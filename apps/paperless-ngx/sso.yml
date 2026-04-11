@@ -1,0 +1,42 @@
+services:
+
+  # --------------------------------------------------------
+  # PAPERLESS-NGX – SSO Override
+  # Adds Authentik OpenID Connect login.
+  # Regular login is disabled, redirects to Authentik.
+  #
+  # Requires: core/authentik running with an
+  # OAuth2/OIDC provider configured for Paperless.
+  #
+  # Authentik setup:
+  #   1. Create Application (slug e.g. "paperless")
+  #   2. Create OAuth2/OIDC Provider
+  #   3. Redirect URI:
+  #      https://<HOST>/accounts/oidc/<SSO_PROVIDER_ID>/login/callback/
+  #   4. Copy Client ID + Secret to .env
+  # --------------------------------------------------------
+  app:
+    environment:
+      # -- SSO / OpenID Connect --
+      PAPERLESS_DISABLE_REGULAR_LOGIN: "true"
+      PAPERLESS_REDIRECT_LOGIN_TO_SSO: "true"
+      PAPERLESS_APPS: allauth.socialaccount.providers.openid_connect
+      # NOTE: SSO_CLIENT_SECRET is in .env because Paperless
+      # reads it as part of a JSON string – no _FILE support.
+      PAPERLESS_SOCIALACCOUNT_PROVIDERS: >
+        {
+          "openid_connect": {
+            "APPS": [
+              {
+                "provider_id": "${SSO_PROVIDER_ID}",
+                "name": "${SSO_PROVIDER_NAME}",
+                "client_id": "${SSO_CLIENT_ID}",
+                "secret": "${SSO_CLIENT_SECRET}",
+                "settings": {
+                  "server_url": "${SSO_SERVER_URL}"
+                }
+              }
+            ],
+            "OAUTH_PKCE_ENABLED": "True"
+          }
+        }
