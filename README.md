@@ -174,6 +174,10 @@ Quick overview of all configured services:
 - **Domain** with a DNS provider supported by Traefik (e.g. Cloudflare)
 - **Optional:** Tailscale for `acc-tailscale` access policies
 
+## Roadmap
+
+See [ROADMAP.md](ROADMAP.md) for planned features, services under evaluation, and future ideas.
+
 ## Contributing
 
 Contributions are welcome. Please follow the [conventions](docs/standards/) when adding new services or modifying existing ones.
