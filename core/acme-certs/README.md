@@ -7,7 +7,7 @@ Use this for devices and services that don't go through Traefik — NAS (Synolog
 ## How It Works
 
 1. A lightweight container runs `crond` in the background for automatic renewal
-2. You issue certificates via scripts that run inside the container (`docker compose exec`)
+2. You issue certificates via the **wizard** or manual commands
 3. Certificates are exported to `./volumes/output/<domain>/` as standard PEM files
 4. The Cloudflare API token is stored as a Docker Secret, never in environment variables
 
@@ -28,11 +28,11 @@ echo 'your-cloudflare-api-token' > secrets/cf_token.txt
 docker compose up -d
 ```
 
-## Usage
+## Issuing Certificates
 
-### Interactive Wizard (recommended)
+### Using the Wizard (recommended)
 
-The wizard prompts for domain, SAN, key type, and ACME server — then issues the certificate:
+The wizard walks you through everything interactively:
 
 ```bash
 ./scripts/wizard.sh
@@ -56,49 +56,36 @@ Configuration:
 Issue certificate now? [y/N]: y
 ```
 
-### Issue a Single Domain Certificate
+That's it — the certificate files appear in `./volumes/output/mynas.example.com/`.
+
+### Using Manual Commands (for scripting/automation)
+
+If you want to skip the wizard and issue certificates directly:
 
 ```bash
+# Single domain
 docker compose exec \
   -e CERT_DOMAIN=mynas.example.com \
   -e CERT_SAN= \
   acme-certs /scripts/issue.sh
-```
 
-### Issue a Wildcard Certificate
-
-```bash
+# Domain + wildcard
 docker compose exec \
   -e CERT_DOMAIN=example.com \
   -e CERT_SAN='*.example.com' \
   acme-certs /scripts/issue.sh
 ```
 
-### Issue a Certificate with Multiple SANs
+## Renewal
 
-```bash
-docker compose exec \
-  -e CERT_DOMAIN=example.com \
-  -e CERT_SAN='*.example.com' \
-  acme-certs /scripts/issue.sh
-```
+Certificates are **renewed automatically** by crond inside the container.
 
-### Renew a Certificate
+To trigger a manual renewal:
 
 ```bash
 docker compose exec \
   -e CERT_DOMAIN=example.com \
   acme-certs /scripts/renew.sh
-```
-
-Renewal also happens automatically via `crond` inside the container.
-
-### Convert to PFX (for Windows, Synology, etc.)
-
-Some devices require PKCS#12 / PFX format instead of PEM:
-
-```bash
-docker compose exec acme-certs /scripts/convert-to-pfx.sh example.com MyPassword123
 ```
 
 ## Output
@@ -110,32 +97,43 @@ volumes/output/example.com/
 ├── cert.pem          # Server certificate
 ├── fullchain.pem     # Server cert + intermediate CA
 ├── privkey.pem       # Private key (chmod 600)
-├── ca.pem            # CA certificate
-└── example.com.pfx   # PFX format (only after convert-to-pfx.sh)
+└── ca.pem            # CA certificate
 ```
 
 **Most devices need:** `fullchain.pem` + `privkey.pem`
 
-| Device | Files to Upload |
-|--------|----------------|
-| Synology DSM | Certificate: `fullchain.pem`, Private Key: `privkey.pem` |
-| OPNsense / pfSense | Certificate: `cert.pem`, CA: `ca.pem`, Key: `privkey.pem` |
-| Windows / IIS | `example.com.pfx` (convert first) |
-| Generic / Nginx | `fullchain.pem` + `privkey.pem` |
+## Importing Certificates
+
+| Device | What to Upload |
+|--------|---------------|
+| **Synology DSM** | Certificate: `fullchain.pem`, Private Key: `privkey.pem` |
+| **OPNsense / pfSense** | Certificate: `cert.pem`, CA: `ca.pem`, Key: `privkey.pem` |
+| **Generic / Nginx** | `fullchain.pem` + `privkey.pem` |
+| **Windows / IIS** | Needs PFX format — see below |
+
+### PFX Conversion (Windows, IIS, .NET)
+
+Some devices don't accept PEM files. They need PFX (PKCS#12) — a single file that bundles the certificate and private key, protected by a password you choose:
+
+```bash
+docker compose exec acme-certs \
+  /scripts/convert-to-pfx.sh example.com your-chosen-password
+```
+
+This creates `./volumes/output/example.com/example.com.pfx`. When importing the PFX on the device, enter the same password you chose above.
 
 ## Scripts Reference
 
-| Script | Description | Runs on |
-|--------|-------------|---------|
-| `scripts/wizard.sh` | Interactive certificate wizard | Host |
-| `scripts/issue.sh` | Issue a new certificate | Container |
-| `scripts/renew.sh` | Renew an existing certificate | Container |
-| `scripts/convert-to-pfx.sh` | Convert PEM to PFX format | Container |
+| Script | Run with | Description |
+|--------|----------|-------------|
+| `scripts/wizard.sh` | `./scripts/wizard.sh` | Interactive wizard (runs on host) |
+| `scripts/issue.sh` | `docker compose exec ...` | Issue new certificate |
+| `scripts/renew.sh` | `docker compose exec ...` | Renew existing certificate |
+| `scripts/convert-to-pfx.sh` | `docker compose exec ...` | Convert PEM → PFX |
 
-**Host scripts** run directly: `./scripts/wizard.sh`
-**Container scripts** run via exec: `docker compose exec acme-certs /scripts/...`
+## Configuration Reference
 
-## Supported ACME Servers
+### ACME Servers
 
 | Server | Value | Notes |
 |--------|-------|-------|
@@ -143,11 +141,11 @@ volumes/output/example.com/
 | ZeroSSL | `zerossl` | Alternative, needs email registration |
 | Buypass | `buypass` | European CA |
 
-## Key Types
+### Key Types
 
 | Type | Value | Notes |
 |------|-------|-------|
-| ECDSA P-256 | `ec-256` | Default, fast, small, recommended |
+| ECDSA P-256 | `ec-256` | Default — fast, small, recommended |
 | ECDSA P-384 | `ec-384` | Stronger, slightly slower |
 | RSA 2048 | `2048` | Legacy compatibility |
 | RSA 4096 | `4096` | Legacy, large key |
