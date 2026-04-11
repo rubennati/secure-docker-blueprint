@@ -29,6 +29,7 @@ Production-ready configurations for 14+ services — with standardized patterns,
 | [Authentik](core/authentik/) | SSO / Identity Provider for centralized authentication (OpenID Connect) |
 | [OnlyOffice](core/onlyoffice/) | Document editing server for Seafile, Nextcloud, etc. |
 | [dnsmasq](core/dnsmasq/) | DNS forwarder with wildcard zones for Tailscale / split-DNS setups |
+| [acme-certs](core/acme-certs/) | Certificate tool (acme.sh) for devices without Traefik (NAS, routers) |
 | [Whoami](core/whoami/) | Traefik debug service to verify routing, TLS, and middlewares |
 
 ### Applications
@@ -103,6 +104,7 @@ docker-ops-blueprint/
 │   ├── authentik/               #   SSO / Identity provider
 │   ├── onlyoffice/              #   Document editing
 │   ├── dnsmasq/                 #   DNS forwarder/cache
+│   ├── acme-certs/              #   Certificate tool (acme.sh)
 │   └── whoami/                  #   Debug service
 │
 ├── apps/                        # Applications (pick what you need)

@@ -1,0 +1,52 @@
+services:
+
+  # --------------------------------------------------------
+  # ACME-CERTS
+  # Let's Encrypt / ZeroSSL certificate tool using acme.sh.
+  # Issues and renews certs via Cloudflare DNS-01 challenge.
+  #
+  # Use for devices without Traefik (NAS, routers, etc.).
+  # Runs crond in background for automatic renewal.
+  #
+  # Usage:
+  #   ./scripts/wizard.sh              Interactive certificate wizard
+  #   ./scripts/issue.sh               Issue cert (set vars in .env)
+  #   ./scripts/renew.sh               Renew existing cert
+  #   ./scripts/convert-to-pfx.sh      Convert to PFX format
+  # --------------------------------------------------------
+  acme-certs:
+    # --- Identity ---
+    image: ${APP_IMAGE}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
+    command: ["/bin/sh", "-c", "crond -f -d 8"]
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      TZ: ${TIMEZONE}
+      ACME_EMAIL: ${ACME_EMAIL}
+      CERT_DOMAIN: ${CERT_DOMAIN}
+      CERT_SAN: ${CERT_SAN}
+      CERT_KEYLENGTH: ${CERT_KEYLENGTH}
+      ACME_SERVER: ${ACME_SERVER}
+    secrets:
+      - CF_TOKEN
+
+    # --- Storage ---
+    volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
+      - ./scripts:/scripts:ro
+      - ./volumes/acme:/acme.sh
+      - ./volumes/output:/output
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  CF_TOKEN:
+    file: ./secrets/cf_token.txt
