@@ -1,0 +1,131 @@
+services:
+
+  # --------------------------------------------------------
+  # DOCKER SOCKET PROXY (Hawser → Docker API)
+  # Defence in depth: validates and filters API requests
+  # even though Hawser needs broad access.
+  # --------------------------------------------------------
+  socket-proxy:
+    # --- Identity ---
+    image: ${SOCKET_PROXY_IMAGE}
+    container_name: ${CONTAINER_NAME_SOCKET_PROXY}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /run
+      - /tmp
+
+    # --- Configuration ---
+    environment:
+      CONTAINERS: "1"
+      SERVICES: "1"
+      NETWORKS: "1"
+      VOLUMES: "1"
+      IMAGES: "1"
+      INFO: "1"
+      EVENTS: "1"
+      PING: "1"
+      VERSION: "1"
+      SYSTEM: "1"
+      BUILD: "1"
+      EXEC: "1"
+      POST: "1"
+      DELETE: "1"
+      ALLOW_START: "1"
+      ALLOW_STOP: "1"
+      ALLOW_RESTARTS: "1"
+
+    # --- Storage ---
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:2375/_ping >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # --------------------------------------------------------
+  # HAWSER
+  # Remote Docker agent for Dockhand.
+  # Deploy on each host that Dockhand should manage.
+  #
+  # Two modes:
+  #   Edge   – agent connects outbound to Dockhand (default)
+  #   Standard – agent listens for incoming connections
+  #
+  # NOTE: No Traefik routing – this is a Docker API agent,
+  # not a web application.
+  # --------------------------------------------------------
+  hawser:
+    # --- Identity ---
+    image: ${APP_IMAGE}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+    depends_on:
+      socket-proxy:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      # -- Edge Mode (default) --
+      DOCKHAND_SERVER_URL: ${DOCKHAND_SERVER_URL}
+      # -- Standard Mode (uncomment, remove DOCKHAND_SERVER_URL) --
+      # PORT: ${HAWSER_PORT}
+      # BIND_ADDRESS: ${HAWSER_BIND_ADDRESS}
+      # -- General --
+      AGENT_NAME: ${AGENT_NAME}
+      LOG_LEVEL: ${LOG_LEVEL}
+      DOCKER_SOCKET: tcp://socket-proxy:2375
+      STACKS_DIR: /data/stacks
+    secrets:
+      - HAWSER_TOKEN
+
+    # --- Storage ---
+    volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
+      - ./volumes/stacks:/data/stacks
+
+    # --- Networking ---
+    networks:
+      - app-internal
+    # Standard mode: uncomment to expose the agent port
+    # ports:
+    #   - "${HAWSER_PORT}:${HAWSER_PORT}"
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:2376/_hawser/health >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  HAWSER_TOKEN:
+    file: ./secrets/hawser_token.txt
