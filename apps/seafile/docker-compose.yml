@@ -1,0 +1,208 @@
+services:
+
+  # --------------------------------------------------------
+  # DATABASE
+  # --------------------------------------------------------
+  database:
+    # --- Identity ---
+    image: ${DB_IMAGE}
+    container_name: ${CONTAINER_NAME_DB}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/DB_ROOT_PWD
+      MYSQL_LOG_CONSOLE: "true"
+      MARIADB_AUTO_UPGRADE: "1"
+      TZ: ${TIMEZONE}
+    secrets:
+      - DB_ROOT_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/mysql:/var/lib/mysql
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--mariadbupgrade", "--innodb_initialized"]
+      interval: 20s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # --------------------------------------------------------
+  # MEMCACHED
+  # --------------------------------------------------------
+  memcached:
+    # --- Identity ---
+    image: ${MEMCACHED_IMAGE}
+    container_name: ${CONTAINER_NAME_MEMCACHED}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    entrypoint: memcached -m 256
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+  # --------------------------------------------------------
+  # SEAFILE SERVER
+  # --------------------------------------------------------
+  app:
+    # --- Identity ---
+    image: ${APP_IMAGE}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+    depends_on:
+      database:
+        condition: service_healthy
+      memcached:
+        condition: service_started
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      DB_HOST: database
+      DB_PORT: "3306"
+      DB_USER: ${SEAFILE_DB_USER}
+      DB_ROOT_PASSWD_FILE: /run/secrets/DB_ROOT_PWD
+      DB_PASSWORD_FILE: /run/secrets/SEAFILE_DB_PWD
+      SEAFILE_MYSQL_DB_CCNET_DB_NAME: ccnet_db
+      SEAFILE_MYSQL_DB_SEAFILE_DB_NAME: seafile_db
+      SEAFILE_MYSQL_DB_SEAHUB_DB_NAME: seahub_db
+      TIME_ZONE: ${TIMEZONE}
+      INIT_SEAFILE_ADMIN_EMAIL: ${SEAFILE_ADMIN_EMAIL}
+      INIT_SEAFILE_ADMIN_PASSWORD_FILE: /run/secrets/SEAFILE_ADMIN_PWD
+      SEAFILE_SERVER_HOSTNAME: ${APP_TRAEFIK_HOST}
+      SEAFILE_SERVER_PROTOCOL: https
+      SITE_ROOT: /
+      NON_ROOT: "false"
+      JWT_PRIVATE_KEY_FILE: /run/secrets/JWT_KEY
+      SEAFILE_LOG_TO_STDOUT: "false"
+      ENABLE_SEADOC: ${SEAFILE_ENABLE_SEADOC}
+      SEADOC_SERVER_URL: https://${APP_TRAEFIK_HOST}/sdoc-server
+      TZ: ${TIMEZONE}
+    secrets:
+      - DB_ROOT_PWD
+      - SEAFILE_DB_PWD
+      - SEAFILE_ADMIN_PWD
+      - JWT_KEY
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/seafile-data:/shared
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+      - app-internal
+
+    # --- Traefik ---
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
+      - "traefik.docker.network=proxy-public"
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:80/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # --------------------------------------------------------
+  # SEADOC (collaborative document editing)
+  # --------------------------------------------------------
+  seadoc:
+    # --- Identity ---
+    image: ${SEADOC_IMAGE}
+    container_name: ${CONTAINER_NAME_SEADOC}
+    restart: unless-stopped
+    depends_on:
+      database:
+        condition: service_healthy
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      DB_HOST: database
+      DB_PORT: "3306"
+      DB_USER: ${SEAFILE_DB_USER}
+      DB_PASSWORD_FILE: /run/secrets/SEAFILE_DB_PWD
+      DB_NAME: seahub_db
+      TIME_ZONE: ${TIMEZONE}
+      JWT_PRIVATE_KEY_FILE: /run/secrets/JWT_KEY
+      NON_ROOT: "false"
+      SEAHUB_SERVICE_URL: http://app
+    secrets:
+      - SEAFILE_DB_PWD
+      - JWT_KEY
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/seadoc-data:/shared
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+      - app-internal
+
+    # --- Traefik ---
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.rule=Host(`${APP_TRAEFIK_HOST}`) && (PathPrefix(`/sdoc-server`) || PathPrefix(`/socket.io/`))"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.middlewares=seadoc-strip@docker"
+      - "traefik.http.middlewares.seadoc-strip.stripprefix.prefixes=/sdoc-server"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}-seadoc.loadbalancer.server.port=80"
+      - "traefik.docker.network=proxy-public"
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  DB_ROOT_PWD:
+    file: ./secrets/db_root_pwd.txt
+  SEAFILE_DB_PWD:
+    file: ./secrets/seafile_db_pwd.txt
+  SEAFILE_ADMIN_PWD:
+    file: ./secrets/seafile_admin_pwd.txt
+  JWT_KEY:
+    file: ./secrets/jwt_key.txt
