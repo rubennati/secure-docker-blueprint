@@ -1,0 +1,216 @@
+services:
+
+  # --------------------------------------------------------
+  # POSTGRESQL
+  # --------------------------------------------------------
+  db:
+    # --- Identity ---
+    image: ${DB_IMAGE}
+    container_name: ${CONTAINER_NAME_DB}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/DB_PWD
+      TZ: ${TIMEZONE}
+    secrets:
+      - DB_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/postgres:/var/lib/postgresql/data
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME} -h 127.0.0.1 || exit 1"]
+      start_period: 30s
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # --------------------------------------------------------
+  # REDIS (session store + cache)
+  # --------------------------------------------------------
+  redis:
+    # --- Identity ---
+    image: ${REDIS_IMAGE}
+    container_name: ${CONTAINER_NAME_REDIS}
+    restart: unless-stopped
+    command: --save 60 1 --loglevel warning
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/redis:/data
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      start_period: 20s
+      interval: 30s
+      timeout: 3s
+      retries: 5
+
+  # --------------------------------------------------------
+  # AUTHENTIK SERVER (Web UI + API)
+  # --------------------------------------------------------
+  server:
+    # --- Identity ---
+    image: ${APP_IMAGE}
+    container_name: ${CONTAINER_NAME_SERVER}
+    restart: unless-stopped
+    command: server
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      AUTHENTIK_REDIS__HOST: ${CONTAINER_NAME_REDIS}
+      AUTHENTIK_POSTGRESQL__HOST: ${CONTAINER_NAME_DB}
+      AUTHENTIK_POSTGRESQL__USER: ${DB_USER}
+      AUTHENTIK_POSTGRESQL__NAME: ${DB_NAME}
+      AUTHENTIK_POSTGRESQL__PASSWORD: file:///run/secrets/DB_PWD
+      AUTHENTIK_SECRET_KEY: file:///run/secrets/AUTHENTIK_SECRET_KEY
+      AUTHENTIK_ERROR_REPORTING__ENABLED: "false"
+      AUTHENTIK_EMAIL__HOST: ${SMTP_HOST}
+      AUTHENTIK_EMAIL__PORT: ${SMTP_PORT}
+      AUTHENTIK_EMAIL__USERNAME: ${SMTP_USERNAME}
+      AUTHENTIK_EMAIL__PASSWORD: file:///run/secrets/SMTP_PASSWORD
+      AUTHENTIK_EMAIL__USE_TLS: ${SMTP_USE_TLS}
+      AUTHENTIK_EMAIL__USE_SSL: ${SMTP_USE_SSL}
+      AUTHENTIK_EMAIL__TIMEOUT: ${SMTP_TIMEOUT}
+      AUTHENTIK_EMAIL__FROM: ${SMTP_FROM}
+    secrets:
+      - DB_PWD
+      - AUTHENTIK_SECRET_KEY
+      - SMTP_PASSWORD
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/media:/media
+      - ./volumes/custom-templates:/templates
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+      - app-internal
+
+    # --- Traefik ---
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=9000"
+      - "traefik.docker.network=proxy-public"
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:9000/-/health/live/ >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # --------------------------------------------------------
+  # AUTHENTIK WORKER (background jobs, email, sync)
+  # --------------------------------------------------------
+  worker:
+    # --- Identity ---
+    image: ${APP_IMAGE}
+    container_name: ${CONTAINER_NAME_WORKER}
+    restart: unless-stopped
+    command: worker
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      AUTHENTIK_REDIS__HOST: ${CONTAINER_NAME_REDIS}
+      AUTHENTIK_POSTGRESQL__HOST: ${CONTAINER_NAME_DB}
+      AUTHENTIK_POSTGRESQL__USER: ${DB_USER}
+      AUTHENTIK_POSTGRESQL__NAME: ${DB_NAME}
+      AUTHENTIK_POSTGRESQL__PASSWORD: file:///run/secrets/DB_PWD
+      AUTHENTIK_SECRET_KEY: file:///run/secrets/AUTHENTIK_SECRET_KEY
+      AUTHENTIK_ERROR_REPORTING__ENABLED: "false"
+      AUTHENTIK_EMAIL__HOST: ${SMTP_HOST}
+      AUTHENTIK_EMAIL__PORT: ${SMTP_PORT}
+      AUTHENTIK_EMAIL__USERNAME: ${SMTP_USERNAME}
+      AUTHENTIK_EMAIL__PASSWORD: file:///run/secrets/SMTP_PASSWORD
+      AUTHENTIK_EMAIL__USE_TLS: ${SMTP_USE_TLS}
+      AUTHENTIK_EMAIL__USE_SSL: ${SMTP_USE_SSL}
+      AUTHENTIK_EMAIL__TIMEOUT: ${SMTP_TIMEOUT}
+      AUTHENTIK_EMAIL__FROM: ${SMTP_FROM}
+    secrets:
+      - DB_PWD
+      - AUTHENTIK_SECRET_KEY
+      - SMTP_PASSWORD
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/media:/media
+      - ./volumes/certs:/certs
+      - ./volumes/custom-templates:/templates
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  DB_PWD:
+    file: ./secrets/db_pwd.txt
+  AUTHENTIK_SECRET_KEY:
+    file: ./secrets/authentik_secret_key.txt
+  SMTP_PASSWORD:
+    file: ./secrets/smtp_password.txt

@@ -1,0 +1,181 @@
+services:
+
+  # --------------------------------------------------------
+  # DOCKER SOCKET PROXY (Dockhand → Docker API)
+  # --------------------------------------------------------
+  socket-proxy:
+    # --- Identity ---
+    image: ${SOCKET_PROXY_IMAGE}
+    container_name: ${CONTAINER_NAME_SOCKET_PROXY}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /run
+      - /tmp
+
+    # --- Configuration ---
+    environment:
+      CONTAINERS: "1"
+      SERVICES: "1"
+      NETWORKS: "1"
+      VOLUMES: "1"
+      IMAGES: "1"
+      INFO: "1"
+      EVENTS: "1"
+      PING: "1"
+      VERSION: "1"
+      SYSTEM: "1"
+      EXEC: "0"
+      POST: "1"
+      DELETE: "0"
+      ALLOW_START: "1"
+      ALLOW_STOP: "1"
+      ALLOW_RESTARTS: "1"
+
+    # --- Storage ---
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:2375/_ping >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # --------------------------------------------------------
+  # POSTGRESQL
+  # --------------------------------------------------------
+  db:
+    # --- Identity ---
+    image: ${DB_IMAGE}
+    container_name: ${CONTAINER_NAME_DB}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/DB_PWD
+      POSTGRES_INITDB_ARGS: --data-checksums
+      TZ: ${TIMEZONE}
+    secrets:
+      - DB_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/postgres:/var/lib/postgresql/data
+    shm_size: 256mb
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME} -h 127.0.0.1 || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 20s
+
+  # --------------------------------------------------------
+  # DOCKHAND
+  # Docker management UI with Git-based stack management.
+  # --------------------------------------------------------
+  dockhand:
+    # --- Identity ---
+    image: ${APP_IMAGE}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      socket-proxy:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
+    command: ["node", "server.js"]
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+
+    # --- Configuration ---
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_USER: ${DB_USER}
+      DB_NAME: ${DB_NAME}
+      DATA_DIR: /app/data
+      GIT_REPOS_DIR: /app/data/git-repos
+      DOCKER_HOST: tcp://socket-proxy:2375
+      PUID: ${APP_PUID}
+      PGID: ${APP_PGID}
+      TZ: ${TIMEZONE}
+    secrets:
+      - DB_PWD
+      - ENCRYPTION_KEY
+
+    # --- Storage ---
+    volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
+      - ./volumes/data:/app/data
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+      - app-internal
+
+    # --- Traefik ---
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=3000"
+      - "traefik.docker.network=proxy-public"
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/ >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  DB_PWD:
+    file: ./secrets/db_pwd.txt
+  ENCRYPTION_KEY:
+    file: ./secrets/encryption_key.txt
