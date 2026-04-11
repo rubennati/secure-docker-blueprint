@@ -1,0 +1,164 @@
+services:
+
+  # --------------------------------------------------------
+  # DATABASE
+  # --------------------------------------------------------
+  database:
+    # --- Identity ---
+    image: ${DB_IMAGE}
+    container_name: ${CONTAINER_NAME_DB}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      MYSQL_DATABASE: ${DB_MYSQL_DATABASE}
+      MYSQL_USER: ${DB_MYSQL_USER}
+      MYSQL_PASSWORD_FILE: /run/secrets/DB_PWD
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/DB_ROOT_PWD
+      TZ: ${TIMEZONE}
+    secrets:
+      - DB_ROOT_PWD
+      - DB_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/mysql:/var/lib/mysql
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect"]
+      interval: 20s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  # --------------------------------------------------------
+  # INVOICE NINJA (Laravel / PHP-FPM)
+  # --------------------------------------------------------
+  app:
+    # --- Identity ---
+    image: ${APP_IMAGE}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+    depends_on:
+      database:
+        condition: service_healthy
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_URL: https://${APP_TRAEFIK_HOST}
+      APP_KEY: ${IN_APP_KEY}
+      REQUIRE_HTTPS: "true"
+      TRUSTED_PROXIES: "*"
+      IS_DOCKER: "true"
+      PDF_GENERATOR: snappdf
+      PHANTOMJS_PDF_GENERATION: "false"
+      NINJA_ENVIRONMENT: selfhost
+      QUEUE_CONNECTION: database
+      FILESYSTEM_DRIVER: public
+      DB_HOST: database
+      DB_PORT: "3306"
+      DB_DATABASE: ${DB_MYSQL_DATABASE}
+      DB_USERNAME: ${DB_MYSQL_USER}
+      DB_PASSWORD__FILE: /run/secrets/DB_PWD
+      IN_USER_EMAIL: ${IN_USER_EMAIL}
+      IN_PASSWORD__FILE: /run/secrets/IN_USER_PWD
+      TZ: ${TIMEZONE}
+    secrets:
+      - DB_PWD
+      - IN_USER_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/app-public:/var/www/app/public:rw
+      - ./volumes/app-storage:/var/www/app/storage:rw
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+  # --------------------------------------------------------
+  # NGINX (Web Server)
+  # --------------------------------------------------------
+  server:
+    # --- Identity ---
+    image: ${NGINX_IMAGE}
+    container_name: ${CONTAINER_NAME_NGINX}
+    restart: unless-stopped
+    depends_on:
+      - app
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx
+      - /run
+
+    # --- Storage ---
+    volumes:
+      - ./config/nginx/in-vhost.conf:/etc/nginx/conf.d/in-vhost.conf:ro
+      - ./volumes/app-public:/var/www/app/public:ro
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+      - app-internal
+
+    # --- Traefik ---
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
+      - "traefik.docker.network=proxy-public"
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  DB_ROOT_PWD:
+    file: ./secrets/db_root_pwd.txt
+  DB_PWD:
+    file: ./secrets/db_pwd.txt
+  IN_USER_PWD:
+    file: ./secrets/in_user_pwd.txt
