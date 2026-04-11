@@ -1,0 +1,124 @@
+services:
+
+  # --------------------------------------------------------
+  # DATABASE
+  # --------------------------------------------------------
+  database:
+    # --- Identity ---
+    image: ${DB_IMAGE}
+    container_name: ${CONTAINER_NAME_DB}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      MYSQL_DATABASE: ${DB_MYSQL_DATABASE}
+      MYSQL_USER: ${DB_MYSQL_USER}
+      MYSQL_PASSWORD_FILE: /run/secrets/DB_PWD
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/DB_ROOT_PWD
+      MYSQL_RANDOM_ROOT_PASSWORD: "false"
+      TZ: ${TIMEZONE}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    secrets:
+      - DB_ROOT_PWD
+      - DB_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/mysql:/var/lib/mysql
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect"]
+      interval: 20s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  # --------------------------------------------------------
+  # WORDPRESS
+  # --------------------------------------------------------
+  wordpress:
+    # --- Identity ---
+    image: ${APP_IMAGE}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+    depends_on:
+      database:
+        condition: service_healthy
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      WORDPRESS_DB_HOST: database:3306
+      WORDPRESS_DB_USER: ${DB_MYSQL_USER}
+      WORDPRESS_DB_PASSWORD_FILE: /run/secrets/DB_PWD
+      WORDPRESS_DB_NAME: ${DB_MYSQL_DATABASE}
+      WORDPRESS_TABLE_PREFIX: ${WORDPRESS_TABLE_PREFIX}
+      DISALLOW_FILE_EDIT: ${DISALLOW_FILE_EDIT}
+      AUTOMATIC_UPDATER_DISABLED: ${AUTOMATIC_UPDATER_DISABLED}
+      TZ: ${TIMEZONE}
+    secrets:
+      - DB_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/wordpress:/var/www/html
+      - ./config/php/uploads.ini:/usr/local/etc/php/conf.d/zz-uploads.ini:ro
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+      - app-internal
+
+    # --- Traefik ---
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+      - "traefik.docker.network=proxy-public"
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1/wp-json/ >/dev/null || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  DB_ROOT_PWD:
+    file: ./secrets/db_root_pwd.txt
+  DB_PWD:
+    file: ./secrets/db_pwd.txt
