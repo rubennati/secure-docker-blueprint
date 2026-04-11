@@ -1,15 +1,17 @@
 services:
 
   # --------------------------------------------------------
-  # SEADOC (collaborative document editing – optional)
+  # NOTIFICATION SERVER (real-time file change updates – optional)
   # --------------------------------------------------------
-  seadoc:
+  notification-server:
     # --- Identity ---
-    image: ${SEADOC_IMAGE}
-    container_name: ${CONTAINER_NAME_SEADOC}
+    image: ${NOTIFICATION_SERVER_IMAGE}
+    container_name: ${CONTAINER_NAME_NOTIFICATION}
     restart: unless-stopped
     depends_on:
       db:
+        condition: service_healthy
+      seafile:
         condition: service_healthy
 
     # --- Security ---
@@ -18,22 +20,22 @@ services:
 
     # --- Configuration ---
     environment:
-      DB_HOST: db
-      DB_PORT: "3306"
-      DB_USER: ${SEAFILE_DB_USER}
-      DB_PASSWORD_FILE: /run/secrets/SEAFILE_DB_PWD
-      DB_NAME: seahub_db
-      TIME_ZONE: ${TIMEZONE}
+      SEAFILE_MYSQL_DB_HOST: db
+      SEAFILE_MYSQL_DB_PORT: "3306"
+      SEAFILE_MYSQL_DB_USER: ${SEAFILE_DB_USER}
+      SEAFILE_MYSQL_DB_PASSWORD_FILE: /run/secrets/SEAFILE_DB_PWD
+      SEAFILE_MYSQL_DB_CCNET_DB_NAME: ccnet_db
+      SEAFILE_MYSQL_DB_SEAFILE_DB_NAME: seafile_db
       JWT_PRIVATE_KEY_FILE: /run/secrets/JWT_KEY
-      NON_ROOT: "false"
-      SEAHUB_SERVICE_URL: http://seafile
+      SEAFILE_LOG_TO_STDOUT: "false"
+      NOTIFICATION_SERVER_LOG_LEVEL: ${NOTIFICATION_LOG_LEVEL}
     secrets:
       - SEAFILE_DB_PWD
       - JWT_KEY
 
     # --- Storage ---
     volumes:
-      - ./volumes/seadoc-data:/shared
+      - ./volumes/seafile-data/seafile/logs:/shared/seafile/logs
 
     # --- Networking ---
     networks:
@@ -43,13 +45,11 @@ services:
     # --- Traefik ---
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.rule=Host(`${APP_TRAEFIK_HOST}`) && (PathPrefix(`/sdoc-server`) || PathPrefix(`/socket.io/`))"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.entrypoints=websecure"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.tls=true"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.middlewares=seadoc-strip@docker"
-      - "traefik.http.middlewares.seadoc-strip.stripprefix.prefixes=/sdoc-server"
-      - "traefik.http.services.${COMPOSE_PROJECT_NAME}-seadoc.loadbalancer.server.port=80"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-notification.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/notification`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-notification.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-notification.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-notification.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}-notification.loadbalancer.server.port=8083"
       - "traefik.docker.network=proxy-public"
 
 # --------------------------------------------------------

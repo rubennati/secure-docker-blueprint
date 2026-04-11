@@ -1,0 +1,62 @@
+services:
+
+  # --------------------------------------------------------
+  # METADATA SERVER (file metadata management – optional)
+  # --------------------------------------------------------
+  seafile-md-server:
+    # --- Identity ---
+    image: ${MD_SERVER_IMAGE}
+    container_name: ${CONTAINER_NAME_MD_SERVER}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      seafile:
+        condition: service_healthy
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      JWT_PRIVATE_KEY_FILE: /run/secrets/JWT_KEY
+      SEAFILE_MYSQL_DB_HOST: db
+      SEAFILE_MYSQL_DB_PORT: "3306"
+      SEAFILE_MYSQL_DB_USER: ${SEAFILE_DB_USER}
+      SEAFILE_MYSQL_DB_PASSWORD_FILE: /run/secrets/SEAFILE_DB_PWD
+      SEAFILE_MYSQL_DB_SEAFILE_DB_NAME: seafile_db
+      SEAFILE_LOG_TO_STDOUT: "false"
+      MD_PORT: "8084"
+      MD_LOG_LEVEL: ${MD_LOG_LEVEL}
+      MD_MAX_CACHE_SIZE: ${MD_MAX_CACHE_SIZE}
+      MD_FILE_COUNT_LIMIT: ${MD_FILE_COUNT_LIMIT}
+      MD_STORAGE_TYPE: disk
+    secrets:
+      - SEAFILE_DB_PWD
+      - JWT_KEY
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/seafile-data:/shared
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+# --------------------------------------------------------
+# NETWORKS (shared with seafile-server.yml)
+# --------------------------------------------------------
+networks:
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+
+# --------------------------------------------------------
+# SECRETS (shared with seafile-server.yml)
+# --------------------------------------------------------
+secrets:
+  SEAFILE_DB_PWD:
+    file: ./secrets/seafile_db_pwd.txt
+  JWT_KEY:
+    file: ./secrets/jwt_key.txt

@@ -3,7 +3,7 @@ services:
   # --------------------------------------------------------
   # DATABASE
   # --------------------------------------------------------
-  database:
+  db:
     # --- Identity ---
     image: ${DB_IMAGE}
     container_name: ${CONTAINER_NAME_DB}
@@ -59,13 +59,13 @@ services:
   # --------------------------------------------------------
   # SEAFILE SERVER
   # --------------------------------------------------------
-  app:
+  seafile:
     # --- Identity ---
     image: ${APP_IMAGE}
     container_name: ${CONTAINER_NAME_APP}
     restart: unless-stopped
     depends_on:
-      database:
+      db:
         condition: service_healthy
       memcached:
         condition: service_started
@@ -76,7 +76,7 @@ services:
 
     # --- Configuration ---
     environment:
-      DB_HOST: database
+      DB_HOST: db
       DB_PORT: "3306"
       DB_USER: ${SEAFILE_DB_USER}
       DB_ROOT_PASSWD_FILE: /run/secrets/DB_ROOT_PWD
@@ -95,6 +95,8 @@ services:
       SEAFILE_LOG_TO_STDOUT: "false"
       ENABLE_SEADOC: ${SEAFILE_ENABLE_SEADOC}
       SEADOC_SERVER_URL: https://${APP_TRAEFIK_HOST}/sdoc-server
+      ENABLE_NOTIFICATION_SERVER: ${SEAFILE_ENABLE_NOTIFICATION}
+      NOTIFICATION_SERVER_URL: https://${APP_TRAEFIK_HOST}/notification
       TZ: ${TIMEZONE}
     secrets:
       - DB_ROOT_PWD
