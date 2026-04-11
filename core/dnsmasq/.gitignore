@@ -1,0 +1,8 @@
+# Environment (contains real values)
+.env
+
+# Rendered config (generated from templates)
+config/dnsmasq.conf
+
+# Runtime data
+volumes/

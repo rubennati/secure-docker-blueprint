@@ -1,0 +1,37 @@
+services:
+
+  # --------------------------------------------------------
+  # DNSMASQ
+  # Lightweight DNS forwarder and cache.
+  # Binds directly to host network (UDP/TCP 53).
+  # No Traefik routing – this IS the DNS layer.
+  # --------------------------------------------------------
+  dnsmasq:
+    # --- Identity ---
+    image: ${APP_IMAGE}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_add:
+      - NET_BIND_SERVICE
+    cap_drop:
+      - ALL
+
+    # --- Storage ---
+    volumes:
+      - ./config/dnsmasq.conf:/etc/dnsmasq.conf:ro
+      - ./config/records.hosts:/etc/dnsmasq.d/records.hosts:ro
+
+    # --- Networking ---
+    network_mode: "host"
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "nslookup localhost 127.0.0.1 >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

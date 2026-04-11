@@ -1,0 +1,10 @@
+# =========================================================
+# Static DNS Records
+# =========================================================
+# Format: IP    FQDN
+# One entry per line. Changes are picked up on dnsmasq restart.
+#
+# Examples:
+# 100.100.100.10    whoami.test.lab.example.com
+# 100.100.100.10    traefik.test.lab.example.com
+# 100.100.100.20    app.dev.lab.example.com

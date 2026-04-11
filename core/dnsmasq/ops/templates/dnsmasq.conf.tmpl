@@ -1,0 +1,60 @@
+# =========================================================
+# dnsmasq – rendered from ops/templates/dnsmasq.conf.tmpl
+# Do NOT edit directly – run ops/scripts/render.sh
+# =========================================================
+
+# =========================================================
+# BASICS / SECURITY
+# =========================================================
+domain-needed
+bogus-priv
+no-hosts
+no-resolv
+
+# =========================================================
+# UPSTREAM DNS
+# =========================================================
+server=${DNS_UPSTREAM_1}
+server=${DNS_UPSTREAM_2}
+
+# =========================================================
+# CACHE
+# =========================================================
+cache-size=${DNS_CACHE_SIZE}
+neg-ttl=${DNS_NEG_TTL}
+
+# =========================================================
+# LISTEN INTERFACES
+# =========================================================
+interface=${DNS_INTERFACE_1}
+interface=${DNS_INTERFACE_2}
+# interface=${DNS_INTERFACE_3}
+bind-interfaces
+
+# =========================================================
+# STATIC HOST FILE
+# =========================================================
+addn-hosts=/etc/dnsmasq.d/records.hosts
+
+# =========================================================
+# LOCAL DOMAIN
+# =========================================================
+local=/${DNS_LOCAL_DOMAIN}/
+domain=${DNS_LOCAL_DOMAIN}
+expand-hosts
+
+# =========================================================
+# WILDCARD ZONES
+# =========================================================
+# Route all *.domain to a single IP address.
+# Add/remove zones as needed after rendering.
+
+address=/${DNS_WILDCARD_1_DOMAIN}/${DNS_WILDCARD_1_IP}
+address=/${DNS_WILDCARD_2_DOMAIN}/${DNS_WILDCARD_2_IP}
+# address=/${DNS_WILDCARD_3_DOMAIN}/${DNS_WILDCARD_3_IP}
+
+# =========================================================
+# LOGGING
+# =========================================================
+log-queries
+log-facility=-
