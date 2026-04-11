@@ -1,0 +1,140 @@
+services:
+
+  # --------------------------------------------------------
+  # DATABASE
+  # --------------------------------------------------------
+  database:
+    # --- Identity ---
+    image: ${DB_IMAGE}
+    container_name: ${CONTAINER_NAME_DB}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      MYSQL_DATABASE: ${DB_MYSQL_DATABASE}
+      MYSQL_USER: ${DB_MYSQL_USER}
+      MYSQL_PASSWORD_FILE: /run/secrets/DB_PWD
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/DB_ROOT_PWD
+      TZ: ${TIMEZONE}
+    secrets:
+      - DB_ROOT_PWD
+      - DB_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/mysql:/var/lib/mysql
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect"]
+      interval: 20s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  # --------------------------------------------------------
+  # VAULTWARDEN
+  # --------------------------------------------------------
+  app:
+    # --- Identity ---
+    image: ${APP_IMAGE}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+    depends_on:
+      database:
+        condition: service_healthy
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+
+    # --- Configuration ---
+    # NOTE: Vaultwarden does not support DATABASE_URL_FILE.
+    # config/entrypoint.sh builds the URL at runtime from the
+    # DB secret + env vars below, then exec's the real start.
+    entrypoint: /entrypoint-custom.sh
+    environment:
+      DB_HOST: database
+      DB_PORT: "3306"
+      DB_NAME: ${DB_MYSQL_DATABASE}
+      DB_USER: ${DB_MYSQL_USER}
+      DOMAIN: https://${APP_TRAEFIK_HOST}
+      SIGNUPS_ALLOWED: ${VW_SIGNUPS_ALLOWED}
+      ADMIN_TOKEN_FILE: /run/secrets/VW_ADMIN_TOKEN
+      LOG_LEVEL: ${VW_LOG_LEVEL}
+      SMTP_HOST: ${VW_SMTP_HOST}
+      SMTP_FROM: ${VW_SMTP_FROM}
+      SMTP_PORT: ${VW_SMTP_PORT}
+      SMTP_SECURITY: ${VW_SMTP_SECURITY}
+      SMTP_USERNAME: ${VW_SMTP_USERNAME}
+      SMTP_PASSWORD_FILE: /run/secrets/VW_SMTP_PWD
+      TZ: ${TIMEZONE}
+    secrets:
+      - DB_PWD
+      - VW_ADMIN_TOKEN
+      - VW_SMTP_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./config/entrypoint.sh:/entrypoint-custom.sh:ro
+      - ./volumes/data:/data
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+      - app-internal
+
+    # --- Traefik ---
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+      - "traefik.docker.network=proxy-public"
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:80/alive"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  DB_ROOT_PWD:
+    file: ./secrets/db_root_pwd.txt
+  DB_PWD:
+    file: ./secrets/db_pwd.txt
+  VW_ADMIN_TOKEN:
+    file: ./secrets/admin_token.txt
+  VW_SMTP_PWD:
+    file: ./secrets/smtp_pwd.txt
