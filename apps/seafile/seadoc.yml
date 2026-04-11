@@ -1,0 +1,73 @@
+services:
+
+  # --------------------------------------------------------
+  # SEADOC (collaborative document editing – optional)
+  # --------------------------------------------------------
+  seadoc:
+    # --- Identity ---
+    image: ${SEADOC_IMAGE}
+    container_name: ${CONTAINER_NAME_SEADOC}
+    restart: unless-stopped
+    depends_on:
+      database:
+        condition: service_healthy
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      DB_HOST: database
+      DB_PORT: "3306"
+      DB_USER: ${SEAFILE_DB_USER}
+      DB_PASSWORD_FILE: /run/secrets/SEAFILE_DB_PWD
+      DB_NAME: seahub_db
+      TIME_ZONE: ${TIMEZONE}
+      JWT_PRIVATE_KEY_FILE: /run/secrets/JWT_KEY
+      NON_ROOT: "false"
+      SEAHUB_SERVICE_URL: http://app
+    secrets:
+      - SEAFILE_DB_PWD
+      - JWT_KEY
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/seadoc-data:/shared
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+      - app-internal
+
+    # --- Traefik ---
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.rule=Host(`${APP_TRAEFIK_HOST}`) && (PathPrefix(`/sdoc-server`) || PathPrefix(`/socket.io/`))"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.middlewares=seadoc-strip@docker"
+      - "traefik.http.middlewares.seadoc-strip.stripprefix.prefixes=/sdoc-server"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}-seadoc.loadbalancer.server.port=80"
+      - "traefik.docker.network=proxy-public"
+
+# --------------------------------------------------------
+# NETWORKS (must match seafile-server.yml)
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+
+# --------------------------------------------------------
+# SECRETS (must match seafile-server.yml)
+# --------------------------------------------------------
+secrets:
+  SEAFILE_DB_PWD:
+    file: ./secrets/seafile_db_pwd.txt
+  JWT_KEY:
+    file: ./secrets/jwt_key.txt
