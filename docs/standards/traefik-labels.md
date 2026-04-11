@@ -1,8 +1,8 @@
 # Traefik Labels
 
-## Standard-Pattern
+## Standard Pattern
 
-Jeder Service mit Web-Zugang bekommt diesen Label-Block:
+Every service with web access gets this label block:
 
 ```yaml
 labels:
@@ -17,63 +17,63 @@ labels:
   - "traefik.docker.network=proxy-public"
 ```
 
-- Router-Name = `${COMPOSE_PROJECT_NAME}` (eindeutig pro App)
-- `traefik.docker.network` immer explizit setzen (Multi-Network)
+- Router name = `${COMPOSE_PROJECT_NAME}` (unique per app)
+- Always set `traefik.docker.network` explicitly (required for multi-network setups)
 
-## .env Werte
+## .env Values
 
-| Variable | Mögliche Werte |
+| Variable | Possible Values |
 |----------|----------------|
 | `APP_TRAEFIK_HOST` | `app.example.com` |
 | `APP_TRAEFIK_CERT_RESOLVER` | `cloudflare-dns`, `httpResolver` |
 | `APP_TRAEFIK_TLS_OPTION` | `tls-basic`, `tls-aplus`, `tls-modern` |
 | `APP_TRAEFIK_ACCESS` | `acc-public`, `acc-tailscale` |
-| `APP_TRAEFIK_SECURITY` | `sec-0` bis `sec-4` |
+| `APP_TRAEFIK_SECURITY` | `sec-0` through `sec-4` |
 | `APP_INTERNAL_PORT` | `80`, `8080`, `3000`, ... |
 
-## Security-Stufen
+## Security Levels
 
-| Level | Einsatz | Headers |
-|-------|---------|---------|
-| `sec-0` | Nur TLS, keine Header | Kein HSTS, kein CSP |
-| `sec-1` | Basis-Headers | HSTS, X-Content-Type |
-| `sec-2` | Standard (empfohlen) | + X-Frame-Options, Referrer-Policy |
-| `sec-3` | Erhöht | + Permissions-Policy, CSP |
-| `sec-4` | Maximum | + Rate-Limiting, strenge CSP |
+| Level | Use Case | Headers |
+|-------|----------|---------|
+| `sec-0` | TLS only, no headers | No HSTS, no CSP |
+| `sec-1` | Basic headers | HSTS, X-Content-Type |
+| `sec-2` | Standard (recommended) | + X-Frame-Options, Referrer-Policy |
+| `sec-3` | Elevated | + Permissions-Policy, CSP |
+| `sec-4` | Maximum | + Rate-Limiting, strict CSP |
 
 ## Access Policies
 
-| Policy | Zugriff |
-|--------|---------|
-| `acc-public` | Offen (Internet) |
-| `acc-tailscale` | Nur Tailscale IP-Ranges |
+| Policy | Access |
+|--------|--------|
+| `acc-public` | Open (internet) |
+| `acc-tailscale` | Tailscale IP ranges only |
 
-## TLS-Profile
+## TLS Profiles
 
-| Profil | Min. Version | Kompatibilität |
-|--------|-------------|----------------|
-| `tls-basic` | TLS 1.2 | Alle modernen Browser |
-| `tls-aplus` | TLS 1.2 | Strengere Cipher-Auswahl |
-| `tls-modern` | TLS 1.3 | Nur aktuelle Browser/Clients |
+| Profile | Min. Version | Compatibility |
+|---------|-------------|---------------|
+| `tls-basic` | TLS 1.2 | All modern browsers |
+| `tls-aplus` | TLS 1.2 | Stricter cipher selection |
+| `tls-modern` | TLS 1.3 | Current browsers/clients only |
 
-## Sonderfälle
+## Special Cases
 
-### Zusätzliche Middlewares (z.B. Custom Headers)
+### Additional middlewares (e.g. custom headers)
 
 ```yaml
 - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${COMPOSE_PROJECT_NAME}-headers,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
 - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
 ```
 
-### Mehrere Router (z.B. Seafile + Thumbnail)
+### Multiple routers (e.g. Seafile + Thumbnail)
 
 ```yaml
-# Haupt-Router
+# Main router
 - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
-# Zusätzlicher Router mit PathPrefix
+# Additional router with PathPrefix
 - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/thumbnail`)"
 ```
 
-### Kein Traefik
+### No Traefik
 
-Services ohne Web-UI (dnsmasq, hawser) brauchen keine Labels.
+Services without a web UI (dnsmasq, hawser) don't need labels.

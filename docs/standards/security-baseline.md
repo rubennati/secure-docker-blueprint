@@ -1,15 +1,15 @@
 # Security Baseline
 
-## Pflicht für jeden Service
+## Required for Every Service
 
 ```yaml
 security_opt:
   - no-new-privileges:true
 ```
 
-Keine Ausnahmen. Verhindert Privilege Escalation innerhalb des Containers.
+No exceptions. Prevents privilege escalation inside the container.
 
-## Empfohlen
+## Recommended
 
 ### Read-only Root Filesystem
 
@@ -20,8 +20,8 @@ tmpfs:
   - /run
 ```
 
-Verwenden wenn das Image es unterstützt. Beispiele: Redis, Whoami, Socket Proxy.
-Weglassen bei Images die ins Root-FS schreiben müssen (Ghost, Paperless).
+Use when the image supports it. Examples: Redis, Whoami, Socket Proxy.
+Skip for images that write to the root filesystem (Ghost, Paperless).
 
 ### Capability Drop
 
@@ -29,10 +29,10 @@ Weglassen bei Images die ins Root-FS schreiben müssen (Ghost, Paperless).
 cap_drop:
   - ALL
 cap_add:
-  - NET_BIND_SERVICE    # Nur wenn Port < 1024 nötig
+  - NET_BIND_SERVICE    # Only if binding to port < 1024
 ```
 
-Ideal für leichtgewichtige Services (Whoami, dnsmasq).
+Ideal for lightweight services (Whoami, dnsmasq).
 
 ### Non-root User
 
@@ -40,15 +40,15 @@ Ideal für leichtgewichtige Services (Whoami, dnsmasq).
 user: "${USERMAP_UID}:${USERMAP_GID}"
 ```
 
-Nur setzen wenn das Image es unterstützt. Nicht raten — in der Image-Doku prüfen.
+Only set when the image supports it. Don't guess — check the image documentation.
 
 ## Secrets
 
-### Regel
+### Rule
 
-Passwörter, Tokens und API Keys **nie** in `environment:` — immer via Docker Secrets.
+Passwords, tokens, and API keys **never** in `environment:` — always via Docker Secrets.
 
-### Pattern 1: Image unterstützt `_FILE`
+### Pattern 1: Image supports `_FILE`
 
 ```yaml
 environment:
@@ -61,11 +61,11 @@ secrets:
     file: ./secrets/db_pwd.txt
 ```
 
-Unterstützt von: PostgreSQL, MySQL/MariaDB, OnlyOffice.
+Supported by: PostgreSQL, MySQL/MariaDB, OnlyOffice.
 
-### Pattern 2: Custom Entrypoint
+### Pattern 2: Custom entrypoint
 
-Wenn das Image kein `_FILE` unterstützt (Vaultwarden, Dockhand, Hawser):
+When the image doesn't support `_FILE` (Vaultwarden, Dockhand, Hawser):
 
 ```sh
 #!/bin/sh
@@ -80,53 +80,53 @@ volumes:
   - ./config/entrypoint.sh:/config/entrypoint.sh:ro
 ```
 
-### Pattern 3: Kein Secret möglich
+### Pattern 3: No secret possible
 
-Wenn der Wert in einem JSON-String steckt (z.B. Paperless SSO `PAPERLESS_SOCIALACCOUNT_PROVIDERS`):
-Env-Var in `.env` belassen — ist gitignored, also akzeptabel.
+When the value is embedded in a JSON string (e.g. Paperless SSO `PAPERLESS_SOCIALACCOUNT_PROVIDERS`):
+Keep as env var in `.env` — it's gitignored, so acceptable.
 
 ## Docker Socket
 
-### Niemals direkt am App-Container
+### Never mount directly on the app container
 
 ```yaml
-# FALSCH
+# WRONG
 volumes:
   - /var/run/docker.sock:/var/run/docker.sock
 ```
 
-### Immer über Socket Proxy
+### Always use a Socket Proxy
 
 ```yaml
-# RICHTIG
+# CORRECT
 socket-proxy:
   image: tecnativa/docker-socket-proxy:v0.4.2
   volumes:
     - /var/run/docker.sock:/var/run/docker.sock:ro
   environment:
-    CONTAINERS: "1"    # Nur was die App braucht
-    POST: "0"          # Schreibzugriff nur wenn nötig
+    CONTAINERS: "1"    # Only what the app needs
+    POST: "0"          # Write access only when required
 
 app:
   environment:
     DOCKER_HOST: tcp://socket-proxy:2375
 ```
 
-Ausnahme: Hawser — braucht Socket-Zugriff als Kernfunktion, nutzt aber trotzdem einen Socket Proxy als Defence in Depth.
+Exception: Hawser — needs socket access as its core function, but still uses a socket proxy for defence in depth.
 
-## Netzwerk-Isolation
+## Network Isolation
 
-- Datenbanken, Redis, interne Services: **nur** im `app-internal` Netzwerk
-- Web-Apps: `proxy-public` + `app-internal`
-- DB-Ports **nie** auf Host exposen
+- Databases, Redis, internal services: **only** in `app-internal` network
+- Web apps: `proxy-public` + `app-internal`
+- Database ports **never** exposed on host
 
-## Checkliste
+## Checklist
 
-- [ ] `no-new-privileges:true` auf jedem Service
-- [ ] `read_only: true` wo möglich
-- [ ] Secrets via `secrets:` Block, nie in `environment:`
-- [ ] Docker Socket nur über Socket Proxy
-- [ ] Config-Mounts mit `:ro`
-- [ ] DB nur im internen Netzwerk
-- [ ] Images gepinnt (nie `:latest`)
-- [ ] `./secrets/` und `./volumes/` in `.gitignore`
+- [ ] `no-new-privileges:true` on every service
+- [ ] `read_only: true` where possible
+- [ ] Secrets via `secrets:` block, never in `environment:`
+- [ ] Docker socket only through socket proxy
+- [ ] Config mounts with `:ro`
+- [ ] Database only in internal network
+- [ ] Images pinned (never `:latest`)
+- [ ] `./secrets/` and `./volumes/` in `.gitignore`

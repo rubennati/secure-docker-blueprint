@@ -1,59 +1,59 @@
 # Naming Conventions
 
-## Container-Namen
+## Container Names
 
 Pattern: `{app}-{role}`
 
-| Beispiel | Rolle |
-|----------|-------|
+| Example | Role |
+|---------|------|
 | `wordpress-app` | Application |
 | `wordpress-db` | Database |
 | `paperless-redis` | Cache/Queue |
 | `dockhand-socket-proxy` | Docker Socket Proxy |
 
-## Env-Variablen
+## Environment Variables
 
 Pattern: `{SCOPE}_{PROPERTY}`
 
-| Scope | Beispiele |
-|-------|-----------|
+| Scope | Examples |
+|-------|----------|
 | `APP_` | `APP_IMAGE`, `APP_TRAEFIK_HOST`, `APP_INTERNAL_PORT` |
 | `DB_` | `DB_IMAGE`, `DB_USER`, `DB_NAME` |
 | `CONTAINER_NAME_` | `CONTAINER_NAME_APP`, `CONTAINER_NAME_DB` |
 | `COMPOSE_` | `COMPOSE_PROJECT_NAME`, `COMPOSE_FILE` |
 
-## Netzwerke
+## Networks
 
-| Name | Typ | Erstellt von |
-|------|-----|-------------|
+| Name | Type | Created by |
+|------|------|-----------|
 | `proxy-public` | `external: true` | core/traefik |
-| `{app}-internal` | `internal: true` | Jede App selbst |
+| `{app}-internal` | `internal: true` | Each app |
 
 ## Volumes
 
-Immer Bind Mounts, keine Named Volumes.
+Always bind mounts, never named volumes.
 
-| Pfad | Inhalt |
-|------|--------|
-| `./volumes/data/` | App-Daten |
+| Path | Content |
+|------|---------|
+| `./volumes/data/` | App data |
 | `./volumes/mysql/` | MySQL/MariaDB |
 | `./volumes/postgres/` | PostgreSQL |
 | `./volumes/redis/` | Redis |
-| `./config/` | Konfig-Dateien (committed) |
+| `./config/` | Config files (committed) |
 
 ## Secrets
 
-| Pfad | Inhalt |
-|------|--------|
-| `./secrets/db_pwd.txt` | Datenbank-Passwort |
-| `./secrets/db_root_pwd.txt` | DB Root-Passwort |
-| `./secrets/jwt_key.txt` | JWT Signing Key |
+| Path | Content |
+|------|---------|
+| `./secrets/db_pwd.txt` | Database password |
+| `./secrets/db_root_pwd.txt` | DB root password |
+| `./secrets/jwt_key.txt` | JWT signing key |
 
-Generieren mit: `openssl rand -base64 32 > secrets/name.txt`
+Generate with: `openssl rand -base64 32 > secrets/name.txt`
 
-## .env.example Aufbau
+## .env.example Structure
 
-Feste Sektionen-Reihenfolge:
+Fixed section order:
 
 ```
 # --- Images ---
@@ -65,7 +65,7 @@ Feste Sektionen-Reihenfolge:
 # --- Secrets ---
 ```
 
-Header immer:
+Header always:
 
 ```
 # =============================================
@@ -76,9 +76,9 @@ Header immer:
 # =============================================
 ```
 
-## docker-compose.yml Aufbau
+## docker-compose.yml Structure
 
-Feste Block-Reihenfolge pro Service:
+Fixed block order per service:
 
 ```
 # --- Identity ---       image, container_name, restart, depends_on

@@ -1,35 +1,37 @@
 # App Template
 
-Kopierbare Vorlage für neue Apps im Blueprint.
+Copyable starter for new apps in the blueprint.
 
-## Verwendung
+## Usage
 
 ```bash
-# 1. Template kopieren
+# 1. Copy template
 cp -r docs/templates apps/my-new-app
 cd apps/my-new-app
 
-# 2. .env erstellen und anpassen
+# 2. Create and adjust .env
 cp .env.example .env
-# Alle Werte in .env anpassen
+# Edit all values in .env
 
-# 3. Secrets erstellen
+# 3. Create secrets
 mkdir -p secrets
 openssl rand -base64 32 > secrets/db_password.txt
 
-# 4. Starten
+# 4. Start
 docker compose up -d
 ```
 
-## Anpassen
+## Customization
 
-- **Ohne Datenbank:** `database` Service, `app-internal` Netzwerk und `secrets` Block entfernen
-- **Ohne Traefik:** `labels` Block und `proxy-public` Netzwerk entfernen
-- **read_only:** Auskommentierung bei `read_only`, `tmpfs` entfernen wenn das Image es unterstützt
-- **Healthcheck:** An die App anpassen (Port, Pfad, Timing)
+- **No database:** Remove `database` service, `app-internal` network, and `secrets` block
+- **No Traefik:** Remove `labels` block and `proxy-public` network
+- **read_only:** Uncomment `read_only` and `tmpfs` if the image supports it
+- **Healthcheck:** Adjust to the app (port, path, timing)
 
-## Checkliste
+## Reference
 
-Siehe die Standards-Dokumentation:
-- [docker-compose.yml Standard](../standards/docker-compose.md)
-- [.env File Standard](../standards/env-file.md)
+See the standards documentation:
+- [Naming Conventions](../standards/naming-conventions.md)
+- [Traefik Labels](../standards/traefik-labels.md)
+- [Security Baseline](../standards/security-baseline.md)
+- [Networking](../standards/networking.md)

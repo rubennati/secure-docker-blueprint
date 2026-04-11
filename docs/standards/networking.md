@@ -1,6 +1,6 @@
 # Networking
 
-## Architektur
+## Architecture
 
 ```
 Internet
@@ -15,10 +15,10 @@ Internet
 ┌──────────┐  app-internal   ┌──────────┐  ┌──────────┐
 │   App    │◄───────────────►│    DB    │  │  Redis   │
 │  (web)   │  (isolated)     │          │  │          │
-└──────────┘                 └──────────┘  └──��───────┘
+└──────────┘                 └──────────┘  └──────────┘
 ```
 
-## Netzwerk-Typen
+## Network Types
 
 ### proxy-public
 
@@ -28,9 +28,9 @@ networks:
     external: true
 ```
 
-- Erstellt von `core/traefik`
-- Wird von jeder App referenziert die Traefik-Routing braucht
-- Nur der Web-Service einer App hängt hier drin
+- Created by `core/traefik`
+- Referenced by every app that needs Traefik routing
+- Only the web-facing service of an app belongs here
 
 ### app-internal
 
@@ -41,22 +41,22 @@ networks:
     internal: true
 ```
 
-- Pro App ein eigenes internes Netz
-- `internal: true` = kein Internet-Zugang
-- Für: DB, Redis, Gotenberg, Tika, Socket Proxy
+- One isolated network per app
+- `internal: true` = no internet access
+- For: DB, Redis, Gotenberg, Tika, Socket Proxy
 
-## Welcher Service in welches Netz?
+## Which Service in Which Network?
 
-| Service-Typ | proxy-public | app-internal |
+| Service Type | proxy-public | app-internal |
 |-------------|:---:|:---:|
-| Web-App (Traefik-Routing) | ✅ | ✅ |
-| Datenbank | ❌ | ✅ |
+| Web app (Traefik routing) | ✅ | ✅ |
+| Database | ❌ | ✅ |
 | Redis / Memcached | ❌ | ✅ |
 | Socket Proxy | ❌ | ✅ |
 | Worker / Background Jobs | ❌ | ✅ |
 | Gotenberg / Tika | ❌ | ✅ |
 
-## Sonderfälle
+## Special Cases
 
 ### network_mode: host
 
@@ -64,25 +64,25 @@ networks:
 network_mode: "host"
 ```
 
-Nur für Services die direkt am Host-Netzwerk lauschen müssen.
-Einziges Beispiel: `core/dnsmasq` (UDP/TCP 53).
+Only for services that must bind directly to the host network stack.
+Only example: `core/dnsmasq` (UDP/TCP 53).
 
-Kein Traefik-Routing möglich, kein Docker-Netzwerk.
+No Traefik routing possible, no Docker networking.
 
-### Ports exposen
+### Exposing Ports
 
 ```yaml
 ports:
   - "${APP_PORT}:8080"
 ```
 
-**Vermeiden.** Nur wenn der Service nicht über Traefik geroutet werden kann:
-- dnsmasq (DNS, kein HTTP)
-- Hawser Standard-Mode (Docker API, kein Web)
+**Avoid.** Only when the service cannot be routed through Traefik:
+- dnsmasq (DNS, not HTTP)
+- Hawser standard mode (Docker API, not web)
 
-Datenbank-Ports **nie** auf Host exposen.
+Database ports **never** exposed on host.
 
-### Mehrere Web-Services
+### Multiple Web Services
 
-Bei Apps mit mehreren öffentlichen Endpunkten (z.B. Seafile + Thumbnail Server):
-Beide in `proxy-public`, jeder mit eigenem Traefik-Router.
+For apps with multiple public endpoints (e.g. Seafile + Thumbnail Server):
+Both in `proxy-public`, each with its own Traefik router.
