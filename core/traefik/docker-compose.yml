@@ -1,0 +1,112 @@
+services:
+
+  # --------------------------------------------------------
+  # SOCKET PROXY (Security Layer 1)
+  # Prevents Traefik from having write access to Docker
+  # --------------------------------------------------------
+  docker-socket-proxy:
+    image: ${SOCKET_PROXY_IMAGE}
+    container_name: ${SOCKET_PROXY_CONTAINER_NAME}
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /run
+      - /tmp
+
+    networks:
+      - socket_proxy_net
+
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./config/haproxy.cfg.template:/usr/local/etc/haproxy/haproxy.cfg.template:ro
+
+    environment:
+      # HAProxy template vars (used by the docker-socket-proxy image)
+      LOG_LEVEL: ${DSP_LOG_LEVEL}
+      SOCKET_PATH: ${DSP_SOCKET_PATH}
+      BIND_CONFIG: ${DSP_BIND_CONFIG}
+      POST: ${DSP_POST}
+
+      # Allow only what Traefik needs for discovery
+      CONTAINERS: 1
+      NETWORKS: 1
+      INFO: 1
+      EVENTS: 1
+      PING: 1
+      VERSION: 1
+
+      SERVICES: 0
+      SWARM: 0
+      TASKS: 0
+      NODES: 0
+      IMAGES: 0
+      VOLUMES: 0
+      SYSTEM: 0
+
+      # Allow start/stop/restart? Keep disabled by default.
+      ALLOW_START: 0
+      ALLOW_STOP: 0
+      ALLOW_RESTARTS: 0
+
+  # --------------------------------------------------------
+  # TRAEFIK (Edge Router)
+  # --------------------------------------------------------
+  traefik:
+    image: ${TRAEFIK_IMAGE}
+    container_name: ${TRAEFIK_CONTAINER_NAME}
+    restart: unless-stopped
+    depends_on:
+      - docker-socket-proxy
+
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+
+    networks:
+      - public
+      - socket_proxy_net
+
+    ports:
+      - "${TRAEFIK_HTTP_PORT}:80/tcp"
+      - "${TRAEFIK_HTTPS_PORT}:443/tcp"
+      - "${TRAEFIK_HTTPS_PORT}:443/udp"
+
+    environment:
+      - TZ=${TIMEZONE}
+      # Cloudflare credentials (only needed if you use DNS-01 resolver)
+      - CF_DNS_API_TOKEN=${CF_DNS_API_TOKEN}
+
+    volumes:
+      - ./config/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./config/dynamic:/etc/traefik/dynamic:ro
+      - ./volumes/letsencrypt:/etc/traefik/acme
+      - ./volumes/logs:/var/log/traefik
+
+    # Docker healthcheck for auto-healing
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 25s
+
+    # --------------------------------------------------------
+    # NOTE:
+    # No Traefik labels are defined here on purpose.
+    # All routers, services, middlewares, and TLS settings
+    # are managed centrally in the dynamic file configuration
+    # (see: config/dynamic/routers-system.yml).
+    # --------------------------------------------------------
+
+networks:
+  public:
+    name: ${PUBLIC_NETWORK}
+    driver: bridge
+
+  socket_proxy_net:
+    name: ${SOCKET_PROXY_NETWORK}
+    internal: true

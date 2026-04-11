@@ -1,0 +1,10 @@
+# Rendered config (generated from templates via ops/scripts/render.sh)
+config/traefik.yml
+config/haproxy.cfg.template
+config/dynamic/*.yml
+
+# Runtime volumes
+volumes/
+
+# Environment (contains secrets)
+.env

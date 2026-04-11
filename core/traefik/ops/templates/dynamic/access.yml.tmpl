@@ -1,0 +1,10 @@
+http:
+  middlewares:
+    acc-public:
+      chain:
+        middlewares: []
+
+    acc-tailscale:
+      ipAllowList:
+        sourceRange:
+          - "${TAILSCALE_CIDR}"

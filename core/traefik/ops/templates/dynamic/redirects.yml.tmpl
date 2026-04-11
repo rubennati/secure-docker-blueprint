@@ -1,0 +1,26 @@
+# This file is intentionally empty by default.
+#
+# Why: redirects/rewrites are very environment-specific. Keeping this empty
+# avoids accidentally enabling a router on every fresh install.
+#
+# Example: redirect an old domain to a new one
+#
+# http:
+#   routers:
+#     redirect-old-to-new:
+#       rule: "Host(`old.example.com`)"
+#       entryPoints:
+#         - websecure
+#       middlewares:
+#         - redirect-to-new@file
+#       service: noop@internal
+#       tls:
+#         certResolver: ${ACME_RESOLVER_DNS}
+#         options: tls-basic
+#
+#   middlewares:
+#     redirect-to-new:
+#       redirectRegex:
+#         regex: "^https?://old\\.example\\.com/(.*)"
+#         replacement: "https://new.example.com/$1"
+#         permanent: true

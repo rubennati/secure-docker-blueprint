@@ -1,0 +1,13 @@
+http:
+  routers:
+    traefik-dashboard:
+      rule: "Host(`${TRAEFIK_DASHBOARD_HOST}`)"
+      entryPoints:
+        - websecure
+      service: api@internal
+      tls:
+        certResolver: ${TRAEFIK_DASHBOARD_CERT_RESOLVER}
+        options: ${TRAEFIK_DASHBOARD_TLS_OPTION}
+      middlewares:
+        - acc-tailscale@file
+        - sec-4@file

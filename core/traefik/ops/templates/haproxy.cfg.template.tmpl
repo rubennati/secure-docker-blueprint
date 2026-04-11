@@ -1,0 +1,85 @@
+global
+    log stdout format raw daemon "${DSP_LOG_LEVEL}"
+    log-tag docker-socket-proxy
+    maxconn 200
+    hard-stop-after 15s
+
+defaults
+    mode http
+    log global
+    option httplog
+    option dontlognull
+    option http-server-close
+    retries 3
+    timeout http-request 5s
+    timeout queue 30s
+    timeout connect 1s
+    timeout client 10m
+    timeout server 10m
+    timeout http-keep-alive 5s
+    timeout check 5s
+    maxconn 200
+
+    errorfile 400 /usr/local/etc/haproxy/errors/400.http
+    errorfile 403 /usr/local/etc/haproxy/errors/403.http
+    errorfile 408 /usr/local/etc/haproxy/errors/408.http
+    errorfile 500 /usr/local/etc/haproxy/errors/500.http
+    errorfile 502 /usr/local/etc/haproxy/errors/502.http
+    errorfile 503 /usr/local/etc/haproxy/errors/503.http
+    errorfile 504 /usr/local/etc/haproxy/errors/504.http
+
+backend dockerbackend
+    server dockersocket ${DSP_SOCKET_PATH}
+
+backend docker-events
+    server dockersocket ${DSP_SOCKET_PATH}
+    timeout server 1h
+
+frontend dockerfrontend
+    bind ${DSP_BIND_CONFIG}
+    timeout client 1h
+
+    # --- URI normalization (before any ACL) ---
+    http-request normalize-uri path-strip-dotdot
+    http-request normalize-uri path-merge-slashes
+    http-request normalize-uri percent-decode-unreserved
+    http-request normalize-uri percent-to-uppercase
+
+    # --- Block path traversal and null bytes ---
+    http-request deny if { path,url_dec -m sub /.. }
+    http-request deny if { path -m sub %00 }
+
+    # --- Method filter: GET-only unless POST is enabled ---
+    http-request deny unless METH_GET || { env(POST) -m bool }
+
+    # --- Allowed endpoints (controlled by container env vars) ---
+    http-request allow if { path,url_dec -m reg ^(/v[0-9.]+)?/containers/[a-zA-Z0-9_.-]+/(stop|restart|kill)(/|$) } { env(ALLOW_RESTARTS) -m bool }
+    http-request allow if { path,url_dec -m reg ^(/v[0-9.]+)?/containers/[a-zA-Z0-9_.-]+/start(/|$) } { env(ALLOW_START) -m bool }
+    http-request allow if { path,url_dec -m reg ^(/v[0-9.]+)?/containers/[a-zA-Z0-9_.-]+/stop(/|$) } { env(ALLOW_STOP) -m bool }
+    http-request allow if { path,url_dec -m reg ^(/v[0-9.]+)?/auth(/|$) } { env(AUTH) -m bool }
+    http-request allow if { path,url_dec -m reg ^(/v[0-9.]+)?/build(/|$) } { env(BUILD) -m bool }
+    http-request allow if { path,url_dec -m reg ^(/v[0-9.]+)?/commit(/|$) } { env(COMMIT) -m bool }
+    http-request allow if { path,url_dec -m reg ^(/v[0-9.]+)?/configs(/|$) } { env(CONFIGS) -m bool }
+    http-request allow if { path,url_dec -m reg ^(/v[0-9.]+)?/containers(/|$) } { env(CONTAINERS) -m bool }
+    http-request allow if { path,url_dec -m reg ^(/v[0-9.]+)?/distribution(/|$) } { env(DISTRIBUTION) -m bool }
+    http-request allow if { path,url_dec -m reg ^(/v[0-9.]+)?/events(/|$) } { env(EVENTS) -m bool }
+    http-request allow if { path,url_dec -m reg ^(/v[0-9.]+)?/exec(/|$) } { env(EXEC) -m bool }
+    http-request allow if { path,url_dec -m reg ^(/v[0-9.]+)?/grpc(/|$) } { env(GRPC) -m bool }
+    http-request allow if { path,url_dec -m reg ^(/v[0-9.]+)?/images(/|$) } { env(IMAGES) -m bool }
+    http-request allow if { path,url_dec -m reg ^(/v[0-9.]+)?/info(/|$) } { env(INFO) -m bool }
+    http-request allow if { path,url_dec -m reg ^(/v[0-9.]+)?/networks(/|$) } { env(NETWORKS) -m bool }
+    http-request allow if { path,url_dec -m reg ^(/v[0-9.]+)?/nodes(/|$) } { env(NODES) -m bool }
+    http-request allow if { path,url_dec -m reg ^(/v[0-9.]+)?/_ping(/|$) } { env(PING) -m bool }
+    http-request allow if { path,url_dec -m reg ^(/v[0-9.]+)?/plugins(/|$) } { env(PLUGINS) -m bool }
+    http-request allow if { path,url_dec -m reg ^(/v[0-9.]+)?/secrets(/|$) } { env(SECRETS) -m bool }
+    http-request allow if { path,url_dec -m reg ^(/v[0-9.]+)?/services(/|$) } { env(SERVICES) -m bool }
+    http-request allow if { path,url_dec -m reg ^(/v[0-9.]+)?/session(/|$) } { env(SESSION) -m bool }
+    http-request allow if { path,url_dec -m reg ^(/v[0-9.]+)?/swarm(/|$) } { env(SWARM) -m bool }
+    http-request allow if { path,url_dec -m reg ^(/v[0-9.]+)?/system(/|$) } { env(SYSTEM) -m bool }
+    http-request allow if { path,url_dec -m reg ^(/v[0-9.]+)?/tasks(/|$) } { env(TASKS) -m bool }
+    http-request allow if { path,url_dec -m reg ^(/v[0-9.]+)?/version(/|$) } { env(VERSION) -m bool }
+    http-request allow if { path,url_dec -m reg ^(/v[0-9.]+)?/volumes(/|$) } { env(VOLUMES) -m bool }
+    http-request deny
+
+    use_backend docker-events if { path,url_dec -m reg ^(/v[0-9.]+)?/events(/|$) }
+    default_backend dockerbackend
