@@ -42,6 +42,12 @@ user: "${USERMAP_UID}:${USERMAP_GID}"
 
 Only set when the image supports it. Don't guess — check the image documentation.
 
+**⚠ Never use `user:` with s6-overlay or supervisord images.** These init
+systems must start as root to set up `/run`, fix permissions, and then drop
+privileges internally. Images like Paperless-ngx and Linuxserver.io containers
+provide `USERMAP_UID`/`USERMAP_GID` or `PUID`/`PGID` environment variables
+instead.
+
 ## Secrets
 
 ### Rule
@@ -61,7 +67,8 @@ secrets:
     file: ./secrets/db_pwd.txt
 ```
 
-Supported by: PostgreSQL, MySQL/MariaDB, OnlyOffice.
+Supported by: PostgreSQL, MySQL/MariaDB, Paperless-ngx.
+Not supported by: OnlyOffice, Seafile, Vaultwarden, Dockhand (use Pattern 2).
 
 ### Pattern 2: Custom entrypoint
 
@@ -125,6 +132,7 @@ Exception: Hawser — needs socket access as its core function, but still uses a
 - [ ] `no-new-privileges:true` on every service
 - [ ] `read_only: true` where possible
 - [ ] Secrets via `secrets:` block, never in `environment:`
+- [ ] Secret files generated without trailing newlines (`| tr -d '\n'`)
 - [ ] Docker socket only through socket proxy
 - [ ] Config mounts with `:ro`
 - [ ] Database only in internal network

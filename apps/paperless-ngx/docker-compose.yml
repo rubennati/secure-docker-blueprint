@@ -128,10 +128,13 @@ services:
     # --- Security ---
     security_opt:
       - no-new-privileges:true
-    user: "${USERMAP_UID}:${USERMAP_GID}"
+    # NOTE: Do NOT set `user:` here. Paperless uses s6-overlay which must start
+    # as root to set up /run, then drops privileges to USERMAP_UID/GID internally.
 
     # --- Configuration ---
     environment:
+      USERMAP_UID: ${USERMAP_UID}
+      USERMAP_GID: ${USERMAP_GID}
       PAPERLESS_URL: https://${APP_TRAEFIK_HOST}
       PAPERLESS_DBHOST: database
       PAPERLESS_DBNAME: ${DB_NAME}

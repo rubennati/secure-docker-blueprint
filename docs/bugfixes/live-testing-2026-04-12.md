@@ -424,6 +424,114 @@ HTTP sub-requests to HTTPS. This masks the problem but doesn't fix the root caus
 
 ---
 
+## 17. Paperless-ngx: Tika image tag `3.1` does not exist
+
+**Symptom:** `docker compose up -d` failed immediately:
+
+```
+Error response from daemon: failed to resolve reference "docker.io/apache/tika:3.1": not found
+```
+
+**Root cause:** Apache Tika uses four-part version tags (`3.1.0.0`, `3.2.0.0`,
+etc.). The shorthand `3.1` does not exist on Docker Hub.
+
+**Fix:** Changed `.env.example`:
+
+```env
+# Before
+TIKA_IMAGE=apache/tika:3.1
+# After
+TIKA_IMAGE=apache/tika:3.1.0.0
+```
+
+**Lesson:** Always verify that the exact image tag exists on the registry before
+adding it to the blueprint. Use `docker pull` or check Docker Hub tags page.
+
+---
+
+## 18. Paperless-ngx: s6-overlay crash (`/run belongs to uid 0`)
+
+**Symptom:** App container in restart loop. Log:
+
+```
+/package/admin/s6-overlay/libexec/preinit: fatal: /run belongs to uid 0 instead
+of 1000, has insecure and/or unworkable permissions
+s6-overlay-suexec: fatal: child failed with exit code 100
+```
+
+**Root cause:** The compose file set `user: "${USERMAP_UID}:${USERMAP_GID}"`
+which forces the entire container to run as UID 1000 from the start. But
+Paperless-ngx uses **s6-overlay** as its init system, which must start as root
+to set up `/run`, `/tmp`, fix file permissions, etc. It then drops privileges
+to the configured user internally via the `USERMAP_UID`/`USERMAP_GID`
+environment variables.
+
+The Docker `user:` directive bypasses this init process entirely.
+
+**Fix:** Removed `user:` directive. Added `USERMAP_UID`/`USERMAP_GID` as
+environment variables instead:
+
+```yaml
+# Before (broken)
+user: "${USERMAP_UID}:${USERMAP_GID}"
+
+# After (correct)
+environment:
+  USERMAP_UID: ${USERMAP_UID}
+  USERMAP_GID: ${USERMAP_GID}
+```
+
+**Rule of thumb:** Never set `user:` in compose when the image uses s6-overlay,
+supervisord, or any init system that needs root at startup. Check if the image
+provides its own UID/GID mechanism via env vars.
+
+---
+
+## 19. Paperless-ngx: DB password authentication failed (trailing newline)
+
+**Symptom:** App connected to PostgreSQL but authentication failed:
+
+```
+FATAL: password authentication failed for user "paperless_user"
+```
+
+Paperless also logged a warning:
+
+```
+[env-init] Your secret: PAPERLESS_DBPASS_FILE contains a trailing newline
+and may not work as expected
+```
+
+**Root cause:** Secrets generated with `openssl rand -base64 32 > file.txt`
+include a trailing newline (`\n`). PostgreSQL's `POSTGRES_PASSWORD_FILE` reads
+the file **including** the newline and stores it as part of the password hash.
+Paperless reads the same file but **strips** the newline before connecting →
+password mismatch.
+
+**Fix:**
+1. Strip newlines from secret generation commands across all `.env.example` files:
+
+```bash
+# Before
+openssl rand -base64 32 > secrets/db_pwd.txt
+# After
+openssl rand -base64 32 | tr -d '\n' > secrets/db_pwd.txt
+```
+
+2. For existing deployments, strip newlines from existing secrets and recreate
+   the DB volume:
+
+```bash
+docker compose down
+cd secrets && for f in *.txt; do printf '%s' "$(cat "$f")" > "$f"; done && cd ..
+rm -rf volumes/postgres
+docker compose up -d
+```
+
+**Applied to:** All 25 secret generation commands across 11 `.env.example` files.
+
+---
+
 ## Key Lessons
 
 1. **Always check official docs for the exact version** — Seafile 13 has
@@ -459,3 +567,16 @@ HTTP sub-requests to HTTPS. This masks the problem but doesn't fix the root caus
    via separate XHR requests (Bug #16) that can fail independently. Always
    test the complete workflow (open → edit → save) to catch all integration
    issues.
+
+9. **Never set `user:` with s6-overlay images** — images using s6-overlay
+   (Paperless, Linuxserver.io images) must start as root. They drop
+   privileges internally via `USERMAP_UID`/`USERMAP_GID` or `PUID`/`PGID`
+   env vars. Setting Docker's `user:` directive bypasses the init system.
+
+10. **Always strip newlines from generated secrets** — `openssl rand -base64`
+    appends `\n`. Some apps include it in the password, others strip it →
+    mismatch. Use `| tr -d '\n'` on every secret generation command.
+
+11. **Verify image tags on the registry** — not all projects use the same
+    versioning scheme. Apache Tika uses four-part versions (`3.1.0.0`), not
+    shorthand (`3.1`). Always `docker pull` or check the tags page first.
