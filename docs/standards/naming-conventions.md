@@ -76,6 +76,8 @@ Header always:
 # =============================================
 ```
 
+For detailed rules and rationale, see [Env Structure](env-structure.md).
+
 ## docker-compose.yml Structure
 
 Fixed block order per service:
@@ -83,9 +85,11 @@ Fixed block order per service:
 ```
 # --- Identity ---       image, container_name, restart, depends_on
 # --- Security ---       security_opt, read_only, tmpfs, cap_drop, user
-# --- Configuration ---  environment, secrets
+# --- Configuration ---  entrypoint, environment, secrets
 # --- Storage ---        volumes
 # --- Networking ---     networks, ports
 # --- Traefik ---        labels
 # --- Health ---         healthcheck
 ```
+
+For detailed rules, common patterns, and checklist, see [Compose Structure](compose-structure.md).

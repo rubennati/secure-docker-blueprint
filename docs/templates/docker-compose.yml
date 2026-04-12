@@ -1,6 +1,46 @@
 services:
 
   # --------------------------------------------------------
+  # DATABASE
+  # --------------------------------------------------------
+  database:
+    # --- Identity ---
+    image: ${DB_IMAGE}
+    container_name: ${CONTAINER_NAME_DB}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      MYSQL_DATABASE: ${DB_MYSQL_DATABASE}
+      MYSQL_USER: ${DB_MYSQL_USER}
+      MYSQL_PASSWORD_FILE: /run/secrets/DB_PWD
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/DB_ROOT_PWD
+      TZ: ${TIMEZONE}
+    secrets:
+      - DB_ROOT_PWD
+      - DB_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/mysql:/var/lib/mysql
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # --------------------------------------------------------
   # APP
   # --------------------------------------------------------
   app:
@@ -18,10 +58,11 @@ services:
     # read_only: true
     # tmpfs:
     #   - /tmp
+    #   - /run
 
     # --- Configuration ---
     environment:
-      - TZ=${TIMEZONE}
+      TZ: ${TIMEZONE}
     # secrets:
     #   - APP_SECRET
 
@@ -44,52 +85,15 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+      - "traefik.docker.network=proxy-public"
 
     # --- Health & Observability ---
     # healthcheck:
-    #   test: ["CMD", "curl", "-f", "http://localhost:${APP_INTERNAL_PORT}/"]
+    #   test: ["CMD", "curl", "-fsS", "http://127.0.0.1:${APP_INTERNAL_PORT}/"]
     #   interval: 30s
     #   timeout: 10s
     #   retries: 5
     #   start_period: 30s
-
-  # --------------------------------------------------------
-  # DATABASE
-  # --------------------------------------------------------
-  database:
-    # --- Identity ---
-    image: ${DB_IMAGE}
-    container_name: ${CONTAINER_NAME_DB}
-    restart: unless-stopped
-
-    # --- Security ---
-    security_opt:
-      - no-new-privileges:true
-
-    # --- Configuration ---
-    environment:
-      MYSQL_DATABASE: ${DB_MYSQL_DATABASE}
-      MYSQL_USER: ${DB_MYSQL_USER}
-      MYSQL_PASSWORD_FILE: /run/secrets/DB_PASSWORD
-      MYSQL_RANDOM_ROOT_PASSWORD: "true"
-    secrets:
-      - DB_PASSWORD
-
-    # --- Storage ---
-    volumes:
-      - ./volumes/mysql:/var/lib/mysql
-
-    # --- Networking ---
-    networks:
-      - app-internal
-
-    # --- Health & Observability ---
-    healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
 
 # --------------------------------------------------------
 # NETWORKS
@@ -106,5 +110,7 @@ networks:
 # SECRETS
 # --------------------------------------------------------
 secrets:
-  DB_PASSWORD:
-    file: ./secrets/db_password.txt
+  DB_ROOT_PWD:
+    file: ./secrets/db_root_pwd.txt
+  DB_PWD:
+    file: ./secrets/db_pwd.txt

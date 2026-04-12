@@ -144,6 +144,8 @@ apps/example/
 
 All services follow documented standards. See [docs/standards/](docs/standards/):
 
+- **[Compose Structure](docs/standards/compose-structure.md)** — block order, rules, common patterns
+- **[Env Structure](docs/standards/env-structure.md)** — section order, variable rules, checklist
 - **[Naming Conventions](docs/standards/naming-conventions.md)** — containers, env vars, networks, volumes, file structure
 - **[Traefik Labels](docs/standards/traefik-labels.md)** — routing pattern, security levels, TLS profiles
 - **[Security Baseline](docs/standards/security-baseline.md)** — required hardening, secret patterns, socket proxy rules

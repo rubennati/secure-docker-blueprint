@@ -31,7 +31,9 @@ docker compose up -d
 ## Reference
 
 See the standards documentation:
-- [Naming Conventions](../standards/naming-conventions.md)
-- [Traefik Labels](../standards/traefik-labels.md)
-- [Security Baseline](../standards/security-baseline.md)
-- [Networking](../standards/networking.md)
+- [Compose Structure](../standards/compose-structure.md) — block order, rules, common patterns
+- [Env Structure](../standards/env-structure.md) — section order, variable rules, checklist
+- [Naming Conventions](../standards/naming-conventions.md) — containers, env vars, networks, volumes
+- [Traefik Labels](../standards/traefik-labels.md) — routing, security levels, TLS profiles
+- [Security Baseline](../standards/security-baseline.md) — hardening, secrets, socket proxy
+- [Networking](../standards/networking.md) — isolation, network types
