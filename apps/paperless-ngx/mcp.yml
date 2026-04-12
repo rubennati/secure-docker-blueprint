@@ -1,0 +1,85 @@
+services:
+
+  # --------------------------------------------------------
+  # PAPERLESS MCP SERVER
+  # Model Context Protocol server for AI assistants.
+  # Connects to Paperless-ngx API for document management.
+  #
+  # Source: https://github.com/nloui/paperless-mcp
+  #
+  # Setup:
+  #   1. Add mcp.yml to COMPOSE_FILE in .env
+  #   2. Build the image: docker compose build mcp
+  #   3. Generate an API token in Paperless UI:
+  #      → Profile (top right) → My Profile → Token → Copy
+  #   4. Save token: echo -n 'your-token' > secrets/mcp_api_token.txt
+  #   5. docker compose up -d mcp
+  #
+  # Usage with Claude Code / Claude Desktop:
+  #   Add to your MCP config:
+  #   {
+  #     "mcpServers": {
+  #       "paperless": {
+  #         "type": "streamable-http",
+  #         "url": "https://<MCP_TRAEFIK_HOST>/mcp"
+  #       }
+  #     }
+  #   }
+  # --------------------------------------------------------
+  mcp:
+    # --- Identity ---
+    build:
+      context: ./build/mcp
+      dockerfile: Dockerfile
+    image: paperless-mcp:local
+    container_name: ${CONTAINER_NAME_MCP}
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+
+    # --- Configuration ---
+    # The MCP server takes positional CLI args: <baseUrl> <token>
+    # The Dockerfile ENTRYPOINT is: node index.js --http --port 3000
+    # We read the API token from the Docker Secret at startup.
+    entrypoint: ["/bin/sh", "-c", "exec node index.js --http --port 3000 http://app:${APP_INTERNAL_PORT} \"$(cat /run/secrets/MCP_API_TOKEN)\""]
+    secrets:
+      - MCP_API_TOKEN
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+      - app-internal
+
+    # --- Traefik ---
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-mcp.rule=Host(`${MCP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-mcp.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-mcp.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-mcp.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-mcp.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-mcp.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}-mcp.loadbalancer.server.port=3000"
+      - "traefik.docker.network=proxy-public"
+
+    # --- Health & Observability ---
+    # GET /mcp returns 405 (only POST allowed) — that confirms the server is up.
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3000/mcp').then(r => process.exit(r.status === 405 ? 0 : 1)).catch(() => process.exit(1))\""]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+# --------------------------------------------------------
+# SECRETS (merged with main compose secrets)
+# --------------------------------------------------------
+secrets:
+  MCP_API_TOKEN:
+    file: ./secrets/mcp_api_token.txt
