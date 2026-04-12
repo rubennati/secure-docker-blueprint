@@ -46,7 +46,7 @@ Restrict admin/backend URLs to specific access policies while keeping the public
 
 **Examples:**
 - WordPress `/wp-admin` and `/wp-login.php` → `acc-tailscale` or Authentik Forward-Auth
-- Paperless entire UI → `acc-tailscale` (already internal-only)
+- Paperless entire Admin UI → `acc-tailscale`
 - Ghost `/ghost` admin panel → `acc-tailscale`
 
 **Approach:** Two Traefik routers per app — one for public paths (`acc-public`, `sec-2`) and one for admin paths (`acc-tailscale`, `sec-4` or Authentik Forward-Auth). Configurable via `.env` variables.
@@ -141,6 +141,60 @@ Evaluate running Docker in rootless mode for improved host security — the Dock
 - Document which apps work, which need workarounds, which don't work
 - Provide a rootless setup guide alongside the standard setup
 - Decide: optional alternative or future default?
+
+---
+
+## Style Review
+
+Open discussion on standards formatting. These are **not security or stability topics** — purely style, readability, and personal preference. Use `/style-review` to discuss.
+
+### Env File Section Headers
+
+Current standard uses `# --- Section ---`. Inbox originals used wider `###...` blocks. The wider style is more visible when scrolling through long files.
+
+| Style | Example |
+|-------|---------|
+| Current | `# --- Database ---` |
+| Inbox | `###############` + `# Database` + `###############` |
+
+**Decision:** Open
+
+### Traefik Variable Naming
+
+Current standard splits into `APP_TRAEFIK_ACCESS` + `APP_TRAEFIK_SECURITY`. Inbox used a single `MIDDLEWARES` variable. Shorter vs. more explicit.
+
+| Style | Example |
+|-------|---------|
+| Current | `APP_TRAEFIK_ACCESS=acc-public` + `APP_TRAEFIK_SECURITY=sec-2` |
+| Inbox | `MIDDLEWARES=acc-public@file,sec-2@file` |
+
+**Decision:** Open
+
+### Compose Inline Section Comments
+
+Current standard adds `# --- Identity ---`, `# --- Security ---` etc. inside each service. Helpful for large stacks, possibly overkill for small ones.
+
+**Decision:** Open
+
+### Image Tag Variables
+
+Current standard puts the full image in `.env` (`APP_IMAGE=ghost:5.96.2`). Inbox split into image name in compose + tag in `.env` (`APP_TAG=5.12.70`).
+
+| Style | Example |
+|-------|---------|
+| Current | `.env`: `APP_IMAGE=ghost:5.96.2` / compose: `image: ${APP_IMAGE}` |
+| Inbox | `.env`: `APP_TAG=5.12.70` / compose: `image: ghost:${APP_TAG}` |
+
+**Decision:** Open
+
+### Standards Classification
+
+Review all standards and classify each rule as:
+- **Must** — Security, stability, non-negotiable
+- **Should** — Best practice, strongly recommended
+- **May** — Convention, consistency, personal preference
+
+**Decision:** Open
 
 ---
 
