@@ -109,6 +109,25 @@ Full IPv6 support across the stack, including IPv6-only deployments.
 - Docker's native IPv6 support maturity (enable in `daemon.json`?)
 - NAT64/DNS64 needed for IPv6-only connecting to IPv4 services?
 
+### Container Resource Management
+
+Define a resource limiting strategy to prevent any single container from taking down the host.
+
+**Scope:**
+- CPU limits and reservations (`deploy.resources.limits.cpus`)
+- Memory limits and reservations (`deploy.resources.limits.memory`)
+- PIDs limit (prevent fork bombs)
+- Temporary storage limits (`tmpfs` size)
+- I/O throttling (`blkio` limits for disk-heavy services like databases)
+
+**Approach to define:**
+- Sensible defaults per service category (database, web app, cache, worker)
+- Hardware-aware profiles (small/medium/large) or percentage-based?
+- Commented examples in each compose file vs. central reference table?
+- Monitoring integration — how to find the right values (observe first, then limit)?
+
+**Goal:** No single container can consume 100% CPU or RAM. OOM-killer targets the container, not the host.
+
 ### Docker Rootless Mode
 
 Evaluate running Docker in rootless mode for improved host security — the Docker daemon and all containers run without root privileges.
