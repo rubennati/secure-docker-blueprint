@@ -63,6 +63,35 @@ Client certificate authentication as an additional access layer. Only devices wi
 
 **Approach:** Traefik TLS option with `clientAuth` requiring certificates signed by a custom CA. The `core/acme-certs` tool could be extended to also generate client certificates.
 
+### Backup Strategy – Multi-Layer with Verification
+
+Comprehensive backup concept covering all levels of the stack, with automated restore testing.
+
+**Layer 1: Host-level**
+- Full system backup (configs, Docker data, secrets)
+- Scheduled via restic, borgbackup, or similar
+- Offsite target (S3, Backblaze B2, NFS)
+
+**Layer 2: App-level**
+- Per-app backup scripts in each app directory (`ops/scripts/backup.sh`)
+- Consistent snapshots: stop app → dump → backup → start
+- Standardized output to `./volumes/backups/`
+
+**Layer 3: Database-level**
+- Automated `pg_dump` / `mysqldump` via sidecar or cron container
+- Point-in-time recovery where supported
+- Encrypted dumps stored alongside app backups
+
+**Layer 4: Verification**
+- Automated restore tests on a schedule (spin up temp containers, restore, verify)
+- Checksums and integrity validation
+- Alerting on failed backups or missed schedules
+
+**Open questions:**
+- Single backup tool (restic?) or per-layer tools?
+- Central backup service in `core/` or per-app scripts?
+- How to handle secrets backup securely (encrypted, separate from data)?
+
 ---
 
 ## Ideas
