@@ -25,6 +25,9 @@ set -e
 [ -f /run/secrets/REDIS_PWD ] && \
   export REDIS_PASSWORD="$(cat /run/secrets/REDIS_PWD)"
 
+[ -f /run/secrets/ONLYOFFICE_JWT_SECRET ] && \
+  export ONLYOFFICE_JWT_SECRET="$(cat /run/secrets/ONLYOFFICE_JWT_SECRET)"
+
 # --- Append custom seahub settings (once) ---
 SEAHUB_CONF="/shared/seafile/conf/seahub_settings.py"
 CUSTOM_CONF="/config/seahub_custom.py"

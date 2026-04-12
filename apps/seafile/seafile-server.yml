@@ -145,6 +145,8 @@ services:
       ENABLE_NOTIFICATION_SERVER: ${SEAFILE_ENABLE_NOTIFICATION}
       NOTIFICATION_SERVER_URL: https://${APP_TRAEFIK_HOST}/notification
       INNER_NOTIFICATION_SERVER_URL: http://notification-server:8083
+      # --- OnlyOffice ---
+      ONLYOFFICE_URL: https://${ONLYOFFICE_HOST}
       # --- Time ---
       TIME_ZONE: ${TIMEZONE}
       TZ: ${TIMEZONE}
@@ -154,6 +156,7 @@ services:
       - SEAFILE_ADMIN_PWD
       - JWT_KEY
       - REDIS_PWD
+      - ONLYOFFICE_JWT_SECRET
 
     # --- Storage ---
     volumes:
@@ -211,3 +214,5 @@ secrets:
     file: ./secrets/jwt_key.txt
   REDIS_PWD:
     file: ./secrets/redis_pwd.txt
+  ONLYOFFICE_JWT_SECRET:
+    file: ./secrets/onlyoffice_jwt_secret.txt

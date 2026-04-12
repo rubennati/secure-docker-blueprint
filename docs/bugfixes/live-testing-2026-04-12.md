@@ -297,6 +297,133 @@ were missed during the initial bulk fix.
 
 ---
 
+## 14. OnlyOffice: Blocked by `X-Frame-Options: DENY`
+
+**Symptom:** Clicking a `.docx` in Seafile opened a blank white iframe. Browser
+console:
+
+```
+Refused to display 'https://office.example.com/' in a frame because it set
+'X-Frame-Options' to 'deny'.
+```
+
+**Root cause:** All Traefik security middleware levels (`sec-1` through `sec-4`)
+chain `sec-headers-basic`, which sets `frameDeny: true`. This adds
+`X-Frame-Options: DENY` to every response — but OnlyOffice **must** be embedded
+in iframes by Seafile/Nextcloud to function.
+
+**Fix:** Replaced `APP_TRAEFIK_SECURITY` with a custom Docker-level middleware
+(`onlyoffice-headers@docker`) that has the same protections as `sec-headers-basic`
+but without `frameDeny`. Instead, iframe embedding is controlled via
+`Content-Security-Policy: frame-ancestors`:
+
+```yaml
+# Custom security headers: same as sec-headers-basic but frameDeny=false
+- "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.browserXssFilter=true"
+- "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.contentTypeNosniff=true"
+- "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.forceSTSHeader=true"
+- "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.stsSeconds=63072000"
+- "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.contentSecurityPolicy=frame-ancestors 'self' https://${ONLYOFFICE_ALLOWED_ORIGIN}"
+```
+
+`ONLYOFFICE_ALLOWED_ORIGINS` lists the domains allowed to embed OnlyOffice
+(e.g. `https://files.example.com https://cloud.example.com`).
+
+**Why not just disable `frameDeny` in `sec-headers-basic`?** That would weaken
+security for all other services. The per-container middleware approach keeps the
+exception isolated to OnlyOffice.
+
+---
+
+## 15. OnlyOffice: JWT authentication fails (`_FILE` not supported)
+
+**Symptom:** Document opened in Seafile but showed "Download failed" with JWT
+token error in OnlyOffice logs.
+
+**Root cause:** OnlyOffice Document Server reads `JWT_SECRET` from environment
+only — no `JWT_SECRET_FILE` or `_FILE` convention support.
+
+**Fix:** Same pattern as Seafile services — created `config/entrypoint.sh` that
+reads the Docker Secret and exports it as a plain env var:
+
+```sh
+#!/bin/bash
+set -e
+[ -f /run/secrets/ONLYOFFICE_JWT_SECRET ] && \
+  export JWT_SECRET="$(cat /run/secrets/ONLYOFFICE_JWT_SECRET)"
+exec "$@"
+```
+
+Original command determined via `docker inspect`:
+`ENTRYPOINT=["/app/ds/run-document-server.sh"]`, `CMD=null`.
+
+```yaml
+entrypoint: ["/bin/bash", "/config/entrypoint.sh", "/app/ds/run-document-server.sh"]
+```
+
+---
+
+## 16. OnlyOffice: "Download failed" — Mixed Content (HTTP URLs behind HTTPS proxy)
+
+**Symptom:** Document opened but content wouldn't load. "Download failed" error
+in OnlyOffice editor. Browser console:
+
+```
+Mixed Content: The page at 'https://files.example.com/...' was loaded over HTTPS,
+but requested an insecure XMLHttpRequest endpoint
+'http://office.example.com/cache/files/data/...'
+This request has been blocked; the content must be served over HTTPS.
+```
+
+**Root cause:** OnlyOffice sits behind Traefik's TLS termination. Internally,
+Traefik forwards traffic to the container over plain HTTP on port 80. OnlyOffice's
+internal nginx uses `X-Forwarded-Proto` to determine the client-facing scheme.
+Without this header, it defaults to `http://` and generates HTTP URLs for all file
+cache/download endpoints — which browsers block as Mixed Content on HTTPS pages.
+
+The relevant nginx config inside OnlyOffice:
+
+```nginx
+map $http_x_forwarded_proto $the_scheme {
+    default $http_x_forwarded_proto;
+    "" $scheme;
+}
+proxy_set_header X-Forwarded-Proto $the_scheme;
+```
+
+And in the Node.js backend (`utils.js → getBaseUrl()`):
+
+```javascript
+// Priority: X-Forwarded-Proto header → req.protocol → "http"
+```
+
+**Fix:** Added a Traefik middleware that explicitly sets `X-Forwarded-Proto: https`
+and `X-Forwarded-Host` on every request to OnlyOffice:
+
+```yaml
+# Proxy headers: tell OnlyOffice it's behind TLS termination
+- "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-proto.headers.customrequestheaders.X-Forwarded-Proto=https"
+- "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-proto.headers.customrequestheaders.X-Forwarded-Host=${APP_TRAEFIK_HOST}"
+```
+
+Chained into the router middleware stack:
+
+```yaml
+- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${COMPOSE_PROJECT_NAME}-proto@docker,${COMPOSE_PROJECT_NAME}-headers@docker"
+```
+
+**Why doesn't Traefik set this automatically?** Traefik does add forwarded headers
+by default, but only when `entryPoints.websecure.forwardedHeaders` is configured
+to trust the source. The explicit middleware approach is more reliable and
+self-documenting — it works regardless of Traefik's global forwarded-headers
+configuration.
+
+**Alternative (workaround, not recommended):** Adding
+`upgrade-insecure-requests` to the CSP header tells browsers to silently rewrite
+HTTP sub-requests to HTTPS. This masks the problem but doesn't fix the root cause.
+
+---
+
 ## Key Lessons
 
 1. **Always check official docs for the exact version** — Seafile 13 has
@@ -315,3 +442,20 @@ were missed during the initial bulk fix.
 5. **Entrypoint wrapper pattern** — a shared script that reads secrets and
    exports env vars before `exec "$@"` is a reliable pattern for images without
    native `_FILE` support.
+
+6. **TLS-terminating proxies need explicit forwarded headers** — when a reverse
+   proxy terminates TLS and forwards plain HTTP to backends, the backend must
+   know the original scheme was HTTPS. Always set `X-Forwarded-Proto: https`
+   explicitly via middleware rather than relying on automatic behavior.
+
+7. **iframe-embedded services need custom security headers** — standard security
+   middleware with `frameDeny: true` blocks iframe embedding. For services that
+   must be embedded (OnlyOffice, collaborative editors), create a per-container
+   middleware with `Content-Security-Policy: frame-ancestors` instead. Keep
+   this exception isolated — don't weaken global security settings.
+
+8. **Test the full chain, not just the UI** — OnlyOffice loading its editor
+   iframe (Bug #14) was only step one. The actual document content is fetched
+   via separate XHR requests (Bug #16) that can fail independently. Always
+   test the complete workflow (open → edit → save) to catch all integration
+   issues.
