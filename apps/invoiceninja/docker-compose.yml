@@ -1,55 +1,17 @@
 services:
 
   # --------------------------------------------------------
-  # DATABASE
-  # --------------------------------------------------------
-  database:
-    # --- Identity ---
-    image: ${DB_IMAGE}
-    container_name: ${CONTAINER_NAME_DB}
-    restart: unless-stopped
-
-    # --- Security ---
-    security_opt:
-      - no-new-privileges:true
-
-    # --- Configuration ---
-    environment:
-      MYSQL_DATABASE: ${DB_MYSQL_DATABASE}
-      MYSQL_USER: ${DB_MYSQL_USER}
-      MYSQL_PASSWORD_FILE: /run/secrets/DB_PWD
-      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/DB_ROOT_PWD
-      TZ: ${TIMEZONE}
-    secrets:
-      - DB_ROOT_PWD
-      - DB_PWD
-
-    # --- Storage ---
-    volumes:
-      - ./volumes/mysql:/var/lib/mysql
-
-    # --- Networking ---
-    networks:
-      - app-internal
-
-    # --- Health & Observability ---
-    healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect"]
-      interval: 20s
-      timeout: 5s
-      retries: 10
-      start_period: 20s
-
-  # --------------------------------------------------------
-  # INVOICE NINJA (Laravel / PHP-FPM)
+  # INVOICE NINJA (PHP-FPM + Supervisor)
   # --------------------------------------------------------
   app:
     # --- Identity ---
-    image: ${APP_IMAGE}
-    container_name: ${CONTAINER_NAME_APP}
+    image: invoiceninja/invoiceninja-debian:${APP_TAG}
+    container_name: ${APP_CONTAINER}
     restart: unless-stopped
     depends_on:
-      database:
+      mysql:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
     # --- Security ---
@@ -57,35 +19,19 @@ services:
       - no-new-privileges:true
 
     # --- Configuration ---
-    environment:
-      APP_ENV: production
-      APP_DEBUG: "false"
-      APP_URL: https://${APP_TRAEFIK_HOST}
-      APP_KEY: ${IN_APP_KEY}
-      REQUIRE_HTTPS: "true"
-      TRUSTED_PROXIES: "*"
-      IS_DOCKER: "true"
-      PDF_GENERATOR: snappdf
-      PHANTOMJS_PDF_GENERATION: "false"
-      NINJA_ENVIRONMENT: selfhost
-      QUEUE_CONNECTION: database
-      FILESYSTEM_DRIVER: public
-      DB_HOST: database
-      DB_PORT: "3306"
-      DB_DATABASE: ${DB_MYSQL_DATABASE}
-      DB_USERNAME: ${DB_MYSQL_USER}
-      DB_PASSWORD__FILE: /run/secrets/DB_PWD
-      IN_USER_EMAIL: ${IN_USER_EMAIL}
-      IN_PASSWORD__FILE: /run/secrets/IN_USER_PWD
-      TZ: ${TIMEZONE}
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh", "/usr/local/bin/init.sh"]
+    command: ["supervisord", "-c", "/etc/supervisor/supervisord.conf"]
+    env_file:
+      - ./.env
     secrets:
       - DB_PWD
       - IN_USER_PWD
 
     # --- Storage ---
     volumes:
-      - ./volumes/app-public:/var/www/app/public:rw
-      - ./volumes/app-storage:/var/www/app/storage:rw
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
+      - app_public:/var/www/html/public
+      - app_storage:/var/www/html/storage
 
     # --- Networking ---
     networks:
@@ -94,10 +40,10 @@ services:
   # --------------------------------------------------------
   # NGINX (Web Server)
   # --------------------------------------------------------
-  server:
+  nginx:
     # --- Identity ---
-    image: ${NGINX_IMAGE}
-    container_name: ${CONTAINER_NAME_NGINX}
+    image: nginx:${NGINX_TAG}
+    container_name: ${NGINX_CONTAINER}
     restart: unless-stopped
     depends_on:
       - app
@@ -113,33 +59,108 @@ services:
 
     # --- Storage ---
     volumes:
-      - ./config/nginx/in-vhost.conf:/etc/nginx/conf.d/in-vhost.conf:ro
-      - ./volumes/app-public:/var/www/app/public:ro
+      - ./nginx:/etc/nginx/conf.d:ro
+      - app_public:/var/www/html/public:ro
+      - app_storage:/var/www/html/storage:ro
 
     # --- Networking ---
     networks:
-      - proxy-public
       - app-internal
+      - proxy-public
 
     # --- Traefik ---
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
-      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
-      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
-      - "traefik.docker.network=proxy-public"
+      - "traefik.docker.network=${NETWORK_NAME}"
+      - "traefik.http.routers.${ROUTER_NAME}.rule=Host(`${HOST_DOMAIN}`)"
+      - "traefik.http.routers.${ROUTER_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${ROUTER_NAME}.tls=true"
+      #- "traefik.http.routers.${ROUTER_NAME}.tls.certresolver=${CERT_RESOLVER}"
+      - "traefik.http.routers.${ROUTER_NAME}.tls.options=${TLS_OPTION}@file"
+      - "traefik.http.routers.${ROUTER_NAME}.middlewares=${MIDDLEWARES}"
+      - "traefik.http.routers.${ROUTER_NAME}.service=${SERVICE_NAME}"
+      - "traefik.http.services.${SERVICE_NAME}.loadbalancer.server.port=80"
+
+  # --------------------------------------------------------
+  # MySQL
+  # --------------------------------------------------------
+  mysql:
+    # --- Identity ---
+    image: mysql:${MYSQL_TAG}
+    container_name: ${MYSQL_CONTAINER}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD_FILE: /run/secrets/DB_PWD
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/DB_ROOT_PWD
+    secrets:
+      - DB_PWD
+      - DB_ROOT_PWD
+
+    # --- Storage ---
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+    # --- Networking ---
+    networks:
+      - app-internal
 
     # --- Health & Observability ---
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1/ >/dev/null || exit 1"]
-      interval: 30s
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root --password=$$(cat /run/secrets/DB_ROOT_PWD) --silent"]
+      interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
       start_period: 30s
+
+  # --------------------------------------------------------
+  # Redis
+  # --------------------------------------------------------
+  redis:
+    # --- Identity ---
+    image: redis:${REDIS_TAG}
+    container_name: ${REDIS_CONTAINER}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Storage ---
+    volumes:
+      - redis_data:/data
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+# --------------------------------------------------------
+# VOLUMES
+# --------------------------------------------------------
+volumes:
+  app_public:
+    driver: local
+  app_storage:
+    driver: local
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
 
 # --------------------------------------------------------
 # NETWORKS
@@ -150,15 +171,14 @@ networks:
 
   app-internal:
     name: ${COMPOSE_PROJECT_NAME}-internal
-    internal: true
 
 # --------------------------------------------------------
 # SECRETS
 # --------------------------------------------------------
 secrets:
-  DB_ROOT_PWD:
-    file: ./secrets/db_root_pwd.txt
   DB_PWD:
     file: ./secrets/db_pwd.txt
+  DB_ROOT_PWD:
+    file: ./secrets/db_root_pwd.txt
   IN_USER_PWD:
     file: ./secrets/in_user_pwd.txt
