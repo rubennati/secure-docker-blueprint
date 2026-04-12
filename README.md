@@ -2,7 +2,7 @@
 
 **Modular, security-hardened Docker Compose setups for self-hosted infrastructure.**
 
-Production-ready configurations for 14+ services — with standardized patterns, Docker Secrets, Traefik routing, and network isolation out of the box.
+Production-ready configurations for 15+ services — with standardized patterns, Docker Secrets, Traefik routing, and network isolation out of the box.
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
@@ -30,6 +30,7 @@ Production-ready configurations for 14+ services — with standardized patterns,
 | [OnlyOffice](core/onlyoffice/) | Document editing server for Seafile, Nextcloud, etc. |
 | [dnsmasq](core/dnsmasq/) | DNS forwarder with wildcard zones for Tailscale / split-DNS setups |
 | [acme-certs](core/acme-certs/) | Certificate tool (acme.sh) for devices without Traefik (NAS, routers) |
+| [CrowdSec](core/crowdsec/) | Intrusion detection engine — log analysis, threat decisions, AppSec/WAF |
 | [Whoami](core/whoami/) | Traefik debug service to verify routing, TLS, and middlewares |
 
 ### Applications
@@ -102,6 +103,7 @@ docker-ops-blueprint/
 ├── core/                        # Infrastructure (always needed)
 │   ├── traefik/                 #   Reverse proxy + socket proxy
 │   ├── authentik/               #   SSO / Identity provider
+│   ├── crowdsec/                #   Intrusion detection (IDS/IPS)
 │   ├── onlyoffice/              #   Document editing
 │   ├── dnsmasq/                 #   DNS forwarder/cache
 │   ├── acme-certs/              #   Certificate tool (acme.sh)

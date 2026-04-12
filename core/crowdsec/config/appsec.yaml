@@ -1,0 +1,14 @@
+# =============================================
+# CrowdSec – AppSec / WAF Configuration
+# =============================================
+# Application Security component for HTTP-level
+# request inspection. Used by the Traefik bouncer
+# plugin to check requests against WAF rules.
+# =============================================
+
+appsec_configs:
+  - crowdsecurity/appsec-default
+labels:
+  type: appsec
+listen_addr: 0.0.0.0:7422
+source: appsec

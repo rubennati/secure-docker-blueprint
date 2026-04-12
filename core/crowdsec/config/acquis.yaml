@@ -1,0 +1,11 @@
+# =============================================
+# CrowdSec – Log Acquisition
+# =============================================
+# Defines which log sources CrowdSec monitors.
+# Traefik must write access logs in JSON format.
+# =============================================
+
+filenames:
+  - /var/log/traefik/access.log
+labels:
+  type: traefik

@@ -1,41 +1,40 @@
 # Roadmap
 
-## Planned
+## In Progress
 
 ### CrowdSec – Intrusion Detection & Prevention
 
-Two-layer security setup for the entire stack:
+Three-phase security setup for the entire stack:
 
-**Layer 1: Traefik Plugin (required)**
-- CrowdSec Security Engine as detection layer (analyzes Traefik logs, SSH logs, system logs)
-- Traefik Bouncer Plugin as HTTP enforcement point (blocks malicious requests before they reach containers)
-- Protects against: bot traffic, brute force, aggressive scans, CVE probes, suspicious HTTP patterns
-- Optional AppSec / WAF rules
-
-**Layer 2: Firewall Bouncer (strongly recommended)**
-- Host-level IP blocking via nftables
-- Protects: SSH, SMTP, database ports, direct host access, global IP blocking
-- CrowdSec recommends combining WAF bouncer + firewall bouncer for web-facing hosts
+| Phase | Component | Status |
+|-------|-----------|--------|
+| Phase 1 | Security Engine (`core/crowdsec/`) | **Done** — standalone detection |
+| Phase 2 | Traefik Bouncer Plugin | Planned — requires Traefik changes |
+| Phase 3 | Firewall Bouncer (host nftables) | Planned — host-level install |
 
 **Architecture:**
 ```
 Internet
    ↓
-Traefik + CrowdSec Plugin    ← HTTP enforcement
+Traefik + CrowdSec Plugin    ← Phase 2: HTTP enforcement
    ↓
 Docker Services
    ↓
-Host nftables                 ← IP-level enforcement
+Host nftables                 ← Phase 3: IP-level enforcement
    ↓
-CrowdSec Engine               ← Detection (logs → decisions)
+CrowdSec Engine               ← Phase 1: Detection (logs → decisions)
 ```
 
-**Components:**
-- Security Engine — collects logs, produces decisions (ban, captcha, challenge)
-- Traefik Plugin — queries engine per request, blocks if denied
-- Firewall Bouncer — syncs decisions to nftables/iptables rules
+**Phase 2 (next)** requires:
+- CrowdSec plugin in Traefik static config (experimental section)
+- CrowdSec middleware in Traefik dynamic config
+- Bouncer API key from the engine
+- Traefik access logs in JSON format
 
-Target location: `core/crowdsec/`
+**Phase 3** requires:
+- `crowdsec-firewall-bouncer-nftables` apt package on host
+- Bouncer API key from the engine
+- Not a Docker container — documentation only in the blueprint
 
 ---
 

@@ -1,0 +1,54 @@
+services:
+
+  # --------------------------------------------------------
+  # CROWDSEC ENGINE
+  # --------------------------------------------------------
+  crowdsec:
+    # --- Identity ---
+    image: ${APP_IMAGE}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      TZ: ${TIMEZONE}
+      GID: ${CROWDSEC_LOG_GID}
+      COLLECTIONS: ${CROWDSEC_COLLECTIONS}
+
+    # --- Storage ---
+    volumes:
+      # CrowdSec persistent data (database with decisions, bouncers, alerts)
+      - ./volumes/data:/var/lib/crowdsec/data
+      # CrowdSec persistent config (generated on first start, survives restarts)
+      - ./volumes/config:/etc/crowdsec
+      # Custom log acquisition and AppSec config
+      - ./config/acquis.yaml:/etc/crowdsec/acquis.yaml:ro
+      - ./config/appsec.yaml:/etc/crowdsec/appsec.yaml:ro
+      # Traefik access logs (read-only)
+      - ${TRAEFIK_LOG_PATH}:/var/log/traefik:ro
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+    ports:
+      # LAPI on localhost only — for firewall bouncer (Phase 3)
+      - "127.0.0.1:${CROWDSEC_LAPI_PORT}:8080"
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD", "cscli", "lapi", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
