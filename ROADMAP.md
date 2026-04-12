@@ -92,8 +92,48 @@ Comprehensive backup concept covering all levels of the stack, with automated re
 - Central backup service in `core/` or per-app scripts?
 - How to handle secrets backup securely (encrypted, separate from data)?
 
+### IPv6 – Dual-Stack and IPv6-Only Setups
+
+Full IPv6 support across the stack, including IPv6-only deployments.
+
+**Scope:**
+- Docker network configuration for dual-stack (IPv4 + IPv6) and IPv6-only
+- Traefik entrypoints and routing with IPv6
+- Firewall rules (nftables) covering both protocols
+- DNS (dnsmasq) with AAAA records
+- CrowdSec compatibility with IPv6 decisions
+- Per-app testing for IPv6-only operation
+
+**Open questions:**
+- Which apps have known IPv6 issues?
+- Docker's native IPv6 support maturity (enable in `daemon.json`?)
+- NAT64/DNS64 needed for IPv6-only connecting to IPv4 services?
+
+### Docker Rootless Mode
+
+Evaluate running Docker in rootless mode for improved host security — the Docker daemon and all containers run without root privileges.
+
+**Current state:**
+- Docker rootless is functional but has known limitations
+- Not all images/apps work correctly (volume permissions, port binding < 1024, network modes)
+- Some of our patterns may need adjustment (socket proxy, `network_mode: host`)
+
+**Evaluation goals:**
+- Test each app in the blueprint for rootless compatibility
+- Document which apps work, which need workarounds, which don't work
+- Provide a rootless setup guide alongside the standard setup
+- Decide: optional alternative or future default?
+
 ---
 
 ## Ideas
 
-_Future possibilities — not yet evaluated._
+### Alternative Container Runtimes
+
+Evaluate alternative runtimes and orchestrators beyond standard Docker:
+
+- **Podman** — Daemonless, rootless by default, Docker CLI compatible. Could replace Docker entirely. How well does it work with Traefik, Compose, and our socket proxy pattern?
+- **Docker Swarm** — Built-in orchestration for multi-node setups. Adds service discovery, rolling updates, and secrets management. Relevant when scaling beyond a single host.
+- **Kubernetes (K8s / K3s)** — Full container orchestration. K3s as lightweight option for homelab. Major architectural shift — Helm charts instead of Compose files. Only makes sense at significant scale or for learning.
+
+_These are long-term considerations. The current Docker Compose approach covers single-host and small-scale deployments well._
