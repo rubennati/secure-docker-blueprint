@@ -27,6 +27,6 @@ COPY --from=builder /app/package.json ./
 
 EXPOSE 3000
 
-# Default: HTTP mode on port 3000
-# Append <baseUrl> <token> at runtime via command/entrypoint
-ENTRYPOINT ["node", "index.js", "--http", "--port", "3000"]
+# Default entrypoint — override in docker-compose to inject secrets.
+# HTTP mode requires env vars: PAPERLESS_URL, API_KEY
+CMD ["node", "index.js", "--http", "--port", "3000"]
