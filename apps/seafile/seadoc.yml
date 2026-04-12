@@ -17,14 +17,15 @@ services:
       - no-new-privileges:true
 
     # --- Configuration ---
+    # NOTE: SeaDoc does not support _FILE env vars.
+    # The shared entrypoint reads secrets and exports them as env vars.
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh", "/sbin/my_init", "--", "/scripts/enterpoint.sh"]
     environment:
       DB_HOST: db
       DB_PORT: "3306"
       DB_USER: ${SEAFILE_DB_USER}
-      DB_PASSWORD_FILE: /run/secrets/SEAFILE_DB_PWD
       DB_NAME: seahub_db
       TIME_ZONE: ${TIMEZONE}
-      JWT_PRIVATE_KEY_FILE: /run/secrets/JWT_KEY
       NON_ROOT: "false"
       SEAHUB_SERVICE_URL: http://seafile
     secrets:
@@ -33,6 +34,7 @@ services:
 
     # --- Storage ---
     volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
       - ./volumes/seadoc-data:/shared
 
     # --- Networking ---
@@ -43,10 +45,19 @@ services:
     # --- Traefik ---
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.rule=Host(`${APP_TRAEFIK_HOST}`) && (PathPrefix(`/sdoc-server`) || PathPrefix(`/socket.io/`))"
+      # socket.io needs its own router (no path stripping)
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc-ws.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/socket.io/`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc-ws.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc-ws.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc-ws.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc-ws.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc-ws.service=${COMPOSE_PROJECT_NAME}-seadoc"
+      # sdoc-server API (strip /sdoc-server prefix)
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/sdoc-server`)"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.entrypoints=websecure"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.tls=true"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.middlewares=seadoc-strip@docker"
       - "traefik.http.middlewares.seadoc-strip.stripprefix.prefixes=/sdoc-server"
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}-seadoc.loadbalancer.server.port=80"

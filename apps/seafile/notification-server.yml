@@ -19,14 +19,16 @@ services:
       - no-new-privileges:true
 
     # --- Configuration ---
+    # NOTE: notification-server is a Go binary — no _FILE support.
+    # The shared entrypoint reads secrets and exports them as env vars.
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
+    command: ["/opt/seafile/notification-server", "-c", "/opt/seafile", "-l", "/shared/seafile/logs/notification-server.log"]
     environment:
       SEAFILE_MYSQL_DB_HOST: db
       SEAFILE_MYSQL_DB_PORT: "3306"
       SEAFILE_MYSQL_DB_USER: ${SEAFILE_DB_USER}
-      SEAFILE_MYSQL_DB_PASSWORD_FILE: /run/secrets/SEAFILE_DB_PWD
       SEAFILE_MYSQL_DB_CCNET_DB_NAME: ccnet_db
       SEAFILE_MYSQL_DB_SEAFILE_DB_NAME: seafile_db
-      JWT_PRIVATE_KEY_FILE: /run/secrets/JWT_KEY
       SEAFILE_LOG_TO_STDOUT: "false"
       NOTIFICATION_SERVER_LOG_LEVEL: ${NOTIFICATION_LOG_LEVEL}
     secrets:
@@ -35,6 +37,7 @@ services:
 
     # --- Storage ---
     volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
       - ./volumes/seafile-data/seafile/logs:/shared/seafile/logs
 
     # --- Networking ---
@@ -48,7 +51,8 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-notification.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/notification`)"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-notification.entrypoints=websecure"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-notification.tls=true"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-notification.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-notification.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-notification.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}-notification.loadbalancer.server.port=8083"
       - "traefik.docker.network=proxy-public"
 

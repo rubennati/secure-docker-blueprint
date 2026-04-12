@@ -11,6 +11,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
       seafile:
         condition: service_healthy
 
@@ -19,13 +21,18 @@ services:
       - no-new-privileges:true
 
     # --- Configuration ---
+    # NOTE: md-server is a Go service — no _FILE support.
+    # The shared entrypoint reads secrets and exports them as env vars.
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
+    command: ["bash", "-c", "/opt/scripts/entrypoint.sh"]
     environment:
-      JWT_PRIVATE_KEY_FILE: /run/secrets/JWT_KEY
       SEAFILE_MYSQL_DB_HOST: db
       SEAFILE_MYSQL_DB_PORT: "3306"
       SEAFILE_MYSQL_DB_USER: ${SEAFILE_DB_USER}
-      SEAFILE_MYSQL_DB_PASSWORD_FILE: /run/secrets/SEAFILE_DB_PWD
       SEAFILE_MYSQL_DB_SEAFILE_DB_NAME: seafile_db
+      CACHE_PROVIDER: redis
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
       SEAFILE_LOG_TO_STDOUT: "false"
       MD_PORT: "8084"
       MD_LOG_LEVEL: ${MD_LOG_LEVEL}
@@ -35,9 +42,11 @@ services:
     secrets:
       - SEAFILE_DB_PWD
       - JWT_KEY
+      - REDIS_PWD
 
     # --- Storage ---
     volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
       - ./volumes/seafile-data:/shared
 
     # --- Networking ---
@@ -60,3 +69,5 @@ secrets:
     file: ./secrets/seafile_db_pwd.txt
   JWT_KEY:
     file: ./secrets/jwt_key.txt
+  REDIS_PWD:
+    file: ./secrets/redis_pwd.txt

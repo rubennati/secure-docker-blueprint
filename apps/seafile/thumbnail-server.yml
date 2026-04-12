@@ -52,7 +52,8 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/thumbnail`)"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.entrypoints=websecure"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.tls=true"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}-thumbnail.loadbalancer.server.port=80"
       - "traefik.docker.network=proxy-public"
 
