@@ -41,7 +41,27 @@ Target location: `core/crowdsec/`
 
 ## Evaluating
 
-_Services and tools being evaluated for inclusion._
+### Admin Path Protection via Traefik
+
+Restrict admin/backend URLs to specific access policies while keeping the public frontend open. Uses Traefik's `PathPrefix` routing with separate middleware chains.
+
+**Examples:**
+- WordPress `/wp-admin` and `/wp-login.php` → `acc-tailscale` or Authentik Forward-Auth
+- Paperless entire UI → `acc-tailscale` (already internal-only)
+- Ghost `/ghost` admin panel → `acc-tailscale`
+
+**Approach:** Two Traefik routers per app — one for public paths (`acc-public`, `sec-2`) and one for admin paths (`acc-tailscale`, `sec-4` or Authentik Forward-Auth). Configurable via `.env` variables.
+
+### Mutual TLS (mTLS) – Certificate-Based Access
+
+Client certificate authentication as an additional access layer. Only devices with a trusted client certificate can connect — stronger than IP allowlists or passwords.
+
+**Use cases:**
+- API endpoints that only specific servers should reach
+- Admin panels with hardware-bound authentication
+- Zero-trust access without VPN dependency
+
+**Approach:** Traefik TLS option with `clientAuth` requiring certificates signed by a custom CA. The `core/acme-certs` tool could be extended to also generate client certificates.
 
 ---
 
