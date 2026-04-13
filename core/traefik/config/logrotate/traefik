@@ -1,0 +1,27 @@
+# Logrotate config for Traefik (Docker-based)
+#
+# Traefik writes access.log and traefik.log to a bind-mounted volume.
+# Docker's json-file log driver does NOT manage these — logrotate must.
+#
+# Install on the HOST (not inside the container):
+#   sudo cp /path/to/docker-ops-blueprint/core/traefik/config/logrotate/traefik /etc/logrotate.d/traefik
+#
+# The path must match the HOST-side volume mount in docker-compose.yml:
+#   ./volumes/logs:/var/log/traefik
+#
+# postrotate sends USR1 to the Traefik container, which tells Traefik
+# to close and reopen its log files (like nginx's USR1 signal).
+# "systemctl reload traefik" does NOT work because Traefik runs in Docker.
+
+/path/to/docker-ops-blueprint/core/traefik/volumes/logs/*.log {
+    daily
+    rotate 7
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0640 root adm
+    postrotate
+        docker kill --signal=USR1 traefik-core >/dev/null 2>&1 || true
+    endscript
+}
