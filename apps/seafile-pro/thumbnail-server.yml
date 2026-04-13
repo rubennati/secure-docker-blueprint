@@ -32,7 +32,7 @@ services:
       - JWT_PRIVATE_KEY_FILE=/run/secrets/JWT_KEY
       - SEAFILE_LOG_TO_STDOUT=false
       - SITE_ROOT=/
-      - INNER_SEAHUB_SERVICE_URL=http://app
+      - INNER_SEAHUB_SERVICE_URL=http://app:80
       - THUMBNAIL_IMAGE_ORIGINAL_SIZE_LIMIT=${THUMBNAIL_SIZE_LIMIT:-256}
       - SEAF_SERVER_STORAGE_TYPE=${SEAF_SERVER_STORAGE_TYPE:-disk}
     secrets:
@@ -50,11 +50,12 @@ services:
 
     # --- Traefik ---
     labels:
-      # Router
+      # Router (priority=100: higher than main seafile catch-all)
       - "traefik.enable=true"
       - "traefik.docker.network=${TRAEFIK_NETWORK}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/thumbnail`)"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.priority=100"
       # TLS
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.tls=true"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"

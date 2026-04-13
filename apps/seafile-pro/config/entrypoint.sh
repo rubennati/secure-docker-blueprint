@@ -21,7 +21,9 @@ set -e
   export DB_PASSWORD="$(cat /run/secrets/SEAFILE_DB_PWD)"
 
 [ -f /run/secrets/SEAFILE_ADMIN_PWD ] && \
-  export INIT_SEAFILE_ADMIN_PASSWORD="$(cat /run/secrets/SEAFILE_ADMIN_PWD)"
+  export INIT_SEAFILE_ADMIN_PASSWORD="$(cat /run/secrets/SEAFILE_ADMIN_PWD)" && \
+  export SS_FIRST_ADMIN_PASSWORD="$(cat /run/secrets/SEAFILE_ADMIN_PWD)" && \
+  export INIT_SS_ADMIN_PASSWORD="$(cat /run/secrets/SEAFILE_ADMIN_PWD)"
 
 [ -f /run/secrets/JWT_KEY ] && \
   export JWT_PRIVATE_KEY="$(cat /run/secrets/JWT_KEY)" && \

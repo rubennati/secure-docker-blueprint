@@ -16,6 +16,11 @@ services:
       - no-new-privileges:true
 
     # --- Configuration ---
+    # NOTE: SeaSearch needs SS_FIRST_ADMIN_PASSWORD for initial setup.
+    # Our entrypoint wrapper exports it from the SEAFILE_ADMIN_PWD secret.
+    # Original CMD: ["bash", "-c", "/opt/scripts/entrypoint.sh"]
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
+    command: ["bash", "-c", "/opt/scripts/entrypoint.sh"]
     environment:
       - SS_FIRST_ADMIN_USER=${SEAFILE_ADMIN_EMAIL}
       - SS_MAX_OBJ_CACHE_SIZE=${SS_MAX_OBJ_CACHE_SIZE:-10GB}
@@ -38,6 +43,7 @@ services:
 
     # --- Storage ---
     volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
       - ./volumes/seasearch-data:/opt/seasearch/data
 
     # --- Networking ---

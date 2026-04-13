@@ -47,11 +47,12 @@ services:
 
     # --- Traefik ---
     labels:
-      # Router
+      # Router (priority=100: higher than main seafile catch-all)
       - "traefik.enable=true"
       - "traefik.docker.network=${TRAEFIK_NETWORK}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-notification.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/notification`)"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-notification.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-notification.priority=100"
       # TLS
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-notification.tls=true"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-notification.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
