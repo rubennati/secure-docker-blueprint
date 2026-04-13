@@ -76,7 +76,7 @@ services:
 
     # --- Health & Observability ---
     healthcheck:
-      test: ["CMD-SHELL", "redis-cli -a \"$${REDIS_PASSWORD}\" ping | grep PONG || exit 1"]
+      test: ["CMD-SHELL", "redis-cli -a ${REDIS_PASSWORD} ping | grep PONG || exit 1"]
       interval: 10s
       timeout: 3s
       retries: 10
@@ -97,8 +97,10 @@ services:
         condition: service_healthy
 
     # --- Security ---
-    security_opt:
-      - no-new-privileges:true
+    # NOTE: no-new-privileges omitted — Nextcloud entrypoint needs to
+    # chown/chmod files as root before PHP-FPM drops to www-data.
+    # With no-new-privileges, config.php gets created as root:root
+    # and PHP-FPM (www-data) cannot write to it → 503.
 
     # --- Configuration ---
     environment:
@@ -108,9 +110,6 @@ services:
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD_FILE: /run/secrets/DB_PWD
-      # Admin (first install only)
-      NEXTCLOUD_ADMIN_USER_FILE: /run/secrets/NC_ADMIN_USER
-      NEXTCLOUD_ADMIN_PASSWORD_FILE: /run/secrets/NC_ADMIN_PWD
       # Redis
       REDIS_HOST: redis
       REDIS_HOST_PASSWORD: ${REDIS_PASSWORD}
@@ -124,8 +123,6 @@ services:
       PHP_UPLOAD_LIMIT: ${PHP_UPLOAD_LIMIT}
     secrets:
       - DB_PWD
-      - NC_ADMIN_USER
-      - NC_ADMIN_PWD
 
     # --- Storage ---
     volumes:
@@ -201,8 +198,7 @@ services:
         condition: service_healthy
 
     # --- Security ---
-    security_opt:
-      - no-new-privileges:true
+    # NOTE: no-new-privileges omitted — same reason as app container
 
     # --- Configuration ---
     entrypoint: /cron.sh
@@ -254,7 +250,3 @@ secrets:
     file: ./.secrets/db_pwd.txt
   DB_ROOT_PWD:
     file: ./.secrets/db_root_pwd.txt
-  NC_ADMIN_USER:
-    file: ./.secrets/nc_admin_user.txt
-  NC_ADMIN_PWD:
-    file: ./.secrets/nc_admin_pwd.txt
