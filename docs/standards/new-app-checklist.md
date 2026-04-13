@@ -151,9 +151,22 @@ volumes:
 
 ---
 
-## 7. Document
+## 7. Create `UPSTREAM.md`
 
-- [ ] Update app's `README.md` if there are special setup steps
+Every app gets an `UPSTREAM.md` that tracks where the setup comes from and how to upgrade:
+
+- [ ] **Source** — Upstream repo URL, branch, version the setup is based on
+- [ ] **What we use** — Which files are 1:1 copies vs adapted
+- [ ] **What we changed** — Every deviation from upstream with reason
+- [ ] **Upgrade checklist** — Steps to follow when bumping the version
+- [ ] **Diff commands** — How to compare our config against upstream
+
+See `apps/invoiceninja/UPSTREAM.md` as reference.
+
+---
+
+## 8. Document
+
 - [ ] Add any bugs found to `docs/bugfixes/` with root cause and fix
 - [ ] Update this checklist if you discovered a new pitfall
 
