@@ -147,6 +147,7 @@ services:
     volumes:
       - ./config/entrypoint.sh:/config/entrypoint.sh:ro
       - ./config/seahub_custom.py:/config/seahub_custom.py:ro
+      - ./config/clamd-remote.conf:/etc/clamav/clamd.conf:ro
       - ./volumes/seafile-data:/shared
 
     # --- Networking ---
