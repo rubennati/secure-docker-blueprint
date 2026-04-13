@@ -44,7 +44,7 @@
 ## Known limitations
 
 - **Passwords in .env**: Docker Secrets via entrypoint wrapper didn't work with Phusion's `my_init` init system. Passwords are stored in `.env` (gitignored). TODO: revisit when Seafile adds native `_FILE` support.
-- **Manual post-install config**: `seafevents.conf` and `seafile.conf` must be configured manually after first start (see below).
+- **One restart needed after first start**: `docker compose restart app` triggers automatic config injection for seahub_settings.py, seafevents.conf, and seafile.conf. No manual editing needed.
 - **SeaDoc/Thumbnail Nginx check**: These containers check for Nginx/Caddy on startup. With Traefik, they need to be in `proxy-public` network with Traefik labels to pass this check.
 
 ## First-time setup
@@ -210,10 +210,11 @@ docker inspect --format='{{json .Config.Entrypoint}} {{json .Config.Cmd}}' <imag
 | Service exit code 127 | Wrong entrypoint/command path | Check original CMD with `docker inspect` |
 | "Waiting Nginx" loop | Missing Traefik labels + proxy-public | Add labels like CE reference |
 | Thumbnail 403 | Router priority or missing JWT | Set priority=100, check env vars |
-| Search "No results" | SeaSearch not configured in seafevents.conf | Add [SEASEARCH] section |
+| Search "No results" | SeaSearch not configured in seafevents.conf | `docker compose restart app` (auto-injects), or check manually with `grep SEASEARCH seafevents.conf` |
 | env vars empty in app | my_init clears exports | Use .env directly, not Docker Secrets |
 | ClamAV connection refused | Missing clamd-remote.conf mount | Mount config with TCPAddr clamav |
-| OnlyOffice not loading | seahub_custom.py not injected | `docker compose restart app` |
+| OnlyOffice not loading | seahub_custom.py not injected | `docker compose restart app` (auto-injects) |
+| ClamAV not scanning | virus_scan not in seafile.conf | `docker compose restart app` (auto-injects), or check manually with `grep virus_scan seafile.conf` |
 
 ## Upstream diff commands
 
