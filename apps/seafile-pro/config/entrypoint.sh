@@ -35,6 +35,34 @@ set -e
 [ -f /run/secrets/ONLYOFFICE_JWT_SECRET ] && \
   export ONLYOFFICE_JWT_SECRET="$(cat /run/secrets/ONLYOFFICE_JWT_SECRET)"
 
+# --- Persist env vars for my_init ---
+# Phusion's my_init re-imports env vars from /etc/container_environment/
+# after each startup script, clearing the process environment.
+# Writing secrets here ensures they survive the re-import cycle.
+# Only runs in containers with my_init (app, seadoc) — others skip this.
+if [ -d /etc/container_environment ]; then
+  [ -n "${INIT_SEAFILE_MYSQL_ROOT_PASSWORD:-}" ] && \
+    printf '%s' "$INIT_SEAFILE_MYSQL_ROOT_PASSWORD" > /etc/container_environment/INIT_SEAFILE_MYSQL_ROOT_PASSWORD
+  [ -n "${SEAFILE_MYSQL_DB_PASSWORD:-}" ] && \
+    printf '%s' "$SEAFILE_MYSQL_DB_PASSWORD" > /etc/container_environment/SEAFILE_MYSQL_DB_PASSWORD
+  [ -n "${DB_PASSWORD:-}" ] && \
+    printf '%s' "$DB_PASSWORD" > /etc/container_environment/DB_PASSWORD
+  [ -n "${INIT_SEAFILE_ADMIN_PASSWORD:-}" ] && \
+    printf '%s' "$INIT_SEAFILE_ADMIN_PASSWORD" > /etc/container_environment/INIT_SEAFILE_ADMIN_PASSWORD
+  [ -n "${SS_FIRST_ADMIN_PASSWORD:-}" ] && \
+    printf '%s' "$SS_FIRST_ADMIN_PASSWORD" > /etc/container_environment/SS_FIRST_ADMIN_PASSWORD
+  [ -n "${INIT_SS_ADMIN_PASSWORD:-}" ] && \
+    printf '%s' "$INIT_SS_ADMIN_PASSWORD" > /etc/container_environment/INIT_SS_ADMIN_PASSWORD
+  [ -n "${JWT_PRIVATE_KEY:-}" ] && \
+    printf '%s' "$JWT_PRIVATE_KEY" > /etc/container_environment/JWT_PRIVATE_KEY
+  [ -n "${SEAFILE_AI_SECRET_KEY:-}" ] && \
+    printf '%s' "$SEAFILE_AI_SECRET_KEY" > /etc/container_environment/SEAFILE_AI_SECRET_KEY
+  [ -n "${REDIS_PASSWORD:-}" ] && \
+    printf '%s' "$REDIS_PASSWORD" > /etc/container_environment/REDIS_PASSWORD
+  [ -n "${ONLYOFFICE_JWT_SECRET:-}" ] && \
+    printf '%s' "$ONLYOFFICE_JWT_SECRET" > /etc/container_environment/ONLYOFFICE_JWT_SECRET
+fi
+
 # --- Append custom seahub settings (once) ---
 SEAHUB_CONF="/shared/seafile/conf/seahub_settings.py"
 CUSTOM_CONF="/config/seahub_custom.py"

@@ -48,6 +48,25 @@ If you need Elasticsearch instead of SeaSearch (e.g. for partial document update
 2. The `elasticsearch.yml` from Stage 0 is still in the directory
 3. See: https://manual.seafile.com/13.0/docker/pro/deploy_seafile_pro_with_docker/
 
+## First-time setup
+
+After the very first `docker compose up -d`:
+
+```bash
+# Wait until app is healthy
+docker compose ps
+
+# Restart app to inject OnlyOffice + Metadata settings into seahub_settings.py
+docker compose restart app
+
+# Verify settings were injected
+docker exec seafile-pro-app grep "Blueprint" /shared/seafile/conf/seahub_settings.py
+```
+
+**Why:** On first boot, Seafile creates `seahub_settings.py`. Our entrypoint wrapper
+tries to append custom settings but the file doesn't exist yet during the first run.
+The restart triggers the injection. This is only needed once.
+
 ## Upgrade checklist
 
 When bumping the Seafile Pro version:
