@@ -1,0 +1,260 @@
+services:
+
+  # --------------------------------------------------------
+  # DATABASE (MariaDB)
+  # --------------------------------------------------------
+  db:
+    # --- Identity ---
+    image: mariadb:${DB_TAG}
+    container_name: ${CONTAINER_NAME_DB}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    command: >
+      --transaction-isolation=READ-COMMITTED
+      --innodb-file-per-table=1
+      --skip-innodb-read-only-compressed
+    environment:
+      TZ: ${TZ}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD_FILE: /run/secrets/DB_PWD
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/DB_ROOT_PWD
+      MYSQL_INITDB_SKIP_TZINFO: "1"
+      MARIADB_AUTO_UPGRADE: "1"
+    secrets:
+      - DB_PWD
+      - DB_ROOT_PWD
+
+    # --- Storage ---
+    volumes:
+      - db_data:/var/lib/mysql
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "healthcheck.sh --connect --innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # --------------------------------------------------------
+  # REDIS
+  # --------------------------------------------------------
+  redis:
+    # --- Identity ---
+    image: redis:${REDIS_TAG}
+    container_name: ${CONTAINER_NAME_REDIS}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD}
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+
+    # --- Storage ---
+    volumes:
+      - redis_data:/data
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$${REDIS_PASSWORD}\" ping | grep PONG || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  # --------------------------------------------------------
+  # NEXTCLOUD (PHP-FPM)
+  # --------------------------------------------------------
+  app:
+    # --- Identity ---
+    image: nextcloud:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      TZ: ${TZ}
+      # Database
+      MYSQL_HOST: db
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD_FILE: /run/secrets/DB_PWD
+      # Admin (first install only)
+      NEXTCLOUD_ADMIN_USER_FILE: /run/secrets/NC_ADMIN_USER
+      NEXTCLOUD_ADMIN_PASSWORD_FILE: /run/secrets/NC_ADMIN_PWD
+      # Redis
+      REDIS_HOST: redis
+      REDIS_HOST_PASSWORD: ${REDIS_PASSWORD}
+      # Reverse Proxy
+      TRUSTED_PROXIES: ${NC_TRUSTED_PROXIES}
+      OVERWRITEPROTOCOL: https
+      OVERWRITEHOST: ${APP_TRAEFIK_HOST}
+      OVERWRITECLIURL: https://${APP_TRAEFIK_HOST}
+      # PHP
+      PHP_MEMORY_LIMIT: ${PHP_MEMORY_LIMIT}
+      PHP_UPLOAD_LIMIT: ${PHP_UPLOAD_LIMIT}
+    secrets:
+      - DB_PWD
+      - NC_ADMIN_USER
+      - NC_ADMIN_PWD
+
+    # --- Storage ---
+    volumes:
+      - nextcloud_html:/var/www/html
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "php -f /var/www/html/occ status 2>/dev/null | grep -q 'installed: true' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+
+  # --------------------------------------------------------
+  # NGINX (Web Server)
+  # --------------------------------------------------------
+  nginx:
+    # --- Identity ---
+    image: nginx:${NGINX_TAG}
+    container_name: ${CONTAINER_NAME_NGINX}
+    restart: unless-stopped
+    depends_on:
+      - app
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Storage ---
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - nextcloud_html:/var/www/html:ro
+
+    # --- Networking ---
+    networks:
+      - app-internal
+      - proxy-public
+
+    # --- Traefik ---
+    labels:
+      # Router
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      # TLS
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Middlewares (CalDAV/CardDAV redirect + access + security)
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${COMPOSE_PROJECT_NAME}-dav@docker,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-dav.replacepathregex.regex=^/.well-known/ca(l|rd)dav"
+      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-dav.replacepathregex.replacement=/remote.php/dav/"
+      # Service
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
+
+  # --------------------------------------------------------
+  # CRON
+  # --------------------------------------------------------
+  cron:
+    # --- Identity ---
+    image: nextcloud:${APP_TAG}
+    container_name: ${CONTAINER_NAME_CRON}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    entrypoint: /cron.sh
+    environment:
+      TZ: ${TZ}
+      MYSQL_HOST: db
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD_FILE: /run/secrets/DB_PWD
+      REDIS_HOST: redis
+      REDIS_HOST_PASSWORD: ${REDIS_PASSWORD}
+    secrets:
+      - DB_PWD
+
+    # --- Storage ---
+    volumes:
+      - nextcloud_html:/var/www/html
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+# --------------------------------------------------------
+# VOLUMES
+# --------------------------------------------------------
+volumes:
+  db_data:
+    driver: local
+  redis_data:
+    driver: local
+  nextcloud_html:
+    driver: local
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+  app-internal:
+    name: ${NETWORK_INTERNAL}
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  DB_PWD:
+    file: ./.secrets/db_pwd.txt
+  DB_ROOT_PWD:
+    file: ./.secrets/db_root_pwd.txt
+  NC_ADMIN_USER:
+    file: ./.secrets/nc_admin_user.txt
+  NC_ADMIN_PWD:
+    file: ./.secrets/nc_admin_pwd.txt
