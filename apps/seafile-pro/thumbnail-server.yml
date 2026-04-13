@@ -19,25 +19,21 @@ services:
       - no-new-privileges:true
 
     # --- Configuration ---
-    # NOTE: thumbnail-server supports _FILE env vars — no entrypoint wrapper needed.
     environment:
       - TIME_ZONE=${TZ}
       - SEAFILE_MYSQL_DB_HOST=db
       - SEAFILE_MYSQL_DB_PORT=3306
       - SEAFILE_MYSQL_DB_USER=${DB_USER}
-      - SEAFILE_MYSQL_DB_PASSWORD_FILE=/run/secrets/SEAFILE_DB_PWD
+      - SEAFILE_MYSQL_DB_PASSWORD=${SEAFILE_MYSQL_DB_PASSWORD}
       - SEAFILE_MYSQL_DB_CCNET_DB_NAME=ccnet_db
       - SEAFILE_MYSQL_DB_SEAFILE_DB_NAME=seafile_db
       - NON_ROOT=false
-      - JWT_PRIVATE_KEY_FILE=/run/secrets/JWT_KEY
+      - JWT_PRIVATE_KEY=${JWT_PRIVATE_KEY}
       - SEAFILE_LOG_TO_STDOUT=false
       - SITE_ROOT=/
       - INNER_SEAHUB_SERVICE_URL=http://app:80
       - THUMBNAIL_IMAGE_ORIGINAL_SIZE_LIMIT=${THUMBNAIL_SIZE_LIMIT:-256}
       - SEAF_SERVER_STORAGE_TYPE=${SEAF_SERVER_STORAGE_TYPE:-disk}
-    secrets:
-      - SEAFILE_DB_PWD
-      - JWT_KEY
 
     # --- Storage ---
     volumes:
@@ -67,9 +63,3 @@ networks:
     external: true
   app-internal:
     name: ${COMPOSE_PROJECT_NAME}-internal
-
-secrets:
-  SEAFILE_DB_PWD:
-    file: ./.secrets/seafile_db_pwd.txt
-  JWT_KEY:
-    file: ./.secrets/jwt_key.txt

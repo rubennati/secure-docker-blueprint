@@ -16,34 +16,17 @@ services:
       - no-new-privileges:true
 
     # --- Configuration ---
-    # NOTE: SeaSearch needs SS_FIRST_ADMIN_PASSWORD for initial setup.
-    # Our entrypoint wrapper exports it from the SEAFILE_ADMIN_PWD secret.
-    # Original CMD: ["bash", "-c", "/opt/scripts/entrypoint.sh"]
-    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
-    command: ["bash", "-c", "/opt/scripts/entrypoint.sh"]
     environment:
       - SS_FIRST_ADMIN_USER=${SEAFILE_ADMIN_EMAIL}
+      - SS_FIRST_ADMIN_PASSWORD=${INIT_SEAFILE_ADMIN_PASSWORD}
       - SS_MAX_OBJ_CACHE_SIZE=${SS_MAX_OBJ_CACHE_SIZE:-10GB}
       - SS_STORAGE_TYPE=${SS_STORAGE_TYPE:-disk}
       - SS_LOG_TO_STDOUT=false
       - SS_LOG_DIR=/opt/seasearch/data/log
       - SS_LOG_LEVEL=${SS_LOG_LEVEL:-info}
-      # S3 (only when SS_STORAGE_TYPE=s3, uncomment and configure)
-      #- S3_SS_BUCKET=${S3_SS_BUCKET:-}
-      #- S3_KEY_ID=${S3_KEY_ID:-}
-      #- S3_SECRET_KEY=${S3_SECRET_KEY:-}
-      #- S3_AWS_REGION=${S3_AWS_REGION:-us-east-1}
-      #- S3_HOST=${S3_HOST:-}
-      #- S3_USE_HTTPS=${S3_USE_HTTPS:-true}
-      #- S3_USE_V4_SIGNATURE=${S3_USE_V4_SIGNATURE:-true}
-      #- S3_PATH_STYLE_REQUEST=${S3_PATH_STYLE_REQUEST:-true}
-      #- S3_SSE_C_KEY=${S3_SSE_C_KEY:-}
-    secrets:
-      - SEAFILE_ADMIN_PWD
 
     # --- Storage ---
     volumes:
-      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
       - ./volumes/seasearch-data:/opt/seasearch/data
 
     # --- Networking ---

@@ -15,12 +15,10 @@ services:
 
     # --- Configuration ---
     environment:
-      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/DB_ROOT_PWD
-      MYSQL_LOG_CONSOLE: "true"
-      MARIADB_AUTO_UPGRADE: "1"
-      TZ: ${TZ}
-    secrets:
-      - DB_ROOT_PWD
+      - MYSQL_ROOT_PASSWORD=${INIT_SEAFILE_MYSQL_ROOT_PASSWORD}
+      - MYSQL_LOG_CONSOLE=true
+      - MARIADB_AUTO_UPGRADE=1
+      - TZ=${TZ}
 
     # --- Storage ---
     volumes:
@@ -52,9 +50,12 @@ services:
       - no-new-privileges:true
 
     # --- Configuration ---
-    command: ["sh", "-c", "redis-server --requirepass \"$$(cat /run/secrets/REDIS_PWD)\""]
-    secrets:
-      - REDIS_PWD
+    command:
+      - /bin/sh
+      - -c
+      - redis-server --requirepass "$$REDIS_PASSWORD"
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
 
     # --- Storage ---
     volumes:
@@ -66,7 +67,7 @@ services:
 
     # --- Health & Observability ---
     healthcheck:
-      test: ["CMD-SHELL", "redis-cli -a \"$$(cat /run/secrets/REDIS_PWD)\" ping | grep PONG"]
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep PONG"]
       interval: 10s
       timeout: 3s
       retries: 5
@@ -91,14 +92,15 @@ services:
       - no-new-privileges:true
 
     # --- Configuration ---
-    # NOTE: Seafile reads passwords via os.environ only — no _FILE support.
-    # The custom entrypoint reads Docker Secrets and exports them as env vars.
+    # Entrypoint wrapper only for seahub_custom.py injection (no secrets handling)
     entrypoint: ["/bin/sh", "/config/entrypoint.sh", "/sbin/my_init", "--", "/scripts/enterpoint.sh"]
     environment:
       # Database
+      - INIT_SEAFILE_MYSQL_ROOT_PASSWORD=${INIT_SEAFILE_MYSQL_ROOT_PASSWORD}
       - SEAFILE_MYSQL_DB_HOST=db
       - SEAFILE_MYSQL_DB_PORT=3306
       - SEAFILE_MYSQL_DB_USER=${DB_USER}
+      - SEAFILE_MYSQL_DB_PASSWORD=${SEAFILE_MYSQL_DB_PASSWORD}
       - SEAFILE_MYSQL_DB_CCNET_DB_NAME=ccnet_db
       - SEAFILE_MYSQL_DB_SEAFILE_DB_NAME=seafile_db
       - SEAFILE_MYSQL_DB_SEAHUB_DB_NAME=seahub_db
@@ -109,12 +111,15 @@ services:
       - NON_ROOT=false
       - SEAFILE_LOG_TO_STDOUT=false
       - ENABLE_GO_FILESERVER=true
+      - JWT_PRIVATE_KEY=${JWT_PRIVATE_KEY}
       # Admin (first install only)
       - INIT_SEAFILE_ADMIN_EMAIL=${SEAFILE_ADMIN_EMAIL}
+      - INIT_SEAFILE_ADMIN_PASSWORD=${INIT_SEAFILE_ADMIN_PASSWORD}
       # Cache
       - CACHE_PROVIDER=redis
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
       # SeaDoc
       - ENABLE_SEADOC=${ENABLE_SEADOC}
       - SEADOC_SERVER_URL=https://${APP_TRAEFIK_HOST}/sdoc-server
@@ -126,34 +131,17 @@ services:
       - ENABLE_SEAFILE_AI=${ENABLE_SEAFILE_AI:-false}
       - ENABLE_FACE_RECOGNITION=${ENABLE_FACE_RECOGNITION:-false}
       - SEAFILE_AI_SERVER_URL=http://seafile-ai:8888
+      - SEAFILE_AI_SECRET_KEY=${JWT_PRIVATE_KEY}
       # Metadata
       - MD_FILE_COUNT_LIMIT=${MD_FILE_COUNT_LIMIT:-100000}
       # OnlyOffice
       - ONLYOFFICE_URL=https://${ONLYOFFICE_HOST}
+      - ONLYOFFICE_JWT_SECRET=${ONLYOFFICE_JWT_SECRET}
       # Storage
       - SEAF_SERVER_STORAGE_TYPE=${SEAF_SERVER_STORAGE_TYPE:-disk}
-      # S3 (only when SEAF_SERVER_STORAGE_TYPE=s3)
-      #- S3_COMMIT_BUCKET=${S3_COMMIT_BUCKET:-}
-      #- S3_FS_BUCKET=${S3_FS_BUCKET:-}
-      #- S3_BLOCK_BUCKET=${S3_BLOCK_BUCKET:-}
-      #- S3_KEY_ID=${S3_KEY_ID:-}
-      #- S3_SECRET_KEY=${S3_SECRET_KEY:-}
-      #- S3_USE_V4_SIGNATURE=${S3_USE_V4_SIGNATURE:-true}
-      #- S3_AWS_REGION=${S3_AWS_REGION:-us-east-1}
-      #- S3_HOST=${S3_HOST:-}
-      #- S3_USE_HTTPS=${S3_USE_HTTPS:-true}
-      #- S3_PATH_STYLE_REQUEST=${S3_PATH_STYLE_REQUEST:-false}
-      #- S3_SSE_C_KEY=${S3_SSE_C_KEY:-}
       # Time
       - TIME_ZONE=${TZ}
       - TZ=${TZ}
-    secrets:
-      - DB_ROOT_PWD
-      - SEAFILE_DB_PWD
-      - SEAFILE_ADMIN_PWD
-      - JWT_KEY
-      - REDIS_PWD
-      - ONLYOFFICE_JWT_SECRET
 
     # --- Storage ---
     volumes:
@@ -200,20 +188,3 @@ networks:
 
   app-internal:
     name: ${COMPOSE_PROJECT_NAME}-internal
-
-# --------------------------------------------------------
-# SECRETS
-# --------------------------------------------------------
-secrets:
-  DB_ROOT_PWD:
-    file: ./.secrets/db_root_pwd.txt
-  SEAFILE_DB_PWD:
-    file: ./.secrets/seafile_db_pwd.txt
-  SEAFILE_ADMIN_PWD:
-    file: ./.secrets/seafile_admin_pwd.txt
-  JWT_KEY:
-    file: ./.secrets/jwt_key.txt
-  REDIS_PWD:
-    file: ./.secrets/redis_pwd.txt
-  ONLYOFFICE_JWT_SECRET:
-    file: ./.secrets/onlyoffice_jwt_secret.txt

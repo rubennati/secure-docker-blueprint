@@ -19,25 +19,19 @@ services:
       - no-new-privileges:true
 
     # --- Configuration ---
-    # NOTE: notification-server is a Go binary — no _FILE support, no shell entrypoint.
-    # Our wrapper exports secrets as env vars, then exec's the binary.
-    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
-    command: ["/opt/seafile/notification-server", "-c", "/opt/seafile", "-l", "/shared/seafile/logs/notification-server.log"]
     environment:
       - SEAFILE_MYSQL_DB_HOST=db
       - SEAFILE_MYSQL_DB_PORT=3306
       - SEAFILE_MYSQL_DB_USER=${DB_USER}
+      - SEAFILE_MYSQL_DB_PASSWORD=${SEAFILE_MYSQL_DB_PASSWORD}
       - SEAFILE_MYSQL_DB_CCNET_DB_NAME=ccnet_db
       - SEAFILE_MYSQL_DB_SEAFILE_DB_NAME=seafile_db
+      - JWT_PRIVATE_KEY=${JWT_PRIVATE_KEY}
       - SEAFILE_LOG_TO_STDOUT=false
       - NOTIFICATION_SERVER_LOG_LEVEL=${NOTIFICATION_LOG_LEVEL:-info}
-    secrets:
-      - SEAFILE_DB_PWD
-      - JWT_KEY
 
     # --- Storage ---
     volumes:
-      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
       - ./volumes/seafile-data/seafile/logs:/shared/seafile/logs
 
     # --- Networking ---
@@ -64,9 +58,3 @@ networks:
     external: true
   app-internal:
     name: ${COMPOSE_PROJECT_NAME}-internal
-
-secrets:
-  SEAFILE_DB_PWD:
-    file: ./.secrets/seafile_db_pwd.txt
-  JWT_KEY:
-    file: ./.secrets/jwt_key.txt
