@@ -1,15 +1,32 @@
 # Naming Conventions
 
+## Service Names
+
+Use short, generic names in `docker-compose.yml`:
+
+| Role | Name |
+|------|------|
+| Application | `app` |
+| Database | `db` |
+| Cache / Queue | `redis` |
+| Web server | `nginx` |
+| Docker socket proxy | `socket-proxy` |
+
 ## Container Names
 
-Pattern: `{app}-{role}`
+Derived from `COMPOSE_PROJECT_NAME` via variables:
 
-| Example | Role |
-|---------|------|
-| `wordpress-app` | Application |
-| `wordpress-db` | Database |
-| `paperless-redis` | Cache/Queue |
-| `dockhand-socket-proxy` | Docker Socket Proxy |
+```env
+CONTAINER_NAME_APP=${COMPOSE_PROJECT_NAME}-app
+CONTAINER_NAME_DB=${COMPOSE_PROJECT_NAME}-db
+CONTAINER_NAME_REDIS=${COMPOSE_PROJECT_NAME}-redis
+```
+
+| Example | Value |
+|---------|-------|
+| `CONTAINER_NAME_APP` | `wordpress-app` |
+| `CONTAINER_NAME_DB` | `wordpress-db` |
+| `CONTAINER_NAME_REDIS` | `paperless-redis` |
 
 ## Environment Variables
 
@@ -17,63 +34,61 @@ Pattern: `{SCOPE}_{PROPERTY}`
 
 | Scope | Examples |
 |-------|----------|
-| `APP_` | `APP_IMAGE`, `APP_TRAEFIK_HOST`, `APP_INTERNAL_PORT` |
-| `DB_` | `DB_IMAGE`, `DB_USER`, `DB_NAME` |
+| `APP_` | `APP_TAG`, `APP_TRAEFIK_HOST` |
+| `DB_` | `DB_TAG`, `DB_USER`, `DB_NAME` |
 | `CONTAINER_NAME_` | `CONTAINER_NAME_APP`, `CONTAINER_NAME_DB` |
-| `COMPOSE_` | `COMPOSE_PROJECT_NAME`, `COMPOSE_FILE` |
+| `COMPOSE_` | `COMPOSE_PROJECT_NAME` |
+| `TRAEFIK_` | `TRAEFIK_NETWORK` |
+
+## Image References
+
+Image name hardcoded in compose, only the tag as variable. Image name + Docker Hub link as comment in `.env.example`:
+
+```yaml
+# docker-compose.yml
+image: wordpress:${APP_TAG}
+```
+```env
+# .env.example
+# wordpress (https://hub.docker.com/_/wordpress)
+APP_TAG=6.7-php8.3-fpm-alpine
+```
 
 ## Networks
 
 | Name | Type | Created by |
 |------|------|-----------|
 | `proxy-public` | `external: true` | core/traefik |
-| `{app}-internal` | `internal: true` | Each app |
-
-## Volumes
-
-Always bind mounts, never named volumes.
-
-| Path | Content |
-|------|---------|
-| `./volumes/data/` | App data |
-| `./volumes/mysql/` | MySQL/MariaDB |
-| `./volumes/postgres/` | PostgreSQL |
-| `./volumes/redis/` | Redis |
-| `./config/` | Config files (committed) |
+| `{app}-internal` | `name: ${COMPOSE_PROJECT_NAME}-internal` | Each app |
 
 ## Secrets
 
+Stored in `.secrets/` (hidden dotfolder, gitignored):
+
 | Path | Content |
 |------|---------|
-| `./secrets/db_pwd.txt` | Database password |
-| `./secrets/db_root_pwd.txt` | DB root password |
-| `./secrets/jwt_key.txt` | JWT signing key |
+| `.secrets/db_pwd.txt` | Database password |
+| `.secrets/db_root_pwd.txt` | DB root password |
+| `.secrets/jwt_key.txt` | JWT signing key |
 
-Generate with: `openssl rand -base64 32 > secrets/name.txt`
+Generate with: `openssl rand -base64 32 | tr -d '\n' > .secrets/name.txt`
 
 ## .env.example Structure
 
 Fixed section order:
 
 ```
+COMPOSE_PROJECT_NAME=...
+
+# --- Domain & Traefik ---
 # --- Images ---
-# --- Container ---
-# --- General ---
+# --- Containers ---
+# --- Network ---
 # --- Database ---
 # --- App Configuration ---
-# --- Traefik Routing ---
+# --- SMTP ---
+# --- Timezone ---
 # --- Secrets ---
-```
-
-Header always:
-
-```
-# =============================================
-# {App Name} – Environment
-# =============================================
-# Copy this file to .env and adjust all values.
-# NEVER commit the .env file.
-# =============================================
 ```
 
 For detailed rules and rationale, see [Env Structure](env-structure.md).

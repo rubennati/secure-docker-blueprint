@@ -15,8 +15,8 @@ Every service follows this exact block order:
 services:
   service-name:
     # --- Identity ---
-    image:                    # What runs (always via ${VAR})
-    container_name:           # Unique name (via ${VAR})
+    image:                    # Image hardcoded, tag via ${VAR}
+    container_name:           # Derived from ${COMPOSE_PROJECT_NAME}
     restart:                  # Restart policy
     depends_on:               # Service dependencies
 
@@ -63,26 +63,25 @@ services:
 ## Block Rules
 
 **Identity** (required)
-- `image:` — always via `${VAR}`, never hardcoded. Pin to a specific version, never `:latest`.
-- `container_name:` — always via `${CONTAINER_NAME_*}` variable.
+- `image:` — Image name hardcoded in compose, only the tag via `${APP_TAG}`. Image name + Docker Hub link as comment in `.env.example`.
+- `container_name:` — Derived from `${COMPOSE_PROJECT_NAME}` via `${CONTAINER_NAME_APP}`, `${CONTAINER_NAME_DB}`, etc.
 - `restart: unless-stopped` — standard for all services.
 - `depends_on:` with `condition: service_healthy` when the dependency has a healthcheck.
 
 **Security** (required)
 - `security_opt: no-new-privileges:true` — mandatory on every service, no exceptions.
-- `read_only: true` + `tmpfs:` — use when the image supports it (Redis, Traefik, Whoami, Socket Proxy). Skip when the app writes to the root filesystem (Ghost, WordPress).
+- `read_only: true` + `tmpfs:` — use when the image supports it (Redis, Traefik, Whoami, Socket Proxy, nginx). Skip when the app writes to the root filesystem (Ghost, WordPress).
 - `cap_drop: ALL` — for lightweight services. Re-add only specific capabilities needed.
 - `user:` — only when the image explicitly supports non-root operation.
 
 **Configuration** (required)
 - `entrypoint:` — only when the image doesn't support `_FILE` env vars. The custom entrypoint reads secrets and exports them as env vars. See [Security Baseline](security-baseline.md) for patterns.
-- `environment:` — map format (key: value), not list format (- KEY=value). Never put passwords or tokens here — use secrets.
+- `environment:` — explicit map format (key: value). Never use `env_file:`. Never put passwords or tokens here — use secrets.
 - `secrets:` — list of secret names the service needs.
 
 **Storage** (required when app has persistent data)
-- Always bind mounts (`./volumes/path:/container/path`), never named Docker volumes.
 - Config file mounts use `:ro` — e.g. `./config/entrypoint.sh:/config/entrypoint.sh:ro`.
-- Standard paths: `./volumes/data/`, `./volumes/mysql/`, `./volumes/postgres/`, `./volumes/redis/`.
+- Volume style (bind mounts vs named volumes) is decided per app. See individual app documentation.
 
 **Networking** (required)
 - Web apps: `proxy-public` + `app-internal`.
@@ -92,13 +91,24 @@ services:
 
 **Traefik** (required for web apps)
 - Full label block. See [Traefik Labels](traefik-labels.md) for structure.
-- Always include `traefik.docker.network=proxy-public` when the service is in multiple networks.
+- Always include `traefik.docker.network=${TRAEFIK_NETWORK}` when the service is in multiple networks.
 - Non-web services (databases, socket proxies, workers) have no labels.
 
 **Health & Observability** (strongly recommended)
 - Healthcheck on every service where possible.
-- Database healthchecks use the image's built-in check (e.g. `healthcheck.sh --connect` for MariaDB/MySQL).
-- App healthchecks probe a known endpoint (e.g. `/alive`, `/api/health`).
+- Healthchecks are app-specific — use whatever the image supports. No forced standard.
+
+## Service Names
+
+Use short, generic names:
+
+| Service | Name |
+|---------|------|
+| Application | `app` |
+| Database | `db` |
+| Cache/Queue | `redis` |
+| Web server | `nginx` |
+| Socket proxy | `socket-proxy` |
 
 ## Top-Level Blocks
 
@@ -114,17 +124,16 @@ networks:
 
   app-internal:
     name: ${COMPOSE_PROJECT_NAME}-internal
-    internal: true
 
 # --------------------------------------------------------
 # SECRETS
 # --------------------------------------------------------
 secrets:
   DB_PWD:
-    file: ./secrets/db_pwd.txt
+    file: ./.secrets/db_pwd.txt
 ```
 
-Order: `services` > `networks` > `secrets`
+Order: `services` > `volumes` (if needed) > `networks` > `secrets`
 
 ## Section Comments
 
@@ -136,25 +145,7 @@ Use consistent separators:
   # --------------------------------------------------------
 ```
 
-Between services, and for top-level blocks (NETWORKS, SECRETS).
-
-## Environment Format
-
-Use **map format**, not list format:
-
-```yaml
-# Correct
-environment:
-  TZ: ${TIMEZONE}
-  DB_HOST: database
-
-# Wrong
-environment:
-  - TZ=${TIMEZONE}
-  - DB_HOST=database
-```
-
-Exception: Traefik labels always use list format (Compose requirement for labels with dots).
+Between services, and for top-level blocks (VOLUMES, NETWORKS, SECRETS).
 
 ---
 
@@ -163,16 +154,16 @@ Exception: Traefik labels always use list format (Compose requirement for labels
 ### App + Database (standard)
 
 Most apps follow this pattern:
-- Database service first (no external dependencies)
-- App service depends on database with healthcheck
-- Database in `app-internal` only
-- App in both `proxy-public` and `app-internal`
+- `db` service first (no external dependencies)
+- `app` service depends on db with healthcheck
+- `db` in `app-internal` only
+- `app` in both `proxy-public` and `app-internal`
 - Database passwords via Docker Secrets
 
 ### App Only (no database)
 
 Services like Whoami, Portainer, or simple web apps:
-- Remove `database` service
+- Remove `db` service
 - Remove `app-internal` network (or keep if the app has other internal services)
 - Remove `secrets` block (unless the app has its own secrets)
 
@@ -189,7 +180,7 @@ Services like Portainer, Dockhand, Hawser:
 When the image doesn't support `_FILE` env vars:
 - `config/entrypoint.sh` reads secrets from `/run/secrets/` and exports as env vars
 - Mount as `./config/entrypoint.sh:/config/entrypoint.sh:ro`
-- Set `entrypoint: ["/bin/sh", "/config/entrypoint.sh"]`
+- Set `entrypoint: ["/bin/sh", "/config/entrypoint.sh", "<original-entrypoint>"]`
 - The entrypoint ends with `exec "$@"` to run the original command
 
 ### Multi-Service Apps
@@ -206,12 +197,12 @@ Complex stacks like Paperless (App + DB + Redis + Gotenberg + Tika) or Seafile:
 - [ ] Block order correct (Identity > Security > Configuration > Storage > Networking > Traefik > Health)
 - [ ] `security_opt: no-new-privileges:true` on every service
 - [ ] Images pinned to specific version (never `:latest`)
-- [ ] Image tags via `${VAR}` in compose, actual version in `.env.example`
-- [ ] Container names via `${CONTAINER_NAME_*}` variables
-- [ ] Environment in map format (not list format)
-- [ ] Secrets via Docker Secrets, never in `environment:`
-- [ ] Bind mounts only, no named volumes
+- [ ] Image name hardcoded in compose, only tag via `${APP_TAG}` / `${DB_TAG}`
+- [ ] Container names derived from `${COMPOSE_PROJECT_NAME}`
+- [ ] Explicit `environment:` blocks (no `env_file:`)
+- [ ] Secrets via Docker Secrets in `.secrets/`, never in `environment:`
 - [ ] Config mounts with `:ro`
 - [ ] Database only in `app-internal` network
-- [ ] `traefik.docker.network=proxy-public` label when service has multiple networks
-- [ ] Healthcheck on every service where possible
+- [ ] `traefik.docker.network=${TRAEFIK_NETWORK}` label when service has multiple networks
+- [ ] Healthcheck on every service where possible (app-specific, no forced standard)
+- [ ] Service names: `app`, `db`, `redis`, `nginx`
