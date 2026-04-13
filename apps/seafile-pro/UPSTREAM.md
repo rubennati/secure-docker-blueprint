@@ -55,53 +55,29 @@ After the very first `docker compose up -d`:
 # 1. Wait until app is healthy
 docker compose ps
 
-# 2. Restart app to inject seahub_custom.py (OnlyOffice + Metadata + Thumbnail)
+# 2. Restart app to inject ALL configs automatically:
+#    - seahub_settings.py (OnlyOffice + Metadata + Thumbnail)
+#    - seafevents.conf (SeaSearch — replaces Elasticsearch)
+#    - seafile.conf (ClamAV virus scanning)
 docker compose restart app
 
-# 3. Verify settings were injected
+# 3. Verify all configs were injected
 docker exec seafile-pro-app grep "Blueprint" /shared/seafile/conf/seahub_settings.py
+docker exec seafile-pro-app grep "SEASEARCH" /shared/seafile/conf/seafevents.conf
+docker exec seafile-pro-app grep "virus_scan" /shared/seafile/conf/seafile.conf
 
-# 4. Configure SeaSearch in seafevents.conf
-#    Generate auth token:
-echo -n '<SEAFILE_ADMIN_EMAIL>:<INIT_SEAFILE_ADMIN_PASSWORD>' | base64
-
-#    Add to seafevents.conf:
-docker exec -it seafile-pro-app bash -c "cat >> /shared/seafile/conf/seafevents.conf << 'CONF'
-
-[SEASEARCH]
-enabled = true
-seasearch_url = http://seasearch:4080
-seasearch_token = <YOUR_BASE64_TOKEN>
-interval = 10m
-index_office_pdf = true
-CONF"
-
-#    Disable old Elasticsearch config:
-docker exec -it seafile-pro-app bash -c "sed -i '/^\[INDEX FILES\]/,/^$/{s/^enabled = true/enabled = false/}' /shared/seafile/conf/seafevents.conf"
-
-# 5. Configure ClamAV virus scanning in seafile.conf
-docker exec -it seafile-pro-app bash -c "cat >> /shared/seafile/conf/seafile.conf << 'CONF'
-
-[virus_scan]
-scan_command = clamdscan
-virus_code = 1
-nonvirus_code = 0
-scan_interval = 5
-scan_size_limit = 20
-threads = 2
-CONF"
-
-# 6. Restart app to apply all config changes
-docker compose restart app
-
-# 7. Trigger initial search index
+# 4. Trigger initial search index
 docker exec seafile-pro-app /opt/seafile/seafile-server-latest/pro/pro.py search --update
 
-# 8. Verify everything works
+# 5. Verify everything works
 curl -s https://your-domain/notification/ping  # should return {"ret": "pong"}
 docker exec seafile-pro-app env | grep JWT_PRIVATE_KEY  # should show the key
 docker exec seafile-pro-app bash -c "curl -s https://secure.eicar.org/eicar.com.txt | clamdscan -"  # should show FOUND
 ```
+
+**Why restart?** On first boot, Seafile creates its config files. Our entrypoint wrapper
+detects these files on the second start and injects the Blueprint configs. All three
+injections are marker-based — they never run twice.
 
 ## Elasticsearch alternative
 
