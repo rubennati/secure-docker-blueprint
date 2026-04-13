@@ -1,53 +1,117 @@
 # Seafile Pro Bugfixes — 2026-04-13
 
-## Bug #1: notification-server + md-server exit 127
+## Bug #1: notification-server + md-server exit 127 (FIXED)
 
 **Symptom:** Both containers crash with exit code 127 (command not found).
 
-**Root cause:** Our entrypoint wrapper was set as a single `entrypoint:` array including the original command. Docker overrides the original CMD when you set entrypoint, but doesn't append the original CMD to it. The `exec "$@"` in our wrapper had nothing to execute.
+**Root cause:** Entrypoint wrapper set as single `entrypoint:` array. Docker overrides the original CMD when you set entrypoint. `exec "$@"` had nothing to execute.
 
-**Fix:** Split into `entrypoint` (our wrapper) + `command` (the original CMD):
-```yaml
-entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
-command: ["/opt/seafile/notification-server", "-c", "/opt/seafile", "-l", "..."]
-```
+**Fix:** Split into `entrypoint` (wrapper) + `command` (original CMD).
 
-**Why CE worked:** CE services all use `/sbin/my_init -- /scripts/enterpoint.sh` which was passed as args to our wrapper correctly. Pro services have different entrypoints (Go binary, different script path).
-
-**Lesson:** Always check the original ENTRYPOINT/CMD of each image with `docker inspect`. Don't assume all services in a stack use the same pattern.
+**Lesson:** Always check original ENTRYPOINT/CMD with `docker inspect`. Don't assume all services use the same pattern.
 
 ---
 
-## Bug #2: seadoc + thumbnail "Waiting Nginx" infinite loop
+## Bug #2: seadoc + thumbnail "Waiting Nginx" loop (FIXED)
 
-**Symptom:** Both containers spam "Waiting Nginx" in logs and never start their actual service.
+**Symptom:** Containers spam "Waiting Nginx" and never start.
 
-**Root cause:** These images internally check if an HTTP proxy (Caddy/Nginx) is reachable before starting. In the official setup, Caddy sits in front. In our setup with Traefik, there's no Caddy — but the containers need to be reachable via Traefik to pass this check.
+**Root cause:** Images check for Caddy/Nginx proxy before starting. Without Traefik labels + proxy-public network, they never see incoming connections.
 
-**Fix:** Added Traefik labels + proxy-public network to seadoc and thumbnail (copied from working CE setup):
-- seadoc: routers for `/socket.io/` and `/sdoc-server`
-- thumbnail: router for `/thumbnail`
+**Fix:** Added Traefik labels + proxy-public network (from working CE setup).
 
-**Why CE worked:** CE already had Traefik labels on seadoc, notification, and thumbnail.
-
-**Lesson:** I assumed the main Seafile container routes all sub-paths internally. Wrong — check the CE reference and official docs first. Each service with an external URL path needs its own Traefik router.
+**Lesson:** Every service with Caddy labels in the original needs equivalent Traefik labels + proxy-public network.
 
 ---
 
-## OPEN: Thumbnail 403 Forbidden
+## Bug #3: Docker Secrets not available in app container (FIXED — workaround)
 
-**Status:** Container runs, but browser gets 403 when requesting `/thumbnail/...`
+**Symptom:** `docker exec app env | grep JWT` returns empty. All password/key env vars missing.
 
-**Suspected cause:** Traefik routes `/thumbnail` to the main Seafile router (which has access/security middlewares) instead of the thumbnail-specific router. Both routers match the same Host — need to set higher priority on the PathPrefix router.
+**Root cause:** Phusion's `my_init` init system clears and re-imports environment variables from `/etc/container_environment/` after each startup script. Our `export` commands in the entrypoint wrapper were lost during this cycle. Even writing to `/etc/container_environment/` didn't reliably work.
 
-**Next step:** Add `priority` to thumbnail Traefik labels, or check if the thumbnail router needs the same middlewares.
+**Workaround:** Removed Docker Secrets entirely. Passwords stored directly in `.env` (gitignored). The entrypoint wrapper now only handles `seahub_custom.py` injection.
+
+**Open:** Revisit when Seafile adds native `_FILE` env var support (GitHub issue #150 — open since 2019).
 
 ---
 
-## OPEN: SeaSearch not initialized / Wiki Search 500
+## Bug #4: Thumbnail 403 Forbidden (FIXED)
 
-**Status:** Container runs but shows only "idle script". Wiki search returns 500.
+**Symptom:** Browser gets 403 when requesting `/thumbnail/...`.
 
-**Root cause:** `SS_FIRST_ADMIN_PASSWORD` environment variable is empty. SeaSearch needs it for initialization. In the original setup this comes from `INIT_SEAFILE_ADMIN_PASSWORD` in .env. In our setup the admin password is a Docker Secret, but SeaSearch doesn't have the entrypoint wrapper.
+**Root cause:** Two issues:
+1. **Traefik router priority**: Main Seafile router caught all requests including `/thumbnail`. Sub-service routers need higher priority.
+2. **Passwords missing**: JWT_PRIVATE_KEY not available in thumbnail container (Bug #3).
 
-**Next step:** Add entrypoint wrapper to SeaSearch (same pattern as notification-server: `entrypoint` + `command` split). Original CMD: `["bash", "-c", "/opt/scripts/entrypoint.sh"]`
+**Fix:** 
+- Set `priority=1` on main router, `priority=100` on sub-services
+- Passwords in .env instead of secrets
+- `INNER_SEAHUB_SERVICE_URL=http://app:80`
+
+---
+
+## Bug #5: SeaSearch not indexing / Search returns no results (FIXED)
+
+**Symptom:** File search and Wiki search return "No results matching".
+
+**Root cause:** Three issues:
+1. `SS_FIRST_ADMIN_PASSWORD` was empty (secrets wrapper didn't work)
+2. `seafevents.conf` had Elasticsearch config instead of SeaSearch
+3. SeaSearch uses port 4080, not 9200 (Elasticsearch) or 9999
+
+**Fix:**
+- Passwords in .env
+- Added `[SEASEARCH]` section in `seafevents.conf` with base64 auth token
+- Set `[INDEX FILES] enabled = false`
+- Manual initial indexing: `pro.py search --update`
+
+**Lesson:** SeaSearch is NOT a drop-in replacement for Elasticsearch config. It needs its own `[SEASEARCH]` section with different URL, port, and auth mechanism.
+
+---
+
+## Bug #6: ClamAV unreachable from app container (FIXED)
+
+**Symptom:** `clamdscan` in app container couldn't connect to ClamAV daemon.
+
+**Root cause:** ClamAV runs in separate container. `clamdscan` defaults to local Unix socket. Needs TCP configuration to reach ClamAV container.
+
+**Fix:** Created `config/clamd-remote.conf` with `TCPSocket 3310` + `TCPAddr clamav`, mounted as `/etc/clamav/clamd.conf:ro` in app container.
+
+**Verification:** `curl -s https://secure.eicar.org/eicar.com.txt | clamdscan -` → `Eicar-Test-Signature FOUND`
+
+---
+
+## Bug #7: seahub_custom.py not injected on first start (EXPECTED)
+
+**Symptom:** OnlyOffice integration doesn't work after first `docker compose up -d`.
+
+**Root cause:** On first boot, Seafile creates `seahub_settings.py`. Our entrypoint wrapper tries to append custom settings but the file doesn't exist yet during the first run.
+
+**Fix:** `docker compose restart app` after first start. The wrapper injects settings on the second run. Only needed once — documented in UPSTREAM.md.
+
+---
+
+## Lessons Learned
+
+1. **Phusion `my_init` kills exported env vars** — Don't rely on shell `export` surviving `my_init`. Either use `.env` directly or write to `/etc/container_environment/`.
+
+2. **Each Caddy-labeled service needs a Traefik equivalent** — Don't assume the main container routes sub-paths. Check the original and CE reference.
+
+3. **Traefik router priority matters** — When multiple routers match the same Host, use `priority` to ensure PathPrefix routers are preferred over the catch-all.
+
+4. **SeaSearch ≠ Elasticsearch config** — Different port (4080 vs 9200), different config section (`[SEASEARCH]` vs `[INDEX FILES]`), different auth (base64 token vs none).
+
+5. **Start with the original pattern** — We wasted hours on the Secrets wrapper. Should have started with passwords in `.env` (like the original) and added Secrets as enhancement later.
+
+---
+
+## Open Issues / Security Notes
+
+- **Passwords in .env**: Not ideal — `.env` is gitignored but still plain text on disk. Docker Secrets would be better but require solving the `my_init` env var problem. Monitor Seafile GitHub issue #150 for native `_FILE` support.
+
+- **Post-install manual steps**: `seafevents.conf` and `seafile.conf` require manual configuration after first install. Could potentially be automated via the entrypoint wrapper in the future.
+
+- **Notification WebSocket**: Works intermittently. May need WebSocket-specific Traefik middleware or connection upgrade headers. Test further.
+
+- **SeaSearch initial errors**: `seasearch error: {"error":"id not found"}` appears during first indexing — seems to be normal (creates indexes on first run).
