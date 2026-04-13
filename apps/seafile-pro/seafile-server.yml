@@ -1,115 +1,218 @@
 services:
+
+  # --------------------------------------------------------
+  # DATABASE (MariaDB)
+  # --------------------------------------------------------
   db:
-    image: ${SEAFILE_DB_IMAGE:-mariadb:10.11}
-    container_name: seafile-mysql
+    # --- Identity ---
+    image: mariadb:${DB_TAG}
+    container_name: ${CONTAINER_NAME_DB}
     restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
     environment:
-      - MYSQL_ROOT_PASSWORD=${INIT_SEAFILE_MYSQL_ROOT_PASSWORD:-}
-      - MYSQL_LOG_CONSOLE=true
-      - MARIADB_AUTO_UPGRADE=1
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/DB_ROOT_PWD
+      MYSQL_LOG_CONSOLE: "true"
+      MARIADB_AUTO_UPGRADE: "1"
+      TZ: ${TZ}
+    secrets:
+      - DB_ROOT_PWD
+
+    # --- Storage ---
     volumes:
-      - "${SEAFILE_MYSQL_VOLUME:-/opt/seafile-mysql/db}:/var/lib/mysql"
+      - ./volumes/mysql:/var/lib/mysql
+
+    # --- Networking ---
     networks:
-      - seafile-net
+      - app-internal
+
+    # --- Health & Observability ---
     healthcheck:
-      test:
-        [
-          "CMD",
-          "/usr/local/bin/healthcheck.sh",
-          "--connect",
-          "--mariadbupgrade",
-          "--innodb_initialized",
-        ]
+      test: ["CMD", "healthcheck.sh", "--connect", "--mariadbupgrade", "--innodb_initialized"]
       interval: 20s
-      start_period: 30s
       timeout: 5s
       retries: 10
+      start_period: 30s
 
+  # --------------------------------------------------------
+  # REDIS
+  # --------------------------------------------------------
   redis:
-    image: ${SEAFILE_REDIS_IMAGE:-redis}
-    container_name: seafile-redis
+    # --- Identity ---
+    image: redis:${REDIS_TAG}
+    container_name: ${CONTAINER_NAME_REDIS}
     restart: unless-stopped
-    command:
-      - /bin/sh
-      - -c
-      - redis-server --requirepass "$$REDIS_PASSWORD"
-    environment:
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
-    networks:
-      - seafile-net
 
-  seafile:
-    image: ${SEAFILE_IMAGE:-seafileltd/seafile-pro-mc:13.0-latest}
-    container_name: seafile
-    restart: unless-stopped
-    # ports:
-    #   - "80:80"
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    command: ["sh", "-c", "redis-server --requirepass \"$$(cat /run/secrets/REDIS_PWD)\""]
+    secrets:
+      - REDIS_PWD
+
+    # --- Storage ---
     volumes:
-      - ${SEAFILE_VOLUME:-/opt/seafile-data}:/shared
-    environment:
-      - INIT_SEAFILE_MYSQL_ROOT_PASSWORD=${INIT_SEAFILE_MYSQL_ROOT_PASSWORD:-}
-      - SEAFILE_MYSQL_DB_HOST=${SEAFILE_MYSQL_DB_HOST:-db}
-      - SEAFILE_MYSQL_DB_PORT=${SEAFILE_MYSQL_DB_PORT:-3306}
-      - SEAFILE_MYSQL_DB_USER=${SEAFILE_MYSQL_DB_USER:-seafile}
-      - SEAFILE_MYSQL_DB_PASSWORD=${SEAFILE_MYSQL_DB_PASSWORD:?Variable is not set or empty}
-      - SEAFILE_MYSQL_DB_CCNET_DB_NAME=${SEAFILE_MYSQL_DB_CCNET_DB_NAME:-ccnet_db}
-      - SEAFILE_MYSQL_DB_SEAFILE_DB_NAME=${SEAFILE_MYSQL_DB_SEAFILE_DB_NAME:-seafile_db}
-      - SEAFILE_MYSQL_DB_SEAHUB_DB_NAME=${SEAFILE_MYSQL_DB_SEAHUB_DB_NAME:-seahub_db}
-      - TIME_ZONE=${TIME_ZONE:-Etc/UTC}
-      - INIT_SEAFILE_ADMIN_EMAIL=${INIT_SEAFILE_ADMIN_EMAIL:-me@example.com}
-      - INIT_SEAFILE_ADMIN_PASSWORD=${INIT_SEAFILE_ADMIN_PASSWORD:-asecret}
-      - SEAFILE_SERVER_HOSTNAME=${SEAFILE_SERVER_HOSTNAME:?Variable is not set or empty}
-      - SEAFILE_SERVER_PROTOCOL=${SEAFILE_SERVER_PROTOCOL:-http}
-      - SITE_ROOT=${SITE_ROOT:-/}
-      - NON_ROOT=${NON_ROOT:-false}
-      - JWT_PRIVATE_KEY=${JWT_PRIVATE_KEY:?Variable is not set or empty}
-      - SEAFILE_LOG_TO_STDOUT=${SEAFILE_LOG_TO_STDOUT:-false}
-      - ENABLE_GO_FILESERVER=${ENABLE_GO_FILESERVER:-true}
-      - ENABLE_SEADOC=${ENABLE_SEADOC:-true}
-      - SEADOC_SERVER_URL=${SEAFILE_SERVER_PROTOCOL:-http}://${SEAFILE_SERVER_HOSTNAME:?Variable is not set or empty}/sdoc-server
-      - CACHE_PROVIDER=${CACHE_PROVIDER:-redis}
-      - REDIS_HOST=${REDIS_HOST:-redis}
-      - REDIS_PORT=${REDIS_PORT:-6379}
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
-      - MEMCACHED_HOST=${MEMCACHED_HOST:-memcached}
-      - MEMCACHED_PORT=${MEMCACHED_PORT:-11211}
-      - SEAF_SERVER_STORAGE_TYPE=${SEAF_SERVER_STORAGE_TYPE:-}
-      - S3_COMMIT_BUCKET=${S3_COMMIT_BUCKET:-}
-      - S3_FS_BUCKET=${S3_FS_BUCKET:-}
-      - S3_BLOCK_BUCKET=${S3_BLOCK_BUCKET:-}
-      - S3_KEY_ID=${S3_KEY_ID:-}
-      - S3_SECRET_KEY=${S3_SECRET_KEY:-}
-      - S3_USE_V4_SIGNATURE=${S3_USE_V4_SIGNATURE:-true}
-      - S3_AWS_REGION=${S3_AWS_REGION:-us-east-1}
-      - S3_HOST=${S3_HOST:-}
-      - S3_USE_HTTPS=${S3_USE_HTTPS:-true}
-      - S3_PATH_STYLE_REQUEST=${S3_PATH_STYLE_REQUEST:-false}
-      - S3_SSE_C_KEY=${S3_SSE_C_KEY:-}
-      - ENABLE_NOTIFICATION_SERVER=${ENABLE_NOTIFICATION_SERVER:-false}
-      - INNER_NOTIFICATION_SERVER_URL=${INNER_NOTIFICATION_SERVER_URL:-http://notification-server:8083}
-      - NOTIFICATION_SERVER_URL=${NOTIFICATION_SERVER_URL:-${SEAFILE_SERVER_PROTOCOL:-http}://${SEAFILE_SERVER_HOSTNAME:?Variable is not set or empty}/notification}
-      - ENABLE_SEAFILE_AI=${ENABLE_SEAFILE_AI:-false}
-      - ENABLE_FACE_RECOGNITION=${ENABLE_FACE_RECOGNITION:-false}
-      - SEAFILE_AI_SERVER_URL=${SEAFILE_AI_SERVER_URL:-http://seafile-ai:8888}
-      - SEAFILE_AI_SECRET_KEY=${JWT_PRIVATE_KEY:?Variable is not set or empty}
-      - MD_FILE_COUNT_LIMIT=${MD_FILE_COUNT_LIMIT:-100000}
-    labels:
-      caddy: ${SEAFILE_SERVER_PROTOCOL:-http}://${SEAFILE_SERVER_HOSTNAME:?Variable is not set or empty}
-      caddy.reverse_proxy: "{{upstreams 80}}"
+      - ./volumes/redis:/data
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:80 || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      test: ["CMD-SHELL", "redis-cli -a \"$$(cat /run/secrets/REDIS_PWD)\" ping | grep PONG"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
       start_period: 10s
+
+  # --------------------------------------------------------
+  # SEAFILE SERVER
+  # --------------------------------------------------------
+  app:
+    # --- Identity ---
+    image: seafileltd/seafile-pro-mc:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
       redis:
-        condition: service_started
-    networks:
-      - seafile-net
+        condition: service_healthy
 
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    # NOTE: Seafile reads passwords via os.environ only — no _FILE support.
+    # The custom entrypoint reads Docker Secrets and exports them as env vars.
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh", "/sbin/my_init", "--", "/scripts/enterpoint.sh"]
+    environment:
+      # Database
+      - SEAFILE_MYSQL_DB_HOST=db
+      - SEAFILE_MYSQL_DB_PORT=3306
+      - SEAFILE_MYSQL_DB_USER=${DB_USER}
+      - SEAFILE_MYSQL_DB_CCNET_DB_NAME=ccnet_db
+      - SEAFILE_MYSQL_DB_SEAFILE_DB_NAME=seafile_db
+      - SEAFILE_MYSQL_DB_SEAHUB_DB_NAME=seahub_db
+      # Server
+      - SEAFILE_SERVER_HOSTNAME=${APP_TRAEFIK_HOST}
+      - SEAFILE_SERVER_PROTOCOL=https
+      - SITE_ROOT=/
+      - NON_ROOT=false
+      - SEAFILE_LOG_TO_STDOUT=false
+      - ENABLE_GO_FILESERVER=true
+      # Admin (first install only)
+      - INIT_SEAFILE_ADMIN_EMAIL=${SEAFILE_ADMIN_EMAIL}
+      # Cache
+      - CACHE_PROVIDER=redis
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      # SeaDoc
+      - ENABLE_SEADOC=${ENABLE_SEADOC}
+      - SEADOC_SERVER_URL=https://${APP_TRAEFIK_HOST}/sdoc-server
+      # Notification
+      - ENABLE_NOTIFICATION_SERVER=${ENABLE_NOTIFICATION_SERVER}
+      - NOTIFICATION_SERVER_URL=https://${APP_TRAEFIK_HOST}/notification
+      - INNER_NOTIFICATION_SERVER_URL=http://notification-server:8083
+      # AI (optional)
+      - ENABLE_SEAFILE_AI=${ENABLE_SEAFILE_AI:-false}
+      - ENABLE_FACE_RECOGNITION=${ENABLE_FACE_RECOGNITION:-false}
+      - SEAFILE_AI_SERVER_URL=http://seafile-ai:8888
+      # Metadata
+      - MD_FILE_COUNT_LIMIT=${MD_FILE_COUNT_LIMIT:-100000}
+      # OnlyOffice
+      - ONLYOFFICE_URL=https://${ONLYOFFICE_HOST}
+      # Storage
+      - SEAF_SERVER_STORAGE_TYPE=${SEAF_SERVER_STORAGE_TYPE:-disk}
+      # S3 (only when SEAF_SERVER_STORAGE_TYPE=s3)
+      #- S3_COMMIT_BUCKET=${S3_COMMIT_BUCKET:-}
+      #- S3_FS_BUCKET=${S3_FS_BUCKET:-}
+      #- S3_BLOCK_BUCKET=${S3_BLOCK_BUCKET:-}
+      #- S3_KEY_ID=${S3_KEY_ID:-}
+      #- S3_SECRET_KEY=${S3_SECRET_KEY:-}
+      #- S3_USE_V4_SIGNATURE=${S3_USE_V4_SIGNATURE:-true}
+      #- S3_AWS_REGION=${S3_AWS_REGION:-us-east-1}
+      #- S3_HOST=${S3_HOST:-}
+      #- S3_USE_HTTPS=${S3_USE_HTTPS:-true}
+      #- S3_PATH_STYLE_REQUEST=${S3_PATH_STYLE_REQUEST:-false}
+      #- S3_SSE_C_KEY=${S3_SSE_C_KEY:-}
+      # Time
+      - TIME_ZONE=${TZ}
+      - TZ=${TZ}
+    secrets:
+      - DB_ROOT_PWD
+      - SEAFILE_DB_PWD
+      - SEAFILE_ADMIN_PWD
+      - JWT_KEY
+      - REDIS_PWD
+      - ONLYOFFICE_JWT_SECRET
+
+    # --- Storage ---
+    volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
+      - ./config/seahub_custom.py:/config/seahub_custom.py:ro
+      - ./volumes/seafile-data:/shared
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+      - app-internal
+
+    # --- Traefik ---
+    labels:
+      # Router
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      # TLS
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Middlewares
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      # Service
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:80/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 180s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
 networks:
-  seafile-net:
-    name: seafile-net
+  proxy-public:
+    external: true
+
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  DB_ROOT_PWD:
+    file: ./.secrets/db_root_pwd.txt
+  SEAFILE_DB_PWD:
+    file: ./.secrets/seafile_db_pwd.txt
+  SEAFILE_ADMIN_PWD:
+    file: ./.secrets/seafile_admin_pwd.txt
+  JWT_KEY:
+    file: ./.secrets/jwt_key.txt
+  REDIS_PWD:
+    file: ./.secrets/redis_pwd.txt
+  ONLYOFFICE_JWT_SECRET:
+    file: ./.secrets/onlyoffice_jwt_secret.txt

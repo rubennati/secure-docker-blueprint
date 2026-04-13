@@ -1,11 +1,23 @@
 services:
-  av:
-    image: clamav/clamav:latest
-    container_name: seafile-clamav
+
+  # --------------------------------------------------------
+  # CLAMAV (Antivirus Scanner – Optional)
+  # Enable by adding clamav.yml to COMPOSE_FILE in .env
+  # --------------------------------------------------------
+  clamav:
+    # --- Identity ---
+    image: clamav/clamav:${CLAMAV_TAG}
+    container_name: ${CONTAINER_NAME_CLAMAV}
     restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Networking ---
     networks:
-      - seafile-net
+      - app-internal
 
 networks:
-  seafile-net:
-    name: seafile-net
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
