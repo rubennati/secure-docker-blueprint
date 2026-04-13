@@ -19,7 +19,8 @@ services:
       - no-new-privileges:true
 
     # --- Configuration ---
-    entrypoint: ["/bin/sh", "/config/entrypoint.sh", "/scripts/enterpoint.sh"]
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
+    command: ["bash", "-c", "/opt/scripts/entrypoint.sh"]
     environment:
       - SEAFILE_MYSQL_DB_HOST=db
       - SEAFILE_MYSQL_DB_PORT=3306

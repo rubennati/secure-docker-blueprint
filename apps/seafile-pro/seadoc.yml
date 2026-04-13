@@ -11,13 +11,17 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      app:
+        condition: service_healthy
 
     # --- Security ---
     security_opt:
       - no-new-privileges:true
 
     # --- Configuration ---
-    entrypoint: ["/bin/sh", "/config/entrypoint.sh", "/scripts/enterpoint.sh"]
+    # NOTE: SeaDoc does not support _FILE env vars.
+    # The shared entrypoint reads secrets and exports them as env vars.
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh", "/sbin/my_init", "--", "/scripts/enterpoint.sh"]
     environment:
       - DB_HOST=db
       - DB_PORT=3306
@@ -37,8 +41,37 @@ services:
 
     # --- Networking ---
     networks:
+      - proxy-public
       - app-internal
 
+    # --- Traefik ---
+    labels:
+      # Router: socket.io (WebSocket, no path stripping)
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc-ws.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/socket.io/`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc-ws.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc-ws.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc-ws.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc-ws.service=${COMPOSE_PROJECT_NAME}-seadoc"
+      # Router: sdoc-server API (strip /sdoc-server prefix)
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/sdoc-server`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.middlewares=seadoc-strip@docker"
+      - "traefik.http.middlewares.seadoc-strip.stripprefix.prefixes=/sdoc-server"
+      # Service
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}-seadoc.loadbalancer.server.port=80"
+
 networks:
+  proxy-public:
+    external: true
   app-internal:
     name: ${COMPOSE_PROJECT_NAME}-internal
+
+secrets:
+  SEAFILE_DB_PWD:
+    file: ./.secrets/seafile_db_pwd.txt
+  JWT_KEY:
+    file: ./.secrets/jwt_key.txt

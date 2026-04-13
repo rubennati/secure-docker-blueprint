@@ -19,45 +19,56 @@ services:
       - no-new-privileges:true
 
     # --- Configuration ---
-    entrypoint: ["/bin/sh", "/config/entrypoint.sh", "/scripts/enterpoint.sh"]
+    # NOTE: thumbnail-server supports _FILE env vars — no entrypoint wrapper needed.
     environment:
       - TIME_ZONE=${TZ}
       - SEAFILE_MYSQL_DB_HOST=db
       - SEAFILE_MYSQL_DB_PORT=3306
       - SEAFILE_MYSQL_DB_USER=${DB_USER}
+      - SEAFILE_MYSQL_DB_PASSWORD_FILE=/run/secrets/SEAFILE_DB_PWD
       - SEAFILE_MYSQL_DB_CCNET_DB_NAME=ccnet_db
       - SEAFILE_MYSQL_DB_SEAFILE_DB_NAME=seafile_db
       - NON_ROOT=false
+      - JWT_PRIVATE_KEY_FILE=/run/secrets/JWT_KEY
       - SEAFILE_LOG_TO_STDOUT=false
       - SITE_ROOT=/
       - INNER_SEAHUB_SERVICE_URL=http://app
       - THUMBNAIL_IMAGE_ORIGINAL_SIZE_LIMIT=${THUMBNAIL_SIZE_LIMIT:-256}
       - SEAF_SERVER_STORAGE_TYPE=${SEAF_SERVER_STORAGE_TYPE:-disk}
-      # S3 (only when SEAF_SERVER_STORAGE_TYPE=s3, uncomment and configure)
-      #- S3_COMMIT_BUCKET=${S3_COMMIT_BUCKET:-}
-      #- S3_FS_BUCKET=${S3_FS_BUCKET:-}
-      #- S3_BLOCK_BUCKET=${S3_BLOCK_BUCKET:-}
-      #- S3_KEY_ID=${S3_KEY_ID:-}
-      #- S3_SECRET_KEY=${S3_SECRET_KEY:-}
-      #- S3_USE_V4_SIGNATURE=${S3_USE_V4_SIGNATURE:-true}
-      #- S3_AWS_REGION=${S3_AWS_REGION:-us-east-1}
-      #- S3_HOST=${S3_HOST:-}
-      #- S3_USE_HTTPS=${S3_USE_HTTPS:-true}
-      #- S3_PATH_STYLE_REQUEST=${S3_PATH_STYLE_REQUEST:-false}
-      #- S3_SSE_C_KEY=${S3_SSE_C_KEY:-}
     secrets:
       - SEAFILE_DB_PWD
       - JWT_KEY
 
     # --- Storage ---
     volumes:
-      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
       - ./volumes/seafile-data:/shared
 
     # --- Networking ---
     networks:
+      - proxy-public
       - app-internal
 
+    # --- Traefik ---
+    labels:
+      # Router
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/thumbnail`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.entrypoints=websecure"
+      # TLS
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Service
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}-thumbnail.loadbalancer.server.port=80"
+
 networks:
+  proxy-public:
+    external: true
   app-internal:
     name: ${COMPOSE_PROJECT_NAME}-internal
+
+secrets:
+  SEAFILE_DB_PWD:
+    file: ./.secrets/seafile_db_pwd.txt
+  JWT_KEY:
+    file: ./.secrets/jwt_key.txt

@@ -19,7 +19,10 @@ services:
       - no-new-privileges:true
 
     # --- Configuration ---
-    entrypoint: ["/bin/sh", "/config/entrypoint.sh", "/scripts/enterpoint.sh"]
+    # NOTE: notification-server is a Go binary — no _FILE support, no shell entrypoint.
+    # Our wrapper exports secrets as env vars, then exec's the binary.
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
+    command: ["/opt/seafile/notification-server", "-c", "/opt/seafile", "-l", "/shared/seafile/logs/notification-server.log"]
     environment:
       - SEAFILE_MYSQL_DB_HOST=db
       - SEAFILE_MYSQL_DB_PORT=3306
@@ -39,8 +42,30 @@ services:
 
     # --- Networking ---
     networks:
+      - proxy-public
       - app-internal
 
+    # --- Traefik ---
+    labels:
+      # Router
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-notification.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/notification`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-notification.entrypoints=websecure"
+      # TLS
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-notification.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-notification.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Service
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}-notification.loadbalancer.server.port=8083"
+
 networks:
+  proxy-public:
+    external: true
   app-internal:
     name: ${COMPOSE_PROJECT_NAME}-internal
+
+secrets:
+  SEAFILE_DB_PWD:
+    file: ./.secrets/seafile_db_pwd.txt
+  JWT_KEY:
+    file: ./.secrets/jwt_key.txt
