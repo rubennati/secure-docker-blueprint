@@ -1,10 +1,9 @@
 #!/bin/sh
-# =========================================================
-# Load TOKEN from Docker Secret at runtime.
-# Hawser does not support TOKEN_FILE natively.
-# =========================================================
 set -e
 
-export TOKEN="$(cat /run/secrets/HAWSER_TOKEN)"
+# Load TOKEN from Docker Secret at runtime.
+# Hawser reads TOKEN directly from env — no _FILE support.
+[ -f /run/secrets/HAWSER_TOKEN ] && \
+  export TOKEN="$(cat /run/secrets/HAWSER_TOKEN)"
 
-exec /hawser "$@"
+exec /usr/local/bin/hawser "$@"
