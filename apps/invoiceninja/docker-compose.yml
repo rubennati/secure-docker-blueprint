@@ -1,74 +1,39 @@
 services:
-
-  # --------------------------------------------------------
-  # INVOICE NINJA (PHP-FPM + Supervisor)
-  # --------------------------------------------------------
   app:
-    # --- Identity ---
+    build:
+      context: .
     image: invoiceninja/invoiceninja-debian:${APP_TAG}
     container_name: ${APP_CONTAINER}
     restart: unless-stopped
+    env_file:
+      - ./.env
+    volumes:
+      # - ./php/php.ini:/usr/local/etc/php/conf.d/invoiceninja.ini:ro
+      # - ./php/php-fpm.conf:/usr/local/etc/php-fpm.d/invoiceninja.conf:ro
+      # - ./supervisor/supervisord.conf:/etc/supervisor/conf.d/supervisord.conf:ro
+      - app_public:/var/www/html/public
+      - app_storage:/var/www/html/storage
     depends_on:
       mysql:
         condition: service_healthy
       redis:
         condition: service_healthy
-
-    # --- Security ---
-    security_opt:
-      - no-new-privileges:true
-
-    # --- Configuration ---
-    entrypoint: ["/bin/sh", "/config/entrypoint.sh", "/usr/local/bin/init.sh"]
-    command: ["supervisord", "-c", "/etc/supervisor/supervisord.conf"]
-    env_file:
-      - ./.env
-    secrets:
-      - DB_PWD
-      - IN_USER_PWD
-
-    # --- Storage ---
-    volumes:
-      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
-      - app_public:/var/www/html/public
-      - app_storage:/var/www/html/storage
-
-    # --- Networking ---
     networks:
-      - app-internal
+      - internal
 
-  # --------------------------------------------------------
-  # NGINX (Web Server)
-  # --------------------------------------------------------
   nginx:
-    # --- Identity ---
     image: nginx:${NGINX_TAG}
     container_name: ${NGINX_CONTAINER}
     restart: unless-stopped
-    depends_on:
-      - app
-
-    # --- Security ---
-    security_opt:
-      - no-new-privileges:true
-    read_only: true
-    tmpfs:
-      - /tmp
-      - /var/cache/nginx
-      - /run
-
-    # --- Storage ---
     volumes:
       - ./nginx:/etc/nginx/conf.d:ro
       - app_public:/var/www/html/public:ro
       - app_storage:/var/www/html/storage:ro
-
-    # --- Networking ---
+    depends_on:
+      - app
     networks:
-      - app-internal
-      - proxy-public
-
-    # --- Traefik ---
+      - internal
+      - proxy
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=${NETWORK_NAME}"
@@ -81,67 +46,34 @@ services:
       - "traefik.http.routers.${ROUTER_NAME}.service=${SERVICE_NAME}"
       - "traefik.http.services.${SERVICE_NAME}.loadbalancer.server.port=80"
 
-  # --------------------------------------------------------
-  # MySQL
-  # --------------------------------------------------------
   mysql:
-    # --- Identity ---
     image: mysql:${MYSQL_TAG}
     container_name: ${MYSQL_CONTAINER}
     restart: unless-stopped
-
-    # --- Security ---
-    security_opt:
-      - no-new-privileges:true
-
-    # --- Configuration ---
     environment:
       MYSQL_DATABASE: ${DB_DATABASE}
       MYSQL_USER: ${DB_USERNAME}
-      MYSQL_PASSWORD_FILE: /run/secrets/DB_PWD
-      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/DB_ROOT_PWD
-    secrets:
-      - DB_PWD
-      - DB_ROOT_PWD
-
-    # --- Storage ---
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
     volumes:
       - mysql_data:/var/lib/mysql
-
-    # --- Networking ---
     networks:
-      - app-internal
-
-    # --- Health & Observability ---
+      - internal
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root --password=$$(cat /run/secrets/DB_ROOT_PWD) --silent"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u${DB_USERNAME}", "-p${DB_PASSWORD}"]
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 30s
 
-  # --------------------------------------------------------
-  # Redis
-  # --------------------------------------------------------
   redis:
-    # --- Identity ---
     image: redis:${REDIS_TAG}
     container_name: ${REDIS_CONTAINER}
     restart: unless-stopped
-
-    # --- Security ---
-    security_opt:
-      - no-new-privileges:true
-
-    # --- Storage ---
     volumes:
       - redis_data:/data
-
-    # --- Networking ---
     networks:
-      - app-internal
-
-    # --- Health & Observability ---
+      - internal
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -149,9 +81,6 @@ services:
       retries: 10
       start_period: 10s
 
-# --------------------------------------------------------
-# VOLUMES
-# --------------------------------------------------------
 volumes:
   app_public:
     driver: local
@@ -162,23 +91,10 @@ volumes:
   redis_data:
     driver: local
 
-# --------------------------------------------------------
-# NETWORKS
-# --------------------------------------------------------
 networks:
-  proxy-public:
-    external: true
-
-  app-internal:
+  internal:
     name: ${COMPOSE_PROJECT_NAME}-internal
-
-# --------------------------------------------------------
-# SECRETS
-# --------------------------------------------------------
-secrets:
-  DB_PWD:
-    file: ./secrets/db_pwd.txt
-  DB_ROOT_PWD:
-    file: ./secrets/db_root_pwd.txt
-  IN_USER_PWD:
-    file: ./secrets/in_user_pwd.txt
+    driver: bridge
+  proxy:
+    external: true
+    name: ${NETWORK_NAME}
