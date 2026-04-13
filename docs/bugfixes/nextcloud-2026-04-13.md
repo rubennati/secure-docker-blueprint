@@ -62,3 +62,15 @@ session_start(): Failed to read session data: redis (path: tcp://redis:6379?auth
 **Fix:** Changed to `${REDIS_PASSWORD}` (single-dollar). Compose substitutes the value from `.env` at compose-time before the healthcheck runs.
 
 **Lesson:** Use `$$` only when the variable must be resolved inside the container at runtime (e.g. from the container's own environment). Use `$` when Compose should substitute the value before starting the container.
+
+---
+
+## Bug #5: OnlyOffice "Error while downloading the document file"
+
+**Symptom:** OnlyOffice integration in Nextcloud shows "Error occurred in the document service: Error while downloading the document file to be converted."
+
+**Root cause:** Nextcloud was behind `acc-tailscale` (Tailscale IP allowlist). OnlyOffice calls back to Nextcloud via the public domain (`https://cloud.example.com`) to download documents. This callback comes from OnlyOffice's container IP (not a Tailscale IP), so Traefik's access middleware blocks it.
+
+**Fix:** Changed Nextcloud from `acc-tailscale` to `acc-public`. Any service that receives callbacks from other services via its public domain must be publicly accessible.
+
+**Lesson:** When two services communicate via their public domains (not internal Docker networking), both must be `acc-public`. This applies to any integration where Service A tells Service B to fetch content from Service A's URL (OnlyOffice ↔ Nextcloud, OnlyOffice ↔ Seafile).
