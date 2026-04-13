@@ -124,6 +124,121 @@ When bumping the Seafile Pro version:
 6. Verify login and file access
 7. Re-run search index: `docker exec app pro.py search --update`
 
+## Troubleshooting & Verification
+
+### Check all services are running
+
+```bash
+docker compose ps
+# All containers should be Up/Healthy. No "Restarting" loops.
+```
+
+### Verify environment variables reach containers
+
+```bash
+# JWT key in app container (must not be empty)
+docker exec seafile-pro-app env | grep JWT_PRIVATE_KEY
+
+# Passwords in any container
+docker exec seafile-pro-app env | grep -i "password\|secret"
+
+# SeaSearch admin credentials
+docker exec seafile-pro-seasearch env | grep SS_FIRST
+```
+
+### Check service connectivity
+
+```bash
+# SeaSearch reachable from app?
+docker exec seafile-pro-app curl -s http://seasearch:4080/version
+# Expected: {"version":"v0.0.0",...}
+
+# Notification server reachable from outside?
+curl -s https://your-domain/notification/ping
+# Expected: {"ret": "pong"}
+
+# Thumbnail server reachable from app?
+docker exec seafile-pro-app curl -sI http://thumbnail-server/thumbnail/ping
+# Expected: HTTP 405 (Method Not Allowed = server runs, just doesn't accept HEAD)
+
+# ClamAV reachable from app?
+docker exec seafile-pro-app bash -c "echo PING | nc -w3 clamav 3310"
+# Expected: PONG
+
+# Metadata server reachable from app?
+docker exec seafile-pro-app curl -s http://md-server:8084/
+```
+
+### Check config files
+
+```bash
+# seahub_settings.py — OnlyOffice + Metadata + Thumbnail settings
+docker exec seafile-pro-app grep -i "onlyoffice\|metadata\|thumbnail\|Blueprint" /shared/seafile/conf/seahub_settings.py
+
+# seafevents.conf — SeaSearch config
+docker exec seafile-pro-app cat /shared/seafile/conf/seafevents.conf | grep -A5 "SEASEARCH"
+
+# seafile.conf — ClamAV config
+docker exec seafile-pro-app cat /shared/seafile/conf/seafile.conf | grep -A7 "virus_scan"
+```
+
+### Check logs for errors
+
+```bash
+# Seafile app logs (main errors)
+docker exec seafile-pro-app cat /shared/seafile/logs/seafevents.log | tail -30
+
+# Specific error search
+docker exec seafile-pro-app cat /shared/seafile/logs/seafevents.log | grep -i "error\|fail" | tail -10
+
+# Virus scan status
+docker exec seafile-pro-app cat /shared/seafile/logs/seafevents.log | grep -i "virus" | tail -10
+
+# SeaSearch logs
+docker exec seafile-pro-seasearch cat /opt/seasearch/data/log/seasearch.log | tail -20
+
+# Individual service logs
+docker compose logs --tail=20 seadoc
+docker compose logs --tail=20 notification-server
+docker compose logs --tail=20 md-server
+docker compose logs --tail=20 thumbnail-server
+docker compose logs --tail=20 seasearch
+```
+
+### Test ClamAV virus detection
+
+```bash
+# EICAR test (harmless test signature)
+docker exec seafile-pro-app bash -c "curl -s https://secure.eicar.org/eicar.com.txt | clamdscan -"
+# Expected: stream: Eicar-Test-Signature FOUND
+```
+
+### Trigger manual search index
+
+```bash
+# Useful after first install or adding many files
+docker exec seafile-pro-app /opt/seafile/seafile-server-latest/pro/pro.py search --update
+```
+
+### Check original entrypoint/CMD of an image
+
+```bash
+# Useful when adding new overlay services
+docker inspect --format='{{json .Config.Entrypoint}} {{json .Config.Cmd}}' <image>
+```
+
+### Common issues
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| Service exit code 127 | Wrong entrypoint/command path | Check original CMD with `docker inspect` |
+| "Waiting Nginx" loop | Missing Traefik labels + proxy-public | Add labels like CE reference |
+| Thumbnail 403 | Router priority or missing JWT | Set priority=100, check env vars |
+| Search "No results" | SeaSearch not configured in seafevents.conf | Add [SEASEARCH] section |
+| env vars empty in app | my_init clears exports | Use .env directly, not Docker Secrets |
+| ClamAV connection refused | Missing clamd-remote.conf mount | Mount config with TCPAddr clamav |
+| OnlyOffice not loading | seahub_custom.py not injected | `docker compose restart app` |
+
 ## Upstream diff commands
 
 ```bash
