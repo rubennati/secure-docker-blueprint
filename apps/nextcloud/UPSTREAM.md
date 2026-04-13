@@ -54,6 +54,31 @@ When bumping the Nextcloud version:
 6. Check `docker compose logs -f app` for migration output
 7. Run `docker compose exec -u www-data app php occ status` to verify
 
+## Post-install steps
+
+After the first browser-based setup, fix Nextcloud's security warnings:
+
+```bash
+# Fix log file permissions
+docker compose exec app chown -R www-data:www-data /var/www/html/data
+
+# Set maintenance window to 1 AM (avoids heavy jobs during usage)
+docker compose exec -u www-data app php occ config:system:set maintenance_window_start --value=1 --type=integer
+
+# Run mimetype migrations
+docker compose exec -u www-data app php occ maintenance:repair --include-expensive
+
+# Set default phone region (ISO 3166-1 code)
+docker compose exec -u www-data app php occ config:system:set default_phone_region --value="AT"
+```
+
+Remaining warnings that are safe to ignore:
+- `.well-known URLs` — CalDAV/CardDAV redirect works via Traefik middleware, Nextcloud self-check doesn't detect it
+- `X-Frame-Options` — Set by nginx, Nextcloud checks its own headers
+- `Second factor` — Enable later when needed
+- `AppAPI deploy daemon` — Only for External Apps
+- `Email test` — Configure when SMTP is set up
+
 ## Upstream diff commands
 
 ```bash
