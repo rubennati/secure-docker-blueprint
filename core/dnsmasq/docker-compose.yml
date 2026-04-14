@@ -15,10 +15,12 @@ services:
     # --- Security ---
     security_opt:
       - no-new-privileges:true
-    cap_add:
-      - NET_BIND_SERVICE
     cap_drop:
       - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+      - SETUID
+      - SETGID
 
     # --- Storage ---
     volumes:
