@@ -6,7 +6,7 @@ services:
   # Issues and renews certs via Cloudflare DNS-01 challenge.
   #
   # Use for devices without Traefik (NAS, routers, etc.).
-  # Runs crond in background for automatic renewal.
+  # Runs crond in foreground for automatic renewal.
   #
   # Usage:
   #   ./scripts/wizard.sh              Interactive certificate wizard
@@ -16,11 +16,13 @@ services:
   # --------------------------------------------------------
   acme-certs:
     # --- Identity ---
-    image: ${APP_IMAGE}
+    image: neilpang/acme.sh:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}
     restart: unless-stopped
     entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
-    command: ["/bin/sh", "-c", "crond -f -d 8"]
+    # -f = foreground, -n = same as -f (BusyBox crond)
+    # NOTE: -d flag removed — not supported in acme.sh 3.1.2+
+    command: ["/bin/sh", "-c", "crond -f"]
 
     # --- Security ---
     security_opt:
@@ -28,7 +30,7 @@ services:
 
     # --- Configuration ---
     environment:
-      TZ: ${TIMEZONE}
+      TZ: ${TZ}
       ACME_EMAIL: ${ACME_EMAIL}
       CERT_DOMAIN: ${CERT_DOMAIN}
       CERT_SAN: ${CERT_SAN}
@@ -49,4 +51,4 @@ services:
 # --------------------------------------------------------
 secrets:
   CF_TOKEN:
-    file: ./secrets/cf_token.txt
+    file: ./.secrets/cf_token.txt
