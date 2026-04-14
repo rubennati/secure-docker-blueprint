@@ -113,10 +113,33 @@ volumes/output/example.com/
 
 | Device | What to Upload |
 |--------|---------------|
+| **Nginx Proxy Manager** | See detailed steps below |
 | **Synology DSM** | Certificate: `fullchain.pem`, Private Key: `privkey.pem` |
 | **OPNsense / pfSense** | Certificate: `cert.pem`, CA: `ca.pem`, Key: `privkey.pem` |
 | **Generic / Nginx** | `fullchain.pem` + `privkey.pem` |
+| **Traefik** | Mount `fullchain.pem` + `privkey.pem` in dynamic config |
 | **Windows / IIS** | Needs PFX format — see below |
+
+### Nginx Proxy Manager (NPM)
+
+1. Open NPM Admin → **SSL Certificates** → **Add SSL Certificate** → **Custom**
+2. Fill in:
+   - **Name:** Your domain (e.g. `example.com`)
+   - **Certificate Key:** Upload `privkey.pem`
+   - **Certificate:** Upload `fullchain.pem`
+   - **Intermediate Certificate:** Upload `ca.pem` (optional but recommended)
+3. Click **Save**
+4. Assign the certificate to your Proxy Host under the **SSL** tab
+
+### Synology DSM
+
+1. Open **Control Panel** → **Security** → **Certificate**
+2. Click **Add** → **Add a new certificate** → **Import certificate**
+3. Upload:
+   - **Private Key:** `privkey.pem`
+   - **Certificate:** `cert.pem`
+   - **Intermediate Certificate:** `ca.pem`
+4. Click **OK** and assign to your services
 
 ### PFX Conversion (Windows, IIS, .NET)
 
