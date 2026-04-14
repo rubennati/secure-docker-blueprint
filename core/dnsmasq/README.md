@@ -55,10 +55,11 @@ Edit `config/records.hosts`:
 100.100.100.20    printer.lab.example.com
 ```
 
-Restart to apply:
+Reload without restart (SIGHUP):
 ```bash
-docker compose restart
+docker exec dnsmasq kill -HUP 1
 ```
+This re-reads `records.hosts` and clears the DNS cache. No downtime.
 
 ## Verify
 
@@ -72,6 +73,15 @@ nslookup mynas.lab.example.com 127.0.0.1
 # Check upstream forwarding
 nslookup google.com 127.0.0.1
 ```
+
+## Reloading vs Restarting
+
+| Change | How to apply |
+|---|---|
+| `config/records.hosts` | `docker exec dnsmasq kill -HUP 1` (no downtime) |
+| DNS cache clear | `docker exec dnsmasq kill -HUP 1` |
+| `.env` + wildcard zones | `./ops/scripts/render.sh` then `docker compose restart` |
+| Upstream DNS, interfaces | `./ops/scripts/render.sh` then `docker compose restart` |
 
 ## Important Notes
 
