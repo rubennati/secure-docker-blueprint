@@ -29,7 +29,8 @@ neg-ttl=${DNS_NEG_TTL}
 interface=${DNS_INTERFACE_1}
 interface=${DNS_INTERFACE_2}
 # interface=${DNS_INTERFACE_3}
-bind-interfaces
+# bind-dynamic avoids DNS amplification attacks (recommended over bind-interfaces)
+bind-dynamic
 
 # =========================================================
 # STATIC HOST FILE
