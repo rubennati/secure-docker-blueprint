@@ -1,11 +1,11 @@
 services:
 
   # --------------------------------------------------------
-  # DATABASE
+  # DATABASE (MariaDB)
   # --------------------------------------------------------
-  database:
+  db:
     # --- Identity ---
-    image: ${DB_IMAGE}
+    image: mariadb:${DB_TAG}
     container_name: ${CONTAINER_NAME_DB}
     restart: unless-stopped
 
@@ -15,14 +15,12 @@ services:
 
     # --- Configuration ---
     environment:
-      MYSQL_DATABASE: ${DB_MYSQL_DATABASE}
-      MYSQL_USER: ${DB_MYSQL_USER}
-      MYSQL_PASSWORD_FILE: /run/secrets/DB_PWD
-      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/DB_ROOT_PWD
-      TZ: ${TIMEZONE}
-    secrets:
-      - DB_ROOT_PWD
-      - DB_PWD
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MARIADB_AUTO_UPGRADE: "1"
+      TZ: ${TZ}
 
     # --- Storage ---
     volumes:
@@ -34,22 +32,22 @@ services:
 
     # --- Health & Observability ---
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect"]
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 20s
       timeout: 5s
       retries: 10
-      start_period: 20s
+      start_period: 30s
 
   # --------------------------------------------------------
   # VAULTWARDEN
   # --------------------------------------------------------
   app:
     # --- Identity ---
-    image: ${APP_IMAGE}
+    image: vaultwarden/server:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}
     restart: unless-stopped
     depends_on:
-      database:
+      db:
         condition: service_healthy
 
     # --- Security ---
@@ -60,34 +58,46 @@ services:
       - /tmp
 
     # --- Configuration ---
-    # NOTE: Vaultwarden does not support DATABASE_URL_FILE.
-    # config/entrypoint.sh builds the URL at runtime from the
-    # DB secret + env vars below, then exec's the real start.
-    entrypoint: /entrypoint-custom.sh
     environment:
-      DB_HOST: database
-      DB_PORT: "3306"
-      DB_NAME: ${DB_MYSQL_DATABASE}
-      DB_USER: ${DB_MYSQL_USER}
+      # Core
       DOMAIN: https://${APP_TRAEFIK_HOST}
+      DATABASE_URL: mysql://${DB_USER}:${DB_PASSWORD}@db:3306/${DB_NAME}
+      TZ: ${TZ}
+      # Registration & Access
       SIGNUPS_ALLOWED: ${VW_SIGNUPS_ALLOWED}
-      ADMIN_TOKEN_FILE: /run/secrets/VW_ADMIN_TOKEN
-      LOG_LEVEL: ${VW_LOG_LEVEL}
-      SMTP_HOST: ${VW_SMTP_HOST}
-      SMTP_FROM: ${VW_SMTP_FROM}
-      SMTP_PORT: ${VW_SMTP_PORT}
-      SMTP_SECURITY: ${VW_SMTP_SECURITY}
-      SMTP_USERNAME: ${VW_SMTP_USERNAME}
-      SMTP_PASSWORD_FILE: /run/secrets/VW_SMTP_PWD
-      TZ: ${TIMEZONE}
-    secrets:
-      - DB_PWD
-      - VW_ADMIN_TOKEN
-      - VW_SMTP_PWD
+      SIGNUPS_VERIFY: "true"
+      INVITATIONS_ALLOWED: "true"
+      PASSWORD_HINTS_ALLOWED: "false"
+      SHOW_PASSWORD_HINT: "false"
+      # Admin (Argon2 hash — generate with: docker run --rm vaultwarden/server /vaultwarden hash)
+      ADMIN_TOKEN: ${VW_ADMIN_TOKEN}
+      ADMIN_RATELIMIT_SECONDS: "300"
+      ADMIN_RATELIMIT_MAX_BURST: "3"
+      ADMIN_SESSION_LIFETIME: "20"
+      # Login Rate Limiting
+      LOGIN_RATELIMIT_SECONDS: "60"
+      LOGIN_RATELIMIT_MAX_BURST: "10"
+      # Security
+      IP_HEADER: X-Real-IP
+      PASSWORD_ITERATIONS: "600000"
+      # Push Notifications (register at https://bitwarden.com/host/)
+      PUSH_ENABLED: ${VW_PUSH_ENABLED:-false}
+      PUSH_INSTALLATION_ID: ${VW_PUSH_INSTALLATION_ID:-}
+      PUSH_INSTALLATION_KEY: ${VW_PUSH_INSTALLATION_KEY:-}
+      # SMTP
+      SMTP_HOST: ${VW_SMTP_HOST:-}
+      SMTP_FROM: ${VW_SMTP_FROM:-}
+      SMTP_FROM_NAME: Vaultwarden
+      SMTP_PORT: ${VW_SMTP_PORT:-587}
+      SMTP_SECURITY: ${VW_SMTP_SECURITY:-starttls}
+      SMTP_USERNAME: ${VW_SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${VW_SMTP_PASSWORD:-}
+      # Logging
+      LOG_LEVEL: ${VW_LOG_LEVEL:-warn}
+      EXTENDED_LOGGING: "true"
 
     # --- Storage ---
     volumes:
-      - ./config/entrypoint.sh:/entrypoint-custom.sh:ro
       - ./volumes/data:/data
 
     # --- Networking ---
@@ -97,15 +107,19 @@ services:
 
     # --- Traefik ---
     labels:
+      # Router
       - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      # TLS
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Middlewares
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
-      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
-      - "traefik.docker.network=proxy-public"
+      # Service
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
 
     # --- Health & Observability ---
     healthcheck:
@@ -126,15 +140,3 @@ networks:
     name: ${COMPOSE_PROJECT_NAME}-internal
     internal: true
 
-# --------------------------------------------------------
-# SECRETS
-# --------------------------------------------------------
-secrets:
-  DB_ROOT_PWD:
-    file: ./secrets/db_root_pwd.txt
-  DB_PWD:
-    file: ./secrets/db_pwd.txt
-  VW_ADMIN_TOKEN:
-    file: ./secrets/admin_token.txt
-  VW_SMTP_PWD:
-    file: ./secrets/smtp_pwd.txt
