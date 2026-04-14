@@ -20,6 +20,8 @@
 
 - **`crond -d` crash**: Fixed — removed unsupported `-d` flag
 - **Script permissions**: Scripts may lose +x after copy. Fix: `chmod +x scripts/*.sh`
+- **SAN default leak**: Old wizard used .env SAN default when input was empty, causing wrong wildcard domain. Fixed in wizard rewrite.
+- **CF_Token not in exec**: `docker compose exec` bypasses entrypoint. Fixed: `issue.sh` loads secret directly.
 
 ## Upgrade checklist
 

@@ -32,24 +32,31 @@ docker compose up -d
 
 ### Using the Wizard (recommended)
 
-The wizard walks you through everything interactively:
-
 ```bash
+# Fully interactive
 ./scripts/wizard.sh
+
+# With domain argument (single domain)
+./scripts/wizard.sh mynas.example.com
+
+# With domain + wildcard shortcut
+./scripts/wizard.sh example.com -w
 ```
+
+Example interactive session:
 
 ```
 Certificate Wizard
 ==================
 
-Domain [example.com]: mynas.example.com
-Wildcard / SAN (leave empty for none) [*.example.com]:
+Domain: mynas.example.com
+Type: [1] Single domain  [2] Wildcard (*.mynas.example.com)  [1]: 1
 Key type [ec-256|ec-384|2048|3072|4096] [ec-256]:
 ACME server [letsencrypt|zerossl|buypass] [letsencrypt]:
 
 Configuration:
   Domain:     mynas.example.com
-  SAN:        <none>
+  Type:       single domain (no wildcard)
   Key type:   ec-256
   ACME:       letsencrypt
 
@@ -126,7 +133,7 @@ This creates `./volumes/output/example.com/example.com.pfx`. When importing the 
 
 | Script | Run with | Description |
 |--------|----------|-------------|
-| `scripts/wizard.sh` | `./scripts/wizard.sh` | Interactive wizard (runs on host) |
+| `scripts/wizard.sh` | `./scripts/wizard.sh [domain] [-w]` | Interactive wizard (runs on host) |
 | `scripts/issue.sh` | `docker compose exec ...` | Issue new certificate |
 | `scripts/renew.sh` | `docker compose exec ...` | Renew existing certificate |
 | `scripts/convert-to-pfx.sh` | `docker compose exec ...` | Convert PEM → PFX |
