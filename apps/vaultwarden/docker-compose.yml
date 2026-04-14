@@ -126,7 +126,13 @@ services:
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
       # Middlewares
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      # NOTE: sec-4 sets X-Frame-Options:DENY, but Vaultwarden needs SAMEORIGIN.
+      # The vw-headers middleware overrides the conflicting headers.
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file,${COMPOSE_PROJECT_NAME}-headers@docker"
+      # Vaultwarden-specific header overrides
+      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.customResponseHeaders.X-Frame-Options=SAMEORIGIN"
+      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.customResponseHeaders.Referrer-Policy=same-origin"
+      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.customResponseHeaders.X-XSS-Protection=0"
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
 
