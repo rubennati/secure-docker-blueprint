@@ -90,6 +90,21 @@ nslookup google.com 127.0.0.1
 - **Interfaces** — only listens on configured interfaces (`lo`, `tailscale0`), not all
 - **Config is rendered** — don't edit `config/dnsmasq.conf` directly, edit the template
 
+## IPv6
+
+dnsmasq supports IPv6 natively. Upstream DNS and wildcard zones work for both A and AAAA records.
+
+In `config/records.hosts`:
+```
+fd7a:115c:a1e0::10    mynas.lab.example.com
+100.100.100.10         mynas.lab.example.com
+```
+
+Test:
+```bash
+nslookup -type=AAAA google.com 127.0.0.1
+```
+
 ## Details
 
 - [UPSTREAM.md](UPSTREAM.md) — Upstream reference, upgrade checklist
