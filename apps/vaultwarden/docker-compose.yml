@@ -126,13 +126,16 @@ services:
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
       # Middlewares
-      # NOTE: sec-4 sets X-Frame-Options:DENY, but Vaultwarden needs SAMEORIGIN.
-      # The vw-headers middleware overrides the conflicting headers.
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file,${COMPOSE_PROJECT_NAME}-headers@docker"
-      # Vaultwarden-specific header overrides
-      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.customResponseHeaders.X-Frame-Options=SAMEORIGIN"
-      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.customResponseHeaders.Referrer-Policy=same-origin"
-      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.customResponseHeaders.X-XSS-Protection=0"
+      # NOTE: Standard sec-* middlewares conflict with Vaultwarden's required headers.
+      # We use a custom Docker-level middleware instead (same pattern as OnlyOffice).
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${COMPOSE_PROJECT_NAME}-headers@docker"
+      # Vaultwarden-specific security headers
+      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.browserXssFilter=false"
+      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.contentTypeNosniff=true"
+      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.forceSTSHeader=true"
+      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.stsSeconds=63072000"
+      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.customFrameOptionsValue=SAMEORIGIN"
+      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.referrerPolicy=same-origin"
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
 
