@@ -1,8 +1,4 @@
-# Environment (contains real values)
-.env
-
-# ACME account data and certificates
-volumes/
-
-# Secrets
+.secrets/
 secrets/
+volumes/
+.env

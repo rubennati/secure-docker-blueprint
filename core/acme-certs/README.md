@@ -9,7 +9,7 @@ Use this for devices and services that don't go through Traefik — NAS (Synolog
 1. A lightweight container runs `crond` in the background for automatic renewal
 2. You issue certificates via the **wizard** or manual commands
 3. Certificates are exported to `./volumes/output/<domain>/` as standard PEM files
-4. The Cloudflare API token is stored as a Docker Secret, never in environment variables
+4. The Cloudflare API token is stored as a Docker Secret in `.secrets/`, never in environment variables
 
 ## Setup
 
@@ -21,8 +21,8 @@ cp .env.example .env
 # 2. Create Cloudflare API token secret
 #    Token needs: Zone > DNS > Edit on the target zone
 #    Use a scoped API Token, NOT the Global API Key
-mkdir -p secrets
-echo 'your-cloudflare-api-token' > secrets/cf_token.txt
+mkdir -p .secrets
+echo -n 'your-cloudflare-api-token' > .secrets/cf_token.txt
 
 # 3. Start the container
 docker compose up -d
@@ -149,3 +149,20 @@ This creates `./volumes/output/example.com/example.com.pfx`. When importing the 
 | ECDSA P-384 | `ec-384` | Stronger, slightly slower |
 | RSA 2048 | `2048` | Legacy compatibility |
 | RSA 4096 | `4096` | Legacy, large key |
+
+## Troubleshooting
+
+### `crond: unrecognized option: d`
+
+The `-d` flag (debug level) was removed in BusyBox crond shipped with acme.sh 3.1.2+.
+Fix: use `crond -f` without `-d`. Already fixed in the current docker-compose.yml.
+
+### `Permission denied` on scripts
+
+```bash
+chmod +x scripts/*.sh
+```
+
+## Details
+
+- [UPSTREAM.md](UPSTREAM.md) — Upstream reference, upgrade checklist
