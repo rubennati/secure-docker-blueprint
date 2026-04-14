@@ -45,8 +45,9 @@ After deployment, verify:
 - `volumes/data/sends/` (if using Send feature)
 
 ```bash
-# MariaDB backup
-docker exec vaultwarden-db mariadb-dump -u root -p"$(grep DB_ROOT_PASSWORD .env | cut -d= -f2)" vaultwarden > backup-$(date +%Y%m%d).sql
+# MariaDB backup (password via env var, not visible in process list)
+docker exec -e MYSQL_PWD="$(grep DB_ROOT_PASSWORD .env | cut -d= -f2)" \
+  vaultwarden-db mariadb-dump -u root vaultwarden > backup-$(date +%Y%m%d).sql
 ```
 
 ## First-time setup
@@ -57,8 +58,9 @@ cp .env.example .env
 nano .env  # Set APP_TRAEFIK_HOST, SMTP settings
 
 # 2. Generate DB passwords
-sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')|" .env
-sed -i "s|^DB_ROOT_PASSWORD=.*|DB_ROOT_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')|" .env
+# hex only — base64 chars +/= break DATABASE_URL
+sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=$(openssl rand -hex 32)|" .env
+sed -i "s|^DB_ROOT_PASSWORD=.*|DB_ROOT_PASSWORD=$(openssl rand -hex 32)|" .env
 
 # 3. Generate Argon2 admin token
 docker run --rm -it vaultwarden/server:1.35.7 /vaultwarden hash

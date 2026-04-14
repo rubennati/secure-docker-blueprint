@@ -12,6 +12,13 @@ services:
     # --- Security ---
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
+      - DAC_OVERRIDE
 
     # --- Configuration ---
     environment:
@@ -53,6 +60,8 @@ services:
     # --- Security ---
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
     read_only: true
     tmpfs:
       - /tmp
@@ -66,14 +75,14 @@ services:
       # Registration & Access
       SIGNUPS_ALLOWED: ${VW_SIGNUPS_ALLOWED}
       SIGNUPS_VERIFY: "true"
-      INVITATIONS_ALLOWED: "true"
+      INVITATIONS_ALLOWED: ${VW_INVITATIONS_ALLOWED:-false}
       PASSWORD_HINTS_ALLOWED: "false"
       SHOW_PASSWORD_HINT: "false"
       # Admin (Argon2 hash — generate with: docker run --rm vaultwarden/server /vaultwarden hash)
       ADMIN_TOKEN: ${VW_ADMIN_TOKEN}
       ADMIN_RATELIMIT_SECONDS: "300"
       ADMIN_RATELIMIT_MAX_BURST: "3"
-      ADMIN_SESSION_LIFETIME: "20"
+      ADMIN_SESSION_LIFETIME: "20"  # minutes
       # Login Rate Limiting
       LOGIN_RATELIMIT_SECONDS: "60"
       LOGIN_RATELIMIT_MAX_BURST: "10"

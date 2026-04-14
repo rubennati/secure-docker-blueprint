@@ -39,7 +39,7 @@ Set these values:
 verification is enabled. Set these in `.env`:
 
 ```env
-VW_SMTP_HOST=smtp-relay.brevo.com    # or your SMTP provider
+VW_SMTP_HOST=smtp.example.com         # your SMTP provider
 VW_SMTP_FROM=vault@yourdomain.com
 VW_SMTP_PORT=587
 VW_SMTP_SECURITY=starttls
