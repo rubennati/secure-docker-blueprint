@@ -10,7 +10,11 @@ set -eu
 : "${CERT_KEYLENGTH:=ec-256}"
 : "${ACME_SERVER:=letsencrypt}"
 
-: "${CF_Token:?CF_Token missing – check secrets/cf_token.txt}"
+# Load CF_Token from Docker Secret if not already set
+if [ -z "${CF_Token:-}" ] && [ -f /run/secrets/CF_TOKEN ]; then
+  export CF_Token="$(cat /run/secrets/CF_TOKEN)"
+fi
+: "${CF_Token:?CF_Token missing – check .secrets/cf_token.txt}"
 
 ACME_HOME="/acme.sh"
 OUT_DIR="/output/${CERT_DOMAIN}"
