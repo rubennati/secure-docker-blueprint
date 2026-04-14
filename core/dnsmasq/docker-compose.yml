@@ -8,7 +8,7 @@ services:
   # --------------------------------------------------------
   dnsmasq:
     # --- Identity ---
-    image: ${APP_IMAGE}
+    image: 4km3/dnsmasq:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}
     restart: unless-stopped
 
