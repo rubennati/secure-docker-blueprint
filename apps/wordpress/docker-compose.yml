@@ -83,6 +83,7 @@ services:
       - ./volumes/wordpress:/var/www/html
       - ./config/php/uploads.ini:/usr/local/etc/php/conf.d/zz-uploads.ini:ro
       - ./config/apache/.htaccess-security:/config/.htaccess-security:ro
+      - ./config/mu-plugins/security-hardening.php:/var/www/html/wp-content/mu-plugins/security-hardening.php:ro
 
     # --- Networking ---
     networks:

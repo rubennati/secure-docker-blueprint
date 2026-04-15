@@ -113,6 +113,25 @@ docker compose exec app wp config set WP_AUTO_UPDATE_CORE minor --allow-root
 
 **Note:** `DISALLOW_FILE_MODS` blocks plugin uploads via dashboard. Only enable this when using MainWP or wp-cli for all plugin management.
 
+## Security Hardening (mu-plugin)
+
+A must-use plugin is mounted from `config/mu-plugins/security-hardening.php`. It is loaded automatically and cannot be deactivated via the dashboard.
+
+What it does:
+
+| Protection | What it prevents |
+|------------|-----------------|
+| REST API blocked for anonymous | User enumeration via `/wp-json/wp/v2/users` |
+| Generator meta tag removed | WordPress version leak in HTML source |
+| RSS generator removed | WordPress version leak in RSS feeds |
+| Version query strings removed | Version leak from `?ver=` on CSS/JS files |
+| Generic login errors | Username/password guessing ("Invalid credentials" for both) |
+| XML-RPC disabled | Brute-force and DDoS amplification via `xmlrpc.php` |
+
+This makes it significantly harder for scanners and bots to detect WordPress or enumerate users. Combined with WPS Hide Login (Tier A), the login page URL is also obscured.
+
+**What still reveals WordPress:** The `/wp-content/` and `/wp-includes/` paths are visible in the HTML source. Fully hiding WordPress would require rewriting all URLs — this is not recommended as it breaks plugins and updates.
+
 ## .htaccess Hardening
 
 A security template is provided in `config/apache/.htaccess-security`. It blocks:
