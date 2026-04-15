@@ -2,10 +2,17 @@ services:
 
   # --------------------------------------------------------
   # CROWDSEC ENGINE
+  # Intrusion Detection and Prevention System.
+  # Analyzes Traefik access logs, detects threats,
+  # shares threat intel with CrowdSec community.
+  #
+  # Phase 1: Detection only (this service)
+  # Phase 2: Traefik Bouncer Plugin (see core/traefik/)
+  # Phase 3: Firewall Bouncer (host-level nftables)
   # --------------------------------------------------------
   crowdsec:
     # --- Identity ---
-    image: ${APP_IMAGE}
+    image: crowdsecurity/crowdsec:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}
     restart: unless-stopped
 
@@ -15,7 +22,7 @@ services:
 
     # --- Configuration ---
     environment:
-      TZ: ${TIMEZONE}
+      TZ: ${TZ}
       GID: ${CROWDSEC_LOG_GID}
       COLLECTIONS: ${CROWDSEC_COLLECTIONS}
 
@@ -28,7 +35,7 @@ services:
       # Custom log acquisition and AppSec config
       - ./config/acquis.yaml:/etc/crowdsec/acquis.yaml:ro
       - ./config/appsec.yaml:/etc/crowdsec/appsec.yaml:ro
-      # Traefik access logs (read-only)
+      # Traefik access logs (read-only, relative path by default)
       - ${TRAEFIK_LOG_PATH}:/var/log/traefik:ro
 
     # --- Networking ---
