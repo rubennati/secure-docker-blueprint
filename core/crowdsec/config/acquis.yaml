@@ -6,10 +6,6 @@
 # =============================================
 
 # Traefik access logs (JSON format)
-# KNOWN ISSUE: Live parsing not working with file-based acquisition.
-# traefik-logs parser v1.5 needs evt.Parsed.program which file acquisition
-# doesn't set. Manual cscli explain works. See bugfix doc for details.
-# Tracking: https://github.com/crowdsecurity/hub/issues/1677
 filenames:
   - /var/log/traefik/access.log
 labels:

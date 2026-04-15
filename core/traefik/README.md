@@ -122,6 +122,160 @@ Set the default in `.env` via `TLS_DEFAULT_OPTION`. Override per-router in `tls.
 | `cloudflare-dns` | DNS-01 | Wildcard certs, private servers (no port 80 needed) |
 | `httpResolver` | HTTP-01 | Standard certs, no Cloudflare dependency |
 
+## CrowdSec Bouncer Plugin (optional)
+
+Blocks malicious IPs and inspects HTTP requests before they reach your apps.
+CrowdSec detects threats (brute force, CVE probes, crawling), the bouncer enforces the bans at Traefik level.
+
+### What it provides
+
+| Feature | What it does |
+|---------|-------------|
+| **IP blocking** | Bans IPs flagged by CrowdSec scenarios (probing, brute force, sensitive files) |
+| **Community blocklist** | Shared threat intelligence from the CrowdSec network |
+| **AppSec / WAF** | Inspects request bodies for SQL injection, XSS, path traversal |
+| **Stream mode** | Polls CrowdSec every 60s, caches decisions locally (no per-request latency) |
+
+### How to enable
+
+Step-by-step — all changes are in templates, rendered via `render.sh`.
+
+```bash
+# -----------------------------------------------
+# Step 1: CrowdSec Engine must be running
+# -----------------------------------------------
+cd /path/to/docker-ops-blueprint/core/crowdsec
+docker compose ps   # should show "healthy"
+
+# -----------------------------------------------
+# Step 2: Generate a bouncer API key
+# -----------------------------------------------
+docker exec crowdsec cscli bouncers add traefik-bouncer
+# Save the output key — it cannot be retrieved later!
+
+# -----------------------------------------------
+# Step 3: Add the key to Traefik .env
+# -----------------------------------------------
+cd /path/to/docker-ops-blueprint/core/traefik
+nano .env
+# Add or uncomment:
+#   CROWDSEC_BOUNCER_KEY=CmuiLn30RFNQkm+phT3Jc4u1ij5DZBA7MUvl1IG+zUE
+
+# -----------------------------------------------
+# Step 4: Enable the plugin in static config
+# -----------------------------------------------
+nano ops/templates/traefik.yml.tmpl
+# Uncomment the experimental.plugins section:
+#   experimental:
+#     plugins:
+#       bouncer:
+#         moduleName: "github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin"
+#         version: "v1.4.5"
+
+# -----------------------------------------------
+# Step 5: Enable the middleware in dynamic config
+# -----------------------------------------------
+nano ops/templates/dynamic/security.yml.tmpl
+# Uncomment the sec-crowdsec block (the full plugin section)
+
+# -----------------------------------------------
+# Step 6: Render and restart
+# -----------------------------------------------
+./ops/scripts/render.sh
+docker compose restart traefik
+# Restart needed because the plugin is in static config.
+# After this, middleware changes are hot-reloaded.
+
+# -----------------------------------------------
+# Step 7: Add to routers
+# -----------------------------------------------
+# Add sec-crowdsec@file to any router's middleware list.
+# Example in an app's docker-compose.yml labels:
+#   traefik.http.routers.myapp.middlewares=sec-crowdsec@file,acc-public@file,sec-2@file
+#
+# Or in config/dynamic/routers-system.yml for the dashboard:
+#   middlewares:
+#     - sec-crowdsec@file
+#     - acc-tailscale@file
+#     - sec-4@file
+```
+
+### How to disable
+
+```bash
+# Option A: Remove from specific routers only
+# Remove "sec-crowdsec@file" from the router's middleware list.
+# Hot-reloaded — no restart needed.
+
+# Option B: Disable completely
+# Comment out sec-crowdsec in security.yml.tmpl
+# Re-render: ./ops/scripts/render.sh
+# Hot-reloaded — no restart needed (plugin stays loaded but unused).
+
+# Option C: Remove plugin entirely
+# Comment out experimental.plugins in traefik.yml.tmpl
+# Comment out sec-crowdsec in security.yml.tmpl
+# Re-render + restart: ./ops/scripts/render.sh && docker compose restart traefik
+```
+
+### Minimum vs recommended config
+
+| Setting | Minimum | Recommended |
+|---------|---------|-------------|
+| `crowdsecMode` | `stream` | `stream` |
+| `crowdsecAppsecEnabled` | `false` | `true` (WAF protection) |
+| `crowdsecAppsecFailureBlock` | `false` | `true` (block if WAF errors) |
+| `crowdsecAppsecUnreachableBlock` | `false` | `true` (block if WAF unreachable) |
+
+Minimum = IP blocking only (no WAF). Recommended = IP blocking + WAF.
+
+### Geo-blocking
+
+CrowdSec can block traffic by country. This is not part of the bouncer plugin — it runs inside the CrowdSec engine as a scenario.
+
+```bash
+# 1. Install the GeoIP enrichment collection
+docker exec crowdsec cscli collections install crowdsecurity/geoloc-enrich
+
+# 2. Create a custom scenario or use community scenarios
+#    that filter on evt.Enriched.GeoLite2.Country.IsoCode
+#    Example: ban all IPs from country "XX" after 1 request
+
+# 3. Restart CrowdSec to load the new collection
+cd /path/to/docker-ops-blueprint/core/crowdsec
+docker compose restart
+```
+
+Bans from geo-blocking flow through the same LAPI — the bouncer picks them up automatically. No Traefik changes needed.
+
+### Verify
+
+```bash
+# Check if plugin is loaded
+docker compose logs traefik | grep -i crowdsec
+
+# Check bouncer connection from CrowdSec side
+docker exec crowdsec cscli bouncers list
+
+# Test: ban an IP and verify it's blocked
+docker exec crowdsec cscli decisions add --ip 1.2.3.4 --duration 1h --reason "test"
+curl -H "X-Forwarded-For: 1.2.3.4" https://your-app.example.com
+# Should return 403 Forbidden
+
+# Clean up test ban
+docker exec crowdsec cscli decisions delete --ip 1.2.3.4
+```
+
+### Troubleshooting
+
+| Problem | Check |
+|---------|-------|
+| Plugin not loading | `docker compose logs traefik` — look for plugin errors. Did you uncomment `experimental.plugins`? |
+| 403 for legitimate IPs | `docker exec crowdsec cscli decisions list` — check if the IP is banned. Remove with `cscli decisions delete --ip X.X.X.X` |
+| WAF blocking valid requests | Set `crowdsecAppsecEnabled: false` temporarily. Check CrowdSec logs for false positives |
+| Bouncer not connecting | `docker exec crowdsec cscli bouncers list` — check last heartbeat. Verify both containers are on `proxy-public` network |
+| High latency | Verify `crowdsecMode: stream` (not `live`). Stream mode has no per-request overhead |
+
 ## Incident Quickmoves
 
 **Lock admin service to VPN only:**

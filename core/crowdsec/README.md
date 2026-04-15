@@ -30,25 +30,12 @@ CrowdSec Engine               <-- Phase 1: Detection (logs -> decisions)
 
 The engine collects and analyzes logs, detects threats, and stores decisions. It doesn't block anything on its own — it needs a bouncer (Phase 2 or 3) to enforce decisions.
 
-What it does right now:
-- Parses Traefik access logs in real-time
+What it does:
+- Parses Traefik access logs in real-time (file-based acquisition)
 - Detects: brute force, aggressive crawling, CVE probes, suspicious HTTP patterns
 - Stores ban decisions in its local database
 - Shares threat intelligence with the CrowdSec community network
 - Provides AppSec / WAF analysis on port 7422
-
-### Setup
-
-```bash
-# 1. Create .env
-cp .env.example .env
-# Edit: TIMEZONE, TRAEFIK_LOG_PATH, CROWDSEC_LOG_GID
-
-# 2. Start the engine
-docker compose up -d
-```
-
-No secrets needed — the engine generates its own internal credentials on first start.
 
 ### Prerequisites
 
@@ -63,29 +50,52 @@ accessLog:
 The `TRAEFIK_LOG_PATH` in `.env` defaults to `../traefik/volumes/logs` (relative).
 Override with absolute path if Traefik is elsewhere.
 
+### Setup
+
+```bash
+# 1. Create .env
+cp .env.example .env
+# Edit: TZ, TRAEFIK_LOG_PATH, CROWDSEC_LOG_GID
+
+# 2. Start the engine
+docker compose up -d
+```
+
+No secrets needed — the engine generates its own internal credentials on first start.
+
 ### Verify
 
 ```bash
-# Check engine status
+# Engine + LAPI status
 docker exec crowdsec cscli lapi status
 
-# View metrics (parsed logs, active decisions)
+# Full metrics overview (parsed logs, parser stats, scenarios, whitelist)
 docker exec crowdsec cscli metrics
 
-# List installed collections
+# Check Traefik log parsing specifically
+docker exec crowdsec cscli metrics | grep -A5 "Acquisition"
+
+# Installed collections
 docker exec crowdsec cscli collections list
 
-# List active decisions (bans)
+# Active decisions (bans)
 docker exec crowdsec cscli decisions list
 
-# List all alerts (detected threats)
+# All detected threats
 docker exec crowdsec cscli alerts list
-
-# Check if Traefik logs are being parsed
-docker exec crowdsec cscli metrics | grep -A5 "Acquisition"
 ```
 
-### Monitoring
+**Expected output after first traffic:**
+
+| Metric | Healthy value |
+|--------|---------------|
+| Lines read | > 0 (increases with traffic) |
+| Lines parsed | = Lines read (no unparsed) |
+| Lines poured to bucket | > 0 (scenarios are evaluating) |
+| Alerts | Appear when suspicious patterns detected |
+| Decisions | Appear when scenarios overflow (ban threshold reached) |
+
+### Operations
 
 ```bash
 # Live logs (real-time detection)
@@ -97,17 +107,52 @@ docker exec crowdsec cscli decisions add --ip 1.2.3.4 --duration 1h --reason "te
 # Remove a test ban
 docker exec crowdsec cscli decisions delete --ip 1.2.3.4
 
-# Update threat intelligence
-docker exec crowdsec cscli hub update && docker exec crowdsec cscli hub upgrade
+# Remove all decisions for an IP
+docker exec crowdsec cscli decisions delete --ip 1.2.3.4 --all
 
-# Generate bouncer API key (needed for Phase 2)
-docker exec crowdsec cscli bouncers add traefik-bouncer
+# Inspect a specific alert
+docker exec crowdsec cscli alerts inspect <ALERT_ID>
 ```
+
+### Hub Management
+
+```bash
+# Check for updates
+docker exec crowdsec cscli hub update
+
+# Apply updates (parsers, scenarios, collections)
+docker exec crowdsec cscli hub upgrade
+
+# Install a new collection
+docker exec crowdsec cscli collections install crowdsecurity/nginx
+
+# List installed parsers
+docker exec crowdsec cscli parsers list
+
+# List installed scenarios
+docker exec crowdsec cscli scenarios list
+```
+
+### Bouncer Management
+
+```bash
+# Generate bouncer API key (for Phase 2 / Phase 3)
+docker exec crowdsec cscli bouncers add traefik-bouncer
+
+# List registered bouncers
+docker exec crowdsec cscli bouncers list
+
+# Remove a bouncer
+docker exec crowdsec cscli bouncers delete traefik-bouncer
+```
+
+Save bouncer keys immediately — they cannot be retrieved later.
 
 ### What to expect
 
-- **No alerts initially** — normal, CrowdSec only alerts on suspicious patterns
-- **Empty decisions list** — normal without Phase 2 (Bouncer), engine detects but doesn't block
+- **Alerts appear** when CrowdSec detects suspicious patterns (probing, brute force, CVE attempts)
+- **Decisions (bans)** are created when a scenario threshold is reached
+- **Without a bouncer** (Phase 2/3), decisions are stored but not enforced — detection only
 - **Community blocklist** downloads automatically after CAPI registration
 - **Parsed lines** increase over time as Traefik processes requests
 
@@ -124,6 +169,18 @@ Collections are sets of parsers and scenarios for specific services. Configured 
 
 Add more collections from the [CrowdSec Hub](https://hub.crowdsec.net/).
 
+### Detected Scenarios
+
+Scenarios that trigger on Traefik traffic:
+
+| Scenario | What it detects |
+|----------|-----------------|
+| `crowdsecurity/http-probing` | Scanning for open ports and services |
+| `crowdsecurity/http-sensitive-files` | Access attempts to `.env`, `.git`, `wp-config`, etc. |
+| `crowdsecurity/http-admin-interface-probing` | Scanning for admin panels (`/admin`, `/wp-admin`) |
+| `crowdsecurity/http-crawl-non_statics` | Aggressive crawling of dynamic pages |
+| `crowdsecurity/http-path-traversal-probing` | `../` path traversal attempts |
+
 ## Phase 2: Traefik Bouncer Plugin (future)
 
 Requires changes to `core/traefik/`:
@@ -137,7 +194,7 @@ Generate the bouncer key:
 docker exec crowdsec cscli bouncers add traefik-bouncer
 ```
 
-This outputs an API key that the Traefik plugin uses to query the engine. Details will be documented when Phase 2 is implemented.
+Save the API key in `core/traefik/.secrets/crowdsec_bouncer_key.txt`. Details will be documented when Phase 2 is implemented.
 
 ## Phase 3: Firewall Bouncer (future)
 
@@ -191,3 +248,7 @@ decisions:
     duration: 4h
 on_success: break
 ```
+
+## Details
+
+- [UPSTREAM.md](UPSTREAM.md) — Upstream reference, upgrade checklist

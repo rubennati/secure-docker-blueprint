@@ -55,6 +55,21 @@ providers:
 
 providersThrottleDuration: 30s
 
+# ---------------------------------------------------------
+# PLUGINS (optional)
+# ---------------------------------------------------------
+# Uncomment to load the CrowdSec bouncer plugin.
+# After enabling, re-render and restart Traefik:
+#   ./ops/scripts/render.sh && docker compose restart traefik
+# Then activate the middleware in config/dynamic/security.yml
+# (see sec-crowdsec section — that part is hot-reloaded).
+#
+# experimental:
+#   plugins:
+#     bouncer:
+#       moduleName: "github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin"
+#       version: "v1.4.5"
+
 certificatesResolvers:
   ${ACME_RESOLVER_DNS}:
     acme:
