@@ -1,0 +1,52 @@
+# ==========================================================
+# WordPress Security Hardening (.htaccess)
+# ==========================================================
+# Append this to the END of your .htaccess (after WordPress
+# rewrite rules). Do NOT place inside the # BEGIN/END
+# WordPress block — WordPress overwrites that section.
+#
+# How to apply:
+#   docker compose exec app bash
+#   cat /config/.htaccess-security >> /var/www/html/.htaccess
+#
+# Or manually copy the rules into .htaccess via the host:
+#   sudo cat config/apache/.htaccess-security >> volumes/wordpress/.htaccess
+# ==========================================================
+
+# --- Block PHP execution in uploads directory ---
+# Prevents uploaded PHP shells from being executed.
+# This is the single most important .htaccess hardening rule.
+<Directory "/var/www/html/wp-content/uploads">
+    <FilesMatch "\.(php|phtml|phar|php3|php4|php5|phps)$">
+        Require all denied
+    </FilesMatch>
+</Directory>
+
+# Fallback for .htaccess context (if above doesn't work):
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^wp-content/uploads/.*\.ph(p[345s]?|tml|ar)$ - [F,L]
+</IfModule>
+
+# --- Protect sensitive files ---
+<FilesMatch "^(\.htaccess|\.htpasswd|wp-config\.php|readme\.html|license\.txt)$">
+    Require all denied
+</FilesMatch>
+
+# --- Disable directory listing ---
+Options -Indexes
+
+# --- Block XML-RPC ---
+# XML-RPC is a legacy API used for brute-force and DDoS amplification attacks.
+# Disable unless you specifically need the WordPress mobile app or Jetpack.
+<Files xmlrpc.php>
+    Require all denied
+</Files>
+
+# --- Block author enumeration ---
+# Prevents ?author=1 scans that reveal usernames.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{QUERY_STRING} ^author=\d+ [NC]
+    RewriteRule .* - [F,L]
+</IfModule>
