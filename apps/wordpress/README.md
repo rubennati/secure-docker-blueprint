@@ -37,20 +37,26 @@ Minimal plugin approach — only what's needed, everything else removed. Every p
 | **WPvivid Backup** | Automated backups | Target: Hetzner Storage Box (SFTP) or S3 |
 | **SEO Plugin** | Sitemap, robots.txt, meta tags | Rank Math or Yoast SEO — pick one |
 
-### wp-admin Protection — Pick One Tier
+### wp-admin Protection
 
-| Tier | Who accesses wp-admin | Plugins needed | Infra |
-|------|----------------------|----------------|-------|
-| **Public + Plugins** | Mitarbeiter, Kunden, von überall | WPS Hide Login + WPS Limit Login + Cloudflare Turnstile + Two Factor | Standard Traefik sec-2 |
-| **Public + Authentik** | Mitarbeiter mit SSO | Two Factor (Authentik handles the rest) | Authentik Forward Auth auf `/wp-admin` |
-| **Tailscale-only** | Nur du, internes Tool | Two Factor (Plugins entfernbar) | `acc-tailscale` Router auf `/wp-admin` |
+Three realistic scenarios. Pick the one that fits the site:
 
-**Tier 1 is the default** for the Blueprint — most WordPress sites have external users accessing wp-admin.
+| Scenario | Frontend | wp-admin | Security Plugins | Infra |
+|----------|----------|----------|-----------------|-------|
+| **A: Public site, public admin** | Public | Public (employees, clients) | WPS Hide Login, WPS Limit Login, Turnstile, Two Factor | sec-2, acc-public |
+| **B: Public site, admin VPN-only** | Public | Tailscale only (single admin) | Two Factor only (rest redundant) | Two Traefik routers: public + acc-tailscale on `/wp-admin` |
+| **C: Fully internal** | Tailscale | Tailscale (e.g. MainWP Dashboard) | Two Factor only | acc-tailscale on entire site |
 
-When using Tier 2 or 3, these plugins become redundant and should be removed:
-- WPS Hide Login (login URL already hidden behind auth/VPN)
-- WPS Limit Login (rate limiting at Traefik/CrowdSec level)
-- Cloudflare Turnstile (no bots reach wp-admin)
+**Scenario A is the most common** — use this when multiple people need wp-admin access from different locations.
+
+**Scenario B** is ideal for personal/company sites where only the owner manages content. The public frontend works normally, but wp-admin is only reachable via VPN. This eliminates the need for Hide Login, Limit Login, and CAPTCHA plugins.
+
+**Scenario C** is for management tools like MainWP that should never be public.
+
+When wp-admin is behind Tailscale or Authentik (Scenario B/C), these plugins are redundant:
+- WPS Hide Login — login URL is already unreachable
+- WPS Limit Login — no brute-force possible, Traefik + CrowdSec handle rate limiting
+- Cloudflare Turnstile — no bots reach the login page
 
 ### Optional — Evaluate Per Site
 
