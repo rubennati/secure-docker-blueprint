@@ -54,10 +54,13 @@ Building blocks and pro mode: see [Traefik README](../../core/traefik/README.md)
 
 ## Access Policies
 
-| Policy | Access |
-|--------|--------|
-| `acc-public` | Open (internet) |
-| `acc-tailscale` | Tailscale IP ranges only |
+| Policy | Who gets through |
+|--------|-----------------|
+| `acc-public` | Everyone (no restriction) |
+| `acc-local` | LAN only (RFC1918 + IPv6 ULA) |
+| `acc-tailscale` | Tailscale/VPN only (IPv4 + IPv6) |
+| `acc-private` | LAN + Tailscale combined |
+| `acc-deny` | Nobody (emergency kill switch) |
 
 ## TLS Profiles
 

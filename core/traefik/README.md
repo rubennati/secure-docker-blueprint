@@ -94,10 +94,13 @@ middlewares:
 
 ### Access
 
-| Middleware | Effect |
-|-----------|--------|
-| `acc-public` | No restriction (pass-through) |
-| `acc-tailscale` | IP allowlist: Tailscale/VPN CIDR only |
+| Middleware | Who gets through |
+|-----------|-----------------|
+| `acc-public` | Everyone (no restriction) |
+| `acc-local` | LAN only (RFC1918 + IPv6 ULA) |
+| `acc-tailscale` | Tailscale/VPN only (IPv4 + IPv6) |
+| `acc-private` | LAN + Tailscale combined |
+| `acc-deny` | Nobody (emergency kill switch) |
 
 ### Security Levels
 

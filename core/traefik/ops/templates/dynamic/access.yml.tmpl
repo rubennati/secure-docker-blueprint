@@ -1,10 +1,65 @@
 http:
   middlewares:
+
+    # ==========================================================
+    # ACCESS POLICIES
+    # ==========================================================
+    # Controls WHO can reach a service. Pick ONE per router.
+    #
+    # Policy         Who gets through
+    # -------------  ----------------------------------------
+    # acc-public     Everyone (no restriction)
+    # acc-local      Private networks only (LAN, no VPN needed)
+    # acc-tailscale  Tailscale/VPN clients only
+    # acc-private    LAN + Tailscale/VPN (both combined)
+    # acc-deny       Nobody (emergency kill switch)
+    #
+    # All policies support IPv4 + IPv6.
+    #
+    # Examples:
+    #   acc-public@file, sec-2@file       # Public website
+    #   acc-tailscale@file, sec-4@file    # Admin panel, VPN-only
+    #   acc-private@file, sec-3@file      # Internal tool, LAN + VPN
+    #   acc-local@file, sec-2@file        # NAS UI, LAN-only
+    #
+    # Incident response: swap any acc-* → acc-deny to block
+    # all traffic instantly. Hot-reloaded, no restart needed.
+    # ==========================================================
+
+    # Open — no restriction (pass-through)
     acc-public:
       chain:
         middlewares: []
 
+    # LAN only — private networks (RFC1918 + IPv6 ULA)
+    # For services that should never leave the local network.
+    acc-local:
+      ipAllowList:
+        sourceRange:
+          - "${LOCAL_CIDR_V4}"
+          - "${LOCAL_CIDR_V6}"
+
+    # Tailscale / VPN only (IPv4 + IPv6)
+    # Reachable from anywhere via VPN, but not from plain internet.
     acc-tailscale:
       ipAllowList:
         sourceRange:
-          - "${TAILSCALE_CIDR}"
+          - "${TAILSCALE_CIDR_V4}"
+          - "${TAILSCALE_CIDR_V6}"
+
+    # LAN + VPN combined — for services reachable from both
+    # Use when you want local access AND remote VPN access.
+    acc-private:
+      ipAllowList:
+        sourceRange:
+          - "${LOCAL_CIDR_V4}"
+          - "${LOCAL_CIDR_V6}"
+          - "${TAILSCALE_CIDR_V4}"
+          - "${TAILSCALE_CIDR_V6}"
+
+    # Emergency kill switch — blocks all traffic
+    # Swap any acc-* to acc-deny during incidents.
+    acc-deny:
+      ipAllowList:
+        sourceRange:
+          - "127.0.0.1/32"

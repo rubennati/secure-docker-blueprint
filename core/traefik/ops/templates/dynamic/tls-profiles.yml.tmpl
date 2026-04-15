@@ -1,13 +1,36 @@
 tls:
   options:
+
+    # ==========================================================
+    # TLS PROFILES
+    # ==========================================================
+    # Pick one per router via APP_TRAEFIK_TLS_OPTION in .env.
+    # Set the global default via TLS_DEFAULT_OPTION in .env.
+    #
+    # Profile     Min TLS   Use case
+    # ----------  --------  ----------------------------------
+    # tls-basic   1.2       Maximum compatibility (older clients)
+    # tls-aplus   1.2       SSL Labs A+ (strict ciphers + curves)
+    # tls-modern  1.3       Current browsers only (strictest)
+    #
+    # Recommendation: tls-aplus for most services.
+    # Use tls-modern for password managers, admin panels.
+    # Use tls-basic only when older clients must connect.
+    # ==========================================================
+
+    # Compatible — TLS 1.2+, no cipher restriction
+    # Traefik excludes insecure ciphers by default.
     tls-basic:
       minVersion: VersionTLS12
       sniStrict: true
 
+    # SSL Labs A+ — TLS 1.2+ with strict cipher suite + curves
+    # Forward secrecy only (ECDHE), X25519 preferred.
     tls-aplus:
       minVersion: VersionTLS12
       sniStrict: true
       curvePreferences:
+        - X25519
         - CurveP256
         - CurveP384
       cipherSuites:
@@ -18,6 +41,8 @@ tls:
         - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
         - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
 
+    # Strictest — TLS 1.3 only
+    # Current browsers and clients only. No TLS 1.2 fallback.
     tls-modern:
       minVersion: VersionTLS13
       sniStrict: true
