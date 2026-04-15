@@ -60,7 +60,8 @@ accessLog:
   format: json
 ```
 
-The `TRAEFIK_LOG_PATH` in `.env` must point to the same directory on the host.
+The `TRAEFIK_LOG_PATH` in `.env` defaults to `../traefik/volumes/logs` (relative).
+Override with absolute path if Traefik is elsewhere.
 
 ### Verify
 
@@ -76,7 +77,39 @@ docker exec crowdsec cscli collections list
 
 # List active decisions (bans)
 docker exec crowdsec cscli decisions list
+
+# List all alerts (detected threats)
+docker exec crowdsec cscli alerts list
+
+# Check if Traefik logs are being parsed
+docker exec crowdsec cscli metrics | grep -A5 "Acquisition"
 ```
+
+### Monitoring
+
+```bash
+# Live logs (real-time detection)
+docker compose logs -f crowdsec
+
+# Test: manually ban an IP
+docker exec crowdsec cscli decisions add --ip 1.2.3.4 --duration 1h --reason "test ban"
+
+# Remove a test ban
+docker exec crowdsec cscli decisions delete --ip 1.2.3.4
+
+# Update threat intelligence
+docker exec crowdsec cscli hub update && docker exec crowdsec cscli hub upgrade
+
+# Generate bouncer API key (needed for Phase 2)
+docker exec crowdsec cscli bouncers add traefik-bouncer
+```
+
+### What to expect
+
+- **No alerts initially** — normal, CrowdSec only alerts on suspicious patterns
+- **Empty decisions list** — normal without Phase 2 (Bouncer), engine detects but doesn't block
+- **Community blocklist** downloads automatically after CAPI registration
+- **Parsed lines** increase over time as Traefik processes requests
 
 ### Installed Collections
 
