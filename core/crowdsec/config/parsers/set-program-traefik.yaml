@@ -11,10 +11,12 @@
 name: local/set-program-traefik
 description: "Set program=traefik for file-based Traefik log acquisition"
 filter: "evt.Line.Labels.type == 'traefik'"
-# IMPORTANT: must be "continue" not "next_stage"!
-# "next_stage" skips the non-syslog parser which extracts evt.Parsed.message
-# Without message, the traefik-logs parser in s01-parse fails.
-onsuccess: continue
+# Set program AND message — both required by traefik-logs parser.
+# program: needed for the filter (evt.Parsed.program startsWith 'traefik')
+# message: needed for JSON parsing (evt.Parsed.message)
+onsuccess: next_stage
 statics:
   - parsed: program
     value: traefik
+  - parsed: message
+    expression: evt.Line.Raw
