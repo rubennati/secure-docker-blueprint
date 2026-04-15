@@ -35,8 +35,6 @@ services:
       # Custom log acquisition and AppSec config
       - ./config/acquis.yaml:/etc/crowdsec/acquis.yaml:ro
       - ./config/appsec.yaml:/etc/crowdsec/appsec.yaml:ro
-      # Local parser: set program=traefik for file-based acquisition
-      - ./config/parsers/set-program-traefik.yaml:/etc/crowdsec/parsers/s00-raw/set-program-traefik.yaml:ro
       # Traefik access logs (read-only, relative path by default)
       - ${TRAEFIK_LOG_PATH}:/var/log/traefik:ro
 
