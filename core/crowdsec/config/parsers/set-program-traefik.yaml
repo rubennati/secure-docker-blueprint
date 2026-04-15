@@ -1,0 +1,17 @@
+# =========================================================
+# Local parser: set program=traefik for file-based acquisition
+#
+# Why: The official traefik-logs parser (v1.5) filters on
+# evt.Parsed.program which is only populated by syslog/journald.
+# File-based acquisition doesn't set this field.
+# This parser bridges the gap.
+#
+# Ref: https://github.com/crowdsecurity/hub/issues/1677
+# =========================================================
+name: local/set-program-traefik
+description: "Set program=traefik for file-based Traefik log acquisition"
+filter: "evt.Line.Labels.type == 'traefik'"
+onsuccess: next_stage
+statics:
+  - parsed: program
+    value: traefik

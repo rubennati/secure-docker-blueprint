@@ -5,8 +5,12 @@
 # Traefik must write access logs in JSON format.
 # =============================================
 
+# Traefik access logs (JSON format)
+# NOTE: The traefik-logs parser (v1.5) filters on evt.Parsed.program
+# which is only set by syslog/journald, not file acquisition.
+# Workaround: use a custom s00-raw parser to set the program field.
+# See config/parsers/set-program-traefik.yaml
 filenames:
   - /var/log/traefik/access.log
 labels:
   type: traefik
-  program: traefik
