@@ -1,0 +1,72 @@
+http:
+  middlewares:
+
+    # ==========================================================
+    # INTEGRATIONS
+    # ==========================================================
+    # External services that plug into Traefik as middleware.
+    # Each is independent — enable/disable per router.
+    # Add "middleware-name@file" to the router's middleware list.
+    # ==========================================================
+
+    # --- CrowdSec Bouncer Plugin ---
+    # Blocks IPs that CrowdSec flagged (brute force, CVE probes, etc.)
+    # and inspects HTTP requests via AppSec/WAF (SQL injection, XSS).
+    #
+    # Prerequisites:
+    #   1. core/crowdsec running + on proxy-public network
+    #   2. Plugin loaded in traefik.yml (experimental.plugins section)
+    #   3. Bouncer API key generated:
+    #      docker exec crowdsec cscli bouncers add traefik-bouncer
+    #   4. Add CROWDSEC_BOUNCER_KEY=<key> to your .env
+    #
+    # Enable: uncomment + add "sec-crowdsec@file" to router middlewares
+    # Disable: comment out or remove "sec-crowdsec@file" from routers
+    #          (Traefik hot-reloads — no restart needed)
+    #
+    # Mode: stream (polls LAPI every 60s, caches decisions locally)
+    #   - Faster than live mode (no per-request LAPI query)
+    #   - New bans take up to 60s to propagate
+    #
+    # AppSec/WAF: inspects request bodies for SQL injection, XSS, etc.
+    #   - Requires appsec.yaml in core/crowdsec/config/
+    #   - Set crowdsecAppsecEnabled to false to disable WAF
+    #
+    # Geo-blocking: install crowdsecurity/geoloc-enrich collection +
+    #   a scenario like crowdsecurity/cdn-whitelist or write a custom
+    #   scenario filtering on evt.Enriched.GeoLite2.Country.IsoCode
+    #
+    # sec-crowdsec:
+    #   plugin:
+    #     bouncer:
+    #       enabled: true
+    #       crowdsecMode: stream
+    #       updateIntervalSeconds: 60
+    #       crowdsecLapiScheme: http
+    #       crowdsecLapiHost: crowdsec:8080
+    #       crowdsecLapiKey: "${CROWDSEC_BOUNCER_KEY}"
+    #       crowdsecAppsecEnabled: true
+    #       crowdsecAppsecHost: crowdsec:7422
+    #       crowdsecAppsecFailureBlock: true
+    #       crowdsecAppsecUnreachableBlock: true
+
+    # --- Authentik (SSO / Forward Auth) ---
+    # Requires: core/authentik running + outpost configured
+    # Enable: uncomment + add "sec-authentik@file" to router middlewares
+    #
+    # sec-authentik:
+    #   forwardAuth:
+    #     address: "http://authentik-server:9000/outpost.goauthentik.io/auth/traefik"
+    #     trustForwardHeader: true
+    #     authResponseHeaders:
+    #       - X-authentik-username
+    #       - X-authentik-groups
+    #       - X-authentik-email
+    #       - X-authentik-name
+    #       - X-authentik-uid
+    #       - X-authentik-jwt
+    #       - X-authentik-meta-jwks
+    #       - X-authentik-meta-outpost
+    #       - X-authentik-meta-provider
+    #       - X-authentik-meta-app
+    #       - X-authentik-meta-version

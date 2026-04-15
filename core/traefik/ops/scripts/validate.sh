@@ -68,7 +68,7 @@ if [ -f "${ROOT_DIR}/config/traefik.yml" ]; then
   fi
 
   # check expected dynamic files exist
-  for f in access.yml security.yml tls-profiles.yml routers-system.yml; do
+  for f in access.yml security-blocks.yml security-chains.yml integrations.yml tls-profiles.yml routers-system.yml; do
     test -f "${ROOT_DIR}/config/dynamic/${f}" || { echo "Missing config/dynamic/${f} (run render.sh)"; exit 1; }
   done
 fi

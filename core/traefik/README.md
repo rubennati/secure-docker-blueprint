@@ -55,7 +55,9 @@ ops/
     haproxy.cfg.template.tmpl         # Socket proxy ACL config
     dynamic/
       access.yml.tmpl                 # Access policies (public / tailscale)
-      security.yml.tmpl               # Security middleware chains
+      security-blocks.yml.tmpl        # Security building blocks (headers, ratelimits, etc.)
+      security-chains.yml.tmpl        # Policy presets (sec-0 to sec-5 + embed variants)
+      integrations.yml.tmpl           # CrowdSec + Authentik (optional)
       tls-profiles.yml.tmpl           # TLS option profiles
       routers-system.yml.tmpl         # Dashboard router
       redirects.yml.tmpl              # Redirects (empty by default)
@@ -69,7 +71,17 @@ config/                               # Generated output (gitignored)
 
 Traefik does not substitute `${VARS}` in YAML. All `.tmpl` files are rendered via `envsubst` into `config/`.
 
-## Policies (2 Axes)
+## Security System
+
+Three files, three layers — from quick presets to full customization:
+
+| File | What it contains |
+|------|-----------------|
+| `security-blocks.yml` | Building blocks (headers, rate limits, compression, CSP) |
+| `security-chains.yml` | Presets: sec-0 to sec-5 + embed variants |
+| `integrations.yml` | CrowdSec + Authentik (optional, separate) |
+
+### Quick Start: Policy Presets
 
 Every router gets **two** middlewares — one for access, one for security:
 
@@ -77,6 +89,7 @@ Every router gets **two** middlewares — one for access, one for security:
 middlewares:
   - acc-public@file, sec-2@file       # Public site, standard hardening
   - acc-tailscale@file, sec-4@file    # Admin tool, VPN + strict
+  - acc-public@file, sec-2e@file      # Public site, iframe-friendly
 ```
 
 ### Access
@@ -86,24 +99,61 @@ middlewares:
 | `acc-public` | No restriction (pass-through) |
 | `acc-tailscale` | IP allowlist: Tailscale/VPN CIDR only |
 
-### Security
+### Security Levels
 
-| Level | Middleware | What it does |
-|-------|-----------|-------------|
-| 0 | `sec-0` | Nothing (debug/naked) |
-| 1 | `sec-1` | Basic security headers (HSTS, XSS filter, nosniff, frameDeny) |
-| 2 | `sec-2` | Soft rate limit + basic headers + compression |
-| 3 | `sec-3` | Soft rate limit + extended headers (HSTS preload, referrer policy, CSP report-only) + compression |
-| 4 | `sec-4` | Hard rate limit + extended headers + compression |
+Each level builds on the previous one. `e` = embed/iframe-friendly (SAMEORIGIN instead of DENY).
 
-## Opt-in Hardening
+| Level | What it includes | Recommended for |
+|-------|-----------------|-----------------|
+| `sec-0` | Nothing | Debug, naked proxy |
+| `sec-1` | Basic headers + compress | Internal tools, monitoring |
+| `sec-1e` | Like sec-1, iframe-friendly | Internal tools embedded in other apps |
+| **`sec-2`** | **+ soft rate limit** | **Standard for most apps** (recommended default) |
+| `sec-2e` | Like sec-2, iframe-friendly | OnlyOffice, editors embedded in other apps |
+| `sec-3` | + strict headers + permissions-policy | Public-facing apps, hardened |
+| `sec-3e` | Like sec-3, iframe-friendly | Vaultwarden, apps needing SAMEORIGIN |
+| `sec-4` | + hard rate limit | Sensitive apps, login pages, admin panels |
+| `sec-5` | + CSP enforce | Maximum — only for CSP-tested apps (e.g. Whoami) |
 
-Two additional middlewares that are **not** part of any chain. Add them per-router where the app can handle it:
+### Examples: Which level for which app?
 
-| Middleware | Effect |
-|-----------|--------|
-| `sec-permissions-policy` | Blocks browser APIs: camera, mic, geolocation, payment, USB, gyroscope |
-| `sec-csp-enforce` | Enforcing Content Security Policy (may break apps that load external scripts) |
+| App | Level | Why |
+|-----|-------|-----|
+| Whoami | `sec-5` | Static page, no external resources → perfect for CSP enforce |
+| Traefik Dashboard | `sec-4` + `acc-tailscale` | Sensitive admin UI, VPN-only, hard rate limit |
+| Vaultwarden | `sec-3e` + `acc-tailscale` | Password manager: strict but needs SAMEORIGIN for browser extension |
+| Nextcloud | `sec-3` + `acc-public` | Public-facing, hardened headers |
+| WordPress / Ghost | `sec-2` + `acc-public` | CMS with inline scripts, standard protection |
+| OnlyOffice | `sec-2e` | Must be embeddable in iframes by other apps |
+| Paperless | `sec-3` + `acc-tailscale` | Internal tool, hardened, VPN-only |
+
+### Pro Mode: Custom Combinations
+
+For apps that don't fit any preset, combine building blocks directly:
+
+```yaml
+# Example: strict headers with embed + hard rate limit + CrowdSec
+middlewares:
+  - acc-tailscale@file
+  - hdr-strict-embed@file
+  - rl-hard@file
+  - compress@file
+  - sec-crowdsec@file
+```
+
+Available building blocks (defined in `security-blocks.yml`):
+
+| Block | What it does |
+|-------|-------------|
+| `hdr-basic` | HSTS, nosniff, frameDeny |
+| `hdr-basic-embed` | HSTS, nosniff, SAMEORIGIN |
+| `hdr-strict` | + HSTS preload, referrer-policy, CSP report-only |
+| `hdr-strict-embed` | + HSTS preload, same-origin referrer, CSP report-only |
+| `rl-soft` | 100 avg / 50 burst |
+| `rl-hard` | 20 avg / 40 burst |
+| `compress` | gzip compression |
+| `permissions-policy` | Blocks camera, mic, geolocation, payment, USB, gyroscope |
+| `csp-enforce` | Enforcing CSP (may break apps with external scripts) |
 
 ## TLS Profiles
 

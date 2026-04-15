@@ -128,6 +128,7 @@ services:
       # Middlewares
       # NOTE: Standard sec-* middlewares conflict with Vaultwarden's required headers.
       # We use a custom Docker-level middleware instead (same pattern as OnlyOffice).
+      # TODO: Switch to sec-3e after testing new security levels on server.
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${COMPOSE_PROJECT_NAME}-headers@docker"
       # Vaultwarden-specific security headers
       - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.browserXssFilter=false"

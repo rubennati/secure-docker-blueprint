@@ -1,0 +1,101 @@
+http:
+  middlewares:
+
+    # ==========================================================
+    # SECURITY POLICY CHAINS (presets)
+    # ==========================================================
+    # Pick a level per router. Higher = stricter.
+    # "e" variants = embed/iframe-friendly (SAMEORIGIN instead of DENY).
+    #
+    # Building blocks are defined in security-blocks.yml.
+    #
+    # Level  What it includes                    Use case
+    # -----  ----------------------------------  -------------------------
+    # sec-0  nothing                             Debug, naked proxy
+    # sec-1  basic headers + compress            Internal tools
+    # sec-2  + soft ratelimit                    Standard (most apps)
+    # sec-3  + strict headers + permissions      Public-facing, hardened
+    # sec-4  + hard ratelimit                    Sensitive (login pages)
+    # sec-5  + CSP enforce                       Maximum (CSP-tested only)
+    #
+    # Examples:
+    #   WordPress        → sec-2    (CMS with inline scripts)
+    #   Nextcloud        → sec-3    (public-facing, hardened)
+    #   Vaultwarden      → sec-3e   (strict + SAMEORIGIN for browser extension)
+    #   OnlyOffice       → sec-2e   (embeddable in iframes)
+    #   Traefik Dashboard→ sec-4    (admin UI, hard rate limit)
+    #   Whoami           → sec-5    (static page, perfect for CSP enforce)
+    #
+    # Recommendation: Start with sec-2 for new apps.
+    # Upgrade to sec-3 when the app handles strict headers.
+    # Use sec-*e only when the app must be embedded in iframes.
+    # ==========================================================
+
+    # Debug — no hardening at all
+    sec-0:
+      chain:
+        middlewares: []
+
+    # Internal tools — basic security headers + compression
+    sec-1:
+      chain:
+        middlewares:
+          - hdr-basic
+          - compress
+
+    sec-1e:
+      chain:
+        middlewares:
+          - hdr-basic-embed
+          - compress
+
+    # Standard — recommended default for most apps
+    sec-2:
+      chain:
+        middlewares:
+          - hdr-basic
+          - rl-soft
+          - compress
+
+    sec-2e:
+      chain:
+        middlewares:
+          - hdr-basic-embed
+          - rl-soft
+          - compress
+
+    # Hardened — public-facing apps, strict headers
+    sec-3:
+      chain:
+        middlewares:
+          - hdr-strict
+          - rl-soft
+          - compress
+          - permissions-policy
+
+    sec-3e:
+      chain:
+        middlewares:
+          - hdr-strict-embed
+          - rl-soft
+          - compress
+          - permissions-policy
+
+    # Sensitive — hard rate limit, login pages, admin panels
+    sec-4:
+      chain:
+        middlewares:
+          - hdr-strict
+          - rl-hard
+          - compress
+          - permissions-policy
+
+    # Maximum — only for apps tested with enforcing CSP
+    sec-5:
+      chain:
+        middlewares:
+          - hdr-strict
+          - rl-hard
+          - compress
+          - permissions-policy
+          - csp-enforce

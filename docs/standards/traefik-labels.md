@@ -34,18 +34,23 @@ labels:
 | `APP_TRAEFIK_CERT_RESOLVER` | `cloudflare-dns`, `httpResolver` |
 | `APP_TRAEFIK_TLS_OPTION` | `tls-basic`, `tls-aplus`, `tls-modern` |
 | `APP_TRAEFIK_ACCESS` | `acc-public`, `acc-tailscale` |
-| `APP_TRAEFIK_SECURITY` | `sec-0` through `sec-4` |
+| `APP_TRAEFIK_SECURITY` | `sec-0` through `sec-5`, `e` suffix for embed (e.g. `sec-3e`) |
 | `TRAEFIK_NETWORK` | `proxy-public` |
 
 ## Security Levels
 
-| Level | Use Case | Headers |
-|-------|----------|---------|
-| `sec-0` | TLS only, no headers | No HSTS, no CSP |
-| `sec-1` | Basic headers | HSTS, X-Content-Type |
-| `sec-2` | Standard (recommended) | + X-Frame-Options, Referrer-Policy |
-| `sec-3` | Elevated | + Permissions-Policy, CSP |
-| `sec-4` | Maximum | + Rate-Limiting, strict CSP |
+Each level builds on the previous. `e` variants = iframe-friendly (SAMEORIGIN).
+
+| Level | What it includes | Recommended for |
+|-------|-----------------|-----------------|
+| `sec-0` | Nothing | Debug |
+| `sec-1` / `sec-1e` | Basic headers + compress | Internal tools |
+| `sec-2` / `sec-2e` | + soft rate limit | **Standard (most apps)** |
+| `sec-3` / `sec-3e` | + strict headers + permissions-policy | Public-facing, hardened |
+| `sec-4` | + hard rate limit | Sensitive apps, login pages |
+| `sec-5` | + CSP enforce | Maximum (CSP-tested only) |
+
+Building blocks and pro mode: see [Traefik README](../../core/traefik/README.md).
 
 ## Access Policies
 

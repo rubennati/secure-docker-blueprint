@@ -1,0 +1,85 @@
+http:
+  middlewares:
+
+    # ==========================================================
+    # SECURITY BUILDING BLOCKS
+    # ==========================================================
+    # Modular middleware components. Used by sec-* chains
+    # (security-chains.yml), or individually for custom setups.
+    #
+    # Pro mode: combine blocks directly in router middlewares:
+    #   middlewares:
+    #     - hdr-strict-embed@file
+    #     - rl-hard@file
+    #     - compress@file
+    # ==========================================================
+
+    # -------- Headers --------
+
+    # Basic security headers (HSTS, nosniff, frame deny)
+    hdr-basic:
+      headers:
+        contentTypeNosniff: true
+        frameDeny: true
+        forceSTSHeader: true
+        stsSeconds: 63072000
+
+    # Basic headers, iframe-friendly (SAMEORIGIN instead of DENY)
+    hdr-basic-embed:
+      headers:
+        contentTypeNosniff: true
+        customFrameOptionsValue: "SAMEORIGIN"
+        forceSTSHeader: true
+        stsSeconds: 63072000
+
+    # Strict headers (preload, referrer policy, CSP report-only)
+    hdr-strict:
+      headers:
+        contentTypeNosniff: true
+        frameDeny: true
+        forceSTSHeader: true
+        stsSeconds: 63072000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+        contentSecurityPolicyReportOnly: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:;"
+        addVaryHeader: true
+
+    # Strict headers, iframe-friendly (SAMEORIGIN, same-origin referrer)
+    hdr-strict-embed:
+      headers:
+        contentTypeNosniff: true
+        customFrameOptionsValue: "SAMEORIGIN"
+        forceSTSHeader: true
+        stsSeconds: 63072000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        referrerPolicy: "same-origin"
+        contentSecurityPolicyReportOnly: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:;"
+        addVaryHeader: true
+
+    # -------- Rate Limiting --------
+
+    rl-soft:
+      rateLimit:
+        average: 100
+        burst: 50
+
+    rl-hard:
+      rateLimit:
+        average: 20
+        burst: 40
+
+    # -------- Extras --------
+
+    compress:
+      compress: {}
+
+    permissions-policy:
+      headers:
+        customResponseHeaders:
+          Permissions-Policy: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()"
+
+    csp-enforce:
+      headers:
+        contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:;"
