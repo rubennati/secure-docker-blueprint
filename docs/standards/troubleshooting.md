@@ -174,13 +174,13 @@ and Traefik returns **403 Forbidden** — not a helpful error message.
 
 ```bash
 # Access control (ipAllowList)
-cat /path/to/docker-ops-blueprint/core/traefik/config/dynamic/access.yml
+cat /path/to/secure-docker-blueprint/core/traefik/config/dynamic/access.yml
 
 # Security headers, rate limits, chains
-cat /path/to/docker-ops-blueprint/core/traefik/config/dynamic/security.yml
+cat /path/to/secure-docker-blueprint/core/traefik/config/dynamic/security.yml
 
 # TLS profiles
-cat /path/to/docker-ops-blueprint/core/traefik/config/dynamic/tls-profiles.yml
+cat /path/to/secure-docker-blueprint/core/traefik/config/dynamic/tls-profiles.yml
 ```
 
 ---
@@ -211,7 +211,7 @@ request before it reached the container. This is a middleware issue (usually
 ### Tailscale IP ranges
 
 ```yaml
-# /path/to/docker-ops-blueprint/core/traefik/config/dynamic/access.yml
+# /path/to/secure-docker-blueprint/core/traefik/config/dynamic/access.yml
 acc-tailscale:
   ipAllowList:
     sourceRange:
@@ -326,7 +326,7 @@ docker exec <traefik-container> cat /var/log/traefik/access.log | grep <app> | t
 docker exec <traefik-container> cat /var/log/traefik/traefik.log | tail -20
 
 # Check dynamic config files
-ls /path/to/docker-ops-blueprint/core/traefik/config/dynamic/
+ls /path/to/secure-docker-blueprint/core/traefik/config/dynamic/
 
 # Validate compose config (catches missing env vars)
 docker compose config

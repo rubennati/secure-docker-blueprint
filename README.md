@@ -1,4 +1,4 @@
-# Docker Ops Blueprint
+# Secure Docker Blueprint
 
 **Modular, security-hardened Docker Compose setups for self-hosted infrastructure.**
 
@@ -52,8 +52,8 @@ Production-ready configurations for 15+ services — with standardized patterns,
 
 ```bash
 # Clone
-git clone https://github.com/your-user/docker-ops-blueprint.git
-cd docker-ops-blueprint
+git clone https://github.com/your-user/secure-docker-blueprint.git
+cd secure-docker-blueprint
 
 # 1. Start Traefik (required for all apps)
 cd core/traefik
@@ -98,7 +98,7 @@ Three patterns for secret handling:
 ## Project Structure
 
 ```
-docker-ops-blueprint/
+secure-docker-blueprint/
 │
 ├── core/                        # Infrastructure (always needed)
 │   ├── traefik/                 #   Reverse proxy + socket proxy

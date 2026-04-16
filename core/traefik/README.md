@@ -197,7 +197,7 @@ Step-by-step — all changes are in templates, rendered via `render.sh`.
 # -----------------------------------------------
 # Step 1: CrowdSec Engine must be running
 # -----------------------------------------------
-cd /path/to/docker-ops-blueprint/core/crowdsec
+cd /path/to/secure-docker-blueprint/core/crowdsec
 docker compose ps   # should show "healthy"
 
 # -----------------------------------------------
@@ -209,7 +209,7 @@ docker exec crowdsec cscli bouncers add traefik-bouncer
 # -----------------------------------------------
 # Step 3: Add the key to Traefik .env
 # -----------------------------------------------
-cd /path/to/docker-ops-blueprint/core/traefik
+cd /path/to/secure-docker-blueprint/core/traefik
 nano .env
 # Add or uncomment:
 #   CROWDSEC_BOUNCER_KEY=CmuiLn30RFNQkm+phT3Jc4u1ij5DZBA7MUvl1IG+zUE
@@ -295,7 +295,7 @@ docker exec crowdsec cscli collections install crowdsecurity/geoloc-enrich
 #    Example: ban all IPs from country "XX" after 1 request
 
 # 3. Restart CrowdSec to load the new collection
-cd /path/to/docker-ops-blueprint/core/crowdsec
+cd /path/to/secure-docker-blueprint/core/crowdsec
 docker compose restart
 ```
 

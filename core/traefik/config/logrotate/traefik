@@ -4,7 +4,7 @@
 # Docker's json-file log driver does NOT manage these — logrotate must.
 #
 # Install on the HOST (not inside the container):
-#   sudo cp /path/to/docker-ops-blueprint/core/traefik/config/logrotate/traefik /etc/logrotate.d/traefik
+#   sudo cp /path/to/secure-docker-blueprint/core/traefik/config/logrotate/traefik /etc/logrotate.d/traefik
 #
 # The path must match the HOST-side volume mount in docker-compose.yml:
 #   ./volumes/logs:/var/log/traefik
@@ -13,7 +13,7 @@
 # to close and reopen its log files (like nginx's USR1 signal).
 # "systemctl reload traefik" does NOT work because Traefik runs in Docker.
 
-/path/to/docker-ops-blueprint/core/traefik/volumes/logs/*.log {
+/path/to/secure-docker-blueprint/core/traefik/volumes/logs/*.log {
     daily
     rotate 7
     compress

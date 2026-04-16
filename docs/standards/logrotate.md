@@ -20,7 +20,7 @@ and do **not** need logrotate.
 ### 1. Copy config to host
 
 ```bash
-sudo cp /path/to/docker-ops-blueprint/core/traefik/config/logrotate/traefik /etc/logrotate.d/traefik
+sudo cp /path/to/secure-docker-blueprint/core/traefik/config/logrotate/traefik /etc/logrotate.d/traefik
 ```
 
 ### 2. Verify the path
@@ -33,9 +33,9 @@ volumes:
   - ./volumes/logs:/var/log/traefik
 ```
 
-If your deploy path is `/path/to/docker-ops-blueprint/core/traefik`, the host path is:
+If your deploy path is `/path/to/secure-docker-blueprint/core/traefik`, the host path is:
 ```
-/path/to/docker-ops-blueprint/core/traefik/volumes/logs/*.log
+/path/to/secure-docker-blueprint/core/traefik/volumes/logs/*.log
 ```
 
 ### 3. Test (dry run)
@@ -61,7 +61,7 @@ sudo cat /var/lib/logrotate/status | grep traefik
 ## How it works
 
 ```
-/path/to/docker-ops-blueprint/core/traefik/volumes/logs/*.log {
+/path/to/secure-docker-blueprint/core/traefik/volumes/logs/*.log {
     daily              # Rotate once per day
     rotate 7           # Keep 7 rotated files (1 week)
     compress           # gzip old logs
