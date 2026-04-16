@@ -109,4 +109,5 @@ Drop a PDF into `./volumes/consume/` and watch the logs — it should be consume
 ## Details
 
 - [UPSTREAM.md](UPSTREAM.md) — source, upgrade checklist, consume/classify tuning
+- [CONFIG.md](CONFIG.md) — full configuration reference bucketed by mandatory / nice-to-have / use-case-dependent, plus backup-lifecycle and management-command cheatsheet
 - [sso.yml](sso.yml) — Authentik OIDC overlay
