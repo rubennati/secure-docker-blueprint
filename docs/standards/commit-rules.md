@@ -115,91 +115,85 @@ Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
 ## Branch Model
 
 ```
-main     ← stable, tested, public-ready (pushed to public remote)
+main       ← stable, tested, public
 │
-└─ dev   ← all work happens here, merges into main after test
-           (pushed to public remote)
-
-docs     ← ORPHAN branch, independent history
-           German drafts, Notion-bound content, private notes
-           NEVER pushed to public remote
+└─ dev     ← active work, merges into main after test
+   │
+   └─ feature/*  ← optional, short-lived feature branches
 ```
 
-### Workflow rule: always work in dev
+### Workflow rule: work in dev
 
-**All changes go through `dev` first.** Direct commits to `main` are avoided. Only exception: commits that update branch-tracking files (e.g. this file itself when it was first created).
+All changes go through `dev` first. Direct commits to `main` are avoided. Only exception: commits that update branch-tracking / meta files when they were first introduced.
 
 Rationale:
 
-- `main` is public-ready at all times — new changes might not be
+- `main` stays in a known-good state
 - Testing happens before merge into `main`
-- Feature-reverts are possible without touching `main` history
-- Clear separation between "tested and public" vs "in progress"
+- Revert of a feature is possible without touching `main` history
+- Clear separation between "tested" and "in progress"
 
 ### When to use which branch
 
 | Change type | Branch |
 |-------------|--------|
-| Any code change, even small | `dev` → merge to `main` after test |
+| Any code change | `dev` → merge to `main` after test |
 | New app, hardening, refactoring | `dev` → merge to `main` after test |
 | Bugfix | `dev` → merge to `main` after test |
-| German meta-doc, Notion draft, private notes | `docs` (orphan) |
-| Emergency fix on main | `main` directly (rare, documented why) |
+| Larger, isolated work | `feature/<name>` from `dev`, merge back into `dev` |
+| Emergency fix | `main` directly (rare, document why in commit) |
 
-### Merge workflow: dev → main
+### Merge workflow
 
 ```bash
-# After feature is tested and stable on dev
+# Feature merged into dev
+git checkout dev
+git merge feature/my-change
+git branch -d feature/my-change
+
+# dev merged into main (only after test)
 git checkout main
 git merge dev
-# Run pre-push checks
-git push origin main
 ```
 
-If conflicts: resolve on `dev` first (rebase or merge), then merge clean.
+If conflicts: resolve on the incoming branch first, then merge clean.
 
 ### Rules per branch
 
 **main:**
-- English only
+
 - Everything tested
-- No drafts, no German
-- Public-ready at all times
+- Commit messages in English
 - Only updated via merge from `dev` (or rare direct commits for emergency)
 
 **dev:**
-- English
-- Work-in-progress allowed (but not broken code — commits should build)
-- Will be merged into `main` after test
-- Pushed to public remote
 
-**docs (ORPHAN):**
-- Can be German
-- Drafts allowed
-- **NEVER pushed to public remote**
-- Content that belongs to Notion lives here until transferred
-- Separate history from main/dev (no shared commits)
+- Work-in-progress allowed, but commits should build
+- Will be merged into `main` after test
+
+**feature/\*:**
+
+- Short-lived
+- Branched from `dev`, merged back into `dev`
+- Deleted after merge
 
 ### Merge rules
 
-- `dev` → `main`: Merge only after live testing passed and README + Test-Script are green
-- `docs` → `main`: Never (docs has separate orphan history)
-- `docs` → `dev`: Never
+- `dev` → `main`: only after live testing passed and tests green
+- `feature/*` → `dev`: after the feature works and is self-contained
 
 ## Push Strategy
 
-**Public remote** gets only `main` and `dev`. `docs` stays local.
+Push only what should be public. Always push refs explicitly.
 
 ### Explicit push commands
 
 ```bash
-# Good — only main and dev
+# Good — explicit refs
+git push origin main
 git push origin main dev
 
-# Good — only main
-git push origin main
-
-# NEVER — pushes all branches including docs
+# Avoid — pushes every local branch
 git push --all
 ```
 
@@ -207,25 +201,98 @@ git push --all
 
 Before `git push`:
 
-- [ ] Only pushing `main` or `dev` (not `docs`, not `--all`)
 - [ ] Pre-commit checks passed on all commits being pushed
-- [ ] No real domains, IPs, secrets, personal data
+- [ ] No real domains, IPs, secrets, personal data in files or commit messages
 - [ ] Commit messages in English
-- [ ] Remote ref explicitly named (not `git push` which may push default)
+- [ ] Remote ref explicitly named
 
 ### Setting up a public remote
 
 ```bash
 # Add remote
-git remote add public git@github.com:<user>/docker-ops-blueprint.git
+git remote add origin git@github.com:<user>/<repo>.git
 
-# Configure default push to only include main and dev
-# (prevents accidental --all)
-git config remote.public.push refs/heads/main
-git config remote.public.push refs/heads/dev
+# Optional: configure which refs get pushed by default
+git config --add remote.origin.push refs/heads/main
+git config --add remote.origin.push refs/heads/dev
+
+# Verify config
+git config --get-all remote.origin.push
 ```
 
-With this config, `git push public` only pushes main and dev. Pushing docs requires explicit `git push public docs` (which should never happen).
+With this config, a plain `git push origin` pushes only the configured refs. Other branches require explicit `git push origin <branch>`.
+
+### First push to a fresh remote
+
+```bash
+# 1. Run pre-push audit (see below)
+
+# 2. Dry-run
+git push --dry-run origin
+
+# 3. Actual push
+git push origin main
+git push origin dev
+```
+
+### Pre-push audit
+
+Run before each push. Replace the pattern list with your own sensitive strings (domains, hostnames, usernames):
+
+```bash
+PATTERNS=(
+  "your-private-domain\.com"
+  "internal-hostname"
+  "real-user-name"
+  # add site-specific patterns here
+)
+
+for branch in main dev; do
+  echo "── $branch ──"
+  for pattern in "${PATTERNS[@]}"; do
+    echo -n "  $pattern: "
+    if git log $branch -p 2>/dev/null | grep -qE "$pattern"; then
+      echo "FOUND — do NOT push"
+    else
+      echo "CLEAN"
+    fi
+  done
+done
+```
+
+### Branch Protection (GitHub settings)
+
+After first push, configure on the GitHub repo:
+
+1. Settings → Branches → Branch Protection Rules
+2. Protect `main`:
+   - Require pull request before merging
+   - Require status checks
+   - Do not allow force pushes
+   - Do not allow deletions
+3. Optionally protect `dev` similarly
+
+### Pre-push hook (optional)
+
+A `.git/hooks/pre-push` script can prevent accidental pushes of specific local branches. The hook is not tracked (per-developer setup). Example pattern:
+
+```bash
+#!/usr/bin/env bash
+# Block push of specific local-only branches
+BLOCKED_BRANCHES=("local-notes" "drafts")
+
+while read local_ref local_sha remote_ref remote_sha; do
+  for blocked in "${BLOCKED_BRANCHES[@]}"; do
+    if [[ "$remote_ref" == "refs/heads/$blocked" ]]; then
+      echo "Push to '$blocked' blocked by local hook."
+      exit 1
+    fi
+  done
+done
+exit 0
+```
+
+Make executable: `chmod +x .git/hooks/pre-push`
 
 ## AI Commit Behavior
 
