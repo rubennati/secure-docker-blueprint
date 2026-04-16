@@ -1,28 +1,38 @@
 services:
 
   # --------------------------------------------------------
-  # DATABASE
+  # DATABASE (MySQL)
   # --------------------------------------------------------
   db:
     # --- Identity ---
-    image: ${DB_IMAGE}
+    image: mysql:${DB_TAG}
     container_name: ${CONTAINER_NAME_DB}
     restart: unless-stopped
 
     # --- Security ---
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
+      - DAC_OVERRIDE
 
     # --- Configuration ---
     environment:
-      MYSQL_DATABASE: ${DB_MYSQL_DATABASE}
-      MYSQL_USER: ${DB_MYSQL_USER}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD_FILE: /run/secrets/DB_PWD
       MYSQL_ROOT_PASSWORD_FILE: /run/secrets/DB_ROOT_PWD
-      TZ: ${TIMEZONE}
+      TZ: ${TZ}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
     secrets:
-      - DB_ROOT_PWD
       - DB_PWD
+      - DB_ROOT_PWD
 
     # --- Storage ---
     volumes:
@@ -34,18 +44,18 @@ services:
 
     # --- Health & Observability ---
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 20s
       timeout: 5s
       retries: 10
-      start_period: 20s
+      start_period: 30s
 
   # --------------------------------------------------------
   # GHOST
   # --------------------------------------------------------
   app:
     # --- Identity ---
-    image: ${APP_IMAGE}
+    image: ghost:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}
     restart: unless-stopped
     depends_on:
@@ -57,15 +67,16 @@ services:
       - no-new-privileges:true
 
     # --- Configuration ---
+    # Ghost uses nconf-style hierarchical env vars (double-underscore as nesting).
+    # Keys ending in `__file` read the value from the given file path —
+    # Ghost's native Docker Secrets equivalent.
     environment:
       url: https://${APP_TRAEFIK_HOST}
       database__client: mysql
       database__connection__host: db
       database__connection__port: "3306"
-      database__connection__user: ${DB_MYSQL_USER}
-      database__connection__database: ${DB_MYSQL_DATABASE}
-      # NOTE: Ghost does not support _FILE for DB password.
-      # We read it from the secret via the shell trick below.
+      database__connection__user: ${DB_USER}
+      database__connection__database: ${DB_NAME}
       database__connection__password__file: /run/secrets/DB_PWD
       mail__from: ${GHOST_MAIL_FROM}
       mail__transport: SMTP
@@ -76,7 +87,7 @@ services:
       mail__options__auth__user: ${GHOST_MAIL_USER}
       mail__options__auth__pass__file: /run/secrets/GHOST_MAIL_PWD
       NODE_ENV: production
-      TZ: ${TIMEZONE}
+      TZ: ${TZ}
     secrets:
       - DB_PWD
       - GHOST_MAIL_PWD
@@ -92,15 +103,19 @@ services:
 
     # --- Traefik ---
     labels:
+      # Router
       - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      # TLS
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Middlewares
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
-      - "traefik.docker.network=proxy-public"
 
     # --- Health & Observability ---
     healthcheck:
@@ -125,9 +140,9 @@ networks:
 # SECRETS
 # --------------------------------------------------------
 secrets:
-  DB_ROOT_PWD:
-    file: ./.secrets/db_root_pwd.txt
   DB_PWD:
     file: ./.secrets/db_pwd.txt
+  DB_ROOT_PWD:
+    file: ./.secrets/db_root_pwd.txt
   GHOST_MAIL_PWD:
     file: ./.secrets/mail_pwd.txt
