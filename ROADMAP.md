@@ -1,8 +1,8 @@
 # Roadmap
 
-Status reference point: 2026-04-16.
+Last updated: 2026-04-16.
 
-Update process: see [`docs/standards/documentation-workflow.md`](docs/standards/documentation-workflow.md).
+This document is the single source of truth for project direction. Updated as part of every meaningful commit that completes, starts, or reprioritises a work item — never batch-updated retroactively. Update rules: see [`docs/standards/documentation-workflow.md`](docs/standards/documentation-workflow.md).
 
 ## Completed
 
@@ -64,6 +64,29 @@ Complete hardening layer:
 - `docs/standards/documentation-workflow.md` — doc update triggers, ownership, freshness rules
 - `LICENSE` — Apache 2.0
 
+### Per-App Documentation Pass (Coherence Audit Package 6)
+
+Brought every app and core component in line with blueprint standards:
+
+- `apps/` (10): dockhand, portainer, whoami (core), ghost, nextcloud, seafile, calcom, paperless-ngx — each with README + UPSTREAM + .gitignore + style alignment
+- `core/` (3): onlyoffice, traefik, authentik — same pattern
+- Style consistency: `APP_TAG`/`DB_TAG` pattern, `TZ` (not `TIMEZONE`), `TRAEFIK_NETWORK` variable, `${COMPOSE_PROJECT_NAME}-*` container names, grouped Traefik labels
+- `TIMEZONE` → `TZ` migration completed across the apps touched
+
+Invoice Ninja, Vaultwarden, Hawser remain for Package 7 (Compose fixes) — see In Progress.
+
+### CONFIG.md Artifact (blueprint v2)
+
+Added a mandatory per-app configuration reference file alongside `README.md` and `UPSTREAM.md`. Every config option is bucketed into:
+
+- **Mandatory** — every production instance sets this
+- **Nice-to-have** — recommended default
+- **Use-case-dependent** — only with a named trigger
+
+Deliverables:
+- `docs/app-setup-blueprint.md` v2 on `docs` branch — new Section 2.8 defines the template, buckets, table formats, and sub-structure by app size. v1 archived as `app-setup-blueprint-v1.md`.
+- `apps/paperless-ngx/CONFIG.md` on `dev` — reference instance for large-app setup, covering all Paperless env vars, backup lifecycle, management commands, and extensions.
+
 ---
 
 ## In Progress
@@ -72,29 +95,38 @@ Complete hardening layer:
 
 Self-audit on 2026-04-16 identified 32 action items across 7 work packages. See [`docs/audits/coherence-check-2026-04-16.md`](docs/audits/coherence-check-2026-04-16.md) for full findings and rationale.
 
-Priority order:
+Progress:
 
-1. **Cross-reference fixes** — add missing apps to README, fix `new-app-checklist` path reference, clean up ROADMAP references (~1h)
-2. **Secrets folder standardization** — `./secrets/` → `./.secrets/` in 6 services (~30min)
-3. **Service naming consistency** — `database` → `db` in 3 apps (~30min)
-4. **Template corrections** — align `docs/templates/` with standards (~20min)
-5. **Standards clarifications** — provider suffixes, secret generation, cross-references (~1h)
-6. **Per-app documentation** — 7 missing READMEs, 6 missing UPSTREAMs, 6 missing `.gitignore`, 3 core READMEs (~4–6h)
-7. **Compose fixes** — Invoice Ninja (non-compliant), Vaultwarden (entrypoint wrapper for DB secret), Hawser (missing fields) (~2h)
+1. ✅ **Cross-reference fixes** — done
+2. ✅ **Secrets folder standardization** (`./secrets/` → `./.secrets/`) — done
+3. ✅ **Service naming consistency** (`database` → `db`) — done
+4. ✅ **Template corrections** — done
+5. ✅ **Standards clarifications** — done
+6. ✅ **Per-app documentation** — done (see Completed)
+7. ⏳ **Compose fixes** — pending: Invoice Ninja (non-compliant), Vaultwarden (entrypoint wrapper for DB secret), Hawser (missing fields). Est. ~2h.
 
-Packages run as independent commits on `dev`. Target: complete all 7 packages within two weeks of the audit.
+Only Package 7 remains.
 
-### Paperless-ngx Security Hardening (Pilot for Implementation-Level Concept)
+### Paperless-ngx Security Hardening (Pilot for CONFIG.md Approach)
 
-Pilot project for applying a structured hardening process to an existing app: gap analysis → user decisions → phased rollout → test-driven deployment.
+Pilot for the CONFIG.md artifact: structured hardening of an existing app via gap-analysis → bucket decisions → phased rollout → test-driven deployment.
 
-Phases in planning (from audit result):
+**Phases 0–3 done** — gap analysis and bucket decisions consolidated in [`apps/paperless-ngx/CONFIG.md`](apps/paperless-ngx/CONFIG.md). All ~140 Paperless env vars catalogued, backup lifecycle documented, management commands listed.
 
-1. `PAPERLESS_ALLOWED_HOSTS` + `PAPERLESS_TRUSTED_PROXIES` (critical basics)
-2. Explicit defaults: `ACCOUNT_ALLOW_SIGNUPS=false`, `AUDIT_LOG_ENABLED=true`
-3. Session hardening + webhook SSRF protection
-4. Remote user auth decision with documented exception handling
-5. `/admin` panel protection via second Traefik router
+**Phase 4: Mandatory env rollout** — 8 open action items from CONFIG.md Quick-Summary, planned as separate commits with live tests between each:
+
+1. `PAPERLESS_ALLOWED_HOSTS` — default `*` leaves host-header injection window open
+2. `PAPERLESS_TRUSTED_PROXIES` — without it the audit log sees only Traefik's IP
+3. `PAPERLESS_URL` — explicit setter that covers ALLOWED_HOSTS / CORS / CSRF in one place
+4. `PAPERLESS_USE_X_FORWARD_HOST` + `USE_X_FORWARD_PORT` + `PROXY_SSL_HEADER` — Django-side trust for Traefik-set proxy headers (currently half-wired)
+5. `PAPERLESS_ACCOUNT_ALLOW_SIGNUPS=false` — explicit instead of implicit default
+6. `PAPERLESS_EMPTY_TRASH_DELAY=30` — explicit for compliance relevance
+7. Automated backup via `document_exporter` + scheduled cron — currently missing
+8. DB upgrade playbook (Paperless major + PostgreSQL major) — currently blank
+
+**Phase 5: `/admin` panel protection** — second Traefik router with `acc-tailscale` for Django admin (bypasses MFA/SSO otherwise). Cross-reference: generalisable pattern, see Admin Path Protection below.
+
+**Phase 6: Extensions** — setup at least one of paperless-gpt / paperless-ai / paperless-mcp as its own app under `apps/`. Template for paperless-mcp already exists in `inbox/Archiv/paperless-mcp/`. Open decision: which extension first, conflict-avoidance strategy if multiple auto-taggers are used.
 
 Each phase is tested on the live server before the next begins.
 
@@ -233,6 +265,8 @@ The current Docker Compose approach covers single-host and small-scale deploymen
 Expose selected apps via MCP (Model Context Protocol) for AI-assisted operation. Candidates: Paperless-ngx document search, Vaultwarden secret retrieval, Invoice Ninja invoice creation.
 
 Scope: blueprint defines the pattern, individual MCP servers developed in separate repos.
+
+Concrete: `paperless-mcp` template already exists in `inbox/Archiv/paperless-mcp/` (complete with build Dockerfile, compose file, entrypoint wrapper). Ready to move into `apps/` when activated — see Paperless-ngx Phase 6 in In Progress.
 
 ### Deploy Script
 
