@@ -76,7 +76,7 @@ services:
       - "${TRAEFIK_HTTPS_PORT}:443/udp"
 
     environment:
-      - TZ=${TIMEZONE}
+      - TZ=${TZ}
       # Cloudflare credentials (only needed if you use DNS-01 resolver)
       - CF_DNS_API_TOKEN=${CF_DNS_API_TOKEN}
 
