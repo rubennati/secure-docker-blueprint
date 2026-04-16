@@ -15,14 +15,14 @@ Ghost's built-in mailer (`mail__transport: SMTP`) is required for member signup 
 
 ### Secret handling
 
-Ghost supports its own file-based secrets pattern via the `__file` suffix on config keys:
+Ghost reads secrets via the `__file` suffix on config keys:
 
 ```yaml
 database__connection__password__file: /run/secrets/DB_PWD
 mail__options__auth__pass__file: /run/secrets/GHOST_MAIL_PWD
 ```
 
-This maps to Ghost's nconf config `database.connection.password.file` — Ghost resolves these at startup and reads the file contents. No entrypoint wrapper is needed.
+This maps to Ghost's nconf config `database.connection.password.file` — Ghost resolves it at startup and reads the file contents.
 
 ## Setup
 

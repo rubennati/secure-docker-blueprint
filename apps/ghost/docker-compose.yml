@@ -68,8 +68,7 @@ services:
 
     # --- Configuration ---
     # Ghost uses nconf-style hierarchical env vars (double-underscore as nesting).
-    # Keys ending in `__file` read the value from the given file path —
-    # Ghost's native Docker Secrets equivalent.
+    # Keys ending in `__file` read the value from the given file path.
     environment:
       url: https://${APP_TRAEFIK_HOST}
       database__client: mysql

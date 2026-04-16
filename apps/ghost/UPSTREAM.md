@@ -13,7 +13,7 @@
 
 - Official `ghost` image (Alpine variant), pinned tag
 - Official `mysql:8.4` LTS as backend
-- Ghost's native `__file` config pattern for secrets — no entrypoint wrapper needed
+- Ghost's native `__file` config pattern for secrets
 
 ## What we changed and why
 
