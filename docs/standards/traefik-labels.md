@@ -1,5 +1,32 @@
 # Traefik Labels
 
+## Provider Suffixes
+
+Every Traefik resource reference (middleware, TLS option, router, service) must include a provider suffix that tells Traefik where to find the definition.
+
+| Suffix | Provider | Used for |
+|--------|----------|----------|
+| `@file` | File provider | Resources defined in `core/traefik/config/dynamic/*.yml` (`access.yml`, `security-chains.yml`, `tls-profiles.yml`, `integrations.yml`) |
+| `@docker` | Docker provider | Resources defined inline via `traefik.*` labels in a service's `docker-compose.yml` |
+
+### Common references in this blueprint
+
+- `acc-*@file`, `sec-*@file` — access and security chains defined in `access.yml` / `security-chains.yml`
+- `tls-*@file` — TLS profiles from `tls-profiles.yml`
+- `sec-crowdsec@file`, `sec-authentik@file` — integrations from `integrations.yml`
+- `${COMPOSE_PROJECT_NAME}-headers@docker` — per-app custom middleware defined inline via labels
+
+### Common failure mode
+
+Omitting the suffix (or mixing them up) produces:
+
+```
+middleware "sec-2" does not exist
+middleware "my-app-headers@file" does not exist
+```
+
+Traefik responds with HTTP 403 for any router that references a non-existent middleware. See [`troubleshooting.md`](troubleshooting.md) for diagnostic steps.
+
 ## Standard Pattern
 
 Every service with web access gets this label block:

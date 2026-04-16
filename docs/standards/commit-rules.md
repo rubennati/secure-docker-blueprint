@@ -370,3 +370,9 @@ git reset --hard HEAD~1  # DESTROYS changes — use with care
 - [ ] Test-Script run (if applicable)
 - [ ] Co-Authored-By footer present
 - [ ] User confirmed after seeing proposed message
+- [ ] Related docs updated in the same commit (see [`documentation-workflow.md`](documentation-workflow.md))
+
+## Related Standards
+
+- [`documentation-workflow.md`](documentation-workflow.md) — which documents must be updated when code changes, and the "same-commit documentation" rule
+- [`new-app-checklist.md`](new-app-checklist.md) — step-by-step for adding a new app, including doc requirements per commit
