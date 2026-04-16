@@ -68,6 +68,22 @@ Complete hardening layer:
 
 ## In Progress
 
+### Coherence Audit Remediation
+
+Self-audit on 2026-04-16 identified 32 action items across 7 work packages. See [`docs/audits/coherence-check-2026-04-16.md`](docs/audits/coherence-check-2026-04-16.md) for full findings and rationale.
+
+Priority order:
+
+1. **Cross-reference fixes** — add missing apps to README, fix `new-app-checklist` path reference, clean up ROADMAP references (~1h)
+2. **Secrets folder standardization** — `./secrets/` → `./.secrets/` in 6 services (~30min)
+3. **Service naming consistency** — `database` → `db` in 3 apps (~30min)
+4. **Template corrections** — align `docs/templates/` with standards (~20min)
+5. **Standards clarifications** — provider suffixes, secret generation, cross-references (~1h)
+6. **Per-app documentation** — 7 missing READMEs, 6 missing UPSTREAMs, 6 missing `.gitignore`, 3 core READMEs (~4–6h)
+7. **Compose fixes** — Invoice Ninja (non-compliant), Vaultwarden (entrypoint wrapper for DB secret), Hawser (missing fields) (~2h)
+
+Packages run as independent commits on `dev`. Target: complete all 7 packages within two weeks of the audit.
+
 ### Paperless-ngx Security Hardening (Pilot for Implementation-Level Concept)
 
 Pilot project for applying a structured hardening process to an existing app: gap analysis → user decisions → phased rollout → test-driven deployment.
