@@ -10,20 +10,28 @@
  * - Removes WordPress version from HTML, RSS, and HTTP headers
  * - Shows generic login error messages (no username/password hints)
  * - Disables XML-RPC (redundant with .htaccess, defense in depth)
+ *
+ * What it does NOT do:
+ * - Block the entire REST API (WordPress needs it for Gutenberg,
+ *   Loopback, WP-Cron, and Site Health checks)
  */
 
 // ============================================================
-// 1. Block REST API for anonymous users (prevents user enumeration)
+// 1. Block REST API user enumeration for anonymous visitors
 // ============================================================
-add_filter('rest_authentication_errors', function ($result) {
+// Only blocks /wp/v2/users — everything else stays open so that
+// Gutenberg, Loopback, WP-Cron, and Site Health keep working.
+add_filter('rest_endpoints', function ($endpoints) {
     if (!is_user_logged_in()) {
-        return new WP_Error(
-            'rest_not_logged_in',
-            'Authentication required.',
-            ['status' => 401]
-        );
+        // Remove user endpoints for anonymous visitors
+        if (isset($endpoints['/wp/v2/users'])) {
+            unset($endpoints['/wp/v2/users']);
+        }
+        if (isset($endpoints['/wp/v2/users/(?P<id>[\d]+)'])) {
+            unset($endpoints['/wp/v2/users/(?P<id>[\d]+)']);
+        }
     }
-    return $result;
+    return $endpoints;
 });
 
 // ============================================================
