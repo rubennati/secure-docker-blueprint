@@ -6,7 +6,7 @@ services:
   # --------------------------------------------------------
   socket-proxy:
     # --- Identity ---
-    image: ${SOCKET_PROXY_IMAGE}
+    image: lscr.io/linuxserver/socket-proxy:${SOCKET_PROXY_TAG}
     container_name: ${CONTAINER_NAME_SOCKET_PROXY}
     restart: unless-stopped
 
@@ -57,9 +57,9 @@ services:
   # Docker management UI. Connects to Docker API
   # exclusively through the socket proxy above.
   # --------------------------------------------------------
-  portainer:
+  app:
     # --- Identity ---
-    image: ${APP_IMAGE}
+    image: portainer/portainer-ce:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}
     restart: unless-stopped
     depends_on:
@@ -72,7 +72,7 @@ services:
 
     # --- Configuration ---
     environment:
-      TZ: ${TIMEZONE}
+      TZ: ${TZ}
     command: --host tcp://socket-proxy:2375
 
     # --- Storage ---
@@ -94,7 +94,7 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=9000"
-      - "traefik.docker.network=proxy-public"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
 
     # --- Health & Observability ---
     healthcheck:
