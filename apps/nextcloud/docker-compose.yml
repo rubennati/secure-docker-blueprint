@@ -240,7 +240,7 @@ networks:
     external: true
 
   app-internal:
-    name: ${NETWORK_INTERNAL}
+    name: ${COMPOSE_PROJECT_NAME}-internal
 
 # --------------------------------------------------------
 # SECRETS
