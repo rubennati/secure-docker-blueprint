@@ -181,9 +181,49 @@ sudo nano ./volumes/wordpress/wp-config.php
 ## Verify
 
 ```bash
-docker compose ps                    # Both services healthy
-docker compose logs app              # No PHP errors
-docker compose exec app wp --info --allow-root   # PHP + wp-cli version
+docker compose ps              # Both services healthy
+docker compose logs app        # No PHP errors
+
+# Run the full security test suite
+bash ops/scripts/test-security.sh <domain>
+```
+
+## Known Issues
+
+### Site Health warnings with `acc-tailscale`
+
+When `APP_TRAEFIK_ACCESS=acc-tailscale` is set, WordPress Site Health shows several warnings:
+
+| Warning | Cause |
+|---------|-------|
+| Scheduled event failed | WP-Cron uses loopback via public domain — blocked by IP allowlist |
+| REST API unexpected result | Site Health self-test blocked (same loopback issue) |
+| Loopback request failed | Container's self-request IP is not in Tailscale range |
+| Page cache not detected | Follows from loopback failure + no cache plugin (caching at proxy level) |
+
+**These are expected and not a real problem.** WordPress, Gutenberg, plugins, and the REST API all work normally for logged-in users accessing via Tailscale. Only the automated self-checks fail because the container cannot reach itself through Traefik's IP allowlist.
+
+For scheduled tasks (WP-Cron), set up a real cron job on the host instead:
+
+```bash
+# Add to host crontab (runs WP-Cron every 5 minutes via container)
+*/5 * * * * docker exec wordpress-app php /var/www/html/wp-cron.php > /dev/null 2>&1
+```
+
+Then disable WP-Cron's built-in loopback in `wp-config.php`:
+
+```bash
+docker compose exec app bash -c "echo \"define('DISABLE_WP_CRON', true);\" >> /var/www/html/wp-config.php"
+```
+
+These warnings do **not** appear with `acc-public` (Scenario A).
+
+### wp-cli not included
+
+The official `wordpress:*-apache` image does **not** include wp-cli. To use wp-cli, run it via a separate container:
+
+```bash
+docker run --rm -v ./volumes/wordpress:/var/www/html --network wordpress-internal wordpress:cli plugin list
 ```
 
 ## Details
