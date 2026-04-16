@@ -3,7 +3,7 @@ services:
   # --------------------------------------------------------
   # DATABASE
   # --------------------------------------------------------
-  database:
+  db:
     # --- Identity ---
     image: ${DB_IMAGE}
     container_name: ${CONTAINER_NAME_DB}
@@ -49,7 +49,7 @@ services:
     container_name: ${CONTAINER_NAME_APP}
     restart: unless-stopped
     depends_on:
-      database:
+      db:
         condition: service_healthy
 
     # --- Security ---
@@ -60,7 +60,7 @@ services:
     environment:
       url: https://${APP_TRAEFIK_HOST}
       database__client: mysql
-      database__connection__host: database
+      database__connection__host: db
       database__connection__port: "3306"
       database__connection__user: ${DB_MYSQL_USER}
       database__connection__database: ${DB_MYSQL_DATABASE}

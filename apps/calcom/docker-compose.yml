@@ -3,7 +3,7 @@ services:
   # --------------------------------------------------------
   # DATABASE
   # --------------------------------------------------------
-  database:
+  db:
     # --- Identity ---
     image: ${DB_IMAGE}
     container_name: ${CONTAINER_NAME_DB}
@@ -47,7 +47,7 @@ services:
     container_name: ${CONTAINER_NAME_APP}
     restart: unless-stopped
     depends_on:
-      database:
+      db:
         condition: service_healthy
 
     # --- Security ---
@@ -64,8 +64,8 @@ services:
       NEXTAUTH_SECRET_FILE: /run/secrets/NEXTAUTH_SECRET
       CALENDSO_ENCRYPTION_KEY_FILE: /run/secrets/ENCRYPTION_KEY
       # --- Database ---
-      DATABASE_URL: postgresql://${DB_USER}:${DB_PWD_INLINE}@database:5432/${DB_NAME}
-      DATABASE_DIRECT_URL: postgresql://${DB_USER}:${DB_PWD_INLINE}@database:5432/${DB_NAME}
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PWD_INLINE}@db:5432/${DB_NAME}
+      DATABASE_DIRECT_URL: postgresql://${DB_USER}:${DB_PWD_INLINE}@db:5432/${DB_NAME}
       # --- Licensing ---
       NEXT_PUBLIC_LICENSE_CONSENT: ${CALCOM_LICENSE_CONSENT}
       LICENSE: ${CALCOM_LICENSE}

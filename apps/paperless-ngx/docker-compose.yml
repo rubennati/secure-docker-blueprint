@@ -3,7 +3,7 @@ services:
   # --------------------------------------------------------
   # DATABASE
   # --------------------------------------------------------
-  database:
+  db:
     # --- Identity ---
     image: ${DB_IMAGE}
     container_name: ${CONTAINER_NAME_DB}
@@ -116,7 +116,7 @@ services:
     container_name: ${CONTAINER_NAME_APP}
     restart: unless-stopped
     depends_on:
-      database:
+      db:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -136,7 +136,7 @@ services:
       USERMAP_UID: ${USERMAP_UID}
       USERMAP_GID: ${USERMAP_GID}
       PAPERLESS_URL: https://${APP_TRAEFIK_HOST}
-      PAPERLESS_DBHOST: database
+      PAPERLESS_DBHOST: db
       PAPERLESS_DBNAME: ${DB_NAME}
       PAPERLESS_DBUSER: ${DB_USER}
       PAPERLESS_DBPASS_FILE: /run/secrets/DB_PWD
