@@ -5,9 +5,9 @@ services:
   # Central office document editing service.
   # Used by: Seafile, Nextcloud, or any app with WOPI support.
   # --------------------------------------------------------
-  onlyoffice:
+  app:
     # --- Identity ---
-    image: ${APP_IMAGE}
+    image: onlyoffice/documentserver:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}
     restart: unless-stopped
 
@@ -22,7 +22,7 @@ services:
     environment:
       JWT_ENABLED: "true"
       WOPI_ENABLED: "true"
-      TZ: ${TIMEZONE}
+      TZ: ${TZ}
     secrets:
       - ONLYOFFICE_JWT_SECRET
 
@@ -37,31 +37,34 @@ services:
       - proxy-public
 
     # --- Traefik ---
+    # OnlyOffice is embedded in iframes by Seafile/Nextcloud. Standard
+    # sec-* middlewares set frameDeny:true which blocks this. Instead,
+    # a dedicated -headers middleware below provides equivalent protection
+    # but allows iframe embedding via Content-Security-Policy frame-ancestors.
     labels:
+      # Router
       - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      # TLS
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
-      # NOTE: OnlyOffice is embedded in iframes by Seafile/Nextcloud.
-      # Standard sec-* middlewares set frameDeny:true which blocks this.
-      # Instead, we define a custom security middleware (onlyoffice-headers)
-      # that has the same protections but allows iframe embedding via
-      # Content-Security-Policy: frame-ancestors.
+      # Middlewares (access + custom proto + custom headers)
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${COMPOSE_PROJECT_NAME}-proto@docker,${COMPOSE_PROJECT_NAME}-headers@docker"
       # Proxy headers: OnlyOffice sits behind Traefik's TLS termination.
       # Without X-Forwarded-Proto it generates http:// URLs → Mixed Content errors.
       - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-proto.headers.customrequestheaders.X-Forwarded-Proto=https"
       - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-proto.headers.customrequestheaders.X-Forwarded-Host=${APP_TRAEFIK_HOST}"
-      # Custom security headers: same as sec-headers-basic but frameDeny=false
+      # Security headers: equivalent to hdr-basic but iframe-friendly.
       - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.browserXssFilter=true"
       - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.contentTypeNosniff=true"
       - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.forceSTSHeader=true"
       - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.stsSeconds=63072000"
       - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.contentSecurityPolicy=frame-ancestors 'self' ${ONLYOFFICE_ALLOWED_ORIGINS}"
-      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
-      - "traefik.docker.network=proxy-public"
+      # Service
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
 
     # --- Health & Observability ---
     healthcheck:
