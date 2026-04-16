@@ -108,6 +108,23 @@ Status: implemented and documented for WordPress as one of the three scenarios i
 
 ## Evaluating
 
+### Secret Generation Standard
+
+Current convention recommends `openssl rand -base64 32 | tr -d '\n'` but the output contains base64 padding (`=`) which breaks URL-embedded passwords, shell contexts, and some apps. Interim workarounds exist:
+
+- `openssl rand -hex 32` for URL-embedded passwords (DATABASE_URL, REDIS_URL)
+- `openssl rand -base64 48` produces 64 chars without padding
+- `openssl rand -base64 32 | tr -d '=\n'` strips padding but output length varies
+- `tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 32` — pure alphanumeric
+
+Open questions:
+
+- Is there a single convention that works universally or do we need use-case-specific rules in env-structure.md?
+- Should a generation helper script live in `ops/scripts/generate-secret.sh` so apps don't need to repeat the command in every README?
+- What entropy floor do we document as the minimum (128 / 192 / 256 bits)?
+
+Goal: one memorable pattern that is safe in all contexts, with entropy ≥ 192 bits, without padding or special chars that cause downstream issues.
+
 ### Mutual TLS (mTLS) – Certificate-Based Access
 
 Client certificate authentication as an additional access layer. Stronger than IP allowlists or passwords.
