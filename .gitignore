@@ -36,3 +36,8 @@ Thumbs.db
 *~
 .vscode/
 .idea/
+
+# -----------------------------------------
+# Tool state (Claude Code, AI assistants)
+# -----------------------------------------
+.claude/
