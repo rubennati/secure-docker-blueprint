@@ -5,7 +5,7 @@ services:
   # --------------------------------------------------------
   db:
     # --- Identity ---
-    image: ${DB_IMAGE}
+    image: postgres:${DB_TAG}
     container_name: ${CONTAINER_NAME_DB}
     restart: unless-stopped
 
@@ -18,7 +18,7 @@ services:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD_FILE: /run/secrets/DB_PWD
-      TZ: ${TIMEZONE}
+      TZ: ${TZ}
     secrets:
       - DB_PWD
 
@@ -43,7 +43,7 @@ services:
   # --------------------------------------------------------
   redis:
     # --- Identity ---
-    image: ${REDIS_IMAGE}
+    image: redis:${REDIS_TAG}
     container_name: ${CONTAINER_NAME_REDIS}
     restart: unless-stopped
     command: --save 60 1 --loglevel warning
@@ -76,7 +76,7 @@ services:
   # --------------------------------------------------------
   server:
     # --- Identity ---
-    image: ${APP_IMAGE}
+    image: ghcr.io/goauthentik/server:${APP_TAG}
     container_name: ${CONTAINER_NAME_SERVER}
     restart: unless-stopped
     command: server
@@ -91,9 +91,11 @@ services:
       - no-new-privileges:true
 
     # --- Configuration ---
+    # Authentik reads values prefixed "file://" by reading the target file —
+    # its native equivalent of the _FILE pattern.
     environment:
-      AUTHENTIK_REDIS__HOST: ${CONTAINER_NAME_REDIS}
-      AUTHENTIK_POSTGRESQL__HOST: ${CONTAINER_NAME_DB}
+      AUTHENTIK_REDIS__HOST: redis
+      AUTHENTIK_POSTGRESQL__HOST: db
       AUTHENTIK_POSTGRESQL__USER: ${DB_USER}
       AUTHENTIK_POSTGRESQL__NAME: ${DB_NAME}
       AUTHENTIK_POSTGRESQL__PASSWORD: file:///run/secrets/DB_PWD
@@ -107,6 +109,7 @@ services:
       AUTHENTIK_EMAIL__USE_SSL: ${SMTP_USE_SSL}
       AUTHENTIK_EMAIL__TIMEOUT: ${SMTP_TIMEOUT}
       AUTHENTIK_EMAIL__FROM: ${SMTP_FROM}
+      TZ: ${TZ}
     secrets:
       - DB_PWD
       - AUTHENTIK_SECRET_KEY
@@ -124,15 +127,19 @@ services:
 
     # --- Traefik ---
     labels:
+      # Router
       - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      # TLS
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Middlewares
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
-      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=9000"
-      - "traefik.docker.network=proxy-public"
+      # Service
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
 
     # --- Health & Observability ---
     healthcheck:
@@ -147,7 +154,7 @@ services:
   # --------------------------------------------------------
   worker:
     # --- Identity ---
-    image: ${APP_IMAGE}
+    image: ghcr.io/goauthentik/server:${APP_TAG}
     container_name: ${CONTAINER_NAME_WORKER}
     restart: unless-stopped
     command: worker
@@ -163,8 +170,8 @@ services:
 
     # --- Configuration ---
     environment:
-      AUTHENTIK_REDIS__HOST: ${CONTAINER_NAME_REDIS}
-      AUTHENTIK_POSTGRESQL__HOST: ${CONTAINER_NAME_DB}
+      AUTHENTIK_REDIS__HOST: redis
+      AUTHENTIK_POSTGRESQL__HOST: db
       AUTHENTIK_POSTGRESQL__USER: ${DB_USER}
       AUTHENTIK_POSTGRESQL__NAME: ${DB_NAME}
       AUTHENTIK_POSTGRESQL__PASSWORD: file:///run/secrets/DB_PWD
@@ -178,6 +185,7 @@ services:
       AUTHENTIK_EMAIL__USE_SSL: ${SMTP_USE_SSL}
       AUTHENTIK_EMAIL__TIMEOUT: ${SMTP_TIMEOUT}
       AUTHENTIK_EMAIL__FROM: ${SMTP_FROM}
+      TZ: ${TZ}
     secrets:
       - DB_PWD
       - AUTHENTIK_SECRET_KEY
