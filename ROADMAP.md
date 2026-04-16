@@ -1,200 +1,185 @@
 # Roadmap
 
-## In Progress
+Status reference point: 2026-04-16.
 
-### CrowdSec – Intrusion Detection & Prevention
+Update process: see [`docs/standards/documentation-workflow.md`](docs/standards/documentation-workflow.md).
 
-Three-phase security setup for the entire stack:
+## Completed
+
+### Traefik Security Middleware Refactoring
+
+Split into three dynamic config files for clarity:
+
+- `security-blocks.yml` — reusable header, rate-limit, compression, CSP blocks
+- `security-chains.yml` — 10 presets: `sec-0` through `sec-5` + `e` variants for iframe-friendly apps
+- `integrations.yml` — CrowdSec bouncer plugin + Authentik forward auth middleware
+
+Removed legacy `browserXssFilter` (deprecated header). Added `customFrameOptionsValue: SAMEORIGIN` for embed variants (Vaultwarden, OnlyOffice).
+
+### Access Policies (IPv4 + IPv6)
+
+Five access middleware defined in `access.yml`:
+
+- `acc-public` — no restriction
+- `acc-local` — RFC1918 + IPv6 ULA
+- `acc-tailscale` — Tailscale CGNAT + IPv6 ULA range
+- `acc-private` — LAN + Tailscale combined
+- `acc-deny` — emergency kill switch
+
+### TLS Profiles
+
+Three profiles in `tls-profiles.yml`:
+
+- `tls-basic` — TLS 1.2+ with default cipher selection
+- `tls-aplus` — TLS 1.2+ with strict ECDHE ciphers, `X25519` preferred (SSL Labs A+)
+- `tls-modern` — TLS 1.3 only
+
+### CrowdSec Integration
+
+Phase 1 (Engine) is live and tested. Phase 2 (Traefik Bouncer Plugin) is prepared in config files with a documented enable procedure — not activated by default to keep first-time setup simple.
 
 | Phase | Component | Status |
 |-------|-----------|--------|
-| Phase 1 | Security Engine (`core/crowdsec/`) | **Done** — standalone detection |
-| Phase 2 | Traefik Bouncer Plugin | Planned — requires Traefik changes |
+| Phase 1 | Security Engine (`core/crowdsec/`) | Live |
+| Phase 2 | Traefik Bouncer Plugin in `integrations.yml` | Ready to enable |
 | Phase 3 | Firewall Bouncer (host nftables) | Planned — host-level install |
 
-**Architecture:**
-```
-Internet
-   ↓
-Traefik + CrowdSec Plugin    ← Phase 2: HTTP enforcement
-   ↓
-Docker Services
-   ↓
-Host nftables                 ← Phase 3: IP-level enforcement
-   ↓
-CrowdSec Engine               ← Phase 1: Detection (logs → decisions)
-```
+Phase 2 activation steps are documented in `core/crowdsec/README.md`.
 
-**Phase 2 (next)** requires:
-- CrowdSec plugin in Traefik static config (experimental section)
-- CrowdSec middleware in Traefik dynamic config
-- Bouncer API key from the engine
-- Traefik access logs in JSON format
+### WordPress Hardening
 
-**Phase 3** requires:
-- `crowdsec-firewall-bouncer-nftables` apt package on host
-- Bouncer API key from the engine
-- Not a Docker container — documentation only in the blueprint
+Complete hardening layer:
+
+- PHP security via `uploads.ini` — limits + `expose_php=Off` + `disable_functions`
+- Apache `.htaccess-security` — blocks PHP in uploads, xmlrpc, author enumeration, directory listing
+- `security-hardening.php` mu-plugin — blocks REST API user enum, removes generator fingerprints
+- Test-script `ops/scripts/test-security.sh` — 24 automated security checks
+- Three documented deployment scenarios (public admin / VPN admin / fully internal)
+
+### Project Documentation
+
+- Root `README.md` — value proposition, features, quick start, security model
+- `SECURITY.md` — vulnerability reporting policy via GitHub Private Advisories
+- `docs/standards/commit-rules.md` — branch model, commit conventions, push strategy
+- `docs/standards/documentation-workflow.md` — doc update triggers, ownership, freshness rules
+- `LICENSE` — Apache 2.0
+
+---
+
+## In Progress
+
+### Paperless-ngx Security Hardening (Pilot for Implementation-Level Concept)
+
+Pilot project for applying a structured hardening process to an existing app: gap analysis → user decisions → phased rollout → test-driven deployment.
+
+Phases in planning (from audit result):
+
+1. `PAPERLESS_ALLOWED_HOSTS` + `PAPERLESS_TRUSTED_PROXIES` (critical basics)
+2. Explicit defaults: `ACCOUNT_ALLOW_SIGNUPS=false`, `AUDIT_LOG_ENABLED=true`
+3. Session hardening + webhook SSRF protection
+4. Remote user auth decision with documented exception handling
+5. `/admin` panel protection via second Traefik router
+
+Each phase is tested on the live server before the next begins.
+
+### Admin Path Protection via Traefik
+
+Pattern for restricting admin/backend URLs to VPN-only while keeping the public frontend open. Uses `PathPrefix` routing with separate middleware chains.
+
+Status: implemented and documented for WordPress as one of the three scenarios in `apps/wordpress/README.md`. To generalize for other apps (Ghost, Paperless, Authentik admin).
 
 ---
 
 ## Evaluating
 
-### Admin Path Protection via Traefik
-
-Restrict admin/backend URLs to specific access policies while keeping the public frontend open. Uses Traefik's `PathPrefix` routing with separate middleware chains.
-
-**Examples:**
-- WordPress `/wp-admin` and `/wp-login.php` → `acc-tailscale` or Authentik Forward-Auth
-- Paperless entire Admin UI → `acc-tailscale`
-- Ghost `/ghost` admin panel → `acc-tailscale`
-
-**Approach:** Two Traefik routers per app — one for public paths (`acc-public`, `sec-2`) and one for admin paths (`acc-tailscale`, `sec-4` or Authentik Forward-Auth). Configurable via `.env` variables.
-
 ### Mutual TLS (mTLS) – Certificate-Based Access
 
-Client certificate authentication as an additional access layer. Only devices with a trusted client certificate can connect — stronger than IP allowlists or passwords.
+Client certificate authentication as an additional access layer. Stronger than IP allowlists or passwords.
 
-**Use cases:**
+Use cases:
+
 - API endpoints that only specific servers should reach
 - Admin panels with hardware-bound authentication
 - Zero-trust access without VPN dependency
 
-**Approach:** Traefik TLS option with `clientAuth` requiring certificates signed by a custom CA. The `core/acme-certs` tool could be extended to also generate client certificates.
+Approach: Traefik TLS option with `clientAuth` requiring certificates signed by a custom CA. The `core/acme-certs` tool could be extended to also generate client certificates.
 
 ### Backup Strategy – Multi-Layer with Verification
 
 Comprehensive backup concept covering all levels of the stack, with automated restore testing.
 
-**Layer 1: Host-level**
-- Full system backup (configs, Docker data, secrets)
-- Scheduled via restic, borgbackup, or similar
-- Offsite target (S3, Backblaze B2, NFS)
+**Layer 1: Host-level** — Full system backup via restic or borgbackup, offsite target (S3, Backblaze B2, NFS)
 
-**Layer 2: App-level**
-- Per-app backup scripts in each app directory (`ops/scripts/backup.sh`)
-- Consistent snapshots: stop app → dump → backup → start
-- Standardized output to `./volumes/backups/`
+**Layer 2: App-level** — Per-app backup scripts in `ops/scripts/backup.sh`, consistent snapshots (stop → dump → backup → start), standardized output to `./volumes/backups/`
 
-**Layer 3: Database-level**
-- Automated `pg_dump` / `mysqldump` via sidecar or cron container
-- Point-in-time recovery where supported
-- Encrypted dumps stored alongside app backups
+**Layer 3: Database-level** — Automated `pg_dump` / `mysqldump` via sidecar or cron container, encrypted dumps
 
-**Layer 4: Verification**
-- Automated restore tests on a schedule (spin up temp containers, restore, verify)
-- Checksums and integrity validation
-- Alerting on failed backups or missed schedules
+**Layer 4: Verification** — Automated restore tests on a schedule, checksum validation, alerting on failed backups
 
-**Open questions:**
-- Single backup tool (restic?) or per-layer tools?
-- Central backup service in `core/` or per-app scripts?
-- How to handle secrets backup securely (encrypted, separate from data)?
+Open questions: single tool (restic?) or per-layer, central service or per-app scripts, secure secrets backup.
 
 ### IPv6 – Dual-Stack and IPv6-Only Setups
 
 Full IPv6 support across the stack, including IPv6-only deployments.
 
-**Scope:**
-- Docker network configuration for dual-stack (IPv4 + IPv6) and IPv6-only
-- Traefik entrypoints and routing with IPv6
-- Firewall rules (nftables) covering both protocols
-- DNS (dnsmasq) with AAAA records
-- CrowdSec compatibility with IPv6 decisions
-- Per-app testing for IPv6-only operation
+Scope:
 
-**Open questions:**
-- Which apps have known IPv6 issues?
-- Docker's native IPv6 support maturity (enable in `daemon.json`?)
-- NAT64/DNS64 needed for IPv6-only connecting to IPv4 services?
+- Docker network configuration for dual-stack and IPv6-only
+- Traefik entrypoints with IPv6 already supported
+- Firewall rules (nftables) covering both protocols
+- Per-app testing for IPv6-only operation
+- NAT64/DNS64 for IPv6-only connecting to IPv4 services
 
 ### Container Resource Management
 
-Define a resource limiting strategy to prevent any single container from taking down the host.
+Define resource limiting strategy to prevent single containers from taking down the host.
 
-**Scope:**
-- CPU limits and reservations (`deploy.resources.limits.cpus`)
-- Memory limits and reservations (`deploy.resources.limits.memory`)
+Scope:
+
+- CPU limits and reservations
+- Memory limits and reservations
 - PIDs limit (prevent fork bombs)
-- Temporary storage limits (`tmpfs` size)
-- I/O throttling (`blkio` limits for disk-heavy services like databases)
+- I/O throttling for disk-heavy services
+- Hardware-aware profiles vs. percentage-based
 
-**Approach to define:**
-- Sensible defaults per service category (database, web app, cache, worker)
-- Hardware-aware profiles (small/medium/large) or percentage-based?
-- Commented examples in each compose file vs. central reference table?
-- Monitoring integration — how to find the right values (observe first, then limit)?
-
-**Goal:** No single container can consume 100% CPU or RAM. OOM-killer targets the container, not the host.
+Goal: No single container can consume 100% CPU or RAM. OOM kills the container, not the host.
 
 ### Docker Rootless Mode
 
-Evaluate running Docker in rootless mode for improved host security — the Docker daemon and all containers run without root privileges.
+Evaluate running Docker in rootless mode for improved host security.
 
-**Current state:**
-- Docker rootless is functional but has known limitations
-- Not all images/apps work correctly (volume permissions, port binding < 1024, network modes)
-- Some of our patterns may need adjustment (socket proxy, `network_mode: host`)
+Current state: Docker rootless is functional but has known limitations — not all apps work, volume permissions, port binding, network modes may need adjustment.
 
-**Evaluation goals:**
-- Test each app in the blueprint for rootless compatibility
-- Document which apps work, which need workarounds, which don't work
-- Provide a rootless setup guide alongside the standard setup
-- Decide: optional alternative or future default?
+Evaluation goals:
+
+- Test each app for rootless compatibility
+- Document works / workarounds / incompatible
+- Decide: optional alternative or future default
+
+### Centralized Observability
+
+Logging and metrics aggregation for all services:
+
+- Log forwarding (Loki/Promtail) for Traefik access logs, app logs
+- Metrics (Prometheus) for Traefik, CrowdSec, app-specific exporters
+- Grafana dashboard for quick overview
+- Alerting (Alertmanager or direct webhooks)
+
+Open: scope — full observability stack or minimal logging-only?
 
 ---
 
-## Style Review
+## Planned Community Infrastructure
 
-Open discussion on standards formatting. These are **not security or stability topics** — purely style, readability, and personal preference. Use `/style-review` to discuss.
+These are GitHub-repo-level additions, not code changes. Tracked in `docs/public-go-live-guide.md` (private).
 
-### Env File Section Headers
-
-Current standard uses `# --- Section ---`. Inbox originals used wider `###...` blocks. The wider style is more visible when scrolling through long files.
-
-| Style | Example |
-|-------|---------|
-| Current | `# --- Database ---` |
-| Inbox | `###############` + `# Database` + `###############` |
-
-**Decision:** Open
-
-### Traefik Variable Naming
-
-Current standard splits into `APP_TRAEFIK_ACCESS` + `APP_TRAEFIK_SECURITY`. Inbox used a single `MIDDLEWARES` variable. Shorter vs. more explicit.
-
-| Style | Example |
-|-------|---------|
-| Current | `APP_TRAEFIK_ACCESS=acc-public` + `APP_TRAEFIK_SECURITY=sec-2` |
-| Inbox | `MIDDLEWARES=acc-public@file,sec-2@file` |
-
-**Decision:** Open
-
-### Compose Inline Section Comments
-
-Current standard adds `# --- Identity ---`, `# --- Security ---` etc. inside each service. Helpful for large stacks, possibly overkill for small ones.
-
-**Decision:** Open
-
-### Image Tag Variables
-
-Current standard puts the full image in `.env` (`APP_IMAGE=ghost:5.96.2`). Inbox split into image name in compose + tag in `.env` (`APP_TAG=5.12.70`).
-
-| Style | Example |
-|-------|---------|
-| Current | `.env`: `APP_IMAGE=ghost:5.96.2` / compose: `image: ${APP_IMAGE}` |
-| Inbox | `.env`: `APP_TAG=5.12.70` / compose: `image: ghost:${APP_TAG}` |
-
-**Decision:** Open
-
-### Standards Classification
-
-Review all standards and classify each rule as:
-- **Must** — Security, stability, non-negotiable
-- **Should** — Best practice, strongly recommended
-- **May** — Convention, consistency, personal preference
-
-**Decision:** Open
+- `CONTRIBUTING.md` — contribution guide
+- `CODE_OF_CONDUCT.md` — Contributor Covenant
+- `CHANGELOG.md` — versioned change log
+- `.github/ISSUE_TEMPLATE/` — bug, feature, new app templates
+- `.github/pull_request_template.md`
+- `CODEOWNERS`
+- Minimal GitHub Actions — compose validate, markdown lint, secret scan
 
 ---
 
@@ -202,10 +187,20 @@ Review all standards and classify each rule as:
 
 ### Alternative Container Runtimes
 
-Evaluate alternative runtimes and orchestrators beyond standard Docker:
+Long-term considerations beyond standard Docker:
 
-- **Podman** — Daemonless, rootless by default, Docker CLI compatible. Could replace Docker entirely. How well does it work with Traefik, Compose, and our socket proxy pattern?
-- **Docker Swarm** — Built-in orchestration for multi-node setups. Adds service discovery, rolling updates, and secrets management. Relevant when scaling beyond a single host.
-- **Kubernetes (K8s / K3s)** — Full container orchestration. K3s as lightweight option for homelab. Major architectural shift — Helm charts instead of Compose files. Only makes sense at significant scale or for learning.
+- **Podman** — daemonless, rootless by default, Docker CLI compatible. How well does it work with Traefik, Compose, and the socket proxy pattern?
+- **Docker Swarm** — built-in orchestration for multi-node setups. Adds service discovery, rolling updates, secrets management.
+- **Kubernetes (K3s)** — full container orchestration. Major architectural shift — Helm charts instead of Compose files. Only relevant at scale.
 
-_These are long-term considerations. The current Docker Compose approach covers single-host and small-scale deployments well._
+The current Docker Compose approach covers single-host and small-scale deployments well.
+
+### MCP Connectors for Apps
+
+Expose selected apps via MCP (Model Context Protocol) for AI-assisted operation. Candidates: Paperless-ngx document search, Vaultwarden secret retrieval, Invoice Ninja invoice creation.
+
+Scope: blueprint defines the pattern, individual MCP servers developed in separate repos.
+
+### Deploy Script
+
+Long-term vision: `./deploy.sh <server> core/traefik apps/nextcloud` — rsync selected app directories to a server, no git/docs/inbox on target. Enables portable app deployments without the full blueprint repo on each target.
