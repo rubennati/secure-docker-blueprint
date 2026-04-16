@@ -1,11 +1,11 @@
 services:
 
   # --------------------------------------------------------
-  # DATABASE
+  # DATABASE (PostgreSQL)
   # --------------------------------------------------------
   db:
     # --- Identity ---
-    image: ${DB_IMAGE}
+    image: postgres:${DB_TAG}
     container_name: ${CONTAINER_NAME_DB}
     restart: unless-stopped
 
@@ -18,7 +18,7 @@ services:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD_FILE: /run/secrets/DB_PWD
-      TZ: ${TIMEZONE}
+      TZ: ${TZ}
     secrets:
       - DB_PWD
 
@@ -39,11 +39,11 @@ services:
       start_period: 15s
 
   # --------------------------------------------------------
-  # REDIS
+  # REDIS (task queue broker)
   # --------------------------------------------------------
   redis:
     # --- Identity ---
-    image: ${REDIS_IMAGE}
+    image: redis:${REDIS_TAG}
     container_name: ${CONTAINER_NAME_REDIS}
     restart: unless-stopped
 
@@ -70,11 +70,11 @@ services:
       retries: 5
 
   # --------------------------------------------------------
-  # GOTENBERG (document conversion)
+  # GOTENBERG (HTML/Office → PDF conversion)
   # --------------------------------------------------------
   gotenberg:
     # --- Identity ---
-    image: ${GOTENBERG_IMAGE}
+    image: gotenberg/gotenberg:${GOTENBERG_TAG}
     container_name: ${CONTAINER_NAME_GOTENBERG}
     restart: unless-stopped
 
@@ -91,11 +91,11 @@ services:
       - app-internal
 
   # --------------------------------------------------------
-  # TIKA (text extraction)
+  # TIKA (text extraction from scanned PDFs / images)
   # --------------------------------------------------------
   tika:
     # --- Identity ---
-    image: ${TIKA_IMAGE}
+    image: apache/tika:${TIKA_TAG}
     container_name: ${CONTAINER_NAME_TIKA}
     restart: unless-stopped
 
@@ -112,7 +112,7 @@ services:
   # --------------------------------------------------------
   app:
     # --- Identity ---
-    image: ${APP_IMAGE}
+    image: ghcr.io/paperless-ngx/paperless-ngx:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}
     restart: unless-stopped
     depends_on:
@@ -128,8 +128,9 @@ services:
     # --- Security ---
     security_opt:
       - no-new-privileges:true
-    # NOTE: Do NOT set `user:` here. Paperless uses s6-overlay which must start
-    # as root to set up /run, then drops privileges to USERMAP_UID/GID internally.
+    # NOTE: Do NOT set `user:` here. Paperless uses s6-overlay which must
+    # start as root to set up /run, then drops privileges to
+    # USERMAP_UID/USERMAP_GID internally.
 
     # --- Configuration ---
     environment:
@@ -145,7 +146,7 @@ services:
       PAPERLESS_TIKA_ENABLED: "1"
       PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://gotenberg:3000
       PAPERLESS_TIKA_ENDPOINT: http://tika:9998
-      PAPERLESS_TIME_ZONE: ${TIMEZONE}
+      PAPERLESS_TIME_ZONE: ${TZ}
       PAPERLESS_OCR_LANGUAGE: ${PAPERLESS_OCR_LANGUAGE}
       PAPERLESS_OCR_LANGUAGES: ${PAPERLESS_OCR_LANGUAGES}
       PAPERLESS_OCR_PAGES: ${PAPERLESS_OCR_PAGES}
@@ -171,18 +172,23 @@ services:
 
     # --- Traefik ---
     labels:
+      # Router
       - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      # TLS
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Middlewares (custom proxy headers + access + security)
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${COMPOSE_PROJECT_NAME}-headers@docker,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
-      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
-      - "traefik.docker.network=proxy-public"
-      # Custom headers for correct URL generation behind reverse proxy
+      # Paperless generates absolute URLs from the incoming request headers.
+      # Without X-Forwarded-Proto=https it produces http:// links → Mixed Content.
       - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
       - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.customrequestheaders.X-Forwarded-Host=${APP_TRAEFIK_HOST}"
+      # Service
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
 
     # --- Health & Observability ---
     healthcheck:
