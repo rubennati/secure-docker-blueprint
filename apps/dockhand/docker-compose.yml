@@ -5,7 +5,7 @@ services:
   # --------------------------------------------------------
   socket-proxy:
     # --- Identity ---
-    image: ${SOCKET_PROXY_IMAGE}
+    image: tecnativa/docker-socket-proxy:${SOCKET_PROXY_TAG}
     container_name: ${CONTAINER_NAME_SOCKET_PROXY}
     restart: unless-stopped
 
@@ -56,7 +56,7 @@ services:
   # --------------------------------------------------------
   db:
     # --- Identity ---
-    image: ${DB_IMAGE}
+    image: postgres:${DB_TAG}
     container_name: ${CONTAINER_NAME_DB}
     restart: unless-stopped
 
@@ -70,7 +70,7 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD_FILE: /run/secrets/DB_PWD
       POSTGRES_INITDB_ARGS: --data-checksums
-      TZ: ${TIMEZONE}
+      TZ: ${TZ}
     secrets:
       - DB_PWD
 
@@ -97,7 +97,7 @@ services:
   # --------------------------------------------------------
   dockhand:
     # --- Identity ---
-    image: ${APP_IMAGE}
+    image: fnsys/dockhand:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}
     restart: unless-stopped
     depends_on:
@@ -125,7 +125,7 @@ services:
       DOCKER_HOST: tcp://socket-proxy:2375
       PUID: ${APP_PUID}
       PGID: ${APP_PGID}
-      TZ: ${TIMEZONE}
+      TZ: ${TZ}
     secrets:
       - DB_PWD
       - ENCRYPTION_KEY
@@ -150,7 +150,7 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=3000"
-      - "traefik.docker.network=proxy-public"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
 
     # --- Health & Observability ---
     healthcheck:
