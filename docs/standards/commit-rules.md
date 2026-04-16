@@ -115,21 +115,48 @@ Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
 ## Branch Model
 
 ```
-main     ← stable, tested, public-ready
+main     ← stable, tested, public-ready (pushed to public remote)
 │
-├─ dev   ← work-in-progress, merges into main after test
-│
-└─ docs  ← drafts / German meta-docs / Notion-bound content
+└─ dev   ← all work happens here, merges into main after test
+           (pushed to public remote)
+
+docs     ← ORPHAN branch, independent history
+           German drafts, Notion-bound content, private notes
+           NEVER pushed to public remote
 ```
+
+### Workflow rule: always work in dev
+
+**All changes go through `dev` first.** Direct commits to `main` are avoided. Only exception: commits that update branch-tracking files (e.g. this file itself when it was first created).
+
+Rationale:
+
+- `main` is public-ready at all times — new changes might not be
+- Testing happens before merge into `main`
+- Feature-reverts are possible without touching `main` history
+- Clear separation between "tested and public" vs "in progress"
 
 ### When to use which branch
 
 | Change type | Branch |
 |-------------|--------|
-| Small fix, tested | `main` directly |
-| New feature, hardening, refactoring | `dev` → merge to `main` after test |
-| German meta-doc, Notion draft, work-in-progress doc | `docs` |
-| Bugfix | `main` (small) or `dev` (bigger) |
+| Any code change, even small | `dev` → merge to `main` after test |
+| New app, hardening, refactoring | `dev` → merge to `main` after test |
+| Bugfix | `dev` → merge to `main` after test |
+| German meta-doc, Notion draft, private notes | `docs` (orphan) |
+| Emergency fix on main | `main` directly (rare, documented why) |
+
+### Merge workflow: dev → main
+
+```bash
+# After feature is tested and stable on dev
+git checkout main
+git merge dev
+# Run pre-push checks
+git push origin main
+```
+
+If conflicts: resolve on `dev` first (rebase or merge), then merge clean.
 
 ### Rules per branch
 
@@ -138,23 +165,67 @@ main     ← stable, tested, public-ready
 - Everything tested
 - No drafts, no German
 - Public-ready at all times
+- Only updated via merge from `dev` (or rare direct commits for emergency)
 
 **dev:**
 - English
-- Work-in-progress allowed
-- Will be merged after test
-- Not public
+- Work-in-progress allowed (but not broken code — commits should build)
+- Will be merged into `main` after test
+- Pushed to public remote
 
-**docs:**
+**docs (ORPHAN):**
 - Can be German
 - Drafts allowed
-- Not public
+- **NEVER pushed to public remote**
 - Content that belongs to Notion lives here until transferred
+- Separate history from main/dev (no shared commits)
 
 ### Merge rules
 
 - `dev` → `main`: Merge only after live testing passed and README + Test-Script are green
-- `docs` → `main`: Never (except explicit English docs that become standards)
+- `docs` → `main`: Never (docs has separate orphan history)
+- `docs` → `dev`: Never
+
+## Push Strategy
+
+**Public remote** gets only `main` and `dev`. `docs` stays local.
+
+### Explicit push commands
+
+```bash
+# Good — only main and dev
+git push origin main dev
+
+# Good — only main
+git push origin main
+
+# NEVER — pushes all branches including docs
+git push --all
+```
+
+### Push-time checklist
+
+Before `git push`:
+
+- [ ] Only pushing `main` or `dev` (not `docs`, not `--all`)
+- [ ] Pre-commit checks passed on all commits being pushed
+- [ ] No real domains, IPs, secrets, personal data
+- [ ] Commit messages in English
+- [ ] Remote ref explicitly named (not `git push` which may push default)
+
+### Setting up a public remote
+
+```bash
+# Add remote
+git remote add public git@github.com:<user>/docker-ops-blueprint.git
+
+# Configure default push to only include main and dev
+# (prevents accidental --all)
+git config remote.public.push refs/heads/main
+git config remote.public.push refs/heads/dev
+```
+
+With this config, `git push public` only pushes main and dev. Pushing docs requires explicit `git push public docs` (which should never happen).
 
 ## AI Commit Behavior
 
