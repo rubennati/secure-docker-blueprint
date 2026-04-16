@@ -179,7 +179,7 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
-      - "traefik.docker.network=proxy-public"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
 
     # --- Health & Observability ---
     healthcheck:

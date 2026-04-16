@@ -61,7 +61,7 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.middlewares=seadoc-strip@docker"
       - "traefik.http.middlewares.seadoc-strip.stripprefix.prefixes=/sdoc-server"
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}-seadoc.loadbalancer.server.port=80"
-      - "traefik.docker.network=proxy-public"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
 
 # --------------------------------------------------------
 # NETWORKS (shared with seafile-server.yml)
