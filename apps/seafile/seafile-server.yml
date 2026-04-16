@@ -205,14 +205,14 @@ networks:
 # --------------------------------------------------------
 secrets:
   DB_ROOT_PWD:
-    file: ./secrets/db_root_pwd.txt
+    file: ./.secrets/db_root_pwd.txt
   SEAFILE_DB_PWD:
-    file: ./secrets/seafile_db_pwd.txt
+    file: ./.secrets/seafile_db_pwd.txt
   SEAFILE_ADMIN_PWD:
-    file: ./secrets/seafile_admin_pwd.txt
+    file: ./.secrets/seafile_admin_pwd.txt
   JWT_KEY:
-    file: ./secrets/jwt_key.txt
+    file: ./.secrets/jwt_key.txt
   REDIS_PWD:
-    file: ./secrets/redis_pwd.txt
+    file: ./.secrets/redis_pwd.txt
   ONLYOFFICE_JWT_SECRET:
-    file: ./secrets/onlyoffice_jwt_secret.txt
+    file: ./.secrets/onlyoffice_jwt_secret.txt

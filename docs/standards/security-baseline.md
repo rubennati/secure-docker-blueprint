@@ -64,7 +64,7 @@ secrets:
 
 secrets:
   DB_PWD:
-    file: ./secrets/db_pwd.txt
+    file: ./.secrets/db_pwd.txt
 ```
 
 Supported by: PostgreSQL, MySQL/MariaDB, Paperless-ngx.
@@ -137,4 +137,4 @@ Exception: Hawser — needs socket access as its core function, but still uses a
 - [ ] Config mounts with `:ro`
 - [ ] Database only in internal network
 - [ ] Images pinned (never `:latest`)
-- [ ] `./secrets/` and `./volumes/` in `.gitignore`
+- [ ] `./.secrets/` and `./volumes/` in `.gitignore`

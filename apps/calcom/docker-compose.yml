@@ -141,10 +141,10 @@ networks:
 # --------------------------------------------------------
 secrets:
   DB_PWD:
-    file: ./secrets/db_pwd.txt
+    file: ./.secrets/db_pwd.txt
   NEXTAUTH_SECRET:
-    file: ./secrets/nextauth_secret.txt
+    file: ./.secrets/nextauth_secret.txt
   ENCRYPTION_KEY:
-    file: ./secrets/encryption_key.txt
+    file: ./.secrets/encryption_key.txt
   SMTP_PWD:
-    file: ./secrets/smtp_pwd.txt
+    file: ./.secrets/smtp_pwd.txt

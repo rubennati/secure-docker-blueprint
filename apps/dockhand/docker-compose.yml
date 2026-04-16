@@ -176,6 +176,6 @@ networks:
 # --------------------------------------------------------
 secrets:
   DB_PWD:
-    file: ./secrets/db_pwd.txt
+    file: ./.secrets/db_pwd.txt
   ENCRYPTION_KEY:
-    file: ./secrets/encryption_key.txt
+    file: ./.secrets/encryption_key.txt

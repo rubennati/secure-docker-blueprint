@@ -126,8 +126,8 @@ networks:
 # --------------------------------------------------------
 secrets:
   DB_ROOT_PWD:
-    file: ./secrets/db_root_pwd.txt
+    file: ./.secrets/db_root_pwd.txt
   DB_PWD:
-    file: ./secrets/db_pwd.txt
+    file: ./.secrets/db_pwd.txt
   GHOST_MAIL_PWD:
-    file: ./secrets/mail_pwd.txt
+    file: ./.secrets/mail_pwd.txt

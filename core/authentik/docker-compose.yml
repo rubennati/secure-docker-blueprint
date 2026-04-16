@@ -209,8 +209,8 @@ networks:
 # --------------------------------------------------------
 secrets:
   DB_PWD:
-    file: ./secrets/db_pwd.txt
+    file: ./.secrets/db_pwd.txt
   AUTHENTIK_SECRET_KEY:
-    file: ./secrets/authentik_secret_key.txt
+    file: ./.secrets/authentik_secret_key.txt
   SMTP_PASSWORD:
-    file: ./secrets/smtp_password.txt
+    file: ./.secrets/smtp_password.txt

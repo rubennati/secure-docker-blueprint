@@ -83,4 +83,4 @@ networks:
 # --------------------------------------------------------
 secrets:
   ONLYOFFICE_JWT_SECRET:
-    file: ./secrets/jwt_secret.txt
+    file: ./.secrets/jwt_secret.txt
