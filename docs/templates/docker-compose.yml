@@ -3,26 +3,34 @@ services:
   # --------------------------------------------------------
   # DATABASE
   # --------------------------------------------------------
-  database:
+  db:
     # --- Identity ---
-    image: ${DB_IMAGE}
+    image: mariadb:${DB_TAG}
     container_name: ${CONTAINER_NAME_DB}
     restart: unless-stopped
 
     # --- Security ---
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
+      - DAC_OVERRIDE
 
     # --- Configuration ---
     environment:
-      MYSQL_DATABASE: ${DB_MYSQL_DATABASE}
-      MYSQL_USER: ${DB_MYSQL_USER}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD_FILE: /run/secrets/DB_PWD
       MYSQL_ROOT_PASSWORD_FILE: /run/secrets/DB_ROOT_PWD
-      TZ: ${TIMEZONE}
+      MARIADB_AUTO_UPGRADE: "1"
+      TZ: ${TZ}
     secrets:
-      - DB_ROOT_PWD
       - DB_PWD
+      - DB_ROOT_PWD
 
     # --- Storage ---
     volumes:
@@ -34,10 +42,10 @@ services:
 
     # --- Health & Observability ---
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 20s
+      timeout: 5s
+      retries: 10
       start_period: 30s
 
   # --------------------------------------------------------
@@ -45,26 +53,26 @@ services:
   # --------------------------------------------------------
   app:
     # --- Identity ---
-    image: ${APP_IMAGE}
+    image: your-image:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}
     restart: unless-stopped
     depends_on:
-      database:
+      db:
         condition: service_healthy
 
     # --- Security ---
     security_opt:
       - no-new-privileges:true
-    # read_only: true
+    # read_only: true     # enable if image supports it
     # tmpfs:
     #   - /tmp
-    #   - /run
 
     # --- Configuration ---
     environment:
-      TZ: ${TIMEZONE}
+      TZ: ${TZ}
+      # Add app-specific settings here
     # secrets:
-    #   - APP_SECRET
+    #   - DB_PWD          # if app supports _FILE pattern
 
     # --- Storage ---
     volumes:
@@ -77,23 +85,27 @@ services:
 
     # --- Traefik ---
     labels:
+      # Router
       - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      # TLS
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Middlewares
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
-      - "traefik.docker.network=proxy-public"
 
     # --- Health & Observability ---
-    # healthcheck:
-    #   test: ["CMD", "curl", "-fsS", "http://127.0.0.1:${APP_INTERNAL_PORT}/"]
-    #   interval: 30s
-    #   timeout: 10s
-    #   retries: 5
-    #   start_period: 30s
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:${APP_INTERNAL_PORT}/"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
 # --------------------------------------------------------
 # NETWORKS
@@ -110,7 +122,7 @@ networks:
 # SECRETS
 # --------------------------------------------------------
 secrets:
-  DB_ROOT_PWD:
-    file: ./secrets/db_root_pwd.txt
   DB_PWD:
-    file: ./secrets/db_pwd.txt
+    file: ./.secrets/db_pwd.txt
+  DB_ROOT_PWD:
+    file: ./.secrets/db_root_pwd.txt

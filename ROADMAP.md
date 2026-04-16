@@ -187,7 +187,7 @@ Open: scope — full observability stack or minimal logging-only?
 
 ## Planned Community Infrastructure
 
-These are GitHub-repo-level additions, not code changes. Tracked in `docs/public-go-live-guide.md` (private).
+These are GitHub-repo-level additions, not code changes.
 
 - `CONTRIBUTING.md` — contribution guide
 - `CODE_OF_CONDUCT.md` — Contributor Covenant

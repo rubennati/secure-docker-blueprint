@@ -38,9 +38,11 @@ Production-ready configurations for 15+ services — with standardized patterns,
 | Service | Stack | Description |
 |---------|-------|-------------|
 | [Vaultwarden](apps/vaultwarden/) | App + MariaDB | Bitwarden-compatible password manager |
+| [Nextcloud](apps/nextcloud/) | App + MariaDB + Redis + Nginx + Cron | File sync, collaboration, optional OnlyOffice integration |
 | [Ghost](apps/ghost/) | App + MySQL | Blog / CMS with SMTP |
 | [Paperless-ngx](apps/paperless-ngx/) | App + Postgres + Redis + Gotenberg + Tika | Document management with OCR, optional Authentik SSO |
-| [Seafile](apps/seafile/) | App + MariaDB + Memcached + optional components | File sync & share with SeaDoc, notifications, thumbnails |
+| [Seafile](apps/seafile/) | App + MariaDB + Memcached + optional components | File sync & share (community edition) |
+| [Seafile Pro](apps/seafile-pro/) | App + MariaDB + Memcached + SeaDoc + notifications + thumbnails + ClamAV + SeaSearch | File sync & share (pro edition with enterprise features) |
 | [WordPress](apps/wordpress/) | App + MariaDB | Classic CMS |
 | [Cal.com](apps/calcom/) | App + Postgres | Scheduling and calendar booking |
 | [Invoice Ninja](apps/invoiceninja/) | App + Nginx + MySQL | Invoicing and billing |

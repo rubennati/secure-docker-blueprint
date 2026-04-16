@@ -48,13 +48,16 @@ Before writing any YAML, answer these questions:
 
 ```bash
 # Copy from template
-cp -r apps/_template apps/my-app
+cp -r docs/templates apps/my-app
 
 # Or create manually
-mkdir -p apps/my-app/{config,secrets,volumes}
+mkdir -p apps/my-app/{config,.secrets,volumes}
 touch apps/my-app/{docker-compose.yml,.env.example}
-echo "secrets/" >> apps/my-app/.gitignore
-echo "volumes/" >> apps/my-app/.gitignore
+cat > apps/my-app/.gitignore <<'EOF'
+.secrets/
+volumes/
+.env
+EOF
 ```
 
 ---
