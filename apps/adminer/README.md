@@ -88,7 +88,7 @@ For DBs on other machines, enter the hostname/IP directly in the Adminer login f
 
 ## Variants (not in this install by default)
 
-- **Bundled MariaDB for throwaway local DB testing** — the original inbox template included a standalone MariaDB next to Adminer for development-only use cases. Dropped from the blueprint version because Adminer's main purpose is managing existing app DBs. The pattern still makes sense for isolated local dev; see [apps/adminer/docs/inbox-notes.md](../../docs/apps/adminer/inbox-notes.md) on the `docs` branch for the reference compose.
+- **Bundled MariaDB for throwaway local DB testing** — the original import source included a standalone MariaDB next to Adminer for development-only use cases. Dropped from the blueprint version because Adminer's main purpose is managing existing app DBs. The pattern still makes sense for isolated local dev; reference compose and rationale live under `docs/apps/adminer/setup-notes.md` on the repository's `docs` branch.
 
 ## Details
 
