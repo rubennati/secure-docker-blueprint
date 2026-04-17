@@ -1,0 +1,141 @@
+services:
+
+  # --------------------------------------------------------
+  # DATABASE (MariaDB)
+  # --------------------------------------------------------
+  db:
+    # --- Identity ---
+    image: mariadb:${DB_TAG}
+    container_name: ${CONTAINER_NAME_DB}
+    hostname: photoview-mariadb
+    restart: unless-stopped
+    stop_grace_period: 5s
+
+    # --- Security ---
+    # NOTE: upstream uses `seccomp:unconfined + apparmor:unconfined` as a
+    # workaround for an io_uring issue on some kernels. Left at defaults
+    # here — uncomment if MariaDB crashes during init.
+    security_opt:
+      - no-new-privileges:true
+      # - seccomp:unconfined
+      # - apparmor:unconfined
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
+      - DAC_OVERRIDE
+
+    # --- Configuration ---
+    environment:
+      MARIADB_AUTO_UPGRADE: "1"
+      MARIADB_DATABASE: ${DB_NAME}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD_FILE: /run/secrets/DB_PWD
+      MARIADB_ROOT_PASSWORD_FILE: /run/secrets/DB_ROOT_PWD
+      TZ: ${TZ}
+    command:
+      - mariadbd
+      - --innodb-buffer-pool-size=512M
+      - --transaction-isolation=READ-COMMITTED
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --max-connections=512
+      - --innodb-rollback-on-timeout=OFF
+      - --innodb-lock-wait-timeout=120
+    secrets:
+      - DB_PWD
+      - DB_ROOT_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/mariadb:/var/lib/mysql
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 30s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
+  # --------------------------------------------------------
+  # PHOTOVIEW (Go app + GraphQL)
+  # --------------------------------------------------------
+  app:
+    # --- Identity ---
+    image: photoview/photoview:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    hostname: photoview
+    restart: unless-stopped
+    stop_grace_period: 10s
+    depends_on:
+      db:
+        condition: service_healthy
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      TZ: ${TZ}
+      # Database — Photoview reads PHOTOVIEW_MYSQL_URL as a single DSN.
+      # No _FILE support — DB_PWD_INLINE must match .secrets/db_pwd.txt.
+      PHOTOVIEW_DATABASE_DRIVER: "mysql"
+      PHOTOVIEW_MYSQL_URL: "${DB_USER}:${DB_PWD_INLINE}@tcp(db)/${DB_NAME}"
+      PHOTOVIEW_LISTEN_IP: "0.0.0.0"
+      MAPBOX_TOKEN: ${MAPBOX_TOKEN}
+      PHOTOVIEW_VIDEO_HARDWARE_ACCELERATION: ${PHOTOVIEW_VIDEO_HARDWARE_ACCELERATION}
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/media-cache:/home/photoview/media-cache
+      # Media library — read-only bind from host
+      - ${MEDIA_ROOT}:/photos:ro
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+      - app-internal
+
+    # --- Traefik ---
+    labels:
+      # Router
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      # TLS
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Middlewares
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      # Service
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  DB_PWD:
+    file: ./.secrets/db_pwd.txt
+  DB_ROOT_PWD:
+    file: ./.secrets/db_root_pwd.txt
