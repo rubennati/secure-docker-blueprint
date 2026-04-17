@@ -120,6 +120,19 @@ The **n8n + NocoDB + OpnForm** trio is a cloud-free data-collection stack: OpnFo
 | [Dockhand](apps/dockhand/) | App + Postgres + Socket Proxy | ✅ | Docker management with Git-based stacks |
 | [Hawser](apps/hawser/) | App + Socket Proxy | ✅ | Remote Docker agent for Dockhand |
 
+### Monitoring
+
+Dedicated top-level category — see [`monitoring/README.md`](monitoring/README.md) for the full roadmap (4 drafted, 6 planned).
+
+| App | Axis | Status | Description |
+|---|---|---|---|
+| [Uptime Kuma](monitoring/uptime-kuma/) | Uptime (UI) | ⚠️ | Click-config uptime monitor, 90+ notification integrations, public status pages |
+| [Gatus](monitoring/gatus/) | Uptime (YAML) | ⚠️ | Config-as-code health checks with Prometheus export |
+| [Beszel](monitoring/beszel/) | Host metrics | ⚠️ | Lightweight hub + agent for CPU / RAM / disk / docker container stats |
+| [changedetection.io](monitoring/changedetection/) | Content watcher | ⚠️ | Page diff + notification (restock / price / ToS / defacement) |
+
+Planned: Statping, ciao, Checkmate, Zabbix, Grafana + Prometheus, Scrutiny. See `monitoring/README.md`.
+
 ## Quick Start
 
 ```bash
