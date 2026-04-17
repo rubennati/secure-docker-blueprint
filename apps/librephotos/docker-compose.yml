@@ -1,0 +1,168 @@
+services:
+
+  # --------------------------------------------------------
+  # DATABASE (PostgreSQL with pgautoupgrade for transparent major bumps)
+  # --------------------------------------------------------
+  db:
+    # --- Identity ---
+    image: pgautoupgrade/pgautoupgrade:${DB_TAG}
+    container_name: ${CONTAINER_NAME_DB}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/DB_PWD
+      TZ: ${TZ}
+    secrets:
+      - DB_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/db:/var/lib/postgresql
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  # --------------------------------------------------------
+  # BACKEND (Django + gunicorn + ML workers)
+  # --------------------------------------------------------
+  backend:
+    # --- Identity ---
+    image: reallibrephotos/librephotos:${APP_TAG}
+    container_name: ${CONTAINER_NAME_BACKEND}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      TZ: ${TZ}
+      SECRET_KEY: ${SECRET_KEY}
+      BACKEND_HOST: backend
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_USERNAME: ${ADMIN_USERNAME}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      DB_BACKEND: postgresql
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      # LibrePhotos reads DB_PASS from env only (no _FILE support).
+      # Value must match contents of .secrets/db_pwd.txt.
+      DB_PASS: ${DB_PWD_INLINE}
+      DB_HOST: db
+      DB_PORT: "5432"
+      MAPBOX_API_KEY: ${MAPBOX_API_KEY}
+      WEB_CONCURRENCY: ${GUNICORN_WORKERS}
+      SKIP_PATTERNS: ${SKIP_PATTERNS}
+      ALLOW_UPLOAD: ${ALLOW_UPLOAD}
+      CSRF_TRUSTED_ORIGINS: https://${APP_TRAEFIK_HOST}
+      DEBUG: "0"
+
+    # --- Storage ---
+    volumes:
+      - ${SCAN_DIRECTORY}:/data
+      - ./volumes/protected_media:/protected_media
+      - ./volumes/logs:/logs
+      - ./volumes/cache:/root/.cache
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+  # --------------------------------------------------------
+  # FRONTEND (React static build served by nginx)
+  # --------------------------------------------------------
+  frontend:
+    # --- Identity ---
+    image: reallibrephotos/librephotos-frontend:${APP_TAG}
+    container_name: ${CONTAINER_NAME_FRONTEND}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+  # --------------------------------------------------------
+  # PROXY (nginx — routes /api → backend, / → frontend, /media → disk)
+  # --------------------------------------------------------
+  proxy:
+    # --- Identity ---
+    image: reallibrephotos/librephotos-proxy:${APP_TAG}
+    container_name: ${CONTAINER_NAME_PROXY}
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - frontend
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Storage ---
+    # Proxy serves static media directly — needs read access to the same
+    # directories the backend writes to.
+    volumes:
+      - ${SCAN_DIRECTORY}:/data:ro
+      - ./volumes/protected_media:/protected_media:ro
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+      - app-internal
+
+    # --- Traefik ---
+    labels:
+      # Router
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      # TLS
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Middlewares
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      # Service
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  DB_PWD:
+    file: ./.secrets/db_pwd.txt
