@@ -77,11 +77,15 @@ Five options — test and pick what fits your workflow.
 | [Dolibarr](apps/dolibarr/) | App (tuxgasy) + MariaDB | ⚠️ | ERP / CRM — invoicing, accounting, projects, HR |
 | [Monica](apps/monicahq/) | App (Laravel) + MariaDB | ⚠️ | Personal CRM for relationships |
 
-#### Automation & analytics
+#### Automation, forms & analytics
+
+The **n8n + NocoDB + OpnForm** trio is a cloud-free data-collection stack: OpnForm collects, n8n routes and transforms, NocoDB stores and presents.
 
 | App | Stack | Status | Description |
 |---|---|---|---|
 | [n8n](apps/n8n/) | Single container + SQLite | ⚠️ | Visual workflow automation (Zapier alternative) |
+| [NocoDB](apps/nocodb/) | Single container + SQLite | ⚠️ | No-code database / spreadsheet UI (Airtable alternative) |
+| [OpnForm](apps/opnform/) | API (Laravel) + UI (Nuxt) + Postgres + Redis | ⚠️ | Self-hosted form builder (Typeform alternative) |
 | [Matomo](apps/matomo/) | App + MariaDB | ⚠️ | GDPR-compliant web analytics (Google Analytics alternative) |
 
 #### Networking
