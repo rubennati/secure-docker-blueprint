@@ -1,0 +1,78 @@
+# changedetection.io
+
+> **Status: Draft — not yet live-tested.**
+
+Self-hosted website content change detection. Different axis from uptime monitoring — answers "what changed on this page" instead of "is it up". Good for: restock alerts, price drops, ToS/policy diff tracking, external-dependency defacement detection.
+
+## Architecture
+
+Single-container deployment (HTTP fetcher only):
+
+| Service | Image | Purpose |
+|---------|-------|---------|
+| `app` | `ghcr.io/dgtlmoon/changedetection.io:latest` | Watcher + diff engine + notification dispatcher |
+
+For JavaScript-heavy sites (SPAs), uncomment the optional `browser` service in `docker-compose.yml` — it runs a Playwright Chrome instance.
+
+## Setup
+
+```bash
+cp .env.example .env
+# Edit: APP_TRAEFIK_HOST, TZ
+
+mkdir -p volumes/data
+docker compose up -d
+docker compose logs app --follow
+# Watch for: "Running on http://0.0.0.0:5000"
+
+# Open UI, set a password under Settings → General
+# https://<APP_TRAEFIK_HOST>
+```
+
+## Security Model
+
+- **No first-user wizard** — the app is open by default. Set a password in Settings → General immediately, or put Authentik forward-auth in front.
+- **Default access `acc-tailscale` + `sec-3`** — watched URLs + selectors + scraping credentials live in the UI. VPN-only default.
+- **Data volume** (`volumes/data/`) holds every snapshot of every watched page. Can grow large — set retention per-watch in Settings.
+- **`no-new-privileges:true`** on the container.
+
+## Notification integrations
+
+Built-in support (via [Apprise](https://github.com/caronc/apprise)):
+- Discord, Slack, Mattermost, Telegram, ntfy
+- Email (SMTP)
+- Generic webhook (POST JSON) — use this to route via n8n for richer logic
+
+Configure globally (Settings → Notifications) or per-watch.
+
+## Common patterns
+
+**Restock alert**:
+```
+URL:       https://shop.example.com/product/xy
+Trigger:   CSS/JSON path `.in-stock-badge` shows "Verfügbar" or similar
+Webhook:   https://n8n.example.com/webhook/restock
+```
+
+**API endpoint drift**:
+```
+URL:       https://api.partner.com/v1/status
+Fetch:     Include request headers / auth
+Trigger:   On any body change
+```
+
+**Impressum / ToS watcher**:
+```
+URL:       https://competitor.example/impressum
+Schedule:  Daily
+Notification: Slack #compliance
+```
+
+## Known Issues
+
+- **Live-tested: no.**
+- **`APP_TAG=latest` is not reproducible** — pin to a dated tag for stable deployments.
+- **No auth on first boot** — set a password immediately or front with Authentik.
+- **Diff storage grows fast** with high-churn pages — set "Max snapshots" per watch.
+- **JS-heavy sites need the optional browser service** — without it, you get the raw HTML which may be a near-empty SPA shell.
+- **Respect rate limits + ToS** — watching sites at high frequency can get you blocked or violate their ToS. Default interval is hours, not seconds, for a reason.

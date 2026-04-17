@@ -1,0 +1,90 @@
+services:
+
+  # --------------------------------------------------------
+  # BESZEL HUB (web UI + metric aggregator)
+  # --------------------------------------------------------
+  # Agents connect back to the hub over SSH with a generated key.
+  # This compose runs BOTH the hub and a local agent on the same host.
+  # For additional hosts, deploy a second `agent` container there
+  # pointing at HUB_URL and carrying the same SSH key.
+  hub:
+    # --- Identity ---
+    image: henrygd/beszel:${APP_TAG}
+    container_name: ${CONTAINER_NAME_HUB}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      TZ: ${TZ}
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/hub-data:/beszel_data
+      # SSH key used to authenticate agents to the hub.
+      # The hub generates this on first start; re-use the same file
+      # when deploying agents on remote hosts.
+      - ./volumes/hub-data/socket:/beszel_socket
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+      - beszel-internal
+
+    # --- Traefik ---
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+
+  # --------------------------------------------------------
+  # BESZEL AGENT (local host metrics collector)
+  # --------------------------------------------------------
+  # Reads CPU / RAM / disk / network / docker-container stats and
+  # pushes to the hub. Runs alongside the hub on THIS host.
+  agent:
+    # --- Identity ---
+    image: henrygd/beszel-agent:${APP_TAG}
+    container_name: ${CONTAINER_NAME_AGENT}
+    restart: unless-stopped
+    # Host networking gets accurate interface stats. Comment out and
+    # use `networks: [beszel-internal]` if you prefer container-net
+    # isolation (agent reports the container's view, not the host).
+    network_mode: host
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      TZ: ${TZ}
+      PORT: "45876"
+      # Paste the public key from the hub UI (Settings → Agent setup)
+      KEY: ${AGENT_KEY}
+      # Enable docker stats collection
+      EXTRA_FILESYSTEMS: ${EXTRA_FILESYSTEMS}
+
+    # --- Storage ---
+    volumes:
+      # Docker socket (read-only) for per-container stats
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+  beszel-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true

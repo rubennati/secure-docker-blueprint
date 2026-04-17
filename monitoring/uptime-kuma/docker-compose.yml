@@ -1,0 +1,64 @@
+services:
+
+  # --------------------------------------------------------
+  # UPTIME KUMA (UI-driven uptime monitoring)
+  # --------------------------------------------------------
+  app:
+    # --- Identity ---
+    image: louislam/uptime-kuma:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      TZ: ${TZ}
+      UPTIME_KUMA_PORT: "3001"
+      # Set behind a reverse proxy — Kuma reads X-Forwarded-*
+      UPTIME_KUMA_DISABLE_FRAME_SAMEORIGIN: "false"
+
+    # --- Storage ---
+    # Holds the SQLite DB, monitor state, and uploaded icons.
+    volumes:
+      - ./volumes/data:/app/data
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+
+    # --- Traefik ---
+    labels:
+      # Router
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      # TLS
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Middlewares — public status pages at /status/<slug> must stay
+      # reachable. If you want the admin UI VPN-only, add a second
+      # router on /dashboard with stricter access. Default here keeps
+      # the whole app behind the same access chain.
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      # Service
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD", "extra/healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true

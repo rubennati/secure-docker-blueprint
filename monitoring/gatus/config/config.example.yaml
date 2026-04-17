@@ -1,0 +1,84 @@
+# -----------------------------------------------------------------------------
+# Gatus — configuration example
+# -----------------------------------------------------------------------------
+# Copy to config.yaml and adjust. Gatus auto-reloads on file change.
+# Full reference: https://github.com/TwiN/gatus
+# -----------------------------------------------------------------------------
+
+# --- Persistent result storage ---
+storage:
+  type: sqlite
+  path: /data/data.db
+
+# --- UI ---
+ui:
+  title: "Service Status"
+  header: "Infrastructure Health"
+  # button:
+  #   name: "Back to home"
+  #   link: "https://example.com"
+
+# --- Security ---
+# Simple basic auth — for advanced auth (OIDC), see Gatus docs.
+# security:
+#   basic:
+#     username: "admin"
+#     password-bcrypt-base64: "..."   # htpasswd -nbBC 10 "" "password" | awk -F: '{print $2}' | base64
+
+# --- Alerting (configure at least one channel before adding alerts to endpoints) ---
+# alerting:
+#   discord:
+#     webhook-url: "${DISCORD_WEBHOOK_URL}"
+#   slack:
+#     webhook-url: "${SLACK_WEBHOOK_URL}"
+#   email:
+#     from: "alerts@example.com"
+#     username: "alerts@example.com"
+#     password: "${SMTP_PASSWORD}"
+#     host: "smtp.example.com"
+#     port: 587
+#     to: "oncall@example.com"
+
+# --- Endpoints ---
+endpoints:
+  - name: traefik-dashboard
+    url: "https://traefik.example.com"
+    interval: 60s
+    conditions:
+      - "[STATUS] == 200"
+      - "[RESPONSE_TIME] < 500"
+      - "[CERTIFICATE_EXPIRATION] > 240h"
+
+  - name: vaultwarden
+    url: "https://vault.example.com"
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"
+      - "[CERTIFICATE_EXPIRATION] > 240h"
+
+  # - name: wordpress
+  #   url: "https://blog.example.com"
+  #   interval: 5m
+  #   conditions:
+  #     - "[STATUS] == 200"
+  #     - "[BODY].title != ''"
+  #   alerts:
+  #     - type: discord
+  #       failure-threshold: 3
+  #       send-on-resolved: true
+
+  # DNS probe
+  # - name: dns-a-record
+  #   url: "1.1.1.1"
+  #   dns:
+  #     query-name: "example.com"
+  #     query-type: "A"
+  #   conditions:
+  #     - "[DNS_RCODE] == NOERROR"
+
+  # TCP port reachability
+  # - name: postgres-reachable
+  #   url: "tcp://db.internal:5432"
+  #   interval: 1m
+  #   conditions:
+  #     - "[CONNECTED] == true"
