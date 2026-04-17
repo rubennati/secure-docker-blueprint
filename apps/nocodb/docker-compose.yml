@@ -1,0 +1,80 @@
+services:
+
+  # --------------------------------------------------------
+  # NOCODB (Airtable-like no-code database)
+  # --------------------------------------------------------
+  # Single-container deployment using NocoDB's built-in SQLite store.
+  # For larger deployments (shared state, HA, big tables) switch to
+  # Postgres — see UPSTREAM.md for the env vars.
+  app:
+    # --- Identity ---
+    image: nocodb/nocodb:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      TZ: ${TZ}
+      # URL behind Traefik
+      NC_PUBLIC_URL: https://${APP_TRAEFIK_HOST}
+      # JWT secret (encrypts API tokens + session cookies).
+      # Losing this = every stored API token becomes invalid.
+      NC_AUTH_JWT_SECRET_FILE: /run/secrets/NC_JWT_SECRET
+      # Disable telemetry
+      NC_DISABLE_TELE: "true"
+      # Harden admin surface — recommended for public deployments
+      NC_INVITE_ONLY_SIGNUP: ${NC_INVITE_ONLY_SIGNUP}
+    secrets:
+      - NC_JWT_SECRET
+
+    # --- Storage ---
+    # NocoDB stores its SQLite DB, attachments, and user uploads here.
+    # Back this up regularly.
+    volumes:
+      - ./volumes/data:/usr/app/data
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+
+    # --- Traefik ---
+    labels:
+      # Router
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      # TLS
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Middlewares
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      # Service
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/api/v1/health >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  NC_JWT_SECRET:
+    file: ./.secrets/nc_jwt_secret.txt
