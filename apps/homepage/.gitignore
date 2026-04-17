@@ -1,0 +1,6 @@
+.secrets/
+volumes/
+.env
+config/*
+!config/*.example.yaml
+!config/README.md
