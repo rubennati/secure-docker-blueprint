@@ -20,7 +20,7 @@
 
 | Change | Reason |
 |--------|--------|
-| **Author slug removed from network names** — inbox used `intern-matomornati` and `npm-matomornati` | Leaked the author's identifier. Now `${COMPOSE_PROJECT_NAME}-internal` (auto-derived) and standard `proxy-public` |
+| **Author slug removed from network names** — inbox embedded a personal identifier in the internal and external network names | Leaked the author's identifier. Now `${COMPOSE_PROJECT_NAME}-internal` (auto-derived) and standard `proxy-public` |
 | **`image: matomo` → `matomo:${APP_TAG}`** | Pinned tag (blueprint convention) |
 | **Traefik labels added** — inbox had `#ports: 8080:80` commented + no Traefik labels | Blueprint routes via Traefik; proxy-headers middleware added for https URL generation |
 | **`MATOMO_DATABASE_PASSWORD_FILE` added** | Matomo supports `_FILE` suffix since 4.x — no need for `DB_PWD_INLINE` duplication |
