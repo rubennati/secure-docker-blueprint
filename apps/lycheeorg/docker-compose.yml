@@ -1,0 +1,182 @@
+services:
+
+  # --------------------------------------------------------
+  # DATABASE (MariaDB)
+  # --------------------------------------------------------
+  db:
+    # --- Identity ---
+    image: mariadb:${DB_TAG}
+    container_name: ${CONTAINER_NAME_DB}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
+      - DAC_OVERRIDE
+
+    # --- Configuration ---
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD_FILE: /run/secrets/DB_PWD
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/DB_ROOT_PWD
+      MARIADB_AUTO_UPGRADE: "1"
+      TZ: ${TZ}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    secrets:
+      - DB_PWD
+      - DB_ROOT_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/mysql:/var/lib/mysql
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 20s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # --------------------------------------------------------
+  # REDIS (cache + sessions)
+  # --------------------------------------------------------
+  redis:
+    # --- Identity ---
+    image: redis:${REDIS_TAG}
+    container_name: ${CONTAINER_NAME_REDIS}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/redis:/data
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --------------------------------------------------------
+  # LYCHEE (Laravel app)
+  # --------------------------------------------------------
+  app:
+    # --- Identity ---
+    image: lycheeorg/lychee:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    # NOTE: Lychee's entrypoint runs as root to chown /conf, /uploads, etc.,
+    # then drops to PUID/PGID. Do NOT set `user:` here.
+
+    # --- Configuration ---
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      PHP_TZ: ${TZ}
+      TIMEZONE: ${TZ}
+      APP_URL: https://${APP_TRAEFIK_HOST}
+      APP_KEY: ${APP_KEY}
+      # Database
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_DATABASE: ${DB_NAME}
+      DB_USERNAME: ${DB_USER}
+      DB_PASSWORD_FILE: /run/secrets/DB_PWD
+      # Cache / sessions via Redis
+      CACHE_DRIVER: redis
+      LOG_VIEWER_CACHE_DRIVER: file
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_URL: redis://redis:6379
+      # Behaviour
+      STARTUP_DELAY: "30"
+      SKIP_PERMISSIONS_CHECKS: "false"
+      DISABLE_BASIC_AUTH: "false"
+      DISABLE_WEBAUTHN: "false"
+      TRUSTED_PROXIES: "*"
+    secrets:
+      - DB_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/conf:/conf
+      - ./volumes/uploads:/uploads
+      - ./volumes/sym:/sym
+      - ./volumes/logs:/logs
+      - ./volumes/tmp:/lychee-tmp
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+      - app-internal
+
+    # --- Traefik ---
+    labels:
+      # Router
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      # TLS
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Middlewares
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      # Service
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  DB_PWD:
+    file: ./.secrets/db_pwd.txt
+  DB_ROOT_PWD:
+    file: ./.secrets/db_root_pwd.txt
