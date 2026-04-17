@@ -140,22 +140,45 @@ Status: implemented and documented for WordPress as one of the three scenarios i
 
 ## Evaluating
 
-### Secret Generation Standard
+### Secret & Password Generation Standard
 
-Current convention recommends `openssl rand -base64 32 | tr -d '\n'` but the output contains base64 padding (`=`) which breaks URL-embedded passwords, shell contexts, and some apps. Interim workarounds exist:
+Blueprint-weite Policy für das Erzeugen von Secrets (maschinell, in `.secrets/` Dateien) und Passwörtern (für menschliche Admin-Accounts). Aktuell hat jeder App-README sein eigenes Rezept, teilweise mit bekannten Fallstricken.
 
-- `openssl rand -hex 32` for URL-embedded passwords (DATABASE_URL, REDIS_URL)
-- `openssl rand -base64 48` produces 64 chars without padding
-- `openssl rand -base64 32 | tr -d '=\n'` strips padding but output length varies
-- `tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 32` — pure alphanumeric
+#### Bekannte Problem-Klassen
 
-Open questions:
+- **Padding-Konflikte**: `openssl rand -base64` liefert `+/=` — bricht DATABASE_URLs, Shell-Contexts, einige App-Parser
+- **Trailing-Newline-Trap**: Jeder App-README predigt `| tr -d '\n'` — fehlt es einmal, schlägt Auth stumm fehl
+- **Char-Set-Konflikte pro App**: Cal.com CALENDSO_ENCRYPTION_KEY muss **32-char hex** sein (`-base64` bricht), Nextcloud Redis-Password muss ohne `+/=` sein (PHP-URL-Parser), Paperless DB-Password über `DATABASE_URL` inline
+- **Länge pro App unterschiedlich**: JWT ≥48 Byte, DB-Passwort 32, Session-Secret wieder anders — Kapsel-Wissen verteilt über Repos
 
-- Is there a single convention that works universally or do we need use-case-specific rules in env-structure.md?
-- Should a generation helper script live in `ops/scripts/generate-secret.sh` so apps don't need to repeat the command in every README?
-- What entropy floor do we document as the minimum (128 / 192 / 256 bits)?
+#### Interim-Workarounds (nutzen wir heute uneinheitlich)
 
-Goal: one memorable pattern that is safe in all contexts, with entropy ≥ 192 bits, without padding or special chars that cause downstream issues.
+- `openssl rand -hex 32` für URL-eingebettete Passwörter (DATABASE_URL, REDIS_URL)
+- `openssl rand -base64 48` produziert 64 Chars ohne Padding
+- `openssl rand -base64 32 | tr -d '=\n'` strippt Padding aber Länge variiert
+- `tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 32` — pure alphanumerisch
+
+#### Offene Entscheidungen
+
+**Policy-Seite:**
+- Eine universelle Konvention oder Use-Case-spezifische Regeln in `docs/standards/env-structure.md`?
+- Entropy-Floor als Minimum (128 / 192 / 256 bits)?
+- Sollen Admin-Passwörter für menschliche Nutzung (typbar, memorable) anders behandelt werden als Service-Secrets?
+
+**Tool-Seite:**
+- Helper-Script auf Repo-Ebene (`scripts/generate-secret.sh`) — welche Signatur? Nur Length-Argument, oder Format-Argument (`--format hex|base64|alphanum|urlsafe`)?
+- Integration mit `.env.example`: auto-populate beim ersten `docker compose up` via Entrypoint-Hook?
+- Wie umgehen mit Apps ohne `_FILE`-Support die das Passwort inline in URLs brauchen (Calcom `DB_PWD_INLINE`, Seafile entrypoint-Wrapper, Ghost `__file` suffix)? Ein Script reicht nicht — braucht abgestimmte Patterns.
+
+**Konsistenz-Seite:**
+- Aktuelle App-READMEs zeigen uneinheitliche Befehle — nachträglich angleichen wenn Policy steht
+- Paperless Known-Issue "Trailing newlines break auth" sollte durch die Policy strukturell vermieden werden, nicht nur warnend dokumentiert
+
+#### Ziel
+
+Ein Blueprint-weites Set von **Generierungs-Patterns** (zwei oder drei, je nach Use-Case) plus **ein minimales Tool** das sie umsetzt. Alle App-READMEs referenzieren dann den Standard statt eigene Rezepte zu haben. Fallstricke wie Newline-Trap und Padding-Konflikte werden strukturell eliminiert, nicht nur dokumentiert.
+
+Entscheidungen werden in `docs/standards/secrets-and-passwords.md` (neu) verankert, sobald getroffen.
 
 ### Mutual TLS (mTLS) – Certificate-Based Access
 
@@ -220,6 +243,8 @@ Evaluation goals:
 - Test each app for rootless compatibility
 - Document works / workarounds / incompatible
 - Decide: optional alternative or future default
+
+Reference material: `inbox/traefik-rootless/` contains an early-draft Traefik v3.3 rootless compose variant (standard + rootless-socket side-by-side, plus README). Starting point for a future `core/traefik/docker-compose.rootless.yml` overlay once the path is confirmed.
 
 ### Centralized Observability
 
