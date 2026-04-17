@@ -35,20 +35,53 @@ Production-ready configurations for 15+ services — with standardized patterns,
 
 ### Applications
 
-| Service | Stack | Description |
-|---------|-------|-------------|
-| [Vaultwarden](apps/vaultwarden/) | App + MariaDB | Bitwarden-compatible password manager |
-| [Nextcloud](apps/nextcloud/) | App + MariaDB + Redis + Nginx + Cron | File sync, collaboration, optional OnlyOffice integration |
-| [Ghost](apps/ghost/) | App + MySQL | Blog / CMS with SMTP |
-| [Paperless-ngx](apps/paperless-ngx/) | App + Postgres + Redis + Gotenberg + Tika | Document management with OCR, optional Authentik SSO |
-| [Seafile](apps/seafile/) | App + MariaDB + Memcached + optional components | File sync & share (community edition) |
-| [Seafile Pro](apps/seafile-pro/) | App + MariaDB + Memcached + SeaDoc + notifications + thumbnails + ClamAV + SeaSearch | File sync & share (pro edition with enterprise features) |
-| [WordPress](apps/wordpress/) | App + MariaDB | Classic CMS |
-| [Cal.com](apps/calcom/) | App + Postgres | Scheduling and calendar booking |
-| [Invoice Ninja](apps/invoiceninja/) | App + Nginx + MySQL | Invoicing and billing |
-| [Portainer](apps/portainer/) | App + Socket Proxy | Docker management UI |
-| [Dockhand](apps/dockhand/) | App + Postgres + Socket Proxy | Docker management with Git-based stacks |
-| [Hawser](apps/hawser/) | App + Socket Proxy | Remote Docker agent for Dockhand |
+Organised by primary use-case. The blueprint takes a **choice-matrix** approach for categories where several tools compete — multiple dashboards and photo galleries are included so you can test and pick what fits.
+
+**Status legend:** ✅ live-tested · ⚠️ draft (not yet live-tested on real infrastructure)
+
+#### Dashboards & launchers
+
+| App | Stack | Status | Description |
+|---|---|---|---|
+| [Dashy](apps/dashy/) | Single container | ⚠️ | Homelab dashboard, YAML-configured |
+| [Heimdall](apps/heimdall/) | Single container (LSIO) | ⚠️ | App-launcher with widget support |
+| [Homarr](apps/homarr/) | Single container | ⚠️ | Modern dashboard with rich integrations |
+| [Homepage](apps/homepage/) | Single container | ⚠️ | File-based YAML dashboard (gethomepage) |
+
+#### Publishing & productivity
+
+| App | Stack | Status | Description |
+|---|---|---|---|
+| [Ghost](apps/ghost/) | App + MySQL | ⚠️ | Blog / CMS with SMTP |
+| [WordPress](apps/wordpress/) | App + MariaDB | ✅ | Classic CMS, hardened (mu-plugin + test-script) |
+| [Cal.com](apps/calcom/) | App + Postgres | ⚠️ | Scheduling and calendar booking |
+| [Invoice Ninja](apps/invoiceninja/) | App + Nginx + MySQL | ✅ | Invoicing and billing |
+
+#### File sync & documents
+
+| App | Stack | Status | Description |
+|---|---|---|---|
+| [Nextcloud](apps/nextcloud/) | App + MariaDB + Redis + Nginx + Cron | ✅ | File sync, collaboration, optional OnlyOffice |
+| [Paperless-ngx](apps/paperless-ngx/) | App + Postgres + Redis + Gotenberg + Tika | ✅ | Document management with OCR, optional Authentik SSO |
+| [Seafile](apps/seafile/) | App + MariaDB + Memcached + optional components | ✅ | File sync & share (community edition) |
+| [Seafile Pro](apps/seafile-pro/) | App + MariaDB + Memcached + SeaDoc + ClamAV + SeaSearch | ✅ | File sync & share (pro edition) |
+
+#### Security & monitoring
+
+| App | Stack | Status | Description |
+|---|---|---|---|
+| [Vaultwarden](apps/vaultwarden/) | App + MariaDB | ✅ | Bitwarden-compatible password manager |
+| [Healthchecks](apps/healthchecks/) | Single container + SQLite | ⚠️ | Cron and scheduled-task monitoring |
+
+#### Admin & tools
+
+| App | Stack | Status | Description |
+|---|---|---|---|
+| [Adminer](apps/adminer/) | Single container | ⚠️ | Database administration UI (connects to other apps' DBs) |
+| [IT-Tools](apps/it-tools/) | Single container | ⚠️ | Collection of IT / developer utilities (JSON, hash, regex, etc.) |
+| [Portainer](apps/portainer/) | App + Socket Proxy | ⚠️ | Docker management UI |
+| [Dockhand](apps/dockhand/) | App + Postgres + Socket Proxy | ✅ | Docker management with Git-based stacks |
+| [Hawser](apps/hawser/) | App + Socket Proxy | ✅ | Remote Docker agent for Dockhand |
 
 ## Quick Start
 
