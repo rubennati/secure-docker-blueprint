@@ -56,6 +56,39 @@ Organised by primary use-case. The blueprint takes a **choice-matrix** approach 
 | [WordPress](apps/wordpress/) | App + MariaDB | ✅ | Classic CMS, hardened (mu-plugin + test-script) |
 | [Cal.com](apps/calcom/) | App + Postgres | ⚠️ | Scheduling and calendar booking |
 | [Invoice Ninja](apps/invoiceninja/) | App + Nginx + MySQL | ✅ | Invoicing and billing |
+| [BookStack](apps/bookstack/) | App (LSIO) + MariaDB | ⚠️ | Wiki / knowledge base (Laravel) |
+
+#### Photo galleries
+
+Five options — test and pick what fits your workflow.
+
+| App | Stack | Status | Description |
+|---|---|---|---|
+| [Immich](apps/immich/) | Server + ML + Postgres (pgvectors) + Valkey | ⚠️ | AI-powered photo backup with mobile apps |
+| [LibrePhotos](apps/librephotos/) | Nginx + Django+ML + React + pgautoupgrade | ⚠️ | Google-Photos-like (OwnPhotos fork) |
+| [Lychee](apps/lycheeorg/) | App (Laravel) + MariaDB + Redis | ⚠️ | Clean, fast gallery |
+| [PhotoPrism](apps/photoprism/) | App (Go+TensorFlow) + MariaDB | ⚠️ | AI classification + WebDAV |
+| [Photoview](apps/photoview/) | App (Go+GraphQL) + MariaDB | ⚠️ | RAW processing + face recognition |
+
+#### Business & personal management
+
+| App | Stack | Status | Description |
+|---|---|---|---|
+| [Dolibarr](apps/dolibarr/) | App (tuxgasy) + MariaDB | ⚠️ | ERP / CRM — invoicing, accounting, projects, HR |
+| [Monica](apps/monicahq/) | App (Laravel) + MariaDB | ⚠️ | Personal CRM for relationships |
+
+#### Automation & analytics
+
+| App | Stack | Status | Description |
+|---|---|---|---|
+| [n8n](apps/n8n/) | Single container + SQLite | ⚠️ | Visual workflow automation (Zapier alternative) |
+| [Matomo](apps/matomo/) | App + MariaDB | ⚠️ | GDPR-compliant web analytics (Google Analytics alternative) |
+
+#### Networking
+
+| App | Stack | Status | Description |
+|---|---|---|---|
+| [UniFi Network App](apps/unifi/) | Controller (LSIO) + MongoDB 4.4 | ⚠️ | Ubiquiti UniFi device controller |
 
 #### File sync & documents
 
