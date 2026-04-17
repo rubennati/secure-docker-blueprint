@@ -103,7 +103,12 @@ Progress:
 4. ✅ **Template corrections** — done
 5. ✅ **Standards clarifications** — done
 6. ✅ **Per-app documentation** — done (see Completed)
-7. ⏳ **Compose fixes** — pending: Invoice Ninja (non-compliant), Vaultwarden (entrypoint wrapper for DB secret), Hawser (missing fields). Est. ~2h.
+7. ⏳ **Compose fixes** — pending:
+   - Invoice Ninja (non-compliant with compose-structure standards). Reference: `inbox/Archiv/invoiceninja-works/` has a working full-stack setup (Dockerfile, nginx, php, supervisor, scripts) that can serve as the starting point.
+   - Vaultwarden (entrypoint wrapper for DB secret — `DATABASE_URL` needs password inline, no `_FILE` support). Reference: `inbox/Archiv/vaultwarden/prestart_vaultwarden.sh` contains the pattern (reads `.secrets/db_pwd.txt`, constructs `DATABASE_URL`, exports it). Needs adaptation from host-run to container-run (`/run/secrets/DB_PWD`).
+   - Hawser (missing fields).
+   
+   Est. ~2h once the Invoice Ninja / Vaultwarden references have been reviewed.
 
 Only Package 7 remains.
 
