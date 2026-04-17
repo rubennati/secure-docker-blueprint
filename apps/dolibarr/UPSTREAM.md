@@ -20,8 +20,8 @@
 
 | Change | Reason |
 |--------|--------|
-| **Real TZ `Europe/Vienna` replaced with `${TZ}`** | Prevent leaking author's timezone; `TZ` defaults to `UTC` |
-| **Real domain suffix `example.at` replaced with `example.com`** | Prevent leaking country-code TLD that correlates with the author |
+| **Hardcoded non-UTC timezone replaced with `${TZ}`** | Prevent leaking author's timezone; `TZ` defaults to `UTC` |
+| **Hardcoded country-code TLD in example domain replaced with `example.com`** | Prevent leaking a regional TLD that correlates with the author |
 | **`image: tuxgasy/dolibarr` → `tuxgasy/dolibarr:${APP_TAG}`** | Pinned tag (blueprint convention) |
 | **Traefik labels added** — inbox had a comment "Traefik-Labels hier ergaenzen fuer HTTPS" but no labels | Blueprint routes via Traefik |
 | **`DB_TAG` variable added** | Blueprint pinning convention |
@@ -30,7 +30,7 @@
 | **External network `traefik` → `proxy-public`** | Blueprint standard name |
 | **`security_opt: no-new-privileges` + `cap_drop: ALL` + minimal `cap_add`** on MariaDB | Baseline hardening |
 | **Healthcheck added on MariaDB + `depends_on.condition: service_healthy`** | Prevents Dolibarr from trying to install before DB is ready |
-| **`TZ` env var on both services** | Replaces hardcoded `PHP_INI_DATE_TIMEZONE: 'Europe/Vienna'` |
+| **`TZ` env var on both services** | Replaces a hardcoded non-UTC `PHP_INI_DATE_TIMEZONE` |
 | **Access `acc-tailscale` + security `sec-3` defaults** | ERP = business data; VPN-only is safer than public |
 
 ## Upgrade checklist
