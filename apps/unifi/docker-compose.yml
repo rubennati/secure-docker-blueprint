@@ -1,0 +1,137 @@
+services:
+
+  # --------------------------------------------------------
+  # DATABASE (MongoDB 4.4 — UniFi does NOT support MongoDB 5+)
+  # --------------------------------------------------------
+  db:
+    # --- Identity ---
+    image: mongo:${DB_TAG}
+    container_name: ${CONTAINER_NAME_DB}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${DB_ROOT_USER}
+      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/DB_ROOT_PWD
+      MONGO_INITDB_DATABASE: ${DB_NAME}
+      # Used by the init script (init-mongo.sh reads these + secrets
+      # to create the application user on first startup).
+      UNIFI_APP_USER: ${DB_APP_USER}
+      UNIFI_APP_DB: ${DB_NAME}
+    secrets:
+      - DB_ROOT_PWD
+      - DB_APP_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/mongodb:/data/db
+      - ./init-mongo.sh:/docker-entrypoint-initdb.d/init-mongo.sh:ro
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD", "mongo", "--quiet", "--eval", "db.runCommand({ping:1}).ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # --------------------------------------------------------
+  # UNIFI NETWORK APPLICATION (LSIO build)
+  # --------------------------------------------------------
+  app:
+    # --- Identity ---
+    image: lscr.io/linuxserver/unifi-network-application:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    # NOTE: Do NOT set `user:` — LSIO image uses s6-overlay.
+
+    # --- Configuration ---
+    environment:
+      TZ: ${TZ}
+      PUID: ${PUID}
+      PGID: ${PGID}
+      MEM_LIMIT: ${MEM_LIMIT}
+      MEM_STARTUP: ${MEM_LIMIT}
+      # MongoDB — UniFi app reads MONGO_PASS from env only (no _FILE support).
+      # Value must match contents of .secrets/db_app_pwd.txt verbatim.
+      MONGO_HOST: db
+      MONGO_PORT: "27017"
+      MONGO_DBNAME: ${DB_NAME}
+      MONGO_USER: ${DB_APP_USER}
+      MONGO_PASS: ${DB_APP_PWD_INLINE}
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/config:/config
+
+    # --- Networking ---
+    # UniFi needs raw L2/L3 discovery ports that Traefik cannot proxy.
+    # The web UI goes via Traefik (host network routing), device-inform
+    # and discovery ports are exposed directly on the host.
+    networks:
+      - proxy-public
+      - app-internal
+    ports:
+      - "3478:3478/udp"       # STUN
+      - "10001:10001/udp"     # device discovery
+      - "8080:8080/tcp"       # device inform (unifi → controller)
+      # Optional (uncomment if needed):
+      # - "1900:1900/udp"     # L2 mDNS / UDP broadcast
+      # - "8843:8843/tcp"     # guest portal HTTPS
+      # - "8880:8880/tcp"     # guest portal HTTP
+      # - "6789:6789/tcp"     # mobile speedtest
+      # - "5514:5514/udp"     # remote syslog
+
+    # --- Traefik (web UI only — device ports are direct) ---
+    labels:
+      # Router
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      # TLS — UniFi uses a self-signed cert on its internal 8443. Tell
+      # Traefik to still trust it when reverse-proxying HTTPS → HTTPS.
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Middlewares
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      # Service — UniFi's UI runs on 8443/HTTPS inside the container
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.scheme=https"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.serversTransport=skip-verify@file"
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  DB_ROOT_PWD:
+    file: ./.secrets/db_root_pwd.txt
+  DB_APP_PWD:
+    file: ./.secrets/db_app_pwd.txt
