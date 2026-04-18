@@ -85,11 +85,22 @@ Five options — test and pick what fits your workflow.
 | [PhotoPrism](apps/photoprism/) | App (Go+TensorFlow) + MariaDB | ⚠️ | AI classification + WebDAV |
 | [Photoview](apps/photoview/) | App (Go+GraphQL) + MariaDB | ⚠️ | RAW processing + face recognition |
 
+#### Scheduling & booking
+
+Three 1:1-booking apps as a choice-matrix (pick one), plus a planned group-polling tool for a different axis.
+
+| App | Stack | Status | When to use |
+|---|---|---|---|
+| [Cal.com](apps/calcom/) | Next.js + Postgres | ⚠️ | Commercial-ready pathway, feature-richest, AGPL + commercial licence. **2026 note:** production codebase goes closed-source — see [calcom/UPSTREAM.md](apps/calcom/UPSTREAM.md). |
+| [Cal.diy](apps/caldiy/) | Next.js + Postgres | ⚠️ | MIT community edition of Cal.com, "personal / non-production" per upstream. Pick if strict OSS matters. |
+| [Easy!Appointments](apps/easyappointments/) | PHP + MariaDB | ⚠️ | Lightweight PHP alternative, established 2013, simpler than Cal.com, GPL-3.0. |
+
+Planned: **Rallly** (group scheduling polls — Doodle alternative, complementary not competing with the 1:1 bookers above).
+
 #### Productivity & personal
 
 | App | Stack | Status | Description |
 |---|---|---|---|
-| [Cal.com](apps/calcom/) | App + Postgres | ⚠️ | Scheduling and calendar booking |
 | [Monica](apps/monicahq/) | App (Laravel) + MariaDB | ⚠️ | Personal CRM for relationships |
 | [NocoDB](apps/nocodb/) | Single container + SQLite | ⚠️ | No-code database / spreadsheet UI (Airtable alternative) |
 | [OpnForm](apps/opnform/) | API (Laravel) + UI (Nuxt) + Postgres + Redis | ⚠️ | Self-hosted form builder (Typeform alternative) |

@@ -33,6 +33,19 @@
 
 Cal.com is AGPL-3.0 with commercial options. For standard self-hosted use on your own infrastructure, `CALCOM_LICENSE_CONSENT=agree` with an empty `LICENSE` key is the correct setting. If you plan to offer Cal.com as a service to third parties, check the commercial license terms.
 
+## 2026 heads-up — Cal.com goes partially closed, Cal.diy is the community edition
+
+In 2026 Cal.com, Inc. announced that their production codebase (rewritten authentication, data handling, commercial systems) moves behind a closed-source licence, while a stripped-down **Cal.diy** remains available under MIT as the community edition. Cal.diy is explicitly positioned as "strictly for personal, non-production use" — no security guarantees from Cal.com, Inc.
+
+**What this means for your deployment:**
+
+- If you are **already running this compose** (`calcom/cal.com:${APP_TAG}`) on a pinned version: you keep working. Pinned tags under AGPL remain accessible indefinitely.
+- If you want to **track the open-source community edition** going forward: see the sibling app [`apps/caldiy/`](../caldiy/). Same tech stack, different image + licence, different support expectations.
+- If you want a **fully open PHP-stack alternative**: see [`apps/easyappointments/`](../easyappointments/). Simpler feature set, established since 2013.
+- If you want **group scheduling polls** ("when does everyone have time?") rather than 1:1 booking: Rallly is planned as a complementary app (see root `README.md`).
+
+The three 1:1-booking apps (Cal.com, Cal.diy, Easy!Appointments) are a choice-matrix — pick one; don't run parallel instances of the same use case.
+
 ## Upgrade checklist
 
 Cal.com moves fast — read the release notes for every minor bump.
