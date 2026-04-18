@@ -8,6 +8,52 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
+Next milestone: **v0.3.0 — Monitoring rollout.** All four drafted `monitoring/` apps live on the server with real probes and at least one end-to-end alert flow through n8n. Criteria: see `docs/architecture/release-criteria.md` on the `docs` branch.
+
+## [0.2.0] — 2026-04-18
+
+### Structure Stable Baseline
+
+Repository layout is now stable: forks can rely on the five top-level directories (`core/`, `apps/`, `business/`, `monitoring/`, `backup/`) and the categorisation rule documented on the `docs` branch.
+
+### Added
+
+- **New top-level directories**: `business/`, `monitoring/`, `backup/`. Each with a dedicated README defining scope and roadmap.
+- **`monitoring/`** (4 drafted, 6 planned): Uptime Kuma, Gatus, Beszel, changedetection.io, Healthchecks.
+- **`business/`** (1 live, 6 drafted, 2 planned): Invoice Ninja (live), Dolibarr, Matomo, Kimai, Listmonk, Zammad, OpenSign; Live Helper Chat + Eramba GRC planned.
+- **`backup/`** (roadmap only): Kopia, Bareos, UrBackup planned.
+- **17 new apps drafted** (`apps/`): Adminer, IT-Tools, Dashy, Heimdall, Homarr, Homepage, BookStack, Immich, LibrePhotos, Lychee, PhotoPrism, Photoview, Monica, n8n, NocoDB, OpnForm, UniFi Network Application.
+- **Cloud-free data chain** documented (OpnForm → n8n → NocoDB webhook pattern) in each relevant README.
+- **Two-router Traefik split** pattern for apps that need admin-VPN-only + subscriber-paths-public (Listmonk, Invoice Ninja).
+- **Path-based Traefik router split** pattern for API+UI-on-one-host apps (OpnForm, OpenSign).
+
+### Changed
+
+- **7 directory moves** to align with the sharpened categorisation rule:
+  - `apps/healthchecks/` → `monitoring/healthchecks/`
+  - `apps/invoiceninja/` → `business/invoiceninja/`
+  - `apps/dolibarr/` → `business/dolibarr/`
+  - `apps/matomo/` → `business/matomo/`
+  - `apps/dockhand/` → `core/dockhand/`
+  - `apps/portainer/` → `core/portainer/`
+  - `apps/hawser/` → `core/hawser/`
+- **Root README** restructured around the five-category layout, with per-category tables and a new "Repository layout" section pointing at the internal architecture docs.
+
+### Security
+
+- **Repo-wide scan pass**: no real domains, IPs, or author-identifying strings in any committed file on `main` / `dev`.
+- **All secrets use Docker Secret `_FILE` pattern** where the upstream image supports it. Apps without `_FILE` support use the `DB_PWD_INLINE` convention with the duplicate-password-in-env trade-off documented in their README.
+- **`no-new-privileges:true`** on every container.
+- **MariaDB `cap_drop: ALL` + minimal `cap_add`** on every MariaDB service.
+- **Internal networks (`internal: true`)** isolate DBs / Redis / ML from the host on every multi-service app.
+
+### Statistics
+
+- Live-tested apps: 14
+- Drafted apps: 30+
+- Planned apps in category READMEs: ~18
+- Top-level categories: 5
+
 ## [0.1.0] — 2026-04-16
 
 Initial public release.
@@ -46,5 +92,6 @@ Initial public release.
 - No CI workflows yet (compose validate, markdown lint, secret scan) — planned for 0.2.0
 - No automatic backup orchestration — planned in Evaluating section of ROADMAP
 
-[Unreleased]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/rubennati/secure-docker-blueprint/releases/tag/v0.2.0
 [0.1.0]: https://github.com/rubennati/secure-docker-blueprint/releases/tag/v0.1.0
