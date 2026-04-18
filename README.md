@@ -133,6 +133,19 @@ Dedicated top-level category — see [`monitoring/README.md`](monitoring/README.
 
 Planned: Statping, ciao, Checkmate, Zabbix, Grafana + Prometheus, Scrutiny. See `monitoring/README.md`.
 
+### Business Apps
+
+Dedicated top-level category — see [`business/README.md`](business/README.md) for the full roadmap (4 drafted, 14 planned). Covers the self-hosted alternative to the typical SaaS company stack: Mailchimp + Zendesk + Intercom + Harvest + DocuSign + Confluence + Typeform + Bitly + Okta + Tailscale.
+
+| App | Function | Status | Description |
+|---|---|---|---|
+| [Listmonk](business/listmonk/) | Marketing | ⚠️ | Newsletter + mailing list + transactional mail |
+| [Zammad](business/zammad/) | Support | ⚠️ | Full helpdesk / ticketing (7-service stack) |
+| [Kimai](business/kimai/) | Operations | ⚠️ | Time tracking per project / customer |
+| [OpenSign](business/opensign/) | Legal | ⚠️ | E-signatures (DocuSign alternative) |
+
+Planned: Live Helper Chat, Eramba GRC, Wiki.js, Outline, Formbricks, HeyForm, Shlink, Kopia, Bareos, UrBackup, PrivateBin, SnapPass, Keycloak, Headscale. See `business/README.md` for the rollout-phase guidance.
+
 ## Quick Start
 
 ```bash
