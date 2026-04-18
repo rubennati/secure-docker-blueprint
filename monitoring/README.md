@@ -1,6 +1,6 @@
 # Monitoring
 
-Self-hosted monitoring stack — covers four axes: **uptime**, **metrics**, **content changes**, **disk health**. Each app in its own subdirectory, drafted and tested independently. Mix-and-match based on what you actually need — you do not need all of them.
+Self-hosted monitoring stack — covers five axes: **uptime**, **cron / scheduled-job monitoring**, **host & container metrics**, **content changes**, **disk health**. Each app in its own subdirectory, drafted and tested independently. Mix-and-match based on what you actually need — you do not need all of them.
 
 ## Status
 
@@ -15,6 +15,12 @@ Self-hosted monitoring stack — covers four axes: **uptime**, **metrics**, **co
 | [Statping](#) | UI-driven | 📋 | Older alternative to Kuma. Less active, but richer plugin ecosystem. |
 | [ciao](#) | Minimal HTTP checks | 📋 | Ruby, YAML-driven. Tiny — "Gatus without the UI." |
 | [Checkmate](#) | Modern YAML uptime | 📋 | Newer alternative to Gatus, richer UI. |
+
+### Cron & scheduled-job monitoring
+
+| App | Approach | Status | Notes |
+|---|---|---|---|
+| [Healthchecks](healthchecks/) | Dead-man's switch for cron / backup / scheduled jobs | ⚠️ | Django + SQLite default. Migrated from `apps/healthchecks/` — structurally belongs in monitoring, not user-facing apps. |
 
 ### Host & container metrics
 

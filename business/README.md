@@ -1,127 +1,88 @@
 # Business Apps
 
-Self-hosted toolchain for running a company end-to-end: communication, legal, operations, identity, knowledge, backup. Designed as a **Profi-Level self-hosted alternative** to the typical SaaS stack (Mailchimp + Zendesk + Intercom + Harvest + DocuSign + Confluence + Typeform + Bitly + Okta + Tailscale + …).
+Self-hosted apps **that only make sense in a business / company context**. The criterion: *do you need to run a business to meaningfully use this?* If yes → here. If the app is equally useful to a private homelab user (wiki, password manager, URL shortener, …) it belongs in [`apps/`](../apps/).
 
-The apps split cleanly by business function. Pick what you need — nothing couples tightly, everything composes via Traefik + shared networks + webhook-based integration (n8n in the middle for routing).
+This keeps `business/` a meaningful category instead of a grab-bag. See [`docs/architecture/directory-layout.md`](../docs/architecture/directory-layout.md) (on the `docs` branch) for the full categorisation rule.
 
 ## Status
 
 ✅ live-tested · ⚠️ draft · 📋 planned
 
-### 📧 Marketing & outreach
-
-| App | Use case | Status |
-|---|---|---|
-| [Listmonk](listmonk/) | Newsletter, mailing list, transactional mail | ⚠️ |
-
-### 🎫 Customer support
+### Billing & operations
 
 | App | Use case | Status | Notes |
 |---|---|---|---|
-| [Zammad](zammad/) | Full helpdesk / ticketing / SLA | ⚠️ | 7-service stack, ~4 GB RAM minimum |
-| Live Helper Chat | Website live-chat widget | 📋 | PHP, lighter, real-time visitor chat |
+| [Invoice Ninja](invoiceninja/) | Invoicing, billing, quotes, client portal | ✅ | Live-tested; `apps/invoiceninja/` → `business/invoiceninja/` during directory restructure |
+| [Dolibarr](dolibarr/) | ERP / CRM — accounting, HR, inventory, projects | ⚠️ | Migrated from `apps/dolibarr/` |
+| [Kimai](kimai/) | Time tracking per project / customer | ⚠️ | Integrates with Invoice Ninja via webhooks |
 
-### ⏱️ Operations & billing
-
-| App | Use case | Status | Notes |
-|---|---|---|---|
-| [Kimai](kimai/) | Time tracking per project/customer | ⚠️ | Integrates with Invoice Ninja via API/export |
-
-### ✍️ Legal & compliance
+### Marketing & analytics
 
 | App | Use case | Status | Notes |
 |---|---|---|---|
-| [OpenSign](opensign/) | E-signatures — DocuSign alternative | ⚠️ | eIDAS-compatible with a qualified cert |
-| Eramba GRC | Governance / Risk / Compliance (NIS2, DSGVO, ISO-27001 mapping) | 📋 | Heavy. For regulated businesses. |
+| [Listmonk](listmonk/) | Newsletter, mailing lists, transactional mail | ⚠️ | Two-router pattern documented: admin VPN-only + subscriber paths public |
+| [Matomo](matomo/) | GDPR-compliant web analytics for company / customer sites | ⚠️ | Migrated from `apps/matomo/` — primary use-case is the business website |
 
-### 📚 Knowledge & collaboration
-
-Two wiki alternatives (beyond the already-drafted [BookStack](../apps/bookstack/)):
+### Customer support
 
 | App | Use case | Status | Notes |
 |---|---|---|---|
-| Wiki.js | Feature-rich wiki, Node.js, many auth backends | 📋 | Heavier than BookStack, more flexible |
-| Outline | Modern, Notion-like wiki | 📋 | React/Node, prettier UI, Slack integration |
+| [Zammad](zammad/) | Full helpdesk / ticketing / SLA | ⚠️ | 7-service stack, ≥ 4 GB RAM |
+| Live Helper Chat | Real-time visitor chat on company website | 📋 | PHP, lighter than Zammad, for pre-sales chat |
 
-### 📝 Forms & surveys
-
-Two more alternatives beyond the already-drafted [OpnForm](../apps/opnform/):
+### Legal & compliance
 
 | App | Use case | Status | Notes |
 |---|---|---|---|
-| Formbricks | Qualtrics-style surveys — in-product, NPS, research | 📋 | Next.js, event-driven, embeddable |
-| HeyForm | Typeform-style form builder, richer than OpnForm | 📋 | Alternative to OpnForm, more designs |
+| [OpenSign](opensign/) | E-signatures — DocuSign alternative | ⚠️ | Mail via Mailgun or SMTP; eIDAS with qualified cert |
+| Eramba GRC | Governance / Risk / Compliance mapping (NIS2, DSGVO, ISO-27001) | 📋 | Heavy. For regulated businesses. |
 
-### 🔗 Utilities
+## Why these and not others
 
-| App | Use case | Status | Notes |
-|---|---|---|---|
-| Shlink | Branded URL shortener (`go.firma.at/xy`) with stats | 📋 | REST API, QR codes, geolocation |
-| PrivateBin | Encrypted paste service — send secrets one-time | 📋 | Zero-knowledge, client-side AES |
-| SnapPass | One-time secret sharing (password reset links for users) | 📋 | Redis-backed, expiring links |
+Applying the criterion consistently, the following were **deliberately kept in `apps/`** because private homelab users have the same use-case:
 
-### 💾 Backup
+- **NocoDB, n8n, Vaultwarden, Cal.com, Monica, BookStack** — general productivity, equally useful private
+- **Wiki.js, Outline, Formbricks, HeyForm, Shlink, PrivateBin, SnapPass, Headscale** — general utilities / knowledge / identity; not business-exclusive
 
-Three approaches, pick one per workload:
+And the following moved to other top-level categories:
 
-| App | Use case | Status | Notes |
-|---|---|---|---|
-| Kopia | Deduplicating snapshots to S3 / SFTP / local | 📋 | Modern, fast. Desktop UI + server mode. |
-| Bareos | Enterprise Bacula-fork with director/storage/file daemons | 📋 | Heavy. For regulated backup policies. |
-| UrBackup | Windows/Linux image + file backup with web UI | 📋 | Good for workstations + servers. |
+- **Healthchecks** → [`monitoring/`](../monitoring/) (ops observability, not business)
+- **Keycloak** → [`core/`](../core/) (alongside Authentik — both are IAM infrastructure)
+- **Kopia, Bareos, UrBackup** → [`backup/`](../backup/) (ops, not business)
 
-### 🔐 Identity & network
+## Rollout sequence
 
-| App | Use case | Status | Notes |
-|---|---|---|---|
-| Keycloak | Full IAM (realms, clients, roles, federated identity) | 📋 | Heavy. Use if you outgrow Authentik. |
-| Headscale | Self-hosted Tailscale control server | 📋 | Kicks the Tailscale SaaS dependency. Network-critical. |
+For someone building out a fresh company stack:
 
-## Recommended rollout sequence
+### Phase 1 — Foundation (core/ + apps/)
 
-For someone building out a fresh company stack on this blueprint:
+Traefik, Vaultwarden, Nextcloud/Seafile, Paperless-ngx already in place.
 
-### Phase 1 — Foundation (already live)
+### Phase 2 — Billing + customer-facing (this category)
 
-Traefik + Vaultwarden + Nextcloud/Seafile + Paperless-ngx. That's the baseline: reverse proxy, password manager, file sync, documents.
+1. **Invoice Ninja** — day-one of first billable project
+2. **Kimai** — track hours from the start (→ Invoice Ninja via n8n)
+3. **Zammad** — when customer-support requests start coming in
+4. **Listmonk** — when you have a list
+5. **OpenSign** — when the first contract needs digital signing
 
-### Phase 2 — Customer-facing (draft now, implement when ready)
+All 5 are drafted or live-tested here.
 
-1. **Listmonk** — if you have a list
-2. **Zammad** — if you have customer support requests
-3. **OpenSign** — when the first contract needs to be signed digitally
-4. **Kimai** — track hours from day 1 of first billable project
+### Phase 3 — Analytics + extras
 
-All 4 are in this category as drafts.
-
-### Phase 3 — Scaling & operations
-
-- **Shlink** (branded links for marketing + trackability)
-- **Formbricks** or **HeyForm** (pick one to complement OpnForm or replace it)
-- **Wiki.js** or **Outline** (pick one — if BookStack's Laravel-stack doesn't fit)
-- **SnapPass** (sharing initial creds with new hires)
-
-### Phase 4 — Scale + compliance
-
-- **Keycloak** (when you have too many apps for Authentik's admin model)
-- **Eramba GRC** (when a formal audit looms: NIS2, ISO-27001)
-- **Headscale** (when the Tailscale SaaS bill bothers you)
-
-### Phase 5 — Specialised
-
-- **Kopia / Bareos / UrBackup** — backup strategy depends on your workload mix
-- **Live Helper Chat** — if live website chat becomes a thing
+- **Matomo** — replace Google Analytics on the company website
+- **Live Helper Chat** — if website live-chat becomes a thing
+- **Eramba GRC** — if NIS2 / ISO-27001 looms
 
 ## The n8n hub
 
-Most of these integrate loosely via webhook → n8n → target API. Build your business process automations in n8n:
+The `apps/n8n/` + `apps/nocodb/` + `apps/opnform/` cloud-free trio connects every business app via webhook:
 
-- Form submitted → create Zammad ticket + append to Listmonk list + Slack/Mattermost notification
-- New invoice in Invoice Ninja → generate OpenSign signing request for delivery confirmation
-- Kimai weekly summary → email via Listmonk to project manager
-- Uptime Kuma alert → Zammad ticket auto-created with severity
-
-The [apps/n8n/](../apps/n8n/), [apps/nocodb/](../apps/nocodb/), and [apps/opnform/](../apps/opnform/) cloud-free trio is already in place — every business app in this category plugs in via its webhook channel.
+- Form submitted → create Zammad ticket + append to Listmonk list
+- Invoice paid → trigger OpenSign delivery confirmation
+- Kimai weekly hours → email via Listmonk to project manager
+- Matomo goal hit → NocoDB conversion row
+- Uptime Kuma alert → Zammad ticket
 
 ## Layout
 
@@ -133,6 +94,7 @@ business/<app>/
 ├── .env.example
 ├── .gitignore
 ├── README.md
-├── .secrets/           # gitignored, created at setup
-└── volumes/            # gitignored, created at setup
+├── UPSTREAM.md
+├── .secrets/        # gitignored
+└── volumes/         # gitignored
 ```

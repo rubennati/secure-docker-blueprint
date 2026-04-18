@@ -32,12 +32,29 @@ Production-ready configurations for 15+ services — with standardized patterns,
 | [acme-certs](core/acme-certs/) | Certificate tool (acme.sh) for devices without Traefik (NAS, routers) |
 | [CrowdSec](core/crowdsec/) | Intrusion detection engine — log analysis, threat decisions, AppSec/WAF |
 | [Whoami](core/whoami/) | Traefik debug service to verify routing, TLS, and middlewares |
+| [Dockhand](core/dockhand/) | Docker management with Git-based stacks (live-tested) |
+| [Portainer](core/portainer/) | Docker management UI (draft) |
+| [Hawser](core/hawser/) | Remote Docker agent for Dockhand (live-tested) |
+
+Planned in `core/`: Keycloak (alternative / heavier IAM next to Authentik).
+
+### Repository layout
+
+Five top-level areas, each with a clear mandate. See `docs/architecture/directory-layout.md` (on the `docs` branch) for the full categorisation rule.
+
+| Directory | Scope |
+|---|---|
+| [`core/`](core/) | Infrastructure shared by everything — Traefik, CrowdSec, identity providers (Authentik + Keycloak planned), OnlyOffice, certs |
+| [`apps/`](apps/) | General-purpose self-hosted apps — equally useful for private homelab or a company |
+| [`business/`](business/) | Apps that only make sense in a company context — invoicing, helpdesk, newsletter, compliance |
+| [`monitoring/`](monitoring/) | Ops observability — uptime, metrics, content-change watching, disk SMART |
+| [`backup/`](backup/) | Ops backup — Kopia / Bareos / UrBackup, structurally separate because of privileged access + remote targets |
 
 ### Applications
 
-Organised by primary use-case. The blueprint takes a **choice-matrix** approach for categories where several tools compete — multiple dashboards and photo galleries are included so you can test and pick what fits.
+The blueprint takes a **choice-matrix** approach: where several tools compete (dashboards, photo galleries, wikis, form builders), multiple options are included so you can test and pick what fits.
 
-**Status legend:** ✅ live-tested · ⚠️ draft (not yet live-tested on real infrastructure)
+**Status legend:** ✅ live-tested · ⚠️ draft · 📋 planned (tracked in the category README, no files yet)
 
 #### Dashboards & launchers
 
@@ -48,14 +65,12 @@ Organised by primary use-case. The blueprint takes a **choice-matrix** approach 
 | [Homarr](apps/homarr/) | Single container | ⚠️ | Modern dashboard with rich integrations |
 | [Homepage](apps/homepage/) | Single container | ⚠️ | File-based YAML dashboard (gethomepage) |
 
-#### Publishing & productivity
+#### Publishing & knowledge
 
 | App | Stack | Status | Description |
 |---|---|---|---|
 | [Ghost](apps/ghost/) | App + MySQL | ⚠️ | Blog / CMS with SMTP |
 | [WordPress](apps/wordpress/) | App + MariaDB | ✅ | Classic CMS, hardened (mu-plugin + test-script) |
-| [Cal.com](apps/calcom/) | App + Postgres | ⚠️ | Scheduling and calendar booking |
-| [Invoice Ninja](apps/invoiceninja/) | App + Nginx + MySQL | ✅ | Invoicing and billing |
 | [BookStack](apps/bookstack/) | App (LSIO) + MariaDB | ⚠️ | Wiki / knowledge base (Laravel) |
 
 #### Photo galleries
@@ -70,29 +85,17 @@ Five options — test and pick what fits your workflow.
 | [PhotoPrism](apps/photoprism/) | App (Go+TensorFlow) + MariaDB | ⚠️ | AI classification + WebDAV |
 | [Photoview](apps/photoview/) | App (Go+GraphQL) + MariaDB | ⚠️ | RAW processing + face recognition |
 
-#### Business & personal management
+#### Productivity & personal
 
 | App | Stack | Status | Description |
 |---|---|---|---|
-| [Dolibarr](apps/dolibarr/) | App (tuxgasy) + MariaDB | ⚠️ | ERP / CRM — invoicing, accounting, projects, HR |
+| [Cal.com](apps/calcom/) | App + Postgres | ⚠️ | Scheduling and calendar booking |
 | [Monica](apps/monicahq/) | App (Laravel) + MariaDB | ⚠️ | Personal CRM for relationships |
-
-#### Automation, forms & analytics
-
-The **n8n + NocoDB + OpnForm** trio is a cloud-free data-collection stack: OpnForm collects, n8n routes and transforms, NocoDB stores and presents.
-
-| App | Stack | Status | Description |
-|---|---|---|---|
-| [n8n](apps/n8n/) | Single container + SQLite | ⚠️ | Visual workflow automation (Zapier alternative) |
 | [NocoDB](apps/nocodb/) | Single container + SQLite | ⚠️ | No-code database / spreadsheet UI (Airtable alternative) |
 | [OpnForm](apps/opnform/) | API (Laravel) + UI (Nuxt) + Postgres + Redis | ⚠️ | Self-hosted form builder (Typeform alternative) |
-| [Matomo](apps/matomo/) | App + MariaDB | ⚠️ | GDPR-compliant web analytics (Google Analytics alternative) |
+| [n8n](apps/n8n/) | Single container + SQLite | ⚠️ | Visual workflow automation (Zapier alternative) |
 
-#### Networking
-
-| App | Stack | Status | Description |
-|---|---|---|---|
-| [UniFi Network App](apps/unifi/) | Controller (LSIO) + MongoDB 4.4 | ⚠️ | Ubiquiti UniFi device controller |
+> **Cloud-free data-collection chain:** `OpnForm → n8n → NocoDB` — forms collect, n8n transforms, NocoDB stores + presents. All three on `proxy-public`, addressable as `http://<app>-app:<port>` for internal calls.
 
 #### File sync & documents
 
@@ -103,48 +106,70 @@ The **n8n + NocoDB + OpnForm** trio is a cloud-free data-collection stack: OpnFo
 | [Seafile](apps/seafile/) | App + MariaDB + Memcached + optional components | ✅ | File sync & share (community edition) |
 | [Seafile Pro](apps/seafile-pro/) | App + MariaDB + Memcached + SeaDoc + ClamAV + SeaSearch | ✅ | File sync & share (pro edition) |
 
-#### Security & monitoring
+#### Identity & security
 
 | App | Stack | Status | Description |
 |---|---|---|---|
 | [Vaultwarden](apps/vaultwarden/) | App + MariaDB | ✅ | Bitwarden-compatible password manager |
-| [Healthchecks](apps/healthchecks/) | Single container + SQLite | ⚠️ | Cron and scheduled-task monitoring |
 
-#### Admin & tools
+Planned (apps/): Headscale (self-hosted Tailscale control server), PrivateBin, SnapPass.
+
+#### Networking
+
+| App | Stack | Status | Description |
+|---|---|---|---|
+| [UniFi Network App](apps/unifi/) | Controller (LSIO) + MongoDB 4.4 | ⚠️ | Ubiquiti UniFi device controller |
+
+#### Developer & admin tools
 
 | App | Stack | Status | Description |
 |---|---|---|---|
 | [Adminer](apps/adminer/) | Single container | ⚠️ | Database administration UI (connects to other apps' DBs) |
 | [IT-Tools](apps/it-tools/) | Single container | ⚠️ | Collection of IT / developer utilities (JSON, hash, regex, etc.) |
-| [Portainer](apps/portainer/) | App + Socket Proxy | ⚠️ | Docker management UI |
-| [Dockhand](apps/dockhand/) | App + Postgres + Socket Proxy | ✅ | Docker management with Git-based stacks |
-| [Hawser](apps/hawser/) | App + Socket Proxy | ✅ | Remote Docker agent for Dockhand |
 
-### Monitoring
+Docker-management tools (Dockhand / Portainer / Hawser) moved to [`core/`](core/) — they're infrastructure, not apps.
 
-Dedicated top-level category — see [`monitoring/README.md`](monitoring/README.md) for the full roadmap (4 drafted, 6 planned).
+Planned (apps/): Wiki.js, Outline, Formbricks, HeyForm, Shlink.
 
-| App | Axis | Status | Description |
-|---|---|---|---|
-| [Uptime Kuma](monitoring/uptime-kuma/) | Uptime (UI) | ⚠️ | Click-config uptime monitor, 90+ notification integrations, public status pages |
-| [Gatus](monitoring/gatus/) | Uptime (YAML) | ⚠️ | Config-as-code health checks with Prometheus export |
-| [Beszel](monitoring/beszel/) | Host metrics | ⚠️ | Lightweight hub + agent for CPU / RAM / disk / docker container stats |
-| [changedetection.io](monitoring/changedetection/) | Content watcher | ⚠️ | Page diff + notification (restock / price / ToS / defacement) |
+### Business apps
 
-Planned: Statping, ciao, Checkmate, Zabbix, Grafana + Prometheus, Scrutiny. See `monitoring/README.md`.
-
-### Business Apps
-
-Dedicated top-level category — see [`business/README.md`](business/README.md) for the full roadmap (4 drafted, 14 planned). Covers the self-hosted alternative to the typical SaaS company stack: Mailchimp + Zendesk + Intercom + Harvest + DocuSign + Confluence + Typeform + Bitly + Okta + Tailscale.
+See [`business/README.md`](business/README.md) for the full category README + rollout phases.
 
 | App | Function | Status | Description |
 |---|---|---|---|
-| [Listmonk](business/listmonk/) | Marketing | ⚠️ | Newsletter + mailing list + transactional mail |
-| [Zammad](business/zammad/) | Support | ⚠️ | Full helpdesk / ticketing (7-service stack) |
-| [Kimai](business/kimai/) | Operations | ⚠️ | Time tracking per project / customer |
-| [OpenSign](business/opensign/) | Legal | ⚠️ | E-signatures (DocuSign alternative) |
+| [Invoice Ninja](business/invoiceninja/) | Billing | ✅ | Invoicing, quotes, client portal |
+| [Dolibarr](business/dolibarr/) | ERP / CRM | ⚠️ | Accounting, projects, HR, inventory |
+| [Kimai](business/kimai/) | Time tracking | ⚠️ | Per-project/customer hours → Invoice Ninja |
+| [Listmonk](business/listmonk/) | Newsletter | ⚠️ | Mailing list + transactional mail |
+| [Matomo](business/matomo/) | Web analytics | ⚠️ | GDPR-compliant (Google Analytics alternative) |
+| [Zammad](business/zammad/) | Helpdesk | ⚠️ | Full 7-service helpdesk / ticketing / SLA |
+| [OpenSign](business/opensign/) | E-signatures | ⚠️ | DocuSign alternative, eIDAS-capable |
 
-Planned: Live Helper Chat, Eramba GRC, Wiki.js, Outline, Formbricks, HeyForm, Shlink, Kopia, Bareos, UrBackup, PrivateBin, SnapPass, Keycloak, Headscale. See `business/README.md` for the rollout-phase guidance.
+Planned: Live Helper Chat, Eramba GRC.
+
+### Monitoring
+
+See [`monitoring/README.md`](monitoring/README.md) for the full category README.
+
+| App | Axis | Status | Description |
+|---|---|---|---|
+| [Uptime Kuma](monitoring/uptime-kuma/) | Uptime (UI) | ⚠️ | Click-config uptime monitor, 90+ notification integrations |
+| [Gatus](monitoring/gatus/) | Uptime (YAML) | ⚠️ | Config-as-code health checks with Prometheus export |
+| [Beszel](monitoring/beszel/) | Host metrics | ⚠️ | Lightweight hub + agent for CPU / RAM / disk / docker stats |
+| [changedetection.io](monitoring/changedetection/) | Content watcher | ⚠️ | Page diff + notification (restock / price / ToS) |
+| [Healthchecks](monitoring/healthchecks/) | Cron / scheduled-job | ⚠️ | Dead-man's switch for backups / cron / scheduled tasks |
+
+Planned: Statping, ciao, Checkmate, Zabbix, Grafana + Prometheus, Scrutiny.
+
+### Backup
+
+See [`backup/README.md`](backup/README.md). All planned for now.
+
+| App | Approach | Status |
+|---|---|---|
+| Kopia | Deduplicating snapshots to S3 / SFTP / filesystem | 📋 |
+| Bareos | Enterprise Bacula-fork (Director + Storage + File daemons) | 📋 |
+| UrBackup | Image + file backup for workstations | 📋 |
 
 ## Quick Start
 
