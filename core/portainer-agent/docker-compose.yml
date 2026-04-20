@@ -1,0 +1,61 @@
+services:
+
+  # --------------------------------------------------------
+  # PORTAINER AGENT
+  # --------------------------------------------------------
+  # Runs on each host that a central Portainer server should manage.
+  # The central server connects via TCP on port 9001 with a shared
+  # secret. Deploy one agent per host.
+  #
+  # For a single-host setup (Portainer and Docker on the same machine)
+  # you do NOT need the agent — core/portainer/ talks to its local
+  # socket-proxy directly.
+  # --------------------------------------------------------
+  agent:
+    # --- Identity ---
+    image: portainer/agent:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      # Shared secret. Paste the same value into Portainer UI when
+      # adding this host as an Edge / Remote environment.
+      AGENT_SECRET: ${AGENT_SECRET}
+      # Single-host / non-swarm — no cluster probing
+      AGENT_CLUSTER_ADDR: ""
+      LOG_LEVEL: INFO
+
+    # --- Storage ---
+    # The agent needs to see Docker resources directly. Using the host
+    # docker.sock (read-write) is the upstream-recommended path. If a
+    # filtered socket-proxy is preferred, see the comment block below.
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/volumes:/var/lib/docker/volumes
+      - /:/host:ro
+
+    # --- Networking ---
+    # The agent must be reachable from the central Portainer server.
+    # Expose 9001 only on a trusted interface — Tailscale address,
+    # private LAN, or behind a firewall rule allowing only Portainer.
+    ports:
+      - "9001:9001/tcp"
+
+# --------------------------------------------------------
+# ALTERNATIVE: socket-proxy pattern (matches core/portainer style)
+# --------------------------------------------------------
+# Portainer Agent can also connect through a filtered socket-proxy.
+# Trade-off: socket-proxy requires broad permissions for the agent to
+# do its job (containers, volumes, networks, images, events, swarm,
+# tasks, exec). The security gain vs. direct docker.sock is small for
+# a management agent. Upstream recommendation is direct socket.
+#
+# If you still want socket-proxy: copy the pattern from
+# core/portainer/docker-compose.yml, set
+#   command: "--host tcp://socket-proxy:2375"
+# on the agent, and drop the /var/run/docker.sock volume.

@@ -29,12 +29,13 @@ Production-ready configurations for 15+ services — with standardized patterns,
 | [Authentik](core/authentik/) | ⚠️ | SSO / Identity Provider for centralized authentication (OpenID Connect) |
 | [OnlyOffice](core/onlyoffice/) | ✅ | Document editing server for Seafile, Nextcloud, etc. |
 | [dnsmasq](core/dnsmasq/) | ✅ | DNS forwarder with wildcard zones for Tailscale / split-DNS setups |
-| [acme-certs](core/acme-certs/) | ✅ | Certificate tool (acme.sh) for devices without Traefik (NAS, routers) |
+| [acme-certs](core/acme-certs/) | ⚠️ | Certificate tool (acme.sh) for devices without Traefik (NAS, routers) |
 | [CrowdSec](core/crowdsec/) | ✅ | Intrusion detection engine — log analysis, threat decisions, AppSec/WAF |
 | [Whoami](core/whoami/) | ✅ | Traefik debug service to verify routing, TLS, and middlewares |
 | [Dockhand](core/dockhand/) | ✅ | Docker management with Git-based stacks |
 | [Portainer](core/portainer/) | ✅ | Docker management UI |
 | [Hawser](core/hawser/) | ✅ | Remote Docker agent for Dockhand |
+| [Portainer Agent](core/portainer-agent/) | ⚠️ | Remote Docker agent for Portainer (multi-host) |
 
 Planned in `core/`: Keycloak (alternative / heavier IAM next to Authentik).
 
