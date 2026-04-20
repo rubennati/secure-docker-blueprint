@@ -23,18 +23,18 @@ Production-ready configurations for 15+ services — with standardized patterns,
 
 ### Core Infrastructure
 
-| Service | Description |
-|---------|-------------|
-| [Traefik](core/traefik/) | Reverse proxy with Socket Proxy, 5 security levels, 3 TLS profiles, access policies |
-| [Authentik](core/authentik/) | SSO / Identity Provider for centralized authentication (OpenID Connect) |
-| [OnlyOffice](core/onlyoffice/) | Document editing server for Seafile, Nextcloud, etc. |
-| [dnsmasq](core/dnsmasq/) | DNS forwarder with wildcard zones for Tailscale / split-DNS setups |
-| [acme-certs](core/acme-certs/) | Certificate tool (acme.sh) for devices without Traefik (NAS, routers) |
-| [CrowdSec](core/crowdsec/) | Intrusion detection engine — log analysis, threat decisions, AppSec/WAF |
-| [Whoami](core/whoami/) | Traefik debug service to verify routing, TLS, and middlewares |
-| [Dockhand](core/dockhand/) | Docker management with Git-based stacks (live-tested) |
-| [Portainer](core/portainer/) | Docker management UI (draft) |
-| [Hawser](core/hawser/) | Remote Docker agent for Dockhand (live-tested) |
+| Service | Status | Description |
+|---------|--------|-------------|
+| [Traefik](core/traefik/) | ✅ | Reverse proxy with Socket Proxy, 5 security levels, 3 TLS profiles, access policies |
+| [Authentik](core/authentik/) | ⚠️ | SSO / Identity Provider for centralized authentication (OpenID Connect) |
+| [OnlyOffice](core/onlyoffice/) | ✅ | Document editing server for Seafile, Nextcloud, etc. |
+| [dnsmasq](core/dnsmasq/) | ✅ | DNS forwarder with wildcard zones for Tailscale / split-DNS setups |
+| [acme-certs](core/acme-certs/) | ✅ | Certificate tool (acme.sh) for devices without Traefik (NAS, routers) |
+| [CrowdSec](core/crowdsec/) | ✅ | Intrusion detection engine — log analysis, threat decisions, AppSec/WAF |
+| [Whoami](core/whoami/) | ✅ | Traefik debug service to verify routing, TLS, and middlewares |
+| [Dockhand](core/dockhand/) | ✅ | Docker management with Git-based stacks |
+| [Portainer](core/portainer/) | ⚠️ | Docker management UI |
+| [Hawser](core/hawser/) | ✅ | Remote Docker agent for Dockhand |
 
 Planned in `core/`: Keycloak (alternative / heavier IAM next to Authentik).
 
