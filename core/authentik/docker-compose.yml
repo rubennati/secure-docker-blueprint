@@ -169,12 +169,15 @@ services:
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
 
     # --- Health & Observability ---
+    # The goauthentik/server image ships no wget/curl. Use Python
+    # (which IS in the image) to hit the live endpoint. start_period
+    # accounts for cold-start Django migrations (60–90s on first boot).
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:9000/-/health/live/ >/dev/null 2>&1 || exit 1"]
+      test: ["CMD", "python3", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:9000/-/health/live/').status==200 else 1)"]
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 30s
+      start_period: 60s
 
   # --------------------------------------------------------
   # AUTHENTIK WORKER (background jobs, email, sync)
@@ -231,6 +234,13 @@ services:
     # --- Networking ---
     networks:
       - app-internal
+
+    # --- Health & Observability ---
+    # No healthcheck on purpose. The worker has no HTTP listener;
+    # upstream removed the worker healthcheck in 2025.10.2 because it
+    # was inherently unreliable. If the worker crashes `restart:
+    # unless-stopped` handles it, and the server's healthcheck is
+    # indirectly gated on the worker (shared DB + Redis).
 
 # --------------------------------------------------------
 # NETWORKS

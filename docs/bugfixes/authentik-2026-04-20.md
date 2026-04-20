@@ -126,3 +126,87 @@ Considered both. Init container won because:
 The chown lives in a standalone script (`ops/scripts/init-volumes.sh`)
 so future changes (new directories, different modes) are a
 one-file edit, not a compose rewrite.
+
+---
+
+## Bug #3 — Healthchecks reported unhealthy forever
+
+### Symptom
+
+After the permission + path fixes above, `authentik-server` and
+`authentik-worker` start cleanly and the app responds normally —
+but `docker compose ps` keeps showing both as `unhealthy`
+indefinitely. Traefik picks up the server on the `proxy-public`
+network regardless, so the app works, but any orchestrator that
+gates on container health (Portainer, Dockhand, monitoring) sees a
+permanent red light.
+
+### Root cause
+
+Two separate issues:
+
+**1. Image ships no `wget` / `curl`.** The blueprint shipped with:
+
+```yaml
+test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:9000/-/health/live/ ..."]
+```
+
+The `goauthentik/server` image is a minimal distroless-style build
+with Python + `dumb-init` and nothing else. `wget` is not on `PATH`,
+so every healthcheck invocation exits non-zero, and after `retries`
+attempts the container is flagged unhealthy — regardless of whether
+the HTTP endpoint is actually responding. Upstream issue:
+https://github.com/goauthentik/authentik/issues/15769
+
+**2. No official worker healthcheck exists anymore.** Upstream
+explicitly removed the worker's HTTP healthcheck in 2025.10.2
+(`cmd/server/healthcheck: remove worker HTTP healthcheck`). The
+worker has no HTTP listener — there is no endpoint to probe. Any
+healthcheck on it is fiction.
+
+**3. `start_period` too short.** 30s doesn't cover cold-start Django
+migrations on a fresh DB. First boot takes 60–120s; the healthcheck
+starts failing before the app is even listening, burning retry budget
+before there's anything to check.
+
+### Fix
+
+**Server** — Python-based healthcheck (Python *is* in the image,
+it's what the server runs on):
+
+```yaml
+healthcheck:
+  test:
+    - "CMD"
+    - "python3"
+    - "-c"
+    - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:9000/-/health/live/').status==200 else 1)"
+  interval: 30s
+  timeout: 10s
+  retries: 5
+  start_period: 60s   # was 30s
+```
+
+**Worker** — no healthcheck block at all. Matches upstream's current
+position. `restart: unless-stopped` catches crashes; the server's
+healthcheck indirectly gates on worker health via the shared DB and
+Redis.
+
+### Verify
+
+```bash
+docker compose ps
+# Expected: server = Up (healthy)
+#           worker = Up (no health column / no healthcheck)
+
+# Confirm the healthcheck command is actually being run:
+docker inspect --format '{{json .State.Health}}' authentik-server | jq
+```
+
+### Upstream reference
+
+- https://github.com/goauthentik/authentik/issues/15769 — wget missing
+- https://github.com/goauthentik/authentik/releases/tag/version/2025.10.2 — worker healthcheck removed
+- Canonical `docker-compose.yml` (goauthentik.io) ships **no**
+  healthchecks for server or worker. Our Python-based server check
+  is the community consensus.
