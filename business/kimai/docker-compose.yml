@@ -1,0 +1,99 @@
+services:
+
+  # --------------------------------------------------------
+  # DATABASE (MariaDB)
+  # --------------------------------------------------------
+  db:
+    image: mariadb:${DB_TAG}
+    container_name: ${CONTAINER_NAME_DB}
+    restart: unless-stopped
+
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    cap_add: [CHOWN, SETUID, SETGID, DAC_OVERRIDE]
+
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD_FILE: /run/secrets/DB_PWD
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/DB_ROOT_PWD
+      MARIADB_AUTO_UPGRADE: "1"
+      TZ: ${TZ}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    secrets:
+      - DB_PWD
+      - DB_ROOT_PWD
+
+    volumes:
+      - ./volumes/mysql:/var/lib/mysql
+
+    networks:
+      - app-internal
+
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 20s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # --------------------------------------------------------
+  # KIMAI (time tracking)
+  # --------------------------------------------------------
+  app:
+    image: kimai/kimai2:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+
+    security_opt:
+      - no-new-privileges:true
+
+    environment:
+      TZ: ${TZ}
+      APP_ENV: prod
+      APP_SECRET: ${APP_SECRET}
+      TRUSTED_PROXIES: "0.0.0.0/0,::/0"
+      TRUSTED_HOSTS: "${APP_TRAEFIK_HOST}"
+      # Kimai assembles the DB DSN inline — no _FILE support.
+      DATABASE_URL: "mysql://${DB_USER}:${DB_PWD_INLINE}@db:3306/${DB_NAME}?charset=utf8mb4&serverVersion=11.4.0-MariaDB"
+      # Initial admin on first boot
+      ADMINMAIL: ${ADMIN_EMAIL}
+      ADMINPASS: ${ADMIN_PASSWORD}
+
+    volumes:
+      - ./volumes/data:/opt/kimai/var/data
+      - ./volumes/plugins:/opt/kimai/var/plugins
+
+    networks:
+      - proxy-public
+      - app-internal
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+
+networks:
+  proxy-public:
+    external: true
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+
+secrets:
+  DB_PWD:
+    file: ./.secrets/db_pwd.txt
+  DB_ROOT_PWD:
+    file: ./.secrets/db_root_pwd.txt

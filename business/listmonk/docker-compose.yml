@@ -1,0 +1,98 @@
+services:
+
+  # --------------------------------------------------------
+  # DATABASE (PostgreSQL)
+  # --------------------------------------------------------
+  db:
+    image: postgres:${DB_TAG}
+    container_name: ${CONTAINER_NAME_DB}
+    restart: unless-stopped
+
+    security_opt:
+      - no-new-privileges:true
+
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/DB_PWD
+      TZ: ${TZ}
+    secrets:
+      - DB_PWD
+
+    volumes:
+      - ./volumes/postgres:/var/lib/postgresql/data
+
+    networks:
+      - app-internal
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  # --------------------------------------------------------
+  # LISTMONK (newsletter + mailing list manager)
+  # --------------------------------------------------------
+  app:
+    image: listmonk/listmonk:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    # First start: run migrations. On normal start, this becomes a no-op.
+    command: ["sh", "-c", "./listmonk --install --idempotent --yes --config '' && ./listmonk --upgrade --yes --config '' && ./listmonk --config ''"]
+
+    security_opt:
+      - no-new-privileges:true
+
+    environment:
+      TZ: ${TZ}
+      # Listmonk reads its config from env vars with LISTMONK_ prefix.
+      # No _FILE support for the DB password — blueprint DB_PWD_INLINE pattern.
+      LISTMONK_app__address: "0.0.0.0:9000"
+      LISTMONK_app__admin_username: ${ADMIN_USER}
+      LISTMONK_app__admin_password: ${ADMIN_PASSWORD}
+      LISTMONK_db__host: db
+      LISTMONK_db__port: "5432"
+      LISTMONK_db__user: ${DB_USER}
+      LISTMONK_db__password: ${DB_PWD_INLINE}
+      LISTMONK_db__database: ${DB_NAME}
+      LISTMONK_db__ssl_mode: disable
+      LISTMONK_db__max_open: "25"
+      LISTMONK_db__max_idle: "25"
+      LISTMONK_db__max_lifetime: "300s"
+
+    volumes:
+      - ./volumes/uploads:/listmonk/uploads
+
+    networks:
+      - proxy-public
+      - app-internal
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # NOTE: /subscription/*, /link/*, /campaign/* must be reachable by
+      # external subscribers. If you want the admin at /admin VPN-only
+      # but public subscription paths, split into two routers — see README.
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+
+networks:
+  proxy-public:
+    external: true
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+
+secrets:
+  DB_PWD:
+    file: ./.secrets/db_pwd.txt

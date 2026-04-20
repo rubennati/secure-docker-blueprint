@@ -2,60 +2,76 @@
 
 Intrusion Detection and Prevention System (IDS/IPS) for the entire stack.
 
-CrowdSec analyzes Traefik access logs and produces security decisions (ban, captcha) based on community-maintained threat intelligence and local log analysis.
+CrowdSec analyzes Traefik access logs, detects threats (brute force, CVE probes, aggressive crawling, path traversal), and stores security decisions. On its own it does **not block anything** — a separate "bouncer" enforces the decisions. You pick which enforcement layer you want.
+
+---
 
 ## Architecture
 
-CrowdSec is deployed in three phases:
-
-| Phase | Component | Scope | Status |
-|-------|-----------|-------|--------|
-| 1 | **Security Engine** (this service) | Detection — analyzes logs, produces decisions | Ready |
-| 2 | **Traefik Bouncer Plugin** | HTTP enforcement — blocks malicious requests | Requires Traefik changes |
-| 3 | **Firewall Bouncer** | IP-level enforcement — nftables rules on host | Host-level install |
+Three independent components. The Engine parses logs and decides; the two bouncers enforce at different network layers.
 
 ```
-Internet
-   |
-Traefik + CrowdSec Plugin    <-- Phase 2: HTTP enforcement
-   |
-Docker Services
-   |
-Host nftables                 <-- Phase 3: IP-level enforcement
-   |
-CrowdSec Engine               <-- Phase 1: Detection (logs -> decisions)
+                      Internet
+                         │
+                         ▼
+           ┌─────────────────────────────┐
+   Phase 3 │  Firewall Bouncer           │  nftables rules on the host
+           └─────────────┬───────────────┘  drop packets before Traefik
+                         ▼
+           ┌─────────────────────────────┐
+   Phase 2 │  Traefik Bouncer Plugin     │  reject HTTP requests (403)
+           └─────────────┬───────────────┘  at the proxy layer
+                         ▼
+                    Your apps
+
+           ┌─────────────────────────────┐
+   Phase 1 │  Security Engine            │  parses Traefik logs,
+           │                             │  runs scenarios,
+           └─────────────┬───────────────┘  stores ban decisions
+                         │
+             queried by Phase 2 + Phase 3
 ```
 
-## Phase 1: Security Engine (this setup)
+The Engine is the only component that runs from this directory. Phase 2 lives in `core/traefik/` (Traefik static + dynamic config plus an env var for the bouncer key). Phase 3 is an apt package installed on the host — it never enters a container.
 
-The engine collects and analyzes logs, detects threats, and stores decisions. It doesn't block anything on its own — it needs a bouncer (Phase 2 or 3) to enforce decisions.
+### Phase roles
 
-What it does:
-- Parses Traefik access logs in real-time (file-based acquisition)
-- Detects: brute force, aggressive crawling, CVE probes, suspicious HTTP patterns
-- Stores ban decisions in its local database
-- Shares threat intelligence with the CrowdSec community network
-- Provides AppSec / WAF analysis on port 7422
+- **Phase 1 — Security Engine.** Detection and decision. Reads logs, matches scenarios (brute force, CVE probes, path traversal, aggressive crawling), produces ban decisions. Stores decisions in a local database. On its own, enforces nothing.
+- **Phase 2 — Traefik Bouncer Plugin.** HTTP-layer enforcement. The plugin polls the Engine every 60 s, caches the current decision list, and rejects matching requests with HTTP 403 before they reach any app. Works only for traffic that goes through Traefik.
+- **Phase 3 — Firewall Bouncer.** Network-layer enforcement. Sets nftables rules on the host, dropping packets from flagged IPs regardless of destination port. Protects services Traefik does not terminate (SSH, exposed database ports, directly mapped containers) and drops attack traffic earlier in the request path.
+
+Phases 2 and 3 are independent: either can run without the other, or both together for defense in depth.
+
+### Typical deployments
+
+| Deployment | Components | Outcome |
+|---|---|---|
+| Detection only | Phase 1 | Visibility into attacks; no blocking. Useful for tuning before enabling enforcement. |
+| HTTP protection | Phase 1 + Phase 2 | Traefik rejects requests from flagged IPs. Blocks web attacks, leaves non-HTTP ports untouched. |
+| Network protection | Phase 1 + Phase 3 | Host firewall drops packets from flagged IPs across all ports. Covers SSH and non-HTTP services; drops traffic earlier. |
+| Defense in depth | Phase 1 + Phase 2 + Phase 3 | Network-layer drop for all protocols; HTTP-layer reject with richer feedback when packets do reach Traefik. |
+
+---
+
+## Phase 1: Security Engine — setup
+
+This directory's `docker-compose.yml` runs the engine. It collects logs, parses them, runs scenarios, stores decisions.
 
 ### Prerequisites
 
-Traefik must write access logs in **JSON format**. Add to your Traefik static config:
+Traefik must write access logs in **JSON format** to a file CrowdSec can read. In the blueprint's `core/traefik/` this is the default — no change needed if you haven't touched Traefik's `.env`.
 
-```yaml
-accessLog:
-  filePath: /var/log/traefik/access.log
-  format: json
-```
+The `.env` vars that matter:
 
-The `TRAEFIK_LOG_PATH` in `.env` defaults to `../traefik/volumes/logs` (relative).
-Override with absolute path if Traefik is elsewhere.
+- Traefik side (`core/traefik/.env`): `TRAEFIK_ACCESSLOG_FORMAT=json` and `TRAEFIK_ACCESSLOG_FILE=/var/log/traefik/access.log`
+- CrowdSec side (`core/crowdsec/.env`): `TRAEFIK_LOG_PATH=../traefik/volumes/logs` (relative path — override with absolute if Traefik lives elsewhere)
 
 ### Setup
 
 ```bash
 # 1. Create .env
 cp .env.example .env
-# Edit: TZ, TRAEFIK_LOG_PATH, CROWDSEC_LOG_GID
+# Review: TZ, TRAEFIK_LOG_PATH, CROWDSEC_LOG_GID
 
 # 2. Start the engine
 docker compose up -d
@@ -65,27 +81,24 @@ No secrets needed — the engine generates its own internal credentials on first
 
 ### Verify
 
+**First-boot takes ~5 minutes** before acquisition starts parsing. On startup the container runs `cscli hub update`, installs collections, loads parsers, then begins tailing the log file. During that window `cscli metrics` shows only `Local API Metrics` and `Local API Machines Metrics` — no Acquisition / Parser / Bucket tables. That is normal startup state, not a broken install. Wait about 5 minutes before running the verify commands.
+
 ```bash
-# Engine + LAPI status
+# 1. Is the engine up?
 docker exec crowdsec cscli lapi status
+# Expected: "You can successfully interact with Local API (LAPI)"
 
-# Full metrics overview (parsed logs, parser stats, scenarios, whitelist)
-docker exec crowdsec cscli metrics
-
-# Check Traefik log parsing specifically
-docker exec crowdsec cscli metrics | grep -A5 "Acquisition"
-
-# Installed collections
-docker exec crowdsec cscli collections list
-
-# Active decisions (bans)
-docker exec crowdsec cscli decisions list
-
-# All detected threats
-docker exec crowdsec cscli alerts list
+# 2. Is Traefik's access log being parsed?
+docker exec crowdsec cscli metrics show acquisition
+# Expected: a row for file:/var/log/traefik/access.log
+# with lines_read > 0 and lines_unparsed = 0 (or empty)
 ```
 
-**Expected output after first traffic:**
+If both green, Phase 1 is done. The `cscli metrics show acquisition` form is preferred over grepping the full `cscli metrics` output — it returns a meaningful "no acquisition source running" message while startup is still in progress, instead of silently empty output.
+
+Decisions may take additional minutes to appear — background internet scanners typically show up within the hour.
+
+**What the metrics should look like once traffic is flowing:**
 
 | Metric | Healthy value |
 |--------|---------------|
@@ -95,58 +108,59 @@ docker exec crowdsec cscli alerts list
 | Alerts | Appear when suspicious patterns detected |
 | Decisions | Appear when scenarios overflow (ban threshold reached) |
 
-### Operations
+### Watching detection in production
+
+Day-to-day monitoring once Phase 1 is running:
 
 ```bash
-# Live logs (real-time detection)
+# Live detection stream
 docker compose logs -f crowdsec
 
-# Test: manually ban an IP
-docker exec crowdsec cscli decisions add --ip 1.2.3.4 --duration 1h --reason "test ban"
+# All detected threats so far
+docker exec crowdsec cscli alerts list
 
-# Remove a test ban
-docker exec crowdsec cscli decisions delete --ip 1.2.3.4
+# Active bans (kept even without a bouncer — Phase 2/3 enforces them)
+docker exec crowdsec cscli decisions list
 
-# Remove all decisions for an IP
-docker exec crowdsec cscli decisions delete --ip 1.2.3.4 --all
-
-# Inspect a specific alert
+# Drill into a specific alert
 docker exec crowdsec cscli alerts inspect <ALERT_ID>
 ```
 
-### Hub Management
+### Ad-hoc commands — only when you need them
+
+Most of the time you won't touch these. Useful for false positives (unban) or manual testing.
 
 ```bash
-# Check for updates
-docker exec crowdsec cscli hub update
+# Manually ban an IP (e.g., one you've identified outside CrowdSec)
+docker exec crowdsec cscli decisions add --ip 1.2.3.4 --duration 1h --reason "manual"
 
-# Apply updates (parsers, scenarios, collections)
+# Remove a specific ban (false positive / your own IP got caught)
+docker exec crowdsec cscli decisions delete --ip 1.2.3.4
+
+# Remove ALL decisions for an IP (captured-by-different-scenarios too)
+docker exec crowdsec cscli decisions delete --ip 1.2.3.4 --all
+```
+
+### Maintenance — monthly or as needed
+
+```bash
+# Pull latest parsers / scenarios / collections from the Hub
+docker exec crowdsec cscli hub update
 docker exec crowdsec cscli hub upgrade
 
-# Install a new collection
+# Add a new data source (e.g., if you later add Nginx logs)
 docker exec crowdsec cscli collections install crowdsecurity/nginx
 
-# List installed parsers
+# Inventory what's currently installed
 docker exec crowdsec cscli parsers list
-
-# List installed scenarios
 docker exec crowdsec cscli scenarios list
+docker exec crowdsec cscli collections list
 ```
 
-### Bouncer Management
-
-```bash
-# Generate bouncer API key (for Phase 2 / Phase 3)
-docker exec crowdsec cscli bouncers add traefik-bouncer
-
-# List registered bouncers
-docker exec crowdsec cscli bouncers list
-
-# Remove a bouncer
-docker exec crowdsec cscli bouncers delete traefik-bouncer
-```
-
-Save bouncer keys immediately — they cannot be retrieved later.
+> **Bouncer setup** — the commands for generating bouncer API keys
+> (`cscli bouncers add/list/delete`) belong to Phase 2 and Phase 3.
+> See those sections below when you are ready to turn detection
+> into enforcement.
 
 ### What to expect
 
@@ -181,37 +195,106 @@ Scenarios that trigger on Traefik traffic:
 | `crowdsecurity/http-crawl-non_statics` | Aggressive crawling of dynamic pages |
 | `crowdsecurity/http-path-traversal-probing` | `../` path traversal attempts |
 
-## Phase 2: Traefik Bouncer Plugin (future)
+---
 
-Requires changes to `core/traefik/`:
-- CrowdSec plugin in Traefik static config
-- CrowdSec middleware in Traefik dynamic config
-- Bouncer API key generated from this engine
+## Phase 2: Traefik Bouncer Plugin
 
-Generate the bouncer key:
+HTTP-layer enforcement. Configuration spans two directories: the bouncer API key is generated here, and the plugin itself is declared in `core/traefik/`.
+
+### Generate the bouncer key
 
 ```bash
 docker exec crowdsec cscli bouncers add traefik-bouncer
 ```
 
-Save the API key in `core/traefik/.secrets/crowdsec_bouncer_key.txt`. Details will be documented when Phase 2 is implemented.
+The command prints the key once — save it immediately.
 
-## Phase 3: Firewall Bouncer (future)
+### Wire the plugin in core/traefik/
 
-Host-level IP blocking via nftables. This is an **apt package on the host**, not a Docker container.
+1. Add the key to `core/traefik/.env` as `CROWDSEC_BOUNCER_KEY=<key>`.
+2. Declare the plugin in `ops/templates/traefik.yml.tmpl` under `experimental.plugins`.
+3. Uncomment the `sec-crowdsec` middleware block in `ops/templates/dynamic/integrations.yml.tmpl`.
+4. Render the templates and restart Traefik:
+   ```bash
+   cd ../traefik
+   ./ops/scripts/render.sh
+   docker compose up -d --force-recreate traefik
+   ```
+5. Add `sec-crowdsec@file` to the middleware list of routers that should be gated by the bouncer. Example in an app's `docker-compose.yml`:
+   ```yaml
+   - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=sec-crowdsec@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+   ```
+
+Full reference including the exact plugin block: `core/traefik/README.md`, section "CrowdSec Bouncer Plugin".
+
+### Phase 2 verify
+
+Four checks, in order. Run after the Traefik restart in step 4.
 
 ```bash
-# Install on the host
-sudo apt install crowdsec-firewall-bouncer-nftables
+# 1. Plugin loaded successfully in Traefik?
+docker compose -f ../traefik/docker-compose.yml logs traefik 2>&1 \
+  | grep -iE "plugin|bouncer" | tail -5
+# Expected: "Plugin bouncer loaded" — no "Plugins are disabled"
+# If "Plugins are disabled because an error has occurred":
+# read-only FS is blocking /plugins-storage. See
+# docs/bugfixes/traefik-crowdsec-plugin-2026-04-20.md.
 
-# Generate bouncer key
-docker exec crowdsec cscli bouncers add firewall-bouncer
+# 2. Bouncer actively pulls from CrowdSec?
+docker exec crowdsec cscli bouncers list
+# Expected: traefik-bouncer with a non-empty IP Address and a
+# recent "Last API pull" timestamp (within ~60 s).
 
-# Configure: /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
-# Set api_url and api_key, then restart the service
+# 3. Middleware visible in Traefik dashboard?
+# https://<traefik-host>/dashboard/#/http/middlewares
+# Find sec-crowdsec@file — Status must be green "Success".
+# If "invalid middleware type or middleware does not exist":
+# plugin did not load (check 1).
+
+# 4. Functional ban test — proves end-to-end enforcement
+docker exec crowdsec cscli decisions add \
+  --ip <an-IP-you-can-reach-the-app-from> \
+  --duration 3m --reason "phase2-verify"
+
+# Wait for the plugin to pull the new decision (stream mode polls
+# every 60 s — do not test before that window elapses, or you will
+# still see the cached empty list and assume the ban is not enforced).
+sleep 65
+
+# From that IP, the protected app must now return HTTP 403.
+# After verifying, clean up:
+docker exec crowdsec cscli decisions delete \
+  --ip <an-IP-you-can-reach-the-app-from>
 ```
 
-The firewall bouncer connects to the LAPI port exposed on `127.0.0.1:8080` (configurable via `CROWDSEC_LAPI_PORT`).
+Do not ban the IP you administer the server from (Tailscale, LAN admin subnet) unless you have a separate path back in — the ban also blocks the Traefik dashboard, Dockhand, Portainer, etc.
+
+---
+
+## Phase 3: Firewall Bouncer
+
+Host-level enforcement via nftables. Installed as a system package (apt) and configured on the host — not inside any container — because it manipulates host firewall rules.
+
+```bash
+# Install the bouncer (on the host, not in a container)
+sudo apt install crowdsec-firewall-bouncer-nftables
+
+# Generate an API key from the CrowdSec Engine
+docker exec crowdsec cscli bouncers add firewall-bouncer
+
+# Configure the bouncer
+sudo nano /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
+# Set:
+#   api_url: http://127.0.0.1:8080/   (matches CROWDSEC_LAPI_PORT)
+#   api_key: <key from the previous command>
+
+# Apply
+sudo systemctl restart crowdsec-firewall-bouncer
+```
+
+The bouncer polls CrowdSec's LAPI on `127.0.0.1:8080` (configurable via `CROWDSEC_LAPI_PORT`). Traefik is not in the path; the bouncer operates at the kernel firewall layer and covers every port on the host.
+
+---
 
 ## Configuration Reference
 
@@ -228,7 +311,7 @@ labels:
   type: syslog
 ```
 
-Mount the additional log file in `docker-compose.yml` and add the corresponding collection.
+Mount the additional log file in `docker-compose.yml` and install the corresponding collection with `cscli collections install`.
 
 ### AppSec (`config/appsec.yaml`)
 

@@ -1,0 +1,4 @@
+.secrets/
+volumes/
+.env
+docker-compose.override.yml

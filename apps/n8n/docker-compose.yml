@@ -1,0 +1,81 @@
+services:
+
+  # --------------------------------------------------------
+  # N8N (workflow automation)
+  # --------------------------------------------------------
+  # This is a single-container deployment using n8n's built-in SQLite
+  # database. For larger deployments (multi-executor, queue mode,
+  # Postgres), see n8n's docs — the blueprint patterns for adding a
+  # `db` service + queue worker can be copied from Paperless-ngx.
+  app:
+    # --- Identity ---
+    image: docker.n8n.io/n8nio/n8n:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      TZ: ${TZ}
+      GENERIC_TIMEZONE: ${TZ}
+      NODE_ENV: production
+      # Host
+      N8N_HOST: ${APP_TRAEFIK_HOST}
+      N8N_PORT: "5678"
+      N8N_PROTOCOL: https
+      WEBHOOK_URL: https://${APP_TRAEFIK_HOST}/
+      # Security
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
+      N8N_RUNNERS_ENABLED: "true"
+      # Credentials encryption — CRITICAL: must not change after first
+      # start, or all stored OAuth tokens / API keys become unreadable.
+      N8N_ENCRYPTION_KEY_FILE: /run/secrets/N8N_ENCRYPTION_KEY
+      # Basic auth on the UI (recommended — n8n has no built-in user
+      # management in the Community Edition unless you enable it).
+      N8N_BASIC_AUTH_ACTIVE: ${BASIC_AUTH_ACTIVE}
+      N8N_BASIC_AUTH_USER: ${BASIC_AUTH_USER}
+      N8N_BASIC_AUTH_PASSWORD: ${BASIC_AUTH_PASSWORD}
+    secrets:
+      - N8N_ENCRYPTION_KEY
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/data:/home/node/.n8n
+      - ./volumes/files:/files
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+
+    # --- Traefik ---
+    labels:
+      # Router
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      # TLS
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Middlewares
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      # Service
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  N8N_ENCRYPTION_KEY:
+    file: ./.secrets/n8n_encryption_key.txt

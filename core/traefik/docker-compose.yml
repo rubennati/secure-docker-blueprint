@@ -85,6 +85,13 @@ services:
       - ./config/dynamic:/etc/traefik/dynamic:ro
       - ./volumes/letsencrypt:/etc/traefik/acme
       - ./volumes/logs:/var/log/traefik
+      # Writable plugin storage — required when experimental.plugins is
+      # configured (CrowdSec bouncer, etc.). Without this the read-only
+      # root filesystem prevents the plugin manager from creating
+      # /plugins-storage/sources, plugins get disabled on startup, and
+      # any router referencing a plugin middleware fails with
+      # "invalid middleware type or middleware does not exist".
+      - ./volumes/plugins-storage:/plugins-storage
 
     # Docker healthcheck for auto-healing
     healthcheck:

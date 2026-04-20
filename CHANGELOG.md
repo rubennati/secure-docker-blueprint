@@ -8,6 +8,101 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
+Next: CrowdSec Firewall Bouncer (nftables) for host-level blocking that complements the L7 Traefik bouncer.
+
+## [0.4.0] — 2026-04-20
+
+### CrowdSec Bouncer Plugin live (Phase 2)
+
+The Traefik bouncer plugin now enforces CrowdSec decisions end-to-end on a fresh install. Banned IPs receive HTTP 403 at the proxy; legitimate traffic passes through unchanged. Proven with a browser ban test against a real router.
+
+### Fixed
+
+- **Traefik plugin storage**: `read_only: true` on the Traefik container prevented `experimental.plugins` from creating `/plugins-storage/`, which silently disabled the plugin manager and made every `sec-crowdsec@file` middleware reference return HTTP 404. Added a dedicated `./volumes/plugins-storage:/plugins-storage` bind mount — root FS stays read-only, plugins work.
+- **AppSec fail-closed default**: `integrations.yml.tmpl` shipped with `crowdsecAppsecEnabled: true` + `crowdsecAppsecUnreachableBlock: true`. With no AppSec server wired up, the plugin failed its WAF query on every request and blocked fail-closed (HTTP 403 with zero active decisions). All three AppSec flags now default to `false`; enable only when the AppSec server at :7422 is actually deployed.
+
+### Added
+
+- **Phase 2 verify section** in `core/crowdsec/README.md`: 4-step checklist (plugin loaded, bouncer pulls from LAPI, middleware registered in dashboard, functional ban test) with a warning not to ban the admin's own IP in stream-mode cache windows.
+
+### Documentation
+
+- `docs/bugfixes/traefik-crowdsec-plugin-2026-04-20.md` documents both first-setup bugs with a discriminator table — same visible failure mode (403/404 on routers with `sec-crowdsec@file`), different root causes, different fixes.
+- Root README: CrowdSec description updated from "Intrusion detection engine — log analysis, threat decisions, AppSec/WAF" to "Intrusion detection engine + Traefik bouncer plugin — log analysis, threat decisions, L7 blocking" to reflect the live Phase 2 posture.
+
+## [0.3.0] — 2026-04-20
+
+### Core complete
+
+Every core service reachable on a fresh install, both multi-host management paths (Dockhand + Hawser, Portainer + Portainer Agent) proven end-to-end.
+
+### Fixed
+
+- **Traefik**: `integrations.yml` template contained a dangling `http:/middlewares:` structure that aborted the dynamic config load with "http cannot be a standalone element". File is now fully commented by default — no routers, middlewares, or ACME issuance silently disabled on first boot.
+- **Portainer**: removed custom wget-based healthcheck. The Portainer image ships no wget/curl/shell, so any CMD-SHELL healthcheck left the container marked unhealthy indefinitely. Runs healthy by default now.
+
+### Added
+
+- **Portainer Edge Agent** (`core/portainer-agent/`) as the counterpart to Hawser. Both agents tested end-to-end on a fresh install:
+  - Dockhand + Hawser: everything on standard HTTPS 443 via Traefik
+  - Portainer + Portainer Agent: requires an extra TCP 8000 tunnel port on the central host (VPN-bound only; see inline documentation)
+- **Certificate strategy** documented in `core/traefik/README.md`: wildcard vs. per-domain, which env vars + which compose labels go with each. Previously implicit, now explicit.
+- **`docker-compose.override.yml` pattern** in `core/portainer/`: local installation-specific ports / overlays stay out of the tracked compose, gitignored.
+- **Status column** on the Core Infrastructure table in the root README, aligned with the ✅ / ⚠️ legend used elsewhere.
+
+### Documentation
+
+- `docs/bugfixes/traefik-2026-04-20.md`, `docs/bugfixes/portainer-2026-04-20.md` capture root cause + fix for the two bugs above.
+- Per-service READMEs updated where setup needed a missing step: Dockhand ("Adding the local environment"), Hawser ("environment must be saved in Dockhand before the token works"), Portainer Agent (4-step Edge Mode setup + VPN-bind guidance).
+
+### Moved / renamed
+
+- `core/acme-certs/` marked draft (⚠️) — extracted to its own repository. The blueprint no longer treats it as live-tested core.
+
+## [0.2.0] — 2026-04-18
+
+### Structure Stable Baseline
+
+Repository layout is now stable: forks can rely on the five top-level directories (`core/`, `apps/`, `business/`, `monitoring/`, `backup/`). Per-category READMEs document scope and roadmap.
+
+### Added
+
+- **New top-level directories**: `business/`, `monitoring/`, `backup/`. Each with a dedicated README defining scope and roadmap.
+- **`monitoring/`** (4 drafted, 6 planned): Uptime Kuma, Gatus, Beszel, changedetection.io, Healthchecks.
+- **`business/`** (1 live, 6 drafted, 2 planned): Invoice Ninja (live), Dolibarr, Matomo, Kimai, Listmonk, Zammad, OpenSign; Live Helper Chat + Eramba GRC planned.
+- **`backup/`** (roadmap only): Kopia, Bareos, UrBackup planned.
+- **17 new apps drafted** (`apps/`): Adminer, IT-Tools, Dashy, Heimdall, Homarr, Homepage, BookStack, Immich, LibrePhotos, Lychee, PhotoPrism, Photoview, Monica, n8n, NocoDB, OpnForm, UniFi Network Application.
+- **Cloud-free data chain** documented (OpnForm → n8n → NocoDB webhook pattern) in each relevant README.
+- **Two-router Traefik split** pattern for apps that need admin-VPN-only + subscriber-paths-public (Listmonk, Invoice Ninja).
+- **Path-based Traefik router split** pattern for API+UI-on-one-host apps (OpnForm, OpenSign).
+
+### Changed
+
+- **7 directory moves** to align with the sharpened categorisation rule:
+  - `apps/healthchecks/` → `monitoring/healthchecks/`
+  - `apps/invoiceninja/` → `business/invoiceninja/`
+  - `apps/dolibarr/` → `business/dolibarr/`
+  - `apps/matomo/` → `business/matomo/`
+  - `apps/dockhand/` → `core/dockhand/`
+  - `apps/portainer/` → `core/portainer/`
+  - `apps/hawser/` → `core/hawser/`
+- **Root README** restructured around the five-category layout, with per-category tables and a "Repository layout" overview section.
+
+### Security
+
+- **Repo-wide scan pass**: no real domains, IPs, or author-identifying strings in any committed file on `main` / `dev`.
+- **All secrets use Docker Secret `_FILE` pattern** where the upstream image supports it. Apps without `_FILE` support use the `DB_PWD_INLINE` convention with the duplicate-password-in-env trade-off documented in their README.
+- **`no-new-privileges:true`** on every container.
+- **MariaDB `cap_drop: ALL` + minimal `cap_add`** on every MariaDB service.
+- **Internal networks (`internal: true`)** isolate DBs / Redis / ML from the host on every multi-service app.
+
+### Statistics
+
+- Live-tested apps: 14
+- Drafted apps: 30+
+- Planned apps in category READMEs: ~18
+- Top-level categories: 5
+
 ## [0.1.0] — 2026-04-16
 
 Initial public release.
@@ -46,5 +141,7 @@ Initial public release.
 - No CI workflows yet (compose validate, markdown lint, secret scan) — planned for 0.2.0
 - No automatic backup orchestration — planned in Evaluating section of ROADMAP
 
-[Unreleased]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/rubennati/secure-docker-blueprint/releases/tag/v0.3.0
+[0.2.0]: https://github.com/rubennati/secure-docker-blueprint/releases/tag/v0.2.0
 [0.1.0]: https://github.com/rubennati/secure-docker-blueprint/releases/tag/v0.1.0

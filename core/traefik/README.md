@@ -175,6 +175,63 @@ Set the default in `.env` via `TLS_DEFAULT_OPTION`. Override per-router in `tls.
 | `cloudflare-dns` | DNS-01 | Wildcard certs, private servers (no port 80 needed) |
 | `httpResolver` | HTTP-01 | Standard certs, no Cloudflare dependency |
 
+## Certificate strategy — wildcard vs. per-domain
+
+Two working modes. Pick one for the instance.
+
+### Path A — Wildcard (`*.example.com`)
+
+One certificate covers every subdomain. Requires DNS at Cloudflare (or any provider the Traefik DNS-01 challenge supports).
+
+**Setup:**
+
+1. In `core/traefik/.env` set:
+   ```env
+   ACME_WILDCARD_DOMAIN=example.com
+   CF_DNS_API_TOKEN=<real-token-with-Zone:Read-+-DNS:Edit>
+   ```
+2. Run `bash ops/scripts/render.sh` (generates `acme-wildcard.yml`)
+3. `docker compose up -d`
+
+**Apps:** leave the `tls.certresolver` label commented out in every `docker-compose.yml`. Traefik serves the wildcard for any subdomain via SNI.
+
+### Path B — Per-domain (one cert per subdomain)
+
+Each app requests its own cert. Works with any resolver, no wildcard setup.
+
+**Setup:**
+
+1. In `core/traefik/.env` leave `ACME_WILDCARD_DOMAIN` **unset** (or commented out)
+2. Choose resolver per app via `APP_TRAEFIK_CERT_RESOLVER` in that app's `.env`:
+   - `cloudflare-dns` for DNS-01 (no port 80 exposure needed)
+   - `httpResolver` for HTTP-01 (port 80 must be public)
+3. **Uncomment the `tls.certresolver` label** in each app's `docker-compose.yml`:
+   ```yaml
+   - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+   ```
+
+### Hybrid
+
+Both modes coexist. A router can request its own cert (uncommented `certresolver` label) even while a wildcard exists for the parent domain.
+
+### Verify after setup
+
+```bash
+# Did Traefik receive a cert?
+docker compose exec traefik cat /etc/traefik/acme/acme.json | \
+  jq '.[] | .Certificates[]?.domain // "no certs yet"'
+
+# Dashboard reachable over HTTPS?
+curl -I https://<TRAEFIK_DASHBOARD_HOST>
+
+# What do the logs say about ACME / cert issuance?
+docker compose logs traefik 2>&1 | grep -iE "acme|cert|challenge" | tail -20
+```
+
+If `acme.json` is empty or the dashboard returns 404 before TLS: check
+`docker compose logs traefik | grep -i error` — most issues surface as file-provider
+errors or auth failures against Cloudflare.
+
 ## CrowdSec Bouncer Plugin (optional)
 
 Blocks malicious IPs and inspects HTTP requests before they reach your apps.
@@ -228,7 +285,7 @@ nano ops/templates/traefik.yml.tmpl
 # -----------------------------------------------
 # Step 5: Enable the middleware in dynamic config
 # -----------------------------------------------
-nano ops/templates/dynamic/security.yml.tmpl
+nano ops/templates/dynamic/integrations.yml.tmpl
 # Uncomment the sec-crowdsec block (the full plugin section)
 
 # -----------------------------------------------
@@ -261,13 +318,13 @@ docker compose restart traefik
 # Hot-reloaded — no restart needed.
 
 # Option B: Disable completely
-# Comment out sec-crowdsec in security.yml.tmpl
+# Comment out sec-crowdsec in integrations.yml.tmpl
 # Re-render: ./ops/scripts/render.sh
 # Hot-reloaded — no restart needed (plugin stays loaded but unused).
 
 # Option C: Remove plugin entirely
 # Comment out experimental.plugins in traefik.yml.tmpl
-# Comment out sec-crowdsec in security.yml.tmpl
+# Comment out sec-crowdsec in integrations.yml.tmpl
 # Re-render + restart: ./ops/scripts/render.sh && docker compose restart traefik
 ```
 

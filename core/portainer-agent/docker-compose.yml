@@ -1,0 +1,65 @@
+services:
+
+  # --------------------------------------------------------
+  # PORTAINER AGENT (Edge Mode — default)
+  # --------------------------------------------------------
+  # Runs on each remote host that a central Portainer server should
+  # manage. Edge mode = agent opens an outbound WebSocket to the
+  # central Portainer. No inbound port needed — works behind NAT,
+  # firewalls, Tailscale.
+  #
+  # Counterpart to core/hawser/ for the Dockhand path.
+  #
+  # For a single-host setup (Portainer and Docker on the same machine)
+  # you do NOT need this — core/portainer/ talks to its local
+  # socket-proxy directly.
+  # --------------------------------------------------------
+  agent:
+    # --- Identity ---
+    image: portainer/agent:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      # Edge Mode
+      EDGE: "1"
+      EDGE_ID: ${EDGE_ID}
+      EDGE_KEY: ${EDGE_KEY}
+      # Set to 1 only if the central Portainer uses a self-signed cert.
+      EDGE_INSECURE_POLL: "0"
+      LOG_LEVEL: INFO
+
+    # --- Storage ---
+    # Portainer Agent needs broad Docker API access (containers, volumes,
+    # networks, images, swarm, tasks, secrets, configs, exec, build).
+    # A filtered socket-proxy would have to allow nearly everything, so
+    # the upstream-recommended direct /var/run/docker.sock is used here.
+    # Same trade-off as core/hawser/.
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/volumes:/var/lib/docker/volumes
+      - /:/host:ro
+
+# --------------------------------------------------------
+# ALTERNATIVE: Classic Agent mode (inbound TCP 9001)
+# --------------------------------------------------------
+# If the central Portainer cannot reach this host via an outbound
+# WebSocket (no internet egress, air-gapped, etc.), use the classic
+# mode: central Portainer connects inbound to port 9001 with the
+# shared secret.
+#
+# To switch:
+#   1. Replace the `environment:` block with:
+#        AGENT_SECRET: "${AGENT_SECRET}"
+#        AGENT_CLUSTER_ADDR: ""
+#        LOG_LEVEL: INFO
+#   2. Add a ports entry:
+#        ports:
+#          - "9001:9001/tcp"
+#   3. Expose port 9001 only on a trusted interface (Tailscale,
+#      private LAN, firewall rule pinning source to Portainer host).

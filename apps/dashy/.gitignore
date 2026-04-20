@@ -1,0 +1,5 @@
+.secrets/
+volumes/
+.env
+config/conf.yml
+!config/conf.example.yml

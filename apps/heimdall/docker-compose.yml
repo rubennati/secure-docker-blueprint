@@ -1,0 +1,60 @@
+services:
+
+  # --------------------------------------------------------
+  # HEIMDALL
+  # Self-hosted application dashboard / homepage.
+  # Classic LinuxServer.io image — PUID/PGID pattern,
+  # uses s6-overlay internally.
+  # --------------------------------------------------------
+  app:
+    # --- Identity ---
+    image: lscr.io/linuxserver/heimdall:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    # NOTE: Do NOT set `user:` — the LinuxServer.io image uses
+    # s6-overlay which needs root to init, then drops to PUID/PGID.
+
+    # --- Configuration ---
+    environment:
+      TZ: ${TZ}
+      PUID: ${PUID}
+      PGID: ${PGID}
+      # Heimdall can block outbound requests from its widgets
+      # (status checks, etc.) to internal networks — set to
+      # 'false' to allow internal probes, 'true' to block (default).
+      ALLOW_INTERNAL_REQUESTS: ${ALLOW_INTERNAL_REQUESTS}
+
+    # --- Storage ---
+    volumes:
+      - ./config:/config
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+
+    # --- Traefik ---
+    labels:
+      # Router
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      # TLS
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Middlewares
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      # Service
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true

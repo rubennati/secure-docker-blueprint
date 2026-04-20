@@ -1,0 +1,53 @@
+services:
+
+  # --------------------------------------------------------
+  # ADMINER
+  # Stateless web-based database administration tool.
+  # Connects to other apps' databases (no DB of its own).
+  # --------------------------------------------------------
+  app:
+    # --- Identity ---
+    image: adminer:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      TZ: ${TZ}
+      ADMINER_DEFAULT_SERVER: ${ADMINER_DEFAULT_SERVER}
+      ADMINER_DESIGN: ${ADMINER_DESIGN}
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+      # App-specific internal networks are added via
+      # `docker network connect <app>-internal adminer-app`
+      # when you need to reach a specific app's database.
+      # See README "Connecting to app databases" for details.
+
+    # --- Traefik ---
+    labels:
+      # Router
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      # TLS
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Middlewares
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      # Service
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true

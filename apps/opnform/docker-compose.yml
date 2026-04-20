@@ -1,0 +1,201 @@
+services:
+
+  # --------------------------------------------------------
+  # DATABASE (PostgreSQL)
+  # --------------------------------------------------------
+  db:
+    # --- Identity ---
+    image: postgres:${DB_TAG}
+    container_name: ${CONTAINER_NAME_DB}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/DB_PWD
+      TZ: ${TZ}
+    secrets:
+      - DB_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/postgres:/var/lib/postgresql/data
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  # --------------------------------------------------------
+  # REDIS (Laravel cache + queue)
+  # --------------------------------------------------------
+  redis:
+    # --- Identity ---
+    image: redis:${REDIS_TAG}
+    container_name: ${CONTAINER_NAME_REDIS}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/redis:/data
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --------------------------------------------------------
+  # API (Laravel backend — OpnForm's brain)
+  # --------------------------------------------------------
+  api:
+    # --- Identity ---
+    image: jhumanj/opnform-api:${APP_TAG}
+    container_name: ${CONTAINER_NAME_API}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      TZ: ${TZ}
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_URL: https://${APP_TRAEFIK_HOST}
+      FRONT_URL: https://${APP_TRAEFIK_HOST}
+      APP_KEY: ${APP_KEY}
+      APP_TRUSTED_PROXIES: "*"
+      # Database — Laravel config reads DB_PASSWORD from env only.
+      # Value must match .secrets/db_pwd.txt.
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_DATABASE: ${DB_NAME}
+      DB_USERNAME: ${DB_USER}
+      DB_PASSWORD: ${DB_PWD_INLINE}
+      # Cache + queue + sessions via Redis
+      CACHE_DRIVER: redis
+      QUEUE_CONNECTION: redis
+      SESSION_DRIVER: redis
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      # Mail — log driver by default, switch to SMTP in prod
+      MAIL_MAILER: ${MAIL_MAILER}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME}
+      # Optional SMTP (only used when MAIL_MAILER=smtp)
+      MAIL_HOST: ${MAIL_HOST}
+      MAIL_PORT: ${MAIL_PORT}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      MAIL_ENCRYPTION: ${MAIL_ENCRYPTION}
+      # Feature toggles
+      SELF_HOSTED: "true"
+      REGISTRATION_DISABLED: ${REGISTRATION_DISABLED}
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/api-storage:/app/storage
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+      - app-internal
+
+    # --- Traefik (API — routes /api/*, /open/*, /storage/*) ---
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      # API router — matches API paths, uses higher priority than the UI catch-all
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.rule=Host(`${APP_TRAEFIK_HOST}`) && (PathPrefix(`/api`) || PathPrefix(`/open`) || PathPrefix(`/storage`) || PathPrefix(`/forms`) && Method(`POST`))"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.priority=100"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}-api.loadbalancer.server.port=80"
+
+  # --------------------------------------------------------
+  # UI (Nuxt frontend)
+  # --------------------------------------------------------
+  ui:
+    # --- Identity ---
+    image: jhumanj/opnform-client:${APP_TAG}
+    container_name: ${CONTAINER_NAME_UI}
+    restart: unless-stopped
+    depends_on:
+      - api
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      NUXT_PUBLIC_APP_URL: https://${APP_TRAEFIK_HOST}
+      NUXT_PUBLIC_API_BASE: https://${APP_TRAEFIK_HOST}/api
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+
+    # --- Traefik (UI — catches everything not matched by the API router) ---
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-ui.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-ui.priority=1"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-ui.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-ui.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-ui.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-ui.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}-ui.loadbalancer.server.port=3000"
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  DB_PWD:
+    file: ./.secrets/db_pwd.txt

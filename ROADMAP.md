@@ -1,273 +1,113 @@
 # Roadmap
 
-Last updated: 2026-04-16.
+Last updated: 2026-04-20.
 
-This document is the single source of truth for project direction. Updated as part of every meaningful commit that completes, starts, or reprioritises a work item — never batch-updated retroactively. Update rules: see [`docs/standards/documentation-workflow.md`](docs/standards/documentation-workflow.md).
-
-## Completed
-
-### Traefik Security Middleware Refactoring
-
-Split into three dynamic config files for clarity:
-
-- `security-blocks.yml` — reusable header, rate-limit, compression, CSP blocks
-- `security-chains.yml` — 10 presets: `sec-0` through `sec-5` + `e` variants for iframe-friendly apps
-- `integrations.yml` — CrowdSec bouncer plugin + Authentik forward auth middleware
-
-Removed legacy `browserXssFilter` (deprecated header). Added `customFrameOptionsValue: SAMEORIGIN` for embed variants (Vaultwarden, OnlyOffice).
-
-### Access Policies (IPv4 + IPv6)
-
-Five access middleware defined in `access.yml`:
-
-- `acc-public` — no restriction
-- `acc-local` — RFC1918 + IPv6 ULA
-- `acc-tailscale` — Tailscale CGNAT + IPv6 ULA range
-- `acc-private` — LAN + Tailscale combined
-- `acc-deny` — emergency kill switch
-
-### TLS Profiles
-
-Three profiles in `tls-profiles.yml`:
-
-- `tls-basic` — TLS 1.2+ with default cipher selection
-- `tls-aplus` — TLS 1.2+ with strict ECDHE ciphers, `X25519` preferred (SSL Labs A+)
-- `tls-modern` — TLS 1.3 only
-
-### CrowdSec Integration
-
-Phase 1 (Engine) is live and tested. Phase 2 (Traefik Bouncer Plugin) is prepared in config files with a documented enable procedure — not activated by default to keep first-time setup simple.
-
-| Phase | Component | Status |
-|-------|-----------|--------|
-| Phase 1 | Security Engine (`core/crowdsec/`) | Live |
-| Phase 2 | Traefik Bouncer Plugin in `integrations.yml` | Ready to enable |
-| Phase 3 | Firewall Bouncer (host nftables) | Planned — host-level install |
-
-Phase 2 activation steps are documented in `core/crowdsec/README.md`.
-
-### WordPress Hardening
-
-Complete hardening layer:
-
-- PHP security via `uploads.ini` — limits + `expose_php=Off` + `disable_functions`
-- Apache `.htaccess-security` — blocks PHP in uploads, xmlrpc, author enumeration, directory listing
-- `security-hardening.php` mu-plugin — blocks REST API user enum, removes generator fingerprints
-- Test-script `ops/scripts/test-security.sh` — 24 automated security checks
-- Three documented deployment scenarios (public admin / VPN admin / fully internal)
-
-### Project Documentation
-
-- Root `README.md` — value proposition, features, quick start, security model
-- `SECURITY.md` — vulnerability reporting policy via GitHub Private Advisories
-- `docs/standards/commit-rules.md` — branch model, commit conventions, push strategy
-- `docs/standards/documentation-workflow.md` — doc update triggers, ownership, freshness rules
-- `LICENSE` — Apache 2.0
-
-### Per-App Documentation Pass (Coherence Audit Package 6)
-
-Brought every app and core component in line with blueprint standards:
-
-- `apps/` (10): dockhand, portainer, whoami (core), ghost, nextcloud, seafile, calcom, paperless-ngx — each with README + UPSTREAM + .gitignore + style alignment
-- `core/` (3): onlyoffice, traefik, authentik — same pattern
-- Style consistency: `APP_TAG`/`DB_TAG` pattern, `TZ` (not `TIMEZONE`), `TRAEFIK_NETWORK` variable, `${COMPOSE_PROJECT_NAME}-*` container names, grouped Traefik labels
-- `TIMEZONE` → `TZ` migration completed across the apps touched
-
-Invoice Ninja, Vaultwarden, Hawser remain for Package 7 (Compose fixes) — see In Progress.
-
-### CONFIG.md Artifact (blueprint v2)
-
-Added a mandatory per-app configuration reference file alongside `README.md` and `UPSTREAM.md`. Every config option is bucketed into:
-
-- **Mandatory** — every production instance sets this
-- **Nice-to-have** — recommended default
-- **Use-case-dependent** — only with a named trigger
-
-Deliverables:
-- `docs/app-setup-blueprint.md` v2 on `docs` branch — new Section 2.8 defines the template, buckets, table formats, and sub-structure by app size. v1 archived as `app-setup-blueprint-v1.md`.
-- `apps/paperless-ngx/CONFIG.md` on `dev` — reference instance for large-app setup, covering all Paperless env vars, backup lifecycle, management commands, and extensions.
+This document captures direction, not detailed changelogs. For shipped work see [`CHANGELOG.md`](CHANGELOG.md); for per-category details see the `README.md` in each top-level directory.
 
 ---
 
-## In Progress
+## Shipped
 
-### Coherence Audit Remediation
+### v0.4.0 — CrowdSec Bouncer Plugin live (2026-04-20)
 
-Self-audit on 2026-04-16 identified 32 action items across 7 work packages. See [`docs/audits/coherence-check-2026-04-16.md`](docs/audits/coherence-check-2026-04-16.md) for full findings and rationale.
+Phase 2 activation proven end-to-end: the Traefik bouncer plugin now enforces CrowdSec decisions at the proxy. Two first-setup bugs fixed along the way (read-only FS blocking plugin storage, AppSec fail-closed default).
 
-Progress:
+### v0.3.0 — Core complete (2026-04-20)
 
-1. ✅ **Cross-reference fixes** — done
-2. ✅ **Secrets folder standardization** (`./secrets/` → `./.secrets/`) — done
-3. ✅ **Service naming consistency** (`database` → `db`) — done
-4. ✅ **Template corrections** — done
-5. ✅ **Standards clarifications** — done
-6. ✅ **Per-app documentation** — done (see Completed)
-7. ⏳ **Compose fixes** — pending: Invoice Ninja (non-compliant), Vaultwarden (entrypoint wrapper for DB secret), Hawser (missing fields). Est. ~2h.
+Every core service validated on a fresh install; both multi-host management paths proven end-to-end (Dockhand + Hawser / Portainer + Portainer Agent). Certificate strategy documented. Two shipped bug fixes (Traefik dynamic config load, Portainer healthcheck).
 
-Only Package 7 remains.
+### v0.2.0 — Structure Stable Baseline (2026-04-18)
 
-### Paperless-ngx Security Hardening (Pilot for CONFIG.md Approach)
+Top-level layout locked in with five categories (`core/`, `apps/`, `business/`, `monitoring/`, `backup/`). Per-category READMEs document scope and roadmap. Forks can rely on the directory layout going forward.
 
-Pilot for the CONFIG.md artifact: structured hardening of an existing app via gap-analysis → bucket decisions → phased rollout → test-driven deployment.
+### v0.1.0 — Initial public release (2026-04-16)
 
-**Phases 0–3 done** — gap analysis and bucket decisions consolidated in [`apps/paperless-ngx/CONFIG.md`](apps/paperless-ngx/CONFIG.md). All ~140 Paperless env vars catalogued, backup lifecycle documented, management commands listed.
+Core infrastructure (Traefik, CrowdSec, Authentik, OnlyOffice) plus 10 hardened app deployments. Standards documentation (`docs/standards/`) and Apache 2.0 license.
 
-**Phase 4: Mandatory env rollout** — 8 open action items from CONFIG.md Quick-Summary, planned as separate commits with live tests between each:
+See [`CHANGELOG.md`](CHANGELOG.md) for the full diff of each release.
 
-1. `PAPERLESS_ALLOWED_HOSTS` — default `*` leaves host-header injection window open
-2. `PAPERLESS_TRUSTED_PROXIES` — without it the audit log sees only Traefik's IP
-3. `PAPERLESS_URL` — explicit setter that covers ALLOWED_HOSTS / CORS / CSRF in one place
-4. `PAPERLESS_USE_X_FORWARD_HOST` + `USE_X_FORWARD_PORT` + `PROXY_SSL_HEADER` — Django-side trust for Traefik-set proxy headers (currently half-wired)
-5. `PAPERLESS_ACCOUNT_ALLOW_SIGNUPS=false` — explicit instead of implicit default
-6. `PAPERLESS_EMPTY_TRASH_DELAY=30` — explicit for compliance relevance
-7. Automated backup via `document_exporter` + scheduled cron — currently missing
-8. DB upgrade playbook (Paperless major + PostgreSQL major) — currently blank
+---
 
-**Phase 5: `/admin` panel protection** — second Traefik router with `acc-tailscale` for Django admin (bypasses MFA/SSO otherwise). Cross-reference: generalisable pattern, see Admin Path Protection below.
+## Direction
 
-**Phase 6: Extensions** — setup at least one of paperless-gpt / paperless-ai / paperless-mcp as its own app under `apps/`. Template for paperless-mcp already exists in `inbox/Archiv/paperless-mcp/`. Open decision: which extension first, conflict-avoidance strategy if multiple auto-taggers are used.
+Pre-1.0 tags are set when a natural milestone is reached, not on a fixed cadence. The single criterion for v1.0 is "would I recommend this repo as a fork base to a third party?" — subjective but unambiguous when met.
 
-Each phase is tested on the live server before the next begins.
+Next natural tag points, in order but without hard schedule:
 
-### Admin Path Protection via Traefik
+### CrowdSec Firewall Bouncer (nftables)
 
-Pattern for restricting admin/backend URLs to VPN-only while keeping the public frontend open. Uses `PathPrefix` routing with separate middleware chains.
+Host-level blocking, complements the L7 Traefik bouncer shipped in v0.4.0. Drops packets before they reach Traefik. Architecturally separate (different deployment pattern, OS-level install), so treated as its own tag.
 
-Status: implemented and documented for WordPress as one of the three scenarios in `apps/wordpress/README.md`. To generalize for other apps (Ghost, Paperless, Authentik admin).
+### Authentik live + Paperless-ngx Forward-Auth
+
+Authentik is currently drafted (`⚠️` in `core/authentik/`) — the first production use-case will be putting Paperless-ngx `/admin` behind an Authentik forward-auth middleware. That validates the pattern for broader rollout.
+
+### Paperless-ngx security hardening phases
+
+Phases 0–3 (gap analysis, env catalogue) are done — see [`apps/paperless-ngx/CONFIG.md`](apps/paperless-ngx/CONFIG.md). Phase 4 is the 8 mandatory env-var fixes; Phase 5 is `/admin` behind Authentik; Phase 6 is optional extension apps (paperless-gpt / paperless-ai / paperless-mcp).
+
+### v1.0 polish
+
+Before v1.0 is tagged:
+
+- Scan for `__REPLACE_ME__` remnants in live-tested files
+- Honest review of every `⚠️ draft` — keep honest, promote only what was actually tested
+- `CONFIG.md` pattern extended to other complex apps that benefit from it
+- CI pass (compose validate, secret scan, markdown lint)
+
+---
+
+## In the backlog — individual app paths
+
+App-level work that does not drive version tags. Picks up continuously as live-testing progresses.
+
+### Complex apps still to verify end-to-end on fresh infra
+
+Vaultwarden, WordPress, Nextcloud, Seafile / Seafile Pro, Invoice Ninja, Paperless-ngx are marked live-tested from pre-v0.2 runs but have not been re-verified on the 2026-04-20 fresh infra yet. Low risk (blueprint patterns stable) but worth a pass before v1.0.
+
+### Choice-matrix categories — pick-one-per-install decisions
+
+When live-tested on real data, pick the default and deprioritise the rest:
+
+- **Dashboards** — Dashy, Heimdall, Homarr, Homepage (`apps/`)
+- **Photo galleries** — Immich, LibrePhotos, Lychee, PhotoPrism, Photoview (`apps/`)
+- **Scheduling** — Cal.com (AGPL + commercial), Cal.diy (MIT community), Easy!Appointments (`apps/`)
+- **Business wikis** — BookStack is live; Wiki.js and Outline are planned (`apps/`)
+- **Forms** — OpnForm is drafted; Formbricks and HeyForm are planned (`apps/`)
+
+### Categories with roadmaps in their own READMEs
+
+- [`monitoring/README.md`](monitoring/README.md) — Uptime Kuma, Gatus, Beszel, changedetection (drafted) + 6 planned
+- [`business/README.md`](business/README.md) — Listmonk, Zammad, Kimai, OpenSign (drafted) + 2 planned
+- [`backup/README.md`](backup/README.md) — Kopia, Bareos, UrBackup (all planned)
 
 ---
 
 ## Evaluating
 
-### Secret Generation Standard
+### Secret & Password Generation Standard
 
-Current convention recommends `openssl rand -base64 32 | tr -d '\n'` but the output contains base64 padding (`=`) which breaks URL-embedded passwords, shell contexts, and some apps. Interim workarounds exist:
+Blueprint-wide policy for secret generation (in `.secrets/` files) and password generation (for admin accounts). Currently each app README has its own recipe, some with known pitfalls (Laravel / Mongo DSN incompatibility with certain chars). Consolidation into a single `docs/standards/` reference is open.
 
-- `openssl rand -hex 32` for URL-embedded passwords (DATABASE_URL, REDIS_URL)
-- `openssl rand -base64 48` produces 64 chars without padding
-- `openssl rand -base64 32 | tr -d '=\n'` strips padding but output length varies
-- `tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 32` — pure alphanumeric
+### Recommendations & Packages
 
-Open questions:
+As live-testing of choice-matrix categories completes, a `docs/packages/` section captures opinionated bundles: "Small-Business Starter", "Cloud-free Data Collection", "Photo Home Lab". Each bundle names the picks, reading order, and integration config. Planned for v1.0 polish.
 
-- Is there a single convention that works universally or do we need use-case-specific rules in env-structure.md?
-- Should a generation helper script live in `ops/scripts/generate-secret.sh` so apps don't need to repeat the command in every README?
-- What entropy floor do we document as the minimum (128 / 192 / 256 bits)?
+### Alternative container runtimes
 
-Goal: one memorable pattern that is safe in all contexts, with entropy ≥ 192 bits, without padding or special chars that cause downstream issues.
+Long-term consideration beyond standard Docker — Podman, Docker Swarm, K3s. Not blocking v1.0.
 
-### Mutual TLS (mTLS) – Certificate-Based Access
+### MCP connectors
 
-Client certificate authentication as an additional access layer. Stronger than IP allowlists or passwords.
+Expose selected apps via Model Context Protocol for AI-assisted operation. Candidates: Paperless-ngx document search, Vaultwarden secret retrieval. Blueprint defines the pattern; individual MCP servers live in their own repos.
 
-Use cases:
+### Deploy script
 
-- API endpoints that only specific servers should reach
-- Admin panels with hardware-bound authentication
-- Zero-trust access without VPN dependency
-
-Approach: Traefik TLS option with `clientAuth` requiring certificates signed by a custom CA. The `core/acme-certs` tool could be extended to also generate client certificates.
-
-### Backup Strategy – Multi-Layer with Verification
-
-Comprehensive backup concept covering all levels of the stack, with automated restore testing.
-
-**Layer 1: Host-level** — Full system backup via restic or borgbackup, offsite target (S3, Backblaze B2, NFS)
-
-**Layer 2: App-level** — Per-app backup scripts in `ops/scripts/backup.sh`, consistent snapshots (stop → dump → backup → start), standardized output to `./volumes/backups/`
-
-**Layer 3: Database-level** — Automated `pg_dump` / `mysqldump` via sidecar or cron container, encrypted dumps
-
-**Layer 4: Verification** — Automated restore tests on a schedule, checksum validation, alerting on failed backups
-
-Open questions: single tool (restic?) or per-layer, central service or per-app scripts, secure secrets backup.
-
-### IPv6 – Dual-Stack and IPv6-Only Setups
-
-Full IPv6 support across the stack, including IPv6-only deployments.
-
-Scope:
-
-- Docker network configuration for dual-stack and IPv6-only
-- Traefik entrypoints with IPv6 already supported
-- Firewall rules (nftables) covering both protocols
-- Per-app testing for IPv6-only operation
-- NAT64/DNS64 for IPv6-only connecting to IPv4 services
-
-### Container Resource Management
-
-Define resource limiting strategy to prevent single containers from taking down the host.
-
-Scope:
-
-- CPU limits and reservations
-- Memory limits and reservations
-- PIDs limit (prevent fork bombs)
-- I/O throttling for disk-heavy services
-- Hardware-aware profiles vs. percentage-based
-
-Goal: No single container can consume 100% CPU or RAM. OOM kills the container, not the host.
-
-### Docker Rootless Mode
-
-Evaluate running Docker in rootless mode for improved host security.
-
-Current state: Docker rootless is functional but has known limitations — not all apps work, volume permissions, port binding, network modes may need adjustment.
-
-Evaluation goals:
-
-- Test each app for rootless compatibility
-- Document works / workarounds / incompatible
-- Decide: optional alternative or future default
-
-### Centralized Observability
-
-Logging and metrics aggregation for all services:
-
-- Log forwarding (Loki/Promtail) for Traefik access logs, app logs
-- Metrics (Prometheus) for Traefik, CrowdSec, app-specific exporters
-- Grafana dashboard for quick overview
-- Alerting (Alertmanager or direct webhooks)
-
-Open: scope — full observability stack or minimal logging-only?
+`./deploy.sh <server> core/traefik apps/nextcloud` — rsync selected app directories to a server, no git / docs / inbox on target. Portable app deployments without the full blueprint on each host.
 
 ---
 
-## Planned Community Infrastructure
+## Out of scope here
 
-These are GitHub-repo-level additions, not code changes.
-
-- `CONTRIBUTING.md` — contribution guide
-- `CODE_OF_CONDUCT.md` — Contributor Covenant
-- `CHANGELOG.md` — versioned change log
-- `.github/ISSUE_TEMPLATE/` — bug, feature, new app templates
-- `.github/pull_request_template.md`
-- `CODEOWNERS`
-- Minimal GitHub Actions — compose validate, markdown lint, secret scan
-
----
-
-## Ideas
-
-### Alternative Container Runtimes
-
-Long-term considerations beyond standard Docker:
-
-- **Podman** — daemonless, rootless by default, Docker CLI compatible. How well does it work with Traefik, Compose, and the socket proxy pattern?
-- **Docker Swarm** — built-in orchestration for multi-node setups. Adds service discovery, rolling updates, secrets management.
-- **Kubernetes (K3s)** — full container orchestration. Major architectural shift — Helm charts instead of Compose files. Only relevant at scale.
-
-The current Docker Compose approach covers single-host and small-scale deployments well.
-
-### MCP Connectors for Apps
-
-Expose selected apps via MCP (Model Context Protocol) for AI-assisted operation. Candidates: Paperless-ngx document search, Vaultwarden secret retrieval, Invoice Ninja invoice creation.
-
-Scope: blueprint defines the pattern, individual MCP servers developed in separate repos.
-
-Concrete: `paperless-mcp` template already exists in `inbox/Archiv/paperless-mcp/` (complete with build Dockerfile, compose file, entrypoint wrapper). Ready to move into `apps/` when activated — see Paperless-ngx Phase 6 in In Progress.
-
-### Deploy Script
-
-Long-term vision: `./deploy.sh <server> core/traefik apps/nextcloud` — rsync selected app directories to a server, no git/docs/inbox on target. Enables portable app deployments without the full blueprint repo on each target.
+- `core/acme-certs/` — being extracted to its own repository. The blueprint stub remains as `⚠️ draft` but is no longer actively maintained in this repo.
+- Paperless-mcp — template exists in the Paperless CONFIG.md extension notes but will live in its own repo once built.

@@ -10,7 +10,7 @@ Thanks for considering a contribution. This is an opinionated blueprint for secu
 
 ## What's welcome
 
-- **New apps** following the blueprint structure — a full `apps/<name>/` setup with `README.md`, `UPSTREAM.md`, `CONFIG.md`, `.gitignore`, `docker-compose.yml`, `.env.example`
+- **New apps** following the blueprint structure — a full `<category>/<name>/` setup with `README.md`, `UPSTREAM.md`, `.gitignore`, `docker-compose.yml`, `.env.example`. A `CONFIG.md` covering all env vars and lifecycle operations is encouraged for complex apps (see `apps/paperless-ngx/CONFIG.md` as the reference pattern) but not required for minimal single-container apps.
 - **Improvements to existing apps** — security hardening, upstream version bumps, bug fixes
 - **New core services** — only with prior discussion, since these affect every app
 - **Documentation fixes** — typos, clarifications, missing cross-references
@@ -46,7 +46,7 @@ See [`docs/standards/commit-rules.md`](docs/standards/commit-rules.md) for the d
 
 - Single focused topic per PR
 - Update `CHANGELOG.md` under the `## [Unreleased]` section
-- Update relevant docs (`README.md`, `CONFIG.md`, app-level `README.md`) if behaviour or configuration changed
+- Update relevant docs (root `README.md`, app-level `README.md` / `UPSTREAM.md`, any app-specific `CONFIG.md` that exists) if behaviour or configuration changed
 - No real data — verify with the pre-commit scan patterns listed in the go-live guide
 - Secrets always via Docker Secrets or `.env` (gitignored), never hardcoded
 

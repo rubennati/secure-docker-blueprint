@@ -1,0 +1,5 @@
+volumes/
+.env
+# Your actual config may contain secrets — keep locally
+config/config.yaml
+!config/config.example.yaml

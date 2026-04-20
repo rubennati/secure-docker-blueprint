@@ -1,0 +1,75 @@
+services:
+
+  # --------------------------------------------------------
+  # CHANGEDETECTION.IO (website content watcher)
+  # --------------------------------------------------------
+  # Monitors web pages for content changes — restock alerts,
+  # price drops, terms-of-service diffs, defacement detection.
+  app:
+    # --- Identity ---
+    image: ghcr.io/dgtlmoon/changedetection.io:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+    # depends_on:                       # uncomment if you enable the
+    #   - browser                       # JS-rendering playwright side-car
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      TZ: ${TZ}
+      BASE_URL: https://${APP_TRAEFIK_HOST}
+      # Uncomment to use the playwright browser service for JS-heavy
+      # sites. Without it, only plain HTTP fetches are supported
+      # (fine for most static pages + APIs).
+      # PLAYWRIGHT_DRIVER_URL: "ws://browser:3000"
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/data:/datastore
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+      # - browser-internal              # uncomment with the browser service
+
+    # --- Traefik ---
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+
+  # --------------------------------------------------------
+  # BROWSER (optional — playwright for JS-rendered pages)
+  # --------------------------------------------------------
+  # Uncomment this service + the env/depends_on/network bits in `app`
+  # to enable watching JavaScript-heavy sites (React/Vue SPAs).
+  #
+  # browser:
+  #   image: dgtlmoon/sockpuppetbrowser:latest
+  #   container_name: ${COMPOSE_PROJECT_NAME}-browser
+  #   restart: unless-stopped
+  #   security_opt:
+  #     - no-new-privileges:true
+  #   cap_add:
+  #     - SYS_ADMIN                     # playwright/Chrome sandboxing
+  #   networks:
+  #     - browser-internal
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+  # browser-internal:
+  #   name: ${COMPOSE_PROJECT_NAME}-browser
+  #   internal: true

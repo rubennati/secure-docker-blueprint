@@ -1,0 +1,181 @@
+# -----------------------------------------------------------------------------
+# Zammad is a multi-service stack. Upstream ships an official docker-compose
+# with 7+ services — this file is a blueprint-conformant fork of it.
+# https://docs.zammad.org/en/latest/install/docker-compose.html
+# -----------------------------------------------------------------------------
+
+x-shared: &zammad-shared
+  image: ghcr.io/zammad/zammad:${APP_TAG}
+  environment: &zammad-env
+    TZ: ${TZ}
+    POSTGRESQL_HOST: db
+    POSTGRESQL_PORT: "5432"
+    POSTGRESQL_DB: ${DB_NAME}
+    POSTGRESQL_USER: ${DB_USER}
+    POSTGRESQL_PASS: ${DB_PWD_INLINE}
+    REDIS_URL: "redis://redis:6379"
+    MEMCACHE_SERVERS: "memcached:11211"
+    ELASTICSEARCH_ENABLED: "true"
+    ELASTICSEARCH_HOST: elasticsearch
+    ELASTICSEARCH_PORT: "9200"
+    ELASTICSEARCH_SCHEMA: http
+    ELASTICSEARCH_NAMESPACE: zammad
+    NGINX_SERVER_NAME: ${APP_TRAEFIK_HOST}
+    NGINX_CLIENT_MAX_BODY_SIZE: "50M"
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+  networks:
+    - app-internal
+
+services:
+
+  # --- Postgres ---
+  db:
+    image: postgres:${DB_TAG}
+    container_name: ${CONTAINER_NAME_DB}
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/DB_PWD
+      TZ: ${TZ}
+    secrets: [DB_PWD]
+    volumes:
+      - ./volumes/postgres:/var/lib/postgresql/data
+    networks: [app-internal]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  # --- Redis ---
+  redis:
+    image: redis:${REDIS_TAG}
+    container_name: ${CONTAINER_NAME_REDIS}
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    tmpfs: [/tmp]
+    volumes:
+      - ./volumes/redis:/data
+    networks: [app-internal]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --- Memcached ---
+  memcached:
+    image: memcached:${MEMCACHED_TAG}
+    container_name: ${CONTAINER_NAME_MEMCACHED}
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    command: memcached -m 256M
+    networks: [app-internal]
+
+  # --- Elasticsearch (full-text search over tickets) ---
+  elasticsearch:
+    image: bitnami/elasticsearch:${ES_TAG}
+    container_name: ${CONTAINER_NAME_ES}
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    environment:
+      discovery.type: single-node
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+    volumes:
+      - ./volumes/elasticsearch:/bitnami/elasticsearch/data
+    networks: [app-internal]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://127.0.0.1:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  # --- Zammad initialization (one-shot DB migrations on each startup) ---
+  init:
+    <<: *zammad-shared
+    container_name: ${COMPOSE_PROJECT_NAME}-init
+    command: ["zammad-init"]
+    depends_on:
+      db:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    secrets: [DB_PWD]
+    volumes:
+      - ./volumes/zammad-storage:/opt/zammad/storage
+
+  # --- Rails server (core app) ---
+  railsserver:
+    <<: *zammad-shared
+    container_name: ${COMPOSE_PROJECT_NAME}-railsserver
+    command: ["zammad-railsserver"]
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    volumes:
+      - ./volumes/zammad-storage:/opt/zammad/storage
+
+  # --- WebSocket server (agent notifications) ---
+  websocket:
+    <<: *zammad-shared
+    container_name: ${COMPOSE_PROJECT_NAME}-websocket
+    command: ["zammad-websocket"]
+    depends_on:
+      init:
+        condition: service_completed_successfully
+
+  # --- Scheduler (background jobs) ---
+  scheduler:
+    <<: *zammad-shared
+    container_name: ${COMPOSE_PROJECT_NAME}-scheduler
+    command: ["zammad-scheduler"]
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    volumes:
+      - ./volumes/zammad-storage:/opt/zammad/storage
+
+  # --- Nginx (serves static assets, proxies to rails + websocket) ---
+  nginx:
+    image: ghcr.io/zammad/zammad:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    command: ["zammad-nginx"]
+    depends_on:
+      railsserver:
+        condition: service_started
+    environment:
+      NGINX_SERVER_NAME: ${APP_TRAEFIK_HOST}
+      NGINX_CLIENT_MAX_BODY_SIZE: "50M"
+    networks:
+      - proxy-public
+      - app-internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+
+networks:
+  proxy-public:
+    external: true
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+
+secrets:
+  DB_PWD:
+    file: ./.secrets/db_pwd.txt

@@ -1,0 +1,72 @@
+services:
+
+  # --------------------------------------------------------
+  # HEALTHCHECKS
+  # Self-hosted cron-job and scheduled-task monitoring.
+  # Services ping a URL on schedule; Healthchecks alerts
+  # when expected pings are missed.
+  # SQLite by default — suitable for personal use / small teams.
+  # --------------------------------------------------------
+  app:
+    # --- Identity ---
+    image: healthchecks/healthchecks:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      TZ: ${TZ}
+      # Database
+      DB: sqlite
+      DB_NAME: /data/hc.sqlite
+      # Django
+      DEBUG: "False"
+      SECRET_KEY: ${HC_SECRET_KEY}
+      ALLOWED_HOSTS: ${APP_TRAEFIK_HOST}
+      SITE_ROOT: https://${APP_TRAEFIK_HOST}
+      SITE_NAME: ${HC_SITE_NAME}
+      # Behind reverse proxy
+      USE_PAYMENTS: "False"
+      REGISTRATION_OPEN: ${HC_REGISTRATION_OPEN}
+      # Email
+      DEFAULT_FROM_EMAIL: ${HC_EMAIL_FROM}
+      EMAIL_HOST: ${HC_SMTP_HOST}
+      EMAIL_PORT: ${HC_SMTP_PORT}
+      EMAIL_HOST_USER: ${HC_SMTP_USER}
+      EMAIL_HOST_PASSWORD: ${HC_SMTP_PASSWORD}
+      EMAIL_USE_TLS: ${HC_SMTP_USE_TLS}
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/data:/data
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+
+    # --- Traefik ---
+    labels:
+      # Router
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      # TLS
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Middlewares
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      # Service
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
