@@ -164,7 +164,7 @@ Every app gets an `UPSTREAM.md` that tracks where the setup comes from and how t
 - [ ] **Upgrade checklist** — Steps to follow when bumping the version
 - [ ] **Diff commands** — How to compare our config against upstream
 
-See `apps/invoiceninja/UPSTREAM.md` as reference.
+See `business/invoiceninja/UPSTREAM.md` as reference.
 
 ---
 
