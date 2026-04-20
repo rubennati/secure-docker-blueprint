@@ -40,7 +40,7 @@ Host-level blocking, complements the L7 Traefik bouncer shipped in v0.4.0. Drops
 
 ### Paperless-ngx Forward-Auth via Authentik
 
-Authentik itself is now live on fresh infra (status ✅ in the Core Infrastructure table; three first-setup bugs fixed and documented in `docs/bugfixes/authentik-2026-04-20.md`). The outstanding piece is the first production use-case: putting Paperless-ngx `/admin` behind an Authentik forward-auth middleware. That validates the pattern for broader rollout.
+Authentik itself is now live (status ✅ in the Core Infrastructure table; three first-setup bugs fixed and documented in `docs/bugfixes/authentik-2026-04-20.md`). The outstanding piece is the first production use-case: putting Paperless-ngx `/admin` behind an Authentik forward-auth middleware. That validates the pattern for broader rollout.
 
 ### Paperless-ngx security hardening phases
 
@@ -61,9 +61,9 @@ Before v1.0 is tagged:
 
 App-level work that does not drive version tags. Picks up continuously as live-testing progresses.
 
-### Complex apps still to verify end-to-end on fresh infra
+### Complex apps still to re-verify end-to-end
 
-Vaultwarden, WordPress, Nextcloud, Seafile / Seafile Pro, Invoice Ninja, Paperless-ngx are marked live-tested from pre-v0.2 runs but have not been re-verified on the 2026-04-20 fresh infra yet. Low risk (blueprint patterns stable) but worth a pass before v1.0.
+Vaultwarden, WordPress, Nextcloud, Seafile / Seafile Pro, Invoice Ninja, Paperless-ngx are marked live-tested from pre-v0.2 runs but have not been re-verified on a clean install yet. Low risk (blueprint patterns stable) but worth a pass before v1.0.
 
 ### Choice-matrix categories — pick-one-per-install decisions
 

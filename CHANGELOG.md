@@ -10,7 +10,7 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ### Authentik live
 
-Authentik now live-tested end-to-end on fresh infra. Initial-setup flow reachable through Traefik (`/if/flow/initial-setup/`), admin account creation works, all four services (`server`, `worker`, `db`, `redis`) stable and healthy. Status in the Core Infrastructure table flips ⚠️ → ✅.
+Authentik now live-tested end-to-end. Initial-setup flow reachable through Traefik (`/if/flow/initial-setup/`), admin account creation works, all four services (`server`, `worker`, `db`, `redis`) stable and healthy. Status in the Core Infrastructure table flips ⚠️ → ✅.
 
 ### Fixed
 
