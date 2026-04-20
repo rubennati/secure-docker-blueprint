@@ -79,9 +79,9 @@ docker compose up -d
 
 No secrets needed — the engine generates its own internal credentials on first start.
 
-### Verify — first check after startup
+### Verify
 
-Only two commands you need to see a green Phase 1:
+**First-boot takes ~5 minutes** before acquisition starts parsing. On startup the container runs `cscli hub update`, installs collections, loads parsers, then begins tailing the log file. During that window `cscli metrics` shows only `Local API Metrics` and `Local API Machines Metrics` — no Acquisition / Parser / Bucket tables. That is normal startup state, not a broken install. Wait about 5 minutes before running the verify commands.
 
 ```bash
 # 1. Is the engine up?
@@ -89,11 +89,14 @@ docker exec crowdsec cscli lapi status
 # Expected: "You can successfully interact with Local API (LAPI)"
 
 # 2. Is Traefik's access log being parsed?
-docker exec crowdsec cscli metrics | grep -A5 "Acquisition"
-# Expected: file:/var/log/traefik/access.log  — lines read > 0, unparsed = 0
+docker exec crowdsec cscli metrics show acquisition
+# Expected: a row for file:/var/log/traefik/access.log
+# with lines_read > 0 and lines_unparsed = 0 (or empty)
 ```
 
-If both green, Phase 1 is done. Decisions may take a few minutes to appear — background internet scanners typically show up within the hour.
+If both green, Phase 1 is done. The `cscli metrics show acquisition` form is preferred over grepping the full `cscli metrics` output — it returns a meaningful "no acquisition source running" message while startup is still in progress, instead of silently empty output.
+
+Decisions may take additional minutes to appear — background internet scanners typically show up within the hour.
 
 **What the metrics should look like once traffic is flowing:**
 
