@@ -37,6 +37,23 @@ docker compose up -d
 
 Default access policy is `acc-tailscale` + `sec-4` (admin tool, VPN-only, hardened). Adjust in `.env` if a different setup is needed.
 
+## Adding the local environment
+
+After first login, Dockhand asks you to add an environment. For the Docker daemon on the host where Dockhand itself runs, enter:
+
+| Field | Value |
+|---|---|
+| Name | any label — e.g. `Production` |
+| Connection type | `Direct connection` |
+| Host | `socket-proxy` |
+| Port | `2375` |
+| Protocol | `HTTP` |
+| Public IP | leave empty |
+
+Dockhand reaches the Docker API through the filtered socket proxy on the internal `dockhand-internal` network. Plain HTTP is safe here because the proxy is never reachable from the host or the internet — only from containers on that network.
+
+Click "Test connection" → should turn green → "Add". The environment appears in the sidebar with full stack management (containers, volumes, networks, Git-based deploys).
+
 ## Verify
 
 ```bash
@@ -45,7 +62,7 @@ docker compose logs app --tail 50    # Check for startup errors
 docker compose logs socket-proxy     # Socket proxy access log
 ```
 
-Log in to the web UI, add a stack pointing at a Git repo, verify that Dockhand pulls and applies the compose file.
+Log in to the web UI, add the environment as described above, then add a stack pointing at a Git repo — verify that Dockhand pulls and applies the compose file.
 
 ## Security Model
 
