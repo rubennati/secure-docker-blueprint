@@ -63,7 +63,18 @@ After successful admin creation, set a strong password and enable 2FA in the use
 
 ## Known Issues
 
-None currently documented.
+**Multi-host setups need an extra port exposed.** For [Portainer Edge Agents](../portainer-agent/) to reach this central Portainer, TCP 8000 has to be published on the host — separate from the web UI on 9000/9443 which goes through Traefik. Port 8000 has no TLS and only `EDGE_KEY` as auth, so exposure must be limited.
+
+This compose does not publish 8000 by default. To enable Edge Agents, add to the `app` service manually:
+
+```yaml
+ports:
+  - "<your-tailscale-ip>:8000:8000/tcp"
+```
+
+Bind to the Tailscale / WireGuard interface only, never `0.0.0.0`.
+
+If you want clean multi-host with no extra public-facing ports, consider [Dockhand + Hawser](../dockhand/) instead — their Edge pattern stays on standard HTTPS 443 via Traefik.
 
 ## Details
 

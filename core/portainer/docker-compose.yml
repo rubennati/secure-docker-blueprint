@@ -84,16 +84,6 @@ services:
       - proxy-public
       - app-internal
 
-    # Edge tunnel port — ONLY needed if you deploy Portainer Edge Agents
-    # (see core/portainer-agent/). Agents connect back to the central
-    # Portainer via TCP 8000.
-    #
-    # Bind to your Tailscale address, NOT 0.0.0.0. Port 8000 exposed
-    # publicly has no TLS and no auth gate beyond the EDGE_KEY —
-    # pinning it to the Tailscale interface is the baseline.
-    # ports:
-    #   - "${PORTAINER_EDGE_BIND}:8000:8000/tcp"
-
     # --- Traefik ---
     labels:
       - "traefik.enable=true"

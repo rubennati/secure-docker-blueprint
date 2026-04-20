@@ -28,13 +28,22 @@ Two connection modes; pick one.
 
 Agent opens an outbound WebSocket to the central Portainer server. **No inbound port required on the agent host** — works behind NAT, firewalls, Tailscale / WireGuard.
 
-**On the central Portainer host** port 8000 must be reachable from the agent. In this blueprint, that means uncommenting the `ports:` block in [`core/portainer/docker-compose.yml`](../portainer/docker-compose.yml) and setting `PORTAINER_EDGE_BIND` to the central host's Tailscale IP. Do NOT bind 0.0.0.0 — port 8000 has no TLS, authentication is `EDGE_KEY` only.
-
 **About the URL:** `EDGE_KEY` is a base64 bundle that already contains the Portainer server URL + auth. No separate URL env var is needed. To verify what's inside:
 
 ```bash
 echo '<EDGE_KEY-value>' | base64 -d
 ```
+
+**Important — central Portainer side:** the agents connect to TCP 8000 on the central host. The blueprint's `core/portainer/` does NOT publish that port by default (clean compose). If you want Edge Agents, add this to `core/portainer/docker-compose.yml` under the `app` service:
+
+```yaml
+ports:
+  - "<your-tailscale-ip>:8000:8000/tcp"
+```
+
+Bind to the Tailscale / WireGuard interface only. Port 8000 has no TLS and only `EDGE_KEY` as auth — never bind `0.0.0.0`.
+
+If the extra port annoys you, the clean alternative is [Dockhand + Hawser](../hawser/): same multi-host capability, everything stays on standard HTTPS 443 via Traefik.
 
 Setup flow:
 
