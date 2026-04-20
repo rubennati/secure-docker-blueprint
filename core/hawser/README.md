@@ -13,7 +13,13 @@ Remote Docker agent for [Dockhand](https://github.com/Finsys/dockhand). Deploy o
 cp .env.example .env
 nano .env  # Set DOCKHAND_SERVER_URL, AGENT_NAME
 
-# 2. Create token (from Dockhand UI: Add Host → Hawser agent (edge) → Generate)
+# 2. Create token in Dockhand:
+#    Environments → Add environment → Hawser agent (edge)
+#    → Generate token, then **click Add / Save** to persist
+#      the environment record. The token only validates against
+#      a saved environment — copy + save the token without
+#      hitting the save button will cause the agent to loop on
+#      "failed to receive welcome: server error".
 mkdir -p .secrets
 echo -n 'your-token' > .secrets/hawser_token.txt
 
