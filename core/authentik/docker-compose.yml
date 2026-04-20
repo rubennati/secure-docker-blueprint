@@ -241,6 +241,13 @@ services:
     # was inherently unreliable. If the worker crashes `restart:
     # unless-stopped` handles it, and the server's healthcheck is
     # indirectly gated on the worker (shared DB + Redis).
+    #
+    # `disable: true` is required: the image ships a baked-in
+    # HEALTHCHECK in its Dockerfile. Without this override, Docker
+    # falls back to the image-level check and the worker perpetually
+    # shows "health: starting".
+    healthcheck:
+      disable: true
 
 # --------------------------------------------------------
 # NETWORKS
