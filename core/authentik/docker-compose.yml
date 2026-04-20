@@ -236,18 +236,12 @@ services:
       - app-internal
 
     # --- Health & Observability ---
-    # No healthcheck on purpose. The worker has no HTTP listener;
-    # upstream removed the worker healthcheck in 2025.10.2 because it
-    # was inherently unreliable. If the worker crashes `restart:
-    # unless-stopped` handles it, and the server's healthcheck is
-    # indirectly gated on the worker (shared DB + Redis).
-    #
-    # `disable: true` is required: the image ships a baked-in
-    # HEALTHCHECK in its Dockerfile. Without this override, Docker
-    # falls back to the image-level check and the worker perpetually
-    # shows "health: starting".
-    healthcheck:
-      disable: true
+    # No explicit healthcheck — the image (2024.12.x) ships a built-in
+    # HEALTHCHECK for the worker that queries Celery internals. On a
+    # cold start it takes ~60s to flip from "starting" to "healthy";
+    # that is expected. Upstream removed the built-in worker
+    # healthcheck in 2025.10.2 — when we upgrade to that line, add
+    # `healthcheck: { disable: true }` here and delete this comment.
 
 # --------------------------------------------------------
 # NETWORKS

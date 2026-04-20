@@ -187,10 +187,15 @@ healthcheck:
   start_period: 60s   # was 30s
 ```
 
-**Worker** — no healthcheck block at all. Matches upstream's current
-position. `restart: unless-stopped` catches crashes; the server's
-healthcheck indirectly gates on worker health via the shared DB and
-Redis.
+**Worker** — no explicit healthcheck. The 2024.12.x image ships a
+built-in HEALTHCHECK for the worker that queries Celery internals;
+it works, it just takes ~60s to flip from `starting` to `healthy`
+on cold boot. Leave it alone.
+
+When we move to 2025.10.2 or later, the built-in worker healthcheck
+is gone upstream — at that point add `healthcheck: { disable: true }`
+to the worker service so Docker doesn't report a spurious
+"starting" state indefinitely.
 
 ### Verify
 
