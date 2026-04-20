@@ -1,7 +1,7 @@
-# Live Testing Bug Fixes — 2026-04-12
+# Cross-cutting bugs — 2026-04-12
 
-First deployment of the blueprint to a live server. This document captures every
-bug found during testing, root cause analysis, and the applied fix.
+Bugs encountered during early deployment runs, with root cause analysis and the
+applied fix. Each item is phrased for a fork maintainer hitting the same issue.
 
 ---
 

@@ -40,7 +40,7 @@ Planned in `core/`: Keycloak (alternative / heavier IAM next to Authentik).
 
 ### Repository layout
 
-Five top-level areas, each with a clear mandate. See `docs/architecture/directory-layout.md` (on the `docs` branch) for the full categorisation rule.
+Five top-level areas, each with a clear mandate. Per-category READMEs (`core/README.md`, `business/README.md`, `monitoring/README.md`, `backup/README.md`) describe what belongs where and why.
 
 | Directory | Scope |
 |---|---|

@@ -8,13 +8,13 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
-Next milestone: **v0.3.0 — Monitoring rollout.** All four drafted `monitoring/` apps live on the server with real probes and at least one end-to-end alert flow through n8n. Criteria: see `docs/architecture/release-criteria.md` on the `docs` branch.
+Next milestone: **v0.3.0 — Monitoring rollout.** All four drafted `monitoring/` apps live-tested with real probes and at least one end-to-end alert flow through n8n.
 
 ## [0.2.0] — 2026-04-18
 
 ### Structure Stable Baseline
 
-Repository layout is now stable: forks can rely on the five top-level directories (`core/`, `apps/`, `business/`, `monitoring/`, `backup/`) and the categorisation rule documented on the `docs` branch.
+Repository layout is now stable: forks can rely on the five top-level directories (`core/`, `apps/`, `business/`, `monitoring/`, `backup/`). Per-category READMEs document scope and roadmap.
 
 ### Added
 
@@ -37,7 +37,7 @@ Repository layout is now stable: forks can rely on the five top-level directorie
   - `apps/dockhand/` → `core/dockhand/`
   - `apps/portainer/` → `core/portainer/`
   - `apps/hawser/` → `core/hawser/`
-- **Root README** restructured around the five-category layout, with per-category tables and a new "Repository layout" section pointing at the internal architecture docs.
+- **Root README** restructured around the five-category layout, with per-category tables and a "Repository layout" overview section.
 
 ### Security
 
