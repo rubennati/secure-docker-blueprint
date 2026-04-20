@@ -285,7 +285,7 @@ nano ops/templates/traefik.yml.tmpl
 # -----------------------------------------------
 # Step 5: Enable the middleware in dynamic config
 # -----------------------------------------------
-nano ops/templates/dynamic/security.yml.tmpl
+nano ops/templates/dynamic/integrations.yml.tmpl
 # Uncomment the sec-crowdsec block (the full plugin section)
 
 # -----------------------------------------------
@@ -318,13 +318,13 @@ docker compose restart traefik
 # Hot-reloaded — no restart needed.
 
 # Option B: Disable completely
-# Comment out sec-crowdsec in security.yml.tmpl
+# Comment out sec-crowdsec in integrations.yml.tmpl
 # Re-render: ./ops/scripts/render.sh
 # Hot-reloaded — no restart needed (plugin stays loaded but unused).
 
 # Option C: Remove plugin entirely
 # Comment out experimental.plugins in traefik.yml.tmpl
-# Comment out sec-crowdsec in security.yml.tmpl
+# Comment out sec-crowdsec in integrations.yml.tmpl
 # Re-render + restart: ./ops/scripts/render.sh && docker compose restart traefik
 ```
 
