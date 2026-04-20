@@ -30,7 +30,7 @@ Production-ready configurations for 15+ services — with standardized patterns,
 | Service | Status | Description |
 |---------|--------|-------------|
 | [Traefik](core/traefik/) | ✅ | Reverse proxy with Socket Proxy, 5 security levels, 3 TLS profiles, access policies |
-| [Authentik](core/authentik/) | ⚠️ | SSO / Identity Provider for centralized authentication (OpenID Connect) |
+| [Authentik](core/authentik/) | ✅ | SSO / Identity Provider for centralized authentication (Forward-Auth, OAuth2 / OIDC / SAML) |
 | [OnlyOffice](core/onlyoffice/) | ✅ | Document editing server for Seafile, Nextcloud, etc. |
 | [dnsmasq](core/dnsmasq/) | ✅ | DNS forwarder with wildcard zones for Tailscale / split-DNS setups |
 | [acme-certs](core/acme-certs/) | ⚠️ | Certificate tool (acme.sh) for devices without Traefik (NAS, routers) |

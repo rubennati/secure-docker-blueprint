@@ -8,7 +8,23 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
-Next: CrowdSec Firewall Bouncer (nftables) for host-level blocking that complements the L7 Traefik bouncer.
+### Authentik live
+
+Authentik now live-tested end-to-end on fresh infra. Initial-setup flow reachable through Traefik (`/if/flow/initial-setup/`), admin account creation works, all four services (`server`, `worker`, `db`, `redis`) stable and healthy. Status in the Core Infrastructure table flips ⚠️ → ✅.
+
+### Fixed
+
+- **Authentik volume permissions**: the `goauthentik/server` image runs as UID 1000 and deliberately refuses to chown bind-mount targets (`"Not running as root, disabling permission fixes"`). Added a one-shot `init-perms` Alpine service that pre-chowns `./volumes/{data,certs,custom-templates}` to `1000:1000` before `server` and `worker` start. The permission logic lives in `core/authentik/ops/scripts/init-volumes.sh` (POSIX sh, idempotent).
+- **Authentik legacy `/media` mount**: upstream migrated to `/data`. Both `server` and `worker` now mount `./volumes/data:/data`; `/media` was deprecated.
+- **Authentik healthcheck**: the image ships no `wget` or `curl`, so the wget-based healthcheck failed every time and kept the container marked unhealthy despite the app serving normally. Switched to a Python-based check via `urllib.request` (Python is in the image). `start_period` bumped 30s → 60s to cover cold-start Django migrations.
+
+### Documentation
+
+- `docs/bugfixes/authentik-2026-04-20.md` documents all three bugs (volume perms, legacy path, broken healthcheck) with symptoms, root causes, and upstream references.
+
+---
+
+Next tag direction: **Paperless-ngx `/admin` protected by Authentik Forward-Auth** as the first end-to-end use case for the new SSO. Then: CrowdSec Firewall Bouncer (nftables) for host-level blocking.
 
 ## [0.4.0] — 2026-04-20
 

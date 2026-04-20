@@ -1,6 +1,6 @@
 # Roadmap
 
-Last updated: 2026-04-20.
+Last updated: 2026-04-20 (Authentik live).
 
 This document captures direction, not detailed changelogs. For shipped work see [`CHANGELOG.md`](CHANGELOG.md); for per-category details see the `README.md` in each top-level directory.
 
@@ -38,9 +38,9 @@ Next natural tag points, in order but without hard schedule:
 
 Host-level blocking, complements the L7 Traefik bouncer shipped in v0.4.0. Drops packets before they reach Traefik. Architecturally separate (different deployment pattern, OS-level install), so treated as its own tag.
 
-### Authentik live + Paperless-ngx Forward-Auth
+### Paperless-ngx Forward-Auth via Authentik
 
-Authentik is currently drafted (`⚠️` in `core/authentik/`) — the first production use-case will be putting Paperless-ngx `/admin` behind an Authentik forward-auth middleware. That validates the pattern for broader rollout.
+Authentik itself is now live on fresh infra (status ✅ in the Core Infrastructure table; three first-setup bugs fixed and documented in `docs/bugfixes/authentik-2026-04-20.md`). The outstanding piece is the first production use-case: putting Paperless-ngx `/admin` behind an Authentik forward-auth middleware. That validates the pattern for broader rollout.
 
 ### Paperless-ngx security hardening phases
 
