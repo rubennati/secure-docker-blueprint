@@ -1,14 +1,17 @@
 services:
 
   # --------------------------------------------------------
-  # PORTAINER AGENT
+  # PORTAINER AGENT (Edge Mode — default)
   # --------------------------------------------------------
-  # Runs on each host that a central Portainer server should manage.
-  # The central server connects via TCP on port 9001 with a shared
-  # secret. Deploy one agent per host.
+  # Runs on each remote host that a central Portainer server should
+  # manage. Edge mode = agent opens an outbound WebSocket to the
+  # central Portainer. No inbound port needed — works behind NAT,
+  # firewalls, Tailscale.
+  #
+  # Counterpart to core/hawser/ for the Dockhand path.
   #
   # For a single-host setup (Portainer and Docker on the same machine)
-  # you do NOT need the agent — core/portainer/ talks to its local
+  # you do NOT need this — core/portainer/ talks to its local
   # socket-proxy directly.
   # --------------------------------------------------------
   agent:
@@ -23,39 +26,40 @@ services:
 
     # --- Configuration ---
     environment:
-      # Shared secret. Paste the same value into Portainer UI when
-      # adding this host as an Edge / Remote environment.
-      AGENT_SECRET: ${AGENT_SECRET}
-      # Single-host / non-swarm — no cluster probing
-      AGENT_CLUSTER_ADDR: ""
+      # Edge Mode
+      EDGE: "1"
+      EDGE_ID: ${EDGE_ID}
+      EDGE_KEY: ${EDGE_KEY}
+      # Set to 1 only if the central Portainer uses a self-signed cert.
+      EDGE_INSECURE_POLL: "0"
       LOG_LEVEL: INFO
 
     # --- Storage ---
-    # The agent needs to see Docker resources directly. Using the host
-    # docker.sock (read-write) is the upstream-recommended path. If a
-    # filtered socket-proxy is preferred, see the comment block below.
+    # Portainer Agent needs broad Docker API access (containers, volumes,
+    # networks, images, swarm, tasks, secrets, configs, exec, build).
+    # A filtered socket-proxy would have to allow nearly everything, so
+    # the upstream-recommended direct /var/run/docker.sock is used here.
+    # Same trade-off as core/hawser/.
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /var/lib/docker/volumes:/var/lib/docker/volumes
       - /:/host:ro
 
-    # --- Networking ---
-    # The agent must be reachable from the central Portainer server.
-    # Expose 9001 only on a trusted interface — Tailscale address,
-    # private LAN, or behind a firewall rule allowing only Portainer.
-    ports:
-      - "9001:9001/tcp"
-
 # --------------------------------------------------------
-# ALTERNATIVE: socket-proxy pattern (matches core/portainer style)
+# ALTERNATIVE: Classic Agent mode (inbound TCP 9001)
 # --------------------------------------------------------
-# Portainer Agent can also connect through a filtered socket-proxy.
-# Trade-off: socket-proxy requires broad permissions for the agent to
-# do its job (containers, volumes, networks, images, events, swarm,
-# tasks, exec). The security gain vs. direct docker.sock is small for
-# a management agent. Upstream recommendation is direct socket.
+# If the central Portainer cannot reach this host via an outbound
+# WebSocket (no internet egress, air-gapped, etc.), use the classic
+# mode: central Portainer connects inbound to port 9001 with the
+# shared secret.
 #
-# If you still want socket-proxy: copy the pattern from
-# core/portainer/docker-compose.yml, set
-#   command: "--host tcp://socket-proxy:2375"
-# on the agent, and drop the /var/run/docker.sock volume.
+# To switch:
+#   1. Replace the `environment:` block with:
+#        AGENT_SECRET: "${AGENT_SECRET}"
+#        AGENT_CLUSTER_ADDR: ""
+#        LOG_LEVEL: INFO
+#   2. Add a ports entry:
+#        ports:
+#          - "9001:9001/tcp"
+#   3. Expose port 9001 only on a trusted interface (Tailscale,
+#      private LAN, firewall rule pinning source to Portainer host).

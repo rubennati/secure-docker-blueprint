@@ -2,67 +2,70 @@
 
 > **Status: Draft — not yet live-tested.**
 
-Remote Docker agent for [Portainer](../portainer/). Runs on each additional host you want to manage from a central Portainer UI.
+Remote Docker agent for [Portainer](../portainer/). Runs on each additional host that a central Portainer should manage.
 
 **When you need it:**
-- You have Portainer running on Host A and want to manage Docker on Host B, C, D from the same UI
+- Portainer runs on Host A, you want to manage Docker on Host B, C, D from the same UI
 - Multi-host homelab / small-fleet setup
 
 **When you don't need it:**
-- Portainer and your Docker daemon are on the same host → use [`core/portainer/`](../portainer/) alone, the Agent is unnecessary
+- Portainer and Docker are on the same host → [`core/portainer/`](../portainer/) alone is enough
 
 ## Counterpart
 
-This is the Portainer equivalent of [`core/hawser/`](../hawser/) (which is the Dockhand agent). If you chose Dockhand as your Docker UI, use Hawser on remote hosts. If you chose Portainer, use this Agent.
+Parallel to [`core/hawser/`](../hawser/) (the Dockhand agent). Pick whichever UI stack you use:
 
-## Architecture
+| Central UI | Agent on remote hosts |
+|---|---|
+| `core/dockhand/` | `core/hawser/` |
+| `core/portainer/` | `core/portainer-agent/` ← this |
 
-| Service | Image | Purpose |
-|---------|-------|---------|
-| `agent` | `portainer/agent:2.x` | Exposes Docker API on port 9001 with shared-secret auth |
+## Modes
 
-## Setup
+Two connection modes; pick one.
 
-Run this on each **remote** host that the central Portainer should manage.
+### Edge Mode (default, recommended)
 
-```bash
-cp .env.example .env
-# Generate a strong shared secret
-openssl rand -hex 32 > /tmp/agent-secret
-sed -i "s|^AGENT_SECRET=.*|AGENT_SECRET=$(cat /tmp/agent-secret)|" .env
-# Save the secret — you'll paste it into the central Portainer UI
-cat /tmp/agent-secret
-rm /tmp/agent-secret
+Agent opens an outbound WebSocket to the central Portainer server. **No inbound port required** — works behind NAT, firewalls, Tailscale / WireGuard, air-gapped with internet egress.
 
-docker compose up -d
-```
+Setup flow:
 
-Then in the central Portainer UI:
+1. In the **central Portainer UI:** Environments → Add environment → Docker Standalone → **Edge Agent Standard**
+2. Wizard shows `EDGE_ID` and `EDGE_KEY` — copy both
+3. On the remote host:
+   ```bash
+   cp .env.example .env
+   # Paste the two values from the wizard:
+   sed -i "s|^EDGE_ID=.*|EDGE_ID=<id-from-wizard>|" .env
+   sed -i "s|^EDGE_KEY=.*|EDGE_KEY=<key-from-wizard>|" .env
 
-1. Settings → Environments → Add environment
-2. Connection type: **Agent**
-3. Environment URL: `<remote-host-ip-or-tailscale>:9001`
-4. Paste the shared secret
-5. Test connection → Add
+   docker compose up -d
+   docker compose logs -f
+   ```
+4. Back in Portainer UI: environment shows as connected within ~30 s
+
+### Classic Mode (inbound TCP 9001)
+
+Only if Edge Mode doesn't fit — e.g. central Portainer has no internet egress. Agent listens on port 9001, central Portainer connects inbound with a shared secret.
+
+See the `docker-compose.yml` comments for the switch. You'll need to:
+- Swap environment variables to `AGENT_SECRET` + port 9001 mapping
+- Expose port 9001 only on a trusted interface (Tailscale, private LAN)
 
 ## Security Model
 
-- **Port 9001 must only be reachable from the central Portainer server.** Typical options:
-  - Tailscale / WireGuard private network (recommended)
-  - LAN-only with firewall rule pinning the source to the Portainer host
-  - Public exposure behind additional TLS / Authentik is possible but not shipped here
-- **`AGENT_SECRET`** is the only authentication — treat it like a root password for Docker on this host.
-- **Direct `/var/run/docker.sock` mount** — Portainer Agent needs broad Docker API access. A filtered socket-proxy is technically possible but the allow-list has to be so wide that the security gain is marginal. Upstream recommends direct socket.
-- **`/host:ro` mount** — Portainer uses this to show host volumes / paths in the UI. Read-only. Can be dropped if you don't need host-path browsing.
+- **`EDGE_KEY` (or `AGENT_SECRET`)** is the only authentication — treat it like a root password for Docker on this host.
+- **Direct `/var/run/docker.sock` mount** — Portainer Agent needs broad Docker API access (containers, volumes, networks, images, swarm, tasks, secrets, configs, exec, build). A filtered socket-proxy would have to allow nearly all endpoints, so the security gain is marginal. Same trade-off as [`core/hawser/`](../hawser/).
+- **`/host:ro` mount** — Portainer uses this to show host volumes / paths. Read-only. Drop if host-path browsing isn't needed.
 - **`no-new-privileges:true`** on the container.
 
 ## Known Issues
 
 - **Live-tested: no.**
-- **`APP_TAG=2.39.1`** — keep in sync with the central Portainer version. Version mismatch between server and agent usually works but can cause UI quirks.
-- **No Traefik integration** — the agent speaks TCP (not HTTP), so it bypasses Traefik. Port 9001 is bound directly on the host.
+- **`APP_TAG=2.39.1`** — keep in sync with the central Portainer major version.
+- **Edge Mode needs outbound HTTPS to the central Portainer** — typically 443. Check egress firewall if the agent never shows as connected.
 
 ## Details
 
 - Docker Hub: https://hub.docker.com/r/portainer/agent
-- Docs: https://docs.portainer.io/admin/environments/add/docker-standalone
+- Edge Agent docs: https://docs.portainer.io/admin/environments/add/docker-standalone#edge-agent-standard
