@@ -33,7 +33,7 @@ Production-ready configurations for 15+ services — with standardized patterns,
 | [CrowdSec](core/crowdsec/) | ✅ | Intrusion detection engine — log analysis, threat decisions, AppSec/WAF |
 | [Whoami](core/whoami/) | ✅ | Traefik debug service to verify routing, TLS, and middlewares |
 | [Dockhand](core/dockhand/) | ✅ | Docker management with Git-based stacks |
-| [Portainer](core/portainer/) | ⚠️ | Docker management UI |
+| [Portainer](core/portainer/) | ✅ | Docker management UI |
 | [Hawser](core/hawser/) | ✅ | Remote Docker agent for Dockhand |
 
 Planned in `core/`: Keycloak (alternative / heavier IAM next to Authentik).
