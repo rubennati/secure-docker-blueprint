@@ -208,7 +208,7 @@ The command prints the key once — save it immediately.
 
 ### Wire the plugin in core/traefik/
 
-1. Add the key to `core/traefik/.env` as `CROWDSEC_BOUNCER_KEY=<key>`. The plugin reads it directly from the environment — no Docker Secret file is involved.
+1. Add the key to `core/traefik/.env` as `CROWDSEC_BOUNCER_KEY=<key>`.
 2. Declare the plugin in `ops/templates/traefik.yml.tmpl` under `experimental.plugins`.
 3. Uncomment the `sec-crowdsec` middleware block in `ops/templates/dynamic/integrations.yml.tmpl`.
 4. Render the templates and restart Traefik:
