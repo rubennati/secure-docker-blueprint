@@ -35,7 +35,7 @@ Production-ready configurations for 15+ services — with standardized patterns,
 | [Dockhand](core/dockhand/) | ✅ | Docker management with Git-based stacks |
 | [Portainer](core/portainer/) | ✅ | Docker management UI |
 | [Hawser](core/hawser/) | ✅ | Remote Docker agent for Dockhand |
-| [Portainer Agent](core/portainer-agent/) | ⚠️ | Remote Docker agent for Portainer (multi-host) |
+| [Portainer Agent](core/portainer-agent/) | ✅ | Remote Docker agent for Portainer (multi-host) |
 
 Planned in `core/`: Keycloak (alternative / heavier IAM next to Authentik).
 

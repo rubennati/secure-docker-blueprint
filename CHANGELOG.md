@@ -8,7 +8,36 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
-Next milestone: **v0.3.0 — Monitoring rollout.** All four drafted `monitoring/` apps live-tested with real probes and at least one end-to-end alert flow through n8n.
+Next: CrowdSec Bouncer Plugin wired into Traefik (Phase 2 activation — IPS actually blocks flagged IPs at the proxy).
+
+## [0.3.0] — 2026-04-20
+
+### Core complete
+
+Every core service reachable on a fresh install, both multi-host management paths (Dockhand + Hawser, Portainer + Portainer Agent) proven end-to-end.
+
+### Fixed
+
+- **Traefik**: `integrations.yml` template contained a dangling `http:/middlewares:` structure that aborted the dynamic config load with "http cannot be a standalone element". File is now fully commented by default — no routers, middlewares, or ACME issuance silently disabled on first boot.
+- **Portainer**: removed custom wget-based healthcheck. The Portainer image ships no wget/curl/shell, so any CMD-SHELL healthcheck left the container marked unhealthy indefinitely. Runs healthy by default now.
+
+### Added
+
+- **Portainer Edge Agent** (`core/portainer-agent/`) as the counterpart to Hawser. Both agents tested end-to-end on a fresh install:
+  - Dockhand + Hawser: everything on standard HTTPS 443 via Traefik
+  - Portainer + Portainer Agent: requires an extra TCP 8000 tunnel port on the central host (VPN-bound only; see inline documentation)
+- **Certificate strategy** documented in `core/traefik/README.md`: wildcard vs. per-domain, which env vars + which compose labels go with each. Previously implicit, now explicit.
+- **`docker-compose.override.yml` pattern** in `core/portainer/`: local installation-specific ports / overlays stay out of the tracked compose, gitignored.
+- **Status column** on the Core Infrastructure table in the root README, aligned with the ✅ / ⚠️ legend used elsewhere.
+
+### Documentation
+
+- `docs/bugfixes/traefik-2026-04-20.md`, `docs/bugfixes/portainer-2026-04-20.md` capture root cause + fix for the two bugs above.
+- Per-service READMEs updated where setup needed a missing step: Dockhand ("Adding the local environment"), Hawser ("environment must be saved in Dockhand before the token works"), Portainer Agent (4-step Edge Mode setup + VPN-bind guidance).
+
+### Moved / renamed
+
+- `core/acme-certs/` marked draft (⚠️) — extracted to its own repository. The blueprint no longer treats it as live-tested core.
 
 ## [0.2.0] — 2026-04-18
 
@@ -92,6 +121,7 @@ Initial public release.
 - No CI workflows yet (compose validate, markdown lint, secret scan) — planned for 0.2.0
 - No automatic backup orchestration — planned in Evaluating section of ROADMAP
 
-[Unreleased]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/rubennati/secure-docker-blueprint/releases/tag/v0.3.0
 [0.2.0]: https://github.com/rubennati/secure-docker-blueprint/releases/tag/v0.2.0
 [0.1.0]: https://github.com/rubennati/secure-docker-blueprint/releases/tag/v0.1.0
