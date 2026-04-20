@@ -26,7 +26,15 @@ Two connection modes; pick one.
 
 ### Edge Mode (default, recommended)
 
-Agent opens an outbound WebSocket to the central Portainer server. **No inbound port required** — works behind NAT, firewalls, Tailscale / WireGuard, air-gapped with internet egress.
+Agent opens an outbound WebSocket to the central Portainer server. **No inbound port required on the agent host** — works behind NAT, firewalls, Tailscale / WireGuard.
+
+**On the central Portainer host** port 8000 must be reachable from the agent. In this blueprint, that means uncommenting the `ports:` block in [`core/portainer/docker-compose.yml`](../portainer/docker-compose.yml) and setting `PORTAINER_EDGE_BIND` to the central host's Tailscale IP. Do NOT bind 0.0.0.0 — port 8000 has no TLS, authentication is `EDGE_KEY` only.
+
+**About the URL:** `EDGE_KEY` is a base64 bundle that already contains the Portainer server URL + auth. No separate URL env var is needed. To verify what's inside:
+
+```bash
+echo '<EDGE_KEY-value>' | base64 -d
+```
 
 Setup flow:
 
