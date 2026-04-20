@@ -84,6 +84,26 @@ services:
       - proxy-public
       - app-internal
 
+    # Edge tunnel port — ONLY needed if you deploy Portainer Edge Agents
+    # (see core/portainer-agent/). Agents connect back here on TCP 8000.
+    # Disabled by default.
+    #
+    # To enable, the recommended pattern is NOT uncommenting the block
+    # below — that would dirty the tracked compose file. Instead create
+    # `docker-compose.override.yml` in this directory (gitignored) with:
+    #
+    #   services:
+    #     app:
+    #       ports:
+    #         - "<your-tailscale-or-wireguard-ip>:8000:8000/tcp"
+    #
+    # Bind to the VPN interface (Tailscale / WireGuard / …) ONLY — never
+    # 0.0.0.0, never a public IP. Port 8000 has no TLS and only EDGE_KEY
+    # as authentication; a private interface is the baseline.
+    #
+    # ports:
+    #   - "<tailscale-ip>:8000:8000/tcp"
+
     # --- Traefik ---
     labels:
       - "traefik.enable=true"
