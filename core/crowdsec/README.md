@@ -6,55 +6,50 @@ CrowdSec analyzes Traefik access logs, detects threats (brute force, CVE probes,
 
 ---
 
-## How it works — the three layers
+## Architecture
 
-Three independent components. The Engine is the brain; Phase 2 and Phase 3 are two different arms that actually block.
+Three independent components. The Engine parses logs and decides; the two bouncers enforce at different network layers.
 
 ```
                       Internet
                          │
                          ▼
            ┌─────────────────────────────┐
-   Phase 3 │  OS firewall (nftables)     │  drops packets at the host
-           └─────────────┬───────────────┘  (before they reach Traefik)
+   Phase 3 │  Firewall Bouncer           │  nftables rules on the host
+           └─────────────┬───────────────┘  drop packets before Traefik
                          ▼
            ┌─────────────────────────────┐
-   Phase 2 │  Traefik Bouncer Plugin     │  rejects HTTP requests (403)
-           └─────────────┬───────────────┘  at the proxy level
+   Phase 2 │  Traefik Bouncer Plugin     │  reject HTTP requests (403)
+           └─────────────┬───────────────┘  at the proxy layer
                          ▼
                     Your apps
 
            ┌─────────────────────────────┐
-   Phase 1 │  CrowdSec Engine            │  reads Traefik logs,
-           │  detect + decide            │  decides who's bad,
-           └─────────────┬───────────────┘  stores decisions in its DB
+   Phase 1 │  Security Engine            │  parses Traefik logs,
+           │                             │  runs scenarios,
+           └─────────────┬───────────────┘  stores ban decisions
                          │
              queried by Phase 2 + Phase 3
 ```
 
-**Phase 1 is the only thing this directory runs.** Phase 2 configuration lives in `core/traefik/`; Phase 3 is an apt package on the host.
+The Engine is the only component that runs from this directory. Phase 2 lives in `core/traefik/` (Traefik static + dynamic config plus an env var for the bouncer key). Phase 3 is an apt package installed on the host — it never enters a container.
 
-## Does Phase 1 alone do anything useful?
+### Phase roles
 
-Yes — but it does **not** block. It:
+- **Phase 1 — Security Engine.** Detection and decision. Reads logs, matches scenarios (brute force, CVE probes, path traversal, aggressive crawling), produces ban decisions. Stores decisions in a local database. On its own, enforces nothing.
+- **Phase 2 — Traefik Bouncer Plugin.** HTTP-layer enforcement. The plugin polls the Engine every 60 s, caches the current decision list, and rejects matching requests with HTTP 403 before they reach any app. Works only for traffic that goes through Traefik.
+- **Phase 3 — Firewall Bouncer.** Network-layer enforcement. Sets nftables rules on the host, dropping packets from flagged IPs regardless of destination port. Protects services Traefik does not terminate (SSH, exposed database ports, directly mapped containers) and drops attack traffic earlier in the request path.
 
-- Shows you in real time who is probing your server (`cscli decisions list`)
-- Builds a local threat database you can act on manually
-- Optionally joins the CrowdSec community blocklist (downloads + contributes threat intel)
-- Lets you tune scenarios before turning on enforcement (catches false positives before they bite legit users)
+Phases 2 and 3 are independent: either can run without the other, or both together for defense in depth.
 
-Phase 1 alone is **observability**. Attackers still reach your apps until you add Phase 2 or Phase 3.
+### Typical deployments
 
-## Which phases do you need?
-
-| Goal | Setup |
-|---|---|
-| See who is attacking me | Phase 1 |
-| Block HTTP attacks at Traefik | Phase 1 + Phase 2 |
-| Block SSH brute force / non-HTTP at the firewall | Phase 1 + Phase 3 |
-| Defense in depth (drop packets earlier + reject at HTTP) | Phase 1 + Phase 2 + Phase 3 |
-
-Phase 3 is fully independent of Traefik — it operates at OS nftables level and will protect ports Traefik never sees (SSH, exposed database ports, etc.). Phase 2 is HTTP-only but gives richer feedback (403 with reason).
+| Deployment | Components | Outcome |
+|---|---|---|
+| Detection only | Phase 1 | Visibility into attacks; no blocking. Useful for tuning before enabling enforcement. |
+| HTTP protection | Phase 1 + Phase 2 | Traefik rejects requests from flagged IPs. Blocks web attacks, leaves non-HTTP ports untouched. |
+| Network protection | Phase 1 + Phase 3 | Host firewall drops packets from flagged IPs across all ports. Covers SSH and non-HTTP services; drops traffic earlier. |
+| Defense in depth | Phase 1 + Phase 2 + Phase 3 | Network-layer drop for all protocols; HTTP-layer reject with richer feedback when packets do reach Traefik. |
 
 ---
 
@@ -201,58 +196,55 @@ Scenarios that trigger on Traefik traffic:
 
 ## Phase 2: Traefik Bouncer Plugin
 
-Turns Phase 1 decisions into actual HTTP-layer blocking. Configuration lives in `core/traefik/` — this directory only generates the bouncer API key.
+HTTP-layer enforcement. Configuration spans two directories: the bouncer API key is generated here, and the plugin itself is declared in `core/traefik/`.
 
-### What you do here
+### Generate the bouncer key
 
 ```bash
-# Generate the API key
 docker exec crowdsec cscli bouncers add traefik-bouncer
-# Save the key string that is printed — it's shown only once.
 ```
 
-### What you do in core/traefik/
+The command prints the key once — save it immediately.
 
-1. Paste the key as `CROWDSEC_BOUNCER_KEY=<key>` in `core/traefik/.env` (plain env var — the plugin reads it directly, no Docker Secret file needed)
-2. Enable the plugin in `ops/templates/traefik.yml.tmpl` (static config — `experimental.plugins` block)
-3. Uncomment the `sec-crowdsec` middleware in `ops/templates/dynamic/integrations.yml.tmpl`
-4. Render + restart Traefik:
+### Wire the plugin in core/traefik/
+
+1. Add the key to `core/traefik/.env` as `CROWDSEC_BOUNCER_KEY=<key>`. The plugin reads it directly from the environment — no Docker Secret file is involved.
+2. Declare the plugin in `ops/templates/traefik.yml.tmpl` under `experimental.plugins`.
+3. Uncomment the `sec-crowdsec` middleware block in `ops/templates/dynamic/integrations.yml.tmpl`.
+4. Render the templates and restart Traefik:
    ```bash
    cd ../traefik
    ./ops/scripts/render.sh
    docker compose restart traefik
    ```
-5. Add `sec-crowdsec@file` to the middleware list of any router that should get the bouncer in front of it
+5. Add `sec-crowdsec@file` to the middleware list of routers that should be gated by the bouncer.
 
-The `core/traefik/README.md` section "CrowdSec Bouncer Plugin (optional)" has the full step-by-step.
+Full reference including the exact plugin block: `core/traefik/README.md`, section "CrowdSec Bouncer Plugin".
 
 ---
 
-## Phase 3: Firewall Bouncer (host-level, independent of Traefik)
+## Phase 3: Firewall Bouncer
 
-Drops packets at the OS nftables level — runs before Traefik even sees the request. Useful for protecting non-HTTP ports (SSH, exposed databases) or for adding a pre-Traefik layer.
-
-Phase 3 is an **apt package on the host**, not a Docker container, because it needs to manipulate host firewall rules.
+Host-level enforcement via nftables. Installed as a system package (apt) and configured on the host — not inside any container — because it manipulates host firewall rules.
 
 ```bash
-# 1. Install on the host (not in a container)
+# Install the bouncer (on the host, not in a container)
 sudo apt install crowdsec-firewall-bouncer-nftables
 
-# 2. Generate a bouncer key from this CrowdSec container
+# Generate an API key from the CrowdSec Engine
 docker exec crowdsec cscli bouncers add firewall-bouncer
-# Save the printed key string.
 
-# 3. Configure the host-side bouncer
+# Configure the bouncer
 sudo nano /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
 # Set:
 #   api_url: http://127.0.0.1:8080/   (matches CROWDSEC_LAPI_PORT)
-#   api_key: <the key from step 2>
+#   api_key: <key from the previous command>
 
-# 4. Restart the service
+# Apply
 sudo systemctl restart crowdsec-firewall-bouncer
 ```
 
-The bouncer talks to CrowdSec's LAPI on `127.0.0.1:8080` (configurable via `CROWDSEC_LAPI_PORT` in this directory's `.env`). No Traefik involved.
+The bouncer polls CrowdSec's LAPI on `127.0.0.1:8080` (configurable via `CROWDSEC_LAPI_PORT`). Traefik is not in the path; the bouncer operates at the kernel firewall layer and covers every port on the host.
 
 ---
 
