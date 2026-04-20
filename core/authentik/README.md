@@ -4,16 +4,25 @@ Self-hosted identity provider. Acts as a central SSO endpoint for other apps in 
 
 ## Architecture
 
-Four services:
+Five services (four long-running plus a one-shot init):
 
 | Service | Image | Purpose |
 |---------|-------|---------|
+| `init-perms` | `alpine:3.19` | One-shot: chowns bind-mount directories to UID 1000 so the non-root Authentik image can write there. Exits in <1s, runs on every `up -d`. |
 | `server` | `ghcr.io/goauthentik/server` (cmd `server`) | Web UI + REST API, the only container exposed through Traefik |
 | `worker` | Same image (cmd `worker`) | Background jobs: email, LDAP/directory sync, policy evaluation |
 | `db` | `postgres:16-alpine` | Primary data store (users, groups, tokens, events) |
 | `redis` | `redis:7.4-alpine` | Session cache + Celery broker for the worker |
 
 `server` and `worker` share the same image — only the command differs. Both need access to `db` and `redis`; only `server` needs access to the outside world (for initial setup flows and user logins).
+
+### Why the init container
+
+Recent Authentik images run as UID 1000 (non-root) and deliberately refuse to fix volume permissions themselves — the relevant log line is `"Not running as root, disabling permission fixes"`. On a fresh install the bind-mounted `./volumes/data`, `./volumes/certs`, and `./volumes/custom-templates` are owned by `root:root` and the container crashes with `PermissionError: [Errno 13] Permission denied`.
+
+`init-perms` runs as root inside a short-lived Alpine container, creates the three subdirectories, and chowns them to `1000:1000` before `server` and `worker` start (`depends_on: service_completed_successfully`). The long-running Authentik containers stay non-root — only the init container needs privilege, and only for the ~500ms it takes to exit.
+
+Upstream reference: https://docs.goauthentik.io/troubleshooting/image_upload/
 
 ### Secret handling
 
@@ -40,7 +49,8 @@ openssl rand -base64 32 | tr -d '\n' > .secrets/db_pwd.txt
 openssl rand -base64 60 | tr -d '\n' > .secrets/authentik_secret_key.txt
 printf '%s' 'YOUR-SMTP-PASSWORD' > .secrets/smtp_password.txt
 
-# 3. Start
+# 3. Start — the init-perms service chowns the bind-mount directories
+#    to UID 1000 before server and worker start. No host-side sudo needed.
 docker compose up -d
 
 # 4. Wait for the server healthcheck to pass
@@ -109,7 +119,8 @@ Similar pattern — create a `SAML Provider`, download the metadata XML from Aut
 - **Setup URL is public until an admin exists.** `/if/flow/initial-setup/` lets anyone create `akadmin`. Complete it immediately after the first boot; if you forget, anyone hitting that URL first becomes the admin.
 - **`AUTHENTIK_SECRET_KEY` rotation invalidates all existing sessions and API tokens.** Plan a maintenance window.
 - **Email flows depend on SMTP.** Password reset, invitation, and event notifications silently fail if SMTP is misconfigured. Test with a real account after setup.
-- **Worker volumes are shared with server.** Both mount `./volumes/media` and `./volumes/custom-templates`. Don't change the mount paths without updating both services.
+- **Worker volumes are shared with server.** Both mount `./volumes/data` and `./volumes/custom-templates`. Don't change the mount paths without updating both services.
+- **Legacy `/media` mount.** Authentik has migrated from `/media` to `/data`. If you are upgrading a pre-2025 install: stop the stack, move `volumes/media` to `volumes/data`, run `up -d` — the init container will re-chown.
 
 ## Details
 
