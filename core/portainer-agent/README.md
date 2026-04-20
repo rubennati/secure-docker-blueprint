@@ -4,64 +4,87 @@
 
 Remote Docker agent for [Portainer](../portainer/). Runs on each additional host that a central Portainer should manage.
 
-**When you need it:**
-- Portainer runs on Host A, you want to manage Docker on Host B, C, D from the same UI
-- Multi-host homelab / small-fleet setup
+> ⚠️ **Requires an extra port on the central Portainer host.** Unlike the Dockhand + Hawser pair (which stays on standard HTTPS 443 through Traefik), Portainer Edge Agents connect back on TCP 8000 — a separate port that has no TLS and only `EDGE_KEY` as authentication.
+>
+> The blueprint's default `core/portainer/` compose does NOT publish that port. If you deploy Agents, you have to enable it manually and bind it to a private interface (Tailscale / WireGuard). See [Setup](#setup) below.
+>
+> If you don't want that extra exposure, use [Dockhand + Hawser](../hawser/) instead — equivalent multi-host capability without opening additional ports.
 
-**When you don't need it:**
+**When you need this:**
+- Portainer runs on Host A, you want to manage Docker on Host B, C, D from the same UI
+- You already picked Portainer as your UI and need to scale beyond one host
+
+**When you don't need this:**
 - Portainer and Docker are on the same host → [`core/portainer/`](../portainer/) alone is enough
+- You haven't committed to Portainer yet → Dockhand + Hawser is the cleaner multi-host path
 
 ## Counterpart
 
 Parallel to [`core/hawser/`](../hawser/) (the Dockhand agent). Pick whichever UI stack you use:
 
-| Central UI | Agent on remote hosts |
-|---|---|
-| `core/dockhand/` | `core/hawser/` |
-| `core/portainer/` | `core/portainer-agent/` ← this |
+| Central UI | Agent on remote hosts | Extra port on central? |
+|---|---|---|
+| `core/dockhand/` | `core/hawser/` | No — 443 only |
+| `core/portainer/` | `core/portainer-agent/` ← this | Yes — TCP 8000 on Tailscale-bound address |
 
-## Modes
+## Setup
 
-Two connection modes; pick one.
+### Step 1 — Expose port 8000 on the central Portainer host
 
-### Edge Mode (default, recommended)
-
-Agent opens an outbound WebSocket to the central Portainer server. **No inbound port required on the agent host** — works behind NAT, firewalls, Tailscale / WireGuard.
-
-**About the URL:** `EDGE_KEY` is a base64 bundle that already contains the Portainer server URL + auth. No separate URL env var is needed. To verify what's inside:
-
-```bash
-echo '<EDGE_KEY-value>' | base64 -d
-```
-
-**Important — central Portainer side:** the agents connect to TCP 8000 on the central host. The blueprint's `core/portainer/` does NOT publish that port by default (clean compose). If you want Edge Agents, add this to `core/portainer/docker-compose.yml` under the `app` service:
+In `core/portainer/docker-compose.yml` on the host where central Portainer runs, add under the `app` service `# --- Networking ---` block:
 
 ```yaml
-ports:
-  - "<your-tailscale-ip>:8000:8000/tcp"
+    ports:
+      - "<your-tailscale-ip>:8000:8000/tcp"
 ```
 
-Bind to the Tailscale / WireGuard interface only. Port 8000 has no TLS and only `EDGE_KEY` as auth — never bind `0.0.0.0`.
+Bind to the Tailscale / WireGuard interface only — never `0.0.0.0`. Port 8000 has no TLS and only `EDGE_KEY` as authentication, so public exposure is not an option.
 
-If the extra port annoys you, the clean alternative is [Dockhand + Hawser](../hawser/): same multi-host capability, everything stays on standard HTTPS 443 via Traefik.
+Apply and verify:
 
-Setup flow:
+```bash
+docker compose up -d --force-recreate app
+ss -tlnp | grep 8000
+# Expected: LISTEN ... <your-tailscale-ip>:8000 ...
+```
 
-1. In the **central Portainer UI:** Environments → Add environment → Docker Standalone → **Edge Agent Standard**
-2. Wizard shows `EDGE_ID` and `EDGE_KEY` — copy both
-3. On the remote host:
-   ```bash
-   cp .env.example .env
-   # Paste the two values from the wizard:
-   sed -i "s|^EDGE_ID=.*|EDGE_ID=<id-from-wizard>|" .env
-   sed -i "s|^EDGE_KEY=.*|EDGE_KEY=<key-from-wizard>|" .env
+### Step 2 — Register the environment in the central Portainer UI
 
-   docker compose up -d
-   docker compose logs -f
-   ```
-4. Back in Portainer UI: environment shows as connected within ~30 s
+1. Open the central Portainer UI
+2. Environments → **Add environment** → Docker Standalone → **Edge Agent Standard**
+3. Give it a name
+4. **Click `Add` to save** — the environment record must exist before the agent can connect. Generating `EDGE_ID` / `EDGE_KEY` without saving causes the agent to loop with a failed handshake.
+5. After saving, the wizard shows `EDGE_ID` and `EDGE_KEY` — copy both
 
-### Classic Mode (inbound TCP 9001)
+> **About the URL:** `EDGE_KEY` is a base64 bundle that already contains the Portainer server URL + auth. No separate URL env var is needed. Decode to inspect: `echo '<EDGE_KEY-value>' | base64 -d`
+
+### Step 3 — Deploy the agent on the remote host
+
+```bash
+cd core/portainer-agent
+cp .env.example .env
+# Paste the two values from Step 2:
+sed -i "s|^EDGE_ID=.*|EDGE_ID=<id-from-wizard>|" .env
+sed -i "s|^EDGE_KEY=.*|EDGE_KEY=<key-from-wizard>|" .env
+
+docker compose up -d
+docker compose logs -f
+```
+
+### Step 4 — Verify
+
+- Agent log shows `Connected` — no `connection refused` loop
+- Central Portainer UI → Environments: the new environment shows as `Connected` within ~30 seconds
+- From another host on the same Tailnet:
+  ```bash
+  # Tailscale interface reachable
+  curl --connect-timeout 3 http://<central-tailscale-ip>:8000
+  # Public interface NOT reachable
+  curl --connect-timeout 3 https://<central-public-ip>:8000
+  # Expected: timeout / refused
+  ```
+
+## Alternative: Classic Mode (inbound TCP 9001 on the agent)
 
 Only if Edge Mode doesn't fit — e.g. central Portainer has no internet egress. Agent listens on port 9001, central Portainer connects inbound with a shared secret.
 
