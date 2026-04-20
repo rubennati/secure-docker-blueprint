@@ -30,9 +30,16 @@
 #     #   4. CROWDSEC_BOUNCER_KEY=<key> in .env
 #     #
 #     # Mode: stream (polls LAPI every 60s, caches decisions).
-#     # AppSec/WAF: inspects request bodies for SQLi, XSS, etc.
-#     #   - Requires appsec.yaml in core/crowdsec/config/
-#     #   - Set crowdsecAppsecEnabled: false to disable WAF
+#     #
+#     # AppSec/WAF is disabled here by default. The AppSec process does
+#     # not auto-start with CrowdSec — it needs its own config in
+#     # core/crowdsec/config/appsec.yaml and the port 7422 to be reachable
+#     # from Traefik. With crowdsecAppsecEnabled=true + unreachable AppSec,
+#     # crowdsecAppsecUnreachableBlock=true makes the bouncer fail-closed
+#     # on EVERY request (HTTP 403), which is almost always not what you
+#     # want for first setup. Enable AppSec only after its server side is
+#     # verified reachable (`curl crowdsec:7422` from the Traefik container).
+#     #
 #     # Geo-blocking: install crowdsecurity/geoloc-enrich collection
 #     #   + a scenario like crowdsecurity/cdn-whitelist
 #     # ------------------------------------------------------
@@ -45,10 +52,10 @@
 #           crowdsecLapiScheme: http
 #           crowdsecLapiHost: crowdsec:8080
 #           crowdsecLapiKey: "${CROWDSEC_BOUNCER_KEY}"
-#           crowdsecAppsecEnabled: true
+#           crowdsecAppsecEnabled: false
 #           crowdsecAppsecHost: crowdsec:7422
-#           crowdsecAppsecFailureBlock: true
-#           crowdsecAppsecUnreachableBlock: true
+#           crowdsecAppsecFailureBlock: false
+#           crowdsecAppsecUnreachableBlock: false
 #
 #     # ------------------------------------------------------
 #     # Authentik (SSO / Forward Auth)

@@ -218,11 +218,56 @@ The command prints the key once — save it immediately.
    ```bash
    cd ../traefik
    ./ops/scripts/render.sh
-   docker compose restart traefik
+   docker compose up -d --force-recreate traefik
    ```
-5. Add `sec-crowdsec@file` to the middleware list of routers that should be gated by the bouncer.
+5. Add `sec-crowdsec@file` to the middleware list of routers that should be gated by the bouncer. Example in an app's `docker-compose.yml`:
+   ```yaml
+   - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=sec-crowdsec@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+   ```
 
 Full reference including the exact plugin block: `core/traefik/README.md`, section "CrowdSec Bouncer Plugin".
+
+### Phase 2 verify
+
+Four checks, in order. Run after the Traefik restart in step 4.
+
+```bash
+# 1. Plugin loaded successfully in Traefik?
+docker compose -f ../traefik/docker-compose.yml logs traefik 2>&1 \
+  | grep -iE "plugin|bouncer" | tail -5
+# Expected: "Plugin bouncer loaded" — no "Plugins are disabled"
+# If "Plugins are disabled because an error has occurred":
+# read-only FS is blocking /plugins-storage. See
+# docs/bugfixes/traefik-crowdsec-plugin-2026-04-20.md.
+
+# 2. Bouncer actively pulls from CrowdSec?
+docker exec crowdsec cscli bouncers list
+# Expected: traefik-bouncer with a non-empty IP Address and a
+# recent "Last API pull" timestamp (within ~60 s).
+
+# 3. Middleware visible in Traefik dashboard?
+# https://<traefik-host>/dashboard/#/http/middlewares
+# Find sec-crowdsec@file — Status must be green "Success".
+# If "invalid middleware type or middleware does not exist":
+# plugin did not load (check 1).
+
+# 4. Functional ban test — proves end-to-end enforcement
+docker exec crowdsec cscli decisions add \
+  --ip <an-IP-you-can-reach-the-app-from> \
+  --duration 3m --reason "phase2-verify"
+
+# Wait for the plugin to pull the new decision (stream mode polls
+# every 60 s — do not test before that window elapses, or you will
+# still see the cached empty list and assume the ban is not enforced).
+sleep 65
+
+# From that IP, the protected app must now return HTTP 403.
+# After verifying, clean up:
+docker exec crowdsec cscli decisions delete \
+  --ip <an-IP-you-can-reach-the-app-from>
+```
+
+Do not ban the IP you administer the server from (Tailscale, LAN admin subnet) unless you have a separate path back in — the ban also blocks the Traefik dashboard, Dockhand, Portainer, etc.
 
 ---
 
