@@ -8,7 +8,27 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
-Next: CrowdSec Bouncer Plugin wired into Traefik (Phase 2 activation — IPS actually blocks flagged IPs at the proxy).
+Next: CrowdSec Firewall Bouncer (nftables) for host-level blocking that complements the L7 Traefik bouncer.
+
+## [0.4.0] — 2026-04-20
+
+### CrowdSec Bouncer Plugin live (Phase 2)
+
+The Traefik bouncer plugin now enforces CrowdSec decisions end-to-end on a fresh install. Banned IPs receive HTTP 403 at the proxy; legitimate traffic passes through unchanged. Proven with a browser ban test against a real router.
+
+### Fixed
+
+- **Traefik plugin storage**: `read_only: true` on the Traefik container prevented `experimental.plugins` from creating `/plugins-storage/`, which silently disabled the plugin manager and made every `sec-crowdsec@file` middleware reference return HTTP 404. Added a dedicated `./volumes/plugins-storage:/plugins-storage` bind mount — root FS stays read-only, plugins work.
+- **AppSec fail-closed default**: `integrations.yml.tmpl` shipped with `crowdsecAppsecEnabled: true` + `crowdsecAppsecUnreachableBlock: true`. With no AppSec server wired up, the plugin failed its WAF query on every request and blocked fail-closed (HTTP 403 with zero active decisions). All three AppSec flags now default to `false`; enable only when the AppSec server at :7422 is actually deployed.
+
+### Added
+
+- **Phase 2 verify section** in `core/crowdsec/README.md`: 4-step checklist (plugin loaded, bouncer pulls from LAPI, middleware registered in dashboard, functional ban test) with a warning not to ban the admin's own IP in stream-mode cache windows.
+
+### Documentation
+
+- `docs/bugfixes/traefik-crowdsec-plugin-2026-04-20.md` documents both first-setup bugs with a discriminator table — same visible failure mode (403/404 on routers with `sec-crowdsec@file`), different root causes, different fixes.
+- Root README: CrowdSec description updated from "Intrusion detection engine — log analysis, threat decisions, AppSec/WAF" to "Intrusion detection engine + Traefik bouncer plugin — log analysis, threat decisions, L7 blocking" to reflect the live Phase 2 posture.
 
 ## [0.3.0] — 2026-04-20
 

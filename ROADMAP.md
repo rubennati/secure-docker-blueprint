@@ -8,6 +8,10 @@ This document captures direction, not detailed changelogs. For shipped work see 
 
 ## Shipped
 
+### v0.4.0 — CrowdSec Bouncer Plugin live (2026-04-20)
+
+Phase 2 activation proven end-to-end: the Traefik bouncer plugin now enforces CrowdSec decisions at the proxy. Two first-setup bugs fixed along the way (read-only FS blocking plugin storage, AppSec fail-closed default).
+
 ### v0.3.0 — Core complete (2026-04-20)
 
 Every core service validated on a fresh install; both multi-host management paths proven end-to-end (Dockhand + Hawser / Portainer + Portainer Agent). Certificate strategy documented. Two shipped bug fixes (Traefik dynamic config load, Portainer healthcheck).
@@ -30,13 +34,9 @@ Pre-1.0 tags are set when a natural milestone is reached, not on a fixed cadence
 
 Next natural tag points, in order but without hard schedule:
 
-### CrowdSec Bouncer Plugin live
-
-CrowdSec engine (Phase 1) is already running and parsing Traefik logs. Phase 2 — the Traefik bouncer plugin that actually blocks flagged IPs — is prepared in `integrations.yml.tmpl` but commented out. Activation steps are documented in `core/crowdsec/README.md`.
-
 ### CrowdSec Firewall Bouncer (nftables)
 
-Host-level blocking, complements the Traefik bouncer which is L7-only. Drops packets before they reach Traefik. Architecturally separate from Phase 2 (different deployment pattern, OS-level install), so treated as its own tag.
+Host-level blocking, complements the L7 Traefik bouncer shipped in v0.4.0. Drops packets before they reach Traefik. Architecturally separate (different deployment pattern, OS-level install), so treated as its own tag.
 
 ### Authentik live + Paperless-ngx Forward-Auth
 

@@ -30,7 +30,7 @@ Production-ready configurations for 15+ services — with standardized patterns,
 | [OnlyOffice](core/onlyoffice/) | ✅ | Document editing server for Seafile, Nextcloud, etc. |
 | [dnsmasq](core/dnsmasq/) | ✅ | DNS forwarder with wildcard zones for Tailscale / split-DNS setups |
 | [acme-certs](core/acme-certs/) | ⚠️ | Certificate tool (acme.sh) for devices without Traefik (NAS, routers) |
-| [CrowdSec](core/crowdsec/) | ✅ | Intrusion detection engine — log analysis, threat decisions, AppSec/WAF |
+| [CrowdSec](core/crowdsec/) | ✅ | Intrusion detection engine + Traefik bouncer plugin — log analysis, threat decisions, L7 blocking |
 | [Whoami](core/whoami/) | ✅ | Traefik debug service to verify routing, TLS, and middlewares |
 | [Dockhand](core/dockhand/) | ✅ | Docker management with Git-based stacks |
 | [Portainer](core/portainer/) | ✅ | Docker management UI |
