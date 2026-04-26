@@ -67,14 +67,6 @@ When wp-admin is behind Tailscale or Authentik (Scenario B/C), these plugins are
 | WPS Limit Login | Brute-force protection | Tier 1 only (Traefik + CrowdSec handle this otherwise) |
 | Matomo | Privacy-friendly analytics | Self-hosted alternative to Google Analytics |
 
-### Avoid
-
-| Plugin | Why |
-|--------|-----|
-| Jetpack Protect | External Automattic connection, increases attack surface |
-| WP Super Cache | CVE history; caching should be at proxy level |
-| Wordfence | Heavy, duplicates what Traefik + CrowdSec already do |
-
 ## security.txt
 
 Every public website should have a `/.well-known/security.txt` file ([RFC 9116](https://www.rfc-editor.org/rfc/rfc9116)). It tells security researchers how to report vulnerabilities.
