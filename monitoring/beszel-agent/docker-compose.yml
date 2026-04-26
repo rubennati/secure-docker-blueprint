@@ -1,0 +1,52 @@
+services:
+
+  # --------------------------------------------------------
+  # BESZEL AGENT (standalone — remote host)
+  # --------------------------------------------------------
+  # Runs on each additional host that a central Beszel hub should
+  # monitor. The hub SSHes INTO this agent on port 45876 using its
+  # generated Ed25519 private key. This agent does not connect back
+  # to the hub — it only listens.
+  #
+  # Counterpart to monitoring/beszel/ (hub + local agent).
+  # Deploy this compose on every host beyond the hub host.
+  agent:
+    # --- Identity ---
+    image: henrygd/beszel-agent:${APP_TAG}
+    container_name: ${CONTAINER_NAME_AGENT}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      TZ: ${TZ}
+      PORT: ${AGENT_PORT}
+      # Hub's SSH public key — paste the full key from the hub UI
+      # ("+ Add System", top right), including the "ssh-ed25519" type prefix.
+      KEY: ${AGENT_KEY}
+      # Optional: comma-separated mount points beyond root FS.
+      EXTRA_FILESYSTEMS: ${EXTRA_FILESYSTEMS}
+
+    # --- Storage ---
+    # Docker socket (read-only): agent reads container stats but cannot
+    # start/stop/delete containers. Accepted exception — no Socket Proxy
+    # equivalent covers docker-stats-style reads. Remove if container-level
+    # metrics are not needed.
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+    # --- Networking ---
+    # network_mode: host — required for accurate host network interface
+    # stats (eth0, tailscale0, etc.). Without it the agent sees only
+    # the container's veth, not the real host interfaces. CPU / RAM /
+    # disk still work with bridge networking if you prefer isolation.
+    #
+    # Security note: port ${AGENT_PORT} binds directly on the host network
+    # stack, not behind Traefik. This is SSH/TCP, not HTTP — Traefik does
+    # not apply. Protect with Tailscale ACLs or host firewall:
+    #   ufw allow from <hub-tailscale-ip> to any port 45876
+    # Same pattern as core/portainer-agent/ and core/hawser/.
+    network_mode: host

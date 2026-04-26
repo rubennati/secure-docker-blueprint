@@ -3,10 +3,12 @@ services:
   # --------------------------------------------------------
   # BESZEL HUB (web UI + metric aggregator)
   # --------------------------------------------------------
-  # Agents connect back to the hub over SSH with a generated key.
-  # This compose runs BOTH the hub and a local agent on the same host.
-  # For additional hosts, deploy a second `agent` container there
-  # pointing at HUB_URL and carrying the same SSH key.
+  # The hub generates an Ed25519 keypair on first start and uses it
+  # to SSH INTO each registered agent. Agents do not connect back to
+  # the hub — the hub initiates all connections.
+  #
+  # This compose runs the hub + one LOCAL agent on the same host.
+  # For additional hosts deploy monitoring/beszel-agent/ there.
   hub:
     # --- Identity ---
     image: henrygd/beszel:${APP_TAG}
@@ -24,15 +26,10 @@ services:
     # --- Storage ---
     volumes:
       - ./volumes/hub-data:/beszel_data
-      # SSH key used to authenticate agents to the hub.
-      # The hub generates this on first start; re-use the same file
-      # when deploying agents on remote hosts.
-      - ./volumes/hub-data/socket:/beszel_socket
 
     # --- Networking ---
     networks:
       - proxy-public
-      - beszel-internal
 
     # --- Traefik ---
     labels:
@@ -46,20 +43,25 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
 
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8090/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
   # --------------------------------------------------------
-  # BESZEL AGENT (local host metrics collector)
+  # BESZEL AGENT — local (this host)
   # --------------------------------------------------------
-  # Reads CPU / RAM / disk / network / docker-container stats and
-  # pushes to the hub. Runs alongside the hub on THIS host.
+  # Collects CPU / RAM / disk / network / per-container Docker stats
+  # for the host running the hub. The hub SSHes to this agent on
+  # port 45876 using its generated private key.
   agent:
     # --- Identity ---
     image: henrygd/beszel-agent:${APP_TAG}
     container_name: ${CONTAINER_NAME_AGENT}
     restart: unless-stopped
-    # Host networking gets accurate interface stats. Comment out and
-    # use `networks: [beszel-internal]` if you prefer container-net
-    # isolation (agent reports the container's view, not the host).
-    network_mode: host
 
     # --- Security ---
     security_opt:
@@ -69,15 +71,31 @@ services:
     environment:
       TZ: ${TZ}
       PORT: "45876"
-      # Paste the public key from the hub UI (Settings → Agent setup)
+      # Hub's SSH public key — paste the full key from the hub UI
+      # ("+ Add System", top right), including the "ssh-ed25519" type prefix.
+      # Leave empty on first start; add key and restart agent after hub boots.
       KEY: ${AGENT_KEY}
-      # Enable docker stats collection
+      # Optional: comma-separated mount points beyond root FS.
       EXTRA_FILESYSTEMS: ${EXTRA_FILESYSTEMS}
 
     # --- Storage ---
+    # Docker socket (read-only): agent reads container stats but cannot
+    # start/stop/delete containers. Accepted exception — no Socket Proxy
+    # equivalent covers docker-stats-style reads. Remove if container-level
+    # metrics are not needed.
     volumes:
-      # Docker socket (read-only) for per-container stats
       - /var/run/docker.sock:/var/run/docker.sock:ro
+
+    # --- Networking ---
+    # network_mode: host — required for accurate host network interface
+    # stats (eth0, tailscale0, etc.). Without it the agent sees only
+    # the container's veth, not the real host interfaces. CPU / RAM /
+    # disk still work with bridge networking if you prefer isolation.
+    #
+    # Security note: port 45876 binds directly on the host network stack,
+    # not behind Traefik. Protection is SSH key auth + Tailscale ACLs /
+    # host firewall. Same pattern as core/portainer-agent/ and core/hawser/.
+    network_mode: host
 
 # --------------------------------------------------------
 # NETWORKS
@@ -85,6 +103,3 @@ services:
 networks:
   proxy-public:
     external: true
-  beszel-internal:
-    name: ${COMPOSE_PROJECT_NAME}-internal
-    internal: true
