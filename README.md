@@ -77,6 +77,7 @@ The blueprint takes a **choice-matrix** approach: where several tools compete (d
 | [Ghost](apps/ghost/) | App + MySQL | ⚠️ | Blog / CMS with SMTP |
 | [WordPress](apps/wordpress/) | App + MariaDB | ✅ | Classic CMS, hardened (mu-plugin + test-script) |
 | [BookStack](apps/bookstack/) | App (LSIO) + MariaDB | ⚠️ | Wiki / knowledge base (Laravel) |
+| [Ackee](apps/ackee/) | App (Node.js) + MongoDB | ⚠️ | Privacy-focused analytics — no cookies, GDPR by design (Google Analytics alternative) |
 
 #### Photo galleries
 
@@ -142,6 +143,7 @@ Planned (apps/): Headscale (self-hosted Tailscale control server), PrivateBin, S
 |---|---|---|---|
 | [Adminer](apps/adminer/) | Single container | ⚠️ | Database administration UI (connects to other apps' DBs) |
 | [IT-Tools](apps/it-tools/) | Single container | ⚠️ | Collection of IT / developer utilities (JSON, hash, regex, etc.) |
+| [go-httpbin](apps/go-httpbin/) | Single container (Go) | ⚠️ | HTTP request/response mirror — debug Traefik middlewares, webhooks, HTTP clients |
 
 Docker-management tools (Dockhand / Portainer / Hawser) moved to [`core/`](core/) — they're infrastructure, not apps.
 
