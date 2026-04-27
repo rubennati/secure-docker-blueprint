@@ -236,12 +236,11 @@ services:
       - app-internal
 
     # --- Health & Observability ---
-    # No explicit healthcheck — the image (2024.12.x) ships a built-in
-    # HEALTHCHECK for the worker that queries Celery internals. On a
-    # cold start it takes ~60s to flip from "starting" to "healthy";
-    # that is expected. Upstream removed the built-in worker
-    # healthcheck in 2025.10.2 — when we upgrade to that line, add
-    # `healthcheck: { disable: true }` here and delete this comment.
+    # Upstream removed the built-in worker healthcheck in 2025.10.2.
+    # Explicitly disabled so Docker does not report a spurious
+    # "starting" state indefinitely.
+    healthcheck:
+      disable: true
 
 # --------------------------------------------------------
 # NETWORKS

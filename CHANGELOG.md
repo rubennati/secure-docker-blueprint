@@ -22,6 +22,14 @@ Authentik now live-tested end-to-end. Initial-setup flow reachable through Traef
 
 - `docs/bugfixes/authentik-2026-04-20.md` documents all three bugs (volume perms, legacy path, broken healthcheck) with symptoms, root causes, and upstream references.
 
+### Authentik upgraded to 2026.2.2
+
+Version bumped from `2024.12.3` (initial live-test pin) to `2026.2.2` (current latest). Verified on a clean install — all migrations run from scratch without errors. Worker healthcheck explicitly disabled (`healthcheck: disable: true`) as upstream removed the built-in worker check in `2025.10.2`.
+
+### Fixed
+
+- **Authentik version-jump migration failure**: upgrading `2024.12.3` → `2026.2.2` directly crashes both server and worker with `FieldError: Cannot resolve keyword 'group_id'` in migration `0056_user_roles`. Root cause: intermediate data-migration script references a field removed before `2026.2`. Fix for blueprint test environments: wipe volumes and start fresh. Fix for production: upgrade incrementally through each major release. Documented in `docs/bugfixes/authentik-upgrade-2026-04-27.md`.
+
 ---
 
 Next tag direction: **Paperless-ngx `/admin` protected by Authentik Forward-Auth** as the first end-to-end use case for the new SSO. Then: CrowdSec Firewall Bouncer (nftables) for host-level blocking.

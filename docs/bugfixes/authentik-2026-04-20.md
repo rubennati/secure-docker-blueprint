@@ -192,10 +192,10 @@ built-in HEALTHCHECK for the worker that queries Celery internals;
 it works, it just takes ~60s to flip from `starting` to `healthy`
 on cold boot. Leave it alone.
 
-When we move to 2025.10.2 or later, the built-in worker healthcheck
-is gone upstream — at that point add `healthcheck: { disable: true }`
-to the worker service so Docker doesn't report a spurious
-"starting" state indefinitely.
+From 2025.10.2 onwards the built-in worker healthcheck was removed
+upstream. The compose sets `healthcheck: { disable: true }` on the
+worker to prevent Docker from reporting a spurious "starting" state
+indefinitely. Applied when upgrading to 2026.2.2.
 
 ### Verify
 
