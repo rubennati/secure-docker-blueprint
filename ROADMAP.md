@@ -79,7 +79,7 @@ When live-tested on real data, pick the default and deprioritise the rest:
 
 - [`monitoring/README.md`](monitoring/README.md) — Uptime Kuma, Gatus, Beszel, changedetection (drafted) + 6 planned
 - [`business/README.md`](business/README.md) — Listmonk, Zammad, Kimai, OpenSign (drafted) + 2 planned
-- [`backup/README.md`](backup/README.md) — Kopia, Bareos, UrBackup (all planned)
+- [`backup/README.md`](backup/README.md) — Kopia, Borgmatic, Bareos, UrBackup (all planned)
 
 ---
 

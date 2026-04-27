@@ -185,6 +185,7 @@ See [`backup/README.md`](backup/README.md). All planned for now.
 | App | Approach | Status |
 |---|---|---|
 | Kopia | Deduplicating snapshots to S3 / SFTP / filesystem | 📋 |
+| Borgmatic | Borg wrapper — YAML-config, cron-scheduled, SSH/SFTP targets | 📋 |
 | Bareos | Enterprise Bacula-fork (Director + Storage + File daemons) | 📋 |
 | UrBackup | Image + file backup for workstations | 📋 |
 
