@@ -143,7 +143,6 @@ Planned (apps/): Headscale (self-hosted Tailscale control server), PrivateBin, S
 |---|---|---|---|
 | [Adminer](apps/adminer/) | Single container | ⚠️ | Database administration UI (connects to other apps' DBs) |
 | [IT-Tools](apps/it-tools/) | Single container | ⚠️ | Collection of IT / developer utilities (JSON, hash, regex, etc.) |
-| [go-httpbin](apps/go-httpbin/) | Single container (Go) | ⚠️ | HTTP request/response mirror — debug Traefik middlewares, webhooks, HTTP clients |
 
 Docker-management tools (Dockhand / Portainer / Hawser) moved to [`core/`](core/) — they're infrastructure, not apps.
 
