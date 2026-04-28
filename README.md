@@ -158,11 +158,10 @@ See [`business/README.md`](business/README.md) for the full category README + ro
 | [Kimai](business/kimai/) | Time tracking | ⚠️ | Per-project/customer hours → Invoice Ninja |
 | [Listmonk](business/listmonk/) | Newsletter | ⚠️ | Mailing list + transactional mail |
 | [Matomo](business/matomo/) | Web analytics | ⚠️ | GDPR-compliant, full-featured (Google Analytics alternative) |
-| Ackee | Web analytics | 📋 | Privacy-focused, no cookies, minimal — GDPR by design |
 | [Zammad](business/zammad/) | Helpdesk | ⚠️ | Full 7-service helpdesk / ticketing / SLA |
 | [OpenSign](business/opensign/) | E-signatures | ⚠️ | DocuSign alternative, eIDAS-capable |
 
-Planned: Live Helper Chat, Eramba GRC.
+Planned: Ackee, Live Helper Chat, Eramba GRC.
 
 ### Monitoring
 
@@ -181,14 +180,9 @@ Planned: Statping, ciao, Checkmate, Zabbix, Grafana + Prometheus, Scrutiny.
 
 ### Backup
 
-See [`backup/README.md`](backup/README.md). All planned for now.
+See [`backup/README.md`](backup/README.md) for tool choices and the per-app isolation principle.
 
-| App | Approach | Status |
-|---|---|---|
-| Kopia | Deduplicating snapshots to S3 / SFTP / filesystem | 📋 |
-| Borgmatic | Borg wrapper — YAML-config, cron-scheduled, SSH/SFTP targets | 📋 |
-| Bareos | Enterprise Bacula-fork (Director + Storage + File daemons) | 📋 |
-| UrBackup | Image + file backup for workstations | 📋 |
+Planned: Kopia, Borgmatic, Bareos, UrBackup.
 
 ## Quick Start
 

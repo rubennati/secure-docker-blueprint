@@ -35,8 +35,10 @@ Use these as the quick check. The detailed process below explains the reasoning.
 ### Consistency Audit — run before releases or when the repo grows significantly
 - [ ] Every `⚠️ draft` entry has a real directory with files — if not, downgrade to `📋 planned`
 - [ ] Every directory in `apps/` `business/` `monitoring/` `backup/` `core/` has a row in its category README
-- [ ] Root README tables match category README tables (no phantom entries, no missing entries)
-- [ ] `grep -r "__REPLACE_ME__"` returns nothing in committed files
+- [ ] Root README tables contain only `⚠️` and `✅` entries — `📋 planned` items appear as inline `Planned: X, Y, Z` lines, not table rows
+- [ ] `📋 planned` items in root README match the planned items listed in the category README (no drift)
+- [ ] Scan `docker-compose.yml` and shell scripts for `__REPLACE_ME__` — these must never appear there: `grep -r "__REPLACE_ME__" --include="docker-compose.yml" --include="*.sh" .` — `.env.example` files are excluded: `__REPLACE_ME__` is intentional there as a credential placeholder
+- [ ] Scan `.env.example` files for real hostnames or vendor-specific values set as defaults — everything should be `example.com` or left empty
 - [ ] `ROADMAP.md` Direction items still reflect intent — archive anything stale
 - [ ] `docs/architecture.md` still accurate (new category? changed networking?)
 
@@ -131,15 +133,15 @@ The goal: no image tag in any `.env.example` should be more than one major versi
 The goal: no contradictions between any two files in the repo.
 
 **Cross-reference checks**
-- [ ] Every app in root `README.md` has a corresponding directory (or is marked 📋 planned with no directory expected)
+- [ ] Every `⚠️` / `✅` entry in root `README.md` has a corresponding directory with files
 - [ ] Every directory in `apps/`, `business/`, `monitoring/`, `backup/`, `core/` has a row in the corresponding category README
-- [ ] Status in root README matches status in category README for every app
-- [ ] Every `📋 planned` entry in a category README is either also in `ROADMAP.md` or clearly scoped to that category only
+- [ ] Root README tables contain only `⚠️` and `✅` — `📋` planned items appear as inline `Planned: X, Y, Z` lines below each section's table, not as table rows
+- [ ] `📋` planned items in root README inline lists match what is listed in the category README (no drift, no phantom entries)
 
 **Standards drift check**
 - [ ] `docs/standards/security-baseline.md` checklist — run it mentally against 3–5 live-tested apps. Do they still comply, or did the standard move forward since they were written?
-- [ ] Scan for `__REPLACE_ME__` in all committed files: `grep -r "__REPLACE_ME__" --include="*.yml" --include="*.md" --include="*.sh" .`
-- [ ] Scan for real domains slipping in: `grep -r "\.at\b\|\.io\b" --include="*.env.example" .` — everything should be `example.com`
+- [ ] Scan `docker-compose.yml` and scripts for `__REPLACE_ME__`: `grep -r "__REPLACE_ME__" --include="docker-compose.yml" --include="*.sh" .` — must return nothing. `.env.example` files intentionally use `__REPLACE_ME__` as placeholders and are excluded from this scan.
+- [ ] Scan `.env.example` for real vendor hostnames set as default values: `grep -rE "^[^#].*(smtp|mail).*\.(com|io|net)" --include="*.env.example" .` — all defaults must be `example.com` or empty
 
 **ROADMAP hygiene**
 - [ ] Does every item in `ROADMAP.md` → Direction still reflect what we actually intend to build?
@@ -177,3 +179,4 @@ Add one row per session or cycle. This is the record of "where we left off". The
 | Date | Cycle | Scope | What was checked / changed | Carry-forward |
 |---|---|---|---|---|
 | 2026-04-28 | Setup | Entire repo | Maintenance process document created. Single source of truth map defined. Four cycles defined. | — |
+| 2026-04-28 | Consistency Audit | Entire repo | First live run. Findings: (1) real SMTP hostnames in ghost/calcom/invoiceninja `.env.example` → fixed to `example.com`; (2) `business/ackee/` broken link → removed; (3) `__REPLACE_ME__` scan rule too broad → scoped to compose+scripts only; (4) root README mixed 📋 in tables → pattern established: tables = ⚠️/✅ only, planned = inline `Planned: X, Y, Z` line. Backup all-📋 table replaced with inline line. Rules updated in maintenance.md. | monitoring/README.md and category READMEs need content depth pass (choice guidance, integration notes) to differentiate from root README. |

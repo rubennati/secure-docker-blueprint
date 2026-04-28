@@ -22,6 +22,15 @@ Authentik now live-tested end-to-end. Initial-setup flow reachable through Traef
 
 - `docs/bugfixes/authentik-2026-04-20.md` documents all three bugs (volume perms, legacy path, broken healthcheck) with symptoms, root causes, and upstream references.
 
+### Consistency Audit — first pass
+
+First live run of the maintenance process (`docs/maintenance.md`). Findings fixed:
+
+- **Root README pattern**: tables now contain only `⚠️` / `✅` entries. `📋` planned items appear as inline `Planned: X, Y, Z` lines below each section — consistent across all categories. Backup all-📋 table replaced with an inline line. Ackee moved to inline planned list in business section.
+- **SMTP hostname leak**: `ghost`, `calcom`, `invoiceninja` `.env.example` had real vendor hostnames (`brevo.com`, `mailtrap.io`) set as default values. Fixed to `smtp.example.com`.
+- **`__REPLACE_ME__` scan rule**: scoped to `docker-compose.yml` and scripts only — `.env.example` files use `__REPLACE_ME__` intentionally as credential placeholders.
+- **Vendor hostname scan**: new rule added — `.env.example` defaults must be `example.com` or empty.
+
 ### Maintenance process
 
 `docs/maintenance.md` added — defines the governance structure for keeping the repo accurate and consistent: single source of truth map (which file owns which information), four maintenance cycles (session / app pass / version audit / consistency audit), quick-reference checklists for each cycle, and a running Maintenance Log table so every session starts from a known state.
