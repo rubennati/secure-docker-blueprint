@@ -6,15 +6,15 @@ This document defines how the blueprint stays accurate, consistent, and up to da
 
 ## Quick-Reference Checklists
 
-Use these as the fast daily/weekly check. The detailed process below explains the reasoning.
+Use these as the quick check. The detailed process below explains the reasoning.
 
-### Every session (5 min)
+### Every session
 - [ ] `CHANGELOG.md` `[Unreleased]` updated with today's work
 - [ ] `ROADMAP.md` reflects current direction (nothing completed or cancelled without an update)
 - [ ] Every file touched follows the relevant standard
 - [ ] One row added to the Maintenance Log at the bottom of this file
 
-### Every app (20–30 min per app — run when adding or re-verifying)
+### Every app — run when adding or re-verifying
 - [ ] Directory exists and contains at minimum `docker-compose.yml` + `.env.example` + `.gitignore` + `README.md`
 - [ ] Status tag is honest: `⚠️ draft` = files exist, `📋 planned` = no files yet, `✅` = clean-install tested
 - [ ] Status in category README = status in root README (no drift)
@@ -27,12 +27,12 @@ Use these as the fast daily/weekly check. The detailed process below explains th
 - [ ] `read_only: true` where the image allows it
 - [ ] `.gitignore` covers `volumes/`, `.secrets/`, `.env`
 
-### Monthly (30–45 min)
+### Version Audit — run periodically or when upstream advisories appear
 - [ ] All `.env.example` image tags still reasonable vs. upstream releases
 - [ ] Any upstream security advisories for pinned images?
-- [ ] Log: "all current" counts as an entry — prevents re-checking next month
+- [ ] Log the outcome — even "all current" is worth recording to avoid re-checking unnecessarily
 
-### Quarterly / pre-release (1–2 h)
+### Consistency Audit — run before releases or when the repo grows significantly
 - [ ] Every `⚠️ draft` entry has a real directory with files — if not, downgrade to `📋 planned`
 - [ ] Every directory in `apps/` `business/` `monitoring/` `backup/` `core/` has a row in its category README
 - [ ] Root README tables match category README tables (no phantom entries, no missing entries)
@@ -71,7 +71,6 @@ Four cycles, each with a different scope and cadence. They are cumulative: a Con
 ### 1 — Session Routine
 
 **When**: every work session, regardless of what was changed.
-**Time**: ~5 minutes.
 
 - [ ] `CHANGELOG.md` — is `[Unreleased]` updated with what was done today?
 - [ ] `ROADMAP.md` — did today's work complete or invalidate a roadmap item? Update if yes.
@@ -83,7 +82,6 @@ Four cycles, each with a different scope and cadence. They are cumulative: a Con
 ### 2 — App Pass
 
 **When**: every time an app is added, re-verified on a clean install, or significantly changed.
-**Time**: ~20–30 minutes per app.
 
 Run the `docs/standards/new-app-checklist.md` in full. Then specifically:
 
@@ -112,8 +110,7 @@ Run the `docs/standards/new-app-checklist.md` in full. Then specifically:
 
 ### 3 — Version Audit
 
-**When**: monthly, or when an upstream security advisory appears.
-**Time**: ~30–45 minutes.
+**When**: periodically, or when an upstream security advisory appears.
 
 The goal: no image tag in any `.env.example` should be more than one major version behind current upstream.
 
@@ -129,8 +126,7 @@ The goal: no image tag in any `.env.example` should be more than one major versi
 
 ### 4 — Consistency Audit
 
-**When**: quarterly, or before tagging a release.
-**Time**: ~1–2 hours.
+**When**: before tagging a release, or when the repo grows significantly.
 
 The goal: no contradictions between any two files in the repo.
 
@@ -160,8 +156,7 @@ The goal: no contradictions between any two files in the repo.
 
 ## Pre-release Sweep
 
-**When**: before tagging any version (`v0.x.0`).
-**Time**: ~2–3 hours. Combines a full Consistency Audit with release-specific steps.
+**When**: before tagging any version (`v0.x.0`). Combines a full Consistency Audit with release-specific steps.
 
 In addition to the full Consistency Audit:
 
@@ -181,4 +176,4 @@ Add one row per session or cycle. This is the record of "where we left off". The
 
 | Date | Cycle | Scope | What was checked / changed | Carry-forward |
 |---|---|---|---|---|
-| 2026-04-28 | Setup | Entire repo | Maintenance process document created. Single source of truth map defined. Four cycles defined. | First Version Audit due ~2026-05-28. First Consistency Audit due ~2026-07-28. |
+| 2026-04-28 | Setup | Entire repo | Maintenance process document created. Single source of truth map defined. Four cycles defined. | — |
