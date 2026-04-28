@@ -22,9 +22,13 @@ Authentik now live-tested end-to-end. Initial-setup flow reachable through Traef
 
 - `docs/bugfixes/authentik-2026-04-20.md` documents all three bugs (volume perms, legacy path, broken healthcheck) with symptoms, root causes, and upstream references.
 
+### Maintenance process
+
+`docs/maintenance.md` added — defines the governance structure for keeping the repo accurate and consistent: single source of truth map (which file owns which information), four maintenance cycles (session / app pass / version audit / consistency audit), quick-reference checklists for each cycle, and a running Maintenance Log table so every session starts from a known state.
+
 ### Moved / renamed
 
-- **Ackee** moved from `apps/` (Publishing & knowledge) → `business/` (Marketing & analytics). Same use-case as Matomo — web analytics for a business website — just a lighter, cookie-free alternative.
+- **Ackee** moved from `apps/` (Publishing & knowledge) → `business/` (Marketing & analytics). Status corrected from `⚠️ draft` → `📋 planned` — no files exist yet, so draft was inaccurate.
 
 ### Architecture documented
 
