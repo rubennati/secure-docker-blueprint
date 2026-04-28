@@ -86,6 +86,19 @@ When live-tested on real data, pick the default and deprioritise the rest:
 
 ## Evaluating
 
+### App Evaluation Criteria (concept — still to develop)
+
+Structured per-app metadata to help users make informed decisions before deploying. Not a rating scale — factual criteria that each person weighs themselves. Candidate criteria:
+
+- **Origin**: country / organisation behind the project
+- **License**: AGPL, GPL, MIT, Apache, commercial dual-license, …
+- **Stack size**: number of containers, minimum RAM
+- **Security features**: Docker Secrets / `_FILE` support, 2FA, SSO / OIDC integration, audit log
+- **Active development**: release cadence, last commit, community size
+- **Privacy posture**: what gets logged, telemetry / phone-home behaviour, GDPR posture
+
+Still open: where this lives (extension of `UPSTREAM.md`? standardised block in each app `README.md`? separate `EVAL.md`?) and how to keep it from becoming a maintenance burden.
+
 ### Secret & Password Generation Standard
 
 Blueprint-wide policy for secret generation (in `.secrets/` files) and password generation (for admin accounts). Currently each app README has its own recipe, some with known pitfalls (Laravel / Mongo DSN incompatibility with certain chars). Consolidation into a single `docs/standards/` reference is open.

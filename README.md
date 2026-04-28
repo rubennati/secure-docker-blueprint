@@ -161,7 +161,7 @@ See [`business/README.md`](business/README.md) for the full category README + ro
 | [Zammad](business/zammad/) | Helpdesk | ⚠️ | Full 7-service helpdesk / ticketing / SLA |
 | [OpenSign](business/opensign/) | E-signatures | ⚠️ | DocuSign alternative, eIDAS-capable |
 
-Planned: Ackee, Live Helper Chat, Eramba GRC.
+Planned: Ackee, Plausible CE, Live Helper Chat, Eramba GRC.
 
 ### Monitoring
 
