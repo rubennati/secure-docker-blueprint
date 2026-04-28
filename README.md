@@ -158,7 +158,7 @@ See [`business/README.md`](business/README.md) for the full category README + ro
 | [Kimai](business/kimai/) | Time tracking | ⚠️ | Per-project/customer hours → Invoice Ninja |
 | [Listmonk](business/listmonk/) | Newsletter | ⚠️ | Mailing list + transactional mail |
 | [Matomo](business/matomo/) | Web analytics | ⚠️ | GDPR-compliant, full-featured (Google Analytics alternative) |
-| [Ackee](business/ackee/) | Web analytics | 📋 | Privacy-focused, no cookies, minimal — GDPR by design |
+| Ackee | Web analytics | 📋 | Privacy-focused, no cookies, minimal — GDPR by design |
 | [Zammad](business/zammad/) | Helpdesk | ⚠️ | Full 7-service helpdesk / ticketing / SLA |
 | [OpenSign](business/opensign/) | E-signatures | ⚠️ | DocuSign alternative, eIDAS-capable |
 
