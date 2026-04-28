@@ -25,6 +25,19 @@ Self-hosted backup tools — separate top-level category because backup is ops-c
 
 Kopia and Borgmatic overlap in scope (both do deduplicating off-site backup) but differ in UX: Kopia has a web UI and S3-native support; Borgmatic is config-as-code and SSH/SFTP-first. Pick one, not both. The rest of the tools cover distinct workload classes.
 
+## Per-App Backup Isolation
+
+Each app gets its **own dedicated backup repository** — not one shared repository for everything.
+
+**Why isolation matters:**
+
+- **Independent retention**: a database may need daily backups with 90-day retention; a static blog can make do with weekly + 30 days. One policy per app, set where it makes sense.
+- **Surgical restore**: recovering Nextcloud does not touch Ghost's backup chain. Restore one app, leave everything else untouched.
+- **Blast radius control**: a corrupted or compromised backup repository for one app does not affect any other app's backup history.
+- **Failure independence**: if a backup job fails for one app, all other backup jobs continue unaffected.
+
+In practice this means: one `borgmatic.yml` (or Kopia snapshot policy) per app, one target repository path per app, one cron schedule per app.
+
 ## Layout
 
 Each app subdirectory follows the blueprint structure:

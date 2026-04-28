@@ -22,6 +22,12 @@ Authentik now live-tested end-to-end. Initial-setup flow reachable through Traef
 
 - `docs/bugfixes/authentik-2026-04-20.md` documents all three bugs (volume perms, legacy path, broken healthcheck) with symptoms, root causes, and upstream references.
 
+### Architecture documented
+
+`docs/architecture.md` added — explains the design goals, directory structure rationale (split by access pattern, not user type), hub-and-spoke networking model, four-layer security stack (Traefik → CrowdSec → Authentik → container hardening), core service roles, per-app directory layout, and backup isolation principle. The "why" behind the structure visible throughout the rest of the repo.
+
+`backup/README.md` gains a **Per-App Backup Isolation** section: each app gets its own repository, retention policy, and cron schedule — independent failure, independent restore, controlled blast radius.
+
 ### Security baseline — Resource Limits
 
 `docs/standards/security-baseline.md` now documents the **Recommended** standard for `deploy.resources` (memory / CPU) and `pids_limit` per container. Fills the last significant gap in the blueprint's security posture: without defined limits a crashed or compromised container can starve the host kernel. Values are calibrated by service profile (lightweight helper / cache / standard web app / database / heavy app). Applying the limits to every live-tested app is tracked as a v1.0 polish item in the ROADMAP.
