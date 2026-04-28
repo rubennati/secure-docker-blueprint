@@ -22,6 +22,10 @@ Authentik now live-tested end-to-end. Initial-setup flow reachable through Traef
 
 - `docs/bugfixes/authentik-2026-04-20.md` documents all three bugs (volume perms, legacy path, broken healthcheck) with symptoms, root causes, and upstream references.
 
+### Security baseline — Resource Limits
+
+`docs/standards/security-baseline.md` now documents the **Recommended** standard for `deploy.resources` (memory / CPU) and `pids_limit` per container. Fills the last significant gap in the blueprint's security posture: without defined limits a crashed or compromised container can starve the host kernel. Values are calibrated by service profile (lightweight helper / cache / standard web app / database / heavy app). Applying the limits to every live-tested app is tracked as a v1.0 polish item in the ROADMAP.
+
 ### Authentik upgraded to 2026.2.2
 
 Version bumped from `2024.12.3` (initial live-test pin) to `2026.2.2` (current latest). Verified on a clean install — all migrations run from scratch without errors. Worker healthcheck explicitly disabled (`healthcheck: disable: true`) as upstream removed the built-in worker check in `2025.10.2`.

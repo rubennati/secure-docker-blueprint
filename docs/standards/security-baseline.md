@@ -48,6 +48,41 @@ privileges internally. Images like Paperless-ngx and Linuxserver.io containers
 provide `USERMAP_UID`/`USERMAP_GID` or `PUID`/`PGID` environment variables
 instead.
 
+### Resource Limits
+
+```yaml
+# Baseline — calibrate per service profile (see table below)
+deploy:
+  resources:
+    limits:
+      memory: 512M
+      cpus: "0.50"
+    reservations:
+      memory: 128M
+
+pids_limit: 100
+```
+
+Prevents a crashed or compromised container from starving the host kernel.
+`deploy.resources` caps memory and CPU so a single container cannot exhaust
+the host under load or during a memory leak. `pids_limit` blocks fork-bomb
+escalation inside the container.
+
+**Calibration by service profile:**
+
+| Profile | Example services | `memory` limit | `cpus` | `pids_limit` |
+|---|---|---|---|---|
+| Lightweight helper | Whoami, Socket Proxy, init containers | `128M` | `0.25` | `50` |
+| Cache / queue | Redis, Valkey | `256M` | `0.25` | `50` |
+| Standard web app | Ghost, Vaultwarden, Dockhand | `512M` | `0.50` | `100` |
+| Database | PostgreSQL, MariaDB | `1G` | `1.00` | `200` |
+| Heavy app | Nextcloud, Paperless-ngx | `2G` | `2.00` | `500` |
+| One-shot / migration | init-perms, DB migration runners | omit — let it finish | — | — |
+
+> **`deploy.resources` vs. `mem_limit`**: Always use `deploy:` — it is the
+> Compose v3 standard and works with both standalone `docker compose` and
+> Swarm mode. The legacy top-level `mem_limit` key is deprecated.
+
 ## Secrets
 
 ### Rule
@@ -138,3 +173,5 @@ Exception: Hawser — needs socket access as its core function, but still uses a
 - [ ] Database only in internal network
 - [ ] Images pinned (never `:latest`)
 - [ ] `./.secrets/` and `./volumes/` in `.gitignore`
+- [ ] `deploy.resources.limits` set per service profile (memory + cpus)
+- [ ] `pids_limit` set on every long-running service

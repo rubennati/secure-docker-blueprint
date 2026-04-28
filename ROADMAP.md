@@ -54,6 +54,7 @@ Before v1.0 is tagged:
 - Honest review of every `⚠️ draft` — keep honest, promote only what was actually tested
 - `CONFIG.md` pattern extended to other complex apps that benefit from it
 - CI pass (compose validate, secret scan, markdown lint)
+- **Resource limits rollout**: apply `deploy.resources` (memory/CPU) and `pids_limit` to every live-tested app per the profile table in `docs/standards/security-baseline.md`. Standard is documented; per-app values still need to be set.
 
 ---
 
