@@ -22,6 +22,10 @@ Authentik now live-tested end-to-end. Initial-setup flow reachable through Traef
 
 - `docs/bugfixes/authentik-2026-04-20.md` documents all three bugs (volume perms, legacy path, broken healthcheck) with symptoms, root causes, and upstream references.
 
+### Moved / renamed
+
+- **Ackee** moved from `apps/` (Publishing & knowledge) → `business/` (Marketing & analytics). Same use-case as Matomo — web analytics for a business website — just a lighter, cookie-free alternative.
+
 ### Architecture documented
 
 `docs/architecture.md` added — explains the design goals, directory structure rationale (split by access pattern, not user type), hub-and-spoke networking model, four-layer security stack (Traefik → CrowdSec → Authentik → container hardening), core service roles, per-app directory layout, and backup isolation principle. The "why" behind the structure visible throughout the rest of the repo.

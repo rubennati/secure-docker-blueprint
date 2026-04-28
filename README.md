@@ -77,7 +77,6 @@ The blueprint takes a **choice-matrix** approach: where several tools compete (d
 | [Ghost](apps/ghost/) | App + MySQL | ⚠️ | Blog / CMS with SMTP |
 | [WordPress](apps/wordpress/) | App + MariaDB | ✅ | Classic CMS, hardened (mu-plugin + test-script) |
 | [BookStack](apps/bookstack/) | App (LSIO) + MariaDB | ⚠️ | Wiki / knowledge base (Laravel) |
-| [Ackee](apps/ackee/) | App (Node.js) + MongoDB | ⚠️ | Privacy-focused analytics — no cookies, GDPR by design (Google Analytics alternative) |
 
 #### Photo galleries
 
@@ -158,7 +157,8 @@ See [`business/README.md`](business/README.md) for the full category README + ro
 | [Dolibarr](business/dolibarr/) | ERP / CRM | ⚠️ | Accounting, projects, HR, inventory |
 | [Kimai](business/kimai/) | Time tracking | ⚠️ | Per-project/customer hours → Invoice Ninja |
 | [Listmonk](business/listmonk/) | Newsletter | ⚠️ | Mailing list + transactional mail |
-| [Matomo](business/matomo/) | Web analytics | ⚠️ | GDPR-compliant (Google Analytics alternative) |
+| [Matomo](business/matomo/) | Web analytics | ⚠️ | GDPR-compliant, full-featured (Google Analytics alternative) |
+| [Ackee](business/ackee/) | Web analytics | ⚠️ | Privacy-focused, no cookies, minimal — GDPR by design |
 | [Zammad](business/zammad/) | Helpdesk | ⚠️ | Full 7-service helpdesk / ticketing / SLA |
 | [OpenSign](business/opensign/) | E-signatures | ⚠️ | DocuSign alternative, eIDAS-capable |
 

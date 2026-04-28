@@ -22,6 +22,7 @@ This keeps `business/` a meaningful category instead of a grab-bag. See [`docs/a
 |---|---|---|---|
 | [Listmonk](listmonk/) | Newsletter, mailing lists, transactional mail | ⚠️ | Two-router pattern documented: admin VPN-only + subscriber paths public |
 | [Matomo](matomo/) | GDPR-compliant web analytics for company / customer sites | ⚠️ | Migrated from `apps/matomo/` — primary use-case is the business website |
+| [Ackee](ackee/) | Privacy-focused analytics — no cookies, GDPR by design | ⚠️ | Minimal alternative to Matomo; moved from `apps/` — same use-case, different weight |
 
 ### Customer support
 
