@@ -17,6 +17,12 @@ services:
     user: "0:0"
     restart: "no"
     entrypoint: ["/bin/sh", "/init.sh"]
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Storage ---
     volumes:
       - ./ops/scripts/init-volumes.sh:/init.sh:ro
       - ./volumes/data:/mnt/data
