@@ -6,13 +6,13 @@ This keeps `business/` a meaningful category instead of a grab-bag. See [`docs/a
 
 ## Status
 
-✅ live-tested · ⚠️ draft · 📋 planned
+✅ Ready · ⚠️ Draft · 📋 Planned
 
 ### Billing & operations
 
 | App | Use case | Status | Notes |
 |---|---|---|---|
-| [Invoice Ninja](invoiceninja/) | Invoicing, billing, quotes, client portal | ✅ | Live-tested; `apps/invoiceninja/` → `business/invoiceninja/` during directory restructure |
+| [Invoice Ninja](invoiceninja/) | Invoicing, billing, quotes, client portal | ✅ | |
 | [Dolibarr](dolibarr/) | ERP / CRM — accounting, HR, inventory, projects | ⚠️ | Migrated from `apps/dolibarr/` |
 | [Kimai](kimai/) | Time tracking per project / customer | ⚠️ | Integrates with Invoice Ninja via webhooks |
 
@@ -68,7 +68,7 @@ Traefik, Vaultwarden, Nextcloud/Seafile, Paperless-ngx already in place.
 4. **Listmonk** — when you have a list
 5. **OpenSign** — when the first contract needs digital signing
 
-All 5 are drafted or live-tested here.
+All 5 are available here.
 
 ### Phase 3 — Analytics + extras
 

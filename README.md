@@ -8,7 +8,7 @@ Production-ready configurations for 15+ services — with standardized patterns,
 [![Version](https://img.shields.io/badge/version-v0.4.0-blue)](CHANGELOG.md)
 [![Status](https://img.shields.io/badge/status-pre--1.0-yellow)](ROADMAP.md)
 
-> **Pre-1.0** — structure is stable and core services are live-tested, but paths, env variables, and defaults can still change before v1.0. See [ROADMAP.md](ROADMAP.md) for the v1.0 criteria.
+> **Pre-1.0** — structure is stable and core services are ready to use, but paths, env variables, and defaults can still change before v1.0. See [ROADMAP.md](ROADMAP.md) for the v1.0 criteria.
 
 ---
 
@@ -59,7 +59,7 @@ Five top-level areas, each with a clear mandate. Per-category READMEs (`core/REA
 
 The blueprint takes a **choice-matrix** approach: where several tools compete (dashboards, photo galleries, wikis, form builders), multiple options are included so you can test and pick what fits.
 
-**Status legend:** ✅ live-tested · ⚠️ draft · 📋 planned (tracked in the category README, no files yet)
+**Status:** ✅ Ready — follow the README and it works · ⚠️ Draft — files exist, not yet fully verified · 📋 Planned — not yet available · Pinned version per app in `.env.example`
 
 #### Dashboards & launchers
 

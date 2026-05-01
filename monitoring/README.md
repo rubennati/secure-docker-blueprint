@@ -4,7 +4,7 @@ Self-hosted monitoring stack — covers five axes: **uptime**, **cron / schedule
 
 ## Status
 
-✅ live-tested · ⚠️ draft · 📋 planned
+✅ Ready · ⚠️ Draft · 📋 Planned
 
 ### Uptime & status pages
 

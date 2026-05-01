@@ -4,7 +4,7 @@ Self-hosted backup tools — separate top-level category because backup is ops-c
 
 ## Status
 
-✅ live-tested · ⚠️ draft · 📋 planned
+✅ Ready · ⚠️ Draft · 📋 Planned
 
 | App | Approach | Status | Notes |
 |---|---|---|---|

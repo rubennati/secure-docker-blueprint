@@ -80,8 +80,8 @@ A chain is a defined sequence of files to check and update for a specific trigge
 | Step | File | Action |
 |---|---|---|
 | 1 | `docs/standards/<changed-file>` | Update the standard itself |
-| 2 | All live-tested apps (`✅`) | Check compliance with the updated standard |
-| 3 | All drafted apps (`⚠️`) | Note any drift — fix before next clean-install pass |
+| 2 | All Ready apps (`✅`) | Check compliance with the updated standard |
+| 3 | All Draft apps (`⚠️`) | Note any drift — fix before next verification pass |
 | 4 | `CHANGELOG.md` | Standard change documented |
 | 5 | `docs/maintenance.md` | Progress Log: which apps were checked, which have open drift |
 
