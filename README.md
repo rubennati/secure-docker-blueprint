@@ -59,7 +59,7 @@ Five top-level areas, each with a clear mandate. Per-category READMEs (`core/REA
 
 The blueprint takes a **choice-matrix** approach: where several tools compete (dashboards, photo galleries, wikis, form builders), multiple options are included so you can test and pick what fits.
 
-**Status:** ✅ Ready — follow the README and it works · 🚧 Draft — files exist, not yet fully verified · 📋 Planned — not yet available · Pinned version per app in `.env.example`
+**Status:** ✅ Ready · 🚧 Draft · 📋 Planned
 
 #### Dashboards & launchers
 
