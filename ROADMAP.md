@@ -51,7 +51,7 @@ Phases 0–3 (gap analysis, env catalogue) are done — see [`apps/paperless-ngx
 Before v1.0 is tagged:
 
 - Scan for `__REPLACE_ME__` remnants in live-tested files
-- Honest review of every `⚠️ draft` — keep honest, promote only what was actually tested
+- Honest review of every `🚧 draft` — keep honest, promote only what was actually tested
 - `CONFIG.md` pattern extended to other complex apps that benefit from it
 - CI pass (compose validate, secret scan, markdown lint)
 - **Resource limits rollout**: apply `deploy.resources` (memory/CPU) and `pids_limit` to every live-tested app per the profile table in `docs/standards/security-baseline.md`. Standard is documented; per-app values still need to be set.
@@ -123,5 +123,5 @@ Expose selected apps via Model Context Protocol for AI-assisted operation. Candi
 
 ## Out of scope here
 
-- `core/acme-certs/` — being extracted to its own repository. The blueprint stub remains as `⚠️ draft` but is no longer actively maintained in this repo.
+- `core/acme-certs/` — being extracted to its own repository. The blueprint stub remains as `🚧 draft` but is no longer actively maintained in this repo.
 - Paperless-mcp — template exists in the Paperless CONFIG.md extension notes but will live in its own repo once built.

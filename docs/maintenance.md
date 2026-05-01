@@ -10,7 +10,7 @@ Each piece of information has exactly one owner. When two files disagree, the ow
 
 | Information | Owner | Mirrors / references it |
 |---|---|---|
-| App status (✅ / ⚠️ / 📋) | Category README | Root README tables |
+| App status (✅ / 🚧 / 📋) | Category README | Root README tables |
 | App location (category) | Directory structure | README tables |
 | Shipped work | `CHANGELOG.md` | — |
 | Direction / planned work | `ROADMAP.md` | Category READMEs reference, do not duplicate |
@@ -23,7 +23,7 @@ Each piece of information has exactly one owner. When two files disagree, the ow
 | Per-app config options | `<app>/CONFIG.md` (where it exists) | No duplication |
 | Per-app upstream info | `<app>/UPSTREAM.md` | — |
 
-**Root README structure rule**: tables show `⚠️` / `✅` only. `📋` planned items appear as inline `Planned: X, Y, Z` lines — never as table rows.
+**Root README structure rule**: tables show `🚧` / `✅` only. `📋` planned items appear as inline `Planned: X, Y, Z` lines — never as table rows.
 
 ---
 
@@ -55,7 +55,7 @@ A chain is a defined sequence of files to check and update for a specific trigge
 | 4 | `<app>/README.md` | Setup + verify steps accurate and tested |
 | 5 | `<app>/UPSTREAM.md` | Image source, license, changelog link current |
 | 6 | `<app>/.gitignore` | Covers `volumes/`, `.secrets/`, `.env` |
-| 7 | Category README | Status correct: `⚠️` = files exist, `✅` = clean-install tested, `📋` = no files |
+| 7 | Category README | Status correct: `🚧` = files exist, `✅` = clean-install tested, `📋` = no files |
 | 8 | Root `README.md` | Table row matches category README (status, description) |
 | 9 | `CHANGELOG.md` | Change documented |
 
@@ -81,7 +81,7 @@ A chain is a defined sequence of files to check and update for a specific trigge
 |---|---|---|
 | 1 | `docs/standards/<changed-file>` | Update the standard itself |
 | 2 | All Ready apps (`✅`) | Check compliance with the updated standard |
-| 3 | All Draft apps (`⚠️`) | Note any drift — fix before next verification pass |
+| 3 | All Draft apps (`🚧`) | Note any drift — fix before next verification pass |
 | 4 | `CHANGELOG.md` | Standard change documented |
 | 5 | `docs/maintenance.md` | Progress Log: which apps were checked, which have open drift |
 
@@ -92,7 +92,7 @@ A chain is a defined sequence of files to check and update for a specific trigge
 
 | Step | File | Action |
 |---|---|---|
-| 1 | All category READMEs | Every directory has a row; every `⚠️` entry has files on disk |
+| 1 | All category READMEs | Every directory has a row; every `🚧` entry has files on disk |
 | 2 | Root `README.md` | Tables mirror category READMEs; `Planned:` lines match category planned items |
 | 3 | All `.env.example` | No real hostnames or vendor values as defaults — `example.com` or empty |
 | 4 | All `docker-compose.yml` + scripts | `grep -r "__REPLACE_ME__"` returns nothing |
@@ -111,7 +111,7 @@ Run the full Consistency Chain first, then:
 |---|---|---|
 | 1 | `CHANGELOG.md` | Move `[Unreleased]` to `[X.Y.Z]` heading; update comparison links |
 | 2 | `ROADMAP.md` | Move shipped milestone to Shipped section |
-| 3 | All `⚠️` entries | Is the draft status still honest? |
+| 3 | All `🚧` entries | Is the draft status still honest? |
 | 4 | All `✅` entries | Were any broken by dependency updates since last test? |
 | 5 | GitHub | `gh release create vX.Y.Z --draft` |
 
@@ -124,6 +124,6 @@ One row per session or chain run. The next session starts here — not at the to
 | Date | Chain | Scope | What was done | Open / carry-forward |
 |---|---|---|---|---|
 | 2026-04-28 | Setup | Entire repo | Process document created. File map defined. Chains defined. | — |
-| 2026-04-28 | Consistency | Entire repo | First live run. Fixed: SMTP hostnames in 3 `.env.example` files, broken Ackee link, root README pattern (tables = ⚠️/✅ only, Planned = inline). Rules refined: `__REPLACE_ME__` scan scoped to compose+scripts, vendor hostname scan added. | Category READMEs need content depth pass (choice guidance, integration notes) to differentiate from root README. |
+| 2026-04-28 | Consistency | Entire repo | First live run. Fixed: SMTP hostnames in 3 `.env.example` files, broken Ackee link, root README pattern (tables = 🚧/✅ only, Planned = inline). Rules refined: `__REPLACE_ME__` scan scoped to compose+scripts, vendor hostname scan added. | Category READMEs need content depth pass (choice guidance, integration notes) to differentiate from root README. |
 | 2026-04-29 | Setup | Process redesign | Rebuilt `maintenance.md` as a process map with trigger-based chains. Removed duplicate rules — chains reference standards, do not repeat them. | First real chain run pending. |
 | 2026-05-01 | App Chain | `core/authentik` | Fixed: `init-perms` missing `no-new-privileges:true`; `UPSTREAM.md` still on 2024.12.3 → bumped to 2026.2.2. Found two violations in `docs/standards/env-structure.md` itself: SMTP example used real vendor hostname, TZ default was Europe/Vienna instead of UTC — both fixed. | Open: `cap_drop` missing on all services (Recommended); `deploy.resources` + `pids_limit` not set (v1.0 Polish, needs measuring). |

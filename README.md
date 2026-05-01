@@ -33,7 +33,7 @@ Production-ready configurations for 15+ services — with standardized patterns,
 | [Authentik](core/authentik/) | ✅ | SSO / Identity Provider for centralized authentication (Forward-Auth, OAuth2 / OIDC / SAML) |
 | [OnlyOffice](core/onlyoffice/) | ✅ | Document editing server for Seafile, Nextcloud, etc. |
 | [dnsmasq](core/dnsmasq/) | ✅ | DNS forwarder with wildcard zones for Tailscale / split-DNS setups |
-| [acme-certs](core/acme-certs/) | ⚠️ | Certificate tool (acme.sh) for devices without Traefik (NAS, routers) |
+| [acme-certs](core/acme-certs/) | 🚧 | Certificate tool (acme.sh) for devices without Traefik (NAS, routers) |
 | [CrowdSec](core/crowdsec/) | ✅ | Intrusion detection engine + Traefik bouncer plugin — log analysis, threat decisions, L7 blocking |
 | [Whoami](core/whoami/) | ✅ | Traefik debug service to verify routing, TLS, and middlewares |
 | [Dockhand](core/dockhand/) | ✅ | Docker management with Git-based stacks |
@@ -59,24 +59,24 @@ Five top-level areas, each with a clear mandate. Per-category READMEs (`core/REA
 
 The blueprint takes a **choice-matrix** approach: where several tools compete (dashboards, photo galleries, wikis, form builders), multiple options are included so you can test and pick what fits.
 
-**Status:** ✅ Ready — follow the README and it works · ⚠️ Draft — files exist, not yet fully verified · 📋 Planned — not yet available · Pinned version per app in `.env.example`
+**Status:** ✅ Ready — follow the README and it works · 🚧 Draft — files exist, not yet fully verified · 📋 Planned — not yet available · Pinned version per app in `.env.example`
 
 #### Dashboards & launchers
 
 | App | Stack | Status | Description |
 |---|---|---|---|
-| [Dashy](apps/dashy/) | Single container | ⚠️ | Homelab dashboard, YAML-configured |
-| [Heimdall](apps/heimdall/) | Single container (LSIO) | ⚠️ | App-launcher with widget support |
-| [Homarr](apps/homarr/) | Single container | ⚠️ | Modern dashboard with rich integrations |
-| [Homepage](apps/homepage/) | Single container | ⚠️ | File-based YAML dashboard (gethomepage) |
+| [Dashy](apps/dashy/) | Single container | 🚧 | Homelab dashboard, YAML-configured |
+| [Heimdall](apps/heimdall/) | Single container (LSIO) | 🚧 | App-launcher with widget support |
+| [Homarr](apps/homarr/) | Single container | 🚧 | Modern dashboard with rich integrations |
+| [Homepage](apps/homepage/) | Single container | 🚧 | File-based YAML dashboard (gethomepage) |
 
 #### Publishing & knowledge
 
 | App | Stack | Status | Description |
 |---|---|---|---|
-| [Ghost](apps/ghost/) | App + MySQL | ⚠️ | Blog / CMS with SMTP |
+| [Ghost](apps/ghost/) | App + MySQL | 🚧 | Blog / CMS with SMTP |
 | [WordPress](apps/wordpress/) | App + MariaDB | ✅ | Classic CMS, hardened (mu-plugin + test-script) |
-| [BookStack](apps/bookstack/) | App (LSIO) + MariaDB | ⚠️ | Wiki / knowledge base (Laravel) |
+| [BookStack](apps/bookstack/) | App (LSIO) + MariaDB | 🚧 | Wiki / knowledge base (Laravel) |
 
 #### Photo galleries
 
@@ -84,11 +84,11 @@ Five options — test and pick what fits your workflow.
 
 | App | Stack | Status | Description |
 |---|---|---|---|
-| [Immich](apps/immich/) | Server + ML + Postgres (pgvectors) + Valkey | ⚠️ | AI-powered photo backup with mobile apps |
-| [LibrePhotos](apps/librephotos/) | Nginx + Django+ML + React + pgautoupgrade | ⚠️ | Google-Photos-like (OwnPhotos fork) |
-| [Lychee](apps/lycheeorg/) | App (Laravel) + MariaDB + Redis | ⚠️ | Clean, fast gallery |
-| [PhotoPrism](apps/photoprism/) | App (Go+TensorFlow) + MariaDB | ⚠️ | AI classification + WebDAV |
-| [Photoview](apps/photoview/) | App (Go+GraphQL) + MariaDB | ⚠️ | RAW processing + face recognition |
+| [Immich](apps/immich/) | Server + ML + Postgres (pgvectors) + Valkey | 🚧 | AI-powered photo backup with mobile apps |
+| [LibrePhotos](apps/librephotos/) | Nginx + Django+ML + React + pgautoupgrade | 🚧 | Google-Photos-like (OwnPhotos fork) |
+| [Lychee](apps/lycheeorg/) | App (Laravel) + MariaDB + Redis | 🚧 | Clean, fast gallery |
+| [PhotoPrism](apps/photoprism/) | App (Go+TensorFlow) + MariaDB | 🚧 | AI classification + WebDAV |
+| [Photoview](apps/photoview/) | App (Go+GraphQL) + MariaDB | 🚧 | RAW processing + face recognition |
 
 #### Scheduling & booking
 
@@ -96,9 +96,9 @@ Three 1:1-booking apps as a choice-matrix (pick one), plus a planned group-polli
 
 | App | Stack | Status | When to use |
 |---|---|---|---|
-| [Cal.com](apps/calcom/) | Next.js + Postgres | ⚠️ | Commercial-ready pathway, feature-richest, AGPL + commercial licence. **2026 note:** production codebase goes closed-source — see [calcom/UPSTREAM.md](apps/calcom/UPSTREAM.md). |
-| [Cal.diy](apps/caldiy/) | Next.js + Postgres | ⚠️ | MIT community edition of Cal.com, "personal / non-production" per upstream. Pick if strict OSS matters. |
-| [Easy!Appointments](apps/easyappointments/) | PHP + MariaDB | ⚠️ | Lightweight PHP alternative, established 2013, simpler than Cal.com, GPL-3.0. |
+| [Cal.com](apps/calcom/) | Next.js + Postgres | 🚧 | Commercial-ready pathway, feature-richest, AGPL + commercial licence. **2026 note:** production codebase goes closed-source — see [calcom/UPSTREAM.md](apps/calcom/UPSTREAM.md). |
+| [Cal.diy](apps/caldiy/) | Next.js + Postgres | 🚧 | MIT community edition of Cal.com, "personal / non-production" per upstream. Pick if strict OSS matters. |
+| [Easy!Appointments](apps/easyappointments/) | PHP + MariaDB | 🚧 | Lightweight PHP alternative, established 2013, simpler than Cal.com, GPL-3.0. |
 
 Planned: **Rallly** (group scheduling polls — Doodle alternative, complementary not competing with the 1:1 bookers above).
 
@@ -106,10 +106,10 @@ Planned: **Rallly** (group scheduling polls — Doodle alternative, complementar
 
 | App | Stack | Status | Description |
 |---|---|---|---|
-| [Monica](apps/monicahq/) | App (Laravel) + MariaDB | ⚠️ | Personal CRM for relationships |
-| [NocoDB](apps/nocodb/) | Single container + SQLite | ⚠️ | No-code database / spreadsheet UI (Airtable alternative) |
-| [OpnForm](apps/opnform/) | API (Laravel) + UI (Nuxt) + Postgres + Redis | ⚠️ | Self-hosted form builder (Typeform alternative) |
-| [n8n](apps/n8n/) | Single container + SQLite | ⚠️ | Visual workflow automation (Zapier alternative) |
+| [Monica](apps/monicahq/) | App (Laravel) + MariaDB | 🚧 | Personal CRM for relationships |
+| [NocoDB](apps/nocodb/) | Single container + SQLite | 🚧 | No-code database / spreadsheet UI (Airtable alternative) |
+| [OpnForm](apps/opnform/) | API (Laravel) + UI (Nuxt) + Postgres + Redis | 🚧 | Self-hosted form builder (Typeform alternative) |
+| [n8n](apps/n8n/) | Single container + SQLite | 🚧 | Visual workflow automation (Zapier alternative) |
 
 > **Cloud-free data-collection chain:** `OpnForm → n8n → NocoDB` — forms collect, n8n transforms, NocoDB stores + presents. All three on `proxy-public`, addressable as `http://<app>-app:<port>` for internal calls.
 
@@ -134,14 +134,14 @@ Planned (apps/): Headscale (self-hosted Tailscale control server), PrivateBin, S
 
 | App | Stack | Status | Description |
 |---|---|---|---|
-| [UniFi Network App](apps/unifi/) | Controller (LSIO) + MongoDB 4.4 | ⚠️ | Ubiquiti UniFi device controller |
+| [UniFi Network App](apps/unifi/) | Controller (LSIO) + MongoDB 4.4 | 🚧 | Ubiquiti UniFi device controller |
 
 #### Developer & admin tools
 
 | App | Stack | Status | Description |
 |---|---|---|---|
-| [Adminer](apps/adminer/) | Single container | ⚠️ | Database administration UI (connects to other apps' DBs) |
-| [IT-Tools](apps/it-tools/) | Single container | ⚠️ | Collection of IT / developer utilities (JSON, hash, regex, etc.) |
+| [Adminer](apps/adminer/) | Single container | 🚧 | Database administration UI (connects to other apps' DBs) |
+| [IT-Tools](apps/it-tools/) | Single container | 🚧 | Collection of IT / developer utilities (JSON, hash, regex, etc.) |
 
 Docker-management tools (Dockhand / Portainer / Hawser) moved to [`core/`](core/) — they're infrastructure, not apps.
 
@@ -154,12 +154,12 @@ See [`business/README.md`](business/README.md) for the full category README + ro
 | App | Function | Status | Description |
 |---|---|---|---|
 | [Invoice Ninja](business/invoiceninja/) | Billing | ✅ | Invoicing, quotes, client portal |
-| [Dolibarr](business/dolibarr/) | ERP / CRM | ⚠️ | Accounting, projects, HR, inventory |
-| [Kimai](business/kimai/) | Time tracking | ⚠️ | Per-project/customer hours → Invoice Ninja |
-| [Listmonk](business/listmonk/) | Newsletter | ⚠️ | Mailing list + transactional mail |
-| [Matomo](business/matomo/) | Web analytics | ⚠️ | GDPR-compliant, full-featured (Google Analytics alternative) |
-| [Zammad](business/zammad/) | Helpdesk | ⚠️ | Full 7-service helpdesk / ticketing / SLA |
-| [OpenSign](business/opensign/) | E-signatures | ⚠️ | DocuSign alternative, eIDAS-capable |
+| [Dolibarr](business/dolibarr/) | ERP / CRM | 🚧 | Accounting, projects, HR, inventory |
+| [Kimai](business/kimai/) | Time tracking | 🚧 | Per-project/customer hours → Invoice Ninja |
+| [Listmonk](business/listmonk/) | Newsletter | 🚧 | Mailing list + transactional mail |
+| [Matomo](business/matomo/) | Web analytics | 🚧 | GDPR-compliant, full-featured (Google Analytics alternative) |
+| [Zammad](business/zammad/) | Helpdesk | 🚧 | Full 7-service helpdesk / ticketing / SLA |
+| [OpenSign](business/opensign/) | E-signatures | 🚧 | DocuSign alternative, eIDAS-capable |
 
 Planned: Ackee, Plausible CE, Live Helper Chat, Eramba GRC.
 
@@ -169,12 +169,12 @@ See [`monitoring/README.md`](monitoring/README.md) for the full category README.
 
 | App | Axis | Status | Description |
 |---|---|---|---|
-| [Uptime Kuma](monitoring/uptime-kuma/) | Uptime (UI) | ⚠️ | Click-config uptime monitor, 90+ notification integrations |
-| [Gatus](monitoring/gatus/) | Uptime (YAML) | ⚠️ | Config-as-code health checks with Prometheus export |
-| [Beszel](monitoring/beszel/) | Host metrics (hub) | ⚠️ | Lightweight hub + local agent for CPU / RAM / disk / docker stats |
-| [Beszel Agent](monitoring/beszel-agent/) | Host metrics (remote agent) | ⚠️ | Standalone agent for additional hosts; pairs with Beszel hub |
-| [changedetection.io](monitoring/changedetection/) | Content watcher | ⚠️ | Page diff + notification (restock / price / ToS) |
-| [Healthchecks](monitoring/healthchecks/) | Cron / scheduled-job | ⚠️ | Dead-man's switch for backups / cron / scheduled tasks |
+| [Uptime Kuma](monitoring/uptime-kuma/) | Uptime (UI) | 🚧 | Click-config uptime monitor, 90+ notification integrations |
+| [Gatus](monitoring/gatus/) | Uptime (YAML) | 🚧 | Config-as-code health checks with Prometheus export |
+| [Beszel](monitoring/beszel/) | Host metrics (hub) | 🚧 | Lightweight hub + local agent for CPU / RAM / disk / docker stats |
+| [Beszel Agent](monitoring/beszel-agent/) | Host metrics (remote agent) | 🚧 | Standalone agent for additional hosts; pairs with Beszel hub |
+| [changedetection.io](monitoring/changedetection/) | Content watcher | 🚧 | Page diff + notification (restock / price / ToS) |
+| [Healthchecks](monitoring/healthchecks/) | Cron / scheduled-job | 🚧 | Dead-man's switch for backups / cron / scheduled tasks |
 
 Planned: Statping, ciao, Checkmate, Zabbix, Grafana + Prometheus, Scrutiny.
 
