@@ -1,6 +1,15 @@
 # Maintenance Process
 
-Navigation document for keeping the repository accurate, consistent, and up to standard. Rules and standards are defined elsewhere — this file maps **triggers to chains**, **chains to affected files**, and tracks **where the process currently stands**.
+This document operates one level above the repository content. It defines **how the project maintains quality over time** — not what the standards are (those live in `docs/standards/`), but when and how they are applied, verified, and kept current.
+
+The repository has three kinds of truth:
+- **Standards** — what correct looks like (`docs/standards/`)
+- **State** — what exists right now (files, READMEs, CHANGELOG)
+- **Process** — how state is kept aligned with standards (this document)
+
+During active development it is easy to add an app, update a standard, or bump a version without updating everything that depends on it. These gaps accumulate silently. The chains below make the dependencies explicit: when X changes, these are the files that need to be checked.
+
+No chain needs to be run in full every time. Run only what the trigger requires.
 
 ---
 
@@ -55,7 +64,7 @@ A chain is a defined sequence of files to check and update for a specific trigge
 | 4 | `<app>/README.md` | Setup + verify steps accurate and tested |
 | 5 | `<app>/UPSTREAM.md` | Image source, license, changelog link current |
 | 6 | `<app>/.gitignore` | Covers `volumes/`, `.secrets/`, `.env` |
-| 7 | Category README | Status correct: `🚧` = files exist, `✅` = clean-install tested, `📋` = no files |
+| 7 | Category README | Status is current and honest → status definitions in root `README.md` |
 | 8 | Root `README.md` | Table row matches category README (status, description) |
 | 9 | `CHANGELOG.md` | Change documented |
 
