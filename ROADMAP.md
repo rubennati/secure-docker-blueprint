@@ -1,6 +1,6 @@
 # Roadmap
 
-Last updated: 2026-04-20 (Authentik live).
+Last updated: 2026-05-02 (Ghost live — base stack + ActivityPub overlay).
 
 This document captures direction, not detailed changelogs. For shipped work see [`CHANGELOG.md`](CHANGELOG.md); for per-category details see the `README.md` in each top-level directory.
 
