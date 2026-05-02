@@ -65,9 +65,9 @@ The blueprint takes a **choice-matrix** approach: where several tools compete (d
 
 | App | Stack | Status | Description |
 |---|---|---|---|
-| [Dashy](apps/dashy/) | Single container | 🚧 | Homelab dashboard, YAML-configured |
-| [Heimdall](apps/heimdall/) | Single container (LSIO) | 🚧 | App-launcher with widget support |
-| [Homarr](apps/homarr/) | Single container | 🚧 | Modern dashboard with rich integrations |
+| [Dashy](apps/dashy/) | Single container | ✅ | Homelab dashboard, YAML-configured |
+| [Heimdall](apps/heimdall/) | Single container (LSIO) | ✅ | App-launcher with widget support |
+| [Homarr](apps/homarr/) | Single container | ✅ | Modern dashboard with rich integrations |
 | [Homepage](apps/homepage/) | Single container | 🚧 | File-based YAML dashboard (gethomepage) |
 
 #### Publishing & knowledge

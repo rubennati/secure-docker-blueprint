@@ -14,6 +14,18 @@ services:
     # --- Security ---
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+    # --- Resource Limits ---
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.50"
+        reservations:
+          memory: 64M
+    pids_limit: 100
 
     # --- Configuration ---
     environment:
@@ -23,7 +35,7 @@ services:
     # --- Storage ---
     volumes:
       # Your dashboard configuration (sections, icons, bookmarks, etc.)
-      - ./config/conf.yml:/app/user-data/conf.yml
+      - ./config/conf.yml:/app/user-data/conf.yml:ro
 
     # --- Networking ---
     networks:

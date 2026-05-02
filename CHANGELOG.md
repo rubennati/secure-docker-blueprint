@@ -8,10 +8,19 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
-### Fixed
+### Dashy, Heimdall, Homarr live
 
-- **Dashy image tag**: `3.1.1` was never published to Docker Hub. Bumped to `4.0.4` (current latest). Healthcheck path updated for v4: `/app/services/healthcheck` → `/app/services/healthcheck.js`.
-- **Heimdall env file**: section header corrected (`Heimdall Options` → `App Configuration`), TZ examples comment added, `ALLOW_INTERNAL_REQUESTS` comment was inverted in `docker-compose.yml` (fixed to match actual behaviour: `false` = block internal probes).
+All three dashboard apps live-tested on clean installs. Status `🚧 → ✅`.
+
+Version fixes: Dashy `3.1.1` → `4.0.4` (tag never existed; healthcheck path updated for v4: `.js` extension added). Homarr `1.39.0` → `v1.60.0` (tag never existed; note `v`-prefix in GHCR tags).
+
+Security baseline applied across all three:
+
+- **Dashy**: `cap_drop: ALL` added; config mount hardened to `:ro` (file-managed, no in-app editor); `deploy.resources` + `pids_limit` added.
+- **Heimdall**: `deploy.resources` + `pids_limit` added; healthcheck added; `cap_drop` intentionally skipped — LSIO/s6-overlay image needs root capabilities during init (same pattern as Paperless-ngx).
+- **Homarr**: `deploy.resources` + `pids_limit` added (1G/1.00 cpus — bundles Next.js + internal Redis + cron); healthcheck added; `cap_drop` intentionally skipped — starts as UID=0, runs internal Redis.
+
+Env file corrections: Heimdall and Homarr section headers aligned to `App Configuration` standard; TZ examples comments added.
 
 ### Ghost live
 
