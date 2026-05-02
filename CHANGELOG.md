@@ -11,6 +11,7 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 ### Fixed
 
 - **Dashy image tag**: `3.1.1` was never published to Docker Hub. Bumped to `4.0.4` (current latest). Healthcheck path updated for v4: `/app/services/healthcheck` → `/app/services/healthcheck.js`.
+- **Heimdall env file**: section header corrected (`Heimdall Options` → `App Configuration`), TZ examples comment added, `ALLOW_INTERNAL_REQUESTS` comment was inverted in `docker-compose.yml` (fixed to match actual behaviour: `false` = block internal probes).
 
 ### Ghost live
 
