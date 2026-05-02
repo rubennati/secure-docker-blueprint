@@ -60,7 +60,7 @@ ActivityPub separated as an optional overlay (`activitypub.yml`), enabled via `C
 
 ### Documentation
 
-- `docs/bugfixes/ghost-2026-05-01.md` documents all three bugs with root causes and fixes.
+- `docs/bugfixes/ghost-2026-05-01.md` documents all four bugs with root causes and fixes.
 
 ### Authentik live
 
@@ -246,7 +246,8 @@ Initial public release.
 - No CI workflows yet (compose validate, markdown lint, secret scan) — planned for 0.2.0
 - No automatic backup orchestration — planned in Evaluating section of ROADMAP
 
-[Unreleased]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/rubennati/secure-docker-blueprint/releases/tag/v0.4.0
 [0.3.0]: https://github.com/rubennati/secure-docker-blueprint/releases/tag/v0.3.0
 [0.2.0]: https://github.com/rubennati/secure-docker-blueprint/releases/tag/v0.2.0
 [0.1.0]: https://github.com/rubennati/secure-docker-blueprint/releases/tag/v0.1.0

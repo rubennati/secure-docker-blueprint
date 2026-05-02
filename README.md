@@ -234,35 +234,46 @@ Three patterns for secret handling:
 ## Project Structure
 
 ```
-secure-docker-blueprint/
+docker-ops-blueprint/
 │
 ├── core/                        # Infrastructure (always needed)
 │   ├── traefik/                 #   Reverse proxy + socket proxy
 │   ├── authentik/               #   SSO / Identity provider
-│   ├── crowdsec/                #   Intrusion detection (IDS/IPS)
-│   ├── onlyoffice/              #   Document editing
-│   ├── dnsmasq/                 #   DNS forwarder/cache
+│   ├── crowdsec/                #   Intrusion detection + Traefik bouncer
+│   ├── onlyoffice/              #   Document editing server
+│   ├── dnsmasq/                 #   DNS forwarder / split-DNS
 │   ├── acme-certs/              #   Certificate tool (acme.sh)
-│   └── whoami/                  #   Debug service
+│   ├── whoami/                  #   Traefik debug service
+│   ├── dockhand/                #   Docker management (Git-based stacks)
+│   ├── hawser/                  #   Remote Docker agent for Dockhand
+│   ├── portainer/               #   Docker management UI
+│   └── portainer-agent/         #   Remote Docker agent for Portainer
 │
-├── apps/                        # Applications (pick what you need)
+├── apps/                        # General-purpose apps (homelab + company)
+│   ├── dashy/  heimdall/  homarr/  homepage/
+│   ├── ghost/  wordpress/  bookstack/
+│   ├── immich/  paperless-ngx/  nextcloud/  seafile/  seafile-pro/
 │   ├── vaultwarden/
-│   ├── ghost/
-│   ├── paperless-ngx/
-│   ├── seafile/
-│   ├── wordpress/
-│   ├── calcom/
-│   ├── invoiceninja/
-│   ├── portainer/
-│   ├── dockhand/
-│   └── hawser/
+│   ├── nocodb/  n8n/  opnform/  monicahq/
+│   ├── calcom/  caldiy/  easyappointments/
+│   ├── adminer/  it-tools/  unifi/
+│   └── ...
 │
-├── docs/
-│   ├── standards/               # Conventions and patterns
-│   └── templates/               # Starter template for new apps
+├── business/                    # Company-only apps
+│   ├── invoiceninja/  dolibarr/  kimai/
+│   ├── listmonk/  matomo/  zammad/  opensign/
+│   └── ...
 │
-└── scripts/
-    └── overview.sh              # Dashboard of all services
+├── monitoring/                  # Ops observability
+│   ├── uptime-kuma/  gatus/  beszel/  changedetection/  healthchecks/
+│   └── ...
+│
+├── backup/                      # Backup tooling
+│
+└── docs/
+    ├── standards/               # Conventions and patterns
+    ├── bugfixes/                # Per-incident root-cause docs
+    └── templates/               # Starter template for new apps
 ```
 
 ### Per-App Layout
