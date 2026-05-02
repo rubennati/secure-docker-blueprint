@@ -57,20 +57,23 @@ deploy:
     limits:
       memory: 512M
       cpus: "0.50"
+      pids: 100
     reservations:
       memory: 128M
-
-pids_limit: 100
 ```
 
 Prevents a crashed or compromised container from starving the host kernel.
 `deploy.resources` caps memory and CPU so a single container cannot exhaust
-the host under load or during a memory leak. `pids_limit` blocks fork-bomb
+the host under load or during a memory leak. `pids` blocks fork-bomb
 escalation inside the container.
+
+Note: `pids_limit` is the legacy top-level key — Docker Compose v2 maps it
+to `deploy.resources.limits.pids` internally and errors if both are set.
+Always use `deploy.resources.limits.pids` when a `deploy:` block is present.
 
 **Calibration by service profile:**
 
-| Profile | Example services | `memory` limit | `cpus` | `pids_limit` |
+| Profile | Example services | `memory` limit | `cpus` | `pids` |
 |---|---|---|---|---|
 | Lightweight helper | Whoami, Socket Proxy, init containers | `128M` | `0.25` | `50` |
 | Cache / queue | Redis, Valkey | `256M` | `0.25` | `50` |
@@ -174,4 +177,4 @@ Exception: Hawser — needs socket access as its core function, but still uses a
 - [ ] Images pinned (never `:latest`)
 - [ ] `./.secrets/` and `./volumes/` in `.gitignore`
 - [ ] `deploy.resources.limits` set per service profile (memory + cpus)
-- [ ] `pids_limit` set on every long-running service
+- [ ] `deploy.resources.limits.pids` set on every long-running service

@@ -25,9 +25,9 @@ services:
         limits:
           memory: 1G
           cpus: "1.00"
+          pids: 200
         reservations:
           memory: 256M
-    pids_limit: 200
 
     # --- Configuration ---
     environment:
