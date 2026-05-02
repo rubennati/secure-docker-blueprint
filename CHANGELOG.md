@@ -8,6 +8,29 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
+### IT-Tools, Adminer, NocoDB, n8n live
+
+All four apps live-tested on clean installs. Status `🚧 → ✅`.
+
+Six bugs found and fixed across the four apps:
+
+- **IT-Tools — non-existent tag**: `.env.example` referenced `2025.7.18-a0bc346` which does not exist on GHCR. Corrected to `2024.10.22-7ca5933`.
+- **IT-Tools — cap_drop crash-loop**: `cap_drop: ALL` dropped `CAP_CHOWN`, which the nginx entrypoint requires to set up `/var/cache/nginx/*` before dropping to UID 101. Removed `cap_drop: ALL`; filesystem hardening retained via `read_only: true` + `tmpfs` for `/tmp`, `/var/cache/nginx`, `/var/run`.
+- **Adminer — healthcheck always unhealthy**: the official `adminer` image ships no `curl` or `wget`. Replaced the `curl`-based check with a PHP one-liner using `stream_socket_client('tcp://127.0.0.1:8080')` — PHP is always present in the image. No `$variables` in the expression avoids Docker Compose interpolation.
+- **NocoDB / n8n — HTTP 429 on first page load**: both are heavy SPAs that load 100+ assets in parallel on the first visit. The Traefik `sec-3` middleware chain includes `rl-soft` (burst: 50), which is immediately saturated. Changed `APP_TRAEFIK_SECURITY` to `sec-1` for both apps. `sec-1` provides security headers without rate-limit middleware; acceptable because both apps are VPN-only (`acc-tailscale`).
+- **NocoDB — signup blocked without SMTP**: the original compose file used non-existent env var names for the super-admin. Corrected to `NC_ADMIN_EMAIL` / `NC_ADMIN_PASSWORD` (verified against source); both optional with `:-` default for installs with SMTP.
+- **n8n — `ERR_ERL_UNEXPECTED_X_FORWARDED_FOR`**: n8n's internal `express-rate-limit` raised a `ValidationError` on every request because Express `trust proxy` was not configured. Fixed with `N8N_PROXY_HOPS: "1"` — tells n8n to trust one reverse-proxy hop (Traefik) for `X-Forwarded-For`. Source: [n8n-io/n8n#9172](https://github.com/n8n-io/n8n/issues/9172).
+
+Additionally removed the deprecated `N8N_RUNNERS_ENABLED` env var (removed in n8n 2.19.2 — task runner is always active).
+
+### Documentation
+
+- `docs/bugfixes/it-tools-adminer-nocodb-n8n-2026-05-02.md` documents all six bugs with symptoms, root causes, and fixes.
+
+### Security baseline — Resource Limits
+
+`deploy.resources` (memory, CPU, PIDs) moved from the mandatory checklist to the **Optional** section in `docs/standards/security-baseline.md`. Resource limits require per-app investigation before any values are set; they are tracked as a v1.0 polish item in the ROADMAP, not a prerequisite for going live.
+
 ### Dashy, Heimdall, Homarr live
 
 All three dashboard apps live-tested on clean installs. Status `🚧 → ✅`.

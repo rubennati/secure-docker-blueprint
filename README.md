@@ -107,9 +107,9 @@ Planned: **Rallly** (group scheduling polls — Doodle alternative, complementar
 | App | Stack | Status | Description |
 |---|---|---|---|
 | [Monica](apps/monicahq/) | App (Laravel) + MariaDB | 🚧 | Personal CRM for relationships |
-| [NocoDB](apps/nocodb/) | Single container + SQLite | 🚧 | No-code database / spreadsheet UI (Airtable alternative) |
+| [NocoDB](apps/nocodb/) | Single container + SQLite | ✅ | No-code database / spreadsheet UI (Airtable alternative) |
 | [OpnForm](apps/opnform/) | API (Laravel) + UI (Nuxt) + Postgres + Redis | 🚧 | Self-hosted form builder (Typeform alternative) |
-| [n8n](apps/n8n/) | Single container + SQLite | 🚧 | Visual workflow automation (Zapier alternative) |
+| [n8n](apps/n8n/) | Single container + SQLite | ✅ | Visual workflow automation (Zapier alternative) |
 
 > **Cloud-free data-collection chain:** `OpnForm → n8n → NocoDB` — forms collect, n8n transforms, NocoDB stores + presents. All three on `proxy-public`, addressable as `http://<app>-app:<port>` for internal calls.
 
@@ -140,8 +140,8 @@ Planned (apps/): Headscale (self-hosted Tailscale control server), PrivateBin, S
 
 | App | Stack | Status | Description |
 |---|---|---|---|
-| [Adminer](apps/adminer/) | Single container | 🚧 | Database administration UI (connects to other apps' DBs) |
-| [IT-Tools](apps/it-tools/) | Single container | 🚧 | Collection of IT / developer utilities (JSON, hash, regex, etc.) |
+| [Adminer](apps/adminer/) | Single container | ✅ | Database administration UI (connects to other apps' DBs) |
+| [IT-Tools](apps/it-tools/) | Single container | ✅ | Collection of IT / developer utilities (JSON, hash, regex, etc.) |
 
 Docker-management tools (Dockhand / Portainer / Hawser) moved to [`core/`](core/) — they're infrastructure, not apps.
 
