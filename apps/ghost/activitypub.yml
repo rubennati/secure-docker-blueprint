@@ -1,5 +1,5 @@
 # ActivityPub overlay — enable by setting in .env:
-#   COMPOSE_FILE=docker-compose.yml:docker-compose.activitypub.yml
+#   COMPOSE_FILE=docker-compose.yml:activitypub.yml
 #
 # For existing deployments: run the ActivityPub migrations once before starting:
 #   docker compose run --rm activitypub-migrate

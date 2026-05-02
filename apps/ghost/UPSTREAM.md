@@ -51,7 +51,7 @@ The official ghost-docker setup uses Caddy as an internal webserver. This bluepr
 | `utf8mb4` character set | Correct Unicode storage for post content and member names; Ghost requires it. |
 | SMTP via external relay | The Alpine image has no local MTA — an external SMTP service is required. |
 | TLS profile `tls-aplus` + `acc-public` + `sec-2` | Public blog, standard web-app security posture, A+ on SSL Labs. |
-| ActivityPub as optional overlay | Adds 2 services + one-shot migration runner. Separated into `docker-compose.activitypub.yml` so the base stack works independently. |
+| ActivityPub as optional overlay | Adds 2 services + one-shot migration runner. Separated into `activitypub.yml` so the base stack works independently. |
 | ActivityPub shares Ghost content volume | Official pattern — images written by ActivityPub land in `./volumes/content/images/activitypub/` and are served by Ghost at `/content/images/activitypub`. No separate volume or Traefik route needed for image delivery. |
 | `MYSQL_MULTIPLE_DATABASES: activitypub` + `mysql-init/` | Official pattern — the activitypub database is created by an init script on first MySQL startup instead of a separate compose service. |
 | `ALLOW_PRIVATE_ADDRESS=true` on ActivityPub | Required for Docker internal network communication between services. |

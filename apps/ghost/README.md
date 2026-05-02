@@ -11,7 +11,7 @@ Base stack (two services):
 | `app` | `ghost:6-alpine` | Ghost CMS (Node.js), serves the blog + admin UI on port `2368` |
 | `db` | `mysql:8.4` | Ghost's content database (posts, members, settings) |
 
-Optional ActivityPub stack (`docker-compose.activitypub.yml`):
+Optional ActivityPub stack (`activitypub.yml`):
 
 | Service | Image | Purpose |
 |---------|-------|---------|
@@ -38,7 +38,7 @@ The ActivityPub service has the same limitation — `ops/activitypub-entrypoint.
 # 1. Create .env
 cp .env.example .env
 # Edit: APP_TRAEFIK_HOST, GHOST_MAIL_*, TZ
-# To enable ActivityPub: set COMPOSE_FILE=docker-compose.yml:docker-compose.activitypub.yml
+# To enable ActivityPub: set COMPOSE_FILE=docker-compose.yml:activitypub.yml
 
 # 2. Generate secrets
 mkdir -p .secrets
@@ -63,7 +63,7 @@ ActivityPub requires its own database. For existing deployments where MySQL alre
 docker exec ghost-db sh /docker-entrypoint-initdb.d/01-activitypub-db.sh
 ```
 
-Then set `COMPOSE_FILE=docker-compose.yml:docker-compose.activitypub.yml` in `.env` and run `docker compose up -d`.
+Then set `COMPOSE_FILE=docker-compose.yml:activitypub.yml` in `.env` and run `docker compose up -d`.
 
 ## Verify
 

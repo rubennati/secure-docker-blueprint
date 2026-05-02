@@ -19,7 +19,7 @@ Four bugs found and fixed along the way:
 - **`ERR_TOO_MANY_REDIRECTS` on ActivityPub endpoints**: ActivityPub's `behindProxy` wrapper reconstructs URLs from `X-Forwarded-Proto`. The official ghost-docker setup (Caddy) forwards this header automatically; Traefik requires an explicit `customrequestheaders` middleware on the ActivityPub router.
 - **SMTP TLS mismatch (Ghost 6 login blocked)**: Ghost 6 sends an email verification code for every new-device login — broken SMTP blocks the admin login entirely. `mail__options__secure` was hardcoded `true` (SSL/TLS, port 465); Brevo uses port 587 (STARTTLS, `secure: false`). Made `GHOST_MAIL_SECURE` configurable via env var; updated `.env.example` defaults to Brevo/STARTTLS.
 
-ActivityPub separated as an optional overlay (`docker-compose.activitypub.yml`), enabled via `COMPOSE_FILE=docker-compose.yml:docker-compose.activitypub.yml`. Stack structure aligned with the official ghost-docker compose: shared Ghost content volume for ActivityPub images, `mysql-init/` init scripts with `MYSQL_MULTIPLE_DATABASES`, `activitypub-migrations:1.2.2` pinned (corrected from `edge`). Docker Secrets layered on top throughout.
+ActivityPub separated as an optional overlay (`activitypub.yml`), enabled via `COMPOSE_FILE=docker-compose.yml:activitypub.yml`. Stack structure aligned with the official ghost-docker compose: shared Ghost content volume for ActivityPub images, `mysql-init/` init scripts with `MYSQL_MULTIPLE_DATABASES`, `activitypub-migrations:1.2.2` pinned (corrected from `edge`). Docker Secrets layered on top throughout.
 
 ### Documentation
 
