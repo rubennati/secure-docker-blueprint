@@ -8,6 +8,23 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
+### Ghost live
+
+Ghost live-tested end-to-end on a clean install: `ghost:6.27.0-alpine` + `mysql:8.4`, with optional ActivityPub overlay (`ghcr.io/tryghost/activitypub:1.2.2`) via `COMPOSE_FILE`. Status `🚧 → ✅`.
+
+Four bugs found and fixed along the way:
+
+- **`ERR_INVALID_ARG_TYPE` at MySQL auth**: Ghost uses nconf's `__` notation — `database__connection__password__file` creates a nested object `{file: '...'}` instead of reading the secret. mysql2 crashes when it receives an Object at sha1. Fixed with a custom `ops/entrypoint.sh` that reads the Docker Secret files and exports plain env vars before handing off to the original entrypoint. Same pattern as other apps in the blueprint.
+- **`mysqladmin ping -h localhost` uses Unix socket, not TCP**: healthcheck reported `Healthy` before TCP port 3306 was ready — dependent containers (`activitypub-migrate`) got `connection refused`. Fixed to `-h 127.0.0.1` to force TCP. Password added via `$(cat /run/secrets/DB_ROOT_PWD)` because `MYSQL_ROOT_PASSWORD_FILE` is not resolved outside the init phase.
+- **`ERR_TOO_MANY_REDIRECTS` on ActivityPub endpoints**: ActivityPub's `behindProxy` wrapper reconstructs URLs from `X-Forwarded-Proto`. The official ghost-docker setup (Caddy) forwards this header automatically; Traefik requires an explicit `customrequestheaders` middleware on the ActivityPub router.
+- **SMTP TLS mismatch (Ghost 6 login blocked)**: Ghost 6 sends an email verification code for every new-device login — broken SMTP blocks the admin login entirely. `mail__options__secure` was hardcoded `true` (SSL/TLS, port 465); Brevo uses port 587 (STARTTLS, `secure: false`). Made `GHOST_MAIL_SECURE` configurable via env var; updated `.env.example` defaults to Brevo/STARTTLS.
+
+ActivityPub separated as an optional overlay (`docker-compose.activitypub.yml`), enabled via `COMPOSE_FILE=docker-compose.yml:docker-compose.activitypub.yml`. Stack structure aligned with the official ghost-docker compose: shared Ghost content volume for ActivityPub images, `mysql-init/` init scripts with `MYSQL_MULTIPLE_DATABASES`, `activitypub-migrations:1.2.2` pinned (corrected from `edge`). Docker Secrets layered on top throughout.
+
+### Documentation
+
+- `docs/bugfixes/ghost-2026-05-01.md` documents all three bugs with root causes and fixes.
+
 ### Authentik live
 
 Authentik now live-tested end-to-end. Initial-setup flow reachable through Traefik (`/if/flow/initial-setup/`), admin account creation works, all four services (`server`, `worker`, `db`, `redis`) stable and healthy. Status in the Core Infrastructure table flips ⚠️ → ✅.

@@ -74,7 +74,7 @@ The blueprint takes a **choice-matrix** approach: where several tools compete (d
 
 | App | Stack | Status | Description |
 |---|---|---|---|
-| [Ghost](apps/ghost/) | App + MySQL | 🚧 | Blog / CMS with SMTP |
+| [Ghost](apps/ghost/) | App + MySQL | ✅ | Blog / CMS with SMTP + optional ActivityPub (Fediverse) |
 | [WordPress](apps/wordpress/) | App + MariaDB | ✅ | Classic CMS, hardened (mu-plugin + test-script) |
 | [BookStack](apps/bookstack/) | App (LSIO) + MariaDB | 🚧 | Wiki / knowledge base (Laravel) |
 
