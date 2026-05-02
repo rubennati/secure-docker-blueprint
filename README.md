@@ -270,10 +270,14 @@ secure-docker-blueprint/
 │
 ├── backup/                      # Backup tooling
 │
-└── docs/
-    ├── standards/               # Conventions and patterns
-    ├── bugfixes/                # Per-incident root-cause docs
-    └── templates/               # Starter template for new apps
+├── docs/
+│   ├── standards/               # Conventions and patterns
+│   ├── bugfixes/                # Per-incident root-cause docs
+│   ├── audits/                  # Consistency & maintenance audit logs
+│   └── templates/               # Starter template for new apps
+│
+└── scripts/
+    └── overview.sh              # Dashboard of all running services
 ```
 
 ### Per-App Layout
