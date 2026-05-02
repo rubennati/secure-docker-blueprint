@@ -6,8 +6,8 @@
 - **GitHub:** https://github.com/nocodb/nocodb
 - **Docker Hub:** https://hub.docker.com/r/nocodb/nocodb
 - **License:** AGPL-3.0
-- **Based on version:** `latest`
-- **Last checked:** 2026-04-17
+- **Based on version:** `0.301.5`
+- **Last checked:** 2026-05-02
 
 ## What we use
 

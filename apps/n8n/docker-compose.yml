@@ -16,6 +16,18 @@ services:
     # --- Security ---
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+    # --- Resource Limits ---
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.50"
+        reservations:
+          memory: 128M
+    pids_limit: 100
 
     # --- Configuration ---
     environment:
@@ -33,11 +45,6 @@ services:
       # Credentials encryption — CRITICAL: must not change after first
       # start, or all stored OAuth tokens / API keys become unreadable.
       N8N_ENCRYPTION_KEY_FILE: /run/secrets/N8N_ENCRYPTION_KEY
-      # Basic auth on the UI (recommended — n8n has no built-in user
-      # management in the Community Edition unless you enable it).
-      N8N_BASIC_AUTH_ACTIVE: ${BASIC_AUTH_ACTIVE}
-      N8N_BASIC_AUTH_USER: ${BASIC_AUTH_USER}
-      N8N_BASIC_AUTH_PASSWORD: ${BASIC_AUTH_PASSWORD}
     secrets:
       - N8N_ENCRYPTION_KEY
 
@@ -65,6 +72,14 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO /dev/null http://127.0.0.1:5678/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
 
 # --------------------------------------------------------
 # NETWORKS

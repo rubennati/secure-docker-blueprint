@@ -14,6 +14,18 @@ services:
     # --- Security ---
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+    # --- Resource Limits ---
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.25"
+        reservations:
+          memory: 32M
+    pids_limit: 50
 
     # --- Configuration ---
     environment:
@@ -44,6 +56,14 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fso /dev/null http://127.0.0.1:8080"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
 # --------------------------------------------------------
 # NETWORKS
