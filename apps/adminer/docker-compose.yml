@@ -17,15 +17,6 @@ services:
     cap_drop:
       - ALL
 
-    # --- Resource Limits ---
-    deploy:
-      resources:
-        limits:
-          memory: 128M
-          cpus: "0.25"
-          pids: 50
-        reservations:
-          memory: 32M
 
     # --- Configuration ---
     environment:

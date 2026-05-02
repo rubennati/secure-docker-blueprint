@@ -18,16 +18,6 @@ services:
     # NOTE: cap_drop not set — Homarr starts as UID=0 and runs an internal
     # Redis server; dropping ALL capabilities would break both.
 
-    # --- Resource Limits ---
-    # Homarr bundles Next.js + Redis + background cron jobs in one container.
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-          cpus: "1.00"
-          pids: 200
-        reservations:
-          memory: 256M
 
     # --- Configuration ---
     environment:
