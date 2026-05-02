@@ -176,5 +176,4 @@ Exception: Hawser — needs socket access as its core function, but still uses a
 - [ ] Database only in internal network
 - [ ] Images pinned (never `:latest`)
 - [ ] `./.secrets/` and `./volumes/` in `.gitignore`
-- [ ] `deploy.resources.limits` set per service profile (memory + cpus)
-- [ ] `deploy.resources.limits.pids` set on every long-running service
+- [ ] Resource limits set per service profile (`deploy.resources`) — optional, discuss per app

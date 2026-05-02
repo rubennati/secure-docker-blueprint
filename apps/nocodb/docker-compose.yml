@@ -31,6 +31,11 @@ services:
       NC_DISABLE_TELE: "true"
       # Harden admin surface — recommended for public deployments
       NC_INVITE_ONLY_SIGNUP: ${NC_INVITE_ONLY_SIGNUP}
+      # Optional: pre-create the super-admin on first start (no SMTP needed).
+      # Leave empty to create the admin interactively via the signup page.
+      # Password requirements: min 8 chars, uppercase, number, special char.
+      NC_ADMIN_EMAIL: ${NC_ADMIN_EMAIL:-}
+      NC_ADMIN_PASSWORD: ${NC_ADMIN_PASSWORD:-}
     secrets:
       - NC_JWT_SECRET
 

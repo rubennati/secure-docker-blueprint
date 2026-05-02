@@ -50,7 +50,7 @@ services:
 
     # --- Health & Observability ---
     healthcheck:
-      test: ["CMD-SHELL", "curl -fso /dev/null http://127.0.0.1:8080"]
+      test: ["CMD", "php", "-r", "exit(stream_socket_client('tcp://127.0.0.1:8080')?0:1);"]
       interval: 30s
       timeout: 5s
       retries: 3

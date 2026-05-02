@@ -15,8 +15,9 @@ services:
     # --- Security ---
     security_opt:
       - no-new-privileges:true
-    cap_drop:
-      - ALL
+    # NOTE: cap_drop: ALL not set — the nginx entrypoint requires CAP_CHOWN to
+    # set up /var/cache/nginx at startup. Without it the container crash-loops.
+    # read_only + tmpfs below still provide filesystem-level hardening.
     read_only: true
     tmpfs:
       - /tmp
