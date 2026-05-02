@@ -47,7 +47,7 @@ services:
 
     # --- Health & Observability ---
     healthcheck:
-      test: ["CMD", "node", "/app/services/healthcheck"]
+      test: ["CMD", "node", "/app/services/healthcheck.js"]
       interval: 90s
       timeout: 10s
       retries: 3
