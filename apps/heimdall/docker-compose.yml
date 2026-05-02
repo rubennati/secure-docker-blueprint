@@ -23,9 +23,7 @@ services:
       TZ: ${TZ}
       PUID: ${PUID}
       PGID: ${PGID}
-      # Heimdall can block outbound requests from its widgets
-      # (status checks, etc.) to internal networks — set to
-      # 'false' to allow internal probes, 'true' to block (default).
+      # false = block internal probes (default, safer); true = allow
       ALLOW_INTERNAL_REQUESTS: ${ALLOW_INTERNAL_REQUESTS}
 
     # --- Storage ---
