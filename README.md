@@ -234,7 +234,7 @@ Three patterns for secret handling:
 ## Project Structure
 
 ```
-docker-ops-blueprint/
+secure-docker-blueprint/
 │
 ├── core/                        # Infrastructure (always needed)
 │   ├── traefik/                 #   Reverse proxy + socket proxy
