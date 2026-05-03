@@ -36,6 +36,32 @@ Each piece of information has exactly one owner. When two files disagree, the ow
 
 ---
 
+## ✅ Ready Criteria
+
+An app is marked ✅ when all of the following are true. Apps that do not meet
+every point stay at 🚧 until the gap is closed.
+
+**Technical**
+1. Image tag pinned — no `latest`, no major-only tags (e.g. `8`, `v2`)
+2. Healthcheck present and verified working
+3. Security baseline met — `no-new-privileges`, network isolation, secrets via Docker Secrets or `_FILE` pattern
+4. No hardcoded values — everything configurable via `.env`
+
+**Tested**
+5. Clean install on a fresh environment completed
+6. Core function verified — the app is usable, not just "container running"
+7. Traefik routing confirmed working (HTTPS, correct middleware)
+
+**Documented**
+8. `UPSTREAM.md` present — source, license, `Last verified: YYYY-MM-DD (vX.Y.Z)`, upgrade checklist
+9. `.env.example` complete — all required fields present, no real domains or credentials as defaults
+
+> **Note on rising bar:** Apps verified in earlier versions of the blueprint may not
+> meet all current criteria. When an app is re-verified, it is brought up to the
+> current standard before ✅ is re-confirmed.
+
+---
+
 ## Chains
 
 A chain is a defined sequence of files to check and update for a specific trigger. Each chain is independent — run only what the trigger requires. Chains can be combined or run partially.
@@ -62,7 +88,7 @@ A chain is a defined sequence of files to check and update for a specific trigge
 | 2 | `<app>/.env.example` | Follows env structure → `docs/standards/env-structure.md` |
 | 3 | `<app>/docker-compose.yml` | Passes security baseline → `docs/standards/security-baseline.md` |
 | 4 | `<app>/README.md` | Setup + verify steps accurate and tested |
-| 5 | `<app>/UPSTREAM.md` | Image source, license, changelog link current |
+| 5 | `<app>/UPSTREAM.md` | Image source, license, changelog link current; `Last verified: YYYY-MM-DD (vX.Y.Z)` updated |
 | 6 | `<app>/.gitignore` | Covers `volumes/`, `.secrets/`, `.env` |
 | 7 | Category README | Status is current and honest → status definitions in root `README.md` |
 | 8 | Root `README.md` | Table row matches category README (status, description) |
