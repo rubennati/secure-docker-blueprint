@@ -58,7 +58,18 @@ Each layer gets a blueprint pattern that works across apps, not per-app one-offs
 
 **Restore testing is part of this version** — a backup that has never been restored is a hypothesis, not a backup. At least one full restore walkthrough per layer, documented step by step.
 
-### v0.8.0 — CrowdSec: operational control
+### v0.8.0 — Monitoring
+
+Backup tells you what to do when something breaks. Monitoring tells you that something broke — and ideally before it causes data loss or downtime. Four layers:
+
+- **Host** — CPU, RAM, disk, network trends over time. Beszel is the default: lightweight, self-hosted, no external dependencies. Know when a disk is filling up before it becomes an incident.
+- **Container / Docker** — which containers are running, which have restarted, resource usage per service. Beszel covers this alongside host metrics.
+- **Uptime & endpoints** — is the service actually responding correctly from the outside? Gatus or Uptime Kuma with per-app health checks and status page.
+- **Alerting** — push or email notification when a service goes down or a threshold is crossed. Without this, monitoring is a dashboard nobody watches.
+
+Each layer gets a proven setup in the blueprint. Log aggregation (Loki/Grafana stack) is out of scope here — heavier infrastructure that fits a later pass.
+
+### v0.9.0 — CrowdSec: operational control
 
 CrowdSec runs after v0.4 and v0.6, but remains a black box — it is not clear what it blocks, whether it has self-blocked you, or how to intervene quickly. This version makes it observable and controllable:
 
@@ -69,7 +80,7 @@ CrowdSec runs after v0.4 and v0.6, but remains a black box — it is not clear w
 
 Goal: after this version, CrowdSec is a tool you can confidently operate, not just something that runs in the background.
 
-### v0.9.0 — App configuration tiering
+### v0.10.0 — App configuration tiering
 
 Most apps currently have one level of configuration: "it runs." This version introduces a consistent tiering across all live apps:
 
@@ -79,7 +90,7 @@ Most apps currently have one level of configuration: "it runs." This version int
 
 The tiering lives in `.env.example` (inline comments) and `CONFIG.md` where the app already has one. Not every app needs all three levels — the point is that Minimum is always explicitly defined.
 
-### v0.10.0 — Resource limits
+### v0.11.0 — Resource limits
 
 Every live app gets `deploy.resources` (memory + CPU) and `pids_limit`. The standard is already documented in [`docs/standards/security-baseline.md`](docs/standards/security-baseline.md); this version applies it.
 
