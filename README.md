@@ -39,7 +39,7 @@ Production-ready configurations for 15+ services — with standardized patterns,
 | [Dockhand](core/dockhand/) | ✅ | Docker management with Git-based stacks |
 | [Portainer](core/portainer/) | ✅ | Docker management UI |
 | [Hawser](core/hawser/) | ✅ | Remote Docker agent for Dockhand |
-| [Portainer Agent](core/portainer-agent/) | ✅ | Remote Docker agent for Portainer (multi-host) |
+| [Portainer Agent](core/portainer-agent/) | 🚧 | Remote Docker agent for Portainer (multi-host) |
 
 Planned in `core/`: Keycloak (alternative / heavier IAM next to Authentik).
 
@@ -153,7 +153,7 @@ See [`business/README.md`](business/README.md) for the full category README + ro
 
 | App | Function | Status | Description |
 |---|---|---|---|
-| [Invoice Ninja](business/invoiceninja/) | Billing | ✅ | Invoicing, quotes, client portal |
+| [Invoice Ninja](business/invoiceninja/) | Billing | 🚧 | Invoicing, quotes, client portal |
 | [Dolibarr](business/dolibarr/) | ERP / CRM | 🚧 | Accounting, projects, HR, inventory |
 | [Kimai](business/kimai/) | Time tracking | 🚧 | Per-project/customer hours → Invoice Ninja |
 | [Listmonk](business/listmonk/) | Newsletter | 🚧 | Mailing list + transactional mail |

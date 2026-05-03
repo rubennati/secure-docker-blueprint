@@ -135,6 +135,6 @@ This section has no actual variables — only comments that document which secre
 - [ ] Container names derived from `${COMPOSE_PROJECT_NAME}`
 - [ ] `TRAEFIK_NETWORK=proxy-public` in Domain & Traefik section
 - [ ] Domain placeholders use `example.com`
-- [ ] `TZ=Europe/Vienna` (not `TIMEZONE=`)
+- [ ] `TZ=UTC` (not `TIMEZONE=`)
 - [ ] No passwords or tokens — only in `.secrets/`
 - [ ] Secrets section lists all required secret files with generation commands including `| tr -d '\n'`

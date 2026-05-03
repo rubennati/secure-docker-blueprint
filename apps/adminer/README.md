@@ -1,7 +1,5 @@
 # Adminer
 
-> **Status: Draft — not yet live-tested.** First-pass import from inbox material. Compose + env are blueprint-standards-compliant but behavior on real infrastructure has not been verified.
-
 Stateless web-based database administration tool. Supports MySQL, MariaDB, PostgreSQL, SQLite, MS SQL, Oracle, Elasticsearch, MongoDB, and more via drivers. Single PHP file, no dependencies.
 
 ## Architecture

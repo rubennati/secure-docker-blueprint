@@ -1,7 +1,5 @@
 # n8n
 
-> **Status: Draft — not yet live-tested.** First-pass import from inbox material.
-
 Workflow automation — visual builder for chaining HTTP calls, webhooks, scheduled jobs, and a large library of third-party integrations (Slack, Airtable, OpenAI, databases, etc.). Free self-hosted Community Edition.
 
 ## Architecture

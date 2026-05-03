@@ -1,5 +1,7 @@
 # acme-certs
 
+> **Deprecated:** Traefik handles certificate issuance and renewal directly via its built-in ACME client. Use `core/traefik/` for all new certificate needs. This tool remains for side-car use cases where Traefik is not in the path (NAS, routers, mail servers).
+
 Certificate issuing and renewal tool using [acme.sh](https://github.com/acmesh-official/acme.sh) with Cloudflare DNS-01 challenge.
 
 Use this for devices and services that don't go through Traefik — NAS (Synology, TrueNAS), routers (OPNsense, pfSense), mail servers, or any internal service that needs a valid TLS certificate.

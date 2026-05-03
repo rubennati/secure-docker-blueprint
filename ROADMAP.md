@@ -68,7 +68,7 @@ App-level work that does not drive version tags. Picks up continuously as live-t
 
 ### Complex apps still to re-verify end-to-end
 
-Vaultwarden, WordPress, Nextcloud, Seafile / Seafile Pro, Invoice Ninja, Paperless-ngx are marked live-tested from pre-v0.2 runs but have not been re-verified on a clean install yet. Low risk (blueprint patterns stable) but worth a pass before v1.0.
+Vaultwarden, WordPress, Nextcloud, Seafile / Seafile Pro, Invoice Ninja are marked live-tested from pre-v0.2 runs but have not been re-verified on a clean install yet. Low risk (blueprint patterns stable) but worth a pass before v1.0.
 
 ### Choice-matrix categories — pick-one-per-install decisions
 

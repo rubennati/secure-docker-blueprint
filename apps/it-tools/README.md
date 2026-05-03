@@ -1,7 +1,5 @@
 # IT-Tools
 
-> **Status: Draft — not yet live-tested.** First-pass import from inbox material.
-
 A self-hosted collection of handy IT and developer tools: JSON/YAML formatters, hash and UUID generators, regex tester, base64/URL encoders, QR code generator, timezone converters, and dozens more. Pure static SPA — no backend, no database, no accounts.
 
 ## Architecture

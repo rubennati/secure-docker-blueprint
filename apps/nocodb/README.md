@@ -1,7 +1,5 @@
 # NocoDB
 
-> **Status: Draft — not yet live-tested.** Built from scratch for this blueprint (inbox was empty).
-
 Open-source Airtable alternative. Turns any SQL database into a spreadsheet-like UI with views, forms, and a REST + GraphQL API. Commonly paired with **n8n** for low-code automation.
 
 ## Architecture
