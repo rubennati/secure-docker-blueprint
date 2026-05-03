@@ -190,6 +190,7 @@ services:
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
       # Optional: protect /admin with Authentik Forward-Auth (Pattern 2 — path-scoped).
+
       # The main router above stays open; only the Django admin panel requires SSO.
       # Prerequisites: core/authentik running, outpost configured, integrations.yml.tmpl
       # sec-authentik block uncommented. See core/authentik/README.md — Pattern 2.
