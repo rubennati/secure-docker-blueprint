@@ -87,6 +87,12 @@ otherwise they are redirected to the Authentik login page.
 The Traefik middleware (`sec-authentik`) is already defined in
 `core/traefik/ops/templates/dynamic/integrations.yml.tmpl` — commented out.
 
+> **Multi-host note:** `forwardAuth` is not limited to the same Docker host.
+> The `address` in `sec-authentik` can point to any reachable endpoint —
+> another machine in the LAN, a remote server, or a public URL. Traefik only
+> needs network access to that address. This means one central Authentik
+> instance can protect apps running on multiple hosts.
+
 ---
 
 ### Step 0 — One-time setup (do this once, not per app)

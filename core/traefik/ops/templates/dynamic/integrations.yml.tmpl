@@ -62,6 +62,14 @@ http:
     # ------------------------------------------------------
     # Requires: core/authentik running + outpost configured.
     # See core/authentik/README.md — "Integrating other apps via Forward-Auth"
+    #
+    # address points to the Authentik outpost endpoint. Traefik calls this URL
+    # for every request before forwarding it to the target app.
+    # The address can point to any reachable host — it does NOT have to be on
+    # the same Docker host as Traefik. Examples:
+    #   Same host (default): http://authentik-server:9000/...
+    #   Other machine in LAN: http://192.168.1.50:9000/...
+    #   Central auth server:  https://auth.example.com/...
     # ------------------------------------------------------
 #     sec-authentik:
 #       forwardAuth:
