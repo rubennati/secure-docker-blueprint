@@ -99,6 +99,7 @@ Before v1.0 is tagged:
 - CI baseline: compose validate, secret scan, markdown lint, **image vulnerability scan** (Trivy or Grype — catches known CVEs in pinned image versions before they reach production)
 - Secret & Password Generation Standard consolidated into `docs/standards/` (currently each app README has its own recipe, some with known pitfalls)
 - **Secrets rotation guidance** — documented procedure for rotating `.secrets/` values in a running stack without downtime; lives in `docs/standards/`
+- **License audit** — every live app has its license documented in `UPSTREAM.md` and verified against the license policy below
 
 ### v1.1 — Living repo
 
@@ -142,6 +143,27 @@ When live-tested on real data, pick the default and deprioritise the rest:
 ---
 
 ## Evaluating
+
+### License policy
+
+This blueprint is for personal self-hosted infrastructure. The following applies:
+
+**Accepted for self-hosted personal use:**
+- MIT, Apache 2.0, BSD — permissive, no conditions on use
+- GPL-2.0 / GPL-3.0 — copyleft applies to distribution, not to running the software
+- AGPL-3.0 — the most common license in this space (Nextcloud, Authentik, Vaultwarden, Zammad). Self-hosting for personal use is explicitly allowed. If you expose the service to others (even within a company), the AGPL requires that you make your modifications available — running unmodified upstream images means no obligation.
+- BSL / Commercial Source — time-limited source-available licenses (e.g. MariaDB BSL). Generally fine for self-hosting; verify the "Change Date" and "Additional Use Grant" per project.
+
+**Requires case-by-case review:**
+- Commercial dual-license (e.g. Cal.com AGPL + commercial) — self-hosting is free under the AGPL tier; check if the feature set you need requires the commercial tier
+- Source-available without redistribution rights — usable, but you cannot fork or modify
+
+**Not included in this blueprint:**
+- Proprietary closed-source images with no self-hosting rights
+
+Every app documents its license in `UPSTREAM.md`. The ✅ Ready Criteria require this field to be present before an app is marked as ready.
+
+---
 
 ### App Evaluation Criteria (concept — still to develop)
 

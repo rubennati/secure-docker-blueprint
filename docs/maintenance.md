@@ -53,8 +53,9 @@ every point stay at 🚧 until the gap is closed.
 7. Traefik routing confirmed working (HTTPS, correct middleware)
 
 **Documented**
-8. `UPSTREAM.md` present — source, license, `Last verified: YYYY-MM-DD (vX.Y.Z)`, upgrade checklist
-9. `.env.example` complete — all required fields present, no real domains or credentials as defaults
+8. `UPSTREAM.md` present — source, `Last verified: YYYY-MM-DD (vX.Y.Z)`, upgrade checklist
+9. `UPSTREAM.md` includes license — name (e.g. MIT, Apache 2.0, AGPL-3.0) and a note if it deviates from standard self-hosting use (see license policy in `ROADMAP.md`)
+10. `.env.example` complete — all required fields present, no real domains or credentials as defaults
 
 > **Note on rising bar:** Apps verified in earlier versions of the blueprint may not
 > meet all current criteria. When an app is re-verified, it is brought up to the
@@ -101,11 +102,13 @@ A chain is a defined sequence of files to check and update for a specific trigge
 
 | Step | File | Action |
 |---|---|---|
-| 1 | `<app>/.env.example` | Bump image tag — test on clean install first, then commit |
-| 2 | `<app>/UPSTREAM.md` | Update version reference and release notes link |
-| 3 | `<app>/docker-compose.yml` | Check if any compose changes are needed (new envs, removed features, healthcheck changes) |
-| 4 | `docs/bugfixes/` | If anything broke during upgrade, document it here |
-| 5 | `CHANGELOG.md` | Version bump documented |
+| 1 | Release notes | Read changelog — any breaking changes, removed features, required migrations? |
+| 2 | Security advisories | Check the upstream GitHub repo for open CVEs or security advisories against the current and new version (`Security` tab → `Advisories`) |
+| 3 | `<app>/.env.example` | Bump image tag — test on clean install first, then commit |
+| 4 | `<app>/UPSTREAM.md` | Update version reference and release notes link |
+| 5 | `<app>/docker-compose.yml` | Check if any compose changes are needed (new envs, removed features, healthcheck changes) |
+| 6 | `docs/bugfixes/` | If anything broke during upgrade, document it here |
+| 7 | `CHANGELOG.md` | Version bump documented |
 
 ---
 
