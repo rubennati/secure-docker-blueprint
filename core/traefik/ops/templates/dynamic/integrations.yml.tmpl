@@ -17,32 +17,32 @@
 # Traefik hot-reloads — no restart needed.
 # ==========================================================
 
-# http:
-#   middlewares:
-#
-#     # ------------------------------------------------------
-#     # CrowdSec Bouncer Plugin
-#     # ------------------------------------------------------
-#     # Prerequisites:
-#     #   1. core/crowdsec running + on proxy-public network
-#     #   2. Plugin loaded in traefik.yml (experimental.plugins)
-#     #   3. Bouncer key: docker exec crowdsec cscli bouncers add traefik-bouncer
-#     #   4. CROWDSEC_BOUNCER_KEY=<key> in .env
-#     #
-#     # Mode: stream (polls LAPI every 60s, caches decisions).
-#     #
-#     # AppSec/WAF is disabled here by default. The AppSec process does
-#     # not auto-start with CrowdSec — it needs its own config in
-#     # core/crowdsec/config/appsec.yaml and the port 7422 to be reachable
-#     # from Traefik. With crowdsecAppsecEnabled=true + unreachable AppSec,
-#     # crowdsecAppsecUnreachableBlock=true makes the bouncer fail-closed
-#     # on EVERY request (HTTP 403), which is almost always not what you
-#     # want for first setup. Enable AppSec only after its server side is
-#     # verified reachable (`curl crowdsec:7422` from the Traefik container).
-#     #
-#     # Geo-blocking: install crowdsecurity/geoloc-enrich collection
-#     #   + a scenario like crowdsecurity/cdn-whitelist
-#     # ------------------------------------------------------
+http:
+  middlewares:
+
+    # ------------------------------------------------------
+    # CrowdSec Bouncer Plugin
+    # ------------------------------------------------------
+    # Prerequisites:
+    #   1. core/crowdsec running + on proxy-public network
+    #   2. Plugin loaded in traefik.yml (experimental.plugins)
+    #   3. Bouncer key: docker exec crowdsec cscli bouncers add traefik-bouncer
+    #   4. CROWDSEC_BOUNCER_KEY=<key> in .env
+    #
+    # Mode: stream (polls LAPI every 60s, caches decisions).
+    #
+    # AppSec/WAF is disabled here by default. The AppSec process does
+    # not auto-start with CrowdSec — it needs its own config in
+    # core/crowdsec/config/appsec.yaml and the port 7422 to be reachable
+    # from Traefik. With crowdsecAppsecEnabled=true + unreachable AppSec,
+    # crowdsecAppsecUnreachableBlock=true makes the bouncer fail-closed
+    # on EVERY request (HTTP 403), which is almost always not what you
+    # want for first setup. Enable AppSec only after its server side is
+    # verified reachable (`curl crowdsec:7422` from the Traefik container).
+    #
+    # Geo-blocking: install crowdsecurity/geoloc-enrich collection
+    #   + a scenario like crowdsecurity/cdn-whitelist
+    # ------------------------------------------------------
 #     sec-crowdsec:
 #       plugin:
 #         bouncer:
@@ -56,12 +56,13 @@
 #           crowdsecAppsecHost: crowdsec:7422
 #           crowdsecAppsecFailureBlock: false
 #           crowdsecAppsecUnreachableBlock: false
-#
-#     # ------------------------------------------------------
-#     # Authentik (SSO / Forward Auth)
-#     # ------------------------------------------------------
-#     # Requires: core/authentik running + outpost configured.
-#     # ------------------------------------------------------
+
+    # ------------------------------------------------------
+    # Authentik (SSO / Forward Auth)
+    # ------------------------------------------------------
+    # Requires: core/authentik running + outpost configured.
+    # See core/authentik/README.md — "Integrating other apps via Forward-Auth"
+    # ------------------------------------------------------
 #     sec-authentik:
 #       forwardAuth:
 #         address: "http://authentik-server:9000/outpost.goauthentik.io/auth/traefik"

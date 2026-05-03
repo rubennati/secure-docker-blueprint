@@ -160,7 +160,7 @@ services:
 
     # --- Traefik ---
     labels:
-      # Router
+      # Router (main — all traffic)
       - "traefik.enable=true"
       - "traefik.docker.network=${TRAEFIK_NETWORK}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
@@ -173,6 +173,18 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+      # Router (static assets — bypasses rate limit)
+      # Authentik is a code-split SPA: /_static/ delivers 100+ JS/CSS chunks in
+      # parallel on first visit. Without a dedicated router these requests hit the
+      # main rate-limiter and return 429. sec-1 (no rate limit) is safe here
+      # because the files are public static assets, not authentication endpoints.
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-static.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/_static/`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-static.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-static.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-static.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-static.middlewares=${APP_TRAEFIK_ACCESS}@file,sec-1@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-static.service=${COMPOSE_PROJECT_NAME}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-static.priority=10"
 
     # --- Health & Observability ---
     # The goauthentik/server image ships no wget/curl. Use Python

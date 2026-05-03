@@ -44,6 +44,9 @@ services:
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
       # Middlewares
+      # Optional: append ,sec-authentik@file to protect Dashy with Authentik Forward-Auth.
+      # Prerequisites: core/authentik running, outpost configured, integrations.yml.tmpl
+      # sec-authentik block uncommented. See core/authentik/README.md — Pattern 1.
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"

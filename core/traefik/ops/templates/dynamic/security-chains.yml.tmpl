@@ -6,29 +6,34 @@ http:
     # ==========================================================
     # Pick a level per router. Higher = stricter.
     # "e" variants = embed/iframe-friendly (SAMEORIGIN instead of DENY).
+    # "spa" variants = high-burst rate limit for code-split SPAs (VPN-only).
     #
     # Building blocks are defined in security-blocks.yml.
     #
-    # Level  What it includes                    Use case
-    # -----  ----------------------------------  -------------------------
-    # sec-0  nothing                             Debug, naked proxy
-    # sec-1  basic headers + compress            Internal tools
-    # sec-2  + soft ratelimit                    Standard (most apps)
-    # sec-3  + strict headers + permissions      Public-facing, hardened
-    # sec-4  + hard ratelimit                    Sensitive (login pages)
-    # sec-5  + CSP enforce                       Maximum (CSP-tested only)
+    # Level      What it includes                    Use case
+    # ---------  ----------------------------------  -------------------------
+    # sec-0      nothing                             Debug, naked proxy
+    # sec-1      basic headers + compress            Internal tools
+    # sec-2      + soft ratelimit                    Standard (most apps)
+    # sec-2-spa  + SPA burst ratelimit               VPN-only SPA, code-split
+    # sec-3      + strict headers + permissions      Public-facing, hardened
+    # sec-3-spa  + SPA burst ratelimit               VPN-only SPA, hardened
+    # sec-4      + hard ratelimit                    Sensitive (login pages)
+    # sec-5      + CSP enforce                       Maximum (CSP-tested only)
     #
     # Examples:
-    #   WordPress        → sec-2    (CMS with inline scripts)
-    #   Nextcloud        → sec-3    (public-facing, hardened)
-    #   Vaultwarden      → sec-3e   (strict + SAMEORIGIN for browser extension)
-    #   OnlyOffice       → sec-2e   (embeddable in iframes)
-    #   Traefik Dashboard→ sec-4    (admin UI, hard rate limit)
-    #   Whoami           → sec-5    (static page, perfect for CSP enforce)
+    #   WordPress        → sec-2      (CMS with inline scripts)
+    #   Nextcloud        → sec-3      (public-facing, hardened)
+    #   Vaultwarden      → sec-3e     (strict + SAMEORIGIN for browser extension)
+    #   OnlyOffice       → sec-2e     (embeddable in iframes)
+    #   Traefik Dashboard→ sec-4      (admin UI, hard rate limit)
+    #   Whoami           → sec-5      (static page, perfect for CSP enforce)
+    #   NocoDB / n8n     → sec-3-spa  (VPN-only SPA, many parallel chunk requests)
     #
     # Recommendation: Start with sec-2 for new apps.
     # Upgrade to sec-3 when the app handles strict headers.
     # Use sec-*e only when the app must be embedded in iframes.
+    # Use sec-*-spa only for VPN-gated apps (network-level access control).
     # ==========================================================
 
     # Debug — no hardening at all
@@ -64,6 +69,14 @@ http:
           - rl-soft
           - compress
 
+    # Standard, SPA burst — VPN-only code-split SPAs (basic headers)
+    sec-2-spa:
+      chain:
+        middlewares:
+          - hdr-basic
+          - rl-spa
+          - compress
+
     # Hardened — public-facing apps, strict headers
     sec-3:
       chain:
@@ -78,6 +91,15 @@ http:
         middlewares:
           - hdr-strict-embed
           - rl-soft
+          - compress
+          - permissions-policy
+
+    # Hardened, SPA burst — VPN-only code-split SPAs (strict headers)
+    sec-3-spa:
+      chain:
+        middlewares:
+          - hdr-strict
+          - rl-spa
           - compress
           - permissions-policy
 
