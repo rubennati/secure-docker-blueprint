@@ -40,11 +40,17 @@ See [`CHANGELOG.md`](CHANGELOG.md) for the full diff of each release.
 
 Pre-1.0 tags are set when a natural milestone is reached, not on a fixed cadence. The single criterion for v1.0 is: **could someone fork this and run it without needing my mental model?** — subjective but unambiguous when met.
 
-### v0.6.0 — CrowdSec Firewall Bouncer (nftables)
+### v0.6.0 — CrowdSec complete
 
-Host-level blocking via nftables — drops packets before they reach Traefik.
-Complements the L7 Traefik bouncer shipped in v0.4.0. Architecturally
-separate (OS-level install), so treated as its own tag.
+Full CrowdSec stack in one version — host-level blocking and operational control:
+
+- **nftables Bouncer** — drops packets before they reach Traefik (OS-level, complements the L7 bouncer from v0.4.0)
+- **Dashboard** — see what is being blocked in real time
+- **Runbook** — how to check decision lists, whitelist your own IP, drain false positives, disable quickly if needed
+- **Geoblocking** — structured setup with documented trade-offs
+- **AppSec tuning** — review default rules, document any false-positive patterns specific to this stack
+
+Goal: after this version, CrowdSec is a tool you can confidently operate at every layer, not just something that runs in the background.
 
 ### v0.7.0 — Backup
 
@@ -69,32 +75,11 @@ Backup tells you what to do when something breaks. Monitoring tells you that som
 
 Each layer gets a proven setup in the blueprint. Log aggregation (Loki/Grafana stack) is out of scope here — heavier infrastructure that fits a later pass.
 
-### v0.9.0 — CrowdSec: operational control
-
-CrowdSec runs after v0.4 and v0.6, but remains a black box — it is not clear what it blocks, whether it has self-blocked you, or how to intervene quickly. This version makes it observable and controllable:
-
-- **Dashboard** — CrowdSec dashboard or Metabase integration: see what is being blocked in real time
-- **Runbook** — how to check decision lists, whitelist your own IP, drain false positives, disable quickly if needed
-- **Geoblocking** — structured setup with documented trade-offs (not just "add a list")
-- **AppSec tuning** — review default rules, document any false-positive patterns specific to this stack
-
-Goal: after this version, CrowdSec is a tool you can confidently operate, not just something that runs in the background.
-
-### v0.10.0 — App configuration tiering
-
-Most apps currently have one level of configuration: "it runs." This version introduces a consistent tiering across all live apps:
-
-- **Minimum** — the smallest working set of env vars. No hidden required settings. Someone who just wants the app running can stop here.
-- **Advanced** — performance, storage, and integration options. Commented out by default, with a brief note on what each does. Paperless Phase 4 (8 mandatory env-var fixes) is the first example of what this looks like in practice.
-- **Expert** — deep tuning, rarely needed. May reference upstream docs rather than repeating them.
-
-The tiering lives in `.env.example` (inline comments) and `CONFIG.md` where the app already has one. Not every app needs all three levels — the point is that Minimum is always explicitly defined.
-
-### v0.11.0 — Resource limits
+### v0.9.0 — Resource limits
 
 Every live app gets `deploy.resources` (memory + CPU) and `pids_limit`. The standard is already documented in [`docs/standards/security-baseline.md`](docs/standards/security-baseline.md); this version applies it.
 
-Intentionally last before v1.0: wrong limits break apps silently (OOM kills, throttled CPUs). Each app needs values measured on a real install, not guessed. This is the fine-tuning pass — not a quick sweep.
+Intentionally late: wrong limits break apps silently (OOM kills, throttled CPUs). Each app needs values measured on a real install, not guessed. This is the fine-tuning pass — not a quick sweep.
 
 ### v1.0 — Complete and hand-off ready
 
@@ -106,19 +91,11 @@ Before v1.0 is tagged:
 - No `🚧` without a documented reason
 - No `__REPLACE_ME__` in any live-tested file
 - Honest review of every `🚧 draft` — promote only what was actually tested
-- `CONFIG.md` pattern extended to other complex apps that benefit from it
-- CI baseline: compose validate, secret scan, markdown lint, **image vulnerability scan** (Trivy or Grype — catches known CVEs in pinned image versions before they reach production)
-- Secret & Password Generation Standard consolidated into `docs/standards/` (currently each app README has its own recipe, some with known pitfalls)
-- **Secrets rotation guidance** — documented procedure for rotating `.secrets/` values in a running stack without downtime; lives in `docs/standards/`
-- **License audit** — every live app has its license documented in `UPSTREAM.md` and verified against the license policy below
-
-### v1.1 — Living repo
-
-v1.0 is a state. v1.1 is a process — the repo maintains itself:
-
-- **Status freshness system**: every `✅` app carries a `Last verified` stamp. When a Major upstream version ships, status drops to `🚧` until re-verified. Minor updates within a Major are low-risk and require only an `UPSTREAM.md` bump. Rule lives in [`docs/maintenance.md`](docs/maintenance.md).
-- **GitHub Issues replace `ROADMAP.md` for tactical work**: strategic direction stays in this file; per-app tasks ("re-verify Vaultwarden", "add Advanced tier to Nextcloud") move to Issues — trackable, closeable, referenceable.
-- **Packages / bundles** (`docs/packages/`): opinionated stacks for common setups — "Small-Business Starter", "Home Lab Photo + Files", etc. Each names the picks, reading order, and integration config.
+- CI baseline: compose validate, secret scan, markdown lint, image vulnerability scan (Trivy or Grype)
+- Secret & Password Generation Standard consolidated into `docs/standards/`
+- Secrets rotation guidance in `docs/standards/`
+- License audit — every live app verified against the license policy below
+- **Status freshness system active** — `Last verified` stamps in place, Major upstream updates drop status to `🚧`; tactical work moves to GitHub Issues
 
 ---
 
@@ -176,18 +153,22 @@ Every app documents its license in `UPSTREAM.md`. The ✅ Ready Criteria require
 
 ---
 
-### App Evaluation Criteria (concept — still to develop)
+### App configuration tiering (concept — no fixed timeline)
 
-Structured per-app metadata to help make informed decisions before deploying. Not a rating scale — factual criteria that each person weighs themselves. Candidate criteria:
+Most apps currently have one level of configuration: "it runs." A tiered approach would give each app a clearly defined Minimum (smallest working set, no hidden required settings), an Advanced layer (performance, storage, integration options — commented out by default), and optionally an Expert layer (deep tuning, references upstream docs). Paperless-ngx Phase 4 is the first concrete example of what this looks like.
 
-- **Origin**: country / organisation behind the project
-- **License**: AGPL, GPL, MIT, Apache, commercial dual-license, …
+This is a concept to develop continuously — not a version milestone. Picked up app by app as they are re-verified.
+
+### App Evaluation Criteria (concept — no fixed timeline)
+
+Structured per-app metadata to help make informed decisions before deploying. Not a rating scale — factual criteria that each person weighs themselves. License and Origin are already covered in `UPSTREAM.md`. Remaining candidates:
+
 - **Stack size**: number of containers, minimum RAM
 - **Security features**: Docker Secrets / `_FILE` support, 2FA, SSO / OIDC integration, audit log
 - **Active development**: release cadence, last commit, community size
 - **Privacy posture**: what gets logged, telemetry / phone-home behaviour, GDPR posture
 
-Still open: where this lives (extension of `UPSTREAM.md`? standardised block in each app `README.md`? separate `EVAL.md`?) and how to keep it from becoming a maintenance burden.
+Still open: where this lives and how to keep it from becoming a maintenance burden.
 
 ### Deploy script
 
