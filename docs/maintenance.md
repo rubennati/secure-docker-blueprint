@@ -119,10 +119,11 @@ Run the full Consistency Chain first, then:
 | Step | File | Action |
 |---|---|---|
 | 1 | `CHANGELOG.md` | Move `[Unreleased]` to `[X.Y.Z]` heading; update comparison links |
-| 2 | `ROADMAP.md` | Move shipped milestone to Shipped section |
-| 3 | All `🚧` entries | Is the draft status still honest? |
-| 4 | All `✅` entries | Were any broken by dependency updates since last test? |
-| 5 | GitHub | `gh release create vX.Y.Z --draft` |
+| 2 | `ROADMAP.md` | Move shipped milestone to Shipped section; update "Last updated" date |
+| 3 | `README.md` | Bump version badge (`v0.X.Y-blue`) |
+| 4 | All `🚧` entries | Is the draft status still honest? |
+| 5 | All `✅` entries | Were any broken by dependency updates since last test? |
+| 6 | GitHub | `gh release create vX.Y.Z --draft` — review, then publish |
 
 ---
 
