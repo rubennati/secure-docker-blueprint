@@ -67,6 +67,10 @@ services:
       - /tmp
 
     # --- Configuration ---
+    # DEVIATION: DB_PASSWORD and ADMIN_TOKEN are passed as env vars, not via Docker Secrets.
+    # Vaultwarden has no _FILE support and DATABASE_URL is a connection string — a custom
+    # entrypoint to inject secrets is the path to full compliance (Phase 2).
+    # Accepted for now: .env is gitignored and never committed. See UPSTREAM.md.
     environment:
       # Core
       DOMAIN: https://${APP_TRAEFIK_HOST}
