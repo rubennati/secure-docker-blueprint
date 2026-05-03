@@ -15,11 +15,15 @@ services:
     # --- Security ---
     security_opt:
       - no-new-privileges:true
+    # NOTE: cap_drop: ALL not set — the nginx entrypoint requires CAP_CHOWN to
+    # set up /var/cache/nginx at startup. Without it the container crash-loops.
+    # read_only + tmpfs below still provide filesystem-level hardening.
     read_only: true
     tmpfs:
       - /tmp
       - /var/cache/nginx
       - /var/run
+
 
     # --- Configuration ---
     environment:
@@ -44,6 +48,14 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fso /dev/null http://127.0.0.1:80"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
 # --------------------------------------------------------
 # NETWORKS

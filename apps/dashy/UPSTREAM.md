@@ -7,8 +7,8 @@
 - **Docs:** https://dashy.to/docs
 - **Live demo:** https://demo.dashy.to/
 - **License:** MIT
-- **Based on version:** `3.1.1`
-- **Last checked:** 2026-04-17
+- **Based on version:** `4.0.4`
+- **Last checked:** 2026-05-02
 
 ## What we use
 

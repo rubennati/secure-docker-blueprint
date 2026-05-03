@@ -4,14 +4,14 @@ Self-hosted monitoring stack — covers five axes: **uptime**, **cron / schedule
 
 ## Status
 
-✅ live-tested · ⚠️ draft · 📋 planned
+✅ Ready · 🚧 Draft · 📋 Planned
 
 ### Uptime & status pages
 
 | App | Approach | Status | Notes |
 |---|---|---|---|
-| [Uptime Kuma](uptime-kuma/) | UI-driven, SQLite | ⚠️ | Community default. Click-config, 90+ notification integrations, public status pages. |
-| [Gatus](gatus/) | YAML-as-code, SQLite/Postgres | ⚠️ | Config-as-code counterpart. Prometheus export built-in. |
+| [Uptime Kuma](uptime-kuma/) | UI-driven, SQLite | 🚧 | Community default. Click-config, 90+ notification integrations, public status pages. |
+| [Gatus](gatus/) | YAML-as-code, SQLite/Postgres | 🚧 | Config-as-code counterpart. Prometheus export built-in. |
 | [Statping](#) | UI-driven | 📋 | Older alternative to Kuma. Less active, but richer plugin ecosystem. |
 | [ciao](#) | Minimal HTTP checks | 📋 | Ruby, YAML-driven. Tiny — "Gatus without the UI." |
 | [Checkmate](#) | Modern YAML uptime | 📋 | Newer alternative to Gatus, richer UI. |
@@ -20,13 +20,14 @@ Self-hosted monitoring stack — covers five axes: **uptime**, **cron / schedule
 
 | App | Approach | Status | Notes |
 |---|---|---|---|
-| [Healthchecks](healthchecks/) | Dead-man's switch for cron / backup / scheduled jobs | ⚠️ | Django + SQLite default. Migrated from `apps/healthchecks/` — structurally belongs in monitoring, not user-facing apps. |
+| [Healthchecks](healthchecks/) | Dead-man's switch for cron / backup / scheduled jobs | 🚧 | Django + SQLite default. Migrated from `apps/healthchecks/` — structurally belongs in monitoring, not user-facing apps. |
 
 ### Host & container metrics
 
 | App | Approach | Status | Notes |
 |---|---|---|---|
-| [Beszel](beszel/) | Hub + Agents (SSH) | ⚠️ | Lightweight (~20 MB per agent), modern, per-container Docker stats. |
+| [Beszel](beszel/) | Hub + local agent | 🚧 | Lightweight (~20 MB per agent), modern, per-container Docker stats. |
+| [Beszel Agent](beszel-agent/) | Standalone agent for remote hosts | 🚧 | Deploy on each additional host; same hub key, no hub needed on the remote. |
 | [Zabbix](#) | Full NMS (Server + Frontend + Agent + DB) | 📋 | Enterprise-grade. Heavy — use only if you need SNMP, auto-discovery, or complex triggers. |
 | [Grafana + Prometheus](#) | Scrape-and-visualize classic | 📋 | Industry standard. Prometheus stores + Grafana dashboards. Needs scrape targets (Beszel can export; cAdvisor / node-exporter are typical). |
 
@@ -34,7 +35,7 @@ Self-hosted monitoring stack — covers five axes: **uptime**, **cron / schedule
 
 | App | Approach | Status | Notes |
 |---|---|---|---|
-| [changedetection.io](changedetection/) | Page diff + notification | ⚠️ | Restock / price / ToS / defacement watcher. |
+| [changedetection.io](changedetection/) | Page diff + notification | 🚧 | Restock / price / ToS / defacement watcher. |
 
 ### Disk health
 
@@ -54,7 +55,7 @@ Pick one per axis you care about:
 | "Is my disk about to fail?" | Scrutiny *(planned)* |
 | "Long-term metric graphs / capacity planning?" | Grafana + Prometheus *(planned)* |
 
-A realistic homelab stack: Kuma OR Gatus + Beszel + changedetection.io. Three containers total (ignoring Beszel's agent), covers the 90% case.
+A realistic homelab stack: Kuma OR Gatus + Beszel + changedetection.io. Covers the 90% case. Add `beszel-agent/` on each additional host you want in the metrics view.
 
 ## Why four are drafted, six are planned
 

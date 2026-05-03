@@ -48,6 +48,44 @@ privileges internally. Images like Paperless-ngx and Linuxserver.io containers
 provide `USERMAP_UID`/`USERMAP_GID` or `PUID`/`PGID` environment variables
 instead.
 
+### Resource Limits
+
+```yaml
+# Baseline — calibrate per service profile (see table below)
+deploy:
+  resources:
+    limits:
+      memory: 512M
+      cpus: "0.50"
+      pids: 100
+    reservations:
+      memory: 128M
+```
+
+Prevents a crashed or compromised container from starving the host kernel.
+`deploy.resources` caps memory and CPU so a single container cannot exhaust
+the host under load or during a memory leak. `pids` blocks fork-bomb
+escalation inside the container.
+
+Note: `pids_limit` is the legacy top-level key — Docker Compose v2 maps it
+to `deploy.resources.limits.pids` internally and errors if both are set.
+Always use `deploy.resources.limits.pids` when a `deploy:` block is present.
+
+**Calibration by service profile:**
+
+| Profile | Example services | `memory` limit | `cpus` | `pids` |
+|---|---|---|---|---|
+| Lightweight helper | Whoami, Socket Proxy, init containers | `128M` | `0.25` | `50` |
+| Cache / queue | Redis, Valkey | `256M` | `0.25` | `50` |
+| Standard web app | Ghost, Vaultwarden, Dockhand | `512M` | `0.50` | `100` |
+| Database | PostgreSQL, MariaDB | `1G` | `1.00` | `200` |
+| Heavy app | Nextcloud, Paperless-ngx | `2G` | `2.00` | `500` |
+| One-shot / migration | init-perms, DB migration runners | omit — let it finish | — | — |
+
+> **`deploy.resources` vs. `mem_limit`**: Always use `deploy:` — it is the
+> Compose v3 standard and works with both standalone `docker compose` and
+> Swarm mode. The legacy top-level `mem_limit` key is deprecated.
+
 ## Secrets
 
 ### Rule
@@ -138,3 +176,4 @@ Exception: Hawser — needs socket access as its core function, but still uses a
 - [ ] Database only in internal network
 - [ ] Images pinned (never `:latest`)
 - [ ] `./.secrets/` and `./volumes/` in `.gitignore`
+- [ ] Resource limits set per service profile (`deploy.resources`) — optional, discuss per app

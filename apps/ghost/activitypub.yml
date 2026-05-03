@@ -1,0 +1,149 @@
+# ActivityPub overlay — enable by setting in .env:
+#   COMPOSE_FILE=docker-compose.yml:activitypub.yml
+#
+# For existing deployments: run the ActivityPub migrations once before starting:
+#   docker compose run --rm activitypub-migrate
+
+services:
+
+  # --------------------------------------------------------
+  # DATABASE — add ActivityPub database + init scripts
+  # --------------------------------------------------------
+  db:
+    environment:
+      # Creates the activitypub database alongside the ghost database on first init.
+      # Handled by mysql-init/01-activitypub-db.sh via docker-entrypoint-initdb.d.
+      MYSQL_MULTIPLE_DATABASES: activitypub
+    volumes:
+      - ./volumes/mysql:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d:ro
+
+  # --------------------------------------------------------
+  # ACTIVITYPUB MIGRATIONS (one-shot)
+  # --------------------------------------------------------
+  activitypub-migrate:
+    # --- Identity ---
+    image: ghcr.io/tryghost/activitypub-migrations:${ACTIVITYPUB_MIGRATIONS_TAG}
+    container_name: ${COMPOSE_PROJECT_NAME}-activitypub-migrate
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+
+    # --- Configuration ---
+    # The migrations image expects a MYSQL_DB DSN string.
+    # We construct it in the entrypoint wrapper because Docker Secrets
+    # are not supported natively by this image.
+    entrypoint: ["/bin/sh", "/migrate-entrypoint.sh"]
+    environment:
+      MYSQL_HOST: db
+      MYSQL_USER: ${DB_USER}
+      MYSQL_DATABASE: activitypub
+    secrets:
+      - DB_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./ops/migrate-entrypoint.sh:/migrate-entrypoint.sh:ro
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+  # --------------------------------------------------------
+  # GHOST ACTIVITYPUB SERVICE
+  # --------------------------------------------------------
+  activitypub:
+    # --- Identity ---
+    image: ghcr.io/tryghost/activitypub:${ACTIVITYPUB_TAG}
+    container_name: ${COMPOSE_PROJECT_NAME}-activitypub
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      activitypub-migrate:
+        condition: service_completed_successfully
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    # ActivityPub does not support _FILE env vars — ops/activitypub-entrypoint.sh
+    # reads the DB secret and exports MYSQL_PASSWORD before handing off.
+    entrypoint: ["/bin/sh", "/activitypub-entrypoint.sh"]
+    environment:
+      NODE_ENV: production
+      PORT: "8080"
+      MYSQL_HOST: db
+      MYSQL_USER: ${DB_USER}
+      MYSQL_DATABASE: activitypub
+      # LOCAL_STORAGE_PATH must be a subdirectory of the Ghost content volume so
+      # Ghost can serve the images directly at /content/images/activitypub.
+      LOCAL_STORAGE_PATH: /opt/activitypub/content/images/activitypub
+      LOCAL_STORAGE_HOSTING_URL: https://${APP_TRAEFIK_HOST}/content/images/activitypub
+      ALLOW_PRIVATE_ADDRESS: "true"
+      USE_MQ: "false"
+      TZ: ${TZ}
+    secrets:
+      - DB_PWD
+
+    # --- Storage ---
+    # ActivityPub shares the Ghost content volume. Images are written to
+    # ./volumes/content/images/activitypub/ and served by Ghost — no separate
+    # Traefik route or volume needed for image delivery.
+    volumes:
+      - ./ops/activitypub-entrypoint.sh:/activitypub-entrypoint.sh:ro
+      - ./volumes/content:/opt/activitypub/content
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+      - app-internal
+
+    # --- Traefik ---
+    labels:
+      # Separate high-priority router for ActivityPub paths.
+      # Routes /.ghost/activitypub/, /.well-known/webfinger|nodeinfo
+      # directly to this service.
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-ap.rule=Host(`${APP_TRAEFIK_HOST}`) && (PathPrefix(`/.ghost/activitypub`) || PathPrefix(`/.well-known/webfinger`) || PathPrefix(`/.well-known/nodeinfo`))"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-ap.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-ap.priority=100"
+      # TLS
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-ap.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-ap.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Middlewares
+      # ap-proto: injects X-Forwarded-Proto: https so ActivityPub reconstructs HTTPS URLs.
+      # Traefik sets this automatically for HTTP entrypoints but does not guarantee it
+      # reaches the backend unchanged. The explicit middleware ensures it.
+      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-ap-proto.headers.customrequestheaders.X-Forwarded-Proto=https"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-ap.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file,${COMPOSE_PROJECT_NAME}-ap-proto"
+      # Service
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}-ap.loadbalancer.server.port=8080"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}-ap.loadbalancer.passhostheader=true"
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://127.0.0.1:8080/',r=>{process.exit(r.statusCode<500?0:1)}).on('error',()=>process.exit(1))\""]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # --------------------------------------------------------
+  # GHOST — extend with ActivityPub connection
+  # --------------------------------------------------------
+  app:
+    # Merged into the base app service by Docker Compose.
+    environment:
+      ACTIVITYPUB_TARGET: http://activitypub:8080
+    # host-gateway resolves the public domain back to Traefik via the Docker bridge.
+    # Required for Ghost's ActivityPub self-referential startup call.
+    extra_hosts:
+      - "${APP_TRAEFIK_HOST}:host-gateway"
+    depends_on:
+      activitypub:
+        condition: service_started
+        required: false

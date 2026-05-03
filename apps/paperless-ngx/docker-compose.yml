@@ -189,6 +189,20 @@ services:
       - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.customrequestheaders.X-Forwarded-Host=${APP_TRAEFIK_HOST}"
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+      # Optional: protect /admin with Authentik Forward-Auth (Pattern 2 — path-scoped).
+
+      # The main router above stays open; only the Django admin panel requires SSO.
+      # Prerequisites: core/authentik running, outpost configured, integrations.yml.tmpl
+      # sec-authentik block uncommented. See core/authentik/README.md — Pattern 2.
+      # Note: set External host in the Authentik provider to https://<host>/admin/
+      # (with the path) — Authentik uses it as the redirect target after login.
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/admin`)"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.entrypoints=websecure"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.priority=100"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.middlewares=${COMPOSE_PROJECT_NAME}-headers@docker,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file,sec-authentik@file"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.service=${COMPOSE_PROJECT_NAME}"
 
     # --- Health & Observability ---
     healthcheck:

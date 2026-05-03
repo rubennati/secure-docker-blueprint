@@ -1,6 +1,35 @@
 services:
 
   # --------------------------------------------------------
+  # INIT — volume permission fix-up (one-shot)
+  # --------------------------------------------------------
+  # The goauthentik/server image runs as UID 1000 and refuses to
+  # self-fix permissions on bind-mounted volumes. This short-lived
+  # Alpine container creates the required subdirectories and chowns
+  # them to 1000:1000 before server/worker start. Exits in <1s;
+  # idempotent on every `docker compose up -d`.
+  #
+  # Upstream reference:
+  #   https://docs.goauthentik.io/troubleshooting/image_upload/
+  init-perms:
+    image: ${INIT_IMAGE}
+    container_name: ${CONTAINER_NAME_INIT}
+    user: "0:0"
+    restart: "no"
+    entrypoint: ["/bin/sh", "/init.sh"]
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Storage ---
+    volumes:
+      - ./ops/scripts/init-volumes.sh:/init.sh:ro
+      - ./volumes/data:/mnt/data
+      - ./volumes/certs:/mnt/certs
+      - ./volumes/custom-templates:/mnt/custom-templates
+
+  # --------------------------------------------------------
   # POSTGRESQL
   # --------------------------------------------------------
   db:
@@ -81,6 +110,8 @@ services:
     restart: unless-stopped
     command: server
     depends_on:
+      init-perms:
+        condition: service_completed_successfully
       db:
         condition: service_healthy
       redis:
@@ -116,8 +147,10 @@ services:
       - SMTP_PASSWORD
 
     # --- Storage ---
+    # Authentik migrated from /media to /data; keep mounts aligned with
+    # the current image. Pre-chowned to UID 1000 by the init-perms service.
     volumes:
-      - ./volumes/media:/media
+      - ./volumes/data:/data
       - ./volumes/custom-templates:/templates
 
     # --- Networking ---
@@ -127,7 +160,7 @@ services:
 
     # --- Traefik ---
     labels:
-      # Router
+      # Router (main — all traffic)
       - "traefik.enable=true"
       - "traefik.docker.network=${TRAEFIK_NETWORK}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
@@ -140,14 +173,29 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+      # Router (static assets — bypasses rate limit)
+      # Authentik is a code-split SPA: /_static/ delivers 100+ JS/CSS chunks in
+      # parallel on first visit. Without a dedicated router these requests hit the
+      # main rate-limiter and return 429. sec-1 (no rate limit) is safe here
+      # because the files are public static assets, not authentication endpoints.
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-static.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/_static/`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-static.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-static.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-static.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-static.middlewares=${APP_TRAEFIK_ACCESS}@file,sec-1@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-static.service=${COMPOSE_PROJECT_NAME}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-static.priority=100"
 
     # --- Health & Observability ---
+    # The goauthentik/server image ships no wget/curl. Use Python
+    # (which IS in the image) to hit the live endpoint. start_period
+    # accounts for cold-start Django migrations (60–90s on first boot).
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:9000/-/health/live/ >/dev/null 2>&1 || exit 1"]
+      test: ["CMD", "python3", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:9000/-/health/live/').status==200 else 1)"]
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 30s
+      start_period: 60s
 
   # --------------------------------------------------------
   # AUTHENTIK WORKER (background jobs, email, sync)
@@ -159,6 +207,8 @@ services:
     restart: unless-stopped
     command: worker
     depends_on:
+      init-perms:
+        condition: service_completed_successfully
       db:
         condition: service_healthy
       redis:
@@ -192,14 +242,23 @@ services:
       - SMTP_PASSWORD
 
     # --- Storage ---
+    # Authentik migrated from /media to /data; keep mounts aligned with
+    # the current image. Pre-chowned to UID 1000 by the init-perms service.
     volumes:
-      - ./volumes/media:/media
+      - ./volumes/data:/data
       - ./volumes/certs:/certs
       - ./volumes/custom-templates:/templates
 
     # --- Networking ---
     networks:
       - app-internal
+
+    # --- Health & Observability ---
+    # Upstream removed the built-in worker healthcheck in 2025.10.2.
+    # Explicitly disabled so Docker does not report a spurious
+    # "starting" state indefinitely.
+    healthcheck:
+      disable: true
 
 # --------------------------------------------------------
 # NETWORKS

@@ -90,7 +90,7 @@ VW_LOG_LEVEL=warn
 **SMTP** — mail relay configuration:
 ```env
 # --- SMTP ---
-VW_SMTP_HOST=smtp-relay.brevo.com
+VW_SMTP_HOST=smtp.example.com
 VW_SMTP_FROM=vaultwarden@example.com
 VW_SMTP_PORT=587
 VW_SMTP_SECURITY=starttls
@@ -101,7 +101,8 @@ SMTP passwords go in `.secrets/`, not here.
 **Timezone** — near the end, rarely changes:
 ```env
 # --- Timezone ---
-TZ=Europe/Vienna
+# Examples: UTC, Europe/Berlin, Europe/Vienna, America/New_York
+TZ=UTC
 ```
 
 **Secrets** — generation instructions as comments:

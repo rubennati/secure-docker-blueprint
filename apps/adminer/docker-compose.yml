@@ -14,6 +14,9 @@ services:
     # --- Security ---
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+
 
     # --- Configuration ---
     environment:
@@ -44,6 +47,14 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(stream_socket_client('tcp://127.0.0.1:8080')?0:1);"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
 # --------------------------------------------------------
 # NETWORKS

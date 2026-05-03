@@ -2,18 +2,20 @@
 
 > **Status: Draft — not yet live-tested.**
 
-Lightweight server monitoring with a hub + agent architecture. Go-based, ~20 MB RAM per agent. Modern alternative to Zabbix / Netdata for homelab + small-fleet use cases.
+Lightweight server monitoring with a hub + agent architecture. Go-based, ~20 MB RAM per agent.
 
 ## Architecture
 
-Hub + Agents model. Agents push CPU / RAM / disk / network / per-container docker stats to the hub over SSH.
+The **hub SSHes INTO each agent** — not the other way around.
 
-| Service | Image | Purpose |
-|---------|-------|---------|
-| `hub` | `henrygd/beszel:0` | Web UI + SQLite metric store + auth |
-| `agent` | `henrygd/beszel-agent:0` | Local host metrics collector |
+| Service | Image | Role |
+|---------|-------|------|
+| `hub` | `henrygd/beszel:0` | Web UI + SQLite metric store + SSH client |
+| `agent` | `henrygd/beszel-agent:0` | SSH server that serves host metrics |
 
-This compose deploys the hub + one local agent together. For additional hosts, install the agent separately on each and point it at the hub URL with the same SSH key.
+On first start the hub generates an Ed25519 keypair. The **public key** goes into each agent's `KEY` env var — this is how the agent decides which hub is allowed to connect. The hub then SSHes to each registered agent on port 45876 to pull CPU / RAM / disk / network / container stats.
+
+This compose runs the hub + one local agent on the **same host**. For additional hosts deploy [`monitoring/beszel-agent/`](../beszel-agent/) there.
 
 ## Setup
 
@@ -22,52 +24,65 @@ cp .env.example .env
 # Edit: APP_TRAEFIK_HOST, TZ
 
 mkdir -p volumes/hub-data
+```
 
-# First-time two-phase start (agent key comes from the hub UI)
+### Phase 1 — Hub only
+
+```bash
 docker compose up -d hub
 docker compose logs hub --follow
-# Watch for: "Server started at http://0.0.0.0:8090"
+# Wait for: "Server started at http://0.0.0.0:8090"
+```
 
-# 1. Open https://<APP_TRAEFIK_HOST> and create the owner account
-# 2. Settings → "Add agent" → copy the SSH public key
-# 3. Paste into AGENT_KEY= in .env
+Open `https://<APP_TRAEFIK_HOST>` and create the owner account.
 
+### Phase 2 — Get the key and register the local agent
+
+In the hub UI click **+ Add System** (top right). A dialog opens:
+
+| Field | What to enter |
+|---|---|
+| **Name** | Display name for this host, e.g. `myserver` |
+| **Host / IP** | The Tailscale IP (or LAN IP) of this host — not `localhost`. The hub SSHes to this address over the network, even for a local agent. |
+| **Port** | `45876` (pre-filled) |
+| **Public Key** | Pre-filled by the hub — this is the hub's SSH public key |
+
+Copy the **full public key** from the dialog, including the `ssh-ed25519` type prefix. The base64 portion alone is not valid.
+
+Set it in `.env`:
+
+```bash
+# .env
+AGENT_KEY=ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA...
+```
+
+### Phase 3 — Start the agent, then register
+
+```bash
 docker compose up -d agent
-# Agent appears in the hub after ~10 seconds
 ```
 
-## Adding more hosts
+Go back to the "Add System" dialog (still open, or reopen via **+ Add System**), fill in **Name** and **Host / IP**, click **Add System**. The system appears with a green dot within ~10 seconds.
 
-On any remote host (Tailnet, LAN, or via SSH tunnel):
-
-```yaml
-# /opt/beszel-agent/docker-compose.yml
-services:
-  agent:
-    image: henrygd/beszel-agent:0
-    restart: unless-stopped
-    network_mode: host
-    environment:
-      PORT: 45876
-      KEY: "<same SSH pubkey as hub-generated>"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-```
-
-Then add the host in the hub UI with its IP / Tailscale name and port 45876.
+After this first setup, `docker compose up -d` starts both hub and agent together normally.
 
 ## Security Model
 
-- **Hub stores all historical metrics + auth state** in `volumes/hub-data/`. Back this up.
-- **Agent auth is SSH-key based** — the hub generates an Ed25519 keypair on first start; agents need only the public key.
-- **Default access `acc-tailscale` + `sec-3`** — host metrics reveal CPU, RAM, disk layout, running containers. VPN-only by default.
-- **Agent runs with `network_mode: host`** by default to report accurate network interface stats. If you don't need that, switch to the `beszel-internal` bridge network.
-- **Docker socket is read-only** — agent reads `docker stats`-equivalent data but cannot control the daemon.
+| Aspect | Detail |
+|---|---|
+| **Hub ↔ Agent auth** | Ed25519 SSH key — cryptographically strong. Agents reject any connection without the matching private key. |
+| **Port 45876 on host network** | The agent binds on the host's network stack directly (not behind Traefik). This is required for accurate host network stats and is a deliberate exception — same pattern as `core/portainer-agent/` and `core/hawser/`. Protect with Tailscale ACLs or host firewall (accept 45876 from hub IP only). |
+| **Hub web UI** | `acc-tailscale` + `sec-3` via Traefik — VPN-only access. |
+| **Docker socket** | Agent mounts `/var/run/docker.sock:ro` — read-only, agent cannot control Docker. Accepted exception for monitoring agents; no Socket Proxy equivalent covers docker-stats reads. Remove if container metrics are not needed. |
+| **Hub data** | SQLite + SSH private key in `volumes/hub-data/`. Back this up — losing it means re-keying all agents. |
+
+## Adding more hosts
+
+Deploy [`monitoring/beszel-agent/`](../beszel-agent/) on each additional host. Same hub public key, different host IP in the "Add System" dialog.
 
 ## Known Issues
 
 - **Live-tested: no.**
-- **Two-phase start required on first setup** — the agent key is only available from the hub UI after the hub is running.
-- **`APP_TAG=0` tracks pre-1.0** — Beszel is young (2024+). Breaking changes are still possible. Pin to a specific version for stability.
-- **Host-network agent** — if you run multiple agents on the same host (rare), adjust `PORT` per agent.
-- **No PagerDuty / Opsgenie-native alerts yet** — webhook-based alerting works; route via n8n for richer routing.
+- **Two-phase start on first install** — see [Setup](#setup). Subsequent starts need no manual steps.
+- **`APP_TAG=0` tracks pre-1.0** — Beszel is young (2024+). Pin to a specific version for stability once the project stabilises.
+- **Host network agent** — if you run multiple agents on the same host (rare), set different `PORT` values per agent.

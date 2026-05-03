@@ -15,17 +15,17 @@ services:
     # --- Security ---
     security_opt:
       - no-new-privileges:true
-    # NOTE: Do NOT set `user:` — the LinuxServer.io image uses
-    # s6-overlay which needs root to init, then drops to PUID/PGID.
+    # NOTE: Do NOT set `user:` or `cap_drop` — the LinuxServer.io image uses
+    # s6-overlay which needs root and elevated capabilities to init, then drops
+    # to PUID/PGID internally.
+
 
     # --- Configuration ---
     environment:
       TZ: ${TZ}
       PUID: ${PUID}
       PGID: ${PGID}
-      # Heimdall can block outbound requests from its widgets
-      # (status checks, etc.) to internal networks — set to
-      # 'false' to allow internal probes, 'true' to block (default).
+      # false = block internal probes (default, safer); true = allow
       ALLOW_INTERNAL_REQUESTS: ${ALLOW_INTERNAL_REQUESTS}
 
     # --- Storage ---
@@ -48,9 +48,20 @@ services:
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
       # Middlewares
+      # Optional: append ,sec-authentik@file to protect Heimdall with Authentik Forward-Auth.
+      # Prerequisites: core/authentik running, outpost configured, integrations.yml.tmpl
+      # sec-authentik block uncommented. See core/authentik/README.md — Pattern 1.
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fso /dev/null http://127.0.0.1:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
 # --------------------------------------------------------
 # NETWORKS

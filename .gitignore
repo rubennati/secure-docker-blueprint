@@ -3,9 +3,10 @@
 # =============================================
 
 # -----------------------------------------
-# Inbox (local working area, never committed)
+# Local working areas (never committed)
 # -----------------------------------------
 inbox/
+archive/
 
 # -----------------------------------------
 # Environment files (contain secrets)

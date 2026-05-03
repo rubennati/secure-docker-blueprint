@@ -1,7 +1,5 @@
 # Heimdall
 
-> **Status: Draft — not yet live-tested.** First-pass import from inbox material.
-
 Self-hosted application dashboard — a pretty launcher for your homelab apps, with optional widgets that show status / stats per service.
 
 ## Architecture
@@ -53,7 +51,6 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 
 ## Known Issues
 
-- **Live-tested: no.**
 - **First user setup is in the UI, not via env var** — new users must be added by clicking "Users" in the sidebar after logging in. Initial user is a "public" admin (everyone sees the same dashboard) until a proper user is created.
 - **Icon upload may need ownership fixes** — if you see permission errors on icon upload, re-run `chown -R 1000:1000 ./config` to match `PUID/PGID`.
 

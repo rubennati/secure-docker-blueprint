@@ -1,7 +1,5 @@
 # Dashy
 
-> **Status: Draft — not yet live-tested.** First-pass import from inbox material.
-
 Self-hosted homelab dashboard. Config-driven via a single YAML file; the UI re-builds when the config changes.
 
 ## Architecture
@@ -10,7 +8,7 @@ Single service:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `lissy93/dashy:3.1.1` | Vue-based SPA + embedded build server |
+| `app` | `lissy93/dashy:4.0.4` | Vue-based SPA + embedded build server |
 
 No database. Config lives in `config/conf.yml`.
 
@@ -46,9 +44,8 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 
 ## Known Issues
 
-- **Live-tested: no.**
-- **Config changes** require a container restart to take effect.
-- **Building sections for the first time** can take a few minutes on slower hosts — healthcheck uses a 40s `start_period` to accommodate.
+- **Config changes** require a container restart to take effect (`docker compose restart app`).
+- **In-app config editor unavailable** — `conf.yml` is mounted read-only (`:ro`). All changes go through the file directly. This is intentional: file-based management is cleaner and prevents accidental in-UI overwrites.
 
 ## Details
 

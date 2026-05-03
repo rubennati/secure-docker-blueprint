@@ -6,35 +6,37 @@ This keeps `business/` a meaningful category instead of a grab-bag. See [`docs/a
 
 ## Status
 
-✅ live-tested · ⚠️ draft · 📋 planned
+✅ Ready · 🚧 Draft · 📋 Planned
 
 ### Billing & operations
 
 | App | Use case | Status | Notes |
 |---|---|---|---|
-| [Invoice Ninja](invoiceninja/) | Invoicing, billing, quotes, client portal | ✅ | Live-tested; `apps/invoiceninja/` → `business/invoiceninja/` during directory restructure |
-| [Dolibarr](dolibarr/) | ERP / CRM — accounting, HR, inventory, projects | ⚠️ | Migrated from `apps/dolibarr/` |
-| [Kimai](kimai/) | Time tracking per project / customer | ⚠️ | Integrates with Invoice Ninja via webhooks |
+| [Invoice Ninja](invoiceninja/) | Invoicing, billing, quotes, client portal | ✅ | |
+| [Dolibarr](dolibarr/) | ERP / CRM — accounting, HR, inventory, projects | 🚧 | Migrated from `apps/dolibarr/` |
+| [Kimai](kimai/) | Time tracking per project / customer | 🚧 | Integrates with Invoice Ninja via webhooks |
 
 ### Marketing & analytics
 
 | App | Use case | Status | Notes |
 |---|---|---|---|
-| [Listmonk](listmonk/) | Newsletter, mailing lists, transactional mail | ⚠️ | Two-router pattern documented: admin VPN-only + subscriber paths public |
-| [Matomo](matomo/) | GDPR-compliant web analytics for company / customer sites | ⚠️ | Migrated from `apps/matomo/` — primary use-case is the business website |
+| [Listmonk](listmonk/) | Newsletter, mailing lists, transactional mail | 🚧 | Two-router pattern documented: admin VPN-only + subscriber paths public |
+| [Matomo](matomo/) | GDPR-compliant web analytics for company / customer sites | 🚧 | Migrated from `apps/matomo/` — primary use-case is the business website |
+| [Ackee](ackee/) | Privacy-focused analytics — no cookies, GDPR by design | 📋 | Minimal alternative to Matomo; no files yet — status reflects reality |
+| [Plausible CE](plausible/) | Privacy-first analytics — clean UI, no cookie banner | 📋 | Middle ground between Matomo (heavy) and Ackee (minimal); AGPL-3.0 |
 
 ### Customer support
 
 | App | Use case | Status | Notes |
 |---|---|---|---|
-| [Zammad](zammad/) | Full helpdesk / ticketing / SLA | ⚠️ | 7-service stack, ≥ 4 GB RAM |
+| [Zammad](zammad/) | Full helpdesk / ticketing / SLA | 🚧 | 7-service stack, ≥ 4 GB RAM |
 | Live Helper Chat | Real-time visitor chat on company website | 📋 | PHP, lighter than Zammad, for pre-sales chat |
 
 ### Legal & compliance
 
 | App | Use case | Status | Notes |
 |---|---|---|---|
-| [OpenSign](opensign/) | E-signatures — DocuSign alternative | ⚠️ | Mail via Mailgun or SMTP; eIDAS with qualified cert |
+| [OpenSign](opensign/) | E-signatures — DocuSign alternative | 🚧 | Mail via Mailgun or SMTP; eIDAS with qualified cert |
 | Eramba GRC | Governance / Risk / Compliance mapping (NIS2, DSGVO, ISO-27001) | 📋 | Heavy. For regulated businesses. |
 
 ## Why these and not others
@@ -66,7 +68,7 @@ Traefik, Vaultwarden, Nextcloud/Seafile, Paperless-ngx already in place.
 4. **Listmonk** — when you have a list
 5. **OpenSign** — when the first contract needs digital signing
 
-All 5 are drafted or live-tested here.
+All 5 are available here.
 
 ### Phase 3 — Analytics + extras
 

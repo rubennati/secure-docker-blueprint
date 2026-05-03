@@ -7,8 +7,8 @@
 - **Docs:** https://docs.goauthentik.io/
 - **Release notes:** https://docs.goauthentik.io/docs/releases/
 - **Reference compose:** https://docs.goauthentik.io/docs/installation/docker-compose
-- **Based on version:** `2024.12.3`
-- **Last checked:** 2026-04-16
+- **Based on version:** `2026.2.2`
+- **Last checked:** 2026-05-01
 
 ## What we use
 

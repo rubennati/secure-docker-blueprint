@@ -4,11 +4,12 @@ Self-hosted backup tools — separate top-level category because backup is ops-c
 
 ## Status
 
-✅ live-tested · ⚠️ draft · 📋 planned
+✅ Ready · 🚧 Draft · 📋 Planned
 
 | App | Approach | Status | Notes |
 |---|---|---|---|
-| Kopia | Deduplicating snapshots to S3 / SFTP / filesystem | 📋 | Modern, fast, Go-based. Desktop UI + server mode. Good for most homelabs. |
+| Kopia | Deduplicating snapshots to S3 / SFTP / filesystem | 📋 | Modern, fast, Go-based. Web UI + server mode. Good for most homelabs. |
+| Borgmatic | Borg wrapper — YAML-config, cron-scheduled, SSH/SFTP targets | 📋 | Config-as-code alternative to Kopia. No UI — runs as a scheduled container. Actively maintained. |
 | Bareos | Bacula-fork: Director + Storage + File daemons | 📋 | Enterprise. For regulated backup policies (retention, audit trail). Heavy. |
 | UrBackup | Image + file backup for Windows / Linux endpoints | 📋 | Best for workstations — bare-metal restore, web UI, agent-based. |
 
@@ -16,12 +17,26 @@ Self-hosted backup tools — separate top-level category because backup is ops-c
 
 | Need | Pick |
 |---|---|
-| "Back up my Docker volumes nightly to S3 / Backblaze" | Kopia |
+| "Back up my Docker volumes nightly to S3 / Backblaze — web UI" | Kopia |
+| "Back up to SSH/SFTP targets, config-as-code, no UI" | Borgmatic |
 | "Back up Windows/Mac workstations + do bare-metal restore" | UrBackup |
 | "Regulated backup policy with retention enforcement + audit trail" | Bareos |
 | "Just docker-compose-level backup of one app" | Per-app `exec db pg_dump` + `tar czf volumes/` in a cron (no dedicated tool) |
 
-The three tools do not overlap meaningfully — pick one per workload class. Kopia alone covers the 80% homelab case.
+Kopia and Borgmatic overlap in scope (both do deduplicating off-site backup) but differ in UX: Kopia has a web UI and S3-native support; Borgmatic is config-as-code and SSH/SFTP-first. Pick one, not both. The rest of the tools cover distinct workload classes.
+
+## Per-App Backup Isolation
+
+Each app gets its **own dedicated backup repository** — not one shared repository for everything.
+
+**Why isolation matters:**
+
+- **Independent retention**: a database may need daily backups with 90-day retention; a static blog can make do with weekly + 30 days. One policy per app, set where it makes sense.
+- **Surgical restore**: recovering Nextcloud does not touch Ghost's backup chain. Restore one app, leave everything else untouched.
+- **Blast radius control**: a corrupted or compromised backup repository for one app does not affect any other app's backup history.
+- **Failure independence**: if a backup job fails for one app, all other backup jobs continue unaffected.
+
+In practice this means: one `borgmatic.yml` (or Kopia snapshot policy) per app, one target repository path per app, one cron schedule per app.
 
 ## Layout
 

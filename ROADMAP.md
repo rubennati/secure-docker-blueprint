@@ -1,12 +1,20 @@
 # Roadmap
 
-Last updated: 2026-04-20.
+Last updated: 2026-05-03 (v0.5.0 shipped).
 
 This document captures direction, not detailed changelogs. For shipped work see [`CHANGELOG.md`](CHANGELOG.md); for per-category details see the `README.md` in each top-level directory.
 
 ---
 
 ## Shipped
+
+### v0.5.0 — Authentik Forward-Auth pattern proven (2026-05-03)
+
+Dashy and Paperless-ngx `/admin` behind Authentik Forward-Auth, live-tested
+end-to-end. Two reusable patterns documented: Pattern 1 (full app) and
+Pattern 2 (path-scoped). SPA rate-limit fix via `rl-spa` / `sec-3-spa`.
+Three bugs fixed along the way (router priority, Pattern 2 External host,
+SPA 429). Heimdall wired up code-side (opt-in comment).
 
 ### v0.4.0 — CrowdSec Bouncer Plugin live (2026-04-20)
 
@@ -32,28 +40,25 @@ See [`CHANGELOG.md`](CHANGELOG.md) for the full diff of each release.
 
 Pre-1.0 tags are set when a natural milestone is reached, not on a fixed cadence. The single criterion for v1.0 is "would I recommend this repo as a fork base to a third party?" — subjective but unambiguous when met.
 
-Next natural tag points, in order but without hard schedule:
+### v0.6.0 — CrowdSec Firewall Bouncer (nftables)
 
-### CrowdSec Firewall Bouncer (nftables)
-
-Host-level blocking, complements the L7 Traefik bouncer shipped in v0.4.0. Drops packets before they reach Traefik. Architecturally separate (different deployment pattern, OS-level install), so treated as its own tag.
-
-### Authentik live + Paperless-ngx Forward-Auth
-
-Authentik is currently drafted (`⚠️` in `core/authentik/`) — the first production use-case will be putting Paperless-ngx `/admin` behind an Authentik forward-auth middleware. That validates the pattern for broader rollout.
+Host-level blocking, complements the L7 Traefik bouncer shipped in v0.4.0.
+Drops packets before they reach Traefik. Architecturally separate (OS-level
+install), so treated as its own tag.
 
 ### Paperless-ngx security hardening phases
 
-Phases 0–3 (gap analysis, env catalogue) are done — see [`apps/paperless-ngx/CONFIG.md`](apps/paperless-ngx/CONFIG.md). Phase 4 is the 8 mandatory env-var fixes; Phase 5 is `/admin` behind Authentik; Phase 6 is optional extension apps (paperless-gpt / paperless-ai / paperless-mcp).
+Phases 0–3 (gap analysis, env catalogue) are done — see [`apps/paperless-ngx/CONFIG.md`](apps/paperless-ngx/CONFIG.md). Phase 4 is the 8 mandatory env-var fixes; Phase 5 (`/admin` behind Authentik) shipped in v0.5.0; Phase 6 is optional extension apps (paperless-gpt / paperless-ai / paperless-mcp).
 
 ### v1.0 polish
 
 Before v1.0 is tagged:
 
 - Scan for `__REPLACE_ME__` remnants in live-tested files
-- Honest review of every `⚠️ draft` — keep honest, promote only what was actually tested
+- Honest review of every `🚧 draft` — keep honest, promote only what was actually tested
 - `CONFIG.md` pattern extended to other complex apps that benefit from it
 - CI pass (compose validate, secret scan, markdown lint)
+- **Resource limits rollout**: apply `deploy.resources` (memory/CPU) and `pids_limit` to every live-tested app per the profile table in `docs/standards/security-baseline.md`. Standard is documented; per-app values still need to be set.
 
 ---
 
@@ -61,9 +66,9 @@ Before v1.0 is tagged:
 
 App-level work that does not drive version tags. Picks up continuously as live-testing progresses.
 
-### Complex apps still to verify end-to-end on fresh infra
+### Complex apps still to re-verify end-to-end
 
-Vaultwarden, WordPress, Nextcloud, Seafile / Seafile Pro, Invoice Ninja, Paperless-ngx are marked live-tested from pre-v0.2 runs but have not been re-verified on the 2026-04-20 fresh infra yet. Low risk (blueprint patterns stable) but worth a pass before v1.0.
+Vaultwarden, WordPress, Nextcloud, Seafile / Seafile Pro, Invoice Ninja, Paperless-ngx are marked live-tested from pre-v0.2 runs but have not been re-verified on a clean install yet. Low risk (blueprint patterns stable) but worth a pass before v1.0.
 
 ### Choice-matrix categories — pick-one-per-install decisions
 
@@ -79,11 +84,24 @@ When live-tested on real data, pick the default and deprioritise the rest:
 
 - [`monitoring/README.md`](monitoring/README.md) — Uptime Kuma, Gatus, Beszel, changedetection (drafted) + 6 planned
 - [`business/README.md`](business/README.md) — Listmonk, Zammad, Kimai, OpenSign (drafted) + 2 planned
-- [`backup/README.md`](backup/README.md) — Kopia, Bareos, UrBackup (all planned)
+- [`backup/README.md`](backup/README.md) — Kopia, Borgmatic, Bareos, UrBackup (all planned)
 
 ---
 
 ## Evaluating
+
+### App Evaluation Criteria (concept — still to develop)
+
+Structured per-app metadata to help users make informed decisions before deploying. Not a rating scale — factual criteria that each person weighs themselves. Candidate criteria:
+
+- **Origin**: country / organisation behind the project
+- **License**: AGPL, GPL, MIT, Apache, commercial dual-license, …
+- **Stack size**: number of containers, minimum RAM
+- **Security features**: Docker Secrets / `_FILE` support, 2FA, SSO / OIDC integration, audit log
+- **Active development**: release cadence, last commit, community size
+- **Privacy posture**: what gets logged, telemetry / phone-home behaviour, GDPR posture
+
+Still open: where this lives (extension of `UPSTREAM.md`? standardised block in each app `README.md`? separate `EVAL.md`?) and how to keep it from becoming a maintenance burden.
 
 ### Secret & Password Generation Standard
 
@@ -109,5 +127,5 @@ Expose selected apps via Model Context Protocol for AI-assisted operation. Candi
 
 ## Out of scope here
 
-- `core/acme-certs/` — being extracted to its own repository. The blueprint stub remains as `⚠️ draft` but is no longer actively maintained in this repo.
+- `core/acme-certs/` — being extracted to its own repository. The blueprint stub remains as `🚧 draft` but is no longer actively maintained in this repo.
 - Paperless-mcp — template exists in the Paperless CONFIG.md extension notes but will live in its own repo once built.

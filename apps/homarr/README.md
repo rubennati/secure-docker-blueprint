@@ -1,7 +1,5 @@
 # Homarr
 
-> **Status: Draft — not yet live-tested.** First-pass import from inbox material.
-
 Modern self-hosted dashboard focused on integrations — widget-based UI that can show live status of media servers, torrent clients, reverse proxies, Proxmox nodes, weather, calendars, and dozens more.
 
 ## Architecture
@@ -10,7 +8,7 @@ Single service:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `ghcr.io/homarr-labs/homarr:1.39.0` | Next.js dashboard with built-in SQLite for state |
+| `app` | `ghcr.io/homarr-labs/homarr:v1.60.0` | Next.js dashboard with built-in SQLite + internal Redis |
 
 Data lives in `./volumes/appdata/`. Integrations encrypt their credentials using `SECRET_ENCRYPTION_KEY`.
 
@@ -64,7 +62,6 @@ Leave disabled if you don't need live container status.
 
 ## Known Issues
 
-- **Live-tested: no.**
 - **`SECRET_ENCRYPTION_KEY` leak in inbox source** — the upstream example and many tutorials include a specific hex string as example. Any .env.example containing it would be a backdoor. Our `.env.example` uses `__REPLACE_ME__` — regenerate in Setup step 2.
 - **`SECRET_ENCRYPTION_KEY` not `_FILE`-capable** — upstream reads it from env only. Stays in `.env` (gitignored).
 

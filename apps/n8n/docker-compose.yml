@@ -16,6 +16,9 @@ services:
     # --- Security ---
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+
 
     # --- Configuration ---
     environment:
@@ -29,15 +32,13 @@ services:
       WEBHOOK_URL: https://${APP_TRAEFIK_HOST}/
       # Security
       N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
-      N8N_RUNNERS_ENABLED: "true"
+      # Tell n8n how many reverse-proxy hops to trust for X-Forwarded-For.
+      # Required when running behind Traefik; fixes ERR_ERL_UNEXPECTED_X_FORWARDED_FOR.
+      # Source: https://github.com/n8n-io/n8n/issues/9172
+      N8N_PROXY_HOPS: "1"
       # Credentials encryption — CRITICAL: must not change after first
       # start, or all stored OAuth tokens / API keys become unreadable.
       N8N_ENCRYPTION_KEY_FILE: /run/secrets/N8N_ENCRYPTION_KEY
-      # Basic auth on the UI (recommended — n8n has no built-in user
-      # management in the Community Edition unless you enable it).
-      N8N_BASIC_AUTH_ACTIVE: ${BASIC_AUTH_ACTIVE}
-      N8N_BASIC_AUTH_USER: ${BASIC_AUTH_USER}
-      N8N_BASIC_AUTH_PASSWORD: ${BASIC_AUTH_PASSWORD}
     secrets:
       - N8N_ENCRYPTION_KEY
 
@@ -65,6 +66,14 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO /dev/null http://127.0.0.1:5678/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
 
 # --------------------------------------------------------
 # NETWORKS

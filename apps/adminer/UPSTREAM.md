@@ -5,12 +5,12 @@
 - **Image:** https://hub.docker.com/_/adminer
 - **Project home:** https://www.adminer.org/
 - **GitHub:** https://github.com/vrana/adminer
-- **Based on version:** `4.x` (standalone variant)
-- **Last checked:** 2026-04-17
+- **Based on version:** `4.8.1` (standalone variant)
+- **Last checked:** 2026-05-02
 
 ## What we use
 
-- Official `adminer` image, `4-standalone` tag (pure Adminer — no bundled web server stack)
+- Official `adminer` image, `4.8.1-standalone` tag (pure Adminer — no bundled web server stack)
 - No database — Adminer connects to external DBs
 - Blueprint-standard Traefik routing + Docker network model
 

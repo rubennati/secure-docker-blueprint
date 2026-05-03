@@ -15,6 +15,9 @@ services:
     # --- Security ---
     security_opt:
       - no-new-privileges:true
+    # NOTE: cap_drop not set — Homarr starts as UID=0 and runs an internal
+    # Redis server; dropping ALL capabilities would break both.
+
 
     # --- Configuration ---
     environment:
@@ -51,6 +54,14 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO /dev/null http://127.0.0.1:${APP_INTERNAL_PORT}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
 
 # --------------------------------------------------------
 # NETWORKS
