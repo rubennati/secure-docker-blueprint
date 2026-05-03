@@ -1,6 +1,6 @@
 # Roadmap
 
-Last updated: 2026-05-03 (v0.5.0 shipped).
+Last updated: 2026-05-03 (v0.5.1 shipped).
 
 This document captures direction, not detailed changelogs. For shipped work see [`CHANGELOG.md`](CHANGELOG.md); for per-category details see the `README.md` in each top-level directory.
 
@@ -56,6 +56,8 @@ A working infrastructure is worthless without recovery. Three layers:
 
 Each layer gets a blueprint pattern that works across apps, not per-app one-offs.
 
+**Restore testing is part of this version** — a backup that has never been restored is a hypothesis, not a backup. At least one full restore walkthrough per layer, documented step by step.
+
 ### v0.8.0 — CrowdSec: operational control
 
 CrowdSec runs after v0.4 and v0.6, but remains a black box — it is not clear what it blocks, whether it has self-blocked you, or how to intervene quickly. This version makes it observable and controllable:
@@ -94,8 +96,9 @@ Before v1.0 is tagged:
 - No `__REPLACE_ME__` in any live-tested file
 - Honest review of every `🚧 draft` — promote only what was actually tested
 - `CONFIG.md` pattern extended to other complex apps that benefit from it
-- CI baseline: compose validate, secret scan, markdown lint
+- CI baseline: compose validate, secret scan, markdown lint, **image vulnerability scan** (Trivy or Grype — catches known CVEs in pinned image versions before they reach production)
 - Secret & Password Generation Standard consolidated into `docs/standards/` (currently each app README has its own recipe, some with known pitfalls)
+- **Secrets rotation guidance** — documented procedure for rotating `.secrets/` values in a running stack without downtime; lives in `docs/standards/`
 
 ### v1.1 — Living repo
 

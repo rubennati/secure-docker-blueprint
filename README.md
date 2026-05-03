@@ -5,7 +5,7 @@
 Production-ready configurations for 15+ services — with standardized patterns, Docker Secrets, Traefik routing, and network isolation out of the box.
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v0.5.0-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v0.5.1-blue)](CHANGELOG.md)
 [![Status](https://img.shields.io/badge/status-pre--1.0-yellow)](ROADMAP.md)
 
 > **Pre-1.0** — structure is stable and core services are ready to use, but paths, env variables, and defaults can still change before v1.0. See [ROADMAP.md](ROADMAP.md) for the v1.0 criteria.
