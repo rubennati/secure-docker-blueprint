@@ -78,18 +78,154 @@ Log in as the admin you just created, open `Admin Interface → System → Confi
 - Redis connection: green
 - Email: test-send works (if SMTP is configured)
 
-## Integrating other apps
+## Integrating other apps via Forward-Auth
 
-### Forward-Auth (easiest — no changes in the target app)
+Forward-Auth lets Traefik delegate authentication to Authentik without touching the target app.
+Every request hits Authentik first — if the user is authenticated the request passes through,
+otherwise they are redirected to the Authentik login page.
 
-Use Authentik's `Proxy Provider` + a Traefik middleware. Each protected app gets:
+The Traefik middleware (`sec-authentik`) is already defined in
+`core/traefik/ops/templates/dynamic/integrations.yml.tmpl` — commented out.
+
+---
+
+### Step 0 — One-time setup (do this once, not per app)
+
+#### 0a. Activate the Traefik middleware
+
+In `core/traefik/ops/templates/dynamic/integrations.yml.tmpl`, uncomment the `http:` /
+`middlewares:` block and the `sec-authentik` section. Then re-render and redeploy Traefik:
+
+```bash
+cd core/traefik
+./ops/scripts/render.sh
+docker compose up -d
+```
+
+The middleware is now available as `sec-authentik@file` for any router.
+
+#### 0b. Verify the embedded outpost
+
+Authentik ships with an embedded outpost — no extra container needed.
+
+In the Authentik UI: **Admin Interface → Applications → Outposts**
+
+Confirm the `authentik Embedded Outpost` exists and its health is green.
+If it is missing: create it (Type: `Proxy`, leave all defaults, save).
+
+---
+
+### Pattern 1 — Full app protection
+
+The entire app is behind Authentik. Any unauthenticated request redirects to the login page.
+
+**Use for:** Dashy, Heimdall, and any internal tool where all routes require a login.
+
+#### 1a. Create the Authentik Provider
+
+**Admin Interface → Applications → Providers → Create**
+
+| Field | Value |
+|-------|-------|
+| Name | `<app-name> Forward Auth` |
+| Type | `Proxy Provider` |
+| Authorization flow | `default-provider-authorization-implicit-consent` |
+| Forward auth (single application) | ✅ selected |
+| External host | `https://<APP_TRAEFIK_HOST>` |
+
+Save. Note the provider name.
+
+#### 1b. Create the Authentik Application
+
+**Admin Interface → Applications → Applications → Create**
+
+| Field | Value |
+|-------|-------|
+| Name | `<app-name>` |
+| Slug | `<app-name>` (lowercase, hyphens) |
+| Provider | select the provider you just created |
+
+Save. Then: **Admin Interface → Applications → Outposts** → edit the Embedded Outpost →
+add the new application to its list → Save.
+
+#### 1c. Add the middleware to the app's Compose file
+
+Add `sec-authentik@file` to the router's existing middleware list:
 
 ```yaml
 labels:
-  - "traefik.http.routers.<app>.middlewares=authentik-forward-auth@docker,..."
+  - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file,sec-authentik@file"
 ```
 
-The middleware is defined once in Authentik's Outposts config and injected into Traefik via Docker labels or the file provider. See: https://docs.goauthentik.io/docs/providers/proxy/forward_auth/traefik
+Redeploy the app:
+
+```bash
+docker compose up -d
+```
+
+#### 1d. Verify
+
+Open the app URL in a private browser window. You should be redirected to the Authentik
+login page. After login, you land back at the app.
+
+---
+
+### Pattern 2 — Path-scoped protection
+
+Only specific paths (e.g. `/admin`, `/api`) require authentication. All other routes remain
+open. Implemented via a second Traefik router with higher priority on the protected path.
+
+**Use for:** Paperless-ngx `/admin`, any app with a public-facing frontend and a protected
+admin backend on the same domain.
+
+#### 2a. Create the Authentik Provider
+
+Same as Pattern 1 — Step 1a, but set **External host** to the full base URL of the app
+(e.g. `https://paperless.example.com`). Authentik will only guard the path you configure
+in Traefik; the provider itself does not need to know the path.
+
+#### 2b. Create the Authentik Application
+
+Same as Pattern 1 — Step 1b. Add the application to the Embedded Outpost.
+
+#### 2c. Add a second router to the app's Compose file
+
+Add a dedicated router for the protected path alongside the existing one.
+The higher `priority` ensures Traefik matches `/admin` before the catch-all router:
+
+```yaml
+labels:
+  # --- Existing router (all traffic, no auth) ---
+  - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+  - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+  - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+  - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+  - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+  - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+
+  # --- Second router: /admin only, with Forward-Auth ---
+  - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/admin`)"
+  - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.entrypoints=websecure"
+  - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.tls=true"
+  - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+  - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.priority=10"
+  - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file,sec-authentik@file"
+  - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.service=${COMPOSE_PROJECT_NAME}"
+```
+
+> **Note:** The `-admin` router reuses the same Traefik service (same `loadbalancer.server.port`)
+> — no separate container is needed. Only the middleware chain differs.
+
+Redeploy the app:
+
+```bash
+docker compose up -d
+```
+
+#### 2d. Verify
+
+- Open `https://<host>/admin` in a private browser window → redirects to Authentik login ✅
+- Open `https://<host>/` → loads without login prompt ✅
 
 ### OAuth2 / OIDC (apps with native support)
 
