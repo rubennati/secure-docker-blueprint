@@ -184,7 +184,7 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-static.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-static.middlewares=${APP_TRAEFIK_ACCESS}@file,sec-1@file"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-static.service=${COMPOSE_PROJECT_NAME}"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-static.priority=10"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-static.priority=100"
 
     # --- Health & Observability ---
     # The goauthentik/server image ships no wget/curl. Use Python
