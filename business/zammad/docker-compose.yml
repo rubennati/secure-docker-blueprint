@@ -12,6 +12,8 @@ x-shared: &zammad-shared
     POSTGRESQL_PORT: "5432"
     POSTGRESQL_DB: ${DB_NAME}
     POSTGRESQL_USER: ${DB_USER}
+    # NOTE: Zammad (Rails) does not support _FILE env vars for credentials.
+    # The password is passed inline from .env. Use a strong random value.
     POSTGRESQL_PASS: ${DB_PWD_INLINE}
     REDIS_URL: "redis://redis:6379"
     MEMCACHE_SERVERS: "memcached:11211"

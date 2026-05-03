@@ -100,10 +100,6 @@ services:
     networks:
       - app-internal
 
-    # --- Health & Observability ---
-    healthcheck:
-      disable: false
-
   # --------------------------------------------------------
   # IMMICH SERVER (web UI + API)
   # --------------------------------------------------------
@@ -166,9 +162,6 @@ services:
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
 
-    # --- Health & Observability ---
-    healthcheck:
-      disable: false
 
 # --------------------------------------------------------
 # NETWORKS
