@@ -7,7 +7,7 @@
 - **Docs:** https://ghost.org/docs/
 - **Config reference:** https://ghost.org/docs/config/
 - **Based on version:** `6.27.0-alpine`
-- **Last checked:** 2026-05-02
+- **Last verified:** 2026-05-02 (v6.27.0-alpine)
 
 ### ActivityPub service
 

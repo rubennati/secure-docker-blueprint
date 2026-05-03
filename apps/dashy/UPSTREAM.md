@@ -8,7 +8,7 @@
 - **Live demo:** https://demo.dashy.to/
 - **License:** MIT
 - **Based on version:** `4.0.4`
-- **Last checked:** 2026-05-02
+- **Last verified:** 2026-05-02 (v4.0.4)
 
 ## What we use
 

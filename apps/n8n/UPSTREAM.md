@@ -7,7 +7,7 @@
 - **Docker docs:** https://docs.n8n.io/hosting/installation/docker/
 - **License:** [Sustainable Use License](https://docs.n8n.io/sustainable-use-license/) (source-available; free for internal + commercial use up to limits)
 - **Based on version:** `2.19.2`
-- **Last checked:** 2026-05-02
+- **Last verified:** 2026-05-02 (v2.19.2)
 
 ## What we use
 

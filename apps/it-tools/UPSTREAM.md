@@ -7,7 +7,7 @@
 - **Live demo:** https://it-tools.tech/
 - **License:** GNU GPL v3.0
 - **Based on version:** `2025.7.18-a0bc346` (upstream uses date + commit hash, not semver)
-- **Last checked:** 2026-04-17
+- **Last verified:** 2026-05-02 (v2024.10.22-7ca5933)
 
 ## What we use
 

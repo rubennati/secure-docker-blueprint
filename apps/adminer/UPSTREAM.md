@@ -6,7 +6,7 @@
 - **Project home:** https://www.adminer.org/
 - **GitHub:** https://github.com/vrana/adminer
 - **Based on version:** `4.8.1` (standalone variant)
-- **Last checked:** 2026-05-02
+- **Last verified:** 2026-05-02 (v4.8.1-standalone)
 
 ## What we use
 
