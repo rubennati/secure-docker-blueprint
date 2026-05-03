@@ -2,7 +2,7 @@
 
 **Modular, security-hardened Docker Compose setups for self-hosted infrastructure.**
 
-Production-ready configurations for 15+ services — with standardized patterns, Docker Secrets, Traefik routing, and network isolation out of the box.
+Hardened configurations for 40+ services — standardized security baseline, Docker Secrets, Traefik routing, CrowdSec integration, and network isolation out of the box.
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-v0.5.1-blue)](CHANGELOG.md)
