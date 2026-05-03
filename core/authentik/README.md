@@ -186,9 +186,21 @@ admin backend on the same domain.
 
 #### 2a. Create the Authentik Provider
 
-Same as Pattern 1 — Step 1a, but set **External host** to the full base URL of the app
-(e.g. `https://paperless.example.com`). Authentik will only guard the path you configure
-in Traefik; the provider itself does not need to know the path.
+**Admin Interface → Applications → Providers → Create**
+
+| Field | Value |
+|-------|-------|
+| Name | `<app-name> Admin Forward Auth` |
+| Type | `Proxy Provider` |
+| Authorization flow | `default-provider-authorization-implicit-consent` |
+| Forward auth (single application) | ✅ selected |
+| External host | `https://<APP_TRAEFIK_HOST>/<protected-path>/` |
+
+> **Important:** For Pattern 2, the External host must include the protected path
+> (e.g. `https://paperless.example.com/admin/`), **not** just the domain root.
+> Authentik uses the External host as the redirect target after a successful login.
+> If you set it to the domain root, users land on the app's public frontend after
+> login instead of the protected path.
 
 #### 2b. Create the Authentik Application
 
@@ -214,7 +226,7 @@ labels:
   - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.entrypoints=websecure"
   - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.tls=true"
   - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
-  - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.priority=10"
+  - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.priority=100"
   - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file,sec-authentik@file"
   - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.service=${COMPOSE_PROJECT_NAME}"
 ```
