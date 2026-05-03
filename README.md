@@ -14,7 +14,7 @@ Production-ready configurations for 15+ services — with standardized patterns,
 
 ## Features
 
-- **Docker Secrets** — passwords and tokens never in environment variables
+- **Docker Secrets** — passwords and tokens via `_FILE` pattern or custom entrypoint; documented deviations where upstream support is missing
 - **Socket Proxy** — no direct Docker socket access on app containers
 - **Network Isolation** — databases and backends in isolated networks, no internet exposure
 - **Pinned Versions** — every image uses an explicit version tag, never `:latest`
@@ -201,9 +201,9 @@ docker compose up -d
 cd ../../apps/vaultwarden
 cp .env.example .env              # Edit: domain, security level
 
-mkdir -p secrets
-openssl rand -base64 32 > secrets/db_pwd.txt
-openssl rand -base64 32 > secrets/db_root_pwd.txt
+mkdir -p .secrets
+openssl rand -base64 32 | tr -d '\n' > .secrets/db_pwd.txt
+openssl rand -base64 32 | tr -d '\n' > .secrets/db_root_pwd.txt
 
 docker compose up -d
 ```
@@ -217,7 +217,7 @@ Every service in this blueprint enforces:
 | Rule | How |
 |------|-----|
 | No privilege escalation | `no-new-privileges:true` on every container |
-| Secrets not in env vars | Docker Secrets with `_FILE` pattern or custom entrypoint |
+| Secrets isolated | Docker Secrets (`_FILE` or custom entrypoint); deviations documented per app |
 | No direct socket access | Socket Proxy with granular API filtering |
 | Network isolation | Internal networks for databases and backend services |
 | Read-only filesystem | Where the image supports it |
@@ -289,7 +289,7 @@ apps/example/
 ├── docker-compose.yml           # Standardized block order
 ├── .env.example                 # All variables with placeholders
 ├── config/                      # Config files (committed)
-├── secrets/                     # Secret files (gitignored)
+├── .secrets/                    # Secret files (gitignored)
 └── volumes/                     # Persistent data (gitignored)
 ```
 

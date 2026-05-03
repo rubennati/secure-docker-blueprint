@@ -157,7 +157,7 @@ app:
     DOCKER_HOST: tcp://socket-proxy:2375
 ```
 
-Exception: Hawser — needs socket access as its core function, but still uses a socket proxy for defence in depth.
+Exception: Hawser — needs direct socket access as its core function. Socket proxy is the target pattern but requires upstream TCP support (tracked in Hawser issue tracker). Until then, the direct mount is an accepted, documented deviation.
 
 ## Network Isolation
 
