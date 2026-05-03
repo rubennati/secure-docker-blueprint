@@ -5,21 +5,24 @@ http:
     # SECURITY POLICY CHAINS (presets)
     # ==========================================================
     # Pick a level per router. Higher = stricter.
-    # "e" variants = embed/iframe-friendly (SAMEORIGIN instead of DENY).
+    # "e" variants   = iframe-friendly (SAMEORIGIN instead of DENY).
     # "spa" variants = high-burst rate limit for code-split SPAs (VPN-only).
     #
     # Building blocks are defined in security-blocks.yml.
     #
-    # Level      What it includes                    Use case
-    # ---------  ----------------------------------  -------------------------
-    # sec-0      nothing                             Debug, naked proxy
-    # sec-1      basic headers + compress            Internal tools
-    # sec-2      + soft ratelimit                    Standard (most apps)
-    # sec-2-spa  + SPA burst ratelimit               VPN-only SPA, code-split
-    # sec-3      + strict headers + permissions      Public-facing, hardened
-    # sec-3-spa  + SPA burst ratelimit               VPN-only SPA, hardened
-    # sec-4      + hard ratelimit                    Sensitive (login pages)
-    # sec-5      + CSP enforce                       Maximum (CSP-tested only)
+    # Level      Content                                  Use case
+    # ---------  ---------------------------------------  ----------------------------
+    # sec-0      nothing                                  Debug, naked proxy
+    # sec-1      basic headers + compress                 Internal tools (no rl)
+    # sec-1e     ↑ iframe-friendly variant                Internal, must be embedded
+    # sec-2      sec-1 + rl-soft                          Standard (most apps)
+    # sec-2e     ↑ iframe-friendly variant                Standard, must be embedded
+    # sec-2-spa  sec-1 + rl-spa                           VPN-only SPA, basic headers
+    # sec-3      sec-2 + strict headers + permissions     Public-facing, hardened
+    # sec-3e     ↑ iframe-friendly variant                Hardened, must be embedded
+    # sec-3-spa  sec-3 with rl-spa instead of rl-soft     VPN-only SPA, hardened
+    # sec-4      sec-3 with rl-hard                       Sensitive (login, admin)
+    # sec-5      sec-4 + CSP enforce                      Maximum (CSP-tested only)
     #
     # Examples:
     #   WordPress        → sec-2      (CMS with inline scripts)
@@ -41,13 +44,14 @@ http:
       chain:
         middlewares: []
 
-    # Internal tools — basic security headers + compression
+    # Internal tools — basic security headers + compression, no rate limit
     sec-1:
       chain:
         middlewares:
           - hdr-basic
           - compress
 
+    # Internal tools, iframe-friendly
     sec-1e:
       chain:
         middlewares:
@@ -62,6 +66,7 @@ http:
           - rl-soft
           - compress
 
+    # Standard, iframe-friendly
     sec-2e:
       chain:
         middlewares:
@@ -86,6 +91,7 @@ http:
           - compress
           - permissions-policy
 
+    # Hardened, iframe-friendly
     sec-3e:
       chain:
         middlewares:
