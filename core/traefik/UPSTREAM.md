@@ -8,6 +8,8 @@
 - **Socket proxy image:** https://hub.docker.com/r/tecnativa/docker-socket-proxy
 - **Socket proxy GitHub:** https://github.com/Tecnativa/docker-socket-proxy
 - **CrowdSec bouncer plugin:** https://github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
+- **License:** MIT
+- **Origin:** France · Traefik Labs · EU
 - **Based on versions:** Traefik `v3.6`, docker-socket-proxy `v0.4.2`
 - **Last checked:** 2026-04-16
 

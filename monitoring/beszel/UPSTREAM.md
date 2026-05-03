@@ -6,6 +6,7 @@
 - **GitHub:** https://github.com/henrygd/beszel
 - **Docker Hub:** https://hub.docker.com/r/henrygd/beszel
 - **License:** MIT
+- **Origin:** US · Henry Gd (community) · non-EU
 - **Based on version:** `0.18.7`
 - **Last checked:** 2026-05-03
 

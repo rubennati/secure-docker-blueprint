@@ -6,6 +6,7 @@
 - **GitHub:** https://github.com/kimai/kimai
 - **Docker Hub:** https://hub.docker.com/r/kimai/kimai2
 - **License:** AGPL-3.0
+- **Origin:** Germany · Kevin Papst · EU
 - **Based on version:** `apache-2.56.0`
 - **Last checked:** 2026-05-03
 

@@ -4,6 +4,8 @@
 
 - **Repo:** https://github.com/dani-garcia/vaultwarden
 - **Wiki:** https://github.com/dani-garcia/vaultwarden/wiki
+- **License:** GPL-3.0
+- **Origin:** Community · unofficial Bitwarden reimplementation · no single company
 - **Based on version:** 1.35.7
 - **Last checked:** 2026-04-14
 

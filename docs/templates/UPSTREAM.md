@@ -6,6 +6,7 @@
 - **GitHub:** https://github.com/VENDOR/REPO
 - **Docs:** https://docs.example.com
 - **License:** __REPLACE_ME__ (e.g. MIT, Apache 2.0, AGPL-3.0 — see license policy in ROADMAP.md)
+- **Origin:** __REPLACE_ME__ (e.g. Germany · Nextcloud GmbH · EU — or: US · Acme Inc · non-EU)
 - **Based on version:** `__REPLACE_ME__`
 - **Last verified:** __REPLACE_ME__ (v__REPLACE_ME__)
 

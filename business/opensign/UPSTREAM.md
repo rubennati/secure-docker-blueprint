@@ -6,6 +6,7 @@
 - **GitHub:** https://github.com/OpenSignLabs/OpenSign
 - **Docker Hub:** https://hub.docker.com/r/opensignlabs/opensign
 - **License:** AGPL-3.0
+- **Origin:** India · OpenSign Inc · non-EU
 - **Based on version:** `v2.38.0`
 - **Last checked:** 2026-05-03
 

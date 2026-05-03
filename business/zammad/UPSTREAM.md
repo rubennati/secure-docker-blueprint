@@ -7,6 +7,7 @@
 - **Registry:** https://github.com/zammad/zammad-docker-compose (Docker setup)
 - **Image:** `ghcr.io/zammad/zammad`
 - **License:** AGPL-3.0
+- **Origin:** Germany · Zammad GmbH · EU
 - **Based on version:** `7.0.1`
 - **Last checked:** 2026-05-03
 

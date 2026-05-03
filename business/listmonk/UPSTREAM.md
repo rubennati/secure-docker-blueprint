@@ -6,6 +6,7 @@
 - **GitHub:** https://github.com/knadh/listmonk
 - **Docker Hub:** https://hub.docker.com/r/listmonk/listmonk
 - **License:** AGPL-3.0
+- **Origin:** India · Zerodha (Kailash Nadh) · non-EU
 - **Based on version:** `v6.1.0`
 - **Last checked:** 2026-05-03
 

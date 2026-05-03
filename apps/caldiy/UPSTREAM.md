@@ -7,6 +7,7 @@
 - **Docker deployment guide:** https://cal.diy/docs/docker
 - **License:** MIT
 - **Relationship:** Community-edition spin-out of Cal.com, announced 2026 after Cal.com moved its production code behind a closed-source licence
+- **Origin:** Community fork of Cal.com · no dedicated company
 - **Last checked:** 2026-04-18
 
 ## What we use

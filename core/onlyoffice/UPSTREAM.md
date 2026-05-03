@@ -6,6 +6,8 @@
 - **Docs:** https://helpcenter.onlyoffice.com/docs/installation/docs-community-install-docker.aspx
 - **GitHub (CE):** https://github.com/ONLYOFFICE/DocumentServer
 - **Config reference:** https://github.com/ONLYOFFICE/DocumentServer/blob/master/Docker/README.md
+- **License:** AGPL-3.0
+- **Origin:** Latvia · Ascensio System SIA · EU
 - **Based on version:** `8.3` (Document Server Community)
 - **Last checked:** 2026-04-16
 

@@ -6,6 +6,7 @@
 - **GitHub:** https://github.com/immich-app/immich
 - **Stock compose:** https://github.com/immich-app/immich/releases/latest/download/docker-compose.yml
 - **License:** AGPL-3.0
+- **Origin:** US · Alex Tran · non-EU
 - **Based on version:** `v2` (Immich 2.x line)
 - **Last checked:** 2026-04-17
 

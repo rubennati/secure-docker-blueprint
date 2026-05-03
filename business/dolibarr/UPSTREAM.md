@@ -6,6 +6,7 @@
 - **GitHub:** https://github.com/Dolibarr/dolibarr
 - **Docker image:** https://hub.docker.com/r/tuxgasy/dolibarr (community-maintained, widely used)
 - **License:** GPL-3.0
+- **Origin:** France · Dolibarr Association · EU
 - **Based on version:** `latest` (tracks Dolibarr's stable line)
 - **Last checked:** 2026-04-17
 

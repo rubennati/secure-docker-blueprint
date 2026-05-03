@@ -7,6 +7,9 @@
 - **Docs:** https://cal.com/docs/self-hosting
 - **Release notes:** https://github.com/calcom/cal.com/releases
 - **License (AGPL + Commercial):** https://github.com/calcom/cal.com/blob/main/LICENSE
+- **License:** AGPL-3.0 + commercial tier
+- **Origin:** US · Cal.com Inc · non-EU
+- **Note:** Some features require the commercial plan — verify the feature set you need is covered by the AGPL tier before deploying.
 - **Based on version:** `v6.2.0`
 - **Last checked:** 2026-04-16
 

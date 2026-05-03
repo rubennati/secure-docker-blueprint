@@ -6,6 +6,8 @@
 - **GitHub:** https://github.com/n8n-io/n8n
 - **Docker docs:** https://docs.n8n.io/hosting/installation/docker/
 - **License:** [Sustainable Use License](https://docs.n8n.io/sustainable-use-license/) (source-available; free for internal + commercial use up to limits)
+- **Origin:** Germany · n8n GmbH · EU
+- **Note:** Not OSI-approved open source — source-available. Free for internal and personal use; commercial SaaS use requires a paid plan.
 - **Based on version:** `2.19.2`
 - **Last verified:** 2026-05-02 (v2.19.2)
 

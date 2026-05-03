@@ -6,6 +6,8 @@
 - **LSIO image:** https://docs.linuxserver.io/images/docker-unifi-network-application/
 - **LSIO GitHub:** https://github.com/linuxserver/docker-unifi-network-application
 - **License:** EULA (Ubiquiti) / GPL-3 (LSIO scripts)
+- **Origin:** US · Ubiquiti Inc · non-EU
+- **Note:** Proprietary software — not open source. LSIO wrapper scripts are GPL-3. Ubiquiti is a US company; CLOUD Act applies to cloud-managed deployments. Self-hosted (local controller) has no cloud dependency.
 - **Based on version:** `latest` (LSIO rolling build)
 - **Last checked:** 2026-04-17
 

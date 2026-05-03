@@ -6,6 +6,7 @@
 - **GitHub:** https://github.com/TwiN/gatus
 - **Docker Hub:** https://hub.docker.com/r/twinproduction/gatus
 - **License:** Apache-2.0
+- **Origin:** Canada · TwinProduction · non-EU
 - **Based on version:** `v5.34.0`
 - **Last checked:** 2026-05-03
 

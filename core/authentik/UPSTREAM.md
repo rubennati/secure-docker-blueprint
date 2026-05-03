@@ -7,6 +7,8 @@
 - **Docs:** https://docs.goauthentik.io/
 - **Release notes:** https://docs.goauthentik.io/docs/releases/
 - **Reference compose:** https://docs.goauthentik.io/docs/installation/docker-compose
+- **License:** MIT
+- **Origin:** Netherlands · Authentik Security · EU
 - **Based on version:** `2026.2.2`
 - **Last verified:** 2026-05-03 (v2026.2.2)
 

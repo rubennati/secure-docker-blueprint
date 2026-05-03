@@ -6,6 +6,7 @@
 - **GitHub:** https://github.com/louislam/uptime-kuma
 - **Docker Hub:** https://hub.docker.com/r/louislam/uptime-kuma
 - **License:** MIT
+- **Origin:** Hong Kong · Louis Lam · non-EU
 - **Based on version:** `1.23.17`
 - **Last checked:** 2026-05-03
 

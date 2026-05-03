@@ -4,6 +4,9 @@
 
 - **Repo:** https://github.com/invoiceninja/dockerfiles (branch: `debian`)
 - **Docs:** https://invoiceninja.github.io/docs/self-host/self-host-installation
+- **License:** Elastic License 2.0
+- **Origin:** US · Invoice Ninja LLC · non-EU
+- **Note:** Elastic License 2.0 is not OSI-approved — source-available, not open source. Self-hosting permitted; providing it as a managed service to others is restricted.
 - **Based on version:** 5.13.16
 - **Last checked:** 2026-04-14
 

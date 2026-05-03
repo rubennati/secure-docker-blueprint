@@ -7,6 +7,7 @@
 - **Docs:** https://dashy.to/docs
 - **Live demo:** https://demo.dashy.to/
 - **License:** MIT
+- **Origin:** UK · Alicia Sykes (Lissy93) · non-EU
 - **Based on version:** `4.0.4`
 - **Last verified:** 2026-05-02 (v4.0.4)
 
