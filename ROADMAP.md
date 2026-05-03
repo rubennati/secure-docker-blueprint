@@ -38,37 +38,87 @@ See [`CHANGELOG.md`](CHANGELOG.md) for the full diff of each release.
 
 ## Direction
 
-Pre-1.0 tags are set when a natural milestone is reached, not on a fixed cadence. The single criterion for v1.0 is "would I recommend this repo as a fork base to a third party?" — subjective but unambiguous when met.
+Pre-1.0 tags are set when a natural milestone is reached, not on a fixed cadence. The single criterion for v1.0 is: **could someone fork this and run it without needing my mental model?** — subjective but unambiguous when met.
 
 ### v0.6.0 — CrowdSec Firewall Bouncer (nftables)
 
-Host-level blocking, complements the L7 Traefik bouncer shipped in v0.4.0.
-Drops packets before they reach Traefik. Architecturally separate (OS-level
-install), so treated as its own tag.
+Host-level blocking via nftables — drops packets before they reach Traefik.
+Complements the L7 Traefik bouncer shipped in v0.4.0. Architecturally
+separate (OS-level install), so treated as its own tag.
 
-### Paperless-ngx security hardening phases
+### v0.7.0 — Backup
 
-Phases 0–3 (gap analysis, env catalogue) are done — see [`apps/paperless-ngx/CONFIG.md`](apps/paperless-ngx/CONFIG.md). Phase 4 is the 8 mandatory env-var fixes; Phase 5 (`/admin` behind Authentik) shipped in v0.5.0; Phase 6 is optional extension apps (paperless-gpt / paperless-ai / paperless-mcp).
+A working infrastructure is worthless without recovery. Three layers:
 
-### v1.0 polish
+- **Host backup** — Borgmatic with 3-2-1 strategy (local + remote targets), documented restore procedure
+- **App data backup** — volume-level snapshots for stateful apps
+- **Database backup** — per-app DB dump strategy (PostgreSQL, MariaDB, SQLite)
+
+Each layer gets a blueprint pattern that works across apps, not per-app one-offs.
+
+### v0.8.0 — CrowdSec: operational control
+
+CrowdSec runs after v0.4 and v0.6, but remains a black box — it is not clear what it blocks, whether it has self-blocked you, or how to intervene quickly. This version makes it observable and controllable:
+
+- **Dashboard** — CrowdSec dashboard or Metabase integration: see what is being blocked in real time
+- **Runbook** — how to check decision lists, whitelist your own IP, drain false positives, disable quickly if needed
+- **Geoblocking** — structured setup with documented trade-offs (not just "add a list")
+- **AppSec tuning** — review default rules, document any false-positive patterns specific to this stack
+
+Goal: after this version, CrowdSec is a tool you can confidently operate, not just something that runs in the background.
+
+### v0.9.0 — App configuration tiering
+
+Most apps currently have one level of configuration: "it runs." This version introduces a consistent tiering across all live apps:
+
+- **Minimum** — the smallest working set of env vars. No hidden required settings. Someone who just wants the app running can stop here.
+- **Advanced** — performance, storage, and integration options. Commented out by default, with a brief note on what each does. Paperless Phase 4 (8 mandatory env-var fixes) is the first example of what this looks like in practice.
+- **Expert** — deep tuning, rarely needed. May reference upstream docs rather than repeating them.
+
+The tiering lives in `.env.example` (inline comments) and `CONFIG.md` where the app already has one. Not every app needs all three levels — the point is that Minimum is always explicitly defined.
+
+### v0.10.0 — Resource limits
+
+Every live app gets `deploy.resources` (memory + CPU) and `pids_limit`. The standard is already documented in [`docs/standards/security-baseline.md`](docs/standards/security-baseline.md); this version applies it.
+
+Intentionally last before v1.0: wrong limits break apps silently (OOM kills, throttled CPUs). Each app needs values measured on a real install, not guessed. This is the fine-tuning pass — not a quick sweep.
+
+### v1.0 — Complete and hand-off ready
+
+The criterion: someone else could fork this and deploy it without needing this conversation.
 
 Before v1.0 is tagged:
 
-- Scan for `__REPLACE_ME__` remnants in live-tested files
-- Honest review of every `🚧 draft` — keep honest, promote only what was actually tested
+- Every app at least once sober-tested on a clean install (continuous — not a last-minute sprint)
+- No `🚧` without a documented reason
+- No `__REPLACE_ME__` in any live-tested file
+- Honest review of every `🚧 draft` — promote only what was actually tested
 - `CONFIG.md` pattern extended to other complex apps that benefit from it
-- CI pass (compose validate, secret scan, markdown lint)
-- **Resource limits rollout**: apply `deploy.resources` (memory/CPU) and `pids_limit` to every live-tested app per the profile table in `docs/standards/security-baseline.md`. Standard is documented; per-app values still need to be set.
+- CI baseline: compose validate, secret scan, markdown lint
+- Secret & Password Generation Standard consolidated into `docs/standards/` (currently each app README has its own recipe, some with known pitfalls)
+
+### v1.1 — Living repo
+
+v1.0 is a state. v1.1 is a process — the repo maintains itself:
+
+- **Status freshness system**: every `✅` app carries a `Last verified` stamp. When a Major upstream version ships, status drops to `🚧` until re-verified. Minor updates within a Major are low-risk and require only an `UPSTREAM.md` bump. Rule lives in [`docs/maintenance.md`](docs/maintenance.md).
+- **GitHub Issues replace `ROADMAP.md` for tactical work**: strategic direction stays in this file; per-app tasks ("re-verify Vaultwarden", "add Advanced tier to Nextcloud") move to Issues — trackable, closeable, referenceable.
+- **Packages / bundles** (`docs/packages/`): opinionated stacks for common setups — "Small-Business Starter", "Home Lab Photo + Files", etc. Each names the picks, reading order, and integration config.
+
+---
+
+## Continuous — not tied to a version
+
+**App testing runs in parallel to everything above.** Any time there is bandwidth: pick a `🚧` app, run the App Chain, set it to `✅`. This does not block or trigger a release. The bar for `✅` rises with the repo — an app verified today must meet the current ✅ Ready Criteria in [`docs/maintenance.md`](docs/maintenance.md), not the bar from v0.1.
+
+Apps still to re-verify on a clean install (pre-v0.2 installs, standards have since evolved):
+Vaultwarden, WordPress, Nextcloud, Seafile / Seafile Pro, Invoice Ninja.
 
 ---
 
 ## In the backlog — individual app paths
 
-App-level work that does not drive version tags. Picks up continuously as live-testing progresses.
-
-### Complex apps still to re-verify end-to-end
-
-Vaultwarden, WordPress, Nextcloud, Seafile / Seafile Pro, Invoice Ninja are marked live-tested from pre-v0.2 runs but have not been re-verified on a clean install yet. Low risk (blueprint patterns stable) but worth a pass before v1.0.
+App-level work that does not drive version tags.
 
 ### Choice-matrix categories — pick-one-per-install decisions
 
@@ -92,7 +142,7 @@ When live-tested on real data, pick the default and deprioritise the rest:
 
 ### App Evaluation Criteria (concept — still to develop)
 
-Structured per-app metadata to help users make informed decisions before deploying. Not a rating scale — factual criteria that each person weighs themselves. Candidate criteria:
+Structured per-app metadata to help make informed decisions before deploying. Not a rating scale — factual criteria that each person weighs themselves. Candidate criteria:
 
 - **Origin**: country / organisation behind the project
 - **License**: AGPL, GPL, MIT, Apache, commercial dual-license, …
@@ -103,13 +153,9 @@ Structured per-app metadata to help users make informed decisions before deployi
 
 Still open: where this lives (extension of `UPSTREAM.md`? standardised block in each app `README.md`? separate `EVAL.md`?) and how to keep it from becoming a maintenance burden.
 
-### Secret & Password Generation Standard
+### Deploy script
 
-Blueprint-wide policy for secret generation (in `.secrets/` files) and password generation (for admin accounts). Currently each app README has its own recipe, some with known pitfalls (Laravel / Mongo DSN incompatibility with certain chars). Consolidation into a single `docs/standards/` reference is open.
-
-### Recommendations & Packages
-
-As live-testing of choice-matrix categories completes, a `docs/packages/` section captures opinionated bundles: "Small-Business Starter", "Cloud-free Data Collection", "Photo Home Lab". Each bundle names the picks, reading order, and integration config. Planned for v1.0 polish.
+`./deploy.sh <server> core/traefik apps/nextcloud` — rsync selected app directories to a server, no git / docs / inbox on target. Portable app deployments without the full blueprint on each host.
 
 ### Alternative container runtimes
 
@@ -118,10 +164,6 @@ Long-term consideration beyond standard Docker — Podman, Docker Swarm, K3s. No
 ### MCP connectors
 
 Expose selected apps via Model Context Protocol for AI-assisted operation. Candidates: Paperless-ngx document search, Vaultwarden secret retrieval. Blueprint defines the pattern; individual MCP servers live in their own repos.
-
-### Deploy script
-
-`./deploy.sh <server> core/traefik apps/nextcloud` — rsync selected app directories to a server, no git / docs / inbox on target. Portable app deployments without the full blueprint on each host.
 
 ---
 
