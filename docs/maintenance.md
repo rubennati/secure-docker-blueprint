@@ -149,7 +149,7 @@ Run the full Consistency Chain first, then:
 | 3 | `README.md` | Bump version badge (`v0.X.Y-blue`) |
 | 4 | All `🚧` entries | Is the draft status still honest? |
 | 5 | All `✅` entries | Were any broken by dependency updates since last test? |
-| 6 | GitHub | `gh release create vX.Y.Z --draft` — review, then publish |
+| 6 | GitHub | Minor versions only (`v0.X.0`): `gh release create vX.Y.0 --draft` — review, then publish. Patch tags (`vX.Y.Z`) are Git tags only — no GitHub Release needed. |
 
 ---
 
