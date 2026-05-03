@@ -9,7 +9,7 @@
 - **License:** MIT (BookStack) / GPL-3 (LSIO scripts)
 - **Origin:** UK · Dan Brown (BookStack) · non-EU
 - **Based on version:** `version-v25.02` (= BookStack 25.02)
-- **Last checked:** 2026-04-17
+- **Last verified:** 2026-05-03 (v25.02)
 
 ## What we use
 

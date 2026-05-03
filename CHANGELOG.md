@@ -11,6 +11,7 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 ### Added
 
 - **Homepage** (`apps/homepage/`): live-tested on clean install, status `🚧 → ✅`. Healthcheck added (`/api/healthcheck`). Draft banner removed.
+- **BookStack** (`apps/bookstack/`): live-tested on clean install, status `🚧 → ✅`. Login and page creation confirmed.
 
 ---
 

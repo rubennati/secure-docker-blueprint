@@ -1,6 +1,5 @@
 # BookStack
 
-> **Status: Draft — not yet live-tested.** First-pass import from inbox material.
 
 Self-hosted wiki / knowledge base. Three-level structure: Shelves → Books → Chapters → Pages. Built on Laravel (PHP) with a MariaDB backend.
 
