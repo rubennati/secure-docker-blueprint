@@ -8,6 +8,70 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
+---
+
+## [0.5.0] — 2026-05-03
+
+### Authentik Forward-Auth integration live
+
+Traefik Forward-Auth patterns documented and proven end-to-end. Two variants
+implemented and tested:
+
+- **Pattern 1 — full app** (Dashy, Heimdall): the entire app is behind
+  Authentik. One router, `sec-authentik@file` in the middleware chain. Unauthenticated requests redirect to the Authentik login page.
+- **Pattern 2 — path-scoped** (Paperless-ngx `/admin`): a second Traefik
+  router with `priority=100` and `PathPrefix(/admin)` carries `sec-authentik@file`; the main router stays open. Allows a public-facing app to protect only its admin backend.
+
+Both patterns are opt-in — commented out by default in each app's
+`docker-compose.yml`. Activation instructions in
+`core/authentik/README.md` — Step 0 (one-time Traefik middleware setup) and
+Pattern 1 / Pattern 2 sections.
+
+The `sec-authentik` middleware in `core/traefik/ops/templates/dynamic/integrations.yml.tmpl` also documents that `forwardAuth` is not limited to the local Docker host — the `address` field accepts any reachable endpoint (other LAN machine, remote server).
+
+### SPA rate-limit fix — rl-spa + sec-*-spa chains
+
+Code-split SPAs (NocoDB, n8n, Authentik login page) fire 100+ parallel HTTP
+requests on first visit. The existing `rl-soft` token bucket (burst: 50) is
+exhausted in milliseconds → HTTP 429 on initial page load. The temporary
+`sec-1` workaround (no rate limit at all) has been replaced with a proper fix:
+
+- **`rl-spa`** — new rate-limit block: `average: 100, burst: 200`. Absorbs
+  the initial SPA chunk load. Safe only behind a network-level access control
+  (`acc-tailscale`).
+- **`sec-2-spa`** — basic headers + rl-spa + compress.
+- **`sec-3-spa`** — strict headers + rl-spa + compress + permissions-policy.
+
+NocoDB and n8n: `APP_TRAEFIK_SECURITY=sec-1` → `sec-3-spa`.
+
+For the Authentik login page (public access): router splitting — a dedicated
+`/_static/` router with `sec-1@file` (no rate limit) and `priority=100`
+handles static assets; the main Authentik router keeps `sec-3` for all other
+paths (API, flow endpoints). Canonical Traefik OSS pattern.
+
+### Fixed
+
+- **Traefik path-scoped router priority** (`apps/paperless-ngx`,
+  `core/authentik`): explicit `priority=10` loses to the auto-calculated
+  priority from rule string length (~29 for a typical `Host(...)` rule).
+  The path-scoped `-admin` and `/_static/` routers never won. Fixed:
+  `priority=10` → `priority=100`.
+- **Authentik Pattern 2 External host** must include the protected path.
+  With External host set to the domain root, Authentik redirects there after
+  login — for Paperless-ngx the Angular frontend shows `/404` because the
+  user has no Paperless account. Correct value: `https://<host>/admin/`.
+  Documented in `core/authentik/README.md` Pattern 2 Step 2a.
+- **`security-chains.yml.tmpl` table**: `sec-1e`, `sec-2e`, `sec-3e` were
+  missing from the header table entirely. Table rewritten with explicit
+  content column (no cumulative `+` notation) and inline comments added for
+  all `e` variants.
+
+### Documentation
+
+- `docs/bugfixes/authentik-forward-auth-2026-05-03.md` — three bugs with
+  root causes and fixes: router priority, Pattern 2 External host,
+  SPA 429 rate-limit.
+
 ### IT-Tools, Adminer, NocoDB, n8n live
 
 All four apps live-tested on clean installs. Status `🚧 → ✅`.
@@ -17,7 +81,7 @@ Six bugs found and fixed across the four apps:
 - **IT-Tools — non-existent tag**: `.env.example` referenced `2025.7.18-a0bc346` which does not exist on GHCR. Corrected to `2024.10.22-7ca5933`.
 - **IT-Tools — cap_drop crash-loop**: `cap_drop: ALL` dropped `CAP_CHOWN`, which the nginx entrypoint requires to set up `/var/cache/nginx/*` before dropping to UID 101. Removed `cap_drop: ALL`; filesystem hardening retained via `read_only: true` + `tmpfs` for `/tmp`, `/var/cache/nginx`, `/var/run`.
 - **Adminer — healthcheck always unhealthy**: the official `adminer` image ships no `curl` or `wget`. Replaced the `curl`-based check with a PHP one-liner using `stream_socket_client('tcp://127.0.0.1:8080')` — PHP is always present in the image. No `$variables` in the expression avoids Docker Compose interpolation.
-- **NocoDB / n8n — HTTP 429 on first page load**: both are heavy SPAs that load 100+ assets in parallel on the first visit. The Traefik `sec-3` middleware chain includes `rl-soft` (burst: 50), which is immediately saturated. Changed `APP_TRAEFIK_SECURITY` to `sec-1` for both apps. `sec-1` provides security headers without rate-limit middleware; acceptable because both apps are VPN-only (`acc-tailscale`).
+- **NocoDB / n8n — HTTP 429 on first page load**: both are heavy SPAs that load 100+ assets in parallel on the first visit. The Traefik `sec-3` middleware chain includes `rl-soft` (burst: 50), which is immediately saturated. Resolved in v0.5.0 with the new `sec-3-spa` chain (`rl-spa`, burst: 200). See the SPA rate-limit fix entry above.
 - **NocoDB — signup blocked without SMTP**: the original compose file used non-existent env var names for the super-admin. Corrected to `NC_ADMIN_EMAIL` / `NC_ADMIN_PASSWORD` (verified against source); both optional with `:-` default for installs with SMTP.
 - **n8n — `ERR_ERL_UNEXPECTED_X_FORWARDED_FOR`**: n8n's internal `express-rate-limit` raised a `ValidationError` on every request because Express `trust proxy` was not configured. Fixed with `N8N_PROXY_HOPS: "1"` — tells n8n to trust one reverse-proxy hop (Traefik) for `X-Forwarded-For`. Source: [n8n-io/n8n#9172](https://github.com/n8n-io/n8n/issues/9172).
 
@@ -110,10 +174,6 @@ Version bumped from `2024.12.3` (initial live-test pin) to `2026.2.2` (current l
 ### Fixed
 
 - **Authentik version-jump migration failure**: upgrading `2024.12.3` → `2026.2.2` directly crashes both server and worker with `FieldError: Cannot resolve keyword 'group_id'` in migration `0056_user_roles`. Root cause: intermediate data-migration script references a field removed before `2026.2`. Fix for blueprint test environments: wipe volumes and start fresh. Fix for production: upgrade incrementally through each major release. Documented in `docs/bugfixes/authentik-upgrade-2026-04-27.md`.
-
----
-
-Next tag direction: **Paperless-ngx `/admin` protected by Authentik Forward-Auth** as the first end-to-end use case for the new SSO. Then: CrowdSec Firewall Bouncer (nftables) for host-level blocking.
 
 ## [0.4.0] — 2026-04-20
 
@@ -246,7 +306,8 @@ Initial public release.
 - No CI workflows yet (compose validate, markdown lint, secret scan) — planned for 0.2.0
 - No automatic backup orchestration — planned in Evaluating section of ROADMAP
 
-[Unreleased]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/rubennati/secure-docker-blueprint/releases/tag/v0.4.0
 [0.3.0]: https://github.com/rubennati/secure-docker-blueprint/releases/tag/v0.3.0
 [0.2.0]: https://github.com/rubennati/secure-docker-blueprint/releases/tag/v0.2.0

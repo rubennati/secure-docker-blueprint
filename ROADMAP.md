@@ -1,12 +1,20 @@
 # Roadmap
 
-Last updated: 2026-05-02 (v0.5.0 scope set).
+Last updated: 2026-05-03 (v0.5.0 shipped).
 
 This document captures direction, not detailed changelogs. For shipped work see [`CHANGELOG.md`](CHANGELOG.md); for per-category details see the `README.md` in each top-level directory.
 
 ---
 
 ## Shipped
+
+### v0.5.0 — Authentik Forward-Auth pattern proven (2026-05-03)
+
+Dashy and Paperless-ngx `/admin` behind Authentik Forward-Auth, live-tested
+end-to-end. Two reusable patterns documented: Pattern 1 (full app) and
+Pattern 2 (path-scoped). SPA rate-limit fix via `rl-spa` / `sec-3-spa`.
+Three bugs fixed along the way (router priority, Pattern 2 External host,
+SPA 429). Heimdall wired up code-side (opt-in comment).
 
 ### v0.4.0 — CrowdSec Bouncer Plugin live (2026-04-20)
 
@@ -32,24 +40,15 @@ See [`CHANGELOG.md`](CHANGELOG.md) for the full diff of each release.
 
 Pre-1.0 tags are set when a natural milestone is reached, not on a fixed cadence. The single criterion for v1.0 is "would I recommend this repo as a fork base to a third party?" — subjective but unambiguous when met.
 
-### v0.5.0 — Authentik Forward-Auth pattern proven
+### v0.6.0 — CrowdSec Firewall Bouncer (nftables)
 
-**Scope:** Dashy, Heimdall, and Paperless-ngx `/admin` behind Authentik Forward-Auth.
-
-All three apps are already live-tested (`✅`). This tag is purely about the authentication layer:
-
-- **Dashy + Heimdall** — full-app protection (entire UI behind forward-auth). Two different image types (static SPA vs. LSIO/s6-overlay) to confirm the Traefik middleware config is generic.
-- **Paperless-ngx `/admin`** — path-scoped protection (only `/admin` behind forward-auth, public-facing routes remain open). Different forward-auth shape than full-app protection.
-
-Together these two variants produce a documented, reusable forward-auth template for every subsequent app.
-
-### Next after v0.5.0
-
-**CrowdSec Firewall Bouncer (nftables):** host-level blocking, complements the L7 Traefik bouncer shipped in v0.4.0. Drops packets before they reach Traefik. Architecturally separate (OS-level install), so treated as its own tag.
+Host-level blocking, complements the L7 Traefik bouncer shipped in v0.4.0.
+Drops packets before they reach Traefik. Architecturally separate (OS-level
+install), so treated as its own tag.
 
 ### Paperless-ngx security hardening phases
 
-Phases 0–3 (gap analysis, env catalogue) are done — see [`apps/paperless-ngx/CONFIG.md`](apps/paperless-ngx/CONFIG.md). Phase 4 is the 8 mandatory env-var fixes; Phase 5 is `/admin` behind Authentik (part of v0.5.0); Phase 6 is optional extension apps (paperless-gpt / paperless-ai / paperless-mcp).
+Phases 0–3 (gap analysis, env catalogue) are done — see [`apps/paperless-ngx/CONFIG.md`](apps/paperless-ngx/CONFIG.md). Phase 4 is the 8 mandatory env-var fixes; Phase 5 (`/admin` behind Authentik) shipped in v0.5.0; Phase 6 is optional extension apps (paperless-gpt / paperless-ai / paperless-mcp).
 
 ### v1.0 polish
 
