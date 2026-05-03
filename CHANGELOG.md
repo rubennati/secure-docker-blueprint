@@ -8,6 +8,10 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
+### Added
+
+- **Homepage** (`apps/homepage/`): live-tested on clean install, status `🚧 → ✅`. Healthcheck added (`/api/healthcheck`). Draft banner removed.
+
 ---
 
 ## [0.5.1] — 2026-05-03

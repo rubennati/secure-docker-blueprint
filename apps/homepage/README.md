@@ -1,6 +1,5 @@
 # Homepage (gethomepage)
 
-> **Status: Draft — not yet live-tested.** First-pass import from inbox material.
 
 Highly-configurable self-hosted dashboard. File-based YAML configuration — one file per concern (services, bookmarks, widgets, settings). Rich set of service integrations and info widgets.
 
@@ -62,7 +61,6 @@ Leave disabled if you manually maintain `services.yaml`.
 
 ## Known Issues
 
-- **Live-tested: no.**
 - **`HOMEPAGE_ALLOWED_HOSTS` must include the exact Host header** — if you proxy through Traefik with a different external hostname, update accordingly.
 
 ## Details
