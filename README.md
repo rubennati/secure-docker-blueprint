@@ -96,9 +96,8 @@ Three 1:1-booking apps as a choice-matrix (pick one), plus a planned group-polli
 
 | App | Stack | Status | When to use |
 |---|---|---|---|
-| [Cal.com](apps/calcom/) | Next.js + Postgres | 🚧 | Commercial-ready pathway, feature-richest, AGPL + commercial licence. **2026 note:** production codebase goes closed-source — see [calcom/UPSTREAM.md](apps/calcom/UPSTREAM.md). |
-| [Cal.diy](apps/caldiy/) | Next.js + Postgres | 🚧 | MIT community edition of Cal.com, "personal / non-production" per upstream. Pick if strict OSS matters. |
-| [Easy!Appointments](apps/easyappointments/) | PHP + MariaDB | 🚧 | Lightweight PHP alternative, established 2013, simpler than Cal.com, GPL-3.0. |
+| [Cal.diy](apps/caldiy/) | Next.js + Postgres | 🚧 | MIT community edition of Cal.com. Requires own Docker image build — see UPSTREAM.md. |
+| [Easy!Appointments](apps/easyappointments/) | PHP + MariaDB | ✅ | Lightweight PHP alternative, established 2013, GPL-3.0. |
 
 Planned: **Rallly** (group scheduling polls — Doodle alternative, complementary not competing with the 1:1 bookers above).
 
@@ -255,7 +254,7 @@ secure-docker-blueprint/
 │   ├── immich/  paperless-ngx/  nextcloud/  seafile/  seafile-pro/
 │   ├── vaultwarden/
 │   ├── nocodb/  n8n/  opnform/  monicahq/
-│   ├── calcom/  caldiy/  easyappointments/
+│   ├── caldiy/  easyappointments/
 │   ├── adminer/  it-tools/  unifi/
 │   └── ...
 │
