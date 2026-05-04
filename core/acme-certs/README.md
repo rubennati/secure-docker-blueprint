@@ -1,6 +1,8 @@
 # acme-certs
 
-> **Deprecated:** Traefik handles certificate issuance and renewal directly via its built-in ACME client. Use `core/traefik/` for all new certificate needs. This tool remains for side-car use cases where Traefik is not in the path (NAS, routers, mail servers).
+> **Status: ✅ Ready** — cert-ops-tool 0.2.1 · 2026-05-04
+
+> **Note:** For services behind Traefik, use `core/traefik/` — it handles ACME natively. Use this tool for devices that don't go through Traefik (NAS, routers, mail servers, firewalls).
 
 Certificate issuing and renewal tool using [acme.sh](https://github.com/acmesh-official/acme.sh) with Cloudflare DNS-01 challenge.
 
