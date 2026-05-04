@@ -71,7 +71,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/api/health     # 200 OK  (API via nginx �
 - **`APP_TRUSTED_PROXIES: "*"`** — required so Laravel honours `X-Forwarded-Proto=https` from Traefik.
 - **`NUXT_PRIVATE_API_BASE=http://nginx/api`** — Nuxt SSR calls the API via the internal Docker network (not the public URL), avoiding DNS resolution failures on private networks.
 - **`no-new-privileges:true`** on all services.
-- **Postgres + Redis on `app-internal` (`internal: true`)** — not reachable from outside Docker.
+- **`app-internal` is not `internal: true`** — the Nuxt SSR server calls `api.iconify.design` at startup to resolve icons; blocking outbound internet causes `EAI_AGAIN` DNS failures. Isolation is enforced at the Traefik layer: only `nginx` is on `proxy-public` and exposed to the reverse proxy. `db` and `redis` are on `app-internal` only and therefore unreachable from outside Docker.
 
 ## Known Issues
 

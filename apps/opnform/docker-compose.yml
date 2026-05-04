@@ -358,7 +358,12 @@ networks:
 
   app-internal:
     name: ${COMPOSE_PROJECT_NAME}-internal
-    internal: true
+    # internal: false (default) — outbound internet access required.
+    # The Nuxt UI server calls api.iconify.design at SSR startup to resolve icons.
+    # Setting internal: true blocks that and causes EAI_AGAIN DNS failures in the
+    # ui container. Isolation is provided at the Traefik layer (only nginx is
+    # exposed); db and redis are not on proxy-public, so they remain unreachable
+    # from outside Docker regardless.
 
 # --------------------------------------------------------
 # SECRETS
