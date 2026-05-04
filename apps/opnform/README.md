@@ -1,6 +1,6 @@
 # OpnForm
 
-> **Status: Draft — not yet live-tested.** Built from scratch for this blueprint (inbox was empty).
+> **Status: 🚧 Draft** — not yet deployed.
 
 Self-hosted form builder — Typeform / Google Forms alternative. Drag-and-drop editor, conditional logic, file uploads, webhooks. Laravel API + Nuxt UI.
 
@@ -25,7 +25,9 @@ cp .env.example .env
 # Edit: APP_TRAEFIK_HOST, TZ, MAIL_FROM_ADDRESS
 
 # 2. Generate Laravel APP_KEY
-docker run --rm jhumanj/opnform-api:latest php artisan key:generate --show
+# The opnform-api image waits for the DB before running any artisan command,
+# so key:generate hangs. Generate it directly instead:
+echo "base64:$(openssl rand -base64 32)"
 # Copy the 'base64:...' output into APP_KEY in .env
 
 # 3. Generate DB secret
@@ -70,7 +72,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/api/health     # 200 OK  (API)
 
 ## Known Issues
 
-- **Live-tested: no.** Expect minor surprises, especially path-priority tuning in Traefik.
+- **Not yet deployed.** Expect minor surprises, especially path-priority tuning in Traefik.
 - **`DB_PWD_INLINE` duplicates the DB password** — OpnForm's Laravel config reads `DB_PASSWORD` from env only. Postgres side uses `POSTGRES_PASSWORD_FILE`; OpnForm needs the same value inline.
 - **`APP_TAG=latest` is not reproducible** — pin to a specific version. OpnForm's release cadence is frequent.
 - **Mail driver defaults to `log`** — no outgoing email until you set `MAIL_MAILER=smtp` + the `MAIL_*` env vars. Form submission notifications and admin invitations rely on this.
