@@ -1,6 +1,6 @@
 # OpnForm
 
-> **Status: 🚧 Draft** — not yet deployed.
+> **Status: ✅ Ready** — v1.13.2 · 2026-05-04
 
 Self-hosted form builder — Typeform / Google Forms alternative. Drag-and-drop editor, conditional logic, file uploads, webhooks. Laravel API + Nuxt UI.
 
@@ -75,6 +75,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/api/health     # 200 OK  (API via nginx �
 
 ## Known Issues
 
+- **Icon 404s in browser console** — `/api/_nuxt_icon/ix.json` and `heroicons.json` return 404. This is an upstream OpnForm issue: the icon proxy path gets routed to the Laravel API instead of the Nuxt icon server. Cosmetic only — the app works normally.
 - **Storage bind mount permissions** — on first start the api entrypoint runs `chown -R www-data:www-data /usr/share/nginx/html/storage`. If permissions fail, fix with:
   ```bash
   docker compose exec api chown -R www-data:www-data /usr/share/nginx/html/storage

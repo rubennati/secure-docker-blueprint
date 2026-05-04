@@ -107,7 +107,7 @@ Planned: **Rallly** (group scheduling polls — Doodle alternative, complementar
 |---|---|---|---|
 | [Monica](apps/monicahq/) | App (Laravel) + MariaDB | ✅ | Personal CRM for relationships |
 | [NocoDB](apps/nocodb/) | Single container + SQLite | ✅ | No-code database / spreadsheet UI (Airtable alternative) |
-| [OpnForm](apps/opnform/) | API (Laravel) + UI (Nuxt) + Postgres + Redis | 🚧 | Self-hosted form builder (Typeform alternative) |
+| [OpnForm](apps/opnform/) | API (Laravel) + UI (Nuxt) + Postgres + Redis | ✅ | Self-hosted form builder (Typeform alternative) |
 | [n8n](apps/n8n/) | Single container + SQLite | ✅ | Visual workflow automation (Zapier alternative) |
 
 > **Cloud-free data-collection chain:** `OpnForm → n8n → NocoDB` — forms collect, n8n transforms, NocoDB stores + presents. All three on `proxy-public`, addressable as `http://<app>-app:<port>` for internal calls.
