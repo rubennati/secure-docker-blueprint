@@ -6,16 +6,17 @@ Self-hosted form builder — Typeform / Google Forms alternative. Drag-and-drop 
 
 ## Architecture
 
-Four services routed through Traefik with path-based splitting:
+Five services — nginx is the single entry point, routing to php-fpm or the Nuxt UI:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `api` | `jhumanj/opnform-api:latest` | Laravel backend — serves `/api/*`, `/open/*`, `/storage/*` |
-| `ui` | `jhumanj/opnform-client:latest` | Nuxt frontend — serves everything else |
+| `nginx` | `nginx:1` | HTTP entry point — routes `/api/*`, `/open/*` to php-fpm; everything else to the UI |
+| `api` | `jhumanj/opnform-api:1.13.2` | Laravel backend — php-fpm on port 9000 |
+| `ui` | `jhumanj/opnform-client:1.13.2` | Nuxt frontend on port 3000 |
 | `db` | `postgres:16-alpine` | Primary store (forms, responses, users, workspaces) |
-| `redis` | `redis:7-alpine` | Cache + queue + sessions |
+| `redis` | `redis:7.4-alpine` | Cache + queue + sessions |
 
-Traefik routes by **path priority**: the API router (priority 100) matches API paths first; the UI router (priority 1) catches everything else — both behind the same hostname.
+Traefik routes to **nginx only** (port 80). nginx handles path-based splitting internally via `docker/nginx.conf`.
 
 ## Setup
 
@@ -25,8 +26,8 @@ cp .env.example .env
 # Edit: APP_TRAEFIK_HOST, TZ, MAIL_FROM_ADDRESS
 
 # 2. Generate Laravel APP_KEY
-# The opnform-api image waits for the DB before running any artisan command,
-# so key:generate hangs. Generate it directly instead:
+# Note: the opnform-api entrypoint waits for the DB, so `php artisan key:generate`
+# hangs when run standalone. Generate the key directly instead:
 echo "base64:$(openssl rand -base64 32)"
 # Copy the 'base64:...' output into APP_KEY in .env
 
@@ -54,9 +55,9 @@ docker compose logs api --follow
 ## Verify
 
 ```bash
-docker compose ps                                    # four services healthy
-curl -fsSI https://<APP_TRAEFIK_HOST>/               # 200 OK  (UI)
-curl -fsSI https://<APP_TRAEFIK_HOST>/api/health     # 200 OK  (API)
+docker compose ps                                    # five services up
+curl -fsSI https://<APP_TRAEFIK_HOST>/               # 200 OK  (UI via nginx)
+curl -fsSI https://<APP_TRAEFIK_HOST>/api/health     # 200 OK  (API via nginx → php-fpm)
 ```
 
 ## Security Model
@@ -76,7 +77,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/api/health     # 200 OK  (API)
 - **`DB_PWD_INLINE` duplicates the DB password** — OpnForm's Laravel config reads `DB_PASSWORD` from env only. Postgres side uses `POSTGRES_PASSWORD_FILE`; OpnForm needs the same value inline.
 - **`APP_TAG=latest` is not reproducible** — pin to a specific version. OpnForm's release cadence is frequent.
 - **Mail driver defaults to `log`** — no outgoing email until you set `MAIL_MAILER=smtp` + the `MAIL_*` env vars. Form submission notifications and admin invitations rely on this.
-- **Path-based Traefik split** — if you change the API router rule, also update the UI router priority. Order matters; the UI router is a catch-all at priority 1.
+- **Startup 502s in UI logs** — on first start the Nuxt SSR calls the API via the public URL while the API is still initialising. These resolve within ~30 seconds once the API is ready. Not an error.
 - **Storage volume** — form file uploads and logo images land in `volumes/api-storage/`. Back up together with the Postgres dump.
 - **Queue worker not run** — Laravel queue jobs for this image run on demand (short-lived). For heavy setups, consider adding a separate `worker` service running `php artisan queue:work`.
 
