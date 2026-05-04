@@ -1,6 +1,6 @@
 # Monica
 
-> **Status: 🚧 Draft** — not yet deployed.
+> **Status: ✅ Ready** — v4.1.2 · 2026-05-04
 
 Monica is a personal CRM — remember everything about your friends, family, and business contacts. Built on Laravel (PHP) with a MariaDB backend.
 
@@ -64,7 +64,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 
 ## Known Issues
 
-- **Not yet deployed.** Expect minor surprises, especially first-run permissions on `volumes/data/`.
+- **`volumes/data/` permissions** — on first run Monica creates subdirectories inside the storage volume. If they end up owned by root, a `chown -R www-data:www-data volumes/data/` fixes it.
 - **`DB_PWD_INLINE` duplicates the DB password** — Monica's Laravel config reads `DB_PASSWORD` from env only. MariaDB side uses `MYSQL_PASSWORD_FILE`; Monica needs the same value inline.
 - **`MYSQL_RANDOM_ROOT_PASSWORD`** — if you need to run maintenance as `root`, exec a shell while the container is up and read `/tmp/mariadb-root-password` or dump via a user with sufficient grants.
 - **2FA, reminders, SMTP** — not configured here. Enable in the UI or add `MAIL_*` env vars.
