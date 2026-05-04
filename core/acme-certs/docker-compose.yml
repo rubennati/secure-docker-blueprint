@@ -1,28 +1,26 @@
 services:
 
   # --------------------------------------------------------
-  # ACME-CERTS
+  # ACME-CERTS (cert-ops-tool)
   # Let's Encrypt / ZeroSSL certificate tool using acme.sh.
   # Issues and renews certs via Cloudflare DNS-01 challenge.
   #
   # Use for devices without Traefik (NAS, routers, etc.).
   # Runs crond in foreground for automatic renewal.
   #
+  # Image source: https://github.com/rubennati/cert-ops-tool
+  #
   # Usage:
-  #   ./scripts/wizard.sh              Interactive certificate wizard
-  #   ./scripts/issue.sh               Issue cert (set vars in .env)
-  #   ./scripts/renew.sh               Renew existing cert
-  #   ./scripts/convert-to-pfx.sh      Convert to PFX format
+  #   ./scripts/wizard.sh                      Interactive certificate wizard (host-side)
+  #   docker compose exec acme-certs /scripts/issue.sh
+  #   docker compose exec acme-certs /scripts/renew.sh
+  #   docker compose exec acme-certs /scripts/convert-to-pfx.sh <domain> <password>
   # --------------------------------------------------------
   acme-certs:
     # --- Identity ---
-    image: neilpang/acme.sh:${APP_TAG}
+    image: ghcr.io/rubennati/cert-ops-tool:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}
     restart: unless-stopped
-    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
-    # -f = foreground, -n = same as -f (BusyBox crond)
-    # NOTE: -d flag removed — not supported in acme.sh 3.1.2+
-    command: ["/bin/sh", "-c", "crond -f"]
 
     # --- Security ---
     security_opt:
@@ -41,8 +39,6 @@ services:
 
     # --- Storage ---
     volumes:
-      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
-      - ./scripts:/scripts:ro
       - ./volumes/acme:/acme.sh
       - ./volumes/output:/output
 
