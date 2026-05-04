@@ -96,7 +96,7 @@ Three 1:1-booking apps as a choice-matrix (pick one), plus a planned group-polli
 
 | App | Stack | Status | When to use |
 |---|---|---|---|
-| [Cal.diy](apps/caldiy/) | Next.js + Postgres | 🚧 | MIT community edition of Cal.com. Requires own Docker image build — see UPSTREAM.md. |
+| [Cal.diy](apps/caldiy/) | Next.js + Postgres + Redis | ✅ | MIT community edition of Cal.com (community fork, personal use). |
 | [Easy!Appointments](apps/easyappointments/) | PHP + MariaDB | ✅ | Lightweight PHP alternative, established 2013, GPL-3.0. |
 
 Planned: **Rallly** (group scheduling polls — Doodle alternative, complementary not competing with the 1:1 bookers above).

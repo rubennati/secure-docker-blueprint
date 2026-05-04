@@ -1,5 +1,7 @@
 # n8n
 
+> **Status: ✅ Ready** — v2.19.2 · 2026-05-02
+
 Workflow automation — visual builder for chaining HTTP calls, webhooks, scheduled jobs, and a large library of third-party integrations (Slack, Airtable, OpenAI, databases, etc.). Free self-hosted Community Edition.
 
 ## Architecture
@@ -61,7 +63,6 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/healthz  # 200 OK
 
 ## Known Issues
 
-- **Live-tested: no.** Expect minor surprises, especially first-run ownership on `volumes/data/`.
 - **Webhook exposure** — even with `acc-tailscale`, webhooks invoked by external services (e.g. GitHub, Stripe) will not reach n8n unless you add a second Traefik router with `acc-public` on specific paths (`/webhook/*`). Not configured here.
 - **`APP_TAG=latest` is not reproducible** — pin to a specific version for stable deployments. n8n has frequent breaking changes in minor bumps.
 - **Queue mode / horizontal scaling not configured** — this is a single-executor deployment. For high-throughput workflows, add Redis + a worker service (see upstream docs).

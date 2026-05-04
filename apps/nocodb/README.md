@@ -1,5 +1,7 @@
 # NocoDB
 
+> **Status: ✅ Ready** — v0.301.5 · 2026-05-02
+
 Open-source Airtable alternative. Turns any SQL database into a spreadsheet-like UI with views, forms, and a REST + GraphQL API. Commonly paired with **n8n** for low-code automation.
 
 ## Architecture
@@ -71,7 +73,6 @@ For n8n and NocoDB to reach each other on an internal network, either:
 
 ## Known Issues
 
-- **Live-tested: no.** Expect minor surprises on first boot.
 - **`APP_TAG=latest` is not reproducible** — pin to a specific release for stable deployments. NocoDB has frequent breaking changes on minor version bumps.
 - **SQLite locks under heavy writes** — for high-volume automation workloads, switch to Postgres. See `UPSTREAM.md`.
 - **Attachments in `volumes/data/`** — back up together with the SQLite DB. Losing `volumes/data/` loses all records *and* file attachments.

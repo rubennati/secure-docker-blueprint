@@ -1,6 +1,8 @@
 # Cal.diy
 
-> **Read first:** Cal.diy is the MIT-licensed community edition of Cal.com, spun out in 2026 when Cal.com moved its production codebase behind a closed-source licence. Upstream explicitly labels Cal.diy as "strictly for personal, non-production use" with no security guarantees. **Do not use for business-critical scheduling** without understanding that trade-off.
+> **Status: ✅ Ready** — v6.2.0 · 2026-05-04
+
+> **Note:** Cal.diy is the MIT-licensed community edition of Cal.com, spun out in 2026 when Cal.com moved its production codebase behind a closed-source licence. Upstream explicitly labels Cal.diy as "strictly for personal, non-production use" with no security guarantees. **Do not use for business-critical scheduling** without understanding that trade-off.
 
 For an alternative with an established track record and no build dependency, see [`apps/easyappointments/`](../easyappointments/) (PHP + MariaDB, GPL-3.0).
 
@@ -64,7 +66,6 @@ docker compose logs app --follow
 
 ## Known Issues
 
-- **Live-tested: yes (v6.2.0, 2026-05-04)**
 - **VAPID keys are mandatory** — skip step 2 and the app logs `Error: No key set vapidDetails.publicKey` on every request.
 - **`CLIENT_FETCH_ERROR` if `NEXTAUTH_URL` is wrong** — must include `/api/auth` path. Already set correctly in `docker-compose.yml`.
 - **`/api/health` returns 500** — Node.js stream API incompatibility in this image version causes a `TypeError` on the health endpoint. The healthcheck falls back to `nc -z 127.0.0.1 3000` (TCP) which works fine. The app itself runs normally.

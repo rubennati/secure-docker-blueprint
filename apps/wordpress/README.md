@@ -1,5 +1,7 @@
 # WordPress
 
+> **Status: ✅ Ready** — v6.8.3 · 2026-04-15
+
 WordPress CMS with MariaDB database, PHP security hardening, and Apache .htaccess protection.
 
 ## Setup

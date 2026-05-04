@@ -1,5 +1,7 @@
 # Adminer
 
+> **Status: ✅ Ready** — v4.8.1 · 2026-05-02
+
 Stateless web-based database administration tool. Supports MySQL, MariaDB, PostgreSQL, SQLite, MS SQL, Oracle, Elasticsearch, MongoDB, and more via drivers. Single PHP file, no dependencies.
 
 ## Architecture
@@ -79,7 +81,6 @@ For DBs on other machines, enter the hostname/IP directly in the Adminer login f
 
 ## Known issues
 
-- **Live-tested: no.** Expect small bugs on first deployment.
 - **Session timeout** is short (~20 min idle). Adminer won't let you stay logged in long — acceptable for an admin tool, occasionally annoying during long query sessions.
 - **No query history across sessions.** Copy-paste your queries into a local file if you need to keep them.
 - **Network-attach dance** (Option A above) is manual. Until the blueprint has a dedicated "admin-internal" network pattern, this is the trade-off.

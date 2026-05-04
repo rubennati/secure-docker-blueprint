@@ -1,5 +1,7 @@
 # Seafile Pro
 
+> **Status: ✅ Ready** — v13.0 · 2026-04-13
+
 Cloud file storage with collaboration, search, and antivirus scanning.
 
 ## Services

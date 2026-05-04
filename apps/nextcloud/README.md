@@ -1,5 +1,7 @@
 # Nextcloud
 
+> **Status: ✅ Ready** — v32 · 2026-04-13
+
 Self-hosted file sync, calendar, contacts, and collaboration suite. This setup runs Nextcloud as **PHP-FPM behind nginx**, with MariaDB as database and Redis for file locking and session storage.
 
 ## Architecture

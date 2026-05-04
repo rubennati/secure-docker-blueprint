@@ -10,8 +10,14 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ### Added
 
-- **Homepage** (`apps/homepage/`): live-tested on clean install, status `🚧 → ✅`. Healthcheck added (`/api/healthcheck`). Draft banner removed.
-- **BookStack** (`apps/bookstack/`): live-tested on clean install, status `🚧 → ✅`. Login and page creation confirmed.
+- **Homepage** (`apps/homepage/`): v0.10.9 ready, status `🚧 → ✅`. Healthcheck added (`/api/healthcheck`).
+- **BookStack** (`apps/bookstack/`): v25.02 ready, status `🚧 → ✅`. Wiki, login, and page creation verified.
+- **Easy!Appointments** (`apps/easyappointments/`): v1.5.x ready, status confirmed ✅.
+- **Cal.diy** (`apps/caldiy/`): v6.2.0 ready, status `🚧 → ✅`. Full migration run and booking flow verified. Custom entrypoint injects all secrets and builds a safe `postgresql://` URL. TCP fallback healthcheck works around upstream `/api/health` incompatibility.
+
+### Removed
+
+- **Cal.com** (`apps/calcom/`): retired — Cal.com Inc. moved the production codebase to a proprietary licence. Replaced by `apps/caldiy/`.
 
 ---
 
