@@ -33,13 +33,13 @@ Hardened configurations for 40+ services — standardized security baseline, Doc
 | [Authentik](core/authentik/) | ✅ | SSO / Identity Provider for centralized authentication (Forward-Auth, OAuth2 / OIDC / SAML) |
 | [OnlyOffice](core/onlyoffice/) | ✅ | Document editing server for Seafile, Nextcloud, etc. |
 | [dnsmasq](core/dnsmasq/) | ✅ | DNS forwarder with wildcard zones for Tailscale / split-DNS setups |
-| [acme-certs](core/acme-certs/) | 🚧 | Certificate tool (acme.sh) for devices without Traefik (NAS, routers) |
+| [acme-certs](core/acme-certs/) | ✅ | Certificate tool (acme.sh) for devices without Traefik (NAS, routers) |
 | [CrowdSec](core/crowdsec/) | ✅ | Intrusion detection engine + Traefik bouncer plugin — log analysis, threat decisions, L7 blocking |
 | [Whoami](core/whoami/) | ✅ | Traefik debug service to verify routing, TLS, and middlewares |
 | [Dockhand](core/dockhand/) | ✅ | Docker management with Git-based stacks |
 | [Portainer](core/portainer/) | ✅ | Docker management UI |
 | [Hawser](core/hawser/) | ✅ | Remote Docker agent for Dockhand |
-| [Portainer Agent](core/portainer-agent/) | 🚧 | Remote Docker agent for Portainer (multi-host) |
+| [Portainer Agent](core/portainer-agent/) | ✅ | Remote Docker agent for Portainer (multi-host) |
 
 Planned in `core/`: Keycloak (alternative / heavier IAM next to Authentik).
 
@@ -105,7 +105,7 @@ Planned: **Rallly** (group scheduling polls — Doodle alternative, complementar
 
 | App | Stack | Status | Description |
 |---|---|---|---|
-| [Monica](apps/monicahq/) | App (Laravel) + MariaDB | 🚧 | Personal CRM for relationships |
+| [Monica](apps/monicahq/) | App (Laravel) + MariaDB | ✅ | Personal CRM for relationships |
 | [NocoDB](apps/nocodb/) | Single container + SQLite | ✅ | No-code database / spreadsheet UI (Airtable alternative) |
 | [OpnForm](apps/opnform/) | API (Laravel) + UI (Nuxt) + Postgres + Redis | 🚧 | Self-hosted form builder (Typeform alternative) |
 | [n8n](apps/n8n/) | Single container + SQLite | ✅ | Visual workflow automation (Zapier alternative) |
