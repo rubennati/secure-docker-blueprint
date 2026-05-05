@@ -1,12 +1,17 @@
+<div align="center">
+
 # Secure Docker Blueprint
 
 **Modular, security-hardened Docker Compose setups for self-hosted infrastructure.**
 
 Hardened configurations for 40+ services — standardized security baseline, Docker Secrets, Traefik routing, CrowdSec integration, and network isolation out of the box.
 
+[![CI](https://github.com/rubennati/secure-docker-blueprint/actions/workflows/ci.yml/badge.svg)](https://github.com/rubennati/secure-docker-blueprint/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-v0.5.1-blue)](CHANGELOG.md)
 [![Status](https://img.shields.io/badge/status-pre--1.0-yellow)](ROADMAP.md)
+
+</div>
 
 > **Pre-1.0** — structure is stable and core services are ready to use, but paths, env variables, and defaults can still change before v1.0. See [ROADMAP.md](ROADMAP.md) for the v1.0 criteria.
 
