@@ -7,7 +7,10 @@ security_opt:
   - no-new-privileges:true
 ```
 
-No exceptions. Prevents privilege escalation inside the container.
+Prevents privilege escalation inside the container. Required on every service.
+Exceptions must be documented in `scripts/ci/check-baseline.py` with a full
+justification (reason, alternatives considered, risk acceptance) — see
+[`docs/standards/ci.md`](ci.md).
 
 ## Recommended
 
