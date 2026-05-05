@@ -1,0 +1,112 @@
+name: CI
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+    branches: [main]
+
+jobs:
+
+  # ─────────────────────────────────────────────
+  # 1. SECRET SCANNING
+  # ─────────────────────────────────────────────
+  secrets:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ─────────────────────────────────────────────
+  # 2. COMPOSE SYNTAX VALIDATION
+  # ─────────────────────────────────────────────
+  compose-validate:
+    name: Compose validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Validate all compose files
+        run: |
+          failed=0
+          while IFS= read -r file; do
+            dir=$(dirname "$file")
+            # Copy .env.example as .env so variables are defined during validation
+            [ -f "$dir/.env.example" ] && cp "$dir/.env.example" "$dir/.env"
+            echo -n "  checking $file ... "
+            if docker compose -f "$file" config --quiet 2>/dev/null; then
+              echo "ok"
+            else
+              echo "FAIL"
+              docker compose -f "$file" config 2>&1 | head -20
+              failed=1
+            fi
+            [ -f "$dir/.env" ] && rm -f "$dir/.env"
+          done < <(find core apps business monitoring -name "docker-compose.yml" | sort)
+          exit $failed
+
+  # ─────────────────────────────────────────────
+  # 3. STRUCTURE CHECK
+  # ─────────────────────────────────────────────
+  structure:
+    name: Structure check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Check README, .env.example, no :latest
+        run: |
+          failed=0
+
+          echo "── README + .env.example ──────────────────"
+          while IFS= read -r compose; do
+            dir=$(dirname "$compose")
+            # Skip template directory
+            [[ "$dir" == *"templates"* ]] && continue
+            if [ ! -f "$dir/README.md" ]; then
+              echo "  MISSING README.md    : $dir"
+              failed=1
+            fi
+            if [ ! -f "$dir/.env.example" ]; then
+              echo "  MISSING .env.example : $dir"
+              failed=1
+            fi
+          done < <(find core apps business monitoring -name "docker-compose.yml" | sort)
+
+          echo "── :latest tags ────────────────────────────"
+          while IFS= read -r file; do
+            # grep exits 1 if no match — that is the success case here
+            if grep -qP 'image:\s+\S+:latest' "$file" 2>/dev/null; then
+              echo "  :latest found        : $file"
+              failed=1
+            fi
+          done < <(find core apps business monitoring -name "docker-compose.yml" | sort)
+
+          [ "$failed" -eq 0 ] && echo "  all checks passed"
+          exit $failed
+
+  # ─────────────────────────────────────────────
+  # 4. SECURITY BASELINE (Checkov)
+  # ─────────────────────────────────────────────
+  checkov:
+    name: Security baseline (checkov)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Run Checkov on Docker Compose files
+        uses: bridgecrew/checkov-action@v12
+        with:
+          directory: .
+          framework: docker_compose
+          # soft_fail: report all findings but don't fail the build yet.
+          # Review the first run output, then remove this line to enforce.
+          soft_fail: true
+          output_format: github_failed_only
+          skip_path: inbox,docs/templates
