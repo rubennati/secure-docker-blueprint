@@ -5,6 +5,10 @@ on:
     branches: [dev, main]
   pull_request:
     branches: [main]
+  schedule:
+    # Nightly at 03:00 UTC — catches stale configs even without commits
+    - cron: '0 3 * * *'
+  workflow_dispatch:
 
 jobs:
 
@@ -37,7 +41,6 @@ jobs:
           failed=0
           while IFS= read -r file; do
             dir=$(dirname "$file")
-            # Copy .env.example as .env so variables are defined during validation
             [ -f "$dir/.env.example" ] && cp "$dir/.env.example" "$dir/.env"
             echo -n "  checking $file ... "
             if docker compose -f "$file" config --quiet 2>/dev/null; then
@@ -67,7 +70,6 @@ jobs:
           echo "── README + .env.example ──────────────────"
           while IFS= read -r compose; do
             dir=$(dirname "$compose")
-            # Skip template directory
             [[ "$dir" == *"templates"* ]] && continue
             if [ ! -f "$dir/README.md" ]; then
               echo "  MISSING README.md    : $dir"
@@ -79,11 +81,12 @@ jobs:
             fi
           done < <(find core apps business monitoring -name "docker-compose.yml" | sort)
 
-          echo "── :latest tags ────────────────────────────"
+          echo "── :latest tags (non-commented lines) ─────"
           while IFS= read -r file; do
-            # grep exits 1 if no match — that is the success case here
-            if grep -qP 'image:\s+\S+:latest' "$file" 2>/dev/null; then
+            # Match only actual image: lines — lines starting with # are comments
+            if grep -qP '^\s+image:\s+\S+:latest' "$file" 2>/dev/null; then
               echo "  :latest found        : $file"
+              grep -nP '^\s+image:\s+\S+:latest' "$file"
               failed=1
             fi
           done < <(find core apps business monitoring -name "docker-compose.yml" | sort)
@@ -100,13 +103,16 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Run Checkov on Docker Compose files
-        uses: bridgecrew/checkov-action@v12
-        with:
-          directory: .
-          framework: docker_compose
-          # soft_fail: report all findings but don't fail the build yet.
-          # Review the first run output, then remove this line to enforce.
-          soft_fail: true
-          output_format: github_failed_only
-          skip_path: inbox,docs/templates
+      - name: Install Checkov
+        run: pip install checkov --quiet
+
+      - name: Run Checkov
+        run: |
+          checkov \
+            --directory . \
+            --framework docker_compose \
+            --skip-path inbox \
+            --skip-path docs/templates \
+            --soft-fail \
+            --compact \
+            --output cli
