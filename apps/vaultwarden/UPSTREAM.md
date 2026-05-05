@@ -18,7 +18,7 @@
 | ADMIN_TOKEN as Argon2 hash | Official recommendation — never store plain text |
 | `read_only: true` + `no-new-privileges` | Security hardening |
 | `tls-modern` (TLS 1.3 only) | Password manager deserves strictest TLS |
-| `sec-4` security middleware | Rate limiting + strict headers |
+| `sec-3e` security middleware | Strict headers + SAMEORIGIN (iframe-friendly for browser extension) + rate limiting |
 | `PASSWORD_HINTS_ALLOWED=false` | Prevent hint-based guessing |
 | `SIGNUPS_VERIFY=true` | Require email verification |
 | Rate limiting configured | Login + Admin panel rate limiting |
