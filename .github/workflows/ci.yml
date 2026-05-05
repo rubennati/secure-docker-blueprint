@@ -95,24 +95,16 @@ jobs:
           exit $failed
 
   # ─────────────────────────────────────────────
-  # 4. SECURITY BASELINE (Checkov)
+  # 4. SECURITY BASELINE (custom script)
   # ─────────────────────────────────────────────
-  checkov:
-    name: Security baseline (checkov)
+  baseline:
+    name: Security baseline
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
 
-      - name: Install Checkov
-        run: pip install checkov --quiet
+      - name: Install PyYAML
+        run: pip install pyyaml --quiet
 
-      - name: Run Checkov
-        run: |
-          checkov \
-            --directory . \
-            --framework docker_compose \
-            --skip-path inbox \
-            --skip-path docs/templates \
-            --soft-fail \
-            --compact \
-            --output cli
+      - name: Run baseline check
+        run: python3 scripts/ci/check-baseline.py "$GITHUB_STEP_SUMMARY"
