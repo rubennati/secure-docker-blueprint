@@ -60,10 +60,12 @@ services:
       VIKUNJA_AUTH_OPENID_PROVIDERS_AUTHENTIK_SCOPE: "openid profile email"
 
       # --- Access control ---
-      # Disable new account registration (enable on first run, then set false)
-      VIKUNJA_SERVICE_ENABLEREGISTRATION: "${VIKUNJA_ENABLEREGISTRATION:-false}"
-      # Disable local login — SSO-only via Authentik (set false on first run)
-      VIKUNJA_AUTH_LOCAL_ENABLED: "${VIKUNJA_LOCAL_AUTH_ENABLED:-false}"
+      # Registration: true on first run so the first user can sign up (= admin).
+      # Set false in .env once your accounts are created.
+      VIKUNJA_SERVICE_ENABLEREGISTRATION: "${VIKUNJA_ENABLEREGISTRATION:-true}"
+      # Local login: always keep true as an emergency fallback (e.g. Authentik down).
+      # Users who log in via Authentik are never affected by this setting.
+      VIKUNJA_AUTH_LOCAL_ENABLED: "${VIKUNJA_LOCAL_AUTH_ENABLED:-true}"
 
       # --- Branding ---
       # Leave empty to use the default Vikunja logo.
