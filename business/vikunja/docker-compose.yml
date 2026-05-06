@@ -100,7 +100,7 @@ services:
     # Vikunja ships a built-in healthcheck subcommand for exactly this purpose.
     # It calls the same /health endpoint internally and exits 0/1.
     healthcheck:
-      test: ["/app/vikunja/vikunja", "healthcheck"]
+      test: ["CMD", "/app/vikunja/vikunja", "healthcheck"]
       interval: 30s
       timeout: 5s
       retries: 3
