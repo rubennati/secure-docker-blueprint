@@ -13,7 +13,7 @@ FROM vikunja/vikunja:${APP_TAG}
 COPY --from=shell /bin/sh /bin/sh
 COPY --from=shell /bin/cat /bin/cat
 COPY --from=shell /bin/chmod /bin/chmod
-USER root
+USER 0
 RUN ["/bin/chmod", "g+w", "/app/vikunja/files"]
 RUN ["/bin/sh", "-c", "rm /bin/chmod"]
 USER 1000
