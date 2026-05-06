@@ -32,30 +32,31 @@ docker compose build
 # 4. Start
 docker compose up -d
 
-# 4. Open https://<HOST_DOMAIN>
+# 5. Open https://<HOST_DOMAIN>
 #    First user to register becomes admin,
 #    or log in directly via Authentik (button on login page)
 ```
 
 ## Authentik OIDC setup
 
+Official guide: https://docs.goauthentik.io/integrations/services/vikunja/
+
 ### In Authentik
 
-1. **Provider** → Create OAuth2/OIDC provider:
-   - Name: `Vikunja`
-   - Client type: `Confidential`
-   - Redirect URI: `https://<HOST_DOMAIN>/auth/openid/authentik`
-   - Scopes: `openid profile email`
-   - Subject mode: `Based on the User's username` (required for username matching)
-   - Note the **Client ID** and **Client Secret**
+Use **Applications → Create with Provider** to create the application/provider pair in one step:
 
-2. **Application** → Create application pointing to the provider
+1. **Provider type**: `OAuth2/OpenID Connect`
+2. **Redirect URI** (type: **Strict**): `https://<HOST_DOMAIN>/auth/openid/authentik`
+   - The path segment `authentik` must match the provider key used in Vikunja env vars
+   - Optional (desktop client): add a `Regex` URI `^http://127\.0\.0\.1:[0-9]+/auth/openid/authentik$`
+3. **Signing key**: select any available key
+4. Note the **Client ID**, **Client Secret**, and **application slug**
 
 ### In `.env`
 
 ```
 AUTHENTIK_DOMAIN=auth.example.com
-AUTHENTIK_APP_SLUG=vikunja          # slug from Authentik application
+AUTHENTIK_APP_SLUG=vikunja          # application slug from Authentik (used in authurl)
 OIDC_CLIENT_ID=<client-id-from-authentik>
 ```
 
