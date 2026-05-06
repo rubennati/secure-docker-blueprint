@@ -8,6 +8,13 @@ This keeps `business/` a meaningful category instead of a grab-bag. See [`docs/a
 
 ✅ Ready · 🚧 Draft · 📋 Planned
 
+### Project management & planning
+
+| App | Use case | Status | Notes |
+|---|---|---|---|
+| [OpenProject CE](openproject/) | Full PM — Gantt, kanban, work packages, time tracking, wikis | 🚧 | 6-service stack; Trello + Jira alternative |
+| [Vikunja](vikunja/) | Task management — kanban, lists, Gantt, table view | 🚧 | 2-service stack; Trello / Microsoft Planner alternative |
+
 ### Billing & operations
 
 | App | Use case | Status | Notes |
