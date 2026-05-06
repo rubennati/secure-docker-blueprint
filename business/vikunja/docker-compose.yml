@@ -1,0 +1,191 @@
+services:
+
+  # --------------------------------------------------------
+  # VIKUNJA
+  # Open-source task management — kanban, lists, Gantt views.
+  # Single binary image (API + frontend combined).
+  #
+  # Docs: https://vikunja.io/docs/full-docker-example/
+  # --------------------------------------------------------
+  vikunja:
+    # --- Identity ---
+    # Custom build: adds /bin/sh from busybox to the upstream scratch image
+    # so that config/entrypoint.sh can inject Docker Secrets at startup.
+    # The upstream vikunja/vikunja image has no shell (FROM scratch).
+    build:
+      context: .
+      args:
+        APP_TAG: ${APP_TAG}
+    image: vikunja-local:${APP_TAG}
+    container_name: ${APP_CONTAINER}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    # Container runs as UID 1000 by default (per upstream docs).
+    # read_only is not set here — Vikunja writes to /app/vikunja/files
+    # which is a named volume, but also creates temp files internally.
+    # Enable read_only + tmpfs only after verifying on live install.
+
+    # --- Secrets injection ---
+    # Vikunja has no _FILE env var support. Secrets are injected via entrypoint.
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
+    secrets:
+      - VIKUNJA_JWT_SECRET
+      - VIKUNJA_DB_PWD
+      - VIKUNJA_OIDC_SECRET
+
+    # --- Configuration ---
+    environment:
+      # Public URL — must match the domain users see in their browser
+      VIKUNJA_SERVICE_PUBLICURL: "https://${HOST_DOMAIN}"
+
+      # Database (PostgreSQL — recommended for multi-user per upstream docs)
+      VIKUNJA_DATABASE_TYPE: postgres
+      VIKUNJA_DATABASE_HOST: db
+      VIKUNJA_DATABASE_USER: ${DB_USER}
+      VIKUNJA_DATABASE_DATABASE: ${DB_NAME}
+
+      # Authentik OIDC — https://vikunja.io/docs/openid/
+      # Provider ID used here: "authentik"
+      # Redirect URL to whitelist in Authentik:
+      #   https://<HOST_DOMAIN>/auth/openid/authentik
+      VIKUNJA_AUTH_OPENID_ENABLED: "true"
+      VIKUNJA_AUTH_OPENID_PROVIDERS_AUTHENTIK_NAME: "Authentik"
+      # authurl = Authentik issuer URL (used for OIDC Discovery)
+      # Format: https://<authentik-domain>/application/o/<application-slug>/
+      VIKUNJA_AUTH_OPENID_PROVIDERS_AUTHENTIK_AUTHURL: "https://${AUTHENTIK_DOMAIN}/application/o/${AUTHENTIK_APP_SLUG}/"
+      VIKUNJA_AUTH_OPENID_PROVIDERS_AUTHENTIK_CLIENTID: "${OIDC_CLIENT_ID}"
+      # Scopes: add vikunja_scope if you want automatic Authentik group → Vikunja team sync
+      VIKUNJA_AUTH_OPENID_PROVIDERS_AUTHENTIK_SCOPE: "openid profile email"
+
+      # Optionally disable local login to enforce SSO-only:
+      # VIKUNJA_AUTH_LOCAL_ENABLED: "false"
+
+      # Auto-redirect to Authentik on login page:
+      # Append ?redirectToProvider=authentik to the login URL
+
+      TZ: ${TZ}
+
+    # --- Storage ---
+    volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
+      - vikunja_files:/app/vikunja/files
+
+    # --- Networking ---
+    networks:
+      - internal
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${NETWORK_NAME}"
+      - "traefik.http.routers.${ROUTER_NAME}.rule=Host(`${HOST_DOMAIN}`)"
+      - "traefik.http.routers.${ROUTER_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${ROUTER_NAME}.tls=true"
+      #- "traefik.http.routers.${ROUTER_NAME}.tls.certresolver=${CERT_RESOLVER}"
+      - "traefik.http.routers.${ROUTER_NAME}.tls.options=${TLS_OPTION}@file"
+      - "traefik.http.routers.${ROUTER_NAME}.middlewares=${MIDDLEWARES}"
+      - "traefik.http.routers.${ROUTER_NAME}.service=${SERVICE_NAME}"
+      - "traefik.http.services.${SERVICE_NAME}.loadbalancer.server.port=3456"
+
+    # --- Dependencies ---
+    depends_on:
+      db:
+        condition: service_healthy
+
+    # --- Health ---
+    # Image is based on scratch — no shell, wget, or curl available.
+    # Vikunja ships a built-in healthcheck subcommand for exactly this purpose.
+    # It calls the same /health endpoint internally and exits 0/1.
+    healthcheck:
+      test: ["/app/vikunja/vikunja", "healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+    # --- Resources ---
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.50"
+          pids: 100
+        reservations:
+          memory: 128M
+
+  # --------------------------------------------------------
+  # DATABASE — PostgreSQL
+  # Upstream docs use postgres:18 — we standardise on 17-alpine
+  # across the blueprint (same major used by Nextcloud, Ghost etc.)
+  # --------------------------------------------------------
+  db:
+    # --- Identity ---
+    image: postgres:${DB_TAG}
+    container_name: ${DB_CONTAINER}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_PASSWORD_FILE: /run/secrets/VIKUNJA_DB_PWD
+      TZ: ${TZ}
+    secrets:
+      - VIKUNJA_DB_PWD
+
+    # --- Storage ---
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+    # --- Networking ---
+    networks:
+      - internal
+
+    # --- Health ---
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+    # --- Resources ---
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 256M
+
+# ─── Secrets ───────────────────────────────────────────────────────────────────
+secrets:
+  VIKUNJA_JWT_SECRET:
+    file: ./.secrets/VIKUNJA_JWT_SECRET
+  VIKUNJA_DB_PWD:
+    file: ./.secrets/VIKUNJA_DB_PWD
+  VIKUNJA_OIDC_SECRET:
+    file: ./.secrets/VIKUNJA_OIDC_SECRET
+
+# ─── Volumes ───────────────────────────────────────────────────────────────────
+volumes:
+  vikunja_files:
+    driver: local
+  db_data:
+    driver: local
+
+# ─── Networks ──────────────────────────────────────────────────────────────────
+networks:
+  internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    driver: bridge
+  proxy:
+    external: true
+    name: ${NETWORK_NAME}
