@@ -16,14 +16,15 @@ Open-source task management with kanban boards, to-do lists, Gantt views, and ta
 ```bash
 # 1. Copy env file and configure it
 cp .env.example .env
-# → set HOST_DOMAIN, AUTHENTIK_DOMAIN, AUTHENTIK_APP_SLUG, OIDC_CLIENT_ID
+# → set HOST_DOMAIN and TZ
+# → VIKUNJA_AUTH_OPENID_ENABLED=false for first run (no Authentik needed yet)
 
 # 2. Create secrets (no trailing newlines)
 mkdir -p .secrets
 echo -n "$(openssl rand -base64 48 | tr -d '\n')" > .secrets/VIKUNJA_JWT_SECRET
 echo -n "$(openssl rand -base64 32 | tr -d '\n')" > .secrets/VIKUNJA_DB_PWD
-# Copy Client Secret from Authentik:
-echo -n "<authentik-client-secret>" > .secrets/VIKUNJA_OIDC_SECRET
+# OIDC secret file must exist even when OIDC is disabled — use placeholder for now:
+echo -n "placeholder" > .secrets/VIKUNJA_OIDC_SECRET
 
 # 3. Build the custom image (adds /bin/sh to the upstream scratch image
 #    so that the secrets-injection entrypoint can run)
@@ -33,8 +34,10 @@ docker compose build
 docker compose up -d
 
 # 5. Open https://<HOST_DOMAIN>
-#    First user to register becomes admin,
-#    or log in directly via Authentik (button on login page)
+#    First user to register becomes admin.
+#    Once Authentik is configured: set VIKUNJA_AUTH_OPENID_ENABLED=true in .env,
+#    replace .secrets/VIKUNJA_OIDC_SECRET with the real client secret,
+#    then docker compose up -d (recreates the container).
 ```
 
 ## Authentik OIDC setup

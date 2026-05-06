@@ -51,7 +51,8 @@ services:
       # Provider ID used here: "authentik"
       # Redirect URL to whitelist in Authentik:
       #   https://<HOST_DOMAIN>/auth/openid/authentik
-      VIKUNJA_AUTH_OPENID_ENABLED: "true"
+      # Set VIKUNJA_AUTH_OPENID_ENABLED=false in .env to skip OIDC on first run.
+      VIKUNJA_AUTH_OPENID_ENABLED: "${VIKUNJA_AUTH_OPENID_ENABLED:-false}"
       VIKUNJA_AUTH_OPENID_PROVIDERS_AUTHENTIK_NAME: "Authentik"
       # authurl = Authentik issuer URL (used for OIDC Discovery)
       # Format: https://<authentik-domain>/application/o/<application-slug>/
