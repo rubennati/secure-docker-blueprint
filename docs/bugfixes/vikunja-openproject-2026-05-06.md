@@ -101,8 +101,6 @@ unset _pwd
 
 ---
 
----
-
 ### Bug 5 — Vikunja container cannot resolve Authentik's hostname → 403 / 404 on OIDC discovery
 
 **Symptom**: After enabling OIDC in Vikunja, logs showed repeated errors on startup:
