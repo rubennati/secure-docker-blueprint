@@ -21,4 +21,11 @@ if [ "${VIKUNJA_AUTH_OPENID_ENABLED:-false}" = "true" ]; then
   unset _oidc
 fi
 
+# Only inject SMTP password when mailer is enabled.
+if [ "${VIKUNJA_MAILER_ENABLED:-false}" = "true" ]; then
+  _smtp="$(cat /run/secrets/smtp_pwd)"
+  export VIKUNJA_MAILER_PASSWORD="$_smtp"
+  unset _smtp
+fi
+
 exec /app/vikunja/vikunja "$@"

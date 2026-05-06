@@ -34,6 +34,7 @@ services:
       - jwt_key
       - db_pwd
       - oidc_secret
+      - smtp_pwd
     environment:
       # Public URL — must match the domain users see in their browser
       VIKUNJA_SERVICE_PUBLICURL: "https://${APP_TRAEFIK_HOST}"
@@ -97,6 +98,19 @@ services:
       # Tell Vikunja to read the real client IP from the X-Forwarded-For header
       # set by Traefik. Required for correct rate limiting and audit logs.
       VIKUNJA_SERVICE_IPEXTRACTIONMETHOD: "xff"
+
+      # --- Mailer / SMTP ---
+      # Password is injected via entrypoint.sh from .secrets/smtp_pwd.txt.
+      # Placeholder file must exist even when mailer is disabled.
+      VIKUNJA_MAILER_ENABLED: "${VIKUNJA_MAILER_ENABLED:-false}"
+      VIKUNJA_MAILER_HOST: "${VIKUNJA_MAILER_HOST:-}"
+      VIKUNJA_MAILER_PORT: "${VIKUNJA_MAILER_PORT:-587}"
+      VIKUNJA_MAILER_USERNAME: "${VIKUNJA_MAILER_USERNAME:-}"
+      VIKUNJA_MAILER_FROMEMAIL: "${VIKUNJA_MAILER_FROMEMAIL:-}"
+      # AUTHTYPE: plain (default), login, cram-md5
+      VIKUNJA_MAILER_AUTHTYPE: "${VIKUNJA_MAILER_AUTHTYPE:-plain}"
+      # FORCESSL: true = SMTPS (port 465). false = STARTTLS (port 587).
+      VIKUNJA_MAILER_FORCESSL: "${VIKUNJA_MAILER_FORCESSL:-false}"
 
       # --- Rate limiting ---
       VIKUNJA_RATELIMIT_ENABLED: "true"
@@ -211,6 +225,8 @@ secrets:
     file: ./.secrets/db_pwd.txt
   oidc_secret:
     file: ./.secrets/oidc_secret.txt
+  smtp_pwd:
+    file: ./.secrets/smtp_pwd.txt
 
 # ─── Volumes ───────────────────────────────────────────────────────────────────
 volumes:
