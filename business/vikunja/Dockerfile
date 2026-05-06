@@ -1,7 +1,11 @@
 # vikunja/vikunja is FROM scratch — no shell, no utilities.
 # We add the minimum needed from busybox:musl:
-#   /bin/sh  — for the secrets-injection entrypoint
-#   /bin/cat — for reading Docker Secret files in the entrypoint
+#   /bin/sh   — for the secrets-injection entrypoint
+#   /bin/cat  — for reading Docker Secret files in the entrypoint
+#   /bin/wget — for the HTTP healthcheck
+#              (`vikunja healthcheck` spawns a new process without the
+#               env vars set by the entrypoint, so it fails DB auth.
+#               An HTTP check against the running server is more reliable.)
 #
 # We also fix /app/vikunja/files ownership.
 # FROM scratch images have no /etc/passwd — USER + RUN fails with
@@ -15,6 +19,7 @@ RUN mkdir /files-init
 FROM vikunja/vikunja:${APP_TAG}
 COPY --from=shell /bin/sh /bin/sh
 COPY --from=shell /bin/cat /bin/cat
+COPY --from=shell /bin/wget /bin/wget
 # Create /app/vikunja/files owned by uid=1000 gid=0.
 # Vikunja runs as uid=1000 — without this the named volume is initialized
 # root-owned and Vikunja fails with "permission denied" on startup.

@@ -96,11 +96,12 @@ services:
         condition: service_healthy
 
     # --- Health ---
-    # Image is based on scratch — no shell, wget, or curl available.
-    # Vikunja ships a built-in healthcheck subcommand for exactly this purpose.
-    # It calls the same /health endpoint internally and exits 0/1.
+    # `vikunja healthcheck` spawns a fresh process with no env vars — it tries
+    # to run migrations and fails DB auth because VIKUNJA_DATABASE_PASSWORD is
+    # only set in the entrypoint-started process, not in docker exec children.
+    # Use wget (added via busybox in the Dockerfile) to hit the HTTP API instead.
     healthcheck:
-      test: ["CMD", "/app/vikunja/vikunja", "healthcheck"]
+      test: ["CMD", "/bin/wget", "-qO-", "http://localhost:3456/api/v1/info"]
       interval: 30s
       timeout: 5s
       retries: 3
