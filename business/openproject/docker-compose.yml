@@ -3,9 +3,9 @@
 # slim image and base environment. This anchor avoids duplication.
 #
 # Services omitted from the upstream compose:
-#   proxy     — Traefik terminates TLS and routes directly to web:8080
-#   autoheal  — requires docker.sock direct mount (not permitted without exception)
-#   hocuspocus — real-time collaborative editing; omitted from this draft
+#   proxy      — Traefik terminates TLS and routes directly to web:8080
+#   autoheal   — requires docker.sock direct mount (not permitted without exception)
+#   hocuspocus — real-time collaborative editing; omitted from this setup
 #
 x-op-app: &op-app
   image: openproject/openproject:${APP_TAG}
@@ -16,12 +16,12 @@ x-op-app: &op-app
   # SECRET_KEY_BASE embed credentials and cannot use _FILE variants.
   entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
   secrets:
-    - OP_SECRET_KEY_BASE
-    - OP_DB_PWD
+    - secret_key_base
+    - db_pwd
   environment:
     # Hostname OpenProject uses for link generation and emails.
     # Must match the external domain users see in their browser.
-    OPENPROJECT_HOST__NAME: "${HOST_DOMAIN}"
+    OPENPROJECT_HOST__NAME: "${APP_TRAEFIK_HOST}"
     OPENPROJECT_HTTPS: "true"
     OPENPROJECT_HSTS: "true"
     # Cache
@@ -53,7 +53,7 @@ services:
   # ─── One-shot: DB migrations + seed data, exits on success ────────────────
   seeder:
     <<: *op-app
-    container_name: ${SEEDER_CONTAINER}
+    container_name: ${CONTAINER_NAME_SEEDER}
     # on-failure: restarts only if migrations fail; stays stopped on success
     restart: on-failure
     command: ["./docker/prod/seeder"]
@@ -66,10 +66,10 @@ services:
   # ─── Web: application server ───────────────────────────────────────────────
   web:
     <<: *op-app
-    container_name: ${WEB_CONTAINER}
+    container_name: ${CONTAINER_NAME_WEB}
     command: ["./docker/prod/web"]
     # hostname required for internal service-to-service routing
-    hostname: "${HOST_DOMAIN}"
+    hostname: "${APP_TRAEFIK_HOST}"
     networks:
       - internal
       - proxy
@@ -82,15 +82,15 @@ services:
         condition: service_completed_successfully
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=${NETWORK_NAME}"
-      - "traefik.http.routers.${ROUTER_NAME}.rule=Host(`${HOST_DOMAIN}`)"
-      - "traefik.http.routers.${ROUTER_NAME}.entrypoints=websecure"
-      - "traefik.http.routers.${ROUTER_NAME}.tls=true"
-      #- "traefik.http.routers.${ROUTER_NAME}.tls.certresolver=${CERT_RESOLVER}"
-      - "traefik.http.routers.${ROUTER_NAME}.tls.options=${TLS_OPTION}@file"
-      - "traefik.http.routers.${ROUTER_NAME}.middlewares=${MIDDLEWARES}"
-      - "traefik.http.routers.${ROUTER_NAME}.service=${SERVICE_NAME}"
-      - "traefik.http.services.${SERVICE_NAME}.loadbalancer.server.port=8080"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.service=${COMPOSE_PROJECT_NAME}"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8080"
     healthcheck:
       # /health_checks/default — standard OpenProject health endpoint (per upstream docs)
       test: ["CMD", "curl", "-f", "http://localhost:8080/health_checks/default"]
@@ -110,7 +110,7 @@ services:
   # ─── Worker: background job processor ─────────────────────────────────────
   worker:
     <<: *op-app
-    container_name: ${WORKER_CONTAINER}
+    container_name: ${CONTAINER_NAME_WORKER}
     command: ["./docker/prod/worker"]
     depends_on:
       db:
@@ -131,7 +131,7 @@ services:
   # ─── Cron: scheduled tasks (email digests, cleanup, exports) ──────────────
   cron:
     <<: *op-app
-    container_name: ${CRON_CONTAINER}
+    container_name: ${CONTAINER_NAME_CRON}
     command: ["./docker/prod/cron"]
     depends_on:
       db:
@@ -152,7 +152,7 @@ services:
   # ─── Cache: memcached ──────────────────────────────────────────────────────
   cache:
     image: memcached:${MEMCACHED_TAG}
-    container_name: ${CACHE_CONTAINER}
+    container_name: ${CONTAINER_NAME_CACHE}
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
@@ -170,17 +170,17 @@ services:
   # ─── Database: PostgreSQL ──────────────────────────────────────────────────
   db:
     image: postgres:${DB_TAG}
-    container_name: ${DB_CONTAINER}
+    container_name: ${CONTAINER_NAME_DB}
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_DB: ${DB_NAME}
-      POSTGRES_PASSWORD_FILE: /run/secrets/OP_DB_PWD
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_pwd
       TZ: ${TZ}
     secrets:
-      - OP_DB_PWD
+      - db_pwd
     volumes:
       - db_data:/var/lib/postgresql/data
     networks:
@@ -202,10 +202,10 @@ services:
 
 # ─── Secrets ───────────────────────────────────────────────────────────────────
 secrets:
-  OP_SECRET_KEY_BASE:
-    file: ./.secrets/OP_SECRET_KEY_BASE
-  OP_DB_PWD:
-    file: ./.secrets/OP_DB_PWD
+  secret_key_base:
+    file: ./.secrets/secret_key_base.txt
+  db_pwd:
+    file: ./.secrets/db_pwd.txt
 
 # ─── Volumes ───────────────────────────────────────────────────────────────────
 volumes:
@@ -221,4 +221,4 @@ networks:
     driver: bridge
   proxy:
     external: true
-    name: ${NETWORK_NAME}
+    name: ${TRAEFIK_NETWORK}

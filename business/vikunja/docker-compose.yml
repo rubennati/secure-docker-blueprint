@@ -9,37 +9,34 @@ services:
   # --------------------------------------------------------
   vikunja:
     # --- Identity ---
-    # Custom build: adds /bin/sh from busybox to the upstream scratch image
-    # so that config/entrypoint.sh can inject Docker Secrets at startup.
-    # The upstream vikunja/vikunja image has no shell (FROM scratch).
+    # Custom build: adds /bin/sh, /bin/cat, /bin/wget from busybox:musl to the
+    # upstream scratch image. sh + cat for secrets injection at startup;
+    # wget for the HTTP healthcheck (see Health section for why).
     build:
       context: .
       args:
         APP_TAG: ${APP_TAG}
     image: vikunja-local:${APP_TAG}
-    container_name: ${APP_CONTAINER}
+    container_name: ${CONTAINER_NAME_APP}
     restart: unless-stopped
 
     # --- Security ---
     security_opt:
       - no-new-privileges:true
     # Container runs as UID 1000 by default (per upstream docs).
-    # read_only is not set here — Vikunja writes to /app/vikunja/files
-    # which is a named volume, but also creates temp files internally.
-    # Enable read_only + tmpfs only after verifying on live install.
-
-    # --- Secrets injection ---
-    # Vikunja has no _FILE env var support. Secrets are injected via entrypoint.
-    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
-    secrets:
-      - VIKUNJA_JWT_SECRET
-      - VIKUNJA_DB_PWD
-      - VIKUNJA_OIDC_SECRET
+    # read_only is not set — Vikunja writes to /app/vikunja/files (named volume)
+    # and to internal temp paths. Enable read_only + tmpfs after verifying live.
 
     # --- Configuration ---
+    # Vikunja has no _FILE env var support — secrets injected via entrypoint.
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
+    secrets:
+      - jwt_key
+      - db_pwd
+      - oidc_secret
     environment:
       # Public URL — must match the domain users see in their browser
-      VIKUNJA_SERVICE_PUBLICURL: "https://${HOST_DOMAIN}"
+      VIKUNJA_SERVICE_PUBLICURL: "https://${APP_TRAEFIK_HOST}"
 
       # Database (PostgreSQL — recommended for multi-user per upstream docs)
       VIKUNJA_DATABASE_TYPE: postgres
@@ -48,9 +45,9 @@ services:
       VIKUNJA_DATABASE_DATABASE: ${DB_NAME}
 
       # Authentik OIDC — https://vikunja.io/docs/openid/
-      # Provider ID used here: "authentik"
-      # Redirect URL to whitelist in Authentik:
-      #   https://<HOST_DOMAIN>/auth/openid/authentik
+      # Provider key used here: "authentik"
+      # Redirect URI to whitelist in Authentik:
+      #   https://<APP_TRAEFIK_HOST>/auth/openid/authentik
       # Set VIKUNJA_AUTH_OPENID_ENABLED=false in .env to skip OIDC on first run.
       VIKUNJA_AUTH_OPENID_ENABLED: "${VIKUNJA_AUTH_OPENID_ENABLED:-false}"
       VIKUNJA_AUTH_OPENID_PROVIDERS_AUTHENTIK_NAME: "Authentik"
@@ -58,7 +55,7 @@ services:
       # Format: https://<authentik-domain>/application/o/<application-slug>/
       VIKUNJA_AUTH_OPENID_PROVIDERS_AUTHENTIK_AUTHURL: "https://${AUTHENTIK_DOMAIN}/application/o/${AUTHENTIK_APP_SLUG}/"
       VIKUNJA_AUTH_OPENID_PROVIDERS_AUTHENTIK_CLIENTID: "${OIDC_CLIENT_ID}"
-      # Scopes: add vikunja_scope if you want automatic Authentik group → Vikunja team sync
+      # Scopes: add vikunja_scope for Authentik group → Vikunja team sync
       VIKUNJA_AUTH_OPENID_PROVIDERS_AUTHENTIK_SCOPE: "openid profile email"
 
       # Optionally disable local login to enforce SSO-only:
@@ -80,15 +77,15 @@ services:
       - proxy
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=${NETWORK_NAME}"
-      - "traefik.http.routers.${ROUTER_NAME}.rule=Host(`${HOST_DOMAIN}`)"
-      - "traefik.http.routers.${ROUTER_NAME}.entrypoints=websecure"
-      - "traefik.http.routers.${ROUTER_NAME}.tls=true"
-      #- "traefik.http.routers.${ROUTER_NAME}.tls.certresolver=${CERT_RESOLVER}"
-      - "traefik.http.routers.${ROUTER_NAME}.tls.options=${TLS_OPTION}@file"
-      - "traefik.http.routers.${ROUTER_NAME}.middlewares=${MIDDLEWARES}"
-      - "traefik.http.routers.${ROUTER_NAME}.service=${SERVICE_NAME}"
-      - "traefik.http.services.${SERVICE_NAME}.loadbalancer.server.port=3456"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.service=${COMPOSE_PROJECT_NAME}"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=3456"
 
     # --- Dependencies ---
     depends_on:
@@ -96,9 +93,8 @@ services:
         condition: service_healthy
 
     # --- Health ---
-    # `vikunja healthcheck` spawns a fresh process with no env vars — it tries
-    # to run migrations and fails DB auth because VIKUNJA_DATABASE_PASSWORD is
-    # only set in the entrypoint-started process, not in docker exec children.
+    # `vikunja healthcheck` spawns a fresh process without the entrypoint's env
+    # vars — it tries to run migrations, fails DB auth, and exits 1 every time.
     # Use wget (added via busybox in the Dockerfile) to hit the HTTP API instead.
     healthcheck:
       test: ["CMD", "/bin/wget", "-qO-", "http://localhost:3456/api/v1/info"]
@@ -119,13 +115,11 @@ services:
 
   # --------------------------------------------------------
   # DATABASE — PostgreSQL
-  # Upstream docs use postgres:18 — we standardise on 17-alpine
-  # across the blueprint (same major used by Nextcloud, Ghost etc.)
   # --------------------------------------------------------
   db:
     # --- Identity ---
     image: postgres:${DB_TAG}
-    container_name: ${DB_CONTAINER}
+    container_name: ${CONTAINER_NAME_DB}
     restart: unless-stopped
 
     # --- Security ---
@@ -136,10 +130,10 @@ services:
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_DB: ${DB_NAME}
-      POSTGRES_PASSWORD_FILE: /run/secrets/VIKUNJA_DB_PWD
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_pwd
       TZ: ${TZ}
     secrets:
-      - VIKUNJA_DB_PWD
+      - db_pwd
 
     # --- Storage ---
     volumes:
@@ -169,12 +163,12 @@ services:
 
 # ─── Secrets ───────────────────────────────────────────────────────────────────
 secrets:
-  VIKUNJA_JWT_SECRET:
-    file: ./.secrets/VIKUNJA_JWT_SECRET
-  VIKUNJA_DB_PWD:
-    file: ./.secrets/VIKUNJA_DB_PWD
-  VIKUNJA_OIDC_SECRET:
-    file: ./.secrets/VIKUNJA_OIDC_SECRET
+  jwt_key:
+    file: ./.secrets/jwt_key.txt
+  db_pwd:
+    file: ./.secrets/db_pwd.txt
+  oidc_secret:
+    file: ./.secrets/oidc_secret.txt
 
 # ─── Volumes ───────────────────────────────────────────────────────────────────
 volumes:
@@ -190,4 +184,4 @@ networks:
     driver: bridge
   proxy:
     external: true
-    name: ${NETWORK_NAME}
+    name: ${TRAEFIK_NETWORK}
