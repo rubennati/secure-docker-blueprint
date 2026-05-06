@@ -1,6 +1,6 @@
 # Zammad
 
-> **Status: Draft — not yet live-tested.**
+> **Status: 🚧 Draft**
 
 Self-hosted helpdesk / ticketing / customer support. Multi-channel (email, web form, Twitter, Telegram, SMS), SLA tracking, time accounting, knowledge base.
 

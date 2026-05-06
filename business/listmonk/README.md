@@ -1,6 +1,6 @@
 # Listmonk
 
-> **Status: Draft — not yet live-tested.**
+> **Status: 🚧 Draft**
 
 Self-hosted newsletter, mailing list manager, and transactional mail. Go single-binary app + Postgres backend. Handles subscriber management, double-opt-in, campaign sending, tracking (open/click), bounce processing, list segmentation.
 

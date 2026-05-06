@@ -1,6 +1,6 @@
-# Live-test findings: Vikunja + OpenProject CE — 2026-05-06
+# Vikunja + OpenProject CE — Setup notes 2026-05-06
 
-Initial live-test of both `business/vikunja` and `business/openproject` on a Debian host. All bugs were found and fixed during this session.
+Initial deployment of both `business/vikunja` and `business/openproject` on a Debian host. All issues were found and fixed during this session.
 
 ---
 

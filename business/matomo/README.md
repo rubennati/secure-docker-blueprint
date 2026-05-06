@@ -1,6 +1,6 @@
 # Matomo
 
-> **Status: Draft — not yet live-tested.** First-pass import from inbox material.
+> **Status: 🚧 Draft** First-pass import from inbox material.
 
 Self-hosted web analytics platform — privacy-respecting, GDPR-compatible alternative to Google Analytics. Two-service stack: PHP/Apache app + MariaDB.
 

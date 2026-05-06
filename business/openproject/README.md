@@ -1,6 +1,6 @@
 # OpenProject CE
 
-**Status: ✅ Live-tested — local accounts only (CE has no OIDC/SSO)**
+**Status: ✅ Ready** — v17.x · 2026-05-06 — local accounts only (CE has no OIDC/SSO)
 
 Full project management platform — Gantt charts, kanban boards, work packages, time tracking, wikis, and team planning. Community Edition (GPL-3.0).
 

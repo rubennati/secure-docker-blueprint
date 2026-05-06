@@ -1,6 +1,6 @@
 # Dolibarr
 
-> **Status: Draft — not yet live-tested.** First-pass import from inbox material.
+> **Status: 🚧 Draft** First-pass import from inbox material.
 
 Open-source ERP / CRM — invoicing, bookkeeping, project management, HR, inventory. Two-service stack: tuxgasy/dolibarr app + MariaDB.
 
