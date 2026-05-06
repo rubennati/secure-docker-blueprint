@@ -1,6 +1,6 @@
 # Vikunja
 
-**Status: ✅ Live-tested — without Authentik (local login only)**
+**Status: ✅ Live-tested — Authentik OIDC working**
 
 Open-source task management with kanban boards, to-do lists, Gantt views, and table view. Trello / Microsoft Planner alternative. Single binary image (API + frontend combined).
 
@@ -104,8 +104,9 @@ VIKUNJA_AUTH_LOCAL_ENABLED: "false"
 
 ## Open items
 
-- [ ] Authentik: create OIDC provider, test login flow end-to-end
-- [ ] Disable registration after admin account created: `VIKUNJA_SERVICE_ENABLEREGISTRATION=false`
+- [x] Authentik: create OIDC provider, test login flow end-to-end
+- [ ] Disable registration after confirming OIDC works: `VIKUNJA_SERVICE_ENABLEREGISTRATION=false`
+- [ ] Disable local login for SSO-only: uncomment `VIKUNJA_AUTH_LOCAL_ENABLED: "false"` in docker-compose.yml
 - [ ] Test `read_only: true` — enable if Vikunja writes only to `/app/vikunja/files` and `/tmp`
 - [ ] SMTP configuration for password reset emails (not needed if OIDC-only)
 
@@ -114,8 +115,8 @@ VIKUNJA_AUTH_LOCAL_ENABLED: "false"
 - [x] Both containers healthy: `docker compose ps`
 - [x] Web UI loads at configured domain
 - [x] First user registration creates admin account
-- [ ] Authentik login button appears on Vikunja login page (requires OIDC setup)
-- [ ] Log in via Authentik — user account created automatically
+- [x] Authentik login button appears on Vikunja login page
+- [x] Log in via Authentik — user account created automatically
 - [x] Create a project and a task — verify they persist after `docker compose restart`
 - [x] Kanban view works
 
@@ -127,7 +128,7 @@ VIKUNJA_AUTH_LOCAL_ENABLED: "false"
 | Secrets | ✅ | JWT secret, DB password, OIDC client secret via Docker Secrets |
 | Database isolation | ✅ | `db` on internal network only |
 | Docker socket | ✅ | Not mounted |
-| SSO | ⬜ | Authentik OIDC configured but not yet tested |
+| SSO | ✅ | Authentik OIDC — live-tested |
 | `read_only` filesystem | ⬜ | Not set — verify in live test before enabling |
 
 ## Notes

@@ -101,6 +101,62 @@ unset _pwd
 
 ---
 
+---
+
+### Bug 5 — Vikunja container cannot resolve Authentik's hostname → 403 / 404 on OIDC discovery
+
+**Symptom**: After enabling OIDC in Vikunja, logs showed repeated errors on startup:
+```
+OpenID Connect provider 'Authentik' not available (attempt 1/3), retrying in 1s: 403 Forbidden: Forbidden
+# or after changing Traefik middleware:
+OpenID Connect provider 'Authentik' not available (attempt 1/3), retrying in 1s: 404 Not Found
+Error while getting openid provider authentik: 404 Not Found: 404 page not found
+```
+Opening the same discovery URL in a browser worked fine.
+
+**Root cause**: The Vikunja container could not resolve the Authentik hostname (`auth.example.com`) internally. Docker containers use the host's DNS resolver but not the host's `/etc/hosts` file by default unless explicitly configured. Without a valid DNS record reachable from inside the container, the request either hit the wrong endpoint or was blocked by Traefik access middleware (which explained the transient 403).
+
+**Fix**: Add the Authentik hostname → server IP mapping to the host's `/etc/hosts`. Docker's embedded DNS server reads the host's `/etc/hosts` and makes those entries available to containers:
+```
+# /etc/hosts on the Docker host
+1.2.3.4   auth.example.com
+1.2.3.4   tasks.example.com
+```
+
+**Alternative fix**: Use Docker's `extra_hosts` in `docker-compose.yml` to inject the entry only into the affected container, avoiding changes to the host system:
+```yaml
+services:
+  vikunja:
+    extra_hosts:
+      - "auth.example.com:1.2.3.4"
+```
+
+**Verification**: Open `https://<authentik-domain>/application/o/<slug>/.well-known/openid-configuration` in a browser — should return a JSON document with `issuer`, `authorization_endpoint`, etc. Then restart Vikunja and confirm no OIDC errors in logs.
+
+**Note**: Also add a policy/group binding in Authentik (Applications → Vikunja → Policy/Group/User Bindings) so users can actually authenticate. Without at least one binding, Authentik may reject login attempts even if discovery succeeds.
+
+---
+
+### Bug 6 — `invalid_client` on token exchange: wrong Client Secret in secret file
+
+**Symptom**: OIDC redirect from Authentik succeeded (authorization code received), but the callback returned 400:
+```
+Error retrieving token: oauth2: "invalid_client" "Client authentication failed
+(e.g., unknown client, no client authentication included, or unsupported authentication method)"
+```
+
+**Root cause**: The value in `.secrets/oidc_secret.txt` did not match the Client Secret shown in the Authentik provider. The secret file had been created with a placeholder or a stale value.
+
+**Fix**: Copy the Client Secret from Authentik → Providers → (Vikunja provider) → Client Secret field. Write it to the secret file without a trailing newline:
+```sh
+echo -n "<client-secret-from-authentik>" > .secrets/oidc_secret.txt
+docker compose up -d --force-recreate vikunja
+```
+
+**File**: `.secrets/oidc_secret.txt` (runtime secret, not tracked in git)
+
+---
+
 ### Note — OpenProject CE has no OIDC/SSO
 
 The OpenProject OAuth2 provider setup documented in the Authentik integration docs is for the **Enterprise Edition** only. CE supports local accounts and basic LDAP. No workaround exists.
