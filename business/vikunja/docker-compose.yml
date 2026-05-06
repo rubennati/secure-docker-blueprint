@@ -100,8 +100,9 @@ services:
       VIKUNJA_SERVICE_IPEXTRACTIONMETHOD: "xff"
 
       # --- Mailer / SMTP ---
-      # Password is injected via entrypoint.sh from .secrets/smtp_pwd.txt.
-      # Placeholder file must exist even when mailer is disabled.
+      # Password injected via entrypoint.sh from .secrets/smtp_pwd.txt.
+      # Placeholder file must exist even when mailer is disabled:
+      #   echo -n "placeholder" > .secrets/smtp_pwd.txt
       VIKUNJA_MAILER_ENABLED: "${VIKUNJA_MAILER_ENABLED:-false}"
       VIKUNJA_MAILER_HOST: "${VIKUNJA_MAILER_HOST:-}"
       VIKUNJA_MAILER_PORT: "${VIKUNJA_MAILER_PORT:-587}"
@@ -109,7 +110,7 @@ services:
       VIKUNJA_MAILER_FROMEMAIL: "${VIKUNJA_MAILER_FROMEMAIL:-}"
       # AUTHTYPE: plain (default), login, cram-md5
       VIKUNJA_MAILER_AUTHTYPE: "${VIKUNJA_MAILER_AUTHTYPE:-plain}"
-      # FORCESSL: true = SMTPS (port 465). false = STARTTLS (port 587).
+      # FORCESSL: true = SMTPS port 465 | false = STARTTLS port 587
       VIKUNJA_MAILER_FORCESSL: "${VIKUNJA_MAILER_FORCESSL:-false}"
 
       # --- Rate limiting ---

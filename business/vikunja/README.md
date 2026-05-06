@@ -26,10 +26,10 @@ cp .env.example .env
 mkdir -p .secrets
 openssl rand -base64 48 | tr -d '\n' > .secrets/jwt_key.txt
 openssl rand -base64 32 | tr -d '\n' > .secrets/db_pwd.txt
-# OIDC + SMTP secret files must exist even when disabled — Docker mounts them regardless:
+# These files must exist even when the feature is disabled — Docker mounts them regardless.
+# Use placeholder values until you configure the feature.
 echo -n "placeholder" > .secrets/oidc_secret.txt
 echo -n "placeholder" > .secrets/smtp_pwd.txt
-# Replace with real values when enabling OIDC / mailer.
 
 # 3. Build the custom image (adds busybox utilities to the upstream scratch image)
 docker compose build
@@ -111,7 +111,7 @@ VIKUNJA_AUTH_LOCAL_ENABLED: "false"
 - [ ] Disable registration after confirming OIDC works: `VIKUNJA_SERVICE_ENABLEREGISTRATION=false`
 - [ ] Disable local login for SSO-only: uncomment `VIKUNJA_AUTH_LOCAL_ENABLED: "false"` in docker-compose.yml
 - [ ] Test `read_only: true` — enable if Vikunja writes only to `/app/vikunja/files` and `/tmp`
-- [ ] SMTP: set `VIKUNJA_MAILER_ENABLED=true` in `.env`, fill host/user/from, write password to `.secrets/smtp_pwd.txt`
+- [ ] SMTP: set `VIKUNJA_MAILER_ENABLED=true`, fill host/user/from in `.env`, write SMTP key to `.secrets/smtp_pwd.txt`
 
 ## Verify
 

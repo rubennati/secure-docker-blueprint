@@ -22,6 +22,7 @@ if [ "${VIKUNJA_AUTH_OPENID_ENABLED:-false}" = "true" ]; then
 fi
 
 # Only inject SMTP password when mailer is enabled.
+# smtp_pwd.txt exists as placeholder when mailer is disabled — safe to ignore.
 if [ "${VIKUNJA_MAILER_ENABLED:-false}" = "true" ]; then
   _smtp="$(cat /run/secrets/smtp_pwd)"
   export VIKUNJA_MAILER_PASSWORD="$_smtp"
