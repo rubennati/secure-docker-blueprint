@@ -125,8 +125,20 @@ When live-tested on real data, pick the default and deprioritise the rest:
 ### Categories with roadmaps in their own READMEs
 
 - [`monitoring/README.md`](monitoring/README.md) — Uptime Kuma, Gatus, Beszel, changedetection (drafted) + 6 planned
-- [`business/README.md`](business/README.md) — Listmonk, Zammad, Kimai, OpenSign (drafted) + 2 planned
+- [`business/README.md`](business/README.md) — Listmonk, Zammad, Kimai, OpenSign (drafted) + planned: Plane, Leantime, AppFlowy
 - [`backup/README.md`](backup/README.md) — Kopia, Borgmatic, Bareos, UrBackup (all planned)
+
+### Project management — to evaluate
+
+Three candidates to assess before committing to a default recommendation:
+
+| App | Angle | License | Notes |
+|---|---|---|---|
+| **Plane** | Jira alternative — issues, cycles, modules, analytics | AGPL-3.0 | Multi-service stack (web, worker, beat, minio); richer than Vikunja, lighter than OpenProject |
+| **Leantime** | PM designed for non-project-managers — goals, tasks, time tracking | AGPL-3.0 | Single-container option available; different UX philosophy than the others |
+| **AppFlowy** | Notion alternative — docs, databases, kanban, AI | AGPL-3.0 | Not strictly business-only; evaluate whether it belongs in `apps/` or `business/` |
+
+Evaluation criteria: self-hosted Docker complexity, SSO/OIDC support, `_FILE` secret support, active maintenance, CE feature set vs paid gating.
 
 ---
 
