@@ -16,7 +16,7 @@ This keeps `business/` a meaningful category instead of a grab-bag. See [`docs/a
 | [Vikunja](vikunja/) | Task management — kanban, lists, Gantt, table view | ✅ | 2-service stack; Authentik OIDC, SSO-ready |
 | Plane | Project management — issues, cycles, modules, analytics | 📋 | Jira alternative; AGPL-3.0; multi-service stack |
 | Leantime | PM for non-project-managers — goals, tasks, time tracking | 📋 | AGPL-3.0; all-in-one single container option available |
-| AppFlowy | Notion alternative — docs, databases, kanban, AI | 📋 | AGPL-3.0; could also live in apps/ (not business-exclusive) |
+| AppFlowy | Notion alternative — docs, databases, kanban, AI | 📋 | AGPL-3.0; ⚠️ only backend runs in Docker — clients connect via desktop/mobile app, not browser. Needs evaluation fit-check before including. |
 
 ### Billing & operations
 

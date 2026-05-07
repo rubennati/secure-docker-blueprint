@@ -136,7 +136,7 @@ Three candidates to assess before committing to a default recommendation:
 |---|---|---|---|
 | **Plane** | Jira alternative — issues, cycles, modules, analytics | AGPL-3.0 | Multi-service stack (web, worker, beat, minio); richer than Vikunja, lighter than OpenProject |
 | **Leantime** | PM designed for non-project-managers — goals, tasks, time tracking | AGPL-3.0 | Single-container option available; different UX philosophy than the others |
-| **AppFlowy** | Notion alternative — docs, databases, kanban, AI | AGPL-3.0 | Not strictly business-only; evaluate whether it belongs in `apps/` or `business/` |
+| **AppFlowy** | Notion alternative — docs, databases, kanban, AI | AGPL-3.0 | ⚠️ Non-standard deployment: only the backend (AppFlowy Cloud) runs in Docker — users connect via desktop or mobile app, not a browser. Evaluate whether this fits the blueprint model before including. |
 
 Evaluation criteria: self-hosted Docker complexity, SSO/OIDC support, `_FILE` secret support, active maintenance, CE feature set vs paid gating.
 
