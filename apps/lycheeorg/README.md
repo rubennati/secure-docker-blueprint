@@ -20,9 +20,9 @@ cp .env.example .env
 # Edit: APP_TRAEFIK_HOST, TZ, PUID/PGID
 
 # 2. Generate Laravel APP_KEY (one-time)
-APP_TAG=$(grep '^APP_TAG=' .env | cut -d= -f2)
-docker run --rm lycheeorg/lychee:${APP_TAG} php artisan key:generate --show
-# Copy the 'base64:...' output into APP_KEY in .env
+echo "APP_KEY=base64:$(openssl rand -base64 32)"
+# Copy the full 'APP_KEY=base64:...' line into .env
+# Note: docker run key:generate does NOT work — the entrypoint blocks it if APP_KEY is unset.
 
 # 3. Generate DB secrets
 mkdir -p .secrets
@@ -66,7 +66,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 
 ## Known Issues
 
-- **Image tag `v6` does not exist** — Lychee is on v7. The correct tag is in `.env.example` (`APP_TAG=v7.x.x`). The `key:generate` command reads the tag from `.env`, not hardcoded.
+- **`docker run key:generate` is blocked by the entrypoint** — the Lychee entrypoint validates `APP_KEY` before executing any command, so `php artisan key:generate --show` never runs. Use `echo "APP_KEY=base64:$(openssl rand -base64 32)"` directly (see Setup step 2).
 - **`STARTUP_DELAY=30`** — Lychee waits 30 s for MariaDB before starting. Leave as-is unless your DB is unusually slow.
 - **WebAuthn is enabled by default** — disable via `DISABLE_WEBAUTHN=true` if you do not want passkey support.
 - **Redis password is not configured here** — Redis runs on the internal network only. If you expose it or move it off-host, add a password.
