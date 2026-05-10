@@ -1,6 +1,6 @@
 # Lychee
 
-> **Status: Draft — not yet live-tested.** First-pass import from inbox material.
+**Status: 🚧 Draft**
 
 Self-hosted photo gallery focused on fast browsing and clean presentation. Three-service stack: Laravel app, MariaDB backend, Redis cache.
 
@@ -8,7 +8,7 @@ Self-hosted photo gallery focused on fast browsing and clean presentation. Three
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `lycheeorg/lychee:v6` | PHP/Laravel app + Apache |
+| `app` | `lycheeorg/lychee:v7` | PHP/Laravel app + Apache |
 | `db` | `mariadb:11.4` | Primary store (albums, photo metadata, users) |
 | `redis` | `redis:7-alpine` | Cache + session driver |
 
@@ -20,7 +20,8 @@ cp .env.example .env
 # Edit: APP_TRAEFIK_HOST, TZ, PUID/PGID
 
 # 2. Generate Laravel APP_KEY (one-time)
-docker run --rm lycheeorg/lychee:v6 php artisan key:generate --show
+APP_TAG=$(grep '^APP_TAG=' .env | cut -d= -f2)
+docker run --rm lycheeorg/lychee:${APP_TAG} php artisan key:generate --show
 # Copy the 'base64:...' output into APP_KEY in .env
 
 # 3. Generate DB secrets
@@ -65,7 +66,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 
 ## Known Issues
 
-- **Live-tested: no.** Expect minor surprises, especially first-run ownership of `volumes/conf/`.
+- **Image tag `v6` does not exist** — Lychee is on v7. The correct tag is in `.env.example` (`APP_TAG=v7.x.x`). The `key:generate` command reads the tag from `.env`, not hardcoded.
 - **`STARTUP_DELAY=30`** — Lychee waits 30 s for MariaDB before starting. Leave as-is unless your DB is unusually slow.
 - **WebAuthn is enabled by default** — disable via `DISABLE_WEBAUTHN=true` if you do not want passkey support.
 - **Redis password is not configured here** — Redis runs on the internal network only. If you expose it or move it off-host, add a password.
