@@ -89,7 +89,7 @@ Five options — test and pick what fits your workflow.
 
 | App | Stack | Status | Description |
 |---|---|---|---|
-| [Immich](apps/immich/) | Server + ML + Postgres (pgvectors) + Valkey | 🚧 | AI-powered photo backup with mobile apps |
+| [Immich](apps/immich/) | Server + ML + Postgres (pgvectors) + Valkey | ✅ | AI-powered photo backup with mobile apps |
 | [LibrePhotos](apps/librephotos/) | Nginx + Django+ML + React + pgautoupgrade | 🚧 | Google-Photos-like (OwnPhotos fork) |
 | [Lychee](apps/lycheeorg/) | App (Laravel) + MariaDB + Redis | 🚧 | Clean, fast gallery |
 | [PhotoPrism](apps/photoprism/) | App (Go+TensorFlow) + MariaDB | 🚧 | AI classification + WebDAV |

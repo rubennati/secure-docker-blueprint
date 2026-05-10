@@ -1,6 +1,6 @@
 # Immich
 
-**Status: 🚧 Draft** — first-run verified 2026-05-11 (startup, migrations, UI loads)
+**Status: ✅ Ready** — v2.7.5 · 2026-05-11
 
 Self-hosted photo and video backup with machine-learning–based search, facial recognition, and mobile apps for iOS/Android. Four-service stack: web server, ML worker, Postgres (with pgvectors/vectorchord extensions for embeddings), and Valkey (Redis-compatible).
 
