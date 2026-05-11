@@ -54,14 +54,21 @@ services:
     security_opt:
       - no-new-privileges:true
 
+    # Override the image's built-in healthcheck (curl http://127.0.0.1:8001).
+    # Symfony rejects Host: 127.0.0.1 as untrusted — pass the real hostname.
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf -H 'Host: ${APP_TRAEFIK_HOST}' http://127.0.0.1:8001/ || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
     environment:
       TZ: ${TZ}
       APP_ENV: prod
       APP_SECRET: ${APP_SECRET}
       TRUSTED_PROXIES: "0.0.0.0/0,::/0"
-      # Traefik host + localhost for the image's built-in healthcheck
-      # (curl hits 127.0.0.1:8001 internally; Symfony rejects unlisted hosts)
-      TRUSTED_HOSTS: "${APP_TRAEFIK_HOST},localhost,127.0.0.1"
+      TRUSTED_HOSTS: "${APP_TRAEFIK_HOST}"
       # Kimai assembles the DB DSN inline — no _FILE support.
       DATABASE_URL: "mysql://${DB_USER}:${DB_PWD_INLINE}@db:3306/${DB_NAME}?charset=utf8mb4&serverVersion=11.4.0-MariaDB"
       # Initial admin on first boot
