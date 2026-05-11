@@ -1,6 +1,6 @@
 # Healthchecks
 
-> **Status: Draft — not yet live-tested.** First-pass import from inbox material.
+**Status: ✅ Ready — v3.13 · 2026-05-11**
 
 Self-hosted cron / scheduled-task monitoring. Each monitored job gets a unique URL — the job pings that URL on schedule, and Healthchecks alerts you (email, webhook, Slack, Discord, ntfy, etc.) when an expected ping doesn't arrive.
 
@@ -25,13 +25,19 @@ cp .env.example .env
 # 2. Generate Django SECRET_KEY and put it into .env as HC_SECRET_KEY
 openssl rand -base64 60 | tr -d '\n='
 
-# 3. Start
-docker compose up -d
+# 3. Create data directory — app runs as uid 999, must own the volume
+mkdir -p volumes/data
+chown -R 999:999 volumes/data
 
-# 4. Create the first admin user (one-time)
+# 4. Start
+docker compose up -d
+docker compose logs app --follow
+# Watch for: "spawned uWSGI worker"
+
+# 5. Create the first admin user (one-time)
 docker compose exec app /opt/healthchecks/manage.py createsuperuser
 
-# 5. Open UI and log in
+# 6. Open UI and log in
 # https://<APP_TRAEFIK_HOST>
 ```
 
@@ -60,7 +66,7 @@ Create a test check in the UI:
 
 ## Known Issues
 
-- **Live-tested: no.** Expect minor surprises on first deployment.
+- **`volumes/data` must be owned by uid 999** — the app runs as `hc` (uid 999). If Docker creates the directory as root, SQLite migration fails with `unable to open database file`. Fix: `chown -R 999:999 volumes/data` before first start.
 - **Monitored-job reachability** — if your cron jobs run on servers that can't reach this instance (e.g. behind NAT without Tailscale), pings will silently fail. The only symptom is "check is down" in the UI for a job that is actually running fine. Check job-side logs first when diagnosing.
 - **Email alerts require working SMTP.** Without SMTP, the only notification channels are webhooks, Slack, Discord, ntfy, and Pushover — all of which need to be configured per-check in the UI.
 - **SECRET_KEY in `.env`** rather than `.secrets/` is a pragmatic blueprint deviation; see ROADMAP "Secret & Password Generation Standard" for the broader policy discussion.
