@@ -20,19 +20,31 @@ Traefik routes `/app/*` + `/api/*` to the API (priority 100), everything else to
 
 ```bash
 cp .env.example .env
-# Edit: APP_TRAEFIK_HOST, TZ
+# Edit: APP_TRAEFIK_HOST, APP_NAME, TZ
 
 mkdir -p .secrets volumes/mongodb volumes/api-files
 
-# DSN-safe Mongo root password
+# DSN-safe Mongo root password (alphanumeric only — DSN-safe)
 openssl rand -hex 32 > .secrets/db_root_pwd.txt
 sed -i "s|^DB_ROOT_PWD_INLINE=.*|DB_ROOT_PWD_INLINE=$(cat .secrets/db_root_pwd.txt)|" .env
 
-# App IDs
-sed -i "s|^APP_ID=.*|APP_ID=$(openssl rand -hex 16)|" .env
+# Master key
 sed -i "s|^MASTER_KEY=.*|MASTER_KEY=$(openssl rand -hex 32)|" .env
 
-# Configure mail (see .env.example — Mailgun OR SMTP)
+# Self-signed document signing certificate
+# Use passphrase from PASS_PHRASE (set it first in .env)
+PASS="$(openssl rand -hex 24)"
+sed -i "s|^PASS_PHRASE=.*|PASS_PHRASE=${PASS}|" .env
+openssl genrsa -des3 -passout pass:"${PASS}" -out /tmp/opensign.key 2048
+openssl req -key /tmp/opensign.key -passin pass:"${PASS}" -new -x509 -days 365 \
+  -out /tmp/opensign.crt -subj "/CN=OpenSign"
+openssl pkcs12 -inkey /tmp/opensign.key -passin pass:"${PASS}" \
+  -in /tmp/opensign.crt -export -out /tmp/opensign.pfx -passout pass:"${PASS}"
+PFX_B64="$(openssl base64 -in /tmp/opensign.pfx | tr -d '\n')"
+sed -i "s|^PFX_BASE64=.*|PFX_BASE64=${PFX_B64}|" .env
+rm /tmp/opensign.key /tmp/opensign.crt /tmp/opensign.pfx
+
+# Configure mail in .env (Mailgun OR SMTP)
 
 docker compose up -d
 docker compose logs api --follow
@@ -64,9 +76,12 @@ Without a working mail config, signature request emails do not go out and the fl
 
 - **No semver tags on Docker Hub** — OpenSign only publishes `main`, `staging`, `docker_beta`. There are no `vX.Y.Z` release tags; upstream does not version its Docker images.
 - **`APP_TAG=main` is a floating tag** — rebuild with `docker compose pull` to get updates. Cannot pin to a specific release.
-- **`MASTER_KEY` in `.env`** — current blueprint reads it from env; Parse Server has no `_FILE` convention. Move to Docker Secret + entrypoint wrapper for higher security.
-- **MongoDB 6 is the last version with the community SSPL license that Parse Server fully supports** — do not jump to 7+ until OpenSign tests it.
-- **Signing certificate** — OpenSign can generate self-signed signing certs, but for legally enforceable signatures in the EU (eIDAS Advanced), you need a qualified trust-service-provider certificate. The platform supports uploading a qualified cert; the basic setup here uses self-signed.
+- **`APP_ID` is fixed as `opensign`** — it is deprecated upstream and hardcoded in the compose. Do not generate a random value; the React client and Parse Server must agree on this literal string.
+- **`MONGODB_URI` has no `_FILE` support** — password embedded inline in DSN. Use alphanumeric-only password to avoid DSN-breaking characters (`@`, `:`, `/`, `?`, `#`).
+- **`MASTER_KEY` in `.env`** — Parse Server has no `_FILE` convention. Move to Docker Secret + entrypoint wrapper for higher security.
+- **`SERVER_URL` is the internal Parse URL** — set to `http://api:8080/app` (container-to-container). The browser-side API URL is `REACT_APP_SERVERURL=https://<domain>/app`.
+- **Self-signed signing cert is not Adobe-trusted** — documents signed with a self-generated cert show no green tick in Adobe Acrobat. For eIDAS Advanced signatures, purchase a qualified p12 from an AATL-approved CA and set `PFX_BASE64` + `PASS_PHRASE`.
+- **MongoDB 6 is the last version with full Parse Server support** — do not jump to 7+ until OpenSign tests it.
 - **OCR / keyword detection** for auto-placement of signature fields requires the `OPENSIGN_OCR` side-car — not included here.
 
 ## Integration patterns
