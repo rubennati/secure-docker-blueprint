@@ -1,6 +1,6 @@
 # OpenSign
 
-> **Status: 🚧 Draft**
+**Status: ✅ Ready — main · 2026-05-11**
 
 Self-hosted electronic signature platform — DocuSign / Adobe Sign alternative. Upload PDF/DOCX, define signing roles, send to signers, audit trail, certificates. GDPR-friendly since everything stays on your infrastructure.
 
@@ -48,10 +48,11 @@ rm /tmp/opensign.key /tmp/opensign.crt /tmp/opensign.pfx
 
 docker compose up -d
 docker compose logs api --follow
-# Watch for: "parse-server-example running on port 8080"
+# Watch for: "opensign-server running on port 8080."
+# Then: "SUCCESS  Successfully run migrations."
 
 # https://<APP_TRAEFIK_HOST>
-# First account to register becomes admin
+# First account to register becomes admin (redirects to /addadmin)
 ```
 
 ## Security Model

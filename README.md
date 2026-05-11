@@ -165,7 +165,7 @@ See [`business/README.md`](business/README.md) for the full category README + ro
 | [Listmonk](business/listmonk/) | Newsletter | ✅ | Mailing list + transactional mail |
 | [Matomo](business/matomo/) | Web analytics | ✅ | GDPR-compliant, full-featured (Google Analytics alternative) |
 | [Zammad](business/zammad/) | Helpdesk | ✅ | Full 7-service helpdesk / ticketing / SLA |
-| [OpenSign](business/opensign/) | E-signatures | 🚧 | DocuSign alternative, eIDAS-capable |
+| [OpenSign](business/opensign/) | E-signatures | ✅ | DocuSign alternative, eIDAS-capable |
 
 Planned: Ackee, Plausible CE, Live Helper Chat, Eramba GRC.
 
