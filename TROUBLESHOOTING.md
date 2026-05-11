@@ -140,9 +140,12 @@ sudo chown -R 999:999 volumes/data
 
 **Affected:** Zammad `app-internal` — railsserver and scheduler need outbound for SMTP and webhooks. Remove `internal: true`.
 
+**Immich-specific:** `machine-learning` sits on `app-internal` (internal) but needs outbound internet to pull CLIP models from HuggingFace on first start. Symptom: `LocalEntryNotFoundError: cannot find the appropriate snapshot folder … check your internet connection`. Fix: add a second `ml-outbound` network (no `internal: true`) to the `machine-learning` service only — DB and Redis stay isolated.
+
 **Rule of thumb:**
 - DB-only network (no container needs outbound) → `internal: true` OK
 - App network (app containers need email/webhooks) → no `internal: true`
+- ML/worker containers that pull models/packages on first run → need their own outbound-capable network
 
 ---
 
