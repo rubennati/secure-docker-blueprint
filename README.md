@@ -161,7 +161,7 @@ See [`business/README.md`](business/README.md) for the full category README + ro
 | [Vikunja](business/vikunja/) | Task management | ✅ | Kanban, lists, Gantt — Trello / Planner alternative. Authentik OIDC live-tested, SSO-only. |
 | [Invoice Ninja](business/invoiceninja/) | Billing | ✅ | Invoicing, quotes, client portal |
 | [Dolibarr](business/dolibarr/) | ERP / CRM | ✅ | Accounting, projects, HR, inventory |
-| [Kimai](business/kimai/) | Time tracking | 🚧 | Per-project/customer hours → Invoice Ninja |
+| [Kimai](business/kimai/) | Time tracking | ✅ | Per-project/customer hours → Invoice Ninja |
 | [Listmonk](business/listmonk/) | Newsletter | 🚧 | Mailing list + transactional mail |
 | [Matomo](business/matomo/) | Web analytics | 🚧 | GDPR-compliant, full-featured (Google Analytics alternative) |
 | [Zammad](business/zammad/) | Helpdesk | 🚧 | Full 7-service helpdesk / ticketing / SLA |

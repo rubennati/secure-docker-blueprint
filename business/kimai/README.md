@@ -1,6 +1,6 @@
 # Kimai
 
-> **Status: 🚧 Draft**
+**Status: ✅ Ready — v2.56.0 · 2026-05-11**
 
 Self-hosted time-tracking for freelancers and small teams. Project/customer hierarchy, timesheet approval, invoicing via plugins, REST API. PHP/Symfony app with MariaDB.
 
@@ -8,7 +8,7 @@ Self-hosted time-tracking for freelancers and small teams. Project/customer hier
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `kimai/kimai2:apache` | PHP/Symfony + Apache + cron |
+| `app` | `kimai/kimai2:apache-2.56.0` | PHP/Symfony + Apache + cron |
 | `db` | `mariadb:11.4` | Timesheets, users, customers, projects |
 
 ## Setup
@@ -34,7 +34,7 @@ echo "Admin password: ${ADMIN_PWD}"
 
 docker compose up -d
 docker compose logs app --follow
-# Watch for: "apache2 -D FOREGROUND"
+# Watch for: "Kimai is ready" then "apache2 -D FOREGROUND"
 
 # https://<APP_TRAEFIK_HOST>
 # Log in with ADMIN_EMAIL / ADMIN_PASSWORD
@@ -51,8 +51,8 @@ docker compose logs app --follow
 
 ## Known Issues
 
-- **Live-tested: no.**
-- **`APP_TAG=apache` tracks latest Apache variant** — pin to a specific Kimai version for reproducibility.
+- **Healthcheck uses `Host` header override** — the image's built-in healthcheck hits `127.0.0.1:8001` with `Host: 127.0.0.1`, which Symfony rejects as untrusted. The compose healthcheck is overridden to pass `Host: APP_TRAEFIK_HOST` instead.
+- **`APP_TAG` uses `apache-X.Y.Z` format** — Kimai images are tagged `apache-2.56.0`, `fpm-2.56.0`, etc. Update `APP_TAG` in `.env.example` on upgrades.
 - **Plugins** land in `volumes/plugins/` as extracted archives. Back up together with the DB dump.
 - **Invoice plugin** ships separately — requires installation via UI after first boot.
 
