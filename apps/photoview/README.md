@@ -26,10 +26,14 @@ openssl rand -hex 32 > .secrets/db_root_pwd.txt
 # 3. Sync DB_PWD_INLINE with the secret file
 sed -i "s|^DB_PWD_INLINE=.*|DB_PWD_INLINE=$(cat .secrets/db_pwd.txt)|" .env
 
-# 4. Create cache volume
+# 4. Create cache volume and fix ownership
 mkdir -p volumes/media-cache volumes/mariadb
-# Photoview runs as UID 1000 internally. Ensure the cache is writable.
-sudo chown -R 1000:1000 volumes/media-cache
+# Photoview runs as user 'photoview' inside the container (not UID 1000).
+# Use the image itself to set the correct ownership:
+docker run --rm --user root \
+  -v "$(pwd)/volumes/media-cache:/home/photoview/media-cache" \
+  photoview/photoview:${APP_TAG} \
+  chown -R photoview:photoview /home/photoview/media-cache
 
 # 5. Start
 docker compose up -d
@@ -65,7 +69,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 - **`DB_PWD_INLINE` duplicates the DB password** — Photoview's `PHOTOVIEW_MYSQL_URL` is a full DSN with the password embedded. The MariaDB service reads `MARIADB_PASSWORD_FILE` from a Docker Secret; Photoview needs the same value inline. Mismatch = connection refused.
 - **Service worker MIME type error in browser console** — Photoview's `service-worker.js` returns `text/html` behind a reverse proxy (known upstream issue). The app works despite this; offline/PWA features are non-functional.
 - **Manifest SVG icon warning** — Chrome cannot use an SVG as a PWA icon; cosmetic only.
-- **Upstream `photoview-prepare` service dropped** — it ran `chown` on the media-cache folder. Setup step 4 does the same thing once; simpler than keeping a one-shot service.
+- **Upstream `photoview-prepare` service dropped** — it ran `chown -R photoview:photoview` on the media-cache folder. Setup step 4 replicates this with a one-shot `docker run --user root`. Do NOT use `chown 1000:1000` on the host — the internal `photoview` user is not UID 1000.
 - **SQLite and PostgreSQL drivers are not wired up here** — upstream compose supported three backends. Only MySQL/MariaDB is imported. To switch, see upstream `docker-compose.yml` for `PHOTOVIEW_SQLITE_PATH` / `PHOTOVIEW_POSTGRES_URL`.
 - **Watchtower dropped** — blueprint policy: explicit `APP_TAG` bumps.
 - **Hardware transcoding requires device passthrough** — uncomment the `devices:` block in `docker-compose.yml` if using `qsv`/`vaapi`/`nvenc`.
