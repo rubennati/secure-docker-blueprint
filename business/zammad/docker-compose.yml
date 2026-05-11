@@ -15,6 +15,7 @@ x-shared: &zammad-shared
     # NOTE: Zammad (Rails) does not support _FILE env vars for credentials.
     # The password is passed inline from .env. Use a strong random value.
     POSTGRESQL_PASS: ${DB_PWD_INLINE}
+    POSTGRESQL_OPTIONS: "?pool=50"
     REDIS_URL: "redis://redis:6379"
     MEMCACHE_SERVERS: "memcached:11211"
     ELASTICSEARCH_ENABLED: "true"
@@ -22,7 +23,13 @@ x-shared: &zammad-shared
     ELASTICSEARCH_PORT: "9200"
     ELASTICSEARCH_SCHEMA: http
     ELASTICSEARCH_NAMESPACE: zammad
+    # Public URL — used in email links, ActionCable origin checks, unsubscribe URLs.
+    ZAMMAD_FQDN: ${APP_TRAEFIK_HOST}
+    ZAMMAD_HTTP_TYPE: https
+    # Tell Rails to trust Traefik's X-Forwarded-* headers.
+    RAILS_TRUSTED_PROXIES: "0.0.0.0/0"
     NGINX_SERVER_NAME: ${APP_TRAEFIK_HOST}
+    NGINX_SERVER_SCHEME: https
     NGINX_CLIENT_MAX_BODY_SIZE: "50M"
   restart: unless-stopped
   security_opt:
@@ -150,23 +157,17 @@ services:
       - ./volumes/zammad-storage:/opt/zammad/storage
 
   # --- Nginx (serves static assets, proxies to rails + websocket) ---
-  # NOTE: nginx runs the same readiness check as railsserver/scheduler —
-  # `bundle exec rails r 'Translation.any? || raise'` — so it needs DB
-  # credentials even though it only serves HTTP. Without *zammad-env the
-  # Rails process can't connect to Postgres and the loop never exits.
+  # NOTE: nginx runs the same Rails readiness check as all other services:
+  # `bundle exec rails r 'Translation.any? || raise'`
+  # It therefore needs the full *zammad-env (DB credentials) even though
+  # nginx itself never queries the database at runtime.
   nginx:
-    image: ghcr.io/zammad/zammad:${APP_TAG}
+    <<: *zammad-shared
     container_name: ${CONTAINER_NAME_APP}
-    restart: unless-stopped
-    security_opt: [no-new-privileges:true]
     command: ["zammad-nginx"]
     depends_on:
       railsserver:
         condition: service_started
-    environment:
-      <<: *zammad-env
-      NGINX_SERVER_NAME: ${APP_TRAEFIK_HOST}
-      NGINX_CLIENT_MAX_BODY_SIZE: "50M"
     volumes:
       - ./volumes/zammad-storage:/opt/zammad/storage:ro
     networks:
@@ -186,9 +187,10 @@ services:
 networks:
   proxy-public:
     external: true
+  # NOT internal: true — railsserver and scheduler need outbound internet
+  # access to send email (SMTP) and process webhooks.
   app-internal:
     name: ${COMPOSE_PROJECT_NAME}-internal
-    internal: true
 
 secrets:
   DB_PWD:
