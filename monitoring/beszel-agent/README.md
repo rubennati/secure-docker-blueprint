@@ -1,6 +1,6 @@
 # Beszel Agent
 
-> **Status: Draft — not yet live-tested.**
+**Status: ✅ Ready — v0.18.7 · 2026-05-11**
 
 Standalone Beszel agent for remote hosts. Deploy this on each additional host that a central [Beszel hub](../beszel/) should monitor.
 
@@ -63,6 +63,6 @@ Then in the hub UI: **+ Add System** (top right) → enter this host's Name, Tai
 
 ## Known Issues
 
-- **Live-tested: no.**
-- **`APP_TAG=0` tracks pre-1.0** — keep in sync with the hub version.
-- **Multiple agents on the same host** — change `AGENT_PORT` per agent to avoid conflicts.
+- **`APP_TAG=0.18.7` is pinned** — keep in sync with the hub version. Check [releases](https://github.com/henrygd/beszel/releases) before upgrading.
+- **`WARN HUB_URL not set`** in logs — harmless. Optional WebSocket fallback mode; SSH mode is what we use.
+- **Multiple agents on the same host** — change `PORT` per agent to avoid conflicts.
