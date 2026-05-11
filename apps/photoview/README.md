@@ -9,7 +9,7 @@ Self-hosted photo gallery focused on RAW processing, EXIF-driven organization, a
 | Service | Image | Purpose |
 |---------|-------|---------|
 | `app` | `photoview/photoview:2.4.0` | Web UI + GraphQL API + media indexer |
-| `db` | `mariadb:lts` | Index, albums, users, face data |
+| `db` | `mariadb:11.4` | Index, albums, users, face data |
 
 ## Setup
 
@@ -17,6 +17,10 @@ Self-hosted photo gallery focused on RAW processing, EXIF-driven organization, a
 # 1. Create .env
 cp .env.example .env
 # Edit: APP_TRAEFIK_HOST, TZ, MEDIA_ROOT
+# MEDIA_ROOT is the host path to your photo library. Examples:
+#   MEDIA_ROOT=./volumes/photos          # local subfolder (create it first)
+#   MEDIA_ROOT=/mnt/nas/photos           # NAS/external mount
+# The folder is mounted read-only into the container at /photos.
 
 # 2. Generate DB secrets (alphanumeric only — DSN-safe)
 mkdir -p .secrets
@@ -28,7 +32,8 @@ sed -i "s|^DB_PWD_INLINE=.*|DB_PWD_INLINE=$(cat .secrets/db_pwd.txt)|" .env
 
 # 4. Create cache volume and fix ownership
 mkdir -p volumes/media-cache volumes/mariadb
-# Photoview runs as uid/gid 999 (user 'photoview') inside the container.
+# Photoview runs as uid/gid 999 ('photoview') inside the container.
+# The media-cache directory must be owned by that uid.
 sudo chown -R 999:999 volumes/media-cache
 
 # 5. Start
@@ -40,7 +45,9 @@ docker compose logs app --follow
 
 # 7. Open UI and complete the initial setup wizard
 # https://<APP_TRAEFIK_HOST>
-# Set root media path to /photos, create the admin account.
+# Username / Password: choose your admin credentials
+# Photo Path: /photos   ← always this value (container-internal mount point)
+# Then go to Settings → Scan and trigger the first scan.
 ```
 
 ## Verify
