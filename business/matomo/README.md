@@ -64,6 +64,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 ## Known Issues
 
 - **Console warnings during installation wizard** — the Congratulations step shows a CSP `unsafe-eval` report-only violation (report-only, no action needed), a `Mousetrap is not defined` JS error, and `.map` file 403s from Apache. All cosmetic; they disappear after installation completes.
+- **"Add User" page shows Oops error** — Matomo fires `UsersManager.getSitesAccessForUser` with an empty `userLogin=` when you open the Add User form, which returns a 400 and triggers the red error banner. Known UI bug; dismiss and fill in the form normally — saving works fine.
 - **Database table prefix** — change `DB_TABLES_PREFIX=mtm_` before the first setup. The default `matomo_` collides with other Matomo installs sharing a DB, and can be scanned for.
 - **Archive cron** — by default, Matomo archives reports on-demand when a report is viewed. For high-traffic sites, add a cron container running `php /var/www/html/console core:archive` every hour. Not configured here.
 - **GeoIP database not shipped** — download MaxMind's `GeoLite2-City.mmdb` manually and place in `volumes/matomo/misc/` for location reports.
