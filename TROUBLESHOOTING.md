@@ -225,6 +225,24 @@ docker compose exec svc printenv VAR_NAME   # what did the container get?
 
 ## 6. Healthcheck Issues
 
+### 6.0 Before writing any healthcheck — check the image type first
+
+**Rule:** Before writing a healthcheck with `wget`/`curl`/`sh`, always verify the image has those tools:
+```bash
+docker compose exec <service> sh -c "which curl || which wget || echo none"
+# If sh itself fails → scratch image → use healthcheck: disable: true immediately
+```
+
+**Known scratch/minimal Go images in this blueprint** (no shell, no tools):
+| Image | Healthcheck |
+|---|---|
+| `henrygd/beszel` (hub) | `disable: true` |
+| `twinproduction/gatus` | `disable: true` |
+
+If `sh` fails → don't spend time looking for alternatives → `disable: true`.
+
+---
+
 ### 6.1 Container perpetually `(unhealthy)` — image has no shell or tools
 
 **Symptom:** Container shows `(unhealthy)` but the app works fine. `docker compose exec <service> sh` fails with `executable file not found`.
