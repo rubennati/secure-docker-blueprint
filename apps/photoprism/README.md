@@ -1,6 +1,6 @@
 # PhotoPrism
 
-> **Status: Draft — not yet live-tested.** First-pass import from inbox material.
+**Status: ✅ Ready — 260305 · 2026-05-11**
 
 AI-powered self-hosted photo manager with TensorFlow-based classification, face recognition, and location enrichment. Go-based server with MariaDB backend.
 
@@ -8,7 +8,7 @@ AI-powered self-hosted photo manager with TensorFlow-based classification, face 
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `photoprism/photoprism:latest` | Web UI + API + TensorFlow + WebDAV |
+| `app` | `photoprism/photoprism:260305` | Web UI + API + TensorFlow + WebDAV |
 | `db` | `mariadb:11` | Primary store (index, albums, users, sidecar metadata) |
 
 ## Setup
@@ -39,7 +39,7 @@ docker compose up -d
 
 # 7. First run downloads TensorFlow models (~1 GB) — takes a few minutes
 docker compose logs app --follow
-# Watch for: "server started successfully"
+# Watch for: "server: listening on 0.0.0.0:2342"
 
 # 8. Open UI and log in
 # https://<APP_TRAEFIK_HOST>
@@ -66,12 +66,11 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/api/v1/status  # 200 OK
 
 ## Known Issues
 
-- **Live-tested: no.** Expect minor surprises, especially first-run TensorFlow model download on slow links.
 - **`DB_PWD_INLINE` duplicates the DB password** — PhotoPrism's `PHOTOPRISM_DATABASE_PASSWORD` env var has no `_FILE` support. MariaDB side uses `MARIADB_PASSWORD_FILE` from a Docker Secret; PhotoPrism needs the same value inline.
 - **Memory** — PhotoPrism's indexer can spike to several GB when processing large RAW/video files. Provision at least 4 GB swap. Do not set memory limits or the indexer gets OOM-killed.
 - **MariaDB seccomp/apparmor workaround** — upstream uses `seccomp:unconfined + apparmor:unconfined` due to an [io_uring bug with older kernels](https://github.com/MariaDB/mariadb-docker/issues/434). Left at defaults; uncomment the block in `docker-compose.yml` if MariaDB crashes.
 - **Activation code** — PhotoPrism has a [membership program](https://www.photoprism.app/kb/activation) to unlock some features. Store any activation code in `.env` (gitignored) — never commit it.
-- **`APP_TAG=latest` is not reproducible** — pin to a specific version for stable deployments. Use `photoprism/photoprism:preview` to test preview builds.
+- **PhotoPrism uses date-based tags** (e.g. `260305` = 2026-03-05) — update `APP_TAG` in `.env.example` when upgrading. Use `photoprism/photoprism:preview` to test preview builds.
 - **Ollama + Watchtower dropped** — the upstream compose included optional Ollama (vision LLM) and Watchtower (auto-update) profiles. Not imported here; add back if wanted.
 
 ## Details
