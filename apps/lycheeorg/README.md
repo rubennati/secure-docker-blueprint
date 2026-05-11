@@ -1,6 +1,6 @@
 # Lychee
 
-**Status: 🚧 Draft**
+**Status: ✅ Ready — v7.5.4 · 2026-05-11**
 
 Self-hosted photo gallery focused on fast browsing and clean presentation. Three-service stack: Laravel app, MariaDB backend, Redis cache.
 
