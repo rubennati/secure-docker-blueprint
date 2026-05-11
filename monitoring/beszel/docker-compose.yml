@@ -96,14 +96,10 @@ services:
     network_mode: host
 
     # --- Health & Observability ---
-    # Agent writes /dev/shm/beszel_health every ~90s when connected.
-    # find checks mtime < 91s — fails if agent stalls or loses SSH.
+    # Agent runs on Alpine but upstream provides no healthcheck endpoint.
+    # Hub status in the UI is the reliable liveness signal for the agent.
     healthcheck:
-      test: ["CMD", "find", "/dev/shm/beszel_health", "-mmin", "-2"]
-      interval: 60s
-      timeout: 5s
-      retries: 3
-      start_period: 30s
+      disable: true
 
 # --------------------------------------------------------
 # NETWORKS

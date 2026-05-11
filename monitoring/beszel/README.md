@@ -84,7 +84,6 @@ Deploy [`monitoring/beszel-agent/`](../beszel-agent/) on each additional host. S
 
 - **Two-phase start on first install** — see [Setup](#setup). Subsequent starts need no manual steps.
 - **`APP_TAG=0.18.7` is pinned** — Beszel is pre-1.0. Check [releases](https://github.com/henrygd/beszel/releases) before upgrading; update both hub and agent together.
-- **Hub image is scratch-based** — no shell, no wget, no curl. Healthcheck disabled; Docker restart policy is the only liveness signal for the hub.
-- **Agent healthcheck uses `/dev/shm/beszel_health` mtime** — the agent writes this file every ~90s when the SSH connection is active. Healthcheck fails if the agent stalls or loses contact with the hub.
+- **Both images have no healthcheck** — hub is scratch-based (no shell/wget), agent provides no health endpoint. Both use `healthcheck: disable: true`; hub status in the UI is the reliable liveness signal for all agents.
 - **`WARN HUB_URL not set`** in agent logs — harmless. This is for an optional WebSocket fallback mode; SSH mode is what we use.
 - **Host network agent** — if you run multiple agents on the same host (rare), set different `PORT` values per agent.
