@@ -150,6 +150,10 @@ services:
       - ./volumes/zammad-storage:/opt/zammad/storage
 
   # --- Nginx (serves static assets, proxies to rails + websocket) ---
+  # NOTE: nginx runs the same readiness check as railsserver/scheduler —
+  # `bundle exec rails r 'Translation.any? || raise'` — so it needs DB
+  # credentials even though it only serves HTTP. Without *zammad-env the
+  # Rails process can't connect to Postgres and the loop never exits.
   nginx:
     image: ghcr.io/zammad/zammad:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}
@@ -160,10 +164,9 @@ services:
       railsserver:
         condition: service_started
     environment:
+      <<: *zammad-env
       NGINX_SERVER_NAME: ${APP_TRAEFIK_HOST}
       NGINX_CLIENT_MAX_BODY_SIZE: "50M"
-    # nginx polls /opt/zammad/storage for init's completion marker file.
-    # Without this mount it waits forever.
     volumes:
       - ./volumes/zammad-storage:/opt/zammad/storage:ro
     networks:

@@ -68,7 +68,7 @@ docker compose logs railsserver --follow
 - **Elasticsearch vm.max_map_count** — required host-level sysctl. If not set, ES crashes on start.
 - **`APP_TAG=7.0.1` is pinned** — update to a newer specific release tag for upgrades; do not use a floating tag like `7`.
 - **bitnami/elasticsearch is no longer free** — switched to `docker.elastic.co/elasticsearch/elasticsearch`. xpack security is disabled via env (`xpack.security.enabled=false`) since ES is on `app-internal` only.
-- **nginx polls `zammad-storage` for init completion** — nginx waits for a marker file written by the init container into `/opt/zammad/storage`. The volume must be mounted in the nginx service (already done in this blueprint). Without it nginx waits forever.
+- **nginx needs DB credentials to pass the readiness check** — nginx runs `bundle exec rails r 'Translation.any? || raise'` in a loop until init has seeded the DB. This requires all `POSTGRESQL_*` env vars. The nginx service therefore merges `*zammad-env` (same as railsserver/scheduler) even though nginx itself doesn't query the DB at runtime.
 - **geo.zammad.com outbound calls fail silently** — init and scheduler attempt to fetch holiday calendar data from `https://geo.zammad.com/calendar`. This fails with `RuntimeError: 0` on networks with restricted outbound access. Non-fatal — Zammad continues normally.
 - **YAML anchor `x-shared`** reuses env + security across zammad-* services — cannot use per-service secrets here, but all use the same DB_PWD.
 
