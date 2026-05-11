@@ -48,7 +48,7 @@ echo "vm.max_map_count=262144" | sudo tee -a /etc/sysctl.d/99-zammad.conf
 docker compose up -d
 # First boot runs migrations — takes 3-5 minutes
 docker compose logs railsserver --follow
-# Watch for: "Puma starting" then "* Listening on http://0.0.0.0:3000"
+# Watch for: "* Listening on http://[::]:3000"
 
 # https://<APP_TRAEFIK_HOST>
 # First visit prompts setup wizard — create admin account + organization
@@ -66,9 +66,11 @@ docker compose logs railsserver --follow
 
 - **First boot is slow** — Elasticsearch warmup + schema migrations ~3-5 min.
 - **Elasticsearch vm.max_map_count** — required host-level sysctl. If not set, ES crashes on start.
-- **`APP_TAG=6` tracks the 6.x line** — pin to a specific release (`6.2.0` etc.) for reproducibility.
+- **`APP_TAG=7.0.1` is pinned** — update to a newer specific release tag for upgrades; do not use a floating tag like `7`.
+- **bitnami/elasticsearch is no longer free** — switched to `docker.elastic.co/elasticsearch/elasticsearch`. xpack security is disabled via env (`xpack.security.enabled=false`) since ES is on `app-internal` only.
+- **nginx polls `zammad-storage` for init completion** — nginx waits for a marker file written by the init container into `/opt/zammad/storage`. The volume must be mounted in the nginx service (already done in this blueprint). Without it nginx waits forever.
+- **geo.zammad.com outbound calls fail silently** — init and scheduler attempt to fetch holiday calendar data from `https://geo.zammad.com/calendar`. This fails with `RuntimeError: 0` on networks with restricted outbound access. Non-fatal — Zammad continues normally.
 - **YAML anchor `x-shared`** reuses env + security across zammad-* services — cannot use per-service secrets here, but all use the same DB_PWD.
-- **`elasticsearch.healthcheck` uses `curl`** — if the bitnami image doesn't have curl, switch to a bash loop against `/dev/tcp/127.0.0.1/9200`.
 
 ## Email integration
 
