@@ -53,8 +53,9 @@ services:
       # Listmonk reads its config from env vars with LISTMONK_ prefix.
       # No _FILE support for the DB password — blueprint DB_PWD_INLINE pattern.
       LISTMONK_app__address: "0.0.0.0:9000"
-      LISTMONK_app__admin_username: ${ADMIN_USER}
-      LISTMONK_app__admin_password: ${ADMIN_PASSWORD}
+      # Public root URL — used in unsubscribe links, tracking pixels, forms.
+      # Must match the external hostname Traefik exposes.
+      LISTMONK_app__root_url: "https://${APP_TRAEFIK_HOST}"
       LISTMONK_db__host: db
       LISTMONK_db__port: "5432"
       LISTMONK_db__user: ${DB_USER}
