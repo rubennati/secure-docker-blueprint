@@ -1,6 +1,6 @@
 # changedetection.io
 
-> **Status: Draft — not yet live-tested.**
+**Status: ✅ Ready — v0.55.3 · 2026-05-11**
 
 Self-hosted website content change detection. Different axis from uptime monitoring — answers "what changed on this page" instead of "is it up". Good for: restock alerts, price drops, ToS/policy diff tracking, external-dependency defacement detection.
 
@@ -10,7 +10,7 @@ Single-container deployment (HTTP fetcher only):
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `ghcr.io/dgtlmoon/changedetection.io:latest` | Watcher + diff engine + notification dispatcher |
+| `app` | `ghcr.io/dgtlmoon/changedetection.io:0.55.3` | Watcher + diff engine + notification dispatcher |
 
 For JavaScript-heavy sites (SPAs), uncomment the optional `browser` service in `docker-compose.yml` — it runs a Playwright Chrome instance.
 
@@ -70,8 +70,8 @@ Notification: Slack #compliance
 
 ## Known Issues
 
-- **Live-tested: no.**
-- **`APP_TAG=latest` is not reproducible** — pin to a dated tag for stable deployments.
+- **Socket.IO WebSocket returns 400 behind Traefik** — `https://<domain> is not an accepted origin` in logs. `BASE_URL` is set correctly but Socket.IO CORS doesn't pick it up when running behind a reverse proxy. Cosmetic only: the app works fully, watches run, diffs are stored and notifications fire. Only live-push updates in the browser UI are affected (badges don't update in real-time — refresh manually). Upstream issue; no workaround without patching the CORS init.
+- **`APP_TAG=0.55.3` is pinned** — `latest` is not reproducible.
 - **No auth on first boot** — set a password immediately or front with Authentik.
 - **Diff storage grows fast** with high-churn pages — set "Max snapshots" per watch.
 - **JS-heavy sites need the optional browser service** — without it, you get the raw HTML which may be a near-empty SPA shell.
