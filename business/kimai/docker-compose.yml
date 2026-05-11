@@ -59,7 +59,9 @@ services:
       APP_ENV: prod
       APP_SECRET: ${APP_SECRET}
       TRUSTED_PROXIES: "0.0.0.0/0,::/0"
-      TRUSTED_HOSTS: "${APP_TRAEFIK_HOST}"
+      # Traefik host + localhost for the image's built-in healthcheck
+      # (curl hits 127.0.0.1:8001 internally; Symfony rejects unlisted hosts)
+      TRUSTED_HOSTS: "${APP_TRAEFIK_HOST},localhost,127.0.0.1"
       # Kimai assembles the DB DSN inline — no _FILE support.
       DATABASE_URL: "mysql://${DB_USER}:${DB_PWD_INLINE}@db:3306/${DB_NAME}?charset=utf8mb4&serverVersion=11.4.0-MariaDB"
       # Initial admin on first boot
