@@ -36,7 +36,7 @@ services:
   # BACKEND (OpenSign Server — Parse Server + Express)
   # --------------------------------------------------------
   api:
-    image: opensignlabs/opensignserver:${APP_TAG}
+    image: opensign/opensignserver:${APP_TAG}
     container_name: ${CONTAINER_NAME_API}
     restart: unless-stopped
     depends_on:
@@ -89,7 +89,7 @@ services:
   # FRONTEND (React app)
   # --------------------------------------------------------
   ui:
-    image: opensignlabs/opensign:${APP_TAG}
+    image: opensign/opensign:${APP_TAG}
     container_name: ${CONTAINER_NAME_UI}
     restart: unless-stopped
     depends_on:
