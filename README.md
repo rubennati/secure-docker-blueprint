@@ -175,7 +175,7 @@ See [`monitoring/README.md`](monitoring/README.md) for the full category README.
 
 | App | Axis | Status | Description |
 |---|---|---|---|
-| [Uptime Kuma](monitoring/uptime-kuma/) | Uptime (UI) | 🚧 | Click-config uptime monitor, 90+ notification integrations |
+| [Uptime Kuma](monitoring/uptime-kuma/) | Uptime (UI) | ✅ | Click-config uptime monitor, 90+ notification integrations |
 | [Gatus](monitoring/gatus/) | Uptime (YAML) | 🚧 | Config-as-code health checks with Prometheus export |
 | [Beszel](monitoring/beszel/) | Host metrics (hub) | 🚧 | Lightweight hub + local agent for CPU / RAM / disk / docker stats |
 | [Beszel Agent](monitoring/beszel-agent/) | Host metrics (remote agent) | 🚧 | Standalone agent for additional hosts; pairs with Beszel hub |
