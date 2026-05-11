@@ -162,6 +162,10 @@ services:
     environment:
       NGINX_SERVER_NAME: ${APP_TRAEFIK_HOST}
       NGINX_CLIENT_MAX_BODY_SIZE: "50M"
+    # nginx polls /opt/zammad/storage for init's completion marker file.
+    # Without this mount it waits forever.
+    volumes:
+      - ./volumes/zammad-storage:/opt/zammad/storage:ro
     networks:
       - proxy-public
       - app-internal
