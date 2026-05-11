@@ -56,7 +56,7 @@ services:
   # --------------------------------------------------------
   app:
     # --- Identity ---
-    image: tuxgasy/dolibarr:${APP_TAG}
+    image: dolibarr/dolibarr:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}
     restart: unless-stopped
     depends_on:
@@ -73,7 +73,7 @@ services:
       PHP_INI_DATE_TIMEZONE: ${TZ}
       # App
       DOLI_URL_ROOT: https://${APP_TRAEFIK_HOST}
-      # Database — tuxgasy/dolibarr supports _FILE suffixes natively
+      # Database — dolibarr/dolibarr supports _FILE suffixes natively
       DOLI_DB_HOST: db
       DOLI_DB_NAME: ${DB_NAME}
       DOLI_DB_USER: ${DB_USER}

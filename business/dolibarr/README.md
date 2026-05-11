@@ -1,14 +1,14 @@
 # Dolibarr
 
-> **Status: 🚧 Draft** First-pass import from inbox material.
+**Status: 🚧 Draft**
 
-Open-source ERP / CRM — invoicing, bookkeeping, project management, HR, inventory. Two-service stack: tuxgasy/dolibarr app + MariaDB.
+Open-source ERP / CRM — invoicing, bookkeeping, project management, HR, inventory. Two-service stack: dolibarr/dolibarr app + MariaDB.
 
 ## Architecture
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `tuxgasy/dolibarr:latest` | PHP/Apache app with Dolibarr pre-installed |
+| `app` | `dolibarr/dolibarr:23.0.2` | PHP/Apache app with Dolibarr pre-installed |
 | `db` | `mariadb:11.4` | Primary store (customers, invoices, products, accounting entries) |
 
 ## Setup
@@ -50,7 +50,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK (or 302 to /install/ on 
 
 ## Security Model
 
-- **`tuxgasy/dolibarr` supports `_FILE` on every secret env var** — DB password, admin login, and admin password are all Docker Secrets. No inline duplication anywhere.
+- **`dolibarr/dolibarr` supports `_FILE` on every secret env var** — DB password, admin login, and admin password are all Docker Secrets. No inline duplication anywhere.
 - **Admin credentials created on first install** — the secret files `.secrets/doli_admin.txt` + `.secrets/doli_pass.txt` seed the initial super-user. Change the password in the UI afterwards; the secrets are only re-read if the DB is empty.
 - **`cap_drop: ALL`** on MariaDB with minimal `cap_add`.
 - **`no-new-privileges:true`** on both services.
@@ -59,8 +59,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK (or 302 to /install/ on 
 
 ## Known Issues
 
-- **Live-tested: no.** Expect minor surprises, especially first-install behaviour if volumes aren't empty.
-- **`APP_TAG=latest` is not reproducible** — pin to a specific Dolibarr version for stable deployments. tuxgasy publishes tags like `21.0.0` that follow Dolibarr's semver.
+- **`tuxgasy/dolibarr` is abandoned** — that community image stalled at 19.0.2. This blueprint uses the official `dolibarr/dolibarr` image (maintained by the Dolibarr association, current at 23.0.2).
 - **Custom modules** — stored in `volumes/custom/`. Install via the UI → the module tarball is unpacked here. Back up together with the documents volume.
 - **Document attachments** — PDFs, scanned invoices, etc. go into `volumes/documents/`. Can grow large; plan backups and storage accordingly.
 - **Upgrades run on first boot after a version bump** — Dolibarr detects the version difference and triggers a schema migration through a web wizard at `/install/`. Do not clear browser cookies during the migration.
