@@ -70,6 +70,7 @@ Notification: Slack #compliance
 
 ## Known Issues
 
+- **`WARNING: This is a development server`** in logs — changedetection.io uses Flask's built-in dev server as their official deployment method (no uWSGI/Gunicorn in front). Fine in practice: Traefik absorbs all external traffic; Flask never sees direct internet connections. Upstream decision, not actionable.
 - **Socket.IO WebSocket returns 400 behind Traefik** — `https://<domain> is not an accepted origin` in logs. `BASE_URL` is set correctly but Socket.IO CORS doesn't pick it up when running behind a reverse proxy. Cosmetic only: the app works fully, watches run, diffs are stored and notifications fire. Only live-push updates in the browser UI are affected (badges don't update in real-time — refresh manually). Upstream issue; no workaround without patching the CORS init.
 - **`APP_TAG=0.55.3` is pinned** — `latest` is not reproducible.
 - **No auth on first boot** — set a password immediately or front with Authentik.
