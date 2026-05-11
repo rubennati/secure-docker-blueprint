@@ -1,6 +1,6 @@
 # Listmonk
 
-> **Status: 🚧 Draft**
+**Status: ✅ Ready — v6.1.0 · 2026-05-11**
 
 Self-hosted newsletter, mailing list manager, and transactional mail. Go single-binary app + Postgres backend. Handles subscriber management, double-opt-in, campaign sending, tracking (open/click), bounce processing, list segmentation.
 
@@ -8,7 +8,7 @@ Self-hosted newsletter, mailing list manager, and transactional mail. Go single-
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `listmonk/listmonk:latest` | Admin UI + sender + subscriber endpoints |
+| `app` | `listmonk/listmonk:v6.1.0` | Admin UI + sender + subscriber endpoints |
 | `db` | `postgres:16-alpine` | Subscribers, campaigns, templates, analytics |
 
 ## Setup
@@ -21,17 +21,14 @@ mkdir -p .secrets volumes/postgres volumes/uploads
 openssl rand -base64 32 | tr -d '\n' > .secrets/db_pwd.txt
 sed -i "s|^DB_PWD_INLINE=.*|DB_PWD_INLINE=$(cat .secrets/db_pwd.txt)|" .env
 
-ADMIN_PWD=$(openssl rand -base64 24 | tr -d '\n')
-sed -i "s|^ADMIN_PASSWORD=.*|ADMIN_PASSWORD=${ADMIN_PWD}|" .env
-echo "Admin password: ${ADMIN_PWD}"
-
 docker compose up -d
-# First boot runs --install --idempotent → Postgres schema + admin user.
-# Second start skips install.
+# First boot: --install --idempotent → creates Postgres schema.
+# Admin user is NOT created from env — create it on first login via the web UI.
 docker compose logs app --follow
-# Watch for: "Listening on :9000"
+# Watch for: "http server started on [::]:9000"
 
-# https://<APP_TRAEFIK_HOST>/admin
+# https://<APP_TRAEFIK_HOST>
+# → First visit prompts you to create the super admin account.
 ```
 
 ## Access split (recommended for production)
@@ -54,7 +51,7 @@ For "admin VPN-only + subscriber endpoints public", add a second Traefik router:
 
 ## Security Model
 
-- **`ADMIN_PASSWORD` only read on first install** — change in the UI afterwards and remove from `.env`.
+- **Admin user created via web UI on first visit** — Listmonk v6+ removed `admin_username`/`admin_password` from env/config. The first visit to `/` shows a setup wizard to create the super admin. Do not use the old `ADMIN_USER`/`ADMIN_PASSWORD` env vars — they are ignored and trigger a deprecation warning.
 - **`DB_PWD_INLINE` duplicates the DB password** — Listmonk has no `_FILE` support on `LISTMONK_db__password`.
 - **`no-new-privileges:true`** on both services.
 - **Postgres on `app-internal` (`internal: true`)** — not reachable from outside.
@@ -62,8 +59,7 @@ For "admin VPN-only + subscriber endpoints public", add a second Traefik router:
 
 ## Known Issues
 
-- **Live-tested: no.**
-- **`APP_TAG=latest`** — pin to a specific version for reproducibility.
+- **UI warning about admin credentials** — after first login, Listmonk shows a banner asking to remove `admin_username`/`admin_password` from config. These fields are already absent from this blueprint's setup; the banner can be dismissed.
 - **Bounce processing** requires either IMAP config to your sender mailbox or an SMTP relay with bounce-webhook support (AWS SES, Mailgun, Postmark).
 - **Media uploads** (logo, campaign images) land in `volumes/uploads/`. Back up together with the Postgres dump.
 
