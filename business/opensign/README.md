@@ -10,8 +10,8 @@ Three-service stack with Traefik path-based split (same pattern as OpnForm):
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `ui` | `opensignlabs/opensign:latest` | React frontend |
-| `api` | `opensignlabs/opensignserver:latest` | Parse Server backend + PDF signing engine |
+| `ui` | `opensign/opensign:main` | React frontend |
+| `api` | `opensign/opensignserver:main` | Parse Server backend + PDF signing engine |
 | `db` | `mongo:6` | Documents, templates, users, audit log |
 
 Traefik routes `/app/*` + `/api/*` to the API (priority 100), everything else to the UI (priority 1).
@@ -62,8 +62,8 @@ Without a working mail config, signature request emails do not go out and the fl
 
 ## Known Issues
 
-- **Live-tested: no.**
-- **`APP_TAG=latest`** — pin to a version for production.
+- **No semver tags on Docker Hub** — OpenSign only publishes `main`, `staging`, `docker_beta`. There are no `vX.Y.Z` release tags; upstream does not version its Docker images.
+- **`APP_TAG=main` is a floating tag** — rebuild with `docker compose pull` to get updates. Cannot pin to a specific release.
 - **`MASTER_KEY` in `.env`** — current blueprint reads it from env; Parse Server has no `_FILE` convention. Move to Docker Secret + entrypoint wrapper for higher security.
 - **MongoDB 6 is the last version with the community SSPL license that Parse Server fully supports** — do not jump to 7+ until OpenSign tests it.
 - **Signing certificate** — OpenSign can generate self-signed signing certs, but for legally enforceable signatures in the EU (eIDAS Advanced), you need a qualified trust-service-provider certificate. The platform supports uploading a qualified cert; the basic setup here uses self-signed.
