@@ -14,7 +14,7 @@ Three-service stack with Traefik path-based split (same pattern as OpnForm):
 | `api` | `opensign/opensignserver:main` | Parse Server backend + PDF signing engine |
 | `db` | `mongo:6` | Documents, templates, users, audit log |
 
-Traefik routes `/app/*` + `/api/*` to the API (priority 100), everything else to the UI (priority 1).
+Traefik routes `PathPrefix(/app)` to the API (priority 100), everything else to the UI (priority 1). No `/api` prefix — Traefik routes directly to Parse's mount path without stripping (unlike Caddy in the upstream default).
 
 ## Setup
 
