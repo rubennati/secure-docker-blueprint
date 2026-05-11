@@ -103,6 +103,7 @@ services:
   init:
     <<: *zammad-shared
     container_name: ${COMPOSE_PROJECT_NAME}-init
+    restart: on-failure
     command: ["zammad-init"]
     depends_on:
       db:

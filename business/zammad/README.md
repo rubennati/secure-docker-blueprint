@@ -1,24 +1,24 @@
 # Zammad
 
-> **Status: 🚧 Draft**
+**Status: 🚧 Draft**
 
 Self-hosted helpdesk / ticketing / customer support. Multi-channel (email, web form, Twitter, Telegram, SMS), SLA tracking, time accounting, knowledge base.
 
 ## Architecture
 
-Heavy stack — 7 services. Upstream default deployment.
+Heavy stack — 9 services. Upstream default deployment.
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `nginx` (= `app`) | `ghcr.io/zammad/zammad:6` + `zammad-nginx` | Web gateway, static assets, reverse-proxy to rails + websocket |
+| `nginx` (= `app`) | `ghcr.io/zammad/zammad:7.0.1` + `zammad-nginx` | Web gateway, static assets, reverse-proxy to rails + websocket |
 | `railsserver` | same + `zammad-railsserver` | Rails app (API + core logic) |
 | `websocket` | same + `zammad-websocket` | Agent live updates |
 | `scheduler` | same + `zammad-scheduler` | Background jobs (email import, SLA checks) |
 | `init` | same + `zammad-init` | One-shot DB migrations on every start |
 | `db` | `postgres:16-alpine` | Primary data store |
-| `redis` | `redis:7-alpine` | Background job queue |
-| `memcached` | `memcached:alpine` | Rails cache |
-| `elasticsearch` | `bitnami/elasticsearch:8` | Full-text ticket search |
+| `redis` | `redis:7.4-alpine` | Background job queue |
+| `memcached` | `memcached:1.6.41` | Rails cache |
+| `elasticsearch` | `bitnami/elasticsearch:8.17.4` | Full-text ticket search |
 
 ## Resource requirements
 
@@ -64,7 +64,6 @@ docker compose logs railsserver --follow
 
 ## Known Issues
 
-- **Live-tested: no.**
 - **First boot is slow** — Elasticsearch warmup + schema migrations ~3-5 min.
 - **Elasticsearch vm.max_map_count** — required host-level sysctl. If not set, ES crashes on start.
 - **`APP_TAG=6` tracks the 6.x line** — pin to a specific release (`6.2.0` etc.) for reproducibility.
