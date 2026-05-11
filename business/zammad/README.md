@@ -18,7 +18,7 @@ Heavy stack — 9 services. Upstream default deployment.
 | `db` | `postgres:16-alpine` | Primary data store |
 | `redis` | `redis:7.4-alpine` | Background job queue |
 | `memcached` | `memcached:1.6.41` | Rails cache |
-| `elasticsearch` | `bitnami/elasticsearch:8.17.4` | Full-text ticket search |
+| `elasticsearch` | `docker.elastic.co/elasticsearch/elasticsearch:8.17.4` | Full-text ticket search |
 
 ## Resource requirements
 

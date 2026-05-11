@@ -81,16 +81,20 @@ services:
     networks: [app-internal]
 
   # --- Elasticsearch (full-text search over tickets) ---
+  # NOTE: bitnami/elasticsearch is no longer freely available on Docker Hub.
+  # Using the official image from Elastic's registry instead.
   elasticsearch:
-    image: bitnami/elasticsearch:${ES_TAG}
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ES_TAG}
     container_name: ${CONTAINER_NAME_ES}
     restart: unless-stopped
     security_opt: [no-new-privileges:true]
     environment:
       discovery.type: single-node
       ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+      # Disable xpack security — ES is on app-internal only, not reachable externally.
+      xpack.security.enabled: "false"
     volumes:
-      - ./volumes/elasticsearch:/bitnami/elasticsearch/data
+      - ./volumes/elasticsearch:/usr/share/elasticsearch/data
     networks: [app-internal]
     healthcheck:
       test: ["CMD-SHELL", "curl -fs http://127.0.0.1:9200/_cluster/health || exit 1"]
