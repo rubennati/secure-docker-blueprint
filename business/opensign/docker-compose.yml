@@ -57,9 +57,11 @@ services:
       MONGODB_URI: "mongodb://${DB_ROOT_USER}:${DB_ROOT_PWD_INLINE}@db:27017/${DB_NAME}?authSource=admin"
       # Path where Parse Server API is mounted (do not change).
       PARSE_MOUNT: /app
-      # Internal URL — used by NodeJS cloud functions / webhooks calling Parse itself.
-      # This is NOT the public URL; the client browser reaches Parse via PUBLIC_URL/app.
-      SERVER_URL: "http://api:8080/app"
+      # Public URL of the Parse Server API — used in signature request emails,
+      # cloud function callbacks, and webhook payloads.
+      # Caddy (upstream default) strips /api before forwarding; we don't use /api
+      # with Traefik — Parse is exposed directly at /app (PARSE_MOUNT=/app).
+      SERVER_URL: "https://${APP_TRAEFIK_HOST}/app"
       PUBLIC_URL: "https://${APP_TRAEFIK_HOST}"
       # Use local volume storage instead of S3/DigitalOcean Spaces.
       USE_LOCAL: "true"

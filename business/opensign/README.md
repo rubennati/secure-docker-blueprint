@@ -79,7 +79,7 @@ Without a working mail config, signature request emails do not go out and the fl
 - **`APP_ID` is fixed as `opensign`** — it is deprecated upstream and hardcoded in the compose. Do not generate a random value; the React client and Parse Server must agree on this literal string.
 - **`MONGODB_URI` has no `_FILE` support** — password embedded inline in DSN. Use alphanumeric-only password to avoid DSN-breaking characters (`@`, `:`, `/`, `?`, `#`).
 - **`MASTER_KEY` in `.env`** — Parse Server has no `_FILE` convention. Move to Docker Secret + entrypoint wrapper for higher security.
-- **`SERVER_URL` is the internal Parse URL** — set to `http://api:8080/app` (container-to-container). The browser-side API URL is `REACT_APP_SERVERURL=https://<domain>/app`.
+- **`SERVER_URL` is the public Parse URL** — set to `https://<domain>/app`. Parse uses this to generate links in signature request emails and webhook payloads. Upstream uses Caddy which strips a `/api` prefix; our Traefik setup routes directly to `/app`, so no prefix needed.
 - **Self-signed signing cert is not Adobe-trusted** — documents signed with a self-generated cert show no green tick in Adobe Acrobat. For eIDAS Advanced signatures, purchase a qualified p12 from an AATL-approved CA and set `PFX_BASE64` + `PASS_PHRASE`.
 - **MongoDB 6 is the last version with full Parse Server support** — do not jump to 7+ until OpenSign tests it.
 - **OCR / keyword detection** for auto-placement of signature fields requires the `OPENSIGN_OCR` side-car — not included here.
