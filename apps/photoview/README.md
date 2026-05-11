@@ -1,6 +1,6 @@
 # Photoview
 
-> **Status: Draft — not yet live-tested.** First-pass import from inbox material.
+**Status: ✅ Ready — v2.4.0 · 2026-05-11**
 
 Self-hosted photo gallery focused on RAW processing, EXIF-driven organization, and face recognition. Go-based server with MariaDB backend.
 
@@ -36,7 +36,7 @@ docker compose up -d
 
 # 6. Wait for MariaDB init + Photoview bootstrap (~60 seconds)
 docker compose logs app --follow
-# Watch for: "Photoview is listening on :80"
+# Watch for: "Photoview API endpoint listening at http://0.0.0.0:80/api"
 
 # 7. Open UI and complete the initial setup wizard
 # https://<APP_TRAEFIK_HOST>
@@ -62,9 +62,9 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 
 ## Known Issues
 
-- **Live-tested: no.** Expect minor surprises, especially first-run MariaDB ownership.
 - **`DB_PWD_INLINE` duplicates the DB password** — Photoview's `PHOTOVIEW_MYSQL_URL` is a full DSN with the password embedded. The MariaDB service reads `MARIADB_PASSWORD_FILE` from a Docker Secret; Photoview needs the same value inline. Mismatch = connection refused.
-- **`APP_TAG=2` tracks the 2.x line** — no minor-version pin; breaking changes can arrive on a rebuild. Pin a specific release for reproducibility.
+- **Service worker MIME type error in browser console** — Photoview's `service-worker.js` returns `text/html` behind a reverse proxy (known upstream issue). The app works despite this; offline/PWA features are non-functional.
+- **Manifest SVG icon warning** — Chrome cannot use an SVG as a PWA icon; cosmetic only.
 - **Upstream `photoview-prepare` service dropped** — it ran `chown` on the media-cache folder. Setup step 4 does the same thing once; simpler than keeping a one-shot service.
 - **SQLite and PostgreSQL drivers are not wired up here** — upstream compose supported three backends. Only MySQL/MariaDB is imported. To switch, see upstream `docker-compose.yml` for `PHOTOVIEW_SQLITE_PATH` / `PHOTOVIEW_POSTGRES_URL`.
 - **Watchtower dropped** — blueprint policy: explicit `APP_TAG` bumps.

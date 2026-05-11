@@ -93,7 +93,7 @@ Five options — test and pick what fits your workflow.
 | [LibrePhotos](apps/librephotos/) | Nginx + Django+ML + React + pgautoupgrade | ✅ | Google-Photos-like (OwnPhotos fork) |
 | [Lychee](apps/lycheeorg/) | App (Laravel) + MariaDB + Redis | ✅ | Clean, fast gallery |
 | [PhotoPrism](apps/photoprism/) | App (Go+TensorFlow) + MariaDB | ✅ | AI classification + WebDAV |
-| [Photoview](apps/photoview/) | App (Go+GraphQL) + MariaDB | 🚧 | RAW processing + face recognition |
+| [Photoview](apps/photoview/) | App (Go+GraphQL) + MariaDB | ✅ | RAW processing + face recognition |
 
 #### Scheduling & booking
 
