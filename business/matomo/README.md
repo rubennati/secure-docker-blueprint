@@ -1,6 +1,6 @@
 # Matomo
 
-> **Status: 🚧 Draft** First-pass import from inbox material.
+**Status: ✅ Ready — v5.10.0 · 2026-05-11**
 
 Self-hosted web analytics platform — privacy-respecting, GDPR-compatible alternative to Google Analytics. Two-service stack: PHP/Apache app + MariaDB.
 
@@ -8,7 +8,7 @@ Self-hosted web analytics platform — privacy-respecting, GDPR-compatible alter
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `matomo:5-apache` | Tracking endpoint + reporting UI |
+| `app` | `matomo:5-apache` (5.10.0) | Tracking endpoint + reporting UI |
 | `db` | `mariadb:11.4` | Raw visits, aggregated reports, users, settings |
 
 ## Setup
@@ -28,10 +28,13 @@ mkdir -p volumes/mysql volumes/config volumes/logs volumes/matomo
 
 # 4. Start
 docker compose up -d
+docker compose logs app --follow
+# Watch for: "apache2 -D FOREGROUND"
 
-# 5. Open UI and run the installation wizard
+# 5. Open UI and run the 8-step installation wizard
 # https://<APP_TRAEFIK_HOST>
-# - Database: host=db, user+name from .env, password read from the secret
+# - System Check: all mandatory checks should pass
+# - Database: host=db, port=3306, user+name+prefix from .env, password from .secrets/db_pwd.txt
 # - Super user: pick any username and a strong password
 # - Add your first website
 
@@ -60,7 +63,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 
 ## Known Issues
 
-- **Live-tested: no.** Expect minor surprises, especially first-run ownership on `volumes/config/` and `volumes/matomo/`.
+- **Console warnings during installation wizard** — the Congratulations step shows a CSP `unsafe-eval` report-only violation (report-only, no action needed), a `Mousetrap is not defined` JS error, and `.map` file 403s from Apache. All cosmetic; they disappear after installation completes.
 - **Database table prefix** — change `DB_TABLES_PREFIX=mtm_` before the first setup. The default `matomo_` collides with other Matomo installs sharing a DB, and can be scanned for.
 - **Archive cron** — by default, Matomo archives reports on-demand when a report is viewed. For high-traffic sites, add a cron container running `php /var/www/html/console core:archive` every hour. Not configured here.
 - **GeoIP database not shipped** — download MaxMind's `GeoLite2-City.mmdb` manually and place in `volumes/matomo/misc/` for location reports.
