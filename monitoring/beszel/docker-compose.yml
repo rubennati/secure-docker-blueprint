@@ -44,12 +44,10 @@ services:
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
 
     # --- Health & Observability ---
+    # Beszel runs a minimal Go binary image — no wget/curl available.
+    # Health is inferred from the container restart policy instead.
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8090/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 20s
+      disable: true
 
   # --------------------------------------------------------
   # BESZEL AGENT — local (this host)
@@ -96,6 +94,16 @@ services:
     # not behind Traefik. Protection is SSH key auth + Tailscale ACLs /
     # host firewall. Same pattern as core/portainer-agent/ and core/hawser/.
     network_mode: host
+
+    # --- Health & Observability ---
+    # Agent writes /dev/shm/beszel_health every ~90s when connected.
+    # find checks mtime < 91s — fails if agent stalls or loses SSH.
+    healthcheck:
+      test: ["CMD", "find", "/dev/shm/beszel_health", "-mmin", "-2"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
 # --------------------------------------------------------
 # NETWORKS
