@@ -60,7 +60,7 @@ For "admin VPN-only + subscriber endpoints public", add a second Traefik router:
 ## Known Issues
 
 - **UI warning about admin credentials** — after first login, Listmonk shows a banner asking to remove `admin_username`/`admin_password` from config. These fields are already absent from this blueprint's setup; the banner can be dismissed.
-- **Campaign preview iframe is blocked** — the campaign editor's preview panel uses an `<iframe>` to render `GET /api/campaigns/:id/preview`. Traefik's security middleware sends `X-Frame-Options: deny`, which blocks the iframe. Core functionality (subscribers, campaigns, sending) is not affected. Workaround: open the preview URL directly in a new tab.
+- **Campaign/template preview uses an iframe** — the preview panel renders `GET /api/campaigns/:id/preview` in an `<iframe>`. `X-Frame-Options: deny` blocks this. The default is therefore `sec-2e` (`SAMEORIGIN`) instead of `sec-2` (`deny`).
 - **Bounce processing** requires either IMAP config to your sender mailbox or an SMTP relay with bounce-webhook support (AWS SES, Mailgun, Postmark).
 - **Media uploads** (logo, campaign images) land in `volumes/uploads/`. Back up together with the Postgres dump.
 
