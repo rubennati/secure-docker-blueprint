@@ -1,6 +1,6 @@
 # Gatus
 
-> **Status: Draft — not yet live-tested.**
+**Status: ✅ Ready — v5.34.0 · 2026-05-11**
 
 YAML-driven health checks, status page, and alerting. Go-based, single-container. The config-as-code counterpart to Uptime Kuma's click-UI.
 
@@ -16,16 +16,18 @@ Config lives in `./config/config.yaml`. Result history in `./volumes/data/data.d
 
 ```bash
 cp .env.example .env
-cp config/config.example.yaml config/config.yaml
+mkdir -p config volumes/data
+cp config.example.yaml config/config.yaml
 # Edit config.yaml — add your endpoints + alerting channels
 
-mkdir -p volumes/data
 docker compose up -d
 docker compose logs app --follow
 # Watch for: "Listening on :8080"
 ```
 
 Gatus auto-reloads on config changes — just `vim config/config.yaml` + save, no restart.
+
+> **Note:** `config.example.yaml` lives next to `docker-compose.yml`, **not** inside `config/`. Gatus reads every `.yaml` file in the config directory — if `config.example.yaml` ends up in `config/` alongside `config.yaml`, Gatus panics on duplicate keys.
 
 ## Security Model
 
@@ -41,7 +43,7 @@ Gatus auto-reloads on config changes — just `vim config/config.yaml` + save, n
 
 ## Known Issues
 
-- **Live-tested: no.**
+- **`config.example.yaml` must NOT be inside `config/`** — Gatus merges all `.yaml` files in the config directory. Duplicate top-level keys cause a panic on startup: `only maps and slices/arrays can be merged`. The example file lives at `monitoring/gatus/config.example.yaml` (next to `docker-compose.yml`), not in `config/`.
 - **SQLite is sufficient for ~100 endpoints**. For 500+ endpoints or long history retention, switch `storage.type` to `postgres` and add a db service (copy pattern from `apps/paperless-ngx/`).
 - **No built-in authentication beyond basic-auth** — use Traefik `sec-*` + `acc-tailscale`, or add an Authentik forward-auth middleware for SSO.
 - **Config hot-reload is best-effort** — a syntax error during reload leaves the old config running; check logs after every save.

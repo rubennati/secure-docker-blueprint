@@ -1,6 +1,6 @@
 # LibrePhotos
 
-> **Status: Draft — not yet live-tested.** First-pass import from inbox material.
+**Status: ✅ Ready** — 2026w14 · 2026-05-11
 
 Self-hosted photo management with face recognition, object detection, location data, and similarity search. Fork of OwnPhotos. Four-service stack: nginx proxy, Django backend with ML workers, React frontend, and PostgreSQL.
 
@@ -70,9 +70,9 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 
 ## Known Issues
 
-- **Live-tested: no.** Expect minor surprises, especially first-run ML model download and Django bootstrap timing.
 - **`DB_PWD_INLINE` duplicates the DB password** — LibrePhotos backend's `DB_PASS` env var has no `_FILE` support. The Postgres service reads `POSTGRES_PASSWORD_FILE` from a Docker Secret, but the backend needs the same value inline in `.env`. Setup step 3 syncs them. Mismatch = backend cannot connect.
-- **`APP_TAG=latest` is not reproducible** — LibrePhotos publishes weekly builds under `latest`. Pin to a dated tag if upgrade discipline matters.
+- **`APP_TAG` is a weekly build tag** — LibrePhotos releases as `YYYYwWW` (e.g. `2026w14`). Pin to a specific week tag in `.env.example`; do not use `latest`.
+- **401 errors in browser console on first load are normal** — the frontend fires API requests before checking auth state. They resolve after login.
 - **ML model download on first use** — face recognition and object detection pull ~1.5 GB of models into `volumes/cache/`.
 - **Initial scan is slow** — LibrePhotos processes each photo through multiple ML pipelines (~1-2 seconds per photo). A 10 000-photo library takes several hours on a CPU-only machine.
 - **MAPBOX_API_KEY is optional** — the map view is disabled if empty; no error is raised.

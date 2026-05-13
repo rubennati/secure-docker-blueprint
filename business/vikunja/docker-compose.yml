@@ -1,0 +1,248 @@
+services:
+
+  # --------------------------------------------------------
+  # VIKUNJA
+  # Open-source task management — kanban, lists, Gantt views.
+  # Single binary image (API + frontend combined).
+  #
+  # Docs: https://vikunja.io/docs/full-docker-example/
+  # --------------------------------------------------------
+  vikunja:
+    # --- Identity ---
+    # Custom build: adds /bin/sh, /bin/cat, /bin/wget from busybox:musl to the
+    # upstream scratch image. sh + cat for secrets injection at startup;
+    # wget for the HTTP healthcheck (see Health section for why).
+    build:
+      context: .
+      args:
+        APP_TAG: ${APP_TAG}
+    image: vikunja-local:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    # Container runs as UID 1000 by default (per upstream docs).
+    # read_only is not set — Vikunja writes to /app/vikunja/files (named volume)
+    # and to internal temp paths. Enable read_only + tmpfs after verifying live.
+
+    # --- Configuration ---
+    # Vikunja has no _FILE env var support — secrets injected via entrypoint.
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
+    secrets:
+      - jwt_key
+      - db_pwd
+      - oidc_secret
+      - smtp_pwd
+    environment:
+      # Public URL — must match the domain users see in their browser
+      VIKUNJA_SERVICE_PUBLICURL: "https://${APP_TRAEFIK_HOST}"
+
+      # Database (PostgreSQL — recommended for multi-user per upstream docs)
+      VIKUNJA_DATABASE_TYPE: postgres
+      VIKUNJA_DATABASE_HOST: db
+      VIKUNJA_DATABASE_USER: ${DB_USER}
+      VIKUNJA_DATABASE_DATABASE: ${DB_NAME}
+
+      # Authentik OIDC — https://vikunja.io/docs/openid/
+      # Provider key used here: "authentik"
+      # Redirect URI to whitelist in Authentik:
+      #   https://<APP_TRAEFIK_HOST>/auth/openid/authentik
+      # Set VIKUNJA_AUTH_OPENID_ENABLED=false in .env to skip OIDC on first run.
+      VIKUNJA_AUTH_OPENID_ENABLED: "${VIKUNJA_AUTH_OPENID_ENABLED:-false}"
+      VIKUNJA_AUTH_OPENID_PROVIDERS_AUTHENTIK_NAME: "Authentik"
+      # authurl = Authentik issuer URL (used for OIDC Discovery)
+      # Format: https://<authentik-domain>/application/o/<application-slug>/
+      VIKUNJA_AUTH_OPENID_PROVIDERS_AUTHENTIK_AUTHURL: "https://${AUTHENTIK_DOMAIN}/application/o/${AUTHENTIK_APP_SLUG}/"
+      VIKUNJA_AUTH_OPENID_PROVIDERS_AUTHENTIK_CLIENTID: "${OIDC_CLIENT_ID}"
+      # Scopes: add vikunja_scope for Authentik group → Vikunja team sync
+      VIKUNJA_AUTH_OPENID_PROVIDERS_AUTHENTIK_SCOPE: "openid profile email"
+
+      # --- Access control ---
+      # Registration: true on first run so the first user can sign up (= admin).
+      # Set false in .env once your accounts are created.
+      VIKUNJA_SERVICE_ENABLEREGISTRATION: "${VIKUNJA_ENABLEREGISTRATION:-true}"
+      # Local login: always keep true as an emergency fallback (e.g. Authentik down).
+      # Users who log in via Authentik are never affected by this setting.
+      VIKUNJA_AUTH_LOCAL_ENABLED: "${VIKUNJA_LOCAL_AUTH_ENABLED:-true}"
+
+      # --- Branding ---
+      # Leave empty to use the default Vikunja logo.
+      VIKUNJA_SERVICE_CUSTOMLOGOURL: "${VIKUNJA_CUSTOMLOGOURL:-}"
+      VIKUNJA_SERVICE_CUSTOMLOGOURLDARK: "${VIKUNJA_CUSTOMLOGOURLDARK:-}"
+      # Allow seasonal icon changes (halloween pumpkin etc.) — set false to lock to custom logo
+      VIKUNJA_SERVICE_ALLOWICONCHANGES: "${VIKUNJA_ALLOWICONCHANGES:-true}"
+
+      # --- Legal links (shown in frontend footer when set) ---
+      VIKUNJA_LEGAL_IMPRINTURL: "${VIKUNJA_IMPRINTURL:-}"
+      VIKUNJA_LEGAL_PRIVACYURL: "${VIKUNJA_PRIVACYURL:-}"
+
+      # --- Message of the Day (shown via /api/v1/info, picked up by frontend) ---
+      VIKUNJA_SERVICE_MOTD: "${VIKUNJA_MOTD:-}"
+
+      # --- Default settings for new users ---
+      VIKUNJA_DEFAULTSETTINGS_LANGUAGE: "${VIKUNJA_DEFAULT_LANGUAGE:-de}"
+      VIKUNJA_DEFAULTSETTINGS_WEEK_START: "${VIKUNJA_DEFAULT_WEEK_START:-1}"
+      VIKUNJA_DEFAULTSETTINGS_TIMEZONE: "${TZ}"
+      VIKUNJA_DEFAULTSETTINGS_AVATAR_PROVIDER: "${VIKUNJA_DEFAULT_AVATAR:-initials}"
+
+      # --- Features ---
+      VIKUNJA_SERVICE_ENABLELINKSHARING: "${VIKUNJA_ENABLELINKSHARING:-true}"
+      VIKUNJA_BACKGROUNDS_ENABLED: "${VIKUNJA_BACKGROUNDS_ENABLED:-true}"
+      VIKUNJA_SERVICE_ENABLECALDAV: "${VIKUNJA_ENABLECALDAV:-true}"
+      VIKUNJA_SERVICE_ENABLETOTP: "${VIKUNJA_ENABLETOTP:-true}"
+      VIKUNJA_SERVICE_ENABLEUSERDELETION: "${VIKUNJA_ENABLEUSERDELETION:-false}"
+      VIKUNJA_SERVICE_ENABLEPUBLICTEAMS: "${VIKUNJA_ENABLEPUBLICTEAMS:-false}"
+      VIKUNJA_WEBHOOKS_ENABLED: "${VIKUNJA_WEBHOOKS_ENABLED:-true}"
+
+      # --- Reverse proxy ---
+      # Tell Vikunja to read the real client IP from the X-Forwarded-For header
+      # set by Traefik. Required for correct rate limiting and audit logs.
+      VIKUNJA_SERVICE_IPEXTRACTIONMETHOD: "xff"
+
+      # --- Mailer / SMTP ---
+      # Password injected via entrypoint.sh from .secrets/smtp_pwd.txt.
+      # Placeholder file must exist even when mailer is disabled:
+      #   echo -n "placeholder" > .secrets/smtp_pwd.txt
+      VIKUNJA_MAILER_ENABLED: "${VIKUNJA_MAILER_ENABLED:-false}"
+      VIKUNJA_MAILER_HOST: "${VIKUNJA_MAILER_HOST:-}"
+      VIKUNJA_MAILER_PORT: "${VIKUNJA_MAILER_PORT:-587}"
+      VIKUNJA_MAILER_USERNAME: "${VIKUNJA_MAILER_USERNAME:-}"
+      VIKUNJA_MAILER_FROMEMAIL: "${VIKUNJA_MAILER_FROMEMAIL:-}"
+      # AUTHTYPE: plain (default), login, cram-md5
+      VIKUNJA_MAILER_AUTHTYPE: "${VIKUNJA_MAILER_AUTHTYPE:-plain}"
+      # FORCESSL: true = SMTPS port 465 | false = STARTTLS port 587
+      VIKUNJA_MAILER_FORCESSL: "${VIKUNJA_MAILER_FORCESSL:-false}"
+
+      # --- Rate limiting ---
+      VIKUNJA_RATELIMIT_ENABLED: "true"
+
+      TZ: ${TZ}
+
+    # --- Storage ---
+    volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
+      - vikunja_files:/app/vikunja/files
+
+    # --- Networking ---
+    networks:
+      - internal
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file,${COMPOSE_PROJECT_NAME}-sso-redirect"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.service=${COMPOSE_PROJECT_NAME}"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=3456"
+      # Auto-redirect /login → /login?redirectToProvider=authentik (SSO-only mode)
+      # Regex matches /login without query string to avoid redirect loop.
+      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-sso-redirect.redirectregex.regex=^(https?://[^/]+)/login$$"
+      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-sso-redirect.redirectregex.replacement=$${1}/login?redirectToProvider=authentik"
+      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-sso-redirect.redirectregex.permanent=false"
+
+    # --- Dependencies ---
+    depends_on:
+      db:
+        condition: service_healthy
+
+    # --- Health ---
+    # `vikunja healthcheck` spawns a fresh process without the entrypoint's env
+    # vars — it tries to run migrations, fails DB auth, and exits 1 every time.
+    # Use wget (added via busybox in the Dockerfile) to hit the HTTP API instead.
+    healthcheck:
+      test: ["CMD", "/bin/wget", "-qO-", "http://localhost:3456/api/v1/info"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+    # --- Resources ---
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.50"
+          pids: 100
+        reservations:
+          memory: 128M
+
+  # --------------------------------------------------------
+  # DATABASE — PostgreSQL
+  # --------------------------------------------------------
+  db:
+    # --- Identity ---
+    image: postgres:${DB_TAG}
+    container_name: ${CONTAINER_NAME_DB}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_pwd
+      TZ: ${TZ}
+    secrets:
+      - db_pwd
+
+    # --- Storage ---
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+    # --- Networking ---
+    networks:
+      - internal
+
+    # --- Health ---
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+    # --- Resources ---
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 256M
+
+# ─── Secrets ───────────────────────────────────────────────────────────────────
+secrets:
+  jwt_key:
+    file: ./.secrets/jwt_key.txt
+  db_pwd:
+    file: ./.secrets/db_pwd.txt
+  oidc_secret:
+    file: ./.secrets/oidc_secret.txt
+  smtp_pwd:
+    file: ./.secrets/smtp_pwd.txt
+
+# ─── Volumes ───────────────────────────────────────────────────────────────────
+volumes:
+  vikunja_files:
+    driver: local
+  db_data:
+    driver: local
+
+# ─── Networks ──────────────────────────────────────────────────────────────────
+networks:
+  internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    driver: bridge
+  proxy:
+    external: true
+    name: ${TRAEFIK_NETWORK}

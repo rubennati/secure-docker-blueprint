@@ -6,8 +6,9 @@
 - **GitHub:** https://github.com/gethomepage/homepage
 - **Docs:** https://gethomepage.dev/
 - **License:** GPL-3.0
+- **Origin:** US · community (gethomepage) · non-EU
 - **Based on version:** `v0.10.9`
-- **Last checked:** 2026-04-17
+- **Last verified:** 2026-05-03 (v0.10.9)
 
 ## What we use
 

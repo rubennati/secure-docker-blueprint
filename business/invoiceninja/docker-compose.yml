@@ -1,10 +1,11 @@
 services:
   app:
-    build:
-      context: .
     image: invoiceninja/invoiceninja-debian:${APP_TAG}
     container_name: ${APP_CONTAINER}
     restart: unless-stopped
+    # NOTE: Invoice Ninja reads DB_PASSWORD and IN_PASSWORD directly from
+    # environment. A custom entrypoint to inject from Docker Secrets is
+    # the path to full compliance — tracked as pre-✅ work.
     env_file:
       - ./.env
     volumes:
@@ -13,6 +14,8 @@ services:
       # - ./supervisor/supervisord.conf:/etc/supervisor/conf.d/supervisord.conf:ro
       - app_public:/var/www/html/public
       - app_storage:/var/www/html/storage
+    security_opt:
+      - no-new-privileges:true
     depends_on:
       mysql:
         condition: service_healthy
@@ -20,6 +23,20 @@ services:
         condition: service_healthy
     networks:
       - internal
+    healthcheck:
+      test: ["CMD", "php", "-r", "echo 'ok';"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 256M
 
   nginx:
     image: nginx:${NGINX_TAG}
@@ -29,8 +46,11 @@ services:
       - ./nginx:/etc/nginx/conf.d:ro
       - app_public:/var/www/html/public:ro
       - app_storage:/var/www/html/storage:ro
+    security_opt:
+      - no-new-privileges:true
     depends_on:
-      - app
+      app:
+        condition: service_healthy
     networks:
       - internal
       - proxy
@@ -45,6 +65,20 @@ services:
       - "traefik.http.routers.${ROUTER_NAME}.middlewares=${MIDDLEWARES}"
       - "traefik.http.routers.${ROUTER_NAME}.service=${SERVICE_NAME}"
       - "traefik.http.services.${SERVICE_NAME}.loadbalancer.server.port=80"
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.25"
+          pids: 50
+        reservations:
+          memory: 32M
 
   mysql:
     image: mysql:${MYSQL_TAG}
@@ -57,6 +91,8 @@ services:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
     volumes:
       - mysql_data:/var/lib/mysql
+    security_opt:
+      - no-new-privileges:true
     networks:
       - internal
     healthcheck:
@@ -65,6 +101,14 @@ services:
       timeout: 5s
       retries: 10
       start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 256M
 
   redis:
     image: redis:${REDIS_TAG}
@@ -72,6 +116,8 @@ services:
     restart: unless-stopped
     volumes:
       - redis_data:/data
+    security_opt:
+      - no-new-privileges:true
     networks:
       - internal
     healthcheck:
@@ -80,6 +126,14 @@ services:
       timeout: 3s
       retries: 10
       start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.25"
+          pids: 50
+        reservations:
+          memory: 64M
 
 volumes:
   app_public:

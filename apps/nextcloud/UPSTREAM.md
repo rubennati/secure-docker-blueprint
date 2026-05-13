@@ -4,6 +4,8 @@
 
 - **Repo:** https://github.com/nextcloud/docker
 - **Example path:** `.examples/docker-compose/with-nginx-proxy/mariadb/fpm/`
+- **License:** AGPL-3.0
+- **Origin:** Germany · Nextcloud GmbH · EU
 - **Based on version:** Nextcloud 32 (fpm-alpine)
 - **Last checked:** 2026-04-13
 

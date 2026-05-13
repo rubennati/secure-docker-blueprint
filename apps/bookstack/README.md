@@ -1,6 +1,6 @@
 # BookStack
 
-> **Status: Draft — not yet live-tested.** First-pass import from inbox material.
+> **Status: ✅ Ready** — v25.02 · 2026-05-03
 
 Self-hosted wiki / knowledge base. Three-level structure: Shelves → Books → Chapters → Pages. Built on Laravel (PHP) with a MariaDB backend.
 
@@ -69,7 +69,6 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/login    # 200 OK
 
 ## Known Issues
 
-- **Live-tested: no.** Expect minor surprises, especially around first-run ownership.
 - **`DB_PWD_INLINE` duplicates the DB password** — BookStack's `DB_PASSWORD` env var has no `_FILE` support. The DB service reads `MYSQL_PASSWORD_FILE` from a Docker Secret (`.secrets/db_pwd.txt`), but BookStack needs the same value inline in `.env`. Setup step 4 syncs them. Mismatch = BookStack can't connect to DB.
 - **First boot is slow** — Laravel migrations run on first start (~60-90 seconds). Second start is fast.
 - **Upstream LSIO tag format** — `version-vXX.XX` tracks BookStack's semver (e.g. `v25.02` = BookStack 25.02). Alternatively `latest` for rolling updates (not recommended for reproducibility).

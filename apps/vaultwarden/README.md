@@ -1,5 +1,7 @@
 # Vaultwarden
 
+> **Status: ✅ Ready** — v1.35.7 · 2026-04-14
+
 Self-hosted Bitwarden-compatible password manager.
 
 ## Services

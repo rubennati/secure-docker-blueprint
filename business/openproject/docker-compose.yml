@@ -1,0 +1,224 @@
+# ─── Shared configuration (YAML anchor — not a service) ───────────────────────
+# All OpenProject process containers (web, worker, cron, seeder) use the same
+# slim image and base environment. This anchor avoids duplication.
+#
+# Services omitted from the upstream compose:
+#   proxy      — Traefik terminates TLS and routes directly to web:8080
+#   autoheal   — requires docker.sock direct mount (not permitted without exception)
+#   hocuspocus — real-time collaborative editing; omitted from this setup
+#
+x-op-app: &op-app
+  image: openproject/openproject:${APP_TAG}
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+  # Secrets are injected via entrypoint.sh because DATABASE_URL and
+  # SECRET_KEY_BASE embed credentials and cannot use _FILE variants.
+  entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
+  secrets:
+    - secret_key_base
+    - db_pwd
+  environment:
+    # Hostname OpenProject uses for link generation and emails.
+    # Must match the external domain users see in their browser.
+    OPENPROJECT_HOST__NAME: "${APP_TRAEFIK_HOST}"
+    OPENPROJECT_HTTPS: "true"
+    OPENPROJECT_HSTS: "true"
+    # Cache
+    OPENPROJECT_RAILS__CACHE__STORE: "memcache"
+    OPENPROJECT_CACHE__MEMCACHE__SERVER: "cache:11211"
+    # Passed to entrypoint.sh to build DATABASE_URL
+    OP_DB_USER: ${DB_USER}
+    OP_DB_NAME: ${DB_NAME}
+    # Language for initial seed data — only effective on first run
+    OPENPROJECT_DEFAULT__LANGUAGE: "${OPENPROJECT_DEFAULT_LANGUAGE:-en}"
+    # IMAP email receiving — disabled by default
+    IMAP_ENABLED: "false"
+    TZ: ${TZ}
+  volumes:
+    - ./config/entrypoint.sh:/config/entrypoint.sh:ro
+    - op_assets:/var/openproject/assets
+  networks:
+    - internal
+  depends_on:
+    db:
+      condition: service_healthy
+    cache:
+      condition: service_started
+
+# ──────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ─── One-shot: DB migrations + seed data, exits on success ────────────────
+  seeder:
+    <<: *op-app
+    container_name: ${CONTAINER_NAME_SEEDER}
+    # on-failure: restarts only if migrations fail; stays stopped on success
+    restart: on-failure
+    command: ["./docker/prod/seeder"]
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_started
+
+  # ─── Web: application server ───────────────────────────────────────────────
+  web:
+    <<: *op-app
+    container_name: ${CONTAINER_NAME_WEB}
+    command: ["./docker/prod/web"]
+    # hostname required for internal service-to-service routing
+    hostname: "${APP_TRAEFIK_HOST}"
+    networks:
+      - internal
+      - proxy
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_started
+      seeder:
+        condition: service_completed_successfully
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.service=${COMPOSE_PROJECT_NAME}"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8080"
+    healthcheck:
+      # /health_checks/default — standard OpenProject health endpoint (per upstream docs)
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health_checks/default"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 512M
+
+  # ─── Worker: background job processor ─────────────────────────────────────
+  worker:
+    <<: *op-app
+    container_name: ${CONTAINER_NAME_WORKER}
+    command: ["./docker/prod/worker"]
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_started
+      seeder:
+        condition: service_completed_successfully
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.50"
+          pids: 100
+        reservations:
+          memory: 256M
+
+  # ─── Cron: scheduled tasks (email digests, cleanup, exports) ──────────────
+  cron:
+    <<: *op-app
+    container_name: ${CONTAINER_NAME_CRON}
+    command: ["./docker/prod/cron"]
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_started
+      seeder:
+        condition: service_completed_successfully
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.25"
+          pids: 50
+        reservations:
+          memory: 128M
+
+  # ─── Cache: memcached ──────────────────────────────────────────────────────
+  cache:
+    image: memcached:${MEMCACHED_TAG}
+    container_name: ${CONTAINER_NAME_CACHE}
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - internal
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.25"
+          pids: 50
+        reservations:
+          memory: 32M
+
+  # ─── Database: PostgreSQL ──────────────────────────────────────────────────
+  db:
+    image: postgres:${DB_TAG}
+    container_name: ${CONTAINER_NAME_DB}
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_pwd
+      TZ: ${TZ}
+    secrets:
+      - db_pwd
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 256M
+
+# ─── Secrets ───────────────────────────────────────────────────────────────────
+secrets:
+  secret_key_base:
+    file: ./.secrets/secret_key_base.txt
+  db_pwd:
+    file: ./.secrets/db_pwd.txt
+
+# ─── Volumes ───────────────────────────────────────────────────────────────────
+volumes:
+  op_assets:
+    driver: local
+  db_data:
+    driver: local
+
+# ─── Networks ──────────────────────────────────────────────────────────────────
+networks:
+  internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    driver: bridge
+  proxy:
+    external: true
+    name: ${TRAEFIK_NETWORK}

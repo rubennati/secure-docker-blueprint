@@ -8,6 +8,43 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
+### Added
+
+- **Homepage** (`apps/homepage/`): v0.10.9 ready, status `🚧 → ✅`. Healthcheck added (`/api/healthcheck`).
+- **BookStack** (`apps/bookstack/`): v25.02 ready, status `🚧 → ✅`. Wiki, login, and page creation verified.
+- **Easy!Appointments** (`apps/easyappointments/`): v1.5.x ready, status confirmed ✅.
+- **Cal.diy** (`apps/caldiy/`): v6.2.0 ready, status `🚧 → ✅`. Full migration run and booking flow verified. Custom entrypoint injects all secrets and builds a safe `postgresql://` URL. TCP fallback healthcheck works around upstream `/api/health` incompatibility.
+
+### Removed
+
+- **Cal.com** (`apps/calcom/`): retired — Cal.com Inc. moved the production codebase to a proprietary licence. Replaced by `apps/caldiy/`.
+
+---
+
+## [0.5.1] — 2026-05-03
+
+### Fixed
+
+- **Nextcloud**: `app-internal` network was missing `internal: true` — database and Redis containers had unintended internet access despite being on an internal network
+- **Seafile CE**: four sidecar images (`sdoc-server`, `notification-server`, `seafile-md-server`, `thumbnail-server`) had floating `major.minor-latest` tags — replaced with `__REPLACE_ME__` pending verified tag lookup
+- **Immich**: removed `healthcheck: disable: false` on `machine-learning` and `app` containers — this is the default value and had no effect
+- **README**: Quick Start secret generation commands used `secrets/` instead of `.secrets/`; missing `| tr -d '\n'` in `openssl` pipeline
+- **README**: per-app layout diagram used `secrets/` instead of `.secrets/`
+- **README**: "Passwords never in environment variables" claim softened — deviations (Zammad, Immich) are documented per app
+- **security-baseline.md**: Hawser socket mount described as using a TCP proxy — clarified as a documented deviation; socket proxy remains the target once upstream supports it
+
+### Changed
+
+- **Tag pinning standard**: two-tier policy formalised — app images pinned to full digest or exact version; infrastructure images (DB, cache, proxy) pinned to `major.minor`
+- **Zammad**: inline DB password documented as a known deviation — Zammad (Rails) does not support `_FILE` env vars
+- **Portainer Agent**: added comment explaining the `/:/host:ro` full-filesystem mount
+- **ROADMAP**: v0.7–v1.1 milestones added; continuous app-testing principle documented; image vulnerability scanning, secrets rotation guidance, and backup restore testing added to the pre-v1.0 and v0.7 scope
+
+### Standards
+
+- **maintenance.md**: ✅ Ready Criteria formalised as a 9-point checklist
+- **maintenance.md**: `Last verified: YYYY-MM-DD (vX.Y.Z)` format standardised across all `UPSTREAM.md` files; all 10 live-tested apps updated
+
 ---
 
 ## [0.5.0] — 2026-05-03
@@ -306,7 +343,8 @@ Initial public release.
 - No CI workflows yet (compose validate, markdown lint, secret scan) — planned for 0.2.0
 - No automatic backup orchestration — planned in Evaluating section of ROADMAP
 
-[Unreleased]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/rubennati/secure-docker-blueprint/releases/tag/v0.4.0
 [0.3.0]: https://github.com/rubennati/secure-docker-blueprint/releases/tag/v0.3.0

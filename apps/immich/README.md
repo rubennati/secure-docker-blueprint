@@ -1,6 +1,6 @@
 # Immich
 
-> **Status: Draft — not yet live-tested.** First-pass import from inbox material.
+**Status: ✅ Ready** — v2.7.5 · 2026-05-11
 
 Self-hosted photo and video backup with machine-learning–based search, facial recognition, and mobile apps for iOS/Android. Four-service stack: web server, ML worker, Postgres (with pgvectors/vectorchord extensions for embeddings), and Valkey (Redis-compatible).
 
@@ -63,7 +63,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/api/server/ping   # 200 OK, {"res":"pong"}
 
 ## Known Issues
 
-- **Live-tested: no.** Expect minor surprises around first-run permissions and ML model download.
+- **Rate limiter must be `sec-2-spa`** — Immich's service worker pre-caches ~100 JS chunks in parallel on first install. The default `rl-soft` burst cap of 50 is too low; requests return 429 and the app stays on a black screen. `sec-2-spa` raises the burst to 200 (same average). Already set correctly in `.env.example`.
 - **`DB_PWD_INLINE` duplicates the DB password** — Immich-server's `DB_PASSWORD` env var has no `_FILE` support. The Postgres service reads `POSTGRES_PASSWORD_FILE` from a Docker Secret, but immich-server needs the same value inline in `.env`. Setup step 3 syncs them. Mismatch = connection refused.
 - **Custom Postgres image is required** — the vector extensions (pgvectors, vectorchord) used for photo similarity search are Immich-specific. Do NOT substitute a stock `postgres:14` image.
 - **Upload volume** — `UPLOAD_LOCATION` can be an NFS/SMB share. The `db` volume must be local storage (Postgres corrupts on network filesystems).

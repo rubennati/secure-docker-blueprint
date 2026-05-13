@@ -6,6 +6,9 @@
 - **Deploy manual (CE):** https://manual.seafile.com/13.0/docker/deploy_seafile_ce_with_docker/
 - **Image (main):** https://hub.docker.com/r/seafileltd/seafile-mc
 - **GitHub:** https://github.com/haiwen/seafile
+- **License:** AGPL-3.0
+- **Origin:** China · Seafile Ltd · non-EU
+- **Note:** Chinese company: data stored on self-hosted instances is under your jurisdiction, but the vendor is subject to Chinese law.
 - **Based on version:** Seafile CE `13.0.20` (multi-container distribution)
 - **Last checked:** 2026-04-16
 

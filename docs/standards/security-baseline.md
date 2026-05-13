@@ -7,7 +7,10 @@ security_opt:
   - no-new-privileges:true
 ```
 
-No exceptions. Prevents privilege escalation inside the container.
+Prevents privilege escalation inside the container. Required on every service.
+Exceptions must be documented in `scripts/ci/check-baseline.py` with a full
+justification (reason, alternatives considered, risk acceptance) — see
+[`docs/standards/ci.md`](ci.md).
 
 ## Recommended
 
@@ -110,13 +113,23 @@ Not supported by: OnlyOffice, Seafile, Vaultwarden, Dockhand (use Pattern 2).
 
 ### Pattern 2: Custom entrypoint
 
-When the image doesn't support `_FILE` (Vaultwarden, Dockhand, Hawser):
+When the image doesn't support `_FILE` (Vaultwarden, Dockhand, Hawser, Vikunja):
 
 ```sh
 #!/bin/sh
 set -e
-export DATABASE_URL="postgres://${DB_USER}:$(cat /run/secrets/DB_PWD)@db:5432/${DB_NAME}"
+# POSIX quirk: `export VAR=$(cmd)` masks cmd's exit status — export is a special
+# builtin whose own exit code (always 0) is what set -e sees. A failing cat is
+# silently ignored and VAR is set to empty. Use intermediate variables instead:
+_pwd="$(cat /run/secrets/db_pwd)"   # set -e fires here if cat fails
+export DATABASE_PASSWORD="$_pwd"
+unset _pwd
 exec "$@"
+```
+
+**Wrong — set -e does NOT catch a failing cat here:**
+```sh
+export DATABASE_PASSWORD="$(cat /run/secrets/db_pwd)"  # silent failure!
 ```
 
 ```yaml
@@ -157,7 +170,7 @@ app:
     DOCKER_HOST: tcp://socket-proxy:2375
 ```
 
-Exception: Hawser — needs socket access as its core function, but still uses a socket proxy for defence in depth.
+Exception: Hawser — needs direct socket access as its core function. Socket proxy is the target pattern but requires upstream TCP support (tracked in Hawser issue tracker). Until then, the direct mount is an accepted, documented deviation.
 
 ## Network Isolation
 

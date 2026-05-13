@@ -1,5 +1,9 @@
 # acme-certs
 
+> **Status: ✅ Ready** — cert-ops-tool 0.2.1 · 2026-05-04
+
+> **Note:** For services behind Traefik, use `core/traefik/` — it handles ACME natively. Use this tool for devices that don't go through Traefik (NAS, routers, mail servers, firewalls).
+
 Certificate issuing and renewal tool using [acme.sh](https://github.com/acmesh-official/acme.sh) with Cloudflare DNS-01 challenge.
 
 Use this for devices and services that don't go through Traefik — NAS (Synology, TrueNAS), routers (OPNsense, pfSense), mail servers, or any internal service that needs a valid TLS certificate.

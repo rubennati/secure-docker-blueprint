@@ -4,6 +4,8 @@
 
 - **Repo:** https://github.com/dani-garcia/vaultwarden
 - **Wiki:** https://github.com/dani-garcia/vaultwarden/wiki
+- **License:** GPL-3.0
+- **Origin:** Community · unofficial Bitwarden reimplementation · no single company
 - **Based on version:** 1.35.7
 - **Last checked:** 2026-04-14
 
@@ -16,7 +18,7 @@
 | ADMIN_TOKEN as Argon2 hash | Official recommendation — never store plain text |
 | `read_only: true` + `no-new-privileges` | Security hardening |
 | `tls-modern` (TLS 1.3 only) | Password manager deserves strictest TLS |
-| `sec-4` security middleware | Rate limiting + strict headers |
+| `sec-3e` security middleware | Strict headers + SAMEORIGIN (iframe-friendly for browser extension) + rate limiting |
 | `PASSWORD_HINTS_ALLOWED=false` | Prevent hint-based guessing |
 | `SIGNUPS_VERIFY=true` | Require email verification |
 | Rate limiting configured | Login + Admin panel rate limiting |

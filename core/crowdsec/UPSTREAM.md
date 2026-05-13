@@ -6,6 +6,8 @@
 - **Docker:** https://hub.docker.com/r/crowdsecurity/crowdsec
 - **Docs:** https://docs.crowdsec.net/
 - **Hub (Collections):** https://hub.crowdsec.net/
+- **License:** MIT
+- **Origin:** France · CrowdSec SAS · EU
 - **Based on version:** v1.7.7
 - **Last checked:** 2026-04-15
 

@@ -8,6 +8,16 @@ This keeps `business/` a meaningful category instead of a grab-bag. See [`docs/a
 
 ✅ Ready · 🚧 Draft · 📋 Planned
 
+### Project management & planning
+
+| App | Use case | Status | Notes |
+|---|---|---|---|
+| [OpenProject CE](openproject/) | Full PM — Gantt, kanban, work packages, time tracking, wikis | ✅ | 6-service stack; Trello + Jira alternative. CE = local accounts only, no SSO. |
+| [Vikunja](vikunja/) | Task management — kanban, lists, Gantt, table view | ✅ | 2-service stack; Authentik OIDC, SSO-ready |
+| Plane | Project management — issues, cycles, modules, analytics | 📋 | Jira alternative; AGPL-3.0; multi-service stack |
+| Leantime | PM for non-project-managers — goals, tasks, time tracking | 📋 | AGPL-3.0; all-in-one single container option available |
+| AppFlowy | Notion alternative — docs, databases, kanban, AI | 📋 | AGPL-3.0; ⚠️ only backend runs in Docker — clients connect via desktop/mobile app, not browser. Needs evaluation fit-check before including. |
+
 ### Billing & operations
 
 | App | Use case | Status | Notes |
@@ -22,8 +32,8 @@ This keeps `business/` a meaningful category instead of a grab-bag. See [`docs/a
 |---|---|---|---|
 | [Listmonk](listmonk/) | Newsletter, mailing lists, transactional mail | 🚧 | Two-router pattern documented: admin VPN-only + subscriber paths public |
 | [Matomo](matomo/) | GDPR-compliant web analytics for company / customer sites | 🚧 | Migrated from `apps/matomo/` — primary use-case is the business website |
-| [Ackee](ackee/) | Privacy-focused analytics — no cookies, GDPR by design | 📋 | Minimal alternative to Matomo; no files yet — status reflects reality |
-| [Plausible CE](plausible/) | Privacy-first analytics — clean UI, no cookie banner | 📋 | Middle ground between Matomo (heavy) and Ackee (minimal); AGPL-3.0 |
+| Ackee | Privacy-focused analytics — no cookies, GDPR by design | 📋 | Minimal alternative to Matomo; no files yet |
+| Plausible CE | Privacy-first analytics — clean UI, no cookie banner | 📋 | Middle ground between Matomo (heavy) and Ackee (minimal); AGPL-3.0 |
 
 ### Customer support
 

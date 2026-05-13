@@ -6,6 +6,7 @@
 - **GitHub:** https://github.com/matomo-org/matomo
 - **Docker Hub:** https://hub.docker.com/_/matomo (official image)
 - **License:** GPL-3.0
+- **Origin:** New Zealand · InnoCraft Ltd · non-EU
 - **Based on version:** `5-apache`
 - **Last checked:** 2026-04-17
 

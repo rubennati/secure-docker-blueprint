@@ -6,6 +6,7 @@
 - **GitHub:** https://github.com/photoview/photoview
 - **Docker Hub:** https://hub.docker.com/r/photoview/photoview
 - **License:** GPL-3.0
+- **Origin:** Denmark · community · EU
 - **Based on version:** `2` (tracks 2.x line)
 - **Last checked:** 2026-04-17
 

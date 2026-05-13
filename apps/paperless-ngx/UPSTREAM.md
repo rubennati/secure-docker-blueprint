@@ -7,8 +7,10 @@
 - **Docs:** https://docs.paperless-ngx.com/
 - **Release notes:** https://github.com/paperless-ngx/paperless-ngx/releases
 - **Config reference:** https://docs.paperless-ngx.com/configuration/
+- **License:** MIT
+- **Origin:** Community · no single company
 - **Based on version:** `2.20.13`
-- **Last checked:** 2026-04-16
+- **Last verified:** 2026-05-03 (v2.20.13)
 
 ## What we use
 

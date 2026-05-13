@@ -1,0 +1,110 @@
+name: CI
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Nightly at 03:00 UTC — catches stale configs even without commits
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+jobs:
+
+  # ─────────────────────────────────────────────
+  # 1. SECRET SCANNING
+  # ─────────────────────────────────────────────
+  secrets:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ─────────────────────────────────────────────
+  # 2. COMPOSE SYNTAX VALIDATION
+  # ─────────────────────────────────────────────
+  compose-validate:
+    name: Compose validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Validate all compose files
+        run: |
+          failed=0
+          while IFS= read -r file; do
+            dir=$(dirname "$file")
+            [ -f "$dir/.env.example" ] && cp "$dir/.env.example" "$dir/.env"
+            echo -n "  checking $file ... "
+            if docker compose -f "$file" config --quiet 2>/dev/null; then
+              echo "ok"
+            else
+              echo "FAIL"
+              docker compose -f "$file" config 2>&1 | head -20
+              failed=1
+            fi
+            [ -f "$dir/.env" ] && rm -f "$dir/.env"
+          done < <(find core apps business monitoring -name "docker-compose.yml" | sort)
+          exit $failed
+
+  # ─────────────────────────────────────────────
+  # 3. STRUCTURE CHECK
+  # ─────────────────────────────────────────────
+  structure:
+    name: Structure check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Check README, .env.example, no :latest
+        run: |
+          failed=0
+
+          echo "── README + .env.example ──────────────────"
+          while IFS= read -r compose; do
+            dir=$(dirname "$compose")
+            [[ "$dir" == *"templates"* ]] && continue
+            if [ ! -f "$dir/README.md" ]; then
+              echo "  MISSING README.md    : $dir"
+              failed=1
+            fi
+            if [ ! -f "$dir/.env.example" ]; then
+              echo "  MISSING .env.example : $dir"
+              failed=1
+            fi
+          done < <(find core apps business monitoring -name "docker-compose.yml" | sort)
+
+          echo "── :latest tags (non-commented lines) ─────"
+          while IFS= read -r file; do
+            # Match only actual image: lines — lines starting with # are comments
+            if grep -qP '^\s+image:\s+\S+:latest' "$file" 2>/dev/null; then
+              echo "  :latest found        : $file"
+              grep -nP '^\s+image:\s+\S+:latest' "$file"
+              failed=1
+            fi
+          done < <(find core apps business monitoring -name "docker-compose.yml" | sort)
+
+          [ "$failed" -eq 0 ] && echo "  all checks passed"
+          exit $failed
+
+  # ─────────────────────────────────────────────
+  # 4. SECURITY BASELINE (custom script)
+  # ─────────────────────────────────────────────
+  baseline:
+    name: Security baseline
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install PyYAML
+        run: pip install pyyaml --quiet
+
+      - name: Run baseline check
+        run: python3 scripts/ci/check-baseline.py "$GITHUB_STEP_SUMMARY"

@@ -6,6 +6,7 @@
 - **GitHub:** https://github.com/monicahq/monica
 - **Docker Hub:** https://hub.docker.com/_/monica (official image)
 - **License:** AGPL-3.0
+- **Origin:** Canada · Monica HQ · non-EU
 - **Based on version:** `5-apache`
 - **Last checked:** 2026-04-17
 

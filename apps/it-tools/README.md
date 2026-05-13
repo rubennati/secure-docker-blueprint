@@ -1,6 +1,6 @@
 # IT-Tools
 
-> **Status: Draft — not yet live-tested.** First-pass import from inbox material.
+> **Status: ✅ Ready** — v2024.10.22 · 2026-05-02
 
 A self-hosted collection of handy IT and developer tools: JSON/YAML formatters, hash and UUID generators, regex tester, base64/URL encoders, QR code generator, timezone converters, and dozens more. Pure static SPA — no backend, no database, no accounts.
 
@@ -48,7 +48,6 @@ The tool list loads immediately — no login, no setup page.
 
 ## Known Issues
 
-- **Live-tested: no.** Expect minor surprises on first deployment.
 - **Image tag** is a timestamped hash from upstream (`2025.7.18-a0bc346` style). Upstream doesn't publish semver tags, so bumping means picking a newer commit-tagged release. Check [upstream releases](https://github.com/CorentinTh/it-tools/releases) for the latest.
 - **Read-only root filesystem** breaks on some old Nginx variants — if the container refuses to start with permission errors, temporarily drop `read_only: true` to diagnose.
 

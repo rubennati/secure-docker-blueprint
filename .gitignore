@@ -42,3 +42,7 @@ Thumbs.db
 # Tool state (Claude Code, AI assistants)
 # -----------------------------------------
 .claude/
+
+# Python
+__pycache__/
+*.pyc

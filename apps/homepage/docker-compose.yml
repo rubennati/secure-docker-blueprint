@@ -31,6 +31,14 @@ services:
       # integration" for details.
       # - /var/run/docker.sock:/var/run/docker.sock:ro
 
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
     # --- Networking ---
     networks:
       - proxy-public

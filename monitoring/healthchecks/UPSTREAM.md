@@ -7,6 +7,7 @@
 - **GitHub:** https://github.com/healthchecks/healthchecks
 - **Docs:** https://healthchecks.io/docs/self_hosted/
 - **License:** BSD 3-Clause
+- **Origin:** Latvia · Pēteris Caune · EU
 - **Based on version:** `v3.13`
 - **Last checked:** 2026-04-17
 

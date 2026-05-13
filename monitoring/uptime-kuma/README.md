@@ -1,6 +1,6 @@
 # Uptime Kuma
 
-> **Status: Draft — not yet live-tested.**
+**Status: ✅ Ready — v1.23.17 · 2026-05-11**
 
 UI-driven uptime monitoring. Single container, SQLite backend, rich probe types (HTTP, TCP, DNS, docker, steam, …), public status pages, 90+ notification integrations.
 
@@ -10,7 +10,7 @@ Modern successor to Statping — more active (weekly releases), better UI, wider
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `louislam/uptime-kuma:1` | Web UI + probe scheduler + SQLite store |
+| `app` | `louislam/uptime-kuma:1.23.17` | Web UI + probe scheduler + SQLite store |
 
 Data lives in `./volumes/data/` (SQLite DB, monitor state, uploaded icons).
 
@@ -48,8 +48,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/        # 200 OK
 
 ## Known Issues
 
-- **Live-tested: no.**
-- **`APP_TAG=1` tracks v1.x stable.** v2 is beta — not recommended in production yet.
+- **`APP_TAG=1.23.17` is pinned.** v2 is beta — not recommended in production yet.
 - **Data volume ownership** — Kuma runs as UID 1000 inside the container. If you pre-create `volumes/data` as root, `chown -R 1000:1000` it.
 - **No built-in backup** — stop the app, `cp -r volumes/data/` to backup target, start again. Do NOT `pg_dump`-style-dump a running SQLite DB.
 - **Heavy monitor counts (>500)** can cause SQLite contention. Switch to MariaDB if that becomes a problem (env: `UPTIME_KUMA_DB_TYPE=mariadb`).

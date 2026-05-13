@@ -21,6 +21,10 @@ services:
     environment:
       TZ: ${TZ}
       BASE_URL: https://${APP_TRAEFIK_HOST}
+      # Socket.IO CORS — BASE_URL alone does not feed into Socket.IO's
+      # cors_allowed_origins check. Without this, WebSocket upgrades from
+      # the browser are rejected with "not an accepted origin" (HTTP 400).
+      SOCKETIO_CORS_ORIGINS: https://${APP_TRAEFIK_HOST}
       # Uncomment to use the playwright browser service for JS-heavy
       # sites. Without it, only plain HTTP fetches are supported
       # (fine for most static pages + APIs).

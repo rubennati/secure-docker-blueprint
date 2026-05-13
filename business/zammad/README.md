@@ -1,24 +1,24 @@
 # Zammad
 
-> **Status: Draft — not yet live-tested.**
+**Status: ✅ Ready — v7.0.1 · 2026-05-11**
 
 Self-hosted helpdesk / ticketing / customer support. Multi-channel (email, web form, Twitter, Telegram, SMS), SLA tracking, time accounting, knowledge base.
 
 ## Architecture
 
-Heavy stack — 7 services. Upstream default deployment.
+Heavy stack — 9 services. Upstream default deployment.
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `nginx` (= `app`) | `ghcr.io/zammad/zammad:6` + `zammad-nginx` | Web gateway, static assets, reverse-proxy to rails + websocket |
+| `nginx` (= `app`) | `ghcr.io/zammad/zammad:7.0.1` + `zammad-nginx` | Web gateway, static assets, reverse-proxy to rails + websocket |
 | `railsserver` | same + `zammad-railsserver` | Rails app (API + core logic) |
 | `websocket` | same + `zammad-websocket` | Agent live updates |
 | `scheduler` | same + `zammad-scheduler` | Background jobs (email import, SLA checks) |
 | `init` | same + `zammad-init` | One-shot DB migrations on every start |
 | `db` | `postgres:16-alpine` | Primary data store |
-| `redis` | `redis:7-alpine` | Background job queue |
-| `memcached` | `memcached:alpine` | Rails cache |
-| `elasticsearch` | `bitnami/elasticsearch:8` | Full-text ticket search |
+| `redis` | `redis:7.4-alpine` | Background job queue |
+| `memcached` | `memcached:1.6.41` | Rails cache |
+| `elasticsearch` | `docker.elastic.co/elasticsearch/elasticsearch:8.17.4` | Full-text ticket search |
 
 ## Resource requirements
 
@@ -48,7 +48,7 @@ echo "vm.max_map_count=262144" | sudo tee -a /etc/sysctl.d/99-zammad.conf
 docker compose up -d
 # First boot runs migrations — takes 3-5 minutes
 docker compose logs railsserver --follow
-# Watch for: "Puma starting" then "* Listening on http://0.0.0.0:3000"
+# Watch for: "* Listening on http://[::]:3000"
 
 # https://<APP_TRAEFIK_HOST>
 # First visit prompts setup wizard — create admin account + organization
@@ -64,12 +64,15 @@ docker compose logs railsserver --follow
 
 ## Known Issues
 
-- **Live-tested: no.**
 - **First boot is slow** — Elasticsearch warmup + schema migrations ~3-5 min.
 - **Elasticsearch vm.max_map_count** — required host-level sysctl. If not set, ES crashes on start.
-- **`APP_TAG=6` tracks the 6.x line** — pin to a specific release (`6.2.0` etc.) for reproducibility.
+- **`APP_TAG=7.0.1` is pinned** — update to a newer specific release tag for upgrades; do not use a floating tag like `7`.
+- **bitnami/elasticsearch is no longer free** — switched to `docker.elastic.co/elasticsearch/elasticsearch`. xpack security is disabled via env (`xpack.security.enabled=false`) since ES is on `app-internal` only.
+- **nginx needs DB credentials to pass the readiness check** — nginx runs `bundle exec rails r 'Translation.any? || raise'` in a loop until init has seeded the DB. This requires all `POSTGRESQL_*` env vars. The nginx service therefore merges `*zammad-env` (same as railsserver/scheduler) even though nginx itself doesn't query the DB at runtime.
+- **Setup wizard email step: select SMTP, not Local MTA** — no sendmail/postfix is present in the container. Choosing "Local MTA" fails with `exitstatus 1`. Select "SMTP - configure your own outgoing SMTP settings" or click Skip and configure later under Admin → Channels → Email.
+- **WebSocket console errors from browser extensions** — errors to `wss://sync.heylogin.app` (or similar third-party domains) during the setup wizard are from browser extensions (e.g. HeyLogin), not from Zammad. Ignore them.
+- **geo.zammad.com outbound calls fail silently** — init and scheduler attempt to fetch holiday calendar data from `https://geo.zammad.com/calendar`. This fails with `RuntimeError: 0` on networks with restricted outbound access. Non-fatal — Zammad continues normally.
 - **YAML anchor `x-shared`** reuses env + security across zammad-* services — cannot use per-service secrets here, but all use the same DB_PWD.
-- **`elasticsearch.healthcheck` uses `curl`** — if the bitnami image doesn't have curl, switch to a bash loop against `/dev/tcp/127.0.0.1/9200`.
 
 ## Email integration
 

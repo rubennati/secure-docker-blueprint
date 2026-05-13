@@ -5,6 +5,8 @@
 - **Image:** https://hub.docker.com/r/portainer/portainer-ce
 - **GitHub:** https://github.com/portainer/portainer
 - **Docs:** https://docs.portainer.io/
+- **License:** zlib
+- **Origin:** New Zealand · Portainer.io Ltd · non-EU
 - **Based on version:** `2.39.1` (Community Edition)
 - **Last checked:** 2026-04-16
 

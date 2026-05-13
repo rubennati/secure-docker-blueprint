@@ -5,11 +5,8 @@
 # If you run this in production, you accept that security fixes come from the
 # community, not from Cal.com, Inc.
 #
-# IMAGE CAVEAT: verify the exact image tag at https://cal.diy/docs/docker
-# before booting — the community edition publishes under a separate channel
-# from the commercial calcom/cal.com image. This compose mirrors the
-# `apps/calcom/` layout and will work once APP_IMAGE is pointed at the
-# correct upstream registry path.
+# Image: ghcr.io/rubennati/cal.diy (built from rubennati/cal.diy fork)
+# Source: https://github.com/rubennati/cal.diy
 # =============================================================================
 
 services:
@@ -18,13 +15,16 @@ services:
   # DATABASE (PostgreSQL)
   # --------------------------------------------------------
   db:
+    # --- Identity ---
     image: postgres:${DB_TAG}
     container_name: ${CONTAINER_NAME_DB}
     restart: unless-stopped
 
+    # --- Security ---
     security_opt:
       - no-new-privileges:true
 
+    # --- Configuration ---
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
@@ -33,12 +33,15 @@ services:
     secrets:
       - DB_PWD
 
+    # --- Storage ---
     volumes:
       - ./volumes/postgres:/var/lib/postgresql/data
 
+    # --- Networking ---
     networks:
       - app-internal
 
+    # --- Health & Observability ---
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
       interval: 10s
@@ -47,70 +50,155 @@ services:
       start_period: 15s
 
   # --------------------------------------------------------
+  # REDIS (session cache + job queue)
+  # --------------------------------------------------------
+  redis:
+    # --- Identity ---
+    image: redis:${REDIS_TAG}
+    container_name: ${CONTAINER_NAME_REDIS}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/redis:/data
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # --------------------------------------------------------
   # CAL.DIY (community edition)
   # --------------------------------------------------------
   app:
-    image: ${APP_IMAGE}:${APP_TAG}
+    # --- Identity ---
+    image: ghcr.io/rubennati/cal.diy:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
 
+    # --- Security ---
     security_opt:
       - no-new-privileges:true
 
+    # --- Configuration ---
+    # Custom entrypoint reads all secrets from /run/secrets/ before start.sh runs.
+    # Cal.diy has no native _FILE support for any of its secrets — see config/entrypoint.sh.
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
+    command: ["/calcom/scripts/start.sh"]
     environment:
       TZ: ${TZ}
       NODE_ENV: production
-      # URL
+      # start.sh uses DATABASE_HOST for wait-for-it health gate before Prisma migrations
+      DATABASE_HOST: db:5432
+      # DB credentials used by entrypoint.sh to build DATABASE_URL from Docker Secrets
+      DB_USER: ${DB_USER}
+      DB_NAME: ${DB_NAME}
+      # Public URLs — NEXTAUTH_URL must include /api/auth (prevents CLIENT_FETCH_ERROR)
       NEXT_PUBLIC_WEBAPP_URL: https://${APP_TRAEFIK_HOST}
-      NEXTAUTH_URL: https://${APP_TRAEFIK_HOST}
-      # Secrets — same _FILE support as Cal.com
-      NEXTAUTH_SECRET_FILE: /run/secrets/NEXTAUTH_SECRET
-      CALENDSO_ENCRYPTION_KEY_FILE: /run/secrets/ENCRYPTION_KEY
-      # Database — Prisma single DSN, no _FILE support
-      DATABASE_URL: "postgresql://${DB_USER}:${DB_PWD_INLINE}@db:5432/${DB_NAME}"
-      # Telemetry off
+      NEXT_PUBLIC_WEBSITE_URL: https://${APP_TRAEFIK_HOST}
+      NEXT_PUBLIC_EMBED_LIB_URL: https://${APP_TRAEFIK_HOST}/embed/embed.js
+      NEXTAUTH_URL: https://${APP_TRAEFIK_HOST}/api/auth
+      # Allowed hostnames — prevents host header injection; matches APP_TRAEFIK_HOST automatically
+      # Multiple hostnames: set ALLOWED_HOSTNAMES='"host1","host2"' in .env to override
+      ALLOWED_HOSTNAMES: '"${APP_TRAEFIK_HOST}"'
+      # Telemetry disabled
       CALCOM_TELEMETRY_DISABLED: "1"
-      # Licence — MIT community edition, no commercial key required
+      # Licence — MIT community edition
       NEXT_PUBLIC_LICENSE_CONSENT: agree
-      # Email — SMTP only (no SES / SendGrid fancy stuff in community edition)
+      # Branding — shown in UI and support links
+      NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME}
+      NEXT_PUBLIC_COMPANY_NAME: ${NEXT_PUBLIC_COMPANY_NAME}
+      NEXT_PUBLIC_SUPPORT_MAIL_ADDRESS: ${NEXT_PUBLIC_SUPPORT_MAIL_ADDRESS}
+      # Push notifications (VAPID) — required; app logs an error on every boot without these
+      # Generate: docker run --rm node:lts-alpine npx --yes web-push generate-vapid-keys
+      NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY}
+      # Legal — self-hosters should set these to their own policy pages
+      NEXT_PUBLIC_WEBSITE_PRIVACY_POLICY_URL: ${NEXT_PUBLIC_WEBSITE_PRIVACY_POLICY_URL}
+      NEXT_PUBLIC_WEBSITE_TERMS_URL: ${NEXT_PUBLIC_WEBSITE_TERMS_URL}
+      # Email — SMTP (EMAIL_SERVER_PASSWORD injected by entrypoint from Docker Secret)
       EMAIL_FROM: ${EMAIL_FROM}
+      EMAIL_FROM_NAME: ${EMAIL_FROM_NAME}
       EMAIL_SERVER_HOST: ${EMAIL_SERVER_HOST}
       EMAIL_SERVER_PORT: ${EMAIL_SERVER_PORT}
       EMAIL_SERVER_USER: ${EMAIL_SERVER_USER}
-      EMAIL_SERVER_PASSWORD_FILE: /run/secrets/SMTP_PASSWORD
+      # Logging (0=silly … 6=fatal; 3=info+ recommended for production)
+      NEXT_PUBLIC_LOGGER_LEVEL: ${NEXT_PUBLIC_LOGGER_LEVEL}
+      # Calendar integrations — optional; leave empty / false to disable
+      GOOGLE_LOGIN_ENABLED: ${GOOGLE_LOGIN_ENABLED}
+      GOOGLE_API_CREDENTIALS: ${GOOGLE_API_CREDENTIALS}
+      GOOGLE_CALENDAR_API_KEY: ${GOOGLE_CALENDAR_API_KEY}
+      OUTLOOK_LOGIN_ENABLED: ${OUTLOOK_LOGIN_ENABLED}
     secrets:
+      - DB_PWD
       - NEXTAUTH_SECRET
       - ENCRYPTION_KEY
+      - CRON_API_KEY
       - SMTP_PASSWORD
 
+    # --- Storage ---
     volumes:
-      - ./volumes/data:/app/data
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
 
+    # --- Networking ---
     networks:
       - proxy-public
       - app-internal
 
+    # --- Traefik ---
     labels:
+      # Router
       - "traefik.enable=true"
       - "traefik.docker.network=${TRAEFIK_NETWORK}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      # TLS
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Middlewares
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
 
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO/dev/null http://127.0.0.1:3000/api/health 2>&1 | grep -q '200\\|301\\|302' || nc -z 127.0.0.1 3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
 networks:
   proxy-public:
     external: true
+
   app-internal:
     name: ${COMPOSE_PROJECT_NAME}-internal
     internal: true
 
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
 secrets:
   DB_PWD:
     file: ./.secrets/db_pwd.txt
@@ -118,5 +206,7 @@ secrets:
     file: ./.secrets/nextauth_secret.txt
   ENCRYPTION_KEY:
     file: ./.secrets/encryption_key.txt
+  CRON_API_KEY:
+    file: ./.secrets/cron_api_key.txt
   SMTP_PASSWORD:
     file: ./.secrets/smtp_password.txt

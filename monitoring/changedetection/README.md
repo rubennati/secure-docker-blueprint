@@ -1,6 +1,6 @@
 # changedetection.io
 
-> **Status: Draft — not yet live-tested.**
+**Status: ✅ Ready — v0.55.3 · 2026-05-11**
 
 Self-hosted website content change detection. Different axis from uptime monitoring — answers "what changed on this page" instead of "is it up". Good for: restock alerts, price drops, ToS/policy diff tracking, external-dependency defacement detection.
 
@@ -10,7 +10,7 @@ Single-container deployment (HTTP fetcher only):
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `ghcr.io/dgtlmoon/changedetection.io:latest` | Watcher + diff engine + notification dispatcher |
+| `app` | `ghcr.io/dgtlmoon/changedetection.io:0.55.3` | Watcher + diff engine + notification dispatcher |
 
 For JavaScript-heavy sites (SPAs), uncomment the optional `browser` service in `docker-compose.yml` — it runs a Playwright Chrome instance.
 
@@ -70,8 +70,9 @@ Notification: Slack #compliance
 
 ## Known Issues
 
-- **Live-tested: no.**
-- **`APP_TAG=latest` is not reproducible** — pin to a dated tag for stable deployments.
+- **`WARNING: This is a development server`** in logs — changedetection.io uses Flask's built-in dev server as their official deployment method (no uWSGI/Gunicorn in front). Fine in practice: Traefik absorbs all external traffic; Flask never sees direct internet connections. Upstream decision, not actionable.
+- **Socket.IO WebSocket upgrade returns 500 in threading mode** — CORS is fixed via `SOCKETIO_CORS_ORIGINS`. The client connects via long-polling (working), but the WebSocket transport upgrade fails with 500 in `SOCKETIO_MODE=threading`. Real-time updates still work via polling. Cosmetic only: all watches run, diffs are stored, notifications fire.
+- **`APP_TAG=0.55.3` is pinned** — `latest` is not reproducible.
 - **No auth on first boot** — set a password immediately or front with Authentik.
 - **Diff storage grows fast** with high-churn pages — set "Max snapshots" per watch.
 - **JS-heavy sites need the optional browser service** — without it, you get the raw HTML which may be a near-empty SPA shell.

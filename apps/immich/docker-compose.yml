@@ -99,10 +99,7 @@ services:
     # --- Networking ---
     networks:
       - app-internal
-
-    # --- Health & Observability ---
-    healthcheck:
-      disable: false
+      - ml-outbound    # needs outbound internet to download CLIP models from HuggingFace
 
   # --------------------------------------------------------
   # IMMICH SERVER (web UI + API)
@@ -166,9 +163,6 @@ services:
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
 
-    # --- Health & Observability ---
-    healthcheck:
-      disable: false
 
 # --------------------------------------------------------
 # NETWORKS
@@ -179,7 +173,13 @@ networks:
 
   app-internal:
     name: ${COMPOSE_PROJECT_NAME}-internal
-    internal: true
+    internal: true      # DB + Redis: no outbound internet
+
+  ml-outbound:
+    name: ${COMPOSE_PROJECT_NAME}-ml-outbound
+    # No internal: true — ML needs outbound internet to download CLIP models
+    # from HuggingFace on first start. Once cached in volumes/model-cache,
+    # no further outbound calls are made.
 
 # --------------------------------------------------------
 # SECRETS

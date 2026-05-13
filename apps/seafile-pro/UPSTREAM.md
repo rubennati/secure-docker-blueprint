@@ -4,6 +4,9 @@
 
 - **Repo:** https://manual.seafile.com/13.0/docker/pro/deploy_seafile_pro_with_docker/
 - **Config source:** Official Seafile Pro Docker Compose files (inbox/seafile-pro_original)
+- **License:** Commercial
+- **Origin:** China · Seafile Ltd · non-EU
+- **Note:** Commercial license — self-hosting permitted under the paid plan. Chinese company: data stored on self-hosted instances is under your jurisdiction, but the vendor itself is subject to Chinese law.
 - **Based on version:** Seafile Pro 13.0
 - **Last checked:** 2026-04-13
 

@@ -1,6 +1,6 @@
 # Beszel
 
-> **Status: Draft — not yet live-tested.**
+**Status: ✅ Ready — v0.18.7 · 2026-05-11**
 
 Lightweight server monitoring with a hub + agent architecture. Go-based, ~20 MB RAM per agent.
 
@@ -10,8 +10,8 @@ The **hub SSHes INTO each agent** — not the other way around.
 
 | Service | Image | Role |
 |---------|-------|------|
-| `hub` | `henrygd/beszel:0` | Web UI + SQLite metric store + SSH client |
-| `agent` | `henrygd/beszel-agent:0` | SSH server that serves host metrics |
+| `hub` | `henrygd/beszel:0.18.7` | Web UI + SQLite metric store + SSH client |
+| `agent` | `henrygd/beszel-agent:0.18.7` | SSH server that serves host metrics |
 
 On first start the hub generates an Ed25519 keypair. The **public key** goes into each agent's `KEY` env var — this is how the agent decides which hub is allowed to connect. The hub then SSHes to each registered agent on port 45876 to pull CPU / RAM / disk / network / container stats.
 
@@ -82,7 +82,8 @@ Deploy [`monitoring/beszel-agent/`](../beszel-agent/) on each additional host. S
 
 ## Known Issues
 
-- **Live-tested: no.**
 - **Two-phase start on first install** — see [Setup](#setup). Subsequent starts need no manual steps.
-- **`APP_TAG=0` tracks pre-1.0** — Beszel is young (2024+). Pin to a specific version for stability once the project stabilises.
+- **`APP_TAG=0.18.7` is pinned** — Beszel is pre-1.0. Check [releases](https://github.com/henrygd/beszel/releases) before upgrading; update both hub and agent together.
+- **Both images have no healthcheck** — hub is scratch-based (no shell/wget), agent provides no health endpoint. Both use `healthcheck: disable: true`; hub status in the UI is the reliable liveness signal for all agents.
+- **`WARN HUB_URL not set`** in agent logs — harmless. This is for an optional WebSocket fallback mode; SSH mode is what we use.
 - **Host network agent** — if you run multiple agents on the same host (rare), set different `PORT` values per agent.

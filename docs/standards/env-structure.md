@@ -56,8 +56,22 @@ This section is second because it's what you change most often per deployment.
 APP_TAG=6.7-php8.3-fpm-alpine
 # mariadb (https://hub.docker.com/_/mariadb)
 DB_TAG=11.4
+# redis (https://hub.docker.com/_/redis)
+REDIS_TAG=7.4-alpine
 ```
-Always pin to a specific stable version. Never `:latest`.
+
+**Tag pinning rules — two tiers:**
+
+| Image type | Pin to | Example | Rationale |
+|---|---|---|---|
+| **App images** | `major.minor.patch` | `32.0.6-fpm-alpine` | Patch upgrades can include DB migrations or config changes |
+| **Infra images** | `major.minor` | `7.4-alpine`, `10.11`, `1.29-alpine` | Patch = security/bug fixes only; auto-update is safe |
+
+App images: Nextcloud, Ghost, Paperless-ngx, Authentik, n8n, NocoDB, Seafile, etc.
+
+Infra images: Redis, MariaDB, PostgreSQL, Nginx (reverse-proxy role), ClamAV, Gotenberg, Tika.
+
+Never `:latest`. Never major-only (e.g. `8`, `v2`, `32`).
 
 **Containers** — derived from COMPOSE_PROJECT_NAME:
 ```env
@@ -130,11 +144,12 @@ This section has no actual variables — only comments that document which secre
 - [ ] Header with app name, copy instruction, and "NEVER commit" warning
 - [ ] `COMPOSE_PROJECT_NAME` at the top, before all sections
 - [ ] Section order matches the standard above
-- [ ] All images pinned to specific version (never `:latest`)
+- [ ] App images pinned to `major.minor.patch` (never `:latest`, never major-only)
+- [ ] Infra images (redis, mariadb, postgres, nginx, clamav) pinned to `major.minor`
 - [ ] Image name + Docker Hub link as comment above each tag variable
 - [ ] Container names derived from `${COMPOSE_PROJECT_NAME}`
 - [ ] `TRAEFIK_NETWORK=proxy-public` in Domain & Traefik section
 - [ ] Domain placeholders use `example.com`
-- [ ] `TZ=Europe/Vienna` (not `TIMEZONE=`)
+- [ ] `TZ=UTC` (not `TIMEZONE=`)
 - [ ] No passwords or tokens — only in `.secrets/`
 - [ ] Secrets section lists all required secret files with generation commands including `| tr -d '\n'`

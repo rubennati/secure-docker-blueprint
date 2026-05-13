@@ -54,6 +54,15 @@ services:
     security_opt:
       - no-new-privileges:true
 
+    # Override the image's built-in healthcheck (curl http://127.0.0.1:8001).
+    # Symfony rejects Host: 127.0.0.1 as untrusted — pass the real hostname.
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf -H 'Host: ${APP_TRAEFIK_HOST}' http://127.0.0.1:8001/ || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
     environment:
       TZ: ${TZ}
       APP_ENV: prod

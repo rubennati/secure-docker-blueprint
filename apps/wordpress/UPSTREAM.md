@@ -4,6 +4,8 @@
 
 - **Image:** https://hub.docker.com/_/wordpress
 - **GitHub:** https://github.com/docker-library/wordpress
+- **License:** GPL-2.0
+- **Origin:** US · Automattic / WordPress Foundation · non-EU
 - **Based on version:** 6.8.3-php8.3-apache
 - **Last checked:** 2026-04-15
 

@@ -116,7 +116,7 @@ Presets that combine building blocks. Each level builds on the previous — high
 | Traefik Dashboard | `sec-4` + `acc-tailscale` | Sensitive admin UI, VPN-only |
 | Dockhand | `sec-4` + `acc-tailscale` | Admin tool, VPN-only |
 | Portainer | `sec-4` + `acc-tailscale` | Admin tool, VPN-only |
-| Vaultwarden | `sec-3e` + `acc-tailscale` | Password manager: strict + SAMEORIGIN (TODO: after live test) |
+| Vaultwarden | `sec-3e` + `acc-tailscale` | Password manager: strict + SAMEORIGIN (iframe-friendly for browser extension) |
 | OnlyOffice | `sec-2e` | Must be embeddable in iframes |
 | Nextcloud | `sec-3` + `acc-public` | Public-facing, hardened |
 | Paperless | `sec-3` + `acc-tailscale` | Hardened, VPN-only |

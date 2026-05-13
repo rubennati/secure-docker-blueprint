@@ -122,8 +122,14 @@ Only when the image doesn't support `_FILE` env vars:
 set -e
 
 # --- Secrets to env vars ---
-[ -f /run/secrets/DB_PWD ] && \
-  export DATABASE_PASSWORD="$(cat /run/secrets/DB_PWD)"
+# POSIX quirk: `export VAR=$(cmd)` masks cmd's exit status — use intermediate
+# variables so set -e correctly aborts if the secret file is missing.
+_pwd="$(cat /run/secrets/db_pwd)"   # set -e fires here if cat fails
+export DATABASE_PASSWORD="$_pwd"
+unset _pwd
+
+# Wrong pattern — set -e does NOT catch a failing cat:
+# export DATABASE_PASSWORD="$(cat /run/secrets/db_pwd)"  ← silent failure!
 
 # --- (Optional) One-time config injection ---
 # See Seafile's seahub_custom.py pattern for marker-based append
@@ -196,3 +202,4 @@ See `business/invoiceninja/UPSTREAM.md` as reference.
 | Seafile (all) | No | Entrypoint wrapper |
 | Vaultwarden | No | Entrypoint wrapper |
 | Ghost | No (partial) | Entrypoint wrapper |
+| Vikunja | No | Entrypoint wrapper — image is `FROM scratch`, add busybox utilities via multi-stage build |

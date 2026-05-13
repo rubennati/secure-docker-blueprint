@@ -53,8 +53,9 @@ every point stay at 🚧 until the gap is closed.
 7. Traefik routing confirmed working (HTTPS, correct middleware)
 
 **Documented**
-8. `UPSTREAM.md` present — source, license, `Last verified: YYYY-MM-DD (vX.Y.Z)`, upgrade checklist
-9. `.env.example` complete — all required fields present, no real domains or credentials as defaults
+8. `UPSTREAM.md` present — source, `Last verified: YYYY-MM-DD (vX.Y.Z)`, upgrade checklist
+9. `UPSTREAM.md` includes license — name (e.g. MIT, Apache 2.0, AGPL-3.0) and a note if it deviates from standard self-hosting use (see license policy in `ROADMAP.md`)
+10. `.env.example` complete — all required fields present, no real domains or credentials as defaults
 
 > **Note on rising bar:** Apps verified in earlier versions of the blueprint may not
 > meet all current criteria. When an app is re-verified, it is brought up to the
@@ -101,11 +102,13 @@ A chain is a defined sequence of files to check and update for a specific trigge
 
 | Step | File | Action |
 |---|---|---|
-| 1 | `<app>/.env.example` | Bump image tag — test on clean install first, then commit |
-| 2 | `<app>/UPSTREAM.md` | Update version reference and release notes link |
-| 3 | `<app>/docker-compose.yml` | Check if any compose changes are needed (new envs, removed features, healthcheck changes) |
-| 4 | `docs/bugfixes/` | If anything broke during upgrade, document it here |
-| 5 | `CHANGELOG.md` | Version bump documented |
+| 1 | Release notes | Read changelog — any breaking changes, removed features, required migrations? |
+| 2 | Security advisories | Check the upstream GitHub repo for open CVEs or security advisories against the current and new version (`Security` tab → `Advisories`) |
+| 3 | `<app>/.env.example` | Bump image tag — test on clean install first, then commit |
+| 4 | `<app>/UPSTREAM.md` | Update version reference and release notes link |
+| 5 | `<app>/docker-compose.yml` | Check if any compose changes are needed (new envs, removed features, healthcheck changes) |
+| 6 | `docs/bugfixes/` | If anything broke during upgrade, document it here |
+| 7 | `CHANGELOG.md` | Version bump documented |
 
 ---
 
@@ -149,7 +152,7 @@ Run the full Consistency Chain first, then:
 | 3 | `README.md` | Bump version badge (`v0.X.Y-blue`) |
 | 4 | All `🚧` entries | Is the draft status still honest? |
 | 5 | All `✅` entries | Were any broken by dependency updates since last test? |
-| 6 | GitHub | `gh release create vX.Y.Z --draft` — review, then publish |
+| 6 | GitHub | Minor versions only (`v0.X.0`): `gh release create vX.Y.0 --draft` — review, then publish. Patch tags (`vX.Y.Z`) are Git tags only — no GitHub Release needed. |
 
 ---
 
@@ -167,3 +170,8 @@ One row per session or chain run. The next session starts here — not at the to
 | 2026-05-02 | Session | `apps/ghost` | Final verification on clean install: all services healthy, admin setup + login via SMTP code working, ActivityPub overlay running (migrate exited 0, webhooks registered). Cleanup: overlay renamed `activitypub.yml`, dead `ops/mysql-init.sh` removed, bugfix doc completed (4 bugs + correct entrypoint snippet). ROADMAP last-updated bumped. | — |
 | 2026-05-02 | Version Chain | `apps/dashy` | Tag `3.1.1` never existed on Docker Hub. Bumped to `4.0.4`. Fixed healthcheck path (v4 added `.js` extension). Verified startup on clean install. | — |
 | 2026-05-02 | App Chain | `apps/dashy`, `apps/heimdall`, `apps/homarr` | Full App Chain run for all three. Version fixes: Dashy 3.1.1→4.0.4, Homarr 1.39.0→v1.60.0 (both tags never existed). Security baseline: cap_drop+:ro+resources on Dashy; resources+healthcheck on Heimdall (cap_drop skipped, s6-overlay); resources+healthcheck on Homarr (cap_drop skipped, runs as root). Env files aligned to standard. Status 🚧→✅ for all three. | — |
+| 2026-05-03 | App Chain | `core/authentik`, `apps/dashy`, `apps/heimdall`, `apps/paperless-ngx` | Authentik Forward-Auth integration live-tested end-to-end. Three bugs found and fixed: Traefik router priority=10 → 100 on path-scoped routers; Pattern 2 External host must include protected path for correct post-login redirect; SPA 429 on first load (NocoDB, n8n, Authentik login) — fixed with `rl-spa` (burst 200) + `sec-3-spa` chain + `/_static/` router split. Dashy + Heimdall protected via Pattern 1 (✅). Paperless `/admin` protected via Pattern 2 (✅). | — |
+| 2026-05-03 | Session | Release v0.5.0 | CHANGELOG `[Unreleased]` → `[0.5.0]`. ROADMAP: v0.5.0 → Shipped, v0.6.0 (CrowdSec) added. README badge bumped. Git tag + GitHub Release published. | — |
+| 2026-05-03 | Standards Chain | `docs/maintenance.md` | Added ✅ Ready Criteria (9-point checklist). Updated App Chain step 5 to `Last verified: YYYY-MM-DD (vX.Y.Z)` format. Updated Release Chain: badge bump + `--draft` flag. Updated all 10 live-tested UPSTREAM.md files: `Last checked` → `Last verified: DATE (vX.Y.Z)`. | — |
+| 2026-05-03 | Consistency | Entire repo | Full audit across 7 categories: 27 findings. Fixed HIGH: stale Draft banners (4 READMEs), portainer-agent + invoiceninja root README status 🚧, Ghost SMTP vendor hostname, env-structure.md TZ checklist, seafile-pro 6 rolling `-latest` tags, nextcloud major-only tags. Fixed MEDIUM: TZ=UTC in invoiceninja + seafile-pro, paperless-ngx tag pins, onlyoffice pin, 6× redis 7.4→7.4.7, ROADMAP Paperless stale entry, business README dead links, acme-certs deprecation notice, maintenance log gaps. | Open: 9 🚧 apps missing UPSTREAM.md; Invoice Ninja docker-compose needs security baseline pass before ✅; Vaultwarden deviation note pending. |
+| 2026-05-03 | Session | Release v0.5.1 | Fixed: Nextcloud network isolation, Seafile CE sidecar tag pinning, Immich healthcheck no-ops, README `.secrets/` path + `tr -d '\n'`, README feature claim softened, security-baseline Hawser deviation clarified, Zammad inline password deviation documented, Portainer Agent mount comment. Standards: two-tier tag pinning formalised, ✅ Ready Criteria added, `Last verified` format standardised. ROADMAP: v0.7–v1.1 milestones, image vulnerability scanning, secrets rotation, backup restore testing added. | — |
