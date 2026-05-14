@@ -1,0 +1,10 @@
+# Gitleaks configuration
+# https://github.com/gitleaks/gitleaks#configuration
+
+[allowlist]
+  description = "Historical example values in documentation"
+  commits = [
+    # core/traefik/README.md — CrowdSec bouncer key used as a documentation
+    # example in the CrowdSec setup section. Not a real secret.
+    "cdb795e",
+  ]
