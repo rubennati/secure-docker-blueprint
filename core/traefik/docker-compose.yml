@@ -50,6 +50,12 @@ services:
       ALLOW_STOP: 0
       ALLOW_RESTARTS: 0
 
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:2375/_ping >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
   # --------------------------------------------------------
   # TRAEFIK (Edge Router)
   # --------------------------------------------------------
@@ -58,7 +64,8 @@ services:
     container_name: ${TRAEFIK_CONTAINER_NAME}
     restart: unless-stopped
     depends_on:
-      - docker-socket-proxy
+      docker-socket-proxy:
+        condition: service_healthy
 
     security_opt:
       - no-new-privileges:true
