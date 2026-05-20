@@ -280,7 +280,7 @@ docker exec crowdsec cscli bouncers add traefik-bouncer
 cd /path/to/secure-docker-blueprint/core/traefik
 nano .env
 # Add or uncomment:
-#   CROWDSEC_BOUNCER_KEY=CmuiLn30RFNQkm+phT3Jc4u1ij5DZBA7MUvl1IG+zUE
+#   CROWDSEC_BOUNCER_KEY=<key-from-step-2>
 
 # -----------------------------------------------
 # Step 4: Enable the plugin in static config
@@ -409,6 +409,36 @@ Escalate security from `sec-2@file` to `sec-4@file` (hard rate limit).
 Switch the router's `certResolver` between `cloudflare-dns` and `httpResolver`.
 
 All changes are in `config/dynamic/*.yml` — Traefik picks them up automatically (file watcher is enabled).
+
+## Logging & Logrotate
+
+Traefik writes two log files into `volumes/logs/` (bind-mounted from the host):
+
+| File | What it contains |
+|------|-----------------|
+| `traefik.log` | Startup, config reload, TLS, errors |
+| `access.log` | Every HTTP request (JSON) |
+
+Docker does **not** rotate bind-mount files. Without logrotate, `access.log` grows unboundedly on busy servers.
+
+### Activate logrotate (one-time, on the host)
+
+```bash
+# Replace path with your actual deployment path
+sudo sed 's|/path/to/secure-docker-blueprint|/srv/docker|g' \
+  /srv/docker/core/traefik/config/logrotate/traefik \
+  | sudo tee /etc/logrotate.d/traefik
+
+# Verify
+cat /etc/logrotate.d/traefik
+
+# Dry-run to confirm it works
+sudo logrotate -d /etc/logrotate.d/traefik
+```
+
+The config rotates daily, keeps 7 days, compresses with gzip. The `postrotate` hook sends `USR1` to the Traefik container — Traefik reopens the log file after rotation (same mechanism as nginx). Without this signal, Traefik keeps writing to the already-rotated file.
+
+> **Note:** logrotate runs on the host, not inside the container. This is the correct approach for bind-mounted Docker log files — it is standard practice for any containerized app that writes logs to a host volume.
 
 ## Reset
 
