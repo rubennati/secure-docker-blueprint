@@ -110,6 +110,23 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/notification/
 - All secrets are Docker Secrets under `./.secrets/`. The wrapper entrypoint converts them to env vars inside the container — they never land in `.env`.
 - `no-new-privileges:true` on every service.
 
+## Access policy — OnlyOffice + SeaDoc require `acc-private`
+
+`acc-tailscale` blocks server-to-server callbacks from Docker containers (their IPs are RFC1918, not Tailscale). This breaks both OnlyOffice document editing and SeaDoc collaborative editing:
+
+- **OnlyOffice**: fetches and saves files via callback to Seafile's URL. The OnlyOffice container IP is not a Tailscale IP → Traefik blocks it → documents fail to open/save.
+- **SeaDoc**: makes internal API calls back to Seafile for token validation and file content. Same issue.
+
+**Fix: set `ACC_TAILSCALE` → `acc-private` in `.env`:**
+
+```env
+APP_TRAEFIK_ACCESS=acc-private
+```
+
+`acc-private` = Tailscale/VPN + LAN (RFC1918). Docker container IPs (172.x.x.x) fall into the LAN range and pass. External internet still blocked.
+
+> If you run Seafile without OnlyOffice and without SeaDoc, `acc-tailscale` works fine.
+
 ## Known Issues
 
 - **First boot is slow** (2–4 min). The main server's healthcheck uses `start_period: 180s` for this reason.
