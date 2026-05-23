@@ -73,6 +73,19 @@ docker compose logs seafile --follow
 # Password is the value in .secrets/seafile_admin_pwd.txt
 ```
 
+### WebDAV
+
+WebDAV is disabled by default. Seafile generates `seafdav.conf` on first boot with `enabled = false` — this is not controllable via `.env`. Enable it after first start:
+
+```bash
+docker compose exec seafile sed -i 's/enabled = false/enabled = true/' /opt/seafile/conf/seafdav.conf
+docker compose restart seafile
+```
+
+WebDAV is then reachable at `https://<APP_TRAEFIK_HOST>/seafdav/`. Mount in macOS Finder via **Go → Connect to Server** → `https://<APP_TRAEFIK_HOST>/seafdav/`.
+
+> **Note:** This change persists in the volume — it survives container restarts and recreates.
+
 ### Turning components off
 
 ```bash
