@@ -147,6 +147,8 @@ services:
       INNER_NOTIFICATION_SERVER_URL: http://notification-server:8083
       # --- OnlyOffice ---
       ONLYOFFICE_URL: https://${ONLYOFFICE_HOST}
+      # --- WebDAV ---
+      SEAFILE_ENABLE_WEBDAV: ${SEAFILE_ENABLE_WEBDAV}
       # --- SMTP ---
       SEAFILE_SMTP_HOST: ${SEAFILE_SMTP_HOST}
       SEAFILE_SMTP_PORT: ${SEAFILE_SMTP_PORT}
