@@ -84,6 +84,34 @@ Full list: [Tesseract language data](https://github.com/tesseract-ocr/tessdata)
 
 Default access is `acc-tailscale` + `sec-3` — Paperless typically holds personal documents, so VPN-only with strict headers is the right baseline. Switch to `acc-public` only if you intentionally want it on the open internet (and then consider adding SSO via `sso.yml`).
 
+### SMTP (optional)
+
+Used for: password reset emails, workflow notifications, document share links.
+
+```bash
+echo -n 'your-smtp-password' > .secrets/email_pwd.txt
+```
+
+Set in `.env`:
+
+```env
+PAPERLESS_EMAIL_HOST=smtp.example.com
+PAPERLESS_EMAIL_PORT=587
+PAPERLESS_EMAIL_HOST_USER=paperless@example.com
+PAPERLESS_EMAIL_USE_TLS=true
+PAPERLESS_EMAIL_FROM=Paperless <paperless@example.com>
+```
+
+For SSL on port 465: `PAPERLESS_EMAIL_USE_TLS=false` + `PAPERLESS_EMAIL_PORT=465`.
+
+Leave `PAPERLESS_EMAIL_HOST` empty to disable outgoing email entirely.
+
+Then restart:
+
+```bash
+docker compose up -d --force-recreate app
+```
+
 ### Enabling SSO (optional)
 
 Authentik must be running with an OAuth2/OIDC provider configured for Paperless.

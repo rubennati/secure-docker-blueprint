@@ -154,9 +154,17 @@ services:
       PAPERLESS_WEBSERVER_WORKERS: ${PAPERLESS_WORKERS}
       PAPERLESS_TASK_WORKERS: ${PAPERLESS_TASK_WORKERS}
       PAPERLESS_THREADS_PER_WORKER: ${PAPERLESS_THREADS}
+      # --- SMTP ---
+      PAPERLESS_EMAIL_HOST: ${PAPERLESS_EMAIL_HOST}
+      PAPERLESS_EMAIL_PORT: ${PAPERLESS_EMAIL_PORT}
+      PAPERLESS_EMAIL_HOST_USER: ${PAPERLESS_EMAIL_HOST_USER}
+      PAPERLESS_EMAIL_HOST_PASSWORD_FILE: /run/secrets/EMAIL_PWD
+      PAPERLESS_EMAIL_USE_TLS: ${PAPERLESS_EMAIL_USE_TLS}
+      PAPERLESS_EMAIL_FROM: ${PAPERLESS_EMAIL_FROM}
     secrets:
       - DB_PWD
       - SECRET_KEY
+      - EMAIL_PWD
 
     # --- Storage ---
     volumes:
@@ -231,3 +239,5 @@ secrets:
     file: ./.secrets/db_pwd.txt
   SECRET_KEY:
     file: ./.secrets/secret_key.txt
+  EMAIL_PWD:
+    file: ./.secrets/email_pwd.txt
