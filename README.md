@@ -55,6 +55,34 @@ docker compose up -d
 
 Every app follows the same workflow: copy `.env.example` → create secrets → `docker compose up -d`.
 
+## Security Model
+
+Every service in this blueprint enforces:
+
+| Rule | How |
+|------|-----|
+| No privilege escalation | `no-new-privileges:true` on every container |
+| Secrets isolated | Docker Secrets (`_FILE` or custom entrypoint); deviations documented per app |
+| No direct socket access | Socket Proxy with granular API filtering |
+| Network isolation | Internal networks for databases and backend services |
+| Read-only filesystem | Where the image supports it |
+| Minimal capabilities | `cap_drop: ALL` where possible |
+
+Three patterns for secret handling:
+
+| Scenario | Pattern |
+|----------|---------|
+| Image supports `_FILE` env vars | `POSTGRES_PASSWORD_FILE: /run/secrets/...` |
+| Image doesn't support `_FILE` | Custom entrypoint reads secret at runtime |
+| Secret embedded in JSON config | Env var in `.env` (gitignored) |
+
+## Requirements
+
+- **Docker** 24.0+ with Compose v2
+- **Linux** host (tested on Debian 12/13)
+- **Domain** with a DNS provider supported by Traefik (e.g. Cloudflare)
+- **Optional:** Tailscale for `acc-tailscale` access policies
+
 ## What's Included
 
 ### Core Infrastructure
@@ -74,19 +102,6 @@ Every app follows the same workflow: copy `.env.example` → create secrets → 
 | [Portainer Agent](core/portainer-agent/) | ✅ | Remote Docker agent for Portainer (multi-host) |
 
 Planned in `core/`: Keycloak (alternative / heavier IAM next to Authentik).
-
-### Repository layout
-
-Five top-level areas, each with a clear mandate. Per-category READMEs (`core/README.md`, `business/README.md`, `monitoring/README.md`, `backup/README.md`) describe what belongs where and why.
-New here? Start with the category README that best matches your goal: [Core Infrastructure](core/README.md), [Apps](apps/README.md), [Business](business/README.md), [Monitoring](monitoring/README.md), or [Backup](backup/README.md).
-
-| Directory | Scope |
-|---|---|
-| [`core/`](core/) | Infrastructure shared by everything — Traefik, CrowdSec, identity providers (Authentik + Keycloak planned), OnlyOffice, certs |
-| [`apps/`](apps/) | General-purpose self-hosted apps — equally useful for private homelab or a company |
-| [`business/`](business/) | Apps that only make sense in a company context — invoicing, helpdesk, newsletter, compliance |
-| [`monitoring/`](monitoring/) | Ops observability — uptime, metrics, content-change watching, disk SMART |
-| [`backup/`](backup/) | Ops backup — Kopia / Bareos / UrBackup, structurally separate because of privileged access + remote targets |
 
 ### Applications
 
@@ -219,26 +234,18 @@ See [`backup/README.md`](backup/README.md) for tool choices and the per-app isol
 
 Planned: Kopia, Borgmatic, Bareos, UrBackup.
 
-## Security Model
+### Repository layout
 
-Every service in this blueprint enforces:
+Five top-level areas, each with a clear mandate. Per-category READMEs (`core/README.md`, `business/README.md`, `monitoring/README.md`, `backup/README.md`) describe what belongs where and why.
+New here? Start with the category README that best matches your goal: [Core Infrastructure](core/README.md), [Apps](apps/README.md), [Business](business/README.md), [Monitoring](monitoring/README.md), or [Backup](backup/README.md).
 
-| Rule | How |
-|------|-----|
-| No privilege escalation | `no-new-privileges:true` on every container |
-| Secrets isolated | Docker Secrets (`_FILE` or custom entrypoint); deviations documented per app |
-| No direct socket access | Socket Proxy with granular API filtering |
-| Network isolation | Internal networks for databases and backend services |
-| Read-only filesystem | Where the image supports it |
-| Minimal capabilities | `cap_drop: ALL` where possible |
-
-Three patterns for secret handling:
-
-| Scenario | Pattern |
-|----------|---------|
-| Image supports `_FILE` env vars | `POSTGRES_PASSWORD_FILE: /run/secrets/...` |
-| Image doesn't support `_FILE` | Custom entrypoint reads secret at runtime |
-| Secret embedded in JSON config | Env var in `.env` (gitignored) |
+| Directory | Scope |
+|---|---|
+| [`core/`](core/) | Infrastructure shared by everything — Traefik, CrowdSec, identity providers (Authentik + Keycloak planned), OnlyOffice, certs |
+| [`apps/`](apps/) | General-purpose self-hosted apps — equally useful for private homelab or a company |
+| [`business/`](business/) | Apps that only make sense in a company context — invoicing, helpdesk, newsletter, compliance |
+| [`monitoring/`](monitoring/) | Ops observability — uptime, metrics, content-change watching, disk SMART |
+| [`backup/`](backup/) | Ops backup — Kopia / Bareos / UrBackup, structurally separate because of privileged access + remote targets |
 
 ## Project Structure
 
@@ -314,6 +321,18 @@ All services follow documented standards. See [docs/standards/](docs/standards/)
 - **[Security Baseline](docs/standards/security-baseline.md)** — required hardening, secret patterns, socket proxy rules
 - **[Networking](docs/standards/networking.md)** — network types, isolation rules, special cases
 
+## Dashboard
+
+Quick overview of all configured services:
+
+```bash
+./scripts/overview.sh
+```
+
+## Roadmap
+
+See [ROADMAP.md](ROADMAP.md) for planned features, services under evaluation, and future ideas.
+
 ## Adding a New App
 
 ```bash
@@ -323,25 +342,6 @@ cd apps/my-new-app
 ```
 
 See [docs/templates/README.md](docs/templates/README.md) for details.
-
-## Dashboard
-
-Quick overview of all configured services:
-
-```bash
-./scripts/overview.sh
-```
-
-## Requirements
-
-- **Docker** 24.0+ with Compose v2
-- **Linux** host (tested on Debian 12/13)
-- **Domain** with a DNS provider supported by Traefik (e.g. Cloudflare)
-- **Optional:** Tailscale for `acc-tailscale` access policies
-
-## Roadmap
-
-See [ROADMAP.md](ROADMAP.md) for planned features, services under evaluation, and future ideas.
 
 ## Contributing
 
