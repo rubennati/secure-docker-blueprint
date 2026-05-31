@@ -65,6 +65,7 @@ Five top-level areas, each with a clear mandate. Per-category READMEs (`core/REA
 The blueprint takes a **choice-matrix** approach: where several tools compete (dashboards, photo galleries, wikis, form builders), multiple options are included so you can test and pick what fits.
 
 **Status:** ✅ Ready · 🚧 Draft · 📋 Planned
+Status note: “✅ Ready” indicates a usable baseline setup; detailed operational maturity (backup/restore/security/version lifecycle) is tracked in [LIFECYCLE.md](LIFECYCLE.md).
 
 #### Dashboards & launchers
 
