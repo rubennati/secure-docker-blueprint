@@ -147,6 +147,12 @@ services:
       INNER_NOTIFICATION_SERVER_URL: http://notification-server:8083
       # --- OnlyOffice ---
       ONLYOFFICE_URL: https://${ONLYOFFICE_HOST}
+      # --- SMTP ---
+      SEAFILE_SMTP_HOST: ${SEAFILE_SMTP_HOST}
+      SEAFILE_SMTP_PORT: ${SEAFILE_SMTP_PORT}
+      SEAFILE_SMTP_USER: ${SEAFILE_SMTP_USER}
+      SEAFILE_SMTP_USE_TLS: ${SEAFILE_SMTP_USE_TLS}
+      SEAFILE_SMTP_FROM: ${SEAFILE_SMTP_FROM}
       # --- Time ---
       TIME_ZONE: ${TIMEZONE}
       TZ: ${TIMEZONE}
@@ -157,6 +163,7 @@ services:
       - JWT_KEY
       - REDIS_PWD
       - ONLYOFFICE_JWT_SECRET
+      - SEAFILE_SMTP_PWD
 
     # --- Storage ---
     volumes:
@@ -216,3 +223,5 @@ secrets:
     file: ./.secrets/redis_pwd.txt
   ONLYOFFICE_JWT_SECRET:
     file: ./.secrets/onlyoffice_jwt_secret.txt
+  SEAFILE_SMTP_PWD:
+    file: ./.secrets/smtp_pwd.txt

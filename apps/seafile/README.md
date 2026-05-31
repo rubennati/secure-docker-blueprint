@@ -73,6 +73,32 @@ docker compose logs seafile --follow
 # Password is the value in .secrets/seafile_admin_pwd.txt
 ```
 
+### SMTP
+
+Set the `SEAFILE_SMTP_*` variables in `.env` and create the password secret:
+
+```bash
+echo -n 'your-smtp-password' > .secrets/smtp_pwd.txt
+```
+
+SMTP is only active when `SEAFILE_SMTP_HOST` is set. Leave it empty to disable email.
+
+```env
+SEAFILE_SMTP_HOST=smtp.example.com
+SEAFILE_SMTP_PORT=587
+SEAFILE_SMTP_USER=seafile@example.com
+SEAFILE_SMTP_USE_TLS=true
+SEAFILE_SMTP_FROM=Seafile <seafile@example.com>
+```
+
+For SSL on port 465: set `SEAFILE_SMTP_USE_TLS=false` and `SEAFILE_SMTP_PORT=465`.
+
+> **Note:** `seahub_settings.py` is only written once on first boot. If you add SMTP after the first start, force a re-inject by removing the marker line and restarting:
+> ```bash
+> docker compose exec seafile sed -i '/# --- Blueprint custom settings ---/,$d' /shared/seafile/conf/seahub_settings.py
+> docker compose restart seafile
+> ```
+
 ### WebDAV
 
 Set `SEAFILE_ENABLE_WEBDAV=true` in `.env` to enable WebDAV at `https://<APP_TRAEFIK_HOST>/seafdav/`.
