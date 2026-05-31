@@ -14,6 +14,7 @@ Hardened configurations for 40+ services — standardized security baseline, Doc
 </div>
 
 > **Pre-1.0** — structure is stable and core services are ready to use, but paths, env variables, and defaults can still change before v1.0. See [ROADMAP.md](ROADMAP.md) for the v1.0 criteria.
+Quick Navigation: [Features](#features) · [Quick Start](#quick-start) · [Core Infrastructure](#core-infrastructure) · [Applications](#applications) · [Business apps](#business-apps) · [Monitoring](#monitoring) · [Backup](#backup)
 
 ---
 
@@ -27,6 +28,32 @@ Hardened configurations for 40+ services — standardized security baseline, Doc
 - **Template-based Config** — Traefik and dnsmasq configs rendered via `envsubst`
 - **Modular** — use any combination of services, each works independently
 - **Zero Hardcoded Values** — everything configurable via `.env`
+
+## Quick Start
+
+```bash
+# Clone
+git clone https://github.com/your-user/secure-docker-blueprint.git
+cd secure-docker-blueprint
+
+# 1. Start Traefik (required for all apps)
+cd core/traefik
+cp .env.example .env              # Edit: domain, email, DNS provider
+./ops/scripts/render.sh           # Render config templates
+docker compose up -d
+
+# 2. Add an app (e.g. Vaultwarden)
+cd ../../apps/vaultwarden
+cp .env.example .env              # Edit: domain, security level
+
+mkdir -p .secrets
+openssl rand -base64 32 | tr -d '\n' > .secrets/db_pwd.txt
+openssl rand -base64 32 | tr -d '\n' > .secrets/db_root_pwd.txt
+
+docker compose up -d
+```
+
+Every app follows the same workflow: copy `.env.example` → create secrets → `docker compose up -d`.
 
 ## What's Included
 
@@ -51,6 +78,7 @@ Planned in `core/`: Keycloak (alternative / heavier IAM next to Authentik).
 ### Repository layout
 
 Five top-level areas, each with a clear mandate. Per-category READMEs (`core/README.md`, `business/README.md`, `monitoring/README.md`, `backup/README.md`) describe what belongs where and why.
+New here? Start with the category README that best matches your goal: [Core Infrastructure](core/README.md), [Apps](apps/README.md), [Business](business/README.md), [Monitoring](monitoring/README.md), or [Backup](backup/README.md).
 
 | Directory | Scope |
 |---|---|
@@ -65,7 +93,7 @@ Five top-level areas, each with a clear mandate. Per-category READMEs (`core/REA
 The blueprint takes a **choice-matrix** approach: where several tools compete (dashboards, photo galleries, wikis, form builders), multiple options are included so you can test and pick what fits.
 
 **Status:** ✅ Ready · 🚧 Draft · 📋 Planned
-Status note: “✅ Ready” indicates a usable baseline setup; detailed operational maturity (backup/restore/security/version lifecycle) is tracked in [LIFECYCLE.md](LIFECYCLE.md).
+Status note: “✅ Ready” indicates a usable baseline setup; detailed operational maturity (backup, restore, security posture, and version lifecycle) is tracked in [LIFECYCLE.md](LIFECYCLE.md).
 
 #### Dashboards & launchers
 
@@ -190,32 +218,6 @@ Planned: Statping, ciao, Checkmate, Zabbix, Grafana + Prometheus, Scrutiny.
 See [`backup/README.md`](backup/README.md) for tool choices and the per-app isolation principle.
 
 Planned: Kopia, Borgmatic, Bareos, UrBackup.
-
-## Quick Start
-
-```bash
-# Clone
-git clone https://github.com/your-user/secure-docker-blueprint.git
-cd secure-docker-blueprint
-
-# 1. Start Traefik (required for all apps)
-cd core/traefik
-cp .env.example .env              # Edit: domain, email, DNS provider
-./ops/scripts/render.sh           # Render config templates
-docker compose up -d
-
-# 2. Add an app (e.g. Vaultwarden)
-cd ../../apps/vaultwarden
-cp .env.example .env              # Edit: domain, security level
-
-mkdir -p .secrets
-openssl rand -base64 32 | tr -d '\n' > .secrets/db_pwd.txt
-openssl rand -base64 32 | tr -d '\n' > .secrets/db_root_pwd.txt
-
-docker compose up -d
-```
-
-Every app follows the same workflow: copy `.env.example` → create secrets → `docker compose up -d`.
 
 ## Security Model
 
