@@ -117,6 +117,12 @@ docker compose up -d --force-recreate seafile
 
 Mount in macOS Finder: **Go → Connect to Server** → `https://<APP_TRAEFIK_HOST>/seafdav/`.
 
+**Credentials:**
+- **Username**: your Seafile email address (e.g. `user@example.com`)
+- **Password**: your normal Seafile account password — not the WebDAV token shown in the profile UI
+
+The WebDAV token shown under Settings → WebDAV in the Seafile UI is an alternative credential that may not work depending on the Seafile version. Use the account password if the token fails.
+
 ### Turning components off
 
 ```bash
