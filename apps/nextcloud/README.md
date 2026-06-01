@@ -65,9 +65,24 @@ docker compose exec -u www-data app php occ config:system:set default_phone_regi
 ## Verify
 
 ```bash
-docker compose ps                              # All five services healthy
+# All five services healthy
+docker compose ps
+
+# Nextcloud installed and reachable
 docker compose exec -u www-data app php occ status
+
+# Confirm trusted proxies are set correctly
 docker compose exec -u www-data app php occ config:system:get trusted_proxies
+
+# Confirm Redis is reachable and the correct policy is active
+docker compose exec redis redis-cli -a "$REDIS_PASSWORD" CONFIG GET maxmemory-policy
+
+# Confirm PHP-FPM pool config was applied
+docker compose exec app php-fpm -tt 2>&1 | grep -E "max_children|pm ="
+
+# Confirm MariaDB flags are active
+docker compose exec db mariadb -u root -p"$(cat .secrets/db_root_pwd.txt)" \
+  -e "SHOW VARIABLES LIKE 'innodb_buffer_pool_size';"
 ```
 
 Check the admin overview at `https://<APP_TRAEFIK_HOST>/settings/admin/overview` — it should show no warnings about reverse proxy or cache configuration.
@@ -99,6 +114,52 @@ ${COMPOSE_PROJECT_NAME}-dav@docker,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECU
 ```
 
 The `-dav` middleware rewrites `/.well-known/caldav` and `/.well-known/carddav` to `/remote.php/dav/` so mobile clients auto-discover correctly.
+
+## Server sizing and tuning rationale
+
+This configuration is tuned for a **Hetzner CPX32** (4 vCPU / 8 GB RAM / 160 GB SSD) running a small business collaboration workload: document editing via OnlyOffice, team folders, and normal file sync. It is not intended as a large public file hosting platform.
+
+### Upload limits
+
+`PHP_UPLOAD_LIMIT=128M` and `client_max_body_size 128M` are set conservatively. 128 MB covers all normal business document workflows. Keeping the limit low reduces abuse surface and memory pressure during concurrent uploads. Both values must always match — if you raise one, raise the other.
+
+### PHP memory limit
+
+`PHP_MEMORY_LIMIT=1024M` is generous for this use case. Normal Nextcloud requests use 100–300 MB. The higher limit provides headroom for preview generation and full-text indexing without risking per-request memory exhaustion.
+
+### MariaDB
+
+`--innodb-buffer-pool-size=1G` keeps frequently accessed Nextcloud tables (`oc_filecache`, `oc_activity`, `oc_share`) in memory and reduces read I/O. The Docker image default is 128 MB, which is too small for a Nextcloud database under normal load.
+
+`--innodb-log-file-size=256M` — Nextcloud produces a high rate of small writes: every file access updates `oc_filecache`, every user action appends to `oc_activity`, and file locking generates continuous `INSERT`/`DELETE` cycles in `oc_locks`. The InnoDB redo log buffers these writes before they are flushed to the data files. When the log fills, InnoDB triggers a checkpoint (synchronous flush), which stalls all writes until the flush completes. The default in MariaDB 10.11 is approximately 96 MB. With Nextcloud's write pattern on an active team instance, this fills quickly and produces periodic I/O stalls. 256 MB extends the time between forced checkpoints and smooths write latency. **Operational impact:** on the first restart after adding this flag, MariaDB automatically resizes the redo log. This is safe and handled internally — no manual steps required. On a 160 GB SSD the resize takes a few seconds.
+
+`--max-connections=200` — explicitly set to match the PHP-FPM pool size (10 workers, both app and cron) with significant headroom for monitoring and admin connections.
+
+`--innodb-buffer-pool-instances` was **not** added — it was removed in MariaDB 10.11 and has no effect. Using it would generate a startup warning.
+
+### PHP-FPM worker pool
+
+The default Nextcloud Docker image ships with `pm.max_children=5`. On this server, cron jobs run every 5 minutes and consume 1–2 workers for 30–120 seconds (file scanning, preview generation, notifications). With only 5 workers, this exhausts the pool during cron execution and causes 502/504 errors that resolve 1–3 minutes later — the characteristic intermittent outage pattern.
+
+`php-fpm/zz-nextcloud-pool.conf` overrides the pool to `pm.max_children=10`. This file is mounted read-only into both `app` and `cron`. It is loaded after the image's own `zz-docker.conf` (alphabetical order: `zz-nextcloud-pool.conf` > `zz-docker.conf`) so it takes precedence. See the file itself for the full sizing calculation.
+
+**Verify the mount path before restarting:**
+```bash
+docker compose exec app ls /usr/local/etc/php-fpm.d/
+# Expected: docker.conf  www.conf  zz-docker.conf  zz-nextcloud-pool.conf
+```
+
+### Redis
+
+`maxmemory 512mb` — raised from the previous 256 MB. Nextcloud uses Redis for file locking, session storage, and transient cache. 512 MB provides adequate headroom for a small team workload without putting meaningful pressure on the 8 GB server.
+
+`maxmemory-policy noeviction` — when Redis reaches its memory limit, it returns an error on new writes rather than silently evicting existing data. This is the stability-first choice:
+
+- Nextcloud handles Redis OOM errors gracefully: it falls back to database-based locking and continues operating in a degraded but correct state.
+- The alternative policies (`allkeys-lru`, `volatile-lru`) would silently remove active file locks or sessions under memory pressure, causing data races or unexpected logouts with no visible error.
+- With 512 MB and a small team workload, the memory limit should not be reached under normal operation. If it is, the OOM error is a visible, actionable signal to increase `maxmemory`.
+
+**AOF / append-only persistence** is not enabled. RDB persistence (default) is sufficient here. If Redis restarts, active PHP sessions are lost (users are logged out) and in-progress file locks expire. This is acceptable for a small team setup. Enabling AOF adds continuous fsync I/O overhead without a proportionate benefit for this use case.
 
 ## Known Issues
 
