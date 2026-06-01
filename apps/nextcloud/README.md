@@ -53,13 +53,46 @@ Default access policy is `acc-public` + `sec-3` — public-facing, hardened head
 
 ### Post-install (recommended)
 
-After the browser-based setup, run these once to clear Nextcloud's default warnings:
+After the browser-based setup, run these once to clear Nextcloud's default warnings and apply stable defaults:
 
 ```bash
+# Fix data directory ownership
 docker compose exec app chown -R www-data:www-data /var/www/html/data
+
+# Maintenance window: run heavy background jobs at 01:00 UTC
 docker compose exec -u www-data app php occ config:system:set maintenance_window_start --value=1 --type=integer
+
+# Repair tasks (safe to run, clears stale warnings)
 docker compose exec -u www-data app php occ maintenance:repair --include-expensive
+
+# Set your region for phone number formatting
 docker compose exec -u www-data app php occ config:system:set default_phone_region --value="AT"
+
+# Log level: 2 = Warning. Lower values (0=Debug, 1=Info) produce very large logs.
+docker compose exec -u www-data app php occ config:system:set loglevel --value=2 --type=integer
+```
+
+**If OnlyOffice is installed**, also run these immediately after enabling the app. See the [OnlyOffice integration notes](#onlyoffice-integration-notes) section for the full explanation:
+
+```bash
+# Disable OnlyOffice preview/thumbnail generation (keep document editing enabled)
+docker compose exec -u www-data app php occ config:app:set onlyoffice preview --value="false"
+
+# Verify
+docker compose exec -u www-data app php occ config:app:get onlyoffice preview
+# Expected output: false
+```
+
+**Conservative preview providers** — limit thumbnail generation to fast, safe formats. Avoid video, Office, and PDF providers that can block PHP-FPM workers:
+
+```bash
+docker compose exec -u www-data app php occ config:system:set enabledPreviewProviders 0 --value="OC\\Preview\\Image"
+docker compose exec -u www-data app php occ config:system:set enabledPreviewProviders 1 --value="OC\\Preview\\TXT"
+docker compose exec -u www-data app php occ config:system:set enabledPreviewProviders 2 --value="OC\\Preview\\MarkDown"
+docker compose exec -u www-data app php occ config:system:set enabledPreviewProviders 3 --value="OC\\Preview\\OpenDocument"
+
+# Verify
+docker compose exec -u www-data app php occ config:system:get enabledPreviewProviders
 ```
 
 ## Verify
@@ -160,6 +193,115 @@ docker compose exec app ls /usr/local/etc/php-fpm.d/
 - With 512 MB and a small team workload, the memory limit should not be reached under normal operation. If it is, the OOM error is a visible, actionable signal to increase `maxmemory`.
 
 **AOF / append-only persistence** is not enabled. RDB persistence (default) is sufficient here. If Redis restarts, active PHP sessions are lost (users are logged out) and in-progress file locks expire. This is acceptable for a small team setup. Enabling AOF adds continuous fsync I/O overhead without a proportionate benefit for this use case.
+
+## OnlyOffice integration notes
+
+OnlyOffice document **editing** works well and should remain enabled. The integration allows users to open and collaboratively edit `.docx`, `.xlsx`, `.pptx`, and similar formats directly in the browser.
+
+OnlyOffice **preview and thumbnail generation** is a separate feature that causes significant stability problems and should be disabled for small business setups.
+
+### Why preview generation causes problems
+
+When a user opens a folder containing PDFs, Nextcloud requests a thumbnail for each file. With OnlyOffice acting as a preview provider, each PDF thumbnail triggers a `POST /converter` request to the OnlyOffice DocumentServer. OnlyOffice converts the PDF to JPEG using a headless document pipeline. This is slow, resource-intensive, and blocks:
+
+- The PHP-FPM worker that initiated the request (held for up to 120 seconds per timeout)
+- The nginx fastcgi slot waiting for a response
+- The user's browser, which shows the folder as loading indefinitely
+
+Observed log signatures:
+
+```
+# Nextcloud log (nextcloud.log or occ log:watch)
+app: onlyoffice
+message: getConvertedUri: from pdf to jpeg
+POST https://office.<domain>/converter → 504 Gateway Timeout
+
+# OnlyOffice / nginx log
+POST /converter?shardKey=thumb_...
+upstream timed out while reading response header from upstream
+whole request cycle timeout: 2m
+```
+
+Neither PHP-FPM workers, MariaDB, Redis, CPU, nor RAM are at fault. The bottleneck is the OnlyOffice converter itself. Increasing timeouts makes the hang longer, not shorter.
+
+### Recommended configuration
+
+Disable OnlyOffice preview generation. Document editing is unaffected.
+
+```bash
+docker compose exec -u www-data app php occ config:app:set onlyoffice preview --value="false"
+
+# Verify
+docker compose exec -u www-data app php occ config:app:get onlyoffice preview
+# Expected: false
+```
+
+Also restrict the global preview providers to fast, lightweight formats only:
+
+```bash
+docker compose exec -u www-data app php occ config:system:set enabledPreviewProviders 0 --value="OC\\Preview\\Image"
+docker compose exec -u www-data app php occ config:system:set enabledPreviewProviders 1 --value="OC\\Preview\\TXT"
+docker compose exec -u www-data app php occ config:system:set enabledPreviewProviders 2 --value="OC\\Preview\\MarkDown"
+docker compose exec -u www-data app php occ config:system:set enabledPreviewProviders 3 --value="OC\\Preview\\OpenDocument"
+```
+
+This leaves document editing fully functional. PDF and Office file thumbnails will not be generated.
+
+### Follow-up
+
+OnlyOffice DocumentServer performance itself (internal URL resolution, reverse proxy path, converter sizing) should be reviewed separately if document editing latency becomes a concern. Disabling previews is the stable workaround; it does not address the root cause of slow OnlyOffice conversion.
+
+---
+
+## Troubleshooting
+
+### Nextcloud appears to hang when users open folders
+
+**Symptoms:** Folder contents load very slowly or indefinitely. The browser spinner runs for 30–120 seconds. After the timeout, folders may load or Nextcloud may show an error.
+
+**Before changing any configuration, check these in order:**
+
+**Step 1 — Check `docker stats` first.** Confirm the bottleneck is not CPU or RAM exhaustion before assuming it is a configuration problem.
+
+```bash
+docker stats --no-stream
+```
+
+If all containers show low CPU and memory is not near the limit, the problem is not resource exhaustion.
+
+**Step 2 — Check PHP-FPM worker availability.**
+
+```bash
+docker compose exec app php-fpm -tt 2>&1 | grep -E "max_children|pm ="
+```
+
+If workers are frequently at capacity, increase `pm.max_children` in `php-fpm/zz-nextcloud-pool.conf`. Do not blindly increase timeouts — they make the hang last longer, not shorter.
+
+**Step 3 — Check the Nextcloud log for OnlyOffice preview requests.**
+
+```bash
+docker compose exec -u www-data app php occ log:watch
+```
+
+Look for:
+```
+app: onlyoffice
+getConvertedUri: from pdf to jpeg
+```
+
+If this appears when users open folders, the problem is OnlyOffice preview generation. Apply the fix in the [OnlyOffice integration notes](#onlyoffice-integration-notes) section.
+
+**Step 4 — Check the OnlyOffice / nginx log for converter timeouts.**
+
+```
+POST /converter?shardKey=thumb_...
+upstream timed out while reading response header from upstream
+whole request cycle timeout: 2m
+```
+
+If this appears, OnlyOffice is the bottleneck. Disabling OnlyOffice previews resolves this immediately without changing any timeout values.
+
+---
 
 ## Known Issues
 
