@@ -98,7 +98,8 @@ docker compose exec -u www-data app php occ config:system:get enabledPreviewProv
 ## Verify
 
 ```bash
-# All five services healthy
+# Container health and resource usage
+docker stats --no-stream
 docker compose ps
 
 # Nextcloud installed and reachable
@@ -116,6 +117,12 @@ docker compose exec app php-fpm -tt 2>&1 | grep -E "max_children|pm ="
 # Confirm MariaDB flags are active
 docker compose exec db mariadb -u root -p"$(cat .secrets/db_root_pwd.txt)" \
   -e "SHOW VARIABLES LIKE 'innodb_buffer_pool_size';"
+
+# Confirm OnlyOffice preview is disabled (if OnlyOffice is installed)
+docker compose exec -u www-data app php occ config:app:get onlyoffice preview
+
+# Confirm global preview setting
+docker compose exec -u www-data app php occ config:system:get enable_previews
 ```
 
 Check the admin overview at `https://<APP_TRAEFIK_HOST>/settings/admin/overview` — it should show no warnings about reverse proxy or cache configuration.
@@ -194,6 +201,47 @@ docker compose exec app ls /usr/local/etc/php-fpm.d/
 
 **AOF / append-only persistence** is not enabled. RDB persistence (default) is sufficient here. If Redis restarts, active PHP sessions are lost (users are logged out) and in-progress file locks expire. This is acceptable for a small team setup. Enabling AOF adds continuous fsync I/O overhead without a proportionate benefit for this use case.
 
+### Traefik security profile
+
+`APP_TRAEFIK_SECURITY=sec-3-spa` is the recommended default for Nextcloud, not the generic `sec-3`.
+
+Nextcloud generates significant legitimate background traffic that does not fit the pattern of a standard web application:
+
+- Sync clients poll OCS API endpoints continuously
+- WebDAV and PROPFIND requests are issued for every mounted folder
+- Activity, notifications, and dashboard widgets poll at regular intervals
+- Mobile clients maintain persistent connections
+
+`sec-3` uses `rl-soft` (100 req/s average, burst 50). This burst cap is too low for Nextcloud's combined sync + interactive traffic and returns HTTP 429 under normal load. `sec-3-spa` uses `rl-spa`, which allows the initial request burst while applying the same strict security headers and permissions-policy. The `.env.example` default reflects this.
+
+## Recommended application set
+
+For small business collaboration deployments, a minimal and stable application set avoids unnecessary background jobs and resource consumption.
+
+**Keep enabled:**
+
+| App | Reason |
+|-----|--------|
+| Files | Core — cannot disable |
+| Group Folders | Team-shared folder management |
+| Guests | External collaborator access |
+| Activity | Audit trail and change notifications |
+| OnlyOffice | Document editing (keep editing enabled, disable previews — see below) |
+
+**Consider disabling** (not needed for document collaboration):
+
+| App | Why |
+|-----|-----|
+| Photos | Runs background AI jobs; not needed if OnlyOffice previews are off |
+| Recommendations | Background machine learning; adds load with no stability benefit |
+| Contacts / ContactsInteraction | Only needed if Nextcloud is also your address book |
+| First Run Wizard | Remove after initial setup |
+| Support | Adds telemetry prompts |
+| Survey Client | Phones home |
+| Weather Status | External API calls from the server |
+
+Disabling unused apps reduces background job load, reduces cron execution time, and keeps PHP-FPM worker usage predictable.
+
 ## OnlyOffice integration notes
 
 OnlyOffice document **editing** works well and should remain enabled. The integration allows users to open and collaboratively edit `.docx`, `.xlsx`, `.pptx`, and similar formats directly in the browser.
@@ -246,6 +294,25 @@ docker compose exec -u www-data app php occ config:system:set enabledPreviewProv
 ```
 
 This leaves document editing fully functional. PDF and Office file thumbnails will not be generated.
+
+### Stronger option: disable all previews
+
+For deployments focused on file collaboration, team folders, or document repositories where thumbnail generation is not needed, disabling previews globally is a simpler and more stable option:
+
+```bash
+docker compose exec -u www-data app php occ config:system:set enable_previews --value=false --type=boolean
+
+# Verify
+docker compose exec -u www-data app php occ config:system:get enable_previews
+# Expected: false
+```
+
+This disables all thumbnail generation regardless of which preview providers are configured. Appropriate when:
+- Users share and edit documents but do not rely on image gallery or thumbnail views
+- Stability is more important than visual previews
+- The deployment is primarily used for team folders and document collaboration
+
+Document editing via OnlyOffice is not affected by this setting.
 
 ### Follow-up
 
