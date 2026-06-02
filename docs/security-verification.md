@@ -282,7 +282,7 @@ Based on **OWASP Docker Security Cheat Sheet**.
 
 ### What is currently verified in CI
 
-Every push to `dev` or `main`, every pull request targeting `main`, and nightly at 03:00 UTC.
+#### `ci.yml` — runs on push to `dev`/`main`, PRs to `main`, nightly 03:00 UTC
 
 **Job 1: Secret scan (`gitleaks`)**
 - Full git history scan with `fetch-depth: 0`
@@ -298,7 +298,12 @@ Every push to `dev` or `main`, every pull request targeting `main`, and nightly 
 - Verifies every compose directory has `README.md` and `.env.example`
 - Checks for `:latest` image tags (regex match on uncommented `image:` lines)
 
-**Job 4: Security baseline (`check-baseline.py`)**
+**Job 4: Sentinel value check** *(added)*
+- Finds any committed `.env` file (not `.env.example`) containing `__REPLACE_ME__`
+- Prevents deployment of unsubstituted configuration values reaching the repository
+- Does **not** cover runtime `.env` files that are gitignored — only committed files
+
+**Job 5: Security baseline (`check-baseline.py`)**
 - Parses all compose files as YAML
 - Enforces: `no-new-privileges:true`, no `privileged: true`, no direct Docker socket mount
 - Reports: `network_mode: host`, `pid: host`
@@ -307,28 +312,63 @@ Every push to `dev` or `main`, every pull request targeting `main`, and nightly 
 
 ---
 
+#### `trivy.yml` — runs on push/PR to `main`, weekly Monday 04:00 UTC *(added)*
+
+**Job 1: IaC misconfiguration scan**
+- Scans all repository files with `trivy config`
+- Detects Compose and infrastructure misconfigurations
+- Results uploaded to GitHub Security tab as SARIF
+- Non-blocking (exit-code 0) — informational relative to `check-baseline.py`
+
+**Job 2: Image CVE scan**
+- Extracts image references from a curated list of ~11 high-risk compose files
+  via `scripts/ci/list-images.sh` (uses `.env.example` + envsubst)
+- Scans each image with Trivy for CRITICAL CVEs (`--ignore-unfixed`)
+- Fails the job if any CRITICAL CVE is found
+- Reports HIGH CVEs in logs as informational (non-blocking)
+- Limitation: covers ~11 of 50 compose files; not all images are scanned
+
+---
+
+#### `scorecard.yml` — runs on push to `main`, weekly Monday 05:30 UTC *(added)*
+
+**OpenSSF Scorecard**
+- Evaluates supply chain security posture: branch protection, dependency review,
+  pinned dependencies, code review, vulnerability disclosure, signed releases
+- Results published to `https://api.securityscorecards.dev`
+- Results uploaded to GitHub Security tab as SARIF
+- Score is visible via badge in README
+
+---
+
 ## Missing Verification
 
 The following controls are absent from CI. Ordered by security value.
 
-### Not implemented — should be considered
+### Partially addressed by recent additions
+
+| Gap | Status | Remaining limitation |
+|-----|--------|----------------------|
+| **CVE / vulnerability scanning** | ⚠ Partial — `trivy.yml` scans ~11 high-risk compose files | ~39 compose files not covered; image scanning is not exhaustive |
+| **IaC static analysis** | ⚠ Partial — `trivy.yml` config scan runs but is non-blocking | Overlaps with `check-baseline.py`; Trivy config scan exit-code is 0 |
+| **`__REPLACE_ME__` sentinel check** | ✅ Addressed — `ci.yml` sentinel job | Only covers committed `.env` files; runtime `.env` files are gitignored and unchecked |
+| **OpenSSF Scorecard** | ✅ Addressed — `scorecard.yml` | Score is a posture signal, not a blocking control |
+
+### Not implemented — still missing
 
 | Gap | Description | Suggested Tool |
 |-----|-------------|---------------|
-| **CVE / vulnerability scanning** | No image is scanned for known CVEs before use. A pinned tag with a critical vulnerability is undetected until manually checked. | Trivy, Grype, Docker Scout |
 | **Digest pinning** | Tags are pinned (no `:latest`) but not to digest. `name:1.2.3` can be overwritten upstream silently. | Renovate with digest pinning, or manual `@sha256:...` pins |
 | **Image signing / provenance** | No verification that images come from the claimed publisher. | cosign, SLSA provenance, Sigstore |
 | **SBOM generation** | No Software Bill of Materials. Unknown what packages are in running containers. | Syft, Trivy SBOM mode |
-| **Checkov / IaC scanning** | Static analysis of compose files for misconfigurations beyond what `check-baseline.py` covers (e.g. missing resource limits, missing healthchecks, exposed ports). | Checkov, Semgrep |
-| **`__REPLACE_ME__` sentinel check** | 50 sentinel values in `.env.example` files are not validated at CI time. A deployment using unsubstituted values may fail silently or use insecure defaults. | Custom CI step: `grep -r '__REPLACE_ME__' .env` should fail |
-| **`read_only: true` coverage** | Documented as recommended, applied in ~28% of compose files. No CI check. | Extension to `check-baseline.py` |
-| **cap_drop coverage** | Documented as recommended, applied in ~20% of files. No CI check. | Extension to `check-baseline.py` |
+| **GitHub Actions pinning** | Actions are referenced as `@v2` / `@v6`, not `@sha256:...`. A compromised action release is pulled automatically. | Pin actions to commit SHA (Renovate can automate updates) |
+| **`read_only: true` coverage** | Applied in ~28% of compose files. No CI enforcement. | Extension to `check-baseline.py` |
+| **`cap_drop` coverage** | Applied in ~20% of files. No CI enforcement. | Extension to `check-baseline.py` |
 | **Resource limits coverage** | Applied in 6% of files. A compromised container can exhaust host memory. | Extension to `check-baseline.py` |
-| **Docker Bench for Security** | Runtime checks against the host Docker configuration (daemon settings, audit logging, file permissions). Compose-level checks are insufficient without this. | Docker Bench for Security |
-| **OpenSSF Scorecard** | Supply chain security posture assessment for the repository itself (dependency review, pinned actions, branch protection, code review). | `ossf/scorecard-action` |
-| **GitHub Actions pinning** | Actions are referenced as `@v2` / `@v6` not `@sha256:...`. Compromised action releases are not caught. | Pin actions to commit SHA |
-| **Dependency review** | No automated check for newly introduced vulnerable dependencies. | `dependency-review-action` |
-| **TLS profile enforcement** | No CI check that each app uses an appropriate TLS profile (`tls-modern` for password managers, not `tls-basic`). | Extension to structure check |
+| **Dependency review** | No automated check for newly introduced vulnerable dependencies on PRs. | `dependency-review-action` |
+| **Docker Bench for Security** | Runtime checks against host Docker daemon config. Not coverable in CI without host access. | Docker Bench for Security |
+| **TLS profile enforcement** | No CI check that each app uses an appropriate TLS profile. | Extension to structure check |
+| **Exhaustive image scanning** | Trivy covers ~11 of 50 compose files. Remaining ~39 files are unscanned. | Extend `scripts/ci/list-images.sh` |
 
 ---
 
@@ -346,13 +386,13 @@ The hard controls (no-new-privileges, no privileged, socket proxy pattern, no `:
 
 CI enforces 4 categories of controls that block merges on violation. The exception system is structured and well-designed. The weakness is the large gap between documented soft controls and actual enforcement. A developer can add a new service, get it past CI, and miss `read_only`, `cap_drop`, resource limits, and non-root user without any CI feedback.
 
-### Verification: 2 / 5
+### Verification: 3 / 5 *(updated)*
 
-This is the weakest dimension. There is no vulnerability scanning, no image digest verification, no SBOM, no runtime security checking, and no supply chain attestation. The CI tells you the configuration is syntactically valid and avoids the hardest misconfigurations — it does not tell you whether the images in the configuration are safe to run.
+CVE scanning is now in place for a curated set of high-risk images via `trivy.yml`. OpenSSF Scorecard provides a supply chain posture signal. The sentinel value check closes a specific gap. The score moves from 2 to 3 because basic vulnerability visibility now exists. It is not 4 because image scanning is not exhaustive (~11/50 compose files), IaC scanning is non-blocking, and runtime security is still absent.
 
-### Supply Chain Security: 1 / 5
+### Supply Chain Security: 2 / 5 *(updated)*
 
-Tags are pinned (good). Nothing else is in place. No digest pinning, no image signing, no provenance verification, no SBOM, no dependency review. A compromised upstream image with a valid version tag would be pulled and deployed without detection. GitHub Actions are referenced by floating version tags (`@v2`, `@v6`), not commit SHAs.
+Tags are pinned. OpenSSF Scorecard now publishes a public score. Basic CVE scanning exists for high-risk images. The score moves from 1 to 2. It remains low because: no digest pinning, no image signing, no provenance verification, no SBOM, no dependency review, and GitHub Actions are still referenced by floating version tags (`@v2`, `@v6`) not commit SHAs.
 
 ---
 

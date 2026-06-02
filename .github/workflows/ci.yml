@@ -95,7 +95,38 @@ jobs:
           exit $failed
 
   # ─────────────────────────────────────────────
-  # 4. SECURITY BASELINE (custom script)
+  # 4. SENTINEL VALUE CHECK
+  # ─────────────────────────────────────────────
+  # .env.example files contain __REPLACE_ME__ as a forcing function
+  # so deployers must substitute real values. This job fails if any
+  # committed .env file (not .env.example) still contains a sentinel —
+  # catching the case where someone committed an unsubstituted .env.
+  # Runtime deployments are not covered by CI; this only catches git.
+  sentinel:
+    name: Sentinel value check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Fail if committed .env contains __REPLACE_ME__
+        run: |
+          # Find .env files that are NOT .env.example
+          files=$(find . -name ".env" -not -name ".env.example" -not -path "./.git/*")
+          if [ -z "$files" ]; then
+            echo "No committed .env files found — ok"
+            exit 0
+          fi
+          failed=0
+          while IFS= read -r f; do
+            if grep -q "__REPLACE_ME__" "$f" 2>/dev/null; then
+              echo "FAIL: $f contains __REPLACE_ME__ — replace all sentinel values before committing"
+              failed=1
+            fi
+          done <<< "$files"
+          exit $failed
+
+  # ─────────────────────────────────────────────
+  # 5. SECURITY BASELINE (custom script)
   # ─────────────────────────────────────────────
   baseline:
     name: Security baseline
