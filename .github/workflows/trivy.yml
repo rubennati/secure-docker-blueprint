@@ -68,7 +68,6 @@ jobs:
   # ─────────────────────────────────────────────────────────────────────────
   # Scans container images from the curated high-risk list for known CVEs.
   # Results appear in CI logs. Non-blocking (exit-code 0) while baseline is reviewed.
-  # Trivy is pre-installed on ubuntu-latest runners — no install step needed.
   image-scan:
     name: Image CVE scan
     runs-on: ubuntu-latest
@@ -78,8 +77,10 @@ jobs:
       - name: Install gettext (provides envsubst for image list resolution)
         run: sudo apt-get install -y gettext-base --quiet
 
-      - name: Install Trivy
-        uses: aquasecurity/setup-trivy@151a37f29c09e4ff49f853d2b23682e688bb1fa1 # v0.3.0
+      - name: Install Trivy CLI
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin v0.71.0
+          trivy --version
 
       - name: Extract image list from compose files
         run: |
