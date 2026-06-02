@@ -36,8 +36,10 @@ http:
     acc-local:
       ipAllowList:
         sourceRange:
-          - "${LOCAL_CIDR_V4}"
-          - "${LOCAL_CIDR_V6}"
+          - "192.168.0.0/16"    # RFC1918
+          - "10.0.0.0/8"        # RFC1918
+          - "172.16.0.0/12"     # RFC1918
+          - "fc00::/7"          # IPv6 ULA
 
     # Tailscale / VPN only (IPv4 + IPv6)
     # Reachable from anywhere via VPN, but not from plain internet.
@@ -52,8 +54,10 @@ http:
     acc-private:
       ipAllowList:
         sourceRange:
-          - "${LOCAL_CIDR_V4}"
-          - "${LOCAL_CIDR_V6}"
+          - "192.168.0.0/16"    # RFC1918
+          - "10.0.0.0/8"        # RFC1918
+          - "172.16.0.0/12"     # RFC1918
+          - "fc00::/7"          # IPv6 ULA
           - "${TAILSCALE_CIDR_V4}"
           - "${TAILSCALE_CIDR_V6}"
 

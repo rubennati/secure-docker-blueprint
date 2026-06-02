@@ -7,6 +7,8 @@
 Hardened configurations for 40+ services — standardized security baseline, Docker Secrets, Traefik routing, CrowdSec integration, and network isolation out of the box.
 
 [![CI](https://github.com/rubennati/secure-docker-blueprint/actions/workflows/ci.yml/badge.svg)](https://github.com/rubennati/secure-docker-blueprint/actions/workflows/ci.yml)
+[![Trivy](https://github.com/rubennati/secure-docker-blueprint/actions/workflows/trivy.yml/badge.svg)](https://github.com/rubennati/secure-docker-blueprint/actions/workflows/trivy.yml)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/rubennati/secure-docker-blueprint/badge)](https://scorecard.dev/viewer/?uri=github.com/rubennati/secure-docker-blueprint)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-v0.5.1-blue)](CHANGELOG.md)
 [![Status](https://img.shields.io/badge/status-pre--1.0-yellow)](ROADMAP.md)
@@ -14,6 +16,7 @@ Hardened configurations for 40+ services — standardized security baseline, Doc
 </div>
 
 > **Pre-1.0** — structure is stable and core services are ready to use, but paths, env variables, and defaults can still change before v1.0. See [ROADMAP.md](ROADMAP.md) for the v1.0 criteria.
+Quick Navigation: [Features](#features) · [Quick Start](#quick-start) · [Core Infrastructure](#core-infrastructure) · [Applications](#applications) · [Business apps](#business-apps) · [Monitoring](#monitoring) · [Backup](#backup)
 
 ---
 
@@ -27,6 +30,60 @@ Hardened configurations for 40+ services — standardized security baseline, Doc
 - **Template-based Config** — Traefik and dnsmasq configs rendered via `envsubst`
 - **Modular** — use any combination of services, each works independently
 - **Zero Hardcoded Values** — everything configurable via `.env`
+
+## Quick Start
+
+```bash
+# Clone
+git clone https://github.com/your-user/secure-docker-blueprint.git
+cd secure-docker-blueprint
+
+# 1. Start Traefik (required for all apps)
+cd core/traefik
+cp .env.example .env              # Edit: domain, email, DNS provider
+./ops/scripts/render.sh           # Render config templates
+docker compose up -d
+
+# 2. Add an app (e.g. Vaultwarden)
+cd ../../apps/vaultwarden
+cp .env.example .env              # Edit: domain, security level
+
+mkdir -p .secrets
+openssl rand -base64 32 | tr -d '\n' > .secrets/db_pwd.txt
+openssl rand -base64 32 | tr -d '\n' > .secrets/db_root_pwd.txt
+
+docker compose up -d
+```
+
+Every app follows the same workflow: copy `.env.example` → create secrets → `docker compose up -d`.
+
+## Security Model
+
+Every service in this blueprint enforces:
+
+| Rule | How |
+|------|-----|
+| No privilege escalation | `no-new-privileges:true` on every container |
+| Secrets isolated | Docker Secrets (`_FILE` or custom entrypoint); deviations documented per app |
+| No direct socket access | Socket Proxy with granular API filtering |
+| Network isolation | Internal networks for databases and backend services |
+| Read-only filesystem | Where the image supports it |
+| Minimal capabilities | `cap_drop: ALL` where possible |
+
+Three patterns for secret handling:
+
+| Scenario | Pattern |
+|----------|---------|
+| Image supports `_FILE` env vars | `POSTGRES_PASSWORD_FILE: /run/secrets/...` |
+| Image doesn't support `_FILE` | Custom entrypoint reads secret at runtime |
+| Secret embedded in JSON config | Env var in `.env` (gitignored) |
+
+## Requirements
+
+- **Docker** 24.0+ with Compose v2
+- **Linux** host (tested on Debian 12/13)
+- **Domain** with a DNS provider supported by Traefik (e.g. Cloudflare)
+- **Optional:** Tailscale for `acc-tailscale` access policies
 
 ## What's Included
 
@@ -48,23 +105,12 @@ Hardened configurations for 40+ services — standardized security baseline, Doc
 
 Planned in `core/`: Keycloak (alternative / heavier IAM next to Authentik).
 
-### Repository layout
-
-Five top-level areas, each with a clear mandate. Per-category READMEs (`core/README.md`, `business/README.md`, `monitoring/README.md`, `backup/README.md`) describe what belongs where and why.
-
-| Directory | Scope |
-|---|---|
-| [`core/`](core/) | Infrastructure shared by everything — Traefik, CrowdSec, identity providers (Authentik + Keycloak planned), OnlyOffice, certs |
-| [`apps/`](apps/) | General-purpose self-hosted apps — equally useful for private homelab or a company |
-| [`business/`](business/) | Apps that only make sense in a company context — invoicing, helpdesk, newsletter, compliance |
-| [`monitoring/`](monitoring/) | Ops observability — uptime, metrics, content-change watching, disk SMART |
-| [`backup/`](backup/) | Ops backup — Kopia / Bareos / UrBackup, structurally separate because of privileged access + remote targets |
-
 ### Applications
 
 The blueprint takes a **choice-matrix** approach: where several tools compete (dashboards, photo galleries, wikis, form builders), multiple options are included so you can test and pick what fits.
 
 **Status:** ✅ Ready · 🚧 Draft · 📋 Planned
+Status note: “✅ Ready” indicates a usable baseline setup; detailed operational maturity (backup, restore, security posture, and version lifecycle) is tracked in [LIFECYCLE.md](LIFECYCLE.md).
 
 #### Dashboards & launchers
 
@@ -190,52 +236,18 @@ See [`backup/README.md`](backup/README.md) for tool choices and the per-app isol
 
 Planned: Kopia, Borgmatic, Bareos, UrBackup.
 
-## Quick Start
+### Repository layout
 
-```bash
-# Clone
-git clone https://github.com/your-user/secure-docker-blueprint.git
-cd secure-docker-blueprint
+Five top-level areas, each with a clear mandate. Per-category READMEs (`core/README.md`, `business/README.md`, `monitoring/README.md`, `backup/README.md`) describe what belongs where and why.
+New here? Start with the category README that best matches your goal: [Core Infrastructure](core/README.md), [Apps](apps/README.md), [Business](business/README.md), [Monitoring](monitoring/README.md), or [Backup](backup/README.md).
 
-# 1. Start Traefik (required for all apps)
-cd core/traefik
-cp .env.example .env              # Edit: domain, email, DNS provider
-./ops/scripts/render.sh           # Render config templates
-docker compose up -d
-
-# 2. Add an app (e.g. Vaultwarden)
-cd ../../apps/vaultwarden
-cp .env.example .env              # Edit: domain, security level
-
-mkdir -p .secrets
-openssl rand -base64 32 | tr -d '\n' > .secrets/db_pwd.txt
-openssl rand -base64 32 | tr -d '\n' > .secrets/db_root_pwd.txt
-
-docker compose up -d
-```
-
-Every app follows the same workflow: copy `.env.example` → create secrets → `docker compose up -d`.
-
-## Security Model
-
-Every service in this blueprint enforces:
-
-| Rule | How |
-|------|-----|
-| No privilege escalation | `no-new-privileges:true` on every container |
-| Secrets isolated | Docker Secrets (`_FILE` or custom entrypoint); deviations documented per app |
-| No direct socket access | Socket Proxy with granular API filtering |
-| Network isolation | Internal networks for databases and backend services |
-| Read-only filesystem | Where the image supports it |
-| Minimal capabilities | `cap_drop: ALL` where possible |
-
-Three patterns for secret handling:
-
-| Scenario | Pattern |
-|----------|---------|
-| Image supports `_FILE` env vars | `POSTGRES_PASSWORD_FILE: /run/secrets/...` |
-| Image doesn't support `_FILE` | Custom entrypoint reads secret at runtime |
-| Secret embedded in JSON config | Env var in `.env` (gitignored) |
+| Directory | Scope |
+|---|---|
+| [`core/`](core/) | Infrastructure shared by everything — Traefik, CrowdSec, identity providers (Authentik + Keycloak planned), OnlyOffice, certs |
+| [`apps/`](apps/) | General-purpose self-hosted apps — equally useful for private homelab or a company |
+| [`business/`](business/) | Apps that only make sense in a company context — invoicing, helpdesk, newsletter, compliance |
+| [`monitoring/`](monitoring/) | Ops observability — uptime, metrics, content-change watching, disk SMART |
+| [`backup/`](backup/) | Ops backup — Kopia / Bareos / UrBackup, structurally separate because of privileged access + remote targets |
 
 ## Project Structure
 
@@ -311,6 +323,18 @@ All services follow documented standards. See [docs/standards/](docs/standards/)
 - **[Security Baseline](docs/standards/security-baseline.md)** — required hardening, secret patterns, socket proxy rules
 - **[Networking](docs/standards/networking.md)** — network types, isolation rules, special cases
 
+## Dashboard
+
+Quick overview of all configured services:
+
+```bash
+./scripts/overview.sh
+```
+
+## Roadmap
+
+See [ROADMAP.md](ROADMAP.md) for planned features, services under evaluation, and future ideas.
+
 ## Adding a New App
 
 ```bash
@@ -320,25 +344,6 @@ cd apps/my-new-app
 ```
 
 See [docs/templates/README.md](docs/templates/README.md) for details.
-
-## Dashboard
-
-Quick overview of all configured services:
-
-```bash
-./scripts/overview.sh
-```
-
-## Requirements
-
-- **Docker** 24.0+ with Compose v2
-- **Linux** host (tested on Debian 12/13)
-- **Domain** with a DNS provider supported by Traefik (e.g. Cloudflare)
-- **Optional:** Tailscale for `acc-tailscale` access policies
-
-## Roadmap
-
-See [ROADMAP.md](ROADMAP.md) for planned features, services under evaluation, and future ideas.
 
 ## Contributing
 

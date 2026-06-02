@@ -70,6 +70,54 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/api/server/ping   # 200 OK, {"res":"pong"}
 - **Hardware acceleration** — transcoding and ML inference can use GPU/NPU. See [Immich hwaccel docs](https://docs.immich.app/features/ml-hardware-acceleration) — add the `extends:` block and change the image tag (e.g. `v2-cuda`).
 - **First ML inference is slow** — CLIP model downloads on first photo upload (~5-10 min on slow links).
 
+## Importing photos
+
+### Official CLI — `immich-cli`
+
+The official Immich CLI (`@immich/cli`). Suitable for straightforward folder imports.
+
+```bash
+# Install (requires Node.js)
+npm install -g @immich/cli
+
+# Import a folder
+immich upload --recursive /path/to/photos \
+  --key <API-KEY> \
+  --server https://<APP_TRAEFIK_HOST>
+```
+
+API key: Immich UI → Account Settings → API Keys → New API Key.
+
+### Community importer — `immich-go`
+
+[`immich-go`](https://github.com/simulot/immich-go) by simulot. Go binary, no Node.js required. More features than the official CLI:
+
+- **Google Photos Takeout import** — parses `.json` sidecar metadata (dates, albums, descriptions) correctly
+- **Duplicate detection** — skips files already in Immich by content hash
+- **Album creation** from folder structure or Google Photos albums
+- **Dry-run mode** — preview what would be uploaded without actually uploading
+- **Stack detection** — groups RAW + JPEG pairs automatically
+
+```bash
+# Download binary (replace VERSION and ARCH as needed)
+# https://github.com/simulot/immich-go/releases
+curl -L https://github.com/simulot/immich-go/releases/latest/download/immich-go_Linux_amd64.tar.gz | tar xz
+
+# Import a local folder
+./immich-go upload from-folder \
+  --server https://<APP_TRAEFIK_HOST> \
+  --api-key <API-KEY> \
+  /path/to/photos
+
+# Import Google Photos Takeout (zip or extracted folder)
+./immich-go upload from-google-photos \
+  --server https://<APP_TRAEFIK_HOST> \
+  --api-key <API-KEY> \
+  /path/to/takeout
+```
+
+> Use `immich-go` for Google Photos migrations or large libraries with duplicate risk. Use the official CLI for simple folder syncs.
+
 ## Details
 
 - [UPSTREAM.md](UPSTREAM.md)

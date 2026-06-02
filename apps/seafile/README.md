@@ -73,6 +73,96 @@ docker compose logs seafile --follow
 # Password is the value in .secrets/seafile_admin_pwd.txt
 ```
 
+### SMTP
+
+Set the `SEAFILE_SMTP_*` variables in `.env` and create the password secret:
+
+```bash
+echo -n 'your-smtp-password' > .secrets/smtp_pwd.txt
+```
+
+SMTP is only active when `SEAFILE_SMTP_HOST` is set. Leave it empty to disable email.
+
+```env
+SEAFILE_SMTP_HOST=smtp.example.com
+SEAFILE_SMTP_PORT=587
+SEAFILE_SMTP_USER=seafile@example.com
+SEAFILE_SMTP_USE_TLS=true
+SEAFILE_SMTP_FROM=Seafile <seafile@example.com>
+```
+
+For SSL on port 465: set `SEAFILE_SMTP_USE_TLS=false` and `SEAFILE_SMTP_PORT=465`.
+
+> **Note:** `seahub_settings.py` is only written once on first boot. If you add SMTP after the first start, force a re-inject by removing the marker line and restarting:
+> ```bash
+> docker compose exec seafile sed -i '/# --- Blueprint custom settings ---/,$d' /shared/seafile/conf/seahub_settings.py
+> docker compose restart seafile
+> ```
+
+### WebDAV
+
+> **WebDAV is a compatibility interface, not a primary access path.** Seafile officially recommends WebDAV only for occasional access. For normal use, prefer the Seafile Sync Client, SeaDrive, or the mobile apps — they are significantly faster and more reliable.
+
+Enable in `.env`:
+
+```env
+SEAFILE_ENABLE_WEBDAV=true
+```
+
+Then restart:
+
+```bash
+docker compose up -d --force-recreate seafile
+```
+
+> `seafdav.conf` is generated on first boot. WebDAV takes effect from the **second start**.
+
+Mount in macOS Finder: **Go → Connect to Server** → `https://<APP_TRAEFIK_HOST>/seafdav/`.
+
+#### Authentication
+
+WebDAV and Seahub (the web UI) use different authentication paths. What works in the browser does not necessarily work in WebDAV.
+
+**Use these credentials:**
+- **Username**: Seafile login email (e.g. `user@example.com`)
+- **Password**: account password — **not** the WebDAV token shown in the profile UI
+
+**The WebDAV token (`ENABLE_WEBDAV_SECRET`) shown in the Seafile profile is unreliable in Seafile 13 Docker setups.** Community reports confirm it does not work consistently. The token is intended for 2FA/SSO scenarios where Basic Auth cannot do interactive authentication. For standard setups, use the account password.
+
+If login fails, work through this matrix:
+
+| Try | Username | Password |
+|-----|----------|----------|
+| 1 | email address | account password ← most likely to work |
+| 2 | login ID / user ID | account password |
+| 3 | email address | app password (if configured) |
+| 4 | email address | WebDAV token (from profile) |
+
+Also check: is the account local, LDAP, OAuth, or Guest? WebDAV Basic Auth only works reliably with local accounts. Guest accounts are blocked.
+
+#### Diagnosis
+
+```bash
+# Check seafdav is running
+docker compose exec seafile ps aux | grep dav
+
+# Check seafdav config
+docker compose exec seafile cat /shared/seafile/conf/seafdav.conf
+
+# Watch auth failures live
+docker compose exec seafile tail -f /shared/seafile/logs/seafdav.log
+```
+
+#### When not to use WebDAV
+
+Avoid WebDAV for:
+- large uploads
+- many small files
+- permanent network drive mounts
+- performance-sensitive workflows
+
+Use instead: **Seafile Sync Client**, **SeaDrive**, mobile app, or web UI.
+
 ### Turning components off
 
 ```bash
@@ -109,6 +199,23 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/notification/
 - The `seafile` main container is on both `proxy-public` (for Traefik) and `app-internal` (for DB + Redis). The optional web-facing services (`seadoc`, `notification-server`, `thumbnail-server`) follow the same pattern.
 - All secrets are Docker Secrets under `./.secrets/`. The wrapper entrypoint converts them to env vars inside the container — they never land in `.env`.
 - `no-new-privileges:true` on every service.
+
+## Access policy — OnlyOffice + SeaDoc require `acc-private`
+
+`acc-tailscale` blocks server-to-server callbacks from Docker containers (their IPs are RFC1918, not Tailscale). This breaks both OnlyOffice document editing and SeaDoc collaborative editing:
+
+- **OnlyOffice**: fetches and saves files via callback to Seafile's URL. The OnlyOffice container IP is not a Tailscale IP → Traefik blocks it → documents fail to open/save.
+- **SeaDoc**: makes internal API calls back to Seafile for token validation and file content. Same issue.
+
+**Fix: set `ACC_TAILSCALE` → `acc-private` in `.env`:**
+
+```env
+APP_TRAEFIK_ACCESS=acc-private
+```
+
+`acc-private` = Tailscale/VPN + LAN (RFC1918). Docker container IPs (172.x.x.x) fall into the LAN range and pass. External internet still blocked.
+
+> If you run Seafile without OnlyOffice and without SeaDoc, `acc-tailscale` works fine.
 
 ## Known Issues
 

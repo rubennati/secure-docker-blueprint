@@ -35,7 +35,7 @@ docker compose up -d
 # https://<APP_TRAEFIK_HOST> (only reachable from the configured access policy)
 ```
 
-Default access policy is `acc-tailscale` + `sec-4` (admin tool, VPN-only, hardened). Adjust in `.env` if a different setup is needed.
+Default access policy is `acc-tailscale` + `sec-3-spa` (VPN-only, hardened, SPA-friendly rate limit). Adjust in `.env` if a different setup is needed.
 
 ## Adding the local environment
 

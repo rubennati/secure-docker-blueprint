@@ -96,6 +96,7 @@ Before v1.0 is tagged:
 - Secrets rotation guidance in `docs/standards/`
 - License audit — every live app verified against the license policy below
 - **Status freshness system active** — `Last verified` stamps in place, Major upstream updates drop status to `🚧`; tactical work moves to GitHub Issues
+- Lifecycle freshness snapshot is summarized in [LIFECYCLE.md](LIFECYCLE.md).
 
 ---
 

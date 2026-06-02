@@ -58,7 +58,59 @@ docker compose exec app python manage.py createsuperuser
 # https://<APP_TRAEFIK_HOST>
 ```
 
+### OCR languages
+
+Two separate variables control OCR language support:
+
+| Variable | Purpose | Example |
+|----------|---------|---------|
+| `PAPERLESS_OCR_LANGUAGE` | Default language used when auto-detection fails | `deu` |
+| `PAPERLESS_OCR_LANGUAGES` | Language packs to install (comma-separated) | `deu,eng,ron` |
+
+`PAPERLESS_OCR_LANGUAGES` must include every language you want to OCR — without the pack installed, Tesseract silently falls back to English. `PAPERLESS_OCR_LANGUAGE` sets which language Paperless picks first when the document has no language metadata.
+
+Common three-letter codes (ISO 639-2):
+
+| Language | Code |
+|----------|------|
+| German | `deu` |
+| English | `eng` |
+| French | `fra` |
+| Spanish | `spa` |
+| Italian | `ita` |
+| Romanian | `ron` |
+
+Full list: [Tesseract language data](https://github.com/tesseract-ocr/tessdata)
+
 Default access is `acc-tailscale` + `sec-3` — Paperless typically holds personal documents, so VPN-only with strict headers is the right baseline. Switch to `acc-public` only if you intentionally want it on the open internet (and then consider adding SSO via `sso.yml`).
+
+### SMTP (optional)
+
+Used for: password reset emails, workflow notifications, document share links.
+
+```bash
+echo -n 'your-smtp-password' > .secrets/email_pwd.txt
+```
+
+Set in `.env`:
+
+```env
+PAPERLESS_EMAIL_HOST=smtp.example.com
+PAPERLESS_EMAIL_PORT=587
+PAPERLESS_EMAIL_HOST_USER=paperless@example.com
+PAPERLESS_EMAIL_USE_TLS=true
+PAPERLESS_EMAIL_FROM=Paperless <paperless@example.com>
+```
+
+For SSL on port 465: `PAPERLESS_EMAIL_USE_TLS=false` + `PAPERLESS_EMAIL_PORT=465`.
+
+Leave `PAPERLESS_EMAIL_HOST` empty to disable outgoing email entirely.
+
+Then restart:
+
+```bash
+docker compose up -d --force-recreate app
+```
 
 ### Enabling SSO (optional)
 

@@ -1,0 +1,54 @@
+name: OpenSSF Scorecard
+
+# Scorecard assesses supply chain security posture for the repository:
+# branch protection, dependency review, pinned dependencies, code review,
+# vulnerability disclosure, signed releases, and similar.
+#
+# Results are uploaded to the GitHub Security tab (SARIF) and published
+# to the public Scorecard API (https://api.securityscorecards.dev).
+#
+# Runs on push to main and weekly. Does not run on PRs — Scorecard
+# evaluates the repository state, not individual changes.
+#
+# Reference: https://github.com/ossf/scorecard-action
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '30 5 * * 1'  # Weekly Monday 05:30 UTC (offset from Trivy run)
+  workflow_dispatch:
+
+permissions:
+  # Required for Scorecard to read repository contents
+  contents: read
+  # Required to upload SARIF results to GitHub Security tab
+  security-events: write
+  # Required for Scorecard to use the OIDC token for result publication
+  id-token: write
+
+jobs:
+  scorecard:
+    name: Scorecard analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Run Scorecard analysis
+        uses: ossf/scorecard-action@v2.4.0
+        with:
+          results_file: scorecard.sarif
+          results_format: sarif
+          # Publish to the public Scorecard API.
+          # This makes the score visible at https://api.securityscorecards.dev
+          # and allows badge generation. Set to false to keep results private.
+          publish_results: true
+
+      - name: Upload SARIF to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: scorecard.sarif
+          category: scorecard

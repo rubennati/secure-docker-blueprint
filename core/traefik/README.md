@@ -23,7 +23,8 @@ Edit `.env` — at minimum change these:
 | `TRAEFIK_DASHBOARD_HOST` | FQDN for the Traefik dashboard (e.g. `traefik.yourdomain.com`) |
 | `CF_DNS_API_TOKEN` | Cloudflare API token (Zone:Read + DNS:Edit) — only needed for DNS-01 |
 | `ACME_WILDCARD_DOMAIN` | Uncomment and set if you want a wildcard certificate (optional) |
-| `TAILSCALE_CIDR` | Your Tailscale/VPN CIDR (default: `100.64.0.0/10`) |
+| `TAILSCALE_CIDR_V4` | Your Tailscale IPv4 CIDR (default: `100.64.0.0/10`) |
+| `TAILSCALE_CIDR_V6` | Your Tailscale IPv6 CIDR (default: `fd7a:115c:a1e0::/48`) |
 
 ```bash
 # 2. Validate environment variables
@@ -97,10 +98,12 @@ middlewares:
 | Middleware | Who gets through |
 |-----------|-----------------|
 | `acc-public` | Everyone (no restriction) |
-| `acc-local` | LAN only (RFC1918 + IPv6 ULA) |
-| `acc-tailscale` | Tailscale/VPN only (IPv4 + IPv6) |
+| `acc-local` | LAN only — `192.168.0.0/16`, `10.0.0.0/8`, `172.16.0.0/12`, `fc00::/7` (hardcoded RFC1918 + ULA) |
+| `acc-tailscale` | Tailscale/VPN only — `TAILSCALE_CIDR_V4` + `TAILSCALE_CIDR_V6` from `.env` |
 | `acc-private` | LAN + Tailscale combined |
 | `acc-deny` | Nobody (emergency kill switch) |
+
+> **Note:** `acc-local` and `acc-private` use hardcoded RFC1918 ranges (`192.168.0.0/16`, `10.0.0.0/8`, `172.16.0.0/12`) + IPv6 ULA (`fc00::/7`). These are universal constants and cannot be set via `.env` — `envsubst` would render a comma-separated string as a single YAML entry, which Traefik cannot parse. Only the Tailscale CIDRs are configurable via `.env`.
 
 ### Security Levels
 
@@ -113,10 +116,16 @@ Each level builds on the previous one. `e` = embed/iframe-friendly (SAMEORIGIN i
 | `sec-1e` | Like sec-1, iframe-friendly | Internal tools embedded in other apps |
 | **`sec-2`** | **+ soft rate limit** | **Standard for most apps** (recommended default) |
 | `sec-2e` | Like sec-2, iframe-friendly | OnlyOffice, editors embedded in other apps |
+| `sec-2-spa` | sec-1 + SPA rate limit | VPN-only SPA, basic headers |
 | `sec-3` | + strict headers + permissions-policy | Public-facing apps, hardened |
 | `sec-3e` | Like sec-3, iframe-friendly | Vaultwarden, apps needing SAMEORIGIN |
+| `sec-3-spa` | sec-3 + SPA rate limit instead of soft | VPN-only SPA, hardened — e.g. Dockhand, n8n, NocoDB |
 | `sec-4` | + hard rate limit | Sensitive apps, login pages, admin panels |
 | `sec-5` | + CSP enforce | Maximum — only for CSP-tested apps (e.g. Whoami) |
+
+> **SPA variants** (`sec-*-spa`): SPA frameworks (SvelteKit, React, Vue) load 50–100 JS chunks on initial page load. `rl-soft` and `rl-hard` throttle this burst with 429s. `rl-spa` allows the initial burst and applies rate limiting thereafter. Use `sec-*-spa` only for VPN-gated apps — `rl-spa` is more permissive than `rl-soft`.
+>
+> Note: `sec-4-spa` does not exist — it would be identical to `sec-3-spa` (both replace the rate limiter with `rl-spa`, the only difference between sec-3 and sec-4 is `rl-soft` vs `rl-hard`).
 
 ### Examples: Which level for which app?
 
@@ -129,6 +138,7 @@ Each level builds on the previous one. `e` = embed/iframe-friendly (SAMEORIGIN i
 | WordPress / Ghost | `sec-2` + `acc-public` | CMS with inline scripts, standard protection |
 | OnlyOffice | `sec-2e` | Must be embeddable in iframes by other apps |
 | Paperless | `sec-3` + `acc-tailscale` | Internal tool, hardened, VPN-only |
+| Dockhand / n8n / NocoDB | `sec-3-spa` + `acc-tailscale` | VPN-only SPA — hard/soft rate limit causes 429 on initial chunk burst |
 
 ### Pro Mode: Custom Combinations
 
@@ -154,6 +164,7 @@ Available building blocks (defined in `security-blocks.yml`):
 | `hdr-strict-embed` | + HSTS preload, same-origin referrer, CSP report-only |
 | `rl-soft` | 100 avg / 50 burst |
 | `rl-hard` | 20 avg / 40 burst |
+| `rl-spa` | High burst allowance for SPA initial load |
 | `compress` | gzip compression |
 | `permissions-policy` | Blocks camera, mic, geolocation, payment, USB, gyroscope |
 | `csp-enforce` | Enforcing CSP (may break apps with external scripts) |
@@ -269,7 +280,7 @@ docker exec crowdsec cscli bouncers add traefik-bouncer
 cd /path/to/secure-docker-blueprint/core/traefik
 nano .env
 # Add or uncomment:
-#   CROWDSEC_BOUNCER_KEY=CmuiLn30RFNQkm+phT3Jc4u1ij5DZBA7MUvl1IG+zUE
+#   CROWDSEC_BOUNCER_KEY=<key-from-step-2>
 
 # -----------------------------------------------
 # Step 4: Enable the plugin in static config
@@ -398,6 +409,36 @@ Escalate security from `sec-2@file` to `sec-4@file` (hard rate limit).
 Switch the router's `certResolver` between `cloudflare-dns` and `httpResolver`.
 
 All changes are in `config/dynamic/*.yml` — Traefik picks them up automatically (file watcher is enabled).
+
+## Logging & Logrotate
+
+Traefik writes two log files into `volumes/logs/` (bind-mounted from the host):
+
+| File | What it contains |
+|------|-----------------|
+| `traefik.log` | Startup, config reload, TLS, errors |
+| `access.log` | Every HTTP request (JSON) |
+
+Docker does **not** rotate bind-mount files. Without logrotate, `access.log` grows unboundedly on busy servers.
+
+### Activate logrotate (one-time, on the host)
+
+```bash
+# Replace path with your actual deployment path
+sudo sed 's|/path/to/secure-docker-blueprint|/srv/docker|g' \
+  /srv/docker/core/traefik/config/logrotate/traefik \
+  | sudo tee /etc/logrotate.d/traefik
+
+# Verify
+cat /etc/logrotate.d/traefik
+
+# Dry-run to confirm it works
+sudo logrotate -d /etc/logrotate.d/traefik
+```
+
+The config rotates daily, keeps 7 days, compresses with gzip. The `postrotate` hook sends `USR1` to the Traefik container — Traefik reopens the log file after rotation (same mechanism as nginx). Without this signal, Traefik keeps writing to the already-rotated file.
+
+> **Note:** logrotate runs on the host, not inside the container. This is the correct approach for bind-mounted Docker log files — it is standard practice for any containerized app that writes logs to a host volume.
 
 ## Reset
 
