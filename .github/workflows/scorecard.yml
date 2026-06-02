@@ -1,54 +1,54 @@
 name: OpenSSF Scorecard
 
-# Scorecard assesses supply chain security posture for the repository:
-# branch protection, dependency review, pinned dependencies, code review,
-# vulnerability disclosure, signed releases, and similar.
+# Generates an OpenSSF Scorecard security score for the repository.
+# Results are published to the OpenSSF API (used by the badge in README.md)
+# and uploaded to GitHub's code-scanning tab as SARIF.
 #
-# Results are uploaded to the GitHub Security tab (SARIF) and published
-# to the public Scorecard API (https://api.securityscorecards.dev).
-#
-# Runs on push to main and weekly. Does not run on PRs — Scorecard
-# evaluates the repository state, not individual changes.
-#
-# Reference: https://github.com/ossf/scorecard-action
+# Docs: https://github.com/ossf/scorecard-action
 
 on:
+  branch_protection_rule:
+  schedule:
+    # Weekly on Mondays at 05:30 UTC.
+    - cron: '30 5 * * 1'
   push:
     branches: [main]
-  schedule:
-    - cron: '30 5 * * 1'  # Weekly Monday 05:30 UTC (offset from Trivy run)
   workflow_dispatch:
 
-permissions:
-  # Required for Scorecard to read repository contents
-  contents: read
-  # Required to upload SARIF results to GitHub Security tab
-  security-events: write
-  # Required for Scorecard to use the OIDC token for result publication
-  id-token: write
+# OIDC + sarif upload + read access to repo metadata.
+permissions: read-all
 
 jobs:
-  scorecard:
-    name: Scorecard analysis
+  analyze:
+    name: Analyze
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      id-token: write
+      contents: read
+      actions: read
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
-      - name: Run Scorecard analysis
-        uses: ossf/scorecard-action@v2.4.3
+      - name: Run analysis
+        uses: ossf/scorecard-action@4eaacf0543bb3f2c246792bd56e8cdeffafb205a # v2.4.3
         with:
-          results_file: scorecard.sarif
+          results_file: results.sarif
           results_format: sarif
-          # Publish to the public Scorecard API.
-          # This makes the score visible at https://api.securityscorecards.dev
-          # and allows badge generation. Set to false to keep results private.
+          # Publishes results to the OpenSSF API so the badge stays current.
           publish_results: true
 
-      - name: Upload SARIF to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v4
-        if: always()
+      - name: Upload artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          sarif_file: scorecard.sarif
-          category: scorecard
+          name: SARIF file
+          path: results.sarif
+          retention-days: 7
+
+      - name: Upload to GitHub code scanning
+        uses: github/codeql-action/upload-sarif@7211b7c8077ea37d8641b6271f6a365a22a5fbfa # v3
+        with:
+          sarif_file: results.sarif
