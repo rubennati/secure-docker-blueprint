@@ -49,7 +49,35 @@ See [`docs/standards/commit-rules.md`](docs/standards/commit-rules.md) for the d
 - Update relevant docs (root `README.md`, app-level `README.md` / `UPSTREAM.md`, any app-specific `CONFIG.md` that exists) if behaviour or configuration changed
 - No real data — verify with the pre-commit scan patterns listed in the go-live guide
 - Secrets always via Docker Secrets or `.env` (gitignored), never hardcoded
+- All CI checks must pass before merge (enforced by branch protection)
+- New apps and services must pass compose validation, structure checks, and the security baseline
+
+## CI and testing
+
+The CI pipeline is the automated test suite for this configuration project. It runs on every push and pull request. **All checks must pass before merge.**
+
+| Job | What it validates |
+|---|---|
+| Secret scan | No credentials committed to git history |
+| Compose validation | All compose files parse and resolve correctly |
+| Structure check | Every service directory has `README.md`, `.env.example`, no `:latest` image tags |
+| Sentinel check | No `__REPLACE_ME__` values in committed `.env` files |
+| Security baseline | `no-new-privileges:true` present, no `privileged: true`, socket proxy pattern enforced |
+
+See [`docs/standards/ci.md`](docs/standards/ci.md) for full documentation of each job.
+
+### Running checks locally
+
+The primary check during development:
+
+```bash
+python3 scripts/ci/check-baseline.py
+```
+
+This validates every compose file against the security baseline rules and prints all violations and documented exceptions.
 
 ## Questions?
 
 Open a [discussion](https://github.com/rubennati/secure-docker-blueprint/discussions) or file an issue with the `question` label.
+
+Enhancement requests and feature suggestions are welcome via GitHub Issues or Discussions. The project direction is tracked in [ROADMAP.md](ROADMAP.md).

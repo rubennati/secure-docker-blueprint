@@ -19,6 +19,10 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 - **Cal.com** (`apps/calcom/`): retired — Cal.com Inc. moved the production codebase to a proprietary licence. Replaced by `apps/caldiy/`.
 
+### Security
+
+No security vulnerabilities fixed in this release.
+
 ---
 
 ## [0.5.1] — 2026-05-03
