@@ -10,7 +10,7 @@ Instead, report security issues privately using one of the following channels:
 
 ### Option 1: GitHub Private Security Advisory (preferred)
 
-1. Go to the [Security tab](../../security) of this repository
+1. Go to the [Security Advisories](https://github.com/rubennati/secure-docker-blueprint/security/advisories/new) page
 2. Click **Report a vulnerability**
 3. Fill in the private advisory form
 
