@@ -231,7 +231,7 @@ Based on **CIS Docker Benchmark v1.6.0**.
 | **4.1** Create user for container | ⚠ Partial | `user:` in 1/50 files; `no-new-privileges` in 50/50 | Most containers run as image-defined users. No systematic non-root enforcement. |
 | **4.2** Use trusted base images | ⚠ Partial | Well-known registries (ghcr.io, docker.io). No image signing or digest pinning. | Tags pinned but not digests. No provenance verification. |
 | **4.3** Do not install unnecessary packages | ℹ N/A | Not applicable to compose blueprint — image content is upstream responsibility | |
-| **4.4** Scan images for vulnerabilities | ❌ Not implemented | No Trivy, Grype, Docker Scout, or equivalent in CI | Significant gap — no CVE visibility |
+| **4.4** Scan images for vulnerabilities | ⚠ Partial | `trivy.yml` scans ~11 high-risk images for CRITICAL/HIGH CVEs; IaC config scan covers all compose files | Not exhaustive — ~40 compose files not image-scanned; see Missing Verification |
 | **4.5** Enable Content Trust | ❌ Not implemented | No `DOCKER_CONTENT_TRUST=1`, no cosign verification | |
 | **4.6** Add HEALTHCHECK | ✅ Partial | Most compose files include healthchecks. Some scratch images correctly use `disable: true` | |
 | **4.7** Do not use update in Dockerfile | ℹ N/A | No Dockerfiles in this repository | |
@@ -271,7 +271,7 @@ Based on **OWASP Docker Security Cheat Sheet**.
 | Set resource limits | ❌ Partial | 3/50 files | Documented baseline, not applied |
 | Use security profiles (AppArmor/SELinux) | ❌ No | None configured | Significant gap |
 | Enable Docker Content Trust | ❌ No | Not configured | |
-| Scan for vulnerabilities | ❌ No | No CVE scanning in CI | |
+| Scan for vulnerabilities | ⚠ Partial | `trivy.yml` scans ~11 high-risk images for CVEs; IaC config scan covers all compose files | Not exhaustive — see Missing Verification section |
 | Use Docker Bench for Security | ❌ No | Not in CI | |
 | Log all container activities | ⚠ Partial | Traefik access log captures HTTP. No container-level audit logging. | |
 | Monitor containers at runtime | ⚠ Optional | Beszel available for metrics. No behavioral anomaly detection. | |
@@ -361,7 +361,7 @@ The following controls are absent from CI. Ordered by security value.
 | **Digest pinning** | Tags are pinned (no `:latest`) but not to digest. `name:1.2.3` can be overwritten upstream silently. | Renovate with digest pinning, or manual `@sha256:...` pins |
 | **Image signing / provenance** | No verification that images come from the claimed publisher. | cosign, SLSA provenance, Sigstore |
 | **SBOM generation** | No Software Bill of Materials. Unknown what packages are in running containers. | Syft, Trivy SBOM mode |
-| **GitHub Actions pinning** | Actions are referenced as `@v2` / `@v6`, not `@sha256:...`. A compromised action release is pulled automatically. | Pin actions to commit SHA (Renovate can automate updates) |
+| **GitHub Actions pinning** | ✅ Addressed — all workflow actions pinned to commit SHA in Batch 1/2 (ci.yml, trivy.yml, scorecard.yml) | Dependabot (`github-actions` ecosystem) keeps pins current |
 | **`read_only: true` coverage** | Applied in ~28% of compose files. No CI enforcement. | Extension to `check-baseline.py` |
 | **`cap_drop` coverage** | Applied in ~20% of files. No CI enforcement. | Extension to `check-baseline.py` |
 | **Resource limits coverage** | Applied in 6% of files. A compromised container can exhaust host memory. | Extension to `check-baseline.py` |

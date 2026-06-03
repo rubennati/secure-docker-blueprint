@@ -19,6 +19,23 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 - **Cal.com** (`apps/calcom/`): retired — Cal.com Inc. moved the production codebase to a proprietary licence. Replaced by `apps/caldiy/`.
 
+### Security
+
+No security vulnerabilities fixed. Security hardening improvements:
+
+- **OpenSSF Best Practices badge**: registered at www.bestpractices.dev (project [#13091](https://www.bestpractices.dev/projects/13091)), 87% passing score
+- **GitHub Actions hardening**: all workflow actions pinned to commit SHAs across `ci.yml`, `trivy.yml`, and `scorecard.yml`; workflow-level `permissions: read-all` set on `ci.yml` and `trivy.yml`; `security-events: write` scoped to the single job that uploads SARIF in `trivy.yml`; Dependabot enabled for the `github-actions` ecosystem (weekly, grouped)
+- **Trivy install hardened**: `curl | sh` pattern replaced with checksum-verified binary download from GitHub Releases using the official `trivy_0.71.0_checksums.txt` SHA256
+- **pip dependency pinned**: `pip install pyyaml` replaced with `pip install --require-hashes -r scripts/ci/requirements.txt`; hashes cover cp312, cp313, and sdist
+- **Vikunja Dockerfile**: `USER 1000` added to final stage; `HEALTHCHECK` added (wget to `/api/v1/info`, matching the Compose healthcheck); `busybox` helper stage pinned to digest (`1.38.0-musl@sha256:8635836…`)
+- **SECURITY.md**: reporting link changed from relative `../../security` path to absolute `https://github.com/rubennati/secure-docker-blueprint/security/advisories/new` — satisfies OpenSSF Scorecard `SecurityPolicyContainsLinks` probe
+- **Branch protection**: main branch now requires 5 CI status checks, 1 approving review, conversation resolution; force-push and deletion blocked
+
+### Changed
+
+- **CONTRIBUTING.md**: `## CI and testing` section added — names the CI pipeline as the automated test suite, documents each of the 5 jobs, and provides the primary local validation command (`python3 scripts/ci/check-baseline.py`)
+- **docs/security-verification.md**: stale "no CVE scanning" entries updated to reflect `trivy.yml`; GitHub Actions pinning row moved from open gaps to addressed items
+
 ---
 
 ## [0.5.1] — 2026-05-03

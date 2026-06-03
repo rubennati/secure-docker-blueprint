@@ -1,12 +1,16 @@
 # Roadmap
 
-Last updated: 2026-05-03 (v0.5.1 shipped).
+Last updated: 2026-06-03 (v0.5.1 is the latest release).
 
 This document captures direction, not detailed changelogs. For shipped work see [`CHANGELOG.md`](CHANGELOG.md); for per-category details see the `README.md` in each top-level directory.
 
 ---
 
 ## Shipped
+
+### v0.5.1 — Bug fixes and standards (2026-05-03)
+
+Nextcloud internal network isolation fix (database containers had unintended internet access). Seafile floating tags replaced. Tag pinning standard formalised. maintenance.md ✅ Ready Criteria added.
 
 ### v0.5.0 — Authentik Forward-Auth pattern proven (2026-05-03)
 
