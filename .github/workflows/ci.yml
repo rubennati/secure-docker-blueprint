@@ -137,7 +137,7 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
       - name: Install PyYAML
-        run: pip install pyyaml --quiet
+        run: pip install --require-hashes -r scripts/ci/requirements.txt --quiet
 
       - name: Run baseline check
         run: python3 scripts/ci/check-baseline.py "$GITHUB_STEP_SUMMARY"

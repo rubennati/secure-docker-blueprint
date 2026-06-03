@@ -80,7 +80,16 @@ jobs:
 
       - name: Install Trivy CLI
         run: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/v0.71.0/contrib/install.sh | sudo sh -s -- -b /usr/local/bin v0.71.0
+          # Download pre-built binary and verify SHA256 before execution.
+          # Both TRIVY_VERSION and TRIVY_CHECKSUM must be updated together on bumps.
+          # Checksums: https://github.com/aquasecurity/trivy/releases/download/v<ver>/trivy_<ver>_checksums.txt
+          TRIVY_VERSION="0.71.0"
+          TRIVY_CHECKSUM="30a3d22b23f88c233f1658f562fb477cae3b3e8b4761109d515b7698daf85814"
+          curl -sfLo /tmp/trivy.tar.gz \
+            "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
+          echo "${TRIVY_CHECKSUM}  /tmp/trivy.tar.gz" | sha256sum --check
+          sudo tar -xzf /tmp/trivy.tar.gz -C /usr/local/bin trivy
+          rm /tmp/trivy.tar.gz
           trivy --version
 
       - name: Extract image list from compose files
