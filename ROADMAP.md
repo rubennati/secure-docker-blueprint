@@ -1,12 +1,24 @@
 # Roadmap
 
-Last updated: 2026-05-03 (v0.5.1 shipped).
+Last updated: 2026-06-03 (v0.6.0 shipped).
 
 This document captures direction, not detailed changelogs. For shipped work see [`CHANGELOG.md`](CHANGELOG.md); for per-category details see the `README.md` in each top-level directory.
 
 ---
 
 ## Shipped
+
+### v0.6.0 — Apps + OpenSSF security posture (2026-06-03)
+
+Four apps live-tested and promoted to ✅: Homepage, BookStack, Easy!Appointments, Cal.diy. Cal.com retired (upstream moved to proprietary licence).
+
+Supply-chain and CI security hardened end-to-end: all GitHub Actions pinned to commit SHAs, Dependabot enabled, workflow token permissions restricted, Trivy install changed to checksum-verified binary, pip dependency hash-pinned. Vikunja Dockerfile hardened with explicit non-root USER, HEALTHCHECK, and busybox digest pin. Branch protection active on main.
+
+OpenSSF Best Practices badge registered ([project #13091](https://bestpractices.coreinfrastructure.org/projects/13091), 87% passing score). OpenSSF Scorecard posture improved across Token-Permissions, Pinned-Dependencies, Branch-Protection, Dependency-Update-Tool, and Security-Policy checks.
+
+### v0.5.1 — Bug fixes and standards (2026-05-03)
+
+Nextcloud internal network isolation fix (database containers had unintended internet access). Seafile floating tags replaced. Tag pinning standard formalised. maintenance.md ✅ Ready Criteria added.
 
 ### v0.5.0 — Authentik Forward-Auth pattern proven (2026-05-03)
 
@@ -40,7 +52,7 @@ See [`CHANGELOG.md`](CHANGELOG.md) for the full diff of each release.
 
 Pre-1.0 tags are set when a natural milestone is reached, not on a fixed cadence. The single criterion for v1.0 is: **could someone fork this and run it without needing my mental model?** — subjective but unambiguous when met.
 
-### v0.6.0 — CrowdSec complete
+### v0.7.0 — CrowdSec complete
 
 Full CrowdSec stack in one version — host-level blocking and operational control:
 
@@ -52,7 +64,7 @@ Full CrowdSec stack in one version — host-level blocking and operational contr
 
 Goal: after this version, CrowdSec is a tool you can confidently operate at every layer, not just something that runs in the background.
 
-### v0.7.0 — Backup
+### v0.8.0 — Backup
 
 A working infrastructure is worthless without recovery. Three layers:
 
@@ -64,7 +76,7 @@ Each layer gets a blueprint pattern that works across apps, not per-app one-offs
 
 **Restore testing is part of this version** — a backup that has never been restored is a hypothesis, not a backup. At least one full restore walkthrough per layer, documented step by step.
 
-### v0.8.0 — Monitoring
+### v0.9.0 — Monitoring
 
 Backup tells you what to do when something breaks. Monitoring tells you that something broke — and ideally before it causes data loss or downtime. Four layers:
 
@@ -74,12 +86,6 @@ Backup tells you what to do when something breaks. Monitoring tells you that som
 - **Alerting** — push or email notification when a service goes down or a threshold is crossed. Without this, monitoring is a dashboard nobody watches.
 
 Each layer gets a proven setup in the blueprint. Log aggregation (Loki/Grafana stack) is out of scope here — heavier infrastructure that fits a later pass.
-
-### v0.9.0 — Resource limits
-
-Every live app gets `deploy.resources` (memory + CPU) and `pids_limit`. The standard is already documented in [`docs/standards/security-baseline.md`](docs/standards/security-baseline.md); this version applies it.
-
-Intentionally late: wrong limits break apps silently (OOM kills, throttled CPUs). Each app needs values measured on a real install, not guessed. This is the fine-tuning pass — not a quick sweep.
 
 ### v1.0 — Complete and hand-off ready
 
@@ -91,6 +97,7 @@ Before v1.0 is tagged:
 - No `🚧` without a documented reason
 - No `__REPLACE_ME__` in any live-tested file
 - Honest review of every `🚧 draft` — promote only what was actually tested
+- Resource limits (`deploy.resources` memory + CPU, `pids_limit`) applied to every live-tested app — values measured on a real install, not guessed
 - CI baseline: compose validate, secret scan, markdown lint, image vulnerability scan (Trivy or Grype)
 - Secret & Password Generation Standard consolidated into `docs/standards/`
 - Secrets rotation guidance in `docs/standards/`
