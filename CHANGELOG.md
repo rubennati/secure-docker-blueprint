@@ -8,14 +8,6 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
-### Security
-
-No security vulnerabilities fixed in this release.
-
----
-
-## [0.6.0] — 2026-06-03
-
 ### Added
 
 - **Homepage** (`apps/homepage/`): v0.10.9 ready, status `🚧 → ✅`. Healthcheck added (`/api/healthcheck`).
@@ -29,7 +21,9 @@ No security vulnerabilities fixed in this release.
 
 ### Security
 
-- **OpenSSF Best Practices badge**: registered at bestpractices.coreinfrastructure.org (project [#13091](https://bestpractices.coreinfrastructure.org/projects/13091)), 87% passing score
+No security vulnerabilities fixed. Security hardening improvements:
+
+- **OpenSSF Best Practices badge**: registered at www.bestpractices.dev (project [#13091](https://www.bestpractices.dev/projects/13091)), 87% passing score
 - **GitHub Actions hardening**: all workflow actions pinned to commit SHAs across `ci.yml`, `trivy.yml`, and `scorecard.yml`; workflow-level `permissions: read-all` set on `ci.yml` and `trivy.yml`; `security-events: write` scoped to the single job that uploads SARIF in `trivy.yml`; Dependabot enabled for the `github-actions` ecosystem (weekly, grouped)
 - **Trivy install hardened**: `curl | sh` pattern replaced with checksum-verified binary download from GitHub Releases using the official `trivy_0.71.0_checksums.txt` SHA256
 - **pip dependency pinned**: `pip install pyyaml` replaced with `pip install --require-hashes -r scripts/ci/requirements.txt`; hashes cover cp312, cp313, and sdist
@@ -366,8 +360,7 @@ Initial public release.
 - No CI workflows yet (compose validate, markdown lint, secret scan) — planned for 0.2.0
 - No automatic backup orchestration — planned in Evaluating section of ROADMAP
 
-[Unreleased]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.6.0...HEAD
-[0.6.0]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.5.1...v0.6.0
+[Unreleased]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.5.1...HEAD
 [0.5.1]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/rubennati/secure-docker-blueprint/releases/tag/v0.4.0
