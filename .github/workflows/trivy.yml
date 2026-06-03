@@ -25,9 +25,7 @@ on:
     - cron: '0 4 * * 1'  # Weekly Monday 04:00 UTC
   workflow_dispatch:
 
-permissions:
-  contents: read
-  security-events: write  # Required for SARIF upload to GitHub Security tab
+permissions: read-all
 
 jobs:
 
@@ -43,6 +41,9 @@ jobs:
   config-scan:
     name: IaC config scan
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write  # Required for SARIF upload to GitHub Security tab
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
@@ -79,7 +80,7 @@ jobs:
 
       - name: Install Trivy CLI
         run: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin v0.71.0
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/v0.71.0/contrib/install.sh | sudo sh -s -- -b /usr/local/bin v0.71.0
           trivy --version
 
       - name: Extract image list from compose files

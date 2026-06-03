@@ -13,7 +13,7 @@
 # COPY --chown sets directory ownership in the new image layer without
 # executing any commands, which works on scratch-based images.
 ARG APP_TAG=2.3.0
-FROM busybox:musl AS shell
+FROM busybox:1.38.0-musl@sha256:8635836765b0c4c43970660219739baa58b0883c2e429e4b8918f7dd1519455c AS shell
 RUN mkdir /files-init
 
 FROM vikunja/vikunja:${APP_TAG}
@@ -24,3 +24,10 @@ COPY --from=shell /bin/wget /bin/wget
 # Vikunja runs as uid=1000 — without this the named volume is initialized
 # root-owned and Vikunja fails with "permission denied" on startup.
 COPY --chown=1000:0 --from=shell /files-init /app/vikunja/files
+# HTTP healthcheck via wget (busybox). The compose healthcheck mirrors this;
+# Compose overrides the Dockerfile instruction at runtime.
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 --start-period=30s \
+  CMD ["/bin/wget", "-qO-", "http://localhost:3456/api/v1/info"]
+# Upstream vikunja/vikunja runs as uid=1000; declare it explicitly so
+# static analysis tools do not report an implicit root user.
+USER 1000
