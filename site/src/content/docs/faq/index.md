@@ -1,22 +1,20 @@
 ---
 title: FAQ
-description: Common questions about secrets, networking, upgrades, and configuration.
+description: Common questions about Secure Docker Blueprint and this site.
 ---
 
-Answers to common questions about the Secure Docker Blueprint stack.
+## Is this site the technical source of truth?
 
-## Why Docker Secrets and not plain environment variables?
+No. The repository is. Compose files, configuration, and implementation details live at [github.com/rubennati/secure-docker-blueprint](https://github.com/rubennati/secure-docker-blueprint). This site is a practical guide layer on top of it.
 
-Environment variables are visible to any process in the container and are commonly captured in logs, debug output, and crash reports. Docker Secrets write credentials to a file (`/run/secrets/<name>`) accessible only to the target container, avoiding that exposure. The blueprint uses the `_FILE` pattern where upstream supports it and documents deviations where it does not.
+## Why is this site smaller than the repository?
 
-## Can I use only some of the apps?
+The repository covers 40+ services. This site is deliberately curated — it covers the services and topics that benefit most from guided, narrative documentation. Not everything needs a guide page.
 
-Yes. Every application is independent. You need the core stack (Traefik at minimum) for routing and TLS, but each app beyond that is opt-in.
+## Why start with Vaultwarden?
 
-## Can I run this without CrowdSec?
+Vaultwarden is commonly the first service people deploy, it stores credentials, and it requires a tested backup and restore setup. That makes it a good reference target for what an operator guide should look like.
 
-Yes. CrowdSec is part of the core stack but removing the bouncer labels from Traefik and skipping `core/crowdsec/` is a valid configuration for development or trusted networks.
+## Can I use the repository directly without this site?
 
-:::note
-This page is a placeholder. Additional FAQ entries are planned for the v0.9.0 Operator Site launch.
-:::
+Yes. The repository is self-contained. This site exists for people who prefer structured guides over reading compose files and READMEs directly.

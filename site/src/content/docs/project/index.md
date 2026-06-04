@@ -1,18 +1,17 @@
 ---
 title: Project
-description: About Secure Docker Blueprint — goals, license, governance, and contributing.
+description: About Secure Docker Blueprint — goals, license, and how to contribute.
 ---
 
 ## About
 
-Secure Docker Blueprint is a collection of security-focused Docker Compose configurations for self-hosted infrastructure. The goal is to make hardened, production-ready setups accessible without requiring deep expertise in each service.
+Secure Docker Blueprint is a set of security-focused Docker Compose configurations for self-hosted infrastructure. The goal is to make hardened, well-documented setups accessible without requiring deep expertise in every service.
 
-## Design principles
+## Repository and this site
 
-- **Repository as source of truth** — compose files, secrets handling, and implementation details live in the repository. This site is the operator-facing view.
-- **Opinionated but documented** — defaults are chosen deliberately and trade-offs are explained.
-- **Opt-in security layers** — CrowdSec geoblocking, AppSec, SSH detection, and Authentik forward auth are opt-in with documented consequences, not forced defaults.
-- **No undocumented deviations** — when an app cannot use Docker Secrets, this is noted explicitly.
+The repository is the technical source of truth. Compose files, configuration, and implementation details live there. This site provides guided documentation for operators who prefer that format.
+
+[GitHub repository →](https://github.com/rubennati/secure-docker-blueprint)
 
 ## License
 
@@ -24,4 +23,4 @@ See [CONTRIBUTING.md](https://github.com/rubennati/secure-docker-blueprint/blob/
 
 ## Roadmap
 
-See [ROADMAP.md](https://github.com/rubennati/secure-docker-blueprint/blob/main/ROADMAP.md) for the planned milestones toward v1.0.
+See [ROADMAP.md](https://github.com/rubennati/secure-docker-blueprint/blob/main/ROADMAP.md) for planned milestones toward v1.0.

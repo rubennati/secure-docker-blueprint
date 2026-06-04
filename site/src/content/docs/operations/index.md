@@ -1,18 +1,21 @@
 ---
 title: Operations
-description: Runbooks, health checks, incident procedures, and maintenance guidance.
+description: Operational topics for running the Blueprint stack day to day.
 ---
 
-This section covers day-to-day operation of the Secure Docker Blueprint stack.
+This section will cover the recurring work of keeping a running stack healthy.
 
-## Topics covered
+:::caution
+A service is not responsibly operated until backup and restore expectations are understood. Starting with operations before backup is backwards.
+:::
 
-- **Health checks** — verifying that core services are running correctly
-- **CrowdSec** — reviewing decisions, whitelisting IPs, handling false positives
-- **Upgrades** — the process for updating pinned image tags
-- **Incidents** — what to do when a service goes down
+## Topics this section will cover
 
-Full operational runbooks are in the repository under the relevant service directory (for example, `core/crowdsec/docs/`).
+- **Backups** — what to back up, how often, and where
+- **Restore** — verifying that backups actually work
+- **Updates** — updating pinned image tags safely
+- **Logs** — where to look when something goes wrong
+- **Troubleshooting** — common problems and how to approach them
 
 :::note
 This page is a placeholder. Operational reference content is planned for the v0.9.0 Operator Site launch.
