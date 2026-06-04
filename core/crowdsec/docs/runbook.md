@@ -75,7 +75,7 @@ docker compose -f ../traefik/docker-compose.yml logs traefik 2>&1 \
 
 # sec-crowdsec middleware status: Traefik dashboard
 # https://<traefik-host>/dashboard/#/http/middlewares
-# sec-crowdsec@file must show green "Enabled"
+# sec-crowdsec@file must show green "Success"
 ```
 
 ### Phase 3 — Firewall Bouncer
@@ -170,10 +170,9 @@ sudo nft list chain ip crowdsec crowdsec-chain | grep -c "ip saddr"
 
 | Log | How to access |
 |---|---|
-| CrowdSec engine | `docker compose logs crowdsec` |
-| Traefik access logs | `${TRAEFIK_LOG_PATH}/access.log` (configured in `core/crowdsec/.env`) |
+| CrowdSec engine (stdout) | `docker compose logs crowdsec` |
+| Traefik access logs | `../traefik/volumes/logs/access.log` (default path; set via `TRAEFIK_LOG_PATH` in `.env`) |
 | Firewall bouncer | `sudo journalctl -u crowdsec-firewall-bouncer` |
-| CrowdSec internal log | `docker exec crowdsec cat /var/log/crowdsec/crowdsec.log` |
 
 ---
 
@@ -188,11 +187,18 @@ never be banned (your own monitoring systems, known good crawlers, office IPs).
 
 ### Remove an active ban (temporary — IP can be re-banned)
 
+`cscli decisions delete --ip X` removes decisions for that IP from the local origin
+(manually added or locally triggered decisions). `cscli decisions delete --ip X --all`
+removes matching decisions across all origins — including the CrowdSec community
+blocklist and any other source that may have contributed a decision. Use `--all` when
+you need to fully unblock an IP and are sure this is intentional — without it, a
+decision from a non-local origin may persist and keep the IP banned.
+
 ```bash
-# Remove ban for a specific IP
+# Remove locally-originated decisions for an IP
 docker exec crowdsec cscli decisions delete --ip 1.2.3.4
 
-# Remove ALL decisions for an IP (covers multi-scenario bans)
+# Remove decisions across all origins (use when you need a complete unblock)
 docker exec crowdsec cscli decisions delete --ip 1.2.3.4 --all
 
 # Verify the ban is gone
@@ -233,12 +239,19 @@ Apply the whitelist (requires container restart to load the new parser):
 docker compose restart crowdsec
 ```
 
-Verify the whitelist loaded:
+Verify the whitelist file is present and readable inside the container:
 
 ```bash
-docker exec crowdsec cscli parsers list | grep whitelist
-# Expected: whitelist-trusted appears in the list
+# Confirm the file exists at the expected path inside the container
+docker exec crowdsec ls -la /etc/crowdsec/parsers/s02-enrich/whitelist-trusted.yaml
+
+# Inspect its contents to confirm the IPs/CIDRs are correct
+docker exec crowdsec cat /etc/crowdsec/parsers/s02-enrich/whitelist-trusted.yaml
 ```
+
+> **Note:** Local parser files placed directly in `volumes/config/` are not managed
+> through the Hub index and may not appear in `cscli parsers list`. The filesystem
+> checks above are the reliable way to confirm the file loaded correctly.
 
 ### Temporary troubleshooting whitelist
 
@@ -262,21 +275,27 @@ whitelist above.
 
 ### Verify whitelist is effective
 
-After creating a whitelist and restarting the container, confirm the IP cannot be re-banned
-by the engine:
+Parser whitelists prevent the engine from automatically creating decisions based on
+log events. They do **not** prevent manual decisions added via `cscli decisions add`
+— those are always enforced regardless of any whitelist.
+
+To confirm the whitelist is working:
 
 ```bash
-# Inject a test event for the whitelisted IP (it should not result in a decision)
-docker exec crowdsec cscli decisions add --ip <whitelisted-ip> --duration 1m --reason "whitelist-test"
+# 1. Confirm the file is loaded (see above)
+docker exec crowdsec ls /etc/crowdsec/parsers/s02-enrich/whitelist-trusted.yaml
 
-# Note: manual decisions bypass the parser whitelist — this will succeed.
-# The whitelist only prevents the engine from auto-banning based on parsed log events.
-# Delete the manual test decision:
-docker exec crowdsec cscli decisions delete --ip <whitelisted-ip>
+# 2. Remove any existing ban for the whitelisted IP
+docker exec crowdsec cscli decisions delete --ip <whitelisted-ip> --all
+
+# 3. Monitor the decision list while the IP generates normal traffic
+#    If the whitelist is working, no automatic decision should reappear:
+watch -n 10 "docker exec crowdsec cscli decisions list --ip <whitelisted-ip>"
 ```
 
-> **Note:** Parser whitelists prevent automatic bans from scenarios. They do not prevent
-> manual decisions added via `cscli decisions add`. Manual decisions are always enforced.
+The whitelist can only be fully confirmed by observing that the IP is not automatically
+re-banned when traffic resumes. There is no dry-run test that proves scenario-based
+auto-banning will not occur.
 
 ---
 
@@ -301,8 +320,9 @@ docker exec crowdsec cscli decisions list --ip <affected-ip>
 
 # 4. Review the raw log events that triggered the scenario
 # The alert inspect output shows the original log lines
-# Cross-reference with Traefik access logs:
-grep <affected-ip> ${TRAEFIK_LOG_PATH}/access.log | tail -20
+# Cross-reference with Traefik access logs (default path — adjust if TRAEFIK_LOG_PATH
+# was changed in .env):
+grep <affected-ip> ../traefik/volumes/logs/access.log | tail -20
 ```
 
 ### Remove the decision
@@ -332,8 +352,8 @@ Based on the investigation, choose the appropriate remediation:
 # Confirm no active decisions remain for the IP
 docker exec crowdsec cscli decisions list --ip <affected-ip>
 
-# If a whitelist was added, confirm it loaded
-docker exec crowdsec cscli parsers list | grep whitelist
+# If a whitelist was added, confirm the file is present inside the container
+docker exec crowdsec ls /etc/crowdsec/parsers/s02-enrich/
 
 # Monitor for re-banning (run for a few minutes)
 docker compose logs -f crowdsec | grep <affected-ip>
@@ -343,10 +363,15 @@ docker compose logs -f crowdsec | grep <affected-ip>
 
 ## 5. Emergency Procedures
 
-### Clear all active bans immediately
+### Clear all active bans immediately (affects all enforcement layers)
 
-The fastest way to unblock everything across all enforcement layers. Does not disable
-any component — bans will re-accumulate as CrowdSec detects new events.
+Removes every active decision from the LAPI. Both Phase 2 (Traefik plugin) and Phase 3
+(firewall bouncer) read from the same decision list — this clears protection at both
+layers simultaneously.
+
+> **Warning:** Do not use this during an active attack unless you are intentionally
+> accepting the exposure window. All enforcement drops until CrowdSec re-bans the
+> sources from new log events.
 
 ```bash
 docker exec crowdsec cscli decisions delete --all
@@ -358,16 +383,20 @@ Phase 2 (Traefik) clears within ~60 s. Phase 3 (nftables) clears within ~10 s.
 
 Stops network-layer enforcement without affecting Phase 1 or Phase 2.
 
+Stopping the service does **not** flush the nftables chain — existing drop rules remain
+in place until explicitly cleared. This is intentional: it prevents a service restart
+from temporarily exposing the host.
+
 ```bash
-# Stop the bouncer service
+# 1. Stop the bouncer service
 sudo systemctl stop crowdsec-firewall-bouncer
 
-# Verify nftables rules are gone (rules flush when the service stops cleanly)
-sudo nft list chain ip crowdsec crowdsec-chain
-# Expected: chain is empty or does not exist
-
-# If rules persist, flush manually:
+# 2. Flush the nftables chain (required — rules do not clear automatically)
 sudo nft flush chain ip crowdsec crowdsec-chain
+
+# 3. Confirm chain is empty
+sudo nft list chain ip crowdsec crowdsec-chain
+# Expected: chain exists but contains no drop rules
 ```
 
 Phase 1 (detection) and Phase 2 (Traefik HTTP blocking) continue running.
@@ -376,20 +405,33 @@ To re-enable:
 
 ```bash
 sudo systemctl start crowdsec-firewall-bouncer
+# The bouncer syncs active decisions from the LAPI within ~10 s and repopulates the chain
 ```
 
-### Disable Phase 2 — Traefik Bouncer (HTTP blocking only)
+### Disable Phase 2 — Traefik Bouncer
 
-The fastest approach without touching Traefik configuration: clear all decisions so the
-bouncer has nothing to enforce.
+There is no single command that disables only Phase 2 without affecting Phase 3.
+
+**Option A — Remove specific decisions causing problems (targeted):**
 
 ```bash
+# Remove bans only for the IPs that are being incorrectly blocked
+docker exec crowdsec cscli decisions delete --ip <ip> --all
+# Phase 3 nftables rules are updated accordingly within ~10 s
+```
+
+**Option B — Clear all decisions (also affects Phase 3):**
+
+```bash
+# Clears ALL bans across both Phase 2 and Phase 3 — see warning above
 docker exec crowdsec cscli decisions delete --all
 ```
 
-This is temporary — new bans will accumulate. For a longer-term disable, remove
-`sec-crowdsec@file` from the router middleware lists in Traefik config and reload
-Traefik. See `core/traefik/README.md` for the configuration location.
+**Option C — Disable the Traefik bouncer plugin entirely (config change required):**
+
+Remove `sec-crowdsec@file` from the router middleware lists in Traefik config, then
+reload Traefik. Phase 3 nftables rules remain active. See `core/traefik/README.md`
+for the configuration location. This is the only approach that truly isolates Phase 2.
 
 ### Disable CrowdSec entirely — engine + all enforcement
 
@@ -486,9 +528,10 @@ CrowdSec Hub upgrades are not trivially reversible. If an update causes problems
    # Look for a sudden spike or unexpected scenario triggering
    ```
 
-2. Disable a specific scenario (does not remove it):
+2. Remove (uninstall) a specific scenario:
    ```bash
    docker exec crowdsec cscli scenarios remove crowdsecurity/<scenario-name>
+   # To reinstall later: docker exec crowdsec cscli scenarios install crowdsecurity/<scenario-name>
    ```
 
 3. Or pin the collection at its current version and skip future updates until the
@@ -605,12 +648,14 @@ docker ps --filter name=crowdsec
 # Can the host reach the LAPI port?
 docker exec crowdsec cscli lapi status
 
-# Is the LAPI port exposed?
-ss -tlnp | grep 8080
-# Expected: 127.0.0.1:8080 listening
-
-# Check the port in .env matches the exposed port
+# What port is configured?
 grep CROWDSEC_LAPI_PORT .env
+# Default: CROWDSEC_LAPI_PORT=8080
+
+# Is the LAPI port exposed on the host?
+# Replace 8080 with the value from CROWDSEC_LAPI_PORT if changed
+ss -tlnp | grep "$(grep CROWDSEC_LAPI_PORT .env | cut -d= -f2)"
+# Expected: 127.0.0.1:<port> listening
 ```
 
 If the container is up but LAPI is unreachable, check the engine logs for startup errors:
@@ -618,6 +663,20 @@ If the container is up but LAPI is unreachable, check the engine logs for startu
 ```bash
 docker compose logs crowdsec | grep -i "error\|fatal" | tail -20
 ```
+
+If the engine fails to start with a database error (e.g., "unable to open database",
+"database is malformed"), the `volumes/data` directory may be corrupted:
+
+```bash
+# Check for database errors at startup
+docker compose logs crowdsec | grep -i "database\|db\|sqlite" | tail -20
+```
+
+> **Recovery:** Stopping the engine and deleting `volumes/data/` forces a clean start.
+> **This permanently loses all decision history and alert history.**
+> All registered bouncers (Phase 2 and Phase 3) will lose their API keys — regenerate
+> with `cscli bouncers add` and update the keys in Traefik config and
+> `/etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml` before restarting those services.
 
 ---
 
@@ -653,7 +712,8 @@ sudo journalctl -u crowdsec-firewall-bouncer -n 30
 
 # 2. Can the bouncer reach the LAPI?
 docker exec crowdsec cscli lapi status
-ss -tlnp | grep 8080
+ss -tlnp | grep "$(grep CROWDSEC_LAPI_PORT .env | cut -d= -f2)"
+# Default port is 8080 — check .env if different
 
 # 3. API key still valid?
 docker exec crowdsec cscli bouncers list
