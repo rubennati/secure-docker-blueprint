@@ -1,9 +1,9 @@
 ---
-title: Secure Docker Blueprint
+title: Running the service is the easy part. Operating it is the challenge.
 description: Security-focused Docker Compose infrastructure with Traefik, CrowdSec, Docker Secrets and operational guidance for self-hosted services.
 template: splash
 hero:
-  tagline: Running the service is the easy part. Operating it is the challenge.
+  tagline: Security-focused Docker Compose infrastructure with Traefik, CrowdSec, Docker Secrets and operational guidance for self-hosted services.
   actions:
     - text: Applications
       link: /applications/
@@ -19,25 +19,17 @@ hero:
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
 
-This site is the operator-facing view of Secure Docker Blueprint.
-The repository is the technical source of truth — configs, compose files, and implementation details live there.
-This site focuses on guidance, reference, and operational context for day-to-day use.
+## Available now
 
 <CardGrid>
-  <Card title="Applications" icon="list-format">
-    Hardened Docker Compose setups for 40+ self-hosted services with Docker Secrets, Traefik routing, and CrowdSec integration.
-    [Browse applications →](/applications/)
+  <Card title="Vaultwarden" icon="approve-check">
+    Password manager guide — installation, configuration, backups, restore, updates, and troubleshooting.
+    [Go to Vaultwarden →](/applications/vaultwarden/)
   </Card>
-  <Card title="Getting Started" icon="rocket">
-    Deploy the core stack — Traefik, CrowdSec, and Authentik — and add your first app.
+  <Card title="Core foundation" icon="setting">
+    Start with Traefik and the shared security baseline before adding services.
     [Getting started →](/getting-started/)
   </Card>
-  <Card title="Operations" icon="setting">
-    Runbooks, health checks, incident procedures, and maintenance guidance.
-    [Operations →](/operations/)
-  </Card>
-  <Card title="FAQ" icon="question">
-    Common questions about secrets, networking, upgrades, and configuration.
-    [FAQ →](/faq/)
-  </Card>
 </CardGrid>
+
+The setup lives in the [GitHub repository](https://github.com/rubennati/secure-docker-blueprint). This site helps you find the right guide faster.
