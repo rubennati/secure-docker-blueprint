@@ -1,12 +1,16 @@
 # Roadmap
 
-Last updated: 2026-06-03 (v0.5.1 is the latest release).
+Last updated: 2026-06-04 (v0.6.0 is the latest release).
 
 This document captures direction, not detailed changelogs. For shipped work see [`CHANGELOG.md`](CHANGELOG.md); for per-category details see the `README.md` in each top-level directory.
 
 ---
 
 ## Shipped
+
+### v0.6.0 — CrowdSec complete (2026-06-04)
+
+Full CrowdSec operational layer documented and structured for confident day-to-day use. Phase 3 nftables firewall bouncer added: host-level packet enforcement covering SSH and all ports beyond what Traefik sees, with SSH brute-force detection documented as opt-in alongside it. Operations runbook covers health checks, whitelisting, false positive handling, emergency procedures, and maintenance. Dashboard guidance documents the CrowdSec Console (opt-in) and the full CLI alternative. Geoblocking guidance documents country-level decisions, automated scenario, Phase 2/3 interaction, and self-lockout prevention — opt-in with explicit trade-offs. AppSec tuning guidance documents the request-level WAF layer, safe enabling progression, application-specific false-positive patterns (Nextcloud, Paperless-ngx, Authentik, WordPress, Seafile, Invoice Ninja), exclusion mechanics, and emergency disable — opt-in and disabled by default.
 
 ### v0.5.1 — Bug fixes and standards (2026-05-03)
 
@@ -44,18 +48,6 @@ See [`CHANGELOG.md`](CHANGELOG.md) for the full diff of each release.
 
 Pre-1.0 tags are set when a natural milestone is reached, not on a fixed cadence. The single criterion for v1.0 is: **could someone fork this and run it without needing my mental model?** — subjective but unambiguous when met.
 
-### v0.6.0 — CrowdSec complete
-
-Full CrowdSec stack in one version — host-level blocking and operational control:
-
-- **nftables Bouncer** — drops packets before they reach Traefik (OS-level, complements the L7 bouncer from v0.4.0)
-- **Dashboard** — see what is being blocked in real time
-- **Runbook** — how to check decision lists, whitelist your own IP, drain false positives, disable quickly if needed
-- **Geoblocking** — structured setup with documented trade-offs
-- **AppSec tuning** — review default rules, document any false-positive patterns specific to this stack
-
-Goal: after this version, CrowdSec is a tool you can confidently operate at every layer, not just something that runs in the background.
-
 ### v0.7.0 — Backup
 
 A working infrastructure is worthless without recovery. Three layers:
@@ -79,11 +71,13 @@ Backup tells you what to do when something breaks. Monitoring tells you that som
 
 Each layer gets a proven setup in the blueprint. Log aggregation (Loki/Grafana stack) is out of scope here — heavier infrastructure that fits a later pass.
 
-### v0.9.0 — Resource limits
+### v0.9.0 — Resource limits and Operator Site launch
 
 Every live app gets `deploy.resources` (memory + CPU) and `pids_limit`. The standard is already documented in [`docs/standards/security-baseline.md`](docs/standards/security-baseline.md); this version applies it.
 
 Intentionally late: wrong limits break apps silently (OOM kills, throttled CPUs). Each app needs values measured on a real install, not guessed. This is the fine-tuning pass — not a quick sweep.
+
+The Operator Site — an Astro/Starlight site published via GitHub Pages — also reaches its official published state at this milestone. The site is the operator-facing entry point; the repository remains the technical source of truth and nothing moves out of it. The site starts deliberately small and curated, not as a mirror of the full repository. Initial scope covers Home, Getting Started, Applications (with Vaultwarden as the first full reference guide), Operations, FAQ, and Project/Governance. The build and deployment workflow is in place by this milestone. Once published, the repository README can route operator-focused users to the site.
 
 ### v1.0 — Complete and hand-off ready
 
@@ -110,6 +104,8 @@ Before v1.0 is tagged:
 
 Apps still to re-verify on a clean install (pre-v0.2 installs, standards have since evolved):
 Vaultwarden, WordPress, Nextcloud, Seafile / Seafile Pro, Invoice Ninja.
+
+**Operator Site work can happen continuously before v0.9.0** — content drafts, structure, and review loops are ongoing. Public, operator-facing publication is gated by the v0.9.0 milestone.
 
 ---
 

@@ -321,3 +321,5 @@ on_success: break
 - [docs/runbook.md](docs/runbook.md) — Day-to-day operations: health checks, whitelisting, false positive handling, emergency procedures, maintenance, troubleshooting
 - [docs/firewall-bouncer.md](docs/firewall-bouncer.md) — Phase 3 setup, SSH detection, verify steps, edge cases
 - [docs/dashboard.md](docs/dashboard.md) — Visual dashboard options: CrowdSec Console (opt-in), CLI alternative, deferred Prometheus/Grafana path
+- [docs/geoblocking.md](docs/geoblocking.md) — Country-level blocking: GeoIP enrichment, manual country decisions, automated scenario, Phase 2/3 interaction, self-lockout prevention, trade-offs
+- [docs/appsec.md](docs/appsec.md) — AppSec / WAF: how request-level inspection works, enabling safely, failure mode trade-offs, application-specific false positives, exclusions, emergency disable

@@ -38,6 +38,19 @@ No security vulnerabilities fixed. Security hardening improvements:
 
 ---
 
+## [0.6.0] — 2026-06-04
+
+### Added
+
+- **CrowdSec Phase 3 — nftables firewall bouncer** (`core/crowdsec/`): host-level packet enforcement via `crowdsec-firewall-bouncer-nftables`. Drops traffic from banned IPs before it reaches any service — Traefik, SSH, or otherwise. Complements the Phase 2 Traefik bouncer (L7) with network-layer coverage across all ports and protocols.
+- **SSH brute-force detection** (`docs/firewall-bouncer.md`): opt-in setup documented alongside Phase 3. Covers the `crowdsecurity/sshd` collection, `auth.log` volume mount, GID configuration, activation steps, end-to-end verification including synthetic log injection, and journald-only system notes.
+- **CrowdSec operations runbook** (`docs/runbook.md`): day-to-day reference covering health checks for all three phases, monitoring and inspection commands, whitelisting (temporary and permanent), false positive investigation workflow, emergency procedures (clear all bans, disable individual phases, full stack disable), and maintenance (hub upgrades, engine version upgrades).
+- **CrowdSec dashboard guidance** (`docs/dashboard.md`): documents the CrowdSec Console (opt-in hosted dashboard) — enrollment, verification, unenrollment, privacy implications, and tier limits. Includes a full CLI alternative table for operators who prefer to keep all data local. Prometheus/Grafana integration deferred to v0.8.0 Monitoring.
+- **Geoblocking guidance** (`docs/geoblocking.md`): opt-in country-level blocking documented with explicit trade-offs. Covers GeoIP enrichment (already active via installed collections), Mechanism A (manual `cscli decisions add --scope Country`), Mechanism B (`crowdsecurity/countries-blacklist` scenario), Phase 2/3 interaction including SSH lockout risk, self-lockout prevention steps, and emergency reversal. No default country list provided.
+- **AppSec tuning guidance** (`docs/appsec.md`): documents the request-level WAF layer — how it differs from scenario detection, current blueprint state (installed and disabled by default), active rule sets (`appsec-generic-rules`, `appsec-virtual-patching`), safe four-step enabling progression (verify reachability → enable fail-open → observe → optionally tighten), diagnosing AppSec blocks vs. IP bans, application-specific false-positive patterns for Nextcloud, Paperless-ngx, Authentik, WordPress, Seafile, and Invoice Ninja, exclusion mechanics and over-exclusion risks, and emergency disable.
+
+---
+
 ## [0.5.1] — 2026-05-03
 
 ### Fixed
@@ -360,7 +373,8 @@ Initial public release.
 - No CI workflows yet (compose validate, markdown lint, secret scan) — planned for 0.2.0
 - No automatic backup orchestration — planned in Evaluating section of ROADMAP
 
-[Unreleased]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/rubennati/secure-docker-blueprint/releases/tag/v0.4.0
