@@ -10,6 +10,9 @@ on:
       - 'site/**'
       - '.github/workflows/site.yml'
 
+permissions:
+  contents: read
+
 jobs:
   build:
     name: Build Astro/Starlight site
