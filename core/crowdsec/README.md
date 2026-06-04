@@ -273,26 +273,16 @@ Do not ban the IP you administer the server from (Tailscale, LAN admin subnet) u
 
 ## Phase 3: Firewall Bouncer
 
-Host-level enforcement via nftables. Installed as a system package (apt) and configured on the host — not inside any container — because it manipulates host firewall rules.
+Host-level enforcement via nftables. Installed as a system package (`apt`) on the host
+— not inside any container — because it manipulates host kernel firewall rules directly.
 
-```bash
-# Install the bouncer (on the host, not in a container)
-sudo apt install crowdsec-firewall-bouncer-nftables
+The bouncer polls the CrowdSec LAPI on `127.0.0.1:8080` and translates active decisions
+into nftables drop rules. Traffic from banned IPs is dropped before any service sees it
+— Traefik, SSH, or otherwise. Phase 3 is the only enforcement layer that covers ports
+Traefik does not terminate.
 
-# Generate an API key from the CrowdSec Engine
-docker exec crowdsec cscli bouncers add firewall-bouncer
-
-# Configure the bouncer
-sudo nano /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
-# Set:
-#   api_url: http://127.0.0.1:8080/   (matches CROWDSEC_LAPI_PORT)
-#   api_key: <key from the previous command>
-
-# Apply
-sudo systemctl restart crowdsec-firewall-bouncer
-```
-
-The bouncer polls CrowdSec's LAPI on `127.0.0.1:8080` (configurable via `CROWDSEC_LAPI_PORT`). Traefik is not in the path; the bouncer operates at the kernel firewall layer and covers every port on the host.
+**Full setup, SSH detection, verify steps, edge cases, and troubleshooting:**
+→ [`docs/firewall-bouncer.md`](docs/firewall-bouncer.md)
 
 ---
 
@@ -300,18 +290,11 @@ The bouncer polls CrowdSec's LAPI on `127.0.0.1:8080` (configurable via `CROWDSE
 
 ### Log Acquisition (`config/acquis.yaml`)
 
-Defines which log files CrowdSec monitors. Default: Traefik access logs.
+Defines which log files CrowdSec monitors. Default: Traefik access logs in JSON format.
 
-To add more log sources (e.g. SSH):
-
-```yaml
-filenames:
-  - /var/log/auth.log
-labels:
-  type: syslog
-```
-
-Mount the additional log file in `docker-compose.yml` and install the corresponding collection with `cscli collections install`.
+The file ships with a commented-out SSH block. Uncomment it to enable SSH brute-force
+detection alongside Phase 3 — see [`docs/firewall-bouncer.md`](docs/firewall-bouncer.md)
+→ "SSH detection" for the full activation steps (volume mount + collection + restart).
 
 ### AppSec (`config/appsec.yaml`)
 

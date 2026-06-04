@@ -37,6 +37,10 @@ services:
       - ./config/appsec.yaml:/etc/crowdsec/appsec.yaml:ro
       # Traefik access logs (read-only, relative path by default)
       - ${TRAEFIK_LOG_PATH}:/var/log/traefik:ro
+      # SSH authentication logs (opt-in — uncomment for SSH brute-force detection)
+      # Requires: crowdsecurity/sshd in CROWDSEC_COLLECTIONS + acquis.yaml SSH block
+      # See docs/firewall-bouncer.md → "SSH detection"
+      # - /var/log/auth.log:/var/log/auth.log:ro
 
     # --- Networking ---
     networks:

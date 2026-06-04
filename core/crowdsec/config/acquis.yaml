@@ -2,7 +2,8 @@
 # CrowdSec – Log Acquisition
 # =============================================
 # Defines which log sources CrowdSec monitors.
-# Traefik must write access logs in JSON format.
+# Each source requires the log file to be mounted
+# into the container (see docker-compose.yml).
 # =============================================
 
 # Traefik access logs (JSON format)
@@ -10,3 +11,25 @@ filenames:
   - /var/log/traefik/access.log
 labels:
   type: traefik
+
+---
+# SSH authentication logs (opt-in)
+#
+# Enables SSH brute-force detection — the primary use case for Phase 3
+# (Firewall Bouncer). Without this, Phase 3 only enforces bans that
+# Phase 2 already covers via Traefik logs.
+#
+# Prerequisites before uncommenting:
+#   1. Uncomment the volume mount in docker-compose.yml:
+#        - /var/log/auth.log:/var/log/auth.log:ro
+#   2. Add crowdsecurity/sshd to CROWDSEC_COLLECTIONS in .env
+#   3. Restart the CrowdSec container:
+#        docker compose up -d --force-recreate crowdsec
+#
+# See docs/firewall-bouncer.md → "SSH detection"
+#
+# ---
+# filenames:
+#   - /var/log/auth.log
+# labels:
+#   type: syslog
