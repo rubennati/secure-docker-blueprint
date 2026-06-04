@@ -7,9 +7,9 @@ export default defineConfig({
 		starlight({
 			title: 'Secure Docker Blueprint',
 			description: 'Security-focused Docker Compose infrastructure with Traefik, CrowdSec, Docker Secrets and operational guidance for self-hosted services.',
-			social: {
-				github: 'https://github.com/rubennati/secure-docker-blueprint',
-			},
+			social: [
+				{ icon: 'github', label: 'GitHub', href: 'https://github.com/rubennati/secure-docker-blueprint' },
+			],
 			sidebar: [
 				{ label: 'Getting Started', link: '/getting-started/' },
 				{
