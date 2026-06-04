@@ -82,9 +82,11 @@ docker exec crowdsec cscli bouncers add firewall-bouncer
 sudo nano /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
 ```
 
-Minimum working configuration:
+The installer creates the file with sensible defaults. You only need to update three
+fields — do not replace the entire file:
 
 ```yaml
+# Update these fields; leave all other installer-generated settings in place:
 api_url: http://127.0.0.1:8080/
 api_key: <key from step 2>
 mode: nftables
@@ -134,9 +136,9 @@ docker exec crowdsec cscli decisions add \
   --duration 5m --reason "phase3-verify"
 
 # Wait ~15 s for the bouncer to pick up the decision:
-sudo nft list chain ip filter crowdsec-chain
+sudo nft list chain ip crowdsec crowdsec-chain
 # Expected:
-#   table ip filter {
+#   table ip crowdsec {
 #     chain crowdsec-chain {
 #       ip saddr 198.51.100.1 drop
 #     }
@@ -157,7 +159,7 @@ When bans are in effect, the nftables chain contains drop rules. Example with tw
 active bans:
 
 ```
-table ip filter {
+table ip crowdsec {
   chain crowdsec-chain {
     ip saddr 185.220.101.5 drop
     ip saddr 45.142.212.100 drop
@@ -210,14 +212,34 @@ CROWDSEC_COLLECTIONS=crowdsecurity/traefik crowdsecurity/http-cve ... crowdsecur
 
 ### Step 2 — Mount the SSH log into the container
 
-Verify the log file exists on the host:
+First confirm where SSH authentication events are written on your system:
 
 ```bash
-ls -la /var/log/auth.log
-# If missing, SSH logs may live in /var/log/syslog — adjust the path in step 3
+ls -l /var/log/auth.log
+# Debian 12, Ubuntu 22.04+: auth.log exists → use /var/log/auth.log
+# If "No such file or directory":
+#   Ubuntu with systemd-journald only: check journalctl -u ssh
+#   Some systems write to /var/log/syslog instead → use /var/log/syslog
+#   Rocky/AlmaLinux: /var/log/secure
 ```
 
-In `docker-compose.yml`, uncomment the SSH log volume mount:
+The file must exist **before** the CrowdSec container starts and must be readable by
+the GID configured in `.env` (`CROWDSEC_LOG_GID`). Verify the file is readable:
+
+```bash
+stat -c '%G %a' /var/log/auth.log
+# Note the group name and check that CROWDSEC_LOG_GID matches that group's GID:
+getent group <group-name>
+```
+
+> **Note on journald-only systems:** If your distro writes SSH logs exclusively to the
+> systemd journal (no flat log file), CrowdSec cannot read them via file acquisition.
+> Enable traditional syslog forwarding (`ForwardToSyslog=yes` in
+> `/etc/systemd/journald.conf`) or use the CrowdSec journald acquisition source instead
+> — which requires additional configuration not covered here.
+
+In `docker-compose.yml`, uncomment the SSH log volume mount (adjust the path if your
+system uses `/var/log/syslog` or `/var/log/secure`):
 
 ```yaml
 # Before (commented out):
@@ -272,6 +294,43 @@ decisions within ~10 seconds:
 docker exec crowdsec cscli decisions list
 ```
 
+### Optional: verify the full detection chain end-to-end
+
+This confirms that the complete path works: auth.log event → parser → engine decision
+→ firewall bouncer rule. It does not require brute-forcing a real SSH service.
+
+**Method:** inject a synthetic failed-login line directly into the log file that
+CrowdSec is monitoring, then check whether the engine parses it and produces an alert.
+
+```bash
+# 1. Note the current alert count (baseline)
+docker exec crowdsec cscli alerts list | wc -l
+
+# 2. Write a single synthetic failed-login line in the format sshd uses.
+#    Use a documentation IP (203.0.113.x range) — never a real address.
+#    The exact format must match what your sshd version writes.
+echo "$(date '+%b %d %H:%M:%S') $(hostname) sshd[99999]: Failed password for invalid user testuser from 203.0.113.99 port 54321 ssh2" \
+  | sudo tee -a /var/log/auth.log
+
+# 3. Wait ~30 s for CrowdSec to parse the new line, then check:
+docker exec crowdsec cscli metrics show acquisition
+# Expected: lines_read for auth.log has increased by 1
+
+# 4. A single line will not trigger a ban (threshold is 5–10 events).
+#    To confirm parsing without triggering a scenario, check the parser hit count:
+docker exec crowdsec cscli metrics show parsers
+# Expected: crowdsecurity/sshd-logs shows a hit for the injected line
+
+# 5. Clean up — the synthetic line is harmless but tidy to remove:
+sudo sed -i '/testuser.*203\.0\.113\.99/d' /var/log/auth.log
+```
+
+> **What a real SSH ban looks like once traffic flows:**
+> After genuine brute-force attempts accumulate, `cscli decisions list` will show an
+> entry with `reason: crowdsecurity/ssh-bf`. Within ~10 s, the nftables chain will
+> contain the corresponding drop rule — verifiable with
+> `sudo nft list chain ip crowdsec crowdsec-chain`.
+
 ---
 
 ## Edge cases
@@ -283,20 +342,23 @@ covers IPv6 automatically — CrowdSec creates both `ip` (IPv4) and `ip6` (IPv6)
 Verify both exist after a ban:
 
 ```bash
-sudo nft list ruleset | grep -E "chain crowdsec"
-# Expected: entries under both `ip filter` and `ip6 filter`
+sudo nft list ruleset | grep -E "table ip"
+# Expected: entries for both `ip crowdsec` and `ip6 crowdsec`
 ```
 
 No additional configuration is needed; the bouncer handles both address families.
 
-### Docker bridge network
+### Docker bridge network and private ranges
 
-CrowdSec does not ban RFC 1918 addresses (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16).
-Docker bridge networks fall within these ranges, so container-to-container traffic
-cannot be accidentally blocked.
+CrowdSec's detection scenarios don't typically trigger on RFC 1918 addresses
+(10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16) — internet scanners and brute-force
+sources almost never originate from private ranges. In practice, Docker bridge traffic
+is safe.
 
-If you use non-standard ranges (custom Docker subnets, Tailscale addresses) that you
-never want banned, add them to `safe_range` in the bouncer config:
+However, the firewall bouncer enforces **any active decision**, including decisions for
+private IPs. A manual `cscli decisions add --ip 192.168.1.x` would be enforced at the
+network layer. If you want a hard guarantee that certain ranges are never dropped,
+configure `safe_range` in the bouncer config:
 
 ```yaml
 # /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
@@ -317,8 +379,20 @@ new decisions from the engine are not picked up until the service restarts.
 To flush all rules manually (emergency only — removes all active bans immediately):
 
 ```bash
-sudo nft flush chain ip filter crowdsec-chain
+sudo nft flush chain ip crowdsec crowdsec-chain
 ```
+
+### Reboot behavior
+
+On reboot, nftables rules are **not** persistent — the kernel starts with an empty
+ruleset. The firewall bouncer re-establishes the rules by syncing decisions from the
+LAPI as soon as the service starts. Because `systemctl enable` is part of the setup,
+the bouncer starts automatically on boot.
+
+There is a brief window between kernel start and when the bouncer service is fully up
+during which no drop rules are active. In most deployments this window is a few seconds
+and poses no meaningful risk. If you require zero-gap enforcement at boot, configure
+`nftables.service` persistence separately (out of scope for this blueprint).
 
 ---
 
@@ -327,7 +401,7 @@ sudo nft flush chain ip filter crowdsec-chain
 | Problem | Likely cause | Resolution |
 |---|---|---|
 | Service fails to start | Config file syntax error or wrong API key | `sudo journalctl -u crowdsec-firewall-bouncer -f` |
-| Bouncer not connecting to LAPI | Wrong `api_url` or port | `curl -s http://127.0.0.1:8080/v1/health` — expect `{"status":"ok"}` |
+| Bouncer not connecting to LAPI | Wrong `api_url` or port | `docker exec crowdsec cscli lapi status` — expect "You can successfully interact with Local API" |
 | LAPI unreachable from host | Port not exposed in Docker | Check `ports:` in `docker-compose.yml` and `CROWDSEC_LAPI_PORT` in `.env` |
 | No nftables chain appears | Wrong `mode` setting | Use `nftables` on Debian 12+ / Ubuntu 22.04+, `iptables` on older |
 | Chain exists but always empty | No active decisions | Normal — rules appear only when bans exist; use the Verify step 4 test |
@@ -343,7 +417,7 @@ sudo nft flush chain ip filter crowdsec-chain
 sudo systemctl disable --now crowdsec-firewall-bouncer
 
 # 2. Flush the nftables chain (removes all active drop rules)
-sudo nft flush chain ip filter crowdsec-chain 2>/dev/null || true
+sudo nft flush chain ip crowdsec crowdsec-chain 2>/dev/null || true
 
 # 3. Uninstall the package
 sudo apt remove crowdsec-firewall-bouncer-nftables
