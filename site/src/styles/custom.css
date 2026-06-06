@@ -1,0 +1,19 @@
+/* Match the cobalt accent from AI Project Standard */
+:root {
+  --sl-color-accent-low: oklch(93% 0.04 258);
+  --sl-color-accent: oklch(40% 0.17 258);
+  --sl-color-accent-high: oklch(28% 0.17 258);
+}
+
+:root[data-theme='dark'] {
+  --sl-color-accent-low: oklch(18% 0.10 258);
+  --sl-color-accent: oklch(62% 0.16 258);
+  --sl-color-accent-high: oklch(82% 0.12 258);
+}
+
+/* Compact, subtle site title */
+.site-title {
+  font-size: var(--sl-text-sm) !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.01em;
+}
