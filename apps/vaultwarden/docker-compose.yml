@@ -97,10 +97,13 @@ services:
       PUSH_ENABLED: ${VW_PUSH_ENABLED:-false}
       PUSH_INSTALLATION_ID: ${VW_PUSH_INSTALLATION_ID:-}
       PUSH_INSTALLATION_KEY: ${VW_PUSH_INSTALLATION_KEY:-}
+      # Empty = global host default. EU host: https://api.bitwarden.eu / https://identity.bitwarden.eu
+      PUSH_RELAY_URI: ${VW_PUSH_RELAY_URI:-}
+      PUSH_IDENTITY_URI: ${VW_PUSH_IDENTITY_URI:-}
       # SMTP
       SMTP_HOST: ${VW_SMTP_HOST:-}
       SMTP_FROM: ${VW_SMTP_FROM:-}
-      SMTP_FROM_NAME: Vaultwarden
+      SMTP_FROM_NAME: ${VW_SMTP_FROM_NAME:-Vaultwarden}
       SMTP_PORT: ${VW_SMTP_PORT:-587}
       SMTP_SECURITY: ${VW_SMTP_SECURITY:-starttls}
       SMTP_USERNAME: ${VW_SMTP_USERNAME:-}
@@ -130,11 +133,13 @@ services:
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
       # Middlewares
-      # sec-3e: strict headers (SAMEORIGIN, same-origin referrer, STS preload, CSP report-only)
-      # + rl-soft rate limiting + compress + permissions-policy.
-      # The iframe-friendly variant (hdr-strict-embed) is required because the
-      # Bitwarden browser extension embeds the vault in an iframe.
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,sec-3e@file"
+      # sec-3e: strict headers (STS preload, referrer, CSP report-only) + rl-soft + compress
+      # + permissions-policy. hdr-strict-embed within sec-3e would normally set
+      # X-Frame-Options: SAMEORIGIN, but Vaultwarden's admin diagnostics require no XFO
+      # header from the proxy — Vaultwarden controls it per-route itself (SAMEORIGIN for
+      # the vault UI, absent for 2FA connector pages). strip-xfo removes it after sec-3e.
+      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-strip-xfo.headers.customResponseHeaders.X-Frame-Options="
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,sec-3e@file,${COMPOSE_PROJECT_NAME}-strip-xfo"
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
 
