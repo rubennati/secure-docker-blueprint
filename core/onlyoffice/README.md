@@ -10,7 +10,7 @@ Single service:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `onlyoffice/documentserver:8.3` | Node.js server + rendering, serves the editor at `/web-apps/apps/api/documents/api.js` |
+| `app` | `onlyoffice/documentserver:9.3.1.2` | Node.js server + rendering, serves the editor at `/web-apps/apps/api/documents/api.js` |
 
 There is no DB container in this setup — the image bundles its own PostgreSQL + Redis + RabbitMQ for internal state. This is the upstream-recommended "single container" deployment.
 

@@ -8,12 +8,12 @@
 - **Config reference:** https://github.com/ONLYOFFICE/DocumentServer/blob/master/Docker/README.md
 - **License:** AGPL-3.0
 - **Origin:** Latvia · Ascensio System SIA · EU
-- **Based on version:** `8.3` (Document Server Community)
-- **Last checked:** 2026-04-16
+- **Based on version:** `9.3.1.2` (Document Server Community)
+- **Last checked:** 2026-06-14
 
 ## What we use
 
-- Official `onlyoffice/documentserver` image, pinned to major version `8.3`
+- Official `onlyoffice/documentserver` image, pinned to `9.3.1.2`
 - Single-container deployment — the image bundles PostgreSQL + Redis + RabbitMQ internally
 - `config/entrypoint.sh` wrapper to inject the JWT secret from Docker Secrets
 
@@ -31,28 +31,60 @@
 
 ## Tag pinning
 
-`APP_TAG=8.3` pins to the 8.3 line. Within the line, patches are rolled out by the upstream and picked up on `docker compose pull` — acceptable for non-critical content. Pin to a specific digest (`docker image inspect <image> --format '{{index .RepoDigests 0}}'`) for reproducible deployments.
+`APP_TAG` is pinned to an exact patch release (`9.3.1.2`). Do not use floating tags such as `9.3`, `9`, or `latest` — they pick up upstream changes silently and make rollback ambiguous.
+
+### Why 9.3.1.2 and not 9.4.x
+
+9.4.0 (released 2026-05-19) consolidated all internal processes into a single Node.js process and **removed the bundled RabbitMQ and internal database**. This is a large architectural change. 9.3.1.2 uses the same internal stack as 8.3.x (PostgreSQL + Redis + RabbitMQ bundled) and is a well-settled release. Test 9.4.x separately before moving to it in production, paying particular attention to:
+
+- Seafile and Nextcloud iframe embedding and JWT handshake
+- First-boot behaviour (no RabbitMQ init messages expected in 9.4)
+- Data volume compatibility (the internal DB format changes between 9.3 and 9.4)
 
 ## Upgrade checklist
 
-Major-version upgrades (`8.x` → `9.x`) carry schema migrations inside the internal PostgreSQL.
+Before upgrading, back up both volumes (documents/fonts and logs):
+
+```bash
+tar czf onlyoffice-data-$(date +%Y%m%d).tgz ./volumes/data
+tar czf onlyoffice-logs-$(date +%Y%m%d).tgz ./volumes/logs
+```
 
 1. Read the release notes: https://github.com/ONLYOFFICE/DocumentServer/releases
-2. Back up the data volume:
+2. If users are active, disconnect them first:
    ```bash
-   tar czf onlyoffice-data-$(date +%Y%m%d).tgz ./volumes/data
+   docker exec ${CONTAINER_NAME_APP} documentserver-prepare4shutdown.sh
+   # Wait up to 5 minutes for sessions to close
    ```
 3. Bump `APP_TAG` in `.env`
 4. `docker compose pull && docker compose up -d`
-5. First start after a major version bump can take several minutes while the internal PostgreSQL migrates. Watch:
+5. First start can take 1–5 minutes (PostgreSQL init or migration). Watch:
    ```bash
    docker compose logs app --follow
+   # Look for: "ONLYOFFICE Document Server Community Edition vX.Y.Z is up and running"
    ```
-6. Verify: `curl -fsSI https://<APP_TRAEFIK_HOST>/healthcheck` returns 200, and open an editor from a connected app.
+6. Verify health:
+   ```bash
+   curl -fsSI https://<APP_TRAEFIK_HOST>/healthcheck   # expect 200
+   curl -fsSI https://<APP_TRAEFIK_HOST>/web-apps/apps/api/documents/api.js   # expect 200
+   ```
+7. Open a `.docx` from Seafile (and Nextcloud if enabled) and confirm:
+   - Editor loads in iframe — no `X-Frame-Options` error in the browser console
+   - No `Token is invalid` JWT error in the browser console
+   - Save and close — changes persist back to Seafile/Nextcloud
+   - Multi-user: collaborative cursor visible when two sessions are open
 
 ### Rollback
 
-The internal PostgreSQL migration is not reversible. Rollback = restore `onlyoffice-data-*.tgz` and revert `APP_TAG`.
+Revert `APP_TAG` in `.env`, restore the volume backup, then `docker compose pull && docker compose up -d`:
+
+```bash
+tar xzf onlyoffice-data-YYYYMMDD.tgz
+# edit .env: APP_TAG=<previous>
+docker compose pull && docker compose up -d
+```
+
+Note: if an internal PostgreSQL schema migration ran, it is not automatically reversible — restoring the volume backup is required.
 
 ## Useful commands
 
