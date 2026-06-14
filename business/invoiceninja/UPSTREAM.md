@@ -25,7 +25,7 @@
 |---|---|---|
 | `docker-compose.yml` | Adapted | Added Traefik labels, Blueprint naming conventions |
 | `.env` | Adapted | Restructured, passwords as placeholders, section headers |
-| `nginx/laravel.conf` | 1:1 copy | Server block: Laravel routes + FastCGI to app:9000 |
+| `nginx/laravel.conf` | Modified | Server block: Laravel routes + FastCGI to app:9000; FastCGI timeouts added (see deviations) |
 | `nginx/invoiceninja.conf` | 1:1 copy | Global nginx settings: gzip, buffers, body size, server_tokens |
 
 ## What We Changed and Why
@@ -47,6 +47,10 @@
 | `REQUIRE_HTTPS=true` | Correct behind Traefik |
 | `APP_DEBUG=false` | Production safety |
 | `NINJA_ENVIRONMENT=selfhost` added | Explicit self-host mode |
+| MySQL healthcheck uses app-user `SELECT 1` | `mysqladmin ping` marks MySQL healthy before user/DB init completes, causing first-boot race. App-user check gates the app container on a real usable connection. |
+| App container memory limit raised to 1G | Snappdf/Chromium PDF rendering requires more than 512M. The previous limit caused OOM on live preview and complex PDF renders. |
+| nginx FastCGI timeouts set to 300s in `laravel.conf` | nginx default 60s is insufficient for Chromium PDF renders via `/api/v1/live_design` and `/api/v1/live_preview`, causing 504 errors. |
+| APP_KEY generated before first boot via `openssl` | Starting without APP_KEY causes an error during migration and requires a two-step restart. Offline key generation removes the race. |
 
 ## What We Kept From Upstream
 
@@ -64,14 +68,14 @@
 | Passwords in `.env` | Laravel has no `_FILE` support for most variables including `APP_KEY` and `DB_PASSWORD`. Secrets are in the gitignored `.env`. | Custom entrypoint for Docker Secrets injection (Phase 2) |
 | `TRUSTED_PROXIES=*` | Wildcard trusts any IP as proxy. Safe when Traefik is the only path to nginx, but is technically too permissive. | Tighten to Traefik container IP or internal CIDR |
 | MySQL instead of MariaDB | Upstream requirement; blueprint default is MariaDB for other stacks. | No change planned — stays MySQL |
-| Healthchecks do not test actual service responsiveness | `php -r "echo 'ok';"` tests the PHP binary only; `nginx -t` tests config only. | Improve once tooling in the pinned images is confirmed |
+| App healthcheck does not test PHP-FPM or queue liveness | `php -r "echo 'ok';"` tests the PHP binary only; `nginx -t` tests config only. MySQL healthcheck now uses an app-user SELECT which is accurate. | Improve app/nginx checks once tooling in the pinned images is confirmed |
 | Named volumes instead of bind mounts | Upstream pattern; harder to inspect on host but simpler to set up. | Migrate to `./volumes/` bind mounts in a future cleanup |
 
 ## Known Issues
 
-- **502 on start**: MySQL init causes a brief connection failure from the app container — normal, resolves within ~30s. The `depends_on: condition: service_healthy` mitigates but does not fully prevent this.
 - **No Docker Secrets**: Laravel does not support `_FILE` env vars for most variables. All secrets are in `.env` (gitignored, never committed).
-- **First boot race**: If `APP_KEY` is not set on first boot, the app starts but generates an error. Always set `APP_KEY` before `docker compose up -d` on a fresh install, or follow the two-step startup in README.md.
+- **App healthcheck is not a full liveness check**: `php -r "echo 'ok';"` verifies the PHP binary is callable but not that PHP-FPM is accepting connections or that supervisor processes (queue workers, scheduler) are running. Use `supervisorctl status` inside the container to verify those.
+- **PDF rendering memory**: Snappdf/Chromium can spike past 1G on complex invoices or many concurrent renders. If rendering fails consistently, increase `memory:` on the app service and restart.
 
 ## Backup
 

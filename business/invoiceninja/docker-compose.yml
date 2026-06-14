@@ -51,7 +51,9 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512M
+          # 1G required: Snappdf/Chromium is used for PDF rendering and live design
+          # previews and can exceed 512M under concurrent load or complex templates.
+          memory: 1G
           cpus: "1.00"
           pids: 200
         reservations:
@@ -152,12 +154,15 @@ services:
       - internal
 
     # --- Health & Observability ---
+    # Connects as the app user to the app database — ensures the user and schema
+    # are fully initialized before the app container starts, not just that mysqld
+    # is listening. $${...} is Compose escape syntax: becomes ${...} in the shell.
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u${DB_USERNAME}", "-p${DB_PASSWORD}"]
+      test: ["CMD-SHELL", "mysql -h 127.0.0.1 -u$${MYSQL_USER} -p$${MYSQL_PASSWORD} $${MYSQL_DATABASE} -e 'SELECT 1' >/dev/null 2>&1"]
       interval: 10s
       timeout: 5s
-      retries: 10
-      start_period: 30s
+      retries: 12
+      start_period: 60s
 
     deploy:
       resources:

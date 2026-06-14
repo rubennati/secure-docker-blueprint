@@ -51,35 +51,47 @@ sed -i "s|^DB_ROOT_PASSWORD=.*|DB_ROOT_PASSWORD=$(openssl rand -base64 32 | tr -
 sed -i "s|^IN_PASSWORD=.*|IN_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')|" .env
 ```
 
-### Step 3: Start (first boot — no APP_KEY yet)
+### Step 3: Generate APP_KEY (before first boot)
+
+**APP_KEY must be set before starting the stack for the first time.** Generate it now using `openssl` — no containers required:
+
+```bash
+APP_KEY="base64:$(openssl rand -base64 32)"
+sed -i "s|^APP_KEY=.*|APP_KEY=${APP_KEY}|" .env
+```
+
+**CRITICAL:** Never change `APP_KEY` after data exists in the database. It encrypts stored payment tokens, gateway credentials, and other sensitive values. If `APP_KEY` changes, that data becomes unreadable.
+
+Save a copy of your `.env` (including `APP_KEY`) in a secure location before starting.
+
+### Step 4: Start
 
 ```bash
 docker compose up -d
-docker compose logs -f app  # Wait until PHP-FPM and supervisor are running
 ```
 
-### Step 4: Generate APP_KEY
+On first boot the app runs database migrations and seeds initial data. Watch progress:
 
 ```bash
-docker compose run --rm app php artisan key:generate --show
+docker compose logs app --follow
 ```
 
-Copy the `base64:...` output and set it in `.env`:
+Expected success markers (in order):
 
-```env
-APP_KEY=base64:your-key-here
+```
+Creating migration table
+Running migrations
+Seeding database
+Production setup completed
+php-fpm entered RUNNING state
+queue-worker_00 entered RUNNING state
+queue-worker_01 entered RUNNING state
+scheduler entered RUNNING state
 ```
 
-**CRITICAL:** Never change `APP_KEY` after first boot. Changing it invalidates all encrypted data (stored payment tokens, gateway credentials).
+First boot typically takes 1–3 minutes. MySQL initialization and user/database creation happen before the app container starts (enforced by the healthcheck), so the race condition between the app and MySQL is handled automatically.
 
-### Step 5: Restart with Key
-
-```bash
-docker compose down
-docker compose up -d
-```
-
-### Step 6: Log in
+### Step 5: Log in
 
 Open `https://invoice.example.com` and log in with `IN_USER_EMAIL` / `IN_PASSWORD`.
 
@@ -139,6 +151,38 @@ Verify env vars were picked up:
 ```bash
 docker compose exec app sh -c 'env | grep -E "^MAIL_"'
 ```
+
+### PDF / live preview troubleshooting
+
+Invoice Ninja uses Snappdf (Chromium) for PDF rendering. If `/api/v1/live_design` or `/api/v1/live_preview` return 504 or 500:
+
+1. **504 from nginx** — FastCGI read timeout exceeded. Check nginx access log for the upstream response time:
+   ```bash
+   docker compose logs nginx --tail=50 | grep "live_design\|live_preview"
+   ```
+   The nginx FastCGI timeouts are set to 300s in `nginx/laravel.conf`. If renders still time out, Chromium may be crashing — check app logs.
+
+2. **500 from the app** — Chromium likely ran out of memory or crashed. Check:
+   ```bash
+   docker compose logs app --tail=50 | grep -iE "snappdf|chromium|chrome|error|fatal"
+   ```
+   The app container memory limit is 1G. If Chromium crashes repeatedly, increase `memory:` in `docker-compose.yml`.
+
+3. **Check Chromium path**:
+   ```bash
+   docker compose exec app ls -la /usr/bin/google-chrome-stable
+   ```
+
+### Browser console warnings (non-critical)
+
+These warnings appear in the browser DevTools console and are expected or cosmetic:
+
+| Warning | Meaning | Action |
+|---|---|---|
+| `tiptap: Extension X is already registered` | Duplicate frontend JS extension registration | Cosmetic — does not affect functionality |
+| `CSP report-only violations` | App tries to load external docs/images; `report-only` means violations are logged but not blocked | No action unless strict CSP is required |
+
+The actionable errors are HTTP **504** on `/api/v1/live_design` and **500** on `/api/v1/live_preview`. Debug those with the steps above, not the console warnings.
 
 ### Logs
 
