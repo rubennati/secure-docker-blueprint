@@ -7,14 +7,14 @@
 - **License:** Elastic License 2.0
 - **Origin:** US · Invoice Ninja LLC · non-EU
 - **Note:** Elastic License 2.0 is not OSI-approved — source-available, not open source. Self-hosting permitted; providing it as a managed service to others is restricted.
-- **Based on version:** 5.13.16
-- **Last checked:** 2026-04-14
+- **Based on version:** 5.13.24
+- **Last checked:** 2026-06-14
 
 ## Pinned Versions
 
 | Component | Tag | Notes |
 |---|---|---|
-| Invoice Ninja | `5.13.16` | TODO: check latest stable before upgrading |
+| Invoice Ninja | `5.13.24` | Verified stable on Docker Hub 2026-06-14 |
 | MySQL | `8.4` | LTS — upstream target DB |
 | Redis | `8.6-alpine` | |
 | Nginx | `1.29-alpine` | |
