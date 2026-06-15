@@ -342,7 +342,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/notification/
 
 - Database, Redis, and Memcached are only on `app-internal` (which is `internal: true`). None of them can reach the outside network directly.
 - The `seafile` main container is on both `proxy-public` (for Traefik) and `app-internal` (for DB + Redis). The optional web-facing services (`seadoc`, `notification-server`, `thumbnail-server`) follow the same pattern.
-- All secrets are Docker Secrets under `./.secrets/`. The wrapper entrypoint converts them to env vars inside the container — they never land in `.env`.
+- Most secrets live as Docker Secrets under `./.secrets/`. The wrapper entrypoint converts them to env vars inside the container. **Exception:** `thumbnail-server` does not use the entrypoint wrapper, so `JWT_PRIVATE_KEY` and `SEAFILE_MYSQL_DB_PASSWORD` must be set as direct environment variables in `.env` matching the secret file contents.
 - `no-new-privileges:true` on every service.
 
 ## Access policy — OnlyOffice + SeaDoc require `acc-private`
@@ -361,6 +361,56 @@ APP_TRAEFIK_ACCESS=acc-private
 `acc-private` = Tailscale/VPN + LAN (RFC1918). Docker container IPs (172.x.x.x) fall into the LAN range and pass. External internet still blocked.
 
 > If you run Seafile without OnlyOffice and without SeaDoc, `acc-tailscale` works fine.
+
+## Thumbnail server
+
+The thumbnail server has one important difference from every other Seafile service in this blueprint: it does **not** use the shared `entrypoint.sh` wrapper. This means Docker Secrets `_FILE` paths are never read inside that container. `JWT_PRIVATE_KEY` and `SEAFILE_MYSQL_DB_PASSWORD` must be supplied as direct environment variables, which means they must be in `.env`.
+
+### Thumbnail 403 Forbidden
+
+If `/thumbnail/...` requests return 403, there are two independent root causes:
+
+1. **Missing `JWT_PRIVATE_KEY`** — the thumbnail container started without the key. Verify without printing the secret:
+   ```bash
+   docker compose exec thumbnail-server sh -lc 'printenv JWT_PRIVATE_KEY | wc -c'
+   # Expected: non-zero byte count (e.g. 65)
+   # If 0: JWT_PRIVATE_KEY is not in .env, or .env was not loaded
+   docker compose exec thumbnail-server sh -lc 'printenv SEAFILE_MYSQL_DB_PASSWORD | wc -c'
+   # Expected: non-zero byte count
+   ```
+
+2. **Traefik router priority** — the main `seafile` router (catch-all for `Host(…)`) intercepts `/thumbnail/…` before the dedicated thumbnail router. Verify:
+   ```bash
+   docker inspect seafile-thumbnail \
+     --format '{{range $k,$v := .Config.Labels}}{{println $k "=" $v}}{{end}}' \
+     | grep -E "traefik.http.routers.*(rule|priority)"
+   # Expected: priority=100 on the thumbnail router
+
+   docker inspect seafile-app \
+     --format '{{range $k,$v := .Config.Labels}}{{println $k "=" $v}}{{end}}' \
+     | grep -E "traefik.http.routers.*(rule|priority)"
+   # Expected: priority=1 on the main router
+   ```
+
+### Production rollout
+
+If applying this fix to a running deployment:
+
+1. Back up `.env` and the compose files.
+2. Add `JWT_PRIVATE_KEY` and `SEAFILE_MYSQL_DB_PASSWORD` to `.env` (values must match `.secrets/jwt_key.txt` and `.secrets/seafile_db_pwd.txt`).
+3. Validate the merged compose config:
+   ```bash
+   docker compose config --quiet
+   ```
+4. Recreate only the affected containers:
+   ```bash
+   docker compose up -d --force-recreate seafile thumbnail-server
+   ```
+5. Verify the key is now present (non-zero byte count, no secret printed):
+   ```bash
+   docker compose exec thumbnail-server sh -lc 'printenv JWT_PRIVATE_KEY | wc -c'
+   ```
+6. Test thumbnail generation — request a thumbnail URL in the browser and confirm it no longer returns 403.
 
 ## Known Issues
 

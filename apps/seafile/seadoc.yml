@@ -46,15 +46,19 @@ services:
     labels:
       - "traefik.enable=true"
       # socket.io needs its own router (no path stripping)
+      # Router (priority=100: higher than main seafile catch-all)
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc-ws.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/socket.io/`)"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc-ws.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc-ws.priority=100"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc-ws.tls=true"
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc-ws.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc-ws.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc-ws.service=${COMPOSE_PROJECT_NAME}-seadoc"
       # sdoc-server API (strip /sdoc-server prefix)
+      # Router (priority=100: higher than main seafile catch-all)
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/sdoc-server`)"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.priority=100"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.tls=true"
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"

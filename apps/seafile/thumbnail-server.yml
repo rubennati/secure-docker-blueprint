@@ -19,15 +19,22 @@ services:
       - no-new-privileges:true
 
     # --- Configuration ---
+    # NOTE: thumbnail-server does not use the shared entrypoint.sh wrapper,
+    # so Docker Secrets _FILE paths are never resolved inside this container.
+    # JWT_PRIVATE_KEY and SEAFILE_MYSQL_DB_PASSWORD must be passed as direct
+    # environment variables (sourced from .env). The _FILE vars below are kept
+    # only as a reference; they have no effect at runtime.
     environment:
       TIME_ZONE: ${TIMEZONE}
       SEAFILE_MYSQL_DB_HOST: db
       SEAFILE_MYSQL_DB_PORT: "3306"
       SEAFILE_MYSQL_DB_USER: ${SEAFILE_DB_USER}
+      SEAFILE_MYSQL_DB_PASSWORD: ${SEAFILE_MYSQL_DB_PASSWORD}
       SEAFILE_MYSQL_DB_PASSWORD_FILE: /run/secrets/SEAFILE_DB_PWD
       SEAFILE_MYSQL_DB_CCNET_DB_NAME: ccnet_db
       SEAFILE_MYSQL_DB_SEAFILE_DB_NAME: seafile_db
       NON_ROOT: "false"
+      JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY}
       JWT_PRIVATE_KEY_FILE: /run/secrets/JWT_KEY
       SEAFILE_LOG_TO_STDOUT: "false"
       SITE_ROOT: /
@@ -49,8 +56,10 @@ services:
     # --- Traefik ---
     labels:
       - "traefik.enable=true"
+      # Router (priority=100: higher than main seafile catch-all at priority=1)
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/thumbnail`)"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.priority=100"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.tls=true"
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"

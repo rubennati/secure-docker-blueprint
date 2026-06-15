@@ -29,6 +29,8 @@
 | `seahub_custom.py` injection mechanism | Avoids replacing Seafile's auto-generated `seahub_settings.py` while still allowing blueprint-local overrides (TLS-aware URLs, proxy trust, etc.) |
 | `app-internal` network with `internal: true` | DB, Redis, Memcached have no outbound reachability — standard hardening |
 | Traefik routers for `/`, `/sdoc-server`, `/socket.io/`, `/notification`, `/thumbnail` | Upstream docs show nginx vhost blocks for this; the same paths work 1:1 through Traefik routers + one stripprefix middleware |
+| `priority=1` on main router, `priority=100` on sub-service routers | Without explicit priorities, Traefik's catch-all `Host(…)` router intercepts `/thumbnail`, `/notification`, and `/sdoc-server` paths before the dedicated sub-service routers. Upstream uses nginx with location blocks that have implicit specificity; Traefik requires explicit priority. |
+| `JWT_PRIVATE_KEY` and `SEAFILE_MYSQL_DB_PASSWORD` as direct env vars for `thumbnail-server` | Unlike other services, the thumbnail-server image does not use the shared `entrypoint.sh` wrapper — it runs its own init without reading Docker Secrets. Passing `_FILE` paths works for the main `seafile` container (wrapper reads them) but silently fails in the thumbnail container, causing 403 on all thumbnail requests. Upstream's reference stack avoids this by running all services under the same nginx process with a shared env. |
 | `ENABLE_GO_FILESERVER: "true"` | Seafile 13 default, but explicit — the Go file server is required for modern sync clients |
 | MariaDB healthcheck includes `--mariadbupgrade --innodb_initialized` | Avoids the race where Seafile connects before MariaDB has finished a version upgrade on restart |
 
