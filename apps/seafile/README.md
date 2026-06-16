@@ -414,6 +414,19 @@ If applying this fix to a running deployment:
 
 ## Known Issues
 
+- **MariaDB `Aborted connection` / `Got an error reading communication packets` warnings** — MariaDB 10.11 logs these during normal Seafile operation (browsing, uploads, thumbnail generation). They appear because Seafile's sidecar services and Django workers do not always close DB connections with a clean MySQL-protocol shutdown. `Aborted_connects = 0` confirms no authentication failures. `Max_used_connections` well below `max_connections` confirms no exhaustion. Classify as known background noise; monitor the `Aborted_clients` growth rate before tuning anything. Full analysis: [docs/bugfixes/seafile-ce-mariadb-aborted-connections-2026-06-15.md](../../docs/bugfixes/seafile-ce-mariadb-aborted-connections-2026-06-15.md).
+
+- **Redis `WARNING Memory overcommit must be enabled`** — Redis logs this warning on Docker hosts where `vm.overcommit_memory` is not set to 1. It does not prevent Redis from starting but can cause data loss under memory pressure. Fix on the Docker host:
+
+  ```bash
+  # Immediate (survives until next reboot)
+  sudo sysctl vm.overcommit_memory=1
+
+  # Permanent
+  echo 'vm.overcommit_memory = 1' | sudo tee /etc/sysctl.d/99-redis-overcommit.conf
+  sudo sysctl --system
+  ```
+
 - **First boot is slow** (2–4 min). The main server's healthcheck uses `start_period: 180s` for this reason.
 - **SeaDoc + Notification server images are tagged `:13.0-latest` / `:2.0-latest`.** These are moving tags; pin to a concrete digest in production if you want reproducible builds.
 - **`seahub_custom.py` is always skipped on first boot.** `seahub_settings.py` doesn't exist when `entrypoint.sh` runs; Seafile generates it after `exec` exits into the init system. After first startup completes, run `docker compose up -d --force-recreate seafile` (setup step 7) to inject the block. See [config/README.md](config/README.md).
