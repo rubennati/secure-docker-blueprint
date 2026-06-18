@@ -1,8 +1,12 @@
 # Firewall Bouncer — Phase 3 Setup
 
-Phase 3 is the host-level enforcement layer. The `crowdsec-firewall-bouncer-nftables`
-package installs nftables rules on the host that drop packets from banned IPs before
-they reach any service — Traefik, SSH, or anything else.
+Phase 3 is the host-level enforcement layer. A firewall bouncer package installs
+nftables rules on the host that drop packets from banned IPs before they reach any
+service — Traefik, SSH, or anything else.
+
+> **Debian 13 / Trixie note:** The package name changed. Use `crowdsec-firewall-bouncer`
+> (from Debian main). Upstream/packagecloud docs and older guides refer to
+> `crowdsec-firewall-bouncer-nftables` — that package is not available in Debian 13.
 
 ---
 
@@ -54,11 +58,36 @@ traffic from the same IP that arrives between bouncer polling windows.
 
 ### 1. Install the bouncer package on the host
 
+**Debian 13 / Trixie:**
+
+```bash
+sudo apt install crowdsec-firewall-bouncer
+```
+
+**Older Debian / Ubuntu / upstream packagecloud:**
+
 ```bash
 sudo apt install crowdsec-firewall-bouncer-nftables
 ```
 
-This installs the bouncer and creates `/etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml`.
+The Debian 13 package installs with nftables configured by default. During installation
+you will see:
+
+```
+W: cscli not found, no automatic registration
+I: Configuring nftables [see README.Debian]
+To adjust the config: editor /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml.local && systemctl restart crowdsec-firewall-bouncer
+```
+
+The `cscli not found` warning is expected — the CrowdSec engine runs in Docker, not on
+the host. Registration is done manually in the next step.
+
+The Debian package creates two files:
+
+- `/etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml` — base config managed by the
+  package; **do not edit this directly**
+- `/etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml.local` — your local overrides;
+  edit this file
 
 ### 2. Generate an API key
 
@@ -78,15 +107,34 @@ docker exec crowdsec cscli bouncers add firewall-bouncer
 
 ### 3. Configure the bouncer
 
+**Debian 13 / Trixie** — edit the `.yaml.local` override file only:
+
+```bash
+sudo editor /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml.local
+```
+
+The base config (`crowdsec-firewall-bouncer.yaml`) uses variable placeholders
+(`${API_KEY}`, `${BACKEND}`). The `.yaml.local` file supplies the concrete values that
+override those placeholders. Set:
+
+```yaml
+api_url: http://127.0.0.1:8080/
+api_key: <key from step 2>
+mode: nftables
+```
+
+Do not edit the base `.yaml` file — it is managed by the Debian package and may be
+reset on upgrade.
+
+**Upstream/packagecloud install** — edit the main config directly:
+
 ```bash
 sudo nano /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
 ```
 
-The installer creates the file with sensible defaults. You only need to update three
-fields — do not replace the entire file:
+Update only these fields; leave all other installer-generated settings in place:
 
 ```yaml
-# Update these fields; leave all other installer-generated settings in place:
 api_url: http://127.0.0.1:8080/
 api_key: <key from step 2>
 mode: nftables
@@ -97,7 +145,7 @@ Notes:
 - `api_url` points to the CrowdSec LAPI. The container exposes it on `127.0.0.1:8080`
   by default (configurable via `CROWDSEC_LAPI_PORT` in `.env`).
 - `mode: nftables` is correct for Debian 12+ and Ubuntu 22.04+. Use `iptables` on
-  older systems.
+  older systems. The Debian 13 package defaults to nftables automatically.
 - The bouncer polls the LAPI every 10 seconds. Decisions propagate within ~10 s of
   being created in the engine.
 
@@ -361,7 +409,8 @@ network layer. If you want a hard guarantee that certain ranges are never droppe
 configure `safe_range` in the bouncer config:
 
 ```yaml
-# /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
+# /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml.local  (Debian 13)
+# /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml        (upstream install)
 deny_mode: drop
 safe_range:
   - 10.0.0.0/8
@@ -403,7 +452,7 @@ and poses no meaningful risk. If you require zero-gap enforcement at boot, confi
 | Service fails to start | Config file syntax error or wrong API key | `sudo journalctl -u crowdsec-firewall-bouncer -f` |
 | Bouncer not connecting to LAPI | Wrong `api_url` or port | `docker exec crowdsec cscli lapi status` — expect "You can successfully interact with Local API" |
 | LAPI unreachable from host | Port not exposed in Docker | Check `ports:` in `docker-compose.yml` and `CROWDSEC_LAPI_PORT` in `.env` |
-| No nftables chain appears | Wrong `mode` setting | Use `nftables` on Debian 12+ / Ubuntu 22.04+, `iptables` on older |
+| No nftables chain appears | Wrong `mode` setting | Use `nftables` on Debian 12+ / Ubuntu 22.04+; Debian 13 package sets this automatically — check `.yaml.local` wasn't inadvertently set to `iptables` |
 | Chain exists but always empty | No active decisions | Normal — rules appear only when bans exist; use the Verify step 4 test |
 | `auth.log` not being parsed | Volume not mounted or wrong path | `docker exec crowdsec ls /var/log/auth.log` — must exist in the container |
 | SSH bans not appearing | `crowdsecurity/sshd` not installed | `docker exec crowdsec cscli collections list \| grep sshd` |
@@ -420,7 +469,10 @@ sudo systemctl disable --now crowdsec-firewall-bouncer
 sudo nft flush chain ip crowdsec crowdsec-chain 2>/dev/null || true
 
 # 3. Uninstall the package
-sudo apt remove crowdsec-firewall-bouncer-nftables
+# Debian 13 / Trixie:
+sudo apt remove crowdsec-firewall-bouncer
+# Upstream/packagecloud install:
+# sudo apt remove crowdsec-firewall-bouncer-nftables
 
 # 4. Remove the bouncer registration from the engine
 docker exec crowdsec cscli bouncers delete firewall-bouncer

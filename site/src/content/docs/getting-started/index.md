@@ -1,14 +1,42 @@
 ---
 title: Getting Started
-description: Start with the core foundation, then add the first service.
+description: The basic operating path for Secure Docker Blueprint — from first server to first running service.
 ---
 
-This section will become the practical starting path for the Blueprint.
+Start here if you want to understand the basic operating path before running a service with Secure Docker Blueprint.
 
-The foundation starts with Traefik, which handles routing and TLS for every service that follows. Once the core foundation is running, you add services one at a time.
+## The basic path
 
-The compose files and setup instructions are in the repository. The [repository README](https://github.com/rubennati/secure-docker-blueprint) has a complete Quick Start walkthrough.
+1. **Prepare the server** — Docker 24.0+ with Compose v2 on a Linux host (Debian 12/13 is tested). You also need a domain with DNS pointing to the server.
 
-:::note
-This page is a placeholder. The full getting-started guide is planned for the v0.9.0 Operator Site launch.
-:::
+2. **Bring up the foundation** — Traefik handles routing and TLS for every service that follows. Start it first from `core/traefik/` before adding any applications.
+
+3. **Check Traefik** — Once Traefik is running, the `proxy-public` Docker network exists and the dashboard should load over HTTPS. Every application connects to Traefik through that network.
+
+4. **Add the first application** — Every application follows the same pattern: copy `.env.example` to `.env`, configure your domain and credentials, then `docker compose up -d`. Add one service at a time.
+
+5. **Verify before relying on it** — Check that the service is healthy (`docker compose ps`) and accessible in a browser. Do not add real data until the service is confirmed working.
+
+6. **Back up before real use** — Configure a backup before putting real data into any service. A backup that has never been tested should not be treated as a recovery plan.
+
+7. **Update deliberately** — Before updating any service, read the release notes for breaking changes. Back up first, then bump the version tag and restart.
+
+## Choose your starting point
+
+### New server
+
+Start with Traefik and the shared foundation. Get it running and verified before adding the first application. The foundation only needs to be set up once — every application you add later uses it.
+
+### Existing Blueprint server
+
+The foundation is already in place. Verify that Traefik is running and the `proxy-public` network exists, then follow the application guide for the service you want to add.
+
+### Existing app / update
+
+Before updating: read the release notes, back up the database and data directory, then bump the version tag and restart. Verify the service is working before considering the update complete.
+
+## Start with the first guide
+
+The first available application guide covers Vaultwarden — a password manager that walks through setup, hardening, backup, restore, and updates.
+
+[Go to the Vaultwarden guide →](/applications/vaultwarden/)

@@ -34,14 +34,14 @@ Controls WHO can reach a service. Pick one per router.
 | `acc-private` | LAN + Tailscale combined |
 | `acc-deny` | Nobody (emergency kill switch) |
 
-All policies support IPv4 + IPv6. Configured via `.env`:
+All policies support IPv4 + IPv6. Tailscale CIDRs are operator-configurable via `.env`:
 
 ```env
 TAILSCALE_CIDR_V4=100.64.0.0/10
 TAILSCALE_CIDR_V6=fd7a:115c:a1e0::/48
-LOCAL_CIDR_V4=192.168.0.0/16,10.0.0.0/8,172.16.0.0/12
-LOCAL_CIDR_V6=fc00::/7
 ```
+
+Local network ranges (RFC1918 for IPv4, ULA `fc00::/7` for IPv6) are hardcoded in `access.yml.tmpl` and are not operator-configurable env variables.
 
 ---
 

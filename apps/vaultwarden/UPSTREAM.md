@@ -6,8 +6,8 @@
 - **Wiki:** https://github.com/dani-garcia/vaultwarden/wiki
 - **License:** GPL-3.0
 - **Origin:** Community · unofficial Bitwarden reimplementation · no single company
-- **Based on version:** 1.35.7
-- **Last checked:** 2026-04-14
+- **Based on version:** 1.36.0
+- **Last checked:** 2026-06-14
 
 ## What we changed and why
 
@@ -18,7 +18,7 @@
 | ADMIN_TOKEN as Argon2 hash | Official recommendation — never store plain text |
 | `read_only: true` + `no-new-privileges` | Security hardening |
 | `tls-modern` (TLS 1.3 only) | Password manager deserves strictest TLS |
-| `sec-3e` security middleware | Strict headers + SAMEORIGIN (iframe-friendly for browser extension) + rate limiting |
+| `sec-3e` + `strip-xfo` middleware | Strict headers + rate limiting; X-Frame-Options stripped so Vaultwarden controls it per-route (required by admin diagnostics) |
 | `PASSWORD_HINTS_ALLOWED=false` | Prevent hint-based guessing |
 | `SIGNUPS_VERIFY=true` | Require email verification |
 | Rate limiting configured | Login + Admin panel rate limiting |
@@ -65,7 +65,7 @@ sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=$(openssl rand -hex 32)|" .env
 sed -i "s|^DB_ROOT_PASSWORD=.*|DB_ROOT_PASSWORD=$(openssl rand -hex 32)|" .env
 
 # 3. Generate Argon2 admin token
-docker run --rm -it vaultwarden/server:1.35.7 /vaultwarden hash
+docker run --rm -it vaultwarden/server:1.36.0 /vaultwarden hash
 # Enter a strong password, copy the $argon2id$... output
 # In .env: replace every $ with $$ then paste as VW_ADMIN_TOKEN
 

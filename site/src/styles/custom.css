@@ -1,0 +1,36 @@
+/* Match the cobalt accent from AI Project Standard */
+:root {
+  --sl-color-accent-low: oklch(93% 0.04 258);
+  --sl-color-accent: oklch(40% 0.17 258);
+  --sl-color-accent-high: oklch(28% 0.17 258);
+}
+
+:root[data-theme='dark'] {
+  --sl-color-accent-low: oklch(18% 0.10 258);
+  --sl-color-accent: oklch(62% 0.16 258);
+  --sl-color-accent-high: oklch(82% 0.12 258);
+}
+
+/* Compact, subtle site title */
+.site-title {
+  font-size: var(--sl-text-sm) !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.01em;
+}
+
+/* Compact density pass — step headings down one level at desktop,
+   narrow the sidebar, widen content, tighten line height */
+@media (min-width: 50em) {
+  :root {
+    --sl-text-h1: var(--sl-text-4xl);  /* 35px instead of 42px */
+    --sl-text-h2: var(--sl-text-3xl);  /* 29px instead of 35px */
+    --sl-text-h3: var(--sl-text-2xl);  /* 24px instead of 29px */
+    --sl-text-h4: var(--sl-text-xl);   /* 20px instead of 24px */
+  }
+}
+
+:root {
+  --sl-sidebar-width: 15rem;   /* 240px instead of 300px */
+  --sl-content-width: 52rem;   /* ~832px instead of 720px */
+  --sl-line-height: 1.625;     /* tighter than 1.75, still accessible */
+}

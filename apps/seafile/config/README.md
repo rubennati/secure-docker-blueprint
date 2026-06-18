@@ -7,7 +7,7 @@ Custom configuration files mounted into Seafile containers.
 | File | Mounted in | Purpose |
 |------|-----------|---------|
 | `entrypoint.sh` | All services | Reads Docker Secrets, exports as env vars, then starts the original service |
-| `seahub_custom.py` | seafile (main) | Custom Python settings appended to `seahub_settings.py` |
+| `seahub_custom.py` | seafile (main) | Custom Python settings injected into `seahub_settings.py` on every container start |
 
 ---
 
@@ -19,39 +19,27 @@ settings to it.
 
 ### The mechanism
 
-1. On container start, `entrypoint.sh` runs before Seafile
-2. It checks if `seahub_settings.py` already contains our marker line:
-   ```
-   # --- Blueprint custom settings ---
-   ```
-3. **Marker not found** → appends the marker + full content of `seahub_custom.py`
-4. **Marker found** → skips (prevents duplicate entries on every restart)
+On every container start, `entrypoint.sh` replaces the blueprint block in
+`seahub_settings.py`:
+
+1. **`seahub_settings.py` exists** → remove any existing blueprint block (marker line to end-of-file), then append the current `seahub_custom.py`
+2. **`seahub_settings.py` absent** → skip — Seafile will generate it during first-boot init
+
+> **First-boot timing:** on a fresh installation `seahub_settings.py` does not
+> exist when `entrypoint.sh` runs. Seafile creates the file only after
+> `exec "$@"` starts the init system and DB migrations complete. The custom
+> block is therefore absent after the very first start. Recreate the container
+> once first boot is complete and the block will be injected on the second
+> start.
 
 ### When to re-inject settings
 
-The injection runs **only once** (marker-based). If you change
-`seahub_custom.py`, the old version stays in `seahub_settings.py` because the
-marker already exists.
-
-**To apply changes to `seahub_custom.py`:**
+The block is replaced on every container start — no manual sed step needed.
+To apply changes to `seahub_custom.py` or SMTP env vars:
 
 ```bash
-# 1. Remove everything from the marker to end-of-file
-docker exec seafile-app sed -i '/# --- Blueprint custom settings ---/,$d' \
-  /shared/seafile/conf/seahub_settings.py
-
-# 2. Restart — entrypoint.sh will re-inject the updated settings
-docker compose down && docker compose up -d
+docker compose up -d --force-recreate seafile
 ```
-
-**What this `sed` command does:**
-
-- `/# --- Blueprint custom settings ---/` — find the line containing our marker
-- `,$d` — delete from that line to the end of the file (`$` = last line, `d` = delete)
-- `-i` — edit the file in-place
-
-This safely removes only our appended block while keeping all of Seafile's
-auto-generated settings above it intact.
 
 ### Alternative: manual edit
 
@@ -61,8 +49,8 @@ You can also edit `seahub_settings.py` directly inside the volume:
 nano volumes/seafile-data/seafile/conf/seahub_settings.py
 ```
 
-But changes made this way are not version-controlled and will diverge from
-`seahub_custom.py`.
+Manual edits below the marker line are overwritten on the next container start.
+Edit `seahub_custom.py` instead to keep changes under version control.
 
 ---
 
@@ -85,7 +73,10 @@ Seafile services (Python, Go, bash-based) don't consistently support Docker's
 │  │  └─ export REDIS_PASSWORD=...                 │
 │  ├─ Read /run/secrets/ONLYOFFICE_JWT_SECRET      │
 │  │  └─ export ONLYOFFICE_JWT_SECRET=...          │
-│  ├─ (Optional) Append seahub_custom.py           │
+│  ├─ Read /run/secrets/SEAFILE_SMTP_PWD (opt.)    │
+│  │  └─ export SEAFILE_SMTP_PASSWORD=...          │
+│  ├─ Replace seahub_custom.py block               │
+│  │  (skipped on first boot if file absent)       │
 │  └─ exec "$@"  →  starts original service        │
 └─────────────────────────────────────────────────┘
 ```
@@ -102,3 +93,16 @@ The same `entrypoint.sh` is used by **all** Seafile services:
 Each secret export is conditional (`[ -f ... ] &&`), so it only runs if the
 secret file is actually mounted. Services that don't need a specific secret
 simply don't mount it.
+
+### SMTP secret
+
+The SMTP secret is mounted unconditionally into the `seafile` container, so `.secrets/smtp_pwd.txt` must always exist — even when SMTP is disabled (`SEAFILE_SMTP_HOST` empty). Create an empty placeholder if not using SMTP.
+
+| Property | Value |
+|----------|-------|
+| Source file | `.secrets/smtp_pwd.txt` |
+| Docker secret name | `SEAFILE_SMTP_PWD` |
+| Container path | `/run/secrets/SEAFILE_SMTP_PWD` |
+| Exported as | `SEAFILE_SMTP_PASSWORD` |
+| Consumed by | `seahub_custom.py` → `EMAIL_HOST_PASSWORD` |
+| Purpose | SMTP authentication password or API key |

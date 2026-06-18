@@ -1,76 +1,119 @@
 services:
+
+  # --------------------------------------------------------
+  # APP (Invoice Ninja — PHP-FPM + Supervisor)
+  # --------------------------------------------------------
   app:
+    # --- Identity ---
     image: invoiceninja/invoiceninja-debian:${APP_TAG}
-    container_name: ${APP_CONTAINER}
+    container_name: ${CONTAINER_NAME_APP}
     restart: unless-stopped
-    # NOTE: Invoice Ninja reads DB_PASSWORD and IN_PASSWORD directly from
-    # environment. A custom entrypoint to inject from Docker Secrets is
-    # the path to full compliance — tracked as pre-✅ work.
-    env_file:
-      - ./.env
-    volumes:
-      # - ./php/php.ini:/usr/local/etc/php/conf.d/invoiceninja.ini:ro
-      # - ./php/php-fpm.conf:/usr/local/etc/php-fpm.d/invoiceninja.conf:ro
-      # - ./supervisor/supervisord.conf:/etc/supervisor/conf.d/supervisord.conf:ro
-      - app_public:/var/www/html/public
-      - app_storage:/var/www/html/storage
+
+    # --- Security ---
     security_opt:
       - no-new-privileges:true
+
+    # --- Configuration ---
+    # NOTE: Invoice Ninja reads DB_PASSWORD and APP_KEY directly from environment.
+    # Laravel has no _FILE support. A custom entrypoint for Docker Secrets injection
+    # is the path to full compliance — tracked as a future improvement.
+    env_file:
+      - ./.env
+
+    # --- Storage ---
+    volumes:
+      # - ./php/php.ini:/usr/local/etc/php/conf.d/invoiceninja.ini:ro
+      - app_public:/var/www/html/public
+      - app_storage:/var/www/html/storage
+
+    # --- Dependencies ---
     depends_on:
       mysql:
         condition: service_healthy
       redis:
         condition: service_healthy
+
+    # --- Networking ---
     networks:
       - internal
+
+    # --- Health & Observability ---
+    # TODO: Replace with a FastCGI socket or HTTP-level check once the available
+    # tooling inside invoiceninja-debian is confirmed. Current check only verifies
+    # that the PHP binary is responsive, not that PHP-FPM or the queue workers are up.
     healthcheck:
       test: ["CMD", "php", "-r", "echo 'ok';"]
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 60s
+
     deploy:
       resources:
         limits:
-          memory: 512M
+          # 1G required: Snappdf/Chromium is used for PDF rendering and live design
+          # previews and can exceed 512M under concurrent load or complex templates.
+          memory: 1G
           cpus: "1.00"
           pids: 200
         reservations:
           memory: 256M
 
+  # --------------------------------------------------------
+  # NGINX (Web Server)
+  # --------------------------------------------------------
   nginx:
+    # --- Identity ---
     image: nginx:${NGINX_TAG}
-    container_name: ${NGINX_CONTAINER}
+    container_name: ${CONTAINER_NAME_NGINX}
     restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Storage ---
     volumes:
       - ./nginx:/etc/nginx/conf.d:ro
       - app_public:/var/www/html/public:ro
       - app_storage:/var/www/html/storage:ro
-    security_opt:
-      - no-new-privileges:true
+
+    # --- Dependencies ---
     depends_on:
       app:
         condition: service_healthy
+
+    # --- Networking ---
     networks:
       - internal
       - proxy
+
+    # --- Traefik ---
     labels:
+      # Router
       - "traefik.enable=true"
-      - "traefik.docker.network=${NETWORK_NAME}"
-      - "traefik.http.routers.${ROUTER_NAME}.rule=Host(`${HOST_DOMAIN}`)"
-      - "traefik.http.routers.${ROUTER_NAME}.entrypoints=websecure"
-      - "traefik.http.routers.${ROUTER_NAME}.tls=true"
-      #- "traefik.http.routers.${ROUTER_NAME}.tls.certresolver=${CERT_RESOLVER}"
-      - "traefik.http.routers.${ROUTER_NAME}.tls.options=${TLS_OPTION}@file"
-      - "traefik.http.routers.${ROUTER_NAME}.middlewares=${MIDDLEWARES}"
-      - "traefik.http.routers.${ROUTER_NAME}.service=${SERVICE_NAME}"
-      - "traefik.http.services.${SERVICE_NAME}.loadbalancer.server.port=80"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      # TLS
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Middlewares
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      # Service
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
+
+    # --- Health & Observability ---
+    # TODO: Replace nginx -t (config check only) with a curl/wget liveness probe
+    # once confirmed available in the pinned nginx:alpine image.
     healthcheck:
       test: ["CMD", "nginx", "-t"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 10s
+
     deploy:
       resources:
         limits:
@@ -80,27 +123,47 @@ services:
         reservations:
           memory: 32M
 
+  # --------------------------------------------------------
+  # DATABASE (MySQL)
+  # --------------------------------------------------------
   mysql:
+    # --- Identity ---
     image: mysql:${MYSQL_TAG}
-    container_name: ${MYSQL_CONTAINER}
+    container_name: ${CONTAINER_NAME_MYSQL}
     restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    # DEVIATION: MySQL instead of MariaDB — Invoice Ninja upstream officially targets
+    # MySQL 8. MariaDB works but is untested with this blueprint.
     environment:
       MYSQL_DATABASE: ${DB_DATABASE}
       MYSQL_USER: ${DB_USERNAME}
       MYSQL_PASSWORD: ${DB_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+
+    # --- Storage ---
     volumes:
       - mysql_data:/var/lib/mysql
-    security_opt:
-      - no-new-privileges:true
+
+    # --- Networking ---
     networks:
       - internal
+
+    # --- Health & Observability ---
+    # Connects as the app user to the app database — ensures the user and schema
+    # are fully initialized before the app container starts, not just that mysqld
+    # is listening. $${...} is Compose escape syntax: becomes ${...} in the shell.
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u${DB_USERNAME}", "-p${DB_PASSWORD}"]
+      test: ["CMD-SHELL", "mysql -h 127.0.0.1 -u$${MYSQL_USER} -p$${MYSQL_PASSWORD} $${MYSQL_DATABASE} -e 'SELECT 1' >/dev/null 2>&1"]
       interval: 10s
       timeout: 5s
-      retries: 10
-      start_period: 30s
+      retries: 12
+      start_period: 60s
+
     deploy:
       resources:
         limits:
@@ -110,22 +173,35 @@ services:
         reservations:
           memory: 256M
 
+  # --------------------------------------------------------
+  # REDIS (Cache / Queue / Sessions)
+  # --------------------------------------------------------
   redis:
+    # --- Identity ---
     image: redis:${REDIS_TAG}
-    container_name: ${REDIS_CONTAINER}
+    container_name: ${CONTAINER_NAME_REDIS}
     restart: unless-stopped
-    volumes:
-      - redis_data:/data
+
+    # --- Security ---
     security_opt:
       - no-new-privileges:true
+
+    # --- Storage ---
+    volumes:
+      - redis_data:/data
+
+    # --- Networking ---
     networks:
       - internal
+
+    # --- Health & Observability ---
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 3s
       retries: 10
       start_period: 10s
+
     deploy:
       resources:
         limits:
@@ -135,6 +211,9 @@ services:
         reservations:
           memory: 64M
 
+# --------------------------------------------------------
+# VOLUMES
+# --------------------------------------------------------
 volumes:
   app_public:
     driver: local
@@ -145,10 +224,13 @@ volumes:
   redis_data:
     driver: local
 
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
 networks:
   internal:
     name: ${COMPOSE_PROJECT_NAME}-internal
     driver: bridge
   proxy:
     external: true
-    name: ${NETWORK_NAME}
+    name: ${TRAEFIK_NETWORK}

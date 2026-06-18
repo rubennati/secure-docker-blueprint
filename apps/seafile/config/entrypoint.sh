@@ -42,16 +42,20 @@ else
   [ -f "$SEAFDAV_CONF" ] && sed -i 's/^enabled = true/enabled = false/' "$SEAFDAV_CONF"
 fi
 
-# --- Append custom seahub settings (once) ---
+# --- Replace custom seahub settings on every start ---
+# If seahub_settings.py does not exist yet (fresh install), injection is
+# skipped; Seafile creates the file during first-boot init and a second
+# container recreate injects the block. On every subsequent start the old
+# block is replaced so changes to seahub_custom.py take effect without
+# a manual sed step.
 SEAHUB_CONF="/shared/seafile/conf/seahub_settings.py"
 CUSTOM_CONF="/config/seahub_custom.py"
 MARKER="# --- Blueprint custom settings ---"
 
 if [ -f "$SEAHUB_CONF" ] && [ -f "$CUSTOM_CONF" ]; then
-  if ! grep -q "$MARKER" "$SEAHUB_CONF" 2>/dev/null; then
-    printf '\n%s\n' "$MARKER" >> "$SEAHUB_CONF"
-    cat "$CUSTOM_CONF" >> "$SEAHUB_CONF"
-  fi
+  sed -i '/# --- Blueprint custom settings ---/,$d' "$SEAHUB_CONF" 2>/dev/null || true
+  printf '\n%s\n' "$MARKER" >> "$SEAHUB_CONF"
+  cat "$CUSTOM_CONF" >> "$SEAHUB_CONF"
 fi
 
 exec "$@"

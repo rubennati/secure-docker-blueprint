@@ -19,11 +19,13 @@ ENABLE_VIDEO_THUMBNAIL = True
 # --- SMTP / Email ---
 _smtp_host = os.environ.get('SEAFILE_SMTP_HOST', '')
 if _smtp_host:
-    EMAIL_USE_TLS = os.environ.get('SEAFILE_SMTP_USE_TLS', 'true').lower() == 'true'
+    _use_tls = os.environ.get('SEAFILE_SMTP_USE_TLS', 'true').lower() == 'true'
     EMAIL_HOST = _smtp_host
     EMAIL_HOST_USER = os.environ.get('SEAFILE_SMTP_USER', '')
     EMAIL_HOST_PASSWORD = os.environ.get('SEAFILE_SMTP_PASSWORD', '')
     EMAIL_PORT = int(os.environ.get('SEAFILE_SMTP_PORT', '587'))
+    EMAIL_USE_TLS = _use_tls      # STARTTLS — port 587; mutually exclusive with EMAIL_USE_SSL
+    EMAIL_USE_SSL = not _use_tls  # Implicit SSL — port 465; set SEAFILE_SMTP_USE_TLS=false to enable
     DEFAULT_FROM_EMAIL = os.environ.get('SEAFILE_SMTP_FROM', EMAIL_HOST_USER)
     SERVER_EMAIL = DEFAULT_FROM_EMAIL
 

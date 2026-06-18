@@ -1,6 +1,6 @@
 # Vaultwarden
 
-> **Status: ✅ Ready** — v1.35.7 · 2026-04-14
+> **Status: ✅ Ready** — v1.36.0 · 2026-06-14
 
 Self-hosted Bitwarden-compatible password manager.
 
@@ -41,13 +41,16 @@ Set these values:
 verification is enabled. Set these in `.env`:
 
 ```env
-VW_SMTP_HOST=smtp.example.com         # your SMTP provider
-VW_SMTP_FROM=vault@yourdomain.com
+VW_SMTP_HOST=smtp-relay.brevo.com     # SMTP provider host
+VW_SMTP_FROM=vault@example.com        # plain email only — no display name, no angle brackets
+VW_SMTP_FROM_NAME=Vaultwarden         # display name shown to recipients
 VW_SMTP_PORT=587
 VW_SMTP_SECURITY=starttls
-VW_SMTP_USERNAME=your-smtp-user
-VW_SMTP_PASSWORD=your-smtp-password
+VW_SMTP_USERNAME=                     # Brevo: SMTP login (not your account email)
+VW_SMTP_PASSWORD=                     # Brevo: SMTP key (not API key, not account password)
 ```
+
+> **Brevo note:** the SMTP password is the SMTP key found under SMTP & API → SMTP. Use port 587 + starttls. If the invite lands in Junk, check SPF/DKIM/DMARC records and sender domain reputation for your sending domain.
 
 ### Step 3: Generate Passwords
 
@@ -60,7 +63,7 @@ sed -i "s|^DB_ROOT_PASSWORD=.*|DB_ROOT_PASSWORD=$(openssl rand -hex 32)|" .env
 ### Step 4: Generate Admin Token (Argon2 Hash)
 
 ```bash
-docker run --rm -it vaultwarden/server:1.35.7 /vaultwarden hash
+docker run --rm -it vaultwarden/server:1.36.0 /vaultwarden hash
 ```
 
 Enter a strong password when prompted. Copy the `$argon2id$...` output.
@@ -111,19 +114,31 @@ Visit `https://vault.yourdomain.com/admin` and enter your admin password.
 
 ### Step 9: Push Notifications (Optional)
 
-For real-time mobile sync:
+Push improves real-time sync on mobile and browser extensions. It is **not required** for login, SMTP, invites, 2FA, or manual sync.
 
-1. Register free at https://bitwarden.com/host/
+1. Register free at https://bitwarden.com/host/ — choose **Global** or **EU** host
 2. Get `INSTALLATION_ID` and `INSTALLATION_KEY`
 3. Set in `.env`:
+
+   **Global host** (default — leave relay URIs empty):
    ```env
    VW_PUSH_ENABLED=true
    VW_PUSH_INSTALLATION_ID=your-id
    VW_PUSH_INSTALLATION_KEY=your-key
    ```
-4. `docker compose restart app`
 
-Only works with official Bitwarden apps (App Store / Google Play).
+   **EU host** (must set relay URIs — EU credentials without EU URIs cause token errors):
+   ```env
+   VW_PUSH_ENABLED=true
+   VW_PUSH_INSTALLATION_ID=your-eu-id
+   VW_PUSH_INSTALLATION_KEY=your-eu-key
+   VW_PUSH_RELAY_URI=https://api.bitwarden.eu
+   VW_PUSH_IDENTITY_URI=https://identity.bitwarden.eu
+   ```
+
+4. `docker compose up -d --force-recreate app`
+
+Only works with official Bitwarden apps (App Store / Google Play, not F-Droid).
 
 ### Step 10: Enable 2FA
 
@@ -150,6 +165,71 @@ curl -sI https://your-domain/admin        # Admin panel loads
 - [ ] `/admin` restricted to Tailscale only (separate Traefik router — future)
 - [ ] Docker Secrets migration (Phase 2 — future)
 - [ ] Backup cronjob for MariaDB + data directory
+
+## Diagnostics
+
+### Version check
+
+Visit `/admin` → **Diagnostics** to see installed vs. latest server and web-vault versions. Use it to identify when `APP_TAG` should be reviewed.
+
+### SMTP troubleshooting
+
+After changing SMTP env vars, recreate the app container:
+
+```bash
+docker compose up -d --force-recreate app
+```
+
+Verify env vars were picked up:
+
+```bash
+docker compose exec app sh -c 'env | grep -E "^SMTP_HOST=|^SMTP_FROM=|^SMTP_FROM_NAME=|^SMTP_PORT=|^SMTP_SECURITY=|^SMTP_USERNAME="'
+```
+
+Check logs after sending an invite:
+
+```bash
+docker compose logs app --tail=200 | grep -iE "smtp|mail|invite|address|error|lettre"
+```
+
+End-to-end test: invite a user from **Admin → Users → Invite User**. Verify the email arrives. If it lands in Junk, check SPF/DKIM/DMARC records and sender domain reputation.
+
+### Push notification troubleshooting
+
+Check active push variables (key value hidden):
+
+```bash
+docker compose exec app sh -c 'env | grep -E "^PUSH_ENABLED=|^PUSH_RELAY_URI=|^PUSH_IDENTITY_URI=|^PUSH_INSTALLATION_ID="'
+docker compose exec app sh -c 'env | grep -q "^PUSH_INSTALLATION_KEY=." && echo "KEY is set" || echo "KEY is empty"'
+```
+
+Follow push-related log lines:
+
+```bash
+docker compose logs app --follow | grep -iE "push|relay|identity|token"
+```
+
+If you see `Unexpected push token received from bitwarden server: error decoding response body`: you are using EU credentials (`bitwarden.eu` registration) without setting the EU relay URIs. Add both `VW_PUSH_RELAY_URI` and `VW_PUSH_IDENTITY_URI` to `.env` and recreate the container.
+
+End-to-end test: change an item in the Web Vault and verify the mobile app or browser extension syncs automatically without a manual refresh.
+
+### Admin panel in browser
+
+If `/admin` returns an error in the normal browser but works in Incognito, clear site data and check browser extensions. Do not treat this as a server-side failure without `curl` or log evidence.
+
+### X-Frame-Options diagnostic
+
+If **Admin → Diagnostics** shows:
+
+```
+2FA Connector calls: Header 'x-frame-options' is present while it should not
+```
+
+This means a proxy (Traefik) is injecting `X-Frame-Options`. Vaultwarden must control this header per-route. The `strip-xfo` middleware in `docker-compose.yml` removes it — verify it is present in the Traefik labels.
+
+### HTTP Response validation error
+
+If **Admin → Diagnostics** shows `HTTP Response validation: Error`, check that the domain in `VW_DOMAIN` (derived from `APP_TRAEFIK_HOST`) matches the actual URL used to access the vault, and that HTTPS is enforced end-to-end.
 
 ## Details
 
