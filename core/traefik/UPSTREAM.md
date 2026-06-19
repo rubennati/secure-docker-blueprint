@@ -37,6 +37,8 @@
 | CrowdSec bouncer plugin in static config, middleware in dynamic config | Static plugin registration requires a restart; the routing middleware is hot-reloaded. Splitting them keeps day-to-day changes zero-downtime. |
 | `TLS_DEFAULT_OPTION` + three named profiles (`tls-basic`, `tls-aplus`, `tls-modern`) | Lets each router escalate or relax its TLS profile without rewriting the server's cipher list. |
 | Host-exposed ports explicit (`TRAEFIK_HTTP_PORT`, `TRAEFIK_HTTPS_PORT`) | Allows binding Traefik to non-privileged ports when running behind another LB or on a port-forwarded VPS. |
+| Dual-stack `proxy-public` as an opt-in Compose overlay (`network-dual-stack.yml`) rather than baked into `docker-compose.yml` | Docker cannot mix "IPv6 subnet present" with "IPv6 disabled" in one static network block, and an unconditional IPv6 default would risk existing deployments whose `proxy-public` was auto-assigned an IPv4 subnet. The overlay pattern (same mechanism as `apps/paperless-ngx/sso.yml`) keeps IPv4-only the default with dual-stack fully opt-in. See `docs/ipv6-dual-stack.md`. |
+| `forwardedHeaders.trustedIPs` (Cloudflare ranges) added to `traefik.yml.tmpl` | Without this, Traefik has no way to distinguish a real client IP forwarded by Cloudflare from one a client could spoof in its own request headers — `docs/security-verification.md` (control #12) flagged this as an open gap. Hardcoded directly in the template (not `.env`) for the same reason `acc-local`'s RFC1918 ranges are hardcoded: `envsubst` can't render a multi-entry YAML list from one variable. |
 
 ## Version / tag notes
 

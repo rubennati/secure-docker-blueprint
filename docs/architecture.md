@@ -44,9 +44,9 @@ Internet
                                                DB · Redis · Workers · internal services
 ```
 
-**`proxy-public`** — shared across all apps. Only Traefik and each app's web-facing service join this network. Traefik routes inbound requests to the right container.
+**`proxy-public`** — shared across all apps. Only Traefik and each app's web-facing service join this network. Traefik routes inbound requests to the right container. IPv4-only by default; dual-stack IPv4+IPv6 is opt-in and recommended for new deployments — Tailscale ingress needs it to preserve real client IPs over IPv6, where Cloudflare ingress does not (it recovers the real IP from a trusted forwarded header instead). See [`core/traefik/docs/ipv6-dual-stack.md`](../core/traefik/docs/ipv6-dual-stack.md).
 
-**`app-internal`** — one per app, `internal: true`. DB, Redis, workers. Completely isolated: no route to the internet, no route between apps. A compromised app cannot reach another app's database.
+**`app-internal`** — one per app, `internal: true`. DB, Redis, workers. Completely isolated: no route to the internet, no route between apps. A compromised app cannot reach another app's database. Always IPv4-only — nothing outside the Docker host connects to these services directly.
 
 Databases and caches **never** join `proxy-public`. They have no exposure beyond their own app stack.
 

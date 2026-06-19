@@ -14,6 +14,7 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 - **BookStack** (`apps/bookstack/`): v25.02 ready, status `🚧 → ✅`. Wiki, login, and page creation verified.
 - **Easy!Appointments** (`apps/easyappointments/`): v1.5.x ready, status confirmed ✅.
 - **Cal.diy** (`apps/caldiy/`): v6.2.0 ready, status `🚧 → ✅`. Full migration run and booking flow verified. Custom entrypoint injects all secrets and builds a safe `postgresql://` URL. TCP fallback healthcheck works around upstream `/api/health` incompatibility.
+- **Traefik** (`core/traefik/`): IPv4-only vs. dual-stack IPv6 networking documented and implemented. New opt-in overlay `network-dual-stack.yml` enables IPv4+IPv6 on `proxy-public` (IPv4-only stays the default — no change for existing installs). Addresses the failure mode where a Tailscale IPv6 client loses its real source IP on an IPv4-only public network — Docker's userland-proxy re-sources the connection from the bridge gateway address (e.g. `172.19.0.1`) before Traefik ever sees it, and `acc-tailscale`'s `ipAllowList` then blocks it. New deep-dive doc `core/traefik/docs/ipv6-dual-stack.md` covers Docker daemon prerequisites (`ipv6`, `ip6tables`, `userland-proxy: false`, with backup/rollback), ULA prefix selection, the migration path from an existing IPv4-only network, and troubleshooting. See `docs/bugfixes/traefik-ipv6-dualstack-2026-06-19.md`.
 
 ### Removed
 
@@ -30,6 +31,7 @@ No security vulnerabilities fixed. Security hardening improvements:
 - **Vikunja Dockerfile**: `USER 1000` added to final stage; `HEALTHCHECK` added (wget to `/api/v1/info`, matching the Compose healthcheck); `busybox` helper stage pinned to digest (`1.38.0-musl@sha256:8635836…`)
 - **SECURITY.md**: reporting link changed from relative `../../security` path to absolute `https://github.com/rubennati/secure-docker-blueprint/security/advisories/new` — satisfies OpenSSF Scorecard `SecurityPolicyContainsLinks` probe
 - **Branch protection**: main branch now requires 5 CI status checks, 1 approving review, conversation resolution; force-push and deletion blocked
+- **Traefik trusted proxy headers**: `forwardedHeaders.trustedIPs` (Cloudflare's published IPv4+IPv6 ranges) added to both entrypoints in `traefik.yml.tmpl` — previously unset, flagged as a gap in `docs/security-verification.md` (control #12). `forwardedHeaders.insecure` remains unset.
 
 ### Changed
 

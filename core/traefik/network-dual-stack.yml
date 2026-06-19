@@ -1,0 +1,69 @@
+# --------------------------------------------------------
+# DUAL-STACK OVERLAY — IPv4 + IPv6 on the public network
+# --------------------------------------------------------
+# Optional. Adds IPv6 to the Traefik public network (proxy-public by
+# default) on top of docker-compose.yml. IPv4-only remains the default
+# when this file is NOT applied — nothing changes unless you opt in.
+#
+# Why this matters: Tailscale always hands out an IPv6 address
+# (fd7a:115c:a1e0::/48) alongside the IPv4 CGNAT address (100.64.0.0/10).
+# If a Tailscale client connects over IPv6 and the public Docker network
+# is IPv4-only, Docker's userland-proxy bridges the IPv6 host port into
+# the IPv4-only bridge — Traefik then sees the Docker gateway address
+# (e.g. 172.19.0.1) as the client, not the real Tailscale IPv6 address.
+# ipAllowList (acc-tailscale) then blocks it: HTTP 403.
+#
+# Cloudflare-fronted public traffic is unaffected either way — real
+# client IPs there come from forwardedHeaders.trustedIPs (traefik.yml),
+# not from network-level source-IP preservation.
+#
+# Full explanation: docs/ipv6-dual-stack.md
+#
+# --------------------------------------------------------
+# Prerequisites (host + Docker daemon) — do this FIRST. See
+# docs/ipv6-dual-stack.md "Docker daemon prerequisites" for the full
+# backup/rollback procedure. Summary:
+#   /etc/docker/daemon.json:
+#     "ipv6": true, "ip6tables": true, "userland-proxy": false
+#   sudo systemctl restart docker
+#   (restarts the WHOLE Docker daemon — brief outage for ALL containers
+#   on the host, not just Traefik)
+#
+# --------------------------------------------------------
+# Usage — pick ONE:
+#
+#   docker compose -f docker-compose.yml -f network-dual-stack.yml up -d
+#
+# or persist it in .env (colon-separated — verified against this
+# repo's Docker Compose version; comma does NOT work as a COMPOSE_FILE
+# separator and fails with "no such file or directory"):
+#
+#   COMPOSE_FILE=docker-compose.yml:network-dual-stack.yml
+#
+# --------------------------------------------------------
+# Requires PUBLIC_NETWORK_SUBNET_V4 and PUBLIC_NETWORK_SUBNET_V6 set in
+# .env (see .env.example — both are commented out by default). Choose
+# your own IPv6 ULA prefix for production — fd00:dead:beef:30::/64 in
+# the example is a placeholder, not a value to copy as-is. See
+# docs/ipv6-dual-stack.md "Choosing a ULA prefix".
+#
+# Migrating an EXISTING IPv4-only proxy-public: do NOT just apply this
+# overlay to a live network. This file only takes effect on a network
+# that doesn't exist yet — if "proxy-public" (or whatever PUBLIC_NETWORK
+# is set to) already exists, Docker Compose silently reuses it AS-IS and
+# does NOT apply enable_ipv6/ipam from this overlay, and does NOT error.
+# The command will appear to succeed while nothing actually changed.
+# Always confirm with:
+#   docker network inspect <network-name> --format 'EnableIPv6={{.EnableIPv6}}'
+# Follow the migration guide in docs/ipv6-dual-stack.md instead: stand up
+# a new dual-stack network under a new name, prove it with whoami +
+# curl -4/-6, then cut over.
+# --------------------------------------------------------
+networks:
+  public:
+    enable_ipv6: true
+    ipam:
+      driver: default
+      config:
+        - subnet: ${PUBLIC_NETWORK_SUBNET_V4:?Set PUBLIC_NETWORK_SUBNET_V4 in .env — see .env.example}
+        - subnet: ${PUBLIC_NETWORK_SUBNET_V6:?Set PUBLIC_NETWORK_SUBNET_V6 in .env — see .env.example}

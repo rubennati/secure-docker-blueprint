@@ -150,7 +150,7 @@ These controls are enforced by Traefik configuration rendered from templates in 
 | **Implemented?** | Yes |
 | **Location** | `core/traefik/ops/templates/dynamic/access.yml.tmpl` |
 | **Policies** | `acc-public`, `acc-local` (RFC1918 + ULA hardcoded), `acc-tailscale` (CIDR from .env), `acc-private` (LAN + VPN), `acc-deny` (nobody) |
-| **Gaps** | IP allowlists can be bypassed by X-Forwarded-For header spoofing if Traefik is not configured to trust only the actual upstream. The `trusted_proxies` mechanism handles this but is not CI-verified per deployment. |
+| **Gaps** | `forwardedHeaders.trustedIPs` (Cloudflare's published IP ranges) is now configured in `traefik.yml.tmpl`, closing the X-Forwarded-For spoofing gap for the Cloudflare path. Not CI-verified per deployment — a custom edit could still misconfigure it, and nothing checks that the hardcoded ranges stay in sync with Cloudflare's published list over time. Separately, the Tailscale path recovers the real client IP at the network layer (direct connection, no header involved) — this only works end to end if `proxy-public` is dual-stack, which is opt-in (`core/traefik/network-dual-stack.yml`), not the default. An IPv4-only deployment with Tailscale IPv6 clients loses the real client IP for `ipAllowList` purposes (`ClientHost` shows the Docker gateway address) until the operator opts in. See `core/traefik/docs/ipv6-dual-stack.md` and `docs/bugfixes/traefik-ipv6-dualstack-2026-06-19.md`. |
 
 #### 13. `exposedByDefault: false`
 
