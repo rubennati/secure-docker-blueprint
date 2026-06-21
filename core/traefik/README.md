@@ -87,9 +87,10 @@ Cloudflare-fronted public traffic is unaffected either way — real client IPs t
 # .env: uncomment and set
 #   PUBLIC_NETWORK_SUBNET_V4=172.30.0.0/16
 #   PUBLIC_NETWORK_SUBNET_V6=<your own ULA prefix>/64
+#   COMPOSE_FILE=docker-compose.yml:network-dual-stack.yml
 # Docker daemon prerequisites first — see docs/ipv6-dual-stack.md
 
-docker compose -f docker-compose.yml -f network-dual-stack.yml up -d
+docker compose up -d
 
 # Verify it actually applied — EnableIPv6 must be true. This command
 # only CREATES a dual-stack network; if proxy-public already existed
@@ -102,6 +103,8 @@ docker network inspect "$(grep ^PUBLIC_NETWORK= .env | cut -d= -f2)" \
 ```
 
 **This command only works for a fresh `proxy-public` that doesn't exist yet.** Migrating an existing IPv4-only install needs a parallel network + tested cutover, not an in-place edit — Docker cannot add IPv6 to a network that already exists without recreating it, and Compose will not warn you if you try. Full explanation (why the public network needs IPv6 but `app-internal` doesn't, why this isn't solved with `network_mode: host`), Docker daemon prerequisites with backup/rollback, the migration guide, and troubleshooting commands: **[`docs/ipv6-dual-stack.md`](docs/ipv6-dual-stack.md)**.
+
+**Setting `COMPOSE_FILE` in `.env` (above) is not optional convenience — set it.** Once the dual-stack network exists, any later `docker compose` command run *without* the overlay (e.g. someone runs `docker compose up -d --force-recreate traefik` and forgets the `-f` flag) makes Compose see only the IPv4-only network definition from `docker-compose.yml`. Compose then tries to remove and recreate the network to match — which fails loudly if other containers are still attached to it (`network proxy-public has active endpoints`, and Traefik ends up stopped until you redo the command correctly), or can silently revert the network to IPv4-only if nothing else happens to be attached. `COMPOSE_FILE` in `.env` means every future command in this directory includes the overlay automatically, with no flag to forget.
 
 ## Security System
 
@@ -449,6 +452,17 @@ Traefik writes two log files into `volumes/logs/` (bind-mounted from the host):
 |------|-----------------|
 | `traefik.log` | Startup, config reload, TLS, errors |
 | `access.log` | Every HTTP request (JSON) |
+
+**`docker compose logs traefik` shows nothing — this is expected.** Both files above are configured via `log.filePath` / `accessLog.filePath` in `traefik.yml`, so Traefik writes to files, not stdout. Read the logs directly instead:
+
+```bash
+docker exec traefik-core cat /var/log/traefik/traefik.log
+docker exec traefik-core cat /var/log/traefik/access.log
+# or from the host:
+cat volumes/logs/traefik.log
+```
+
+`access.log` is buffered (`TRAEFIK_ACCESSLOG_BUFFER`, default 100 entries) — recent requests may not appear until the buffer flushes. `traefik.log` is not affected by this buffer and is the one to check first for startup/ACME/TLS issues.
 
 Docker does **not** rotate bind-mount files. Without logrotate, `access.log` grows unboundedly on busy servers.
 

@@ -30,16 +30,30 @@
 #   on the host, not just Traefik)
 #
 # --------------------------------------------------------
-# Usage — pick ONE:
-#
-#   docker compose -f docker-compose.yml -f network-dual-stack.yml up -d
-#
-# or persist it in .env (colon-separated — verified against this
-# repo's Docker Compose version; comma does NOT work as a COMPOSE_FILE
-# separator and fails with "no such file or directory"):
+# Usage — STRONGLY prefer the .env option, not the -f flag:
 #
 #   COMPOSE_FILE=docker-compose.yml:network-dual-stack.yml
 #
+# (colon-separated — verified against this repo's Docker Compose
+# version; comma does NOT work as a COMPOSE_FILE separator and fails
+# with "no such file or directory")
+#
+# Alternative (NOT recommended for routine use):
+#
+#   docker compose -f docker-compose.yml -f network-dual-stack.yml up -d
+#
+# Why this matters, concretely: once the dual-stack network exists, ANY
+# `docker compose` command run WITHOUT this overlay (e.g. a later
+# `docker compose up -d --force-recreate traefik` where someone forgot
+# the -f flag) makes Compose see only the IPv4-only network definition
+# from docker-compose.yml. Compose then detects that this doesn't match
+# the network's actual (dual-stack) state and tries to remove and
+# recreate it to match — which either fails loudly (if other containers
+# are still attached to it, e.g. "network proxy-public has active
+# endpoints") or, if nothing else is attached, can silently revert the
+# network to IPv4-only. Setting COMPOSE_FILE in .env makes every future
+# `docker compose` invocation in this directory include the overlay
+# automatically — no flag to forget.
 # --------------------------------------------------------
 # Requires PUBLIC_NETWORK_SUBNET_V4 and PUBLIC_NETWORK_SUBNET_V6 set in
 # .env (see .env.example — both are commented out by default). Choose

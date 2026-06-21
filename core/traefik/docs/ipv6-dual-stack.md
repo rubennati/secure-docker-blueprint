@@ -340,11 +340,25 @@ else's RFC1918 range on purpose:
 
 ```bash
 # Generate a random 40-bit ULA global ID (RFC 4193 §3.2.2) and format it
-# as an fd00:.../64 prefix:
-printf 'fd%s\n' "$(openssl rand -hex 5 | sed -E 's/(.{4})(.{4})(.{2})/\1:\2:\3/')"
-# Example output: fd3a:9f1c:7e::  → use as fd3a:9f1c:7e00::/64 (pick a
-# consistent /64 boundary) — or use https://www.unique-local-ipv6.com/
+# as a /64 prefix. The 40-bit Global ID includes the leading "fd" byte,
+# so only the next 4 bytes (8 hex chars) are random — split as 2+4+4
+# hex chars across the three /48 groups, with a 4th (zero) group for
+# the /64 subnet ID:
+RANDOM_HEX=$(openssl rand -hex 5)
+printf 'fd%s:%s:%s::/64\n' "${RANDOM_HEX:0:2}" "${RANDOM_HEX:2:4}" "${RANDOM_HEX:6:4}"
+# Example output: fd3e:8647:15b3::/64
+# Verify it's a valid IPv6 network before using it:
+python3 -c "import ipaddress,sys; ipaddress.ip_network(sys.argv[1])" "<output-from-above>"
+# Or use https://www.unique-local-ipv6.com/
 ```
+
+> **Note:** an earlier version of this command (`printf 'fd%s\n' "$(openssl
+> rand -hex 5 | sed ...)"`) prepended `fd` directly onto the first 4 hex
+> characters of the random output without a colon separator, producing an
+> invalid 6-character first group (e.g. `fdacc2:5ed0:2f::` — not a valid
+> IPv6 address). Always validate generated prefixes with
+> `python3 -c "import ipaddress; ipaddress.ip_network('...')"` before
+> using them, regardless of which generation method you use.
 
 Record the prefix you chose somewhere durable (this repo's convention:
 the per-deployment `.env`, which is already gitignored and host-specific).
@@ -363,11 +377,12 @@ cp .env.example .env
 # Edit .env: uncomment and set
 #   PUBLIC_NETWORK_SUBNET_V4=172.30.0.0/16
 #   PUBLIC_NETWORK_SUBNET_V6=<your own ULA prefix>/64
+#   COMPOSE_FILE=docker-compose.yml:network-dual-stack.yml
 
 # Complete the Docker daemon prerequisites above FIRST.
 
 bash ops/scripts/render.sh
-docker compose -f docker-compose.yml -f network-dual-stack.yml up -d
+docker compose up -d
 
 # Verify it actually applied — EnableIPv6 must be true, and IPAM.Config
 # must list both subnets. This overlay only CREATES a dual-stack network;
@@ -378,6 +393,19 @@ docker network inspect "$(grep ^PUBLIC_NETWORK= .env | cut -d= -f2)" \
 docker network inspect "$(grep ^PUBLIC_NETWORK= .env | cut -d= -f2)" \
   --format '{{json .IPAM.Config}}'
 ```
+
+**Set `COMPOSE_FILE` in `.env` as shown above — do not rely on remembering
+a `-f network-dual-stack.yml` flag on every command.** Once the dual-stack
+network exists, any later `docker compose` invocation run without the
+overlay (a restart, a `--force-recreate`, anything) makes Compose see only
+the IPv4-only network definition from `docker-compose.yml`. Compose then
+tries to reconcile by removing and recreating the network — which fails
+loudly if other containers are still attached to it (`network proxy-public
+has active endpoints`, and Traefik is left stopped until the command is
+redone correctly), or can silently revert the network to IPv4-only if
+nothing else happens to be attached at that moment. With `COMPOSE_FILE` set,
+every command in this directory includes the overlay automatically — there
+is no flag to forget.
 
 Everything else (apps, security middleware, TLS) works exactly as in the
 IPv4-only setup — `proxy-public` is still just `proxy-public`, attached

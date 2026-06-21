@@ -96,6 +96,22 @@ docker exec crowdsec cscli metrics show acquisition
 
 If both green, Phase 1 is done. The `cscli metrics show acquisition` form is preferred over grepping the full `cscli metrics` output — it returns a meaningful "no acquisition source running" message while startup is still in progress, instead of silently empty output.
 
+**If the acquisition table is empty (no row at all) even after the 5-minute startup window**, this is usually not a broken install — two things commonly delay it:
+
+1. **CrowdSec tails from the end of the file, not the beginning** (`Starting tail (offset: 0, whence: 2)` in the engine log). Any Traefik traffic that happened *before* the CrowdSec container started is invisible to it — only new lines written after that point count.
+2. **`TRAEFIK_ACCESSLOG_BUFFER`** (default `100` in `core/traefik/.env`) batches access-log writes — on a quiet server, a handful of requests may not be enough to trigger a flush to disk yet.
+
+To force a flush and confirm ingestion actually works, generate enough local traffic directly against Traefik (no DNS needed, works even if the only reachable app uses `acc-tailscale` and blocks self-curls with 403 — the access-log line is written either way):
+
+```bash
+for i in $(seq 1 110); do
+  curl -sk -o /dev/null -H "Host: <any-app-domain-with-a-router>" https://127.0.0.1/
+done
+docker exec crowdsec cscli metrics show acquisition
+```
+
+Expect `lines_read`/`lines_parsed` to jump to the request count. A `lines_whitelisted` count equal to `lines_read` is normal here too — CrowdSec's built-in whitelists recognize private/loopback-range source IPs (like the `172.x.x.x` Docker-gateway address a self-curl produces — see [`docs/standards/troubleshooting.md`](../../docs/standards/troubleshooting.md) "Common IP problems") as non-threatening test traffic, not a sign anything is misconfigured.
+
 Decisions may take additional minutes to appear — background internet scanners typically show up within the hour.
 
 **What the metrics should look like once traffic is flowing:**
@@ -220,16 +236,20 @@ The command prints the key once — save it immediately.
    ./ops/scripts/render.sh
    docker compose up -d --force-recreate traefik
    ```
-5. Add `sec-crowdsec@file` to the middleware list of routers that should be gated by the bouncer. Example in an app's `docker-compose.yml`:
+5. **Required, not optional — do this before verifying.** Add `sec-crowdsec@file` to the middleware list of at least one router. The plugin loading successfully (steps 1–4) does not make the bouncer do anything by itself: its polling loop only starts once the middleware is actually attached to a router's request path. Skip this step and `cscli bouncers list` will never show a `Last API pull` — no error anywhere, it just silently never starts. See [`docs/bugfixes/traefik-crowdsec-plugin-2026-04-20.md`](../../docs/bugfixes/traefik-crowdsec-plugin-2026-04-20.md) "Bug #3" if this happens. Example in an app's `docker-compose.yml` (start with a low-stakes test app like `core/whoami`):
    ```yaml
    - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=sec-crowdsec@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+   ```
+   ```bash
+   cd ../whoami   # or whichever app you edited
+   docker compose up -d --force-recreate
    ```
 
 Full reference including the exact plugin block: `core/traefik/README.md`, section "CrowdSec Bouncer Plugin".
 
 ### Phase 2 verify
 
-Four checks, in order. Run after the Traefik restart in step 4.
+Four checks, in order. Run after **step 5** (not just step 4) — check #2 depends on at least one router actually using the middleware.
 
 ```bash
 # 1. Plugin loaded successfully in Traefik?
