@@ -1,0 +1,192 @@
+---
+title: Traefik
+description: Reverse proxy and TLS termination for every service in the Blueprint.
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+Traefik is the reverse proxy every other service sits behind — it terminates TLS and routes requests to the right container. Set it up first.
+
+## Quickstart
+
+This path uses Cloudflare DNS-01 for a wildcard certificate — it doesn't require port 80 to be publicly reachable. Needs: a domain with DNS at Cloudflare, and a Cloudflare API token (My Profile → API Tokens → Custom Token, with `Zone:DNS:Edit` + `Zone:Zone:Read`).
+
+Don't use Cloudflare, or don't want a wildcard? See "Certificate strategy" under [Going further](#going-further) — per-domain certificates work with or without Cloudflare.
+
+<Steps>
+
+1. From `core/traefik/`:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Set these in `.env`:
+
+   ```ini
+   ACME_EMAIL=you@example.com
+   TRAEFIK_DASHBOARD_HOST=traefik.example.com
+   CF_DNS_API_TOKEN=<your Cloudflare token>
+   ACME_WILDCARD_DOMAIN=example.com
+   ```
+
+3. Render and start:
+
+   ```bash
+   bash ops/scripts/render.sh
+   docker compose up -d
+   ```
+
+4. Confirm both containers are healthy:
+
+   ```bash
+   docker compose ps
+   ```
+
+</Steps>
+
+## Verify
+
+```bash
+curl -I https://<your-dashboard-domain>
+```
+
+The dashboard is Tailscale-only by default — connect over your tailnet to reach it.
+
+:::note
+`docker compose logs traefik` shows nothing — this is expected. Traefik writes logs to files, not stdout:
+
+```bash
+docker exec traefik-core cat /var/log/traefik/traefik.log     # startup, ACME, errors
+docker exec traefik-core cat /var/log/traefik/access.log      # every HTTP request
+```
+:::
+
+Check certificate issuance:
+
+```bash
+docker exec traefik-core cat /etc/traefik/acme/acme.json | jq '.[] | .Certificates[]?.domain // "no certs yet"'
+```
+
+## Going further
+
+### Networking: IPv4-only or dual-stack?
+
+The quickstart above is IPv4-only — works for most setups. Dual-stack (IPv4 **and** IPv6) only matters if you use **Tailscale**: Tailscale always hands a client both addresses, and if it connects over IPv6 while Traefik's network is IPv4-only, Traefik loses the real client IP and may wrongly block Tailscale-only services. Cloudflare-fronted traffic is unaffected either way.
+
+<Tabs>
+  <TabItem label="IPv4-only (default)">
+    No extra setup. Skip this section if you don't use Tailscale, or haven't run into this.
+  </TabItem>
+  <TabItem label="Dual-stack">
+    <Steps>
+
+    1. Generate your own IPv6 ULA prefix — never reuse a documentation example:
+
+       ```bash
+       RANDOM_HEX=$(openssl rand -hex 5)
+       printf 'fd%s:%s:%s::/64\n' "${RANDOM_HEX:0:2}" "${RANDOM_HEX:2:4}" "${RANDOM_HEX:6:4}"
+       ```
+
+    2. Check for subnet conflicts:
+
+       ```bash
+       docker network ls
+       docker network inspect <network-name> --format '{{range .IPAM.Config}}{{.Subnet}} {{end}}'
+       ```
+
+    3. Back up and edit `/etc/docker/daemon.json`, merging in:
+
+       ```json
+       {
+         "ipv6": true,
+         "ip6tables": true,
+         "userland-proxy": false
+       }
+       ```
+
+       Then restart the daemon — this briefly affects every container on the host:
+
+       ```bash
+       sudo systemctl restart docker
+       ```
+
+    4. In `core/traefik/.env`:
+
+       ```ini
+       PUBLIC_NETWORK_SUBNET_V4=172.30.0.0/16
+       PUBLIC_NETWORK_SUBNET_V6=<your generated prefix>/64
+       COMPOSE_FILE=docker-compose.yml:network-dual-stack.yml
+       ```
+
+    </Steps>
+
+    :::caution
+    Set `COMPOSE_FILE` as shown — don't rely on remembering a `-f network-dual-stack.yml` flag. Once the dual-stack network exists, running `docker compose` without it makes Compose try to recreate the network as IPv4-only — which fails loudly if other containers are attached, or can silently revert it if not.
+    :::
+
+    Full migration guide for adding this to an already-running deployment: [`core/traefik/docs/ipv6-dual-stack.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/traefik/docs/ipv6-dual-stack.md).
+  </TabItem>
+</Tabs>
+
+### Certificate strategy
+
+The quickstart above is one path. Two more work too — the only hard constraint is that wildcard certificates require DNS-01, since Let's Encrypt doesn't issue wildcards over HTTP-01 at all, regardless of this Blueprint.
+
+<Tabs>
+  <TabItem label="Wildcard">
+    One DNS-01 certificate covers `*.yourdomain.com` — what the quickstart sets up. Needs a Cloudflare account and token; does **not** need port 80 reachable from the internet. Best when all your services live under one domain, and avoids registering every subdomain in public Certificate Transparency logs.
+  </TabItem>
+  <TabItem label="Per-domain (DNS-01)">
+    Each application requests its own DNS-01 certificate through Cloudflare — still no public port 80 needed. Leave `ACME_WILDCARD_DOMAIN` unset; in each app's `.env` set `APP_TRAEFIK_CERT_RESOLVER=cloudflare-dns`, and uncomment the `tls.certresolver` label in its `docker-compose.yml`.
+  </TabItem>
+  <TabItem label="Per-domain (HTTP-01)">
+    Each application requests its own certificate via the standard HTTP-01 challenge — no Cloudflare account or token at all. Requires port 80 to be publicly reachable on this server. Leave `ACME_WILDCARD_DOMAIN` unset; in each app's `.env` set `APP_TRAEFIK_CERT_RESOLVER=httpResolver`, and uncomment the `tls.certresolver` label.
+  </TabItem>
+</Tabs>
+
+These combine, too: keep a wildcard for your main domain and let individual apps opt into their own certificate (either resolver) via the same per-app label.
+
+Cloudflare's proxy status (orange-cloud vs. DNS-only) is a separate, per-record choice — independent of certificate strategy and resolver, and irrelevant to the HTTP-01 path above.
+
+## Troubleshooting
+
+:::caution
+**A 403 from a Tailscale client that should be allowed** — check the access log's `ClientHost` field. `100.x.x.x` or `fd7a:115c:a1e0::...` is correct. `172.x.x.x` from a remote client is the dual-stack issue above. `172.x.x.x` from a `curl` run *on the Traefik host itself* is a different, harmless Docker behavior (hairpin NAT) — test from a separate client instead.
+:::
+
+```bash
+docker compose logs traefik 2>&1 | grep -iE "acme|cert|challenge" | tail -20
+```
+
+Most first-setup certificate failures are a Cloudflare token missing zone permissions, or a mismatch between `ACME_WILDCARD_DOMAIN` and the per-app `tls.certresolver` label state.
+
+:::tip
+`docker compose config` prints every `.env` value, including `CF_DNS_API_TOKEN`. Redact before sharing it anywhere:
+
+```bash
+docker compose config | sed -E 's/(CF_DNS_API_TOKEN: ).*/\1***REDACTED***/'
+```
+:::
+
+Full reference: [`docs/standards/troubleshooting.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/docs/standards/troubleshooting.md).
+
+## Updates
+
+```bash
+# Read release notes first: https://github.com/traefik/traefik/releases
+# Bump TRAEFIK_IMAGE in .env, then:
+bash ops/scripts/render.sh
+docker compose pull
+docker compose up -d
+docker compose logs traefik 2>&1 | grep -i error   # should be empty
+```
+
+Never jump major versions without reading the migration guide — the configuration schema changes.
+
+## Repository files
+
+- [`core/traefik/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/traefik/README.md) — full setup, security middleware system, CrowdSec plugin integration
+- [`core/traefik/docs/ipv6-dual-stack.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/traefik/docs/ipv6-dual-stack.md) — dual-stack networking in depth
+- [`core/traefik/.env.example`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/traefik/.env.example) — all configurable variables
+- [`docs/standards/traefik-security.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/docs/standards/traefik-security.md) — access policies, security levels, TLS profiles
