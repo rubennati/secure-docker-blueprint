@@ -1,0 +1,28 @@
+---
+import type { FaqCategory } from '../data/faq';
+
+interface Props {
+  categories: FaqCategory[];
+}
+
+const { categories } = Astro.props;
+---
+
+{categories.map((cat) => (
+  <>
+    <h2>{cat.category}</h2>
+    {cat.items.map((item) => (
+      <>
+        <h3>{item.question}</h3>
+        <p>
+          {item.answer}
+          {item.link && (
+            <>
+              {' '}<a href={item.link.href}>{item.link.text} →</a>
+            </>
+          )}
+        </p>
+      </>
+    ))}
+  </>
+))}

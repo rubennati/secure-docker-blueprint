@@ -1,0 +1,36 @@
+---
+// Overrides Starlight's default <Head> to add FAQPage JSON-LD on the
+// FAQ page only. Scoped narrowly on purpose — see the FAQ rewrite plan
+// for why (FAQPage rich snippets are dead in Google Search as of May
+// 2026, but FAQPage JSON-LD still functions as an extraction signal
+// for AI answer engines, which is the actual reason to have it here).
+//
+// Reads from the same src/data/faq.ts the visible page renders from
+// (via FaqList.astro) — the structured data and the visible content
+// cannot drift apart because there is only one source.
+import Default from '@astrojs/starlight/components/Head.astro';
+import type { FAQPage, WithContext } from 'schema-dts';
+import { faqCategories } from '../data/faq';
+
+const isFaqPage = Astro.locals.starlightRoute?.id === 'faq';
+
+const schema: WithContext<FAQPage> | null = isFaqPage
+  ? {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: faqCategories.flatMap((category) =>
+        category.items.map((item) => ({
+          '@type': 'Question' as const,
+          name: item.question,
+          acceptedAnswer: {
+            '@type': 'Answer' as const,
+            text: item.answer,
+          },
+        })),
+      ),
+    }
+  : null;
+---
+
+<Default {...Astro.props} />
+{schema && <script type="application/ld+json" set:html={JSON.stringify(schema)} />}
