@@ -101,6 +101,7 @@ Open an office doc from a connected app and confirm the editor loads in an ifram
 - **Log volume grows quickly.** `./volumes/logs` is mounted so logs persist; rotate or truncate it periodically if disk usage matters.
 - **`APP_TRAEFIK_SECURITY` is not used.** Setting it in `.env` has no effect — the compose file wires the custom middleware chain unconditionally. Left in the `.env.example` with a comment so nobody is surprised.
 - **JWT secret rotation is not automatic.** Rotating means updating the secret file in OnlyOffice _and_ every consuming app, then restarting each.
+- **`ONLYOFFICE_ALLOWED_ORIGINS` changes require container recreation.** The value is embedded in a Traefik label at container startup time — `docker compose restart` does not update it. Run `docker compose up -d --force-recreate` to apply a new or updated allowed origin.
 
 ## Details
 

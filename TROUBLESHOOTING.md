@@ -189,6 +189,40 @@ sudo chown -R 999:999 volumes/data
 
 ---
 
+### 4.4 `acc-tailscale` rejects requests that are actually routed via Tailscale
+
+**Symptom:** A service is reachable and DNS resolves the hostname to a Tailscale address. Both client and server are online in the same Tailnet. Traffic provably routes through `tailscale0`. But Traefik's `acc-tailscale` middleware returns 403 (or blocks the connection) for that request.
+
+**Root cause (not fully diagnosed):** Traefik's access middleware enforces a source-IP allowlist. When Traefik runs in a container with published ports (`ports: "443:443"`), Docker's `docker-proxy` handles the connection and forwards it to the Traefik container — but the source IP visible to Traefik is the Docker bridge gateway (`172.17.0.1`), not the original client address. The Tailscale CGNAT range (`100.64.0.0/10`) and ULA range (`fd7a::/16`) never appear as the source IP, so the allowlist check fails.
+
+**Observed case (Seafile Pro installation, 2026-06-24):** The OnlyOffice server (`alpha`) resolves `fs.rubennati.at` to Tailscale IPs (`100.66.127.87`, `fd7a:115c:a1e0::332:7f58`) and routes via `tailscale0`. OnlyOffice `.docx` editing only started working after switching from `acc-tailscale` to `acc-public` on the Seafile server. The Hetzner firewall continued to block public inbound 80/443, so `acc-public` did not actually expose the service to the internet.
+
+**Workaround:** Switch to `acc-public`. If an upstream firewall (e.g. Hetzner, iptables, nftables) blocks public inbound 80 and 443, the service is not exposed to the internet — `acc-public` only removes the Traefik-level IP check.
+
+**Future investigation steps:**
+
+1. Enable Traefik access logs and check the `ClientHost` field for a request from the Tailscale peer:
+   ```bash
+   # In traefik's dynamic config or static config, enable accessLog
+   # Then tail and look for the request:
+   docker compose logs traefik --follow | grep "<hostname>"
+   ```
+
+2. Confirm the source IP Traefik sees:
+   ```bash
+   # From the Tailscale peer, send a request while watching Traefik logs
+   curl -vkI https://<APP_TRAEFIK_HOST>/
+   # In Traefik logs: look for ClientHost or remoteAddr
+   ```
+
+3. Check whether Traefik's entrypoint is configured with `proxyProtocol` or `forwardedHeaders` trusted ranges that cover the Docker bridge (`172.17.0.0/16`) and the Tailscale ranges.
+
+4. Consider whether `network_mode: host` for the Traefik container would preserve source IPs (eliminates `docker-proxy` but changes other networking behaviour).
+
+**Related:** Affects any service using `acc-tailscale` when the access path goes through Docker published ports rather than host networking. See also `apps/seafile-pro/UPSTREAM.md` for the specific Seafile Pro note.
+
+---
+
 ## 5. Git & Deployment Issues
 
 ### 5.1 Server running old code after local commits

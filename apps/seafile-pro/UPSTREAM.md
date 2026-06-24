@@ -50,6 +50,7 @@
 - **One restart needed after first start**: `docker compose restart app` triggers automatic config injection for seahub_settings.py, seafevents.conf, and seafile.conf. No manual editing needed.
 - **SeaDoc/Thumbnail Nginx check**: These containers check for Nginx/Caddy on startup. With Traefik, they need to be in `proxy-public` network with Traefik labels to pass this check.
 - **SEAHUB_DB_NAME is permanent**: Database names are chosen on first init. Changing `SEAHUB_DB_NAME` in `.env` after first start does not rename the database — it causes a mismatch. Migration requires manual database work.
+- **`DB_USER` may not control the actual MariaDB username**: On Seafile Pro 13.0, the database user created during first init was `seafile` regardless of the `DB_USER` value in `.env`. Operators setting a custom `DB_USER` (e.g. `seafileu`) should verify the actual MariaDB username after first boot — the configured value may be silently ignored. The `.env.example` defaults to `DB_USER=seafile`, which matches observed behaviour.
 
 ## First-time setup
 
@@ -109,12 +110,27 @@ Blueprint, OnlyOffice's secret lives in `core/onlyoffice/.secrets/jwt_secret.txt
 | Who | Must reach | Why |
 |---|---|---|
 | Browser/client | OnlyOffice (`ONLYOFFICE_HOST`) | Loads the editor JS (`api.js`) and communicates with the editor |
-| OnlyOffice server | Seafile's public URL | Fetches the document to open and saves it back on close |
+| OnlyOffice server | Seafile's configured hostname (`APP_TRAEFIK_HOST`) | Fetches the document to open and saves it back on close |
 | Seafile app container | Not required | Integration is browser-mediated; app only writes config |
 
-If Seafile is access-restricted (e.g. Tailscale-only via `acc-tailscale`), the OnlyOffice
-server must also have a network path to Seafile — either by being on the same Tailscale
-network, or via a restricted firewall rule allowing the OnlyOffice server's IP.
+The OnlyOffice-to-Seafile path can be public internet, Tailscale, or any direct route.
+If DNS for `APP_TRAEFIK_HOST` resolves to a Tailscale address on the OnlyOffice server
+(split-DNS), traffic will route via Tailscale automatically — no public internet exposure
+required on the Seafile side.
+
+**`APP_TRAEFIK_ACCESS` is a Traefik middleware mode, not a network reachability setting.**
+`acc-public` removes Traefik's source-IP allowlist; it does not bypass upstream firewalls.
+`acc-tailscale` enforces a source-IP allowlist for requests from the Tailscale CGNAT range
+(`100.64.0.0/10`) and ULA range (`fd7a::/16`).
+
+**Known caveat — `acc-tailscale` source-IP recognition:**
+When Traefik receives a connection through Docker published ports, `docker-proxy` may
+replace the original source IP with the Docker bridge gateway (`172.17.0.1`) before
+Traefik sees the packet. Traefik then cannot match the Tailscale IP range, and
+`acc-tailscale` rejects the request even though the traffic arrived via Tailscale.
+The working workaround is `acc-public`. If an upstream firewall (e.g. Hetzner) blocks
+public inbound 80/443, `acc-public` does not expose the service to the internet.
+See `TROUBLESHOOTING.md §4.4` for investigation steps.
 
 **On the OnlyOffice server**, the Seafile domain must be added to `ONLYOFFICE_ALLOWED_ORIGINS`
 so browsers are permitted to embed the editor in an iframe. This is a CSP `frame-ancestors`
@@ -124,6 +140,10 @@ See `core/onlyoffice/.env.example` for the format:
 ```
 ONLYOFFICE_ALLOWED_ORIGINS=https://files.example.com
 ```
+
+**Changes to `ONLYOFFICE_ALLOWED_ORIGINS` require container recreation** on the OnlyOffice
+server (`docker compose up -d --force-recreate`), not just a restart. The value is embedded
+in a Traefik label at container creation time and is not re-read on restart.
 
 ## Elasticsearch alternative
 
@@ -261,6 +281,9 @@ docker inspect --format='{{json .Config.Entrypoint}} {{json .Config.Cmd}}' <imag
 | ClamAV connection refused | Missing clamd-remote.conf mount | Mount config with TCPAddr clamav |
 | OnlyOffice not loading | seahub_custom.py not injected | `docker compose restart app` (auto-injects) |
 | ClamAV not scanning | virus_scan not in seafile.conf | `docker compose restart app` (auto-injects), or check manually with `grep virus_scan seafile.conf` |
+| `acc-tailscale` rejects Tailscale-routed requests | Docker bridge (`docker-proxy`) replaces original source IP with `172.17.0.1` before Traefik sees it | Use `acc-public` as workaround (safe if upstream firewall blocks public inbound); see `TROUBLESHOOTING.md §4.4` |
+| Redis `WARNING Memory overcommit must be enabled` in logs | Host sysctl not tuned | Add `vm.overcommit_memory = 1` to `/etc/sysctl.conf`, then `sysctl -p`; non-blocking until then |
+| MariaDB `io_uring_queue_init() failed with EPERM` in logs | Kernel restricts io_uring (`io_uring_disabled=2`) | Non-blocking — MariaDB falls back to libaio automatically; no action needed |
 
 ## Upstream diff commands
 

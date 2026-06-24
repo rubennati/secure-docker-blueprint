@@ -29,6 +29,24 @@
 | `no-new-privileges:true` | Blueprint baseline; the upstream image doesn't need privilege escalation at runtime. |
 | Single `app` service name (instead of `onlyoffice`) | Blueprint convention — `app` is the primary service of the compose project; the project name disambiguates when stacks are merged. |
 
+## Operational notes
+
+### Updating `ONLYOFFICE_ALLOWED_ORIGINS`
+
+`ONLYOFFICE_ALLOWED_ORIGINS` is used in a Traefik label to build the `frame-ancestors`
+CSP directive. Labels are applied at container creation time, not on restart.
+
+After changing `ONLYOFFICE_ALLOWED_ORIGINS` in `.env`:
+
+```bash
+# On the OnlyOffice server — restart alone is NOT sufficient:
+docker compose up -d --force-recreate
+```
+
+A plain `docker compose restart` leaves the old Traefik label (and therefore the old CSP)
+in place. The browser will continue to block the iframe embed for any origin not in the
+original CSP until the container is recreated.
+
 ## Tag pinning
 
 `APP_TAG` is pinned to an exact patch release (`9.3.1.2`). Do not use floating tags such as `9.3`, `9`, or `latest` — they pick up upstream changes silently and make rollback ambiguous.
