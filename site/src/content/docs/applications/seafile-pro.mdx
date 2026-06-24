@@ -1,0 +1,270 @@
+---
+title: Seafile Pro
+description: Self-hosted file sync, sharing, and collaborative editing on Docker Compose.
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+Seafile Pro is the Blueprint's file sync and sharing platform — private cloud storage with browser-based Office editing (OnlyOffice), collaborative document editing (SeaDoc), full-text search (SeaSearch), and antivirus scanning (ClamAV). All ten services deploy as a single Compose stack.
+
+Needs: [Traefik](/core/traefik/) running, a hostname, a Seafile Pro commercial license, and an external [OnlyOffice](/core/onlyoffice/) instance for `.docx`/`.xlsx`/`.pptx` editing (optional — all other features work without it).
+
+## Quickstart
+
+From `apps/seafile-pro/`:
+
+<Steps>
+
+1. ```bash
+   cp .env.example .env
+   ```
+
+2. Set required values in `.env`:
+
+   ```ini
+   APP_TRAEFIK_HOST=files.example.com
+   SEAFILE_ADMIN_EMAIL=admin@example.com
+   TZ=Europe/Vienna
+   ```
+
+3. Generate passwords and the JWT key:
+
+   ```bash
+   sed -i "s|^INIT_SEAFILE_MYSQL_ROOT_PASSWORD=.*|INIT_SEAFILE_MYSQL_ROOT_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')|" .env
+   sed -i "s|^SEAFILE_MYSQL_DB_PASSWORD=.*|SEAFILE_MYSQL_DB_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')|" .env
+   sed -i "s|^INIT_SEAFILE_ADMIN_PASSWORD=.*|INIT_SEAFILE_ADMIN_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')|" .env
+   sed -i "s|^JWT_PRIVATE_KEY=.*|JWT_PRIVATE_KEY=$(openssl rand -base64 48 | tr -d '\n')|" .env
+   sed -i "s|^REDIS_PASSWORD=.*|REDIS_PASSWORD=$(openssl rand -hex 32)|" .env
+   ```
+
+4. If using OnlyOffice, set the hostname and copy the JWT secret — it must match the OnlyOffice server exactly:
+
+   ```ini
+   ONLYOFFICE_HOST=office.example.com
+   ```
+
+   ```bash
+   # sed -i "s|^ONLYOFFICE_JWT_SECRET=.*|ONLYOFFICE_JWT_SECRET=<value-from-core/onlyoffice>|" .env
+   ```
+
+5. Pull images:
+
+   ```bash
+   docker compose pull
+   ```
+
+6. Start the stack:
+
+   ```bash
+   docker compose up -d
+   ```
+
+7. Wait for all containers to be healthy — first boot initialises the databases and takes roughly three minutes:
+
+   ```bash
+   docker compose ps
+   ```
+
+8. **Required:** restart the app container once to inject Blueprint configs into Seafile's settings files. This step only needs to run once — a marker prevents it from repeating on subsequent restarts:
+
+   ```bash
+   docker compose restart app
+   ```
+
+9. Build the initial full-text search index:
+
+   ```bash
+   docker exec seafile-pro-app /opt/seafile/seafile-server-latest/pro/pro.py search --update
+   ```
+
+</Steps>
+
+## Verify
+
+```bash
+docker compose ps   # all ten containers up; app, db, redis, clamav should show healthy
+```
+
+Confirm the config injection from step 8 ran:
+
+```bash
+docker exec seafile-pro-app grep "Blueprint" /shared/seafile/conf/seahub_settings.py
+docker exec seafile-pro-app grep "SEASEARCH"  /shared/seafile/conf/seafevents.conf
+docker exec seafile-pro-app grep "virus_scan" /shared/seafile/conf/seafile.conf
+```
+
+Each command should return a matching line. No output means the injection step was skipped — run `docker compose restart app` and recheck.
+
+Confirm the notification server is reachable:
+
+```bash
+curl -s https://your-domain/notification/ping   # {"ret": "pong"}
+```
+
+Test antivirus:
+
+```bash
+docker exec seafile-pro-app bash -c "curl -s https://secure.eicar.org/eicar.com.txt | clamdscan -"
+# Expected: stream: Eicar-Test-Signature FOUND
+```
+
+Then in the browser, confirm each service works:
+
+- Log in with the admin account.
+- Upload a file and download it back.
+- Create and edit a Markdown (`.md`) file.
+- Open a `.docx` in the OnlyOffice editor (requires OnlyOffice configured).
+- Create a `.sdoc` file and open it in SeaDoc.
+- Search for a word from an uploaded file — SeaSearch should return it.
+
+## OnlyOffice
+
+OnlyOffice embeds a browser-based Office editor into Seafile. It runs as a separate server — either another Blueprint stack or a different machine — and both sides share the same JWT secret.
+
+**Server-to-server path:** OnlyOffice needs a direct network route to Seafile's configured hostname to fetch files and save edits back. That path can be a public internet connection or a private route such as Tailscale. If DNS for the Seafile hostname resolves to a Tailscale address on the OnlyOffice host, it will use that path automatically — no additional configuration is needed on the OnlyOffice side for the network path itself.
+
+**Allowed origins:** On the OnlyOffice server, add the Seafile origin to `ONLYOFFICE_ALLOWED_ORIGINS` in its `.env` so browsers are permitted to embed the editor in an iframe. In the Blueprint's `core/onlyoffice` stack this value is embedded in a Traefik label — changing it takes effect only after recreating the container, not after a plain restart:
+
+```bash
+# On the OnlyOffice server — restart is NOT enough:
+docker compose up -d --force-recreate
+```
+
+:::note
+`APP_TRAEFIK_ACCESS` is a Traefik middleware setting, not a network exposure control. `acc-public` removes the source-IP allowlist inside Traefik; it does not bypass an upstream firewall or make the service reachable if it wasn't already. If OnlyOffice traffic arrives via Tailscale but Traefik still rejects it under `acc-tailscale`, the source IP Traefik sees may differ from the actual client address — see [Traefik troubleshooting](/core/traefik/#troubleshooting) for the known caveat and investigation steps.
+:::
+
+## Going further
+
+<Tabs>
+
+  <TabItem label="SMTP">
+    SMTP is optional but required for password reset emails, share invitations, and file change notifications. Set the SMTP variables in `.env`:
+
+    ```ini
+    SEAFILE_SMTP_HOST=smtp.example.com
+    SEAFILE_SMTP_PORT=587
+    SEAFILE_SMTP_USER=user@example.com
+    SEAFILE_SMTP_FROM=seafile@example.com
+    SEAFILE_SMTP_USE_TLS=true
+    SEAFILE_SMTP_PASSWORD=your-smtp-password
+    ```
+
+    Then restart the app to pick up the new values:
+
+    ```bash
+    docker compose restart app
+    ```
+
+    :::caution
+    SMTP delivery is not verified end-to-end in this Blueprint guide. After configuring, send a test email from the Seafile admin panel to confirm delivery before relying on it for password resets.
+    :::
+  </TabItem>
+
+  <TabItem label="Access">
+    The default `APP_TRAEFIK_ACCESS=acc-public` removes Traefik's source-IP allowlist. Whether the service is actually reachable from the public internet depends on your DNS records, routing, and upstream firewall — the `acc-public` middleware setting does not control any of that.
+
+    Setting `APP_TRAEFIK_ACCESS=acc-tailscale` enforces a source-IP allowlist for Tailscale addresses, restricting access to clients connected to the same Tailnet. Server-to-server integrations (OnlyOffice, notifications) must also reach Seafile via Tailscale for this to apply to them.
+
+    :::note
+    `acc-tailscale` has a known source-IP caveat when traffic arrives through Docker published ports — Traefik may see the Docker bridge gateway address rather than the original Tailscale client address. See [Traefik troubleshooting](/core/traefik/#troubleshooting) for the cause and investigation steps. `acc-public` is the working alternative when this caveat applies.
+    :::
+  </TabItem>
+
+  <TabItem label="Antivirus">
+    ClamAV is included in the default `COMPOSE_FILE` and configured automatically when the Blueprint config injection runs (step 8 of the Quickstart). Uploaded files are scanned on write.
+
+    To verify ClamAV is active:
+
+    ```bash
+    docker exec seafile-pro-app bash -c "curl -s https://secure.eicar.org/eicar.com.txt | clamdscan -"
+    # Expected: stream: Eicar-Test-Signature FOUND
+    ```
+
+    A startup log warning about the clamd socket (`Clamd was NOT notified`) is expected during container initialisation — it is a timing race and does not affect scanning once the container is up.
+  </TabItem>
+
+  <TabItem label="Search">
+    SeaSearch is the default full-text search backend. It is lightweight and configured automatically by the config injection step — no manual setup required.
+
+    Elasticsearch is available in the repository as a reference compose file (`elasticsearch.yml`) but is **not active** by default and not included in `COMPOSE_FILE`. Do not add it alongside SeaSearch — both cannot run simultaneously. See `apps/seafile-pro/UPSTREAM.md` for switching instructions.
+
+    Trigger a manual index rebuild after bulk uploads or a first install:
+
+    ```bash
+    docker exec seafile-pro-app /opt/seafile/seafile-server-latest/pro/pro.py search --update
+    ```
+  </TabItem>
+
+</Tabs>
+
+## Backup
+
+:::caution
+No backup or restore procedure has been tested for this Blueprint guide yet. Do not treat this installation as production-ready until a backup exists and a restore has been verified.
+
+What needs to be covered before production use:
+
+- `volumes/seafile-data/` — all user files and library data
+- `volumes/mysql/` — all databases (Seafile, Seahub, Ccnet)
+- `volumes/seadoc-data/` — collaborative document state
+- The `.env` file and any secrets
+
+A restore that recovers the database without the matching file volumes — or vice versa — leaves the installation in an inconsistent state.
+:::
+
+## Updates
+
+<Steps>
+
+1. Read the [Seafile Pro release notes](https://manual.seafile.com/changelog/server-changelog/) and the [Docker upgrade guide](https://manual.seafile.com/upgrade/upgrade_docker/) for breaking changes.
+2. Back up all volumes before touching the stack.
+3. Update image tags in `.env` — `APP_TAG` for the main server, and the tags for any component services that changed.
+4. Pull and recreate:
+
+   ```bash
+   docker compose pull
+   docker compose up -d
+   ```
+
+5. Watch app logs for any database migration output:
+
+   ```bash
+   docker compose logs -f app
+   ```
+
+6. Verify login, file access, editing, and search after the update.
+
+</Steps>
+
+:::caution
+This update sequence has not been tested end-to-end in this Blueprint guide — it follows the upstream documented procedure. Read the Seafile release notes before running it.
+:::
+
+## Troubleshooting
+
+:::caution
+**OnlyOffice editor not loading** — the most common causes are a JWT mismatch (`ONLYOFFICE_JWT_SECRET` in `apps/seafile-pro/.env` must match the secret on the OnlyOffice server exactly) or the Seafile origin missing from `ONLYOFFICE_ALLOWED_ORIGINS` on the OnlyOffice side.
+:::
+
+:::caution
+**Allowed-origins change has no effect** — `ONLYOFFICE_ALLOWED_ORIGINS` is embedded in a Traefik label at container creation time. A plain `docker compose restart` on the OnlyOffice server does not pick up a new value. Recreate the container: `docker compose up -d --force-recreate` on the OnlyOffice server.
+:::
+
+:::note
+**ClamAV socket warning in startup logs** — the line `Clamd was NOT notified: Can't connect to clamd through /tmp/clamd.sock` is a timing race during container initialisation and is non-fatal. Run the EICAR test in Verify to confirm scanning is active.
+:::
+
+:::note
+**MariaDB `io_uring` warning or Redis memory overcommit warning** — both are host-level configuration notices, not application errors. The stack continues to function. See `apps/seafile-pro/UPSTREAM.md` for the optional sysctl change that silences the Redis warning.
+:::
+
+:::note
+**`acc-tailscale` returning 403 for a Tailscale client** — see [Traefik troubleshooting](/core/traefik/#troubleshooting) for the source-IP caveat when traffic arrives through Docker published ports.
+:::
+
+## Repository files
+
+- [`apps/seafile-pro/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/seafile-pro/README.md) — full setup, config injection details, and verification commands
+- [`apps/seafile-pro/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/seafile-pro/UPSTREAM.md) — upstream notes, known limitations, troubleshooting table, and upgrade checklist
+- [`apps/seafile-pro/.env.example`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/seafile-pro/.env.example) — all configurable variables with inline comments

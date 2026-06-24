@@ -1,0 +1,152 @@
+---
+title: OnlyOffice
+description: Shared browser-based Office document editing service for Seafile Pro, Nextcloud, and other WOPI-compatible applications.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+OnlyOffice Document Server is a shared editing backend — it provides browser-based Office document editing for any application that integrates with it, such as [Seafile Pro](/applications/seafile-pro/) or Nextcloud. It runs as a single container and serves an editor that embeds as an iframe inside the consuming application.
+
+One OnlyOffice instance can serve multiple consuming applications simultaneously. Each application must hold the same JWT secret and have its origin listed in the allowed-origins setting.
+
+Needs: [Traefik](/core/traefik/) running, a hostname, a JWT secret, and the origin(s) of each application that will embed the editor.
+
+## Quickstart
+
+From `core/onlyoffice/`:
+
+<Steps>
+
+1. ```bash
+   cp .env.example .env
+   ```
+
+2. Set the hostname and timezone in `.env`:
+
+   ```ini
+   APP_TRAEFIK_HOST=office.example.com
+   TZ=Europe/Vienna
+   ```
+
+3. Set `ONLYOFFICE_ALLOWED_ORIGINS` to the hostname(s) of each application that will embed the editor — space-separated, with `https://` prefix:
+
+   ```ini
+   ONLYOFFICE_ALLOWED_ORIGINS=https://files.example.com
+   ```
+
+4. Generate the JWT secret:
+
+   ```bash
+   mkdir -p .secrets
+   openssl rand -base64 30 | tr -d '\n' > .secrets/jwt_secret.txt
+   ```
+
+5. Start:
+
+   ```bash
+   docker compose up -d
+   ```
+
+6. First boot takes roughly 90 seconds — PostgreSQL initialises and the document server warms up:
+
+   ```bash
+   docker compose logs app --follow
+   # Wait for: ONLYOFFICE Document Server ... is up and running
+   ```
+
+</Steps>
+
+After OnlyOffice is running, share the JWT secret with each consuming application. The exact step depends on the app — for example, Seafile Pro reads it from `.env` rather than a secrets file. See the consuming application's guide for the specific step.
+
+## Verify
+
+```bash
+curl -fsSI https://your-domain/healthcheck                              # expect 200 OK
+curl -fsSI https://your-domain/web-apps/apps/api/documents/api.js      # expect 200 OK
+```
+
+Full functional verification requires a consuming application — open a `.docx` file in Seafile Pro (or another connected app) and confirm the editor loads in the browser without `X-Frame-Options` or CSP errors in the browser console.
+
+## Allowed origins
+
+`ONLYOFFICE_ALLOWED_ORIGINS` controls which application origins browsers are permitted to embed the editor from. It maps to a CSP `frame-ancestors` directive — any origin not listed is rejected by the browser even if the JWT is valid.
+
+**Changes to `ONLYOFFICE_ALLOWED_ORIGINS` require container recreation**, not just a restart. The value is embedded in a Traefik label at container creation time:
+
+```bash
+# After changing ONLYOFFICE_ALLOWED_ORIGINS in .env:
+docker compose up -d --force-recreate
+```
+
+A plain `docker compose restart` leaves the old CSP in place and the browser will continue to block embedding from any origin not in the original value.
+
+## Network path
+
+OnlyOffice needs a server-to-server network route to each consuming application to fetch documents and save edits. The path can be a public internet connection or a private route such as Tailscale — what matters is that the OnlyOffice server can reach the consuming application's configured hostname.
+
+**Traefik access middleware and actual network reachability are independent.** The access mode (`acc-public`, `acc-tailscale`) on the consuming application is a Traefik middleware setting — it does not determine whether a network path from the OnlyOffice server exists. Actual reachability depends on DNS, routing, and upstream firewall rules.
+
+If the consuming application's hostname resolves to a Tailscale address on the OnlyOffice host, OnlyOffice will route via Tailscale automatically.
+
+:::note
+If the consuming application uses `acc-tailscale` but OnlyOffice connections are still rejected, the source IP Traefik sees may not match the expected Tailscale address — see [Traefik troubleshooting](/core/traefik/#troubleshooting) for the known Docker bridge source-IP caveat.
+:::
+
+## Going further
+
+### Multiple consuming applications
+
+Add each application's origin to `ONLYOFFICE_ALLOWED_ORIGINS`, space-separated:
+
+```ini
+ONLYOFFICE_ALLOWED_ORIGINS=https://files.example.com https://cloud.example.com
+```
+
+Each application also needs a copy of the same JWT secret. Mismatched secrets produce `Token is invalid` errors in the browser console.
+
+After adding a new origin, recreate the container to apply the updated CSP:
+
+```bash
+docker compose up -d --force-recreate
+```
+
+### Tailscale-only or private access
+
+Set `APP_TRAEFIK_ACCESS=acc-tailscale` in `.env` to restrict the OnlyOffice server to Tailscale clients. Consuming applications must also be reachable from the OnlyOffice server via Tailscale — otherwise the server-to-server document fetch will fail regardless of whether the browser half of the integration works.
+
+### JWT secret rotation
+
+Rotating the JWT secret requires updating both sides simultaneously — there is no downtime-free path:
+
+1. Update `.secrets/jwt_secret.txt` on the OnlyOffice server.
+2. Update the secret in every consuming application (check each app's guide for where it is stored).
+3. Restart OnlyOffice and each consuming application.
+
+Active editing sessions will break when the secret changes.
+
+## Troubleshooting
+
+:::caution
+**Editor fails to load or shows a blank area** — open the browser console and look for a CSP or `X-Frame-Options` error. The most likely cause is the consuming application's origin missing from `ONLYOFFICE_ALLOWED_ORIGINS`. Confirm the value matches exactly, including the `https://` prefix, then recreate the OnlyOffice container.
+:::
+
+:::caution
+**Document does not load or changes do not save** — OnlyOffice cannot reach the consuming application server-to-server. Check:
+- DNS resolution for the consuming application's hostname from the OnlyOffice host.
+- Whether the consuming application's Traefik access middleware is blocking the request.
+- That the JWT secret in the consuming application matches the OnlyOffice secret exactly.
+:::
+
+:::caution
+**Allowed-origins change has no effect** — `ONLYOFFICE_ALLOWED_ORIGINS` is baked into a Traefik label at container creation time. `docker compose restart` does not update it. Run `docker compose up -d --force-recreate` on the OnlyOffice server.
+:::
+
+:::note
+**Private/Tailscale path: document does not load** — verify that DNS for the consuming application's hostname resolves to an address reachable from the OnlyOffice host. If it resolves to a public IP blocked by a firewall, the server-to-server fetch will fail — this is not visible in the browser console as a clear error.
+:::
+
+## Repository files
+
+- [`core/onlyoffice/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/onlyoffice/README.md) — setup, JWT secret handling, iframe and CSP architecture
+- [`core/onlyoffice/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/onlyoffice/UPSTREAM.md) — upgrade checklist, version notes, operational notes
+- [`core/onlyoffice/.env.example`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/onlyoffice/.env.example) — all configurable variables with inline comments

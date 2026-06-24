@@ -76,12 +76,12 @@ export const faqCategories: FaqCategory[] = [
       {
         question: 'Is this safe to run in production today?',
         answer:
-          'Traefik, CrowdSec, and Vaultwarden are each verified end to end — setup through backup, restore, and updates — and considered stable. Newer additions may still see breaking changes to file paths or variable names before the project reaches its 1.0 milestone.',
+          'Traefik, CrowdSec, and Vaultwarden are each verified end to end — setup through backup, restore, and updates — and considered stable. Seafile Pro has been installed and verified in a real deployment, but backup and restore have not yet been tested for this guide, so it should not be treated as production-ready without a tested backup strategy. Newer additions may still see breaking changes to file paths or variable names before the project reaches its 1.0 milestone.',
       },
       {
         question: 'What can I actually deploy right now?',
         answer:
-          'Core infrastructure (Traefik, CrowdSec) plus a small, growing set of fully-verified application guides — currently Vaultwarden. New guides are added once they’re verified end to end, not as soon as a container starts.',
+          'Core infrastructure (Traefik, CrowdSec) plus a growing set of application guides — currently Vaultwarden (fully verified including backup and restore) and Seafile Pro (installation verified; backup and restore not yet tested). New guides are added once installation is verified end to end, not as soon as a container starts.',
         link: { text: 'Applications', href: '/applications/' },
       },
       {

@@ -22,6 +22,7 @@ export default defineConfig({
 						{ label: 'Overview', link: '/core/' },
 						{ label: 'Traefik', link: '/core/traefik/' },
 						{ label: 'CrowdSec', link: '/core/crowdsec/' },
+						{ label: 'OnlyOffice', link: '/core/onlyoffice/' },
 					],
 				},
 				{
@@ -29,6 +30,7 @@ export default defineConfig({
 					items: [
 						{ label: 'Overview', link: '/applications/' },
 						{ label: 'Vaultwarden', link: '/applications/vaultwarden/' },
+						{ label: 'Seafile Pro', link: '/applications/seafile-pro/' },
 					],
 				},
 				{ label: 'Operations', link: '/operations/' },

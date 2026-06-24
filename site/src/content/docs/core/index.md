@@ -3,7 +3,7 @@ title: Core Infrastructure
 description: Guides for the foundational services every application in Secure Docker Blueprint depends on — reverse proxy, TLS, and intrusion prevention.
 ---
 
-Two services, set up once per server, before any application. Together they answer two questions every self-hosted setup runs into: how multiple services share one server securely, and how you find out something is attacking it.
+Traefik and CrowdSec are set up once per server before any application — together they cover how multiple services share one server securely and how you detect attacks. OnlyOffice is an additional optional shared service, needed only when applications require in-browser Office document editing.
 
 ### Traefik
 
@@ -21,7 +21,16 @@ Optional, but the layer most setups end up wanting once Traefik is stable.
 
 [Go to the CrowdSec guide →](/core/crowdsec/)
 
+### OnlyOffice
+
+**Problem it solves:** applications such as Seafile Pro need a running OnlyOffice server to open `.docx`, `.xlsx`, and `.pptx` files in the browser — without one, Office files open read-only or not at all.
+
+Optional shared service. One instance serves multiple consuming applications simultaneously.
+
+[Go to the OnlyOffice guide →](/core/onlyoffice/)
+
 ## Where to go next
 
 - New server: [Traefik](/core/traefik/) first — everything else depends on it.
 - Traefik already running: add [CrowdSec](/core/crowdsec/) for intrusion detection, or skip straight to [Applications](/applications/).
+- Setting up Seafile Pro or another Office-editing app: [OnlyOffice](/core/onlyoffice/) provides the shared document editing backend.

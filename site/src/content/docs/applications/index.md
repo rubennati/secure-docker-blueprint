@@ -13,11 +13,18 @@ Guides cover the full operating path — setup, ongoing use, backup, restore, an
 
 [Go to the Vaultwarden guide →](/applications/vaultwarden/)
 
-## Why only one guide?
+### Seafile Pro
 
-A useful guide has to address what to back up, what restore looks like, and how to update without data loss — that takes time to verify per application. One complete guide is more useful than several incomplete ones.
+**Problem it solves:** private cloud file storage and sharing with browser-based Office document editing, collaborative documents, full-text search, and antivirus scanning — without depending on a third-party cloud provider.
+
+[Go to the Seafile Pro guide →](/applications/seafile-pro/)
+
+## What these guides cover
+
+A useful guide has to address what to back up, what restore looks like, and how to update without data loss — that takes time to verify per application. Not every guide is complete in all respects yet; each page states clearly what has and has not been tested.
 
 ## Where to go next
 
-- [Vaultwarden](/applications/vaultwarden/) — the available application guide.
+- [Vaultwarden](/applications/vaultwarden/) — password manager; setup, backup, and restore verified.
+- [Seafile Pro](/applications/seafile-pro/) — file sync and collaborative editing; installation verified, backup and restore not yet tested.
 - [Core Infrastructure](/core/) if Traefik isn't running yet — every application guide needs it first.
