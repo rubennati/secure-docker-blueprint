@@ -48,6 +48,22 @@ docker compose logs -f app
 docker compose logs --tail 50 app
 ```
 
+> **Traefik is an exception — `docker compose logs traefik` shows nothing.**
+> `core/traefik` configures `log.filePath` / `accessLog.filePath` in
+> `traefik.yml`, so Traefik writes to files inside the container
+> (`/var/log/traefik/traefik.log`, `/var/log/traefik/access.log`), not to
+> stdout. `docker compose logs` only captures stdout/stderr — for Traefik,
+> read the files instead:
+> ```bash
+> docker exec traefik-core cat /var/log/traefik/traefik.log    # startup, ACME, errors
+> docker exec traefik-core cat /var/log/traefik/access.log     # HTTP requests (JSON)
+> # or directly from the host (bind-mounted):
+> cat core/traefik/volumes/logs/traefik.log
+> ```
+> `access.log` is additionally buffered (`TRAEFIK_ACCESSLOG_BUFFER`, default
+> 100 entries) — it may not show very recent requests until the buffer
+> flushes. `traefik.log` is not buffered the same way.
+
 **Common log patterns and what they mean:**
 
 | Log message | Cause | Fix |
@@ -224,9 +240,52 @@ acc-tailscale:
 | You see | Meaning | Fix |
 |---|---|---|
 | `ClientHost: 100.x.x.x` | Tailscale IPv4 — should pass `acc-tailscale` | Check IP range in access.yml |
-| `ClientHost: fd7a:...` | Tailscale IPv6 — might not be in allowlist | Add `fd7a:115c:a1e0::/48` to access.yml |
+| `ClientHost: fd7a:...` | Tailscale IPv6 — should pass `acc-tailscale` (default range already covers it) | If still blocked, check `TAILSCALE_CIDR_V6` wasn't overridden to something narrower in `.env` |
 | `ClientHost: 178.x.x.x` (public IP) | Traffic goes over internet, not VPN | DNS resolves to public IP, not Tailscale IP |
-| `ClientHost: 172.x.x.x` (Docker bridge) | Traefik sees Docker internal IP | Check `forwardedHeaders` in Traefik config |
+| `ClientHost: 172.x.x.x` (Docker bridge gateway) — request from a **remote** client | The real client IP was lost before Traefik saw it — almost always a Tailscale **IPv6** client hitting an **IPv4-only** `proxy-public` network. Docker's userland-proxy bridged the IPv6 host connection into the IPv4-only bridge and re-sourced it from the gateway address. | Not a `forwardedHeaders` issue (that's for the Cloudflare path only). Fix is network-level: dual-stack `proxy-public` + Docker daemon prerequisites. See [`core/traefik/docs/ipv6-dual-stack.md`](../../core/traefik/docs/ipv6-dual-stack.md) and [`docs/bugfixes/traefik-ipv6-dualstack-2026-06-19.md`](../bugfixes/traefik-ipv6-dualstack-2026-06-19.md). Do **not** "fix" this by allowlisting `172.x.x.x/32` — see "why this is a workaround, not a fix" in that doc. |
+| `ClientHost: 172.x.x.x` (Docker bridge gateway) — request run **on the Traefik host itself** (e.g. `curl` over SSH on the same server) | **Not the bug above — a different, unrelated Docker behavior.** A process on the Docker host connecting to the host's own published port (loopback/hairpin) gets NAT'd through the bridge gateway address, regardless of whether `proxy-public` is dual-stack and regardless of IPv4/IPv6. This happens even on a fully-fixed, correctly dual-stack network. | Nothing to fix. Don't test client-IP preservation by curling from the Traefik host itself — test from a genuinely remote client (another machine on the tailnet, or a real browser/Cloudflare request). A 403 here with `ClientHost: 172.x.x.x` from a self-curl is expected and does not indicate the dual-stack fix failed. |
+| Cloudflare edge IP in `ClientAddr`, real client IP in `ClientHost` | Cloudflare path working correctly | Nothing to fix — this is the expected good state. If `ClientHost` instead shows the Cloudflare edge IP too, `forwardedHeaders.trustedIPs` is missing or doesn't cover the connecting edge IP — see [Trusted Proxy Headers](traefik-security.md#trusted-proxy-headers-traefikyml--forwardedheaders) |
+
+### IPv4 vs. IPv6 — isolating which layer is broken
+
+Test both address families directly against the domain, independent of
+which client/network you're on:
+
+```bash
+# Force IPv4
+curl -4 -v https://<app-domain>/
+
+# Force IPv6
+curl -6 -v https://<app-domain>/
+```
+
+If `-4` works and `-6` doesn't (or vice versa), the problem is specific to
+that address family — check it at each layer outward from the host:
+
+```bash
+# Is the public Docker network actually dual-stack?
+# (EnableIPv6 should be true, IPAM.Config should show both an IPv4 and
+# an IPv6 subnet if dual-stack was intended)
+docker network inspect proxy-public
+
+# Is the Traefik container itself attached with an IPv6 address?
+docker inspect traefik-core --format \
+  '{{range .NetworkSettings.Networks}}{{.IPAddress}} {{.GlobalIPv6Address}}{{end}}'
+
+# Is the host actually listening on both families for 80/443?
+# Look for both 0.0.0.0:80/443 (IPv4) and :::80/443 or [::]:80/443 (IPv6)
+sudo ss -ltnp | grep -E ':80|:443'
+
+# Is docker-proxy still bridging host ports into the container network?
+# (expected to be ABSENT once userland-proxy: false is set in
+# /etc/docker/daemon.json — its presence here means the daemon prerequisite
+# wasn't applied, or the daemon wasn't restarted after editing daemon.json)
+ps aux | grep docker-proxy
+```
+
+Cross-reference container name and network name with your actual `.env`
+values — `traefik-core` / `proxy-public` are this blueprint's defaults
+(`TRAEFIK_CONTAINER_NAME` / `PUBLIC_NETWORK`).
 
 ### DNS vs Tailscale
 
@@ -330,6 +389,11 @@ ls /path/to/secure-docker-blueprint/core/traefik/config/dynamic/
 
 # Validate compose config (catches missing env vars)
 docker compose config
+
+# Same, but redacted — docker compose config resolves and PRINTS every
+# ${VAR}, including secrets like CF_DNS_API_TOKEN. Redact before pasting
+# output anywhere (issue, chat, support request):
+docker compose config | sed -E 's/(CF_DNS_API_TOKEN: ).*/\1***REDACTED***/'
 ```
 
 ### Secret Debugging

@@ -1,0 +1,25 @@
+# Secure Docker Blueprint
+
+> Security-focused Docker Compose infrastructure for self-hosted services: hardened defaults, Docker Secrets, a Traefik reverse proxy with optional dual-stack IPv6, CrowdSec intrusion detection, and standards-consistent service definitions. Apache 2.0.
+
+This is the operator-facing guide site for Secure Docker Blueprint. The [GitHub repository](https://github.com/rubennati/secure-docker-blueprint) is the technical source of truth — compose files, `.env.example` templates, and full per-service READMEs for 40+ services live there. This site curates guided, narrative documentation for the services and topics that benefit most from it.
+
+## Core Infrastructure
+
+- [Traefik](/core/traefik/): Reverse proxy and TLS termination. Set up first — every other service depends on it. Covers IPv4-only vs. dual-stack IPv6 networking (for correct Tailscale client IPs), certificate strategy (Cloudflare DNS-01 or standard HTTP-01, with or without Cloudflare), and CrowdSec integration.
+- [CrowdSec](/core/crowdsec/): Intrusion detection and blocking, layered on Traefik, in three independent and optional phases: log-based detection, Traefik-layer HTTP blocking, and host-level firewall blocking.
+
+## Applications
+
+- [Vaultwarden](/applications/vaultwarden/): Self-hosted Bitwarden-compatible password manager. Setup, hardening, backup scope, restore, and updates.
+
+## Reference
+
+- [Getting Started](/getting-started/): The basic operating path from a fresh server to a first running service.
+- [FAQ](/faq/): Networking (Tailscale, Cloudflare), project status and scope, licensing.
+- [Project](/project/): License, contributing, roadmap.
+
+## Notes for AI agents
+
+- This site is not yet published; URLs above are site-relative and may move under a different base path once a production domain is set.
+- Code examples in guide pages are tested against the actual repository structure as of each guide's last edit — prefer the linked repository file over re-deriving paths/variable names from memory.

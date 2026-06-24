@@ -1,0 +1,169 @@
+---
+title: CrowdSec
+description: Intrusion detection and blocking, layered on Traefik.
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+CrowdSec watches Traefik's access logs and decides which IPs to ban for attack patterns (brute force, CVE probes, path traversal). On its own it detects but doesn't block — blocking is added separately, in layers you choose.
+
+Needs: [Traefik](/core/traefik/) running.
+
+## Quickstart
+
+The required baseline — detection only, blocks nothing yet.
+
+<Steps>
+
+1. From `core/crowdsec/`:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Find the GID that owns Traefik's log files, and set it as `CROWDSEC_LOG_GID` in `.env`:
+
+   ```bash
+   stat -c '%g' ../traefik/volumes/logs/access.log
+   ```
+
+3. Start:
+
+   ```bash
+   docker compose up -d
+   ```
+
+</Steps>
+
+:::note
+First boot takes about 5 minutes — CrowdSec installs its detection collections before it starts reading logs. Metrics commands return mostly empty output during that window; that's normal, not broken.
+:::
+
+## Verify
+
+```bash
+docker exec crowdsec cscli lapi status
+docker exec crowdsec cscli metrics show acquisition
+```
+
+Expect "You can successfully interact with Local API" and a row for `file:/var/log/traefik/access.log` with `lines_read > 0`.
+
+:::tip
+If the acquisition table stays empty after 5 minutes: CrowdSec only reads log lines written *after* it started, and Traefik buffers access-log writes — on a quiet server that can take a while to flush. Force it:
+
+```bash
+for i in $(seq 1 110); do
+  curl -sk -o /dev/null -H "Host: <any-app-domain>" https://127.0.0.1/
+done
+docker exec crowdsec cscli metrics show acquisition
+```
+:::
+
+## Going further
+
+Phase 1 above is detection only. Two more layers, each independently optional, add blocking.
+
+<Tabs>
+  <TabItem label="Phase 2 — HTTP blocking">
+    Rejects requests from banned IPs with a 403, inside Traefik.
+
+    <Steps>
+
+    1. Generate a key:
+
+       ```bash
+       docker exec crowdsec cscli bouncers add traefik-bouncer
+       ```
+
+    2. In `core/traefik/.env`, add `CROWDSEC_BOUNCER_KEY=<key>`.
+
+    3. Uncomment the plugin block in `ops/templates/traefik.yml.tmpl` and the `sec-crowdsec` middleware in `ops/templates/dynamic/integrations.yml.tmpl`, then:
+
+       ```bash
+       bash ops/scripts/render.sh
+       docker compose up -d --force-recreate traefik
+       ```
+
+    4. Add `sec-crowdsec@file` to at least one router's middleware list, then recreate that app:
+
+       ```yaml
+       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=sec-crowdsec@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+       ```
+
+    </Steps>
+
+    :::caution
+    Step 4 is required, not optional. The plugin loading successfully does **not** make the bouncer do anything — its polling loop only starts once the middleware is attached to a router. Skip this and `cscli bouncers list` will show the bouncer as registered but never pulling, with no error anywhere to explain why.
+    :::
+
+    Verify:
+
+    ```bash
+    docker exec crowdsec cscli bouncers list
+    # Expect an IP address and a recent "Last API pull"
+    ```
+  </TabItem>
+  <TabItem label="Phase 3 — network-layer blocking">
+    Drops packets from banned IPs at the host firewall — every port, not just HTTP. Runs as a host package, not a container.
+
+    Worth it mainly if SSH is reachable from the public internet (Traefik never sees SSH brute force). Skip if SSH is Tailscale-only.
+
+    <Steps>
+
+    1. Install and register:
+
+       ```bash
+       sudo apt install crowdsec-firewall-bouncer   # Debian 13
+       docker exec crowdsec cscli bouncers add firewall-bouncer
+       ```
+
+    2. Edit `/etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml.local` — never the base `.yaml`, the package manages that:
+
+       ```yaml
+       api_url: http://127.0.0.1:8080/
+       api_key: <key from above>
+       mode: nftables
+       ```
+
+    3. Start:
+
+       ```bash
+       sudo systemctl enable --now crowdsec-firewall-bouncer
+       ```
+
+    </Steps>
+
+    Verify:
+
+    ```bash
+    sudo systemctl status crowdsec-firewall-bouncer
+    docker exec crowdsec cscli bouncers list
+    ```
+
+    :::note
+    Banned IPs live in an nftables **set**, not as individual rules — `nft list chain ip crowdsec crowdsec-chain` shows the rule but not which IPs are currently banned. Check the set instead: `sudo nft list set ip crowdsec crowdsec-blacklists`.
+    :::
+
+    :::caution
+    **Emergency — remove all active bans:** use `sudo nft flush set ip crowdsec crowdsec-blacklists`, not `flush chain`. Flushing the chain deletes the enforcement rule itself, leaving the host with no active drop logic until the bouncer service is restarted.
+    :::
+  </TabItem>
+</Tabs>
+
+## Troubleshooting
+
+A legitimate IP got banned:
+
+```bash
+docker exec crowdsec cscli decisions delete --ip <ip> --all
+```
+
+Use `--all` — without it, a decision from a non-local source (like the shared community blocklist) can keep the IP banned.
+
+Full operational reference — health checks, whitelisting, false positives, SSH detection, geo-blocking, emergency procedures: [`core/crowdsec/docs/runbook.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/crowdsec/docs/runbook.md).
+
+## Repository files
+
+- [`core/crowdsec/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/crowdsec/README.md) — full setup for all three phases
+- [`core/crowdsec/docs/runbook.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/crowdsec/docs/runbook.md) — day-to-day operations
+- [`core/crowdsec/docs/firewall-bouncer.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/crowdsec/docs/firewall-bouncer.md) — Phase 3 in depth, including SSH detection

@@ -1,0 +1,169 @@
+---
+title: Vaultwarden
+description: Self-hosted Bitwarden-compatible password manager on Docker Compose.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Vaultwarden is a self-hosted password manager compatible with Bitwarden clients — browser extensions, mobile apps, and the desktop client. It can hold access credentials to everything else you run; treat setup and backup accordingly.
+
+Needs: [Traefik](/core/traefik/) running, a domain, and SMTP credentials (email verification is on by default).
+
+## Quickstart
+
+From `apps/vaultwarden/`:
+
+<Steps>
+
+1. ```bash
+   cp .env.example .env
+   ```
+
+2. Set your domain in `.env`:
+
+   ```ini
+   APP_TRAEFIK_HOST=vault.example.com
+   ```
+
+3. Set SMTP — required before the first account can verify its email:
+
+   ```ini
+   VW_SMTP_HOST=smtp.example.com
+   VW_SMTP_FROM=vault@yourdomain.com
+   VW_SMTP_PORT=587
+   VW_SMTP_SECURITY=starttls
+   VW_SMTP_USERNAME=your-smtp-user
+   VW_SMTP_PASSWORD=your-smtp-password
+   ```
+
+4. Generate database passwords (the connection string needs hex-only values):
+
+   ```bash
+   sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=$(openssl rand -hex 32)|" .env
+   sed -i "s|^DB_ROOT_PASSWORD=.*|DB_ROOT_PASSWORD=$(openssl rand -hex 32)|" .env
+   ```
+
+5. Generate the admin token — must be an Argon2 hash, never plain text:
+
+   ```bash
+   docker run --rm -it vaultwarden/server:${APP_TAG} /vaultwarden hash
+   ```
+
+   Copy the full `$argon2id$...` output, then paste it into `.env` with every `$` doubled (Compose escaping):
+
+   ```ini
+   VW_ADMIN_TOKEN=$$argon2id$$v=19$$m=65540,t=3,p=4$$...your-hash...
+   ```
+
+6. Allow signups for your first account — you'll turn this off again right after:
+
+   ```ini
+   VW_SIGNUPS_ALLOWED=true
+   ```
+
+7. Start:
+
+   ```bash
+   docker compose up -d
+   docker compose logs -f
+   ```
+
+   Wait for `Starting Vaultwarden` with no errors — MariaDB has a health check Vaultwarden waits on.
+
+</Steps>
+
+## Verify
+
+```bash
+docker compose ps                      # both containers healthy
+curl -sI https://your-domain/alive     # expect 200 OK
+```
+
+Open `https://your-domain` — the login page should load over TLS.
+
+## Create your account and lock signups
+
+<Steps>
+
+1. Click **Create Account**, register, and verify your email.
+
+2. In `.env`, turn signups back off:
+
+   ```ini
+   VW_SIGNUPS_ALLOWED=false
+   ```
+
+   ```bash
+   docker compose restart app
+   ```
+
+   Confirm "Create Account" no longer appears on the login page.
+
+3. At `https://your-domain/admin`, set:
+
+   | Setting | Value |
+   |---|---|
+   | Allow new signups | false |
+   | Allow password hints | false |
+   | Block non-global IPs | true |
+   | Disable 2FA remember | true |
+
+4. Enable 2FA on your account: Settings → Security → Two-step login.
+
+</Steps>
+
+## Going further
+
+### Public access instead of Tailscale-only
+
+The quickstart uses the default, `APP_TRAEFIK_ACCESS=acc-tailscale` — the vault is reachable only over Tailscale/VPN. Setting `APP_TRAEFIK_ACCESS=acc-public` makes it reachable from the open internet instead. That's a deliberate change to your attack surface, not a default — decide it before exposing real credentials.
+
+## Backup before real use
+
+Do not add real credentials before a backup exists.
+
+**What to back up:** `volumes/mysql/` (database), `volumes/data/attachments/`, `volumes/data/rsa_key.*` (signing keys — without these, sessions break on restore even with an intact database), `volumes/data/sends/`.
+
+```bash
+docker exec -e MYSQL_PWD="$(grep DB_ROOT_PASSWORD .env | cut -d= -f2)" \
+  vaultwarden-db mariadb-dump -u root vaultwarden > backup-$(date +%Y%m%d).sql
+```
+
+No automated backup is included yet — schedule this and the data directories yourself.
+
+:::caution
+A restore needs the database dump, the RSA signing keys, and any attachments together, from the same point in time — not just the database. No tested restore procedure is documented for this Blueprint yet; don't treat an unverified backup as a recovery plan.
+:::
+
+## Updates
+
+<Steps>
+
+1. Check the [release notes](https://github.com/dani-garcia/vaultwarden/releases) for breaking changes.
+2. Back up the database (see above).
+3. Update `APP_TAG` in `.env`.
+4. ```bash
+   docker compose pull
+   docker compose up -d
+   ```
+5. Verify `/alive` and log in.
+
+</Steps>
+
+## Troubleshooting
+
+:::caution
+**Container not starting** — check `docker compose logs app` and `docker compose logs db`. Common causes: MariaDB not yet healthy (the app waits for it), or incorrect `$$` escaping in `VW_ADMIN_TOKEN`.
+:::
+
+:::note
+**Login page not loading but the container is healthy** — check Traefik logs and confirm `APP_TRAEFIK_HOST` matches your DNS record exactly.
+:::
+
+**Email verification not arriving:** send a test email from `/admin` → Settings, and check your SMTP provider's outbound log if it fails.
+
+## Repository files
+
+- [`apps/vaultwarden/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/vaultwarden/README.md) — full setup and admin panel settings
+- [`apps/vaultwarden/.env.example`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/vaultwarden/.env.example)
+- [`apps/vaultwarden/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/vaultwarden/UPSTREAM.md) — upstream notes, backup, and upgrade steps

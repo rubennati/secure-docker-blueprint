@@ -173,8 +173,10 @@ docker exec crowdsec cscli bouncers list
 
 # 3. nftables chain created?
 sudo nft list ruleset | grep -A3 crowdsec
-# Expected (chain exists, empty if no active bans yet):
+# Expected (chain exists, referencing a set — empty set if no active bans yet):
 #   chain crowdsec-chain {
+#     type filter hook input priority filter; policy accept;
+#     ip saddr @crowdsec-blacklists counter packets 0 bytes 0 drop
 #   }
 # No output: bouncer is not writing to nftables — check mode setting
 
@@ -183,12 +185,16 @@ docker exec crowdsec cscli decisions add \
   --ip 198.51.100.1 \
   --duration 5m --reason "phase3-verify"
 
-# Wait ~15 s for the bouncer to pick up the decision:
-sudo nft list chain ip crowdsec crowdsec-chain
+# Wait ~15 s for the bouncer to pick up the decision. The chain rule itself
+# only references a named set — checking the chain shows the rule, not
+# which IPs are currently banned. Check the SET contents instead:
+sudo nft list set ip crowdsec crowdsec-blacklists
 # Expected:
 #   table ip crowdsec {
-#     chain crowdsec-chain {
-#       ip saddr 198.51.100.1 drop
+#     set crowdsec-blacklists {
+#       type ipv4_addr
+#       flags timeout
+#       elements = { 198.51.100.1 timeout 5m expires 4m44s }
 #     }
 #   }
 
@@ -199,25 +205,48 @@ docker exec crowdsec cscli decisions delete --ip 198.51.100.1
 Use a documentation IP (192.0.2.x, 198.51.100.x, 203.0.113.x) for the test —
 not an address you are connecting from.
 
+> **`nft list chain ...` vs. `nft list set ...`** — confirmed against
+> `crowdsec-firewall-bouncer` v0.0.25 on Debian 13: the chain holds one
+> static rule (`ip saddr @crowdsec-blacklists ... drop`) that references a
+> named set, and individual banned IPs are added to / removed from that
+> **set** with a per-IP `timeout`, not written as separate `ip saddr X
+> drop` rules in the chain itself. `nft list chain ip crowdsec
+> crowdsec-chain` will look unchanged whether 0 or 1000 IPs are
+> currently banned — it only shows the rule, not the set's contents.
+> Always check the set (`nft list set ip crowdsec crowdsec-blacklists`,
+> and `nft list set ip6 crowdsec6 crowdsec6-blacklists` for IPv6) to see
+> what is actually banned right now. Exact ruleset structure can vary by
+> bouncer version; this is what the currently-packaged Debian 13 version
+> produces.
+
 ---
 
 ## What active enforcement looks like
 
-When bans are in effect, the nftables chain contains drop rules. Example with two
-active bans:
+When bans are in effect, the nftables set referenced by the chain rule
+contains the banned addresses with their remaining timeout. Example with
+two active bans:
 
 ```
 table ip crowdsec {
+  set crowdsec-blacklists {
+    type ipv4_addr
+    flags timeout
+    elements = { 185.220.101.5 timeout 4h expires 3h58m12s,
+                 45.142.212.100 timeout 4h expires 1h2m3s }
+  }
   chain crowdsec-chain {
-    ip saddr 185.220.101.5 drop
-    ip saddr 45.142.212.100 drop
+    type filter hook input priority filter; policy accept;
+    ip saddr @crowdsec-blacklists counter packets 12 bytes 504 drop
   }
 }
 ```
 
-The chain is populated automatically as the engine creates decisions and emptied as
-decisions expire. You do not manage the rules manually — the bouncer handles the full
-lifecycle.
+The set is populated automatically as the engine creates decisions and emptied as
+decisions expire (or removed early if a decision is deleted). You do not manage the
+set manually — the bouncer handles the full lifecycle. The chain rule's `counter`
+shows cumulative packets/bytes actually dropped — a non-zero counter is direct
+evidence the rule is matching real traffic, not just configured.
 
 To see which decisions are currently feeding these rules:
 
@@ -375,9 +404,10 @@ sudo sed -i '/testuser.*203\.0\.113\.99/d' /var/log/auth.log
 
 > **What a real SSH ban looks like once traffic flows:**
 > After genuine brute-force attempts accumulate, `cscli decisions list` will show an
-> entry with `reason: crowdsecurity/ssh-bf`. Within ~10 s, the nftables chain will
-> contain the corresponding drop rule — verifiable with
-> `sudo nft list chain ip crowdsec crowdsec-chain`.
+> entry with `reason: crowdsecurity/ssh-bf`. Within ~10 s, the banned IP will
+> appear as an element in the nftables set — verifiable with
+> `sudo nft list set ip crowdsec crowdsec-blacklists` (see "`nft list chain`
+> vs. `nft list set`" note in the Verify section above).
 
 ---
 
@@ -425,11 +455,26 @@ If `crowdsec-firewall-bouncer` stops, the nftables rules it created remain in pl
 (they are not automatically flushed on service stop). Existing bans stay enforced;
 new decisions from the engine are not picked up until the service restarts.
 
-To flush all rules manually (emergency only — removes all active bans immediately):
+To remove all active bans manually (emergency only — removes all active bans
+immediately):
 
 ```bash
-sudo nft flush chain ip crowdsec crowdsec-chain
+sudo nft flush set ip crowdsec crowdsec-blacklists
+# IPv6:
+sudo nft flush set ip6 crowdsec6 crowdsec6-blacklists
 ```
+
+> **Do not use `nft flush chain ip crowdsec crowdsec-chain` for this.**
+> Confirmed live on `crowdsec-firewall-bouncer` v0.0.25 / Debian 13: the
+> chain holds exactly one rule (`ip saddr @crowdsec-blacklists ... drop`).
+> `flush chain` deletes that rule entirely — not just the bans — leaving
+> the chain hooked into `input` but with **no drop logic at all**. Every
+> IP, banned or not, passes until the rule is restored. The bouncer does
+> not appear to recreate the rule on its own; restoring requires
+> `sudo systemctl restart crowdsec-firewall-bouncer`, which re-applies the
+> full ruleset including the chain rule. `flush set` clears only the ban
+> list and leaves the enforcement rule untouched — that is the correct
+> command for "remove all bans without breaking enforcement."
 
 ### Reboot behavior
 
@@ -465,8 +510,11 @@ and poses no meaningful risk. If you require zero-gap enforcement at boot, confi
 # 1. Stop and disable the service
 sudo systemctl disable --now crowdsec-firewall-bouncer
 
-# 2. Flush the nftables chain (removes all active drop rules)
-sudo nft flush chain ip crowdsec crowdsec-chain 2>/dev/null || true
+# 2. Remove the nftables tables entirely (chain, rule, and set together —
+#    more thorough than flushing, appropriate here since the package is
+#    being removed anyway and nothing needs to keep enforcing)
+sudo nft delete table ip crowdsec 2>/dev/null || true
+sudo nft delete table ip6 crowdsec6 2>/dev/null || true
 
 # 3. Uninstall the package
 # Debian 13 / Trixie:

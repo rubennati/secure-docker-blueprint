@@ -11,8 +11,19 @@ export default defineConfig({
 			social: [
 				{ icon: 'github', label: 'GitHub', href: 'https://github.com/rubennati/secure-docker-blueprint' },
 			],
+			components: {
+				Head: './src/components/Head.astro',
+			},
 			sidebar: [
 				{ label: 'Getting Started', link: '/getting-started/' },
+				{
+					label: 'Core Infrastructure',
+					items: [
+						{ label: 'Overview', link: '/core/' },
+						{ label: 'Traefik', link: '/core/traefik/' },
+						{ label: 'CrowdSec', link: '/core/crowdsec/' },
+					],
+				},
 				{
 					label: 'Applications',
 					items: [

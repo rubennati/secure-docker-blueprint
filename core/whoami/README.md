@@ -57,6 +57,15 @@ openssl s_client -servername whoami.example.com -connect whoami.example.com:443 
 
 # Does the security level chain what you expect?
 curl -sI https://whoami.example.com | grep -iE "strict-transport|content-security|x-frame"
+
+# IPv4 vs. IPv6 — is the real client IP preserved on both? (Tailscale clients
+# always have an IPv6 address; this only matches on a dual-stack proxy-public —
+# see core/traefik/docs/ipv6-dual-stack.md)
+curl -4 https://whoami.example.com | grep -iE "x-forwarded-for|x-real-ip"
+curl -6 https://whoami.example.com | grep -iE "x-forwarded-for|x-real-ip"
+# Good: the header value matches your actual IP for that family.
+# Bad: a 172.x.x.x (or other Docker-bridge-looking) address instead of your
+# real IPv6 address — proxy-public is IPv4-only, see the doc above.
 ```
 
 ## Security Model
@@ -87,3 +96,4 @@ Keeping a public `whoami` endpoint running long-term leaks information useful to
 ## Details
 
 - [UPSTREAM.md](UPSTREAM.md) — source, upgrade checklist
+- [core/traefik/docs/ipv6-dual-stack.md](../traefik/docs/ipv6-dual-stack.md) — using whoami to verify dual-stack IPv4/IPv6 + real client IP preservation

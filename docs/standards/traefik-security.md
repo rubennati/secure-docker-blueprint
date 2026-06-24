@@ -45,6 +45,38 @@ Local network ranges (RFC1918 for IPv4, ULA `fc00::/7` for IPv6) are hardcoded i
 
 ---
 
+## Trusted Proxy Headers (`traefik.yml` — `forwardedHeaders`)
+
+`ipAllowList` (above) only works if the IP it evaluates is actually the
+real client IP. Whether that holds depends on which ingress path the
+request took — Cloudflare and Tailscale recover the real client IP
+through two unrelated mechanisms:
+
+| Path | Mechanism | Configured where |
+|------|-----------|-------------------|
+| Cloudflare | Cloudflare proxies the connection and sets `X-Forwarded-For` to the real client IP. Traefik only trusts that header from Cloudflare's own edge IPs. | `entryPoints.web/websecure.forwardedHeaders.trustedIPs` in `traefik.yml.tmpl` — hardcoded list of Cloudflare's published ranges (same reasoning as `acc-local`'s hardcoded RFC1918 ranges: `envsubst` can't render a multi-entry list from one `.env` variable) |
+| Tailscale | The client connects to Traefik directly — no proxy hop, no header to trust. The TCP source IP **is** the real client IP, provided the network can carry it (see IPv6 note below). | Nothing to configure — this is a network-layer property, not a Traefik setting |
+
+**Never set `forwardedHeaders.insecure=true`.** That trusts forwarded
+headers from *any* source, which lets a client set its own
+`X-Forwarded-For` and spoof an IP that passes `ipAllowList` — it defeats
+every access policy in this document. Always scope `trustedIPs` to the
+specific proxy's real address ranges.
+
+**IPv6 note:** Tailscale always gives a client an IPv6 address. If
+`proxy-public` is IPv4-only, that address is lost before Traefik ever
+sees it (no header-based fallback exists for this path, unlike
+Cloudflare) — Traefik sees the Docker gateway address instead, and
+`acc-tailscale` blocks it. See
+[`core/traefik/docs/ipv6-dual-stack.md`](../../core/traefik/docs/ipv6-dual-stack.md)
+for the full explanation, the dual-stack network setup, and the
+migration path for existing IPv4-only installs. Allowlisting the gateway
+address as a workaround is explicitly **not** the fix — see "Why
+`172.19.0.1/32` in `ipAllowList` is a workaround, not a fix" in that
+document.
+
+---
+
 ## Security Building Blocks (`security-blocks.yml`)
 
 Modular middleware components. Used by the sec-* chains, or individually for custom combinations.
