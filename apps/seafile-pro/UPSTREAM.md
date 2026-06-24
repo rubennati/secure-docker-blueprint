@@ -46,9 +46,10 @@
 
 ## Known limitations
 
-- **Passwords in .env**: Docker Secrets via entrypoint wrapper didn't work with Phusion's `my_init` init system. Passwords are stored in `.env` (gitignored). TODO: revisit when Seafile adds native `_FILE` support.
+- **Passwords in .env**: Docker Secrets via entrypoint wrapper didn't work with Phusion's `my_init` init system. Passwords are stored in `.env` (gitignored). TODO: revisit when Seafile adds native `_FILE` support. The same limitation applies to the SMTP password — `SEAFILE_SMTP_PASSWORD` is in `.env`, not a Docker Secret.
 - **One restart needed after first start**: `docker compose restart app` triggers automatic config injection for seahub_settings.py, seafevents.conf, and seafile.conf. No manual editing needed.
 - **SeaDoc/Thumbnail Nginx check**: These containers check for Nginx/Caddy on startup. With Traefik, they need to be in `proxy-public` network with Traefik labels to pass this check.
+- **SEAHUB_DB_NAME is permanent**: Database names are chosen on first init. Changing `SEAHUB_DB_NAME` in `.env` after first start does not rename the database — it causes a mismatch. Migration requires manual database work.
 
 ## First-time setup
 
@@ -79,8 +80,50 @@ docker exec seafile-pro-app bash -c "curl -s https://secure.eicar.org/eicar.com.
 ```
 
 **Why restart?** On first boot, Seafile creates its config files. Our entrypoint wrapper
-detects these files on the second start and injects the Blueprint configs. All three
-injections are marker-based — they never run twice.
+detects these files on the second start and injects the Blueprint configs.
+
+**Injection behaviour (important):** `seahub_settings.py` injection is one-time — the
+marker `# --- Blueprint custom settings ---` prevents it from running again. This is
+different from Seafile CE, which re-injects on every container start.
+
+- Settings that use `os.environ.get()` (OnlyOffice URL, SMTP host, etc.) are evaluated at
+  Django startup. Changing those values in `.env` and running `docker compose restart app`
+  takes effect immediately — no re-injection needed.
+- Adding a brand-new setting that was absent from `config/seahub_custom.py` at injection
+  time requires removing the marker line and everything after it from `seahub_settings.py`,
+  updating `config/seahub_custom.py` on the host, then restarting.
+- `seafevents.conf` and `seafile.conf` injections are also one-time (separate markers).
+
+## OnlyOffice integration
+
+`ONLYOFFICE_HOST` expects a hostname only — no `https://`, no trailing slash. The Compose
+file constructs the full URL: `https://${ONLYOFFICE_HOST}`. This becomes `ONLYOFFICE_URL`
+in the container environment, and `seahub_custom.py` appends `/web-apps/apps/api/documents/api.js`
+to produce the final `ONLYOFFICE_APIJS_URL` written to `seahub_settings.py`.
+
+`ONLYOFFICE_JWT_SECRET` must match the secret on the OnlyOffice server exactly. In this
+Blueprint, OnlyOffice's secret lives in `core/onlyoffice/.secrets/jwt_secret.txt`.
+
+**Network requirements:**
+
+| Who | Must reach | Why |
+|---|---|---|
+| Browser/client | OnlyOffice (`ONLYOFFICE_HOST`) | Loads the editor JS (`api.js`) and communicates with the editor |
+| OnlyOffice server | Seafile's public URL | Fetches the document to open and saves it back on close |
+| Seafile app container | Not required | Integration is browser-mediated; app only writes config |
+
+If Seafile is access-restricted (e.g. Tailscale-only via `acc-tailscale`), the OnlyOffice
+server must also have a network path to Seafile — either by being on the same Tailscale
+network, or via a restricted firewall rule allowing the OnlyOffice server's IP.
+
+**On the OnlyOffice server**, the Seafile domain must be added to `ONLYOFFICE_ALLOWED_ORIGINS`
+so browsers are permitted to embed the editor in an iframe. This is a CSP `frame-ancestors`
+directive — any origin not listed is rejected by the browser even if the JWT is valid.
+See `core/onlyoffice/.env.example` for the format:
+
+```
+ONLYOFFICE_ALLOWED_ORIGINS=https://files.example.com
+```
 
 ## Elasticsearch alternative
 
