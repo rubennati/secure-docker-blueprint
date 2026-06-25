@@ -217,6 +217,14 @@ Scenarios that trigger on Traefik traffic:
 
 HTTP-layer enforcement. Configuration spans two directories: the bouncer API key is generated here, and the plugin itself is declared in `core/traefik/`.
 
+> **Before attaching the bouncer to anything, read [docs/profiles.md](docs/profiles.md).**
+> HTTP enforcement is modelled as a small family of named, per-app profiles
+> (`crowdsec-basic` → `crowdsec-appsec` → `crowdsec-strict`), chosen independently of
+> the `acc-*` access and `sec-N` header axes — not one generic `sec-crowdsec` applied
+> everywhere. That document also defines the whoami-first validation path, what is
+> per-app vs global, and why geo is a deferred, separate mechanism. The steps below are
+> the raw plugin enablement those profiles build on.
+
 ### Generate the bouncer key
 
 ```bash
@@ -338,6 +346,7 @@ on_success: break
 ## Details
 
 - [UPSTREAM.md](UPSTREAM.md) — Upstream reference, upgrade checklist
+- [docs/profiles.md](docs/profiles.md) — Traefik bouncer profile architecture: the `crowdsec-*` per-app profile family, what is per-app vs global, three-level enforcement model, geo/AppSec feasibility, whoami-first validation
 - [docs/runbook.md](docs/runbook.md) — Day-to-day operations: health checks, whitelisting, false positive handling, emergency procedures, maintenance, troubleshooting
 - [docs/firewall-bouncer.md](docs/firewall-bouncer.md) — Phase 3 setup, SSH detection, verify steps, edge cases
 - [docs/dashboard.md](docs/dashboard.md) — Visual dashboard options: CrowdSec Console (opt-in), CLI alternative, deferred Prometheus/Grafana path
