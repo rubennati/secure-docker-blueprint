@@ -237,16 +237,16 @@ The command prints the key once — save it immediately.
 
 1. Add the key to `core/traefik/.env` as `CROWDSEC_BOUNCER_KEY=<key>`.
 2. Declare the plugin in `ops/templates/traefik.yml.tmpl` under `experimental.plugins`.
-3. Uncomment the `sec-crowdsec` middleware block in `ops/templates/dynamic/integrations.yml.tmpl`.
+3. Uncomment the `crowdsec-basic` middleware block in `ops/templates/dynamic/integrations.yml.tmpl`.
 4. Render the templates and restart Traefik:
    ```bash
    cd ../traefik
    ./ops/scripts/render.sh
    docker compose up -d --force-recreate traefik
    ```
-5. **Required, not optional — do this before verifying.** Add `sec-crowdsec@file` to the middleware list of at least one router. The plugin loading successfully (steps 1–4) does not make the bouncer do anything by itself: its polling loop only starts once the middleware is actually attached to a router's request path. Skip this step and `cscli bouncers list` will never show a `Last API pull` — no error anywhere, it just silently never starts. See [`docs/bugfixes/traefik-crowdsec-plugin-2026-04-20.md`](../../docs/bugfixes/traefik-crowdsec-plugin-2026-04-20.md) "Bug #3" if this happens. Example in an app's `docker-compose.yml` (start with a low-stakes test app like `core/whoami`):
+5. **Required, not optional — do this before verifying.** Add `crowdsec-basic@file` as the **first** middleware on the router. The plugin loading successfully (steps 1–4) does not make the bouncer do anything by itself: its polling loop only starts once the middleware is actually attached to a router's request path. Skip this step and `cscli bouncers list` will never show a `Last API pull` — no error anywhere, it just silently never starts. See [`docs/bugfixes/traefik-crowdsec-plugin-2026-04-20.md`](../../docs/bugfixes/traefik-crowdsec-plugin-2026-04-20.md) "Bug #3" if this happens. Start with `core/whoami` — see [docs/profiles.md](docs/profiles.md) "whoami-first validation". Example label:
    ```yaml
-   - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=sec-crowdsec@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+   - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=crowdsec-basic@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
    ```
    ```bash
    cd ../whoami   # or whichever app you edited
@@ -275,7 +275,7 @@ docker exec crowdsec cscli bouncers list
 
 # 3. Middleware visible in Traefik dashboard?
 # https://<traefik-host>/dashboard/#/http/middlewares
-# Find sec-crowdsec@file — Status must be green "Success".
+# Find crowdsec-basic@file — Status must be green "Success".
 # If "invalid middleware type or middleware does not exist":
 # plugin did not load (check 1).
 

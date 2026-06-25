@@ -181,11 +181,11 @@ For apps that don't fit any preset, combine building blocks directly:
 ```yaml
 # Example: strict headers with embed + hard rate limit + CrowdSec
 middlewares:
+  - crowdsec-basic@file
   - acc-tailscale@file
   - hdr-strict-embed@file
   - rl-hard@file
   - compress@file
-  - sec-crowdsec@file
 ```
 
 Available building blocks (defined in `security-blocks.yml`):
@@ -331,7 +331,7 @@ nano ops/templates/traefik.yml.tmpl
 # Step 5: Enable the middleware in dynamic config
 # -----------------------------------------------
 nano ops/templates/dynamic/integrations.yml.tmpl
-# Uncomment the sec-crowdsec block (the full plugin section)
+# Uncomment the crowdsec-basic block (the full plugin section)
 
 # -----------------------------------------------
 # Step 6: Render and restart
@@ -342,15 +342,16 @@ docker compose restart traefik
 # After this, middleware changes are hot-reloaded.
 
 # -----------------------------------------------
-# Step 7: Add to routers
+# Step 7: Add to routers (start with whoami only)
 # -----------------------------------------------
-# Add sec-crowdsec@file to any router's middleware list.
-# Example in an app's docker-compose.yml labels:
-#   traefik.http.routers.myapp.middlewares=sec-crowdsec@file,acc-public@file,sec-2@file
+# Before attaching to any real app, read core/crowdsec/docs/profiles.md
+# and run the whoami-first validation. Then add crowdsec-basic@file as
+# the FIRST middleware on a router. Example label:
+#   traefik.http.routers.myapp.middlewares=crowdsec-basic@file,acc-public@file,sec-3@file
 #
 # Or in config/dynamic/routers-system.yml for the dashboard:
 #   middlewares:
-#     - sec-crowdsec@file
+#     - crowdsec-basic@file
 #     - acc-tailscale@file
 #     - sec-4@file
 ```
@@ -359,17 +360,17 @@ docker compose restart traefik
 
 ```bash
 # Option A: Remove from specific routers only
-# Remove "sec-crowdsec@file" from the router's middleware list.
+# Remove "crowdsec-basic@file" from the router's middleware list.
 # Hot-reloaded — no restart needed.
 
 # Option B: Disable completely
-# Comment out sec-crowdsec in integrations.yml.tmpl
+# Comment out crowdsec-basic in integrations.yml.tmpl
 # Re-render: ./ops/scripts/render.sh
 # Hot-reloaded — no restart needed (plugin stays loaded but unused).
 
 # Option C: Remove plugin entirely
 # Comment out experimental.plugins in traefik.yml.tmpl
-# Comment out sec-crowdsec in integrations.yml.tmpl
+# Comment out crowdsec-basic in integrations.yml.tmpl
 # Re-render + restart: ./ops/scripts/render.sh && docker compose restart traefik
 ```
 

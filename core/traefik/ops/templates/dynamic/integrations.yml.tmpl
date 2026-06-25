@@ -40,10 +40,11 @@
     # want for first setup. Enable AppSec only after its server side is
     # verified reachable (`curl crowdsec:7422` from the Traefik container).
     #
-    # Geo-blocking: install crowdsecurity/geoloc-enrich collection
-    #   + a scenario like crowdsecurity/cdn-whitelist
+    # Geo-blocking works through CrowdSec LAPI decisions (global to all
+    # bouncers — not per-app middleware). See core/crowdsec/docs/profiles.md
+    # "The profile family" for the geo-* deferred mechanism and its trade-offs.
     # ------------------------------------------------------
-#     sec-crowdsec:
+#     crowdsec-basic:
 #       plugin:
 #         bouncer:
 #           enabled: true

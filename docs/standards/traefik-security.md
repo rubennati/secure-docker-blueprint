@@ -156,7 +156,7 @@ Presets that combine building blocks. Each level builds on the previous — high
 | Authentik | `sec-3` | Auth provider, should be hardened |
 | Invoice Ninja | `sec-2` | Standard web app |
 | WordPress / Ghost | `sec-2` | CMS with inline scripts |
-| CalCom | `sec-2` | Scheduling tool |
+| Cal.diy | `sec-3` | Public-facing scheduling tool, hardened default |
 
 ---
 
@@ -167,11 +167,11 @@ For apps that don't fit any preset, combine building blocks directly:
 ```yaml
 # Example: strict headers with embed + hard rate limit + CrowdSec
 middlewares:
+  - crowdsec-basic@file
   - acc-tailscale@file
   - hdr-strict-embed@file
   - rl-hard@file
   - compress@file
-  - sec-crowdsec@file
 ```
 
 All building blocks are standalone middlewares — use them individually or with sec-* chains.
@@ -184,10 +184,13 @@ External services that plug into Traefik as middleware. Each is independent and 
 
 | Integration | Type | What it does |
 |-------------|------|-------------|
-| `sec-crowdsec` | Traefik plugin | Blocks IPs flagged by CrowdSec + WAF inspection |
+| `crowdsec-basic` | Traefik plugin | Blocks IPs flagged by CrowdSec (stream mode, fail-open, no WAF) |
 | `sec-authentik` | Forward auth | SSO authentication via Authentik |
 
-Both are commented out by default. See the [Traefik README](../../core/traefik/README.md) for step-by-step enable/disable instructions.
+Both are commented out by default. `crowdsec-basic` is the first profile in the `crowdsec-*`
+family — see [`core/crowdsec/docs/profiles.md`](../../core/crowdsec/docs/profiles.md) for the
+full profile model (AppSec, strict, geo) and the whoami-first validation procedure.
+See the [Traefik README](../../core/traefik/README.md) for step-by-step enable/disable instructions.
 
 ---
 
