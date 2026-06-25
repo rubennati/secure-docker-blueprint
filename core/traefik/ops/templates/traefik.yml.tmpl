@@ -13,7 +13,7 @@ accessLog:
   bufferingSize: ${TRAEFIK_ACCESSLOG_BUFFER}
   filters:
     statusCodes:
-      - "400-599"
+      - "200-599"
     retryAttempts: true
 
 api:
