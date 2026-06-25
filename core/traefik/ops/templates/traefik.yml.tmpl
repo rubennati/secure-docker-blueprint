@@ -101,8 +101,8 @@ providersThrottleDuration: 30s
 # Uncomment to load the CrowdSec bouncer plugin.
 # After enabling, re-render and restart Traefik:
 #   ./ops/scripts/render.sh && docker compose restart traefik
-# Then activate the middleware in config/dynamic/security.yml
-# (see sec-crowdsec section — that part is hot-reloaded).
+# Then activate the crowdsec-basic middleware block in
+# integrations.yml.tmpl (dynamic config — hot-reloaded).
 #
 # experimental:
 #   plugins:
