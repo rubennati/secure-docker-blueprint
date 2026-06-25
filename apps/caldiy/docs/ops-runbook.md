@@ -323,3 +323,118 @@ Key points:
 - If the image at a new tag introduces incompatible env vars, check
   [Cal.diy releases](https://github.com/calcom/cal.diy/releases) for breaking changes before
   bumping `APP_TAG`
+
+---
+
+## 9. Traefik security chain rollout
+
+Cal.diy ships with `APP_TRAEFIK_SECURITY=sec-3` in `.env.example`. `sec-3` adds strict
+headers (HSTS `includeSubDomains`+`preload`, `Referrer-Policy`, `Permissions-Policy`,
+CSP report-only) over the standard `sec-2`. It blocks no requests and does not change the
+rate limit — but the HSTS directive is **browser-sticky**, so roll it out deliberately.
+
+### 9.1 Pre-check — before enabling in production
+
+**HSTS scope:** the header applies to the **exact host that serves it** (`APP_TRAEFIK_HOST`)
+and, with `includeSubDomains`, to **subdomains below that host** — never to sibling hosts or
+the parent domain unless those serve the header themselves. Examples: `calendar.example.com`
+covers `*.calendar.example.com` but **not** `www.example.com` or `example.com`; an apex host
+`example.com` covers `*.example.com` (the whole zone).
+
+- [ ] Identify `APP_TRAEFIK_HOST` and whether it is a leaf host (e.g. `cal.example.com`) or an
+      apex/root host (e.g. `example.com`). A leaf host with no child subdomains has little
+      practical scope here; an apex host pulls in the entire zone
+- [ ] Confirm **every subdomain below the Cal.diy hostname** is HTTPS-capable —
+      `includeSubDomains` forces HTTPS for all of them in any browser that loads Cal.diy
+- [ ] Confirm **no** required plain-HTTP host sits **below the Cal.diy hostname** (only relevant
+      if Cal.diy is an apex/parent host — e.g. if Cal.diy is `example.com`, check
+      `http://nas.example.com`, `http://print.example.com`). Sibling hosts are unaffected
+- [ ] If a required plain-HTTP host sits below the Cal.diy hostname: **do not enable `sec-3`** —
+      stay on `sec-2`, or move Cal.diy to a dedicated leaf host with no plain-HTTP children
+- [ ] Decide on `preload` intentionally: the `preload` directive signals eligibility for the
+      browser HSTS preload list. Do **not** submit the host to hstspreload.org unless every
+      current and future in-scope host will always be HTTPS — preload-list removal takes months
+
+### 9.2 Apply
+
+```bash
+# In the REAL apps/caldiy/.env (never commit it):
+#   APP_TRAEFIK_SECURITY=sec-3
+docker compose -f apps/caldiy/docker-compose.yml up -d --force-recreate app
+```
+
+Container labels are read at create time, so the app must be recreated. Traefik hot-reloads
+the middleware reference — no Traefik restart, and the `sec-3` chain already exists in the
+rendered dynamic config.
+
+### 9.3 Test
+
+```bash
+# 1. Header check
+curl -skI https://<APP_TRAEFIK_HOST>/ | grep -iE \
+  'strict-transport-security|referrer-policy|permissions-policy|content-security-policy'
+```
+
+- [ ] Browser smoke test — load `https://<APP_TRAEFIK_HOST>/`, no console/security errors
+- [ ] Booking page smoke test — open a public booking link, confirm it renders and submits
+- [ ] Login / admin smoke test — sign in, confirm the dashboard loads (sessions unaffected by
+      a header-only change)
+
+### 9.4 Expected headers (sec-3)
+
+| Header | Expected value |
+|--------|----------------|
+| `Strict-Transport-Security` | `max-age=63072000; includeSubDomains; preload` |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` |
+| `Permissions-Policy` | `camera=(), microphone=(), geolocation=(), payment=(), usb=(), …` |
+| `Content-Security-Policy-Report-Only` | `default-src 'self'; script-src 'self' 'unsafe-inline'; …` |
+| `X-Content-Type-Options` | `nosniff` |
+| `X-Frame-Options` | `DENY` |
+
+If `Content-Security-Policy-Report-Only` is **absent**, that is fine — it means the app set its
+own CSP; the report-only variant never blocks regardless.
+
+### 9.5 Rollback
+
+```bash
+# In the REAL apps/caldiy/.env:
+#   APP_TRAEFIK_SECURITY=sec-2
+docker compose -f apps/caldiy/docker-compose.yml up -d --force-recreate app
+```
+
+> **HSTS browser-cache caveat:** rollback stops *sending* the strict HSTS header, but any
+> browser that already received `max-age=63072000` keeps forcing HTTPS for this host (and the
+> subdomains below it) until that max-age expires (~2 years) or the user manually clears HSTS state
+> (`chrome://net-internals/#hsts` → "Delete domain security policies"). Rolling back does not
+> un-stick already-served clients — which is exactly why §9.1 must be cleared first.
+
+### 9.6 Monitoring after rollout
+
+- [ ] `docker compose -f apps/caldiy/docker-compose.yml logs traefik --tail 100` — no new
+      router/middleware errors for the Cal.diy router (Traefik runs from `core/traefik/`)
+- [ ] `docker compose -f apps/caldiy/docker-compose.yml logs app --tail 100` — no boot errors
+- [ ] Watch for a 4xx/5xx spike in the first minutes after rollout. A header-only change
+      should not move error rates; an increase points to something else (DNS, TLS, app health)
+
+---
+
+## 10. Next step — Batch 3: CrowdSec bouncer (not yet enabled)
+
+Phase 2 Batch 3 attaches CrowdSec HTTP enforcement to Cal.diy. **It is not implemented yet** —
+this note records the guardrails so it is done safely when the time comes.
+
+- **Prove it on `core/whoami` first.** Enable the Traefik bouncer plugin, attach
+  `sec-crowdsec@file` to the throwaway `whoami` router, and run the end-to-end ban test
+  (§6 / `core/crowdsec/README.md` Phase 2) before touching the Cal.diy router.
+- **Keep AppSec disabled** (`crowdsecAppsecEnabled: false`, `crowdsecAppsecUnreachableBlock:
+  false`). An unreachable AppSec with unreachable-block on fails closed — HTTP 403 on every
+  request.
+- **Never ban the operator/admin IP.** The bouncer also blocks the Traefik dashboard and any
+  admin tooling on the same path. Use a test IP for verification.
+- **Keep a Tailscale/LAN recovery path** that does not depend on the Cal.diy public router, so
+  a bad decision can be undone.
+- **Do not add `sec-crowdsec@file` to Cal.diy's router until the bouncer is proven on whoami.**
+  Once attached it must be the **first** middleware in the chain.
+
+Rollback for Batch 3 (when it exists) is removing `sec-crowdsec@file` from the router and
+recreating the app — Traefik hot-reloads within seconds.

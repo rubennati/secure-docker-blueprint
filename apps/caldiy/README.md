@@ -63,12 +63,31 @@ docker compose logs app --follow
 | Postgres | `app-internal` network (`internal: true`) — not reachable from host |
 | Redis | `app-internal` (`internal: true`), `read_only: true`, `cap_drop: ALL`, `pids_limit: 50` |
 | Host header injection | `ALLOWED_HOSTNAMES` set to deployment hostname |
+| HTTP security headers | Traefik `sec-3` chain (`APP_TRAEFIK_SECURITY`) — strict HSTS, Referrer-Policy, Permissions-Policy, CSP report-only. See [Security chain (sec-3)](#security-chain-sec-3) below. |
 | Privilege escalation | `no-new-privileges:true` on all services |
 | Capability restriction | `cap_drop: ALL` on all services |
 | Process count | `pids_limit` on all services (app: 200, db: 100, redis: 50) |
 | Resource limits | Not yet configured — add `deploy.resources` after measuring memory under load |
 | CrowdSec enforcement | Not yet attached — see [ops-runbook.md](docs/ops-runbook.md) Phase 2 steps |
 | Community-maintained security | No Cal.com, Inc. incident response — watch upstream releases manually |
+
+### Security chain (sec-3)
+
+Cal.diy defaults to the **`sec-3`** Traefik middleware chain (`APP_TRAEFIK_SECURITY=sec-3`), one level stricter than the blueprint's standard `sec-2`. The difference is **header hardening only — no request is blocked at the proxy, and the rate limit is unchanged** (100 req/s average, 50 burst, same as sec-2):
+
+| Header | sec-2 | sec-3 |
+|--------|-------|-------|
+| `Strict-Transport-Security` | `max-age=63072000` | `max-age=63072000; includeSubDomains; preload` |
+| `Referrer-Policy` | — | `strict-origin-when-cross-origin` |
+| `Permissions-Policy` | — | camera / microphone / geolocation / payment / usb / … all denied |
+| `Content-Security-Policy` | — | `…-Report-Only` (reports violations, does **not** block) |
+| `X-Content-Type-Options` / `X-Frame-Options: DENY` | yes | yes (unchanged) |
+
+`sec-3` is the right default for a **public-facing scheduling app that stores PII** (names, emails, meeting topics): it tells browsers to enforce HTTPS, limit referrer leakage, and disable device APIs the app never uses. The CSP ships **report-only**, so it surfaces violations without breaking the page — a later phase can promote it to enforcing once the report stream is clean.
+
+> **⚠️ HSTS `includeSubDomains` + `preload` is browser-sticky.** The header applies to **the exact host that served it** (`APP_TRAEFIK_HOST`) and, with `includeSubDomains`, to **any subdomain below that host** — it does **not** affect sibling hosts or the parent domain unless those serve the header themselves. Scope examples: `calendar.example.com` covers `*.calendar.example.com` but **not** `www.example.com` or `example.com`; an apex host `example.com` covers `*.example.com` (the whole zone). Rolling back to `sec-2` stops *sending* the header, but browsers that already received `max-age=63072000` keep enforcing HTTPS for the in-scope hosts until it expires (~2 years) or the user clears HSTS state. **Before enabling in production, confirm every subdomain *below the Cal.diy hostname* is HTTPS-capable**, and treat `preload` as a deliberate, hard-to-reverse choice. A dedicated leaf host with no child subdomains carries much lower practical scope; an apex host carries the most.
+
+**Rollback:** set `APP_TRAEFIK_SECURITY=sec-2` in `.env` and recreate the app container — `docker compose up -d --force-recreate app`. Traefik hot-reloads the middleware reference; no Traefik restart needed. See [docs/ops-runbook.md](docs/ops-runbook.md) → "Traefik security chain rollout" for the full procedure and the HSTS caveat.
 
 ## Post-incident redeployment
 
