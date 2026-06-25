@@ -23,6 +23,9 @@ services:
     # --- Security ---
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    pids_limit: 100
 
     # --- Configuration ---
     environment:
@@ -61,6 +64,13 @@ services:
     # --- Security ---
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /run
+      - /tmp
+    pids_limit: 50
 
     # --- Storage ---
     volumes:
@@ -95,6 +105,9 @@ services:
     # --- Security ---
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    pids_limit: 200
 
     # --- Configuration ---
     # Custom entrypoint reads all secrets from /run/secrets/ before start.sh runs.
@@ -127,8 +140,9 @@ services:
       NEXT_PUBLIC_SUPPORT_MAIL_ADDRESS: ${NEXT_PUBLIC_SUPPORT_MAIL_ADDRESS}
       # Push notifications (VAPID) — required; app logs an error on every boot without these
       # Generate: docker run --rm node:lts-alpine npx --yes web-push generate-vapid-keys
+      # Public key set here (NEXT_PUBLIC_ prefix exposes it to the browser by design).
+      # Private key injected from Docker Secret — never set VAPID_PRIVATE_KEY in .env.
       NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
-      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY}
       # Legal — self-hosters should set these to their own policy pages
       NEXT_PUBLIC_WEBSITE_PRIVACY_POLICY_URL: ${NEXT_PUBLIC_WEBSITE_PRIVACY_POLICY_URL}
       NEXT_PUBLIC_WEBSITE_TERMS_URL: ${NEXT_PUBLIC_WEBSITE_TERMS_URL}
@@ -151,6 +165,7 @@ services:
       - ENCRYPTION_KEY
       - CRON_API_KEY
       - SMTP_PASSWORD
+      - VAPID_PRIVATE_KEY
 
     # --- Storage ---
     volumes:
@@ -210,3 +225,5 @@ secrets:
     file: ./.secrets/cron_api_key.txt
   SMTP_PASSWORD:
     file: ./.secrets/smtp_password.txt
+  VAPID_PRIVATE_KEY:
+    file: ./.secrets/vapid_private_key.txt

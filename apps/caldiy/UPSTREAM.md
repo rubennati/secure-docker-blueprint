@@ -41,7 +41,9 @@ Branch model of the fork:
 | Custom entrypoint for secret injection | Cal.diy has no `_FILE` support; entrypoint reads `/run/secrets/` files at runtime — no secrets in `.env` |
 | `app-internal` network (`internal: true`) | DB and Redis not reachable from host |
 | `no-new-privileges:true` on all services | Baseline |
-| `read_only: true` + `cap_drop: ALL` on Redis | Redis writes only to mounted `/data` volume |
+| `read_only: true` + `cap_drop: ALL` + `tmpfs` + `pids_limit: 50` on Redis | Redis writes only to mounted `/data` volume; ephemeral paths served from tmpfs |
+| `cap_drop: ALL` + `pids_limit` on all services | Limits Linux capabilities and process count on app (200), db (100), redis (50) |
+| `VAPID_PRIVATE_KEY` as Docker Secret | Private key injected from `/run/secrets/` via entrypoint; not visible in `docker inspect` |
 | Healthcheck-gated `depends_on` | Prevents app startup before Postgres is ready |
 | `DATABASE_HOST: db:5432` | Required by `start.sh` for wait-for-it gate before Prisma migrations |
 | `ALLOWED_HOSTNAMES` set to deployment hostname | Prevents host header injection |
