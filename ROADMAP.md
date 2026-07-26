@@ -1,6 +1,6 @@
 # Roadmap
 
-Last updated: 2026-06-04 (v0.6.0 is the latest release).
+Last updated: 2026-07-26 (v0.6.0 is the latest release).
 
 This document captures direction, not detailed changelogs. For shipped work see [`CHANGELOG.md`](CHANGELOG.md); for per-category details see the `README.md` in each top-level directory.
 
@@ -44,6 +44,20 @@ See [`CHANGELOG.md`](CHANGELOG.md) for the full diff of each release.
 
 ---
 
+## Since v0.6.0 — work outside the plan
+
+Between 2026-06-04 and 2026-07-26 the repo grew in directions this document did not name. Recorded here so the milestones below stay honest. **None of it changes the milestone order** — nothing below depends on it.
+
+| What happened | Where it lands |
+|---|---|
+| Repo-wide dependency sweep — every registry-checkable image reviewed, ~50 bumped (`docs/maintenance.md`) | Continuous. ~9 major bumps are pinned but have not yet run on a host; they ride along with the next host session. |
+| Reference app (`apps/_reference/`) + structure checker (`scripts/ci/check-structure.py`) | New capability, not a milestone of its own. Feeds v0.9.0 (it measures the gap) and v1.0 (CI baseline). |
+| Four new drafts — `core/infisical`, `core/euro-office`, `core/collabora`, `business/documenso` | Continuous app work — see the choice-matrix categories below. |
+| Cal.com retired (upstream went proprietary), replaced by `apps/caldiy`; phased hardening plan written after an incident on a live host | Own track — `apps/caldiy/docs/hardening-plan.md`. Not tied to a version. |
+| Supply-chain hardening — SHA-pinned GitHub Actions, Trivy with checksum-verified install, OpenSSF badges, branch protection | Closes part of the v1.0 CI baseline below. |
+
+---
+
 ## Direction
 
 Pre-1.0 tags are set when a natural milestone is reached, not on a fixed cadence. The single criterion for v1.0 is: **could someone fork this and run it without needing my mental model?** — subjective but unambiguous when met.
@@ -59,6 +73,11 @@ A working infrastructure is worthless without recovery. Three layers:
 Each layer gets a blueprint pattern that works across apps, not per-app one-offs.
 
 **Restore testing is part of this version** — a backup that has never been restored is a hypothesis, not a backup. At least one full restore walkthrough per layer, documented step by step.
+
+Two practical notes, both new since this milestone was written:
+
+- Each backup service starts from `apps/_reference/` rather than a hand-rolled skeleton, and is checked with `scripts/ci/check-structure.py` before it lands.
+- The restore walkthroughs need a reachable host with real data — the same precondition as the pending major bumps above. Both are best done in one host session.
 
 ### v0.8.0 — Monitoring
 
@@ -77,6 +96,8 @@ Every live app gets `deploy.resources` (memory + CPU) and `pids_limit`. The stan
 
 Intentionally late: wrong limits break apps silently (OOM kills, throttled CPUs). Each app needs values measured on a real install, not guessed. This is the fine-tuning pass — not a quick sweep.
 
+The size of the gap is now measurable rather than estimated — `python3 scripts/ci/check-structure.py` reports it per service. As of 2026-07-26, across 54 apps: **102 services without `deploy.resources.limits`, 41 without a healthcheck.** That number is the milestone's progress bar.
+
 The Operator Site — an Astro/Starlight site published via GitHub Pages — also reaches its official published state at this milestone. The site is the operator-facing entry point; the repository remains the technical source of truth and nothing moves out of it. The site starts deliberately small and curated, not as a mirror of the full repository. Initial scope covers Home, Getting Started, Applications (with Vaultwarden as the first full reference guide), Operations, FAQ, and Project/Governance. The build and deployment workflow is in place by this milestone. Once published, the repository README can route operator-focused users to the site.
 
 ### v1.0 — Complete and hand-off ready
@@ -85,14 +106,14 @@ The criterion: someone else could fork this and deploy it without needing this c
 
 Before v1.0 is tagged:
 
-- Every app at least once sober-tested on a clean install (continuous — not a last-minute sprint)
+- Every app verified at least once on a clean install (continuous — not a last-minute sprint)
 - No `🚧` without a documented reason
-- No `__REPLACE_ME__` in any live-tested file
-- Honest review of every `🚧 draft` — promote only what was actually tested
-- CI baseline: compose validate, secret scan, markdown lint, image vulnerability scan (Trivy or Grype)
+- No `__REPLACE_ME__` in any verified file
+- Honest review of every `🚧 draft` — promote only what was actually verified
+- CI baseline: compose validate, secret scan, markdown lint, image vulnerability scan (✅ Trivy, since v0.6.0), structure checker wired in (`scripts/ci/check-structure.py` — written, not yet running in CI)
 - Secret & Password Generation Standard consolidated into `docs/standards/`
 - Secrets rotation guidance in `docs/standards/`
-- License audit — every live app verified against the license policy below
+- License review — every live app checked against the license policy below
 - **Status freshness system active** — `Last verified` stamps in place, Major upstream updates drop status to `🚧`; tactical work moves to GitHub Issues
 - Lifecycle freshness snapshot is summarized in [LIFECYCLE.md](LIFECYCLE.md).
 
@@ -105,6 +126,9 @@ Before v1.0 is tagged:
 Apps still to re-verify on a clean install (pre-v0.2 installs, standards have since evolved):
 Vaultwarden, WordPress, Nextcloud, Seafile / Seafile Pro, Invoice Ninja.
 
+Added 2026-07-26 — pinned to a new major during the dependency sweep, not yet run on a host:
+Paperless-ngx 3.x, WordPress 7.x, Immich 3.x, Healthchecks 4.x, NocoDB (CalVer switch), Adminer 5.x, Homepage 1.13.x, OpnForm 2.2.x, Uptime Kuma 2.x. Each is marked `🚧` in `docs/maintenance.md`; verify on the next host session before the status claim stands.
+
 **Operator Site work can happen continuously before v0.9.0** — content drafts, structure, and review loops are ongoing. Public, operator-facing publication is gated by the v0.9.0 milestone.
 
 ---
@@ -115,19 +139,21 @@ App-level work that does not drive version tags.
 
 ### Choice-matrix categories — pick-one-per-install decisions
 
-When live-tested on real data, pick the default and deprioritise the rest:
+Once verified on real data, pick the default and deprioritise the rest:
 
 - **Dashboards** — Dashy, Heimdall, Homarr, Homepage (`apps/`)
 - **Photo galleries** — Immich, LibrePhotos, Lychee, PhotoPrism, Photoview (`apps/`)
-- **Scheduling** — Cal.com (AGPL + commercial), Cal.diy (MIT community), Easy!Appointments (`apps/`)
+- **Scheduling** — Cal.diy (MIT community), Easy!Appointments (`apps/`). Cal.com was retired — upstream moved the production codebase to a proprietary licence.
 - **Business wikis** — BookStack is live; Wiki.js and Outline are planned (`apps/`)
-- **Forms** — OpnForm is drafted; Formbricks and HeyForm are planned (`apps/`)
+- **Forms** — OpnForm is in place; Formbricks and HeyForm are planned (`apps/`)
+- **Office / document servers** — OnlyOffice is live; Euro-Office (EU-governed fork) and Collabora (lighter, LibreOffice-based) are drafted (`core/`)
+- **E-signatures** — OpenSign and Documenso, both drafted (`business/`)
 
 ### Categories with roadmaps in their own READMEs
 
-- [`monitoring/README.md`](monitoring/README.md) — Uptime Kuma, Gatus, Beszel, changedetection (drafted) + 6 planned
-- [`business/README.md`](business/README.md) — Listmonk, Zammad, Kimai, OpenSign (drafted) + planned: Plane, Leantime, AppFlowy
-- [`backup/README.md`](backup/README.md) — Kopia, Borgmatic, Bareos, UrBackup (all planned)
+- [`monitoring/README.md`](monitoring/README.md) — 6 services in place + 6 planned (Statping, ciao, Checkmate, Zabbix, Grafana + Prometheus, Scrutiny)
+- [`business/README.md`](business/README.md) — 10 services in place + 7 planned (Plane, Leantime, AppFlowy, Ackee, Plausible CE, Live Helper Chat, Eramba GRC)
+- [`backup/README.md`](backup/README.md) — Kopia, Borgmatic, Bareos, UrBackup (all planned — this is v0.7.0 above)
 
 ### Project management — to evaluate
 
