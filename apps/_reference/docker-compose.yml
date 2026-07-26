@@ -1,0 +1,221 @@
+# =============================================================================
+# Reference App — production stack (Traefik + Docker Secrets)
+# =============================================================================
+# THE canonical docker-compose.yml. Copy it, swap the stand-in images, delete
+# what the app does not need. For running it locally instead, see
+# docker-compose.local.yml.
+#
+# BLOCK ORDER — identical in every service, so any file can be read at a glance:
+#
+#   Identity       what it is and how it starts   image, container_name, restart, depends_on
+#   Security       hardening comes before config  security_opt, read_only, tmpfs, cap_*, user
+#   Resources      bound what it may consume      deploy.resources
+#   Configuration  what it receives               entrypoint, environment, secrets
+#   Storage        where data lives               volumes
+#   Networking     who it can talk to             networks, ports
+#   Traefik        how it is exposed              labels
+#   Health         how we know it works           healthcheck
+#
+# Spec: docs/standards/compose-structure.md · security-baseline.md
+# =============================================================================
+
+services:
+
+  # --------------------------------------------------------
+  # DATABASE (PostgreSQL)
+  # Dependencies come first, so the file reads in startup order.
+  # Stand-in for any datastore. Demonstrates NATIVE _FILE secrets.
+  # --------------------------------------------------------
+  db:
+    # --- Identity ---
+    # Image name hardcoded, tag from .env — one place to see what is pinned.
+    image: postgres:${DB_TAG}
+    container_name: ${CONTAINER_NAME_DB}
+    restart: unless-stopped
+
+    # --- Security ---
+    # no-new-privileges is mandatory on EVERY service, no exceptions: it stops a
+    # process from gaining rights via setuid binaries. cap_drop ALL removes all
+    # Linux capabilities; re-add only what breaks without it.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+    # --- Resources ---
+    # A compromised or looping container must not take the host down. Start with
+    # generous caps, then retune from real usage (`docker stats`) to ~2x peak.
+    # pids belongs here — a top-level `pids_limit` conflicts with deploy.resources.
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "0.50"
+          pids: 100
+        reservations:
+          memory: 128m
+
+    # --- Configuration ---
+    # Postgres reads *_FILE variables itself — no entrypoint wrapper needed.
+    # This is always the preferred pattern when the image supports it.
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/DB_PWD
+      TZ: ${TZ}
+    secrets:
+      - DB_PWD
+
+    # --- Storage ---
+    # Bind mount under ./volumes/ — gitignored, and visible next to the app.
+    volumes:
+      - ./volumes/postgres:/var/lib/postgresql/data
+
+    # --- Networking ---
+    # Internal only. A database NEVER joins proxy-public and never publishes a
+    # host port; the app reaches it by service name over app-internal.
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    # Gates the app's depends_on, so the app cannot start against a cold DB.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME} -h 127.0.0.1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # --------------------------------------------------------
+  # APP (web-facing)
+  # Stand-in for the real application. Demonstrates the ENTRYPOINT WRAPPER
+  # pattern for images that cannot read secrets from files.
+  # --------------------------------------------------------
+  app:
+    # --- Identity ---
+    image: nginxinc/nginx-unprivileged:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+    # Wait for a HEALTHY database, not merely a started one.
+    depends_on:
+      db:
+        condition: service_healthy
+
+    # --- Security ---
+    # read_only freezes the image filesystem; anything the app must write goes to
+    # tmpfs (RAM, wiped on restart). Drop it only if the app writes to its own
+    # install directory. This image already runs as a non-root user.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx
+
+    # --- Resources ---
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 128m
+
+    # --- Configuration ---
+    # This image has no _FILE support, so entrypoint.sh injects the secrets and
+    # then execs the image's own entrypoint (see config/entrypoint.sh).
+    # Non-sensitive settings go in `environment:` — always the explicit map form,
+    # never `env_file:`, so every value is visible here.
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh", "/docker-entrypoint.sh"]
+    command: ["nginx", "-g", "daemon off;"]
+    environment:
+      TZ: ${TZ}
+      # Passed through for entrypoint.sh to build DATABASE_URL — user and name
+      # are not secret, only the password is.
+      DB_USER: ${DB_USER}
+      DB_NAME: ${DB_NAME}
+      APP_LOG_LEVEL: ${APP_LOG_LEVEL}
+      APP_DISABLE_SIGNUP: ${APP_DISABLE_SIGNUP}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_FROM_ADDRESS: ${SMTP_FROM_ADDRESS}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME}
+      SMTP_USERNAME: ${SMTP_USERNAME}
+    secrets:
+      - DB_PWD
+      - APP_KEY
+      - SMTP_PASSWORD
+
+    # --- Storage ---
+    # Config mounts are always :ro — the container must not rewrite its own config.
+    volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
+
+    # --- Networking ---
+    # Web-facing services join both: proxy-public for Traefik, app-internal for
+    # the database. No `ports:` — Traefik is the only way in.
+    networks:
+      - proxy-public
+      - app-internal
+
+    # --- Traefik ---
+    # Router names derive from COMPOSE_PROJECT_NAME, so they never collide.
+    # @file refers to middlewares defined in core/traefik's dynamic config.
+    labels:
+      # Router
+      - "traefik.enable=true"
+      # Required when a service is on several networks — tells Traefik which to use.
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      # TLS
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      # Uncomment ONLY for per-domain certificates; leave off when a wildcard
+      # certificate already covers this host.
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Middlewares — order matters: WHO may reach it, then WHAT headers apply.
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      # Service — the container-internal port, not a host port.
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+
+    # --- Health & Observability ---
+    # Use whatever the image actually ships (wget here, curl or node elsewhere).
+    # start_period must cover a cold start incl. migrations, or Docker will
+    # restart-loop a healthy-but-slow app.
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO/dev/null http://127.0.0.1:${APP_INTERNAL_PORT}/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  # Shared with Traefik and every other app — created by core/traefik.
+  proxy-public:
+    external: true
+
+  # Private to this stack. internal: true means no route to the internet, and no
+  # route from other apps — a compromised app cannot reach this database.
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+# File-based secrets from .secrets/ (gitignored). Mounted read-only at
+# /run/secrets/<NAME> — they never appear in `docker inspect` or in .env.
+secrets:
+  DB_PWD:
+    file: ./.secrets/db_pwd.txt
+  APP_KEY:
+    file: ./.secrets/app_key.txt
+  SMTP_PASSWORD:
+    file: ./.secrets/smtp_password.txt

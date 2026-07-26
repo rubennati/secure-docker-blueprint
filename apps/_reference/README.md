@@ -39,10 +39,21 @@ Every file here is meant to hold up under all four. The same lenses drive
 | File | Purpose | Status |
 |------|---------|--------|
 | [`.env.example`](.env.example) | Canonical env layout — sections, order, layer tags, pinning rules | ✅ |
-| `docker-compose.yml` | Production stack — Traefik, Docker Secrets, resource caps | *pending* |
-| `docker-compose.local.yml` | Local stack — localhost port, plain env, no Traefik | *pending* |
-| `config/entrypoint.sh` | Secret-injection wrapper for images without `_FILE` support | *pending* |
-| `.gitignore` | Keeps `.env`, `.secrets/`, `volumes/` out of git | ✅ |
+| [`docker-compose.yml`](docker-compose.yml) | Production stack — Traefik, Docker Secrets, resource caps | ✅ |
+| [`docker-compose.local.yml`](docker-compose.local.yml) | Local stack — localhost port, plain env, no Traefik | ✅ |
+| [`.env.local.example`](.env.local.example) | Local env — deliberately minimal | ✅ |
+| [`config/entrypoint.sh`](config/entrypoint.sh) | Secret-injection wrapper for images without `_FILE` support | ✅ |
+| [`.gitignore`](.gitignore) | Keeps `.env`, `.secrets/`, `volumes/` out of git | ✅ |
+| `UPSTREAM.md` | Per-app upstream reference + upgrade checklist | *pending* |
+
+## Try it locally
+
+```bash
+cp .env.local.example .env.local     # fill in the openssl one-liners
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+curl http://localhost:8080/          # nginx welcome page = the structure works
+docker compose -f docker-compose.local.yml --env-file .env.local down
+```
 
 ## Stand-in images (deliberate)
 

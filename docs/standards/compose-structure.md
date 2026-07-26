@@ -28,6 +28,9 @@ services:
     cap_add:                  # Re-add only what's needed
     user:                     # Non-root user (if image supports it)
 
+    # --- Resources ---
+    deploy:                   # resources.limits (memory, cpus, pids) + reservations
+
     # --- Configuration ---
     entrypoint:               # Custom entrypoint (only for secret injection)
     environment:              # Non-sensitive configuration
@@ -54,11 +57,15 @@ services:
 |----------|-------|-----------|
 | 1 | Identity | Immediately see what the service is and how it starts |
 | 2 | Security | Security is not an afterthought — it comes before config |
-| 3 | Configuration | What the service receives (env vars, secrets) |
-| 4 | Storage | Where data lives |
-| 5 | Networking | Which networks the service joins |
-| 6 | Traefik | How the service is exposed (routing, TLS, middleware) |
-| 7 | Health | Verification — how to check the service works |
+| 3 | Resources | What it may consume — a containment control, so it sits with Security |
+| 4 | Configuration | What the service receives (env vars, secrets) |
+| 5 | Storage | Where data lives |
+| 6 | Networking | Which networks the service joins |
+| 7 | Traefik | How the service is exposed (routing, TLS, middleware) |
+| 8 | Health | Verification — how to check the service works |
+
+> The canonical, runnable embodiment of this structure is
+> [`apps/_reference/`](../../apps/_reference/). Copy it when adding an app.
 
 ## Block Rules
 
@@ -73,6 +80,10 @@ services:
 - `read_only: true` + `tmpfs:` — use when the image supports it (Redis, Traefik, Whoami, Socket Proxy, nginx). Skip when the app writes to the root filesystem (Ghost, WordPress).
 - `cap_drop: ALL` — for lightweight services. Re-add only specific capabilities needed.
 - `user:` — only when the image explicitly supports non-root operation.
+
+**Resources** (recommended)
+- `deploy.resources.limits` — `memory`, `cpus`, `pids` on every service. Bounds a runaway or compromised container; start generous, retune from `docker stats` to ~2× peak.
+- Put `pids` inside `deploy.resources.limits` — a top-level `pids_limit` alongside `deploy.resources` is rejected by Compose.
 
 **Configuration** (required)
 - `entrypoint:` — only when the image doesn't support `_FILE` env vars. The custom entrypoint reads secrets and exports them as env vars. See [Security Baseline](security-baseline.md) for patterns.
