@@ -9,7 +9,7 @@
 - **Config reference:** https://docs.paperless-ngx.com/configuration/
 - **License:** MIT
 - **Origin:** Community · no single company
-- **Based on version:** `2.20.13`
+- **Based on version:** `3.0.3`
 - **Last verified:** 2026-05-03 (v2.20.13)
 
 ## What we use

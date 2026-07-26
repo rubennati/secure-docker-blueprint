@@ -171,6 +171,8 @@ rest listed below to finish). Update path = Version Chain above; prefer digest-p
 | apps/nextcloud | 32.0.6 | **32.0.13** (33/34 exist — major, deliberate) |
 | apps/ghost | 6.27.0 | **6.54.0** |
 | core/crowdsec | v1.7.7 | **v1.7.8** |
+| apps/paperless-ngx | 2.20.13 | **3.0.3** (🚧 major — verify: Python 3.11+, API v1 removed, search Whoosh→tantivy reindex) |
+| business/invoiceninja | 5.13.24 | **5.13.26** |
 
 ### Pending — verified, security-relevant (apply next)
 
@@ -184,13 +186,12 @@ rest listed below to finish). Update path = Version Chain above; prefer digest-p
 | apps/photoprism | 260305 | **260601** | security/reliability |
 | apps/bookstack | v25.02 | **v26.05.2** | security fixes; ~1yr behind |
 | apps/immich | v2.7.5 | **v3.0.3** | major 2→3 — verify migration |
-| apps/paperless-ngx | 2.20.13 | **~3.0.x** | major — verify |
 | monitoring/healthchecks | v3.13 | **v4.2** | major — verify |
 | core/traefik | v3.6 | **3.7.9** | floating `v3.6` auto-patches to 3.6.24; evaluate 3.7 |
 
 ### Pending — feature/minor (lower priority)
 
-n8n 2.19.2→2.31.6 · homarr v1.60.0→v1.72.0 · onlyoffice 9.3.1.2→9.4.0 · nocodb 0.301.5→2026.07.0 (CalVer) · openproject 17.3.1→17.6.0 · dashy 4.0.4→4.5.0 · kimai 2.56.0→2.61.0 · gatus v5.34.0→v5.36.0 · invoiceninja 5.13.24→5.13.26
+n8n 2.19.2→2.31.6 · homarr v1.60.0→v1.72.0 · onlyoffice 9.3.1.2→9.4.0 · nocodb 0.301.5→2026.07.0 (CalVer) · openproject 17.3.1→17.6.0 · dashy 4.0.4→4.5.0 · kimai 2.56.0→2.61.0 · gatus v5.34.0→v5.36.0
 
 ### Up-to-date (no action)
 

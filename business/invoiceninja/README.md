@@ -1,6 +1,6 @@
 # Invoice Ninja
 
-> **Status: 🔬 Preview** — v5.13.24 · 2026-06-14
+> **Status: 🔬 Preview** — v5.13.26 · 2026-07-26
 
 Self-hosted invoicing, quotes, expenses, and time-tracking (Laravel / PHP-FPM).
 
