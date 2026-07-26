@@ -1,6 +1,6 @@
 # Adminer
 
-> **Status: ✅ Ready** — v4.8.1 · 2026-05-02
+> **Status: 🚧 v5.5.0** — major upgrade from 4.x; verify first · 2026-07-26
 
 Stateless web-based database administration tool. Supports MySQL, MariaDB, PostgreSQL, SQLite, MS SQL, Oracle, Elasticsearch, MongoDB, and more via drivers. Single PHP file, no dependencies.
 
