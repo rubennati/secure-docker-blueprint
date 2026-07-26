@@ -7,7 +7,7 @@
 - **Docker Hub:** https://hub.docker.com/r/louislam/uptime-kuma
 - **License:** MIT
 - **Origin:** Hong Kong · Louis Lam · non-EU
-- **Based on version:** `1.23.17`
+- **Based on version:** `2.4.0` (🚧 major 1.x→2.x — verify DB migration before deploy)
 - **Last checked:** 2026-05-03
 
 ## What we use
