@@ -208,14 +208,14 @@ See [`business/README.md`](business/README.md) for the full category README + ro
 | App | Function | Status | Description |
 |---|---|---|---|
 | [OpenProject CE](business/openproject/) | Project management | ✅ | Full PM — Gantt, kanban, work packages, time tracking. CE = local accounts only, no SSO. |
-| [Vikunja](business/vikunja/) | Task management | ✅ | Kanban, lists, Gantt — Trello / Planner alternative. Authentik OIDC live-tested, SSO-only. |
+| [Vikunja](business/vikunja/) | Task management | ✅ | Kanban, lists, Gantt — Trello / Planner alternative. Authentik OIDC verified, SSO-only. |
 | [Invoice Ninja](business/invoiceninja/) | Billing | ✅ | Invoicing, quotes, client portal |
-| [Dolibarr](business/dolibarr/) | ERP / CRM | ✅ | Accounting, projects, HR, inventory |
-| [Kimai](business/kimai/) | Time tracking | ✅ | Per-project/customer hours → Invoice Ninja |
-| [Listmonk](business/listmonk/) | Newsletter | ✅ | Mailing list + transactional mail |
-| [Matomo](business/matomo/) | Web analytics | ✅ | GDPR-compliant, full-featured (Google Analytics alternative) |
-| [Zammad](business/zammad/) | Helpdesk | ✅ | Full 7-service helpdesk / ticketing / SLA |
-| [OpenSign](business/opensign/) | E-signatures | ✅ | DocuSign alternative, eIDAS-capable |
+| [Dolibarr](business/dolibarr/) | ERP / CRM | 🚧 | Accounting, projects, HR, inventory |
+| [Kimai](business/kimai/) | Time tracking | 🚧 | Per-project/customer hours → Invoice Ninja |
+| [Listmonk](business/listmonk/) | Newsletter | 🚧 | Mailing list + transactional mail |
+| [Matomo](business/matomo/) | Web analytics | 🚧 | GDPR-compliant, full-featured (Google Analytics alternative) |
+| [Zammad](business/zammad/) | Helpdesk | 🚧 | Full 7-service helpdesk / ticketing / SLA |
+| [OpenSign](business/opensign/) | E-signatures | 🚧 | DocuSign alternative, eIDAS-capable |
 | [Documenso](business/documenso/) | E-signatures | 🚧 | DocuSign alternative (Remix + Postgres, local signing cert) |
 
 Planned: Ackee, Plausible CE, Live Helper Chat, Eramba GRC.
@@ -226,12 +226,12 @@ See [`monitoring/README.md`](monitoring/README.md) for the full category README.
 
 | App | Axis | Status | Description |
 |---|---|---|---|
-| [Uptime Kuma](monitoring/uptime-kuma/) | Uptime (UI) | ✅ | Click-config uptime monitor, 90+ notification integrations |
-| [Gatus](monitoring/gatus/) | Uptime (YAML) | ✅ | Config-as-code health checks with Prometheus export |
-| [Beszel](monitoring/beszel/) | Host metrics (hub) | ✅ | Lightweight hub + local agent for CPU / RAM / disk / docker stats |
-| [Beszel Agent](monitoring/beszel-agent/) | Host metrics (remote agent) | ✅ | Standalone agent for additional hosts; pairs with Beszel hub |
-| [changedetection.io](monitoring/changedetection/) | Content watcher | ✅ | Page diff + notification (restock / price / ToS) |
-| [Healthchecks](monitoring/healthchecks/) | Cron / scheduled-job | ✅ | Dead-man's switch for backups / cron / scheduled tasks |
+| [Uptime Kuma](monitoring/uptime-kuma/) | Uptime (UI) | 🚧 | Click-config uptime monitor, 90+ notification integrations |
+| [Gatus](monitoring/gatus/) | Uptime (YAML) | 🚧 | Config-as-code health checks with Prometheus export |
+| [Beszel](monitoring/beszel/) | Host metrics (hub) | 🚧 | Lightweight hub + local agent for CPU / RAM / disk / docker stats |
+| [Beszel Agent](monitoring/beszel-agent/) | Host metrics (remote agent) | 🚧 | Standalone agent for additional hosts; pairs with Beszel hub |
+| [changedetection.io](monitoring/changedetection/) | Content watcher | 🚧 | Page diff + notification (restock / price / ToS) |
+| [Healthchecks](monitoring/healthchecks/) | Cron / scheduled-job | 🚧 | Dead-man's switch for backups / cron / scheduled tasks |
 
 Planned: Statping, ciao, Checkmate, Zabbix, Grafana + Prometheus, Scrutiny.
 
@@ -243,8 +243,9 @@ Planned: Kopia, Borgmatic, Bareos, UrBackup.
 
 ### Repository layout
 
-Five top-level areas, each with a clear mandate. Per-category READMEs (`core/README.md`, `business/README.md`, `monitoring/README.md`, `backup/README.md`) describe what belongs where and why.
-New here? Start with the category README that best matches your goal: [Core Infrastructure](core/README.md), [Apps](apps/README.md), [Business](business/README.md), [Monitoring](monitoring/README.md), or [Backup](backup/README.md).
+Five top-level areas, each with a clear mandate. `business/`, `monitoring/` and `backup/` have a category README describing what belongs where and why; `core/` and `apps/` are documented per service in the tables above.
+
+New here? Start with the area that best matches your goal: [Core Infrastructure](core/), [Apps](apps/), [Business](business/README.md), [Monitoring](monitoring/README.md), or [Backup](backup/README.md).
 
 | Directory | Scope |
 |---|---|
