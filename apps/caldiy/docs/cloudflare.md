@@ -1,6 +1,6 @@
 # Cal.diY — Cloudflare Configuration (required)
 
-> **Status: ✅ Required layer** — v6.2.0-2 · 2026-07-26
+> **Status: ✅ Required layer** — v6.2.0-3 · 2026-07-26
 
 Cal.diy is community-maintained and **not confirmed secure**; a live instance was compromised
 once (the SMTP credential was exfiltrated). For this app the blueprint therefore treats

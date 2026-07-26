@@ -1,6 +1,6 @@
 # Cal.diy
 
-> **Status: ✅ Ready** — v6.2.0-2 · 2026-07-26
+> **Status: ✅ Ready** — v6.2.0-3 · 2026-07-26
 
 > **Note:** Cal.diy is the MIT-licensed community edition of Cal.com, spun out in 2026 when Cal.com moved its production codebase behind a closed-source licence. Upstream explicitly labels Cal.diy as "strictly for personal, non-production use" with no security guarantees. **Do not use for business-critical scheduling** without understanding that trade-off.
 
@@ -12,7 +12,7 @@ For an alternative with an established track record and no build dependency, see
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `ghcr.io/rubennati/cal.diy:v6.2.0-2` | Next.js web app + scheduling engine |
+| `app` | `ghcr.io/rubennati/cal.diy:v6.2.0-3` | Next.js web app + scheduling engine |
 | `db` | `postgres:17.4` | Users, event types, bookings, team memberships |
 | `redis` | `redis:7.4-alpine` | Session cache + job queue |
 
