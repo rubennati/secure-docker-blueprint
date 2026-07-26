@@ -47,6 +47,7 @@ This keeps `business/` a meaningful category instead of a grab-bag. See [`docs/a
 | App | Use case | Status | Notes |
 |---|---|---|---|
 | [OpenSign](opensign/) | E-signatures — DocuSign alternative | 🚧 | Mail via Mailgun or SMTP; eIDAS with qualified cert |
+| [Documenso](documenso/) | E-signatures — DocuSign alternative | 🚧 | Remix + Postgres; local signing cert (.p12) |
 | Eramba GRC | Governance / Risk / Compliance mapping (NIS2, DSGVO, ISO-27001) | 📋 | Heavy. For regulated businesses. |
 
 ## Why these and not others

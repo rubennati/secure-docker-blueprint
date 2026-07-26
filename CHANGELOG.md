@@ -15,6 +15,13 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 - **Easy!Appointments** (`apps/easyappointments/`): v1.5.x ready, status confirmed ✅.
 - **Cal.diy** (`apps/caldiy/`): v6.2.0 ready, status `🚧 → ✅`. Full migration run and booking flow verified. Custom entrypoint injects all secrets and builds a safe `postgresql://` URL. TCP fallback healthcheck works around upstream `/api/health` incompatibility.
 - **Traefik** (`core/traefik/`): IPv4-only vs. dual-stack IPv6 networking documented and implemented. New opt-in overlay `network-dual-stack.yml` enables IPv4+IPv6 on `proxy-public` (IPv4-only stays the default — no change for existing installs). Addresses the failure mode where a Tailscale IPv6 client loses its real source IP on an IPv4-only public network — Docker's userland-proxy re-sources the connection from the bridge gateway address (e.g. `172.19.0.1`) before Traefik ever sees it, and `acc-tailscale`'s `ipAllowList` then blocks it. New deep-dive doc `core/traefik/docs/ipv6-dual-stack.md` covers Docker daemon prerequisites (`ipv6`, `ip6tables`, `userland-proxy: false`, with backup/rollback), ULA prefix selection, the migration path from an existing IPv4-only network, and troubleshooting. See `docs/bugfixes/traefik-ipv6-dualstack-2026-06-19.md`.
+- **Infisical** (`core/infisical/`): 🚧 self-hosted central secret manager (VPN-only default) + local test stack.
+- **Euro-Office** (`core/euro-office/`): 🚧 EU-governed OnlyOffice fork (Nextcloud/IONOS/XWiki/Proton) — drop-in document server + local test stack.
+- **Collabora Online** (`core/collabora/`): 🚧 lightweight LibreOffice-based office server (~1 GB vs ~4 GB) + local test stack.
+- **Documenso** (`business/documenso/`): 🚧 e-signature platform (DocuSign alternative) + local test stack.
+- **Cal.diy hardening**: `docs/hardening-plan.md` (phased roadmap) and `docs/cloudflare.md` (required proxy layer — WAF, geo allowlist, origin lock); public self-registration disabled; `deploy.resources` caps.
+- **Local test stacks**: `docker-compose.local.yml` added for Cal.diy and the four new services (standalone on localhost, no Traefik/secrets).
+- **Dependency sweep** (`docs/maintenance.md`): repo-wide image-version review with per-service status.
 
 ### Removed
 
@@ -22,7 +29,9 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ### Security
 
-No security vulnerabilities fixed. Security hardening improvements:
+No vulnerabilities in the blueprint's own code. Upstream security image updates + hardening improvements:
+
+- **Upstream security updates applied**: Vaultwarden `1.37.0` (SSRF + 7 fixes), Portainer(+agent) `2.39.5` (containerd/Alpine CVEs), Authentik `2026.5.6`, Nextcloud `32.0.13`, Ghost `6.54.0`, CrowdSec `1.7.8`, Listmonk `6.2.0`, Dolibarr `23.0.3`, Changedetection `0.55.8`
 
 - **OpenSSF Best Practices badge**: registered at www.bestpractices.dev (project [#13091](https://www.bestpractices.dev/projects/13091)), 87% passing score
 - **GitHub Actions hardening**: all workflow actions pinned to commit SHAs across `ci.yml`, `trivy.yml`, and `scorecard.yml`; workflow-level `permissions: read-all` set on `ci.yml` and `trivy.yml`; `security-events: write` scoped to the single job that uploads SARIF in `trivy.yml`; Dependabot enabled for the `github-actions` ecosystem (weekly, grouped)
@@ -37,6 +46,8 @@ No security vulnerabilities fixed. Security hardening improvements:
 
 - **CONTRIBUTING.md**: `## CI and testing` section added — names the CI pipeline as the automated test suite, documents each of the 5 jobs, and provides the primary local validation command (`python3 scripts/ci/check-baseline.py`)
 - **docs/security-verification.md**: stale "no CVE scanning" entries updated to reflect `trivy.yml`; GitHub Actions pinning row moved from open gaps to addressed items
+- **Cal.diy**: updated to `v6.2.0-3`, pinned by digest; app/db resource caps raised to Cal.com's 2 vCPU / 4 GB minimum
+- **~30 image pins bumped** across `apps/`, `core/`, `business/`, `monitoring/` (dependency sweep — details in `docs/maintenance.md`). Floating/broken tags fixed: OpenSign and Cal.diy digest-pinned, matomo pinned to `5.12.0-apache`, zammad corrected from the non-existent `7.0.1` tag to `7.1.1-0036`. Majors bumped and flagged 🚧 for migration verification (WordPress 7.0.2, Immich 3.0.3, Paperless-ngx 3.0.3, Healthchecks 4.2, NocoDB CalVer, Homepage 1.13.2, OpnForm 2.2.2, Adminer 5.5.0, Uptime-Kuma 2.4.0)
 
 ---
 
