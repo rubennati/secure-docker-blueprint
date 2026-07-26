@@ -176,22 +176,19 @@ rest listed below to finish). Update path = Version Chain above; prefer digest-p
 
 ### Pending — verified, security-relevant (apply next)
 
+**Applied 2026-07-26** (second wave): wordpress **7.0.2** 🚧, listmonk **v6.2.0**, portainer(+agent)
+**2.39.5**, dolibarr **23.0.3**, changedetection **0.55.8**, photoprism **260601**, bookstack
+**v26.05.2**, immich **v3.0.3** 🚧, healthchecks **v4.2** 🚧. (🚧 = major, verify migration on deploy.)
+
+Still pending:
+
 | Service | Pinned | Latest | Note |
 |---|---|---|---|
-| apps/wordpress | 6.8.3 | **7.0.2** | major 6→7; only 7.0 is maintained |
-| business/listmonk | v6.1.0 | **v6.2.0** | security fixes |
-| core/portainer (+agent) | 2.39.1 | **2.39.5** | CVE fixes (containerd/alpine) |
-| business/dolibarr | 23.0.2 | **23.0.3** | security patches |
-| monitoring/changedetection | 0.55.3 | **0.55.8** | RSS security |
-| apps/photoprism | 260305 | **260601** | security/reliability |
-| apps/bookstack | v25.02 | **v26.05.2** | security fixes; ~1yr behind |
-| apps/immich | v2.7.5 | **v3.0.3** | major 2→3 — verify migration |
-| monitoring/healthchecks | v3.13 | **v4.2** | major — verify |
-| core/traefik | v3.6 | **3.7.9** | floating `v3.6` auto-patches to 3.6.24; evaluate 3.7 |
+| core/traefik | v3.6 | **3.7.9** | floating `v3.6` auto-patches to 3.6.24; evaluate 3.7 (deliberate minor upgrade) |
 
-### Pending — feature/minor (lower priority)
+### Feature/minor — applied 2026-07-26
 
-n8n 2.19.2→2.31.6 · homarr v1.60.0→v1.72.0 · onlyoffice 9.3.1.2→9.4.0 · nocodb 0.301.5→2026.07.0 (CalVer) · openproject 17.3.1→17.6.0 · dashy 4.0.4→4.5.0 · kimai 2.56.0→2.61.0 · gatus v5.34.0→v5.36.0
+n8n 2.31.6 · homarr v1.72.0 · onlyoffice 9.4.0 · nocodb 2026.07.0 (🚧 CalVer switch) · openproject 17.6.0 · dashy 4.5.0 · kimai 2.61.0 · gatus v5.36.0
 
 ### Up-to-date (no action)
 
@@ -199,7 +196,7 @@ it-tools (2024.10.22, dormant) · beszel + agent (0.18.7)
 
 ### Structural (fix regardless of version)
 
-- **business/opensign pinned to `main`** — unversioned floating branch, violates Ready-Criteria #1. Pin a release tag.
+- ~~business/opensign pinned to `main`~~ — **fixed 2026-07-26: digest-pinned.** Upstream ships no semver tags (only `main`/`staging`/`docker_beta`), so both images pinned to `main@sha256:…` for reproducibility (re-pin on upgrade).
 - **Floating major tags** — matomo `5-apache`, opnform/invoiceninja nginx `1`/`1.29`, clamav `1.4`. Pin specific (contrast: caldiy is digest-pinned).
 - **`main` and `dev` diverged** — Dependabot bumps on `main`, app work on `dev`. Converge.
 
@@ -231,3 +228,4 @@ One row per session or chain run. The next session starts here — not at the to
 | 2026-06-19 | App Chain | `core/traefik` | IPv4-only vs. dual-stack IPv6 networking implemented: opt-in `network-dual-stack.yml` overlay (`proxy-public` stays IPv4-only by default — existing installs unaffected), Docker daemon prerequisites with backup/rollback and a full migration guide in new `core/traefik/docs/ipv6-dual-stack.md`, Cloudflare `forwardedHeaders.trustedIPs` added to `traefik.yml.tmpl` (closes the gap tracked in `docs/security-verification.md` control #12). Fixes the failure mode where Tailscale IPv6 clients lose their real source IP on an IPv4-only public network and get blocked by `acc-tailscale` — new snapshot doc `docs/bugfixes/traefik-ipv6-dualstack-2026-06-19.md`. Cross-referenced from `networking.md`, `traefik-security.md`, `troubleshooting.md`, `architecture.md`. | Not yet exercised against a real dual-stack Docker host — local validation covered `docker compose config` overlay-merge behavior and rendered-YAML syntax only. Operators applying the overlay should follow the migration guide's whoami + `curl -4`/`curl -6` verification steps before cutting production traffic over. |
 | 2026-07-26 | Version Chain | 5 security-critical images | Bumped vaultwarden 1.37.0, authentik 2026.5.6, nextcloud 32.0.13, ghost 6.54.0, crowdsec 1.7.8 (+ `.env.example`, `UPSTREAM.md`, README status/verified dates). Not deploy-tested — server offline. | Verify on next deploy. |
 | 2026-07-26 | Version Chain | Repo-wide dependency sweep (~30 of ~50 verified) | Checked pinned tags vs. upstream; recorded results in "Dependency Sweep — 2026-07-26". | Pending high: wordpress 7.0.2, listmonk 6.2, portainer 2.39.5, dolibarr 23.0.3, changedetection 0.55.8, bookstack, photoprism; majors to verify: immich 3.x, paperless 3.x, healthchecks 4.x. Structural: opensign pinned to `main`; floating tags; `main`/`dev` diverged. ~15 services not yet verified. |
+| 2026-07-26 | Version Chain | 20 more image pins + opensign | Applied the pending sweep updates (wordpress 7.0.2🚧, immich 3.0.3🚧, healthchecks 4.2🚧, nocodb CalVer🚧 + 16 minor/patch); digest-pinned opensign `main` (no semver tags upstream). Not deploy-tested. | Verify majors on deploy; core/traefik 3.7 optional; ~15 services still unchecked. |
