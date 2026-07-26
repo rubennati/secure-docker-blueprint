@@ -1,0 +1,224 @@
+# =============================================================================
+# Infisical — self-hosted central secret manager
+# =============================================================================
+# Manage secrets for all your servers/apps in one place instead of distributing
+# .env files. Apps/servers pull their secrets from here (CLI / machine identity).
+#
+# Image: infisical/infisical (https://hub.docker.com/r/infisical/infisical)
+# Source: https://github.com/Infisical/infisical
+#
+# ⚠ This is INFRASTRUCTURE that holds every other app's secrets — treat it as the
+# crown jewel. Default access is VPN-only (acc-tailscale); do not expose it public
+# without a deliberate decision.
+# =============================================================================
+
+services:
+
+  # --------------------------------------------------------
+  # DATABASE (PostgreSQL)
+  # --------------------------------------------------------
+  db:
+    # --- Identity ---
+    image: postgres:${DB_TAG}
+    container_name: ${CONTAINER_NAME_DB}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+    # --- Resources ---
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "0.50"
+          pids: 100
+        reservations:
+          memory: 128m
+
+    # --- Configuration ---
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/DB_PWD
+      TZ: ${TZ}
+    secrets:
+      - DB_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/postgres:/var/lib/postgresql/data
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME} -h 127.0.0.1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # --------------------------------------------------------
+  # REDIS (cache + job queue)
+  # --------------------------------------------------------
+  redis:
+    # --- Identity ---
+    image: redis:${REDIS_TAG}
+    container_name: ${CONTAINER_NAME_REDIS}
+    restart: unless-stopped
+    command: --save 60 1 --loglevel warning
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+
+    # --- Resources ---
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.25"
+          pids: 50
+        reservations:
+          memory: 64m
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/redis:/data
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 30s
+      timeout: 3s
+      retries: 5
+      start_period: 20s
+
+  # --------------------------------------------------------
+  # INFISICAL (backend + web UI + API)
+  # --------------------------------------------------------
+  app:
+    # --- Identity ---
+    image: infisical/infisical:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+    # --- Resources ---
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 256m
+
+    # --- Configuration ---
+    # Infisical has no _FILE support — entrypoint.sh injects secrets from
+    # /run/secrets/ then execs the image's CMD (./standalone-entrypoint.sh),
+    # which runs DB migrations on boot and starts the server.
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
+    command: ["./standalone-entrypoint.sh"]
+    environment:
+      TZ: ${TZ}
+      # DB credentials used by entrypoint.sh to build DB_CONNECTION_URI from the secret
+      DB_USER: ${DB_USER}
+      DB_NAME: ${DB_NAME}
+      REDIS_URL: redis://redis:6379
+      SITE_URL: https://${APP_TRAEFIK_HOST}
+      TELEMETRY_ENABLED: "false"
+      # Email — SMTP_PASSWORD injected by entrypoint from Docker Secret
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_FROM_ADDRESS: ${SMTP_FROM_ADDRESS}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME}
+      SMTP_USERNAME: ${SMTP_USERNAME}
+    secrets:
+      - DB_PWD
+      - ENCRYPTION_KEY
+      - AUTH_SECRET
+      - SMTP_PASSWORD
+
+    # --- Storage ---
+    volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+      - app-internal
+
+    # --- Traefik ---
+    labels:
+      # Router
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      # TLS
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Middlewares
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      # Service
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+
+    # --- Health & Observability ---
+    # Node is present in the image; use it to hit the status endpoint.
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:8080/api/status',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  DB_PWD:
+    file: ./.secrets/db_pwd.txt
+  ENCRYPTION_KEY:
+    file: ./.secrets/encryption_key.txt
+  AUTH_SECRET:
+    file: ./.secrets/auth_secret.txt
+  SMTP_PASSWORD:
+    file: ./.secrets/smtp_password.txt
