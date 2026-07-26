@@ -113,8 +113,13 @@ Planned in `core/`: Keycloak (alternative / heavier IAM next to Authentik).
 
 The blueprint takes a **choice-matrix** approach: where several tools compete (dashboards, photo galleries, wikis, form builders), multiple options are included so you can test and pick what fits.
 
-**Status:** ✅ Ready · 🚧 Draft · 📋 Planned
-Status note: “✅ Ready” indicates a usable baseline setup; detailed operational maturity (backup, restore, security posture, and version lifecycle) is tracked in [LIFECYCLE.md](LIFECYCLE.md).
+**Status:** ✅ Ready · 🚧 Preview · 📋 Planned
+
+- **✅ Ready** — clean install and core function established, security baseline met, documentation in place. Deploy it.
+- **🚧 Preview** — on disk and it may well work, but the blueprint does not vouch for it. Evaluate it yourself before trusting it with data.
+- **📋 Planned** — named as intended, nothing on disk yet.
+
+What each symbol promises is defined in [`docs/standards/status-model.md`](docs/standards/status-model.md); the per-stack detail behind it — pinned version, verification date, backup and restore documentation — is in [LIFECYCLE.md](LIFECYCLE.md).
 
 #### Dashboards & launchers
 
@@ -301,8 +306,7 @@ secure-docker-blueprint/
 ├── docs/
 │   ├── standards/               # Conventions and patterns
 │   ├── bugfixes/                # Per-incident root-cause docs
-│   ├── audits/                  # Consistency & maintenance audit logs
-│   └── templates/               # Starter template for new apps
+│   └── audits/                  # Consistency & maintenance logs
 │
 └── scripts/
     └── overview.sh              # Dashboard of all running services
@@ -347,12 +351,12 @@ See [ROADMAP.md](ROADMAP.md) for planned features, services under evaluation, an
 ## Adding a New App
 
 ```bash
-cp -r docs/templates apps/my-new-app
+cp -r apps/_reference apps/my-new-app
 cd apps/my-new-app
-# Edit docker-compose.yml and .env.example following the standards
+# Replace the stand-in images, drop what the app does not need
 ```
 
-See [docs/templates/README.md](docs/templates/README.md) for details.
+[`apps/_reference/`](apps/_reference/) is the canonical structure every app follows — a runnable stack, not a paper skeleton. Diff an existing app against it to find drift, or run `python3 scripts/ci/check-structure.py`. Full walkthrough: [docs/standards/new-app-checklist.md](docs/standards/new-app-checklist.md).
 
 ## Contributing
 

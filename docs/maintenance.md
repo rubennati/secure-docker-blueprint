@@ -19,7 +19,10 @@ Each piece of information has exactly one owner. When two files disagree, the ow
 
 | Information | Owner | Mirrors / references it |
 |---|---|---|
-| App status (✅ / 🚧 / 📋) | Category README | Root README tables |
+| Status definitions (what ✅ / 🚧 / 📋 promise) | `docs/standards/status-model.md` | Root README legend, `LIFECYCLE.md` |
+| App status — `business/`, `monitoring/`, `backup/` | Category README | Root README tables, `LIFECYCLE.md` |
+| App status — `core/`, `apps/` | Root README tables | `LIFECYCLE.md` |
+| Per-stack lifecycle detail | *generated* — `scripts/ci/lifecycle-report.py` | `LIFECYCLE.md` (never hand-edited) |
 | App location (category) | Directory structure | README tables |
 | Shipped work | `CHANGELOG.md` | — |
 | Direction / planned work | `ROADMAP.md` | Category READMEs reference, do not duplicate |
@@ -34,12 +37,23 @@ Each piece of information has exactly one owner. When two files disagree, the ow
 
 **Root README structure rule**: tables show `🚧` / `✅` only. `📋` planned items appear as inline `Planned: X, Y, Z` lines — never as table rows.
 
+`core/` and `apps/` deliberately have no category README — they are documented per service in the root README tables, which is why the root owns their status. Everything derived from these owners is regenerated, not retyped:
+
+```bash
+python3 scripts/ci/lifecycle-report.py --write
+```
+
 ---
 
 ## ✅ Ready Criteria
 
 An app is marked ✅ when all of the following are true. Apps that do not meet
 every point stay at 🚧 until the gap is closed.
+
+These ten points are the gate between public `preview` and public `ready`, and
+together they are exactly the internal status `baseline-aligned` — see
+[`standards/status-model.md`](standards/status-model.md) for how the two axes map
+onto each other and onto the symbols in the README tables.
 
 **Technical**
 1. Image tag pinned — no `latest`, no major-only tags (e.g. `8`, `v2`)
@@ -119,7 +133,7 @@ A chain is a defined sequence of files to check and update for a specific trigge
 |---|---|---|
 | 1 | `docs/standards/<changed-file>` | Update the standard itself |
 | 2 | All Ready apps (`✅`) | Check compliance with the updated standard |
-| 3 | All Draft apps (`🚧`) | Note any drift — fix before next verification pass |
+| 3 | All Preview apps (`🚧`) | Note any drift — fix before next verification pass |
 | 4 | `CHANGELOG.md` | Standard change documented |
 | 5 | `docs/maintenance.md` | Progress Log: which apps were checked, which have open drift |
 
@@ -150,7 +164,7 @@ Run the full Consistency Chain first, then:
 | 1 | `CHANGELOG.md` | Move `[Unreleased]` to `[X.Y.Z]` heading; update comparison links |
 | 2 | `ROADMAP.md` | Move shipped milestone to Shipped section; update "Last updated" date |
 | 3 | `README.md` | Bump version badge (`v0.X.Y-blue`) |
-| 4 | All `🚧` entries | Is the draft status still honest? |
+| 4 | All `🚧` entries | Is the preview status still honest? |
 | 5 | All `✅` entries | Were any broken by dependency updates since last test? |
 | 6 | GitHub | Minor versions only (`v0.X.0`): `gh release create vX.Y.0 --draft` — review, then publish. Patch tags (`vX.Y.Z`) are Git tags only — no GitHub Release needed. |
 
@@ -246,3 +260,4 @@ One row per session or chain run. The next session starts here — not at the to
 | 2026-07-26 | Standards | `apps/_reference` + structure checker | Added the canonical reference app (runnable: postgres `_FILE` secrets + nginx entrypoint-wrapper secrets; prod & local compose; layer-tagged `.env.example`) and `scripts/ci/check-structure.py` (severity per rule). First run found and fixed: repo-root `.gitignore` never covered `.secrets/`; 3 major-only tags (paperless `16`, opensign `6`, opnform nginx `1`); section order in documenso/infisical. Two false positives were verified and the rules corrected (date-based tag `260601`; gitignore rule now reads the root file and only fails when secrets are actually unprotected). `compose-structure.md` gained the `Resources` block so spec and reference agree. | **Open work list** (all WARN, nothing blocking): ~102 services without `deploy.resources`, ~41 without a healthcheck, invoiceninja section order + `env_file:`, core/traefik without `COMPOSE_PROJECT_NAME`, whoami without a local `.gitignore`. **Not done yet:** wire `check-structure.py` into CI (currently 0 FAILs, so it would pass); point `docs/templates/` + `new-app-checklist.md` at `apps/_reference/` so only one template exists; `apps/_reference/UPSTREAM.md`; actually boot the reference stack (Docker daemon was off, so "runnable" is unproven). |
 | 2026-07-26 | Version Chain | Finish sweep (3rd wave) | Bumped easyappointments 1.6.0, lychee v7.7.1, librephotos 2026w25, heimdall v2.8.1, homepage v1.13.2🚧, opnform 2.2.2🚧; monicahq/photoview confirmed current. caldiy → v6.2.0-3 (new digest). Merged `main`→`dev`. | Operator-tracked (seafile) / floating (matomo) / awkward-source (unifi, zammad, vikunja, uptime-kuma, adminer) remain — see Sweep status. |
 | 2026-07-26 | Session | `ROADMAP.md` | Roadmap synced to the actual state — it had not been touched since 2026-06-04. Checked first whether any of the intervening work blocks v0.7.0: it does not, so **the milestone order stays unchanged**. Added a "Since v0.6.0 — work outside the plan" section placing the sweep, reference app + structure checker, four new drafts, the Cal.diY track, and the supply-chain work. v0.7.0 gained two practical notes (backup services start from `apps/_reference/`; restore walkthroughs share the host precondition with the pending majors). v0.9.0 gained measured numbers from the checker (54 apps · 102 services without `deploy.resources.limits` · 41 without a healthcheck). v1.0 CI baseline updated (Trivy done, structure checker written but not wired in). Corrected stale entries: Cal.com retired, OpnForm in place, category counts; added office-server and e-signature choice matrices. Status-language convention applied ("verified" instead of "sober-/live-tested", "review" instead of "audit"). | **Found, not fixed — needs a decision:** 12 services claim ✅ in the root README but `🚧` in their owning category README (business: dolibarr, kimai, listmonk, matomo, zammad, opensign; monitoring: all six). Per the File Map the category README is the owner, and criterion 8 backs it — all 12 still carry the pre-v0.5.1 `Last checked:` field instead of `Last verified: DATE (vX.Y.Z)`. Either correct the root README to 🚧 or verify the 12 and update both. |
+| 2026-07-26 | Standards | Status model — repo-wide | Resolved the root cause behind the 12 mismatches above: three status systems ran in parallel (root README, category README, `LIFECYCLE.md`) with no derivation between them, so drift was structural rather than accidental. New `docs/standards/status-model.md` defines the public axis (what an operator can rely on) and the internal axis (what the maintainer has established), maps them onto each other and onto the ✅ Ready Criteria — all ten criteria = `baseline-aligned` = public `ready` = ✅ — and records the owner of every fact. `LIFECYCLE.md` is now generated by `scripts/ci/lifecycle-report.py` across all 54 stacks (was 6, hand-written, three months stale, and claiming backup/restore docs that no stack has ever had). Two CI jobs added: `Canonical structure` (`check-structure.py`, previously written but never wired in) and `Status model` (`lifecycle-report.py --check`). Root README corrected to 🚧 for the 12; dead `core/README.md` + `apps/README.md` links removed from the front page; 🚧 relabelled Draft → Preview repo-wide; `docs/templates/` folded into `apps/_reference/` (+ its missing `UPSTREAM.md`) so one template remains; whoami `.gitignore`, traefik `COMPOSE_PROJECT_NAME`, invoiceninja section order fixed. All six CI checks pass locally. | **20 stacks carry `Last checked:` instead of `Last verified: DATE (vX.Y.Z)`** — reported as `legacy-stamp` (WARN, non-blocking). The date exists, so evidence probably does too; converting the field asserts that evidence is real, which is a per-app judgement and never automatic. Decide per app on the next host session. **Still open:** invoiceninja `env_file:` (needs the Laravel entrypoint wrapper, not a cleanup); 102 services without `deploy.resources.limits` and 41 without a healthcheck (v0.9.0 — needs measuring, must not be guessed); the reference stack has still never been booted. |

@@ -1,6 +1,6 @@
 # Documenso
 
-> **Status: 🚧 Draft** — v2.15.0 · 2026-07-26 · config complete, **not yet verified on a live server**
+> **Status: 🚧 Preview** — v2.15.0 · 2026-07-26 · config complete, **not yet verified on a live server**
 
 Open-source document-signing platform — a self-hosted **DocuSign alternative**. Sibling e-sign
 option: [`business/opensign/`](../opensign/).
@@ -61,7 +61,7 @@ docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:3000
 ```
 
-## Verify on first deploy (Draft → Ready gate)
+## Verify on first deploy (Preview → Ready gate)
 
 Config follows the standard but has not been run here. Confirm:
 

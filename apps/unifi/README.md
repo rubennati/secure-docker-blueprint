@@ -1,6 +1,6 @@
 # UniFi Network Application
 
-> **Status: Draft — not yet live-tested.** First-pass import from inbox material.
+> **Status: 🚧 Preview** — first-pass import from inbox material, not yet verified on a live server
 
 Controller for Ubiquiti UniFi access points, switches, and gateways. Runs as an on-prem alternative to UniFi Cloud. Two-service stack: LSIO-built UniFi controller + MongoDB 4.4.
 

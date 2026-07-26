@@ -1,6 +1,6 @@
 # Infisical
 
-> **Status: 🚧 Draft** — v0.162.13 · 2026-07-26 · config complete, **not yet verified on a live server**
+> **Status: 🚧 Preview** — v0.162.13 · 2026-07-26 · config complete, **not yet verified on a live server**
 
 Self-hosted central secret manager. Instead of distributing and re-filling `.env` files per app
 per server, manage every secret in one place; servers and apps pull what they need over the
@@ -62,7 +62,7 @@ docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:8080 — create the first account
 ```
 
-## Verify on first deploy (Draft → Ready gate)
+## Verify on first deploy (Preview → Ready gate)
 
 This config follows the standard but has **not** been run on a server yet. Confirm before marking ✅:
 

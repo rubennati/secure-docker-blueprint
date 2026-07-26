@@ -1,6 +1,6 @@
 # Collabora Online (CODE)
 
-> **Status: 🚧 Draft** — v26.04.2.4.1 · 2026-07-26 · config complete, **not yet verified on a live server**
+> **Status: 🚧 Preview** — v26.04.2.4.1 · 2026-07-26 · config complete, **not yet verified on a live server**
 
 LibreOffice-based online office server — the **lightweight** document-editing option: ~1 GB idle
 (single stateless container) vs ~4 GB for OnlyOffice / Euro-Office (which bundle Postgres, RabbitMQ,
@@ -38,7 +38,7 @@ docker compose -f docker-compose.local.yml --env-file .env.local up -d
 curl http://localhost:9980/   # → "OK"
 ```
 
-## Verify on first deploy (Draft → Ready gate)
+## Verify on first deploy (Preview → Ready gate)
 
 - [ ] Container starts; `http://<host>/` (or local `:9980/`) returns `OK`
 - [ ] **LibreOffice sandbox starts** — if boot fails on the jail/chroot, relax security: the

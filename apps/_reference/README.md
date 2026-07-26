@@ -24,15 +24,15 @@ and this app gets fixed.
 ## Four lenses
 
 Every file here is meant to hold up under all four. The same lenses drive
-`scripts/ci/check-baseline.py`, which reports drift as **FAIL** (dangerous) or
-**WARN** (inconsistent).
+`scripts/ci/check-structure.py`, which reports drift as **FAIL** (dangerous) or
+**WARN** (inconsistent) and runs in CI.
 
 | Lens | Question | Spec |
 |------|----------|------|
 | **Structure** | Is it laid out and named like every other app? | [env-structure.md](../../docs/standards/env-structure.md) · [compose-structure.md](../../docs/standards/compose-structure.md) · [naming-conventions.md](../../docs/standards/naming-conventions.md) |
 | **Security** | Secrets isolated, privileges dropped, nothing needlessly exposed? | [security-baseline.md](../../docs/standards/security-baseline.md) |
 | **Architecture** | Right networks, routing, dependencies, healthchecks? | [networking.md](../../docs/standards/networking.md) · [traefik-labels.md](../../docs/standards/traefik-labels.md) |
-| **Resources** | Bounded memory/CPU/pids, sane healthcheck timing? | *(spec pending)* |
+| **Resources** | Bounded memory/CPU/pids, sane healthcheck timing? | [compose-structure.md](../../docs/standards/compose-structure.md) — `Resources` block |
 
 ## Files
 
@@ -44,7 +44,7 @@ Every file here is meant to hold up under all four. The same lenses drive
 | [`.env.local.example`](.env.local.example) | Local env — deliberately minimal | ✅ |
 | [`config/entrypoint.sh`](config/entrypoint.sh) | Secret-injection wrapper for images without `_FILE` support | ✅ |
 | [`.gitignore`](.gitignore) | Keeps `.env`, `.secrets/`, `volumes/` out of git | ✅ |
-| `UPSTREAM.md` | Per-app upstream reference + upgrade checklist | *pending* |
+| [`UPSTREAM.md`](UPSTREAM.md) | Per-app upstream reference + upgrade checklist | ✅ |
 
 ## Try it locally
 
@@ -60,11 +60,7 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 
 ## Open
 
-- `UPSTREAM.md` — the per-app upstream/upgrade doc every app carries
-- Boot the stack once (above) to confirm it truly runs
-- `scripts/ci/check-structure.py` is not wired into CI yet
-- `docs/templates/` still holds an older skeleton — fold it into this directory
-  so there is only one template
+- Boot the stack once (above) to confirm it truly runs — the one outstanding proof
 
 ## Stand-in images (deliberate)
 

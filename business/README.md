@@ -6,7 +6,7 @@ This keeps `business/` a meaningful category instead of a grab-bag. See [`docs/a
 
 ## Status
 
-✅ Ready · 🚧 Draft · 📋 Planned
+✅ Ready · 🚧 Preview · 📋 Planned
 
 ### Project management & planning
 

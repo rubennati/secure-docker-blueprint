@@ -32,7 +32,7 @@ Canonical rules live in the main repository documents, not in this file.
 
 ## Templates and Collaboration Gates
 
-- Document/templates: [`docs/templates/`](../docs/templates/)
+- App template / canonical structure: [`apps/_reference/`](../apps/_reference/)
 - PR/Issue templates: [`.github/pull_request_template.md`](../.github/pull_request_template.md), [`.github/ISSUE_TEMPLATE/`](../.github/ISSUE_TEMPLATE/)
 - CI gates: [`.github/workflows/ci.yml`](../.github/workflows/ci.yml)
 

@@ -10,6 +10,10 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ### Added
 
+- **Status model** (`docs/standards/status-model.md`): one definition replacing three parallel status systems. Separates what an operator can rely on (`preview` / `ready` / `ops-ready`, shown as the README symbol) from what the maintainer has established (`scaffolded` / `verified` / `baseline-aligned` / `ops-proven`, shown in `LIFECYCLE.md`), maps the two onto each other, and names the ✅ Ready Criteria as the single gate between 🚧 and ✅ — all ten criteria together are exactly `baseline-aligned`, which is exactly public `ready`. Also records which file owns which fact, including that `core/` and `apps/` have no category README by design and their status is owned by the root README.
+- **Generated lifecycle view** (`scripts/ci/lifecycle-report.py`): `LIFECYCLE.md` is now derived from the owning files — pins from `.env.example`, verification dates from `UPSTREAM.md`, statuses from the owning README — and covers all 54 stacks instead of 6. Hand-maintenance is what let the previous version go three months stale while claiming backup and restore documentation that no stack had. `--write` regenerates, `--check` fails CI.
+- **Two CI jobs**: `Canonical structure` runs `check-structure.py` (written in the previous session, never wired in); `Status model` runs `lifecycle-report.py --check`, which fails on a status claim that is not backed — the owner and root README disagreeing, ✅ without a verification date, or `LIFECYCLE.md` left stale. The existing `Structure check` job kept only its file-presence rule and was renamed `Required files`; its `:latest` check is superseded by `check-structure.py`, which also rejects major-only tags.
+- **`apps/_reference/UPSTREAM.md`**: the per-app upstream template, folded in from `docs/templates/` — which is now removed, so only one canonical template exists. `README.md` and `new-app-checklist.md` point at the reference app.
 - **Homepage** (`apps/homepage/`): v0.10.9 ready, status `🚧 → ✅`. Healthcheck added (`/api/healthcheck`).
 - **BookStack** (`apps/bookstack/`): v25.02 ready, status `🚧 → ✅`. Wiki, login, and page creation verified.
 - **Easy!Appointments** (`apps/easyappointments/`): v1.5.x ready, status confirmed ✅.
@@ -52,6 +56,14 @@ No vulnerabilities in the blueprint's own code. Upstream security image updates 
 - **docs/security-verification.md**: stale "no CVE scanning" entries updated to reflect `trivy.yml`; GitHub Actions pinning row moved from open gaps to addressed items
 - **Cal.diy**: updated to `v6.2.0-3`, pinned by digest; app/db resource caps raised to Cal.com's 2 vCPU / 4 GB minimum
 - **~30 image pins bumped** across `apps/`, `core/`, `business/`, `monitoring/` (dependency sweep — details in `docs/maintenance.md`). Floating/broken tags fixed: OpenSign and Cal.diy digest-pinned, matomo pinned to `5.12.0-apache`, zammad corrected from the non-existent `7.0.1` tag to `7.1.1-0036`. Majors bumped and flagged 🚧 for migration verification (WordPress 7.0.2, Immich 3.0.3, Paperless-ngx 3.0.3, Healthchecks 4.2, NocoDB CalVer, Homepage 1.13.2, OpnForm 2.2.2, Adminer 5.5.0, Uptime-Kuma 2.4.0)
+- **🚧 renamed from "Draft" to "Preview"** across every README and standard. The symbol sits on the public axis, so its label should describe the reader's risk ("evaluate it yourself") rather than the maintainer's progress. Historical CHANGELOG and Progress Log entries keep the original wording.
+- **ROADMAP.md** synced after standing still since 2026-06-04. Milestone order deliberately unchanged — nothing in the intervening work blocks v0.7.0. New "Since v0.6.0 — work outside the plan" section places the dependency sweep, the reference app, the four new previews, the Cal.diY track, and the supply-chain work. v0.9.0 now carries measured numbers instead of an estimate (54 apps · 102 services without `deploy.resources.limits` · 41 without a healthcheck).
+
+### Fixed
+
+- **12 unbacked status claims**: `business/` (dolibarr, kimai, listmonk, matomo, zammad, opensign) and all six `monitoring/` services claimed ✅ in the root README while their owning category README said 🚧. The category README was right — all twelve carry the pre-v0.5.1 `Last checked:` field instead of `Last verified: DATE (vX.Y.Z)`, so ✅ Ready criterion 8 was unmet. Root README corrected to 🚧; the new CI job prevents a recurrence.
+- **Dead links on the front page**: the "New here?" line pointed at `core/README.md` and `apps/README.md`, neither of which exists — both 404'd for every visitor. Those two categories are documented per service in the root README tables instead, and the line now says so.
+- **Structure drift cleared**: `core/whoami` had no `.gitignore`, `core/traefik/.env.example` had no `COMPOSE_PROJECT_NAME` (safe to add — its container and network names are set explicitly), and `business/invoiceninja/.env.example` had its sections out of canonical order.
 
 ---
 

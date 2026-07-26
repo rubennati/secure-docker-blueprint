@@ -4,7 +4,7 @@ Self-hosted monitoring stack — covers five axes: **uptime**, **cron / schedule
 
 ## Status
 
-✅ Ready · 🚧 Draft · 📋 Planned
+✅ Ready · 🚧 Preview · 📋 Planned
 
 ### Uptime & status pages
 
@@ -57,9 +57,9 @@ Pick one per axis you care about:
 
 A realistic homelab stack: Kuma OR Gatus + Beszel + changedetection.io. Covers the 90% case. Add `beszel-agent/` on each additional host you want in the metrics view.
 
-## Why four are drafted, six are planned
+## Why these six are in place and six are planned
 
-The four drafted apps cover **four distinct monitoring axes** with minimal overlap. The six planned apps are overlapping alternatives or specialized heavier tools — draft them on demand when the drafted options don't fit.
+The six services in place cover **four distinct monitoring axes** with minimal overlap — uptime (Kuma or Gatus), host and container metrics (Beszel + agent), scheduled-job liveness (Healthchecks), and content change (changedetection.io). The six planned apps are overlapping alternatives or specialized heavier tools — add them on demand when the ones in place don't fit.
 
 Rationale per planned:
 

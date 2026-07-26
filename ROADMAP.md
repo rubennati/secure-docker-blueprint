@@ -52,7 +52,7 @@ Between 2026-06-04 and 2026-07-26 the repo grew in directions this document did 
 |---|---|
 | Repo-wide dependency sweep — every registry-checkable image reviewed, ~50 bumped (`docs/maintenance.md`) | Continuous. ~9 major bumps are pinned but have not yet run on a host; they ride along with the next host session. |
 | Reference app (`apps/_reference/`) + structure checker (`scripts/ci/check-structure.py`) | New capability, not a milestone of its own. Feeds v0.9.0 (it measures the gap) and v1.0 (CI baseline). |
-| Four new drafts — `core/infisical`, `core/euro-office`, `core/collabora`, `business/documenso` | Continuous app work — see the choice-matrix categories below. |
+| Four new previews — `core/infisical`, `core/euro-office`, `core/collabora`, `business/documenso` | Continuous app work — see the choice-matrix categories below. |
 | Cal.com retired (upstream went proprietary), replaced by `apps/caldiy`; phased hardening plan written after an incident on a live host | Own track — `apps/caldiy/docs/hardening-plan.md`. Not tied to a version. |
 | Supply-chain hardening — SHA-pinned GitHub Actions, Trivy with checksum-verified install, OpenSSF badges, branch protection | Closes part of the v1.0 CI baseline below. |
 
@@ -109,13 +109,13 @@ Before v1.0 is tagged:
 - Every app verified at least once on a clean install (continuous — not a last-minute sprint)
 - No `🚧` without a documented reason
 - No `__REPLACE_ME__` in any verified file
-- Honest review of every `🚧 draft` — promote only what was actually verified
+- Honest review of every `🚧 preview` — promote only what was actually verified
 - CI baseline: compose validate, secret scan, markdown lint, image vulnerability scan (✅ Trivy, since v0.6.0), structure checker wired in (`scripts/ci/check-structure.py` — written, not yet running in CI)
 - Secret & Password Generation Standard consolidated into `docs/standards/`
 - Secrets rotation guidance in `docs/standards/`
 - License review — every live app checked against the license policy below
 - **Status freshness system active** — `Last verified` stamps in place, Major upstream updates drop status to `🚧`; tactical work moves to GitHub Issues
-- Lifecycle freshness snapshot is summarized in [LIFECYCLE.md](LIFECYCLE.md).
+- Status model applied end to end — [`docs/standards/status-model.md`](docs/standards/status-model.md) defines what each symbol promises, [LIFECYCLE.md](LIFECYCLE.md) is generated from the owning files, and CI fails on a status claim that is not backed
 
 ---
 
@@ -225,5 +225,5 @@ Expose selected apps via Model Context Protocol for AI-assisted operation. Candi
 
 ## Out of scope here
 
-- `core/acme-certs/` — being extracted to its own repository. The blueprint stub remains as `🚧 draft` but is no longer actively maintained in this repo.
+- `core/acme-certs/` — being extracted to its own repository. The blueprint stub remains as `🚧 preview` but is no longer actively maintained in this repo.
 - Paperless-mcp — template exists in the Paperless CONFIG.md extension notes but will live in its own repo once built.

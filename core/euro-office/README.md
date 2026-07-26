@@ -1,6 +1,6 @@
 # Euro-Office
 
-> **Status: 🚧 Draft** — v9.3.2 · 2026-07-26 · modeled on `core/onlyoffice/`, **not yet verified on a live server**
+> **Status: 🚧 Preview** — v9.3.2 · 2026-07-26 · modeled on `core/onlyoffice/`, **not yet verified on a live server**
 
 EU-governed, open-source **fork of OnlyOffice Document Server** — in-browser editing of
 docx / xlsx / pptx / pdf / odt for Seafile, Nextcloud, or any WOPI-compatible app. Backed by
@@ -43,7 +43,7 @@ docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:8080/healthcheck → "true"   (JWT disabled locally — never in prod)
 ```
 
-## Verify on first deploy (Draft → Ready gate)
+## Verify on first deploy (Preview → Ready gate)
 
 Modeled on the proven OnlyOffice config, but the fork image has not been run here. Confirm:
 
