@@ -64,20 +64,22 @@ Pre-1.0 tags are set when a natural milestone is reached, not on a fixed cadence
 
 ### v0.7.0 — Backup
 
-A working infrastructure is worthless without recovery. Three layers:
+A working infrastructure is worthless without recovery. The architecture is designed in [`backup/README.md`](backup/README.md) — five layers, staged so the floor is reachable before the hardening:
 
-- **Host backup** — Borgmatic with 3-2-1 strategy (local + remote targets), documented restore procedure
-- **App data backup** — volume-level snapshots for stateful apps
-- **Database backup** — per-app DB dump strategy (PostgreSQL, MariaDB, SQLite)
+1. **Snapshot** — explained and bounded, not implemented here (it is not a backup)
+2. **Consistency** — database dumps via Borgmatic's container-aware hooks, covering PostgreSQL, MySQL, MariaDB and SQLite
+3. **File data** — bind mounts and named volumes, both supported without preference
+4. **Off-site** — 3-2-1, encryption, key held off the host, immutability with its real limits stated
+5. **Proof** — restore rehearsal, `borgmatic check`, and run monitoring through the `monitoring/` stacks already in the repo
 
-Each layer gets a blueprint pattern that works across apps, not per-app one-offs.
+The agent runs **on the host**, not in a container — the one deliberate exception to this repository's Docker-only scope, because a containerised agent would need read access to every volume and therefore every secret. Reasoning in `backup/README.md`.
 
-**Restore testing is part of this version** — a backup that has never been restored is a hypothesis, not a backup. At least one full restore walkthrough per layer, documented step by step.
+**Restore testing is part of this version** — a backup that has never been restored is a hypothesis, not a backup. At least one full restore walkthrough, documented step by step.
 
-Two practical notes, both new since this milestone was written:
+Two practical notes:
 
-- Each backup service starts from `apps/_reference/` rather than a hand-rolled skeleton, and is checked with `scripts/ci/check-structure.py` before it lands.
-- The restore walkthroughs need a reachable host with real data — the same precondition as the pending major bumps above. Both are best done in one host session.
+- A backup component that *does* run in a container starts from `apps/_reference/` and is checked with `scripts/ci/check-structure.py`. `backup/borgmatic/` is host-installed and therefore holds configuration and procedure instead of a Compose stack.
+- The restore walkthrough needs a reachable host with real data — the same precondition as the pending major bumps above. Both are best done in one host session.
 
 ### v0.8.0 — Monitoring
 
