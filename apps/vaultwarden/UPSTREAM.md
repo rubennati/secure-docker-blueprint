@@ -6,7 +6,7 @@
 - **Wiki:** https://github.com/dani-garcia/vaultwarden/wiki
 - **License:** GPL-3.0
 - **Origin:** Community · unofficial Bitwarden reimplementation · no single company
-- **Based on version:** 1.36.0
+- **Based on version:** 1.37.0
 - **Last checked:** 2026-06-14
 
 ## What we changed and why
@@ -65,7 +65,7 @@ sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=$(openssl rand -hex 32)|" .env
 sed -i "s|^DB_ROOT_PASSWORD=.*|DB_ROOT_PASSWORD=$(openssl rand -hex 32)|" .env
 
 # 3. Generate Argon2 admin token
-docker run --rm -it vaultwarden/server:1.36.0 /vaultwarden hash
+docker run --rm -it vaultwarden/server:1.37.0 /vaultwarden hash
 # Enter a strong password, copy the $argon2id$... output
 # In .env: replace every $ with $$ then paste as VW_ADMIN_TOKEN
 

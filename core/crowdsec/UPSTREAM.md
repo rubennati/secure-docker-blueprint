@@ -8,7 +8,7 @@
 - **Hub (Collections):** https://hub.crowdsec.net/
 - **License:** MIT
 - **Origin:** France · CrowdSec SAS · EU
-- **Based on version:** v1.7.7
+- **Based on version:** v1.7.8
 - **Last checked:** 2026-04-15
 
 ## Architecture

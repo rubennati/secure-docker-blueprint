@@ -1,6 +1,6 @@
 # Vaultwarden
 
-> **Status: ✅ Ready** — v1.36.0 · 2026-06-14
+> **Status: ✅ Ready** — v1.37.0 · 2026-07-26
 
 Self-hosted Bitwarden-compatible password manager.
 
@@ -63,7 +63,7 @@ sed -i "s|^DB_ROOT_PASSWORD=.*|DB_ROOT_PASSWORD=$(openssl rand -hex 32)|" .env
 ### Step 4: Generate Admin Token (Argon2 Hash)
 
 ```bash
-docker run --rm -it vaultwarden/server:1.36.0 /vaultwarden hash
+docker run --rm -it vaultwarden/server:1.37.0 /vaultwarden hash
 ```
 
 Enter a strong password when prompted. Copy the `$argon2id$...` output.

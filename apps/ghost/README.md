@@ -1,6 +1,6 @@
 # Ghost
 
-> **Status: ✅ Ready** — v6.27.0 · 2026-05-02
+> **Status: ✅ Ready** — v6.54.0 · 2026-07-26
 
 Headless Node.js CMS focused on publishing, newsletters, and paid memberships. This setup runs Ghost with a dedicated MySQL 8 database and an external SMTP relay for member emails. ActivityPub (Fediverse/Mastodon integration) is optional via a separate overlay file.
 
