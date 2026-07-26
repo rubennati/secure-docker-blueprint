@@ -103,6 +103,7 @@ Three patterns for secret handling:
 | [Portainer](core/portainer/) | ✅ | Docker management UI |
 | [Hawser](core/hawser/) | ✅ | Remote Docker agent for Dockhand |
 | [Portainer Agent](core/portainer-agent/) | ✅ | Remote Docker agent for Portainer (multi-host) |
+| [Infisical](core/infisical/) | 🚧 | Central secret manager (self-hosted) — one place for all servers'/apps' secrets. VPN-only |
 
 Planned in `core/`: Keycloak (alternative / heavier IAM next to Authentik).
 
@@ -266,7 +267,8 @@ secure-docker-blueprint/
 │   ├── dockhand/                #   Docker management (Git-based stacks)
 │   ├── hawser/                  #   Remote Docker agent for Dockhand
 │   ├── portainer/               #   Docker management UI
-│   └── portainer-agent/         #   Remote Docker agent for Portainer
+│   ├── portainer-agent/         #   Remote Docker agent for Portainer
+│   └── infisical/               #   Central secret manager (self-hosted)
 │
 ├── apps/                        # General-purpose apps (homelab + company)
 │   ├── dashy/  heimdall/  homarr/  homepage/
