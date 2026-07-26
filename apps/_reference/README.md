@@ -55,6 +55,17 @@ curl http://localhost:8080/          # nginx welcome page = the structure works
 docker compose -f docker-compose.local.yml --env-file .env.local down
 ```
 
+> Both compose files pass `docker compose config` and the security baseline, but
+> the stack has **not been booted yet** — the run above is the outstanding proof.
+
+## Open
+
+- `UPSTREAM.md` — the per-app upstream/upgrade doc every app carries
+- Boot the stack once (above) to confirm it truly runs
+- `scripts/ci/check-structure.py` is not wired into CI yet
+- `docs/templates/` still holds an older skeleton — fold it into this directory
+  so there is only one template
+
 ## Stand-in images (deliberate)
 
 | Service | Image | Demonstrates |

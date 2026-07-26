@@ -22,6 +22,8 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 - **Cal.diy hardening**: `docs/hardening-plan.md` (phased roadmap) and `docs/cloudflare.md` (required proxy layer — WAF, geo allowlist, origin lock); public self-registration disabled; `deploy.resources` caps.
 - **Local test stacks**: `docker-compose.local.yml` added for Cal.diy and the four new services (standalone on localhost, no Traefik/secrets).
 - **Dependency sweep** (`docs/maintenance.md`): repo-wide image-version review with per-service status.
+- **Reference app** (`apps/_reference/`): the canonical, runnable structure every app follows — layer-tagged `.env.example`, production + local compose, secret-injection entrypoint, and a README defining the four review lenses (structure, security, architecture, resources). Copy it to start a new app; diff against it to realign an existing one.
+- **Structure checker** (`scripts/ci/check-structure.py`): reports drift from that structure with severity per rule — FAIL for dangerous (`:latest`/major-only tags, plaintext secrets, unprotected `.secrets/`, datastore on `proxy-public`), WARN for inconsistent (section order, missing resource limits or healthchecks, `env_file:`). Not yet wired into CI.
 
 ### Removed
 
@@ -32,6 +34,8 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 No vulnerabilities in the blueprint's own code. Upstream security image updates + hardening improvements:
 
 - **Upstream security updates applied**: Vaultwarden `1.37.0` (SSRF + 7 fixes), Portainer(+agent) `2.39.5` (containerd/Alpine CVEs), Authentik `2026.5.6`, Nextcloud `32.0.13`, Ghost `6.54.0`, CrowdSec `1.7.8`, Listmonk `6.2.0`, Dolibarr `23.0.3`, Changedetection `0.55.8`
+- **`.secrets/` gitignore gap closed**: the repo-root `.gitignore` matched `**/secrets/`, which does **not** match the dot-prefixed `.secrets/` every app actually uses — an app without its own `.gitignore` could have committed real secret files. `**/.secrets/` now covers them repo-wide.
+- **Non-reproducible image tags pinned**: `paperless-ngx` postgres `16 → 16.14`, `opensign` mongo `6 → 6.0`, `opnform` nginx `1 → 1.29` — major-only tags silently move to new majors.
 
 - **OpenSSF Best Practices badge**: registered at www.bestpractices.dev (project [#13091](https://www.bestpractices.dev/projects/13091)), 87% passing score
 - **GitHub Actions hardening**: all workflow actions pinned to commit SHAs across `ci.yml`, `trivy.yml`, and `scorecard.yml`; workflow-level `permissions: read-all` set on `ci.yml` and `trivy.yml`; `security-events: write` scoped to the single job that uploads SARIF in `trivy.yml`; Dependabot enabled for the `github-actions` ecosystem (weekly, grouped)
