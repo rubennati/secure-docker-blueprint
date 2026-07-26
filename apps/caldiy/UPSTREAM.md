@@ -9,8 +9,8 @@
 - **Docs:** https://cal.diy/docs
 - **License:** MIT
 - **Relationship:** Community-edition spin-out of Cal.com (2026, after Cal.com moved its production code behind a closed-source licence). This blueprint consumes the **hardened fork**, not upstream directly.
-- **Based on version:** `v6.2.0` (fork release `v6.2.0-3`)
-- **Last verified:** 2026-07-26
+- **Based on version:** `v6.2.0` (fork release `v6.2.0-4`)
+- **Last verified:** 2026-07-26 (v6.2.0-3)
 
 ## Why a fork?
 
@@ -39,7 +39,7 @@ Consume **only** a reviewed tag or digest from `release` — never `latest`.
 
 ## What we use
 
-- `ghcr.io/rubennati/cal.diy:v6.2.0-3` — built from the `rubennati/cal.diy` (cal.forte) fork's `release` branch
+- `ghcr.io/rubennati/cal.diy:v6.2.0-4` — built from the `rubennati/cal.diy` (cal.forte) fork's `release` branch
 - `postgres:17.4` as primary backend
 - `redis:7.4-alpine` for session cache and job queue (required by upstream)
 - Custom entrypoint (`config/entrypoint.sh`) injects all secrets from Docker Secret files
@@ -83,8 +83,8 @@ When upstream releases a new version, follow the fork's `UPSTREAM_SYNC.md` + `SE
    - **Sync `main`** from upstream (1:1 mirror, no edits)
    - `git checkout develop && git merge main` → **review the diff per `SECURITY_REVIEW.md`**, adjust CI/`.github` as needed
    - Promote `develop → release` only once the review gate passes
-   - `git checkout release && git pull && git tag v6.2.0-4 && git push origin v6.2.0-4` → image built automatically
-   - Fork release tags carry a `-N` suffix (`v6.2.0-3`, `v6.2.0-4`, …) so a fork rebuild is distinct from the upstream base version
+   - `git checkout release && git pull && git tag v6.2.0-5 && git push origin v6.2.0-5` → image built automatically
+   - Fork release tags carry a `-N` suffix (`v6.2.0-4`, `v6.2.0-5`, …) so a fork rebuild is distinct from the upstream base version
 3. Back up before upgrading:
    ```bash
    docker compose exec db sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' \
