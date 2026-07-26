@@ -1,8 +1,10 @@
 # Cal.diy
 
-> **Status: ✅ Ready** — v6.2.0 · 2026-05-04
+> **Status: ✅ Ready** — v6.2.0-2 · 2026-07-26
 
 > **Note:** Cal.diy is the MIT-licensed community edition of Cal.com, spun out in 2026 when Cal.com moved its production codebase behind a closed-source licence. Upstream explicitly labels Cal.diy as "strictly for personal, non-production use" with no security guarantees. **Do not use for business-critical scheduling** without understanding that trade-off.
+
+> **⚠️ Cloudflare (proxied) is a required layer for this deployment.** Because Cal.diy is community-maintained and not confirmed secure — and because a live instance was compromised once (SMTP credential exfiltrated) — this blueprint runs Cal.diy **behind Cloudflare as a proxy (orange cloud), not DNS-only**, as a mandatory extra layer: WAF, geo allowlist on the human-facing surface, rate limiting, and origin hiding. Exact settings: **[docs/cloudflare.md](docs/cloudflare.md)**. The full post-incident hardening roadmap: **[docs/hardening-plan.md](docs/hardening-plan.md)**.
 
 For an alternative with an established track record and no build dependency, see [`apps/easyappointments/`](../easyappointments/) (PHP + MariaDB, GPL-3.0).
 
@@ -10,11 +12,11 @@ For an alternative with an established track record and no build dependency, see
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `ghcr.io/rubennati/cal.diy:v6.2.0` | Next.js web app + scheduling engine |
+| `app` | `ghcr.io/rubennati/cal.diy:v6.2.0-2` | Next.js web app + scheduling engine |
 | `db` | `postgres:17.4` | Users, event types, bookings, team memberships |
 | `redis` | `redis:7.4-alpine` | Session cache + job queue |
 
-The image is built from [`rubennati/cal.diy`](https://github.com/rubennati/cal.diy) — a fork of the upstream that publishes versioned images to GHCR. Upstream does not publish a reliable pre-built image.
+The image is built from [`rubennati/cal.diy`](https://github.com/rubennati/cal.diy) — the security-first, review-gated **cal.forte** fork that publishes reviewed, versioned images to GHCR (never `latest`). Upstream does not publish a reliable pre-built image. See [UPSTREAM.md](UPSTREAM.md).
 
 ## Setup
 
@@ -49,10 +51,15 @@ docker compose logs app --follow
 # Setup wizard runs on first visit — first user becomes the owner.
 ```
 
+> **Before exposing publicly:** put the host behind Cloudflare (proxied) and apply
+> [docs/cloudflare.md](docs/cloudflare.md) — WAF, geo allowlist, and origin hiding are part of
+> this deployment's security model, not optional extras.
+
 ## Security Model
 
 | Concern | How handled |
 |---------|-------------|
+| Edge protection (Cloudflare) | **Required** proxied layer — WAF, geo allowlist on the human surface, rate limiting, origin hiding. See [docs/cloudflare.md](docs/cloudflare.md) |
 | DB password | Docker Secret (`db_pwd.txt`) — never in `.env` |
 | `NEXTAUTH_SECRET` | Docker Secret (`nextauth_secret.txt`) — never in `.env` |
 | `CALENDSO_ENCRYPTION_KEY` | Docker Secret (`encryption_key.txt`) — never in `.env` |
@@ -63,12 +70,13 @@ docker compose logs app --follow
 | Postgres | `app-internal` network (`internal: true`) — not reachable from host |
 | Redis | `app-internal` (`internal: true`), `read_only: true`, `cap_drop: ALL`, `pids_limit: 50` |
 | Host header injection | `ALLOWED_HOSTNAMES` set to deployment hostname |
+| Public self-registration | Disabled — `NEXT_PUBLIC_DISABLE_SIGNUP=true` (no open account creation) |
 | HTTP security headers | Traefik `sec-3` chain (`APP_TRAEFIK_SECURITY`) — strict HSTS, Referrer-Policy, Permissions-Policy, CSP report-only. See [Security chain (sec-3)](#security-chain-sec-3) below. |
 | Privilege escalation | `no-new-privileges:true` on all services |
 | Capability restriction | `cap_drop: ALL` on all services |
 | Process count | `pids_limit` on all services (app: 200, db: 100, redis: 50) |
-| Resource limits | Not yet configured — add `deploy.resources` after measuring memory under load |
-| CrowdSec enforcement | Not yet attached — see [ops-runbook.md](docs/ops-runbook.md) Phase 2 steps |
+| Resource limits | Interim caps set — `deploy.resources` (memory/cpus/pids) on all three services; retune after measuring under load |
+| CrowdSec enforcement | Not yet attached — roadmap in [docs/hardening-plan.md](docs/hardening-plan.md) Phase 2; steps in [ops-runbook.md](docs/ops-runbook.md) §6 |
 | Community-maintained security | No Cal.com, Inc. incident response — watch upstream releases manually |
 
 ### Security chain (sec-3)
@@ -137,6 +145,8 @@ For the emergency rotation procedure and ongoing monitoring, see [docs/ops-runbo
 
 ## Details
 
-- [UPSTREAM.md](UPSTREAM.md) — upstream reference, upgrade checklist, gotchas
+- [docs/hardening-plan.md](docs/hardening-plan.md) — post-incident hardening roadmap (surface reduction, CrowdSec, geo)
+- [docs/cloudflare.md](docs/cloudflare.md) — required Cloudflare settings (WAF, geo allowlist, rate limiting, origin hiding)
+- [UPSTREAM.md](UPSTREAM.md) — fork (cal.forte) reference, upgrade checklist, gotchas
 - [docs/ops-runbook.md](docs/ops-runbook.md) — deployment, secret rotation, SMTP, CrowdSec, emergency kill-switch
 - Sibling: [`apps/easyappointments/`](../easyappointments/) — PHP-stack alternative, no build dependency

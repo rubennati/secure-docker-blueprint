@@ -3,32 +3,43 @@
 ## Source
 
 - **Project site:** https://cal.diy/
-- **Upstream GitHub:** https://github.com/calcom/cal.diy
-- **Fork (image source):** https://github.com/rubennati/cal.diy
+- **Upstream (ultimate):** https://github.com/calcom/cal.diy — the community edition our fork's `main` mirrors 1:1
+- **Fork (image source):** https://github.com/rubennati/cal.diy — **cal.forte**, a security-first, review-gated fork
 - **Image registry:** `ghcr.io/rubennati/cal.diy`
 - **Docs:** https://cal.diy/docs
 - **License:** MIT
-- **Relationship:** Community-edition spin-out of Cal.com, announced 2026 after Cal.com moved its production code behind a closed-source licence
-- **Based on version:** `v6.2.0`
-- **Last verified:** 2026-05-04
+- **Relationship:** Community-edition spin-out of Cal.com (2026, after Cal.com moved its production code behind a closed-source licence). This blueprint consumes the **hardened fork**, not upstream directly.
+- **Based on version:** `v6.2.0` (fork release `v6.2.0-2`)
+- **Last verified:** 2026-07-26
 
 ## Why a fork?
 
-Upstream (`calcom/cal.diy`) does not publish a reliable pre-built Docker image.
-The `rubennati/cal.diy` fork exists solely to build versioned images and push them to
-`ghcr.io/rubennati/cal.diy` via GitHub Actions.
+Two reasons — and the second reshaped the fork in 2026:
+
+1. **Reliable images.** Upstream (`calcom/cal.diy`) does not publish a dependable pre-built
+   Docker image. The fork builds versioned images and pushes them to `ghcr.io/rubennati/cal.diy`.
+2. **Security control.** After a compromise on a live instance (the SMTP credential was
+   exfiltrated), the fork was restructured as **cal.forte** — a security-first, **review-gated**
+   fork. Every upstream change is reviewed before it can reach a deployable image, so the
+   blueprint no longer rides on the upstream community's security cadence.
+
+Governance lives in the fork — read these before cutting a release: `FORK_PROCESS.md` (branch
+contract + allowed divergence), `UPSTREAM_SYNC.md` (security-first sync rules), `SECURITY_REVIEW.md`
+(the review gate), `IMAGE_BUILD.md`, `RELEASE_PROCESS.md`.
 
 Branch model of the fork:
 
 | Branch | Purpose |
 |--------|---------|
-| `main` | 1:1 mirror of `calcom/cal.diy:main` — updated via Sync Fork |
-| `develop` | Merge target — upstream changes land here first, CI files adjusted |
-| `release` | Tagged branch — every `v*` tag triggers a Docker image build |
+| `main` | Untouched 1:1 mirror of `calcom/cal.diy` — **not deployable** |
+| `develop` | Integration & review branch — upstream changes land and are reviewed here; **not deployable** |
+| `release` | Reviewed source for image publication — every `v*` tag here triggers a Docker image build |
+
+Consume **only** a reviewed tag or digest from `release` — never `latest`.
 
 ## What we use
 
-- `ghcr.io/rubennati/cal.diy:v6.2.0` — built from `rubennati/cal.diy` fork
+- `ghcr.io/rubennati/cal.diy:v6.2.0-2` — built from the `rubennati/cal.diy` (cal.forte) fork's `release` branch
 - `postgres:17.4` as primary backend
 - `redis:7.4-alpine` for session cache and job queue (required by upstream)
 - Custom entrypoint (`config/entrypoint.sh`) injects all secrets from Docker Secret files
@@ -65,20 +76,21 @@ For a self-hosting blueprint that explicitly targets OSS-first deployments, Cal.
 
 ## Upgrade checklist
 
-When upstream releases a new version:
+When upstream releases a new version, follow the fork's `UPSTREAM_SYNC.md` + `SECURITY_REVIEW.md`:
 
 1. Watch [Cal.diy GitHub releases](https://github.com/calcom/cal.diy/releases)
-2. In `rubennati/cal.diy` fork:
-   - GitHub: **Sync Fork** → merges upstream into `main`
-   - `git checkout develop && git pull && git merge main` → resolve any `.github/` conflicts
-   - PR `develop → release` on GitHub → merge
-   - `git checkout release && git pull && git tag vX.Y.Z && git push origin vX.Y.Z` → image built automatically
+2. In the `rubennati/cal.diy` (cal.forte) fork:
+   - **Sync `main`** from upstream (1:1 mirror, no edits)
+   - `git checkout develop && git merge main` → **review the diff per `SECURITY_REVIEW.md`**, adjust CI/`.github` as needed
+   - Promote `develop → release` only once the review gate passes
+   - `git checkout release && git pull && git tag v6.2.0-3 && git push origin v6.2.0-3` → image built automatically
+   - Fork release tags carry a `-N` suffix (`v6.2.0-2`, `v6.2.0-3`, …) so a fork rebuild is distinct from the upstream base version
 3. Back up before upgrading:
    ```bash
    docker compose exec db sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' \
      > caldiy-$(date +%Y%m%d).sql
    ```
-4. Bump `APP_TAG` in `.env`
+4. Bump `APP_TAG` in `.env` to the new reviewed tag (or pin the digest — see `.env.example`)
 5. `docker compose pull && docker compose up -d`
 6. Watch Prisma migrations on first boot:
    ```bash
@@ -111,7 +123,7 @@ docker compose logs app --follow --tail 50
 - **Feature set is reduced vs. Cal.com** — Teams, Organisations, advanced Insights, SSO/SAML, Workflows removed
 - **Community-maintained security cadence** — no dedicated security team; watch [releases](https://github.com/calcom/cal.diy/releases) manually
 
-## Gotchas found during live testing (v6.2.0)
+## Known gotchas (v6.2.0)
 
 ### 1. Base64/special-character passwords break the `postgresql://` URL
 

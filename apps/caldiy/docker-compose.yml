@@ -25,7 +25,18 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
-    pids_limit: 100
+    # --- Resources ---
+    # Interim caps — measure real peak with `docker stats` and retune to ~2× peak.
+    # An unbounded container is a free cryptominer/DoS host after a break-in.
+    # pids is folded in here: a top-level pids_limit conflicts with deploy.resources.
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "0.50"
+          pids: 100
+        reservations:
+          memory: 128m
 
     # --- Configuration ---
     environment:
@@ -70,7 +81,16 @@ services:
     tmpfs:
       - /run
       - /tmp
-    pids_limit: 50
+    # --- Resources ---
+    # Interim caps — retune after measuring with `docker stats`.
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.25"
+          pids: 50
+        reservations:
+          memory: 64m
 
     # --- Storage ---
     volumes:
@@ -107,7 +127,17 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
-    pids_limit: 200
+    # --- Resources ---
+    # Interim caps — Next.js runtime is memory-hungry; measure with `docker stats`
+    # under real load and retune to ~2× peak. Bounds a compromised app.
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          cpus: "2.00"
+          pids: 200
+        reservations:
+          memory: 512m
 
     # --- Configuration ---
     # Custom entrypoint reads all secrets from /run/secrets/ before start.sh runs.
@@ -154,6 +184,8 @@ services:
       EMAIL_SERVER_USER: ${EMAIL_SERVER_USER}
       # Logging (0=silly … 6=fatal; 3=info+ recommended for production)
       NEXT_PUBLIC_LOGGER_LEVEL: ${NEXT_PUBLIC_LOGGER_LEVEL}
+      # Attack surface — disable public self-registration (see .env)
+      NEXT_PUBLIC_DISABLE_SIGNUP: ${NEXT_PUBLIC_DISABLE_SIGNUP}
       # Calendar integrations — optional; leave empty / false to disable
       GOOGLE_LOGIN_ENABLED: ${GOOGLE_LOGIN_ENABLED}
       GOOGLE_API_CREDENTIALS: ${GOOGLE_API_CREDENTIALS}
