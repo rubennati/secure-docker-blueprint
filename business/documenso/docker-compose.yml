@@ -1,0 +1,184 @@
+# =============================================================================
+# Documenso — open-source document signing (DocuSign alternative)
+# =============================================================================
+# Image: documenso/documenso (https://hub.docker.com/r/documenso/documenso)
+# Source: https://github.com/documenso/documenso
+#
+# Requires a signing certificate (.p12) mounted at /opt/documenso/cert.p12 —
+# generate it before first start (see .env.example "Signing certificate").
+# Sibling e-sign option: business/opensign/.
+# =============================================================================
+
+services:
+
+  # --------------------------------------------------------
+  # DATABASE (PostgreSQL)
+  # --------------------------------------------------------
+  db:
+    # --- Identity ---
+    image: postgres:${DB_TAG}
+    container_name: ${CONTAINER_NAME_DB}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+    # --- Resources ---
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "0.50"
+          pids: 100
+        reservations:
+          memory: 128m
+
+    # --- Configuration ---
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/DB_PWD
+      TZ: ${TZ}
+    secrets:
+      - DB_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/postgres:/var/lib/postgresql/data
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME} -h 127.0.0.1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # --------------------------------------------------------
+  # DOCUMENSO (Remix web app + API)
+  # --------------------------------------------------------
+  app:
+    # --- Identity ---
+    image: documenso/documenso:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+    # --- Resources ---
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 256m
+
+    # --- Configuration ---
+    # No _FILE support — entrypoint.sh injects secrets from /run/secrets/ then
+    # execs the image CMD (sh start.sh, which runs Prisma migrations on boot).
+    working_dir: /app/apps/remix
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
+    command: ["sh", "start.sh"]
+    environment:
+      TZ: ${TZ}
+      PORT: "3000"
+      # DB credentials used by entrypoint.sh to build the connection URL
+      DB_USER: ${DB_USER}
+      DB_NAME: ${DB_NAME}
+      NEXT_PUBLIC_WEBAPP_URL: https://${APP_TRAEFIK_HOST}
+      NEXT_PRIVATE_INTERNAL_WEBAPP_URL: http://127.0.0.1:3000
+      NEXT_PUBLIC_UPLOAD_TRANSPORT: database
+      # Signing — local .p12 mounted below; passphrase injected from Docker Secret
+      NEXT_PRIVATE_SIGNING_TRANSPORT: local
+      NEXT_PRIVATE_SIGNING_LOCAL_FILE_PATH: /opt/documenso/cert.p12
+      # Email — password injected by entrypoint from Docker Secret
+      NEXT_PRIVATE_SMTP_FROM_NAME: ${SMTP_FROM_NAME}
+      NEXT_PRIVATE_SMTP_FROM_ADDRESS: ${SMTP_FROM_ADDRESS}
+      NEXT_PRIVATE_SMTP_HOST: ${SMTP_HOST}
+      NEXT_PRIVATE_SMTP_PORT: ${SMTP_PORT}
+      NEXT_PRIVATE_SMTP_USERNAME: ${SMTP_USERNAME}
+    secrets:
+      - DB_PWD
+      - NEXTAUTH_SECRET
+      - ENCRYPTION_KEY
+      - ENCRYPTION_SECONDARY_KEY
+      - SIGNING_PASSPHRASE
+      - SMTP_PASSWORD
+
+    # --- Storage ---
+    volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
+      - ./.secrets/cert.p12:/opt/documenso/cert.p12:ro
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+      - app-internal
+
+    # --- Traefik ---
+    labels:
+      # Router
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      # TLS
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Middlewares
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      # Service
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:3000/',r=>process.exit(r.statusCode<500?0:1)).on('error',()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  DB_PWD:
+    file: ./.secrets/db_pwd.txt
+  NEXTAUTH_SECRET:
+    file: ./.secrets/nextauth_secret.txt
+  ENCRYPTION_KEY:
+    file: ./.secrets/encryption_key.txt
+  ENCRYPTION_SECONDARY_KEY:
+    file: ./.secrets/encryption_secondary_key.txt
+  SIGNING_PASSPHRASE:
+    file: ./.secrets/signing_passphrase.txt
+  SMTP_PASSWORD:
+    file: ./.secrets/smtp_password.txt

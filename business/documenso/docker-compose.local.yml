@@ -1,0 +1,76 @@
+# =============================================================================
+# Documenso — LOCAL test stack (no Traefik, no Docker Secrets)
+# =============================================================================
+# Run standalone on http://localhost:3000. Secrets as plain env from .env.local
+# (gitignored) — NOT for production. Prod uses docker-compose.yml (Traefik + Secrets).
+#
+#   cp .env.local.example .env.local            # fill values (openssl one-liners inside)
+#   # generate .secrets/cert.p12 first (see .env.example "Signing certificate")
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   # http://localhost:3000 — create the first account
+# =============================================================================
+
+services:
+
+  db:
+    image: postgres:${DB_TAG}
+    container_name: documenso-local-db
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      TZ: ${TZ}
+    volumes:
+      - ./volumes/local/postgres:/var/lib/postgresql/data
+    networks: [documenso-local]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  app:
+    image: documenso/documenso:${APP_TAG}
+    container_name: documenso-local-app
+    restart: unless-stopped
+    depends_on:
+      db: {condition: service_healthy}
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    working_dir: /app/apps/remix
+    # No secret-injector entrypoint here — all secrets arrive as plain env below.
+    environment:
+      TZ: ${TZ}
+      PORT: "3000"
+      NEXT_PRIVATE_DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+      NEXT_PRIVATE_DIRECT_DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+      NEXT_PUBLIC_WEBAPP_URL: http://localhost:3000
+      NEXT_PRIVATE_INTERNAL_WEBAPP_URL: http://127.0.0.1:3000
+      NEXT_PUBLIC_UPLOAD_TRANSPORT: database
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      NEXT_PRIVATE_ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      NEXT_PRIVATE_ENCRYPTION_SECONDARY_KEY: ${ENCRYPTION_SECONDARY_KEY}
+      NEXT_PRIVATE_SIGNING_TRANSPORT: local
+      NEXT_PRIVATE_SIGNING_LOCAL_FILE_PATH: /opt/documenso/cert.p12
+      NEXT_PRIVATE_SIGNING_PASSPHRASE: ${SIGNING_PASSPHRASE}
+      NEXT_PRIVATE_SMTP_FROM_NAME: Documenso
+      NEXT_PRIVATE_SMTP_FROM_ADDRESS: documenso@localhost
+    volumes:
+      - ./.secrets/cert.p12:/opt/documenso/cert.p12:ro
+    ports:
+      - "127.0.0.1:3000:3000"   # localhost only; change to 3000:3000 for LAN access
+    networks: [documenso-local]
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:3000/',r=>process.exit(r.statusCode<500?0:1)).on('error',()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+networks:
+  documenso-local:
+    name: documenso-local

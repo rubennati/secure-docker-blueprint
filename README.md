@@ -215,6 +215,7 @@ See [`business/README.md`](business/README.md) for the full category README + ro
 | [Matomo](business/matomo/) | Web analytics | ✅ | GDPR-compliant, full-featured (Google Analytics alternative) |
 | [Zammad](business/zammad/) | Helpdesk | ✅ | Full 7-service helpdesk / ticketing / SLA |
 | [OpenSign](business/opensign/) | E-signatures | ✅ | DocuSign alternative, eIDAS-capable |
+| [Documenso](business/documenso/) | E-signatures | 🚧 | DocuSign alternative (Remix + Postgres, local signing cert) |
 
 Planned: Ackee, Plausible CE, Live Helper Chat, Eramba GRC.
 
@@ -285,7 +286,7 @@ secure-docker-blueprint/
 ├── business/                    # Company-only apps
 │   ├── openproject/  vikunja/
 │   ├── invoiceninja/  dolibarr/  kimai/
-│   ├── listmonk/  matomo/  zammad/  opensign/
+│   ├── listmonk/  matomo/  zammad/  opensign/  documenso/
 │   └── ...
 │
 ├── monitoring/                  # Ops observability
