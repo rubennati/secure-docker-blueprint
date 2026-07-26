@@ -26,6 +26,9 @@ archive/
 # Secrets (passwords, tokens, keys)
 # -----------------------------------------
 **/secrets/
+# Dot-prefixed variant — the convention every app actually uses. `**/secrets/`
+# does NOT match `.secrets/`, so this line is what protects them repo-wide.
+**/.secrets/
 
 # -----------------------------------------
 # OS and editor files
