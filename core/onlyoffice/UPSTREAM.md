@@ -8,7 +8,7 @@
 - **Config reference:** https://github.com/ONLYOFFICE/DocumentServer/blob/master/Docker/README.md
 - **License:** AGPL-3.0
 - **Origin:** Latvia · Ascensio System SIA · EU
-- **Based on version:** `9.3.1.2` (Document Server Community)
+- **Based on version:** `9.4.0` (Document Server Community)
 - **Last checked:** 2026-06-14
 
 ## What we use

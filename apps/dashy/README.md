@@ -1,6 +1,6 @@
 # Dashy
 
-> **Status: ✅ Ready** — v4.0.4 · 2026-05-02
+> **Status: ✅ Ready** — v4.5.0 · 2026-07-26
 
 Self-hosted homelab dashboard. Config-driven via a single YAML file; the UI re-builds when the config changes.
 

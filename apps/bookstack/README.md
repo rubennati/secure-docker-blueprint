@@ -1,6 +1,6 @@
 # BookStack
 
-> **Status: ✅ Ready** — v25.02 · 2026-05-03
+> **Status: ✅ Ready** — v26.05.2 · 2026-07-26
 
 Self-hosted wiki / knowledge base. Three-level structure: Shelves → Books → Chapters → Pages. Built on Laravel (PHP) with a MariaDB backend.
 

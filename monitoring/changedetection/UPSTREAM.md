@@ -7,7 +7,7 @@
 - **Registry:** `ghcr.io/dgtlmoon/changedetection.io`
 - **License:** Apache-2.0
 - **Origin:** Australia · dgtlmoon · non-EU
-- **Based on version:** `0.55.3`
+- **Based on version:** `0.55.8`
 - **Last checked:** 2026-05-03
 
 ## What we use

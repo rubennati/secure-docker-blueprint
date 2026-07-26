@@ -7,7 +7,7 @@
 - **Docs:** https://homarr.dev/
 - **License:** MIT (fork heritage: originally forked from `ajnart/homarr`; current maintainer `homarr-labs`)
 - **Origin:** Community · homarr-labs · EU contributors
-- **Based on version:** `v1.60.0`
+- **Based on version:** `v1.72.0`
 - **Last verified:** 2026-05-02 (v1.60.0)
 
 ## What we use

@@ -7,7 +7,7 @@
 - **Docs:** https://docs.portainer.io/
 - **License:** zlib
 - **Origin:** New Zealand · Portainer.io Ltd · non-EU
-- **Based on version:** `2.39.1` (Community Edition)
+- **Based on version:** `2.39.5` (Community Edition)
 - **Last checked:** 2026-04-16
 
 Note: this setup uses Portainer **CE** (Community Edition). Portainer Business Edition (`portainer/portainer-ee`) is a different paid product with additional features and a different license — not used here.

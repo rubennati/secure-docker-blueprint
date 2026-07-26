@@ -1,6 +1,6 @@
 # Portainer Agent
 
-> **Status: ✅ Ready** — v2.39.1 · 2026-05-04
+> **Status: ✅ Ready** — v2.39.5 · 2026-07-26
 
 Remote Docker agent for [Portainer](../portainer/). Runs on each additional host that a central Portainer should manage.
 

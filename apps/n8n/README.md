@@ -1,6 +1,6 @@
 # n8n
 
-> **Status: ✅ Ready** — v2.19.2 · 2026-05-02
+> **Status: ✅ Ready** — v2.31.6 · 2026-07-26
 
 Workflow automation — visual builder for chaining HTTP calls, webhooks, scheduled jobs, and a large library of third-party integrations (Slack, Airtable, OpenAI, databases, etc.). Free self-hosted Community Edition.
 
