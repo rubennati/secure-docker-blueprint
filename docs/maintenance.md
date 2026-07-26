@@ -200,9 +200,21 @@ it-tools (2024.10.22, dormant) · beszel + agent (0.18.7)
 - **Floating major tags** — matomo `5-apache`, opnform/invoiceninja nginx `1`/`1.29`, clamav `1.4`. Pin specific (contrast: caldiy is digest-pinned).
 - **`main` and `dev` diverged** — Dependabot bumps on `main`, app work on `dev`. Converge.
 
-### Not yet verified — finish the sweep
+### Sweep status (2026-07-26)
 
-adminer · easyappointments · heimdall · homepage · librephotos · lycheeorg · monicahq · photoview · seafile / seafile-pro · unifi · matomo · vikunja · zammad (no GH releases → docker tags) · uptime-kuma (2.4.0 reported — verify 2.x-stable) · opnform · core: acme-certs, dnsmasq, dockhand, hawser, whoami (mostly internal / low-risk)
+**Verified current (no action):** it-tools · beszel(+agent) · monicahq 4.1.2 · photoview 2.4.0
+
+**Bumped this session (3rd wave):** easyappointments 1.6.0 · lychee v7.7.1 · librephotos 2026w25 · heimdall v2.8.1 · homepage v1.13.2 🚧 · opnform 2.2.2 🚧
+
+**Still open — operator-tracked / floating / awkward source:**
+- seafile / seafile-pro — proprietary versioning; operator-tracked
+- matomo `5-apache` — floating major; pin a specific `5.x.y`
+- unifi — via `linuxserver/unifi-network-application` tags (tracks Ubiquiti)
+- zammad — no GH releases; check Docker Hub tags
+- vikunja — moved to codeberg (`code.vikunja.io`)
+- uptime-kuma — 2.4.0 reported stable; verify the 1.x→2.x transition before bumping
+- adminer — check `_/adminer` (5.x may exist)
+- core internal (acme-certs, dnsmasq, dockhand, hawser, whoami) — low-risk/internal, low priority
 
 ---
 
@@ -229,3 +241,4 @@ One row per session or chain run. The next session starts here — not at the to
 | 2026-07-26 | Version Chain | 5 security-critical images | Bumped vaultwarden 1.37.0, authentik 2026.5.6, nextcloud 32.0.13, ghost 6.54.0, crowdsec 1.7.8 (+ `.env.example`, `UPSTREAM.md`, README status/verified dates). Not deploy-tested — server offline. | Verify on next deploy. |
 | 2026-07-26 | Version Chain | Repo-wide dependency sweep (~30 of ~50 verified) | Checked pinned tags vs. upstream; recorded results in "Dependency Sweep — 2026-07-26". | Pending high: wordpress 7.0.2, listmonk 6.2, portainer 2.39.5, dolibarr 23.0.3, changedetection 0.55.8, bookstack, photoprism; majors to verify: immich 3.x, paperless 3.x, healthchecks 4.x. Structural: opensign pinned to `main`; floating tags; `main`/`dev` diverged. ~15 services not yet verified. |
 | 2026-07-26 | Version Chain | 20 more image pins + opensign | Applied the pending sweep updates (wordpress 7.0.2🚧, immich 3.0.3🚧, healthchecks 4.2🚧, nocodb CalVer🚧 + 16 minor/patch); digest-pinned opensign `main` (no semver tags upstream). Not deploy-tested. | Verify majors on deploy; core/traefik 3.7 optional; ~15 services still unchecked. |
+| 2026-07-26 | Version Chain | Finish sweep (3rd wave) | Bumped easyappointments 1.6.0, lychee v7.7.1, librephotos 2026w25, heimdall v2.8.1, homepage v1.13.2🚧, opnform 2.2.2🚧; monicahq/photoview confirmed current. caldiy → v6.2.0-3 (new digest). Merged `main`→`dev`. | Operator-tracked (seafile) / floating (matomo) / awkward-source (unifi, zammad, vikunja, uptime-kuma, adminer) remain — see Sweep status. |
