@@ -1,0 +1,96 @@
+services:
+
+  # --------------------------------------------------------
+  # COLLABORA ONLINE (CODE)
+  # LibreOffice-based online office — lightweight document editing
+  # server (~1 GB idle vs ~4 GB for OnlyOffice/Euro-Office). Stateless,
+  # single container. Embedded via WOPI by Seafile / Nextcloud.
+  # --------------------------------------------------------
+  app:
+    # --- Identity ---
+    image: collabora/code:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+
+    # --- Security ---
+    # cap_add MKNOD: Collabora builds a per-document LibreOffice jail (chroot)
+    # and needs mknod for it. no-new-privileges is kept per baseline — if the
+    # sandbox fails to start on your host, that is the first thing to relax.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - MKNOD
+
+    # --- Resources ---
+    deploy:
+      resources:
+        limits:
+          memory: 1536m
+          cpus: "1.50"
+          pids: 300
+        reservations:
+          memory: 256m
+
+    # --- Configuration ---
+    environment:
+      # aliasgroup1 = regex of the host(s) allowed to embed Collabora via WOPI.
+      # Escape the dots. Example: https://cloud\.example\.com:443
+      aliasgroup1: ${COLLABORA_ALIASGROUP}
+      server_name: ${APP_TRAEFIK_HOST}
+      # TLS is terminated at Traefik — Collabora serves plain HTTP internally.
+      DONT_GEN_SSL_CERT: "true"
+      extra_params: "--o:ssl.enable=false --o:ssl.termination=true"
+      TZ: ${TZ}
+      # Admin console is OFF by default (an attack surface). To enable, set
+      # username + a password here and restrict /browser/.../admin at the proxy.
+      #username: admin
+      #password: __set_in_env__
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+
+    # --- Traefik ---
+    # Embedded in iframes by Seafile/Nextcloud → iframe-friendly middleware
+    # (CSP frame-ancestors) instead of the standard sec-* chains (frameDeny).
+    labels:
+      # Router
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      # TLS
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Middlewares (access + custom proto + custom headers)
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${COMPOSE_PROJECT_NAME}-proto@docker,${COMPOSE_PROJECT_NAME}-headers@docker"
+      # Proxy headers: Collabora runs with ssl.termination=true and needs X-Forwarded-Proto.
+      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-proto.headers.customrequestheaders.X-Forwarded-Proto=https"
+      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-proto.headers.customrequestheaders.X-Forwarded-Host=${APP_TRAEFIK_HOST}"
+      # Security headers: equivalent to hdr-basic but iframe-friendly.
+      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.browserXssFilter=true"
+      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.contentTypeNosniff=true"
+      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.forceSTSHeader=true"
+      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.stsSeconds=63072000"
+      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.contentSecurityPolicy=frame-ancestors 'self' ${COLLABORA_ALLOWED_ORIGINS}"
+      # Service
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+
+    # --- Health & Observability ---
+    # Collabora image has bash — TCP liveness on 9980 (no curl guaranteed).
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'cat < /dev/null > /dev/tcp/127.0.0.1/9980' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
