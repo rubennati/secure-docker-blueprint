@@ -1,0 +1,33 @@
+# =============================================================================
+# Euro-Office — LOCAL test stack (no Traefik, no Docker Secrets)
+# =============================================================================
+# Run the document server standalone on http://localhost:8080 to check it boots.
+# JWT is disabled for local-only convenience — NOT for production.
+# Production uses docker-compose.yml (Traefik + JWT via Docker Secret).
+#
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   # http://localhost:8080/healthcheck  → "true";  http://localhost:8080/ → welcome page
+# =============================================================================
+
+services:
+
+  app:
+    image: ghcr.io/euro-office/documentserver:${APP_TAG}
+    container_name: euro-office-local-app
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    environment:
+      JWT_ENABLED: "false"   # local only — never disable JWT in production
+      WOPI_ENABLED: "true"
+      TZ: ${TZ}
+    volumes:
+      - ./volumes/local/data:/var/www/onlyoffice/Data
+      - ./volumes/local/logs:/var/log/onlyoffice
+    ports:
+      - "127.0.0.1:8080:80"   # localhost only; change to 8080:80 for LAN access
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1/healthcheck >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s

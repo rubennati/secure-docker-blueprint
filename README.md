@@ -95,6 +95,7 @@ Three patterns for secret handling:
 | [Traefik](core/traefik/) | ✅ | Reverse proxy with Socket Proxy, 5 security levels, 3 TLS profiles, access policies |
 | [Authentik](core/authentik/) | ✅ | SSO / Identity Provider for centralized authentication (Forward-Auth, OAuth2 / OIDC / SAML) |
 | [OnlyOffice](core/onlyoffice/) | ✅ | Document editing server for Seafile, Nextcloud, etc. |
+| [Euro-Office](core/euro-office/) | 🚧 | EU-governed OnlyOffice fork (Nextcloud/IONOS/XWiki/Proton) — drop-in document server |
 | [dnsmasq](core/dnsmasq/) | ✅ | DNS forwarder with wildcard zones for Tailscale / split-DNS setups |
 | [acme-certs](core/acme-certs/) | ✅ | Certificate tool (acme.sh) for devices without Traefik (NAS, routers) |
 | [CrowdSec](core/crowdsec/) | ✅ | Intrusion detection engine + Traefik bouncer plugin — log analysis, threat decisions, L7 blocking |
@@ -261,6 +262,7 @@ secure-docker-blueprint/
 │   ├── authentik/               #   SSO / Identity provider
 │   ├── crowdsec/                #   Intrusion detection + Traefik bouncer
 │   ├── onlyoffice/              #   Document editing server
+│   ├── euro-office/             #   EU OnlyOffice fork (document server)
 │   ├── dnsmasq/                 #   DNS forwarder / split-DNS
 │   ├── acme-certs/              #   Certificate tool (acme.sh)
 │   ├── whoami/                  #   Traefik debug service
