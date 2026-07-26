@@ -206,15 +206,17 @@ it-tools (2024.10.22, dormant) · beszel + agent (0.18.7)
 
 **Bumped this session (3rd wave):** easyappointments 1.6.0 · lychee v7.7.1 · librephotos 2026w25 · heimdall v2.8.1 · homepage v1.13.2 🚧 · opnform 2.2.2 🚧
 
-**Still open — operator-tracked / floating / awkward source:**
-- seafile / seafile-pro — proprietary versioning; operator-tracked
-- matomo `5-apache` — floating major; pin a specific `5.x.y`
-- unifi — via `linuxserver/unifi-network-application` tags (tracks Ubiquiti)
-- zammad — no GH releases; check Docker Hub tags
-- vikunja — moved to codeberg (`code.vikunja.io`)
-- uptime-kuma — 2.4.0 reported stable; verify the 1.x→2.x transition before bumping
-- adminer — check `_/adminer` (5.x may exist)
-- core internal (acme-certs, dnsmasq, dockhand, hawser, whoami) — low-risk/internal, low priority
+**4th wave applied:** matomo `5.12.0-apache` (was floating `5-apache`) · adminer **5.5.0** 🚧 (major 4→5) · unifi **10.4.57** · dockhand **v1.0.39**.
+
+**Verified current (no action):** it-tools · beszel(+agent) · monicahq · photoview · whoami v1.11.0 · dnsmasq 2.90-r3 · hawser 0.2.39.
+
+**Operator-owned (you version these — no registry check):** vikunja (local build `vikunja-local`) · acme-certs (`ghcr.io/rubennati/cert-ops-tool`) · seafile / seafile-pro (proprietary).
+
+**Genuinely open — awkward tag scheme, decide before pinning:**
+- zammad — Docker Hub uses `X.Y.Z-BUILD` (e.g. `7.1.1-0036`) or floating `7`/`7.1`; pinned `7.0.1`. Pick a scheme.
+- uptime-kuma — `2.4.0` exists but 1.x→2.x is a major transition; verify before leaving `1.23.17`.
+
+The sweep is otherwise complete: every registry-checkable service is verified or bumped.
 
 ---
 

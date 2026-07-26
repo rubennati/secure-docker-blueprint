@@ -5,7 +5,7 @@
 - **Image:** https://hub.docker.com/r/fnsys/dockhand
 - **GitHub:** https://github.com/finsys/dockhand
 - **Docs:** Project-internal (see image description on Docker Hub)
-- **Based on version:** `v1.0.24`
+- **Based on version:** `v1.0.39`
 - **Last checked:** 2026-04-16
 
 ## What we use
