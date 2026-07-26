@@ -55,6 +55,18 @@ docker compose logs app --follow
 > [docs/cloudflare.md](docs/cloudflare.md) — WAF, geo allowlist, and origin hiding are part of
 > this deployment's security model, not optional extras.
 
+## Local testing (no Traefik)
+
+Run the app standalone on `http://localhost:3000` — no Traefik, Cloudflare, or Docker Secrets:
+
+```bash
+cp .env.local.example .env.local   # fill values (openssl one-liners inside)
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+# http://localhost:3000 — signup is ON so you can create the first user
+```
+
+Secrets are plain env in `.env.local` (gitignored) — **local only**, never production.
+
 ## Security Model
 
 | Concern | How handled |

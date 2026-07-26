@@ -1,0 +1,105 @@
+# =============================================================================
+# Cal.diy — LOCAL test stack (no Traefik, no Cloudflare, no Docker Secrets)
+# =============================================================================
+# Run the app standalone on http://localhost:3000 for quick local testing.
+# Secrets come as plain env from .env.local (gitignored) — NOT for production.
+# Production deployment uses docker-compose.yml (Traefik + Docker Secrets).
+#
+#   cp .env.local.example .env.local   # then fill the values (see that file)
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   docker compose -f docker-compose.local.yml --env-file .env.local logs app -f
+#   # open http://localhost:3000  — signup is ON so you can create the first user
+# =============================================================================
+
+services:
+
+  db:
+    image: postgres:${DB_TAG}
+    container_name: caldiy-local-db
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      TZ: ${TZ}
+    volumes:
+      - ./volumes/local/postgres:/var/lib/postgresql/data
+    networks: [caldiy-local]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  redis:
+    image: redis:${REDIS_TAG}
+    container_name: caldiy-local-redis
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs: [/run, /tmp]
+    volumes:
+      - ./volumes/local/redis:/data
+    networks: [caldiy-local]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  app:
+    image: ghcr.io/rubennati/cal.diy:${APP_TAG}
+    container_name: caldiy-local-app
+    restart: unless-stopped
+    depends_on:
+      db: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    # No secret-injector entrypoint here: all secrets arrive as plain env below.
+    entrypoint: ["/bin/sh", "-c", "exec /calcom/scripts/start.sh"]
+    environment:
+      TZ: ${TZ}
+      NODE_ENV: production
+      DATABASE_HOST: db:5432
+      # DB password is hex (URL-safe) so no percent-encoding is needed here.
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+      DATABASE_DIRECT_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+      NEXTAUTH_URL: http://localhost:3000/api/auth
+      NEXT_PUBLIC_WEBAPP_URL: http://localhost:3000
+      NEXT_PUBLIC_WEBSITE_URL: http://localhost:3000
+      NEXT_PUBLIC_EMBED_LIB_URL: http://localhost:3000/embed/embed.js
+      ALLOWED_HOSTNAMES: '"localhost"'
+      CALCOM_TELEMETRY_DISABLED: "1"
+      NEXT_PUBLIC_LICENSE_CONSENT: agree
+      NEXT_PUBLIC_DISABLE_SIGNUP: "false"
+      NEXT_PUBLIC_LOGGER_LEVEL: "3"
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      CALENDSO_ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      CRON_API_KEY: ${CRON_API_KEY}
+      NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY}
+      # SMTP optional locally — leave blank and emails just no-op.
+      EMAIL_FROM: ${EMAIL_FROM}
+      EMAIL_SERVER_HOST: ${EMAIL_SERVER_HOST}
+      EMAIL_SERVER_PORT: ${EMAIL_SERVER_PORT}
+      EMAIL_SERVER_USER: ${EMAIL_SERVER_USER}
+      EMAIL_SERVER_PASSWORD: ${EMAIL_SERVER_PASSWORD}
+    ports:
+      - "127.0.0.1:3000:3000"   # localhost only; change to 3000:3000 for LAN access
+    networks: [caldiy-local]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO/dev/null http://127.0.0.1:3000/api/health 2>&1 | grep -q '200\\|301\\|302' || nc -z 127.0.0.1 3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+networks:
+  caldiy-local:
+    name: caldiy-local

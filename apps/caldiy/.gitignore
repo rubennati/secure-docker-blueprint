@@ -1,3 +1,4 @@
 .secrets/
 volumes/
 .env
+.env.local
