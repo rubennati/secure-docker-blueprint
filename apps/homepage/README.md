@@ -1,6 +1,6 @@
 # Homepage (gethomepage)
 
-> **Status: ✅ Ready** — v0.10.9 · 2026-05-03
+> **Status: 🚧 v1.13.2** — major upgrade from 0.x; verify config first · 2026-07-26
 
 Highly-configurable self-hosted dashboard. File-based YAML configuration — one file per concern (services, bookmarks, widgets, settings). Rich set of service integrations and info widgets.
 

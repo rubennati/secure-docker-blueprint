@@ -7,7 +7,7 @@
 - **GitHub (Heimdall upstream):** https://github.com/linuxserver/Heimdall
 - **License:** MIT
 - **Origin:** UK · linuxserver.io community · non-EU
-- **Based on version:** `2.6.3`
+- **Based on version:** `2.8.1`
 - **Last verified:** 2026-05-02 (v2.6.3)
 
 ## What we use

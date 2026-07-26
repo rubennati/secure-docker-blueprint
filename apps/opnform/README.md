@@ -1,6 +1,6 @@
 # OpnForm
 
-> **Status: ✅ Ready** — v1.13.2 · 2026-05-04
+> **Status: 🚧 v2.2.2** — major upgrade from 1.x; verify first · 2026-07-26
 
 Self-hosted form builder — Typeform / Google Forms alternative. Drag-and-drop editor, conditional logic, file uploads, webhooks. Laravel API + Nuxt UI.
 
