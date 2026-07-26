@@ -26,17 +26,16 @@ services:
     cap_drop:
       - ALL
     # --- Resources ---
-    # Interim caps — measure real peak with `docker stats` and retune to ~2× peak.
-    # An unbounded container is a free cryptominer/DoS host after a break-in.
-    # pids is folded in here: a top-level pids_limit conflicts with deploy.resources.
+    # Postgres for a small Cal.com instance; retune after measuring with `docker stats`.
+    # pids folded in here — a top-level pids_limit conflicts with deploy.resources.
     deploy:
       resources:
         limits:
-          memory: 512m
-          cpus: "0.50"
+          memory: 1g
+          cpus: "1.00"
           pids: 100
         reservations:
-          memory: 128m
+          memory: 256m
 
     # --- Configuration ---
     environment:
@@ -128,16 +127,17 @@ services:
     cap_drop:
       - ALL
     # --- Resources ---
-    # Interim caps — Next.js runtime is memory-hungry; measure with `docker stats`
-    # under real load and retune to ~2× peak. Bounds a compromised app.
+    # Cal.com's stated minimum is 2 vCPU / 4 GB for app+DB. Size the app for safe
+    # headroom so the cap bounds a runaway/compromised process, not normal load.
+    # Retune after measuring with `docker stats`.
     deploy:
       resources:
         limits:
-          memory: 2g
+          memory: 4g
           cpus: "2.00"
           pids: 200
         reservations:
-          memory: 512m
+          memory: 1g
 
     # --- Configuration ---
     # Custom entrypoint reads all secrets from /run/secrets/ before start.sh runs.
