@@ -54,6 +54,11 @@ go wrong so it can be avoided rather than rediscovered.
   reports success and the problem appears at restore. Always dump.
 - **Aborted connections under load** — a database container with default limits and
   a connection-heavy application produces intermittent, hard-to-attribute failures.
+- **Redis persistence across a major upgrade.** An RDB file written by an older
+  Redis is not read by a newer major version; the container starts and the cache is
+  silently empty, or it refuses to start. Plan `docker compose down --volumes` for
+  the cache volume as part of a Redis major bump — and make sure that volume really
+  holds only cache.
 
 ## Process
 

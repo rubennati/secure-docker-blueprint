@@ -17,18 +17,12 @@ structural decision. [`decisions.md`](../decisions.md) is the index with reasoni
 ## Categorisation
 
 Five top-level directories, split by **how** a tool accesses the system, not by who
-uses it. The test question per category:
-
-| Directory | Test |
-|---|---|
-| `core/` | Does the stack break without it, or does it control Docker, identity, certificates or DNS? |
-| `apps/` | Would a homelab user *and* a company both use it? |
-| `business/` | Does it need a company to be useful at all? |
-| `monitoring/` | Does it observe other services? |
-| `backup/` | Does it protect data from other services? |
-
-`monitoring/` and `backup/` are top-level because they reach across service
+uses it. `monitoring/` and `backup/` are top-level because they reach across service
 boundaries and need broader permissions than a user-facing app.
+
+The test question per category is in
+[`docs/architecture.md`](../../docs/architecture.md#directory-structure) — apply them
+in order rather than guessing from the name.
 
 ## Networking
 

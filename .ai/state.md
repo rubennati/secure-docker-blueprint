@@ -50,10 +50,7 @@ Carried until the maintainer decides. Each blocks a clean resolution somewhere.
    documentation, or only to German drafts?
 6. **v0.8.0 scope** — `ROADMAP.md` names four layers including alerting;
    `monitoring/README.md` names five axes without it. Which defines done?
-7. **`docs/app-setup-blueprint.md`** — referenced from `CONTRIBUTING.md` and an
-   issue template but present only on the `docs` branch. Port it, or drop the
-   references?
-8. **Host-installed backup agent vs. the portability goal** in
+7. **Host-installed backup agent vs. the portability goal** in
    `docs/architecture.md`. Record as a documented exception, or revisit?
 
 ## Active constraints
@@ -63,4 +60,7 @@ Carried until the maintainer decides. Each blocks a clean resolution somewhere.
   pre-v0.5.1 `Last checked:` field. Both ride along with the host session.
 - Public repository: no real domains, IPs, hostnames or personal data; no session
   context or personal attribution in committed content.
-- The `docs` branch holds German drafts and is **not** linked from public files.
+- A `docs` branch exists, frozen at 2026-04-20 while 306 commits landed on `dev`.
+  Its durable content has been migrated; the remainder is either superseded or
+  personal. It is not linked from public files and is pending deletion by the
+  maintainer.

@@ -25,6 +25,25 @@ For anything larger than a single focused change:
 Many simultaneous changes make failures untraceable. This is why the repository is
 built in small, individually testable steps.
 
+## Source hierarchy
+
+When sources disagree, the higher level wins:
+
+| Level | Source |
+|---|---|
+| **L1** | Official upstream documentation and repositories — registry pages, the project's own README and docs, release notes |
+| **L2** | Configurations proven to work — stacks already verified in this repository |
+| **L3** | Historical documentation — older versions of official docs, archived pages |
+| **L4** | Exploratory material — forum threads, Q&A sites, blog posts |
+
+A community solution is checked against L1 before it is adopted. Where upstream has
+an open issue for a problem, waiting for the upstream fix beats carrying a local
+workaround — a workaround has to be maintained and removed later, and it usually
+outlives the memory of why it exists.
+
+This is also how contradictions inside this repository are resolved: the owning
+document per the File Map is the local L1.
+
 ## Verify before asserting
 
 Never state that an image contains a tool, that a flag exists, or that a version is

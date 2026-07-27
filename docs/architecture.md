@@ -27,6 +27,18 @@ Five top-level categories, split by **how** each tool accesses the system — no
 
 `monitoring/` and `backup/` are top-level (not under `apps/`) because their access patterns are fundamentally different: they reach across service boundaries and need broader permissions than a typical user-facing app.
 
+**Which category does a new service belong to?** One test question each, applied in order:
+
+| Directory | Test |
+|---|---|
+| `core/` | Does the stack — or a large part of it — break without this, or does it control Docker itself, or is it shared identity, certificates, DNS or WAF? |
+| `monitoring/` | Does it observe one or more other services? |
+| `backup/` | Does it protect data belonging to other services? |
+| `business/` | Is a company needed for this to be useful at all? (issuing invoices, customer helpdesk, compliance) |
+| `apps/` | Everything else — would a homelab user *and* a company both use it? |
+
+The rule was sharpened after an earlier attempt placed `business/` by analogy to `monitoring/` and left ten existing apps stranded. Categorising by **access pattern** rather than by audience is what makes it hold.
+
 ---
 
 ## Networking Model
