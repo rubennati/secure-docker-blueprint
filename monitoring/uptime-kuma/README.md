@@ -46,6 +46,24 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/        # 200 OK
   ```
 - **`no-new-privileges:true`**.
 
+## Backup
+
+| | |
+|---|---|
+| **State** | `./volumes/data` — SQLite at `/app/data/kuma.db`, holding every monitor, notification channel and credential |
+| **Critical** | All of it. The configuration lives in the database, not in files — there is nothing to reconstruct from. |
+| **Quiescing** | Dump rather than copy; the database is written continuously |
+
+```yaml
+sqlite_databases:
+    - name: uptime-kuma
+      path: /srv/docker/monitoring/uptime-kuma/volumes/data/kuma.db
+```
+
+**Restore order:** stop the container, restore, start. Verify that notification
+channels still work afterwards — re-testing them is part of the restore, not an
+extra.
+
 ## Known Issues
 
 - **`APP_TAG=1.23.17` is pinned.** v2 is beta — not recommended in production yet.

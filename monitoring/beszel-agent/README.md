@@ -61,6 +61,15 @@ Then in the hub UI: **+ Add System** (top right) → enter this host's Name, Tai
 | **Docker socket** | Mounted read-only (`:ro`). Agent reads stats but cannot control Docker. Remove the volume if container-level metrics are not needed. |
 | **network_mode: host** | Required for accurate host network interface stats (eth0, tailscale0 etc.). Without it, the agent reports only the container's veth interface. CPU / RAM / disk work fine with bridge networking if you prefer isolation over accurate network stats. |
 
+## Backup
+
+Nothing to back up. The agent holds no state — it reads host and container metrics
+and reports them to the hub. After a loss, redeploy and register it against the same
+hub key.
+
+The state that matters lives in [`monitoring/beszel/`](../beszel/) — see its
+`## Backup` section.
+
 ## Known Issues
 
 - **`APP_TAG=0.18.7` is pinned** — keep in sync with the hub version. Check [releases](https://github.com/henrygd/beszel/releases) before upgrading.

@@ -114,7 +114,7 @@ echo -n "<smtp-key>" > .secrets/smtp_pwd.txt
 VIKUNJA_MAILER_ENABLED=true
 VIKUNJA_MAILER_HOST=smtp-relay.brevo.com
 VIKUNJA_MAILER_PORT=587
-VIKUNJA_MAILER_USERNAME=your@email.com
+VIKUNJA_MAILER_USERNAME=your@example.com
 VIKUNJA_MAILER_FROMEMAIL=vikunja@your-domain.com
 VIKUNJA_MAILER_AUTHTYPE=login
 

@@ -76,7 +76,7 @@ docker compose logs railsserver --follow
 
 ## Email integration
 
-Agents typically configure an inbound IMAP mailbox (Admin → Channels → Email) so `support@firma.at` tickets auto-create. SMTP outbound likewise. Requires either:
+Agents typically configure an inbound IMAP mailbox (Admin → Channels → Email) so `support@example.com` tickets auto-create. SMTP outbound likewise. Requires either:
 - Own mailserver (Mailcow/Mailu — planned) — direct IMAP/SMTP
 - Hosted provider (mailbox.org, Brevo) — IMAP + SMTP credentials
 

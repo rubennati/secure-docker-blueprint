@@ -64,10 +64,29 @@ Create a test check in the UI:
 - **SECRET_KEY in `.env`** (gitignored) — upstream does not support `_FILE` env vars for this. Rotating the secret invalidates all sessions (acceptable).
 - **Ping URLs are public-information once shared** — anyone with the URL can ping a check. Each URL is a UUID and unguessable but does not need authentication; if you need stricter control, use signed ping URLs (Healthchecks v2+ feature, in UI per-check).
 
+## Backup
+
+| | |
+|---|---|
+| **State** | `./volumes/data` — SQLite at `/data/hc.sqlite`: checks, ping URLs, notification channels, ping history |
+| **Critical** | The ping URLs. Every monitored job holds one; regenerating them means reconfiguring every job that pings this instance, including `backup/borgmatic`. |
+| **Quiescing** | Dump rather than copy |
+
+```yaml
+sqlite_databases:
+    - name: healthchecks
+      path: /srv/docker/monitoring/healthchecks/volumes/data/hc.sqlite
+```
+
+`UPSTREAM.md` documents the SQLite `.backup` command as the manual alternative.
+
+**Restore order:** stop, restore, start, then confirm an existing job's ping still
+registers — the URL must be unchanged.
+
 ## Known Issues
 
 - **`volumes/data` must be owned by uid 999** — the app runs as `hc` (uid 999). If Docker creates the directory as root, SQLite migration fails with `unable to open database file`. Fix: `chown -R 999:999 volumes/data` before first start.
-- **`APP_TRAEFIK_HOST` typo causes Traefik 404** — double-check the hostname in `.env` after copying from `.env.example`. A typo (e.g. `qhode.at` instead of `qode.at`) results in `HTTP 404` from Traefik with no other error. Verify with `docker inspect <container> | grep rule`.
+- **`APP_TRAEFIK_HOST` typo causes Traefik 404** — double-check the hostname in `.env` after copying from `.env.example`. A typo (e.g. `helathchecks.example.com` instead of `healthchecks.example.com`) results in `HTTP 404` from Traefik with no other error. Verify with `docker inspect <container> | grep rule`.
 - **Monitored-job reachability** — if your cron jobs run on servers that can't reach this instance (e.g. behind NAT without Tailscale), pings will silently fail. The only symptom is "check is down" in the UI for a job that is actually running fine. Check job-side logs first when diagnosing.
 - **Email alerts require working SMTP.** Without SMTP, the only notification channels are webhooks, Slack, Discord, ntfy, and Pushover — all of which need to be configured per-check in the UI.
 - **SECRET_KEY in `.env`** rather than `.secrets/` is a pragmatic blueprint deviation; see ROADMAP "Secret & Password Generation Standard" for the broader policy discussion.

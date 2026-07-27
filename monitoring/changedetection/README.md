@@ -56,7 +56,7 @@ Webhook:   https://n8n.example.com/webhook/restock
 
 **API endpoint drift**:
 ```
-URL:       https://api.partner.com/v1/status
+URL:       https://api.example.com/v1/status
 Fetch:     Include request headers / auth
 Trigger:   On any body change
 ```
@@ -67,6 +67,19 @@ URL:       https://competitor.example/impressum
 Schedule:  Daily
 Notification: Slack #compliance
 ```
+
+## Backup
+
+| | |
+|---|---|
+| **State** | `./volumes/data` (mounted at `/datastore`) — JSON datastore with watches, plus snapshot history |
+| **Critical** | The watch definitions. The diff history is convenience. |
+| **Quiescing** | Not needed — file-based, no database |
+
+A plain file backup of the volume is sufficient; there is no database hook to
+configure.
+
+**Restore order:** restore the directory and start. Watches resume on their schedule.
 
 ## Known Issues
 

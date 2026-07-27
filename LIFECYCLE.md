@@ -83,12 +83,12 @@ Generated 2026-07-27 from the sources named in [`docs/standards/status-model.md`
 
 | Stack | Public | Internal | Pinned | Last verified | Backup docs | Restore docs |
 |---|---|---|---|---|---|---|
-| [`monitoring/beszel`](monitoring/beszel/) | 🚧 `preview` | `scaffolded` | `APP_TAG=0.18.7` | 2026-05-03 ⚠️ | missing | missing |
-| [`monitoring/beszel-agent`](monitoring/beszel-agent/) | 🚧 `preview` | `scaffolded` | `APP_TAG=0.18.7` | 2026-05-03 ⚠️ | missing | missing |
-| [`monitoring/changedetection`](monitoring/changedetection/) | 🚧 `preview` | `scaffolded` | `APP_TAG=0.55.8` | 2026-05-03 ⚠️ | missing | missing |
-| [`monitoring/gatus`](monitoring/gatus/) | 🚧 `preview` | `scaffolded` | `APP_TAG=v5.36.0` | 2026-05-03 ⚠️ | missing | missing |
-| [`monitoring/healthchecks`](monitoring/healthchecks/) | 🚧 `preview` | `scaffolded` | `APP_TAG=v4.2` | 2026-04-17 ⚠️ | missing | missing |
-| [`monitoring/uptime-kuma`](monitoring/uptime-kuma/) | 🚧 `preview` | `scaffolded` | `APP_TAG=2.4.0` | 2026-05-03 ⚠️ | missing | missing |
+| [`monitoring/beszel`](monitoring/beszel/) | 🚧 `preview` | `scaffolded` | `APP_TAG=0.18.7` | 2026-05-03 ⚠️ | documented | missing |
+| [`monitoring/beszel-agent`](monitoring/beszel-agent/) | 🚧 `preview` | `scaffolded` | `APP_TAG=0.18.7` | 2026-05-03 ⚠️ | documented | missing |
+| [`monitoring/changedetection`](monitoring/changedetection/) | 🚧 `preview` | `scaffolded` | `APP_TAG=0.55.8` | 2026-05-03 ⚠️ | documented | missing |
+| [`monitoring/gatus`](monitoring/gatus/) | 🚧 `preview` | `scaffolded` | `APP_TAG=v5.36.0` | 2026-05-03 ⚠️ | documented | missing |
+| [`monitoring/healthchecks`](monitoring/healthchecks/) | 🚧 `preview` | `scaffolded` | `APP_TAG=v4.2` | 2026-04-17 ⚠️ | documented | missing |
+| [`monitoring/uptime-kuma`](monitoring/uptime-kuma/) | 🚧 `preview` | `scaffolded` | `APP_TAG=2.4.0` | 2026-05-03 ⚠️ | documented | missing |
 
 ## `backup/`
 

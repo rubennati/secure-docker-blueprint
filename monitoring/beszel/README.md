@@ -76,9 +76,49 @@ After this first setup, `docker compose up -d` starts both hub and agent togethe
 | **Docker socket** | Agent mounts `/var/run/docker.sock:ro` — read-only, agent cannot control Docker. Accepted exception for monitoring agents; no Socket Proxy equivalent covers docker-stats reads. Remove if container metrics are not needed. |
 | **Hub data** | SQLite + SSH private key in `volumes/hub-data/`. Back this up — losing it means re-keying all agents. |
 
+## Alerting
+
+Configured in the hub UI, per system — there is no config file for it. Beszel alerts
+on thresholds rather than on failure: CPU, memory, disk usage, temperature, and
+whether a system is reporting at all.
+
+Two settings worth deciding deliberately:
+
+- **Disk usage** — the one threshold that reliably prevents an incident rather than
+  reporting one. Set it low enough to leave time to act.
+- **System down** — Beszel notices when an agent stops reporting, but only while the
+  hub itself is running. A hub that dies reports nothing, including its own death.
+  That gap is covered by the dead-man's-switch pattern in
+  [`../README.md`](../README.md#alerting).
+
+A threshold that has never fired is untested. Cross one deliberately once and confirm
+the notification arrives.
+
 ## Adding more hosts
 
 Deploy [`monitoring/beszel-agent/`](../beszel-agent/) on each additional host. Same hub public key, different host IP in the "Add System" dialog.
+
+## Backup
+
+| | |
+|---|---|
+| **State** | `./volumes/hub-data` — SQLite metric store **and the hub's SSH private key** |
+| **Critical** | The SSH key. Losing it means re-keying every registered agent by hand. |
+| **Reproducible** | Historical metrics — useful, not irreplaceable |
+| **Quiescing** | Stop the hub briefly, or use the SQLite dump hook — the store is live |
+
+```yaml
+sqlite_databases:
+    - name: beszel
+      path: /srv/docker/monitoring/beszel/volumes/hub-data/data.db
+```
+
+Confirm the database filename on the running instance before relying on that path.
+Back up the whole `hub-data` directory regardless — the SSH key is not in the
+database.
+
+**Restore order:** restore the directory, start the hub, confirm the agents
+reconnect without re-registration.
 
 ## Known Issues
 
