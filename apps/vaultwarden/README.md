@@ -231,6 +231,39 @@ This means a proxy (Traefik) is injecting `X-Frame-Options`. Vaultwarden must co
 
 If **Admin → Diagnostics** shows `HTTP Response validation: Error`, check that the domain in `VW_DOMAIN` (derived from `APP_TRAEFIK_HOST`) matches the actual URL used to access the vault, and that HTTPS is enforced end-to-end.
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | MariaDB · container `vaultwarden-db` · database `vaultwarden` · user `vw_user` |
+| **Password** | `DB_PWD` in `.env` — **not** a Docker Secret on this stack |
+| **State** | `./volumes/mysql` (database) · **`./volumes/data`** — the RSA keypair, attachments, sends |
+| **Reproducible** | the icon cache inside `./volumes/data` |
+| **Quiescing** | Not needed. The dump is consistent on its own. |
+
+```yaml
+mariadb_databases:
+    - name: vaultwarden
+      container: vaultwarden-db
+      username: vw_user
+      password: "{credential file /srv/docker/apps/vaultwarden/.secrets/db_pwd.txt}"
+```
+
+**The credential file above does not exist yet** — this stack still carries its
+database password in `.env`. Either move it to `.secrets/db_pwd.txt` first, or
+supply the value to borgmatic another way.
+
+**`volumes/data/rsa_key*` signs the authentication tokens.** A database restored
+without it leaves every client unable to log in, with vaults that are present and
+inaccessible. It is a handful of small files next to a database that is useless
+without them.
+
+This archive holds everybody's passwords in encrypted form. Encryption at rest in
+the borg repository is not optional here, and neither is keeping the repository
+somewhere this host cannot delete from.
+
+**Restore order:** database first, then the app.
+
 ## Details
 
 - [UPSTREAM.md](UPSTREAM.md) — Security checklist, backup, troubleshooting, upgrade

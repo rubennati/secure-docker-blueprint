@@ -148,12 +148,29 @@ def last_verified(stack: Path) -> tuple[str, bool]:
     return "—", False
 
 
+# Stacks for which a `## Backup` section would be circular: the tool that performs
+# the backup cannot meaningfully describe how to back itself up with itself. What
+# protects them is documented in their own terms — for borgmatic, the exported
+# repository key under `## Keys`.
+NO_BACKUP_SECTION = {
+    "backup/borgmatic": "it is the backup tool — see its `## Keys` section",
+}
+
+
 def doc_sections(stack: Path) -> tuple[str, str]:
     """(backup docs, restore docs).
 
     Counted either as a section in the stack README or as a dedicated file —
     `backup/borgmatic` keeps its procedure in RESTORE.md rather than a heading.
     """
+    if str(stack) in NO_BACKUP_SECTION:
+        _, restore = doc_sections_raw(stack)
+        return "n/a", restore
+
+    return doc_sections_raw(stack)
+
+
+def doc_sections_raw(stack: Path) -> tuple[str, str]:
     has = {
         "backup": (stack / "BACKUP.md").exists(),
         "restore": (stack / "RESTORE.md").exists(),
@@ -275,7 +292,9 @@ def render(rows: list[dict]) -> str:
         "`Last checked:` field, which predates the current format and does not "
         "satisfy ✅ Ready criterion 8.",
         "- **Backup / Restore docs** — whether the stack README has such a section. "
-        "Says nothing about whether either was ever performed.",
+        "Says nothing about whether either was ever performed. `n/a` marks a stack "
+        "where the section would be circular — the backup tool cannot describe "
+        "backing itself up with itself.",
         "- **Restore tested** — omitted deliberately: the blueprint holds no restore "
         "evidence for any stack yet. The column returns with the v0.7.0 backup "
         "milestone, which is what makes `ops-ready` reachable.",

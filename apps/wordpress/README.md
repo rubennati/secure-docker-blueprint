@@ -220,6 +220,33 @@ The official `wordpress:*-apache` image does **not** include wp-cli. To use wp-c
 docker run --rm -v ./volumes/wordpress:/var/www/html --network wordpress-internal wordpress:cli plugin list
 ```
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | MariaDB · container `wordpress-db` · database `wordpress` · user `wp_user` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **State** | `./volumes/mysql` (database) · `./volumes/wordpress` (uploads, themes, plugins) |
+| **Reproducible** | WordPress core inside `./volumes/wordpress` — restored from the image on upgrade |
+| **Quiescing** | Not needed. The dump is consistent on its own. |
+
+```yaml
+mariadb_databases:
+    - name: wordpress
+      container: wordpress-db
+      username: wp_user
+      password: "{credential file /srv/docker/apps/wordpress/.secrets/db_pwd.txt}"
+```
+
+Posts are in the database, media and the active theme are in
+`volumes/wordpress/wp-content`. Restoring only the database gives a site whose
+every image is missing and whose theme has reverted.
+
+The salts in `wp-config.php` invalidate all sessions when they change. They are
+generated on first start, so a restore that regenerates them logs everyone out.
+
+**Restore order:** database first, then the app.
+
 ## Details
 
 - [UPSTREAM.md](UPSTREAM.md) — Upstream reference, upgrade checklist

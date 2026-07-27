@@ -61,6 +61,29 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/healthz  # 200 OK
 - **`N8N_RUNNERS_ENABLED: true`** — uses task runners for isolated code execution (n8n >= 1.53).
 - **`no-new-privileges:true`** on the container.
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | SQLite inside `./volumes/data` — no database server, no dump hook |
+| **State** | `./volumes/data` (workflows, executions, credentials) · `./volumes/files` |
+| **Reproducible** | nothing |
+| **Quiescing** | **Recommended.** Copying a live SQLite file can capture a torn state; stop the container or snapshot the filesystem. |
+
+No database hook. This stack is `source_directories` only, quiesced.
+
+**`.secrets/n8n_encryption_key.txt` decrypts the stored credentials.** Every API
+key and connection this instance holds is encrypted with it. Restoring the data
+directory without the matching key produces workflows that are intact and cannot
+authenticate anywhere — and n8n will generate a fresh key on start rather than
+telling you the old one is missing.
+
+Back the key up separately from the data, and keep a copy off the host.
+
+Executions history is the bulk of the data directory and the least valuable part
+of it; if archive size becomes a problem, prune executions in n8n rather than
+excluding the directory.
+
 ## Known Issues
 
 - **Webhook exposure** — even with `acc-tailscale`, webhooks invoked by external services (e.g. GitHub, Stripe) will not reach n8n unless you add a second Traefik router with `acc-public` on specific paths (`/webhook/*`). Not configured here.

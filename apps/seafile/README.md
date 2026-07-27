@@ -345,6 +345,43 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/notification/
 - Most secrets live as Docker Secrets under `./.secrets/`. The wrapper entrypoint converts them to env vars inside the container. **Exception:** `thumbnail-server` does not use the entrypoint wrapper, so `JWT_PRIVATE_KEY` and `SEAFILE_MYSQL_DB_PASSWORD` must be set as direct environment variables in `.env` matching the secret file contents.
 - `no-new-privileges:true` on every service.
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | MariaDB · container `seafile-db` · **three databases**: `ccnet_db`, `seafile_db`, `seahub_db` · user `seafile` |
+| **Password** | `.secrets/seafile_db_pwd.txt` |
+| **State** | `./volumes/mysql` (databases) · **`./volumes/seafile-data`** — the file store · `./volumes/seadoc-data` |
+| **Reproducible** | `./volumes/redis` (cache) · `./volumes/seafile-data/seafile/logs` |
+| **Quiescing** | Not needed for the dumps. Seafile writes content-addressed blocks, so a file captured mid-write is a new block rather than a corrupted one. |
+
+```yaml
+mariadb_databases:
+    - name: ccnet_db
+      container: seafile-db
+      username: seafile
+      password: "{credential file /srv/docker/apps/seafile/.secrets/seafile_db_pwd.txt}"
+    - name: seafile_db
+      container: seafile-db
+      username: seafile
+      password: "{credential file /srv/docker/apps/seafile/.secrets/seafile_db_pwd.txt}"
+    - name: seahub_db
+      container: seafile-db
+      username: seafile
+      password: "{credential file /srv/docker/apps/seafile/.secrets/seafile_db_pwd.txt}"
+```
+
+**Three databases, not one.** Backing up only `seafile_db` is the classic mistake
+here: it holds the file metadata, while `ccnet_db` holds users and groups and
+`seahub_db` holds the web layer, shares and links. Any one missing produces a
+restore that starts and is unusable.
+
+`volumes/seafile-data` holds the blocks the metadata points at. Restore the
+databases and the block store from the same archive — a newer block store with an
+older database means files exist that no library references.
+
+**Restore order:** databases first, then the block store, then the app.
+
 ## Access policy — OnlyOffice + SeaDoc require `acc-private`
 
 `acc-tailscale` blocks server-to-server callbacks from Docker containers (their IPs are RFC1918, not Tailscale). This breaks both OnlyOffice document editing and SeaDoc collaborative editing:

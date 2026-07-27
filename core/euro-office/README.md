@@ -53,6 +53,23 @@ Modeled on the proven OnlyOffice config, but the fork image has not been run her
 - [ ] End-to-end — a document opens and saves from Seafile/Nextcloud using the shared secret
 - [ ] `EXAMPLE_ENABLED` is off — `https://<host>/example/` is not reachable
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | None in this stack. |
+| **State** | `.secrets/jwt_secret.txt` — shared with the embedding application |
+| **Reproducible** | `./volumes/data` (document cache) · `./volumes/logs` |
+| **Quiescing** | Not applicable. |
+
+Documents live in the application that embeds this document server — Nextcloud,
+Seafile — and are backed up there. What is cached here is a working copy.
+
+The JWT secret is the only thing whose loss is felt: both sides have to hold the
+same value, so regenerating it means updating the embedding application too.
+Editing stays broken until they match, and the error surfaces there rather than
+here.
+
 ## Details
 
 - [UPSTREAM.md](UPSTREAM.md) — source, upgrade checklist, deviations

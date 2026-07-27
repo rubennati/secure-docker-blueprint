@@ -47,6 +47,19 @@ curl http://localhost:9980/   # → "OK"
 - [ ] A document opens and saves from Nextcloud/Seafile through Collabora
 - [ ] Admin console is not publicly reachable (kept off by default)
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | None. |
+| **State** | None. Configuration comes from `.env` and the entrypoint; documents live in the application that embeds this server, never here. |
+| **Reproducible** | everything — the container is disposable |
+| **Quiescing** | Not applicable. |
+
+Nothing to back up. Restoring means starting the container again with the same
+`.env`, including the JWT secret shared with the embedding application — if that
+value changes, the integration stops working until both sides agree again.
+
 ## Details
 
 - [UPSTREAM.md](UPSTREAM.md) — source, upgrade checklist, deviations

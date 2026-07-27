@@ -152,6 +152,40 @@ Drop a PDF into `./volumes/consume/` and watch the logs — it should be consume
 - `no-new-privileges:true` on every service
 - Default access is VPN-only (`acc-tailscale`)
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | PostgreSQL · container `paperless-db` · database `paperless` · user `paperless_user` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **State** | `./volumes/postgres` (database) · **`./volumes/media`** — the archived documents themselves |
+| **Reproducible** | `./volumes/data` (search index — rebuildable) · `./volumes/redis` (queue) · `./volumes/consume` (inbox, transient) · `./volumes/export` |
+| **Quiescing** | Not needed. The dump is consistent on its own. |
+
+```yaml
+postgresql_databases:
+    - name: paperless
+      container: paperless-db
+      username: paperless_user
+      password: "{credential file /srv/docker/apps/paperless-ngx/.secrets/db_pwd.txt}"
+```
+
+**`volumes/media` is the archive.** The database holds tags, correspondents and
+the text extracted from each document; the documents themselves are files. Losing
+media means losing the papers, and no amount of database is a substitute.
+
+`.secrets/secret_key.txt` is required for existing sessions and tokens to remain
+valid.
+
+Paperless also has its own `document_exporter`, which writes documents plus
+metadata into a single self-describing tree. That is the more portable restore
+path — and the one to use when moving between major versions rather than
+restoring in place.
+
+**Restore order:** database first, then media, then the app. Expect the search
+index to rebuild on first start; until it does, search returns nothing while the
+documents are all present.
+
 ## Known Issues
 
 - **`USERMAP_UID` / `USERMAP_GID` must match the host owner of `./volumes/`.** Wrong UID = permission errors on consume/media. The default (1000:1000) works for most Debian/Ubuntu users.

@@ -52,6 +52,35 @@ docker compose logs app --follow    # watch for migrations + server start
 | Privilege escalation | `no-new-privileges:true` + `cap_drop: ALL` on all services |
 | Resource limits | `deploy.resources` (memory/cpus/pids) on all services |
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | PostgreSQL · container `infisical-db` · database `infisical` · user `infisical` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **State** | `./volumes/postgres` (database) |
+| **Reproducible** | `./volumes/redis` — cache |
+| **Quiescing** | Not needed. The dump is consistent on its own. |
+
+```yaml
+postgresql_databases:
+    - name: infisical
+      container: infisical-db
+      username: infisical
+      password: "{credential file /srv/docker/core/infisical/.secrets/db_pwd.txt}"
+```
+
+**`.secrets/encryption_key.txt` is the backup.** Everything this service stores is
+encrypted with it, so a database dump without the key is ciphertext and nothing
+else. Restoring the key alone recovers nothing either — both are needed, and
+storing them in the same place turns two controls into one.
+
+Keep the key off this host and out of the borgmatic repository the database goes
+into. That is inconvenient on purpose: a single compromised archive should not
+yield both halves.
+
+**Restore order:** database first, then the app.
+
 ## Local testing (no Traefik)
 
 Run standalone on `http://localhost:8080` — plain env, no Traefik/Docker Secrets:

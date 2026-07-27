@@ -51,6 +51,20 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 - **Default access `acc-tailscale`** — VPN-only.
 - **Optional authentication** — Heimdall supports user accounts in its UI. Not enabled by default; add via the UI if you share the instance.
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | SQLite inside `./config` — no database server, no dump hook |
+| **State** | `./config` — dashboard items, uploaded icons, users |
+| **Reproducible** | nothing |
+| **Quiescing** | **Recommended.** Copying a live SQLite file can capture a torn state; stop the container or snapshot the filesystem. |
+
+No database hook. This stack is `source_directories` only, quiesced.
+
+Small and easy to skip — and entirely hand-made. Nothing regenerates a curated
+dashboard, so the cost of losing it is measured in the hour it took to build.
+
 ## Known Issues
 
 - **First user setup is in the UI, not via env var** — new users must be added by clicking "Users" in the sidebar after logging in. Initial user is a "public" admin (everyone sees the same dashboard) until a proper user is created.

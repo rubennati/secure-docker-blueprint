@@ -109,6 +109,34 @@ Cal.diy defaults to the **`sec-3`** Traefik middleware chain (`APP_TRAEFIK_SECUR
 
 **Rollback:** set `APP_TRAEFIK_SECURITY=sec-2` in `.env` and recreate the app container — `docker compose up -d --force-recreate app`. Traefik hot-reloads the middleware reference; no Traefik restart needed. See [docs/ops-runbook.md](docs/ops-runbook.md) → "Traefik security chain rollout" for the full procedure and the HSTS caveat.
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | PostgreSQL · container `caldiy-db` · database `caldiy` · user `caldiy` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **State** | `./volumes/postgres` (database) |
+| **Reproducible** | `./volumes/redis` — cache |
+| **Quiescing** | Not needed. The dump is consistent on its own. |
+
+```yaml
+postgresql_databases:
+    - name: caldiy
+      container: caldiy-db
+      username: caldiy
+      password: "{credential file /srv/docker/apps/caldiy/.secrets/db_pwd.txt}"
+```
+
+**`.secrets/encryption_key.txt` decrypts the stored calendar credentials.** The
+tokens this app holds for connected calendars are encrypted with it; a database
+restored without the key leaves every integration broken and re-authorisable only
+by hand. `nextauth_secret.txt` additionally invalidates all sessions if lost.
+
+Both belong off this host — and given this stack's history, treat the restore
+rehearsal as covering the credential path, not only the row count.
+
+**Restore order:** database first, then the app.
+
 ## Post-incident redeployment
 
 > **If the previous instance was compromised, treat every secret as burned. None of the values below can be reused.**

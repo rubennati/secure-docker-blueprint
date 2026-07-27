@@ -80,6 +80,22 @@ Whoami runs with the full hardening set:
 
 Ideal candidate for `sec-5` (maximum chain including CSP enforce) because it serves only a static text response.
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | None. |
+| **State** | None. |
+| **Reproducible** | everything |
+| **Quiescing** | Not applicable. |
+
+Nothing to back up. This is a diagnostic endpoint with no persistence — that is
+the whole point of it.
+
+It earns a mention in a restore plan for a different reason: it is the cheapest
+way to confirm that Traefik routing, TLS and the middleware chain work again
+after a restore, before pointing a real application at them.
+
 ## When to disable
 
 Whoami is a diagnostic tool. After the Traefik setup is validated:

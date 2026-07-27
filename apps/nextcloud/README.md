@@ -155,6 +155,46 @@ ${COMPOSE_PROJECT_NAME}-dav@docker,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECU
 
 The `-dav` middleware rewrites `/.well-known/caldav` and `/.well-known/carddav` to `/remote.php/dav/` so mobile clients auto-discover correctly.
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | MariaDB · container `nextcloud-db` · database `nextcloud` · user `nextcloud` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **State** | `db_data` (database) · `nextcloud_html` — includes `config/config.php` **and** the user data directory |
+| **Reproducible** | `redis_data` — cache and file locks |
+| **Quiescing** | **Maintenance mode.** Enable it before the file copy, or the database and the file tree can disagree about what exists. |
+
+This stack uses **named volumes**; their host paths are
+`/var/lib/docker/volumes/nextcloud_<name>/_data`.
+
+```yaml
+mariadb_databases:
+    - name: nextcloud
+      container: nextcloud-db
+      username: nextcloud
+      password: "{credential file /srv/docker/apps/nextcloud/.secrets/db_pwd.txt}"
+```
+
+```bash
+docker compose exec -u www-data app php occ maintenance:mode --on
+# … archive …
+docker compose exec -u www-data app php occ maintenance:mode --off
+```
+
+**This is the stack in the repository where quiescing genuinely matters.**
+Nextcloud's file index lives in the database and the files live on disk; capture
+them at different moments under load and the restore shows files the index does
+not know about, or index entries pointing at nothing. `occ files:scan` repairs the
+first case and not the second.
+
+`config/config.php` carries the instance secret and the passwordsalt. Restoring
+the database against a regenerated config invalidates existing sessions and can
+make encrypted content unreadable.
+
+**Restore order:** database first, then the file tree, then the app — and leave
+maintenance mode on until both halves are in place.
+
 ## Server sizing and tuning rationale
 
 This configuration is tuned for a **Hetzner CPX32** (4 vCPU / 8 GB RAM / 160 GB SSD) running a small business collaboration workload: document editing via OnlyOffice, team folders, and normal file sync. It is not intended as a large public file hosting platform.

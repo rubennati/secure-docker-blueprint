@@ -64,6 +64,31 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 - **MariaDB + Redis on `app-internal` (`internal: true`)** — not reachable from outside the app.
 - **`TRUSTED_PROXIES: "*"`** — required behind Traefik so Laravel trusts `X-Forwarded-*` headers.
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | MariaDB · container `lychee-db` · database `lychee` · user `lychee` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **State** | `./volumes/mysql` (database) · `./volumes/uploads` (the photos) · `./volumes/conf` |
+| **Reproducible** | `./volumes/sym` (symlinks) · `./volumes/redis` (cache) · `./volumes/logs` · `./volumes/tmp` |
+| **Quiescing** | Not needed. The dump is consistent on its own. |
+
+```yaml
+mariadb_databases:
+    - name: lychee
+      container: lychee-db
+      username: lychee
+      password: "{credential file /srv/docker/apps/lycheeorg/.secrets/db_pwd.txt}"
+```
+
+`volumes/uploads` holds the originals and the generated sizes together. The
+database holds albums and permissions that reference them by path, so the two have
+to be restored as a pair — a mismatch produces albums full of missing files rather
+than an error.
+
+**Restore order:** database first, then the app.
+
 ## Known Issues
 
 - **`docker run key:generate` is blocked by the entrypoint** — the Lychee entrypoint validates `APP_KEY` before executing any command, so `php artisan key:generate --show` never runs. Use `echo "APP_KEY=base64:$(openssl rand -base64 32)"` directly (see Setup step 2).

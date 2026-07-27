@@ -90,6 +90,30 @@ Check that SMTP works: register a test member on the site and confirm the verifi
 - Ghost and ActivityPub run as non-root users inside their containers (configured by upstream images)
 - ActivityPub backend is on the internal network; only Traefik routes the specific ActivityPub paths to it
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | MySQL · container `ghost-db` · database `ghost` · user `ghost_user` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **State** | `./volumes/mysql` (database) · `./volumes/content` (themes, uploaded images, member data) |
+| **Reproducible** | nothing |
+| **Quiescing** | Not needed. The dump is consistent on its own. |
+
+```yaml
+mysql_databases:
+    - name: ghost
+      container: ghost-db
+      username: ghost_user
+      password: "{credential file /srv/docker/apps/ghost/.secrets/db_pwd.txt}"
+```
+
+`volumes/content` is not just uploads: the active theme lives there too. A
+database-only restore brings the posts back and renders them with the default
+theme, which reads as a broken site rather than a partial restore.
+
+**Restore order:** database first, then the app.
+
 ## Known Issues
 
 - **Ghost 6 DB migrations on first start can take 30–60 seconds.** The `start_period: 45s` on the healthcheck allows for this; if migrations take longer (e.g. on slow storage), the container may briefly show `unhealthy` before recovering.

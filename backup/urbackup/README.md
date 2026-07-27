@@ -74,6 +74,39 @@ Everything below is unconfirmed. Each item must pass before this stack moves out
 
 Once all pass: set `Last verified` in `UPSTREAM.md`, update the status here and in [`../README.md`](../README.md), and regenerate `LIFECYCLE.md`.
 
+## Backup
+
+Backing up a backup server sounds circular, and mostly it is — but not entirely.
+
+| | |
+|---|---|
+| **Database** | SQLite inside the UrBackup data directory — no database server, no dump hook |
+| **State** | the UrBackup database: which client backed up what, when, and where it landed |
+| **Excluded — deliberately** | **`BACKUP_STORAGE_PATH`** — the client backups themselves |
+| **Quiescing** | **Required.** Stop the container, or snapshot the filesystem, before copying the database. |
+
+**`BACKUP_STORAGE_PATH` must not appear in borgmatic's `source_directories`.**
+It holds every client backup this server has taken, already deduplicated by
+UrBackup. Feeding it into a Borg repository re-deduplicates terabytes to no
+benefit, and one oversight here can outgrow the backup target overnight.
+
+What is worth capturing is the small part: the database that indexes the client
+backups. Losing it does not lose the file data, but it does mean the web
+interface no longer knows what exists — restores become a matter of reading the
+storage tree by hand.
+
+Verify the exclusion holds rather than assuming it:
+
+```bash
+sudo borgmatic create --dry-run --list | grep -c "$BACKUP_STORAGE_PATH"
+```
+
+Zero is the expected answer.
+
+This stack is the second direction of `backup/` — it protects the machines around
+the host, while `backup/borgmatic` protects the host. Neither backs up the other,
+and neither is a substitute.
+
 ## Known limitations
 
 - **Whole-disk image backup is Windows-only.** macOS and Linux clients back up files.

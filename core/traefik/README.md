@@ -493,3 +493,32 @@ Delete all rendered config files (templates stay untouched):
 ```bash
 bash ops/scripts/reset-templates.sh
 ```
+## Backup
+
+| | |
+|---|---|
+| **Database** | None. |
+| **State** | `./volumes/letsencrypt` — `acme.json`, holding the ACME account key and every issued certificate |
+| **Reproducible** | `./volumes/logs` · `./volumes/plugins-storage` — plugins are re-downloaded on start |
+| **Quiescing** | Not needed. `acme.json` is rewritten atomically on issuance and renewal. |
+
+No database hook. This stack is `source_directories` only, and the static and
+dynamic configuration under `config/` is versioned in git rather than backed up
+from the host.
+
+**`acme.json` contains private keys.** It is the one file in this repository that
+combines "small enough to overlook" with "grants the ability to impersonate every
+host it covers". Two consequences for the backup plan:
+
+- The archive containing it deserves the same protection as a secret store. It is
+  not merely configuration.
+- Its file mode is `600` and Traefik refuses to start if that is widened. A
+  restore that flattens permissions produces a proxy that will not come up, which
+  during an incident reads as a much larger failure than it is.
+
+Certificates can be reissued, so this is recoverable. But reissuing during an
+outage means DNS or HTTP validation has to work while the proxy is down.
+
+**Restore order:** early. Nothing else in the deployment is reachable until the
+proxy is up.
+

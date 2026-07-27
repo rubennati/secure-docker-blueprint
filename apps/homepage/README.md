@@ -50,6 +50,20 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 - **Docker socket integration disabled by default** — see below.
 - **`no-new-privileges:true`**.
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | None. |
+| **State** | None on the host — `config/` is versioned in git |
+| **Reproducible** | everything |
+| **Quiescing** | Not applicable. |
+
+Nothing to back up, provided the configuration is committed. Homepage writes its
+defaults into `config/` on first start, so check that what is running matches what
+is in the repository before assuming this is true — an uncommitted local edit is
+the one thing here that a restore would lose.
+
 ## Docker integration (optional)
 
 Homepage can discover services via Docker labels (set on other containers) or show live container status. Two options:

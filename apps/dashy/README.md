@@ -44,6 +44,21 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 - Default security `sec-3`
 - No data persistence beyond config file — container can be recreated freely
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | None. |
+| **State** | None on the host — `config/conf.yml` is mounted read-only and versioned in git |
+| **Reproducible** | everything |
+| **Quiescing** | Not applicable. |
+
+Nothing to back up. Restoring means checking out the repository and starting the
+container.
+
+Editing the dashboard through the UI is therefore not persistent here by design:
+the configuration file is the source of truth, and it lives in git.
+
 ## Known Issues
 
 - **Config changes** require a container restart to take effect (`docker compose restart app`).

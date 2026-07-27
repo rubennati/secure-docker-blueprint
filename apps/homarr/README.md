@@ -50,6 +50,23 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 - **Docker integration is disabled by default** — see below.
 - **`no-new-privileges:true`**.
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | SQLite inside `./volumes/appdata` — no database server, no dump hook |
+| **State** | `./volumes/appdata` — boards, integrations, users, encrypted credentials |
+| **Reproducible** | nothing |
+| **Quiescing** | **Recommended.** Stop the container or snapshot the filesystem rather than copying a live SQLite file. |
+
+No database hook. This stack is `source_directories` only, quiesced.
+
+**The encryption key is not in this directory.** Homarr encrypts stored
+integration credentials with a key supplied through the environment; restoring
+`appdata` against a different key leaves the boards intact and every integration
+unable to authenticate. Back the key up wherever `.env` is kept, and treat the two
+as one restore unit.
+
 ## Docker integration (optional)
 
 Homarr can show live container status, start/stop buttons, etc. if it can reach the Docker socket. The direct socket mount gives the container full control of Docker — **risky**.

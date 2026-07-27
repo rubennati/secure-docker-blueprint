@@ -95,6 +95,23 @@ Open an office doc from a connected app and confirm the editor loads in an ifram
 - `ONLYOFFICE_ALLOWED_ORIGINS` is a CSP allowlist. Any domain not listed here is rejected by the browser, even if it holds a valid JWT.
 - `no-new-privileges:true` on the container.
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | None in this stack. |
+| **State** | `.secrets/jwt_secret.txt` — shared with the embedding application |
+| **Reproducible** | `./volumes/data` (document cache) · `./volumes/logs` |
+| **Quiescing** | Not applicable. |
+
+Documents live in the application that embeds this document server and are backed
+up there. What is cached here is a working copy.
+
+The JWT secret is the only thing whose loss is felt: both sides have to hold the
+same value, so regenerating it means updating the embedding application too.
+Editing stays broken until they match, and the error surfaces there rather than
+here.
+
 ## Known Issues
 
 - **Image size is large (~1.5 GB)** — this is upstream; the document server bundles LibreOffice, Node.js, Nginx, PostgreSQL, RabbitMQ, and Redis. No slim variant is available.

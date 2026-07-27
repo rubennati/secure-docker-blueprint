@@ -60,6 +60,38 @@ curl -fsSIk https://<APP_TRAEFIK_HOST>/manage/account/login    # 200 OK
 - **Default access `acc-tailscale` + `sec-3`** — the UniFi controller manages your network infrastructure; VPN-only is the right default. The device ports (3478/udp, 8080/tcp, 10001/udp) are still exposed to the LAN so devices can adopt.
 - **Self-signed internal TLS → Traefik skip-verify** — UniFi uses a self-signed cert on its internal 8443. Traefik reverse-proxies HTTPS → HTTPS using the `skip-verify@file` server transport.
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | MongoDB · container `unifi-db` · database `unifi` |
+| **Password** | `.secrets/db_root_pwd.txt` (root) · `.secrets/db_app_pwd.txt` (application) |
+| **State** | `./volumes/mongodb` (database) · `./volumes/config` (site configuration, backups, certificates) |
+| **Reproducible** | nothing |
+| **Quiescing** | Not needed with the MongoDB hook. A file-level copy of `volumes/mongodb` can capture a torn state and must not replace the dump. |
+
+```yaml
+mongodb_databases:
+    - name: unifi
+      container: unifi-db
+      username: unifi
+      password: "{credential file /srv/docker/apps/unifi/.secrets/db_app_pwd.txt}"
+      authentication_database: admin
+```
+
+`authentication_database: admin` is required — the user is created in `admin`, so
+a dump without it authenticates against the wrong database.
+
+The controller also writes its own periodic `.unf` backups into `volumes/config`.
+Those are the supported restore path for the controller itself and are worth
+keeping even though the database dump duplicates them: restoring a `.unf` through
+the UI is considerably less error-prone than reassembling a Mongo dump.
+
+**Adopted devices keep running while this is down.** What is lost with the
+database is the configuration and history, not the network.
+
+**Restore order:** database first, then the app.
+
 ## Known Issues
 
 - **Live-tested: no.** Expect minor surprises, especially first-run Mongo init timing.

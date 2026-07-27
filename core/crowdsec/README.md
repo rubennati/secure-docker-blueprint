@@ -343,6 +343,28 @@ decisions:
 on_success: break
 ```
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | SQLite inside `./volumes/data` — no database server, and no dump hook |
+| **State** | `./volumes/data` (decisions, alerts, machine and bouncer credentials) · `./volumes/config` (installed collections, parsers, local API credentials) |
+| **Reproducible** | the acquisition config in `./config/` — versioned in git, not on the host |
+| **Quiescing** | **Required.** A file-level copy of a live SQLite database can capture a torn state that restores as a corrupt file. Stop the container, or snapshot the filesystem, before copying `volumes/data`. |
+
+No database hook: borgmatic's SQLite support addresses a file, and this one lives
+inside the data directory rather than being declared separately. Back the
+directory up as a source directory and quiesce it.
+
+**The bouncer credentials are the operational part.** They live in
+`volumes/config` and are registered against the local API in `volumes/data`. Restoring
+one without the other leaves bouncers that authenticate against an API that has
+never heard of them — Traefik then fails open or closed depending on its own
+configuration, and neither is what you intended.
+
+Losing the decision list itself is survivable: bans rebuild from live traffic.
+Losing the credentials means re-enrolling every bouncer by hand.
+
 ## Details
 
 - [UPSTREAM.md](UPSTREAM.md) — Upstream reference, upgrade checklist

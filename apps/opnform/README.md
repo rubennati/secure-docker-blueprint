@@ -73,6 +73,32 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/api/health     # 200 OK  (API via nginx �
 - **`no-new-privileges:true`** on all services.
 - **`app-internal` is not `internal: true`** — the Nuxt SSR server calls `api.iconify.design` at startup to resolve icons; blocking outbound internet causes `EAI_AGAIN` DNS failures. Isolation is enforced at the Traefik layer: only `nginx` is on `proxy-public` and exposed to the reverse proxy. `db` and `redis` are on `app-internal` only and therefore unreachable from outside Docker.
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | PostgreSQL · container `opnform-db` · database `opnform` · user `opnform` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **State** | `./volumes/postgres` (database) · `./volumes/storage` (file uploads submitted through forms) |
+| **Reproducible** | `./volumes/redis` — cache and queue |
+| **Quiescing** | Not needed. The dump is consistent on its own. |
+
+```yaml
+postgresql_databases:
+    - name: opnform
+      container: opnform-db
+      username: opnform
+      password: "{credential file /srv/docker/apps/opnform/.secrets/db_pwd.txt}"
+```
+
+Form submissions are database rows; anything a respondent uploaded is in
+`volumes/storage`. Restoring only the database gives submissions whose attachments
+are gone — and unlike most losses here, the data cannot be asked for again without
+contacting the people who sent it.
+
+**Restore order:** database first, then the app. The worker and scheduler come up
+with it; a queue restored mid-flight simply retries.
+
 ## Known Issues
 
 - **Icon 404s in browser console** — `/api/_nuxt_icon/ix.json` and `heroicons.json` return 404. This is an upstream OpnForm issue: the icon proxy path gets routed to the Laravel API instead of the Nuxt icon server. Cosmetic only — the app works normally.

@@ -99,6 +99,24 @@ See the `docker-compose.yml` comments for the switch. You'll need to:
 - **`/host:ro` mount** — Portainer uses this to show host volumes / paths. Read-only. Drop if host-path browsing isn't needed.
 - **`no-new-privileges:true`** on the container.
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | None. |
+| **State** | None — the agent holds no data of its own |
+| **Reproducible** | everything |
+| **Quiescing** | Not applicable. |
+
+Nothing to back up. The agent is a stateless relay; what it exposes belongs to the
+host it runs on, and what it is used for is stored by the Portainer instance that
+connects to it.
+
+**It mounts `/:/host:ro`** — the security baseline's one documented deviation of
+that kind. For backup purposes that mount is worth knowing about in the other
+direction: it means an agent container can read anything on the host, so its
+placement is a security decision, not a convenience one.
+
 ## Known Issues
 
 - **Live-tested: no.**

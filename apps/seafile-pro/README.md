@@ -79,6 +79,43 @@ Settings that use `os.environ.get()` (OnlyOffice URL, SMTP host, etc.) are evalu
 
 Adding a brand-new setting that was absent from `seahub_custom.py` at injection time requires either editing `seahub_settings.py` directly in the volume, or removing the marker line (`# --- Blueprint custom settings ---`) and everything after it, updating `config/seahub_custom.py`, then restarting.
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | MariaDB · container `seafile-pro-db` · **three databases**: `ccnet_db`, `seafile_db`, `seahub_db` · user `seafile` |
+| **Password** | `.secrets/seafile_db_pwd.txt` |
+| **State** | `./volumes/mysql` (databases) · **`./volumes/seafile-data`** — the file store · `./volumes/seadoc-data` |
+| **Reproducible** | `./volumes/redis` (cache) · the Elasticsearch volume · `./volumes/seasearch-data` — both search indexes, rebuildable |
+| **Quiescing** | Not needed for the dumps. Content-addressed blocks tolerate a mid-write copy. |
+
+```yaml
+mariadb_databases:
+    - name: ccnet_db
+      container: seafile-pro-db
+      username: seafile
+      password: "{credential file /srv/docker/apps/seafile-pro/.secrets/seafile_db_pwd.txt}"
+    - name: seafile_db
+      container: seafile-pro-db
+      username: seafile
+      password: "{credential file /srv/docker/apps/seafile-pro/.secrets/seafile_db_pwd.txt}"
+    - name: seahub_db
+      container: seafile-pro-db
+      username: seafile
+      password: "{credential file /srv/docker/apps/seafile-pro/.secrets/seafile_db_pwd.txt}"
+```
+
+**Three databases, not one** — `ccnet_db` for users and groups, `seafile_db` for
+file metadata, `seahub_db` for the web layer and shares. Any one missing restores
+to something that starts and does not work.
+
+The two search indexes are excluded deliberately and cost a reindex after a
+restore. Until it completes, search returns nothing while every file is present —
+which looks like data loss and is not.
+
+**Restore order:** databases first, then the block store, then the app, then
+trigger the reindex.
+
 ## Details
 
 - [UPSTREAM.md](UPSTREAM.md) — Full setup guide, troubleshooting, upgrade checklist

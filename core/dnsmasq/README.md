@@ -105,6 +105,23 @@ Test:
 nslookup -type=AAAA google.com 127.0.0.1
 ```
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | None. |
+| **State** | None on the host — `config/dnsmasq.conf` and `config/records.hosts` are mounted read-only and versioned in git |
+| **Reproducible** | everything |
+| **Quiescing** | Not applicable. |
+
+Nothing to back up. This stack is configuration only, and that configuration is
+in the repository. Restoring means checking out the repository and starting the
+container.
+
+Worth noting for the wider restore plan: while this container is down, name
+resolution for the internal zones is down with it. Bring it up early rather than
+last.
+
 ## Details
 
 - [UPSTREAM.md](UPSTREAM.md) — Upstream reference, upgrade checklist

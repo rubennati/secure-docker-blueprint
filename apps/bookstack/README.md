@@ -67,6 +67,30 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/login    # 200 OK
 - **`no-new-privileges:true`** on both services.
 - **LSIO s6-overlay** — container starts as root for init, drops to PUID/PGID. Do **not** set `user:` (would break s6).
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | MariaDB · container `bookstack-db` · database `bookstack` · user `bookstack` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **State** | `./volumes/mysql` (database) · `./volumes/config` (uploaded images, attachments, `.env`) |
+| **Reproducible** | nothing |
+| **Quiescing** | Not needed. The dump is consistent on its own. |
+
+```yaml
+mariadb_databases:
+    - name: bookstack
+      container: bookstack-db
+      username: bookstack
+      password: "{credential file /srv/docker/apps/bookstack/.secrets/db_pwd.txt}"
+```
+
+Page content is in the database; the images embedded in those pages are in
+`volumes/config`. A database-only restore gives a wiki whose pages all render with
+broken images — technically recovered, practically not.
+
+**Restore order:** database first, then the app.
+
 ## Known Issues
 
 - **`DB_PWD_INLINE` duplicates the DB password** — BookStack's `DB_PASSWORD` env var has no `_FILE` support. The DB service reads `MYSQL_PASSWORD_FILE` from a Docker Secret (`.secrets/db_pwd.txt`), but BookStack needs the same value inline in `.env`. Setup step 4 syncs them. Mismatch = BookStack can't connect to DB.

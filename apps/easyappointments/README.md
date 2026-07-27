@@ -61,6 +61,30 @@ After install, log in at `/index.php/user/login` (backend) or `/index.php/backen
 - **MariaDB on `app-internal` (`internal: true`)** — DB not reachable from outside.
 - **Default access `acc-public` + `sec-2`** — booking URLs must be reachable by external visitors.
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | MariaDB · container `easyappointments-db` · database `easyappointments` · user `easyappointments` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **State** | `./volumes/mysql` (database) · `./volumes/storage` (uploads, generated files) |
+| **Reproducible** | nothing |
+| **Quiescing** | Not needed. The dump is consistent on its own. |
+
+```yaml
+mariadb_databases:
+    - name: easyappointments
+      container: easyappointments-db
+      username: easyappointments
+      password: "{credential file /srv/docker/apps/easyappointments/.secrets/db_pwd.txt}"
+```
+
+Appointments are database rows. Restoring an older database silently removes
+bookings made since — and unlike most data loss, the people affected still expect
+to be seen. Reconcile against the notification mail before resuming operation.
+
+**Restore order:** database first, then the app.
+
 ## Known Issues
 
 - **`APP_TAG=latest` is not reproducible** — pin to a specific version for stable deployments.

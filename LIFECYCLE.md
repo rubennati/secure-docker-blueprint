@@ -11,58 +11,58 @@ Generated 2026-07-27 from the sources named in [`docs/standards/status-model.md`
 - **Public** — what an operator can rely on: `preview` · `ready` · `ops-ready`.
 - **Internal** — what the maintainer has established: `scaffolded` · `verified` · `baseline-aligned` · `ops-proven`.
 - **Last verified** — from the stack's `UPSTREAM.md`. A ⚠️ marks the legacy `Last checked:` field, which predates the current format and does not satisfy ✅ Ready criterion 8.
-- **Backup / Restore docs** — whether the stack README has such a section. Says nothing about whether either was ever performed.
+- **Backup / Restore docs** — whether the stack README has such a section. Says nothing about whether either was ever performed. `n/a` marks a stack where the section would be circular — the backup tool cannot describe backing itself up with itself.
 - **Restore tested** — omitted deliberately: the blueprint holds no restore evidence for any stack yet. The column returns with the v0.7.0 backup milestone, which is what makes `ops-ready` reachable.
 
 ## `core/`
 
 | Stack | Public | Internal | Pinned | Last verified | Backup docs | Restore docs |
 |---|---|---|---|---|---|---|
-| [`core/acme-certs`](core/acme-certs/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=0.2.1` | 2026-04-14 ⚠️ | missing | missing |
-| [`core/authentik`](core/authentik/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=2026.5.6` | 2026-07-26 | missing | missing |
-| [`core/collabora`](core/collabora/) | 🚧 `preview` | `scaffolded` | `APP_TAG=26.04.2.4.1` | — | missing | missing |
-| [`core/crowdsec`](core/crowdsec/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=v1.7.8` | 2026-04-15 ⚠️ | missing | missing |
-| [`core/dnsmasq`](core/dnsmasq/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=2.90-r3` | 2026-04-14 ⚠️ | missing | missing |
-| [`core/dockhand`](core/dockhand/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=v1.0.39` | 2026-04-16 ⚠️ | missing | missing |
-| [`core/euro-office`](core/euro-office/) | 🚧 `preview` | `scaffolded` | `APP_TAG=v9.3.2` | — | missing | missing |
-| [`core/hawser`](core/hawser/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=0.2.39` | 2026-04-14 ⚠️ | missing | missing |
-| [`core/infisical`](core/infisical/) | 🚧 `preview` | `scaffolded` | `APP_TAG=v0.162.13` | — | missing | missing |
-| [`core/onlyoffice`](core/onlyoffice/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=9.4.0` | 2026-06-14 ⚠️ | missing | missing |
-| [`core/portainer`](core/portainer/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=2.39.5` | 2026-04-16 ⚠️ | missing | missing |
-| [`core/portainer-agent`](core/portainer-agent/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=2.39.5` | 2026-05-05 | missing | missing |
-| [`core/traefik`](core/traefik/) | ✅ `ready` | `baseline-aligned` | `TRAEFIK_IMAGE=traefik:v3.6` | 2026-04-16 ⚠️ | missing | missing |
-| [`core/whoami`](core/whoami/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=v1.11.0` | 2026-04-16 ⚠️ | missing | missing |
+| [`core/acme-certs`](core/acme-certs/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=0.2.1` | 2026-04-14 ⚠️ | documented | missing |
+| [`core/authentik`](core/authentik/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=2026.5.6` | 2026-07-26 | documented | missing |
+| [`core/collabora`](core/collabora/) | 🚧 `preview` | `scaffolded` | `APP_TAG=26.04.2.4.1` | — | documented | missing |
+| [`core/crowdsec`](core/crowdsec/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=v1.7.8` | 2026-04-15 ⚠️ | documented | missing |
+| [`core/dnsmasq`](core/dnsmasq/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=2.90-r3` | 2026-04-14 ⚠️ | documented | missing |
+| [`core/dockhand`](core/dockhand/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=v1.0.39` | 2026-04-16 ⚠️ | documented | missing |
+| [`core/euro-office`](core/euro-office/) | 🚧 `preview` | `scaffolded` | `APP_TAG=v9.3.2` | — | documented | missing |
+| [`core/hawser`](core/hawser/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=0.2.39` | 2026-04-14 ⚠️ | documented | missing |
+| [`core/infisical`](core/infisical/) | 🚧 `preview` | `scaffolded` | `APP_TAG=v0.162.13` | — | documented | missing |
+| [`core/onlyoffice`](core/onlyoffice/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=9.4.0` | 2026-06-14 ⚠️ | documented | missing |
+| [`core/portainer`](core/portainer/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=2.39.5` | 2026-04-16 ⚠️ | documented | missing |
+| [`core/portainer-agent`](core/portainer-agent/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=2.39.5` | 2026-05-05 | documented | missing |
+| [`core/traefik`](core/traefik/) | ✅ `ready` | `baseline-aligned` | `TRAEFIK_IMAGE=traefik:v3.6` | 2026-04-16 ⚠️ | documented | missing |
+| [`core/whoami`](core/whoami/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=v1.11.0` | 2026-04-16 ⚠️ | documented | missing |
 
 ## `apps/`
 
 | Stack | Public | Internal | Pinned | Last verified | Backup docs | Restore docs |
 |---|---|---|---|---|---|---|
-| [`apps/adminer`](apps/adminer/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=5.5.0-standalone` | 2026-05-02 | missing | missing |
-| [`apps/bookstack`](apps/bookstack/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=version-v26.05.2` | 2026-05-03 | missing | missing |
-| [`apps/caldiy`](apps/caldiy/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=v6.2.0-4@sha256:9818a0be6404…` | 2026-07-26 | missing | missing |
-| [`apps/dashy`](apps/dashy/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=4.5.0` | 2026-05-02 | missing | missing |
-| [`apps/easyappointments`](apps/easyappointments/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=1.6.0` | 2026-05-03 | missing | missing |
-| [`apps/ghost`](apps/ghost/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=6.54.0-alpine` | 2026-07-26 | missing | missing |
-| [`apps/heimdall`](apps/heimdall/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=2.8.1` | 2026-05-02 | missing | missing |
-| [`apps/homarr`](apps/homarr/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=v1.72.0` | 2026-05-02 | missing | missing |
-| [`apps/homepage`](apps/homepage/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=v1.13.2` | 2026-05-03 | missing | missing |
-| [`apps/immich`](apps/immich/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=v3.0.3` | 2026-04-17 ⚠️ | missing | missing |
-| [`apps/it-tools`](apps/it-tools/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=2024.10.22-7ca5933` | 2026-05-02 | missing | missing |
-| [`apps/librephotos`](apps/librephotos/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=2026w25` | 2026-04-17 ⚠️ | missing | missing |
-| [`apps/lycheeorg`](apps/lycheeorg/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=v7.7.1` | 2026-04-17 ⚠️ | missing | missing |
-| [`apps/monicahq`](apps/monicahq/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=4.1.2-apache` | 2026-04-17 ⚠️ | missing | missing |
-| [`apps/n8n`](apps/n8n/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=2.31.6` | 2026-05-02 | missing | missing |
-| [`apps/nextcloud`](apps/nextcloud/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=32.0.13-fpm-alpine` | 2026-04-13 ⚠️ | missing | missing |
-| [`apps/nocodb`](apps/nocodb/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=2026.07.0` | 2026-05-02 | missing | missing |
-| [`apps/opnform`](apps/opnform/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=2.2.2` | 2026-04-17 ⚠️ | missing | missing |
-| [`apps/paperless-ngx`](apps/paperless-ngx/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=3.0.3` | 2026-05-03 | missing | missing |
-| [`apps/photoprism`](apps/photoprism/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=260601` | 2026-04-17 ⚠️ | missing | missing |
-| [`apps/photoview`](apps/photoview/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=2.4.0` | 2026-04-17 ⚠️ | missing | missing |
-| [`apps/seafile`](apps/seafile/) | ✅ `ready` | `baseline-aligned` | `APP_IMAGE=seafileltd/seafile-mc:13.0.20` | 2026-04-16 ⚠️ | missing | missing |
-| [`apps/seafile-pro`](apps/seafile-pro/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=13.0.21` | 2026-04-13 ⚠️ | missing | missing |
-| [`apps/unifi`](apps/unifi/) | 🚧 `preview` | `scaffolded` | `APP_TAG=10.4.57` | 2026-04-17 ⚠️ | missing | missing |
-| [`apps/vaultwarden`](apps/vaultwarden/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=1.37.0` | 2026-06-14 ⚠️ | missing | missing |
-| [`apps/wordpress`](apps/wordpress/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=7.0.2-php8.3-apache` | 2026-04-15 ⚠️ | missing | missing |
+| [`apps/adminer`](apps/adminer/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=5.5.0-standalone` | 2026-05-02 | documented | missing |
+| [`apps/bookstack`](apps/bookstack/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=version-v26.05.2` | 2026-05-03 | documented | missing |
+| [`apps/caldiy`](apps/caldiy/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=v6.2.0-4@sha256:9818a0be6404…` | 2026-07-26 | documented | missing |
+| [`apps/dashy`](apps/dashy/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=4.5.0` | 2026-05-02 | documented | missing |
+| [`apps/easyappointments`](apps/easyappointments/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=1.6.0` | 2026-05-03 | documented | missing |
+| [`apps/ghost`](apps/ghost/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=6.54.0-alpine` | 2026-07-26 | documented | missing |
+| [`apps/heimdall`](apps/heimdall/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=2.8.1` | 2026-05-02 | documented | missing |
+| [`apps/homarr`](apps/homarr/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=v1.72.0` | 2026-05-02 | documented | missing |
+| [`apps/homepage`](apps/homepage/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=v1.13.2` | 2026-05-03 | documented | missing |
+| [`apps/immich`](apps/immich/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=v3.0.3` | 2026-04-17 ⚠️ | documented | missing |
+| [`apps/it-tools`](apps/it-tools/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=2024.10.22-7ca5933` | 2026-05-02 | documented | missing |
+| [`apps/librephotos`](apps/librephotos/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=2026w25` | 2026-04-17 ⚠️ | documented | missing |
+| [`apps/lycheeorg`](apps/lycheeorg/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=v7.7.1` | 2026-04-17 ⚠️ | documented | missing |
+| [`apps/monicahq`](apps/monicahq/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=4.1.2-apache` | 2026-04-17 ⚠️ | documented | missing |
+| [`apps/n8n`](apps/n8n/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=2.31.6` | 2026-05-02 | documented | missing |
+| [`apps/nextcloud`](apps/nextcloud/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=32.0.13-fpm-alpine` | 2026-04-13 ⚠️ | documented | missing |
+| [`apps/nocodb`](apps/nocodb/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=2026.07.0` | 2026-05-02 | documented | missing |
+| [`apps/opnform`](apps/opnform/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=2.2.2` | 2026-04-17 ⚠️ | documented | missing |
+| [`apps/paperless-ngx`](apps/paperless-ngx/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=3.0.3` | 2026-05-03 | documented | missing |
+| [`apps/photoprism`](apps/photoprism/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=260601` | 2026-04-17 ⚠️ | documented | missing |
+| [`apps/photoview`](apps/photoview/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=2.4.0` | 2026-04-17 ⚠️ | documented | missing |
+| [`apps/seafile`](apps/seafile/) | ✅ `ready` | `baseline-aligned` | `APP_IMAGE=seafileltd/seafile-mc:13.0.20` | 2026-04-16 ⚠️ | documented | missing |
+| [`apps/seafile-pro`](apps/seafile-pro/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=13.0.21` | 2026-04-13 ⚠️ | documented | missing |
+| [`apps/unifi`](apps/unifi/) | 🚧 `preview` | `scaffolded` | `APP_TAG=10.4.57` | 2026-04-17 ⚠️ | documented | missing |
+| [`apps/vaultwarden`](apps/vaultwarden/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=1.37.0` | 2026-06-14 ⚠️ | documented | missing |
+| [`apps/wordpress`](apps/wordpress/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=7.0.2-php8.3-apache` | 2026-04-15 ⚠️ | documented | missing |
 
 ## `business/`
 
@@ -95,8 +95,8 @@ Generated 2026-07-27 from the sources named in [`docs/standards/status-model.md`
 
 | Stack | Public | Internal | Pinned | Last verified | Backup docs | Restore docs |
 |---|---|---|---|---|---|---|
-| [`backup/borgmatic`](backup/borgmatic/) | 🚧 `preview` | `scaffolded` | *host-installed* | — | missing | documented |
-| [`backup/urbackup`](backup/urbackup/) | 🚧 `preview` | `scaffolded` | `APP_TAG=2.5.x@sha256:e2fdc0d59071…` | — | missing | missing |
+| [`backup/borgmatic`](backup/borgmatic/) | 🚧 `preview` | `scaffolded` | *host-installed* | — | n/a | documented |
+| [`backup/urbackup`](backup/urbackup/) | 🚧 `preview` | `scaffolded` | `APP_TAG=2.5.x@sha256:e2fdc0d59071…` | — | documented | missing |
 
 ## Source of truth
 

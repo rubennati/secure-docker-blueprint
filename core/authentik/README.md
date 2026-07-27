@@ -268,6 +268,38 @@ Similar pattern — create a `SAML Provider`, download the metadata XML from Aut
 - Redis runs `read_only: true` with a `tmpfs` for `/tmp`; no writable root filesystem
 - `no-new-privileges:true` on every service
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | PostgreSQL · container `authentik-db` · database `authentik` · user `authentik` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **State** | `./volumes/postgres` (database) · `./volumes/data` (media, blueprints) · `./volumes/certs` (signing keypairs) · `./volumes/custom-templates` |
+| **Reproducible** | `./volumes/redis` — cache and task queue |
+| **Quiescing** | Not needed. The dump is consistent on its own. |
+
+```yaml
+postgresql_databases:
+    - name: authentik
+      container: authentik-db
+      username: authentik
+      password: "{credential file /srv/docker/core/authentik/.secrets/db_pwd.txt}"
+```
+
+**This stack is the one whose loss cascades.** Every application behind
+Forward-Auth depends on it; a failed Authentik restore locks users out of
+everything at once, not just out of Authentik. Treat it as a first-class restore
+target, and rehearse it before the applications that depend on it.
+
+Two files outside the database are required for a working restore:
+
+- **`.secrets/authentik_secret_key.txt`** derives session and token values.
+  Restoring without it invalidates every session and every issued token.
+- **`volumes/certs`** holds the signing keypairs. Restore without them and SAML
+  assertions no longer validate against the metadata that relying parties hold.
+
+**Restore order:** database first, then `server`, then `worker`.
+
 ## Known Issues
 
 - **Setup URL is public until an admin exists.** `/if/flow/initial-setup/` lets anyone create `akadmin`. Complete it immediately after the first boot; if you forget, anyone hitting that URL first becomes the admin.

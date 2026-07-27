@@ -57,6 +57,25 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/api/v1/health        # 200 OK
 - **`no-new-privileges:true`** on the container.
 - **Default access `acc-tailscale` + `sec-3`** — NocoDB holds structured operational data and often API credentials in table cells. VPN-only is a safer default than public. Switch to `acc-public + sec-2` only if you want external share links and are OK with that exposure.
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | SQLite inside `./volumes/data` by default — no database server, no dump hook |
+| **State** | `./volumes/data` (bases, views, uploaded attachments) |
+| **Reproducible** | nothing |
+| **Quiescing** | **Recommended.** Stop the container or snapshot the filesystem rather than copying a live SQLite file. |
+
+No database hook for the default configuration. This stack is
+`source_directories` only, quiesced.
+
+`.secrets/nc_jwt_secret.txt` signs the session tokens — restoring without it logs
+everyone out, which is recoverable but looks like a failed restore.
+
+**If this instance was pointed at an external database instead**, the data is
+there and not in `volumes/data`; back that database up with the appropriate hook
+and treat this directory as configuration only.
+
 ## Using NocoDB with n8n
 
 Typical automation pattern:

@@ -51,6 +51,27 @@ The socket proxy is the main hardening. Its environment variables in `docker-com
 
 This is a **full-access** set suitable for a trusted admin UI. If Portainer only needs read-only operation (e.g. monitoring), reduce `POST`, `DELETE`, `EXEC` to `"0"`.
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | Embedded key-value store inside `./volumes/data` — no database server, no dump hook |
+| **State** | `./volumes/data` — users, environments, stacks, registries, access policies |
+| **Reproducible** | nothing |
+| **Quiescing** | **Recommended.** The embedded database is written continuously while the container runs; stop it, or snapshot the filesystem, rather than copying the directory live. |
+
+No database hook. This stack is `source_directories` only, with the container
+quiesced.
+
+Portainer also has its own backup function in the UI, which produces a single
+encrypted archive. That is the more reliable route for this stack, and it composes
+well with borgmatic: write the export to a path the file backup already covers.
+
+**What is lost without it:** the environment definitions and access policies, not
+the containers themselves. Everything Portainer manages keeps running while
+Portainer is down, which makes this feel less urgent than it is when several
+environments are configured.
+
 ## First-Login Admin Setup
 
 Portainer enforces a 5-minute window for initial admin creation after first start. If missed, the instance becomes unreachable and must be restarted:

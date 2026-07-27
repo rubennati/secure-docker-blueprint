@@ -62,6 +62,26 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 - **MariaDB on `app-internal` (`internal: true`)** — not reachable from outside.
 - **Default access `acc-tailscale` + `sec-3`** — Monica holds very personal data (contacts, health, journal). VPN-only is a safer default than public.
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | MariaDB · container `monica-db` · database `monica` · user `monica` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **State** | `./volumes/mysql` (database) · `./volumes/data` (uploaded photos and documents) |
+| **Reproducible** | nothing |
+| **Quiescing** | Not needed. The dump is consistent on its own. |
+
+```yaml
+mariadb_databases:
+    - name: monica
+      container: monica-db
+      username: monica
+      password: "{credential file /srv/docker/apps/monicahq/.secrets/db_pwd.txt}"
+```
+
+**Restore order:** database first, then the app.
+
 ## Known Issues
 
 - **`volumes/data/` permissions** — on first run Monica creates subdirectories inside the storage volume. If they end up owned by root, a `chown -R www-data:www-data volumes/data/` fixes it.

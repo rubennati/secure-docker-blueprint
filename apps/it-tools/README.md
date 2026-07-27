@@ -46,6 +46,17 @@ The tool list loads immediately — no login, no setup page.
 - **Default access `acc-tailscale`** — personal toolbox, VPN-only by default. Flip to `acc-public` if you want to share the tools publicly (the app is a benign static SPA, no confidentiality concerns; but personal use doesn't need public exposure).
 - **No backend** — no API endpoints, no data submission anywhere. All computation happens in the user's browser.
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | None. |
+| **State** | None. Everything runs client-side in the browser. |
+| **Reproducible** | everything |
+| **Quiescing** | Not applicable. |
+
+Nothing to back up. Restoring means starting the container again.
+
 ## Known Issues
 
 - **Image tag** is a timestamped hash from upstream (`2025.7.18-a0bc346` style). Upstream doesn't publish semver tags, so bumping means picking a newer commit-tagged release. Check [upstream releases](https://github.com/CorentinTh/it-tools/releases) for the latest.

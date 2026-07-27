@@ -25,10 +25,11 @@ Listed with context in [`state.md`](state.md). Nothing proceeds on these until d
 
 ## Doable without a host
 
-- [ ] Fill the `## Backup` section in the remaining app READMEs — `business/` is
-      done (10 stacks), 42 to go. `LIFECYCLE.md` reports which still lack it; the
-      pattern is in `apps/_reference/README.md`. Do it per category, from the
-      compose file, not from memory
+- [x] Fill the `## Backup` section in every stack README — done, 58 of 59.
+      `backup/borgmatic` is `n/a` by declaration: the backup tool cannot describe
+      backing itself up with itself
+- [ ] `backup/urbackup` has no restore section — restoring a *client* backup is a
+      real procedure and the one gap left in that column
 - [ ] Decide the `TROUBLESHOOTING.md` / `docs/standards/troubleshooting.md` overlap
 - [ ] Add `Checker coverage` to the required checks in branch protection — the job
       runs, but nothing blocks on it yet
