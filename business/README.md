@@ -6,7 +6,9 @@ This keeps `business/` a meaningful category instead of a grab-bag. See [`docs/a
 
 ## Status
 
-✅ Ready · 🚧 Preview · 📋 Planned
+🛡️ Ops-ready · ✅ Ready · 🚧 Preview · 📋 Planned
+
+`🛡️ Ops-ready` means a restore has actually been performed — no service holds it yet. Full definitions: [`docs/standards/status-model.md`](../docs/standards/status-model.md).
 
 ### Project management & planning
 

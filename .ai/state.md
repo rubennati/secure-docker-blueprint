@@ -12,8 +12,9 @@
 
 ## Snapshot
 
-- 59 stacks tracked. 39 `ready`, 18 `preview`, **0 `ops-ready`** — no stack has
-  restore evidence, which is exactly what v0.7.0 changes.
+- 58 stacks tracked. 39 `ready`, 19 `preview`, **0 `ops-ready`** — no stack has
+  restore evidence, which is exactly what v0.7.0 changes. Numbers come from
+  `LIFECYCLE.md`; regenerate rather than editing them here.
 - Backup architecture designed (`backup/README.md`): five layers, host-installed
   agent, snapshot/backup/archive kept distinct.
 - `backup/borgmatic/` — configuration, systemd timer, setup and restore playbook.

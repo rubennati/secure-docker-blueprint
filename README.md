@@ -113,8 +113,9 @@ Planned in `core/`: Keycloak (alternative / heavier IAM next to Authentik).
 
 The blueprint takes a **choice-matrix** approach: where several tools compete (dashboards, photo galleries, wikis, form builders), multiple options are included so you can test and pick what fits.
 
-**Status:** ✅ Ready · 🚧 Preview · 📋 Planned
+**Status:** 🛡️ Ops-ready · ✅ Ready · 🚧 Preview · 📋 Planned
 
+- **🛡️ Ops-ready** — everything `Ready` promises, plus a restore actually performed from a backup. *No service holds this yet* — it becomes reachable with the v0.7.0 backup milestone.
 - **✅ Ready** — clean install and core function established, security baseline met, documentation in place. Deploy it.
 - **🚧 Preview** — on disk and it may well work, but the blueprint does not vouch for it. Evaluate it yourself before trusting it with data.
 - **📋 Planned** — named as intended, nothing on disk yet.

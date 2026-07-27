@@ -9,7 +9,9 @@ They solve different problems and neither replaces the other. Separate top-level
 
 ## Status
 
-✅ Ready · 🚧 Preview · 📋 Planned
+🛡️ Ops-ready · ✅ Ready · 🚧 Preview · 📋 Planned
+
+`🛡️ Ops-ready` means a restore has actually been performed — no service holds it yet. Full definitions: [`docs/standards/status-model.md`](../docs/standards/status-model.md).
 
 | Tool | Direction | Status | Notes |
 |---|---|---|---|

@@ -4,7 +4,9 @@ Self-hosted monitoring stack — covers five axes: **uptime**, **cron / schedule
 
 ## Status
 
-✅ Ready · 🚧 Preview · 📋 Planned
+🛡️ Ops-ready · ✅ Ready · 🚧 Preview · 📋 Planned
+
+`🛡️ Ops-ready` means a restore has actually been performed — no service holds it yet. Full definitions: [`docs/standards/status-model.md`](../docs/standards/status-model.md).
 
 ### Uptime & status pages
 

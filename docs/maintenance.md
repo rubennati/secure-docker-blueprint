@@ -35,7 +35,7 @@ Each piece of information has exactly one owner. When two files disagree, the ow
 | Per-app config options | `<app>/CONFIG.md` (where it exists) | No duplication |
 | Per-app upstream info | `<app>/UPSTREAM.md` | — |
 
-**Root README structure rule**: tables show `🚧` / `✅` only. `📋` planned items appear as inline `Planned: X, Y, Z` lines — never as table rows.
+**Root README structure rule**: tables show `🛡️` / `✅` / `🚧` only. `📋` planned items appear as inline `Planned: X, Y, Z` lines — never as table rows. `🛡️` is listed in every status legend but appears in no table yet; the first stack earns it with the v0.7.0 restore.
 
 `core/` and `apps/` deliberately have no category README — they are documented per service in the root README tables, which is why the root owns their status. Everything derived from these owners is regenerated, not retyped:
 
