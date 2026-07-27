@@ -27,6 +27,10 @@ WARN — evidence probably exists, the record is in the old shape:
   legacy-stamp         ✅ with the pre-v0.5.1 `Last checked: DATE` field instead
                        of `Last verified: DATE (vX.Y.Z)`. Converting it requires
                        knowing the evidence is real, so it is never automatic.
+  backup-docs-split    UPSTREAM.md documents the backup or restore procedure as
+                       well. Two owners for one fact — and because this report
+                       only reads the README, the stack shows up as "missing"
+                       and invites a third copy. A pointer there is fine.
 
 Usage:
   python3 scripts/ci/lifecycle-report.py            # report to stdout
@@ -62,7 +66,7 @@ INTERNAL = {
 EXCEPT = {"apps/_reference": "the canonical reference itself"}
 
 # Rules that report drift without blocking CI.
-WARN_RULES = {"legacy-stamp"}
+WARN_RULES = {"legacy-stamp", "backup-docs-split"}
 
 ROW = re.compile(r"^\|.*\]\((?P<path>[a-z0-9._-]+)/\)")
 STATUS_CELL = re.compile(r"\|\s*(✅|🚧|📋|🛡️)\s*\|")
@@ -170,6 +174,28 @@ def doc_sections(stack: Path) -> tuple[str, str]:
     return doc_sections_raw(stack)
 
 
+def backup_docs_elsewhere(stack: Path) -> bool:
+    """True when UPSTREAM.md carries backup/restore *procedure*, not a pointer.
+
+    The backup section belongs in the stack README — that is where the per-app
+    pattern lives and the only place this script looks. An UPSTREAM.md that also
+    documents the procedure is a second owner for the same fact, and because it is
+    invisible here it reads as "missing" and invites someone to write a third copy.
+    That happened to `apps/vaultwarden` and `business/invoiceninja`.
+
+    A pointer back to the README is fine; a table or a command block is not.
+    """
+    lines = read(stack / "UPSTREAM.md").splitlines()
+    inside = False
+    for line in lines:
+        if line.startswith("#"):
+            inside = bool(SECTION.match(line))
+            continue
+        if inside and (line.startswith("```") or line.startswith("|")):
+            return True
+    return False
+
+
 def doc_sections_raw(stack: Path) -> tuple[str, str]:
     has = {
         "backup": (stack / "BACKUP.md").exists(),
@@ -231,6 +257,14 @@ def collect() -> tuple[list[dict], list[dict]]:
                 problems.append({
                     "rule": "status-mismatch", "stack": key,
                     "detail": f"{owner_file} says {symbol}, root README says {mirrored}",
+                })
+
+            if backup_docs_elsewhere(stack):
+                problems.append({
+                    "rule": "backup-docs-split", "stack": key,
+                    "detail": "UPSTREAM.md documents the backup or restore procedure "
+                              "as well — one owner per fact; the README is the one "
+                              "this report reads. Leave a pointer there instead",
                 })
 
             public = SYMBOLS.get(symbol, "preview")

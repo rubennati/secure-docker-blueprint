@@ -36,7 +36,7 @@ docker compose config --quiet          # in the stack directory
 | Sentinel value check | `__REPLACE_ME__` in a committed `.env` |
 | Security baseline | missing `no-new-privileges`, `privileged: true`, socket-proxy violations |
 | Canonical structure | `:latest` or major-only tags, plaintext secrets, unprotected `.secrets/`, a datastore on the public network |
-| Status model | owner and mirror disagreeing on a status, ✅ without a verification date, stale `LIFECYCLE.md` |
+| Status model | owner and mirror disagreeing on a status, ✅ without a verification date, stale `LIFECYCLE.md`; warns when `UPSTREAM.md` duplicates the README's backup procedure |
 | Checker coverage | a content directory no checker enumerates, a top-level directory declared nowhere |
 
 The required-check names must match the job `name:` fields in

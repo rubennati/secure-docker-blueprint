@@ -30,6 +30,13 @@ Listed with context in [`state.md`](state.md). Nothing proceeds on these until d
       backing itself up with itself
 - [ ] `backup/urbackup` has no restore section — restoring a *client* backup is a
       real procedure and the one gap left in that column
+- [ ] **`apps/vaultwarden` → Docker Secrets.** The blocker recorded in `UPSTREAM.md`
+      was wrong: Vaultwarden does support `_FILE`. The real obstacle is that the
+      password sits inside `DATABASE_URL`, so the secret must carry the whole URL
+      (`DATABASE_URL_FILE`) or an entrypoint must assemble it. Needs a host test —
+      it changes how a ✅ stack starts
+- [ ] `business/invoiceninja` → Docker Secrets via entrypoint wrapper (Phase 2).
+      Genuinely upstream-limited: Laravel has no `_FILE` for `APP_KEY`/`DB_PASSWORD`
 - [ ] Decide the `TROUBLESHOOTING.md` / `docs/standards/troubleshooting.md` overlap
 - [ ] Add `Checker coverage` to the required checks in branch protection — the job
       runs, but nothing blocks on it yet

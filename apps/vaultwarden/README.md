@@ -236,8 +236,8 @@ If **Admin → Diagnostics** shows `HTTP Response validation: Error`, check that
 | | |
 |---|---|
 | **Database** | MariaDB · container `vaultwarden-db` · database `vaultwarden` · user `vw_user` |
-| **Password** | `DB_PWD` in `.env` — **not** a Docker Secret on this stack |
-| **State** | `./volumes/mysql` (database) · **`./volumes/data`** — the RSA keypair, attachments, sends |
+| **Password** | `DB_PASSWORD` in `.env` — see the note below |
+| **State** | `./volumes/mysql` (database) · **`./volumes/data`** — `rsa_key.*`, `attachments/`, `sends/` |
 | **Reproducible** | the icon cache inside `./volumes/data` |
 | **Quiescing** | Not needed. The dump is consistent on its own. |
 
@@ -249,14 +249,28 @@ mariadb_databases:
       password: "{credential file /srv/docker/apps/vaultwarden/.secrets/db_pwd.txt}"
 ```
 
-**The credential file above does not exist yet** — this stack still carries its
-database password in `.env`. Either move it to `.secrets/db_pwd.txt` first, or
-supply the value to borgmatic another way.
+**The credential file does not exist yet.** This stack holds `DB_PASSWORD` in
+`.env`. Vaultwarden does support `_FILE`, so this is not an upstream dead end —
+the obstacle is that the password sits inside `DATABASE_URL`, a connection
+string, so the secret would have to carry the whole URL or an entrypoint would
+have to assemble it. Until that happens, supply the value to borgmatic another
+way rather than letting two systems read the same password from `.env`.
 
-**`volumes/data/rsa_key*` signs the authentication tokens.** A database restored
-without it leaves every client unable to log in, with vaults that are present and
-inaccessible. It is a handful of small files next to a database that is useless
-without them.
+**`volumes/data/rsa_key.*` signs the authentication tokens.** A database restored
+without those files leaves every client unable to log in, with vaults that are
+present and inaccessible. They are a handful of small files next to a database
+that is useless without them — and the single most common way a Vaultwarden
+restore fails.
+
+`attachments/` and `sends/` are referenced from the database and stored as files.
+Restore both halves from the same archive.
+
+Manual dump, when borgmatic is not in the picture:
+
+```bash
+docker exec -e MYSQL_PWD="$(grep DB_ROOT_PASSWORD .env | cut -d= -f2)" \
+  vaultwarden-db mariadb-dump -u root vaultwarden > backup-$(date +%Y%m%d).sql
+```
 
 This archive holds everybody's passwords in encrypted form. Encryption at rest in
 the borg repository is not optional here, and neither is keeping the repository

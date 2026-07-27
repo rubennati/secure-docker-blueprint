@@ -31,8 +31,8 @@ Supervisor inside the `app` container manages the Laravel scheduler and queue wo
 | | |
 |---|---|
 | **Database** | MySQL · container `invoiceninja-mysql` · database `ninja` · user `ninja` |
-| **Password** | `DB_PASSWORD` in `.env` — **not** a Docker Secret on this stack |
-| **State** | `mysql_data` (database) · `app_storage` (uploads, generated PDFs, backups) |
+| **Password** | `DB_PASSWORD` in `.env` — see the note below |
+| **State** | `mysql_data` (database) · `app_storage` (attachments, logos, generated PDFs) · **`.env`, especially `APP_KEY`** |
 | **Reproducible** | `redis_data` (cache) · `app_public` — served assets, rebuilt by the image |
 | **Quiescing** | Not needed. The dump is consistent on its own. |
 
@@ -48,13 +48,45 @@ mysql_databases:
       password: "{credential file /srv/docker/business/invoiceninja/.secrets/db_pwd.txt}"
 ```
 
-**The credential file above does not exist yet.** This stack still carries its
-database password in `.env` rather than in `.secrets/`, together with the
-`env_file:` deviation noted under Details. Until that is reworked, either point
-borgmatic at the value another way or move the password to `.secrets/db_pwd.txt`
-first — a password read from `.env` by two different systems drifts.
+**`APP_KEY` in `.env` decrypts the stored data.** Without it a restored database
+is unreadable — this is the single most important line in this section, and it is
+the one thing here that is not in a volume. Back `.env` up with the database, and
+keep a copy of `APP_KEY` somewhere the host cannot reach.
 
-**Restore order:** database first, then the app.
+**The credential file above does not exist yet**, because this stack keeps its
+secrets in `.env` rather than in `.secrets/`. That is an upstream limitation, not
+an oversight: Laravel has no `_FILE` support for most variables, `APP_KEY` and
+`DB_PASSWORD` among them, so a custom entrypoint is the path to Docker Secrets
+here — recorded as Phase 2 in [`UPSTREAM.md`](UPSTREAM.md#known-deviations).
+Until then, supply the password to borgmatic another way rather than having two
+systems read it out of `.env`.
+
+Manual dump and restore, when borgmatic is not in the picture:
+
+```bash
+# Dump
+docker exec invoiceninja-mysql mysqldump \
+  -u root -p"$(grep '^DB_ROOT_PASSWORD=' .env | cut -d= -f2)" ninja \
+  > backup-db-$(date +%Y%m%d-%H%M).sql
+
+docker run --rm -v invoiceninja_app_storage:/data:ro -v "$(pwd)":/out \
+  alpine tar czf /out/backup-storage-$(date +%Y%m%d-%H%M).tar.gz -C /data .
+
+cp .env .env.backup-$(date +%Y%m%d)
+
+# Restore — database first, with only MySQL running
+docker compose up -d mysql
+docker compose exec mysql sh -c 'mysql -u root -p"${MYSQL_ROOT_PASSWORD}" ninja' \
+  < backup-db-YYYYMMDD-HHMM.sql
+
+docker run --rm -v invoiceninja_app_storage:/data -v "$(pwd)":/in \
+  alpine sh -c "cd /data && tar xzf /in/backup-storage-YYYYMMDD-HHMM.tar.gz"
+```
+
+**Back up before every upgrade.** Invoice Ninja runs migrations on start, and a
+failed migration against a database with no dump behind it is not recoverable.
+
+**Restore order:** `.env` and database first, then storage, then the app.
 
 ## First-Time Setup
 

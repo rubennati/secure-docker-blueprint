@@ -68,8 +68,11 @@ services:
 
     # --- Configuration ---
     # DEVIATION: DB_PASSWORD and ADMIN_TOKEN are passed as env vars, not via Docker Secrets.
-    # Vaultwarden has no _FILE support and DATABASE_URL is a connection string — a custom
-    # entrypoint to inject secrets is the path to full compliance (Phase 2).
+    # Vaultwarden DOES support `_FILE` (upstream configuration wiki, confirmed 2026-07-27) —
+    # an earlier version of this comment claimed otherwise. The real obstacle is narrower:
+    # the password is embedded in DATABASE_URL, a connection string, so the secret would have
+    # to hold the whole URL (DATABASE_URL_FILE) or an entrypoint would have to assemble it.
+    # Either is a real option; neither has been done. Phase 2.
     # Accepted for now: .env is gitignored and never committed. See UPSTREAM.md.
     environment:
       # Core

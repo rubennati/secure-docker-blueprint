@@ -14,7 +14,7 @@
 | Change | Reason |
 |--------|--------|
 | MariaDB instead of SQLite | More robust for concurrent access, better backup tooling |
-| Passwords in .env (not Secrets) | Phase 1 — Vaultwarden has no _FILE support. Secrets planned for Phase 2 |
+| Passwords in .env (not Secrets) | Phase 2 open. **Vaultwarden does support `_FILE`** — confirmed against the upstream configuration wiki on 2026-07-27; this entry previously claimed it does not, and whether that was wrong when written or went stale could not be established from the release notes. The genuine obstacle is narrower: the password sits inside `DATABASE_URL`, a connection string, so the secret has to carry the whole URL (`DATABASE_URL_FILE`) or an entrypoint has to assemble it — the pattern this repository already uses elsewhere. A real option, not a blocked path |
 | ADMIN_TOKEN as Argon2 hash | Official recommendation — never store plain text |
 | `read_only: true` + `no-new-privileges` | Security hardening |
 | `tls-modern` (TLS 1.3 only) | Password manager deserves strictest TLS |
@@ -39,18 +39,9 @@ After deployment, verify:
 
 ## Backup
 
-**Critical files to back up:**
-- `volumes/data/db.sqlite3` (if using SQLite)
-- `volumes/mysql/` (if using MariaDB)
-- `volumes/data/attachments/`
-- `volumes/data/rsa_key.*` (signing keys — without these, tokens break)
-- `volumes/data/sends/` (if using Send feature)
-
-```bash
-# MariaDB backup (password via env var, not visible in process list)
-docker exec -e MYSQL_PWD="$(grep DB_ROOT_PASSWORD .env | cut -d= -f2)" \
-  vaultwarden-db mariadb-dump -u root vaultwarden > backup-$(date +%Y%m%d).sql
-```
+Owned by [`README.md`](README.md#backup) — engine, container, which volumes
+hold state, and the borgmatic block. Kept there because that is where the
+per-app backup pattern lives and what `lifecycle-report.py` reads.
 
 ## First-time setup
 
