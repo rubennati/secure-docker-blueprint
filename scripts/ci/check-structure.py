@@ -43,7 +43,7 @@ from pathlib import Path
 
 import yaml
 
-ROOTS = ["core", "apps", "business", "monitoring"]
+ROOTS = ["core", "apps", "business", "monitoring", "backup"]
 
 # Canonical .env.example section order (docs/standards/env-structure.md).
 # A file may omit any section; the ones present must appear in this order.

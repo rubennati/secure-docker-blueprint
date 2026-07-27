@@ -1,0 +1,117 @@
+# =============================================================================
+# UrBackup Server — client/endpoint backup
+# =============================================================================
+# Backs up the machines AROUND the infrastructure — laptops, desktops, other
+# servers — to storage you own. This is the counterpart to backup/borgmatic/,
+# which backs up the Docker host itself.
+#
+# Default here is bridge networking with the web interface behind Traefik.
+# That costs LAN broadcast discovery; clients are added by hostname or IP
+# instead, which works because the SERVER initiates the connection to the
+# client. If you want auto-discovery, apply the network-host.yml overlay —
+# see README.md "Networking".
+#
+# Spec: docs/standards/compose-structure.md · security-baseline.md
+# =============================================================================
+
+services:
+
+  # --------------------------------------------------------
+  # URBACKUP SERVER
+  # Single service — UrBackup keeps its own SQLite database, no DB container.
+  # --------------------------------------------------------
+  app:
+    # --- Identity ---
+    # Digest-pinned: upstream publishes only rolling series tags (2.5.x), which
+    # move. The digest makes the deployment reproducible — re-pin on upgrade.
+    # `2.5.x` and `2.5.x-btrfs` are the same image; only `-zfs` differs.
+    image: uroni/urbackup-server:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+
+    # --- Security ---
+    # DEVIATION: no `user:` and no `read_only`. A backup server writes client
+    # files while preserving their ownership and permissions, and maintains its
+    # database and a large writable backup tree. Both restrictions break that.
+    # cap_drop ALL still applies — see README.md "Security deviations".
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # SYS_ADMIN is required ONLY for btrfs snapshot-backed storage. Leave it off
+    # unless ./volumes/backups sits on btrfs and you enabled that mode.
+    #cap_add:
+    #  - SYS_ADMIN
+
+    # --- Resources ---
+    # A backup server is I/O-heavy and its memory use scales with the number of
+    # clients and file count. These are a starting point, not a measurement —
+    # watch `docker stats` during a full backup and retune to ~2x peak.
+    deploy:
+      resources:
+        limits:
+          memory: ${APP_MEM_LIMIT}
+          cpus: ${APP_CPU_LIMIT}
+          pids: 500
+        reservations:
+          memory: 512m
+
+    # --- Configuration ---
+    # UrBackup is configured through its web interface, not through env vars.
+    # The first account created becomes the administrator — do that immediately
+    # after first start, before the server is reachable by anyone else.
+    environment:
+      TZ: ${TZ}
+
+    # --- Storage ---
+    # backups/  — client backup data. This grows without bound; put it on the
+    #             volume with room, and keep it OUT of the borgmatic source
+    #             directories or you back up your backups.
+    # database/ — UrBackup's own SQLite database and settings.
+    volumes:
+      - ${BACKUP_STORAGE_PATH}:/backups
+      - ./volumes/database:/var/urbackup
+
+    # --- Networking ---
+    # Web interface goes through Traefik only. Port 55415 is for clients that
+    # reach the server over the internet rather than the LAN — publish it only
+    # if you actually have such clients, and understand it is then exposed.
+    networks:
+      - proxy-public
+    #ports:
+    #  - "55415:55415"
+
+    # --- Traefik ---
+    # The web interface has its own login, but it is an administrative surface
+    # holding every client's file index — put an access policy in front of it.
+    # acc-tailscale (VPN-only) is the recommended default; acc-public only if
+    # you genuinely need to reach it from anywhere.
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+
+    # --- Health & Observability ---
+    # 🚧 Unverified: the tool available inside this image has not been confirmed
+    # on a running container. If `curl` is absent the container will report
+    # unhealthy — check with `docker exec <name> sh -c 'which curl wget'` on
+    # first deploy and adjust before promoting this stack out of Preview.
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fso /dev/null http://127.0.0.1:${APP_INTERNAL_PORT}/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true

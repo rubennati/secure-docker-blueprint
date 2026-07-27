@@ -242,13 +242,14 @@ Planned: Statping, ciao, Checkmate, Zabbix, Grafana + Prometheus, Scrutiny.
 
 ### Backup
 
-See [`backup/README.md`](backup/README.md) for the layer model, the host-agent rationale, and what append-only protection actually buys.
+Backup runs in two directions — this host outward, and your own devices inward. See [`backup/README.md`](backup/README.md) for the layer model, the host-agent rationale, and what append-only protection actually buys.
 
-| Tool | Approach | Status | Description |
+| Tool | Direction | Status | Description |
 |---|---|---|---|
-| [Borgmatic](backup/borgmatic/) | Host-installed, SSH/SFTP | 🚧 | Deduplicated encrypted backup with native database dumps for PostgreSQL, MySQL, MariaDB and SQLite. Configuration and restore procedure written, not yet exercised on a host. |
+| [Borgmatic](backup/borgmatic/) | This host → off-site | 🚧 | Deduplicated encrypted backup over SSH/SFTP, with native database dumps for PostgreSQL, MySQL, MariaDB, SQLite and MongoDB. Host-installed. Not yet exercised on a host. |
+| [UrBackup](backup/urbackup/) | Your devices → this host | 🚧 | Client backup for Windows, macOS and Linux — keep laptop and desktop backups on hardware you own. Whole-disk image restore on Windows. |
 
-Planned: Kopia, Bareos, UrBackup.
+Planned: Kopia, Bareos.
 
 ### Repository layout
 
@@ -262,7 +263,7 @@ New here? Start with the area that best matches your goal: [Core Infrastructure]
 | [`apps/`](apps/) | General-purpose self-hosted apps — equally useful for private homelab or a company |
 | [`business/`](business/) | Apps that only make sense in a company context — invoicing, helpdesk, newsletter, compliance |
 | [`monitoring/`](monitoring/) | Ops observability — uptime, metrics, content-change watching, disk SMART |
-| [`backup/`](backup/) | Ops backup — host-installed agent plus container-aware database dumps, structurally separate because of privileged access + remote targets |
+| [`backup/`](backup/) | Ops backup in both directions — this host outward (Borgmatic), your devices inward (UrBackup); structurally separate because of privileged access + remote targets |
 
 ## Project Structure
 
@@ -306,7 +307,8 @@ secure-docker-blueprint/
 │   └── ...
 │
 ├── backup/                      # Backup tooling
-│   └── borgmatic/               #   Host-installed agent (no compose stack)
+│   ├── borgmatic/               #   Server backup — host-installed, no compose stack
+│   └── urbackup/                #   Client backup — Windows / macOS / Linux endpoints
 │
 ├── docs/
 │   ├── standards/               # Conventions and patterns

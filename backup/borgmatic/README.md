@@ -139,9 +139,30 @@ sudo borgmatic prune --stats      # apply retention (fails under append-only)
 journalctl -u borgmatic -n 50     # what the last run did
 ```
 
+## What connects to what
+
+Borgmatic's integrations map onto stacks this blueprint already ships. This table is the reason the backup layer needs almost no new infrastructure:
+
+| Borgmatic integration | In this repository | How it connects |
+|---|---|---|
+| PostgreSQL · MySQL · MariaDB · SQLite | 24 · 16 · 13 stacks, plus several SQLite | `container:` dump hook |
+| MongoDB | `apps/unifi`, `business/opensign` | `container:` dump hook |
+| Healthchecks | `monitoring/healthchecks` ✅ | `healthchecks.ping_url` |
+| Uptime Kuma | `monitoring/uptime-kuma` ✅ | `uptime_kuma.push_url` |
+| Zabbix | `monitoring/` — planned | available when that stack lands |
+| btrfs · ZFS · LVM | host filesystem | borgmatic takes the snapshot itself |
+| systemd | host | the scheduling timer |
+| ntfy · Loki · Apprise · PagerDuty · Pushover · Sentry | not in this repository | external services, all optional |
+| rclone · BorgBase | not in this repository | alternative storage targets |
+
+Two of these change how the layers work:
+
+- **Filesystem snapshots.** Borgmatic can take a btrfs, ZFS or LVM snapshot, back up from the frozen view, and discard it. That removes the "files changed while I was reading them" problem for the Docker volume directory — the one place file-level backup is otherwise weakest. Snapshots still are not backups; here one is used as a consistent *source* for the backup.
+- **MongoDB.** Easy to miss because it is not in the usual list, but two stacks here run it.
+
 ## Databases
 
-Every engine in this blueprint is covered natively — PostgreSQL, MySQL, MariaDB and SQLite — with the dump streamed into the archive. Add one entry per database in `config.yaml`, using `container:` to name the container.
+Five engines are covered natively — PostgreSQL, MySQL, MariaDB, SQLite and MongoDB — with the dump streamed into the archive. Add one entry per database in `config.yaml`, using `container:` to name the container.
 
 Two things to know before you need them: **restore is destructive**, and **the target database must already exist** — Borgmatic will not create it.
 

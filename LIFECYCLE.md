@@ -4,7 +4,7 @@
 
 Generated 2026-07-27 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-57 stacks: 0 ops-ready · 39 ready · 18 preview.
+58 stacks: 0 ops-ready · 39 ready · 19 preview.
 
 ## What the columns mean
 
@@ -95,6 +95,7 @@ Generated 2026-07-27 from the sources named in [`docs/standards/status-model.md`
 | Stack | Public | Internal | Pinned | Last verified | Backup docs | Restore docs |
 |---|---|---|---|---|---|---|
 | [`backup/borgmatic`](backup/borgmatic/) | 🚧 `preview` | `scaffolded` | *host-installed* | — | missing | documented |
+| [`backup/urbackup`](backup/urbackup/) | 🚧 `preview` | `scaffolded` | `APP_TAG=2.5.x@sha256:e2fdc0d59071…` | — | missing | missing |
 
 ## Source of truth
 

@@ -66,8 +66,8 @@ Pre-1.0 tags are set when a natural milestone is reached, not on a fixed cadence
 
 A working infrastructure is worthless without recovery. The architecture is designed in [`backup/README.md`](backup/README.md) — five layers, staged so the floor is reachable before the hardening:
 
-1. **Snapshot** — explained and bounded, not implemented here (it is not a backup)
-2. **Consistency** — database dumps via Borgmatic's container-aware hooks, covering PostgreSQL, MySQL, MariaDB and SQLite
+1. **Snapshot** — bounded against backup, and optionally driven by Borgmatic itself (btrfs / ZFS / LVM) to give the file layer a consistent source
+2. **Consistency** — database dumps via Borgmatic's container-aware hooks, covering PostgreSQL, MySQL, MariaDB, SQLite and MongoDB
 3. **File data** — bind mounts and named volumes, both supported without preference
 4. **Off-site** — 3-2-1, encryption, key held off the host, immutability with its real limits stated
 5. **Proof** — restore rehearsal, `borgmatic check`, and run monitoring through the `monitoring/` stacks already in the repo

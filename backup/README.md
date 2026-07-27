@@ -1,19 +1,24 @@
 # Backup
 
-Self-hosted backup for the stacks in this blueprint — separate top-level category because backup is ops-cross-cutting (it touches every data-producing service) and needs hardware-close access (block devices, mount points, credentials for remote targets).
+Backup has two directions, and a self-hoster needs both:
+
+- **This infrastructure** — the Docker host and everything it runs. Recovered with [Borgmatic](borgmatic/).
+- **The machines around it** — your laptop, desktop, other servers, backed up *to* infrastructure you own instead of somebody's cloud. That is [UrBackup](urbackup/).
+
+They solve different problems and neither replaces the other. Separate top-level category because backup is ops-cross-cutting (it touches every data-producing service) and needs hardware-close access — block devices, mount points, credentials for remote targets.
 
 ## Status
 
 ✅ Ready · 🚧 Preview · 📋 Planned
 
-| Tool | Approach | Status | Notes |
+| Tool | Direction | Status | Notes |
 |---|---|---|---|
-| [Borgmatic](borgmatic/) | Borg wrapper — YAML config, systemd-timed, SSH/SFTP targets, native database hooks | 🚧 | **The documented default.** Host-installed — configuration and restore procedure written, not yet exercised on a host. |
-| Kopia | Deduplicating snapshots to S3 / SFTP / filesystem, web UI | 📋 | Alternative for operators who want a UI or native object storage. No database hooks — dumps must be scripted. |
-| Bareos | Bacula fork: Director + Storage + File daemons | 📋 | Enterprise. For regulated retention and audit trails. Heavy. |
-| UrBackup | Image + file backup for Windows / Linux endpoints | 📋 | Workstation backup with bare-metal restore. Different workload class. |
+| [Borgmatic](borgmatic/) | This host → off-site | 🚧 | **The documented default for server backup.** Host-installed; configuration and restore procedure written, not yet exercised on a host. |
+| [UrBackup](urbackup/) | Your devices → this host | 🚧 | Client backup for Windows, macOS and Linux; whole-disk image restore on Windows. Configuration complete, not yet verified. |
+| Kopia | either | 📋 | Deduplicating, with a web UI and native object storage. Its repository-server mode is interesting for client backup too — clients never hold the storage credentials. No database hooks, so server-side dumps would need scripting. Candidate for v0.8.0. |
+| Bareos | This host → tape / regulated retention | 📋 | Enterprise: Director, Storage and File daemons. Kept on the list for operators under retention or audit obligations, but **deliberately not built out** — the complexity is not justified for the single-operator setups this blueprint targets. |
 
-Pick **one** deduplicating backup tool — Borgmatic or Kopia, not both. Two repositories means two retention policies and two things to verify, for no gain.
+For *server* backup pick one deduplicating tool — Borgmatic or Kopia, not both. Two repositories means two retention policies and two things to verify, for no gain. UrBackup is not in that comparison; it does a different job.
 
 ---
 

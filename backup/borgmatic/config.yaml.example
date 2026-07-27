@@ -50,7 +50,27 @@ source_directories:
     # inconsistent state. It is acceptable for data whose consistency does not
     # depend on multiple files agreeing, and it is NOT how databases should be
     # handled — those go through the dump hooks below.
+    #
+    # If this filesystem is btrfs, ZFS or LVM, prefer the snapshot integration
+    # below: borgmatic then backs up a frozen point-in-time view instead of a
+    # live directory, which removes the inconsistency entirely.
     - /var/lib/docker/volumes
+
+# --- Filesystem snapshots [consistency, optional] --------------------------
+# Borgmatic can take a snapshot itself, back up from it, and discard it. This
+# is the clean answer to "the files changed while I was reading them" — and it
+# is what makes the Docker volume directory above safe to include.
+#
+# Enable the one matching your filesystem; leave all of them off otherwise.
+# This does NOT make snapshots a backup — it uses one as a consistent source
+# for the real backup. See ../README.md "Three layers people conflate".
+#
+# btrfs:
+#     btrfs_command: btrfs
+# zfs:
+#     zfs_command: zfs
+# lvm:
+#     snapshot_size: 10%ORIGIN
 
 exclude_patterns:
     - '**/volumes/*/cache'
@@ -105,6 +125,13 @@ mariadb_databases:
 sqlite_databases:
     - name: myapp
       path: /srv/docker/apps/myapp/volumes/data/database.sqlite
+
+# MongoDB — used by apps/unifi and business/opensign in this blueprint.
+mongodb_databases:
+    - name: myapp
+      container: myapp-db
+      username: myapp
+      password: ${MONGO_PASSWORD}
 
 # --- Integrity [proof] -----------------------------------------------------
 # Separate from "did the job run". These detect bit rot and truncation.
