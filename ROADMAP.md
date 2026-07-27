@@ -83,14 +83,24 @@ Two practical notes:
 
 ### v0.8.0 — Monitoring
 
-Backup tells you what to do when something breaks. Monitoring tells you that something broke — and ideally before it causes data loss or downtime. Four layers:
+Backup tells you what to do when something breaks. Monitoring tells you that something broke — and ideally before it causes data loss or downtime.
 
-- **Host** — CPU, RAM, disk, network trends over time. Beszel is the default: lightweight, self-hosted, no external dependencies. Know when a disk is filling up before it becomes an incident.
-- **Container / Docker** — which containers are running, which have restarted, resource usage per service. Beszel covers this alongside host metrics.
-- **Uptime & endpoints** — is the service actually responding correctly from the outside? Gatus or Uptime Kuma with per-app health checks and status page.
-- **Alerting** — push or email notification when a service goes down or a threshold is crossed. Without this, monitoring is a dashboard nobody watches.
+Six services are already in place, spanning the axes described in [`monitoring/README.md`](monitoring/README.md). The milestone is reached when each axis has **one verified service** — not when all six are verified, and not one axis per operator:
 
-Each layer gets a proven setup in the blueprint. Log aggregation (Loki/Grafana stack) is out of scope here — heavier infrastructure that fits a later pass.
+| Axis | In place | Verified for the milestone |
+|---|---|---|
+| Host & container metrics | Beszel + agent | Beszel |
+| Uptime & endpoints | Uptime Kuma, Gatus | either one — they are a preference pair, not a hierarchy |
+| Scheduled-job liveness | Healthchecks | Healthchecks — also the receiver for backup run monitoring |
+| Content change | changedetection.io | changedetection.io |
+| Disk health | *(Scrutiny planned)* | out of scope — needs physical-disk passthrough |
+| **Alerting** | notification integrations in the services above | at least one channel proven to actually arrive |
+
+**Alerting is the cross-cutting layer, not a fifth service.** It is delivered by the services above rather than by a separate tool, and it is the one thing that turns a dashboard nobody watches into monitoring. A notification path that has never fired is worth as little as a backup that has never been restored.
+
+Log aggregation (Loki/Grafana) stays out of scope — heavier infrastructure for a later pass.
+
+**This milestone shares a precondition with v0.7.0.** Borgmatic's run monitoring pings Healthchecks or Uptime Kuma, so backup's proof layer depends on services this milestone verifies. Both are best closed in one host session.
 
 ### v0.9.0 — Resource limits and Operator Site launch
 
