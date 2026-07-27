@@ -95,6 +95,8 @@ Borgmatic includes its own configuration file in the archive, so the credentials
 
 > **Older Borgmatic, or a different tool:** publish the database port to `127.0.0.1` and point the hook at it, or run the dump in a `before_backup` hook via `docker exec`. If you use a hook, make it **fail loudly** — a dump command that errors while the backup continues produces an archive that looks fine and contains nothing. Kopia and Restic have no database hooks; there you script the dump yourself.
 
+**Where the per-app detail lives.** Each app README carries a `## Backup` section — which database and container, which volumes hold state, which are reproducible, whether the app needs quiescing, and a copy-pasteable borgmatic block. The template is in [`apps/_reference/README.md`](../apps/_reference/README.md). That way `/etc/borgmatic/config.yaml` is assembled from the apps rather than reverse-engineered from their compose files at the moment someone needs a restore. `LIFECYCLE.md` reports which apps still lack it.
+
 ### Layer 2 — both volume types, no preference
 
 The blueprint uses bind mounts under `./volumes/` for most stacks and named volumes for a few. **Both are valid** — Docker itself recommends named volumes for portability and notes they are not suited to direct host access. The backup has to handle whatever an operator already runs.

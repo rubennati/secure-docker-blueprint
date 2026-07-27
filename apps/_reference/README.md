@@ -46,6 +46,43 @@ Every file here is meant to hold up under all four. The same lenses drive
 | [`.gitignore`](.gitignore) | Keeps `.env`, `.secrets/`, `volumes/` out of git | ✅ |
 | [`UPSTREAM.md`](UPSTREAM.md) | Per-app upstream reference + upgrade checklist | ✅ |
 
+## Backup
+
+Every app README carries this section. It exists so the backup configuration can
+be *assembled* from the apps rather than reverse-engineered from their compose
+files at the moment someone needs a restore.
+
+Keep it to what an operator writing `/etc/borgmatic/config.yaml` needs, and keep
+the heading exactly `## Backup` — `scripts/ci/lifecycle-report.py` reads it to
+fill the `Backup docs` column in `LIFECYCLE.md`.
+
+| | |
+|---|---|
+| **Database** | PostgreSQL · container `${COMPOSE_PROJECT_NAME}-db` · database `myapp` · user `myapp` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **State** | `./volumes/postgres` (database) — bind mount |
+| **Reproducible** | `./volumes/*/cache` — safe to exclude |
+| **Quiescing** | Not needed. The dump is consistent on its own; the app can keep running. |
+
+Drop this straight into the borgmatic configuration — the path is the same
+`.secrets/` file this stack already mounts, so there is one copy of the password
+on the host:
+
+```yaml
+postgresql_databases:
+    - name: myapp
+      container: myapp-db
+      username: myapp
+      password: "{credential file /srv/docker/apps/myapp/.secrets/db_pwd.txt}"
+```
+
+**Restore order:** database first, then the app. Starting the app against an
+empty or half-restored database can leave it writing migrations over the restore.
+
+Where an app needs more than this — a maintenance mode, an index to rebuild, a
+search engine to reseed — say so here rather than in a comment nobody reads
+during an incident. Full architecture: [`backup/README.md`](../../backup/README.md).
+
 ## Try it locally
 
 ```bash

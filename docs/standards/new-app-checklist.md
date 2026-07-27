@@ -181,7 +181,23 @@ verified on a clean install. A filled-in example: `apps/dashy/UPSTREAM.md`.
 
 ---
 
-## 8. Document
+## 8. Write the `## Backup` section
+
+The app README carries a `## Backup` section — the template came with the
+reference app. Fill in which database, which volumes hold state, which are
+reproducible, and whether the app needs quiescing before a dump.
+
+- [ ] Database engine, container name, database name, user
+- [ ] Path to the password file under `.secrets/`
+- [ ] Which volumes are state, which are cache
+- [ ] A copy-pasteable borgmatic block
+- [ ] Restore order, if it is anything other than "database, then app"
+
+This is not paperwork: it is what makes `/etc/borgmatic/config.yaml` assemblable
+from the apps instead of reverse-engineered from compose files during an
+incident. Keep the heading exactly `## Backup` — `lifecycle-report.py` reads it.
+
+## 9. Document
 
 - [ ] Add any bugs found to `docs/bugfixes/` with root cause and fix
 - [ ] Update this checklist if you discovered a new pitfall
