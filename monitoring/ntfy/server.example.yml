@@ -1,0 +1,49 @@
+# =============================================
+# ntfy – Server configuration
+# =============================================
+# Copy this file to config/server.yml and adjust before the first start.
+# config/server.yml is gitignored — it carries the real hostname.
+#
+# Full reference: https://docs.ntfy.sh/config/
+# =============================================
+
+# Public address this server is reachable at. Must match APP_TRAEFIK_HOST in
+# .env and must be https — attachment links and the mobile apps derive from it.
+base-url: https://ntfy.example.com
+
+# Listen inside the container; Traefik terminates TLS in front of it.
+listen-http: ":80"
+
+# Traefik sits in front, so the real client address arrives in a forwarded
+# header. Without this, rate limiting and visitor accounting see only Traefik.
+behind-proxy: true
+
+# --- Storage ---
+cache-file: /var/cache/ntfy/cache.db
+cache-duration: "12h"
+attachment-cache-dir: /var/cache/ntfy/attachments
+auth-file: /var/lib/ntfy/user.db
+
+# --- Access control ---
+# deny-all is what makes acc-public defensible: no topic is readable or
+# writable without an explicit grant. Create users and grants after first start:
+#
+#   docker compose exec app ntfy user add --role=admin admin
+#   docker compose exec app ntfy user add monitoring
+#   docker compose exec app ntfy access monitoring alerts rw
+#
+# Leaving this at the upstream default (read-write) makes every topic on this
+# server world-readable and world-writable to anyone who guesses its name.
+auth-default-access: deny-all
+
+# --- iOS instant notifications (optional) ---
+# Apple restricts background processing, so a self-hosted server cannot push to
+# iOS on its own. With this set, publishing sends a poll request to the upstream
+# server, which delivers it via APNS; the device then fetches the actual message
+# from this server. The upstream request carries only the message ID and a
+# SHA256 checksum of the topic URL — not the message content.
+# Only needed for iOS receivers. Android and desktop work without it.
+#upstream-base-url: "https://ntfy.sh"
+
+# --- Logging ---
+log-level: info

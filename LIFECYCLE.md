@@ -4,7 +4,7 @@
 
 Generated 2026-07-27 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-58 stacks: 0 ops-ready · 39 ready · 19 preview.
+59 stacks: 0 ops-ready · 39 ready · 20 preview.
 
 ## What the columns mean
 
@@ -88,6 +88,7 @@ Generated 2026-07-27 from the sources named in [`docs/standards/status-model.md`
 | [`monitoring/changedetection`](monitoring/changedetection/) | 🚧 `preview` | `scaffolded` | `APP_TAG=0.55.8` | 2026-05-03 ⚠️ | documented | missing |
 | [`monitoring/gatus`](monitoring/gatus/) | 🚧 `preview` | `scaffolded` | `APP_TAG=v5.36.0` | 2026-05-03 ⚠️ | documented | missing |
 | [`monitoring/healthchecks`](monitoring/healthchecks/) | 🚧 `preview` | `scaffolded` | `APP_TAG=v4.2` | 2026-04-17 ⚠️ | documented | missing |
+| [`monitoring/ntfy`](monitoring/ntfy/) | 🚧 `preview` | `scaffolded` | `APP_TAG=v2.26.3` | — | documented | missing |
 | [`monitoring/uptime-kuma`](monitoring/uptime-kuma/) | 🚧 `preview` | `scaffolded` | `APP_TAG=2.4.0` | 2026-05-03 ⚠️ | documented | missing |
 
 ## `backup/`

@@ -18,7 +18,7 @@ Database consistency still reaches into containers: Borgmatic's `container:` opt
 
 **Open:** this conflicts with the portability design goal in `architecture.md`
 ("no host-specific assumptions beyond Debian + Docker"). Needs to be recorded there
-as an explicit exception, or revisited. See `state.md` open decision 8.
+as an explicit exception, or revisited. See `state.md` open decision 6.
 
 ## 2026-07 · Backup covers two directions
 

@@ -12,7 +12,7 @@
 
 ## Snapshot
 
-- 58 stacks tracked. 39 `ready`, 19 `preview`, **0 `ops-ready`** — no stack has
+- 59 stacks tracked. 39 `ready`, 20 `preview`, **0 `ops-ready`** — no stack has
   restore evidence, which is exactly what v0.7.0 changes. Numbers come from
   `LIFECYCLE.md`; regenerate rather than editing them here.
 - Backup architecture designed (`backup/README.md`): five layers, host-installed
@@ -49,9 +49,7 @@ Carried until the maintainer decides. Each blocks a clean resolution somewhere.
    history uses conventional commits. Correct the standard or the practice?
 5. **Neutral language** — does the "no direct address" rule apply to the English
    documentation, or only to German drafts?
-6. **v0.8.0 scope** — `ROADMAP.md` names four layers including alerting;
-   `monitoring/README.md` names five axes without it. Which defines done?
-7. **Host-installed backup agent vs. the portability goal** in
+6. **Host-installed backup agent vs. the portability goal** in
    `docs/architecture.md`. Record as a documented exception, or revisit?
 
 ## Active constraints
@@ -60,8 +58,5 @@ Carried until the maintainer decides. Each blocks a clean resolution somewhere.
 - Nine major version bumps are pinned but never started; 22 stacks still carry the
   pre-v0.5.1 `Last checked:` field. Both ride along with the host session.
 - Public repository: no real domains, IPs, hostnames or personal data; no session
-  context or personal attribution in committed content.
-- A `docs` branch exists, frozen at 2026-04-20 while 306 commits landed on `dev`.
-  Its durable content has been migrated; the remainder is either superseded or
-  personal. It is not linked from public files and is pending deletion by the
-  maintainer.
+  context or personal attribution in committed content. `.ai/` is committed and
+  therefore public — it holds working context, never internal process detail.

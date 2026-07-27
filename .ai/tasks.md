@@ -14,6 +14,9 @@ Ordered run: [`../docs/host-session-v0.7.0.md`](../docs/host-session-v0.7.0.md)
 - [ ] Decide the 22 legacy verification stamps, per app
 - [ ] Verify `monitoring/healthchecks` and `monitoring/uptime-kuma` — borgmatic's run
       monitoring points at them, so backup's proof layer depends on them
+- [ ] Verify `monitoring/ntfy` — `read_only: true`, the `sec-3` rate limit under a
+      publish burst, and one message proven to arrive on a real device. Its Known
+      Issues list is the check list.
 - [ ] Boot `apps/_reference/` once to confirm the template actually runs
 
 ## Open decisions for the maintainer

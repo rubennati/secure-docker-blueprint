@@ -94,7 +94,7 @@ Six services are already in place, spanning the axes described in [`monitoring/R
 | Scheduled-job liveness | Healthchecks | Healthchecks — also the receiver for backup run monitoring |
 | Content change | changedetection.io | changedetection.io |
 | Disk health | *(Scrutiny planned)* | out of scope — needs physical-disk passthrough |
-| **Alerting** | notification integrations in the services above | at least one channel proven to actually arrive |
+| **Alerting** | notification integrations in the services above, plus `monitoring/ntfy` as a receiver | at least one channel proven to actually arrive |
 
 **Alerting is the cross-cutting layer, not a fifth service.** It is delivered by the services above rather than by a separate tool, and it is the one thing that turns a dashboard nobody watches into monitoring. A notification path that has never fired is worth as little as a backup that has never been restored.
 
@@ -108,7 +108,7 @@ Every live app gets `deploy.resources` (memory + CPU) and `pids_limit`. The stan
 
 Intentionally late: wrong limits break apps silently (OOM kills, throttled CPUs). Each app needs values measured on a real install, not guessed. This is the fine-tuning pass — not a quick sweep.
 
-The size of the gap is now measurable rather than estimated — `python3 scripts/ci/check-structure.py` reports it per service. As of 2026-07-26, across 54 apps: **102 services without `deploy.resources.limits`, 41 without a healthcheck.** That number is the milestone's progress bar.
+The size of the gap is now measurable rather than estimated — `python3 scripts/ci/check-structure.py` reports it per service. As of 2026-07-27, across 57 apps: **121 services without `deploy.resources.limits`, 54 without a healthcheck.** That number is the milestone's progress bar. It rose against the previous count because `backup/` and the split-compose Seafile stacks became visible to the checker, not because anything regressed.
 
 The Operator Site — an Astro/Starlight site published via GitHub Pages — also reaches its official published state at this milestone. The site is the operator-facing entry point; the repository remains the technical source of truth and nothing moves out of it. The site starts deliberately small and curated, not as a mirror of the full repository. Initial scope covers Home, Getting Started, Applications (with Vaultwarden as the first full reference guide), Operations, FAQ, and Project/Governance. The build and deployment workflow is in place by this milestone. Once published, the repository README can route operator-focused users to the site.
 

@@ -238,8 +238,9 @@ See [`monitoring/README.md`](monitoring/README.md) for the full category README.
 | [Beszel Agent](monitoring/beszel-agent/) | Host metrics (remote agent) | 🚧 | Standalone agent for additional hosts; pairs with Beszel hub |
 | [changedetection.io](monitoring/changedetection/) | Content watcher | 🚧 | Page diff + notification (restock / price / ToS) |
 | [Healthchecks](monitoring/healthchecks/) | Cron / scheduled-job | 🚧 | Dead-man's switch for backups / cron / scheduled tasks |
+| [ntfy](monitoring/ntfy/) | Notification receiver | 🚧 | Self-hosted push to phone and desktop; belongs on a different host than the services above |
 
-Planned: Statping, ciao, Checkmate, Zabbix, Grafana + Prometheus, Scrutiny.
+Planned: Statping, ciao, Checkmate, Zabbix, Grafana + Prometheus, Scrutiny, Gotify.
 
 ### Backup
 
@@ -304,7 +305,7 @@ secure-docker-blueprint/
 │   └── ...
 │
 ├── monitoring/                  # Ops observability
-│   ├── uptime-kuma/  gatus/  beszel/  changedetection/  healthchecks/
+│   ├── uptime-kuma/  gatus/  beszel/  changedetection/  healthchecks/  ntfy/
 │   └── ...
 │
 ├── backup/                      # Backup tooling

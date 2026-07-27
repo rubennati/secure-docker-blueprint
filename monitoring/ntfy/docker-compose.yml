@@ -1,0 +1,89 @@
+services:
+
+  # --------------------------------------------------------
+  # NTFY (push notification server)
+  # Receives alerts from the monitoring services and delivers them to phones
+  # and desktops. Deliberately deployable on its own host — see README.
+  # --------------------------------------------------------
+  app:
+    # --- Identity ---
+    image: binwiederhier/ntfy:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+    # The image entrypoint is the ntfy binary itself; `serve` starts the server.
+    command: ["serve"]
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    # Upstream runs as root. A fixed UID works, but the mounted config, cache and
+    # auth paths must be chown'd to the same UID first — otherwise the server
+    # starts and then cannot write its databases.
+    #user: "${APP_UID}:${APP_GID}"
+
+    # --- Resources ---
+    # Starting values, not measured ones. Retune from `docker stats` to ~2x peak.
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.50"
+          pids: 100
+        reservations:
+          memory: 64m
+
+    # --- Configuration ---
+    # Every server setting lives in config/server.yml — one place, rather than
+    # split between a file and NTFY_* environment variables.
+    environment:
+      TZ: ${TZ}
+
+    # --- Storage ---
+    # Config read-only: the container must not rewrite its own configuration.
+    # cache/ holds the message cache and attachments, lib/ the user database.
+    volumes:
+      - ./config:/etc/ntfy:ro
+      - ./volumes/cache:/var/cache/ntfy
+      - ./volumes/lib:/var/lib/ntfy
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+
+    # --- Traefik ---
+    labels:
+      # Router
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      # TLS
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Middlewares
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      # Service
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+
+    # --- Health & Observability ---
+    # ntfy serves /v1/health and the image ships wget. Checking the payload
+    # rather than the status code — a reachable server can still report unhealthy.
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --tries=1 -O - http://127.0.0.1:${APP_INTERNAL_PORT}/v1/health | grep -q '\"healthy\":true' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
