@@ -53,6 +53,31 @@ docker compose logs app --follow   # watch migrations + server start
 | HTTP security headers | Traefik `sec-3` chain (public-facing, stores PII) |
 | Resource limits | `deploy.resources` (memory/cpus/pids) |
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | PostgreSQL · container `documenso-db` · database `documenso` · user `documenso` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **State** | `./volumes/postgres` (database) · `./.secrets/cert.p12` (signing certificate) |
+| **Reproducible** | nothing — this stack keeps no cache on disk |
+| **Quiescing** | Not needed. The dump is consistent on its own; the app can keep running. |
+
+```yaml
+postgresql_databases:
+    - name: documenso
+      container: documenso-db
+      username: documenso
+      password: "{credential file /srv/docker/business/documenso/.secrets/db_pwd.txt}"
+```
+
+**`cert.p12` is not a secret like the others.** Every signature this instance has
+ever produced was made with it. Restoring the database without it leaves signed
+documents that cannot be validated against a new certificate — back it up with the
+same care as the database, and keep a copy off the host.
+
+**Restore order:** database first, then the app.
+
 ## Local testing (no Traefik)
 
 ```bash

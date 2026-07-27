@@ -165,3 +165,23 @@ jobs:
 
       - name: Check status consistency and LIFECYCLE.md freshness
         run: python3 scripts/ci/lifecycle-report.py --check "$GITHUB_STEP_SUMMARY"
+
+  # ─────────────────────────────────────────────
+  # 8. CHECKER COVERAGE
+  # Inverts the question the other jobs ask: not "does this stack comply?" but
+  # "is there content nothing looks at?". Three blind spots surfaced by accident
+  # in one day — split compose files, a component without compose, and a whole
+  # category missing from the checker roots. Finding the next one by accident
+  # does not scale.
+  # ─────────────────────────────────────────────
+  coverage:
+    name: Checker coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Install PyYAML
+        run: pip install --require-hashes -r scripts/ci/requirements.txt --quiet
+
+      - name: Check that every content directory is covered
+        run: python3 scripts/ci/check-coverage.py "$GITHUB_STEP_SUMMARY"

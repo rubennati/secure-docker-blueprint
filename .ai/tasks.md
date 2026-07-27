@@ -25,8 +25,10 @@ Listed with context in [`state.md`](state.md). Nothing proceeds on these until d
 
 ## Doable without a host
 
-- [ ] Fill the `## Backup` section in app READMEs as apps are touched — the pattern
-      is in `apps/_reference/README.md`; `LIFECYCLE.md` reports which still lack it
+- [ ] Fill the `## Backup` section in the remaining app READMEs — `business/` is
+      done (10 stacks), 42 to go. `LIFECYCLE.md` reports which still lack it; the
+      pattern is in `apps/_reference/README.md`. Do it per category, from the
+      compose file, not from memory
 - [ ] Decide the `TROUBLESHOOTING.md` / `docs/standards/troubleshooting.md` overlap
-- [ ] A check that reports any content directory no checker covers — three coverage
-      blind spots surfaced in one day, all found by accident
+- [ ] Add `Checker coverage` to the required checks in branch protection — the job
+      runs, but nothing blocks on it yet

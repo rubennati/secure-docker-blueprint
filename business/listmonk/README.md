@@ -57,6 +57,31 @@ For "admin VPN-only + subscriber endpoints public", add a second Traefik router:
 - **Postgres on `app-internal` (`internal: true`)** — not reachable from outside.
 - **SMTP credentials** live in the admin UI (Settings → SMTP) after setup — not in `.env`. They're stored encrypted in the DB.
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | PostgreSQL · container `listmonk-db` · database `listmonk` · user `listmonk` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **State** | `./volumes/postgres` (database) · `./volumes/uploads` (media referenced from campaigns) |
+| **Reproducible** | nothing |
+| **Quiescing** | Not needed. The dump is consistent on its own. |
+
+```yaml
+postgresql_databases:
+    - name: listmonk
+      container: listmonk-db
+      username: listmonk
+      password: "{credential file /srv/docker/business/listmonk/.secrets/db_pwd.txt}"
+```
+
+Subscriber lists and their opt-in state are database rows. Restoring an **older**
+database is not a neutral act here: it can resurrect addresses that unsubscribed
+after that backup was taken, and mail them again. Check the subscription table
+against the unsubscribe log before the first send following a restore.
+
+**Restore order:** database first, then the app.
+
 ## Known Issues
 
 - **UI warning about admin credentials** — after first login, Listmonk shows a banner asking to remove `admin_username`/`admin_password` from config. These fields are already absent from this blueprint's setup; the banner can be dismissed.

@@ -57,6 +57,30 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK (or 302 to /install/ on 
 - **MariaDB on `app-internal` (`internal: true`)** — not reachable from outside.
 - **Default access `acc-tailscale` + `sec-3`** — ERPs hold all of your business data (invoices, customer details, financials). VPN-only is the right default; switch to `acc-public + sec-3` only with `sec-crowdsec` + 2FA.
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | MariaDB · container `dolibarr-db` · database `dolibarr` · user `dolibarr` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **State** | `./volumes/mysql` (database) · `./volumes/documents` (invoices, attachments, generated PDFs) · `./volumes/custom` (installed custom modules) |
+| **Reproducible** | nothing — `volumes/custom` is reinstallable in principle, but only if every module source is still available |
+| **Quiescing** | Not needed for the dump. `volumes/documents` is written during normal use, so a file captured mid-write is possible — acceptable for documents, since each is independent. |
+
+```yaml
+mariadb_databases:
+    - name: dolibarr
+      container: dolibarr-db
+      username: dolibarr
+      password: "{credential file /srv/docker/business/dolibarr/.secrets/db_pwd.txt}"
+```
+
+**`volumes/documents` is not optional.** Dolibarr stores generated invoices and
+attachments there, referenced by rows in the database. A database-only restore
+produces an ERP whose documents are all missing links.
+
+**Restore order:** database first, then the app.
+
 ## Known Issues
 
 - **`tuxgasy/dolibarr` is abandoned** — that community image stalled at 19.0.2. This blueprint uses the official `dolibarr/dolibarr` image (maintained by the Dolibarr association, current at 23.0.2).

@@ -26,6 +26,36 @@ Supervisor inside the `app` container manages the Laravel scheduler and queue wo
 - Access restricted to VPN (`acc-tailscale`) by default
 - Known deviation: secrets in `.env` (Laravel has no `_FILE` support — see UPSTREAM.md)
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | MySQL · container `invoiceninja-mysql` · database `ninja` · user `ninja` |
+| **Password** | `DB_PASSWORD` in `.env` — **not** a Docker Secret on this stack |
+| **State** | `mysql_data` (database) · `app_storage` (uploads, generated PDFs, backups) |
+| **Reproducible** | `redis_data` (cache) · `app_public` — served assets, rebuilt by the image |
+| **Quiescing** | Not needed. The dump is consistent on its own. |
+
+This stack uses **named volumes**, not bind mounts. Their host paths are
+`/var/lib/docker/volumes/invoiceninja_<name>/_data` — that is what goes into
+`source_directories`, not a path under the stack directory.
+
+```yaml
+mysql_databases:
+    - name: ninja
+      container: invoiceninja-mysql
+      username: ninja
+      password: "{credential file /srv/docker/business/invoiceninja/.secrets/db_pwd.txt}"
+```
+
+**The credential file above does not exist yet.** This stack still carries its
+database password in `.env` rather than in `.secrets/`, together with the
+`env_file:` deviation noted under Details. Until that is reworked, either point
+borgmatic at the value another way or move the password to `.secrets/db_pwd.txt`
+first — a password read from `.env` by two different systems drifts.
+
+**Restore order:** database first, then the app.
+
 ## First-Time Setup
 
 ### Step 1: Configure

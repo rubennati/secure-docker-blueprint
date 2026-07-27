@@ -68,16 +68,16 @@ Generated 2026-07-27 from the sources named in [`docs/standards/status-model.md`
 
 | Stack | Public | Internal | Pinned | Last verified | Backup docs | Restore docs |
 |---|---|---|---|---|---|---|
-| [`business/documenso`](business/documenso/) | 🚧 `preview` | `scaffolded` | `APP_TAG=v2.15.0` | — | missing | missing |
-| [`business/dolibarr`](business/dolibarr/) | 🚧 `preview` | `scaffolded` | `APP_TAG=23.0.3` | 2026-04-17 ⚠️ | missing | missing |
-| [`business/invoiceninja`](business/invoiceninja/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=5.13.26` | 2026-06-14 ⚠️ | missing | missing |
-| [`business/kimai`](business/kimai/) | 🚧 `preview` | `scaffolded` | `APP_TAG=apache-2.61.0` | 2026-05-03 ⚠️ | missing | missing |
-| [`business/listmonk`](business/listmonk/) | 🚧 `preview` | `scaffolded` | `APP_TAG=v6.2.0` | 2026-05-03 ⚠️ | missing | missing |
-| [`business/matomo`](business/matomo/) | 🚧 `preview` | `scaffolded` | `APP_TAG=5.12.0-apache` | 2026-04-17 ⚠️ | missing | missing |
-| [`business/openproject`](business/openproject/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=17.6.0-slim` | 2026-05-06 | missing | missing |
-| [`business/opensign`](business/opensign/) | 🚧 `preview` | `scaffolded` | `APP_TAG=main@sha256:817654a3f804…` | 2026-05-11 ⚠️ | missing | missing |
-| [`business/vikunja`](business/vikunja/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=2.3.0` | 2026-05-06 | missing | missing |
-| [`business/zammad`](business/zammad/) | 🚧 `preview` | `scaffolded` | `APP_TAG=7.1.1-0036` | 2026-05-11 ⚠️ | missing | missing |
+| [`business/documenso`](business/documenso/) | 🚧 `preview` | `scaffolded` | `APP_TAG=v2.15.0` | — | documented | missing |
+| [`business/dolibarr`](business/dolibarr/) | 🚧 `preview` | `scaffolded` | `APP_TAG=23.0.3` | 2026-04-17 ⚠️ | documented | missing |
+| [`business/invoiceninja`](business/invoiceninja/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=5.13.26` | 2026-06-14 ⚠️ | documented | missing |
+| [`business/kimai`](business/kimai/) | 🚧 `preview` | `scaffolded` | `APP_TAG=apache-2.61.0` | 2026-05-03 ⚠️ | documented | missing |
+| [`business/listmonk`](business/listmonk/) | 🚧 `preview` | `scaffolded` | `APP_TAG=v6.2.0` | 2026-05-03 ⚠️ | documented | missing |
+| [`business/matomo`](business/matomo/) | 🚧 `preview` | `scaffolded` | `APP_TAG=5.12.0-apache` | 2026-04-17 ⚠️ | documented | missing |
+| [`business/openproject`](business/openproject/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=17.6.0-slim` | 2026-05-06 | documented | missing |
+| [`business/opensign`](business/opensign/) | 🚧 `preview` | `scaffolded` | `APP_TAG=main@sha256:817654a3f804…` | 2026-05-11 ⚠️ | documented | missing |
+| [`business/vikunja`](business/vikunja/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=2.3.0` | 2026-05-06 | documented | missing |
+| [`business/zammad`](business/zammad/) | 🚧 `preview` | `scaffolded` | `APP_TAG=7.1.1-0036` | 2026-05-11 ⚠️ | documented | missing |
 
 ## `monitoring/`
 

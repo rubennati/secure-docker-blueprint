@@ -106,11 +106,13 @@ Log aggregation (Loki/Grafana) stays out of scope — heavier infrastructure for
 
 Every live app gets `deploy.resources` (memory + CPU) and `pids_limit`. The standard is already documented in [`docs/standards/security-baseline.md`](docs/standards/security-baseline.md); this version applies it.
 
-Intentionally late: wrong limits break apps silently (OOM kills, throttled CPUs). Each app needs values measured on a real install, not guessed. This is the fine-tuning pass — not a quick sweep.
+Intentionally late: wrong limits break apps silently (OOM kills, throttled CPUs). Each app needs values measured on a real install, not guessed. This is the fine-tuning pass — not a quick sweep. The measurement procedure is in [`docs/resource-measurement.md`](docs/resource-measurement.md) — what to sample, under which load states, and how a peak becomes a limit.
 
 The size of the gap is now measurable rather than estimated — `python3 scripts/ci/check-structure.py` reports it per service. As of 2026-07-27, across 57 apps: **121 services without `deploy.resources.limits`, 54 without a healthcheck.** That number is the milestone's progress bar. It rose against the previous count because `backup/` and the split-compose Seafile stacks became visible to the checker, not because anything regressed.
 
-The Operator Site — an Astro/Starlight site published via GitHub Pages — also reaches its official published state at this milestone. The site is the operator-facing entry point; the repository remains the technical source of truth and nothing moves out of it. The site starts deliberately small and curated, not as a mirror of the full repository. Initial scope covers Home, Getting Started, Applications (with Vaultwarden as the first full reference guide), Operations, FAQ, and Project/Governance. The build and deployment workflow is in place by this milestone. Once published, the repository README can route operator-focused users to the site.
+The Operator Site — an Astro/Starlight site published via GitHub Pages — also reaches its official published state at this milestone. The site is the operator-facing entry point; the repository remains the technical source of truth and nothing moves out of it. The site starts deliberately small and curated, not as a mirror of the full repository.
+
+**The content and the pipeline are in place already**: Home, Getting Started, Applications (with Vaultwarden as the first full reference guide), Core, Operations, FAQ and Project/Governance all exist, and `.github/workflows/site.yml` builds and deploys. What remains for the milestone is the declaration that it is official — a review pass over the existing pages, and the root README routing operator-focused users to it.
 
 ### v1.0 — Complete and hand-off ready
 
@@ -122,7 +124,7 @@ Before v1.0 is tagged:
 - No `🚧` without a documented reason
 - No `__REPLACE_ME__` in any verified file
 - Honest review of every `🚧 preview` — promote only what was actually verified
-- CI baseline: compose validate, secret scan, markdown lint, image vulnerability scan (✅ Trivy, since v0.6.0), structure checker wired in (`scripts/ci/check-structure.py` — written, not yet running in CI)
+- CI baseline: compose validate ✅, secret scan ✅, image vulnerability scan ✅ (Trivy, since v0.6.0), structure checker ✅ (`Canonical structure`), status model ✅ (`Status model`) — **markdown lint is the one still missing**
 - Secret & Password Generation Standard consolidated into `docs/standards/`
 - Secrets rotation guidance in `docs/standards/`
 - License review — every live app checked against the license policy below

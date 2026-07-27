@@ -49,6 +49,29 @@ docker compose logs app --follow
 - **`no-new-privileges:true`** on both services.
 - **Default access `acc-tailscale` + `sec-3`** — Kimai holds customer, project, and billing data. VPN-only default.
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | MariaDB · container `kimai-db` · database `kimai` · user `kimai` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **State** | `./volumes/mysql` (database) · `./volumes/data` (invoice templates, uploads) |
+| **Reproducible** | `./volumes/plugins` — reinstallable, provided the plugin sources are still obtainable |
+| **Quiescing** | Not needed. The dump is consistent on its own. |
+
+```yaml
+mariadb_databases:
+    - name: kimai
+      container: kimai-db
+      username: kimai
+      password: "{credential file /srv/docker/business/kimai/.secrets/db_pwd.txt}"
+```
+
+Time entries — the data that actually matters here — live entirely in the
+database. `volumes/data` matters for invoice output, not for the tracked time.
+
+**Restore order:** database first, then the app.
+
 ## Known Issues
 
 - **Healthcheck uses `Host` header override** — the image's built-in healthcheck hits `127.0.0.1:8001` with `Host: 127.0.0.1`, which Symfony rejects as untrusted. The compose healthcheck is overridden to pass `Host: APP_TRAEFIK_HOST` instead.

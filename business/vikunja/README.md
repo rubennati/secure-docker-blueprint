@@ -171,6 +171,32 @@ VIKUNJA_PRIVACYURL=https://your-domain.com/privacy
 | Rate limiting | ✅ | Enabled |
 | Read-only filesystem | ⬜ | Not yet verified — enable after testing |
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | PostgreSQL · container `vikunja-db` · database `vikunja` · user `vikunja` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **State** | `db_data` (database) · `vikunja_files` (task attachments) |
+| **Reproducible** | nothing |
+| **Quiescing** | Not needed. The dump is consistent on its own. |
+
+This stack uses **named volumes**. Their host paths are
+`/var/lib/docker/volumes/vikunja_<name>/_data`.
+
+```yaml
+postgresql_databases:
+    - name: vikunja
+      container: vikunja-db
+      username: vikunja
+      password: "{credential file /srv/docker/business/vikunja/.secrets/db_pwd.txt}"
+```
+
+`.secrets/jwt_key.txt` signs the session tokens. Restoring without it invalidates
+every active session — recoverable, but users are logged out without explanation.
+
+**Restore order:** database first, then the app.
+
 ## Notes
 
 - **PostgreSQL vs SQLite**: PostgreSQL is required for multi-user setups (SQLite only for personal single-user use).

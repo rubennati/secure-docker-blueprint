@@ -71,6 +71,35 @@ docker compose ps
 | TLS termination | ✅ | Traefik — `OPENPROJECT_HTTPS=true` set |
 | SSO / OIDC | ✗ | Enterprise Edition only — not available in CE |
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | PostgreSQL · container `openproject-db` · database `openproject` · user `openproject` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **State** | `db_data` (database) · `op_assets` (work-package attachments) |
+| **Reproducible** | the memcached container holds no disk state |
+| **Quiescing** | Not needed for the dump. Attachments are written during use; each file is independent. |
+
+This stack uses **named volumes**. Their host paths are
+`/var/lib/docker/volumes/openproject_<name>/_data` — that is what belongs in
+`source_directories`.
+
+```yaml
+postgresql_databases:
+    - name: openproject
+      container: openproject-db
+      username: openproject
+      password: "{credential file /srv/docker/business/openproject/.secrets/db_pwd.txt}"
+```
+
+`secret_key_base` in `.secrets/` derives session and token values. Restoring
+without it logs everyone out and invalidates issued tokens.
+
+**Restore order:** database first, then `web`, `worker`, `cron`. The `seeder`
+runs migrations — let it finish before the others come up, or a half-migrated
+schema gets written over the restore.
+
 ## Notes
 
 - **No OIDC in CE**: OAuth2 / OpenID Connect is an Enterprise add-on. CE supports local accounts and basic LDAP only. See [docs/bugfixes/vikunja-openproject-2026-05-06.md](../../docs/bugfixes/vikunja-openproject-2026-05-06.md).

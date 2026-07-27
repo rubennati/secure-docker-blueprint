@@ -64,6 +64,35 @@ docker compose logs api --follow
 - **Signed PDFs** land in `volumes/api-files/` — legally binding artefacts, treat backup with care.
 - **Default access `acc-public` + `sec-3`** — signers receive a signing URL and need to reach it from outside. Admin UI sits on the same host — gate with a second router if agents are internal-only.
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | MongoDB · container `opensign-db` · database `OpenSignDB` · user `opensign` (root) |
+| **Password** | `.secrets/db_root_pwd.txt` |
+| **State** | `./volumes/mongodb` (database) · `./volumes/api-files` (signed documents) |
+| **Reproducible** | nothing |
+| **Quiescing** | Not needed. Borgmatic's MongoDB hook dumps a consistent snapshot; a file-level copy of `volumes/mongodb` can capture a torn state and must not be used instead. |
+
+```yaml
+mongodb_databases:
+    - name: OpenSignDB
+      container: opensign-db
+      username: opensign
+      password: "{credential file /srv/docker/business/opensign/.secrets/db_root_pwd.txt}"
+      authentication_database: admin
+```
+
+`authentication_database: admin` is required — the root user is created in
+`admin`, not in `OpenSignDB`, so a dump without it authenticates against the
+wrong database and fails.
+
+**`volumes/api-files` holds the signed documents themselves.** The database holds
+the signature metadata that points at them. Either one alone restores to an
+e-signature service that cannot produce the documents it claims to have signed.
+
+**Restore order:** database first, then `api`, then `ui`.
+
 ## Mail configuration
 
 OpenSign supports two mail backends — pick one:
