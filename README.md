@@ -242,9 +242,13 @@ Planned: Statping, ciao, Checkmate, Zabbix, Grafana + Prometheus, Scrutiny.
 
 ### Backup
 
-See [`backup/README.md`](backup/README.md) for tool choices and the per-app isolation principle.
+See [`backup/README.md`](backup/README.md) for the layer model, the host-agent rationale, and what append-only protection actually buys.
 
-Planned: Kopia, Borgmatic, Bareos, UrBackup.
+| Tool | Approach | Status | Description |
+|---|---|---|---|
+| [Borgmatic](backup/borgmatic/) | Host-installed, SSH/SFTP | 🚧 | Deduplicated encrypted backup with native database dumps for PostgreSQL, MySQL, MariaDB and SQLite. Configuration and restore procedure written, not yet exercised on a host. |
+
+Planned: Kopia, Bareos, UrBackup.
 
 ### Repository layout
 
@@ -258,7 +262,7 @@ New here? Start with the area that best matches your goal: [Core Infrastructure]
 | [`apps/`](apps/) | General-purpose self-hosted apps — equally useful for private homelab or a company |
 | [`business/`](business/) | Apps that only make sense in a company context — invoicing, helpdesk, newsletter, compliance |
 | [`monitoring/`](monitoring/) | Ops observability — uptime, metrics, content-change watching, disk SMART |
-| [`backup/`](backup/) | Ops backup — Kopia / Bareos / UrBackup, structurally separate because of privileged access + remote targets |
+| [`backup/`](backup/) | Ops backup — host-installed agent plus container-aware database dumps, structurally separate because of privileged access + remote targets |
 
 ## Project Structure
 
@@ -302,6 +306,7 @@ secure-docker-blueprint/
 │   └── ...
 │
 ├── backup/                      # Backup tooling
+│   └── borgmatic/               #   Host-installed agent (no compose stack)
 │
 ├── docs/
 │   ├── standards/               # Conventions and patterns

@@ -1,0 +1,153 @@
+# =============================================
+# Borgmatic – Backup configuration
+# =============================================
+# Copy to /etc/borgmatic/config.yaml and adjust every value.
+# Validate before trusting it:  sudo borgmatic config validate
+#
+# This runs on the HOST, not in a container. See ../README.md for why.
+# Requires borgmatic >= 2.0.8 for the `container:` database option.
+# =============================================
+
+# --- Repositories [target] -------------------------------------------------
+# SSH/SFTP is the primary target: any provider offering SSH storage works, and
+# Borg speaks it natively. The `/./` after the port means "relative to the SSH
+# user's home directory". Some providers use a non-standard SSH port.
+#
+# Initialise the repository once, before the first run:
+#   borg init --encryption=repokey-blake2 ssh://backup-user@backup.example.com:22/./borg/myhost
+#
+# Then EXPORT THE KEY and store it off this host — see ../README.md "Keys".
+repositories:
+    - path: ssh://backup-user@backup.example.com:22/./borg/myhost
+      label: offsite
+
+    # A second target on different media completes 3-2-1. Uncomment once the
+    # first one is proven. A locally mounted disk is a reasonable second copy;
+    # note that it is only "off-site" if it physically leaves the building.
+    # - path: /mnt/backup/borg/myhost
+    #   label: local
+
+# --- Encryption [secrets] --------------------------------------------------
+# Never put the passphrase in this file. Read it from a root-only file, or
+# from a secret manager. Both the passphrase AND the exported key are required
+# to restore — losing either loses the backup.
+encryption_passcommand: cat /root/.borg-passphrase
+
+# --- What to back up [data] ------------------------------------------------
+# Point this at wherever the blueprint is deployed. Bind-mounted app data
+# (./volumes/), configuration (docker-compose.yml, .env) and secrets
+# (.secrets/) all live under the deployment root — which is why the archive
+# MUST stay encrypted.
+source_directories:
+    - /srv/docker
+
+    # Named volumes. A few stacks in this blueprint use them, and Docker
+    # recommends them generally — so the backup has to cover both kinds.
+    # Docker's storage path differs under rootless Docker or a custom
+    # data-root; confirm yours with:  docker info --format '{{.DockerRootDir}}'
+    #
+    # Reading this path directly while containers write to it can capture an
+    # inconsistent state. It is acceptable for data whose consistency does not
+    # depend on multiple files agreeing, and it is NOT how databases should be
+    # handled — those go through the dump hooks below.
+    - /var/lib/docker/volumes
+
+exclude_patterns:
+    - '**/volumes/*/cache'
+    - '**/volumes/*/tmp'
+    - '**/node_modules'
+exclude_caches: true
+exclude_if_present:
+    - .nobackup
+
+# --- Retention [policy] ----------------------------------------------------
+# Derive these from your RPO, not from habit. Daily backups mean accepting up
+# to 24 hours of data loss. Keep enough history that a problem discovered late
+# is still recoverable — a week of dailies does not survive a three-week-old
+# deletion nobody noticed.
+keep_daily: 7
+keep_weekly: 4
+keep_monthly: 6
+keep_yearly: 1
+
+# --- Databases [consistency] -----------------------------------------------
+# Copying a running database's files can capture a torn, mid-transaction
+# state that only reveals itself at restore. Always dump.
+#
+# `container:` (borgmatic >= 2.0.8) resolves the container's address through
+# Docker — no published ports, no database clients on the host, no docker exec
+# wrapper. Dumps stream into the archive through named pipes.
+#
+# Keep one entry per database. Delete the engines you do not run.
+
+postgresql_databases:
+    - name: myapp
+      container: myapp-db
+      username: myapp
+      # Read the password from the same Docker secret the stack uses, so there
+      # is exactly one copy of it on the host.
+      password: ${POSTGRES_PASSWORD}
+      format: custom
+
+mysql_databases:
+    - name: myapp
+      container: myapp-db
+      username: myapp
+      password: ${MYSQL_PASSWORD}
+
+mariadb_databases:
+    - name: myapp
+      container: myapp-db
+      username: myapp
+      password: ${MARIADB_PASSWORD}
+
+# SQLite is a file, but a live one — dump it rather than copying it.
+sqlite_databases:
+    - name: myapp
+      path: /srv/docker/apps/myapp/volumes/data/database.sqlite
+
+# --- Integrity [proof] -----------------------------------------------------
+# Separate from "did the job run". These detect bit rot and truncation.
+# `data` reads and verifies every chunk — thorough and slow, so run it rarely.
+checks:
+    - name: repository
+      frequency: 2 weeks
+    - name: archives
+      frequency: 1 month
+    - name: data
+      frequency: 3 months
+
+# --- Monitoring [proof] ----------------------------------------------------
+# The failure this catches: the timer stopped six weeks ago and nothing said
+# so. Both services below are already in this blueprint under monitoring/.
+# Use one; two is noise.
+
+healthchecks:
+    ping_url: https://healthchecks.example.com/ping/00000000-0000-0000-0000-000000000000
+    states:
+        - start
+        - finish
+        - fail
+
+# uptime_kuma:
+#     push_url: https://kuma.example.com/api/push/abcd1234
+#     states:
+#         - start
+#         - finish
+#         - fail
+
+# --- Command hooks [optional] ----------------------------------------------
+# v2 syntax. The old before_backup/after_backup keys are deprecated.
+#
+# Only needed for things the database hooks do not cover — for example
+# quiescing an application that has no dump mechanism. If you add a hook that
+# produces data for the backup, make it FAIL LOUDLY: a dump command that errors
+# while the backup continues produces an archive that looks complete and
+# restores nothing. Use `set -e` and a non-zero exit.
+#
+# commands:
+#     - before: action
+#       when:
+#           - create
+#       run:
+#           - /usr/local/sbin/quiesce-app.sh

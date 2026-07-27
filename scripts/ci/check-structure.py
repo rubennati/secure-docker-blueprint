@@ -81,10 +81,39 @@ EXCEPT_DIRS = {
 }
 
 
+def is_compose(path: Path) -> bool:
+    """True when a YAML file declares Compose services."""
+    try:
+        data = yaml.safe_load(path.read_text(encoding="utf-8", errors="replace")) or {}
+    except yaml.YAMLError:
+        return False
+    return isinstance(data, dict) and bool(data.get("services"))
+
+
+def compose_files(app: Path) -> list[Path]:
+    """The compose files that define the stack.
+
+    Normally that is `docker-compose.yml` alone — overlays such as
+    `activitypub.yml` or `docker-compose.local.yml` are opt-in and deliberately
+    not checked. Some stacks (seafile, seafile-pro) instead split the stack
+    across one file per component with no `docker-compose.yml` at all; those
+    were invisible to this checker until every part was picked up.
+    """
+    main = app / "docker-compose.yml"
+    if main.exists():
+        return [main]
+    return sorted(p for p in app.glob("*.yml") if is_compose(p))
+
+
 def find_apps() -> list[Path]:
-    return sorted(
-        p.parent for root in ROOTS for p in Path(root).rglob("docker-compose.yml")
-    )
+    apps = {p.parent for root in ROOTS for p in Path(root).rglob("docker-compose.yml")}
+    # Split-compose stacks: a directory with compose files but no docker-compose.yml.
+    for root in ROOTS:
+        for candidate in Path(root).iterdir() if Path(root).is_dir() else []:
+            if candidate.is_dir() and candidate not in apps:
+                if any(is_compose(p) for p in candidate.glob("*.yml")):
+                    apps.add(candidate)
+    return sorted(apps)
 
 
 def parse_env(path: Path) -> tuple[list[tuple[str, str]], list[str]]:
@@ -157,12 +186,16 @@ def check_env(app: Path, findings: list[dict]) -> None:
 
 
 def check_compose(app: Path, findings: list[dict]) -> None:
-    path = app / "docker-compose.yml"
+    for path in compose_files(app):
+        check_one_compose(app, path, findings)
+
+
+def check_one_compose(app: Path, path: Path, findings: list[dict]) -> None:
     try:
         data = yaml.safe_load(path.read_text(encoding="utf-8", errors="replace")) or {}
     except yaml.YAMLError as exc:
         findings.append({"level": "FAIL", "rule": "yaml-parse",
-                         "detail": f"docker-compose.yml is not valid YAML: {exc}"})
+                         "detail": f"{path.name} is not valid YAML: {exc}"})
         return
 
     for name, svc in (data.get("services") or {}).items():
@@ -213,12 +246,14 @@ def root_gitignore() -> str:
 
 def uses_secrets(app: Path) -> bool:
     """True when the stack mounts Docker Secrets — i.e. .secrets/ will hold real values."""
-    path = app / "docker-compose.yml"
-    try:
-        data = yaml.safe_load(path.read_text(encoding="utf-8", errors="replace")) or {}
-    except yaml.YAMLError:
-        return False
-    return bool(data.get("secrets"))
+    for path in compose_files(app):
+        try:
+            data = yaml.safe_load(path.read_text(encoding="utf-8", errors="replace")) or {}
+        except yaml.YAMLError:
+            continue
+        if data.get("secrets"):
+            return True
+    return False
 
 
 def check_files(app: Path, findings: list[dict], root_gi: str) -> None:

@@ -4,7 +4,7 @@
 
 Generated 2026-07-27 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-54 stacks: 0 ops-ready · 37 ready · 17 preview.
+57 stacks: 0 ops-ready · 39 ready · 18 preview.
 
 ## What the columns mean
 
@@ -58,6 +58,8 @@ Generated 2026-07-27 from the sources named in [`docs/standards/status-model.md`
 | [`apps/paperless-ngx`](apps/paperless-ngx/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=3.0.3` | 2026-05-03 | missing | missing |
 | [`apps/photoprism`](apps/photoprism/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=260601` | 2026-04-17 ⚠️ | missing | missing |
 | [`apps/photoview`](apps/photoview/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=2.4.0` | 2026-04-17 ⚠️ | missing | missing |
+| [`apps/seafile`](apps/seafile/) | ✅ `ready` | `baseline-aligned` | `APP_IMAGE=seafileltd/seafile-mc:13.0.20` | 2026-04-16 ⚠️ | missing | missing |
+| [`apps/seafile-pro`](apps/seafile-pro/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=13.0.21` | 2026-04-13 ⚠️ | missing | missing |
 | [`apps/unifi`](apps/unifi/) | 🚧 `preview` | `scaffolded` | `APP_TAG=10.4.57` | 2026-04-17 ⚠️ | missing | missing |
 | [`apps/vaultwarden`](apps/vaultwarden/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=1.37.0` | 2026-06-14 ⚠️ | missing | missing |
 | [`apps/wordpress`](apps/wordpress/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=7.0.2-php8.3-apache` | 2026-04-15 ⚠️ | missing | missing |
@@ -87,6 +89,12 @@ Generated 2026-07-27 from the sources named in [`docs/standards/status-model.md`
 | [`monitoring/gatus`](monitoring/gatus/) | 🚧 `preview` | `scaffolded` | `APP_TAG=v5.36.0` | 2026-05-03 ⚠️ | missing | missing |
 | [`monitoring/healthchecks`](monitoring/healthchecks/) | 🚧 `preview` | `scaffolded` | `APP_TAG=v4.2` | 2026-04-17 ⚠️ | missing | missing |
 | [`monitoring/uptime-kuma`](monitoring/uptime-kuma/) | 🚧 `preview` | `scaffolded` | `APP_TAG=2.4.0` | 2026-05-03 ⚠️ | missing | missing |
+
+## `backup/`
+
+| Stack | Public | Internal | Pinned | Last verified | Backup docs | Restore docs |
+|---|---|---|---|---|---|---|
+| [`backup/borgmatic`](backup/borgmatic/) | 🚧 `preview` | `scaffolded` | *host-installed* | — | missing | documented |
 
 ## Source of truth
 

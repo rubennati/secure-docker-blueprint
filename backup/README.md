@@ -8,7 +8,7 @@ Self-hosted backup for the stacks in this blueprint — separate top-level categ
 
 | Tool | Approach | Status | Notes |
 |---|---|---|---|
-| Borgmatic | Borg wrapper — YAML config, systemd-timed, SSH/SFTP targets, native database hooks | 📋 | **The documented default.** Rationale below. |
+| [Borgmatic](borgmatic/) | Borg wrapper — YAML config, systemd-timed, SSH/SFTP targets, native database hooks | 🚧 | **The documented default.** Host-installed — configuration and restore procedure written, not yet exercised on a host. |
 | Kopia | Deduplicating snapshots to S3 / SFTP / filesystem, web UI | 📋 | Alternative for operators who want a UI or native object storage. No database hooks — dumps must be scripted. |
 | Bareos | Bacula fork: Director + Storage + File daemons | 📋 | Enterprise. For regulated retention and audit trails. Heavy. |
 | UrBackup | Image + file backup for Windows / Linux endpoints | 📋 | Workstation backup with bare-metal restore. Different workload class. |

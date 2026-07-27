@@ -1,0 +1,39 @@
+# =============================================
+# Borgmatic – systemd timer
+# =============================================
+# The borgmatic package usually ships borgmatic.service and borgmatic.timer
+# already. Check before installing this:
+#
+#   systemctl list-unit-files | grep borgmatic
+#
+# If they exist, do NOT overwrite them — override just what you need:
+#
+#   sudo systemctl edit borgmatic.timer
+#
+# and put only the [Timer] section below into the override. Use this file only
+# when the package ships no units at all.
+#
+# Install to /etc/systemd/system/borgmatic.timer, then:
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now borgmatic.timer
+#   systemctl list-timers borgmatic.timer     # confirm the next run
+# =============================================
+
+[Unit]
+Description=Run borgmatic backup
+
+[Timer]
+# Daily, at a time when load is low. Pick an hour that does not collide with
+# other maintenance on the host.
+OnCalendar=*-*-* 03:00:00
+
+# Spread the start over an hour. On a shared backup target this stops every
+# host hitting it at the same second.
+RandomizedDelaySec=1h
+
+# Run on next boot if the machine was off at the scheduled time. Without this
+# an intermittently powered host silently skips backups.
+Persistent=true
+
+[Install]
+WantedBy=timers.target

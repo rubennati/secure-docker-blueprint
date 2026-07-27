@@ -99,8 +99,15 @@ def statuses_from(readme: Path, prefix: str = "") -> dict[str, str]:
     return found
 
 
+def has_compose(stack: Path) -> bool:
+    """True for a Compose stack — including ones split across per-component files."""
+    return any(stack.glob("*.yml"))
+
+
 def pinned_version(stack: Path) -> str:
     """The stack's primary image pin, in `VAR=value` form."""
+    if not has_compose(stack):
+        return "*host-installed*"
     env = read(stack / ".env.example")
     if not env:
         return "—"
@@ -142,8 +149,15 @@ def last_verified(stack: Path) -> tuple[str, bool]:
 
 
 def doc_sections(stack: Path) -> tuple[str, str]:
-    """(backup docs, restore docs) — derived from the stack README's headings."""
-    has = {"backup": False, "restore": False}
+    """(backup docs, restore docs).
+
+    Counted either as a section in the stack README or as a dedicated file —
+    `backup/borgmatic` keeps its procedure in RESTORE.md rather than a heading.
+    """
+    has = {
+        "backup": (stack / "BACKUP.md").exists(),
+        "restore": (stack / "RESTORE.md").exists(),
+    }
     for line in read(stack / "README.md").splitlines():
         m = SECTION.match(line)
         if m:
@@ -175,7 +189,12 @@ def collect() -> tuple[list[dict], list[dict]]:
         )
 
         for stack in sorted(p for p in cat_dir.iterdir() if p.is_dir()):
-            if not (stack / "docker-compose.yml").exists():
+            # A component qualifies if it ships compose files — including stacks
+            # split across one file per component, which have no
+            # `docker-compose.yml` — or if the owning README gives it a status
+            # row, which is how host-installed components like backup/borgmatic
+            # get a lifecycle despite having no compose file at all.
+            if not has_compose(stack) and stack.name not in owner_map:
                 continue
             key = f"{category}/{stack.name}"
             if key in EXCEPT:
