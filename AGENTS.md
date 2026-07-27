@@ -4,6 +4,16 @@
 This file is a routing index for AI agents and does not redefine project rules.
 Existing repository documents remain the source of truth.
 
+## Start here
+Before any non-trivial task, read the shared `.ai/` workspace:
+
+1. `.ai/index.md` — start sequence and repository map
+2. `.ai/state.md` — current phase, objective, open decisions, active constraints
+3. `.ai/routing.md` — which documents this task type actually needs
+4. `.ai/rules.md` — how to work here
+
+`.ai/` coordinates work. It never overrides the documents listed under Rule Precedence.
+
 ## Rule Precedence
 1. `docs/standards/*.md`
 2. `SECURITY.md`
@@ -39,4 +49,15 @@ If guidance appears to conflict, follow the Rule Precedence order above.
 Use `docs/maintenance.md` owner/mirror mapping to resolve which document owns a given fact.
 
 ## Tool-Specific Adapters
-Tool-specific files (for example `CODEX.md`, `CLAUDE.md`) may be added later only as thin adapters that reference canonical documents, not as independent rule sources.
+This file is the source of truth for all AI tools. Tool-specific files exist only
+because each tool reads its own path:
+
+- `CLAUDE.md` — Claude Code
+- `.github/copilot-instructions.md` — GitHub Copilot
+- `.cursor/rules/00-project.mdc` — Cursor
+
+Pointer files stay short (target: ≤20 lines) and defer to this file for any rule that
+is not specific to the tool. Never duplicate a rule across pointer files — add it here
+instead.
+
+`CLAUDE.local.md` and `.claude/` are personal and gitignored; never commit them.

@@ -2,7 +2,7 @@
 
 Self-hosted apps **that only make sense in a business / company context**. The criterion: *do you need to run a business to meaningfully use this?* If yes → here. If the app is equally useful to a private homelab user (wiki, password manager, URL shortener, …) it belongs in [`apps/`](../apps/).
 
-This keeps `business/` a meaningful category instead of a grab-bag. See [`docs/architecture/directory-layout.md`](../docs/architecture/directory-layout.md) (on the `docs` branch) for the full categorisation rule.
+This keeps `business/` a meaningful category instead of a grab-bag. See [`docs/architecture.md`](../docs/architecture.md#directory-structure) for the categorisation rule across all five top-level directories.
 
 ## Status
 

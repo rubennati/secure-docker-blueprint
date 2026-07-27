@@ -72,5 +72,4 @@ After install, log in at `/index.php/user/login` (backend) or `/index.php/backen
 ## Details
 
 - [UPSTREAM.md](UPSTREAM.md)
-- Sibling: [`apps/calcom/`](../calcom/) — commercial-support pathway
 - Sibling: [`apps/caldiy/`](../caldiy/) — MIT community edition

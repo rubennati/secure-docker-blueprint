@@ -23,7 +23,7 @@ Other ways you thought about solving this (and why they don't fit).
 - [ ] This fits the blueprint's scope (security-hardened self-hosted Docker Compose)
 - [ ] This respects existing standards in `docs/standards/`
 - [ ] I've searched existing issues and discussions for duplicates
-- [ ] For a new app: I've read [CONTRIBUTING.md](../../CONTRIBUTING.md) and the [app-setup-blueprint](../../docs/app-setup-blueprint.md) on the `docs` branch
+- [ ] For a new app: I've read [CONTRIBUTING.md](../../CONTRIBUTING.md) and the [new-app checklist](../../docs/standards/new-app-checklist.md)
 
 ## Additional context
 
