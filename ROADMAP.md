@@ -79,7 +79,7 @@ The agent runs **on the host**, not in a container — the one deliberate except
 Two practical notes:
 
 - A backup component that *does* run in a container starts from `apps/_reference/` and is checked with `scripts/ci/check-structure.py`. `backup/borgmatic/` is host-installed and therefore holds configuration and procedure instead of a Compose stack.
-- The restore walkthrough needs a reachable host with real data — the same precondition as the pending major bumps above. Both are best done in one host session.
+- The restore walkthrough needs a reachable host with real data — the same precondition as the pending major bumps above. Both are best done in one host session, for which [`docs/host-session-v0.7.0.md`](docs/host-session-v0.7.0.md) is the ordered run.
 
 ### v0.8.0 — Monitoring
 

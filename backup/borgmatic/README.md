@@ -108,6 +108,23 @@ Two rules that sound contradictory but are not:
 
 Store the passphrase and the exported key together. Separating them protects against nothing and doubles the chance of losing one.
 
+## Credentials
+
+Borgmatic never needs a password written into its configuration. It offers four credential sources — `file`, `container`, `systemd` and KeePassXC — and two matter here:
+
+| Source | Syntax | Used for |
+|---|---|---|
+| **file** | `"{credential file /path}"` | everything in this setup |
+| container | `"{credential container NAME}"` | reads Docker secrets from `/run/secrets` — **only works when borgmatic runs inside a container**, which it deliberately does not here |
+
+The file source is what makes this fit the blueprint cleanly: point it straight at the `.secrets/*.txt` file the stack already mounts as a Docker secret.
+
+```yaml
+password: "{credential file /srv/docker/apps/myapp/.secrets/db_pwd.txt}"
+```
+
+One copy of that password exists on the host. Borgmatic reads the same file Docker does, nothing is exported into its environment, and rotating the secret needs no second edit. It also strips a trailing newline itself — the failure this repository otherwise guards against with `| tr -d '\n'` everywhere.
+
 ## Ransomware — what append-only actually gives you
 
 Restrict the backup key on the **target** to append-only, in that user's `~/.ssh/authorized_keys`:
