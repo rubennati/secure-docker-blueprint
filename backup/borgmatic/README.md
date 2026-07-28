@@ -1,6 +1,7 @@
 # Borgmatic
 
-> **Status: 🚧 Preview** — v2.0.8+ · 2026-07-26 · configuration and procedure are written, **not yet exercised on a host**
+> **Status: ✅ Ready** — v2.1.6 · 2026-07-29 · backup and restore both performed
+> on a live host; the rehearsal is logged in [`RESTORE.md`](RESTORE.md#rehearsal-log)
 
 Host-installed backup for the stacks in this blueprint. Borg does the deduplicated, encrypted, append-capable storage; Borgmatic adds scheduling, retention, database dumps and monitoring on top.
 
@@ -17,6 +18,7 @@ Host-installed backup for the stacks in this blueprint. Borg does the deduplicat
 ## Requirements
 
 - **Borgmatic ≥ 2.0.8** — earlier versions have no `container:` option for databases, and the v2 configuration format differs from v1. Check with `borgmatic --version`.
+- **A client for every database engine you back up, on the host.** `mariadb-client`, `postgresql-client`, `mongodb-database-tools` as applicable. See [Databases](#databases) — this surprises people, and it is not optional.
 - An SSH-reachable target. Any provider offering SSH/SFTP storage works; so does another machine you control.
 - Root on the Docker host.
 
@@ -24,10 +26,21 @@ Host-installed backup for the stacks in this blueprint. Borg does the deduplicat
 
 **1. Install**
 
+Check what your distribution offers before installing it — the packaged version is frequently older than the requirement above. Debian 13 ships 1.9.14, which predates the `container:` option entirely:
+
 ```bash
-sudo apt install borgmatic          # or the equivalent for your distro
+apt-cache policy borgmatic
+```
+
+If it is below 2.0.8, install from PyPI instead. This is what upstream recommends and what was used here:
+
+```bash
+sudo apt install pipx
+sudo PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install borgmatic
 borgmatic --version                 # must be >= 2.0.8
 ```
+
+`PIPX_BIN_DIR=/usr/local/bin` matters: borgmatic runs as root from a systemd timer, and a default pipx installation lands in a user's `~/.local/bin`, which root's `PATH` does not include.
 
 **2. Prepare the target**
 
@@ -117,6 +130,8 @@ Borgmatic never needs a password written into its configuration. It offers four 
 | **file** | `"{credential file /path}"` | everything in this setup |
 | container | `"{credential container NAME}"` | reads Docker secrets from `/run/secrets` — **only works when borgmatic runs inside a container**, which it deliberately does not here |
 
+Do not confuse this with the `container:` option on a database entry — different mechanism, same word. That one names the container to dump *from*; this one names where a credential is read.
+
 The file source is what makes this fit the blueprint cleanly: point it straight at the `.secrets/*.txt` file the stack already mounts as a Docker secret.
 
 ```yaml
@@ -162,8 +177,8 @@ Borgmatic's integrations map onto stacks this blueprint already ships. This tabl
 
 | Borgmatic integration | In this repository | How it connects |
 |---|---|---|
-| PostgreSQL · MySQL · MariaDB · SQLite | 24 · 16 · 13 stacks, plus several SQLite | `container:` dump hook |
-| MongoDB | `apps/unifi`, `business/opensign` | `container:` dump hook |
+| PostgreSQL · MySQL · MariaDB · SQLite | 24 · 16 · 13 stacks, plus several SQLite | `container:` dump hook, plus that engine's client on the host |
+| MongoDB | `apps/unifi`, `business/opensign` | `container:` dump hook, plus the MongoDB tools on the host |
 | Healthchecks | `monitoring/healthchecks` ✅ | `healthchecks.ping_url` |
 | Uptime Kuma | `monitoring/uptime-kuma` ✅ | `uptime_kuma.push_url` |
 | Zabbix | `monitoring/` — planned | available when that stack lands |
@@ -181,13 +196,47 @@ Two of these change how the layers work:
 
 Five engines are covered natively — PostgreSQL, MySQL, MariaDB, SQLite and MongoDB — with the dump streamed into the archive. Add one entry per database in `config.yaml`, using `container:` to name the container.
 
-Two things to know before you need them: **restore is destructive**, and **the target database must already exist** — Borgmatic will not create it.
+### What `container:` actually does
+
+It resolves the container's IP address through `docker inspect`. That is all. The dump command then runs **on the host** and connects to that address over TCP.
+
+So it removes the need to publish database ports, and it does not remove the need for the client:
+
+```text
+[Errno 2] No such file or directory: 'mariadb-dump'
+```
+
+The alternative upstream documents is `mariadb_dump_command: docker exec …`, running the dump inside the container. It is not the default here, because borgmatic passes credentials through a defaults-file on the host that a container cannot see — making it work means also switching `password_transport` and forwarding the variable into the container.
+
+### Version skew is a real failure, not a theoretical one
+
+The host client comes from the distribution; the server version is pinned per stack. On Debian 13 that pairs an 11.8 client with, for example, a 10.11 server, and the newer client requires TLS the older server does not offer:
+
+```text
+TLS/SSL error: SSL is required, but the server does not support it
+```
+
+For a connection from the host to a container on a local bridge, `tls: false` on the database entry is the proportionate answer — the traffic never reaches a network. Where the database is genuinely remote, configure TLS on the server instead.
+
+### Before you need them
+
+**Restore is destructive**, and **the target database must already exist** — Borgmatic will not create it.
+
+### More than one deployment on a host
+
+`source_directories` and `container:` are matched literally, and a host running two deployments will have two sets of similar names. State full paths and exact container names rather than patterns, then prove the scoping by searching the archive for something that must *not* be in it:
+
+```bash
+sudo borgmatic list --archive latest --find '*other-deployment*' | grep -v '^local:'
+```
+
+An empty result is the evidence. Quiescing hooks deserve the same care: `docker exec <exact-container>` cannot resolve to the wrong project, `docker compose` can.
 
 Borgmatic writes its own configuration into the archive so the credentials needed for a restore travel with the backup. That is deliberate, and it is another reason the archive must stay encrypted.
 
 ## Known limitations
 
-- **Not yet exercised on a host.** The configuration validates and the procedure is written; neither has run against a real target. That is what moves this from 🚧 to ✅.
+- **Exercised against a local repository, not an SSH target.** Backup, archive inspection and restore have all been performed; the target was a directory on the same host. The SSH path and append-only enforcement are still written rather than proven.
 - **Prune under append-only fails by design.** Plan where retention runs before enabling it.
 - **`/var/lib/docker/volumes` read live.** Fine for ordinary files, not for databases — which is what the dump hooks are for. Verify your Docker root with `docker info --format '{{.DockerRootDir}}'`; rootless and custom data-root setups differ.
 - **One host, one configuration.** Per-app repositories are possible via `/etc/borgmatic.d/` but are deliberately not the starting point — see [`../README.md`](../README.md#per-app-separation--an-option-not-a-rule).

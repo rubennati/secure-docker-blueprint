@@ -138,14 +138,22 @@ settled ground.
 
 Closes v0.7.0. The proof is a restore, not a configuration.
 
-- [ ] Borgmatic configured against the running stack with the database hook
-- [ ] Maintenance mode around the file capture — the one stack where it matters
-- [ ] First backup, verified to contain what it claims
-- [ ] **Restore into a scratch location, content checked** — the milestone
+- [x] Borgmatic configured against the running stack with the database hook
+- [x] Maintenance mode around the file capture — the one stack where it matters.
+      The error hook was proven by two failed runs: the instance came back out of
+      maintenance mode both times
+- [x] First backup, verified to contain what it claims — 27,840 files,
+      912 MB → 440 MB, the dump complete to its closing line
+- [x] **Restore into a scratch location, content checked** — the milestone.
+      131 tables and the file index into a throwaway container; `config.php`
+      byte-identical to the live one apart from the maintenance flag
+- [x] Scoping proven against a second, unrelated deployment on the same host
 - [ ] The upgrade rehearsal: backup → major upgrade → restore to the state before
 - [ ] Retention tied to a stated recovery objective
 - [ ] Run monitoring reporting somewhere it will be noticed
-- [ ] Site: backup and restore from the operator's point of view
+- [ ] An SSH target and append-only — the local repository proved the mechanism,
+      not the off-site half
+- [~] Site: backup and restore from the operator's point of view
 
 ## Phase C — Operating documentation
 
@@ -184,8 +192,9 @@ Grouped by what it takes to resolve. Detail for each is in
 - [x] Nextcloud: root-owned files — dissolved, the unattended install never creates them (finding 12)
 - [x] Nextcloud: SQLite trap — dissolved, there is no wizard to offer it (finding 16)
 - [x] Nextcloud: exposure of the setup form — dissolved on both counts (finding 15)
-- [ ] Borgmatic install instruction yields a version too old for the feature the
-      architecture depends on (finding 5)
+- [x] Borgmatic install instruction yields a version too old for the feature the
+      architecture depends on (finding 5) — README now checks the packaged
+      version first and installs via pipx into `/usr/local/bin`
 - [ ] Database collation is `utf8mb4_general_ci`; upstream documents
       `utf8mb4_bin`
 

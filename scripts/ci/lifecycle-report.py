@@ -43,7 +43,7 @@ Usage:
 import re
 import subprocess
 import sys
-from datetime import date
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 CATEGORIES = ["core", "apps", "business", "monitoring", "backup"]
@@ -297,8 +297,23 @@ def collect() -> tuple[list[dict], list[dict]]:
     return rows, problems
 
 
+def strip_stamp(text: str) -> str:
+    """The report without its generation date.
+
+    The date says when the file was written, not what it says. Comparing it
+    would make the freshness check fail for everyone whose clock is ahead of
+    the runner's — a commit made at 01:00 CEST carries tomorrow's date while
+    CI, in UTC, is still on today's. That is a two-hour window every night in
+    which a correct report is reported stale.
+    """
+    return "\n".join(
+        line for line in text.splitlines() if not line.startswith("Generated ")
+    )
+
+
 def render(rows: list[dict]) -> str:
-    today = date.today().isoformat()
+    # UTC, so the file a contributor generates matches the one CI generates.
+    today = datetime.now(timezone.utc).date().isoformat()
     counts: dict[str, int] = {}
     for r in rows:
         counts[r["public"]] = counts.get(r["public"], 0) + 1
@@ -397,7 +412,7 @@ def main() -> int:
     print("  Lifecycle report")
     print()
 
-    stale = read(target) != generated
+    stale = strip_stamp(read(target)) != strip_stamp(generated)
     if stale:
         problems.append({
             "rule": "stale-report", "stack": "LIFECYCLE.md",

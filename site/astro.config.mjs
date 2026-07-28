@@ -40,7 +40,13 @@ export default defineConfig({
 						{ label: 'Seafile Pro', link: '/applications/seafile-pro/' },
 					],
 				},
-				{ label: 'Operations', link: '/operations/' },
+				{
+					label: 'Operations',
+					items: [
+						{ label: 'Overview', link: '/operations/' },
+						{ label: 'Backup and restore', link: '/operations/backup/' },
+					],
+				},
 				{ label: 'FAQ', link: '/faq/' },
 				{ label: 'Project', link: '/project/' },
 			],

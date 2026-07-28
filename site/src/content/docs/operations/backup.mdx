@@ -1,0 +1,311 @@
+---
+title: Backup and restore
+description: Borgmatic on the host — install, configure, prove it. A backup nobody has restored is a hypothesis.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Borg does the deduplicated, encrypted storage. Borgmatic adds scheduling,
+retention, database dumps and monitoring on top, and it runs **on the host**
+rather than in a container — a containerised agent would need read access to
+every volume, and therefore every secret, in the deployment.
+
+:::note[What has been verified]
+Installation, configuration, a first backup and a full restore were carried out
+on a live host. The repository was a directory on that same machine, so the
+mechanism is proven and the off-site half is not. Treat the SSH target and
+append-only enforcement below as written, not demonstrated.
+:::
+
+## Before you start
+
+Needs: root on the Docker host, somewhere to put the repository, and a client for
+each database engine you run.
+
+That last one surprises people. Borgmatic's `container:` option resolves a
+container's IP address and nothing more — the dump command itself runs on the
+host and connects over TCP. Without the client:
+
+```text
+[Errno 2] No such file or directory: 'mariadb-dump'
+```
+
+```bash
+sudo apt install mariadb-client        # or postgresql-client, mongodb-database-tools
+```
+
+## Quickstart
+
+<Steps>
+
+1. Check what your distribution offers. Version 2.0.8 introduced the `container:`
+   option this setup depends on, and packaged versions are frequently older —
+   Debian 13 ships 1.9.14:
+
+   ```bash
+   apt-cache policy borgmatic
+   ```
+
+2. If it is below 2.0.8, install from PyPI:
+
+   ```bash
+   sudo apt install pipx
+   sudo PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install borgmatic
+   borgmatic --version
+   ```
+
+   :::caution
+   `PIPX_BIN_DIR=/usr/local/bin` matters. Borgmatic runs as root from a timer,
+   and a default pipx install lands in a user's `~/.local/bin` — which root's
+   `PATH` does not include.
+   :::
+
+3. Create the passphrase and the repository. Both the passphrase **and** the
+   exported key are needed to read a backup; losing either loses everything:
+
+   ```bash
+   openssl rand -base64 32 | tr -d '\n' | sudo tee /root/.borg-passphrase > /dev/null
+   sudo chmod 600 /root/.borg-passphrase
+
+   sudo BORG_PASSCOMMAND='cat /root/.borg-passphrase' \
+     borg init --encryption=repokey-blake2 \
+     ssh://backup-user@backup.example.com:22/./borg/$(hostname)
+   ```
+
+4. Export the key and move it off this host:
+
+   ```bash
+   sudo BORG_PASSCOMMAND='cat /root/.borg-passphrase' \
+     borg key export ssh://backup-user@backup.example.com:22/./borg/$(hostname) \
+     /root/borg-key-$(hostname).txt
+   ```
+
+   Store it with the passphrase, in a password manager or on encrypted offline
+   media. Separating the two protects against nothing and doubles the chance of
+   losing one.
+
+5. Write the configuration, then validate before trusting it:
+
+   ```bash
+   sudo mkdir -p /etc/borgmatic
+   sudo cp config.yaml.example /etc/borgmatic/config.yaml
+   sudo chmod 600 /etc/borgmatic/config.yaml
+   sudo borgmatic config validate
+   ```
+
+6. Run it:
+
+   ```bash
+   sudo borgmatic create --verbosity 1 --stats
+   ```
+
+</Steps>
+
+## Databases need dumping, not copying
+
+Copying a running database's files captures a torn, mid-transaction state that
+only reveals itself at restore. Add one entry per database:
+
+```yaml
+mariadb_databases:
+    - name: nextcloud
+      container: nextcloud-db
+      username: nextcloud
+      password: "{credential file /srv/blueprint/apps/nextcloud/.secrets/db_pwd.txt}"
+      tls: false
+```
+
+Two things in there are worth understanding.
+
+**The password is read from the file the stack already uses.** One copy of it
+exists on the host, nothing is exported into borgmatic's environment, and
+rotating the secret needs no second edit.
+
+**`tls: false` is deliberate.** The distribution's client is often newer than the
+server a stack pins, and a newer client demands TLS the older server has no
+certificate for:
+
+```text
+TLS/SSL error: SSL is required, but the server does not support it
+```
+
+This connection runs from the host to a container over a local bridge and never
+reaches a network, so a certificate lifecycle for it would buy nothing. For a
+database that genuinely is remote, configure TLS on the server instead.
+
+## Quiescing, where the files and the database must agree
+
+Some applications keep an index in the database and the data on disk. Capture the
+two at different moments under load and the restore shows files the index does
+not know about, or index entries pointing at nothing.
+
+```yaml
+commands:
+    - before: action
+      when: [create]
+      run:
+          - docker exec -u www-data nextcloud-app php occ maintenance:mode --on
+    - after: action
+      when: [create]
+      run:
+          - docker exec -u www-data nextcloud-app php occ maintenance:mode --off
+    - after: error
+      run:
+          - docker exec -u www-data nextcloud-app php occ maintenance:mode --off
+```
+
+:::caution
+The error hook is not optional. Without it, a run that fails between the other
+two leaves the application offline until somebody notices. It carries no `when:`,
+so it covers every action.
+:::
+
+Name the container exactly. `docker compose` resolves a project from the working
+directory and can pick the wrong one on a host running more than one deployment;
+`docker exec <name>` cannot.
+
+## Verify
+
+Check what the archive contains, not that the command exited zero:
+
+```bash
+sudo borgmatic list
+sudo borgmatic list --archive latest --find '*mariadb_databases*'
+```
+
+Then invert the question — search for something that must **not** be in it. If
+this host carries anything besides the deployment you meant to back up, that is
+the check that catches a configuration reaching too far:
+
+```bash
+sudo borgmatic list --archive latest --find '*the-other-deployment*' | grep -v '^local:'
+```
+
+Empty output is the evidence.
+
+## Prove it with a restore
+
+A backup that has never been restored is a hypothesis. Rehearse quarterly, into a
+throwaway target — never into the live deployment.
+
+<Steps>
+
+1. Bring up a scratch database and create the target. Borgmatic will not create
+   it for you:
+
+   ```bash
+   PW=$(openssl rand -hex 16)
+   docker run -d --name restore-test -e MARIADB_ROOT_PASSWORD="$PW" \
+     --tmpfs /var/lib/mysql:rw mariadb:10.11
+   docker exec restore-test mariadb -uroot -p"$PW" -e 'CREATE DATABASE nextcloud;'
+   ```
+
+2. Restore into it. `--container` names the target explicitly, so the configured
+   one cannot be hit by accident:
+
+   ```bash
+   sudo borgmatic restore --archive latest --database nextcloud \
+     --container restore-test --username root --password "$PW"
+   ```
+
+3. Read the result:
+
+   ```bash
+   docker exec restore-test mariadb -uroot -p"$PW" nextcloud -e "
+     SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='nextcloud';
+     SELECT COUNT(*) FROM oc_users;"
+   ```
+
+   A count you can sanity-check is the evidence. A directory tree of
+   correctly-named empty files is a failure mode that looks like success.
+
+4. Clean up:
+
+   ```bash
+   docker rm -f restore-test
+   ```
+
+</Steps>
+
+### A restored instance may come back in maintenance mode
+
+If the backup quiesced the application, that flag is part of what was captured.
+For Nextcloud it lives in `config.php`, so a restored file differs from the live
+one by exactly one line:
+
+```text
+< 'maintenance' => false,
+> 'maintenance' => true,
+```
+
+That is the backup working. Clear it once you have looked at the result:
+
+```bash
+docker exec -u www-data nextcloud-app php occ maintenance:mode --off
+```
+
+## Going further
+
+### Retention
+
+Derive it from how much data loss you can accept and how late a problem might be
+noticed. A week of dailies does not survive a three-week-old deletion nobody
+spotted.
+
+```yaml
+keep_daily: 7
+keep_weekly: 4
+keep_monthly: 6
+```
+
+### Append-only, and what it actually buys
+
+Restricting the backup key on the target to `borg serve --append-only` is worth
+doing, and it is routinely overstated. From Borg's own documentation, it affects
+the low-level structure only — delete and prune still appear to work. A
+compromised client can still make archives *look* gone.
+
+What survives is the data, until `borg compact` runs. So: run retention from
+somewhere else, prefer storage-level immutability where the target offers it, and
+above all **notice quickly** — every recovery path above expires.
+
+### Notice when it stops running
+
+The failure this catches is the one nobody sees: the timer stopped six weeks ago
+and nothing said so.
+
+```yaml
+healthchecks:
+    ping_url: https://healthchecks.example.com/ping/your-uuid
+    states: [start, finish, fail]
+```
+
+## Troubleshooting
+
+**`[Errno 2] No such file or directory: 'mariadb-dump'`** — the client is missing
+on the host. `container:` does not remove that requirement.
+
+**`SSL is required, but the server does not support it`** — client and server
+versions disagree. See `tls: false` above.
+
+**The application stayed in maintenance mode** — a run failed and there is no
+`after: error` hook. Add one, then clear the flag by hand.
+
+**Archives exist but are older than the schedule** — the timer has been failing
+silently. This is the most common finding in a rehearsal, and the reason the
+monitoring hook is not decoration.
+
+## Repository files
+
+- [`backup/borgmatic/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/backup/borgmatic/README.md) — full setup, keys, ransomware notes
+- [`backup/borgmatic/config.yaml.example`](https://github.com/rubennati/secure-docker-blueprint/blob/main/backup/borgmatic/config.yaml.example)
+- [`backup/borgmatic/RESTORE.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/backup/borgmatic/RESTORE.md) — the rehearsal and the real thing
+- [`backup/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/backup/README.md) — why the agent runs on the host
+
+## Official sources
+
+- [Borgmatic documentation](https://torsion.org/borgmatic/)
+- [Backing up databases](https://torsion.org/borgmatic/docs/how-to/backup-your-databases/)
+- [Command hooks](https://torsion.org/borgmatic/docs/how-to/add-preparation-and-cleanup-steps-to-backups/)
+- [Borg documentation](https://borgbackup.readthedocs.io/)
+- [Borg on append-only mode](https://borgbackup.readthedocs.io/en/stable/usage/notes.html)

@@ -295,6 +295,17 @@ make encrypted content unreadable.
 **Restore order:** database first, then the file tree, then the app — and leave
 maintenance mode on until both halves are in place.
 
+The flag itself is captured. `config.php` holds `'maintenance' => true` in any
+archive taken while the quiescing hook was active, so a restored instance refuses
+to serve until it is cleared:
+
+```bash
+docker compose exec -u www-data app php occ maintenance:mode --off
+```
+
+Working configuration, the run it produced and the restore rehearsal:
+[`backup/borgmatic/`](../../backup/borgmatic/README.md).
+
 ## Server sizing and tuning rationale
 
 This configuration is tuned for a **Hetzner CPX32** (4 vCPU / 8 GB RAM / 160 GB SSD) running a small business collaboration workload: document editing via OnlyOffice, team folders, and normal file sync. It is not intended as a large public file hosting platform.

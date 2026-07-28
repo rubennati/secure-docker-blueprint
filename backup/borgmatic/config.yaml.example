@@ -41,6 +41,12 @@ encryption_passphrase: "{credential file /root/.borg-passphrase}"
 # (./volumes/), configuration (docker-compose.yml, .env) and secrets
 # (.secrets/) all live under the deployment root — which is why the archive
 # MUST stay encrypted.
+#
+# If this host carries more than one deployment, name paths in full instead of
+# reaching for /var/lib/docker/volumes wholesale — otherwise this configuration
+# quietly captures, and its hooks quietly quiesce, a deployment it was never
+# meant to touch. Prove the scoping after the first run:
+#   sudo borgmatic list --archive latest --find '*the-other-one*' | grep -v '^local:'
 source_directories:
     - /srv/docker
 
@@ -97,9 +103,16 @@ keep_yearly: 1
 # Copying a running database's files can capture a torn, mid-transaction
 # state that only reveals itself at restore. Always dump.
 #
-# `container:` (borgmatic >= 2.0.8) resolves the container's address through
-# Docker — no published ports, no database clients on the host, no docker exec
-# wrapper. Dumps stream into the archive through named pipes.
+# `container:` (borgmatic >= 2.0.8) resolves the container's IP through Docker,
+# so no ports need publishing. The dump command itself still runs ON THE HOST
+# and connects over TCP, so the matching client must be installed there —
+# mariadb-client, postgresql-client, mongodb-database-tools. Without it:
+#   [Errno 2] No such file or directory: 'mariadb-dump'
+#
+# TLS: a distribution client is often newer than the pinned server and will
+# demand TLS the server does not offer. For a host-to-container connection over
+# a local bridge, set `tls: false` on the entry. For a genuinely remote
+# database, configure TLS on the server instead.
 #
 # PASSWORDS: point `{credential file ...}` straight at the same .secrets/ file
 # the stack already mounts as a Docker secret. One copy of the password on the
@@ -130,6 +143,9 @@ mariadb_databases:
       container: myapp-db
       username: myapp
       password: "{credential file /srv/docker/apps/myapp/.secrets/db_pwd.txt}"
+      # See the TLS note above. Remove this for a database reached over a
+      # network rather than a local bridge.
+      tls: false
 
 # SQLite is a file, but a live one — dump it rather than copying it.
 sqlite_databases:
@@ -176,15 +192,34 @@ healthchecks:
 # --- Command hooks [optional] ----------------------------------------------
 # v2 syntax. The old before_backup/after_backup keys are deprecated.
 #
-# Only needed for things the database hooks do not cover — for example
-# quiescing an application that has no dump mechanism. If you add a hook that
-# produces data for the backup, make it FAIL LOUDLY: a dump command that errors
-# while the backup continues produces an archive that looks complete and
-# restores nothing. Use `set -e` and a non-zero exit.
+# Needed where the database hooks are not enough on their own — an application
+# whose file tree and database must agree, or one with no dump mechanism at all.
+# If a hook produces data for the backup, make it FAIL LOUDLY: a dump command
+# that errors while the backup continues produces an archive that looks
+# complete and restores nothing. Use `set -e` and a non-zero exit.
+#
+# The example below quiesces Nextcloud, which is the case in this repository
+# where it genuinely matters: the file index lives in the database and the files
+# on disk, and capturing them at different moments under load produces a restore
+# with files the index does not know about.
+#
+# THE ERROR HOOK IS NOT OPTIONAL. Without it, a run that fails between the two
+# leaves the application offline until someone notices. `after: error` carries
+# no `when:`, so it covers every action.
+#
+# Name the container exactly. `docker compose` resolves a project from the
+# working directory and can pick the wrong one on a host with two deployments;
+# `docker exec <name>` cannot.
 #
 # commands:
 #     - before: action
-#       when:
-#           - create
+#       when: [create]
 #       run:
-#           - /usr/local/sbin/quiesce-app.sh
+#           - docker exec -u www-data myapp-app php occ maintenance:mode --on
+#     - after: action
+#       when: [create]
+#       run:
+#           - docker exec -u www-data myapp-app php occ maintenance:mode --off
+#     - after: error
+#       run:
+#           - docker exec -u www-data myapp-app php occ maintenance:mode --off

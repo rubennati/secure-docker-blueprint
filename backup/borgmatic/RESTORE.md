@@ -40,9 +40,20 @@ sudo borgmatic extract --archive latest --path srv/docker/apps/myapp --destinati
 
 Paths inside an archive are **relative** — no leading slash. Confirm the files are there, non-empty, and that a file you recognise has the content you expect. A directory tree of correctly-named empty files is a failure mode, not a success.
 
+Compare a file you can check against the live one rather than eyeballing it:
+
+```bash
+docker exec -u www-data myapp-app sha256sum /var/www/html/config/config.php
+sudo sha256sum /tmp/restore-test/<the same path from the archive>
+```
+
+A difference is not automatically a failure — see [what a quiesced backup looks like](#a-restored-instance-may-come-back-in-maintenance-mode) — but it is always worth explaining.
+
 ### 3 · A database comes back
 
-Restore into a throwaway database, not the live one:
+Restore into a throwaway database, not the live one. `--container` is the safest override: it names the target explicitly, so there is no chance of the configured one being used.
+
+PostgreSQL:
 
 ```bash
 docker run -d --name restore-test -e POSTGRES_PASSWORD=test -p 15432:5432 postgres:17
@@ -52,11 +63,25 @@ sudo borgmatic restore --archive latest --database myapp \
   --hostname 127.0.0.1 --port 15432 --username postgres
 ```
 
+MariaDB — no published port needed, and the database has to exist first:
+
+```bash
+PW=$(openssl rand -hex 16)
+docker run -d --name restore-test -e MARIADB_ROOT_PASSWORD="$PW" \
+  --tmpfs /var/lib/mysql:rw mariadb:10.11
+docker exec restore-test mariadb -uroot -p"$PW" -e 'CREATE DATABASE myapp;'
+
+sudo borgmatic restore --archive latest --database myapp \
+  --container restore-test --username root --password "$PW"
+```
+
 Then verify the data, not just the exit code:
 
 ```bash
-docker exec restore-test psql -U postgres -d myapp -c '\dt'
-docker exec restore-test psql -U postgres -d myapp -c 'SELECT count(*) FROM <a_real_table>;'
+docker exec restore-test mariadb -uroot -p"$PW" myapp -e "
+  SELECT COUNT(*) AS tables_restored FROM information_schema.tables
+    WHERE table_schema='myapp';
+  SELECT COUNT(*) FROM <a_real_table>;"
 ```
 
 A row count you can sanity-check is the evidence. "The command exited 0" is not.
@@ -67,6 +92,27 @@ A row count you can sanity-check is the evidence. "The command exited 0" is not.
 docker rm -f restore-test
 rm -rf /tmp/restore-test
 ```
+
+### A restored instance may come back in maintenance mode
+
+If the backup quiesces the application through a command hook, the flag is part
+of what gets captured. For Nextcloud that flag lives in `config.php`, so the
+restored file differs from the live one by exactly one line:
+
+```text
+< 'maintenance' => false,
+> 'maintenance' => true,
+```
+
+That is the backup working, not a fault — but a restored instance will refuse to
+serve until it is cleared:
+
+```bash
+docker exec -u www-data myapp-app php occ maintenance:mode --off
+```
+
+Arguably the safer default: nothing is served before someone has looked at it.
+Know it in advance, or the first restore looks like a broken one.
 
 ### 5 · Write it down
 
@@ -141,4 +187,4 @@ If `borg compact` has already run since the deletion, the data is gone. That is 
 
 | Date | Archive | Scope | Result | Notes |
 |---|---|---|---|---|
-| — | — | — | — | No rehearsal has been performed yet. |
+| 2026-07-29 | first archive of a Nextcloud stack — 27,840 files, 912 MB → 440 MB deduplicated, 22 s | `config.php` from the archive against the live file; full MariaDB dump into a throwaway container | Pass | 131 tables, the expected account, 114 rows in the file index. The extracted `config.php` differed by one line, `'maintenance' => true` — the quiescing hook, captured as intended. Three things had to be fixed first: the packaged borgmatic was too old, `mariadb-dump` was missing on the host, and the distribution client demanded TLS the pinned server does not offer. |

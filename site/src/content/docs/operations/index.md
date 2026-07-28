@@ -9,14 +9,16 @@ This section will cover the recurring work of keeping a running stack healthy.
 A service is not responsibly operated until backup and restore expectations are understood. Starting with operations before backup is backwards.
 :::
 
-## Topics this section will cover
+## Available now
 
-- **Backups** — what to back up, how often, and where
-- **Restore** — verifying that backups actually work
+- **[Backup and restore](/operations/backup/)** — Borgmatic on the host: install, configure, take a backup, and prove it with a restore.
+
+## Still to come
+
 - **Updates** — updating pinned image tags safely
 - **Logs** — where to look when something goes wrong
 - **Troubleshooting** — common problems and how to approach them
 
 :::note
-This page is a placeholder. Operational reference content is planned for the v0.9.0 Operator Site launch.
+The remaining topics are planned for the v0.9.0 Operator Site launch.
 :::
