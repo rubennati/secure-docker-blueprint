@@ -123,6 +123,15 @@ services:
       # `occ maintenance:install` on first start — no setup wizard.
       NEXTCLOUD_ADMIN_USER_FILE: /run/secrets/ADMIN_USER
       NEXTCLOUD_ADMIN_PASSWORD_FILE: /run/secrets/ADMIN_PWD
+      # Mail — required for password reset and share notifications.
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_SECURE: ${SMTP_SECURE}
+      SMTP_AUTHTYPE: ${SMTP_AUTHTYPE}
+      SMTP_NAME: ${SMTP_NAME}
+      SMTP_PASSWORD_FILE: /run/secrets/SMTP_PWD
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
+      MAIL_DOMAIN: ${MAIL_DOMAIN}
       # Reverse Proxy
       TRUSTED_PROXIES: ${NC_TRUSTED_PROXIES}
       OVERWRITEPROTOCOL: https
@@ -135,9 +144,10 @@ services:
       - DB_PWD
       - ADMIN_USER
       - ADMIN_PWD
-      # Read at PHP runtime as www-data, so the file on the host must be owned
+      # Read at PHP runtime as www-data, so these files on the host must be owned
       # by that uid — see .env.example.
       - REDIS_PWD
+      - SMTP_PWD
 
     # --- Storage ---
     volumes:
@@ -229,13 +239,23 @@ services:
       # `occ maintenance:install` on first start — no setup wizard.
       NEXTCLOUD_ADMIN_USER_FILE: /run/secrets/ADMIN_USER
       NEXTCLOUD_ADMIN_PASSWORD_FILE: /run/secrets/ADMIN_PWD
+      # Mail — required for password reset and share notifications.
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_SECURE: ${SMTP_SECURE}
+      SMTP_AUTHTYPE: ${SMTP_AUTHTYPE}
+      SMTP_NAME: ${SMTP_NAME}
+      SMTP_PASSWORD_FILE: /run/secrets/SMTP_PWD
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
+      MAIL_DOMAIN: ${MAIL_DOMAIN}
     secrets:
       - DB_PWD
       - ADMIN_USER
       - ADMIN_PWD
-      # Read at PHP runtime as www-data, so the file on the host must be owned
+      # Read at PHP runtime as www-data, so these files on the host must be owned
       # by that uid — see .env.example.
       - REDIS_PWD
+      - SMTP_PWD
 
     # --- Storage ---
     volumes:
@@ -289,3 +309,5 @@ secrets:
     file: ./.secrets/admin_user.txt
   ADMIN_PWD:
     file: ./.secrets/admin_pwd.txt
+  SMTP_PWD:
+    file: ./.secrets/smtp_pwd.txt

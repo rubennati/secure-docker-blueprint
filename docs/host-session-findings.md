@@ -333,6 +333,70 @@ the wizard silently offers the wrong answer.
 
 The change was reverted after testing; the repository is untouched.
 
+## 17. Editing a secret in an editor leaves the container on the old value
+
+**Observed.** After entering the SMTP key and running `docker compose restart`,
+the application log kept reporting
+
+```text
+file_get_contents(/run/secrets/SMTP_PWD): Failed to open stream: Permission denied
+```
+
+while `ls -l` on the host showed the file present, correctly owned and readable
+by the web user's group. A direct read inside the container as `www-data`
+succeeded — the same read through the application failed. The contradiction held
+across several attempts and produced two wrong diagnoses before it resolved.
+
+**Cause.** Most editors save by writing a temporary file and renaming it over the
+target. That is a new file. A bind-mounted single file resolves once, at container
+start, so the mount stays attached to the file that was replaced — which is
+unlinked, and whose permissions no longer match anything on the host. `restart`
+does not re-resolve the mount; only a new container does.
+
+**Fix.** Two lines in the stack's `.env.example`: recreate after rotating a key,
+
+```bash
+docker compose up -d --force-recreate app cron
+```
+
+or write in place (`printf '%s' "$KEY" > .secrets/smtp_pwd.txt`), which keeps the
+same file and needs nothing further.
+
+**Wider than this stack.** Every stack that mounts a secret as a single file is
+affected. Belongs in `docs/standards/compose-structure.md`, where the secret
+pattern is defined, rather than only in one stack's `.env.example`.
+
+## 18. The SMTP transport setting is honoured only in one direction
+
+**Observed.** The stack shipped `SMTP_SECURE=tls` with port 587. Nextcloud stored
+`mail_smtpsecure = tls`, and mail was delivered.
+
+**Cause.** The admin manual states for `mail_smtpsecure`: specify `ssl` when using
+SSL/TLS, *any other value will be ignored*. The instance's own settings page
+offers only two choices, `None/STARTTLS` and `SSL/TLS`. So `tls` and an empty
+value are the same thing — opportunistic STARTTLS, which a network attacker on the
+path can strip. Only `ssl` gives TLS from the first byte.
+
+The value is not entirely inert: the image derives the default port from it, so
+`SMTP_SECURE=tls` with no explicit `SMTP_PORT` yields 465 — a port that does not
+speak STARTTLS.
+
+**Measured against a real relay.** Ports open outbound from the host:
+
+```text
+25    blocked
+465   blocked
+587   open
+2525  open
+```
+
+Provider-level blocking of 25 and 465 is common, so 465 cannot simply be made the
+only documented path.
+
+**Fix.** `.env.example` now defaults to `ssl` on 465, states plainly that 587 is a
+fallback and why it is weaker, and carries a one-liner to test which ports the
+host can actually reach. `SMTP_PORT` is always set explicitly.
+
 ## What worked, session 2
 
 - The wildcard certificate covered the new subdomain with **no second certificate

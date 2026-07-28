@@ -66,9 +66,10 @@ hardest patterns. What comes out of it becomes the template for every app after.
 - [x] Skeleton files disabled for new users
 - [x] **Admin overview free of warnings** — 60 checks pass, 0 warnings, 0 errors.
       Twelve were shown after the first clean install
-- [ ] **SMTP is not optional.** Password reset does not work without it. Provide
-      the settings and the secret in `.env.example` so it is configured during
-      setup rather than discovered when a user is locked out
+- [x] **SMTP is not optional.** Password reset does not work without it. Settings
+      and the secret are in `.env.example`, the transport choice is explained, and
+      delivery was confirmed end to end — four test messages sent with `occ
+      user:welcome`, all four received
 - [ ] **PHP and container tuning to documented values.** Upload size, memory
       limit, OPcache, worker count — sourced from the project's own
       recommendations, not guessed. `pm.max_children = 10` on an eight-core host
@@ -92,8 +93,8 @@ hardest patterns. What comes out of it becomes the template for every app after.
       before nginx saw it, so the redirect never fired. Middleware removed
 - [ ] Redirect goes out relative and arrives as `http://` before Traefik lifts it
       to `https://` — one extra hop, correct result. Worth tidying
-- [ ] SMTP — password reset does not work without it. Provider, settings and
-      secret into `.env.example`
+- [x] SMTP — configured and delivering. `ssl` on 465 is the documented default,
+      587 the fallback where the host blocks it (finding 18)
 - [ ] Two-factor available but not enforced — decide whether the blueprint
       enforces it
 - [ ] Server ID unset — only relevant across multiple PHP servers; decide and
@@ -219,6 +220,10 @@ Grouped by what it takes to resolve. Detail for each is in
 - [ ] Stale artefacts from an earlier deployment block a fresh one — no guidance
       exists for deploying alongside one (finding 14)
 - [ ] `docker-compose.local.yml` for every stack — 6 of 57 have one
+- [ ] Secret rotation replaces the file's identity and the mount keeps the old
+      one; every stack mounting a secret as a single file is affected. Belongs in
+      `docs/standards/compose-structure.md`, not only in one `.env.example`
+      (finding 17)
 
 ### Repository-wide, carried from before this session
 
