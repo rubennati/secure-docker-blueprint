@@ -6,6 +6,55 @@ Rules for keeping documentation in sync with the code. Documentation that lags b
 
 **Same-commit documentation.** Code changes and their documentation updates go into the same commit (or the next one at the latest). "We'll fix the docs later" is not allowed.
 
+## Who You Are Writing For
+
+Every file is read by someone who has no context: they did not follow the
+development, they do not know what was tried before, and they are not interested.
+They arrived with a goal — install this, decide that, fix the thing in front of
+them.
+
+Write for that reader. State what is, and what they can choose.
+
+### What does not belong in configuration files and setup docs
+
+- **History.** What used to be configured, what changed, what broke once.
+- **Justification of a decision to whoever reviewed it.** "X rather than Y — one
+  source of truth" explains a change to a colleague. The reader wants to know
+  what to set, not why the last person set it.
+- **Self-description.** That the setup is secure, careful, or follows best
+  practice. If it does, that shows; saying it costs the reader a line and buys
+  nothing.
+- **Anything that only makes sense to someone who was there.**
+
+All of it has a home, and none of those homes is a `.env.example`:
+
+| What | Where |
+|---|---|
+| What changed and when | `CHANGELOG.md` |
+| Why a decision was made | `docs/architecture.md`, the stack's `UPSTREAM.md` |
+| What went wrong and what it taught | `docs/bugfixes/`, `.ai/errors.md` |
+| Deviations from upstream | `UPSTREAM.md` |
+
+### What does belong
+
+- The value to set, and what happens if it is wrong.
+- The choice the reader has, where there is one, and what each option costs.
+- A link to the official source — the project's own documentation, the registry
+  page — so the reader can go deeper without asking anyone.
+
+A comment earns its place by changing what the reader does. If it does not, delete
+it.
+
+### Layered, not exhaustive
+
+Answer the common case first and completely. Send the rest onward: a link to
+upstream documentation, a deeper page, a reference section. A reader who wants
+more will follow a link; a reader who wants to finish will not read three screens
+to find one value.
+
+This matters most on the operator site, where the reader chose to be there and
+will leave if the first screen is not useful.
+
 ## Document Types
 
 Every document has a type. The type determines when it must be updated.

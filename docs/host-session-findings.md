@@ -152,6 +152,199 @@ the combination.
 
 ---
 
+**Session 2 — 2026-07-28.** Nextcloud deployed from a clean clone.
+
+> **Findings 12, 15 and 16 were resolved in session 3 rather than documented.**
+> Switching to the image's unattended installation removes all three at once:
+> there is no wizard, so nothing creates root-owned files, nothing offers SQLite,
+> and no unauthenticated form is reachable. What follows is kept as the record of
+> how they presented — the symptoms are what a reader will search for.
+
+## 12. Nextcloud cannot install — two root-owned files block it
+
+**Observed.** On a first start from a clean clone, the stack came up and every
+request returned `503`. The application log repeated:
+
+```text
+fopen(/var/www/html/config/config.php): Failed to open stream: Permission denied
+fopen(/var/www/html/data/nextcloud.log): Failed to open stream: Permission denied
+```
+
+Two files in an otherwise `www-data`-owned tree belonged to `root`: a zero-byte
+`config/config.php` and `data/nextcloud.log`. PHP-FPM workers run as `www-data`
+and could not write either. Writing to the same directories **as `www-data`
+succeeded** when tested by hand, which is what makes this confusing to diagnose —
+the directories are fine, two files are not.
+
+The `cron` service overrides the image's entrypoint (`entrypoint: /cron.sh`),
+which skips the initialisation the official image performs, and its container runs
+as root while mounting the same volume. Its own log shows `Cannot write into
+"config" directory!` at start. Whether it created the files or merely tripped over
+them was not isolated — the ownership state is reproducible, the attribution is
+not.
+
+**Fix that worked.**
+
+```bash
+docker compose exec -u root app chown -R www-data:www-data \
+  /var/www/html/config /var/www/html/data
+docker compose restart app
+```
+
+Setup page returned `200` immediately afterwards, with no further permission
+errors.
+
+**Why it matters.** The README already carries this `chown` — under **"Post-install
+(recommended) — After the browser-based setup"**. But the browser-based setup
+cannot happen: the wizard is exactly what the `503` prevents. The step is
+documented in the wrong place in the sequence, described as optional tidying, and
+it is neither.
+
+Someone hit this before and papered over it. A first-time deployer following the
+README in order gets a stack that starts, reports containers as running, and
+serves nothing.
+
+**Fix.** Move it ahead of the browser setup and state it as required, or better,
+remove the need — the `cron` service overriding the image entrypoint is the part
+worth revisiting.
+
+## 13. `acc-public` paired with `sec-3-spa` contradicts the security chain rules
+
+**Observed.** `apps/nextcloud/.env.example` ships `APP_TRAEFIK_ACCESS=acc-public`
+together with `APP_TRAEFIK_SECURITY=sec-3-spa`.
+
+**Why it matters.** The security-chain template states plainly: *"Use `sec-*-spa`
+only for VPN-gated apps (network-level access control)"* — the SPA variants swap
+the standard rate limit for a much looser one, on the reasoning that network-level
+access control is already restricting who can reach the app. Pairing it with
+`acc-public` removes that premise while keeping the loose limit.
+
+**The tension is real, not a typo.** Nextcloud is a code-split SPA and does fire
+many parallel requests on first load; `errors.md` records that exact failure mode.
+So the app plausibly needs the looser limit, and the rule says it should not have
+it while public. One of the two has to give.
+
+**Fix.** Decide it deliberately rather than by default: either the rule gains a
+documented exception for apps whose request pattern requires it, or public SPAs
+get their own chain with a limit tuned for bursts rather than borrowed from the
+VPN-gated case.
+
+## 14. Stale artefacts from a previous deployment block a fresh one
+
+**Observed.** On a host that had run an older revision of the blueprint, a fresh
+deployment failed twice before starting:
+
+- `network nextcloud-internal was found but has incorrect label
+  com.docker.compose.network set to "internal" (expected: "app-internal")` — the
+  compose network *key* was renamed at some point while the network *name* stayed
+  the same.
+- `Conflict. The container name "/nextcloud-db" is already in use` — the older
+  deployment's stopped containers still hold the names.
+
+**Why it matters.** Neither message says what to do, and the obvious reaction —
+removing the conflicting object — destroys part of a deployment that may still be
+wanted. The documented answer exists (`COMPOSE_PROJECT_NAME` "must be unique
+across the whole stack") but nothing connects it to these two errors.
+
+**Fix.** A short section on deploying alongside an existing installation: choose a
+distinct `COMPOSE_PROJECT_NAME`, and note that a renamed network key requires the
+old network to be removed and recreated rather than adopted.
+
+## 15. An unauthenticated setup wizard is served publicly — the worst of the set
+
+**Observed.** `apps/nextcloud/.env.example` ships `APP_TRAEFIK_ACCESS=acc-public`.
+On first start the instance serves Nextcloud's installation wizard to anyone who
+reaches the hostname: a form that creates the administrator account, with no
+authentication in front of it.
+
+The window lasts from `docker compose up -d` until a human finishes the wizard —
+minutes at best, and open indefinitely if the deployment is left half-finished
+over a weekend. On the host used here, unrelated scanners were probing within
+minutes of the first certificate being issued. A certificate is public: it appears
+in Certificate Transparency logs the moment it is issued, so the hostname is
+discoverable without anyone being told.
+
+**Why it is worse than it looks.** The repository already knows this failure mode —
+`TROUBLESHOOTING.md` 7.1 is titled *"First-user-wins — open the UI immediately
+after start"*. That is mitigation by racing the internet, and it is not a control.
+The README compounds it by advising `acc-public` be **kept** for OnlyOffice
+callbacks, so the one instruction a careful reader might follow points the wrong
+way during exactly the vulnerable window.
+
+**The rule this should become.** Not Nextcloud-specific — it applies to every app
+with a first-run setup step, which is most of them:
+
+> Deploy restricted. Open up deliberately, once the app is configured, verified
+> and has an administrator account.
+
+Concretely: `acc-tailscale` (or `acc-local`, or `acc-private`) is the correct
+value in every `.env.example` that has an unauthenticated first-run state.
+Widening to `acc-public` is a later, separate, deliberate edit — and where an
+integration genuinely needs public reachability, that requirement starts *after*
+setup, not during it.
+
+This costs nothing: the operator already has VPN access, since that is how the
+blueprint expects the machine to be administered.
+
+**Fix.** Change the shipped default, and state the rule once in
+`docs/standards/traefik-security.md` rather than per app. `TROUBLESHOOTING.md` 7.1
+should then describe a situation that can no longer arise by default.
+
+## 16. The database pre-selection does not work — the wizard offers SQLite
+
+**Observed.** With the stack running and MariaDB healthy, the wizard presented
+SQLite as the selected database, with a performance warning, and asked for
+credentials manually.
+
+**Cause, traced precisely.** The image's `autoconfig.php` enables pre-filling only
+when one of three complete sets is present:
+
+| Variant | Requires |
+|---|---|
+| SQLite | `SQLITE_DATABASE` |
+| MySQL via files | `MYSQL_DATABASE_FILE` **and** `MYSQL_USER_FILE` **and** `MYSQL_PASSWORD_FILE` **and** `MYSQL_HOST` |
+| MySQL plain | `MYSQL_DATABASE` **and** `MYSQL_USER` **and** `MYSQL_PASSWORD` **and** `MYSQL_HOST` |
+
+The stack ships `MYSQL_DATABASE` and `MYSQL_USER` as plain values but the password
+as `MYSQL_PASSWORD_FILE` — a mixture satisfying neither the file variant nor the
+plain one. Auto-configuration stays off and the wizard falls back to SQLite.
+
+If someone accepts that default, they get SQLite while a configured, healthy
+MariaDB container sits unused — and Nextcloud's own warning says not to use SQLite
+with sync clients.
+
+**And the obvious fix does not work.** Supplying all three as `_FILE` was tried on
+the host: auto-configuration then activates (`dbtype=mysql`), but PHP cannot read
+the secrets —
+
+```text
+file_get_contents(/run/secrets/DB_NAME): Failed to open stream: Permission denied
+```
+
+Docker mounts secrets root-only; the web process runs as `www-data`. So the
+`_FILE` route needs `uid`/`mode` on each secret reference, which pins a
+container-internal user ID into the compose file.
+
+**Fix.** Needs a decision rather than a patch. Either accept plain `MYSQL_PASSWORD`
+for this stack as a documented deviation, or set explicit `uid`/`mode` on the
+secrets, or document that the database must be selected by hand during setup and
+where to read the password from. What must not stay is the current state, where
+the wizard silently offers the wrong answer.
+
+The change was reverted after testing; the repository is untouched.
+
+## What worked, session 2
+
+- The wildcard certificate covered the new subdomain with **no second certificate
+  issued** — Path A behaved exactly as documented for app stacks.
+- `TRUSTED_PROXIES` worked on the first attempt: the application log recorded the
+  real public client address, not the proxy's, confirming the chain from Traefik
+  through to the application.
+- Container health, dependency ordering and secret injection all behaved as
+  configured; `db` and `redis` were healthy before `app` started.
+
+---
+
 ## From existing operating documentation
 
 Four items carried over from operating notes for two unrelated servers, both run

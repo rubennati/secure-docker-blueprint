@@ -64,10 +64,13 @@ services:
 
     # --- Configuration ---
     command: >
-      redis-server
-      --requirepass ${REDIS_PASSWORD}
+      sh -c 'exec redis-server
+      --requirepass "$$(cat /run/secrets/REDIS_PWD)"
       --maxmemory 512mb
-      --maxmemory-policy noeviction
+      --maxmemory-policy noeviction'
+
+    secrets:
+      - REDIS_PWD
 
     # --- Storage ---
     volumes:
@@ -79,7 +82,7 @@ services:
 
     # --- Health & Observability ---
     healthcheck:
-      test: ["CMD-SHELL", "redis-cli -a ${REDIS_PASSWORD} ping | grep PONG || exit 1"]
+      test: ["CMD-SHELL", "redis-cli -a \"$$(cat /run/secrets/REDIS_PWD)\" ping | grep -q PONG"]
       interval: 10s
       timeout: 3s
       retries: 10
@@ -115,7 +118,11 @@ services:
       MYSQL_PASSWORD_FILE: /run/secrets/DB_PWD
       # Redis
       REDIS_HOST: redis
-      REDIS_HOST_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_HOST_PASSWORD_FILE: /run/secrets/REDIS_PWD
+      # Set together with the database values, these make the entrypoint run
+      # `occ maintenance:install` on first start — no setup wizard.
+      NEXTCLOUD_ADMIN_USER_FILE: /run/secrets/ADMIN_USER
+      NEXTCLOUD_ADMIN_PASSWORD_FILE: /run/secrets/ADMIN_PWD
       # Reverse Proxy
       TRUSTED_PROXIES: ${NC_TRUSTED_PROXIES}
       OVERWRITEPROTOCOL: https
@@ -126,6 +133,11 @@ services:
       PHP_UPLOAD_LIMIT: ${PHP_UPLOAD_LIMIT}
     secrets:
       - DB_PWD
+      - ADMIN_USER
+      - ADMIN_PWD
+      # Read at PHP runtime as www-data, so the file on the host must be owned
+      # by that uid — see .env.example.
+      - REDIS_PWD
 
     # --- Storage ---
     volumes:
@@ -135,6 +147,7 @@ services:
     # --- Networking ---
     networks:
       - app-internal
+      - app-egress
 
     # --- Health & Observability ---
     healthcheck:
@@ -213,9 +226,18 @@ services:
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD_FILE: /run/secrets/DB_PWD
       REDIS_HOST: redis
-      REDIS_HOST_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_HOST_PASSWORD_FILE: /run/secrets/REDIS_PWD
+      # Set together with the database values, these make the entrypoint run
+      # `occ maintenance:install` on first start — no setup wizard.
+      NEXTCLOUD_ADMIN_USER_FILE: /run/secrets/ADMIN_USER
+      NEXTCLOUD_ADMIN_PASSWORD_FILE: /run/secrets/ADMIN_PWD
     secrets:
       - DB_PWD
+      - ADMIN_USER
+      - ADMIN_PWD
+      # Read at PHP runtime as www-data, so the file on the host must be owned
+      # by that uid — see .env.example.
+      - REDIS_PWD
 
     # --- Storage ---
     volumes:
@@ -225,6 +247,7 @@ services:
     # --- Networking ---
     networks:
       - app-internal
+      - app-egress
 
 # --------------------------------------------------------
 # VOLUMES
@@ -248,6 +271,12 @@ networks:
     name: ${COMPOSE_PROJECT_NAME}-internal
     internal: true
 
+  # Outbound for the application containers only. The database and cache stay on
+  # app-internal alone and never reach the internet. See README, "Network
+  # exception".
+  app-egress:
+    name: ${COMPOSE_PROJECT_NAME}-egress
+
 # --------------------------------------------------------
 # SECRETS
 # --------------------------------------------------------
@@ -256,3 +285,9 @@ secrets:
     file: ./.secrets/db_pwd.txt
   DB_ROOT_PWD:
     file: ./.secrets/db_root_pwd.txt
+  REDIS_PWD:
+    file: ./.secrets/redis_pwd.txt
+  ADMIN_USER:
+    file: ./.secrets/admin_user.txt
+  ADMIN_PWD:
+    file: ./.secrets/admin_pwd.txt

@@ -78,6 +78,34 @@ Infra images: Redis, MariaDB, PostgreSQL, Nginx (reverse-proxy role), ClamAV, Go
 
 Never `:latest`. Never major-only (e.g. `8`, `v2`, `32`).
 
+### Which version to pin — the rule
+
+**Pin the newest version the project itself currently recommends for production.**
+
+Not the newest tag that exists, and not an older one because it feels safer. The
+question is always: *what does the upstream project tell an operator to install
+today?* Follow that, and record where it says so.
+
+Where a project designates a long-term release — Debian's LTS, a project's
+"stable" branch — that designation is the recommendation and wins. Where a project
+has no such concept, the newest maintained release is the recommendation. The
+label differs per project; the principle does not.
+
+**Why not deliberately stay one major behind.** Support windows are finite and
+often shorter than they look. A version chosen for being "settled" can be months
+from end of life, which converts a planned upgrade into a forced one — and for
+projects that only upgrade one major at a time, starting behind means several
+forced upgrades in a row.
+
+**Check the support window, not just the version number.** Before pinning, find
+the upstream end-of-life date for that major and record it in the stack's
+`UPSTREAM.md`. A pin with two months of support left is a pin that has already
+failed; nothing else in this repository will notice it on your behalf.
+
+A deliberate exception is allowed — an upstream bug, a required integration that
+lags, a migration that needs planning. It goes in `UPSTREAM.md` with the reason
+and the date it should be revisited, like every other documented deviation.
+
 **Containers** — derived from COMPOSE_PROJECT_NAME:
 
 ```env

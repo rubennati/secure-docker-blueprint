@@ -177,7 +177,7 @@ Planned: **Rallly** (group scheduling polls — Doodle alternative, complementar
 
 | App | Stack | Status | Description |
 |---|---|---|---|
-| [Nextcloud](apps/nextcloud/) | App + MariaDB + Redis + Nginx + Cron | ✅ | File sync, collaboration, optional OnlyOffice |
+| [Nextcloud](apps/nextcloud/) | App + MariaDB + Redis + Nginx + Cron | 🚧 | File sync, collaboration, optional OnlyOffice |
 | [Paperless-ngx](apps/paperless-ngx/) | App + Postgres + Redis + Gotenberg + Tika | ✅ | Document management with OCR, optional Authentik SSO |
 | [Seafile](apps/seafile/) | App + MariaDB + Memcached + optional components | ✅ | File sync & share (community edition) |
 | [Seafile Pro](apps/seafile-pro/) | App + MariaDB + Memcached + SeaDoc + ClamAV + SeaSearch | ✅ | File sync & share (pro edition) |

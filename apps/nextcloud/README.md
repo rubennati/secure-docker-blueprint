@@ -155,6 +155,58 @@ ${COMPOSE_PROJECT_NAME}-dav@docker,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECU
 
 The `-dav` middleware rewrites `/.well-known/caldav` and `/.well-known/carddav` to `/remote.php/dav/` so mobile clients auto-discover correctly.
 
+## Network exception — why the application containers reach the internet
+
+Every stack in this blueprint isolates its internal network. Nextcloud is a
+documented exception: `app` and `cron` additionally join an egress network, while
+`db` and `redis` stay isolated and cannot reach anything outside.
+
+### What breaks without it
+
+| Function | Needs outbound |
+|---|---|
+| Push notifications to the mobile apps | yes — routed via the project's push service |
+| App Store, installing or updating apps from the UI | yes |
+| Update notifications | yes |
+| External storage mounts (S3, SMB, other clouds) | yes |
+| Outgoing mail — password reset, share notifications | yes |
+| Federation with other instances | yes |
+| The instance's own setup checks | yes |
+
+Without the exception, all of these fail, and every outbound attempt runs into a
+timeout — the interface feels slow for a reason that has nothing to do with its
+performance.
+
+### What the exception costs, precisely
+
+`app` and `cron` can open outbound connections. They are not reachable from
+outside: only `nginx` is published through the proxy.
+
+The data stays where it was. `db` and `redis` hold everything worth stealing and
+remain on the isolated network with no route out. Verify at any time:
+
+```bash
+docker compose exec db sh -c 'timeout 4 sh -c "echo > /dev/tcp/1.1.1.1/443"' \
+  && echo "unexpected: reachable" || echo "isolated"
+```
+
+### If you want it isolated anyway
+
+Remove `app-egress` from the `app` and `cron` services. The stack runs. Accept
+that mobile push, the app store, outgoing mail and external storage stop working,
+that apps must be managed with `occ`, and that the interface will pause on
+operations that attempt to reach the network.
+
+That is a legitimate choice for an instance with no mobile clients and no outgoing
+mail. It is not the default because most deployments need at least password reset.
+
+### Setup checks while access is restricted
+
+With `APP_TRAEFIK_ACCESS=acc-tailscale`, several checks report failures —
+`WebdavEndpoint`, `SecurityHeaders`, `WellKnownUrls`, `OcxProviders`. The instance
+calls itself through the proxy and the access policy denies it, which is the
+policy working. They resolve when access is opened.
+
 ## Backup
 
 | | |
