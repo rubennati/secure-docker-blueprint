@@ -15,7 +15,13 @@ export default defineConfig({
 				Head: './src/components/Head.astro',
 			},
 			sidebar: [
-				{ label: 'Getting Started', link: '/getting-started/' },
+				{
+					label: 'Getting Started',
+					items: [
+						{ label: 'The basic path', link: '/getting-started/' },
+						{ label: 'Setting up a server', link: '/getting-started/server-setup/' },
+					],
+				},
 				{
 					label: 'Core Infrastructure',
 					items: [

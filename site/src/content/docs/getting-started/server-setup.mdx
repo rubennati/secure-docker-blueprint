@@ -1,0 +1,230 @@
+---
+title: Setting up a server
+description: The concrete path from a fresh Linux host to a working, TLS-terminated foundation — with the decisions that are easy to get wrong.
+---
+
+The [basic path](/getting-started/) describes what happens in what order. This page
+is the version with commands, written from a fresh host to a working foundation.
+
+Every step here was performed on a real server before being written down. Where a
+step exists only to catch a mistake, the mistake is named — those are the ones that
+cost an evening.
+
+## Before you start
+
+- A Linux host you may reconfigure. Debian 13 is what this was verified on.
+- Docker with the Compose plugin, and your user in the `docker` group.
+- Ports 80 and 443 free.
+- A domain you control, with access to its DNS.
+
+```bash
+docker --version && docker compose version
+ss -tlnp | grep -E ':80 |:443 ' || echo "ports free"
+```
+
+## 1. Decide how people will reach the server
+
+This decision comes first because it changes the setup, and changing it later means
+restarting Docker.
+
+**If anyone will reach your services through a VPN** — Tailscale, or anything where
+the client connects directly rather than through a proxy — **you need IPv6 on the
+Docker network.** Not as an improvement; the VPN-only access policies do not work
+without it.
+
+The reason: a VPN client connects straight to your server, so there is no proxy in
+front to write the original address into a header. The only record of who is calling
+is the source address of the connection itself. VPN clients prefer IPv6. If the
+Docker network cannot carry an IPv6 source address, that address is gone before
+anything can check it — and an access policy that allows "only my VPN" will reject
+your VPN.
+
+The symptom is a `403 Forbidden` that looks like a permissions problem and is a
+networking one.
+
+**If everything will be public-only**, IPv4 is enough and you can skip step 2.
+
+## 2. Enable IPv6 in Docker
+
+Do this while nothing is running. It needs a daemon restart, which stops every
+container on the host.
+
+```bash
+sudo tee /etc/docker/daemon.json >/dev/null <<'EOF'
+{
+  "log-driver": "json-file",
+  "log-opts": { "max-size": "10m", "max-file": "3" },
+  "ipv6": true,
+  "ip6tables": true,
+  "userland-proxy": false
+}
+EOF
+
+sudo python3 -m json.tool /etc/docker/daemon.json   # valid JSON before restarting
+sudo systemctl restart docker
+```
+
+The `log-opts` are not decoration — without them, container logs grow without limit.
+
+## 3. Point DNS at the server
+
+A wildcard record covers every service you will add later, so you never touch DNS
+again:
+
+```text
+*.apps.example.com    A       203.0.113.10
+*.apps.example.com    AAAA    2001:db8::1
+```
+
+Add the `AAAA` record only if the server actually has a working public IPv6:
+
+```bash
+curl -6 https://api64.ipify.org
+```
+
+If you use split DNS on a VPN, add the same wildcard there pointing at the server's
+VPN addresses — **both** families. An IPv4-only entry there quietly sends all VPN
+traffic over IPv4 and leaves the IPv6 path untested.
+
+## 4. Get the blueprint
+
+```bash
+sudo mkdir -p /srv/blueprint && sudo chown "$USER" /srv/blueprint
+cd /srv/blueprint
+git clone --branch main https://github.com/rubennati/secure-docker-blueprint.git .
+```
+
+Use its own directory. Cloning over an older copy on the same machine gives you a
+mix of old and new configuration — and if the old copy has containers running, they
+share a project name and get replaced rather than left alone.
+
+## 5. Configure Traefik
+
+Traefik terminates TLS and routes every service that follows. It is set up once.
+
+```bash
+cd core/traefik
+cp .env.example .env
+```
+
+Fill in five values:
+
+| Setting | What it is |
+|---|---|
+| `ACME_EMAIL` | Your address — Let's Encrypt sends expiry warnings there |
+| `TRAEFIK_DASHBOARD_HOST` | `traefik.apps.example.com` |
+| `ACME_WILDCARD_DOMAIN` | `apps.example.com` — one certificate for every subdomain |
+| `CF_DNS_API_TOKEN` | DNS provider token, for the certificate challenge |
+| `TZ` | Your timezone, so log timestamps are readable |
+
+The DNS token needs exactly two permissions: read the zone, edit its records.
+A global account key would work and gives away far more than the job requires.
+
+If you enabled IPv6 in step 2, also set the two network ranges:
+
+```bash
+RANDOM_HEX=$(openssl rand -hex 5)
+printf 'PUBLIC_NETWORK_SUBNET_V6=fd%s:%s:%s::/64\n' \
+  "${RANDOM_HEX:0:2}" "${RANDOM_HEX:2:4}" "${RANDOM_HEX:6:4}"
+```
+
+Generate your own rather than copying an example. These are private ranges — reusing
+someone else's is the IPv6 equivalent of everyone picking the same `192.168.1.0/24`,
+and it bites the day two networks have to meet.
+
+## 6. Render and start
+
+```bash
+bash ops/scripts/validate.sh    # before: are all values present
+bash ops/scripts/render.sh      # build the config from templates
+bash ops/scripts/validate.sh    # after: did anything stay unresolved
+```
+
+The second run takes ten seconds and catches a placeholder that never got replaced —
+which otherwise surfaces much later as a service that will not route.
+
+```bash
+# with IPv6:
+docker compose -f docker-compose.yml -f network-dual-stack.yml up -d
+# without:
+docker compose up -d
+```
+
+If you enabled IPv6, that overlay belongs on **every** `docker compose` command for
+this stack from now on. Leave it off once and the network is rebuilt without IPv6.
+
+## 7. Verify — properly
+
+Four checks, each answering something the others do not.
+
+```bash
+docker compose ps                       # healthy, not just started
+docker network inspect proxy-public --format '{{range .IPAM.Config}}{{.Subnet}} {{end}}'
+ss -tlnp | grep -E ':80 |:443 '         # listening on 0.0.0.0 AND [::]
+```
+
+Two subnets from the second command means IPv6 is active. One means the overlay was
+missed.
+
+Then the check that actually matters — **does the server see who is calling?**
+Everything else depends on it: access policies, rate limits, and any intrusion
+detection you add later. Bring up the diagnostic endpoint:
+
+```bash
+cd ../whoami
+cp .env.example .env
+# set APP_TRAEFIK_HOST, and APP_TRAEFIK_ACCESS=acc-public for the test
+docker compose up -d
+```
+
+Open it in a browser and read `X-Real-Ip`. It must show **your** address — the one
+`curl https://api64.ipify.org` reports. Repeat once per path you care about: public
+IPv4, public IPv6, and through the VPN.
+
+If it shows something like `172.30.0.1`, the real address is being lost. Recheck
+step 2 and the overlay in step 6.
+
+```bash
+# then close it again — it reveals internal addresses and container names
+sed -i 's/^APP_TRAEFIK_ACCESS=.*/APP_TRAEFIK_ACCESS=acc-tailscale/' .env
+docker compose up -d
+```
+
+Leave it public only for the measurement. Servers get scanned within minutes of a
+certificate being issued — that is not a hypothetical, it is what the logs showed on
+the host this page was written from.
+
+## When the dashboard says Forbidden
+
+Before suspecting the access policy, rule out your browser.
+
+```bash
+dig +short traefik.apps.example.com
+```
+
+If that returns the right address but the page stays forbidden, open it in a private
+window. Browsers cache DNS answers independently of the system, and a **corrected**
+record is the worst case: the browser keeps sending you to the old host, which
+answers `403` — identical to being rejected by policy. In Chrome, clear it at
+`chrome://net-internals/#dns`.
+
+## Rotate the logs before you forget
+
+Traefik writes access logs to disk, and Docker's own log rotation does not cover
+them. Left alone they grow until the disk is full — fastest when someone floods the
+server with requests.
+
+```bash
+sudo cp config/logrotate/traefik /etc/logrotate.d/traefik
+sudo sed -i 's|/path/to/secure-docker-blueprint|/srv/blueprint|' /etc/logrotate.d/traefik
+sudo logrotate -d /etc/logrotate.d/traefik    # dry run — check the path matches
+```
+
+## Next
+
+The foundation is in place. Every service you add from here connects through it, and
+you will not touch this again.
+
+Add services one at a time and verify each before the next — see the
+[application guides](/applications/). And before putting real data anywhere, read
+[Operations](/operations/): a service without a tested restore is not backed up.
