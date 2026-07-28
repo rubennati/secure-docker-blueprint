@@ -37,7 +37,12 @@ These are binding from now on and are written where they belong, not only here.
    slow is not finished. Tuning values come from the project's own
    recommendations, and the minimum requirements are stated so a machine can be
    sized before deployment.
-7. **Link the official sources.** Every operator-facing page carries links to the
+7. **Every app gets its proxy configuration reviewed, not inherited.** Access
+   policy, security chain and TLS profile are checked against what the app
+   actually needs and verified against its own diagnostics. The proxy is there to
+   make an app safe *and* fast; where it makes one slow or broken, the proxy is
+   what changes.
+8. **Link the official sources.** Every operator-facing page carries links to the
    project's own documentation and to the registry page for the pinned image, so
    a reader can go deeper without asking.
 
@@ -49,6 +54,8 @@ The reference case: it is needed for a real deployment, and it exercises the
 hardest patterns. What comes out of it becomes the template for every app after.
 
 - [x] Version decided: newest recommended for production, EOL recorded
+- [x] Container self-resolution — the instance reaches itself through the proxy
+- [x] Outbound access decided and documented — narrow egress for `app` and `cron`
 - [x] Rebuilt on that version from an empty volume
 - [x] Unattended install via `NEXTCLOUD_ADMIN_USER_FILE` / `_PASSWORD_FILE` — no wizard
 - [x] Redis password moved from the environment into a secret — one source
@@ -57,19 +64,8 @@ hardest patterns. What comes out of it becomes the template for every app after.
 - [x] Minimal app set — telemetry and UI-noise apps disabled `[?]` federation still open
 - [x] Preview generation bounded to 2048px / 25 MB
 - [x] Skeleton files disabled for new users
-- [ ] **Admin overview free of warnings.** Twelve are shown after a clean
-      install. Most report "could not check" because the app container cannot
-      reach the instance under its own domain — see the container-networking
-      item below. Each remaining one is either fixed or recorded as a deliberate
-      choice; a wall of warnings trains an operator to ignore all of them
-- [ ] **Container self-resolution.** The setup checks require the server to
-      reach itself via `trusted_domains` or `overwrite.cli.url`. Establish that
-      without granting outbound internet — a network alias or host entry pointing
-      the public hostname at the web container
-- [ ] **Outbound access — decide and document.** `internal: true` blocks the app
-      store, update notifications, external storage and outgoing mail. Weigh what
-      the isolation buys against what it costs, provide an opt-in overlay for
-      operators who want the app store, and state the consequences either way
+- [x] **Admin overview free of warnings** — 60 checks pass, 0 warnings, 0 errors.
+      Twelve were shown after the first clean install
 - [ ] **SMTP is not optional.** Password reset does not work without it. Provide
       the settings and the secret in `.env.example` so it is configured during
       setup rather than discovered when a user is locked out
@@ -88,6 +84,54 @@ hardest patterns. What comes out of it becomes the template for every app after.
       matter, what to check after, with links to the official documentation and
       the registry page for the pinned image
 - [ ] Status to ✅ once every point above is verified, not before
+
+### Still open on this instance
+
+- [x] `.well-known/caldav` — resolved. The stack's own nginx configuration
+      already issued the documented 301; a Traefik middleware rewrote the path
+      before nginx saw it, so the redirect never fired. Middleware removed
+- [ ] Redirect goes out relative and arrives as `http://` before Traefik lifts it
+      to `https://` — one extra hop, correct result. Worth tidying
+- [ ] SMTP — password reset does not work without it. Provider, settings and
+      secret into `.env.example`
+- [ ] Two-factor available but not enforced — decide whether the blueprint
+      enforces it
+- [ ] Server ID unset — only relevant across multiple PHP servers; decide and
+      record
+- [ ] AppAPI deploy daemon unset — needed only for external apps; likely out of
+      scope, state it
+- [ ] Admin surface: can `/settings/admin` be restricted separately, to VPN or an
+      allowlist, while the rest stays reachable? A path-scoped router with its own
+      access policy is the mechanism the repository already uses. Evaluate, and
+      compare against putting Authentik in front
+
+## Phase A2 — Traefik as a first-class part of every app
+
+Traefik was designed before the apps it now carries. The naming and the levels were
+reasoned about in the abstract; several turned out not to fit once a real app was
+verified against them. Treat it as a component that keeps being adjusted, not as
+settled ground.
+
+- [x] `sec-3e-spa` added — the combination Nextcloud needs did not exist
+- [x] Corrected the claim that SPA rate limits belong behind a VPN only. `rl-soft`
+      and `rl-spa` share the same sustained rate; only the burst differs, so the
+      restriction bought 429s in normal use and no protection
+- [ ] **Rename for comprehension.** `sec-1e`, `rl-spa`, `hdr-strict-embed` mean
+      nothing to someone arriving. Names should say what they do — a reader should
+      not have to open the template to find out what they picked
+- [ ] **Make the axes explicit.** Header strictness, frame policy and rate limit
+      are independent; the current names bundle them, which is why 10 of 16
+      combinations exist and the missing one was the one needed
+- [ ] **TLS profiles per app.** `tls-basic`, `tls-aplus`, `tls-modern` are assigned
+      by habit. Check what each app's clients actually support — a password
+      manager and a mobile sync client have different floors
+- [ ] **Review every app's proxy settings** against its own diagnostics, the way
+      Nextcloud was. Record the result per app
+- [ ] **The render workflow.** Configuration is generated by a script, and adding
+      a zone or a chain means editing a template and re-rendering, which silently
+      discards hand edits. Automate it or make the failure loud
+- [ ] Neither Traefik nor CrowdSec may be the reason an app is slow. Where they
+      are, they change
 
 ## Phase B — Backup chain on Nextcloud
 

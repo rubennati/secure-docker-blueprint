@@ -65,10 +65,13 @@ http:
         average: 100
         burst: 50
 
-    # SPA burst — for VPN-only apps that load 100+ JS chunks simultaneously
-    # on first visit (NocoDB, n8n, Authentik login, …). The token bucket starts
-    # with 200 tokens so all initial chunk requests pass without 429.
-    # Only appropriate behind a network-level access control (e.g. acc-tailscale).
+    # SPA burst — for apps that load 100+ JS chunks simultaneously on first
+    # visit (Nextcloud, NocoDB, n8n, Authentik login, …).
+    #
+    # Same sustained rate as rl-soft; only the bucket is larger, so the initial
+    # chunk requests pass without 429. Sustained abuse is bounded by `average`,
+    # which is identical — this is not a weaker limit, and it is appropriate for
+    # public apps whose first load needs it.
     rl-spa:
       rateLimit:
         average: 100
