@@ -40,6 +40,15 @@ Listed with context in [`state.md`](state.md). Nothing proceeds on these until d
 - [ ] Decide the three questions in [`../docs/renovate-proposal.md`](../docs/renovate-proposal.md):
       marker comments vs. normalising 28 outliers · Renovate App vs. self-hosted
       Action · whether `site/` npm rides along. Nothing runs until then
+- [ ] **`docker-compose.local.yml` for every stack — 6 of 57 have one.** The
+      pattern is canonical in `apps/_reference/`: no Traefik, no certificates, no
+      Docker Secrets, a published port and plain environment variables. It exists
+      so someone can try an app — locally, on a laptop, on a lab box — without
+      first standing up a reverse proxy, DNS and a certificate chain. Today the
+      blueprint asks for the whole pipeline before anything runs, which is a
+      steep first step for a user who only wants to see whether the app suits
+      them. Also the natural entry point for the operator site: *try it locally*
+      before *deploy it properly*
 - [ ] Decide the `TROUBLESHOOTING.md` / `docs/standards/troubleshooting.md` overlap
 - [ ] Add `Checker coverage`, `Docs QA` and `Workflow supply chain` to the required
       checks in branch protection — all three run, but nothing blocks on them yet

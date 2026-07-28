@@ -195,41 +195,84 @@ sudo chown -R 999:999 volumes/data
 
 **Fix:** Hard refresh (`Ctrl+Shift+R` / `Cmd+Shift+R`) or open in a private/incognito window.
 
+**The same cache, a worse disguise:** when a record is *corrected* rather than
+created — pointed at a different host — the browser keeps serving the old address
+while `dig` returns the new one. The request then reaches the wrong machine and
+comes back `403 Forbidden`, which looks exactly like an access policy rejecting
+you. Verified on a live host: incognito worked immediately while the normal
+window stayed forbidden.
+
+Before debugging any access policy, rule the cache out:
+
+```bash
+dig +short <host>        # what the resolver says
+```
+
+Then open the same URL in a private window. If that works, it was never the
+policy. Chrome keeps its own cache independent of the system resolver — clear it
+at `chrome://net-internals/#dns`.
+
 ---
 
 ### 4.4 `acc-tailscale` rejects requests that are actually routed via Tailscale
 
-**Symptom:** A service is reachable and DNS resolves the hostname to a Tailscale address. Both client and server are online in the same Tailnet. Traffic provably routes through `tailscale0`. But Traefik's `acc-tailscale` middleware returns 403 (or blocks the connection) for that request.
+**Symptom:** A service is reachable, DNS resolves the hostname to a Tailscale
+address, both peers are online in the same tailnet, and traffic provably routes
+through `tailscale0` — but Traefik's `acc-tailscale` middleware answers 403.
 
-**Root cause (not fully diagnosed):** Traefik's access middleware enforces a source-IP allowlist. When Traefik runs in a container with published ports (`ports: "443:443"`), Docker's `docker-proxy` handles the connection and forwards it to the Traefik container — but the source IP visible to Traefik is the Docker bridge gateway (`172.17.0.1`), not the original client address. The Tailscale CGNAT range (`100.64.0.0/10`) and ULA range (`fd7a::/16`) never appear as the source IP, so the allowlist check fails.
+**Cause.** `acc-tailscale` allows `100.64.0.0/10` and `fd7a:115c:a1e0::/48`, and
+it matches on the source address of the connection. Tailscale gives every client
+an IPv6 address and prefers it, and a tailnet client connects **directly** — there
+is no proxy in front to record the original address in a header. If the Docker
+network Traefik sits on cannot carry an IPv6 source address end to end, that
+address is gone before Traefik evaluates the allowlist, and no header exists to
+recover it from. The request is then judged on whatever address survived, which is
+never in the allowed ranges.
 
-**Observed case (Seafile Pro installation, 2026-06-24):** The OnlyOffice server (`alpha`) resolves `fs.rubennati.at` to Tailscale IPs (`100.66.127.87`, `fd7a:115c:a1e0::332:7f58`) and routes via `tailscale0`. OnlyOffice `.docx` editing only started working after switching from `acc-tailscale` to `acc-public` on the Seafile server. The Hetzner firewall continued to block public inbound 80/443, so `acc-public` did not actually expose the service to the internet.
+The full reasoning is in
+[`core/traefik/docs/ipv6-dual-stack.md`](core/traefik/docs/ipv6-dual-stack.md).
 
-**Workaround:** Switch to `acc-public`. If an upstream firewall (e.g. Hetzner, iptables, nftables) blocks public inbound 80 and 443, the service is not exposed to the internet — `acc-public` only removes the Traefik-level IP check.
+**Fix — enable dual-stack. Do not switch to `acc-public`.**
 
-**Future investigation steps:**
-
-1. Enable Traefik access logs and check the `ClientHost` field for a request from the Tailscale peer:
+1. `/etc/docker/daemon.json` — `"ipv6": true`, `"ip6tables": true`,
+   `"userland-proxy": false`, then `sudo systemctl restart docker`.
+2. Set `PUBLIC_NETWORK_SUBNET_V4` and `PUBLIC_NETWORK_SUBNET_V6` in
+   `core/traefik/.env`. Generate your own ULA prefix — do not copy the example.
+3. Bring Traefik up with the overlay:
 
    ```bash
-   # In traefik's dynamic config or static config, enable accessLog
-   # Then tail and look for the request:
-   docker compose logs traefik --follow | grep "<hostname>"
+   docker compose -f docker-compose.yml -f network-dual-stack.yml up -d
    ```
 
-2. Confirm the source IP Traefik sees:
+**Verified on a Debian 13 host, 2026-07-28.** With the above in place, `whoami`
+reported the client's real tailnet address in `X-Real-Ip` for a browser request
+over the tailnet, and the same setup preserved the real client IP over public
+IPv4 and public IPv6. The three daemon flags and the overlay were applied
+together and **not** isolated individually, so which of them is strictly required
+is still open — but the combination is proven.
 
-   ```bash
-   # From the Tailscale peer, send a request while watching Traefik logs
-   curl -vkI https://<APP_TRAEFIK_HOST>/
-   # In Traefik logs: look for ClientHost or remoteAddr
-   ```
+**Confirm it yourself before blaming the policy:**
 
-3. Check whether Traefik's entrypoint is configured with `proxyProtocol` or `forwardedHeaders` trusted ranges that cover the Docker bridge (`172.17.0.0/16`) and the Tailscale ranges.
+```bash
+docker network inspect proxy-public --format '{{range .IPAM.Config}}{{.Subnet}} {{end}}'
+```
 
-4. Consider whether `network_mode: host` for the Traefik container would preserve source IPs (eliminates `docker-proxy` but changes other networking behaviour).
+Two subnets means dual-stack is active. Then deploy `core/whoami` temporarily and
+read `X-Real-Ip` — if it shows your tailnet address, the path is correct and any
+remaining 403 has another cause.
 
-**Related:** Affects any service using `acc-tailscale` when the access path goes through Docker published ports rather than host networking. See also `apps/seafile-pro/UPSTREAM.md` for the specific Seafile Pro note.
+**Rule out the browser first.** A stale DNS answer produces an identical 403 from
+a different host entirely — see 4.3.
+
+**Why not `acc-public`:** it removes the Traefik-level IP check for everyone, not
+just for your tailnet. It is only defensible when an upstream firewall blocks
+public inbound 80/443 independently, and it silently stops being defensible the
+day that firewall changes. Earlier revisions of this document recommended it as a
+workaround; dual-stack replaces it.
+
+**Related:** `apps/seafile-pro/UPSTREAM.md` carries a note from the 2026-06-24
+Seafile Pro case, which was resolved with the `acc-public` workaround before the
+cause was understood — it should be revisited.
 
 ---
 
