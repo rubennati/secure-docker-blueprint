@@ -37,6 +37,9 @@ Listed with context in [`state.md`](state.md). Nothing proceeds on these until d
       it changes how a ✅ stack starts
 - [ ] `business/invoiceninja` → Docker Secrets via entrypoint wrapper (Phase 2).
       Genuinely upstream-limited: Laravel has no `_FILE` for `APP_KEY`/`DB_PASSWORD`
+- [ ] Decide the three questions in [`../docs/renovate-proposal.md`](../docs/renovate-proposal.md):
+      marker comments vs. normalising 28 outliers · Renovate App vs. self-hosted
+      Action · whether `site/` npm rides along. Nothing runs until then
 - [ ] Decide the `TROUBLESHOOTING.md` / `docs/standards/troubleshooting.md` overlap
 - [ ] Add `Checker coverage`, `Docs QA` and `Workflow supply chain` to the required
       checks in branch protection — all three run, but nothing blocks on them yet
