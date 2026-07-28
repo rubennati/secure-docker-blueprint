@@ -207,3 +207,19 @@ jobs:
 
       - name: Check internal links and anchors
         run: python3 scripts/ci/check-links.py "$GITHUB_STEP_SUMMARY"
+
+  # ─────────────────────────────────────────────
+  # 10. WORKFLOW SUPPLY CHAIN
+  # An action referenced by tag is mutable — the owner can move `@v7` at any
+  # time, and the new code runs with the same repository permissions. This
+  # repository pinned by SHA everywhere except site.yml, which had drifted back
+  # to `@v7` because nothing checked.
+  # ─────────────────────────────────────────────
+  workflows:
+    name: Workflow supply chain
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Check action pinning and workflow permissions
+        run: python3 scripts/ci/check-workflows.py "$GITHUB_STEP_SUMMARY"
