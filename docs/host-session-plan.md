@@ -220,9 +220,9 @@ Grouped by what it takes to resolve. Detail for each is in
 - [ ] Stale artefacts from an earlier deployment block a fresh one — no guidance
       exists for deploying alongside one (finding 14)
 - [ ] `docker-compose.local.yml` for every stack — 6 of 57 have one
-- [ ] Secret rotation replaces the file's identity and the mount keeps the old
-      one; every stack mounting a secret as a single file is affected. Belongs in
-      `docs/standards/compose-structure.md`, not only in one `.env.example`
+- [x] Secret rotation replaces the file's identity and the mount keeps the old
+      one; every stack mounting a secret as a single file is affected. Written up
+      in `docs/standards/compose-structure.md` alongside the `uid`/`mode` trap
       (finding 17)
 
 ### Repository-wide, carried from before this session

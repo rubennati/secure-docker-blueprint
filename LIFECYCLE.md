@@ -52,7 +52,7 @@ Generated 2026-07-29 from the sources named in [`docs/standards/status-model.md`
 | [`apps/lycheeorg`](apps/lycheeorg/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=v7.7.1` | 2026-04-17 ⚠️ | documented | missing |
 | [`apps/monicahq`](apps/monicahq/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=4.1.2-apache` | 2026-04-17 ⚠️ | documented | missing |
 | [`apps/n8n`](apps/n8n/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=2.31.6` | 2026-05-02 | documented | missing |
-| [`apps/nextcloud`](apps/nextcloud/) | 🚧 `preview` | `scaffolded` | `APP_TAG=34.0.2-fpm-alpine` | 2026-04-13 ⚠️ | documented | missing |
+| [`apps/nextcloud`](apps/nextcloud/) | 🚧 `preview` | `scaffolded` | `APP_TAG=34.0.2-fpm-alpine` | 2026-07-29 | documented | missing |
 | [`apps/nocodb`](apps/nocodb/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=2026.07.0` | 2026-05-02 | documented | missing |
 | [`apps/opnform`](apps/opnform/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=2.2.2` | 2026-04-17 ⚠️ | documented | missing |
 | [`apps/paperless-ngx`](apps/paperless-ngx/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=3.0.3` | 2026-05-03 | documented | missing |

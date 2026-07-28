@@ -154,6 +154,37 @@ secrets:
 
 Order: `services` > `volumes` (if needed) > `networks` > `secrets`
 
+### Two properties of file-based secrets that surprise people
+
+**`uid`, `gid` and `mode` on a secret reference do nothing.** Compose accepts
+them and ignores them outside Swarm. What appears inside the container is the
+host file's ownership and mode. So when a process reads a secret as a non-root
+user — anything the application does at request time, rather than an entrypoint
+running as root — the access has to be granted on the host:
+
+```bash
+sudo chown "$USER":<container-gid> .secrets/foo.txt
+chmod 640 .secrets/foo.txt
+```
+
+Grant it through the group, not by handing the file to the container's user, or
+the operator can no longer edit the file they just created.
+
+**Rotating a secret needs `--force-recreate`, not `restart`.** Each secret is
+bind-mounted as a single file, resolved once when the container starts. Most
+editors save by writing a temporary file and renaming it over the target, which
+replaces the file — the mount stays attached to the one that was replaced, and
+the container keeps serving the old value:
+
+```bash
+docker compose up -d --force-recreate <service>
+```
+
+Writing in place (`printf '%s' "$NEW" > .secrets/foo.txt`) keeps the same file
+and avoids this. Neither case changes the container's health status, so a stack
+can report healthy while authenticating with a secret that no longer exists on
+disk.
+
 ## Section Comments
 
 Use consistent separators:

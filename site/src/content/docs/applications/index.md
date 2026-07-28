@@ -13,6 +13,12 @@ Guides cover the full operating path — setup, ongoing use, backup, restore, an
 
 [Go to the Vaultwarden guide →](/applications/vaultwarden/)
 
+## Nextcloud
+
+**Problem it solves:** keeps files, calendars and contacts on your own server and syncs them to desktops and phones, with sharing and document editing on top.
+
+[Go to the Nextcloud guide →](/applications/nextcloud/)
+
 ## Seafile Pro
 
 **Problem it solves:** private cloud file storage and sharing with browser-based Office document editing, collaborative documents, full-text search, and antivirus scanning — without depending on a third-party cloud provider.
@@ -26,5 +32,6 @@ A useful guide has to address what to back up, what restore looks like, and how 
 ## Where to go next
 
 - [Vaultwarden](/applications/vaultwarden/) — password manager; setup, backup, and restore verified.
+- [Nextcloud](/applications/nextcloud/) — files, calendars and contacts; installation, mail and hardening verified on a live host, client sync and backup not yet exercised.
 - [Seafile Pro](/applications/seafile-pro/) — file sync and collaborative editing; installation verified, backup and restore not yet tested.
 - [Core Infrastructure](/core/) if Traefik isn't running yet — every application guide needs it first.

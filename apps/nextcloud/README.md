@@ -1,6 +1,7 @@
 # Nextcloud
 
-> **Status: ✅ Ready** — v32 · 2026-04-13
+> **Status: 🚧 v34.0.2** — install, mail and hardening verified on a live host;
+> desktop and mobile client sync not yet exercised · 2026-07-29
 
 Self-hosted file sync, calendar, contacts, and collaboration suite. This setup runs Nextcloud as **PHP-FPM behind nginx**, with MariaDB as database and Redis for file locking and session storage.
 
@@ -10,66 +11,100 @@ Five services:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `nextcloud:32-fpm-alpine` | PHP-FPM — the Nextcloud application |
-| `nginx` | `nginx:alpine-slim` | Web server, speaks HTTP to Traefik and FastCGI to `app` |
+| `app` | `nextcloud:34.0.2-fpm-alpine` | PHP-FPM — the Nextcloud application |
+| `nginx` | `nginx:1.29-alpine-slim` | Web server, speaks HTTP to Traefik and FastCGI to `app` |
 | `db` | `mariadb:10.11` | Primary data store |
-| `redis` | `redis:7-alpine` | File locking + session cache |
-| `cron` | `nextcloud:32-fpm-alpine` | Runs Nextcloud's scheduled jobs (`cron.php` every 5 minutes) |
+| `redis` | `redis:7.4-alpine` | File locking + session cache |
+| `cron` | `nextcloud:34.0.2-fpm-alpine` | Runs Nextcloud's scheduled jobs (`cron.php` every 5 minutes) |
 
 Traefik routes to `nginx`, which proxies PHP requests to `app` via FastCGI on port 9000. `cron` uses the same image as `app` but with `entrypoint: /cron.sh` and no HTTP listener.
 
 ### Why FPM + nginx instead of Apache
 
-The Alpine FPM image is lighter and gives nginx full control over static asset serving, caching headers, and the CalDAV/CardDAV path rewrites. The `.env.example` documents the fallback to the `-apache` variant if this architecture causes issues.
+The Alpine FPM image is lighter and gives nginx full control over static asset serving, caching headers, and the CalDAV/CardDAV redirects. The `-apache` variant is a supported alternative upstream; switching to it means dropping the `nginx` service, mounting the configuration into `app` instead, and moving the Traefik labels there with port 80.
 
 ## Setup
+
+There is no setup wizard. `NEXTCLOUD_ADMIN_USER_FILE` and
+`NEXTCLOUD_ADMIN_PASSWORD_FILE`, set together with the database values, make the
+image's entrypoint run `occ maintenance:install` on first start. The installation
+is therefore repeatable, reviewable, and there is no window in which an
+unauthenticated setup form is reachable.
 
 ```bash
 # 1. Create .env
 cp .env.example .env
-# Edit: APP_TRAEFIK_HOST, NC_TRUSTED_PROXIES, TZ
-# Generate REDIS_PASSWORD: openssl rand -hex 32
+# Edit: APP_TRAEFIK_HOST, NC_TRUSTED_PROXIES, TZ, and the SMTP block
 
-# 2. Generate secrets
+# 2. Find the correct NC_TRUSTED_PROXIES value — both families if IPv6 is enabled
+docker network inspect proxy-public \
+  --format '{{range .IPAM.Config}}{{.Subnet}} {{end}}'
+
+# 3. Generate the six secrets
 mkdir -p .secrets
 openssl rand -base64 32 | tr -d '\n' > .secrets/db_pwd.txt
 openssl rand -base64 32 | tr -d '\n' > .secrets/db_root_pwd.txt
+openssl rand -hex 32    | tr -d '\n' > .secrets/redis_pwd.txt
+printf 'admin'                        > .secrets/admin_user.txt
+openssl rand -base64 24 | tr -d '\n' > .secrets/admin_pwd.txt
+printf 'your-smtp-key'                > .secrets/smtp_pwd.txt
+chmod 600 .secrets/*.txt
 
-# 3. Find the correct NC_TRUSTED_PROXIES value
-docker network inspect proxy-public --format '{{range .IPAM.Config}}{{.Subnet}}{{end}}'
-# Update NC_TRUSTED_PROXIES in .env with that subnet
+# 4. redis_pwd.txt and smtp_pwd.txt are read by PHP at runtime, so www-data
+#    needs them. Grant through the group, so the file stays editable.
+sudo chown "$USER":82 .secrets/redis_pwd.txt .secrets/smtp_pwd.txt
+chmod 640 .secrets/redis_pwd.txt .secrets/smtp_pwd.txt
 
-# 4. Start
+# 5. Read the administrator password once — it is generated, never displayed
+cat .secrets/admin_pwd.txt
+
+# 6. Start and watch the install run
 docker compose up -d
-
-# 5. Complete setup in the browser
-# https://<APP_TRAEFIK_HOST>
-# Admin user + password are created here — there's no pre-seeded admin account.
+docker compose logs -f app
 ```
 
-Default access policy is `acc-public` + `sec-3` — public-facing, hardened headers, standard rate limiting.
+Expect `Initializing nextcloud` followed by `Nextcloud was successfully
+installed`.
 
-> **If you plan to integrate OnlyOffice:** keep `APP_TRAEFIK_ACCESS=acc-public`. OnlyOffice makes server-to-server callbacks to Nextcloud over the public domain; `acc-tailscale` would block them.
+Default access policy is `acc-private` + `sec-3e-spa` — reachable from LAN and
+VPN, hardened headers with `SAMEORIGIN` framing, and the wider burst the sync
+clients need. `acc-private` also covers the Docker gateway, which the instance
+needs to run its own setup checks against itself.
 
-### Post-install (recommended)
+Switch to `acc-public` once the instance is configured and verified.
 
-After the browser-based setup, run these once to clear Nextcloud's default warnings and apply stable defaults:
+> **If you plan to integrate OnlyOffice:** `APP_TRAEFIK_ACCESS=acc-public` is
+> required. OnlyOffice makes server-to-server callbacks to Nextcloud over the
+> public domain, and every restricted policy blocks them.
+
+### Post-install
+
+Run these once, before the first user. Each is idempotent.
 
 ```bash
-# Fix data directory ownership
-docker compose exec app chown -R www-data:www-data /var/www/html/data
-
-# Maintenance window: run heavy background jobs at 01:00 UTC
-docker compose exec -u www-data app php occ config:system:set maintenance_window_start --value=1 --type=integer
-
-# Repair tasks (safe to run, clears stale warnings)
-docker compose exec -u www-data app php occ maintenance:repair --include-expensive
-
-# Set your region for phone number formatting
+# Region for phone number parsing in contacts
 docker compose exec -u www-data app php occ config:system:set default_phone_region --value="AT"
 
-# Log level: 2 = Warning. Lower values (0=Debug, 1=Info) produce very large logs.
-docker compose exec -u www-data app php occ config:system:set loglevel --value=2 --type=integer
+# Heavy background jobs at 01:00 UTC
+docker compose exec -u www-data app php occ config:system:set maintenance_window_start --value=1 --type=integer
+
+# No example files in new accounts
+docker compose exec -u www-data app php occ config:system:set skeletondirectory --value=""
+
+# Bound preview generation — thumbnails are produced by PHP workers, and without
+# a limit one large image occupies a worker long enough for users to notice
+docker compose exec -u www-data app php occ config:system:set preview_max_x --value=2048 --type=integer
+docker compose exec -u www-data app php occ config:system:set preview_max_y --value=2048 --type=integer
+docker compose exec -u www-data app php occ config:system:set preview_max_filesize_image --value=25 --type=integer
+
+# Restrict the administration settings to the networks you administer from.
+# The rest of the instance stays reachable. These two ranges are Tailscale's —
+# substitute your own, and confirm you can still reach /settings/admin.
+docker compose exec -u www-data app php occ config:system:set allowed_admin_ranges 0 --value="100.64.0.0/10"
+docker compose exec -u www-data app php occ config:system:set allowed_admin_ranges 1 --value="fd7a:115c:a1e0::/48"
+
+# Send a test message before handing the instance to anyone
+docker compose exec -u www-data app php occ user:welcome admin
 ```
 
 **If OnlyOffice is installed**, also run these immediately after enabling the app. See the [OnlyOffice integration notes](#onlyoffice-integration-notes) section for the full explanation:
@@ -109,7 +144,16 @@ docker compose exec -u www-data app php occ status
 docker compose exec -u www-data app php occ config:system:get trusted_proxies
 
 # Confirm Redis is reachable and the correct policy is active
-docker compose exec redis redis-cli -a "$REDIS_PASSWORD" CONFIG GET maxmemory-policy
+docker compose exec redis sh -c \
+  'redis-cli -a "$(cat /run/secrets/REDIS_PWD)" CONFIG GET maxmemory-policy'
+
+# Confirm PHP can read the two runtime secrets as www-data — a permission problem
+# here leaves the container healthy while mail and locking fail
+docker compose exec -u www-data app php -r \
+  'foreach (["REDIS_PWD","SMTP_PWD"] as $s) {
+     printf("%s: %s\n", $s,
+       @file_get_contents("/run/secrets/$s") === false ? "UNREADABLE" : "ok");
+   }'
 
 # Confirm PHP-FPM pool config was applied
 docker compose exec app php-fpm -tt 2>&1 | grep -E "max_children|pm ="
@@ -132,28 +176,28 @@ Check the admin overview at `https://<APP_TRAEFIK_HOST>/settings/admin/overview`
 ### Network layout
 
 - `proxy-public` — only `nginx` joins; this is where Traefik routes in
-- `app-internal` — `app`, `db`, `redis`, `nginx`, `cron`; not flagged `internal: true`
+- `app-internal` — `app`, `db`, `redis`, `nginx`, `cron`; flagged `internal: true`, no route out
+- `app-egress` — `app` and `cron` only; the narrow outbound path
 
-`app-internal` is intentionally **not** marked `internal: true`. Nextcloud's `app` container is not on `proxy-public` (only nginx is), so without outbound routing via `app-internal`, the PHP process could not reach the Nextcloud app store, the update server, or external preview services. The `db` and `redis` containers also gain outbound reachability from this, which is a conscious trade-off.
-
-If you don't use the app store or update checks, you can harden the setup by adding `internal: true` to `app-internal`.
+The database and the cache hold everything worth stealing and reach `app-internal` alone. Only the two application containers can open outbound connections, and neither is reachable from outside — Traefik routes to `nginx`. See [Network exception](#network-exception--why-the-application-containers-reach-the-internet) for what that buys and what it costs.
 
 ### Per-service hardening
 
 - `no-new-privileges:true` on `db`, `redis`, `nginx`
 - **NOT** set on `app` and `cron` — the Nextcloud entrypoint runs as root to chown `config.php` before dropping to www-data; with `no-new-privileges` the file ends up owned by root and FPM gets a 503. Documented in the compose file.
-- Database credentials, DB root password → Docker Secrets (`.secrets/*.txt`)
-- Redis password → `.env` (passed via `--requirepass` flag; the Redis CLI needs it as a literal string, not a file path). Use `openssl rand -hex 32` to avoid `+/=` characters that break URL encoding in the PHP Redis session handler.
+- All six credentials → Docker Secrets (`.secrets/*.txt`): database, database root, Redis, administrator name and password, SMTP key. Nothing sensitive lives in `.env`.
+- Redis reads its password from the secret at startup (`--requirepass "$(cat /run/secrets/REDIS_PWD)"`), so the value never appears in the process environment. Use `openssl rand -hex 32` — `+/=` characters break URL encoding in the PHP Redis session handler.
+- `REDIS_PWD` and `SMTP_PWD` are read by PHP at request time, as `www-data`, so those two files need group access on the host. The other four are read by entrypoints running as root.
 
 ### Traefik middlewares
 
-`nginx` carries two middlewares in addition to access + security chains:
+`nginx` carries the access and security chains and nothing else:
 
 ```text
-${COMPOSE_PROJECT_NAME}-dav@docker,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file
+${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file
 ```
 
-The `-dav` middleware rewrites `/.well-known/caldav` and `/.well-known/carddav` to `/remote.php/dav/` so mobile clients auto-discover correctly.
+`/.well-known/caldav` and `/.well-known/carddav` are handled by `nginx/nginx.conf`, which issues the `301` the project documents. An earlier Traefik middleware rewrote the path before nginx saw it, so the redirect never fired; adding one back reintroduces that.
 
 ## Network exception — why the application containers reach the internet
 
@@ -205,7 +249,11 @@ mail. It is not the default because most deployments need at least password rese
 With `APP_TRAEFIK_ACCESS=acc-tailscale`, several checks report failures —
 `WebdavEndpoint`, `SecurityHeaders`, `WellKnownUrls`, `OcxProviders`. The instance
 calls itself through the proxy and the access policy denies it, which is the
-policy working. They resolve when access is opened.
+policy working.
+
+This is why the shipped default is `acc-private` rather than `acc-tailscale`: it
+covers the Docker gateway as well as LAN and VPN, so the instance can reach
+itself and the checks pass while the instance is still closed to the internet.
 
 ## Backup
 
@@ -296,16 +344,18 @@ docker compose exec app ls /usr/local/etc/php-fpm.d/
 
 ### Traefik security profile
 
-`APP_TRAEFIK_SECURITY=sec-3-spa` is the recommended default for Nextcloud, not the generic `sec-3`.
+`APP_TRAEFIK_SECURITY=sec-3e-spa`, not the generic `sec-3`. Two properties differ, and Nextcloud needs both — which is why this chain was added for it.
 
-Nextcloud generates significant legitimate background traffic that does not fit the pattern of a standard web application:
+**Framing.** `sec-3` sets `X-Frame-Options: DENY`. Nextcloud's own setup checks require `SAMEORIGIN`, and several of its apps render in an iframe against the same origin. The `e` variants use `hdr-strict-embed`, identical to the strict headers apart from that one value.
+
+**Burst.** Nextcloud generates continuous legitimate background traffic that does not fit a standard web application:
 
 - Sync clients poll OCS API endpoints continuously
 - WebDAV and PROPFIND requests are issued for every mounted folder
 - Activity, notifications, and dashboard widgets poll at regular intervals
 - Mobile clients maintain persistent connections
 
-`sec-3` uses `rl-soft` (100 req/s average, burst 50). This burst cap is too low for Nextcloud's combined sync + interactive traffic and returns HTTP 429 under normal load. `sec-3-spa` uses `rl-spa`, which allows the initial request burst while applying the same strict security headers and permissions-policy. The `.env.example` default reflects this.
+`rl-soft` allows 100 req/s average with a burst of 50; `rl-spa` allows the same 100 req/s average with a burst of 200. The sustained rate is unchanged — only the burst differs, so this is not a weaker limit, it is the same limit with room for a first page load that fetches a hundred assets at once.
 
 ## Recommended application set
 
@@ -416,6 +466,34 @@ OnlyOffice DocumentServer performance itself (internal URL resolution, reverse p
 
 ## Troubleshooting
 
+### A secret reads as `Permission denied` although the host file looks correct
+
+```text
+file_get_contents(/run/secrets/SMTP_PWD): Failed to open stream: Permission denied
+```
+
+Two distinct causes, and they look the same:
+
+1. **Ownership.** `REDIS_PWD` and `SMTP_PWD` are read by PHP as `www-data`. Give
+   the group access — `sudo chown "$USER":82` and `chmod 640`. Setting `uid` or
+   `mode` on the secret in `docker-compose.yml` does nothing: Compose ignores
+   both outside Swarm, and the host file's ownership is what appears in the
+   container.
+2. **The file was replaced.** Editors save by writing a new file and renaming it
+   over the target. A bind-mounted single file resolves once, at container
+   start, so the mount stays attached to the file that was replaced. `restart`
+   does not re-resolve it:
+
+   ```bash
+   docker compose up -d --force-recreate app cron
+   ```
+
+   Writing in place — `printf '%s' "$KEY" > .secrets/smtp_pwd.txt` — avoids this
+   entirely.
+
+In both cases the container keeps reporting healthy. Confirm with the PHP read
+test in [Verify](#verify).
+
 ### Nextcloud appears to hang when users open folders
 
 **Symptoms:** Folder contents load very slowly or indefinitely. The browser spinner runs for 30–120 seconds. After the timeout, folders may load or Nextcloud may show an error.
@@ -467,10 +545,8 @@ If this appears, OnlyOffice is the bottleneck. Disabling OnlyOffice previews res
 
 ## Known Issues
 
-- **Admin overview warnings that are safe to ignore:**
-  - `.well-known URLs` — CalDAV/CardDAV redirect works via Traefik middleware; Nextcloud's internal self-check does not detect the Traefik-level rewrite.
-  - `X-Frame-Options` — Set by the security middleware chain, but Nextcloud checks its own PHP output and doesn't see the Traefik header.
-  - `Email test`, `Second factor`, `AppAPI deploy daemon` — Configure when/if those features are needed.
+- **The admin overview is the acceptance test.** With this configuration it reports 60 checks passing, no warnings and no errors. Treat any warning as work to do rather than noise — the ones this stack used to carry (`.well-known URLs`, `X-Frame-Options`, `Email test`) were all real, and all three were configuration defects here rather than false positives.
+- **`AppAPI deploy daemon` is unset by design** — it is needed only for external apps, which this stack does not deploy.
 - **First install is slow** — the healthcheck has `start_period: 120s` because the Nextcloud installer can take over a minute to run all migrations on first boot.
 - **Large file uploads need matching limits on both sides**: `PHP_UPLOAD_LIMIT` and nginx's `client_max_body_size` in `nginx/nginx.conf`.
 
