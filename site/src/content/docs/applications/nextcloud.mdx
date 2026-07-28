@@ -15,9 +15,10 @@ Needs: [Traefik](/core/traefik/) running, a domain, and SMTP credentials.
 :::note[What has been verified]
 Installation, mail delivery, the reverse-proxy chain and the hardening below were
 carried out on a live host and checked against the instance's own diagnostics —
-60 checks passing, no warnings. Desktop and mobile client sync, and a restore
-from backup, have not been exercised yet. Treat this as a guide to follow, not a
-result to assume.
+60 checks passing, no warnings. The backup below was run and its database
+restored into a scratch target. Not yet exercised: desktop and mobile client
+sync, and a restore back into live service. Treat this as a guide to follow, not
+a result to assume.
 :::
 
 :::caution
@@ -228,24 +229,104 @@ Writing in place — `printf '%s' "$KEY" > .secrets/smtp_pwd.txt` — avoids thi
 
 ## Backup
 
-Nextcloud stores state in three places that must be captured together: the
-database, the data directory, and `config/config.php`. A database dump alone
-restores an instance that cannot read its own files.
+:::note
+This section covers what Borgmatic needs to know **about Nextcloud**. Installing
+it, the repository, the encryption keys, the schedule and the restore mechanics
+are all on [Backup and restore](/operations/backup/) — set that up first, then
+come back here.
+:::
 
-Put the instance into maintenance mode around the capture, so no write lands
-between the file copy and the dump:
+Nextcloud keeps its file index in the database and the files on disk. Capture the
+two at different moments under load and the restore shows files the index does
+not know about, or index entries pointing at nothing. `occ files:scan` repairs the
+first case and not the second. This is the stack in the Blueprint where quiescing
+genuinely matters.
+
+Three things must be captured together — a database dump alone restores an
+instance that cannot read its own files:
+
+| | Where |
+|---|---|
+| Database | dumped through Borgmatic's hook, not copied |
+| Data directory and `config/config.php` | the `nextcloud_html` volume |
+| `.env` and `.secrets/` | the deployment directory |
+
+`config.php` carries the instance secret and the password salt. Restoring the
+database against a regenerated config invalidates sessions and can make encrypted
+content unreadable.
+
+### What to add to `/etc/borgmatic/config.yaml`
+
+<Steps>
+
+1. The data. Deliberately **not** the database volume — the dump below is the
+   consistent copy, the raw files would be a torn one:
+
+   ```yaml
+   source_directories:
+       - /srv/blueprint
+       - /var/lib/docker/volumes/nextcloud_nextcloud_html/_data
+   ```
+
+   Confirm the volume's real name with `docker volume ls`; it is prefixed with
+   your Compose project name.
+
+2. The database. The password is read from the same file the stack already
+   mounts as a secret, so there is no second copy to rotate:
+
+   ```yaml
+   mariadb_databases:
+       - name: nextcloud
+         container: nextcloud-db
+         username: nextcloud
+         password: "{credential file /srv/blueprint/apps/nextcloud/.secrets/db_pwd.txt}"
+         tls: false
+   ```
+
+3. Maintenance mode around the capture. The error hook is what stops a failed run
+   leaving the instance offline:
+
+   ```yaml
+   commands:
+       - before: action
+         when: [create]
+         run:
+             - docker exec -u www-data nextcloud-app php occ maintenance:mode --on
+       - after: action
+         when: [create]
+         run:
+             - docker exec -u www-data nextcloud-app php occ maintenance:mode --off
+       - after: error
+         run:
+             - docker exec -u www-data nextcloud-app php occ maintenance:mode --off
+   ```
+
+4. Validate, then run it once by hand:
+
+   ```bash
+   sudo borgmatic config validate
+   sudo borgmatic create --verbosity 1 --stats
+   ```
+
+</Steps>
+
+### Restoring this stack
+
+Database first, then the file tree, then the application — and leave maintenance
+mode on until both halves are in place.
+
+The flag itself is inside the backup. Any archive taken while the quiescing hook
+was active holds `'maintenance' => true` in `config.php`, so a restored instance
+refuses to serve until you clear it:
 
 ```bash
-docker compose exec -u www-data app php occ maintenance:mode --on
-# capture, then
 docker compose exec -u www-data app php occ maintenance:mode --off
 ```
 
-See [Operations](/operations/) for the scheduled chain.
-
 :::caution
 A backup you have not restored is not a backup. Rehearse it into a scratch
-location and open a file from the result.
+location and open a file from the result — the procedure is on
+[Backup and restore](/operations/backup/#prove-it-with-a-restore).
 :::
 
 ## Updates

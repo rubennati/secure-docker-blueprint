@@ -10,6 +10,13 @@ retention, database dumps and monitoring on top, and it runs **on the host**
 rather than in a container — a containerised agent would need read access to
 every volume, and therefore every secret, in the deployment.
 
+This page is the general half: installing it, the repository, the keys, the
+schedule, and how a restore works. **What to back up for a particular
+application lives on that application's page** — which database to dump, whether
+it needs quiescing, what is different when restoring it. One Borgmatic
+installation covers every stack on the host; each stack contributes its own few
+lines to the same configuration file.
+
 :::note[What has been verified]
 Installation, configuration, a first backup and a full restore were carried out
 on a live host. The repository was a directory on that same machine, so the
@@ -101,6 +108,19 @@ sudo apt install mariadb-client        # or postgresql-client, mongodb-database-
 
 </Steps>
 
+## Add the applications
+
+Everything above is set up once. From here on, each stack you want covered adds a
+few lines to the same `/etc/borgmatic/config.yaml`.
+
+| Stack | Its backup section |
+|---|---|
+| Nextcloud | [Backup](/applications/nextcloud/#backup) — MariaDB dump, maintenance mode, what is different on restore |
+| Vaultwarden | [Backup before real use](/applications/vaultwarden/#backup-before-real-use) — signing keys matter as much as the database |
+| Seafile Pro | [Seafile Pro guide](/applications/seafile-pro/) |
+
+The rest of this page is what those sections assume you understand.
+
 ## Databases need dumping, not copying
 
 Copying a running database's files captures a torn, mid-transaction state that
@@ -108,10 +128,10 @@ only reveals itself at restore. Add one entry per database:
 
 ```yaml
 mariadb_databases:
-    - name: nextcloud
-      container: nextcloud-db
-      username: nextcloud
-      password: "{credential file /srv/blueprint/apps/nextcloud/.secrets/db_pwd.txt}"
+    - name: myapp
+      container: myapp-db
+      username: myapp
+      password: "{credential file /srv/blueprint/apps/myapp/.secrets/db_pwd.txt}"
       tls: false
 ```
 
@@ -137,21 +157,25 @@ database that genuinely is remote, configure TLS on the server instead.
 
 Some applications keep an index in the database and the data on disk. Capture the
 two at different moments under load and the restore shows files the index does
-not know about, or index entries pointing at nothing.
+not know about, or index entries pointing at nothing. Those applications need to
+be paused for the length of the capture — the application page says whether yours
+is one of them, and what the pause command is.
+
+The shape is always the same:
 
 ```yaml
 commands:
     - before: action
       when: [create]
       run:
-          - docker exec -u www-data nextcloud-app php occ maintenance:mode --on
+          - <put the application into maintenance mode>
     - after: action
       when: [create]
       run:
-          - docker exec -u www-data nextcloud-app php occ maintenance:mode --off
+          - <take it back out>
     - after: error
       run:
-          - docker exec -u www-data nextcloud-app php occ maintenance:mode --off
+          - <take it back out>
 ```
 
 :::caution
@@ -197,23 +221,23 @@ throwaway target — never into the live deployment.
    PW=$(openssl rand -hex 16)
    docker run -d --name restore-test -e MARIADB_ROOT_PASSWORD="$PW" \
      --tmpfs /var/lib/mysql:rw mariadb:10.11
-   docker exec restore-test mariadb -uroot -p"$PW" -e 'CREATE DATABASE nextcloud;'
+   docker exec restore-test mariadb -uroot -p"$PW" -e 'CREATE DATABASE myapp;'
    ```
 
 2. Restore into it. `--container` names the target explicitly, so the configured
    one cannot be hit by accident:
 
    ```bash
-   sudo borgmatic restore --archive latest --database nextcloud \
+   sudo borgmatic restore --archive latest --database myapp \
      --container restore-test --username root --password "$PW"
    ```
 
-3. Read the result:
+3. Read the result — a table count, and rows in a table you can sanity-check:
 
    ```bash
-   docker exec restore-test mariadb -uroot -p"$PW" nextcloud -e "
-     SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='nextcloud';
-     SELECT COUNT(*) FROM oc_users;"
+   docker exec restore-test mariadb -uroot -p"$PW" myapp -e "
+     SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='myapp';
+     SELECT COUNT(*) FROM <a_real_table>;"
    ```
 
    A count you can sanity-check is the evidence. A directory tree of
@@ -227,22 +251,35 @@ throwaway target — never into the live deployment.
 
 </Steps>
 
-### A restored instance may come back in maintenance mode
+### A restored instance may come back paused
 
-If the backup quiesced the application, that flag is part of what was captured.
-For Nextcloud it lives in `config.php`, so a restored file differs from the live
-one by exactly one line:
+If the backup quiesced the application, that state is part of what was captured —
+the flag was set at the moment the files were read. A restored configuration file
+will therefore differ from the live one by exactly that, and the restored
+instance refuses to serve until it is cleared.
 
-```text
-< 'maintenance' => false,
-> 'maintenance' => true,
-```
+That is the backup working, not a fault. The application page names the command;
+know it in advance, or the first restore looks like a broken one.
 
-That is the backup working. Clear it once you have looked at the result:
+## Schedule it, or it will not happen
+
+A backup taken by hand is a demonstration. Check whether the package already
+ships units before writing your own:
 
 ```bash
-docker exec -u www-data nextcloud-app php occ maintenance:mode --off
+systemctl list-unit-files | grep borgmatic
+sudo systemctl enable --now borgmatic.timer
+systemctl list-timers borgmatic.timer
 ```
+
+A pipx installation ships none — take
+[`borgmatic.timer.example`](https://github.com/rubennati/secure-docker-blueprint/blob/main/backup/borgmatic/borgmatic.timer.example)
+from the repository.
+
+:::caution
+The timer is the point at which this stops being a rehearsal. Until it exists,
+there is exactly one archive and it is as old as the day you made it.
+:::
 
 ## Going further
 

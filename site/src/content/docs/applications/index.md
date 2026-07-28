@@ -32,6 +32,6 @@ A useful guide has to address what to back up, what restore looks like, and how 
 ## Where to go next
 
 - [Vaultwarden](/applications/vaultwarden/) — password manager; setup, backup, and restore verified.
-- [Nextcloud](/applications/nextcloud/) — files, calendars and contacts; installation, mail and hardening verified on a live host, client sync and backup not yet exercised.
+- [Nextcloud](/applications/nextcloud/) — files, calendars and contacts; installation, mail, hardening and a backup with a database restore verified on a live host; client sync not yet exercised.
 - [Seafile Pro](/applications/seafile-pro/) — file sync and collaborative editing; installation verified, backup and restore not yet tested.
 - [Core Infrastructure](/core/) if Traefik isn't running yet — every application guide needs it first.

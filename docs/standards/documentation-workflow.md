@@ -55,6 +55,27 @@ to find one value.
 This matters most on the operator site, where the reader chose to be there and
 will leave if the first screen is not useful.
 
+### A shared tool gets one page; each stack contributes its own section
+
+Where one host-level tool serves every stack — the backup agent, the reverse
+proxy, the intrusion detection — the split is:
+
+| Where | What belongs there |
+|---|---|
+| The tool's own page | Installing it, its own configuration, the concepts a reader needs before any stack makes sense, and how to verify it |
+| The stack's page | Only what is specific to that stack — the lines it contributes, whether it needs special handling, what is different when recovering it — with a link back to the tool's page |
+
+The reader arrives from either direction. Someone setting up a stack reaches
+"and I want this backed up", follows the link, installs the tool, and returns.
+Someone setting up the tool wants to know which stacks then need attention. Both
+paths have to work, so the tool's page carries a list of the stacks and each
+stack links back.
+
+What must not happen is the tool's page teaching itself through one stack's
+example. It reads as complete and is not: the next stack's operator finds
+instructions that name a database and a pause command belonging to something they
+do not run.
+
 ## Document Types
 
 Every document has a type. The type determines when it must be updated.
