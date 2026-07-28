@@ -43,15 +43,19 @@
 
 1. Check [Listmonk releases](https://github.com/knadh/listmonk/releases)
 2. Back up:
+
    ```bash
    docker compose exec db pg_dump -U listmonk listmonk > listmonk-$(date +%Y%m%d).sql
    ```
+
 3. Bump `APP_TAG` in `.env`
 4. `docker compose pull && docker compose up -d`
 5. Run DB upgrade:
+
    ```bash
    docker compose run --rm app --upgrade
    ```
+
 6. Verify: log in, send a test campaign
 
 ## Useful commands

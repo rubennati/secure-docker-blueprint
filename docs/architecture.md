@@ -45,7 +45,7 @@ The rule was sharpened after an earlier attempt placed `business/` by analogy to
 
 Every multi-service app uses a **hub-and-spoke** network layout. Two Docker networks per app, with a strict separation of concerns:
 
-```
+```text
 Internet
     │
     ▼
@@ -68,7 +68,7 @@ Databases and caches **never** join `proxy-public`. They have no exposure beyond
 
 Inbound traffic passes through four independent, additive layers before reaching an application:
 
-```
+```text
 Request
     │
     ▼
@@ -108,7 +108,7 @@ Each layer is independent. CrowdSec works without Authentik. Authentik works wit
 
 Every app follows the same directory layout regardless of category:
 
-```
+```text
 <category>/<app>/
 ├── docker-compose.yml   # hardened, standards-aligned
 ├── .env.example         # all variables documented inline, no real values

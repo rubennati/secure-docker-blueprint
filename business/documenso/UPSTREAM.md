@@ -34,9 +34,11 @@
 1. Watch [Documenso releases](https://github.com/documenso/documenso/releases)
 2. Read the changelog for breaking changes / required env
 3. Back up the database before upgrading:
+
    ```bash
    docker compose exec db sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' > documenso-$(date +%Y%m%d).sql
    ```
+
 4. Bump `APP_TAG` in `.env` (prefer a digest pin — see `apps/caldiy`)
 5. `docker compose pull && docker compose up -d`; watch migrations: `docker compose logs app --follow`
 

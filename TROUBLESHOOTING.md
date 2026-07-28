@@ -70,6 +70,7 @@
 **Fix:** Always set these to the **public HTTPS URL** the browser uses, not the internal container address.
 
 **If already wrong and data was written:** You need a DB migration. Example for OpenSign (Parse Server stores full file URLs):
+
 ```bash
 docker compose exec db mongosh \
   --username opensign --password "$(cat .secrets/db_root_pwd.txt)" \
@@ -94,9 +95,11 @@ docker compose exec db mongosh \
 **Affected apps:** Any app that takes a full DSN string (OpenSign `MONGODB_URI`, etc.).
 
 **Fix:** Generate alphanumeric-only passwords for DSN use:
+
 ```bash
 openssl rand -hex 32   # safe: hex chars only
 ```
+
 Avoid `openssl rand -base64` for DSN passwords — base64 output contains `+`, `/`, `=`.
 
 ---
@@ -118,6 +121,7 @@ Avoid `openssl rand -base64` for DSN passwords — base64 output contains `+`, `
 | Most LSIO images | 1000 (`abc`) |
 
 **Fix:**
+
 ```bash
 sudo chown -R <uid>:<gid> volumes/<dirname>
 # Example for Healthchecks:
@@ -143,6 +147,7 @@ sudo chown -R 999:999 volumes/data
 **Immich-specific:** `machine-learning` sits on `app-internal` (internal) but needs outbound internet to pull CLIP models from HuggingFace on first start. Symptom: `LocalEntryNotFoundError: cannot find the appropriate snapshot folder … check your internet connection`. Fix: add a second `ml-outbound` network (no `internal: true`) to the `machine-learning` service only — DB and Redis stay isolated.
 
 **Rule of thumb:**
+
 - DB-only network (no container needs outbound) → `internal: true` OK
 - App network (app containers need email/webhooks) → no `internal: true`
 - ML/worker containers that pull models/packages on first run → need their own outbound-capable network
@@ -156,18 +161,21 @@ sudo chown -R 999:999 volumes/data
 **Causes in order of likelihood:**
 
 1. **Typo in `APP_TRAEFIK_HOST`** — the most common cause. The label on the container has the wrong hostname.
+
    ```bash
    docker inspect <container> | grep "rule"
    # Check: does the Host() value exactly match the DNS name you're hitting?
    ```
 
 2. **Container not on the correct Docker network** — Traefik can only route to containers on a shared network.
+
    ```bash
    docker inspect <container> --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}} {{end}}'
    # Must include proxy-public (or whatever TRAEFIK_NETWORK is set to)
    ```
 
 3. **Labels not applied** — happens when `docker compose up -d` used an old compose file or the container wasn't recreated after a label change.
+
    ```bash
    docker inspect <container> | grep -A30 '"Labels"'
    # Check traefik.http.routers.* labels are present
@@ -202,6 +210,7 @@ sudo chown -R 999:999 volumes/data
 **Future investigation steps:**
 
 1. Enable Traefik access logs and check the `ClientHost` field for a request from the Tailscale peer:
+
    ```bash
    # In traefik's dynamic config or static config, enable accessLog
    # Then tail and look for the request:
@@ -209,6 +218,7 @@ sudo chown -R 999:999 volumes/data
    ```
 
 2. Confirm the source IP Traefik sees:
+
    ```bash
    # From the Tailscale peer, send a request while watching Traefik logs
    curl -vkI https://<APP_TRAEFIK_HOST>/
@@ -232,6 +242,7 @@ sudo chown -R 999:999 volumes/data
 **Root cause:** Commits exist locally but were never pushed. Server's `git pull` has nothing to fetch.
 
 **Fix:**
+
 ```bash
 # On local machine:
 git push origin dev
@@ -252,6 +263,7 @@ docker compose up -d --force-recreate <service>
 **Cause:** The server hasn't pulled the latest commit yet. `force-recreate` re-reads the compose file and `.env` on disk — if they haven't changed on disk, nothing changes.
 
 **Debug:**
+
 ```bash
 git log --oneline -3          # what commit is the server on?
 grep "VAR_NAME" .env          # what does the file actually say?
@@ -265,12 +277,14 @@ docker compose exec svc printenv VAR_NAME   # what did the container get?
 ### 6.0 Before writing any healthcheck — check the image type first
 
 **Rule:** Before writing a healthcheck with `wget`/`curl`/`sh`, always verify the image has those tools:
+
 ```bash
 docker compose exec <service> sh -c "which curl || which wget || echo none"
 # If sh itself fails → scratch image → use healthcheck: disable: true immediately
 ```
 
 **Known scratch/minimal Go images in this blueprint** (no shell, no tools):
+
 | Image | Healthcheck |
 |---|---|
 | `henrygd/beszel` (hub) | `disable: true` |
@@ -289,15 +303,18 @@ If `sh` fails → don't spend time looking for alternatives → `disable: true`.
 **Affected:** Beszel hub (`henrygd/beszel`) — scratch image.
 
 **Fix:** Disable the healthcheck:
+
 ```yaml
 healthcheck:
   disable: true
 ```
 
 **Check before writing a healthcheck:**
+
 ```bash
 docker compose exec <service> sh -c "which curl || which wget || echo none"
 ```
+
 If `sh` itself fails → scratch image → `disable: true`.
 
 ---
@@ -307,11 +324,13 @@ If `sh` itself fails → scratch image → `disable: true`.
 **Symptom:** Container `(unhealthy)` even though the app runs fine and the tool (`wget`, `curl`) is present.
 
 **Causes:**
+
 - Health endpoint path is wrong (e.g. `/api/health` doesn't exist, actual path is `/api/v3/status/`)
 - App hasn't finished starting when healthcheck fires (increase `start_period`)
 - Upstream provides no health endpoint at all
 
 **Debug:**
+
 ```bash
 docker compose exec <service> wget -qO- http://127.0.0.1:<port>/api/health
 # 200 = endpoint exists, 404 = wrong path, connection refused = wrong port
@@ -368,6 +387,7 @@ docker compose exec <service> wget -qO- http://127.0.0.1:<port>/api/health
 **Symptom:** Incorrect redirect URLs, HTTP links in emails instead of HTTPS, wrong `REMOTE_ADDR` in logs.
 
 **Fix:** Tell the app to trust `X-Forwarded-*` headers from Traefik:
+
 - Rails (Zammad): `RAILS_TRUSTED_PROXIES: "0.0.0.0/0"`
 - Django: `USE_X_FORWARDED_HOST = True` + `SECURE_PROXY_SSL_HEADER`
 
@@ -377,7 +397,7 @@ docker compose exec <service> wget -qO- http://127.0.0.1:<port>/api/health
 
 When something doesn't work after deployment, run through this in order:
 
-```
+```text
 1. Is the container running?
    docker compose ps
 

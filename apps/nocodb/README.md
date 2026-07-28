@@ -87,6 +87,7 @@ Typical automation pattern:
 5. Store the token as an n8n credential so it encrypts into n8n's credential store.
 
 For n8n and NocoDB to reach each other on an internal network, either:
+
 - Run both in the same `compose.yml`, or
 - Attach n8n's app service to NocoDB's `proxy-public` network and address it as `http://nocodb-app:8080`.
 

@@ -77,14 +77,17 @@ Users now see an **"Log in with Authentik"** button. The login page also auto-re
 Authentik groups can be automatically mirrored as Vikunja teams.
 
 1. In Authentik, create a scope mapping named `vikunja_scope`:
+
    ```python
    groupsDict = {"vikunja_groups": []}
    for group in request.user.ak_groups.all():
        groupsDict["vikunja_groups"].append({"name": group.name, "oidcID": group.num_pk})
    return groupsDict
    ```
+
 2. Add `vikunja_scope` to the provider → Advanced protocol settings → Scopes
 3. In `.env`, extend the scope:
+
    ```env
    # Add to docker-compose.yml environment or override via .env:
    VIKUNJA_AUTH_OPENID_PROVIDERS_AUTHENTIK_SCOPE=openid profile email vikunja_scope
@@ -132,6 +135,7 @@ VIKUNJA_ALLOWICONCHANGES=false  # prevents seasonal changes overriding your logo
 ```
 
 Legal footer links (shown at the bottom of the login page):
+
 ```env
 VIKUNJA_IMPRINTURL=https://your-domain.com/imprint
 VIKUNJA_PRIVACYURL=https://your-domain.com/privacy

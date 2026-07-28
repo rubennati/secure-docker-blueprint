@@ -36,9 +36,11 @@
 1. Watch [Infisical releases](https://github.com/Infisical/infisical/releases)
 2. Read the changelog for breaking changes / required migrations
 3. Back up the database before upgrading:
+
    ```bash
    docker compose exec db sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' > infisical-$(date +%Y%m%d).sql
    ```
+
 4. Bump `APP_TAG` in `.env` (prefer a digest pin — see `apps/caldiy`)
 5. `docker compose pull && docker compose up -d`
 6. Watch migrations on first boot: `docker compose logs app --follow`

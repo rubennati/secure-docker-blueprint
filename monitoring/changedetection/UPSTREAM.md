@@ -43,9 +43,11 @@ Then set **"Request via browser steps"** in the watch settings for affected URLs
 
 1. Check [changedetection.io releases](https://github.com/dgtlmoon/changedetection.io/releases)
 2. Back up:
+
    ```bash
    cp -r volumes/data/ changedetection-backup-$(date +%Y%m%d)/
    ```
+
 3. Bump `APP_TAG` in `.env`
 4. `docker compose pull && docker compose up -d`
 5. Verify: existing watches are intact, notifications still fire

@@ -140,7 +140,7 @@ docker compose logs app --follow
 
 Expected success markers (in order):
 
-```
+```text
 Creating migration table
 Running migrations
 Seeding database
@@ -219,18 +219,23 @@ docker compose exec app sh -c 'env | grep -E "^MAIL_"'
 Invoice Ninja uses Snappdf (Chromium) for PDF rendering. If `/api/v1/live_design` or `/api/v1/live_preview` return 504 or 500:
 
 1. **504 from nginx** — FastCGI read timeout exceeded. Check nginx access log for the upstream response time:
+
    ```bash
    docker compose logs nginx --tail=50 | grep "live_design\|live_preview"
    ```
+
    The nginx FastCGI timeouts are set to 300s in `nginx/laravel.conf`. If renders still time out, Chromium may be crashing — check app logs.
 
 2. **500 from the app** — Chromium likely ran out of memory or crashed. Check:
+
    ```bash
    docker compose logs app --tail=50 | grep -iE "snappdf|chromium|chrome|error|fatal"
    ```
+
    The app container memory limit is 1G. If Chromium crashes repeatedly, increase `memory:` in `docker-compose.yml`.
 
 3. **Check Chromium path**:
+
    ```bash
    docker compose exec app ls -la /usr/bin/google-chrome-stable
    ```

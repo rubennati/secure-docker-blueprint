@@ -15,7 +15,7 @@ After enabling the CrowdSec bouncer plugin in Traefik's static config
 (`experimental.plugins.bouncer`) and the `sec-crowdsec` middleware in
 `integrations.yml`, Traefik logs show:
 
-```
+```text
 {"level":"info","plugins":["bouncer"],"message":"Loading plugins..."}
 {"level":"error","plugins":["bouncer"],
  "error":"unable to create plugins manager: unable to create directory
@@ -26,7 +26,7 @@ After enabling the CrowdSec bouncer plugin in Traefik's static config
 
 And any router that references the CrowdSec middleware fails:
 
-```
+```text
 {"level":"error","routerName":"whoami@docker",
  "error":"invalid middleware \"sec-crowdsec@file\" configuration:
           invalid middleware type or middleware does not exist"}
@@ -110,7 +110,7 @@ bouncer shows up in `cscli bouncers list` with a recent `Last API
 pull`, and `cscli decisions list` is empty — yet every request
 through a router with `sec-crowdsec@file` returns HTTP 403:
 
-```
+```console
 $ curl -I https://whoami.example.com
 HTTP/2 403
 
@@ -191,7 +191,7 @@ disabled"` in Traefik's logs), but `cscli bouncers list` never gets a
 `Last API pull` or `IP Address` — indefinitely, not just slow to
 appear:
 
-```
+```console
 $ docker exec crowdsec cscli bouncers list
  Name             IP Address  Valid  Last API pull  Type  Version  Auth Type
  traefik-bouncer              ✔️                                   api-key

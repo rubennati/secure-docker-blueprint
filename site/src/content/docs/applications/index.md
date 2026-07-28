@@ -7,13 +7,13 @@ Application and business-tool guides live here — what an operator deploys and 
 
 Guides cover the full operating path — setup, ongoing use, backup, restore, and updates — not just how to start a container.
 
-### Vaultwarden
+## Vaultwarden
 
 **Problem it solves:** centralizes credentials — browser, mobile, and desktop — in one self-hosted vault instead of trusting a third-party service with everything you log into.
 
 [Go to the Vaultwarden guide →](/applications/vaultwarden/)
 
-### Seafile Pro
+## Seafile Pro
 
 **Problem it solves:** private cloud file storage and sharing with browser-based Office document editing, collaborative documents, full-text search, and antivirus scanning — without depending on a third-party cloud provider.
 

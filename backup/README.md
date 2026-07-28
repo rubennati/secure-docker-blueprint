@@ -183,7 +183,7 @@ Separate repositories per app give independent retention, surgical restore and i
 
 Backup differs structurally from every other category here: the agent is installed on the host, so `backup/borgmatic/` holds configuration and procedure rather than a Compose stack.
 
-```
+```text
 backup/borgmatic/
 ├── config.yaml.example      # source directories, database hooks, retention, monitoring
 ├── borgmatic.timer.example  # systemd schedule

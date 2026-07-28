@@ -40,6 +40,7 @@ as a matching hint. Setting it to the domain root causes Authentik to redirect
 there after login.
 
 **Fix:**
+
 - Pattern 1 (full app): External host = `https://app.example.com` — correct,
   the whole app is protected and the user lands on the homepage.
 - Pattern 2 (path-scoped): External host = `https://app.example.com/<path>/`
@@ -79,6 +80,7 @@ New `rl-spa` middleware with `burst: 200` absorbs the initial chunk load.
 access control (e.g. `acc-tailscale`).
 
 New chains added:
+
 - `sec-2-spa` — basic headers + rl-spa + compress
 - `sec-3-spa` — strict headers + rl-spa + compress + permissions-policy
 
@@ -94,6 +96,7 @@ This is the canonical Traefik OSS approach for per-path middleware — no
 Enterprise license required.
 
 **Files changed:**
+
 - `security-blocks.yml.tmpl`: added `rl-spa`
 - `security-chains.yml.tmpl`: added `sec-2-spa`, `sec-3-spa`; updated table
 - `apps/nocodb/.env.example`: `sec-1` → `sec-3-spa`

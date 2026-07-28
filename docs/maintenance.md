@@ -3,6 +3,7 @@
 This document operates one level above the repository content. It defines **how the project maintains quality over time** — not what the standards are (those live in `docs/standards/`), but when and how they are applied, verified, and kept current.
 
 The repository has three kinds of truth:
+
 - **Standards** — what correct looks like (`docs/standards/`)
 - **State** — what exists right now (files, READMEs, CHANGELOG)
 - **Process** — how state is kept aligned with standards (this document)
@@ -58,6 +59,7 @@ together they are exactly the internal status `baseline-aligned` — see
 onto each other and onto the symbols in the README tables.
 
 **Technical**
+
 1. Image tag pinned — no `latest`, no major-only tags (e.g. `8`, `v2`)
 2. Healthcheck present and verified working
 3. Security baseline met — `no-new-privileges`, network isolation, secrets via Docker Secrets or `_FILE` pattern
@@ -86,6 +88,7 @@ A chain is a defined sequence of files to check and update for a specific trigge
 ---
 
 ### Session Chain
+
 **Trigger**: any work session, regardless of what was changed.
 
 | Step | File | Action |
@@ -98,6 +101,7 @@ A chain is a defined sequence of files to check and update for a specific trigge
 ---
 
 ### App Chain
+
 **Trigger**: new app added, existing app re-verified, or significantly changed.
 
 | Step | File | Action |
@@ -115,6 +119,7 @@ A chain is a defined sequence of files to check and update for a specific trigge
 ---
 
 ### Version Chain
+
 **Trigger**: upstream image has a new release, or a security advisory appears.
 
 | Step | File | Action |
@@ -130,6 +135,7 @@ A chain is a defined sequence of files to check and update for a specific trigge
 ---
 
 ### Standards Chain
+
 **Trigger**: a standard in `docs/standards/` is updated or a new standard is added.
 
 | Step | File | Action |
@@ -143,6 +149,7 @@ A chain is a defined sequence of files to check and update for a specific trigge
 ---
 
 ### Consistency Chain
+
 **Trigger**: before a release, or when the repo has grown significantly.
 
 | Step | File | Action |
@@ -158,6 +165,7 @@ A chain is a defined sequence of files to check and update for a specific trigge
 ---
 
 ### Release Chain
+
 **Trigger**: before tagging a version (`vX.Y.Z`).
 
 Run the full Consistency Chain first, then:
@@ -230,6 +238,7 @@ it-tools (2024.10.22, dormant) · beszel + agent (0.18.7)
 **Operator-owned (you version these — no registry check):** vikunja (local build `vikunja-local`) · acme-certs (`ghcr.io/rubennati/cert-ops-tool`) · seafile / seafile-pro (proprietary).
 
 **Genuinely open — awkward tag scheme, decide before pinning:**
+
 - zammad — Docker Hub uses `X.Y.Z-BUILD` (e.g. `7.1.1-0036`) or floating `7`/`7.1`; pinned `7.0.1`. Pick a scheme.
 - uptime-kuma — `2.4.0` exists but 1.x→2.x is a major transition; verify before leaving `1.23.17`.
 
@@ -271,3 +280,4 @@ One row per session or chain run. The next session starts here — not at the to
 | 2026-07-27 | Session | Coverage checker · `business/` backup docs · v0.8.0 and v0.9.0 preparation | Acted on a status review rather than adding features. **`scripts/ci/check-coverage.py`** closes the pattern behind three blind spots that had surfaced by accident: it enumerates content and asks which checker claims it, instead of asking whether known stacks comply. Verified against both gap classes — a compose-less directory under a stack root and an undeclared top-level directory each produce a FAIL — and it correctly reports `backup/borgmatic` as structure-blind. An earlier version of it missed borgmatic because it keyed on marker filenames; that is the same mistake it exists to catch, so it now treats any tracked file as content. **`business/` backup documentation** filled for all ten stacks from the compose files, taking backup coverage from 7 of 59 to 17. **`docs/host-session-v0.8.0.md`** and **`docs/resource-measurement.md`** added, the latter because v0.9.0 cannot be prepared at a desk — only the method can. `docs/standards/ci.md` documented 4 of 8 jobs and now documents all 8. Two stale ROADMAP claims corrected: the structure checker was listed as not wired into CI, and the Operator Site as pending when its content and deploy pipeline both exist. | **42 stacks still lack a `## Backup` section** — `core/`, `apps/` and the rest. Per category, from the compose file. `Checker coverage` runs but is not in the required set; adding it is a branch-protection setting, not a file here. Invoice Ninja's borgmatic block is written but unusable: the stack keeps its database password in `.env` rather than `.secrets/`. Markdown lint remains the one missing v1.0 CI baseline item. |
 | 2026-07-27 | App | `## Backup` sections — `core/`, `apps/`, `backup/urbackup` | Completed the sweep started with `business/`: 41 further stacks, taking backup documentation from 17 of 59 to 58 of 59. Written from each compose file, so the non-obvious cases are stated rather than inferred — Seafile needs **three** databases dumped (`ccnet_db`, `seafile_db`, `seahub_db`) and backing up only `seafile_db` restores to something that starts and does not work; Nextcloud is the one stack here where maintenance mode genuinely matters, because the file index and the file tree diverge under load; Immich's Postgres carries a vector extension and must be restored into its own image, not a stock one; PhotoPrism's `volumes/storage` is mostly cache but holds sidecar edits that exist nowhere else, so excluding the whole tree is wrong; Vaultwarden's `rsa_key*` files leave every client unable to log in if lost. Several stacks hold their irreplaceable half **outside** the stack directory (`UPLOAD_LOCATION`, `SCAN_DIRECTORY`, `ORIGINALS_PATH`), which is exactly why it gets forgotten. `backup/urbackup` gained a section whose headline is an *exclusion*: `BACKUP_STORAGE_PATH` must not enter borgmatic's sources, or terabytes of already-deduplicated client backups get re-deduplicated into the Borg repository. | **`backup/borgmatic` is `n/a`, not missing** — a backup tool cannot document backing itself up with itself; `lifecycle-report.py` now carries that as a declared exception with its reason, and the column legend explains the marker. `backup/urbackup` still has no restore section: restoring a *client* backup is a real procedure and the one remaining gap in that column. Two `core/` sections had to be relocated after insertion — a "Phase 1: Security Engine" and a "Security System" heading both matched a substring rule and split a setup flow. |
 | 2026-07-27 | Standards | Backup-doc ownership · corrected Vaultwarden deviation | Follow-up to the sweep, prompted by the question why two stacks keep secrets in `.env`. Both have a recorded reason; only one holds. **Invoice Ninja is genuinely upstream-limited** — Laravel has no `_FILE` for most variables including `APP_KEY` and `DB_PASSWORD`, with an entrypoint wrapper recorded as Phase 2. **Vaultwarden's recorded reason was wrong**: `UPSTREAM.md` and the compose comment both claimed no `_FILE` support, which the upstream configuration wiki contradicts. Whether that was wrong when written (2026-06-14) or went stale could not be established — the release notes do not mention the feature and a commit search returned nothing, so the correction states what is confirmed today rather than inventing a history. The genuine obstacle is narrower and now recorded as such: the password sits inside `DATABASE_URL`, so the secret has to carry the whole URL or an entrypoint has to assemble it. **Ownership**: both stacks already had backup procedure in `UPSTREAM.md`, which `lifecycle-report.py` does not read — so both showed as "missing" and the sweep wrote a second copy next to the first. Consolidated into the README, keeping what the older versions had and the sweep did not: Invoice Ninja's `APP_KEY`, without which a restored database cannot be decrypted. New `backup-docs-split` WARN catches the pattern — a backup or restore heading in `UPSTREAM.md` whose body holds a table or a command block, verified by restoring the duplicate and watching it fire. | `apps/vaultwarden` → Docker Secrets is now open work rather than a blocked path, but it changes how a ✅ stack starts and belongs in a host session. `business/invoiceninja` keeps its Phase 2 entrypoint plan. |
+| 2026-07-28 | Standards | Docs QA gate — markdown lint + internal link checker | First phase of a repo-wide quality pass. Baseline was 7,900 markdown findings and no gate at all; the v1.0 CI baseline had listed markdown lint as missing since it was written. Over 7,000 of those findings were two rules arguing with deliberate house conventions (line length, compact table pipes), so the ruleset was tuned to the repository rather than the repository to the ruleset — each disabled rule records the convention it would break. **The lint found a real defect:** a table row in `new-app-checklist.md` whose inline code contained an unescaped pipe, so Markdown read it as a third column and discarded the rest when rendering. The advice that vanished was the trailing-newline fix that `errors.md` lists as a recurring failure. **The auto-fix caused two of its own**, both caught by reading the diff rather than trusting it: a wrapped sentence whose literal `+` was reformatted into a list item, and a numbered list renumbered to `1.` `1.` because an unindented fence split it. Same class in the 121 fence labels — of eighteen classified as `yaml` by first-line heuristic, seventeen were log output. Every one reviewed by hand. New `scripts/ci/check-links.py` validates relative paths and heading anchors offline; external URLs are out of scope because they fail for reasons unrelated to the commit. Both checks verified by introducing the defect they catch. | `Docs QA` runs but is not in the required set — branch protection, not a file here. `--fix` is deliberately **not** run in CI: automatic rewriting of prose needs a human reading the diff, which this session demonstrated twice. Remaining phases: action pinning, Renovate for the `APP_TAG` pins, digest policy + SBOM, Trivy gating. |

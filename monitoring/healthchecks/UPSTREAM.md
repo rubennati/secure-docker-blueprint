@@ -39,16 +39,20 @@ Healthchecks uses semver. Django migrations run on container start.
 
 1. Check [GitHub releases](https://github.com/healthchecks/healthchecks/releases) for breaking changes — especially "Database schema" or "Config changes" sections
 2. Back up the SQLite DB:
+
    ```bash
    docker compose exec app sqlite3 /data/hc.sqlite ".backup '/data/hc.sqlite.backup'"
    cp volumes/data/hc.sqlite.backup /safe/offsite/location/
    ```
+
 3. Bump `APP_TAG` in `.env`
 4. `docker compose pull && docker compose up -d`
 5. Watch logs for migration output:
+
    ```bash
    docker compose logs app --tail 100 --follow
    ```
+
 6. Verify UI loads, existing checks still listed
 
 ### Rollback

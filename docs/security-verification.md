@@ -285,25 +285,30 @@ Based on **OWASP Docker Security Cheat Sheet**.
 #### `ci.yml` — runs on push to `dev`/`main`, PRs to `main`, nightly 03:00 UTC
 
 **Job 1: Secret scan (`gitleaks`)**
+
 - Full git history scan with `fetch-depth: 0`
 - Catches committed credentials, API keys, tokens
 - Configured via `.gitleaks.toml` with one documented historical allowlist entry
 
 **Job 2: Compose syntax validation**
+
 - Runs `docker compose config --quiet` on all 50 compose files
 - Substitutes `.env.example` as `.env` for validation
 - Catches YAML errors and undefined variable references
 
 **Job 3: Structure check**
+
 - Verifies every compose directory has `README.md` and `.env.example`
 - Checks for `:latest` image tags (regex match on uncommented `image:` lines)
 
 **Job 4: Sentinel value check** *(added)*
+
 - Finds any committed `.env` file (not `.env.example`) containing `__REPLACE_ME__`
 - Prevents deployment of unsubstituted configuration values reaching the repository
 - Does **not** cover runtime `.env` files that are gitignored — only committed files
 
 **Job 5: Security baseline (`check-baseline.py`)**
+
 - Parses all compose files as YAML
 - Enforces: `no-new-privileges:true`, no `privileged: true`, no direct Docker socket mount
 - Reports: `network_mode: host`, `pid: host`
@@ -315,12 +320,14 @@ Based on **OWASP Docker Security Cheat Sheet**.
 #### `trivy.yml` — runs on push/PR to `main`, weekly Monday 04:00 UTC *(added)*
 
 **Job 1: IaC misconfiguration scan**
+
 - Scans all repository files with `trivy config`
 - Detects Compose and infrastructure misconfigurations
 - Results uploaded to GitHub Security tab as SARIF
 - Non-blocking (exit-code 0) — informational relative to `check-baseline.py`
 
 **Job 2: Image CVE scan**
+
 - Extracts image references from a curated list of ~11 high-risk compose files
   via `scripts/ci/list-images.sh` (uses `.env.example` + envsubst)
 - Scans each image with Trivy for CRITICAL CVEs (`--ignore-unfixed`)
@@ -333,6 +340,7 @@ Based on **OWASP Docker Security Cheat Sheet**.
 #### `scorecard.yml` — runs on push to `main`, weekly Monday 05:30 UTC *(added)*
 
 **OpenSSF Scorecard**
+
 - Evaluates supply chain security posture: branch protection, dependency review,
   pinned dependencies, code review, vulnerability disclosure, signed releases
 - Results published to `https://api.securityscorecards.dev`
@@ -438,6 +446,7 @@ These require significant design decisions and ongoing commitment.
 ## Summary
 
 **What this repository genuinely provides:**
+
 - Enforced `no-new-privileges` on 100% of services (with documented exceptions)
 - Enforced prohibition on `privileged: true`
 - Enforced Docker socket proxy pattern for all management tools
@@ -450,6 +459,7 @@ These require significant design decisions and ongoing commitment.
 - Responsive disclosure policy
 
 **What this repository does not provide:**
+
 - Vulnerability scanning of any kind
 - Image digest pinning or signing
 - SBOM generation

@@ -70,22 +70,28 @@ tar czf onlyoffice-logs-$(date +%Y%m%d).tgz ./volumes/logs
 
 1. Read the release notes: https://github.com/ONLYOFFICE/DocumentServer/releases
 2. If users are active, disconnect them first:
+
    ```bash
    docker exec ${CONTAINER_NAME_APP} documentserver-prepare4shutdown.sh
    # Wait up to 5 minutes for sessions to close
    ```
+
 3. Bump `APP_TAG` in `.env`
 4. `docker compose pull && docker compose up -d`
 5. First start can take 1–5 minutes (PostgreSQL init or migration). Watch:
+
    ```bash
    docker compose logs app --follow
    # Look for: "ONLYOFFICE Document Server Community Edition vX.Y.Z is up and running"
    ```
+
 6. Verify health:
+
    ```bash
    curl -fsSI https://<APP_TRAEFIK_HOST>/healthcheck   # expect 200
    curl -fsSI https://<APP_TRAEFIK_HOST>/web-apps/apps/api/documents/api.js   # expect 200
    ```
+
 7. Open a `.docx` from Seafile (and Nextcloud if enabled) and confirm:
    - Editor loads in iframe — no `X-Frame-Options` error in the browser console
    - No `Token is invalid` JWT error in the browser console

@@ -38,5 +38,5 @@ Listed with context in [`state.md`](state.md). Nothing proceeds on these until d
 - [ ] `business/invoiceninja` → Docker Secrets via entrypoint wrapper (Phase 2).
       Genuinely upstream-limited: Laravel has no `_FILE` for `APP_KEY`/`DB_PASSWORD`
 - [ ] Decide the `TROUBLESHOOTING.md` / `docs/standards/troubleshooting.md` overlap
-- [ ] Add `Checker coverage` to the required checks in branch protection — the job
-      runs, but nothing blocks on it yet
+- [ ] Add `Checker coverage` and `Docs QA` to the required checks in branch
+      protection — both jobs run, but nothing blocks on them yet

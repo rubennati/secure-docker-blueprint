@@ -37,6 +37,7 @@ LSIO tags track BookStack semver as `version-vXX.XX`. Major bumps may require DB
 
 1. Check BookStack [GitHub releases](https://github.com/BookStackApp/BookStack/releases) — breaking changes and required env-var updates
 2. Back up:
+
    ```bash
    # DB dump
    docker compose exec db sh -c \
@@ -45,12 +46,15 @@ LSIO tags track BookStack semver as `version-vXX.XX`. Major bumps may require DB
    # Attachments / config
    tar czf bookstack-config-$(date +%Y%m%d).tgz volumes/config/
    ```
+
 3. Bump `APP_TAG` in `.env` (keep `version-v` prefix)
 4. `docker compose pull && docker compose up -d`
 5. Watch logs for Laravel migration output:
+
    ```bash
    docker compose logs app --follow
    ```
+
 6. Verify: log in, open an existing page, edit and save, upload image
 
 ### Rollback

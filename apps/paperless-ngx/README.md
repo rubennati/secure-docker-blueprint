@@ -24,7 +24,7 @@ Paperless-ngx drives OCR, classification, and archiving itself; it delegates for
 
 Enable via `COMPOSE_FILE` in `.env`:
 
-```
+```env
 COMPOSE_FILE=docker-compose.yml,sso.yml
 ```
 
@@ -123,7 +123,8 @@ Authentik must be running with an OAuth2/OIDC provider configured for Paperless.
    - Copy the Client ID + Client Secret
 
 2. **In Paperless `.env`:**
-   ```
+
+   ```text
    COMPOSE_FILE=docker-compose.yml,sso.yml
    SSO_PROVIDER_ID=authentik
    SSO_PROVIDER_NAME=Single Sign-On

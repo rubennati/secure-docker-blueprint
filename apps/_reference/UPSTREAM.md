@@ -27,7 +27,7 @@
 
 ## Architecture
 
-```
+```text
 Internet → Traefik (TLS, port 443) → App :PORT
 ```
 

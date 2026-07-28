@@ -190,16 +190,19 @@ Evaluation criteria: self-hosted Docker complexity, SSO/OIDC support, `_FILE` se
 This blueprint is for personal self-hosted infrastructure. The following applies:
 
 **Accepted for self-hosted personal use:**
+
 - MIT, Apache 2.0, BSD — permissive, no conditions on use
 - GPL-2.0 / GPL-3.0 — copyleft applies to distribution, not to running the software
 - AGPL-3.0 — the most common license in this space (Nextcloud, Authentik, Vaultwarden, Zammad). Self-hosting for personal use is explicitly allowed. If you expose the service to others (even within a company), the AGPL requires that you make your modifications available — running unmodified upstream images means no obligation.
 - BSL / Commercial Source — time-limited source-available licenses (e.g. MariaDB BSL). Generally fine for self-hosting; verify the "Change Date" and "Additional Use Grant" per project.
 
 **Requires case-by-case review:**
+
 - Commercial dual-license (e.g. Cal.com AGPL + commercial) — self-hosting is free under the AGPL tier; check if the feature set you need requires the commercial tier
 - Source-available without redistribution rights — usable, but you cannot fork or modify
 
 **Not included in this blueprint:**
+
 - Proprietary closed-source images with no self-hosting rights
 
 Every app documents its license in `UPSTREAM.md`. The ✅ Ready Criteria require this field to be present before an app is marked as ready.

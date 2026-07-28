@@ -32,12 +32,15 @@ COMPOSE_PROJECT_NAME=appname
 ## Section Rules
 
 **COMPOSE_PROJECT_NAME** — always first, no section header:
+
 ```env
 COMPOSE_PROJECT_NAME=wordpress
 ```
+
 This is the single source for container names, network names, and Traefik router names.
 
 **Domain & Traefik** — how the app is exposed:
+
 ```env
 # --- Domain & Traefik ---
 APP_TRAEFIK_HOST=app.example.com
@@ -47,9 +50,11 @@ APP_TRAEFIK_ACCESS=acc-tailscale
 APP_TRAEFIK_SECURITY=sec-3
 TRAEFIK_NETWORK=proxy-public
 ```
+
 This section is second because it's what you change most often per deployment.
 
 **Images** — one tag variable per image, with image name + Docker Hub link as comment:
+
 ```env
 # --- Images ---
 # wordpress (https://hub.docker.com/_/wordpress)
@@ -74,6 +79,7 @@ Infra images: Redis, MariaDB, PostgreSQL, Nginx (reverse-proxy role), ClamAV, Go
 Never `:latest`. Never major-only (e.g. `8`, `v2`, `32`).
 
 **Containers** — derived from COMPOSE_PROJECT_NAME:
+
 ```env
 # --- Containers ---
 CONTAINER_NAME_APP=${COMPOSE_PROJECT_NAME}-app
@@ -81,20 +87,24 @@ CONTAINER_NAME_DB=${COMPOSE_PROJECT_NAME}-db
 ```
 
 **Network** — internal network name, derived from COMPOSE_PROJECT_NAME:
+
 ```env
 # --- Network ---
 NETWORK_INTERNAL=${COMPOSE_PROJECT_NAME}-internal
 ```
 
 **Database** — non-sensitive database config:
+
 ```env
 # --- Database ---
 DB_NAME=wordpress
 DB_USER=wp_user
 ```
+
 Passwords are never here — they go in `.secrets/`.
 
 **App Configuration** — app-specific settings:
+
 ```env
 # --- App Configuration ---
 VW_SIGNUPS_ALLOWED=false
@@ -102,6 +112,7 @@ VW_LOG_LEVEL=warn
 ```
 
 **SMTP** — mail relay configuration:
+
 ```env
 # --- SMTP ---
 VW_SMTP_HOST=smtp.example.com
@@ -110,9 +121,11 @@ VW_SMTP_PORT=587
 VW_SMTP_SECURITY=starttls
 VW_SMTP_USERNAME=
 ```
+
 SMTP passwords go in `.secrets/`, not here.
 
 **Timezone** — near the end, rarely changes:
+
 ```env
 # --- Timezone ---
 # Examples: UTC, Europe/Berlin, Europe/Vienna, America/New_York
@@ -120,6 +133,7 @@ TZ=UTC
 ```
 
 **Secrets** — generation instructions as comments:
+
 ```env
 # --- Secrets ---
 # Create the secrets directory and files:
@@ -127,6 +141,7 @@ TZ=UTC
 #   openssl rand -base64 32 | tr -d '\n' > .secrets/db_pwd.txt
 #   openssl rand -base64 32 | tr -d '\n' > .secrets/db_root_pwd.txt
 ```
+
 This section has no actual variables — only comments that document which secrets to create.
 
 ## Rules

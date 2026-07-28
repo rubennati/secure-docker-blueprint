@@ -47,6 +47,7 @@ docker compose logs app --follow
 ```
 
 The installation wizard asks for:
+
 - Admin username / password (pick a strong password)
 - Company name / email / working hours
 

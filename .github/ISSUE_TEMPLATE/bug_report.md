@@ -23,18 +23,18 @@ What you expected to happen instead.
 ## Which app or component
 
 - App / core service affected: (e.g. `apps/ghost/`, `core/traefik/`)
-- Version / commit / tag: 
+- Version / commit / tag:
 - Branch: main / dev / (other)
 
 ## Environment
 
-- Docker + Compose version: 
-- Host OS + arch: 
-- Relevant env vars (redacted): 
+- Docker + Compose version:
+- Host OS + arch:
+- Relevant env vars (redacted):
 
 ## Logs
 
-```
+```text
 Paste relevant output. Redact real domain names, IPs, tokens, and passwords
 before pasting. No contents of .secrets/ files or .env.
 ```

@@ -18,7 +18,7 @@ There is no DB container in this setup — the image bundles its own PostgreSQL 
 
 Every editing request carries a signed JWT. Both sides — OnlyOffice and the consuming app — must hold the same secret:
 
-```
+```text
 ┌────────────┐      ┌──────────────┐      ┌──────────────┐
 │ Seafile /  │─────▶│ Traefik      │─────▶│ OnlyOffice   │
 │ Nextcloud  │ JWT  │ (TLS + CSP)  │ JWT  │ (verify)     │
@@ -72,7 +72,7 @@ cp .secrets/jwt_secret.txt ../../apps/nextcloud/.secrets/onlyoffice_jwt_secret.t
 
 Then configure that app to point at:
 
-```
+```text
 https://<APP_TRAEFIK_HOST>/web-apps/apps/api/documents/api.js
 ```
 

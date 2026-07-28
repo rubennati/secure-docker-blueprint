@@ -92,4 +92,5 @@ against the unsubscribe log before the first send following a restore.
 ## Integration with n8n
 
 For event-driven flows (new subscriber → CRM row, unsubscribe → alert):
+
 - Admin UI → Settings → Webhook events → point at `https://n8n.example.com/webhook/<path>`

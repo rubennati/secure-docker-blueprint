@@ -63,6 +63,7 @@ ranges (the same list already in `traefik.yml.tmpl`), drop the rest. This overla
 Phase 3 firewall bouncer — see [`core/crowdsec/docs/firewall-bouncer.md`](../../../core/crowdsec/docs/firewall-bouncer.md).
 
 **Also — don't leak the origin IP:**
+
 - No unproxied (grey-cloud) record pointing at the same origin (a `direct.` or old `www.` A record undoes everything).
 - Check DNS history and mail records — an `MX`/`autodiscover` on the same host can expose the IP.
 - If the IP was ever public before Cloudflare, consider changing it.
@@ -94,13 +95,13 @@ while provider webhooks stay open so calendars/Teams/Zoom keep syncing.
 
 > **Why not the whole host:** Google Calendar push, Microsoft Graph, and Zoom webhooks are
 > server-to-server from **US/global** provider infrastructure. Blocking the whole host to DACH
-> would 403 those callbacks and break sync. So geo-gate the human paths and **exclude the webhook
-> + auth paths.**
+> would 403 those callbacks and break sync. So geo-gate the human paths and
+> **exclude the webhook and auth paths.**
 
 **WAF → Custom rules.** Build in the dashboard (use the "Country" field from the dropdown so you
 don't have to hand-type the expression field name). Equivalent expression:
 
-```
+```text
 (http.host eq "cal.<domain>")
   and (not ip.geoip.country in {"AT" "DE" "CH"})
   and not starts_with(http.request.uri.path, "/api/integrations")

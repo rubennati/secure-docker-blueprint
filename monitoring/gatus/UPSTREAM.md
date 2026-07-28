@@ -29,6 +29,7 @@
 ## Configuration
 
 Gatus is config-file driven. Edit `config/config.yaml` for:
+
 - **Endpoints**: services to monitor (HTTP, TCP, DNS, ICMP)
 - **Alerting**: Slack, email, PagerDuty, Telegram integrations
 - **Conditions**: response time, status codes, body content

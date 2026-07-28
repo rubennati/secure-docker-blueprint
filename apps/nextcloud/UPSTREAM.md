@@ -75,6 +75,7 @@ docker compose exec -u www-data app php occ config:system:set default_phone_regi
 ```
 
 Remaining warnings that are safe to ignore:
+
 - `.well-known URLs` — CalDAV/CardDAV redirect works via Traefik middleware, Nextcloud self-check doesn't detect it
 - `X-Frame-Options` — Set by nginx, Nextcloud checks its own headers
 - `Second factor` — Enable later when needed

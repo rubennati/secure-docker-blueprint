@@ -269,7 +269,7 @@ New here? Start with the area that best matches your goal: [Core Infrastructure]
 
 ## Project Structure
 
-```
+```text
 secure-docker-blueprint/
 │
 ├── core/                        # Infrastructure (always needed)
@@ -325,7 +325,7 @@ secure-docker-blueprint/
 
 Every app follows the same structure:
 
-```
+```text
 apps/example/
 ├── docker-compose.yml           # Standardized block order
 ├── .env.example                 # All variables with placeholders

@@ -103,10 +103,12 @@ with it; a queue restored mid-flight simply retries.
 
 - **Icon 404s in browser console** — `/api/_nuxt_icon/ix.json` and `heroicons.json` return 404. This is an upstream OpnForm issue: the icon proxy path gets routed to the Laravel API instead of the Nuxt icon server. Cosmetic only — the app works normally.
 - **Storage bind mount permissions** — on first start the api entrypoint runs `chown -R www-data:www-data /usr/share/nginx/html/storage`. If permissions fail, fix with:
+
   ```bash
   docker compose exec api chown -R www-data:www-data /usr/share/nginx/html/storage
   docker compose exec api chmod -R 775 /usr/share/nginx/html/storage
   ```
+
 - **Startup 502s in UI logs** — on first start the Nuxt SSR makes internal requests to `http://nginx/api` while the API is still initialising. These resolve once the API healthcheck passes (~60 seconds). Not an error.
 - **`DB_PWD_INLINE` duplicates the DB password** — OpnForm's Laravel config reads `DB_PASSWORD` from env only. Postgres uses `POSTGRES_PASSWORD_FILE`; the API needs the same value inline.
 - **Queue worker required for async features** — email notifications, webhook integrations, and file processing are handled by `api-worker`. If it's not running, those features silently fail.

@@ -82,9 +82,11 @@ database. `volumes/data` matters for invoice output, not for the tracked time.
 ## Integration with Invoice Ninja
 
 Kimai exports timesheets as CSV/JSON per project. Typical flow:
+
 1. Team tracks time in Kimai
 2. End of month: Admin → Export → Invoice Ninja
 3. Invoice Ninja generates the actual invoice
 
 Via n8n for automation:
+
 - Kimai webhook (Admin → Webhooks) → n8n → Invoice Ninja API

@@ -40,18 +40,22 @@ LibrePhotos publishes weekly builds under `latest`. Major DB upgrades are handle
 
 1. Check [LibrePhotos releases](https://github.com/LibrePhotos/librephotos/releases)
 2. Back up:
+
    ```bash
    docker compose exec -T db sh -c \
      'pg_dump --clean --if-exists -U "$POSTGRES_USER" "$POSTGRES_DB"' \
      > librephotos-db-$(date +%Y%m%d).sql
    tar czf librephotos-media-$(date +%Y%m%d).tgz volumes/protected_media/
    ```
+
 3. Bump `APP_TAG` and/or `DB_TAG` in `.env`
 4. `docker compose pull && docker compose up -d`
 5. Watch for Django migrations and Postgres auto-upgrade output:
+
    ```bash
    docker compose logs --follow
    ```
+
 6. Verify: log in, browse timeline, run a face-recognition job, open the map view (if `MAPBOX_API_KEY` set)
 
 ### Rollback

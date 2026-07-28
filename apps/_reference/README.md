@@ -11,9 +11,11 @@ Two ways to use it:
 
 1. **Starting a new app** — copy it, then replace the stand-in images and delete
    what the app does not need:
+
    ```bash
    cp -r apps/_reference apps/my-app
    ```
+
 2. **Checking an existing app** — diff your app's files against these and close
    the gaps. When a pattern here changes, existing apps get realigned to it.
 

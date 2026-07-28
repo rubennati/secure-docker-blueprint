@@ -149,7 +149,7 @@ If you don't use the app store or update checks, you can harden the setup by add
 
 `nginx` carries two middlewares in addition to access + security chains:
 
-```
+```text
 ${COMPOSE_PROJECT_NAME}-dav@docker,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file
 ```
 
@@ -224,6 +224,7 @@ The default Nextcloud Docker image ships with `pm.max_children=5`. On this serve
 `php-fpm/zz-nextcloud-pool.conf` overrides the pool to `pm.max_children=10`. This file is mounted read-only into both `app` and `cron`. It is loaded after the image's own `zz-docker.conf` (alphabetical order: `zz-nextcloud-pool.conf` > `zz-docker.conf`) so it takes precedence. See the file itself for the full sizing calculation.
 
 **Verify the mount path before restarting:**
+
 ```bash
 docker compose exec app ls /usr/local/etc/php-fpm.d/
 # Expected: docker.conf  www.conf  zz-docker.conf  zz-nextcloud-pool.conf
@@ -298,7 +299,7 @@ When a user opens a folder containing PDFs, Nextcloud requests a thumbnail for e
 
 Observed log signatures:
 
-```
+```text
 # Nextcloud log (nextcloud.log or occ log:watch)
 app: onlyoffice
 message: getConvertedUri: from pdf to jpeg
@@ -348,6 +349,7 @@ docker compose exec -u www-data app php occ config:system:get enable_previews
 ```
 
 This disables all thumbnail generation regardless of which preview providers are configured. Appropriate when:
+
 - Users share and edit documents but do not rely on image gallery or thumbnail views
 - Stability is more important than visual previews
 - The deployment is primarily used for team folders and document collaboration
@@ -391,7 +393,8 @@ docker compose exec -u www-data app php occ log:watch
 ```
 
 Look for:
-```
+
+```yaml
 app: onlyoffice
 getConvertedUri: from pdf to jpeg
 ```
@@ -400,7 +403,7 @@ If this appears when users open folders, the problem is OnlyOffice preview gener
 
 **Step 4 — Check the OnlyOffice / nginx log for converter timeouts.**
 
-```
+```text
 POST /converter?shardKey=thumb_...
 upstream timed out while reading response header from upstream
 whole request cycle timeout: 2m

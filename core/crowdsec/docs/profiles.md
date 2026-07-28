@@ -17,7 +17,7 @@ See [§ Implemented vs deferred](#implemented-vs-deferred) for the exact status.
 Every app router in this blueprint composes its middleware from independent layers.
 Two exist today and are set per app via `.env`:
 
-```
+```text
 traefik.http.routers.<app>.middlewares = ${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file
                                           └─── WHO ───┘            └──── WHAT ────┘
 ```
@@ -31,7 +31,7 @@ traefik.http.routers.<app>.middlewares = ${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFI
 CrowdSec is a **third, independent axis** — not a new `sec-N` level and not part of
 the `acc-*` policy. A protected public app composes all three:
 
-```
+```text
 crowdsec-basic@file, acc-public@file, sec-3@file
 └── reject banned IPs ──┘ └─ access ─┘ └─ headers/rl ─┘
 ```
@@ -101,6 +101,7 @@ a CrowdSec-plugin mechanism — see below.
 | `geo-dach` / `geo-eu` | country allowlist (edge/geo plugin) | n/a | allowlist | depends on mechanism | High | Deferred — not plugin-native |
 
 ### `crowdsec-basic`
+
 - **Purpose:** reject IPs CrowdSec has already decided are malicious (scenario bans + community blocklist + any manual/country decisions).
 - **Intended for:** any public-facing app once validated on whoami — the standard first production profile. Pairs naturally with `acc-public` + `sec-3`.
 - **Blocks:** requests from IPs with an active LAPI decision → HTTP 403. No request-body inspection.
@@ -110,6 +111,7 @@ a CrowdSec-plugin mechanism — see below.
 - **When not to use:** VPN-only apps (`acc-tailscale`) gain little — the access policy already restricts the source to trusted peers.
 
 ### `crowdsec-appsec` (deferred)
+
 - **Purpose:** `crowdsec-basic` **plus** synchronous WAF inspection of each request (SQLi, XSS, path traversal, virtual patches) via the AppSec engine.
 - **Intended for:** public apps whose traffic has been tested against the WAF and shown clean — after the engine is confirmed reachable from Traefik.
 - **Blocks:** banned IPs **and** individual requests matching a WAF rule. AppSec blocks the request without creating an IP ban (see [appsec.md](appsec.md)).
@@ -117,12 +119,14 @@ a CrowdSec-plugin mechanism — see below.
 - **When not to use:** apps with known WAF false positives until per-path exclusions are written — Nextcloud WebDAV, Paperless/Seafile/WordPress uploads, Authentik SAML, Invoice Ninja webhooks (full table in [appsec.md](appsec.md)).
 
 ### `crowdsec-strict` (deferred)
+
 - **Purpose:** maximum HTTP enforcement — `crowdsec-appsec` with **fail-closed** AppSec.
 - **Intended for:** high-value apps where a failed WAF should be treated as an incident, **and only** with a proven out-of-band recovery path.
 - **Failure mode:** **fail-closed** — if AppSec errors or is unreachable, every request returns 403. A CrowdSec restart race can cut all traffic on that router.
 - **When not to use:** anything without a Tailscale/LAN/console recovery path; any app not first run for days under `crowdsec-appsec` (fail-open) without incident.
 
 ### `geo-dach` / `geo-eu` (deferred, not plugin-native)
+
 - **Purpose:** restrict an app to DACH or EU client geographies (allowlist).
 - **Why deferred:** the CrowdSec plugin cannot express a per-app geo allowlist. CrowdSec geo is global, IP/country-scoped, and **blocklist**-only (ban country X for the whole stack — [geoblocking.md](geoblocking.md)). Allowlisting "only DACH/EU" would mean blocklisting every other country, globally — impractical and not per app.
 - **Candidate mechanisms (open decision):**
@@ -171,9 +175,11 @@ nothing here is committed.**
 2. **Keep AppSec disabled** for first validation (`crowdsec-basic` already does).
 3. **Attach `crowdsec-basic@file` to the whoami router only**, as the **first**
    middleware — a local label edit, not committed:
-   ```
+
+   ```text
    ...middlewares=crowdsec-basic@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file
    ```
+
    whoami defaults to `acc-tailscale`, so the test request must actually reach it:
    test from a Tailscale-connected device, or set `APP_TRAEFIK_ACCESS=acc-public`
    on whoami **for the test only**.
@@ -181,12 +187,14 @@ nothing here is committed.**
    a recent "Last API pull" (within ~60 s).
 5. **Ban a test IP — never your admin IP.** Use a second device/IP you control
    (phone on cellular, a VPS) that is **not** your Tailscale/LAN admin path:
+
    ```bash
    docker exec crowdsec cscli decisions add --ip <TEST_IP> --duration 3m --reason whoami-validate
    sleep 65   # stream mode polls every 60 s
    # From <TEST_IP>, whoami must return 403. From your admin path, it must still load.
    docker exec crowdsec cscli decisions delete --ip <TEST_IP>
    ```
+
 6. **Validate rollback:** remove `crowdsec-basic@file` from whoami (and restore
    `acc-tailscale` if changed), `docker compose up -d --force-recreate`. The plugin
    and profile stay loaded; whoami simply stops using them.

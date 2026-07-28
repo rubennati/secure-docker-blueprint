@@ -137,7 +137,7 @@ so browsers are permitted to embed the editor in an iframe. This is a CSP `frame
 directive — any origin not listed is rejected by the browser even if the JWT is valid.
 See `core/onlyoffice/.env.example` for the format:
 
-```
+```env
 ONLYOFFICE_ALLOWED_ORIGINS=https://files.example.com
 ```
 

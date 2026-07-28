@@ -32,6 +32,7 @@ nano .env
 ```
 
 Set these values:
+
 - `APP_TRAEFIK_HOST` — your domain (e.g. `vault.example.com`)
 - `VW_SIGNUPS_ALLOWED=true` — temporarily for first user creation
 
@@ -69,6 +70,7 @@ docker run --rm -it vaultwarden/server:1.37.0 /vaultwarden hash
 Enter a strong password when prompted. Copy the `$argon2id$...` output.
 
 **In .env:** Replace every `$` with `$$` (Docker Compose escaping), then paste:
+
 ```env
 VW_ADMIN_TOKEN=$$argon2id$$v=19$$m=65540,t=3,p=4$$...your-hash...
 ```
@@ -121,6 +123,7 @@ Push improves real-time sync on mobile and browser extensions. It is **not requi
 3. Set in `.env`:
 
    **Global host** (default — leave relay URIs empty):
+
    ```env
    VW_PUSH_ENABLED=true
    VW_PUSH_INSTALLATION_ID=your-id
@@ -128,6 +131,7 @@ Push improves real-time sync on mobile and browser extensions. It is **not requi
    ```
 
    **EU host** (must set relay URIs — EU credentials without EU URIs cause token errors):
+
    ```env
    VW_PUSH_ENABLED=true
    VW_PUSH_INSTALLATION_ID=your-eu-id
@@ -221,7 +225,7 @@ If `/admin` returns an error in the normal browser but works in Incognito, clear
 
 If **Admin → Diagnostics** shows:
 
-```
+```text
 2FA Connector calls: Header 'x-frame-options' is present while it should not
 ```
 

@@ -11,10 +11,12 @@ Remote Docker agent for [Portainer](../portainer/). Runs on each additional host
 > If you don't want that extra exposure, use [Dockhand + Hawser](../hawser/) instead — equivalent multi-host capability without opening additional ports.
 
 **When you need this:**
+
 - Portainer runs on Host A, you want to manage Docker on Host B, C, D from the same UI
 - You already picked Portainer as your UI and need to scale beyond one host
 
 **When you don't need this:**
+
 - Portainer and Docker are on the same host → [`core/portainer/`](../portainer/) alone is enough
 - You haven't committed to Portainer yet → Dockhand + Hawser is the cleaner multi-host path
 
@@ -76,6 +78,7 @@ docker compose logs -f
 - Agent log shows `Connected` — no `connection refused` loop
 - Central Portainer UI → Environments: the new environment shows as `Connected` within ~30 seconds
 - From another host on the same Tailnet:
+
   ```bash
   # Tailscale interface reachable
   curl --connect-timeout 3 http://<central-tailscale-ip>:8000
@@ -89,6 +92,7 @@ docker compose logs -f
 Only if Edge Mode doesn't fit — e.g. central Portainer has no internet egress. Agent listens on port 9001, central Portainer connects inbound with a shared secret.
 
 See the `docker-compose.yml` comments for the switch. You'll need to:
+
 - Swap environment variables to `AGENT_SECRET` + port 9001 mapping
 - Expose port 9001 only on a trusted interface (Tailscale, private LAN)
 

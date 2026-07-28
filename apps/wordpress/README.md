@@ -56,6 +56,7 @@ Three realistic scenarios. Pick the one that fits the site:
 **Scenario C** is for management tools like MainWP that should never be public.
 
 When wp-admin is behind Tailscale or Authentik (Scenario B/C), these plugins are redundant:
+
 - WPS Hide Login — login URL is already unreachable
 - WPS Limit Login — no brute-force possible, Traefik + CrowdSec handle rate limiting
 - Cloudflare Turnstile — no bots reach the login page
@@ -129,6 +130,7 @@ This makes it significantly harder for scanners and bots to detect WordPress or 
 ## .htaccess Hardening
 
 A security template is provided in `config/apache/.htaccess-security`. It blocks:
+
 - PHP execution in `/wp-content/uploads/` (prevents uploaded shells)
 - Direct access to `wp-config.php`, `.htaccess`, `readme.html`
 - Directory listing

@@ -44,6 +44,7 @@
 
 1. Check [PhotoPrism release notes](https://docs.photoprism.app/release-notes/) — PhotoPrism ships frequent breaking changes on `latest`
 2. Back up:
+
    ```bash
    # DB dump
    docker compose exec db sh -c \
@@ -52,12 +53,15 @@
    # Storage (sidecars, cache, settings)
    tar czf photoprism-storage-$(date +%Y%m%d).tgz volumes/storage/
    ```
+
 3. Bump `APP_TAG` in `.env` (consider pinning to a dated tag)
 4. `docker compose pull && docker compose up -d`
 5. Watch logs:
+
    ```bash
    docker compose logs app --follow
    ```
+
 6. Verify: log in, browse library, trigger a rescan, confirm face-recognition still works
 
 ### Rollback

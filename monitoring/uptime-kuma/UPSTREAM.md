@@ -36,9 +36,11 @@
 
 1. Check [Uptime Kuma releases](https://github.com/louislam/uptime-kuma/releases)
 2. Back up:
+
    ```bash
    cp -r volumes/data/ uptime-kuma-backup-$(date +%Y%m%d)/
    ```
+
 3. Bump `APP_TAG` in `.env`
 4. `docker compose pull && docker compose up -d`
 5. Verify: monitors are active, notification channels functional

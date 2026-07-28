@@ -49,7 +49,7 @@ docker compose up -d
 
 Example interactive session:
 
-```
+```text
 Certificate Wizard
 ==================
 
@@ -103,7 +103,7 @@ docker compose exec \
 
 Certificates are exported to `./volumes/output/<domain>/`:
 
-```
+```text
 volumes/output/example.com/
 ├── cert.pem          # Server certificate
 ├── fullchain.pem     # Server cert + intermediate CA

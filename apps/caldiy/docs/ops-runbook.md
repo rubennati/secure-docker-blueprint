@@ -16,12 +16,15 @@ Before `docker compose up`:
 - [ ] `APP_TRAEFIK_HOST` set to the deployment hostname
 - [ ] SMTP variables set (`EMAIL_FROM`, `EMAIL_SERVER_HOST`, `EMAIL_SERVER_PORT`, `EMAIL_SERVER_USER`)
 - [ ] VAPID keypair generated:
+
   ```bash
   docker run --rm node:lts-alpine npx --yes web-push generate-vapid-keys
   ```
+
   - Public key → `VAPID_PUBLIC_KEY` in `.env`
   - Private key → `.secrets/vapid_private_key.txt`
 - [ ] All `.secrets/*.txt` generated fresh (never copied from a previous instance):
+
   ```bash
   mkdir -p .secrets volumes/postgres volumes/redis
   openssl rand -hex 32 > .secrets/db_pwd.txt
@@ -31,6 +34,7 @@ Before `docker compose up`:
   touch .secrets/smtp_password.txt          # write SMTP password here
   touch .secrets/vapid_private_key.txt      # write VAPID private key here
   ```
+
 - [ ] SMTP password written to `.secrets/smtp_password.txt` (use a dedicated credential — see §4)
 - [ ] `docker compose config` shows no undefined variables and no warnings
 - [ ] `docker compose up -d`
@@ -45,27 +49,35 @@ Before `docker compose up`:
 After the first successful deployment:
 
 - [ ] Confirm no secret values appear in `docker inspect`:
+
   ```bash
   docker inspect caldiy-app | grep -E 'VAPID_PRIVATE|SMTP|NEXTAUTH_SECRET|ENCRYPTION_KEY|CRON_API'
   # Expected: empty output
   ```
+
 - [ ] Confirm `cap_drop: ALL` is enforced on all three containers:
+
   ```bash
   docker inspect caldiy-app | grep -A2 CapDrop
   docker inspect caldiy-db  | grep -A2 CapDrop
   docker inspect caldiy-redis | grep -A2 CapDrop
   # Expected: "CapDrop": ["ALL"] on all three
   ```
+
 - [ ] Confirm Redis filesystem is read-only:
+
   ```bash
   docker exec caldiy-redis touch /test-write
   # Expected: touch: /test-write: Read-only file system
   ```
+
 - [ ] Confirm DB and Redis are not reachable from outside the internal network:
+
   ```bash
   docker inspect caldiy-db | grep -A5 '"Ports"'
   # Expected: no port mappings (empty Ports object)
   ```
+
 - [ ] Disable public self-registration if Cal.diy supports it (check `NEXT_PUBLIC_DISABLE_SIGNUP`
   or admin settings panel — pending source-code review of the fork)
 - [ ] Set `deploy.resources` memory limits after 24–48 hours of normal usage (measure with
@@ -158,7 +170,7 @@ docker compose restart app
 
 Use this procedure when the SMTP credential may have been compromised, or during planned rotation.
 
-```
+```text
 Step 1 — Revoke at the provider immediately.
   Do not wait until after deployment. Log in to the SMTP provider and revoke the
   current credential now. Any email sent with the old credential after this point
@@ -184,6 +196,7 @@ Step 6 — Confirm the old credential is rejected.
 ```
 
 **Monitoring after rotation:**
+
 - Check the provider dashboard daily for send volume
 - Expected baseline: roughly `N bookings × 2 emails` per day
 - Investigate immediately if volume is unexpectedly higher
@@ -214,6 +227,7 @@ full upgrade and rollback procedure.
 ## 6. CrowdSec verification — Phase 2
 
 > **Phase 2 prerequisites — do not attempt until all of the following are true:**
+>
 > - `core/crowdsec/` engine healthy: `docker exec crowdsec cscli lapi status`
 > - Traefik access log filter expanded to `200-599` in `core/traefik/ops/templates/traefik.yml.tmpl`
 >   (re-render required: `./ops/scripts/render.sh && docker compose restart traefik`)
@@ -223,16 +237,21 @@ full upgrade and rollback procedure.
 **Phase 2 verification checklist:**
 
 - [ ] Bouncer is actively pulling decisions:
+
   ```bash
   docker exec crowdsec cscli bouncers list
   # Expected: traefik-bouncer with a recent "Last API pull" timestamp (within 60 s)
   ```
+
 - [ ] Access log is capturing Cal.diy requests:
+
   ```bash
   docker exec crowdsec cscli metrics show acquisition
   # Expected: lines_parsed increases when Cal.diy is browsed
   ```
+
 - [ ] End-to-end ban test:
+
   ```bash
   docker exec crowdsec cscli decisions add \
     --ip <your-ip> --duration 3m --reason phase2-verify
@@ -241,15 +260,21 @@ full upgrade and rollback procedure.
   docker exec crowdsec cscli decisions delete --ip <your-ip>
   # Confirm access is restored
   ```
+
 - [ ] Weekly: review active decisions
+
   ```bash
   docker exec crowdsec cscli decisions list
   ```
+
 - [ ] Weekly: review detected threats
+
   ```bash
   docker exec crowdsec cscli alerts list
   ```
+
 - [ ] Monthly: update hub parsers and scenarios
+
   ```bash
   docker exec crowdsec cscli hub update && docker exec crowdsec cscli hub upgrade
   ```
@@ -264,15 +289,19 @@ change within seconds.
 ### Step 1 — Block all traffic
 
 In `apps/caldiy/.env`, change:
-```
+
+```env
 APP_TRAEFIK_ACCESS=acc-public
 ```
+
 to:
-```
+
+```env
 APP_TRAEFIK_ACCESS=acc-deny
 ```
 
 Then force Traefik to read the updated container labels:
+
 ```bash
 docker compose up -d --force-recreate app
 ```
@@ -291,6 +320,7 @@ docker compose logs db  --tail 100 > incident-db-$(date +%Y%m%d%H%M).log
 ```
 
 If CrowdSec is running:
+
 ```bash
 docker exec crowdsec cscli alerts list    > incident-cs-alerts-$(date +%Y%m%d%H%M).txt
 docker exec crowdsec cscli decisions list > incident-cs-decisions-$(date +%Y%m%d%H%M).txt
@@ -304,6 +334,7 @@ remaining secrets as root-cause analysis warrants.
 ### Step 5 — Restore access
 
 After root-cause is understood and all affected secrets rotated:
+
 ```bash
 # Revert .env
 APP_TRAEFIK_ACCESS=acc-public
@@ -317,6 +348,7 @@ docker compose up -d --force-recreate app
 See [UPSTREAM.md](../UPSTREAM.md) → "Upgrade checklist" and "Rollback" for the full procedure.
 
 Key points:
+
 - Back up the database before every upgrade (§5)
 - Prisma migrations are forward-only — rollback requires restoring the DB dump
 - Watch `docker compose logs app --follow` after every upgrade for migration errors

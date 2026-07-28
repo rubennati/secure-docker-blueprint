@@ -45,6 +45,7 @@ Seafile 13's schema migrations are forward-only. Back up before upgrading.
 
 1. Read the changelog for the target version: https://manual.seafile.com/13.0/changelog/server-changelog/
 2. Back up:
+
    ```bash
    # Database
    docker compose exec db sh -c \
@@ -53,12 +54,15 @@ Seafile 13's schema migrations are forward-only. Back up before upgrading.
    # Data volume
    tar czf seafile-data-$(date +%Y%m%d).tgz ./volumes/seafile-data
    ```
+
 3. Bump `APP_IMAGE` (and the related `*_IMAGE` tags) in `.env`
 4. `docker compose pull && docker compose up -d`
 5. Watch startup:
+
    ```bash
    docker compose logs seafile --follow
    ```
+
    Expect schema migration output on the first start after the bump.
 6. Verify: log in, upload/download a file, open an existing SeaDoc doc.
 

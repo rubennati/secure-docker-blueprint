@@ -60,6 +60,7 @@ a release.
 | "live testing" phrasing in `UPSTREAM.md` | "Gotchas found during live testing (v6.2.0)" | Neutral phrasing (e.g. "Known gotchas (v6.2.0)") per repo status-language convention |
 
 **Acceptance:**
+
 - [ ] `UPSTREAM.md` matches the cal.forte branch/governance model, no stale `calcom/cal.diy` upstream naming
 - [ ] `APP_TAG` pinned to a reviewed tag/digest that actually exists; `.env.example` + `README.md` consistent
 - [ ] `docker compose config` clean
@@ -119,6 +120,7 @@ exfiltrate outbound) rather than break integrations. An egress allowlist proxy i
 later step, out of scope for this phase.
 
 **Acceptance:**
+
 - [ ] Signup disabled, verified in the UI (registration returns disabled/404)
 - [ ] Memory limits set on all three services; app stable for 24–48h
 - [ ] Surface inventory table filled in and committed
@@ -156,6 +158,7 @@ false`, `crowdsecAppsecUnreachableBlock: false`). Never fail-closed without a pr
 recovery path.
 
 **Acceptance:**
+
 - [ ] `cscli bouncers list` shows a recent pull; whoami ban test passes and rolls back cleanly
 - [ ] `crowdsec-basic` attached to Cal.diY; end-to-end ban test returns 403 from a test IP, admin path unaffected
 - [ ] (later) AppSec reachable, false-positive-tested on Cal.diY traffic, fail-open confirmed
@@ -204,6 +207,7 @@ and would get 403 → sync falls back to polling or breaks. Keep webhook/callbac
 that does not depend on the geo rule, so you are never locked out from abroad.
 
 **Acceptance:**
+
 - [ ] Cloudflare proxy confirmed in front (cloudflare.md §0); origin locked to Cloudflare (cloudflare.md §1)
 - [ ] Human paths return 403/challenge from a non-allowed country (test via VPN exit); booking + login work from DACH/EU
 - [ ] A provider webhook (e.g. calendar push) still reaches `/api/integrations/*/webhook` from outside DACH

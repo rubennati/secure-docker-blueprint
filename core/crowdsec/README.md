@@ -10,7 +10,7 @@ CrowdSec analyzes Traefik access logs, detects threats (brute force, CVE probes,
 
 Three independent components. The Engine parses logs and decides; the two bouncers enforce at different network layers.
 
-```
+```text
                       Internet
                          │
                          ▼
@@ -239,15 +239,19 @@ The command prints the key once — save it immediately.
 2. Declare the plugin in `ops/templates/traefik.yml.tmpl` under `experimental.plugins`.
 3. Uncomment the `crowdsec-basic` middleware block in `ops/templates/dynamic/integrations.yml.tmpl`.
 4. Render the templates and restart Traefik:
+
    ```bash
    cd ../traefik
    ./ops/scripts/render.sh
    docker compose up -d --force-recreate traefik
    ```
+
 5. **Required, not optional — do this before verifying.** Add `crowdsec-basic@file` as the **first** middleware on the router. The plugin loading successfully (steps 1–4) does not make the bouncer do anything by itself: its polling loop only starts once the middleware is actually attached to a router's request path. Skip this step and `cscli bouncers list` will never show a `Last API pull` — no error anywhere, it just silently never starts. See [`docs/bugfixes/traefik-crowdsec-plugin-2026-04-20.md`](../../docs/bugfixes/traefik-crowdsec-plugin-2026-04-20.md) "Bug #3" if this happens. Start with `core/whoami` — see [docs/profiles.md](docs/profiles.md) "whoami-first validation". Example label:
+
    ```yaml
    - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=crowdsec-basic@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
    ```
+
    ```bash
    cd ../whoami   # or whichever app you edited
    docker compose up -d --force-recreate

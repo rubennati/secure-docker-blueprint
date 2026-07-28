@@ -249,7 +249,7 @@ docker compose up -d
 
 Create an `OAuth2/OpenID Provider` in Authentik, point the target app at:
 
-```
+```text
 https://<APP_TRAEFIK_HOST>/application/o/<application-slug>/
 ```
 

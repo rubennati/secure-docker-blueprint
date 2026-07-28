@@ -59,7 +59,7 @@ Edit `seahub_custom.py` instead to keep changes under version control.
 Seafile services (Python, Go, bash-based) don't consistently support Docker's
 `_FILE` convention for reading secrets. Our shared entrypoint solves this:
 
-```
+```text
 ┌─────────────────────────────────────────────────┐
 │ Docker starts container                          │
 │                                                  │

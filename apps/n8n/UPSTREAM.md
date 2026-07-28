@@ -38,15 +38,19 @@
 
 1. Check [n8n releases](https://github.com/n8n-io/n8n/releases) — minor bumps can contain breaking changes to nodes and workflows
 2. Back up:
+
    ```bash
    tar czf n8n-data-$(date +%Y%m%d).tgz volumes/data/
    ```
+
 3. Bump `APP_TAG` in `.env` (pin to a specific release)
 4. `docker compose pull && docker compose up -d`
 5. Watch logs:
+
    ```bash
    docker compose logs app --follow
    ```
+
 6. Verify: log in, open a workflow, trigger a manual execution, confirm credentials still decrypt (encryption key unchanged)
 
 ### Rollback

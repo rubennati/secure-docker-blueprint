@@ -78,7 +78,7 @@ git log -1 --pretty=%B | grep -iE "ä|ö|ü|ß|und|für|nach|mit|auch|bei|oder" 
 
 Conventional-style, English, scope-first:
 
-```
+```text
 <scope>: <short description (max 72 chars)>
 
 <optional body with details>
@@ -114,7 +114,7 @@ Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
 
 ## Branch Model
 
-```
+```text
 main       ← stable, tested, public
 │
 └─ dev     ← active work, merges into main after test

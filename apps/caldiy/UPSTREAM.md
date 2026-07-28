@@ -86,13 +86,16 @@ When upstream releases a new version, follow the fork's `UPSTREAM_SYNC.md` + `SE
    - `git checkout release && git pull && git tag v6.2.0-5 && git push origin v6.2.0-5` → image built automatically
    - Fork release tags carry a `-N` suffix (`v6.2.0-4`, `v6.2.0-5`, …) so a fork rebuild is distinct from the upstream base version
 3. Back up before upgrading:
+
    ```bash
    docker compose exec db sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' \
      > caldiy-$(date +%Y%m%d).sql
    ```
+
 4. Bump `APP_TAG` in `.env` to the new reviewed tag (or pin the digest — see `.env.example`)
 5. `docker compose pull && docker compose up -d`
 6. Watch Prisma migrations on first boot:
+
    ```bash
    docker compose logs app --follow
    ```
@@ -135,11 +138,14 @@ characters — all of which break `pg-connection-string`'s URL parser, causing `
 **Workaround (applied in this blueprint):**
 
 1. Generate the DB password with hex instead of base64 to avoid special characters entirely:
+
    ```bash
    openssl rand -hex 32 > .secrets/db_pwd.txt
    ```
+
 2. The custom `config/entrypoint.sh` additionally URL-encodes the password before building
    `DATABASE_URL`, so it is safe with any generator:
+
    ```sh
    _enc_pwd="$(printf '%s' "${_raw_pwd}" | sed 's/%/%25/g; s/+/%2B/g; s|/|%2F|g; s/=/%3D/g')"
    ```
@@ -156,9 +162,11 @@ which fails the default curl-based healthcheck.
 **Workaround (applied in this blueprint):**
 
 The healthcheck uses wget with an HTTP status grep plus a TCP fallback:
+
 ```yaml
 test: ["CMD-SHELL", "wget -qO/dev/null http://127.0.0.1:3000/api/health 2>&1 | grep -q '200\\|301\\|302' || nc -z 127.0.0.1 3000"]
 ```
+
 This reports the container healthy as long as port 3000 accepts connections, which is the correct signal.
 
 **Upstream status:** reported to [rubennati/cal.diy](https://github.com/rubennati/cal.diy).

@@ -83,14 +83,17 @@ docker exec vaultwarden-app curl -s http://127.0.0.1:80/alive  # Internal check
 ## Push Notifications
 
 Free registration at https://bitwarden.com/host/:
+
 1. Enter any email
 2. Get `INSTALLATION_ID` and `INSTALLATION_KEY`
 3. Set in .env:
+
    ```env
    VW_PUSH_ENABLED=true
    VW_PUSH_INSTALLATION_ID=your-id
    VW_PUSH_INSTALLATION_KEY=your-key
    ```
+
 4. `docker compose restart app`
 
 Only works with official Bitwarden apps (App Store / Google Play, not F-Droid).

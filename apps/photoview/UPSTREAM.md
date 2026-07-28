@@ -40,6 +40,7 @@
 
 1. Check [Photoview releases](https://github.com/photoview/photoview/releases)
 2. Back up:
+
    ```bash
    # DB dump
    docker compose exec db sh -c \
@@ -48,12 +49,15 @@
    # Media cache (thumbnails)
    tar czf photoview-cache-$(date +%Y%m%d).tgz volumes/media-cache/
    ```
+
 3. Bump `APP_TAG` in `.env` (pin to a dated tag for reproducibility)
 4. `docker compose pull && docker compose up -d`
 5. Watch logs:
+
    ```bash
    docker compose logs --follow
    ```
+
 6. Verify: log in, browse albums, trigger a rescan
 
 ### Rollback

@@ -3,7 +3,7 @@
 All checks run automatically on every push to `dev` and `main`, on pull requests
 targeting `main`, and nightly at 03:00 UTC.
 
-```
+```text
 push (dev/main) ──┐
 pull_request      ├──▶  CI
 schedule 03:00 UTC┤
@@ -204,7 +204,7 @@ python3 scripts/ci/check-coverage.py
 
 Output:
 
-```
+```text
   ✓ 48 files checked, no violations
 
   48 files  ·  0 failures  ·  0 warnings  ·  12 skipped

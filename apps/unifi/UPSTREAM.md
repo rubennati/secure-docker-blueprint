@@ -44,6 +44,7 @@ LSIO rolls the UniFi controller as Ubiquiti publishes stable builds. Major UniFi
 
 1. Check the [UniFi release notes](https://community.ui.com/releases) — breaking changes + required firmware versions
 2. Back up:
+
    ```bash
    # Mongo dump
    docker compose exec db sh -c \
@@ -53,12 +54,15 @@ LSIO rolls the UniFi controller as Ubiquiti publishes stable builds. Major UniFi
    # Controller config + device backups
    tar czf unifi-config-$(date +%Y%m%d).tgz volumes/config/
    ```
+
 3. Bump `APP_TAG` in `.env` (pin to a specific LSIO build)
 4. `docker compose pull && docker compose up -d`
 5. Watch logs:
+
    ```bash
    docker compose logs app --follow
    ```
+
 6. Verify: log in, confirm all devices are online, trigger a firmware check
 
 ### Rollback

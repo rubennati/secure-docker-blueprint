@@ -103,7 +103,7 @@ The `apps/n8n/` + `apps/nocodb/` + `apps/opnform/` cloud-free trio connects ever
 
 Each app subdirectory follows the blueprint structure:
 
-```
+```text
 business/<app>/
 ├── docker-compose.yml
 ├── .env.example

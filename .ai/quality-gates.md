@@ -10,6 +10,8 @@ python3 scripts/ci/check-baseline.py         # security baseline per container
 python3 scripts/ci/check-structure.py        # canonical structure, tags, secrets
 python3 scripts/ci/lifecycle-report.py --check   # status consistency + LIFECYCLE freshness
 python3 scripts/ci/check-coverage.py         # content no checker covers
+python3 scripts/ci/check-links.py            # broken relative links and anchors
+npx markdownlint-cli2                        # markdown style
 ```
 
 Requires PyYAML: `pip install --require-hashes -r scripts/ci/requirements.txt`
@@ -26,7 +28,7 @@ Compose files:
 docker compose config --quiet          # in the stack directory
 ```
 
-## CI — 8 checks on `main`
+## CI — 9 checks on `main`
 
 | Job | Blocks on |
 |---|---|
@@ -38,12 +40,13 @@ docker compose config --quiet          # in the stack directory
 | Canonical structure | `:latest` or major-only tags, plaintext secrets, unprotected `.secrets/`, a datastore on the public network |
 | Status model | owner and mirror disagreeing on a status, ✅ without a verification date, stale `LIFECYCLE.md`; warns when `UPSTREAM.md` duplicates the README's backup procedure |
 | Checker coverage | a content directory no checker enumerates, a top-level directory declared nowhere |
+| Docs QA | markdown style drift, a link to a missing file, a link to a missing heading |
 
 The required-check names must match the job `name:` fields in
 `.github/workflows/ci.yml` exactly. Renaming a job without updating branch
 protection leaves every pull request waiting on a check that can never report.
 
-> `Checker coverage` runs but is **not yet in the required set** — adding it to
+> `Checker coverage` and `Docs QA` run but are **not yet in the required set** — adding it to
 > branch protection is a repository setting, not a file in here.
 
 ## Not blocking, deliberately

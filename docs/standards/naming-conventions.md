@@ -48,6 +48,7 @@ Image name hardcoded in compose, only the tag as variable. Image name + Docker H
 # docker-compose.yml
 image: wordpress:${APP_TAG}
 ```
+
 ```env
 # .env.example
 # wordpress (https://hub.docker.com/_/wordpress)
@@ -77,7 +78,7 @@ Generate with: `openssl rand -base64 32 | tr -d '\n' > .secrets/name.txt`
 
 Fixed section order:
 
-```
+```env
 COMPOSE_PROJECT_NAME=...
 
 # --- Domain & Traefik ---
@@ -97,7 +98,7 @@ For detailed rules and rationale, see [Env Structure](env-structure.md).
 
 Fixed block order per service:
 
-```
+```text
 # --- Identity ---       image, container_name, restart, depends_on
 # --- Security ---       security_opt, read_only, tmpfs, cap_drop, user
 # --- Configuration ---  entrypoint, environment, secrets

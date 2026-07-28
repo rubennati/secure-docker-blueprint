@@ -185,3 +185,25 @@ jobs:
 
       - name: Check that every content directory is covered
         run: python3 scripts/ci/check-coverage.py "$GITHUB_STEP_SUMMARY"
+
+  # ─────────────────────────────────────────────
+  # 9. DOCS QA
+  # This repository is mostly documentation, and documentation rots silently:
+  # a renamed file leaves a dead link, a moved heading leaves a dead anchor,
+  # and nothing complains until a reader hits it. Closes the markdown-lint item
+  # in the v1.0 CI baseline.
+  #
+  # External URLs are deliberately not fetched — they fail for reasons unrelated
+  # to the commit under test.
+  # ─────────────────────────────────────────────
+  docs-qa:
+    name: Docs QA
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Lint Markdown
+        run: npx --yes markdownlint-cli2
+
+      - name: Check internal links and anchors
+        run: python3 scripts/ci/check-links.py "$GITHUB_STEP_SUMMARY"

@@ -29,6 +29,7 @@ Before writing any YAML, answer these questions:
 
 - [ ] **What is the original ENTRYPOINT/CMD?** If you need a custom entrypoint,
   you must know the original command to pass through. Check with:
+
   ```bash
   docker inspect --format='{{json .Config.Entrypoint}} {{json .Config.Cmd}}' <image>
   ```
@@ -113,7 +114,7 @@ Follow [Compose Structure](compose-structure.md) for block order per service:
 | `frameDeny` blocking iframes | Use custom Docker middleware with `frame-ancestors` CSP |
 | HTTP URLs behind TLS proxy | Add `X-Forwarded-Proto=https` middleware |
 | Image tag doesn't exist | Verify on Docker Hub before adding |
-| Secret with trailing newline | Always `| tr -d '\n'` in generation command |
+| Secret with trailing newline | Always `\| tr -d '\n'` in generation command |
 
 ---
 

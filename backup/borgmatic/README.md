@@ -129,7 +129,7 @@ One copy of that password exists on the host. Borgmatic reads the same file Dock
 
 Restrict the backup key on the **target** to append-only, in that user's `~/.ssh/authorized_keys`:
 
-```
+```text
 command="borg serve --append-only --restrict-to-path /home/backup-user/borg",restrict ssh-ed25519 AAAA... borg backup myhost
 ```
 

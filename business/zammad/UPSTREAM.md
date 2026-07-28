@@ -58,17 +58,21 @@ Minimum RAM: ~4 GB (Elasticsearch grabs 512 MB heap alone).
 
 1. Check [Zammad releases](https://github.com/zammad/zammad/releases) — major version upgrades may require sequential stepping (e.g. 6.x → 7.0 before 7.x → 8.0)
 2. Back up Postgres:
+
    ```bash
    docker compose exec db pg_dump -U zammad zammad_production > zammad-backup-$(date +%Y%m%d).sql
    ```
+
 3. Bump `APP_TAG` in `.env`
 4. `docker compose pull && docker compose up -d`
 5. Watch init run migrations:
+
    ```bash
    docker compose logs init --follow
    docker compose logs railsserver --follow
    # Watch for: "* Listening on http://[::]:3000"
    ```
+
 6. Verify: create a ticket, search for it, send an email notification
 
 ## Useful commands

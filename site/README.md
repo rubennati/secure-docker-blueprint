@@ -31,7 +31,7 @@ npm run preview    # serve the production build locally
 
 ## Structure
 
-```
+```text
 site/
   src/content/docs/    — page content (.md / .mdx)
   astro.config.mjs     — site config, navigation, sidebar

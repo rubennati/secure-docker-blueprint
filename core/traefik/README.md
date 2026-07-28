@@ -47,7 +47,7 @@ docker compose ps
 
 ## Structure
 
-```
+```text
 .env.example                          # All configurable variables
 docker-compose.yml                    # Docker Socket Proxy + Traefik
 network-dual-stack.yml                # Optional overlay: IPv4+IPv6 on proxy-public
@@ -231,10 +231,12 @@ One certificate covers every subdomain. Requires DNS at Cloudflare (or any provi
 **Setup:**
 
 1. In `core/traefik/.env` set:
+
    ```env
    ACME_WILDCARD_DOMAIN=example.com
    CF_DNS_API_TOKEN=<real-token-with-Zone:Read-+-DNS:Edit>
    ```
+
 2. Run `bash ops/scripts/render.sh` (generates `acme-wildcard.yml`)
 3. `docker compose up -d`
 
@@ -251,6 +253,7 @@ Each app requests its own cert. Works with any resolver, no wildcard setup.
    - `cloudflare-dns` for DNS-01 (no port 80 exposure needed)
    - `httpResolver` for HTTP-01 (port 80 must be public)
 3. **Uncomment the `tls.certresolver` label** in each app's `docker-compose.yml`:
+
    ```yaml
    - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
    ```
@@ -493,6 +496,7 @@ Delete all rendered config files (templates stay untouched):
 ```bash
 bash ops/scripts/reset-templates.sh
 ```
+
 ## Backup
 
 | | |
@@ -521,4 +525,3 @@ outage means DNS or HTTP validation has to work while the proxy is down.
 
 **Restore order:** early. Nothing else in the deployment is reachable until the
 proxy is up.
-

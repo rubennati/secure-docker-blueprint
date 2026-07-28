@@ -44,6 +44,7 @@
 
 1. Check [Lychee releases](https://github.com/LycheeOrg/Lychee/releases)
 2. Back up:
+
    ```bash
    # DB dump
    docker compose exec db sh -c \
@@ -52,12 +53,15 @@
    # Uploads + conf
    tar czf lychee-data-$(date +%Y%m%d).tgz volumes/uploads/ volumes/conf/
    ```
+
 3. Bump `APP_TAG` in `.env`
 4. `docker compose pull && docker compose up -d`
 5. Watch logs for Laravel migrations:
+
    ```bash
    docker compose logs app --follow
    ```
+
 6. Verify: log in, browse an album, upload a new photo
 
 ### Rollback

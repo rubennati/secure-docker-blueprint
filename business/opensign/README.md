@@ -113,6 +113,7 @@ Without a working mail config, signature request emails do not go out and the fl
 - **Self-signed signing cert is not Adobe-trusted** — documents signed with a self-generated cert show no green tick in Adobe Acrobat. For eIDAS Advanced signatures, purchase a qualified p12 from an AATL-approved CA and set `PFX_BASE64` + `PASS_PHRASE`.
 - **MongoDB 6 is the last version with full Parse Server support** — do not jump to 7+ until OpenSign tests it.
 - **Changing `SERVER_URL` after first use requires a MongoDB migration** — Parse Server stores the full file URL at upload time in `contracts_Document.URL`. Documents created before a `SERVER_URL` change will have the old URL (e.g. `http://api:8080/app/files/...`) causing Mixed Content errors. Fix with:
+
   ```bash
   docker compose exec db mongosh \
     --username opensign --password "$(cat .secrets/db_root_pwd.txt)" \
@@ -125,6 +126,7 @@ Without a working mail config, signature request emails do not go out and the fl
       }}}}]
     )'
   ```
+
 - **OCR / keyword detection** for auto-placement of signature fields requires the `OPENSIGN_OCR` side-car — not included here.
 
 ## Integration patterns

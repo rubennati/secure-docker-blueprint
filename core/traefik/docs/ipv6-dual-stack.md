@@ -41,7 +41,7 @@ unaffected by the network's IP family — it depends on
 
 ### The three traffic paths
 
-```
+```text
 PUBLIC PATH (Cloudflare)                     INTERNAL PATH (Tailscale)
 ─────────────────────────                    ─────────────────────────
 Browser (any IP)                              Tailnet client (100.x.x.x / fd7a:...)
@@ -113,7 +113,7 @@ curl -6 https://auth.example.com/   # → fd7a:115c:a1e0::9e32:b510 → HTTP/2 4
 5. `acc-tailscale`'s `ipAllowList` only allows `100.64.0.0/10` and
    `fd7a:115c:a1e0::/48` — `172.19.0.1` matches neither → `403`.
 
-```
+```text
 Tailscale IPv6 client
   → fd7a:115c:a1e0::...:443 on the host
   → Docker published port → docker-proxy (userland relay)
@@ -148,7 +148,7 @@ curl -6 https://auth.example.com/   # → fd7a:115c:a1e0::9e32:b510 → HTTP/2 3
 And `whoami` (see [core/whoami](../../whoami/)) shows the real address in
 both the proxy headers and its own view of the connection:
 
-```
+```text
 X-Forwarded-For: fd7a:115c:a1e0::9e32:b510
 X-Real-Ip: fd7a:115c:a1e0::9e32:b510
 ```

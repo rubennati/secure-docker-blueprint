@@ -523,12 +523,14 @@ docker exec crowdsec cscli hub list --all | grep -i "fail\|disabled"
 CrowdSec Hub upgrades are not trivially reversible. If an update causes problems:
 
 1. Identify the affected collection or scenario:
+
    ```bash
    docker exec crowdsec cscli alerts list
    # Look for a sudden spike or unexpected scenario triggering
    ```
 
 2. Remove (uninstall) a specific scenario:
+
    ```bash
    docker exec crowdsec cscli scenarios remove crowdsecurity/<scenario-name>
    # To reinstall later: docker exec crowdsec cscli scenarios install crowdsecurity/<scenario-name>

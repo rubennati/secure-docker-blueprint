@@ -3,7 +3,8 @@
 ## Bug #1: `crond: unrecognized option: d`
 
 **Symptom:** Container crashes in restart loop with:
-```
+
+```text
 crond: unrecognized option: d
 ```
 
@@ -30,9 +31,11 @@ crond: unrecognized option: d
 ## Bug #3: CF_Token missing when running wizard or docker compose exec
 
 **Symptom:** Running `./scripts/wizard.sh` or `docker compose exec acme-certs /scripts/issue.sh` fails with:
-```
+
+```text
 CF_Token missing – check .secrets/cf_token.txt
 ```
+
 Even though the secret file exists and contains a valid token.
 
 **Root cause:** The entrypoint wrapper (`config/entrypoint.sh`) correctly loads `CF_Token` from `/run/secrets/CF_TOKEN` and exports it. But:
@@ -54,6 +57,7 @@ fi
 ```
 
 **Lesson:** Never rely on entrypoint-exported env vars for scripts that run via:
+
 - `docker compose exec` (bypasses entrypoint)
 - `crond` (spawns independent processes)
 - Any process not directly started by `exec "$@"` in the entrypoint

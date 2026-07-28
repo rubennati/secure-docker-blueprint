@@ -8,7 +8,7 @@ Used to verify that Traefik routing, TLS termination, and middleware chains work
 
 A response like:
 
-```
+```text
 Hostname: 18e4b3f5d92a
 IP: 172.20.0.3
 RemoteAddr: 172.20.0.2:47028

@@ -34,9 +34,11 @@ Homepage breaks config-schema changes occasionally (usually with a migration not
 
 1. [GitHub releases](https://github.com/gethomepage/homepage/releases) — read breaking changes
 2. Back up `./config/`:
+
    ```bash
    tar czf homepage-config-$(date +%Y%m%d).tgz config/
    ```
+
 3. Bump `APP_TAG`
 4. `docker compose pull && docker compose up -d`
 5. Watch logs — schema errors surface immediately

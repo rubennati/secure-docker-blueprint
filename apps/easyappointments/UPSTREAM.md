@@ -38,12 +38,14 @@ The upstream Docker compose example is minimal (app + db, linked via env). Bluep
 Easy!Appointments has a slower, more predictable release cadence than Cal.com. Check [releases](https://github.com/alextselegidis/easyappointments/releases) every few months.
 
 1. Back up:
+
    ```bash
    docker compose exec db sh -c \
      'mariadb-dump -u root -p"$(cat /run/secrets/DB_ROOT_PWD)" easyappointments' \
      > easyappointments-$(date +%Y%m%d).sql
    tar czf easyappointments-storage-$(date +%Y%m%d).tgz volumes/storage/
    ```
+
 2. Bump `APP_TAG` in `.env`
 3. `docker compose pull && docker compose up -d`
 4. Visit the UI — EA runs schema migrations through a web wizard on first request after a major version bump

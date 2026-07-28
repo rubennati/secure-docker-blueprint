@@ -83,7 +83,7 @@ before writing healthchecks.
 
 **Symptom:** `tecnativa/docker-socket-proxy` crashed on start. HAProxy log:
 
-```
+```text
 'normalize-uri' requires 'expose-experimental-directives'
 ```
 
@@ -94,7 +94,7 @@ directive without the required opt-in.
 **Fix:** Added `expose-experimental-directives` to the HAProxy global section in
 `core/traefik/ops/templates/haproxy.cfg.template.tmpl`:
 
-```
+```text
 global
     expose-experimental-directives
     log stdout format raw daemon "${DSP_LOG_LEVEL}"
@@ -106,7 +106,7 @@ global
 
 **Symptom:** Seafile web UI returned HTTP 500. Seahub log:
 
-```
+```text
 redis.exceptions.ConnectionError: Error 111 connecting to redis:6379.
 Connection refused.
 ```
@@ -204,7 +204,7 @@ SEAFILE_MYSQL_DB_USER: ${SEAFILE_DB_USER}
 **Symptom:** Both services crashed in restart loops immediately after start.
 Metadata server log:
 
-```
+```text
 [ERROR] The Metadata server only can run with Redis!
 ```
 
@@ -241,11 +241,13 @@ Redis cache), plus `depends_on: redis` with health condition.
 console: `403` on `/sdoc-server/api/v1/...`.
 
 **Root cause:** Two issues:
+
 1. SeaDoc also doesn't support `_FILE` env vars. `JWT_PRIVATE_KEY_FILE` was
    ignored → JWT validation failed → 403.
 2. Image version `1.0-latest` was outdated. Seafile 13 requires `2.0-latest`.
 
 **Fix:**
+
 - Same `entrypoint.sh` wrapper as other services
 - Updated image to `seafileltd/sdoc-server:2.0-latest`
 - Separated Traefik routing: dedicated router for `/socket.io/` (no path
@@ -292,6 +294,7 @@ After enabling globally, the feature must also be activated **per Library**
 were missed during the initial bulk fix.
 
 **Fix:** Applied same Traefik label fixes to all satellite files:
+
 - Commented out `certresolver`
 - Added `tls.options=${APP_TRAEFIK_TLS_OPTION}@file`
 
@@ -302,7 +305,7 @@ were missed during the initial bulk fix.
 **Symptom:** Clicking a `.docx` in Seafile opened a blank white iframe. Browser
 console:
 
-```
+```text
 Refused to display 'https://office.example.com/' in a frame because it set
 'X-Frame-Options' to 'deny'.
 ```
@@ -368,7 +371,7 @@ entrypoint: ["/bin/bash", "/config/entrypoint.sh", "/app/ds/run-document-server.
 **Symptom:** Document opened but content wouldn't load. "Download failed" error
 in OnlyOffice editor. Browser console:
 
-```
+```text
 Mixed Content: The page at 'https://files.example.com/...' was loaded over HTTPS,
 but requested an insecure XMLHttpRequest endpoint
 'http://office.example.com/cache/files/data/...'
@@ -428,7 +431,7 @@ HTTP sub-requests to HTTPS. This masks the problem but doesn't fix the root caus
 
 **Symptom:** `docker compose up -d` failed immediately:
 
-```
+```text
 Error response from daemon: failed to resolve reference "docker.io/apache/tika:3.1": not found
 ```
 
@@ -453,7 +456,7 @@ adding it to the blueprint. Use `docker pull` or check Docker Hub tags page.
 
 **Symptom:** App container in restart loop. Log:
 
-```
+```text
 /package/admin/s6-overlay/libexec/preinit: fatal: /run belongs to uid 0 instead
 of 1000, has insecure and/or unworkable permissions
 s6-overlay-suexec: fatal: child failed with exit code 100
@@ -491,13 +494,13 @@ provides its own UID/GID mechanism via env vars.
 
 **Symptom:** App connected to PostgreSQL but authentication failed:
 
-```
+```text
 FATAL: password authentication failed for user "paperless_user"
 ```
 
 Paperless also logged a warning:
 
-```
+```text
 [env-init] Your secret: PAPERLESS_DBPASS_FILE contains a trailing newline
 and may not work as expected
 ```
@@ -509,14 +512,15 @@ Paperless reads the same file but **strips** the newline before connecting →
 password mismatch.
 
 **Fix:**
+
 1. Strip newlines from secret generation commands across all `.env.example` files:
 
-```bash
-# Before
-openssl rand -base64 32 > secrets/db_pwd.txt
-# After
-openssl rand -base64 32 | tr -d '\n' > secrets/db_pwd.txt
-```
+   ```bash
+   # Before
+   openssl rand -base64 32 > secrets/db_pwd.txt
+   # After
+   openssl rand -base64 32 | tr -d '\n' > secrets/db_pwd.txt
+   ```
 
 2. For existing deployments, strip newlines from existing secrets and recreate
    the DB volume:

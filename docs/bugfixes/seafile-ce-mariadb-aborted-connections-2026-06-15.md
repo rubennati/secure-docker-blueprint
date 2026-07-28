@@ -19,14 +19,14 @@
 MariaDB logs repeated warnings during normal operation (browsing, uploads, deletions, thumbnail
 generation):
 
-```
+```text
 [Warning] Aborted connection ... to db: 'seafile_db' user: 'sefiuser' host: '172.23.0.9' (Got an error reading communication packets)
 [Warning] Aborted connection ... to db: 'seahub_db' user: 'sefiuser' host: '172.23.0.6' (Got an error reading communication packets)
 ```
 
 Container IP mapping at time of observation:
 
-```
+```text
 172.23.0.9  →  seafile-thumbnail
 172.23.0.6  →  seafile-app
 ```
@@ -48,7 +48,7 @@ At time of investigation the deployment was fully functional:
 
 ### MariaDB status snapshot
 
-```
+```text
 Aborted_clients      40
 Aborted_connects      0
 Connections          924
@@ -64,7 +64,7 @@ net_write_timeout      60
 
 ### Resource snapshot
 
-```
+```text
 seafile-app         0.80% CPU   800 MiB / 7.6 GiB
 seafile-thumbnail   0.34% CPU   171 MiB / 7.6 GiB
 seafile-db          0.03% CPU   136 MiB / 7.6 GiB
@@ -266,12 +266,13 @@ At `log_warnings = 4`, each aborted connection entry includes a system errno. Er
 
 ## Final Classification
 
-```
+```text
 Current classification: noisy but acceptable / known MariaDB-Seafile logging behavior.
 Action: monitor and document. No immediate tuning required.
 ```
 
 Root cause is the combination of:
+
 1. Seafile's Go/Python sidecar services and Django workers not always issuing an explicit MySQL-protocol close before releasing connections
 2. MariaDB 10.11 logging this more visibly than earlier versions due to the `log_warnings = 2` default (changed from `1` in MariaDB 10.2.4)
 

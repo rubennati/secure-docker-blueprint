@@ -73,7 +73,7 @@ sudo apt install crowdsec-firewall-bouncer-nftables
 The Debian 13 package installs with nftables configured by default. During installation
 you will see:
 
-```
+```text
 W: cscli not found, no automatic registration
 I: Configuring nftables [see README.Debian]
 To adjust the config: editor /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml.local && systemctl restart crowdsec-firewall-bouncer
@@ -227,7 +227,7 @@ When bans are in effect, the nftables set referenced by the chain rule
 contains the banned addresses with their remaining timeout. Example with
 two active bans:
 
-```
+```text
 table ip crowdsec {
   set crowdsec-blacklists {
     type ipv4_addr

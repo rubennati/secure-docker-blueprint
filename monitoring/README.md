@@ -188,7 +188,7 @@ Rationale per planned:
 
 Each app subdirectory follows the blueprint structure:
 
-```
+```text
 monitoring/<app>/
 ├── docker-compose.yml
 ├── .env.example

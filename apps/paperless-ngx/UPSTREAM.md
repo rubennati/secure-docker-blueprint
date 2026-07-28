@@ -41,6 +41,7 @@ Paperless does schema migrations on every minor bump. The classifier model may a
 
 1. Release notes: https://github.com/paperless-ngx/paperless-ngx/releases (look for "Breaking changes")
 2. Back up:
+
    ```bash
    # Use Paperless's own exporter — it knows what to include
    docker compose exec -u paperless app \
@@ -50,12 +51,15 @@ Paperless does schema migrations on every minor bump. The classifier model may a
    docker compose exec db sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' \
      > paperless-db-$(date +%Y%m%d).sql
    ```
+
 3. Bump `APP_TAG` in `.env`
 4. `docker compose pull && docker compose up -d`
 5. Watch migrations:
+
    ```bash
    docker compose logs app --follow
    ```
+
    Expect `Applying migrations...` and `Listening at: http://0.0.0.0:8000`.
 6. Verify:
    - UI loads, document list populated

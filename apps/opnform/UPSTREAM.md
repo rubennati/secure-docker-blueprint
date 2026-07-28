@@ -47,6 +47,7 @@ Key design choices:
 
 1. Check [OpnForm releases](https://github.com/JhumanJ/OpnForm/releases) — note schema migrations in the changelog
 2. Back up:
+
    ```bash
    # DB dump
    docker compose exec -T db sh -c \
@@ -55,12 +56,15 @@ Key design choices:
    # API storage (uploaded files, form logos)
    tar czf opnform-storage-$(date +%Y%m%d).tgz volumes/api-storage/
    ```
+
 3. Bump `APP_TAG` in `.env` (use the same tag for both `api` and `client`)
 4. `docker compose pull && docker compose up -d`
 5. Watch Laravel migration output:
+
    ```bash
    docker compose logs api --follow
    ```
+
 6. Verify: log in, open an existing form, submit a test response, check the response lands in Postgres
 
 ### Rollback
@@ -106,6 +110,7 @@ This pattern gives you: external user fills OpnForm → webhook fires → n8n no
 ### OpnForm → SMTP
 
 To send confirmation emails to respondents, set:
+
 ```env
 MAIL_MAILER=smtp
 MAIL_HOST=smtp-relay.brevo.com   # or your own
