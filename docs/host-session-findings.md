@@ -49,6 +49,20 @@ Traefik setup ask the question up front: *are any clients reaching this through
 Tailscale?* → if yes, the overlay is not optional. A `📋` note in the README is
 not enough; this one silently produces 403s.
 
+**Independently confirmed — and with one caveat.** Operating notes for an
+unrelated server, written months earlier, record the same symptom: Traefik seeing
+a Docker bridge address instead of the client's, only for VPN traffic, carried as
+*"known — not finally solved"* with the workaround of widening the allowlist to
+the whole VPN subnet. Two machines, the same failure, open since. That the cause
+now has a fix is worth more than the fix itself.
+
+The caveat: those same notes observe the problem on a home server and **not** on a
+hosted one, which the author attributed to differing NAT behaviour. The host used
+here is a hosted machine. The likelier explanation is `userland-proxy: false` and
+`ip6tables: true` rather than the platform — but that was not isolated, so a
+second test on a machine with a different network stack is what would turn this
+from *fixed here* into *fixed*.
+
 ## 2. Denied requests produce no access-log line
 
 **Observed.** Measured directly: 36 log lines before a request blocked by
@@ -135,6 +149,97 @@ undermined by its own default.
 **Fix.** `TRAEFIK_DASHBOARD_CERT_RESOLVER` should be empty when
 `ACME_WILDCARD_DOMAIN` is set, and `validate.sh` is the natural place to catch
 the combination.
+
+---
+
+## From existing operating documentation
+
+Four items carried over from operating notes for two unrelated servers, both run
+by the maintainer over months. They are recorded here because they were **already
+proven in practice**, not discovered in this session — the review pass should
+weigh them differently to the findings above.
+
+Kept only where they hold regardless of where someone deploys. Anything tied to a
+particular provider, disk layout or host distribution was left out: this is a
+blueprint, and it cannot assume the machine.
+
+## 8. `excludedIPs` in `ipAllowList` breaks direct access
+
+**Source.** Recorded as a resolved issue, referencing Traefik bug #10561.
+
+**Observed there.** An `ipAllowList` middleware carrying `excludedIPs` answered
+403 to every direct connection — LAN or VPN — regardless of whether the source
+address was allowed. `excludedIPs` only behaves as expected when an upstream
+proxy sets `X-Forwarded-For`; without one it rejects everything.
+
+**Checked here.** This repository does not use `excludedIPs` anywhere, so nothing
+is broken today.
+
+**Why record it.** It is a plausible thing to reach for when refining an access
+policy, and the failure it produces is indistinguishable from a correctly denied
+request. A one-line warning next to the `acc-*` definitions costs nothing and
+saves an evening.
+
+## 9. Docker starting before its network dependency
+
+**Source.** Two failed attempts and one working fix, recorded across both sets of
+notes.
+
+**Observed there.** A stack that needs a VPN connection at start — an agent
+dialling out to a control server — fails on boot when Docker starts first. Two
+approaches made it worse: an `ExecStartPre` waiting on the VPN broke Docker
+startup entirely, and a separate wait-online unit failed outright on a Debian
+system using `ifupdown` rather than `systemd-networkd`.
+
+**Why record it, and how.** The fix is a systemd drop-in ordering Docker after the
+VPN service — which is host configuration, not blueprint content. It belongs in
+troubleshooting as *"this stack fails after a reboot but starts fine by hand"*,
+with the two dead ends named, and not as a setup step. The repository does not get
+to assume the host's network stack.
+
+## 10. A syslog fallback for backup failures
+
+**Source.** Both configurations use it.
+
+**Observed there.** `on_error` and `after_backup` hooks piping a line to syslog,
+independent of any monitoring service.
+
+**Why it fits here.** `backup/README.md` points run monitoring at Healthchecks or
+Uptime Kuma — which is better, and which is also not running on day one. Between
+configuring the backup and standing up monitoring there is a window where a
+failing job is silent. A syslog line is not an alert, but it is a record, and it
+costs two lines of configuration.
+
+## 11. Backup targets that are not a plain SSH host
+
+**Source.** Both configurations, different targets.
+
+**Observed there.** A target reachable only on a non-standard SSH port, and a
+target running an older borg than the client. Both are handled by borgmatic —
+`ssh_command` for the first, `--remote-path` for the second — and both produce
+confusing failures if you do not know the option exists.
+
+**Why record it.** `backup/borgmatic/README.md` assumes a straightforward SSH
+target. Naming the two options, without naming any provider, turns a dead end into
+a footnote. Which storage someone uses is their business; that these knobs exist
+is worth knowing.
+
+## What was deliberately left out
+
+Recorded so the same material is not mined twice:
+
+- Disk preparation, filesystem layout, snapshot tooling, bootloader integration.
+- Host installation, user creation, SSH hardening.
+- Provider consoles, VM snapshots, storage products.
+- System journal sizing. Bounding it is sound sysadmin practice, but container
+  logs are covered by the Docker log driver and Traefik's by logrotate — the rest
+  of the disk is the host's business. Worth at most one sentence in
+  `docs/standards/logrotate.md` marking where this repository's responsibility
+  ends.
+
+All of it is competent and none of it is a blueprint's to prescribe. The
+repository promises Debian plus Docker and no further assumptions; each of these
+would break that promise for anyone whose machine looks different.
 
 ---
 
