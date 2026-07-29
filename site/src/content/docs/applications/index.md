@@ -19,6 +19,12 @@ Guides cover setup, ongoing use, backup, restore and updates.
 
 [Go to the Nextcloud guide →](/applications/nextcloud/)
 
+## Invoice Ninja
+
+**Problem it solves:** issues invoices and quotes, tracks what has been paid, and gives each client a portal to view and settle them — on your own server, with the payment data staying there.
+
+[Go to the Invoice Ninja guide →](/applications/invoiceninja/)
+
 ## Seafile Pro
 
 **Problem it solves:** private cloud file storage and sharing with browser-based Office document editing, collaborative documents, full-text search, and antivirus scanning — without depending on a third-party cloud provider.
@@ -29,6 +35,7 @@ Guides cover setup, ongoing use, backup, restore and updates.
 
 - [Vaultwarden](/applications/vaultwarden/) — password manager
 - [Nextcloud](/applications/nextcloud/) — files, calendars and contacts
+- [Invoice Ninja](/applications/invoiceninja/) — invoicing, quotes and a client portal
 - [Seafile Pro](/applications/seafile-pro/) — file sync and collaborative editing
 - [Core Infrastructure](/core/) if Traefik isn't running yet — every application guide needs it first
 

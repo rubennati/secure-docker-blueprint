@@ -45,6 +45,7 @@ export default defineConfig({
 						{ label: 'Overview', link: '/applications/' },
 						{ label: 'Vaultwarden', link: '/applications/vaultwarden/' },
 						{ label: 'Nextcloud', link: '/applications/nextcloud/' },
+						{ label: 'Invoice Ninja', link: '/applications/invoiceninja/' },
 						{ label: 'Seafile Pro', link: '/applications/seafile-pro/' },
 					],
 				},

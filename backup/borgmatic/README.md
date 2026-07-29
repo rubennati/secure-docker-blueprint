@@ -12,6 +12,8 @@ Host-installed backup for the stacks in this blueprint. Borg does the deduplicat
 | [`config.yaml.example`](config.yaml.example) | Sources, targets, retention, database hooks, monitoring |
 | [`borgmatic.timer.example`](borgmatic.timer.example) | systemd schedule — only if the package ships none |
 | [`RESTORE.md`](RESTORE.md) | The rehearsal, and the real thing |
+| [`ops/verify.sh`](ops/verify.sh) | What the newest archive actually contains — and what it must not |
+| [`ops/browse.sh`](ops/browse.sh) | Mount an archive and read it as a directory tree |
 
 ---
 
@@ -162,6 +164,25 @@ So a compromised client **can still make archives disappear** logically. What su
 - **Notice quickly.** Every recovery path above expires — the monitoring hook is what makes the difference between a bad week and a total loss.
 
 ## Operating
+
+Two of these are scripted, because they are the ones worth running often enough
+to mistype:
+
+```bash
+sudo ops/verify.sh /srv/docker /srv/other-deployment
+```
+
+Prints the database dumps in the newest archive with their sizes, asserts the
+first path is present, and asserts the second is absent — the check that catches
+a configuration reaching further than intended. Exits non-zero on either
+failure, so a monitoring hook can call it.
+
+```bash
+sudo ops/browse.sh          # mount at /mnt/borg
+sudo ops/browse.sh --umount
+```
+
+The rest by hand:
 
 ```bash
 sudo borgmatic create --stats     # run now

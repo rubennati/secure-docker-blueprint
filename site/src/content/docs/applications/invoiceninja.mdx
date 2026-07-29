@@ -1,0 +1,223 @@
+---
+title: Invoice Ninja
+description: Self-hosted invoicing, quotes and a client portal — installed from secrets, restricted by default, with mail working before the first invoice goes out.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackStatus from '../../../components/StackStatus.astro';
+
+Invoice Ninja issues invoices and quotes, tracks payments, and gives each client
+a portal to view and pay them. Four containers: the application with its
+scheduler and queue workers, a web server, a database, and a cache.
+
+<StackStatus stack="business/invoiceninja"
+  note="Exercised on a live host: install, secrets, proxy, and an invoice created, sent and opened in the client portal. A restore has not been rehearsed." />
+
+Needs: [Traefik](/core/traefik/) running, a domain, and SMTP credentials.
+
+:::caution
+Mail is not a nice-to-have here. Invoices, quotes, reminders and payment
+receipts all leave the system by mail — configure it during setup, not when the
+first invoice is due.
+:::
+
+## Installation
+
+From `business/invoiceninja/`:
+
+<Steps>
+
+1. ```bash
+   cp .env.example .env
+   ```
+
+2. Set the domain, the timezone, and the address the application will send
+   from:
+
+   ```ini
+   APP_TRAEFIK_HOST=invoice.example.com
+   TZ=Europe/Vienna
+   IN_USER_EMAIL=you@example.com
+   ```
+
+3. Tell it which proxy it may believe about the client's address. Without this
+   the application sees every visitor as the proxy, and abuse detection then
+   measures the wrong thing:
+
+   ```bash
+   docker network inspect proxy-public \
+     --format '{{range .IPAM.Config}}{{.Subnet}} {{end}}'
+   ```
+
+   Copy the result into `TRUSTED_PROXIES`, comma-separated. With IPv6 enabled
+   there are two.
+
+4. Set mail. Port 465 is encrypted from the first byte; 587 starts unencrypted
+   and switches over partway:
+
+   ```ini
+   MAIL_MAILER=smtp
+   MAIL_HOST=smtp.example.com
+   MAIL_PORT=465
+   MAIL_ENCRYPTION=ssl
+   MAIL_USERNAME=your-smtp-login
+   MAIL_FROM_ADDRESS=invoices@example.com
+   ```
+
+   :::note
+   `MAIL_FROM_ADDRESS` here is the **full address**. Laravel differs from
+   Nextcloud, which takes only the part before the `@`.
+
+   If mail never arrives, check the port first — many hosting companies block
+   465 outbound:
+
+   ```bash
+   openssl s_client -connect smtp.example.com:465 -brief </dev/null
+   ```
+
+   `CONNECTION ESTABLISHED` means you are fine. Otherwise use `MAIL_PORT=587`
+   with `MAIL_ENCRYPTION=tls`.
+   :::
+
+5. Create the secrets. Nothing sensitive goes in `.env`:
+
+   ```bash
+   mkdir -p .secrets
+   openssl rand -base64 32 | tr -d '\n' > .secrets/db_pwd.txt
+   openssl rand -base64 32 | tr -d '\n' > .secrets/db_root_pwd.txt
+   openssl rand -hex 32    | tr -d '\n' > .secrets/redis_pwd.txt
+   openssl rand -base64 24 | tr -d '\n' > .secrets/in_pwd.txt
+   printf 'your-smtp-password'          > .secrets/mail_pwd.txt
+   chmod 600 .secrets/*.txt
+   ```
+
+   `in_pwd.txt` is the first administrator's password. It is read on the first
+   start only — note it down, then change it in the interface.
+
+6. Let the application generate its own encryption key. It has to exist before
+   the first start, and it must carry the `base64:` prefix that Laravel's own
+   generator produces:
+
+   ```bash
+   docker run --rm invoiceninja/invoiceninja-debian:5.13.26 \
+     php artisan key:generate --show | tr -d '\n' > .secrets/app_key.txt
+   chmod 600 .secrets/app_key.txt
+   ```
+
+   :::danger
+   Never change this key once invoices exist. It encrypts stored payment tokens
+   and gateway credentials — change it and that data is unreadable, with no way
+   back. Keep a copy somewhere this server cannot reach: a database backup
+   without the key restores nothing usable.
+   :::
+
+7. Start it:
+
+   ```bash
+   docker compose up -d
+   docker compose logs -f app
+   ```
+
+   The first start runs migrations and seeds the database — one to three
+   minutes. Wait for `Production setup completed`, then the four supervisor
+   programs reporting `RUNNING`.
+
+</Steps>
+
+## Verify
+
+```bash
+docker compose ps
+docker compose exec app supervisorctl -c /etc/supervisor/supervisord.conf status
+```
+
+Expected: four containers healthy, and `php-fpm`, both queue workers and the
+scheduler all `RUNNING`. The queue workers send the mail and the scheduler
+raises recurring invoices, so a stack where only `php-fpm` runs looks fine and
+quietly does half its job.
+
+Then log in with `IN_USER_EMAIL` and the password from `.secrets/in_pwd.txt`,
+and change it.
+
+## Backup
+
+:::note
+This covers what the backup needs to know **about Invoice Ninja**. Installing
+Borgmatic, the repository, the keys and the schedule are on
+[Backup and restore](/operations/backup/).
+:::
+
+Two things carry the state, and one of them is not in a volume:
+
+| | Where |
+|---|---|
+| Database | dumped through Borgmatic's hook, not copied |
+| Attachments, logos, generated PDFs | the `app_storage` volume |
+| **The encryption key** | `.secrets/app_key.txt` — without it the database restores unreadable |
+
+```yaml
+source_directories:
+    - /srv/blueprint
+    - /var/lib/docker/volumes/invoiceninja_app_storage/_data
+
+mysql_databases:
+    - name: ninja
+      container: invoiceninja-mysql
+      username: ninja
+      password: "{credential file /srv/blueprint/business/invoiceninja/.secrets/db_pwd.txt}"
+      tls: false
+```
+
+No quiescing hook: the dump is consistent on its own. `app_public` is left out —
+the image rebuilds it on every start.
+
+**Back up before every update.** Invoice Ninja migrates its database on start,
+and a failed migration with no dump behind it is not recoverable.
+
+## Going further
+
+### Opening it to clients
+
+The stack ships `APP_TRAEFIK_ACCESS=acc-tailscale` — reachable over your VPN
+only. That is deliberate for setting up, and it is also a decision you have to
+revisit: **a client portal nobody outside can reach cannot serve clients.**
+Switch to `acc-public` once the instance is configured and you have sent
+yourself a test invoice.
+
+### Framing
+
+The shipped header profile sends `X-Frame-Options: DENY`, so the client portal
+cannot be embedded in someone else's page. If you want customers to see it
+inside their own site, that is the setting to change — otherwise leave it.
+
+## Troubleshooting
+
+**The design preview returns an error, but invoices still arrive** — the
+renderer is running out of shared memory. Docker gives a container 64 MB of
+`/dev/shm` and Chromium needs more; the stack sets `shm_size: 512m`. Invoice
+PDFs keep working because those are rendered by the queue worker with no
+request timing out behind them, which makes it look like an interface fault.
+
+```bash
+docker compose exec app df -h /dev/shm     # expect 512M, not 64M
+```
+
+**A 404 from the proxy, not a 403** — the web server container is unhealthy, and
+Traefik drops unhealthy containers from the load balancer. Check
+`docker compose ps` before looking at routing.
+
+**Mail does not leave** — check the port first, as above, then
+`docker compose logs app | grep -i mail`.
+
+## Repository files
+
+- [`business/invoiceninja/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/business/invoiceninja/README.md) — full setup, backup, diagnostics
+- [`business/invoiceninja/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/business/invoiceninja/UPSTREAM.md) — which image variant and why, known deviations
+- [`business/invoiceninja/ops/entrypoint.sh`](https://github.com/rubennati/secure-docker-blueprint/blob/main/business/invoiceninja/ops/entrypoint.sh) — how the secrets reach the application
+
+## Official sources
+
+- [Invoice Ninja documentation](https://invoiceninja.github.io/docs/self-host/self-host-installation)
+- [Server requirements](https://www.invoiceninja.org/getting-started/)
+- [Docker images and compose files](https://github.com/invoiceninja/dockerfiles)
+- [Image on Docker Hub](https://hub.docker.com/r/invoiceninja/invoiceninja-debian)
