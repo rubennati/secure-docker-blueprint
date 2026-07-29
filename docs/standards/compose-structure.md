@@ -83,10 +83,43 @@ services:
 - `cap_drop: ALL` — for lightweight services. Re-add only specific capabilities needed.
 - `user:` — only when the image explicitly supports non-root operation.
 
-**Resources** (recommended)
+**Resources** (required)
 
-- `deploy.resources.limits` — `memory`, `cpus`, `pids` on every service. Bounds a runaway or compromised container; start generous, retune from `docker stats` to ~2× peak.
-- Put `pids` inside `deploy.resources.limits` — a top-level `pids_limit` alongside `deploy.resources` is rejected by Compose.
+A memory limit is a blast radius, not an allocation. It exists so a leak in one
+container cannot take the host down with it — and it must sit far enough above
+the working set that ordinary work never reaches it. A container killed mid-import
+looks like an application fault, and that is a worse failure than the one the
+limit was set to prevent.
+
+Derive it, in this order:
+
+1. **From the component's own configured budget**, where it has one. MariaDB with
+   `--innodb-buffer-pool-size=1G` needs room for that plus connections, sort
+   buffers and temporary tables — `2G`. Redis with `maxmemory 512mb` needs it
+   plus allocator overhead — `768M`.
+2. **From a measured peak**, where it does not. Measure under the workload that
+   costs most, not at idle. Invoice Ninja idles near 500 MB and reaches 641 MB
+   rendering a PDF; a limit derived from idle would kill the renderer.
+3. **Never from upstream's stated minimum.** Those size a machine, not a
+   container: "512 MB per PHP process" and "1 GB RAM, 2 GB recommended" describe
+   the whole deployment. They belong in a README's requirements section.
+
+Then leave roughly half again on top.
+
+`pids` bounds a fork bomb and costs nothing to set. **CPU limits are deliberately
+not applied by default** — they make a stack slow under load rather than safe,
+and a busy container is not the failure mode this is guarding against. Set one
+only where a component demonstrably pins a core.
+
+| Role | Typical limit | Basis |
+|---|---|---|
+| Web server | `128M` | measured single-digit MB, generous ceiling |
+| Cache | configured `maxmemory` + ~50% | its own budget |
+| Database | configured buffer pool + ~100% | its own budget plus connections |
+| Application | measured peak + ~50% | workers × measured RSS, or the renderer's peak |
+
+Put `pids` inside `deploy.resources.limits` — a top-level `pids_limit` alongside
+`deploy.resources` is rejected by Compose.
 
 **Configuration** (required)
 

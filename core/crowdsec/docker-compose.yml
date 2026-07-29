@@ -40,10 +40,13 @@ services:
       - ./config/appsec.yaml:/etc/crowdsec/acquis.d/appsec.yaml:ro
       # Traefik access logs (read-only, relative path by default)
       - ${TRAEFIK_LOG_PATH}:/var/log/traefik:ro
-      # SSH authentication logs (opt-in — uncomment for SSH brute-force detection)
-      # Requires: crowdsecurity/sshd in CROWDSEC_COLLECTIONS + acquis.yaml SSH block
+      # SSH authentication logs. The sshd collection ships in
+      # CROWDSEC_COLLECTIONS by default, so its rules load either way — without
+      # this mount and a matching block in acquis.yaml they simply have nothing
+      # to read, which looks identical to working. Leave it commented only if
+      # this host has no SSH.
       # See docs/firewall-bouncer.md → "SSH detection"
-      # - /var/log/auth.log:/var/log/auth.log:ro
+      - /var/log/auth.log:/var/log/auth.log:ro
 
     # --- Networking ---
     networks:

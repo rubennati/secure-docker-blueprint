@@ -13,6 +13,17 @@ services:
     security_opt:
       - no-new-privileges:true
 
+    # --- Resources ---
+    # The buffer pool alone is configured at 1G below; connections, sort buffers
+    # and temporary tables come on top. 2G is the ceiling, not the appetite.
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          pids: 200
+        reservations:
+          memory: 512M
+
     # --- Configuration ---
     command: >
       --transaction-isolation=READ-COMMITTED
@@ -61,6 +72,16 @@ services:
     security_opt:
       - no-new-privileges:true
 
+    # --- Resources ---
+    # maxmemory is 512mb; the rest covers allocator fragmentation and overhead.
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+          pids: 50
+        reservations:
+          memory: 64M
+
     # --- Configuration ---
     command: >
       sh -c 'exec redis-server
@@ -106,6 +127,18 @@ services:
     # chown/chmod files as root before PHP-FPM drops to www-data.
     # With no-new-privileges, config.php gets created as root:root
     # and PHP-FPM (www-data) cannot write to it → 503.
+
+    # --- Resources ---
+    # pm.max_children is 25 and a worker measured 65–107 MB, so the working set
+    # is around 2G. The ceiling sits above it deliberately: a limit the normal
+    # workload reaches is a limit that kills previews and imports.
+    deploy:
+      resources:
+        limits:
+          memory: 3G
+          pids: 300
+        reservations:
+          memory: 512M
 
     # --- Configuration ---
     environment:
@@ -185,6 +218,15 @@ services:
     security_opt:
       - no-new-privileges:true
 
+    # --- Resources ---
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          pids: 50
+        reservations:
+          memory: 32M
+
     # --- Storage ---
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
@@ -227,6 +269,16 @@ services:
 
     # --- Security ---
     # NOTE: no-new-privileges omitted — same reason as app container
+
+    # --- Resources ---
+    # Same pool file as `app`, but cron occupies one or two workers at a time.
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          pids: 150
+        reservations:
+          memory: 256M
 
     # --- Configuration ---
     entrypoint: /cron.sh

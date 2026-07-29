@@ -28,8 +28,8 @@ labels:
 #
 # See docs/firewall-bouncer.md → "SSH detection"
 #
-# ---
-# filenames:
-#   - /var/log/auth.log
-# labels:
-#   type: syslog
+---
+filenames:
+  - /var/log/auth.log
+labels:
+  type: syslog
