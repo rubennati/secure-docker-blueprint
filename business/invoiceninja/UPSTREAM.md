@@ -10,7 +10,7 @@
 - **Origin:** US · Invoice Ninja LLC · non-EU
 - **Note:** Elastic License 2.0 is not OSI-approved — source-available, not open source. Self-hosting permitted; providing it as a managed service to others is restricted.
 - **Based on version:** `5.13.26`
-- **Last verified:** 2026-07-29 (5.13.26) — configuration reviewed against upstream and validated; not yet started on a host
+- **Last verified:** 2026-07-29 (5.13.26) — installed on a live host: migrations, seeding, secrets reaching Laravel, and routing behind Traefik under `acc-tailscale`
 
 ## Pinned Versions
 
@@ -107,12 +107,12 @@ a file-and-database capture cannot give.
 | Credentials injected by a wrapper entrypoint | The image upstream recommends (`invoiceninja-debian`) starts through `init.sh`, which reads plain environment variables and implements no `_FILE` handling. The alpine branch does implement it, but upstream states that branch is no longer updated. `ops/entrypoint.sh` reads `/run/secrets` and exports the variables before handing over — the pattern this repository already uses for Ghost. | None. This is the documented approach for an image without `_FILE`. |
 | `TRUSTED_PROXIES=*` | Wildcard trusts any IP as proxy. Safe when Traefik is the only path to nginx, but is technically too permissive. | Tighten to Traefik container IP or internal CIDR |
 | MySQL instead of MariaDB | Upstream requirement; blueprint default is MariaDB for other stacks. | No change planned — stays MySQL |
-| Healthchecks not yet exercised | `app` now asks supervisor whether all three programs are running — php-fpm, queue-worker and scheduler — rather than only that PHP starts. `nginx` requests a page instead of checking config syntax. Neither has run against a live instance. | Confirm on a host |
+| nginx health uses an undocumented endpoint | The documented one, `/api/v1/health_check`, answers 403 on a running instance despite the API reference describing it as needing no authentication. `/health` answers 200 with `{"status":"ok"}`. Checking the site root is not an option: it answers 302, busybox wget calls that a failure, and Traefik drops unhealthy containers from the load balancer — the proxy then returns 404, which looks nothing like a health problem. | Switch to the documented endpoint if it starts answering |
 | Named volumes instead of bind mounts | Upstream pattern; harder to inspect on host but simpler to set up. | Migrate to `./volumes/` bind mounts in a future cleanup |
 
 ## Known Issues
 
-- **Not yet started on a host.** The configuration validates and the entrypoint has been exercised on its own; the stack has not run. That is what moves this from 🚧 to ✅.
+- **Client-facing features not exercised.** The stack installs, migrates, seeds and answers behind the proxy, and the secrets reach Laravel. Creating an invoice, sending it, and the PDF renderer under load have not been tried.
 - **App healthcheck is not a full liveness check**: `php -r "echo 'ok';"` verifies the PHP binary is callable but not that PHP-FPM is accepting connections or that supervisor processes (queue workers, scheduler) are running. Use `supervisorctl status` inside the container to verify those.
 - **PDF rendering memory**: Snappdf/Chromium can spike past 1G on complex invoices or many concurrent renders. If rendering fails consistently, increase `memory:` on the app service and restart.
 

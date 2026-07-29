@@ -150,8 +150,19 @@ services:
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
 
     # --- Health & Observability ---
+    # `/health` answers 200 with {"status":"ok","message":"API is healthy"}.
+    #
+    # It is not the endpoint the API reference documents — that is
+    # /api/v1/health_check, described as needing no authentication, which
+    # answers 403 on this instance. Measured, not assumed; revisit if `/health`
+    # ever stops answering, since nothing upstream promises it.
+    #
+    # Do not check the site root: it answers 302 to the login, busybox wget
+    # treats that as a failure, and an unhealthy container is one Traefik drops
+    # from the load balancer — so the symptom is a 404 from the proxy, which
+    # looks nothing like a health problem.
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1"]
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3

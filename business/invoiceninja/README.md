@@ -1,7 +1,7 @@
 # Invoice Ninja
 
-> **Status: 🚧 v5.13.26** — credentials moved into Docker Secrets;
-> not yet exercised on a host · 2026-07-29
+> **Status: 🚧 v5.13.26** — installed on a live host: migrations, secrets and
+> proxy routing verified; invoicing and PDF rendering not yet exercised · 2026-07-29
 
 Self-hosted invoicing, quotes, expenses, and time-tracking (Laravel / PHP-FPM).
 
@@ -46,7 +46,7 @@ Supervisor inside the `app` container manages the Laravel scheduler and queue wo
 
 - `no-new-privileges:true` on all services
 - All services isolated on an internal bridge network
-- nginx is the only public-facing service (on the `proxy` network)
+- nginx is the only public-facing service (on `proxy-public`)
 - MySQL and Redis are not exposed on the host
 - `REQUIRE_HTTPS=true` enforced via env
 - `APP_DEBUG=false` in production
@@ -60,7 +60,7 @@ Supervisor inside the `app` container manages the Laravel scheduler and queue wo
 |---|---|
 | **Database** | MySQL · container `invoiceninja-mysql` · database `ninja` · user `ninja` |
 | **Password** | `.secrets/db_pwd.txt` |
-| **State** | `mysql_data` (database) · `app_storage` (attachments, logos, generated PDFs) · **`.env`, especially `APP_KEY`** |
+| **State** | `mysql_data` (database) · `app_storage` (attachments, logos, generated PDFs) · **`.secrets/app_key.txt`** |
 | **Reproducible** | `redis_data` (cache) · `app_public` — served assets, rebuilt by the image |
 | **Quiescing** | Not needed. The dump is consistent on its own. |
 
@@ -76,10 +76,10 @@ mysql_databases:
       password: "{credential file /srv/docker/business/invoiceninja/.secrets/db_pwd.txt}"
 ```
 
-**`.secrets/app_key.txt` decrypts the stored data.** Without it a restored database
-is unreadable — this is the single most important line in this section, and it is
-the one thing here that is not in a volume. Back `.env` up with the database, and
-keep a copy of `APP_KEY` somewhere the host cannot reach.
+**`.secrets/app_key.txt` decrypts the stored data.** Without it a restored
+database is unreadable — the single most important line in this section, and the
+one thing here that lives in no volume. Capture `.secrets/` with the database,
+and keep a second copy of the key somewhere this host cannot reach.
 
 Point borgmatic straight at `.secrets/db_pwd.txt`, the same file the stack
 mounts — one copy of the password on the host, and nothing to update twice when
@@ -90,17 +90,18 @@ Manual dump and restore, when borgmatic is not in the picture:
 ```bash
 # Dump
 docker exec invoiceninja-mysql mysqldump \
-  -u root -p"$(grep '^DB_ROOT_PASSWORD=' .env | cut -d= -f2)" ninja \
+  -u root -p"$(cat .secrets/db_root_pwd.txt)" ninja \
   > backup-db-$(date +%Y%m%d-%H%M).sql
 
 docker run --rm -v invoiceninja_app_storage:/data:ro -v "$(pwd)":/out \
   alpine tar czf /out/backup-storage-$(date +%Y%m%d-%H%M).tar.gz -C /data .
 
-cp .env .env.backup-$(date +%Y%m%d)
+tar czf secrets-$(date +%Y%m%d).tar.gz .secrets .env
 
 # Restore — database first, with only MySQL running
 docker compose up -d mysql
-docker compose exec mysql sh -c 'mysql -u root -p"${MYSQL_ROOT_PASSWORD}" ninja' \
+docker compose exec -T mysql sh -c \
+  'mysql -u root -p"$(cat /run/secrets/DB_ROOT_PWD)" ninja' \
   < backup-db-YYYYMMDD-HHMM.sql
 
 docker run --rm -v invoiceninja_app_storage:/data -v "$(pwd)":/in \
@@ -110,7 +111,7 @@ docker run --rm -v invoiceninja_app_storage:/data -v "$(pwd)":/in \
 **Back up before every upgrade.** Invoice Ninja runs migrations on start, and a
 failed migration against a database with no dump behind it is not recoverable.
 
-**Restore order:** `.env` and database first, then storage, then the app.
+**Restore order:** `.secrets/` and the database first, then storage, then the app.
 
 ## First-Time Setup
 
@@ -127,7 +128,7 @@ Set these values:
 |---|---|
 | `APP_TRAEFIK_HOST` | Your domain (e.g. `invoice.example.com`) |
 | `IN_USER_EMAIL` | Initial admin email |
-| `MAIL_HOST` / `MAIL_*` | SMTP settings for sending invoices |
+| `MAIL_HOST` / `MAIL_*` | SMTP settings — invoices, quotes and reminders all leave by mail |
 
 ### Step 2: Create the secrets
 
@@ -194,9 +195,11 @@ First boot typically takes 1–3 minutes. MySQL initialization and user/database
 
 ### Step 5: Log in
 
-Open `https://invoice.example.com` and log in with `IN_USER_EMAIL` / `IN_PASSWORD`.
+Open `https://invoice.example.com` and log in with `IN_USER_EMAIL` from `.env`
+and the password in `.secrets/in_pwd.txt`.
 
-After logging in you can remove or blank `IN_USER_EMAIL` and `IN_PASSWORD` from `.env` — the account already exists in the database.
+Change it in the interface afterwards. The account lives in the database from
+then on; the secret file is read on the first start only.
 
 ## Verify
 
@@ -209,7 +212,7 @@ curl -sI https://your-domain/            # 200 or 302
 ## TODOs After Initial Setup
 
 - [ ] `APP_KEY` set and saved in a secure location (loss = cannot decrypt stored data)
-- [ ] `IN_USER_EMAIL` and `IN_PASSWORD` blanked or removed from `.env`
+- [ ] First administrator's password changed in the interface; `.secrets/in_pwd.txt` is read on the first start only
 - [ ] SMTP configured and tested (send a test invoice)
 - [ ] Backup strategy in place (see UPSTREAM.md)
 - [ ] Upgrade check: verify `APP_TAG` against latest stable release (see UPSTREAM.md)
