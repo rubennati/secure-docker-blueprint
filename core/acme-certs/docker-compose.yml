@@ -47,6 +47,14 @@ services:
     secrets:
       - CF_TOKEN
 
+    # --- Health & Observability ---
+    # healthcheck: none — a renewal tool with nothing listening and no state to
+    # query from outside. `restart: unless-stopped` already covers the process
+    # exiting; what a check could add is "running but no longer renewing",
+    # and that needs a signal from the tool itself. This image is first-party,
+    # so that signal is something the tool could expose — a timestamp file
+    # written on each successful run would make a real check possible.
+
     # --- Storage ---
     volumes:
       - ./volumes/acme:/acme.sh

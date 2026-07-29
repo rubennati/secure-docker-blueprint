@@ -50,6 +50,11 @@ services:
       - ./config/entrypoint.sh:/config/entrypoint.sh:ro
       - ./volumes/seafile-data/seafile/logs:/shared/seafile/logs
 
+    # --- Health & Observability ---
+    # healthcheck: none — the image has no shell, so there is nothing for
+    # healthcheck.test to run. Confirmed with
+    # `docker run --rm --entrypoint sh <image>`.
+
     # --- Networking ---
     networks:
       - proxy-public

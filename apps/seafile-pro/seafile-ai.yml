@@ -34,6 +34,12 @@ services:
     depends_on:
       seafile:
         condition: service_healthy
+    # --- Health & Observability ---
+    # healthcheck: none — the image could not be pulled to establish what it
+    # contains, and a check written without that is a guess. Establish it
+    # the next time this stack runs:
+    #   docker run --rm --entrypoint sh <image> -c 'command -v curl wget nc'
+
     networks:
       - seafile-net
 

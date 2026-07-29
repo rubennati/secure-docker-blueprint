@@ -314,6 +314,13 @@ services:
     volumes:
       - ./volumes/storage:/usr/share/nginx/html/storage
 
+    # --- Health & Observability ---
+    # healthcheck: none — a background worker with nothing listening. If the
+    # process exits, `restart: unless-stopped` already brings it back; a
+    # check would only add value for a process that is alive but wedged,
+    # and detecting that needs a liveness signal from the application
+    # itself rather than anything visible from outside.
+
     # --- Networking ---
     networks:
       - app-internal

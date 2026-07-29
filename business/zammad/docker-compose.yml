@@ -206,6 +206,13 @@ services:
     depends_on:
       init:
         condition: service_completed_successfully
+    # --- Health & Observability ---
+    # healthcheck: none — this does listen, so a port check would be
+    # meaningful, but the port is not declared anywhere in this stack and
+    # writing one from upstream's defaults would be a guess. Establish it
+    # against a running instance, then replace this:
+    #   docker compose exec railsserver sh -c 'ss -tlnp || netstat -tln'
+
     volumes:
       - ./volumes/zammad-storage:/opt/zammad/storage
 
@@ -214,6 +221,13 @@ services:
     <<: *zammad-shared
     container_name: ${COMPOSE_PROJECT_NAME}-websocket
     command: ["zammad-websocket"]
+    # --- Health & Observability ---
+    # healthcheck: none — this does listen, so a port check would be
+    # meaningful, but the port is not declared anywhere in this stack and
+    # writing one from upstream's defaults would be a guess. Establish it
+    # against a running instance, then replace this:
+    #   docker compose exec websocket sh -c 'ss -tlnp || netstat -tln'
+
     # --- Resources ---
     # Search, rendering or ML — generous on purpose. Retune from docker stats.
     deploy:
@@ -246,6 +260,13 @@ services:
     depends_on:
       init:
         condition: service_completed_successfully
+    # --- Health & Observability ---
+    # healthcheck: none — a background worker with nothing listening. If the
+    # process exits, `restart: unless-stopped` already brings it back; a
+    # check would only add value for a process that is alive but wedged,
+    # and detecting that needs a liveness signal from the application
+    # itself rather than anything visible from outside.
+
     volumes:
       - ./volumes/zammad-storage:/opt/zammad/storage
 

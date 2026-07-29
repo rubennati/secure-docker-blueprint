@@ -53,6 +53,11 @@ services:
     volumes:
       - ./volumes/seafile-data:/shared
 
+    # --- Health & Observability ---
+    # healthcheck: none — the image has no shell, so there is nothing for
+    # healthcheck.test to run. Confirmed with
+    # `docker run --rm --entrypoint sh <image>`.
+
     # --- Networking ---
     networks:
       - app-internal

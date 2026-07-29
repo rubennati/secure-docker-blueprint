@@ -62,6 +62,15 @@ services:
       - no-new-privileges:true
     entrypoint: memcached -m 256
 
+    # --- Health & Observability ---
+    # Not an HTTP service — this confirms the port accepts a connection.
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 11211"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
     # --- Networking ---
     # --- Resources ---
     # `-m 256M` is configured; the rest is process overhead.
