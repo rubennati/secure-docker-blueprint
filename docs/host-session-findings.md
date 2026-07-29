@@ -563,6 +563,31 @@ wherever the repository documents resource limits, since `deploy.resources`
 says nothing about `/dev/shm` and the default is invisible until something
 stalls.
 
+## 25. CrowdSec runs, and measures how little it can see
+
+**Deployed.** Phase 1, the engine, against Traefik's access log. Healthy in about
+20 seconds; six collections active including `http-cve` and `sshd`. Acquisition
+parses cleanly — every line read was a line parsed, none unparsed — and
+`crowdsecurity/http-crawl-non_statics` instantiated on the first traffic it saw.
+
+**And the number that matters.** 120 requests were driven at a host behind
+`acc-tailscale`. CrowdSec's acquisition counter moved by **3**.
+
+That is finding 2 again, no longer as a before-and-after line count but as a
+ratio. `ipAllowList` rejects the request before Traefik writes an access-log
+line, so the detection layer never learns that 117 requests happened. An
+attacker enumerating a VPN-only host generates almost nothing to detect.
+
+**What this settles.** CrowdSec is worth running from the moment anything is
+public, and it is close to decoration while everything sits behind a network
+restriction. The two layers do not stack — they take turns. Where `ipAllowList`
+is doing the work, CrowdSec is blind; where CrowdSec is doing the work, the
+allowlist has already been opened.
+
+Neither statement is an argument against either layer. It is an argument against
+believing the two add up, which the repository's own README table invites by
+listing them side by side.
+
 ## What worked, session 2
 
 - The wildcard certificate covered the new subdomain with **no second certificate

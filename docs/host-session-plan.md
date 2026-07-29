@@ -88,7 +88,10 @@ hardest patterns. What comes out of it becomes the template for every app after.
 - [ ] Two-factor: providers are available but not enforced — decide
 - [ ] Rate limits checked against real usage — the app must not stall behind them
 - [ ] Desktop and mobile client connect and sync
-- [ ] CrowdSec integrated at a basic level and confirmed to see the traffic
+- [x] CrowdSec integrated at a basic level and confirmed to see the traffic —
+      engine deployed, acquisition parsing cleanly, scenarios firing. Confirmed
+      it also cannot see traffic a network restriction rejects: 120 requests,
+      3 log lines (finding 25)
 - [ ] Record `Supported until` in `UPSTREAM.md`
 - [ ] Site: an operator-facing Nextcloud page — setup, the `occ` commands that
       matter, what to check after, with links to the official documentation and

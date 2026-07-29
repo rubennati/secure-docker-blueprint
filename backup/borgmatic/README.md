@@ -19,6 +19,7 @@ Host-installed backup for the stacks in this blueprint. Borg does the deduplicat
 
 - **Borgmatic ≥ 2.0.8** — earlier versions have no `container:` option for databases, and the v2 configuration format differs from v1. Check with `borgmatic --version`.
 - **A client for every database engine you back up, on the host.** `mariadb-client`, `postgresql-client`, `mongodb-database-tools` as applicable. See [Databases](#databases) — this surprises people, and it is not optional.
+- **`python3-llfuse`**, if you want to browse an archive rather than extract from it. `borg mount` fails without it; `list` and `extract` do not need it.
 - An SSH-reachable target. Any provider offering SSH/SFTP storage works; so does another machine you control.
 - Root on the Docker host.
 

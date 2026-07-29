@@ -120,6 +120,39 @@ Record the date, the archive used, what was restored, and anything that surprise
 
 ---
 
+## Just looking — browse an archive as a filesystem
+
+"Where are my backups?" has an unsatisfying answer if you go looking on disk: a
+Borg repository is not a folder of copies. It holds `config`, `data/`, an index
+and a nonce — encrypted, deduplicated chunks, owned by root and unreadable
+without the passphrase. There is nothing there to recognise.
+
+Mount one instead and it becomes an ordinary directory tree:
+
+```bash
+sudo mkdir -p /mnt/borg
+sudo borgmatic mount --mount-point /mnt/borg
+ls /mnt/borg                      # one directory per archive
+ls /mnt/borg/<archive>            # the filesystem as it was
+sudo umount /mnt/borg
+```
+
+Database dumps appear under `borgmatic/` at the top of each archive, the rest
+mirrors the original paths.
+
+**`borg mount` needs FUSE**, which the Debian package does not pull in:
+
+```text
+Runtime Error: borg mount not available: no FUSE support
+```
+
+```bash
+sudo apt install python3-llfuse
+```
+
+Without it, everything else still works — `list` and `extract` do not need
+FUSE. Only browsing does.
+
 ## Real restore — single file or directory
 
 ```bash
