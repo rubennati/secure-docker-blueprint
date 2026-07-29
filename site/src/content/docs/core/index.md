@@ -9,7 +9,7 @@ Traefik and CrowdSec are set up once per server before any application — toget
 
 **Problem it solves:** multiple Docker services need HTTPS on the same server and the same port, without manually juggling certificates per service — and some should be reachable from the internet while others stay Tailscale-only.
 
-Every other guide on this site assumes Traefik is already running. Nothing is reachable without it.
+Every other guide on this site assumes Traefik is already running — the services in them publish no ports of their own and are routed through it.
 
 [Go to the Traefik guide →](/core/traefik/)
 

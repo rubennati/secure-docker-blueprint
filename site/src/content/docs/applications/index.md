@@ -5,7 +5,7 @@ description: Curated operator guides for self-hosted applications and business t
 
 Application and business-tool guides live here — what an operator deploys and uses day to day, on top of the [Core Infrastructure](/core/) every guide assumes is already running.
 
-Guides cover the full operating path — setup, ongoing use, backup, restore, and updates — not just how to start a container.
+Guides cover setup, ongoing use, backup, restore and updates.
 
 ## Vaultwarden
 
@@ -25,13 +25,11 @@ Guides cover the full operating path — setup, ongoing use, backup, restore, an
 
 [Go to the Seafile Pro guide →](/applications/seafile-pro/)
 
-## What these guides cover
-
-A useful guide has to address what to back up, what restore looks like, and how to update without data loss — that takes time to verify per application. Not every guide is complete in all respects yet; each page states clearly what has and has not been tested.
-
 ## Where to go next
 
-- [Vaultwarden](/applications/vaultwarden/) — password manager; setup, backup, and restore verified.
-- [Nextcloud](/applications/nextcloud/) — files, calendars and contacts; installation, mail, hardening and a backup with a database restore verified on a live host; client sync not yet exercised.
-- [Seafile Pro](/applications/seafile-pro/) — file sync and collaborative editing; installation verified, backup and restore not yet tested.
-- [Core Infrastructure](/core/) if Traefik isn't running yet — every application guide needs it first.
+- [Vaultwarden](/applications/vaultwarden/) — password manager
+- [Nextcloud](/applications/nextcloud/) — files, calendars and contacts
+- [Seafile Pro](/applications/seafile-pro/) — file sync and collaborative editing
+- [Core Infrastructure](/core/) if Traefik isn't running yet — every application guide needs it first
+
+Each guide opens with its status, the version it sets up, when that was last checked, and what has not been exercised.
