@@ -55,6 +55,13 @@ services:
     volumes:
       - ./volumes/data:/data
 
+    # --- Health & Observability ---
+    # healthcheck: inherited from the image, which declares its own.
+    # Compose does not need to repeat it, and overriding it here would
+    # replace a check the maintainers keep current. Confirm with
+    # `docker inspect <image> --format '{{json .Config.Healthcheck}}'`.
+    # Here: ./fetchstatus.py
+
     # --- Networking ---
     networks:
       - proxy-public

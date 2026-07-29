@@ -237,6 +237,19 @@ services:
       - app-internal
       - proxy-public
 
+    # --- Health & Observability ---
+    # status.php answers 200 with JSON and reaches through FastCGI to the
+    # application, so this proves the whole path rather than that nginx is up.
+    # Do not check `/`: it answers 302, and a redirect that a minimal wget
+    # treats as failure makes the container unhealthy — whereupon Traefik drops
+    # it from the load balancer and the symptom is a 404 from the proxy.
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1/status.php | grep -q '\"installed\":true'"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
     # --- Traefik ---
     labels:
       # Router
@@ -321,6 +334,17 @@ services:
     networks:
       - app-internal
       - app-egress
+
+    # --- Health & Observability ---
+    # There is no service to query here — the container is busybox crond running
+    # cron.php on a schedule. If PID 1 is still crond, the scheduler is alive;
+    # if it exited, this is the only thing that would say so.
+    healthcheck:
+      test: ["CMD-SHELL", "grep -q crond /proc/1/cmdline"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
 # --------------------------------------------------------
 # VOLUMES

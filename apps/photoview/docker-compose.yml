@@ -120,6 +120,13 @@ services:
       # Media library — read-only bind from host
       - ${MEDIA_ROOT}:/photos:ro
 
+    # --- Health & Observability ---
+    # healthcheck: inherited from the image, which declares its own.
+    # Compose does not need to repeat it, and overriding it here would
+    # replace a check the maintainers keep current. Confirm with
+    # `docker inspect <image> --format '{{json .Config.Healthcheck}}'`.
+    # Here: curl --fail on the app's own /api endpoint
+
     # --- Networking ---
     networks:
       - proxy-public

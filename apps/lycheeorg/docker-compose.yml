@@ -171,6 +171,13 @@ services:
       - ./volumes/logs:/logs
       - ./volumes/tmp:/lychee-tmp
 
+    # --- Health & Observability ---
+    # healthcheck: inherited from the image, which declares its own.
+    # Compose does not need to repeat it, and overriding it here would
+    # replace a check the maintainers keep current. Confirm with
+    # `docker inspect <image> --format '{{json .Config.Healthcheck}}'`.
+    # Here: curl -f http://localhost:2019/metrics
+
     # --- Networking ---
     networks:
       - proxy-public

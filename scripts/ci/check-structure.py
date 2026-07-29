@@ -185,14 +185,30 @@ def check_env(app: Path, findings: list[dict]) -> None:
                                  "detail": f"{key}={value} — use *.example.com in a committed file"})
 
 
+
+def _healthcheck_waived(text: str, service: str) -> bool:
+    """True when the service block carries a documented reason for having none.
+
+    Comments do not survive YAML parsing, so this reads the raw file and looks
+    only inside the block belonging to `service`.
+    """
+    m = re.search(rf"(?m)^  {re.escape(service)}:\n", text)
+    if not m:
+        return False
+    rest = text[m.end():]
+    nxt = re.search(r"(?m)^  [A-Za-z0-9_.-]+:\n|^[a-z]+:\n", rest)
+    block = rest[: nxt.start()] if nxt else rest
+    return bool(re.search(r"#\s*healthcheck:\s*(inherited|none)\b", block, re.I))
+
 def check_compose(app: Path, findings: list[dict]) -> None:
     for path in compose_files(app):
         check_one_compose(app, path, findings)
 
 
 def check_one_compose(app: Path, path: Path, findings: list[dict]) -> None:
+    raw_text = path.read_text(encoding="utf-8", errors="replace")
     try:
-        data = yaml.safe_load(path.read_text(encoding="utf-8", errors="replace")) or {}
+        data = yaml.safe_load(raw_text) or {}
     except yaml.YAMLError as exc:
         findings.append({"level": "FAIL", "rule": "yaml-parse",
                          "detail": f"{path.name} is not valid YAML: {exc}"})
@@ -225,8 +241,19 @@ def check_one_compose(app: Path, path: Path, findings: list[dict]) -> None:
                              "detail": "no deploy.resources.limits — unbounded container"})
 
         # -- healthcheck (WARN) -----------------------------------------------
+        # A service can legitimately have none: some images ship their own, which
+        # Compose inherits, and some are built FROM scratch with no shell to run
+        # one in. Neither is visible here — reading it would mean pulling images,
+        # which CI should not do. So the compose file declares the reason and
+        # this accepts it:
+        #
+        #   # healthcheck: inherited from the image
+        #   # healthcheck: none — <why not>
+        #
+        # Anything else still warns, so the escape hatch cannot be used to wave
+        # a service through quietly.
         hc = svc.get("healthcheck")
-        if not hc:
+        if not hc and not _healthcheck_waived(raw_text, name):
             findings.append({"level": "WARN", "rule": "no-healthcheck", "service": name,
                              "detail": "no healthcheck"})
 

@@ -45,6 +45,12 @@ services:
     volumes:
       - ./volumes/data:/datastore
 
+    # --- Health & Observability ---
+    # healthcheck: none — the image is built FROM scratch and has no shell,
+    # so there is nothing for healthcheck.test to run. Verified by
+    # `docker run --rm --entrypoint sh <image>`, which reports that sh
+    # does not exist. Docker treats such a container as healthy.
+
     # --- Networking ---
     networks:
       - proxy-public

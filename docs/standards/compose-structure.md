@@ -147,8 +147,35 @@ Put `pids` inside `deploy.resources.limits` — a top-level `pids_limit` alongsi
 
 **Health & Observability** (strongly recommended)
 
-- Healthcheck on every service where possible.
-- Healthchecks are app-specific — use whatever the image supports. No forced standard.
+A healthcheck sets a status. **Nothing acts on it by itself** — Docker will not
+restart or report an unhealthy container. Three things read it, and only the
+second has an effect at runtime:
+
+| Reader | Effect |
+|---|---|
+| `depends_on: condition: service_healthy` | start ordering |
+| **Traefik** | drops an unhealthy container from the load balancer — the proxy then answers 404 |
+| `docker compose ps`, a monitoring stack | visibility, if anyone is looking |
+
+That second row is why a *wrong* healthcheck is worse than none: a check that
+fails on a redirect takes the service out of rotation, and the symptom looks
+like a routing fault.
+
+So verify the command against the running image before committing it. Check what
+the image actually contains — `docker run --rm --entrypoint sh <image> -c 'command -v curl wget'`
+— and prefer an endpoint that proves the path end to end. Nextcloud's
+`/status.php` returns `{"installed":true,…}`, which exercises nginx, FastCGI and
+the application in one request; `nginx -t` would only have parsed a config file.
+
+Some services legitimately have none, and the compose file says which:
+
+```yaml
+    # healthcheck: inherited from the image, which declares its own.
+    # healthcheck: none — the image is FROM scratch and has no shell.
+```
+
+`check-structure.py` accepts either marker and warns on anything else, so the
+exemption cannot be used to wave a service through without stating why.
 
 ## Service Names
 
