@@ -9,7 +9,7 @@ import StackStatus from '../../../components/StackStatus.astro';
 CrowdSec watches Traefik's access logs and decides which IPs to ban for attack patterns (brute force, CVE probes, path traversal). On its own it detects but doesn't block — blocking is added separately, in layers you choose.
 
 <StackStatus stack="core/crowdsec"
-  note="Verified on a live host: detection, a ban enforced against a real client, and the WAF layer blocking a CVE signature. The host firewall bouncer has not been set up." />
+  note="Verified on a live host: detection, a ban enforced against a real client, the WAF layer blocking a CVE signature, and the host firewall dropping packets at the kernel." />
 
 Needs: [Traefik](/core/traefik/) running.
 
@@ -62,6 +62,37 @@ done
 docker exec crowdsec cscli metrics show acquisition
 ```
 :::
+
+## The three layers, and what each one covers
+
+They are separate components with one thing in common: the engine decides,
+nothing else does. It writes decisions to a list; each enforcement layer polls
+that list and applies it in its own place. A decision with no enforcer attached
+does nothing at all.
+
+| | Where it acts | Catches |
+|---|---|---|
+| **Engine** | reads the proxy's access log | decides — blocks nothing itself |
+| **Proxy plugin** | inside Traefik, per request | HTTP attacks; answers 403 and sees the decrypted request |
+| **Firewall bouncer** | nftables on the host | everything, on every port — the packet is dropped before a connection exists |
+
+The proxy plugin has the better view: it knows the URL and can say why it
+refused. The firewall bouncer has the wider one — SSH, port scans and anything
+not behind the proxy never reach Traefik at all.
+
+Running both is not redundancy. Measured here: a decision reaches the kernel in
+about 15 seconds and clears again in about 10, while the proxy plugin acts on
+its own polling cycle in between.
+
+### What the firewall layer inherits the moment you enable it
+
+The engine subscribes to CrowdSec's community blocklist from the start. On this
+host that had quietly accumulated **roughly 15,800 addresses** — known-bad, with
+nothing enforcing them, because Phase 1 only decides.
+
+Alongside them sat one the engine had found itself: an address probing this host
+for common exploit paths, eleven events, banned three hours earlier. Until the
+firewall layer existed, that ban applied only to HTTP through the proxy.
 
 ## What it can and cannot see
 

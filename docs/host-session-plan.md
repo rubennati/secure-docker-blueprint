@@ -147,6 +147,11 @@ settled ground.
       to the middleware list, empty by default — the three axes in
       `profiles.md` are now expressible on a router (finding 26)
 - [ ] Roll `APP_TRAEFIK_THREAT` out to the remaining stacks as each is reviewed
+- [x] **CrowdSec Phase 3 in place.** Firewall bouncer installed with safe_range
+      set before first start; a decision reaches the kernel in ~15s and clears in
+      ~10s, both address families. It inherited ~15,880 community decisions that
+      had been collected but never enforced, plus one locally detected scanner
+      (finding 30)
 - [x] **CrowdSec verified end to end.** Engine, bouncer, a real ban producing
       403 for an external client, and AppSec blocking a CVE signature. Two
       defects found on the way: the AppSec config was mounted where the engine

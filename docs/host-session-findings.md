@@ -721,6 +721,49 @@ that is not there fail in the one way nobody notices.
 rsyslog has to be installed first, the file has to exist, and there is a command
 to check before touching anything. A one-word "opt-in" was the actual defect.
 
+## 30. Phase 3 works, and it arrived with 15,000 decisions already waiting
+
+**Set up and verified.** The Debian package is `crowdsec-firewall-bouncer` — not
+the `-nftables` name upstream guides still use, which does not exist in Debian
+13. `safe_range` was written before the service was ever started, covering RFC
+1918 and Tailscale, because the failure mode here is locking yourself out of the
+machine you are configuring.
+
+The chain measured end to end:
+
+```text
+cscli decisions add   → 15 s → ip saddr @crowdsec-blacklists counter drop
+cscli decisions delete → 10 s → gone
+```
+
+Both address families: `table ip crowdsec` and `table ip6 crowdsec6`.
+
+**What was already there.** The blacklist set was not empty before the test
+decision. `cscli decisions list -a` returns roughly **15,880 active decisions**,
+almost all with `Source: CAPI` — the community blocklist, which the engine had
+been pulling since Phase 1 went up without anything enforcing them.
+
+And one with `Source: crowdsec`:
+
+```text
+Ip:80.94.95.211  crowdsecurity/http-probing  ban  RO  11 events
+```
+
+That is this host's own engine catching a real scanner, not a test. It had been
+detected and decided for hours; until Phase 3 existed, the decision applied only
+to HTTP through Traefik.
+
+**Why that matters for how the phases are described.** Phase 1 was accurate but
+undersold: it is not only watching this host's traffic, it subscribes to a feed
+of known-bad addresses. Without a bouncer that feed is inert. With Phase 3 it
+becomes a network-layer blocklist covering every port, and the marginal cost of
+that was one apt package and a config file.
+
+**Still missing, and it is the reason Phase 3 was described as SSH protection:**
+SSH brute force is not detected on this host at all — no `auth.log`, no
+`journalctl` in the container (finding 29). Phase 3 enforces SSH bans; nothing
+is producing them.
+
 ## What worked, session 2
 
 - The wildcard certificate covered the new subdomain with **no second certificate
