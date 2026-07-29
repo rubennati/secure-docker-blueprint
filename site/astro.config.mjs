@@ -3,6 +3,14 @@ import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 
 export default defineConfig({
+	// The site's own public address, and the only place it is written down.
+	// Canonical link tags, Open Graph URLs, the sitemap and the generated
+	// robots.txt / security.txt all derive from it — moving the site is a
+	// one-line change here, not a sweep across files.
+	//
+	// No `base` on purpose: this is an apex-style custom domain, so every
+	// internal path stays root-relative and llms.txt keeps working as written.
+	site: 'https://secure-docker.rubennati.at',
 	integrations: [
 		starlight({
 			title: 'Secure Docker Blueprint',
