@@ -72,14 +72,25 @@ Supervisor inside the `app` container manages the Laravel scheduler and queue wo
 
 This stack uses **named volumes**, not bind mounts. Their host paths are
 `/var/lib/docker/volumes/invoiceninja_<name>/_data` — that is what goes into
-`source_directories`, not a path under the stack directory.
+`source_directories`, not a path under the stack directory:
+
+```yaml
+source_directories:
+    - /srv/blueprint
+    - /var/lib/docker/volumes/invoiceninja_app_storage/_data
+```
+
+`app_public` is the image's own served assets, rebuilt on start, and is left
+out. `mysql_data` is left out deliberately as well — the dump below is the
+consistent copy, the raw files would be a torn one.
 
 ```yaml
 mysql_databases:
     - name: ninja
       container: invoiceninja-mysql
       username: ninja
-      password: "{credential file /srv/docker/business/invoiceninja/.secrets/db_pwd.txt}"
+      password: "{credential file /srv/blueprint/business/invoiceninja/.secrets/db_pwd.txt}"
+      tls: false
 ```
 
 **`.secrets/app_key.txt` decrypts the stored data.** Without it a restored

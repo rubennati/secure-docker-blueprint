@@ -137,6 +137,10 @@ mysql_databases:
       container: myapp-db
       username: myapp
       password: "{credential file /srv/docker/apps/myapp/.secrets/db_pwd.txt}"
+      # Same TLS note as above. Worth knowing: the distribution's MariaDB client
+      # dumps a MySQL 8.4 server without complaint — one client covers both
+      # engines, which is not obvious from the package name.
+      tls: false
 
 mariadb_databases:
     - name: myapp
