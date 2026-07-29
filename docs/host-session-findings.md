@@ -496,6 +496,42 @@ UTC so the file is reproducible regardless of who writes it, and exclude the
 is not part of what it says. Verified with `TZ=Pacific/Auckland`, twelve hours
 ahead: no `stale-report`.
 
+## 23. Which proxy an app behind nginx must trust
+
+**Question.** Stacks in this repository put nginx between Traefik and the
+application. Both are proxies, on different networks — so which address does the
+application's `trusted_proxies` have to name? Getting it wrong is silent: the
+application records a fixed internal address as every client, and rate limiting
+and brute-force protection then count everyone against it.
+
+**Measured.** A failed login driven through the proxy chain, read back from the
+application's own log:
+
+```text
+Login failed: 'admin' (Remote IP: '172.30.0.2')
+```
+
+`172.30.0.2` is Traefik on `proxy-public`. The nginx in front of the application
+sits at `172.20.0.6` on the stack's internal network and does **not** appear.
+
+**Why.** nginx speaks FastCGI to the application and passes its own
+`$remote_addr` through as `REMOTE_ADDR`. It is transparent at this layer, so the
+application's effective peer is the proxy in front of *nginx*, not nginx itself.
+
+**Consequence.** Trust the `proxy-public` subnets — both families where IPv6 is
+enabled — and not the stack's internal network. That is what Nextcloud already
+had, so the setting was right; what was missing was any statement of why, which
+made it look like a guess and invited someone to "correct" it to the internal
+subnet.
+
+Invoice Ninja shipped `TRUSTED_PROXIES=*` as a documented deviation. It now
+carries the same subnets, with the reasoning next to it.
+
+**Still open.** In this test the client reached Traefik as `127.0.0.1` from the
+host itself, and the application logged Traefik's address rather than that
+client. Whether the forwarded chain survives the nginx hop for a genuinely
+external client is not yet established — it needs a request from outside.
+
 ## What worked, session 2
 
 - The wildcard certificate covered the new subdomain with **no second certificate
