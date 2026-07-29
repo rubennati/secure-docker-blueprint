@@ -588,6 +588,37 @@ Neither statement is an argument against either layer. It is an argument against
 believing the two add up, which the repository's own README table invites by
 listing them side by side.
 
+## 26. The bouncer works — and testing it from the host proves nothing
+
+**Wired and verified.** Plugin declared, key generated, `crowdsec-basic`
+rendered, and the middleware attached to `core/whoami` on `acc-public`. The
+criterion the plan warns about was met immediately: `cscli bouncers list` showed
+a `Last API pull` only *after* a router actually used the middleware — the
+polling loop does not start on plugin load.
+
+**Then the ban did not take.** A decision against `127.0.0.1`, probed for 140
+seconds against a 60-second poll interval: HTTP 200 throughout.
+
+**The test was wrong, not the bouncer.** A request made on the host with
+`curl --resolve …:127.0.0.1` enters through the Docker bridge, so Traefik records
+the client as `172.30.0.1`, the gateway. The banned address never appeared as a
+sender. Repeated from a real external client, with that client's address read out
+of the access log, the ban produced a `403` on the next poll — and access
+returned after the decision was deleted.
+
+**The rule this leaves.** A bouncer cannot be validated from the machine it runs
+on. Any local probe is rewritten to a bridge address, and every result is
+meaningless. Read the address out of the access log, ban that, and have the real
+client retry. Anything else measures the loopback path.
+
+**And a gap it exposed.** The middleware label carried two axes,
+`APP_TRAEFIK_ACCESS` and `APP_TRAEFIK_SECURITY`, with no slot for the third that
+`core/crowdsec/docs/profiles.md` describes. `APP_TRAEFIK_THREAT` now fills it,
+prepended and carrying its own trailing comma so that an empty value renders
+nothing rather than a leading separator Traefik rejects. Applied to
+`apps/_reference` and `core/whoami`; the remaining stacks pick it up as each is
+reviewed.
+
 ## What worked, session 2
 
 - The wildcard certificate covered the new subdomain with **no second certificate

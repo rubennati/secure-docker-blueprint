@@ -43,10 +43,39 @@ labels:
   #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
   - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
   # Middlewares
-  - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+  - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
   # Service
   - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
 ```
+
+### The three axes on one router
+
+The middleware list carries three independent questions, in this order:
+
+| Variable | Question | Values |
+|---|---|---|
+| `APP_TRAEFIK_THREAT` | Is this caller known to be bad? | empty, or a `crowdsec-*` profile |
+| `APP_TRAEFIK_ACCESS` | Is this caller allowed here at all? | `acc-public` · `acc-private` · `acc-local` · `acc-tailscale` · `acc-deny` |
+| `APP_TRAEFIK_SECURITY` | What headers and rate limit apply? | `sec-0` … `sec-5`, plus `-e` and `-spa` variants |
+
+They are chosen independently — a public app can run without threat enforcement,
+and a VPN-only one can have it. Picking one does not imply the others.
+
+**Order matters.** Threat comes first so a banned address is rejected before
+anything else does work on the request.
+
+**`APP_TRAEFIK_THREAT` carries its own trailing comma**, because it is the one
+that may be empty:
+
+```ini
+APP_TRAEFIK_THREAT=                      # nothing prepended
+APP_TRAEFIK_THREAT=crowdsec-basic@file,  # prepended, note the comma
+```
+
+A separate variable with a fixed separator would render `,acc-public@file` when
+unset, and Traefik rejects that.
+
+Which profile suits which app is [`core/crowdsec/docs/profiles.md`](../../core/crowdsec/docs/profiles.md).
 
 - Router and service name = `${COMPOSE_PROJECT_NAME}` (unique per app)
 - Network via `${TRAEFIK_NETWORK}` variable (always set explicitly for multi-network setups)
