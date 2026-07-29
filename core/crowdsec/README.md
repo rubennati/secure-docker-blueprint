@@ -213,6 +213,59 @@ Scenarios that trigger on Traefik traffic:
 
 ---
 
+## The community blocklist — what you get, what you send
+
+The engine registers with CrowdSec's Central API on first start and both pulls and
+pushes. It is on by default, and it is a trade rather than a subscription.
+
+**What arrives.** Measured on a host running this blueprint: **15,880 active
+decisions**, essentially all of them `Source: CAPI`. Addresses other installations
+detected attacking them.
+
+**What leaves.** The address that triggered, which scenario fired, a timestamp.
+Not the request — `context` is off by default, so URLs, headers and bodies stay
+on your host. Check yours:
+
+```bash
+docker exec crowdsec cscli console status   # what is forwarded
+docker exec crowdsec cscli capi status      # registration and sharing
+```
+
+**Whether it is worth it.** Over fourteen hours this host's own engine produced
+two genuine detections — probes for a Jira CVE, against software it does not
+even run. The community list supplied 15,880. That is not a close comparison,
+and the imbalance is structural: local detection can only see what reaches you,
+while the list is what reached everyone else first.
+
+Turning sharing off also ends the pull; the two are one arrangement. CrowdSec is
+a French company, so for EU deployments the data leaving is at least staying
+inside that jurisdiction — but it is a data flow, and it should be a decision
+rather than a default nobody looked at.
+
+**The cost is not security, it is diagnosis.** A packet dropped by the firewall
+bouncer produces no log line anywhere — not in the proxy's access log, not in the
+application. Same blind spot as an access policy, except these addresses were
+chosen by somebody else.
+
+The scenario to be ready for: a client sits behind an address that reached the
+list — shared CGNAT, a compromised neighbour, a VPN exit. For them the site does
+not load, and nothing anywhere says why. One command answers it:
+
+```bash
+docker exec crowdsec cscli decisions list --ip <address>
+```
+
+That belongs at the *start* of "the site does not work for me", not at the end.
+To clear one:
+
+```bash
+docker exec crowdsec cscli decisions delete --ip <address>
+```
+
+Note that the firewall bouncer cannot filter by origin — it enforces every
+decision or none. Keeping community decisions at the proxy layer only, where a
+403 at least leaves a log line, is not something the current tooling offers.
+
 ## Phase 2: Traefik Bouncer Plugin
 
 HTTP-layer enforcement. Configuration spans two directories: the bouncer API key is generated here, and the plugin itself is declared in `core/traefik/`.

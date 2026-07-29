@@ -219,6 +219,23 @@ Phase 1 above is detection only. Two more layers, each independently optional, a
 
 ## Troubleshooting
 
+**"The site does not load for me" — check this first, not last.** Once the
+firewall layer is running, the most likely cause of one person being unable to
+reach a service is that their address is on a blocklist. The packet is dropped in
+the kernel, so there is no log line anywhere to tell you — not in the proxy, not
+in the application.
+
+```bash
+docker exec crowdsec cscli decisions list --ip <their address>
+docker exec crowdsec cscli decisions delete --ip <their address>
+```
+
+Most of those decisions did not come from your server. The engine subscribes to
+CrowdSec's community blocklist, which on a running host means around 15,000
+addresses other installations reported. That is the point of it — but it also
+means a shared CGNAT address, a VPN exit or a compromised neighbour can take a
+legitimate visitor with it.
+
 **The bouncer never polls** — `cscli bouncers list` shows no `Last API pull`.
 Loading the plugin is not enough: the polling loop starts only once a router
 actually uses the middleware. Attach it to one, then check again. There is no

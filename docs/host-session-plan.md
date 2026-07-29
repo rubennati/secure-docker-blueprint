@@ -147,6 +147,15 @@ settled ground.
       to the middleware list, empty by default — the three axes in
       `profiles.md` are now expressible on a router (finding 26)
 - [ ] Roll `APP_TRAEFIK_THREAT` out to the remaining stacks as each is reviewed
+- [?] **The community blocklist is a two-way arrangement, on by default.**
+      15,880 addresses arrive; this host's own detections leave. Not the request
+      content — `context` is off. Worth it by the numbers (14 hours of local
+      detection produced two genuine findings), and CrowdSec is EU-based, but it
+      is a data flow that should be decided rather than inherited
+- [ ] **A dropped packet leaves no trace.** `cscli decisions list --ip` is the
+      only way to answer "the site does not load for me", and it belongs at the
+      start of that conversation. Written into the README and the site; it also
+      belongs in an operating runbook once one exists
 - [x] **CrowdSec Phase 3 in place.** Firewall bouncer installed with safe_range
       set before first start; a decision reaches the kernel in ~15s and clears in
       ~10s, both address families. It inherited ~15,880 community decisions that
