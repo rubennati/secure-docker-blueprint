@@ -1,7 +1,8 @@
 # Nextcloud
 
-> **Status: 🚧 v34.0.2** — install, mail and hardening verified on a live host;
-> desktop and mobile client sync not yet exercised · 2026-07-29
+> **Status: 🚧 v34.0.2** — install, mail, hardening, a backup with a database
+> restore, and a MariaDB major upgrade all carried out on a live host; desktop
+> and mobile client sync not yet exercised · 2026-07-29
 
 Self-hosted file sync, calendar, contacts, and collaboration suite. This setup runs Nextcloud as **PHP-FPM behind nginx**, with MariaDB as database and Redis for file locking and session storage.
 
@@ -13,7 +14,7 @@ Five services:
 |---------|-------|---------|
 | `app` | `nextcloud:34.0.2-fpm-alpine` | PHP-FPM — the Nextcloud application |
 | `nginx` | `nginx:1.29-alpine-slim` | Web server, speaks HTTP to Traefik and FastCGI to `app` |
-| `db` | `mariadb:10.11` | Primary data store |
+| `db` | `mariadb:11.8` | Primary data store |
 | `redis` | `redis:7.4-alpine` | File locking + session cache |
 | `cron` | `nextcloud:34.0.2-fpm-alpine` | Runs Nextcloud's scheduled jobs (`cron.php` every 5 minutes) |
 
@@ -310,7 +311,7 @@ empty target, and let borgmatic restore into it:
 ```bash
 PW=$(openssl rand -hex 16)
 docker run -d --name nextcloud-restore-test \
-  -e MARIADB_ROOT_PASSWORD="$PW" --tmpfs /var/lib/mysql:rw mariadb:10.11
+  -e MARIADB_ROOT_PASSWORD="$PW" --tmpfs /var/lib/mysql:rw mariadb:11.8
 docker exec nextcloud-restore-test mariadb -uroot -p"$PW" -e 'CREATE DATABASE nextcloud;'
 
 sudo borgmatic restore --archive latest --database nextcloud \
@@ -369,6 +370,68 @@ After a file-tree restore, reconcile the index with what is actually on disk:
 docker compose exec -u www-data app php occ files:scan --all
 ```
 
+## Updates
+
+Two separate things, with different rules. Do not run both at once — when
+something breaks afterwards you want to know which one caused it.
+
+### Nextcloud
+
+One major version at a time; skipping is not supported. The web updater is
+disabled in this stack (`upgrade.disable-web`) in favour of replacing the image.
+
+```bash
+# 1. Back up, and confirm the archive is readable
+sudo borgmatic create --stats
+sudo borgmatic list --archive latest --find '*mariadb_databases*'
+
+# 2. Raise APP_TAG by one major version, then
+docker compose pull
+docker compose up -d
+docker compose logs -f app
+
+# 3. Confirm
+docker compose exec -u www-data app php occ status      # needsDbUpgrade: false
+docker compose exec -u www-data app php occ setupchecks
+```
+
+### MariaDB
+
+Skipping majors **is** supported for a standalone server — only Galera requires
+one step at a time. What is not supported is going back: across majors there is
+no downgrade, so the archive taken in step 1 is the only way to the previous
+state.
+
+`MARIADB_AUTO_UPGRADE` is already set on the `db` service, so the entrypoint runs
+`mariadb-upgrade` itself and writes `system_mysql_backup_*.sql.zst` into the data
+directory before touching anything.
+
+```bash
+# 1. Archive first — this is the only rollback that exists
+sudo borgmatic create --stats
+
+# 2. Quiesce the application; leave the database running
+docker compose exec -u www-data app php occ maintenance:mode --on
+docker compose stop app cron nginx
+
+# 3. Raise DB_TAG, bring only the database up, and watch it upgrade
+docker compose up -d db
+docker compose logs db | grep -iE "upgrade|error"
+
+# 4. Check the data before letting anyone near it
+docker compose exec db mariadb -uroot -p"$(cat .secrets/db_root_pwd.txt)" nextcloud \
+  -e "SELECT VERSION(); CHECK TABLE oc_filecache, oc_users, oc_storages;"
+
+# 5. Back into service
+docker compose up -d
+docker compose exec -u www-data app php occ maintenance:mode --off
+```
+
+Before raising the tag, read the *incompatible changes* page for **every** major
+version between the two — MariaDB documents them per step even when the upgrade
+itself skips them. Check the list against this stack's `command:` block; anything
+it does not set cannot be affected by a removal.
+
 ## Minimum requirements
 
 Nextcloud states its requirements per PHP process rather than per server, because
@@ -423,9 +486,14 @@ sync. It is not sized as a large public file hosting platform.
 
 `--innodb-log-file-size=256M` — Nextcloud produces a high rate of small writes: every file access updates `oc_filecache`, every user action appends to `oc_activity`, and file locking generates continuous `INSERT`/`DELETE` cycles in `oc_locks`. The InnoDB redo log buffers these writes before they are flushed to the data files. When the log fills, InnoDB triggers a checkpoint (synchronous flush), which stalls all writes until the flush completes. The default in MariaDB 10.11 is approximately 96 MB. With Nextcloud's write pattern on an active team instance, this fills quickly and produces periodic I/O stalls. 256 MB extends the time between forced checkpoints and smooths write latency. **Operational impact:** on the first restart after adding this flag, MariaDB automatically resizes the redo log. This is safe and handled internally — no manual steps required. On a 160 GB SSD the resize takes a few seconds.
 
-`--max-connections=200` — explicitly set to match the PHP-FPM pool size (10 workers, both app and cron) with significant headroom for monitoring and admin connections.
+`--max-connections=200` — comfortably above the PHP-FPM pool (25 workers in `app`, the same again in `cron`) with headroom for monitoring and administrative connections.
 
-`--innodb-buffer-pool-instances` was **not** added — it was removed in MariaDB 10.11 and has no effect. Using it would generate a startup warning.
+Two flags are deliberately **absent**:
+
+- `--innodb-buffer-pool-instances` was removed in MariaDB 10.11 and would only produce a startup warning.
+- `--innodb-file-per-table` is deprecated as of 11.8 and slated for removal. It has been the default since 5.6, so setting it changed nothing and only added a warning to every start. Confirm with `SHOW VARIABLES LIKE 'innodb_file_per_table'`.
+
+`--transaction-isolation=READ-COMMITTED` is what Nextcloud requires, and it also keeps this stack clear of the one behavioural change in the 11.x line that would otherwise matter: from 11.6, `innodb_snapshot_isolation` alters how *Repeatable Read* transactions behave and can raise `ERROR 1020` on statements that previously succeeded.
 
 ### PHP-FPM worker pool
 
@@ -653,6 +721,20 @@ Two distinct causes, and they look the same:
 
 In both cases the container keeps reporting healthy. Confirm with the PHP read
 test in [Verify](#verify).
+
+### MariaDB warns about `io_uring_queue_init() failed with EPERM`
+
+```text
+mariadbd: io_uring_queue_init() failed with EPERM: sysctl kernel.io_uring_disabled
+has the value 2 …
+```
+
+Not a fault, and not something to fix in this stack. `io_uring` has been a
+recurring source of kernel vulnerabilities, so hardened hosts disable it —
+`kernel.io_uring_disabled=2` refuses it outright. MariaDB notices, says so once
+per start, and falls back to conventional I/O.
+
+Re-enabling it to silence the message trades a hardening measure for a log line.
 
 ### Nextcloud appears to hang when users open folders
 

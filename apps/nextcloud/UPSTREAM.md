@@ -16,17 +16,32 @@ Nextcloud publishes a major version every four months and maintains each for one
 year. 34 was released 2026-06-09, so it is the newest version carrying a full
 support window — [release schedule](https://github.com/nextcloud/server/wiki/Maintenance-and-Release-Schedule).
 
-### Open: the database is pinned below the recommended version
+### The database, and the upgrade that was performed
 
-Nextcloud 34 lists MariaDB 10.11 · 11.4 · **11.8 (recommended)** · 12.3. This
-stack pins `DB_TAG=10.11` — supported, and one of the two versions upstream does
-not single out. That contradicts this repository's own rule of pinning what the
-project recommends, so it is a deviation rather than a choice, and it is open.
+`DB_TAG=11.8` — the version Nextcloud 34 recommends of 10.11 · 11.4 · **11.8** ·
+12.3.
 
-Closing it is a major database upgrade on a live instance, which is the same work
-as the upgrade rehearsal the backup milestone calls for: back up, upgrade, and be
-able to return to the state before. Check MariaDB's own upgrade path before
-jumping two majors at once.
+It was reached by upgrading a running instance from 10.11, not by installing
+fresh, so the path is documented rather than assumed:
+
+- **Skipping majors is supported** for a standalone server; only Galera requires
+  one step at a time.
+  [Upgrade paths](https://mariadb.com/docs/server/server-management/install-and-upgrade-mariadb/upgrading/mariadb-community-server-upgrade-paths)
+- **None of this stack's server options were affected.** The removals across the
+  11.x line are `innodb_defragment*`, `old_alter_table` and
+  `debug_no_thread_alarm`; none are set here. `tx_isolation` was replaced by
+  `transaction_isolation`, which is the spelling already in use.
+- **The one behavioural change does not apply.** From 11.6,
+  `innodb_snapshot_isolation` changes *Repeatable Read* semantics and can raise
+  `ERROR 1020`. Nextcloud requires `READ-COMMITTED`, which this stack sets.
+- **`MARIADB_AUTO_UPGRADE` does the work.** The entrypoint runs `mariadb-upgrade`
+  and writes `system_mysql_backup_*.sql.zst` into the data directory first.
+- **There is no downgrade.** Across majors the only way back is a restore, which
+  is why the archive is taken before the tag changes.
+
+Result: 10.11.16 → 11.8.8, 131 tables and every row count unchanged, `CHECK
+TABLE` clean, `needsDbUpgrade: false`. Procedure in
+[README.md](README.md#updates).
 
 ## What we use from upstream
 

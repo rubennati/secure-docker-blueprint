@@ -81,10 +81,10 @@ hardest patterns. What comes out of it becomes the template for every app after.
       root, which cannot read the two group-readable secrets, so the instance
       reported errors in its own log — 2880 entries a day. Now runs as the web
       user
-- [?] **The database is pinned below the recommended version.** Nextcloud 34
-      recommends MariaDB 11.8; this stack pins 10.11. Supported, but against this
-      repository's own version rule. Closing it is a major upgrade on a live
-      instance — the same work as the upgrade rehearsal
+- [x] **The database now runs the recommended version.** 10.11 → 11.8 on the
+      live instance: row counts unchanged, `CHECK TABLE` clean, no configuration
+      change needed. Removed `--innodb-file-per-table`, deprecated in 11.8 and
+      the default since 5.6
 - [ ] Two-factor: providers are available but not enforced — decide
 - [ ] Rate limits checked against real usage — the app must not stall behind them
 - [ ] Desktop and mobile client connect and sync
@@ -157,7 +157,9 @@ Closes v0.7.0. The proof is a restore, not a configuration.
       131 tables and the file index into a throwaway container; `config.php`
       byte-identical to the live one apart from the maintenance flag
 - [x] Scoping proven against a second, unrelated deployment on the same host
-- [ ] The upgrade rehearsal: backup → major upgrade → restore to the state before
+- [x] The upgrade rehearsal: backup → major upgrade → verified. MariaDB 10.11 to
+      11.8 with an archive taken first; the restore path was exercised separately
+      rather than by rolling this one back
 - [ ] Retention tied to a stated recovery objective
 - [ ] Run monitoring reporting somewhere it will be noticed
 - [ ] An SSH target and append-only — the local repository proved the mechanism,

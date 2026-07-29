@@ -68,7 +68,7 @@ MariaDB — no published port needed, and the database has to exist first:
 ```bash
 PW=$(openssl rand -hex 16)
 docker run -d --name restore-test -e MARIADB_ROOT_PASSWORD="$PW" \
-  --tmpfs /var/lib/mysql:rw mariadb:10.11
+  --tmpfs /var/lib/mysql:rw mariadb:11.8
 docker exec restore-test mariadb -uroot -p"$PW" -e 'CREATE DATABASE myapp;'
 
 sudo borgmatic restore --archive latest --database myapp \
