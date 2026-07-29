@@ -104,6 +104,17 @@ services:
     volumes:
       - ./volumes/api-files:/usr/src/app/files
 
+    # --- Health & Observability ---
+    # Any HTTP answer means the server is serving. Deliberately no `-f`:
+    # this app redirects, and treating a 3xx as failure would take the
+    # container out of Traefik's load balancer and surface as a 404.
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sS -o /dev/null --max-time 5 http://127.0.0.1:8080/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
     networks:
       - proxy-public
       - app-internal
@@ -151,6 +162,17 @@ services:
       REACT_APP_SERVERURL: "https://${APP_TRAEFIK_HOST}/app"
       # Must match APP_ID on the server — fixed value 'opensign'.
       REACT_APP_APPID: opensign
+
+    # --- Health & Observability ---
+    # Any HTTP answer means the server is serving. Deliberately no `-f`:
+    # this app redirects, and treating a 3xx as failure would take the
+    # container out of Traefik's load balancer and surface as a 404.
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sS -o /dev/null --max-time 5 http://127.0.0.1:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
     networks:
       - proxy-public

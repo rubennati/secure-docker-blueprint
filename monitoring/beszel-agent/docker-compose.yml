@@ -48,6 +48,11 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
 
+    # --- Health & Observability ---
+    # healthcheck: none — the image has no shell, so there is nothing for
+    # healthcheck.test to run. Confirmed with
+    # `docker run --rm --entrypoint sh <image>`.
+
     # --- Networking ---
     # network_mode: host — required for accurate host network interface
     # stats (eth0, tailscale0, etc.). Without it the agent sees only

@@ -90,6 +90,15 @@ services:
     volumes:
       - ./volumes/uploads:/listmonk/uploads
 
+    # --- Health & Observability ---
+    # Not an HTTP service — this confirms the port accepts a connection.
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 9000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
     networks:
       - proxy-public
       - app-internal

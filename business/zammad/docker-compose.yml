@@ -116,6 +116,11 @@ services:
           memory: 64M
 
     command: memcached -m 256M
+    # --- Health & Observability ---
+    # healthcheck: none — the image has no shell, so there is nothing for
+    # healthcheck.test to run. Confirmed with
+    # `docker run --rm --entrypoint sh <image>`.
+
     networks: [app-internal]
 
   # --- Elasticsearch (full-text search over tickets) ---
@@ -173,6 +178,13 @@ services:
       elasticsearch:
         condition: service_healthy
     secrets: [DB_PWD]
+    # --- Health & Observability ---
+    # healthcheck: none — this container runs once and exits (`restart: on-failure`).
+    # A health status only exists while a container runs, so a check here
+    # would report on a few seconds of work and then freeze at whatever it
+    # last saw. What guards this step is `depends_on` on the services that
+    # need it to have finished.
+
     volumes:
       - ./volumes/zammad-storage:/opt/zammad/storage
 
@@ -261,6 +273,17 @@ services:
         condition: service_started
     volumes:
       - ./volumes/zammad-storage:/opt/zammad/storage:ro
+    # --- Health & Observability ---
+    # Any HTTP answer means the server is serving. Deliberately no `-f`:
+    # this app redirects, and treating a 3xx as failure would take the
+    # container out of Traefik's load balancer and surface as a 404.
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sS -o /dev/null --max-time 5 http://127.0.0.1:8080/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
     networks:
       - proxy-public
       - app-internal

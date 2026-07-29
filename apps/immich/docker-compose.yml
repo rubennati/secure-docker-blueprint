@@ -126,6 +126,10 @@ services:
     volumes:
       - ./volumes/model-cache:/cache
 
+    # --- Health & Observability ---
+    # healthcheck: inherited from the image, which declares its own.
+    # Overriding it here would replace a check its maintainers keep current.
+
     # --- Networking ---
     networks:
       - app-internal
@@ -181,6 +185,10 @@ services:
     volumes:
       - ${UPLOAD_LOCATION}:/data
       - /etc/localtime:/etc/localtime:ro
+
+    # --- Health & Observability ---
+    # healthcheck: inherited from the image, which declares its own.
+    # Overriding it here would replace a check its maintainers keep current.
 
     # --- Networking ---
     networks:

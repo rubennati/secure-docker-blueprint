@@ -44,6 +44,11 @@ services:
       EDGE_INSECURE_POLL: "0"
       LOG_LEVEL: INFO
 
+    # --- Health & Observability ---
+    # healthcheck: none — the image has no shell, so there is nothing for
+    # healthcheck.test to run. Confirmed with
+    # `docker run --rm --entrypoint sh <image>`.
+
     # --- Storage ---
     # Portainer Agent needs broad Docker API access (containers, volumes,
     # networks, images, swarm, tasks, secrets, configs, exec, build).
