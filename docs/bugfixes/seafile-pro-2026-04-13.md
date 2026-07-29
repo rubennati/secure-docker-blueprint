@@ -41,10 +41,12 @@
 **Symptom:** Browser gets 403 when requesting `/thumbnail/...`.
 
 **Root cause:** Two issues:
+
 1. **Traefik router priority**: Main Seafile router caught all requests including `/thumbnail`. Sub-service routers need higher priority.
 2. **Passwords missing**: JWT_PRIVATE_KEY not available in thumbnail container (Bug #3).
 
-**Fix:** 
+**Fix:**
+
 - Set `priority=1` on main router, `priority=100` on sub-services
 - Passwords in .env instead of secrets
 - `INNER_SEAHUB_SERVICE_URL=http://app:80`
@@ -56,11 +58,13 @@
 **Symptom:** File search and Wiki search return "No results matching".
 
 **Root cause:** Three issues:
+
 1. `SS_FIRST_ADMIN_PASSWORD` was empty (secrets wrapper didn't work)
 2. `seafevents.conf` had Elasticsearch config instead of SeaSearch
 3. SeaSearch uses port 4080, not 9200 (Elasticsearch) or 9999
 
 **Fix:**
+
 - Passwords in .env
 - Added `[SEASEARCH]` section in `seafevents.conf` with base64 auth token
 - Set `[INDEX FILES] enabled = false`

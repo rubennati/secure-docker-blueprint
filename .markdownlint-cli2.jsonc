@@ -1,0 +1,76 @@
+// Markdown lint configuration — a v1.0 CI baseline item.
+//
+// The ruleset is tuned to conventions this repository already follows on purpose.
+// A linter that fights the house style produces thousands of findings nobody acts
+// on, which is worse than no linter: it trains people to ignore a red check.
+//
+// Disabled rules each name the convention they would break. Everything else is
+// enabled, because the remainder catches real defects rather than taste.
+{
+  "globs": [
+    "**/*.md"
+  ],
+  "ignores": [
+    "**/node_modules/**",
+    "site/dist/**",
+    "archive/**",
+    "inbox/**"
+  ],
+  "config": {
+    "default": true,
+
+    // Prose and tables are written to read well, not to a column limit. Wrapping
+    // a 140-character table row at 80 makes it unreadable in source and identical
+    // when rendered. 4133 findings, none of them a defect.
+    "MD013": false,
+
+    // Tables use the compact `|---|---|` form throughout. It is consistent across
+    // every file; the rule simply prefers a different consistent form.
+    "MD060": false,
+
+    // UPSTREAM.md source lists show the URL itself — that is the point of the
+    // line. `- **Repo:** https://github.com/...` is more useful than a label.
+    "MD034": false,
+
+    // Planned entries are written as `[Statping](#)` in the category READMEs:
+    // the tool is named and deliberately not linked yet. Documented in
+    // docs/maintenance.md under the Root README structure rule.
+    "MD042": false,
+
+    // Keep a Changelog repeats `### Added` / `### Fixed` / `### Documentation`
+    // by design, and app READMEs repeat `### Restore database` under both Backup
+    // and Restore. The heading text is meaningful precisely because it recurs.
+    "MD024": false,
+
+    // Consecutive blockquotes separated by a blank line are three distinct
+    // callouts, not one quote with a gap — see the status / licence / Cloudflare
+    // trio at the top of apps/caldiy/README.md.
+    "MD028": false,
+
+    // The root README opens with a centred badge block and the pull request
+    // template with its instructions. Neither wants an H1 as its first line.
+    "MD041": false,
+
+    // Starlight pages carry their title in frontmatter, so the body's first
+    // heading is not a second H1.
+    "MD025": { "front_matter_title": "" },
+
+    // ATX headings only, consistent with every file in the repository.
+    "MD003": { "style": "atx" },
+
+    // Ordered lists are written 1. 2. 3. — the rendered result is the same, but
+    // the source reads as the sequence it describes.
+    "MD029": { "style": "ordered" },
+
+    // The root README centres its badge block. That is the only raw HTML in the
+    // repository; everything else that looks like a tag is placeholder notation
+    // inside code spans.
+    "MD033": { "allowed_elements": ["div"] },
+
+    // Every app README opens with a bold status line —
+    // `**Status: ✅ Ready — v7.5.4 · 2026-05-03**`. It is metadata about the
+    // document, not a section heading, and turning it into one would put it in
+    // every table of contents.
+    "MD036": false
+  }
+}

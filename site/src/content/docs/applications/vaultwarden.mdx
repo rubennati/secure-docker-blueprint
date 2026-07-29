@@ -4,12 +4,15 @@ description: Self-hosted Bitwarden-compatible password manager on Docker Compose
 ---
 
 import { Steps } from '@astrojs/starlight/components';
+import StackStatus from '../../../components/StackStatus.astro';
 
 Vaultwarden is a self-hosted password manager compatible with Bitwarden clients — browser extensions, mobile apps, and the desktop client. It can hold access credentials to everything else you run; treat setup and backup accordingly.
 
+<StackStatus stack="apps/vaultwarden" />
+
 Needs: [Traefik](/core/traefik/) running, a domain, and SMTP credentials (email verification is on by default).
 
-## Quickstart
+## Installation
 
 From `apps/vaultwarden/`:
 
@@ -116,7 +119,7 @@ Open `https://your-domain` — the login page should load over TLS.
 
 ### Public access instead of Tailscale-only
 
-The quickstart uses the default, `APP_TRAEFIK_ACCESS=acc-tailscale` — the vault is reachable only over Tailscale/VPN. Setting `APP_TRAEFIK_ACCESS=acc-public` makes it reachable from the open internet instead. That's a deliberate change to your attack surface, not a default — decide it before exposing real credentials.
+The installation above uses the default, `APP_TRAEFIK_ACCESS=acc-tailscale` — the vault is reachable only over Tailscale/VPN. Setting `APP_TRAEFIK_ACCESS=acc-public` makes it reachable from the open internet instead. That's a deliberate change to your attack surface, not a default — decide it before exposing real credentials.
 
 ## Backup before real use
 

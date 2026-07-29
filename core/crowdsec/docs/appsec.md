@@ -27,7 +27,7 @@ and have it succeed, provided the offending payload is not repeated. This makes 
 false positives self-contained — the user retries and succeeds — but it also means AppSec
 does not accumulate evidence against persistent attackers the way scenario detection does.
 
-```
+```text
 Scenario detection path (asynchronous):
   Traefik access log → CrowdSec engine → scenario matches → LAPI decision → ban (IP-scope)
 
@@ -172,6 +172,7 @@ crowdsecAppsecUnreachableBlock: true    # block if AppSec endpoint unreachable
 ```
 
 **Before setting `crowdsecAppsecUnreachableBlock: true`**, confirm that:
+
 - The CrowdSec container starts reliably and before Traefik
 - You have an out-of-band access path (Tailscale, cloud console) in case all HTTP access
   is cut off by a startup race condition
@@ -223,6 +224,7 @@ docker compose logs -f crowdsec 2>&1 | grep -A5 -i "appsec"
 ### Determine if it is a false positive
 
 A false positive has all of the following characteristics:
+
 - The request is from a known-legitimate source (your own browser, a sync client, a
   webhook from a service you control)
 - The request content is intentional and expected for the application
@@ -255,6 +257,7 @@ signatures match legitimate application traffic.
 | **Invoice Ninja** | Invoice PDF generation | HTML content of invoice templates passed as POST parameters includes inline styles and layout HTML that triggers XSS rules | Exclude the PDF generation endpoint from XSS body rules; the content is operator-defined template HTML, not untrusted user input |
 
 **General pattern:** AppSec false positives in this stack cluster around three root causes:
+
 1. Non-standard HTTP methods (WebDAV)
 2. Binary file uploads (any application)
 3. Rich content (HTML, XML, JSON with operator-authored content) sent in request bodies
@@ -270,6 +273,7 @@ for specific request attributes (path prefix, HTTP method, header value, content
 ### When exclusions are appropriate
 
 Use an exclusion when:
+
 - The trigger is a known false positive in a specific application context (see table above)
 - The matched content is operator-controlled or cryptographically validated at the
   application layer (SAML assertions, HMAC-signed webhooks)
@@ -277,6 +281,7 @@ Use an exclusion when:
   endpoints that benefit from it
 
 Do not write exclusions for:
+
 - Unknown blocks where the source or content is unclear — investigate first
 - Broad path prefixes that cover most of the application — this neutralizes the protection
 - Rules that haven't been confirmed as false positives — a firing rule may be a real attack
@@ -299,6 +304,7 @@ exclusions:
 ```
 
 Mount the file and restart the engine. Always scope exclusions as narrowly as possible:
+
 - Prefer path prefix over entire host
 - Prefer specific rule or rule group over all rules
 - Prefer specific HTTP method over all methods

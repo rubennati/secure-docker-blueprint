@@ -38,18 +38,22 @@
 
 1. Check [Monica releases](https://github.com/monicahq/monica/releases) — Monica has had migration-heavy major bumps (3.x → 4.x → 5.x)
 2. Back up:
+
    ```bash
    docker compose exec db sh -c \
      'mariadb-dump -u ${DB_USER} -p"$(cat /run/secrets/DB_PWD)" monica' \
      > monica-db-$(date +%Y%m%d).sql
    tar czf monica-data-$(date +%Y%m%d).tgz volumes/data/
    ```
+
 3. Bump `APP_TAG` in `.env`
 4. `docker compose pull && docker compose up -d`
 5. Watch Laravel migration output:
+
    ```bash
    docker compose logs app --follow
    ```
+
 6. Verify: log in, open a contact, add an activity, trigger an export
 
 ### Rollback

@@ -7,7 +7,7 @@
 - **Stock compose:** https://github.com/immich-app/immich/releases/latest/download/docker-compose.yml
 - **License:** AGPL-3.0
 - **Origin:** US · Alex Tran · non-EU
-- **Based on version:** `v2` (Immich 2.x line)
+- **Based on version:** `v3` (Immich 3.x line)
 - **Last checked:** 2026-04-17
 
 ## What we use
@@ -38,6 +38,7 @@
 
 1. Check [Immich releases](https://github.com/immich-app/immich/releases) — breaking changes especially in v-major bumps (2.x → 3.x)
 2. Back up:
+
    ```bash
    # DB dump
    docker compose exec -T db sh -c \
@@ -46,12 +47,15 @@
    # Upload volume
    tar czf immich-library-$(date +%Y%m%d).tgz volumes/library/
    ```
+
 3. Bump `APP_TAG` in `.env`
 4. `docker compose pull && docker compose up -d`
 5. Watch logs for DB migrations:
+
    ```bash
    docker compose logs app --follow
    ```
+
 6. Verify: log in, browse timeline, upload a new photo, confirm thumbnail + ML tags appear
 
 ### Rollback

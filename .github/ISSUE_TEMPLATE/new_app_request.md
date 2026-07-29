@@ -8,7 +8,7 @@ assignees: ''
 
 ## App details
 
-- **Name**: 
+- **Name**:
 - **Upstream project**: (link)
 - **Docker image**: (Docker Hub or registry link)
 - **License**: (app's own license)
@@ -21,6 +21,7 @@ What use-case does it cover that isn't already in the blueprint?
 ## Complexity estimate
 
 How many services does it need? Examples:
+
 - **Small**: single container (like Whoami, Dockhand)
 - **Medium**: app + database (like Ghost, WordPress)
 - **Large**: app + database + cache + workers (like Paperless, Nextcloud, Seafile)

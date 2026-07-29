@@ -7,7 +7,7 @@
 - **Docker Hub:** https://hub.docker.com/r/twinproduction/gatus
 - **License:** Apache-2.0
 - **Origin:** Canada · TwinProduction · non-EU
-- **Based on version:** `v5.34.0`
+- **Based on version:** `v5.36.0`
 - **Last checked:** 2026-05-03
 
 ## What we use
@@ -29,6 +29,7 @@
 ## Configuration
 
 Gatus is config-file driven. Edit `config/config.yaml` for:
+
 - **Endpoints**: services to monitor (HTTP, TCP, DNS, ICMP)
 - **Alerting**: Slack, email, PagerDuty, Telegram integrations
 - **Conditions**: response time, status codes, body content

@@ -13,7 +13,7 @@ URL. Image and video previews are broken. All other Seafile features work normal
 
 The production thumbnail container showed:
 
-```
+```text
 THUMB JWT direct bytes: 0
 THUMB JWT_FILE: /run/secrets/JWT_KEY
 
@@ -50,6 +50,7 @@ thumbnail-server, resulting in a 403 from Seahub (which doesn't serve thumbnails
 directly).
 
 The fix is the same pattern already used in `apps/seafile-pro/`:
+
 - main router → `priority=1` (lowest, catch-all)
 - all PathPrefix sub-service routers → `priority=100` (higher)
 

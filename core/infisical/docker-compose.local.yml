@@ -1,0 +1,85 @@
+# =============================================================================
+# Infisical — LOCAL test stack (no Traefik, no Docker Secrets)
+# =============================================================================
+# Run Infisical standalone on http://localhost:8080 for quick local testing.
+# Secrets come as plain env from .env.local (gitignored) — NOT for production.
+# Production deployment uses docker-compose.yml (Traefik + Docker Secrets, VPN-only).
+#
+#   cp .env.local.example .env.local   # then fill the values (see that file)
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   docker compose -f docker-compose.local.yml --env-file .env.local logs app -f
+#   # open http://localhost:8080 — create the first (admin) account
+# =============================================================================
+
+services:
+
+  db:
+    image: postgres:${DB_TAG}
+    container_name: infisical-local-db
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      TZ: ${TZ}
+    volumes:
+      - ./volumes/local/postgres:/var/lib/postgresql/data
+    networks: [infisical-local]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  redis:
+    image: redis:${REDIS_TAG}
+    container_name: infisical-local-redis
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs: [/tmp]
+    volumes:
+      - ./volumes/local/redis:/data
+    networks: [infisical-local]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  app:
+    image: infisical/infisical:${APP_TAG}
+    container_name: infisical-local-app
+    restart: unless-stopped
+    depends_on:
+      db: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    # No secret-injector entrypoint here: all secrets arrive as plain env below.
+    environment:
+      TZ: ${TZ}
+      DB_CONNECTION_URI: postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+      REDIS_URL: redis://redis:6379
+      SITE_URL: http://localhost:8080
+      TELEMETRY_ENABLED: "false"
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      AUTH_SECRET: ${AUTH_SECRET}
+    ports:
+      - "127.0.0.1:8080:8080"   # localhost only; change to 8080:8080 for LAN access
+    networks: [infisical-local]
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:8080/api/status',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+networks:
+  infisical-local:
+    name: infisical-local

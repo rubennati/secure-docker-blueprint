@@ -3,7 +3,8 @@
 ## Bug #1: InvalidConnectionUrl — base64 password breaks DATABASE_URL
 
 **Symptom:** Vaultwarden crashes in loop with:
-```
+
+```text
 InvalidConnectionUrl("MySQL connection URLs must be in the form mysql://...")
 ```
 
@@ -18,7 +19,8 @@ InvalidConnectionUrl("MySQL connection URLs must be in the form mysql://...")
 ## Bug #2: HTTP Response validation Error — Header conflicts with sec-4
 
 **Symptom:** Vaultwarden Admin → Diagnostics shows "HTTP Response validation Error":
-```
+
+```text
 Header: 'x-frame-options' does not contain 'SAMEORIGIN'
 Header: 'referrer-policy' does not contain 'same-origin'
 Header: 'x-xss-protection' does not contain '0'
@@ -29,6 +31,7 @@ Header: 'x-xss-protection' does not contain '0'
 First attempt: Adding a second Docker-level `headers` middleware to override. **Failed** — Traefik only applies one headers middleware per chain; the second one's values are ignored.
 
 **Fix:** Replaced `sec-4` file-provider middleware entirely with a custom Docker-level middleware (same pattern as OnlyOffice). The custom middleware sets:
+
 - `customFrameOptionsValue=SAMEORIGIN`
 - `referrerPolicy=same-origin`
 - `browserXssFilter=false` (sets X-XSS-Protection: 0)

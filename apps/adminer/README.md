@@ -1,6 +1,6 @@
 # Adminer
 
-> **Status: ✅ Ready** — v4.8.1 · 2026-05-02
+> **Status: 🚧 v5.5.0** — major upgrade from 4.x; verify first · 2026-07-26
 
 Stateless web-based database administration tool. Supports MySQL, MariaDB, PostgreSQL, SQLite, MS SQL, Oracle, Elasticsearch, MongoDB, and more via drivers. Single PHP file, no dependencies.
 
@@ -88,6 +88,21 @@ For DBs on other machines, enter the hostname/IP directly in the Adminer login f
 ## Variants (not in this install by default)
 
 - **Bundled MariaDB for throwaway local DB testing** — the original import source included a standalone MariaDB next to Adminer for development-only use cases. Dropped from the blueprint version because Adminer's main purpose is managing existing app DBs. The pattern still makes sense for isolated local dev; reference compose and rationale live under `docs/apps/adminer/setup-notes.md` on the repository's `docs` branch.
+
+## Backup
+
+| | |
+|---|---|
+| **Database** | None of its own. |
+| **State** | None. Connection details are typed per session and never persisted. |
+| **Reproducible** | everything |
+| **Quiescing** | Not applicable. |
+
+Nothing to back up. Adminer is a client, not a store.
+
+It earns one line in a restore plan for the opposite reason: it is a fast way to
+confirm that a restored database actually contains rows, without installing a
+client on the host. Bring it up after the database, check, and take it down again.
 
 ## Details
 

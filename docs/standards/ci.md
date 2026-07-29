@@ -3,7 +3,7 @@
 All checks run automatically on every push to `dev` and `main`, on pull requests
 targeting `main`, and nightly at 03:00 UTC.
 
-```
+```text
 push (dev/main) ──┐
 pull_request      ├──▶  CI
 schedule 03:00 UTC┤
@@ -131,6 +131,64 @@ The key is the **relative path to the directory** containing `docker-compose.yml
 
 ---
 
+### 5 — Sentinel value check
+
+Fails when a committed `.env` still contains `__REPLACE_ME__` — a placeholder that
+reached the repository is a configuration nobody filled in.
+
+**Blocks merge:** yes
+
+---
+
+### 6 — Canonical structure
+
+Runs `scripts/ci/check-structure.py`. Severity is per rule rather than per
+category: `:latest` or major-only tags, a plaintext secret in `.env.example`, a
+`.gitignore` that does not cover `.secrets/`, and a datastore on `proxy-public`
+all fail. Missing resource limits, missing healthchecks and `env_file:` are
+reported as warnings — they need values measured on a real host, which is v0.9.0.
+
+**Blocks merge:** yes, on FAIL rules only
+
+---
+
+### 7 — Status model
+
+Runs `scripts/ci/lifecycle-report.py --check`. Fails on a status claim that is not
+backed: an owner and its mirror disagreeing, a ✅ without `Last verified`, or a
+`LIFECYCLE.md` left stale against its sources.
+
+**Blocks merge:** yes
+
+---
+
+### 8 — Checker coverage
+
+Runs `scripts/ci/check-coverage.py`. Inverts the question every other job asks —
+not "does this stack comply?" but "is there content nothing looks at?".
+
+A directory counts as covered when either the structure checker enumerates it or
+the lifecycle report includes it. Neither alone suffices: the structure checker
+keys on compose files and cannot see a host-installed component, while the
+lifecycle report covers that component but verifies nothing about its tags or
+secrets.
+
+| Level | Rule | What triggers it |
+|---|---|---|
+| **FAIL** | `unchecked-dir` | A directory under a stack root holds tracked files and neither checker enumerates it |
+| **FAIL** | `unknown-root` | A tracked top-level directory is neither a stack root nor a declared non-stack area |
+| **WARN** | `structure-blind` | Covered by the lifecycle report only — no compose file, so tags and secrets are verified by hand |
+
+Adding a new top-level category therefore fails CI until the category is either
+added to a checker's roots or declared in `NON_STACK_ROOTS` with the reason. That
+is the point: three coverage gaps surfaced by accident within one day, and each
+had let real stacks go unchecked for months.
+
+**Blocks merge:** not yet — the job runs, but adding it to the required set is a
+branch-protection setting.
+
+---
+
 ## Running locally
 
 ```bash
@@ -139,11 +197,14 @@ pip install pyyaml
 
 # Run from the repo root
 python3 scripts/ci/check-baseline.py
+python3 scripts/ci/check-structure.py
+python3 scripts/ci/lifecycle-report.py --check
+python3 scripts/ci/check-coverage.py
 ```
 
 Output:
 
-```
+```text
   ✓ 48 files checked, no violations
 
   48 files  ·  0 failures  ·  0 warnings  ·  12 skipped

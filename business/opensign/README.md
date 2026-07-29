@@ -64,6 +64,35 @@ docker compose logs api --follow
 - **Signed PDFs** land in `volumes/api-files/` — legally binding artefacts, treat backup with care.
 - **Default access `acc-public` + `sec-3`** — signers receive a signing URL and need to reach it from outside. Admin UI sits on the same host — gate with a second router if agents are internal-only.
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | MongoDB · container `opensign-db` · database `OpenSignDB` · user `opensign` (root) |
+| **Password** | `.secrets/db_root_pwd.txt` |
+| **State** | `./volumes/mongodb` (database) · `./volumes/api-files` (signed documents) |
+| **Reproducible** | nothing |
+| **Quiescing** | Not needed. Borgmatic's MongoDB hook dumps a consistent snapshot; a file-level copy of `volumes/mongodb` can capture a torn state and must not be used instead. |
+
+```yaml
+mongodb_databases:
+    - name: OpenSignDB
+      container: opensign-db
+      username: opensign
+      password: "{credential file /srv/docker/business/opensign/.secrets/db_root_pwd.txt}"
+      authentication_database: admin
+```
+
+`authentication_database: admin` is required — the root user is created in
+`admin`, not in `OpenSignDB`, so a dump without it authenticates against the
+wrong database and fails.
+
+**`volumes/api-files` holds the signed documents themselves.** The database holds
+the signature metadata that points at them. Either one alone restores to an
+e-signature service that cannot produce the documents it claims to have signed.
+
+**Restore order:** database first, then `api`, then `ui`.
+
 ## Mail configuration
 
 OpenSign supports two mail backends — pick one:
@@ -84,6 +113,7 @@ Without a working mail config, signature request emails do not go out and the fl
 - **Self-signed signing cert is not Adobe-trusted** — documents signed with a self-generated cert show no green tick in Adobe Acrobat. For eIDAS Advanced signatures, purchase a qualified p12 from an AATL-approved CA and set `PFX_BASE64` + `PASS_PHRASE`.
 - **MongoDB 6 is the last version with full Parse Server support** — do not jump to 7+ until OpenSign tests it.
 - **Changing `SERVER_URL` after first use requires a MongoDB migration** — Parse Server stores the full file URL at upload time in `contracts_Document.URL`. Documents created before a `SERVER_URL` change will have the old URL (e.g. `http://api:8080/app/files/...`) causing Mixed Content errors. Fix with:
+
   ```bash
   docker compose exec db mongosh \
     --username opensign --password "$(cat .secrets/db_root_pwd.txt)" \
@@ -96,6 +126,7 @@ Without a working mail config, signature request emails do not go out and the fl
       }}}}]
     )'
   ```
+
 - **OCR / keyword detection** for auto-placement of signature fields requires the `OPENSIGN_OCR` side-car — not included here.
 
 ## Integration patterns

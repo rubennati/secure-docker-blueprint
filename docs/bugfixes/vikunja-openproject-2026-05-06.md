@@ -13,6 +13,7 @@ Initial deployment of both `business/vikunja` and `business/openproject` on a De
 **Root cause**: The OpenProject entrypoint builds `DATABASE_URL` in the form `postgres://user:password@host/db`. Base64 passwords contain `+`, `/`, and `=` — all URL-special characters. The `+` is interpreted as a space, `/` splits the path segment, and `=` breaks query string parsing. The postgres driver silently received a malformed URL and returned a non-zero exit without a useful message.
 
 **Fix**: URL-encode the password with `sed` before embedding it in the URL:
+
 ```sh
 _enc="$(printf '%s' "${_pwd}" | sed 's/%/%25/g; s/+/%2B/g; s|/|%2F|g; s/=/%3D/g')"
 export DATABASE_URL="postgres://...:${_enc}@..."
@@ -37,7 +38,8 @@ export DATABASE_URL="postgres://...:${_enc}@..."
 ### Bug 1 — Healthcheck fails every time: `vikunja healthcheck` lacks env vars
 
 **Symptom**: Container showed `(unhealthy)` despite the server running correctly (HTTP :3456 up, migrations passed). Health log showed:
-```
+
+```text
 Running migrations…
 pq: password authentication failed for user "vikunja"
 Migration failed: pq: password authentication failed for user "vikunja"
@@ -46,10 +48,12 @@ Migration failed: pq: password authentication failed for user "vikunja"
 **Root cause**: The `vikunja healthcheck` subcommand is a fresh process spawned by Docker. It does not inherit environment variables set by the entrypoint — it starts with a clean environment. The entrypoint sets `VIKUNJA_DATABASE_PASSWORD` for the main server process, but the healthcheck subprocess has no password and fails DB auth every time.
 
 **Fix**: Replace the healthcheck subcommand with an HTTP check using `wget` (added to the image via busybox):
+
 ```yaml
 healthcheck:
   test: ["CMD", "/bin/wget", "-qO-", "http://localhost:3456/api/v1/info"]
 ```
+
 **Files**: `business/vikunja/Dockerfile` (add `/bin/wget`), `business/vikunja/docker-compose.yml`
 
 ---
@@ -61,6 +65,7 @@ healthcheck:
 **Root cause**: POSIX special-builtin rule: when `export` is used as `export VAR=$(cmd)`, the exit status of `cmd` is discarded — `export`'s own status (always 0) is what `set -e` sees. So a failing `cat` is silently ignored and `VAR` is set to empty.
 
 **Fix**: Use intermediate variables. The assignment form `_var=$(cmd)` is a simple command — `set -e` *does* apply to the command substitution:
+
 ```sh
 # Wrong — set -e does NOT catch cat failing here:
 export VIKUNJA_DATABASE_PASSWORD="$(cat /run/secrets/db_pwd)"
@@ -104,24 +109,28 @@ unset _pwd
 ### Bug 5 — Vikunja container cannot resolve Authentik's hostname → 403 / 404 on OIDC discovery
 
 **Symptom**: After enabling OIDC in Vikunja, logs showed repeated errors on startup:
-```
+
+```text
 OpenID Connect provider 'Authentik' not available (attempt 1/3), retrying in 1s: 403 Forbidden: Forbidden
 # or after changing Traefik middleware:
 OpenID Connect provider 'Authentik' not available (attempt 1/3), retrying in 1s: 404 Not Found
 Error while getting openid provider authentik: 404 Not Found: 404 page not found
 ```
+
 Opening the same discovery URL in a browser worked fine.
 
 **Root cause**: The Vikunja container could not resolve the Authentik hostname (`auth.example.com`) internally. Docker containers use the host's DNS resolver but not the host's `/etc/hosts` file by default unless explicitly configured. Without a valid DNS record reachable from inside the container, the request either hit the wrong endpoint or was blocked by Traefik access middleware (which explained the transient 403).
 
 **Fix**: Add the Authentik hostname → server IP mapping to the host's `/etc/hosts`. Docker's embedded DNS server reads the host's `/etc/hosts` and makes those entries available to containers:
-```
+
+```text
 # /etc/hosts on the Docker host
 1.2.3.4   auth.example.com
 1.2.3.4   tasks.example.com
 ```
 
 **Alternative fix**: Use Docker's `extra_hosts` in `docker-compose.yml` to inject the entry only into the affected container, avoiding changes to the host system:
+
 ```yaml
 services:
   vikunja:
@@ -138,7 +147,8 @@ services:
 ### Bug 6 — `invalid_client` on token exchange: wrong Client Secret in secret file
 
 **Symptom**: OIDC redirect from Authentik succeeded (authorization code received), but the callback returned 400:
-```
+
+```text
 Error retrieving token: oauth2: "invalid_client" "Client authentication failed
 (e.g., unknown client, no client authentication included, or unsupported authentication method)"
 ```
@@ -146,6 +156,7 @@ Error retrieving token: oauth2: "invalid_client" "Client authentication failed
 **Root cause**: The value in `.secrets/oidc_secret.txt` did not match the Client Secret shown in the Authentik provider. The secret file had been created with a placeholder or a stale value.
 
 **Fix**: Copy the Client Secret from Authentik → Providers → (Vikunja provider) → Client Secret field. Write it to the secret file without a trailing newline:
+
 ```sh
 echo -n "<client-secret-from-authentik>" > .secrets/oidc_secret.txt
 docker compose up -d --force-recreate vikunja

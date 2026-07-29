@@ -1,6 +1,6 @@
 # Invoice Ninja
 
-> **Status: 🔬 Preview** — v5.13.24 · 2026-06-14
+> **Status: 🔬 Preview** — v5.13.26 · 2026-07-26
 
 Self-hosted invoicing, quotes, expenses, and time-tracking (Laravel / PHP-FPM).
 
@@ -25,6 +25,68 @@ Supervisor inside the `app` container manages the Laravel scheduler and queue wo
 - `APP_DEBUG=false` in production
 - Access restricted to VPN (`acc-tailscale`) by default
 - Known deviation: secrets in `.env` (Laravel has no `_FILE` support — see UPSTREAM.md)
+
+## Backup
+
+| | |
+|---|---|
+| **Database** | MySQL · container `invoiceninja-mysql` · database `ninja` · user `ninja` |
+| **Password** | `DB_PASSWORD` in `.env` — see the note below |
+| **State** | `mysql_data` (database) · `app_storage` (attachments, logos, generated PDFs) · **`.env`, especially `APP_KEY`** |
+| **Reproducible** | `redis_data` (cache) · `app_public` — served assets, rebuilt by the image |
+| **Quiescing** | Not needed. The dump is consistent on its own. |
+
+This stack uses **named volumes**, not bind mounts. Their host paths are
+`/var/lib/docker/volumes/invoiceninja_<name>/_data` — that is what goes into
+`source_directories`, not a path under the stack directory.
+
+```yaml
+mysql_databases:
+    - name: ninja
+      container: invoiceninja-mysql
+      username: ninja
+      password: "{credential file /srv/docker/business/invoiceninja/.secrets/db_pwd.txt}"
+```
+
+**`APP_KEY` in `.env` decrypts the stored data.** Without it a restored database
+is unreadable — this is the single most important line in this section, and it is
+the one thing here that is not in a volume. Back `.env` up with the database, and
+keep a copy of `APP_KEY` somewhere the host cannot reach.
+
+**The credential file above does not exist yet**, because this stack keeps its
+secrets in `.env` rather than in `.secrets/`. That is an upstream limitation, not
+an oversight: Laravel has no `_FILE` support for most variables, `APP_KEY` and
+`DB_PASSWORD` among them, so a custom entrypoint is the path to Docker Secrets
+here — recorded as Phase 2 in [`UPSTREAM.md`](UPSTREAM.md#known-deviations).
+Until then, supply the password to borgmatic another way rather than having two
+systems read it out of `.env`.
+
+Manual dump and restore, when borgmatic is not in the picture:
+
+```bash
+# Dump
+docker exec invoiceninja-mysql mysqldump \
+  -u root -p"$(grep '^DB_ROOT_PASSWORD=' .env | cut -d= -f2)" ninja \
+  > backup-db-$(date +%Y%m%d-%H%M).sql
+
+docker run --rm -v invoiceninja_app_storage:/data:ro -v "$(pwd)":/out \
+  alpine tar czf /out/backup-storage-$(date +%Y%m%d-%H%M).tar.gz -C /data .
+
+cp .env .env.backup-$(date +%Y%m%d)
+
+# Restore — database first, with only MySQL running
+docker compose up -d mysql
+docker compose exec mysql sh -c 'mysql -u root -p"${MYSQL_ROOT_PASSWORD}" ninja' \
+  < backup-db-YYYYMMDD-HHMM.sql
+
+docker run --rm -v invoiceninja_app_storage:/data -v "$(pwd)":/in \
+  alpine sh -c "cd /data && tar xzf /in/backup-storage-YYYYMMDD-HHMM.tar.gz"
+```
+
+**Back up before every upgrade.** Invoice Ninja runs migrations on start, and a
+failed migration against a database with no dump behind it is not recoverable.
+
+**Restore order:** `.env` and database first, then storage, then the app.
 
 ## First-Time Setup
 
@@ -78,7 +140,7 @@ docker compose logs app --follow
 
 Expected success markers (in order):
 
-```
+```text
 Creating migration table
 Running migrations
 Seeding database
@@ -157,18 +219,23 @@ docker compose exec app sh -c 'env | grep -E "^MAIL_"'
 Invoice Ninja uses Snappdf (Chromium) for PDF rendering. If `/api/v1/live_design` or `/api/v1/live_preview` return 504 or 500:
 
 1. **504 from nginx** — FastCGI read timeout exceeded. Check nginx access log for the upstream response time:
+
    ```bash
    docker compose logs nginx --tail=50 | grep "live_design\|live_preview"
    ```
+
    The nginx FastCGI timeouts are set to 300s in `nginx/laravel.conf`. If renders still time out, Chromium may be crashing — check app logs.
 
 2. **500 from the app** — Chromium likely ran out of memory or crashed. Check:
+
    ```bash
    docker compose logs app --tail=50 | grep -iE "snappdf|chromium|chrome|error|fatal"
    ```
+
    The app container memory limit is 1G. If Chromium crashes repeatedly, increase `memory:` in `docker-compose.yml`.
 
 3. **Check Chromium path**:
+
    ```bash
    docker compose exec app ls -la /usr/bin/google-chrome-stable
    ```

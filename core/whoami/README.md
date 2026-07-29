@@ -8,7 +8,7 @@ Used to verify that Traefik routing, TLS termination, and middleware chains work
 
 A response like:
 
-```
+```text
 Hostname: 18e4b3f5d92a
 IP: 172.20.0.3
 RemoteAddr: 172.20.0.2:47028
@@ -79,6 +79,22 @@ Whoami runs with the full hardening set:
 - No database, no secrets, no persistent state
 
 Ideal candidate for `sec-5` (maximum chain including CSP enforce) because it serves only a static text response.
+
+## Backup
+
+| | |
+|---|---|
+| **Database** | None. |
+| **State** | None. |
+| **Reproducible** | everything |
+| **Quiescing** | Not applicable. |
+
+Nothing to back up. This is a diagnostic endpoint with no persistence — that is
+the whole point of it.
+
+It earns a mention in a restore plan for a different reason: it is the cheapest
+way to confirm that Traefik routing, TLS and the middleware chain work again
+after a restore, before pointing a real application at them.
 
 ## When to disable
 

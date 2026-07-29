@@ -41,6 +41,30 @@ Gatus auto-reloads on config changes — just `vim config/config.yaml` + save, n
 - **Prometheus export**: add `metrics: true` to `config.yaml` — Gatus exposes `/metrics` with per-endpoint availability, response times, SSL expiry.
 - **Forward to n8n**: use a `custom` alert with a webhook URL pointing at `https://n8n.example.com/webhook/<path>` for richer routing.
 
+## Backup
+
+| | |
+|---|---|
+| **Configuration** | `config.yaml` — the endpoints and alerting rules. This is the part worth keeping. |
+| **State** | `./volumes/data` — SQLite result history |
+| **Reproducible** | The result history. Losing it costs graphs, not function. |
+| **Quiescing** | Not needed for the config; the database is live, so dump it rather than copying it |
+
+Config-as-code is the point here: `config.yaml` belongs in version control or in the
+backup, and a restore is essentially that file plus a container start.
+
+```yaml
+sqlite_databases:
+    - name: gatus
+      path: /srv/docker/monitoring/gatus/volumes/data/data.db
+```
+
+Confirm the filename on the running instance. With the optional PostgreSQL backend
+enabled instead, use `postgresql_databases:` with the `container:` option.
+
+**Restore order:** restore `config.yaml`, then the database if the history matters,
+then start.
+
 ## Known Issues
 
 - **`config.example.yaml` must NOT be inside `config/`** — Gatus merges all `.yaml` files in the config directory. Duplicate top-level keys cause a panic on startup: `only maps and slices/arrays can be merged`. The example file lives at `monitoring/gatus/config.example.yaml` (next to `docker-compose.yml`), not in `config/`.

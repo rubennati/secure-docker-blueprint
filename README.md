@@ -95,6 +95,8 @@ Three patterns for secret handling:
 | [Traefik](core/traefik/) | ✅ | Reverse proxy with Socket Proxy, 5 security levels, 3 TLS profiles, access policies |
 | [Authentik](core/authentik/) | ✅ | SSO / Identity Provider for centralized authentication (Forward-Auth, OAuth2 / OIDC / SAML) |
 | [OnlyOffice](core/onlyoffice/) | ✅ | Document editing server for Seafile, Nextcloud, etc. |
+| [Euro-Office](core/euro-office/) | 🚧 | EU-governed OnlyOffice fork (Nextcloud/IONOS/XWiki/Proton) — drop-in document server |
+| [Collabora](core/collabora/) | 🚧 | Lightweight LibreOffice-based office server (~1 GB) — leaner alternative to OnlyOffice/Euro-Office |
 | [dnsmasq](core/dnsmasq/) | ✅ | DNS forwarder with wildcard zones for Tailscale / split-DNS setups |
 | [acme-certs](core/acme-certs/) | ✅ | Certificate tool (acme.sh) for devices without Traefik (NAS, routers) |
 | [CrowdSec](core/crowdsec/) | ✅ | Intrusion detection engine + Traefik bouncer plugin — log analysis, threat decisions, L7 blocking |
@@ -103,6 +105,7 @@ Three patterns for secret handling:
 | [Portainer](core/portainer/) | ✅ | Docker management UI |
 | [Hawser](core/hawser/) | ✅ | Remote Docker agent for Dockhand |
 | [Portainer Agent](core/portainer-agent/) | ✅ | Remote Docker agent for Portainer (multi-host) |
+| [Infisical](core/infisical/) | 🚧 | Central secret manager (self-hosted) — one place for all servers'/apps' secrets. VPN-only |
 
 Planned in `core/`: Keycloak (alternative / heavier IAM next to Authentik).
 
@@ -110,8 +113,14 @@ Planned in `core/`: Keycloak (alternative / heavier IAM next to Authentik).
 
 The blueprint takes a **choice-matrix** approach: where several tools compete (dashboards, photo galleries, wikis, form builders), multiple options are included so you can test and pick what fits.
 
-**Status:** ✅ Ready · 🚧 Draft · 📋 Planned
-Status note: “✅ Ready” indicates a usable baseline setup; detailed operational maturity (backup, restore, security posture, and version lifecycle) is tracked in [LIFECYCLE.md](LIFECYCLE.md).
+**Status:** 🛡️ Ops-ready · ✅ Ready · 🚧 Preview · 📋 Planned
+
+- **🛡️ Ops-ready** — everything `Ready` promises, plus a restore actually performed from a backup. *No service holds this yet* — it becomes reachable with the v0.7.0 backup milestone.
+- **✅ Ready** — clean install and core function established, security baseline met, documentation in place. Deploy it.
+- **🚧 Preview** — on disk and it may well work, but the blueprint does not vouch for it. Evaluate it yourself before trusting it with data.
+- **📋 Planned** — named as intended, nothing on disk yet.
+
+What each symbol promises is defined in [`docs/standards/status-model.md`](docs/standards/status-model.md); the per-stack detail behind it — pinned version, verification date, backup and restore documentation — is in [LIFECYCLE.md](LIFECYCLE.md).
 
 #### Dashboards & launchers
 
@@ -168,7 +177,7 @@ Planned: **Rallly** (group scheduling polls — Doodle alternative, complementar
 
 | App | Stack | Status | Description |
 |---|---|---|---|
-| [Nextcloud](apps/nextcloud/) | App + MariaDB + Redis + Nginx + Cron | ✅ | File sync, collaboration, optional OnlyOffice |
+| [Nextcloud](apps/nextcloud/) | App + MariaDB + Redis + Nginx + Cron | 🚧 | File sync, collaboration, optional OnlyOffice |
 | [Paperless-ngx](apps/paperless-ngx/) | App + Postgres + Redis + Gotenberg + Tika | ✅ | Document management with OCR, optional Authentik SSO |
 | [Seafile](apps/seafile/) | App + MariaDB + Memcached + optional components | ✅ | File sync & share (community edition) |
 | [Seafile Pro](apps/seafile-pro/) | App + MariaDB + Memcached + SeaDoc + ClamAV + SeaSearch | ✅ | File sync & share (pro edition) |
@@ -205,14 +214,15 @@ See [`business/README.md`](business/README.md) for the full category README + ro
 | App | Function | Status | Description |
 |---|---|---|---|
 | [OpenProject CE](business/openproject/) | Project management | ✅ | Full PM — Gantt, kanban, work packages, time tracking. CE = local accounts only, no SSO. |
-| [Vikunja](business/vikunja/) | Task management | ✅ | Kanban, lists, Gantt — Trello / Planner alternative. Authentik OIDC live-tested, SSO-only. |
+| [Vikunja](business/vikunja/) | Task management | ✅ | Kanban, lists, Gantt — Trello / Planner alternative. Authentik OIDC verified, SSO-only. |
 | [Invoice Ninja](business/invoiceninja/) | Billing | ✅ | Invoicing, quotes, client portal |
-| [Dolibarr](business/dolibarr/) | ERP / CRM | ✅ | Accounting, projects, HR, inventory |
-| [Kimai](business/kimai/) | Time tracking | ✅ | Per-project/customer hours → Invoice Ninja |
-| [Listmonk](business/listmonk/) | Newsletter | ✅ | Mailing list + transactional mail |
-| [Matomo](business/matomo/) | Web analytics | ✅ | GDPR-compliant, full-featured (Google Analytics alternative) |
-| [Zammad](business/zammad/) | Helpdesk | ✅ | Full 7-service helpdesk / ticketing / SLA |
-| [OpenSign](business/opensign/) | E-signatures | ✅ | DocuSign alternative, eIDAS-capable |
+| [Dolibarr](business/dolibarr/) | ERP / CRM | 🚧 | Accounting, projects, HR, inventory |
+| [Kimai](business/kimai/) | Time tracking | 🚧 | Per-project/customer hours → Invoice Ninja |
+| [Listmonk](business/listmonk/) | Newsletter | 🚧 | Mailing list + transactional mail |
+| [Matomo](business/matomo/) | Web analytics | 🚧 | GDPR-compliant, full-featured (Google Analytics alternative) |
+| [Zammad](business/zammad/) | Helpdesk | 🚧 | Full 7-service helpdesk / ticketing / SLA |
+| [OpenSign](business/opensign/) | E-signatures | 🚧 | DocuSign alternative, eIDAS-capable |
+| [Documenso](business/documenso/) | E-signatures | 🚧 | DocuSign alternative (Remix + Postgres, local signing cert) |
 
 Planned: Ackee, Plausible CE, Live Helper Chat, Eramba GRC.
 
@@ -222,25 +232,32 @@ See [`monitoring/README.md`](monitoring/README.md) for the full category README.
 
 | App | Axis | Status | Description |
 |---|---|---|---|
-| [Uptime Kuma](monitoring/uptime-kuma/) | Uptime (UI) | ✅ | Click-config uptime monitor, 90+ notification integrations |
-| [Gatus](monitoring/gatus/) | Uptime (YAML) | ✅ | Config-as-code health checks with Prometheus export |
-| [Beszel](monitoring/beszel/) | Host metrics (hub) | ✅ | Lightweight hub + local agent for CPU / RAM / disk / docker stats |
-| [Beszel Agent](monitoring/beszel-agent/) | Host metrics (remote agent) | ✅ | Standalone agent for additional hosts; pairs with Beszel hub |
-| [changedetection.io](monitoring/changedetection/) | Content watcher | ✅ | Page diff + notification (restock / price / ToS) |
-| [Healthchecks](monitoring/healthchecks/) | Cron / scheduled-job | ✅ | Dead-man's switch for backups / cron / scheduled tasks |
+| [Uptime Kuma](monitoring/uptime-kuma/) | Uptime (UI) | 🚧 | Click-config uptime monitor, 90+ notification integrations |
+| [Gatus](monitoring/gatus/) | Uptime (YAML) | 🚧 | Config-as-code health checks with Prometheus export |
+| [Beszel](monitoring/beszel/) | Host metrics (hub) | 🚧 | Lightweight hub + local agent for CPU / RAM / disk / docker stats |
+| [Beszel Agent](monitoring/beszel-agent/) | Host metrics (remote agent) | 🚧 | Standalone agent for additional hosts; pairs with Beszel hub |
+| [changedetection.io](monitoring/changedetection/) | Content watcher | 🚧 | Page diff + notification (restock / price / ToS) |
+| [Healthchecks](monitoring/healthchecks/) | Cron / scheduled-job | 🚧 | Dead-man's switch for backups / cron / scheduled tasks |
+| [ntfy](monitoring/ntfy/) | Notification receiver | 🚧 | Self-hosted push to phone and desktop; belongs on a different host than the services above |
 
-Planned: Statping, ciao, Checkmate, Zabbix, Grafana + Prometheus, Scrutiny.
+Planned: Statping, ciao, Checkmate, Zabbix, Grafana + Prometheus, Scrutiny, Gotify.
 
 ### Backup
 
-See [`backup/README.md`](backup/README.md) for tool choices and the per-app isolation principle.
+Backup runs in two directions — this host outward, and your own devices inward. See [`backup/README.md`](backup/README.md) for the layer model, the host-agent rationale, and what append-only protection actually buys.
 
-Planned: Kopia, Borgmatic, Bareos, UrBackup.
+| Tool | Direction | Status | Description |
+|---|---|---|---|
+| [Borgmatic](backup/borgmatic/) | This host → off-site | ✅ | Deduplicated encrypted backup over SSH/SFTP, with native database dumps for PostgreSQL, MySQL, MariaDB, SQLite and MongoDB. Host-installed. Backup and restore both performed; the off-site target is written, not yet exercised. |
+| [UrBackup](backup/urbackup/) | Your devices → this host | 🚧 | Client backup for Windows, macOS and Linux — keep laptop and desktop backups on hardware you own. Whole-disk image restore on Windows. |
+
+Planned: Kopia, Bareos.
 
 ### Repository layout
 
-Five top-level areas, each with a clear mandate. Per-category READMEs (`core/README.md`, `business/README.md`, `monitoring/README.md`, `backup/README.md`) describe what belongs where and why.
-New here? Start with the category README that best matches your goal: [Core Infrastructure](core/README.md), [Apps](apps/README.md), [Business](business/README.md), [Monitoring](monitoring/README.md), or [Backup](backup/README.md).
+Five top-level areas, each with a clear mandate. `business/`, `monitoring/` and `backup/` have a category README describing what belongs where and why; `core/` and `apps/` are documented per service in the tables above.
+
+New here? Start with the area that best matches your goal: [Core Infrastructure](core/), [Apps](apps/), [Business](business/README.md), [Monitoring](monitoring/README.md), or [Backup](backup/README.md).
 
 | Directory | Scope |
 |---|---|
@@ -248,11 +265,11 @@ New here? Start with the category README that best matches your goal: [Core Infr
 | [`apps/`](apps/) | General-purpose self-hosted apps — equally useful for private homelab or a company |
 | [`business/`](business/) | Apps that only make sense in a company context — invoicing, helpdesk, newsletter, compliance |
 | [`monitoring/`](monitoring/) | Ops observability — uptime, metrics, content-change watching, disk SMART |
-| [`backup/`](backup/) | Ops backup — Kopia / Bareos / UrBackup, structurally separate because of privileged access + remote targets |
+| [`backup/`](backup/) | Ops backup in both directions — this host outward (Borgmatic), your devices inward (UrBackup); structurally separate because of privileged access + remote targets |
 
 ## Project Structure
 
-```
+```text
 secure-docker-blueprint/
 │
 ├── core/                        # Infrastructure (always needed)
@@ -260,13 +277,16 @@ secure-docker-blueprint/
 │   ├── authentik/               #   SSO / Identity provider
 │   ├── crowdsec/                #   Intrusion detection + Traefik bouncer
 │   ├── onlyoffice/              #   Document editing server
+│   ├── euro-office/             #   EU OnlyOffice fork (document server)
+│   ├── collabora/               #   Lightweight office server (LibreOffice)
 │   ├── dnsmasq/                 #   DNS forwarder / split-DNS
 │   ├── acme-certs/              #   Certificate tool (acme.sh)
 │   ├── whoami/                  #   Traefik debug service
 │   ├── dockhand/                #   Docker management (Git-based stacks)
 │   ├── hawser/                  #   Remote Docker agent for Dockhand
 │   ├── portainer/               #   Docker management UI
-│   └── portainer-agent/         #   Remote Docker agent for Portainer
+│   ├── portainer-agent/         #   Remote Docker agent for Portainer
+│   └── infisical/               #   Central secret manager (self-hosted)
 │
 ├── apps/                        # General-purpose apps (homelab + company)
 │   ├── dashy/  heimdall/  homarr/  homepage/
@@ -281,20 +301,21 @@ secure-docker-blueprint/
 ├── business/                    # Company-only apps
 │   ├── openproject/  vikunja/
 │   ├── invoiceninja/  dolibarr/  kimai/
-│   ├── listmonk/  matomo/  zammad/  opensign/
+│   ├── listmonk/  matomo/  zammad/  opensign/  documenso/
 │   └── ...
 │
 ├── monitoring/                  # Ops observability
-│   ├── uptime-kuma/  gatus/  beszel/  changedetection/  healthchecks/
+│   ├── uptime-kuma/  gatus/  beszel/  changedetection/  healthchecks/  ntfy/
 │   └── ...
 │
 ├── backup/                      # Backup tooling
+│   ├── borgmatic/               #   Server backup — host-installed, no compose stack
+│   └── urbackup/                #   Client backup — Windows / macOS / Linux endpoints
 │
 ├── docs/
 │   ├── standards/               # Conventions and patterns
 │   ├── bugfixes/                # Per-incident root-cause docs
-│   ├── audits/                  # Consistency & maintenance audit logs
-│   └── templates/               # Starter template for new apps
+│   └── audits/                  # Consistency & maintenance logs
 │
 └── scripts/
     └── overview.sh              # Dashboard of all running services
@@ -304,7 +325,7 @@ secure-docker-blueprint/
 
 Every app follows the same structure:
 
-```
+```text
 apps/example/
 ├── docker-compose.yml           # Standardized block order
 ├── .env.example                 # All variables with placeholders
@@ -339,12 +360,12 @@ See [ROADMAP.md](ROADMAP.md) for planned features, services under evaluation, an
 ## Adding a New App
 
 ```bash
-cp -r docs/templates apps/my-new-app
+cp -r apps/_reference apps/my-new-app
 cd apps/my-new-app
-# Edit docker-compose.yml and .env.example following the standards
+# Replace the stand-in images, drop what the app does not need
 ```
 
-See [docs/templates/README.md](docs/templates/README.md) for details.
+[`apps/_reference/`](apps/_reference/) is the canonical structure every app follows — a runnable stack, not a paper skeleton. Diff an existing app against it to find drift, or run `python3 scripts/ci/check-structure.py`. Full walkthrough: [docs/standards/new-app-checklist.md](docs/standards/new-app-checklist.md).
 
 ## Contributing
 

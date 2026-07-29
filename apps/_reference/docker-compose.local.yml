@@ -1,0 +1,79 @@
+# =============================================================================
+# Reference App — LOCAL stack (no Traefik, no Docker Secrets)
+# =============================================================================
+# For trying the app on your own machine: it binds a localhost port directly and
+# takes secrets as plain env from .env.local. Production stays in
+# docker-compose.yml — never deploy this file.
+#
+#   cp .env.local.example .env.local     # fill in the openssl one-liners
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   curl http://localhost:8080/
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+#
+# WHAT CHANGES vs. production, and why:
+#   ports:          publishes to 127.0.0.1 — no reverse proxy in the loop
+#   no labels:      nothing to route; Traefik is not running here
+#   no secrets:     plain env is acceptable ONLY on a local, non-exposed machine
+#   no entrypoint:  values already arrive as env, so no injection is needed
+#   no proxy net:   one throwaway network, so this cannot collide with the stack
+# Hardening (no-new-privileges, cap_drop, read_only) stays on — local should
+# resemble production wherever it costs nothing.
+# =============================================================================
+
+services:
+
+  db:
+    image: postgres:${DB_TAG}
+    container_name: reference-local-db
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      # Plain value — local only. Production uses POSTGRES_PASSWORD_FILE.
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      TZ: ${TZ}
+    volumes:
+      # Separate from the production path, so both can coexist.
+      - ./volumes/local/postgres:/var/lib/postgresql/data
+    networks: [reference-local]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  app:
+    image: nginxinc/nginx-unprivileged:${APP_TAG}
+    container_name: reference-local-app
+    restart: unless-stopped
+    depends_on:
+      db: {condition: service_healthy}
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs: [/tmp, /var/cache/nginx]
+    environment:
+      TZ: ${TZ}
+      DATABASE_URL: postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+      APP_KEY: ${APP_KEY}
+      APP_LOG_LEVEL: ${APP_LOG_LEVEL}
+      # Signup enabled locally so the first account can be created.
+      APP_DISABLE_SIGNUP: "false"
+    ports:
+      # 127.0.0.1 prefix keeps it off the LAN. Drop it for testing from another
+      # device, and only then.
+      - "127.0.0.1:8080:8080"
+    networks: [reference-local]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO/dev/null http://127.0.0.1:8080/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+networks:
+  reference-local:
+    name: reference-local

@@ -1,6 +1,6 @@
 # Ghost
 
-> **Status: ✅ Ready** — v6.27.0 · 2026-05-02
+> **Status: ✅ Ready** — v6.54.0 · 2026-07-26
 
 Headless Node.js CMS focused on publishing, newsletters, and paid memberships. This setup runs Ghost with a dedicated MySQL 8 database and an external SMTP relay for member emails. ActivityPub (Fediverse/Mastodon integration) is optional via a separate overlay file.
 
@@ -89,6 +89,30 @@ Check that SMTP works: register a test member on the site and confirm the verifi
 - `no-new-privileges:true` on all containers
 - Ghost and ActivityPub run as non-root users inside their containers (configured by upstream images)
 - ActivityPub backend is on the internal network; only Traefik routes the specific ActivityPub paths to it
+
+## Backup
+
+| | |
+|---|---|
+| **Database** | MySQL · container `ghost-db` · database `ghost` · user `ghost_user` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **State** | `./volumes/mysql` (database) · `./volumes/content` (themes, uploaded images, member data) |
+| **Reproducible** | nothing |
+| **Quiescing** | Not needed. The dump is consistent on its own. |
+
+```yaml
+mysql_databases:
+    - name: ghost
+      container: ghost-db
+      username: ghost_user
+      password: "{credential file /srv/docker/apps/ghost/.secrets/db_pwd.txt}"
+```
+
+`volumes/content` is not just uploads: the active theme lives there too. A
+database-only restore brings the posts back and renders them with the default
+theme, which reads as a broken site rather than a partial restore.
+
+**Restore order:** database first, then the app.
 
 ## Known Issues
 

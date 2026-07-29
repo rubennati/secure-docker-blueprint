@@ -39,12 +39,32 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/        # 200 OK
 - **First-user-wins owner** — open the UI yourself immediately after `docker compose up -d`.
 - **Default access `acc-tailscale` + `sec-3`** — the admin UI exposes all your probe URLs, response bodies, and notification webhook URLs. VPN-only is the right default.
 - **Public status pages** — Kuma serves these at `/status/<slug>`. If you want them externally reachable while keeping the admin UI private, add a second Traefik router:
+
   ```yaml
   - "traefik.http.routers.kuma-public.rule=Host(`status.example.com`)"
   - "traefik.http.routers.kuma-public.service=uptime-kuma"
   # + public-friendly middleware chain
   ```
+
 - **`no-new-privileges:true`**.
+
+## Backup
+
+| | |
+|---|---|
+| **State** | `./volumes/data` — SQLite at `/app/data/kuma.db`, holding every monitor, notification channel and credential |
+| **Critical** | All of it. The configuration lives in the database, not in files — there is nothing to reconstruct from. |
+| **Quiescing** | Dump rather than copy; the database is written continuously |
+
+```yaml
+sqlite_databases:
+    - name: uptime-kuma
+      path: /srv/docker/monitoring/uptime-kuma/volumes/data/kuma.db
+```
+
+**Restore order:** stop the container, restore, start. Verify that notification
+channels still work afterwards — re-testing them is part of the restore, not an
+extra.
 
 ## Known Issues
 

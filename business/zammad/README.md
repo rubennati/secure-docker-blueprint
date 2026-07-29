@@ -62,6 +62,34 @@ docker compose logs railsserver --follow
 - **`no-new-privileges:true`** on all services.
 - **Default access `acc-public` + `sec-3`** — customers submit tickets via public web form `/customer_ticket_new`; agents log in at `/#login`. For agent-only VPN access, see the two-router split pattern (see `business/listmonk/README.md` for the pattern).
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | PostgreSQL · container `zammad-db` · database `zammad_production` · user `zammad` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **State** | `./volumes/postgres` (database) · `./volumes/zammad-storage` (ticket attachments) |
+| **Reproducible** | `./volumes/elasticsearch` (search index — rebuildable) · `./volumes/redis` (cache) |
+| **Quiescing** | Not needed. The dump is consistent on its own. |
+
+```yaml
+postgresql_databases:
+    - name: zammad_production
+      container: zammad-db
+      username: zammad
+      password: "{credential file /srv/docker/business/zammad/.secrets/db_pwd.txt}"
+```
+
+**Excluding the Elasticsearch volume is deliberate, and it has a cost.** The index
+is derived data and rebuilds from the database, so backing it up wastes
+considerable space. But it does not rebuild by itself — after a restore, run the
+searchindex rebuild and expect it to take a while on a large ticket history.
+Until it finishes, Zammad is up and its search returns nothing, which looks like
+data loss and is not.
+
+**Restore order:** database first, then `init` (it runs migrations), then the
+remaining services once it has exited cleanly.
+
 ## Known Issues
 
 - **First boot is slow** — Elasticsearch warmup + schema migrations ~3-5 min.
@@ -76,7 +104,8 @@ docker compose logs railsserver --follow
 
 ## Email integration
 
-Agents typically configure an inbound IMAP mailbox (Admin → Channels → Email) so `support@firma.at` tickets auto-create. SMTP outbound likewise. Requires either:
+Agents typically configure an inbound IMAP mailbox (Admin → Channels → Email) so `support@example.com` tickets auto-create. SMTP outbound likewise. Requires either:
+
 - Own mailserver (Mailcow/Mailu — planned) — direct IMAP/SMTP
 - Hosted provider (mailbox.org, Brevo) — IMAP + SMTP credentials
 

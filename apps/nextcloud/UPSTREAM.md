@@ -3,11 +3,18 @@
 ## Source
 
 - **Repo:** https://github.com/nextcloud/docker
+- **Image:** https://hub.docker.com/_/nextcloud
+- **Docs:** https://docs.nextcloud.com/server/latest/admin_manual/
 - **Example path:** `.examples/docker-compose/with-nginx-proxy/mariadb/fpm/`
 - **License:** AGPL-3.0
 - **Origin:** Germany · Nextcloud GmbH · EU
-- **Based on version:** Nextcloud 32 (fpm-alpine)
-- **Last checked:** 2026-04-13
+- **Based on version:** `34.0.2-fpm-alpine`
+- **Last verified:** 2026-07-29 (34.0.2-fpm-alpine)
+- **Supported until:** 2027-06-08
+
+Nextcloud publishes a major version every four months and maintains each for one
+year. 34 was released 2026-06-09, so it is the newest version carrying a full
+support window — [release schedule](https://github.com/nextcloud/server/wiki/Maintenance-and-Release-Schedule).
 
 ## What we use from upstream
 
@@ -22,11 +29,13 @@
 | Change | Reason |
 |--------|--------|
 | Removed nginx-proxy + letsencrypt-companion | Replaced by Traefik |
-| Docker Secrets for DB + admin passwords | Blueprint standard; Nextcloud supports `_FILE` natively |
+| Docker Secrets for all six credentials — database, database root, Redis, admin name, admin password, SMTP key | Blueprint standard; Nextcloud supports `_FILE` natively, and Redis reads its own from the secret at startup |
+| Unattended install via `NEXTCLOUD_ADMIN_USER_FILE` / `_PASSWORD_FILE` | Repeatable, and no unauthenticated setup form is ever reachable |
 | Service names: `app`, `db`, `redis`, `nginx`, `cron` | Blueprint naming convention |
 | Traefik labels on nginx | Blueprint routing |
-| CalDAV/CardDAV redirect via Traefik middleware | Cleaner than nginx-only redirect, works with Traefik routing |
-| `security_opt: no-new-privileges` on all services | Blueprint security baseline |
+| CalDAV/CardDAV redirect left to `nginx.conf` | Upstream's own configuration already issues the documented 301; a Traefik rewrite runs first and suppresses it |
+| `security_opt: no-new-privileges` on `db`, `redis`, `nginx` only | The Nextcloud entrypoint needs to chown files as root before dropping to `www-data`; with the flag set, `config.php` ends up root-owned and FPM returns 503 |
+| Second network `app-egress` for `app` and `cron` | `app-internal` is `internal: true`, so the database and cache have no route out at all |
 | MariaDB `healthcheck.sh --connect --innodb_initialized` | Official MariaDB healthcheck script |
 | Named volumes | Upstream pattern |
 
@@ -34,7 +43,7 @@
 
 If fpm-alpine + nginx causes issues:
 
-1. Change `APP_TAG=32-apache` in `.env`
+1. Change `APP_TAG` to the matching `-apache` tag in `.env`
 2. Remove the `nginx` service from `docker-compose.yml`
 3. Move Traefik labels to the `app` service
 4. Change loadbalancer port to `80`
@@ -58,28 +67,12 @@ When bumping the Nextcloud version:
 
 ## Post-install steps
 
-After the first browser-based setup, fix Nextcloud's security warnings:
+See [README.md](README.md#post-install). They are kept in one place so the two
+files cannot drift apart.
 
-```bash
-# Fix log file permissions
-docker compose exec app chown -R www-data:www-data /var/www/html/data
-
-# Set maintenance window to 1 AM (avoids heavy jobs during usage)
-docker compose exec -u www-data app php occ config:system:set maintenance_window_start --value=1 --type=integer
-
-# Run mimetype migrations
-docker compose exec -u www-data app php occ maintenance:repair --include-expensive
-
-# Set default phone region (ISO 3166-1 code)
-docker compose exec -u www-data app php occ config:system:set default_phone_region --value="AT"
-```
-
-Remaining warnings that are safe to ignore:
-- `.well-known URLs` — CalDAV/CardDAV redirect works via Traefik middleware, Nextcloud self-check doesn't detect it
-- `X-Frame-Options` — Set by nginx, Nextcloud checks its own headers
-- `Second factor` — Enable later when needed
-- `AppAPI deploy daemon` — Only for External Apps
-- `Email test` — Configure when SMTP is set up
+No admin-overview warning is treated as expected here. The configuration in this
+stack reaches 60 passing checks with none outstanding; a warning means something
+is genuinely unset.
 
 ## Upstream diff commands
 

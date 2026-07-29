@@ -8,8 +8,8 @@
 - **Config reference:** https://ghost.org/docs/config/
 - **License:** MIT
 - **Origin:** Ireland · Ghost Foundation · EU
-- **Based on version:** `6.27.0-alpine`
-- **Last verified:** 2026-05-02 (v6.27.0-alpine)
+- **Based on version:** `6.54.0-alpine`
+- **Last verified:** 2026-07-26 (v6.54.0-alpine)
 
 ### ActivityPub service
 
@@ -31,7 +31,7 @@
 
 ## Architecture
 
-```
+```text
 Internet → Traefik (TLS, port 443) → Ghost :2368
                                     → ActivityPub :8080  (overlay, high-priority router)
 ```
@@ -66,10 +66,12 @@ Ghost has major-version migrations that can rewrite the database schema. Plan th
 
 1. Read the Ghost release notes for breaking changes and required migration steps: https://github.com/TryGhost/Ghost/releases
 2. **Backup** the database and content volume:
+
    ```bash
    docker compose exec db mysqldump -u root -p"$(cat .secrets/db_root_pwd.txt)" ghost > ghost-$(date +%Y%m%d).sql
    tar czf ghost-content-$(date +%Y%m%d).tgz ./volumes/content/
    ```
+
 3. Bump `APP_TAG` in `.env` (one major version at a time — e.g. 5 → 6, not 4 → 6)
 4. `docker compose pull && docker compose up -d`
 5. Watch migration output: `docker compose logs app --tail 200 --follow`

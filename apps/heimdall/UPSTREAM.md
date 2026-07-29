@@ -7,7 +7,7 @@
 - **GitHub (Heimdall upstream):** https://github.com/linuxserver/Heimdall
 - **License:** MIT
 - **Origin:** UK · linuxserver.io community · non-EU
-- **Based on version:** `2.6.3`
+- **Based on version:** `2.8.1`
 - **Last verified:** 2026-05-02 (v2.6.3)
 
 ## What we use
@@ -33,9 +33,11 @@ LinuxServer.io images get frequent minor bumps (weekly). Major upgrades infreque
 
 1. Check [LinuxServer changelog](https://fleet.linuxserver.io/image?name=linuxserver/heimdall)
 2. Back up `./config/`:
+
    ```bash
    tar czf heimdall-config-$(date +%Y%m%d).tgz config/
    ```
+
 3. Bump `APP_TAG`
 4. `docker compose pull && docker compose up -d`
 5. First start after upgrade may run DB migrations (Laravel); watch logs

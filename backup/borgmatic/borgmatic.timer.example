@@ -1,0 +1,48 @@
+# =============================================
+# Borgmatic – systemd timer
+# =============================================
+# A timer activates a service of the same name. It does nothing on its own —
+# install borgmatic.service.example alongside it, or check whether your package
+# already ships both:
+#
+#   systemctl list-unit-files | grep borgmatic
+#
+# If they exist, do NOT overwrite them — override just what you need:
+#
+#   sudo systemctl edit borgmatic.timer
+#
+# and put only the [Timer] section below into the override. Use this file only
+# when the package ships no units at all; a pipx installation ships neither.
+#
+# Install to /etc/systemd/system/borgmatic.timer, then:
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now borgmatic.timer
+#   systemctl list-timers borgmatic.timer     # confirm the next run
+#
+# Prove the service works before trusting the timer:
+#   sudo systemctl start borgmatic.service
+# =============================================
+
+[Unit]
+Description=Run borgmatic backup
+
+[Timer]
+# Name the timezone explicitly (systemd >= 252). Servers commonly run on UTC
+# while the window that matters is the one where the users are, and a fixed UTC
+# time drifts by an hour twice a year against local working hours.
+#
+# Check what you wrote actually means what you think:
+#   systemd-analyze calendar "*-*-* 03:00:00 Europe/Vienna" --iterations=3
+OnCalendar=*-*-* 03:00:00 Europe/Vienna
+
+# Together with the line above this defines a window, not an instant: the run
+# starts somewhere between 03:00 and 05:00. On a shared backup target it stops
+# every host arriving at the same second. Set it to 0 if you need a fixed time.
+RandomizedDelaySec=2h
+
+# Run on next boot if the machine was off at the scheduled time. Without this an
+# intermittently powered host silently skips backups.
+Persistent=true
+
+[Install]
+WantedBy=timers.target

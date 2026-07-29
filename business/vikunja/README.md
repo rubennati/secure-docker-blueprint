@@ -77,14 +77,17 @@ Users now see an **"Log in with Authentik"** button. The login page also auto-re
 Authentik groups can be automatically mirrored as Vikunja teams.
 
 1. In Authentik, create a scope mapping named `vikunja_scope`:
+
    ```python
    groupsDict = {"vikunja_groups": []}
    for group in request.user.ak_groups.all():
        groupsDict["vikunja_groups"].append({"name": group.name, "oidcID": group.num_pk})
    return groupsDict
    ```
+
 2. Add `vikunja_scope` to the provider → Advanced protocol settings → Scopes
 3. In `.env`, extend the scope:
+
    ```env
    # Add to docker-compose.yml environment or override via .env:
    VIKUNJA_AUTH_OPENID_PROVIDERS_AUTHENTIK_SCOPE=openid profile email vikunja_scope
@@ -114,7 +117,7 @@ echo -n "<smtp-key>" > .secrets/smtp_pwd.txt
 VIKUNJA_MAILER_ENABLED=true
 VIKUNJA_MAILER_HOST=smtp-relay.brevo.com
 VIKUNJA_MAILER_PORT=587
-VIKUNJA_MAILER_USERNAME=your@email.com
+VIKUNJA_MAILER_USERNAME=your@example.com
 VIKUNJA_MAILER_FROMEMAIL=vikunja@your-domain.com
 VIKUNJA_MAILER_AUTHTYPE=login
 
@@ -132,6 +135,7 @@ VIKUNJA_ALLOWICONCHANGES=false  # prevents seasonal changes overriding your logo
 ```
 
 Legal footer links (shown at the bottom of the login page):
+
 ```env
 VIKUNJA_IMPRINTURL=https://your-domain.com/imprint
 VIKUNJA_PRIVACYURL=https://your-domain.com/privacy
@@ -170,6 +174,32 @@ VIKUNJA_PRIVACYURL=https://your-domain.com/privacy
 | Real client IP | ✅ | Read from `X-Forwarded-For` (Traefik) for accurate rate limiting |
 | Rate limiting | ✅ | Enabled |
 | Read-only filesystem | ⬜ | Not yet verified — enable after testing |
+
+## Backup
+
+| | |
+|---|---|
+| **Database** | PostgreSQL · container `vikunja-db` · database `vikunja` · user `vikunja` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **State** | `db_data` (database) · `vikunja_files` (task attachments) |
+| **Reproducible** | nothing |
+| **Quiescing** | Not needed. The dump is consistent on its own. |
+
+This stack uses **named volumes**. Their host paths are
+`/var/lib/docker/volumes/vikunja_<name>/_data`.
+
+```yaml
+postgresql_databases:
+    - name: vikunja
+      container: vikunja-db
+      username: vikunja
+      password: "{credential file /srv/docker/business/vikunja/.secrets/db_pwd.txt}"
+```
+
+`.secrets/jwt_key.txt` signs the session tokens. Restoring without it invalidates
+every active session — recoverable, but users are logged out without explanation.
+
+**Restore order:** database first, then the app.
 
 ## Notes
 

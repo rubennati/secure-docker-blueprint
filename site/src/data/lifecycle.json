@@ -1,0 +1,592 @@
+{
+  "apps/adminer": {
+    "backup_docs": "documented",
+    "internal": "baseline-aligned",
+    "pinned": "APP_TAG=5.5.0-standalone",
+    "public": "ready",
+    "restore_docs": "missing",
+    "symbol": "✅",
+    "verified": "2026-05-02",
+    "verified_legacy_field": false
+  },
+  "apps/bookstack": {
+    "backup_docs": "documented",
+    "internal": "baseline-aligned",
+    "pinned": "APP_TAG=version-v26.05.2",
+    "public": "ready",
+    "restore_docs": "missing",
+    "symbol": "✅",
+    "verified": "2026-05-03",
+    "verified_legacy_field": false
+  },
+  "apps/caldiy": {
+    "backup_docs": "documented",
+    "internal": "baseline-aligned",
+    "pinned": "APP_TAG=v6.2.0-4@sha256:9818a0be6404…",
+    "public": "ready",
+    "restore_docs": "missing",
+    "symbol": "✅",
+    "verified": "2026-07-26",
+    "verified_legacy_field": false
+  },
+  "apps/dashy": {
+    "backup_docs": "documented",
+    "internal": "baseline-aligned",
+    "pinned": "APP_TAG=4.5.0",
+    "public": "ready",
+    "restore_docs": "missing",
+    "symbol": "✅",
+    "verified": "2026-05-02",
+    "verified_legacy_field": false
+  },
+  "apps/easyappointments": {
+    "backup_docs": "documented",
+    "internal": "baseline-aligned",
+    "pinned": "APP_TAG=1.6.0",
+    "public": "ready",
+    "restore_docs": "missing",
+    "symbol": "✅",
+    "verified": "2026-05-03",
+    "verified_legacy_field": false
+  },
+  "apps/ghost": {
+    "backup_docs": "documented",
+    "internal": "baseline-aligned",
+    "pinned": "APP_TAG=6.54.0-alpine",
+    "public": "ready",
+    "restore_docs": "missing",
+    "symbol": "✅",
+    "verified": "2026-07-26",
+    "verified_legacy_field": false
+  },
+  "apps/heimdall": {
+    "backup_docs": "documented",
+    "internal": "baseline-aligned",
+    "pinned": "APP_TAG=2.8.1",
+    "public": "ready",
+    "restore_docs": "missing",
+    "symbol": "✅",
+    "verified": "2026-05-02",
+    "verified_legacy_field": false
+  },
+  "apps/homarr": {
+    "backup_docs": "documented",
+    "internal": "baseline-aligned",
+    "pinned": "APP_TAG=v1.72.0",
+    "public": "ready",
+    "restore_docs": "missing",
+    "symbol": "✅",
+    "verified": "2026-05-02",
+    "verified_legacy_field": false
+  },
+  "apps/homepage": {
+    "backup_docs": "documented",
+    "internal": "baseline-aligned",
+    "pinned": "APP_TAG=v1.13.2",
+    "public": "ready",
+    "restore_docs": "missing",
+    "symbol": "✅",
+    "verified": "2026-05-03",
+    "verified_legacy_field": false
+  },
+  "apps/immich": {
+    "backup_docs": "documented",
+    "internal": "baseline-aligned",
+    "pinned": "APP_TAG=v3.0.3",
+    "public": "ready",
+    "restore_docs": "missing",
+    "symbol": "✅",
+    "verified": "2026-04-17",
+    "verified_legacy_field": true
+  },
+  "apps/it-tools": {
+    "backup_docs": "documented",
+    "internal": "baseline-aligned",
+    "pinned": "APP_TAG=2024.10.22-7ca5933",
+    "public": "ready",
+    "restore_docs": "missing",
+    "symbol": "✅",
+    "verified": "2026-05-02",
+    "verified_legacy_field": false
+  },
+  "apps/librephotos": {
+    "backup_docs": "documented",
+    "internal": "baseline-aligned",
+    "pinned": "APP_TAG=2026w25",
+    "public": "ready",
+    "restore_docs": "missing",
+    "symbol": "✅",
+    "verified": "2026-04-17",
+    "verified_legacy_field": true
+  },
+  "apps/lycheeorg": {
+    "backup_docs": "documented",
+    "internal": "baseline-aligned",
+    "pinned": "APP_TAG=v7.7.1",
+    "public": "ready",
+    "restore_docs": "missing",
+    "symbol": "✅",
+    "verified": "2026-04-17",
+    "verified_legacy_field": true
+  },
+  "apps/monicahq": {
+    "backup_docs": "documented",
+    "internal": "baseline-aligned",
+    "pinned": "APP_TAG=4.1.2-apache",
+    "public": "ready",
+    "restore_docs": "missing",
+    "symbol": "✅",
+    "verified": "2026-04-17",
+    "verified_legacy_field": true
+  },
+  "apps/n8n": {
+    "backup_docs": "documented",
+    "internal": "baseline-aligned",
+    "pinned": "APP_TAG=2.31.6",
+    "public": "ready",
+    "restore_docs": "missing",
+    "symbol": "✅",
+    "verified": "2026-05-02",
+    "verified_legacy_field": false
+  },
+  "apps/nextcloud": {
+    "backup_docs": "documented",
+    "internal": "scaffolded",
+    "pinned": "APP_TAG=34.0.2-fpm-alpine",
+    "public": "preview",
+    "restore_docs": "documented",
+    "symbol": "🚧",
+    "verified": "2026-07-29",
+    "verified_legacy_field": false
+  },
+  "apps/nocodb": {
+    "backup_docs": "documented",
+    "internal": "baseline-aligned",
+    "pinned": "APP_TAG=2026.07.0",
+    "public": "ready",
+    "restore_docs": "missing",
+    "symbol": "✅",
+    "verified": "2026-05-02",
+    "verified_legacy_field": false
+  },
+  "apps/opnform": {
+    "backup_docs": "documented",
+    "internal": "baseline-aligned",
+    "pinned": "APP_TAG=2.2.2",
+    "public": "ready",
+    "restore_docs": "missing",
+    "symbol": "✅",
+    "verified": "2026-04-17",
+    "verified_legacy_field": true
+  },
+  "apps/paperless-ngx": {
+    "backup_docs": "documented",
+    "internal": "baseline-aligned",
+    "pinned": "APP_TAG=3.0.3",
+    "public": "ready",
+    "restore_docs": "missing",
+    "symbol": "✅",
+    "verified": "2026-05-03",
+    "verified_legacy_field": false
+  },
+  "apps/photoprism": {
+    "backup_docs": "documented",
+    "internal": "baseline-aligned",
+    "pinned": "APP_TAG=260601",
+    "public": "ready",
+    "restore_docs": "missing",
+    "symbol": "✅",
+    "verified": "2026-04-17",
+    "verified_legacy_field": true
+  },
+  "apps/photoview": {
+    "backup_docs": "documented",
+    "internal": "baseline-aligned",
+    "pinned": "APP_TAG=2.4.0",
+    "public": "ready",
+    "restore_docs": "missing",
+    "symbol": "✅",
+    "verified": "2026-04-17",
+    "verified_legacy_field": true
+  },
+  "apps/seafile": {
+    "backup_docs": "documented",
+    "internal": "baseline-aligned",
+    "pinned": "APP_IMAGE=seafileltd/seafile-mc:13.0.20",
+    "public": "ready",
+    "restore_docs": "missing",
+    "symbol": "✅",
+    "verified": "2026-04-16",
+    "verified_legacy_field": true
+  },
+  "apps/seafile-pro": {
+    "backup_docs": "documented",
+    "internal": "baseline-aligned",
+    "pinned": "APP_TAG=13.0.21",
+    "public": "ready",
+    "restore_docs": "missing",
+    "symbol": "✅",
+    "verified": "2026-04-13",
+    "verified_legacy_field": true
+  },
+  "apps/unifi": {
+    "backup_docs": "documented",
+    "internal": "scaffolded",
+    "pinned": "APP_TAG=10.4.57",
+    "public": "preview",
+    "restore_docs": "missing",
+    "symbol": "🚧",
+    "verified": "2026-04-17",
+    "verified_legacy_field": true
+  },
+  "apps/vaultwarden": {
+    "backup_docs": "documented",
+    "internal": "baseline-aligned",
+    "pinned": "APP_TAG=1.37.0",
+    "public": "ready",
+    "restore_docs": "missing",
+    "symbol": "✅",
+    "verified": "2026-06-14",
+    "verified_legacy_field": true
+  },
+  "apps/wordpress": {
+    "backup_docs": "documented",
+    "internal": "baseline-aligned",
+    "pinned": "APP_TAG=7.0.2-php8.3-apache",
+    "public": "ready",
+    "restore_docs": "missing",
+    "symbol": "✅",
+    "verified": "2026-04-15",
+    "verified_legacy_field": true
+  },
+  "backup/borgmatic": {
+    "backup_docs": "n/a",
+    "internal": "baseline-aligned",
+    "pinned": "host-installed",
+    "public": "ready",
+    "restore_docs": "documented",
+    "symbol": "✅",
+    "verified": "2026-07-29",
+    "verified_legacy_field": false
+  },
+  "backup/urbackup": {
+    "backup_docs": "documented",
+    "internal": "scaffolded",
+    "pinned": "APP_TAG=2.5.x@sha256:e2fdc0d59071…",
+    "public": "preview",
+    "restore_docs": "missing",
+    "symbol": "🚧",
+    "verified": "—",
+    "verified_legacy_field": false
+  },
+  "business/documenso": {
+    "backup_docs": "documented",
+    "internal": "scaffolded",
+    "pinned": "APP_TAG=v2.15.0",
+    "public": "preview",
+    "restore_docs": "missing",
+    "symbol": "🚧",
+    "verified": "—",
+    "verified_legacy_field": false
+  },
+  "business/dolibarr": {
+    "backup_docs": "documented",
+    "internal": "scaffolded",
+    "pinned": "APP_TAG=23.0.3",
+    "public": "preview",
+    "restore_docs": "missing",
+    "symbol": "🚧",
+    "verified": "2026-04-17",
+    "verified_legacy_field": true
+  },
+  "business/invoiceninja": {
+    "backup_docs": "documented",
+    "internal": "baseline-aligned",
+    "pinned": "APP_TAG=5.13.26",
+    "public": "ready",
+    "restore_docs": "missing",
+    "symbol": "✅",
+    "verified": "2026-06-14",
+    "verified_legacy_field": true
+  },
+  "business/kimai": {
+    "backup_docs": "documented",
+    "internal": "scaffolded",
+    "pinned": "APP_TAG=apache-2.61.0",
+    "public": "preview",
+    "restore_docs": "missing",
+    "symbol": "🚧",
+    "verified": "2026-05-03",
+    "verified_legacy_field": true
+  },
+  "business/listmonk": {
+    "backup_docs": "documented",
+    "internal": "scaffolded",
+    "pinned": "APP_TAG=v6.2.0",
+    "public": "preview",
+    "restore_docs": "missing",
+    "symbol": "🚧",
+    "verified": "2026-05-03",
+    "verified_legacy_field": true
+  },
+  "business/matomo": {
+    "backup_docs": "documented",
+    "internal": "scaffolded",
+    "pinned": "APP_TAG=5.12.0-apache",
+    "public": "preview",
+    "restore_docs": "missing",
+    "symbol": "🚧",
+    "verified": "2026-04-17",
+    "verified_legacy_field": true
+  },
+  "business/openproject": {
+    "backup_docs": "documented",
+    "internal": "baseline-aligned",
+    "pinned": "APP_TAG=17.6.0-slim",
+    "public": "ready",
+    "restore_docs": "missing",
+    "symbol": "✅",
+    "verified": "2026-05-06",
+    "verified_legacy_field": false
+  },
+  "business/opensign": {
+    "backup_docs": "documented",
+    "internal": "scaffolded",
+    "pinned": "APP_TAG=main@sha256:817654a3f804…",
+    "public": "preview",
+    "restore_docs": "missing",
+    "symbol": "🚧",
+    "verified": "2026-05-11",
+    "verified_legacy_field": true
+  },
+  "business/vikunja": {
+    "backup_docs": "documented",
+    "internal": "baseline-aligned",
+    "pinned": "APP_TAG=2.3.0",
+    "public": "ready",
+    "restore_docs": "missing",
+    "symbol": "✅",
+    "verified": "2026-05-06",
+    "verified_legacy_field": false
+  },
+  "business/zammad": {
+    "backup_docs": "documented",
+    "internal": "scaffolded",
+    "pinned": "APP_TAG=7.1.1-0036",
+    "public": "preview",
+    "restore_docs": "missing",
+    "symbol": "🚧",
+    "verified": "2026-05-11",
+    "verified_legacy_field": true
+  },
+  "core/acme-certs": {
+    "backup_docs": "documented",
+    "internal": "baseline-aligned",
+    "pinned": "APP_TAG=0.2.1",
+    "public": "ready",
+    "restore_docs": "missing",
+    "symbol": "✅",
+    "verified": "2026-04-14",
+    "verified_legacy_field": true
+  },
+  "core/authentik": {
+    "backup_docs": "documented",
+    "internal": "baseline-aligned",
+    "pinned": "APP_TAG=2026.5.6",
+    "public": "ready",
+    "restore_docs": "missing",
+    "symbol": "✅",
+    "verified": "2026-07-26",
+    "verified_legacy_field": false
+  },
+  "core/collabora": {
+    "backup_docs": "documented",
+    "internal": "scaffolded",
+    "pinned": "APP_TAG=26.04.2.4.1",
+    "public": "preview",
+    "restore_docs": "missing",
+    "symbol": "🚧",
+    "verified": "—",
+    "verified_legacy_field": false
+  },
+  "core/crowdsec": {
+    "backup_docs": "documented",
+    "internal": "baseline-aligned",
+    "pinned": "APP_TAG=v1.7.8",
+    "public": "ready",
+    "restore_docs": "missing",
+    "symbol": "✅",
+    "verified": "2026-04-15",
+    "verified_legacy_field": true
+  },
+  "core/dnsmasq": {
+    "backup_docs": "documented",
+    "internal": "baseline-aligned",
+    "pinned": "APP_TAG=2.90-r3",
+    "public": "ready",
+    "restore_docs": "missing",
+    "symbol": "✅",
+    "verified": "2026-04-14",
+    "verified_legacy_field": true
+  },
+  "core/dockhand": {
+    "backup_docs": "documented",
+    "internal": "baseline-aligned",
+    "pinned": "APP_TAG=v1.0.39",
+    "public": "ready",
+    "restore_docs": "missing",
+    "symbol": "✅",
+    "verified": "2026-04-16",
+    "verified_legacy_field": true
+  },
+  "core/euro-office": {
+    "backup_docs": "documented",
+    "internal": "scaffolded",
+    "pinned": "APP_TAG=v9.3.2",
+    "public": "preview",
+    "restore_docs": "missing",
+    "symbol": "🚧",
+    "verified": "—",
+    "verified_legacy_field": false
+  },
+  "core/hawser": {
+    "backup_docs": "documented",
+    "internal": "baseline-aligned",
+    "pinned": "APP_TAG=0.2.39",
+    "public": "ready",
+    "restore_docs": "missing",
+    "symbol": "✅",
+    "verified": "2026-04-14",
+    "verified_legacy_field": true
+  },
+  "core/infisical": {
+    "backup_docs": "documented",
+    "internal": "scaffolded",
+    "pinned": "APP_TAG=v0.162.13",
+    "public": "preview",
+    "restore_docs": "missing",
+    "symbol": "🚧",
+    "verified": "—",
+    "verified_legacy_field": false
+  },
+  "core/onlyoffice": {
+    "backup_docs": "documented",
+    "internal": "baseline-aligned",
+    "pinned": "APP_TAG=9.4.0",
+    "public": "ready",
+    "restore_docs": "missing",
+    "symbol": "✅",
+    "verified": "2026-06-14",
+    "verified_legacy_field": true
+  },
+  "core/portainer": {
+    "backup_docs": "documented",
+    "internal": "baseline-aligned",
+    "pinned": "APP_TAG=2.39.5",
+    "public": "ready",
+    "restore_docs": "missing",
+    "symbol": "✅",
+    "verified": "2026-04-16",
+    "verified_legacy_field": true
+  },
+  "core/portainer-agent": {
+    "backup_docs": "documented",
+    "internal": "baseline-aligned",
+    "pinned": "APP_TAG=2.39.5",
+    "public": "ready",
+    "restore_docs": "missing",
+    "symbol": "✅",
+    "verified": "2026-05-05",
+    "verified_legacy_field": false
+  },
+  "core/traefik": {
+    "backup_docs": "documented",
+    "internal": "baseline-aligned",
+    "pinned": "TRAEFIK_IMAGE=traefik:v3.6",
+    "public": "ready",
+    "restore_docs": "missing",
+    "symbol": "✅",
+    "verified": "2026-04-16",
+    "verified_legacy_field": true
+  },
+  "core/whoami": {
+    "backup_docs": "documented",
+    "internal": "baseline-aligned",
+    "pinned": "APP_TAG=v1.11.0",
+    "public": "ready",
+    "restore_docs": "missing",
+    "symbol": "✅",
+    "verified": "2026-04-16",
+    "verified_legacy_field": true
+  },
+  "monitoring/beszel": {
+    "backup_docs": "documented",
+    "internal": "scaffolded",
+    "pinned": "APP_TAG=0.18.7",
+    "public": "preview",
+    "restore_docs": "missing",
+    "symbol": "🚧",
+    "verified": "2026-05-03",
+    "verified_legacy_field": true
+  },
+  "monitoring/beszel-agent": {
+    "backup_docs": "documented",
+    "internal": "scaffolded",
+    "pinned": "APP_TAG=0.18.7",
+    "public": "preview",
+    "restore_docs": "missing",
+    "symbol": "🚧",
+    "verified": "2026-05-03",
+    "verified_legacy_field": true
+  },
+  "monitoring/changedetection": {
+    "backup_docs": "documented",
+    "internal": "scaffolded",
+    "pinned": "APP_TAG=0.55.8",
+    "public": "preview",
+    "restore_docs": "missing",
+    "symbol": "🚧",
+    "verified": "2026-05-03",
+    "verified_legacy_field": true
+  },
+  "monitoring/gatus": {
+    "backup_docs": "documented",
+    "internal": "scaffolded",
+    "pinned": "APP_TAG=v5.36.0",
+    "public": "preview",
+    "restore_docs": "missing",
+    "symbol": "🚧",
+    "verified": "2026-05-03",
+    "verified_legacy_field": true
+  },
+  "monitoring/healthchecks": {
+    "backup_docs": "documented",
+    "internal": "scaffolded",
+    "pinned": "APP_TAG=v4.2",
+    "public": "preview",
+    "restore_docs": "missing",
+    "symbol": "🚧",
+    "verified": "2026-04-17",
+    "verified_legacy_field": true
+  },
+  "monitoring/ntfy": {
+    "backup_docs": "documented",
+    "internal": "scaffolded",
+    "pinned": "APP_TAG=v2.26.3",
+    "public": "preview",
+    "restore_docs": "missing",
+    "symbol": "🚧",
+    "verified": "—",
+    "verified_legacy_field": false
+  },
+  "monitoring/uptime-kuma": {
+    "backup_docs": "documented",
+    "internal": "scaffolded",
+    "pinned": "APP_TAG=2.4.0",
+    "public": "preview",
+    "restore_docs": "missing",
+    "symbol": "🚧",
+    "verified": "2026-05-03",
+    "verified_legacy_field": true
+  }
+}

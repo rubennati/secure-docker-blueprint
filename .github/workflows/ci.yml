@@ -59,17 +59,19 @@ jobs:
   # ─────────────────────────────────────────────
   # 3. STRUCTURE CHECK
   # ─────────────────────────────────────────────
+  # Every stack must be documented and configurable. Tag pinning used to live
+  # here too; check-structure.py (job 6) now covers it more strictly — it also
+  # rejects major-only tags, not just :latest — so this job keeps only the
+  # file-presence rule, which check-structure.py reports as a warning.
   structure:
-    name: Structure check
+    name: Required files
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Check README, .env.example, no :latest
+      - name: Every stack has a README and a .env.example
         run: |
           failed=0
-
-          echo "── README + .env.example ──────────────────"
           while IFS= read -r compose; do
             dir=$(dirname "$compose")
             [[ "$dir" == *"templates"* ]] && continue
@@ -83,17 +85,7 @@ jobs:
             fi
           done < <(find core apps business monitoring -name "docker-compose.yml" | sort)
 
-          echo "── :latest tags (non-commented lines) ─────"
-          while IFS= read -r file; do
-            # Match only actual image: lines — lines starting with # are comments
-            if grep -qP '^\s+image:\s+\S+:latest' "$file" 2>/dev/null; then
-              echo "  :latest found        : $file"
-              grep -nP '^\s+image:\s+\S+:latest' "$file"
-              failed=1
-            fi
-          done < <(find core apps business monitoring -name "docker-compose.yml" | sort)
-
-          [ "$failed" -eq 0 ] && echo "  all checks passed"
+          [ "$failed" -eq 0 ] && echo "  all stacks documented"
           exit $failed
 
   # ─────────────────────────────────────────────
@@ -141,3 +133,93 @@ jobs:
 
       - name: Run baseline check
         run: python3 scripts/ci/check-baseline.py "$GITHUB_STEP_SUMMARY"
+
+  # ─────────────────────────────────────────────
+  # 6. CANONICAL STRUCTURE (docs/standards/*-structure.md)
+  # Fails only on the dangerous rules — :latest tags, plaintext secrets,
+  # unprotected .secrets/, a datastore on proxy-public. Structural drift
+  # (missing resource limits, healthchecks) is reported, not blocking.
+  # ─────────────────────────────────────────────
+  structure-canonical:
+    name: Canonical structure
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Install PyYAML
+        run: pip install --require-hashes -r scripts/ci/requirements.txt --quiet
+
+      - name: Run structure check
+        run: python3 scripts/ci/check-structure.py "$GITHUB_STEP_SUMMARY"
+
+  # ─────────────────────────────────────────────
+  # 7. STATUS MODEL (docs/standards/status-model.md)
+  # Catches a status claim that is not backed — the owner and the root README
+  # disagreeing, ✅ without a verification date, or LIFECYCLE.md left stale.
+  # ─────────────────────────────────────────────
+  lifecycle:
+    name: Status model
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Check status consistency and LIFECYCLE.md freshness
+        run: python3 scripts/ci/lifecycle-report.py --check "$GITHUB_STEP_SUMMARY"
+
+  # ─────────────────────────────────────────────
+  # 8. CHECKER COVERAGE
+  # Inverts the question the other jobs ask: not "does this stack comply?" but
+  # "is there content nothing looks at?". Three blind spots surfaced by accident
+  # in one day — split compose files, a component without compose, and a whole
+  # category missing from the checker roots. Finding the next one by accident
+  # does not scale.
+  # ─────────────────────────────────────────────
+  coverage:
+    name: Checker coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Install PyYAML
+        run: pip install --require-hashes -r scripts/ci/requirements.txt --quiet
+
+      - name: Check that every content directory is covered
+        run: python3 scripts/ci/check-coverage.py "$GITHUB_STEP_SUMMARY"
+
+  # ─────────────────────────────────────────────
+  # 9. DOCS QA
+  # This repository is mostly documentation, and documentation rots silently:
+  # a renamed file leaves a dead link, a moved heading leaves a dead anchor,
+  # and nothing complains until a reader hits it. Closes the markdown-lint item
+  # in the v1.0 CI baseline.
+  #
+  # External URLs are deliberately not fetched — they fail for reasons unrelated
+  # to the commit under test.
+  # ─────────────────────────────────────────────
+  docs-qa:
+    name: Docs QA
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Lint Markdown
+        run: npx --yes markdownlint-cli2
+
+      - name: Check internal links and anchors
+        run: python3 scripts/ci/check-links.py "$GITHUB_STEP_SUMMARY"
+
+  # ─────────────────────────────────────────────
+  # 10. WORKFLOW SUPPLY CHAIN
+  # An action referenced by tag is mutable — the owner can move `@v7` at any
+  # time, and the new code runs with the same repository permissions. This
+  # repository pinned by SHA everywhere except site.yml, which had drifted back
+  # to `@v7` because nothing checked.
+  # ─────────────────────────────────────────────
+  workflows:
+    name: Workflow supply chain
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Check action pinning and workflow permissions
+        run: python3 scripts/ci/check-workflows.py "$GITHUB_STEP_SUMMARY"

@@ -53,12 +53,15 @@
 1. Read the Traefik release notes: https://github.com/traefik/traefik/releases
 2. Bump `TRAEFIK_IMAGE` in `.env`
 3. Re-render (no changes expected, but catches any env drift):
+
    ```bash
    ./ops/scripts/render.sh
    ./ops/scripts/validate.sh
    ```
+
 4. `docker compose pull && docker compose up -d`
 5. Verify:
+
    ```bash
    docker compose ps                      # traefik healthy
    docker compose logs traefik --tail 100 # no plugin / config errors
@@ -69,9 +72,11 @@
 
 1. **Stop.** Read the full migration guide end-to-end before touching anything.
 2. Back up rendered config + ACME state:
+
    ```bash
    tar czf traefik-$(date +%Y%m%d).tgz config/ volumes/letsencrypt/
    ```
+
 3. Port the templates to the new format — router, middleware, and TLS option schemas tend to change between majors.
 4. Test in a separate host or with a throwaway cert resolver before swapping the production container.
 
@@ -80,6 +85,7 @@
 1. Read the release notes: https://github.com/Tecnativa/docker-socket-proxy/releases
 2. Confirm the `ALLOW_*` / `CONTAINERS=1` etc. knobs still mean the same thing (the image occasionally adds new defaults).
 3. Bump `SOCKET_PROXY_IMAGE`, restart, and verify Traefik still discovers containers:
+
    ```bash
    docker compose restart
    docker compose logs traefik | grep -i "provider.docker"

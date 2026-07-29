@@ -6,7 +6,7 @@ Upgrading from `2024.12.3` directly to `2026.2.2`. Both `server` and
 `worker` enter a crash loop on every startup. The migration
 `authentik_core.0056_user_roles` fails with:
 
-```
+```text
 django.core.exceptions.FieldError: Cannot resolve keyword 'group_id'
 into field. Choices are: ak_groups, initialpermissions, managed, name,
 rolemodelpermission, roleobjectpermission, users, uuid
@@ -14,7 +14,7 @@ rolemodelpermission, roleobjectpermission, users, uuid
 
 Gunicorn dies immediately after:
 
-```
+```text
 authentik-server | gunicorn process died, restarting
 authentik-server | gunicorn failed to start, restarting
 ```
@@ -53,7 +53,7 @@ All migrations run from `0001` in order and succeed cleanly.
 
 Upgrade incrementally through each major release:
 
-```
+```text
 2024.12.x → 2025.2.x → 2025.6.x → 2025.10.x → 2026.2.x
 ```
 

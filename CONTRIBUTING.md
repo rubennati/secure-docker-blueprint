@@ -29,7 +29,7 @@ For larger changes, please open an issue first to discuss direction before writi
 
 1. **Fork** the repository
 2. **Create a branch** off `dev` (not `main`) with a descriptive name: `feature/add-vaultwarden`, `fix/wordpress-uploads-ini`, `docs/clarify-env-structure`
-3. **Make your changes** following the [app-setup-blueprint](docs/app-setup-blueprint.md) if you're adding or modifying an app
+3. **Make your changes** — for a new app, copy [`apps/_reference/`](apps/_reference/) and follow the [new-app checklist](docs/standards/new-app-checklist.md)
 4. **Test** live if possible — deploy on your own server, verify healthchecks green, run the app's test-security script if applicable
 5. **Open a Pull Request** against `dev`. The maintainer will review and merge into `dev`, then later into `main` as part of a tested batch
 

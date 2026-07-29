@@ -7,7 +7,7 @@
 - **Docs:** https://homarr.dev/
 - **License:** MIT (fork heritage: originally forked from `ajnart/homarr`; current maintainer `homarr-labs`)
 - **Origin:** Community · homarr-labs · EU contributors
-- **Based on version:** `v1.60.0`
+- **Based on version:** `v1.72.0`
 - **Last verified:** 2026-05-02 (v1.60.0)
 
 ## What we use
@@ -31,9 +31,11 @@
 
 1. Check [GitHub releases](https://github.com/homarr-labs/homarr/releases) — breaking changes and DB migration notes
 2. Back up `./volumes/appdata/`:
+
    ```bash
    tar czf homarr-appdata-$(date +%Y%m%d).tgz volumes/appdata/
    ```
+
 3. Bump `APP_TAG`
 4. `docker compose pull && docker compose up -d`
 5. Next.js migrations run on start; watch logs

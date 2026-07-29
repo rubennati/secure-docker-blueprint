@@ -39,6 +39,7 @@ docker compose logs app --follow
 ## Notification integrations
 
 Built-in support (via [Apprise](https://github.com/caronc/apprise)):
+
 - Discord, Slack, Mattermost, Telegram, ntfy
 - Email (SMTP)
 - Generic webhook (POST JSON) — use this to route via n8n for richer logic
@@ -48,25 +49,41 @@ Configure globally (Settings → Notifications) or per-watch.
 ## Common patterns
 
 **Restock alert**:
-```
+
+```text
 URL:       https://shop.example.com/product/xy
 Trigger:   CSS/JSON path `.in-stock-badge` shows "Verfügbar" or similar
 Webhook:   https://n8n.example.com/webhook/restock
 ```
 
 **API endpoint drift**:
-```
-URL:       https://api.partner.com/v1/status
+
+```text
+URL:       https://api.example.com/v1/status
 Fetch:     Include request headers / auth
 Trigger:   On any body change
 ```
 
 **Impressum / ToS watcher**:
-```
+
+```text
 URL:       https://competitor.example/impressum
 Schedule:  Daily
 Notification: Slack #compliance
 ```
+
+## Backup
+
+| | |
+|---|---|
+| **State** | `./volumes/data` (mounted at `/datastore`) — JSON datastore with watches, plus snapshot history |
+| **Critical** | The watch definitions. The diff history is convenience. |
+| **Quiescing** | Not needed — file-based, no database |
+
+A plain file backup of the volume is sufficient; there is no database hook to
+configure.
+
+**Restore order:** restore the directory and start. Watches resume on their schedule.
 
 ## Known Issues
 

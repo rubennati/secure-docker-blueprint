@@ -13,7 +13,8 @@ Setting up a VitePress docs site on GitHub Pages required fixing four independen
 ## Issue 1 — ESM error: `"vitepress" cannot be loaded by require`
 
 **Symptom:**
-```
+
+```text
 Error: "vitepress" resolved to an ESM file. ESM file cannot be loaded by `require`.
 failed to load config from docs/.vitepress/config.ts
 ```
@@ -21,6 +22,7 @@ failed to load config from docs/.vitepress/config.ts
 **Root cause:** `package.json` lacked `"type": "module"`. Node treated the project as CommonJS; VitePress is ESM-only and cannot be `require()`-d.
 
 **Fix:**
+
 ```json
 {
   "type": "module"
@@ -34,7 +36,8 @@ failed to load config from docs/.vitepress/config.ts
 ## Issue 2 — `npm ci` fails: missing `@esbuild/linux-*` platform packages
 
 **Symptom:**
-```
+
+```text
 npm error `npm ci` can only install packages when your package.json and
 package-lock.json are in sync.
 npm error Missing: @esbuild/linux-x64@0.21.5 from lock file
@@ -57,6 +60,7 @@ npm error Missing: @rollup/rollup-linux-x64-gnu@4.60.3 from lock file
 **Root cause:** The `actions/configure-pages` step was missing from the workflow. This step initialises the GitHub Pages deployment environment and sets the correct base URL. Without it, the subsequent `upload-pages-artifact` and `deploy-pages` steps have no environment to target and the job fails silently.
 
 **Fix:** Add as a required step before the build:
+
 ```yaml
 - name: Setup Pages
   uses: actions/configure-pages@v6

@@ -5,7 +5,8 @@
 **Symptom:** Browser shows "Can't write into config directory!" with 503.
 
 **Logs:**
-```
+
+```text
 fopen(/var/www/html/config/config.php): Failed to open stream: Permission denied
 chmod(): Operation not permitted
 ```
@@ -15,6 +16,7 @@ chmod(): Operation not permitted
 **Fix:** Remove `no-new-privileges` from the `app` and `cron` containers. Nextcloud's entrypoint needs root privileges to chown/chmod files before PHP-FPM drops to www-data.
 
 **Manual workaround (if it happens again):**
+
 ```bash
 docker compose exec app chown www-data:www-data /var/www/html/config/config.php
 ```
@@ -28,7 +30,8 @@ docker compose exec app chown www-data:www-data /var/www/html/config/config.php
 **Symptom:** Login form refreshes without error. POST returns 303 redirect back to login page. Sessions not persisted.
 
 **Logs:**
-```
+
+```text
 session_start(): Redis connection not available
 session_start(): Failed to read session data: redis (path: tcp://redis:6379?auth=MinUkW6wAbixqHCaVCUE9aO+YR+0FYTIWRDVqH7wPrA=)
 ```

@@ -10,7 +10,7 @@ CrowdSec analyzes Traefik access logs, detects threats (brute force, CVE probes,
 
 Three independent components. The Engine parses logs and decides; the two bouncers enforce at different network layers.
 
-```
+```text
                       Internet
                          │
                          ▼
@@ -217,6 +217,14 @@ Scenarios that trigger on Traefik traffic:
 
 HTTP-layer enforcement. Configuration spans two directories: the bouncer API key is generated here, and the plugin itself is declared in `core/traefik/`.
 
+> **Before attaching the bouncer to anything, read [docs/profiles.md](docs/profiles.md).**
+> HTTP enforcement is modelled as a small family of named, per-app profiles
+> (`crowdsec-basic` → `crowdsec-appsec` → `crowdsec-strict`), chosen independently of
+> the `acc-*` access and `sec-N` header axes — not one generic `sec-crowdsec` applied
+> everywhere. That document also defines the whoami-first validation path, what is
+> per-app vs global, and why geo is a deferred, separate mechanism. The steps below are
+> the raw plugin enablement those profiles build on.
+
 ### Generate the bouncer key
 
 ```bash
@@ -229,17 +237,21 @@ The command prints the key once — save it immediately.
 
 1. Add the key to `core/traefik/.env` as `CROWDSEC_BOUNCER_KEY=<key>`.
 2. Declare the plugin in `ops/templates/traefik.yml.tmpl` under `experimental.plugins`.
-3. Uncomment the `sec-crowdsec` middleware block in `ops/templates/dynamic/integrations.yml.tmpl`.
+3. Uncomment the `crowdsec-basic` middleware block in `ops/templates/dynamic/integrations.yml.tmpl`.
 4. Render the templates and restart Traefik:
+
    ```bash
    cd ../traefik
    ./ops/scripts/render.sh
    docker compose up -d --force-recreate traefik
    ```
-5. **Required, not optional — do this before verifying.** Add `sec-crowdsec@file` to the middleware list of at least one router. The plugin loading successfully (steps 1–4) does not make the bouncer do anything by itself: its polling loop only starts once the middleware is actually attached to a router's request path. Skip this step and `cscli bouncers list` will never show a `Last API pull` — no error anywhere, it just silently never starts. See [`docs/bugfixes/traefik-crowdsec-plugin-2026-04-20.md`](../../docs/bugfixes/traefik-crowdsec-plugin-2026-04-20.md) "Bug #3" if this happens. Example in an app's `docker-compose.yml` (start with a low-stakes test app like `core/whoami`):
+
+5. **Required, not optional — do this before verifying.** Add `crowdsec-basic@file` as the **first** middleware on the router. The plugin loading successfully (steps 1–4) does not make the bouncer do anything by itself: its polling loop only starts once the middleware is actually attached to a router's request path. Skip this step and `cscli bouncers list` will never show a `Last API pull` — no error anywhere, it just silently never starts. See [`docs/bugfixes/traefik-crowdsec-plugin-2026-04-20.md`](../../docs/bugfixes/traefik-crowdsec-plugin-2026-04-20.md) "Bug #3" if this happens. Start with `core/whoami` — see [docs/profiles.md](docs/profiles.md) "whoami-first validation". Example label:
+
    ```yaml
-   - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=sec-crowdsec@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+   - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=crowdsec-basic@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
    ```
+
    ```bash
    cd ../whoami   # or whichever app you edited
    docker compose up -d --force-recreate
@@ -267,7 +279,7 @@ docker exec crowdsec cscli bouncers list
 
 # 3. Middleware visible in Traefik dashboard?
 # https://<traefik-host>/dashboard/#/http/middlewares
-# Find sec-crowdsec@file — Status must be green "Success".
+# Find crowdsec-basic@file — Status must be green "Success".
 # If "invalid middleware type or middleware does not exist":
 # plugin did not load (check 1).
 
@@ -335,9 +347,32 @@ decisions:
 on_success: break
 ```
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | SQLite inside `./volumes/data` — no database server, and no dump hook |
+| **State** | `./volumes/data` (decisions, alerts, machine and bouncer credentials) · `./volumes/config` (installed collections, parsers, local API credentials) |
+| **Reproducible** | the acquisition config in `./config/` — versioned in git, not on the host |
+| **Quiescing** | **Required.** A file-level copy of a live SQLite database can capture a torn state that restores as a corrupt file. Stop the container, or snapshot the filesystem, before copying `volumes/data`. |
+
+No database hook: borgmatic's SQLite support addresses a file, and this one lives
+inside the data directory rather than being declared separately. Back the
+directory up as a source directory and quiesce it.
+
+**The bouncer credentials are the operational part.** They live in
+`volumes/config` and are registered against the local API in `volumes/data`. Restoring
+one without the other leaves bouncers that authenticate against an API that has
+never heard of them — Traefik then fails open or closed depending on its own
+configuration, and neither is what you intended.
+
+Losing the decision list itself is survivable: bans rebuild from live traffic.
+Losing the credentials means re-enrolling every bouncer by hand.
+
 ## Details
 
 - [UPSTREAM.md](UPSTREAM.md) — Upstream reference, upgrade checklist
+- [docs/profiles.md](docs/profiles.md) — Traefik bouncer profile architecture: the `crowdsec-*` per-app profile family, what is per-app vs global, three-level enforcement model, geo/AppSec feasibility, whoami-first validation
 - [docs/runbook.md](docs/runbook.md) — Day-to-day operations: health checks, whitelisting, false positive handling, emergency procedures, maintenance, troubleshooting
 - [docs/firewall-bouncer.md](docs/firewall-bouncer.md) — Phase 3 setup, SSH detection, verify steps, edge cases
 - [docs/dashboard.md](docs/dashboard.md) — Visual dashboard options: CrowdSec Console (opt-in), CLI alternative, deferred Prometheus/Grafana path

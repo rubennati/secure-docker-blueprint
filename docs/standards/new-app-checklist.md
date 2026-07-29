@@ -29,6 +29,7 @@ Before writing any YAML, answer these questions:
 
 - [ ] **What is the original ENTRYPOINT/CMD?** If you need a custom entrypoint,
   you must know the original command to pass through. Check with:
+
   ```bash
   docker inspect --format='{{json .Config.Entrypoint}} {{json .Config.Cmd}}' <image>
   ```
@@ -46,18 +47,22 @@ Before writing any YAML, answer these questions:
 
 ## 2. Create the Directory Structure
 
-```bash
-# Copy from template
-cp -r docs/templates apps/my-app
+Copy the reference app — it is the canonical structure, and it runs:
 
-# Or create manually
-mkdir -p apps/my-app/{config,.secrets,volumes}
-touch apps/my-app/{docker-compose.yml,.env.example}
-cat > apps/my-app/.gitignore <<'EOF'
-.secrets/
-volumes/
-.env
-EOF
+```bash
+cp -r apps/_reference apps/my-app
+cd apps/my-app
+```
+
+Then replace the stand-in images (`nginx` for the app, `postgres` for the database)
+and delete what your app does not need. The reference deliberately shows both secret
+patterns at once — native `_FILE` support on the database, an entrypoint wrapper on
+the app — so keep whichever matches your image and drop the other.
+
+Check your work at any point with:
+
+```bash
+python3 scripts/ci/check-structure.py
 ```
 
 ---
@@ -109,7 +114,7 @@ Follow [Compose Structure](compose-structure.md) for block order per service:
 | `frameDeny` blocking iframes | Use custom Docker middleware with `frame-ancestors` CSP |
 | HTTP URLs behind TLS proxy | Add `X-Forwarded-Proto=https` middleware |
 | Image tag doesn't exist | Verify on Docker Hub before adding |
-| Secret with trailing newline | Always `| tr -d '\n'` in generation command |
+| Secret with trailing newline | Always `\| tr -d '\n'` in generation command |
 
 ---
 
@@ -160,9 +165,10 @@ volumes:
 
 ---
 
-## 7. Create `UPSTREAM.md`
+## 7. Fill in `UPSTREAM.md`
 
-Every app gets an `UPSTREAM.md` that tracks where the setup comes from and how to upgrade:
+It already came with the reference app — replace every `__REPLACE_ME__`. It tracks
+where the setup comes from and how to upgrade:
 
 - [ ] **Source** — Upstream repo URL, branch, version the setup is based on
 - [ ] **What we use** — Which files are 1:1 copies vs adapted
@@ -170,11 +176,29 @@ Every app gets an `UPSTREAM.md` that tracks where the setup comes from and how t
 - [ ] **Upgrade checklist** — Steps to follow when bumping the version
 - [ ] **Diff commands** — How to compare our config against upstream
 
-See `business/invoiceninja/UPSTREAM.md` as reference.
+The `Last verified: YYYY-MM-DD (vX.Y.Z)` line is what `scripts/ci/lifecycle-report.py`
+reads and what the ✅ in the README rests on — set it only once the app was actually
+verified on a clean install. A filled-in example: `apps/dashy/UPSTREAM.md`.
 
 ---
 
-## 8. Document
+## 8. Write the `## Backup` section
+
+The app README carries a `## Backup` section — the template came with the
+reference app. Fill in which database, which volumes hold state, which are
+reproducible, and whether the app needs quiescing before a dump.
+
+- [ ] Database engine, container name, database name, user
+- [ ] Path to the password file under `.secrets/`
+- [ ] Which volumes are state, which are cache
+- [ ] A copy-pasteable borgmatic block
+- [ ] Restore order, if it is anything other than "database, then app"
+
+This is not paperwork: it is what makes `/etc/borgmatic/config.yaml` assemblable
+from the apps instead of reverse-engineered from compose files during an
+incident. Keep the heading exactly `## Backup` — `lifecycle-report.py` reads it.
+
+## 9. Document
 
 - [ ] Add any bugs found to `docs/bugfixes/` with root cause and fix
 - [ ] Update this checklist if you discovered a new pitfall

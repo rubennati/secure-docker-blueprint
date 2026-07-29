@@ -23,7 +23,7 @@ Cloud file storage with collaboration, search, and antivirus scanning.
 ```bash
 # 1. Copy and configure
 cp .env.example .env
-nano .env  # Set domain, admin email, etc.
+nano .env  # Set APP_TRAEFIK_HOST, SEAFILE_ADMIN_EMAIL, ONLYOFFICE_HOST, TZ
 
 # 2. Generate passwords
 sed -i "s|^INIT_SEAFILE_MYSQL_ROOT_PASSWORD=.*|INIT_SEAFILE_MYSQL_ROOT_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')|" .env
@@ -31,15 +31,22 @@ sed -i "s|^SEAFILE_MYSQL_DB_PASSWORD=.*|SEAFILE_MYSQL_DB_PASSWORD=$(openssl rand
 sed -i "s|^INIT_SEAFILE_ADMIN_PASSWORD=.*|INIT_SEAFILE_ADMIN_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')|" .env
 sed -i "s|^JWT_PRIVATE_KEY=.*|JWT_PRIVATE_KEY=$(openssl rand -base64 48 | tr -d '\n')|" .env
 sed -i "s|^REDIS_PASSWORD=.*|REDIS_PASSWORD=$(openssl rand -hex 32)|" .env
-sed -i "s|^ONLYOFFICE_JWT_SECRET=.*|ONLYOFFICE_JWT_SECRET=$(cat /path/to/core/onlyoffice/.secrets/jwt_secret.txt)|" .env
+# OnlyOffice JWT secret — copy from the OnlyOffice server (must match exactly):
+#   sed -i "s|^ONLYOFFICE_JWT_SECRET=.*|ONLYOFFICE_JWT_SECRET=<paste-value>|" .env
 
-# 3. Start
+# 3. Pull images
+docker compose pull
+
+# 4. Start
 docker compose up -d
 
-# 4. Wait for healthy, then inject configs
+# 5. Wait for app healthy (first boot initialises databases — takes ~3 min)
+docker compose ps
+
+# 6. Inject Blueprint configs (runs once — see Passwords section)
 docker compose restart app
 
-# 5. Build search index
+# 7. Build search index
 docker exec seafile-pro-app /opt/seafile/seafile-server-latest/pro/pro.py search --update
 ```
 
@@ -52,13 +59,62 @@ docker exec seafile-pro-app grep "virus_scan" /shared/seafile/conf/seafile.conf 
 curl -s https://your-domain/notification/ping              # {"ret": "pong"}
 ```
 
-## Features requiring acc-public
+## OnlyOffice
 
-OnlyOffice integration requires `APP_TRAEFIK_ACCESS=acc-public` because OnlyOffice calls back to Seafile via the public domain.
+OnlyOffice needs a server-to-server network path to Seafile's configured hostname (`APP_TRAEFIK_HOST`). This path can be public internet, Tailscale, or any direct route. If DNS for `APP_TRAEFIK_HOST` resolves to a Tailscale address on the OnlyOffice server, traffic routes via Tailscale automatically — no public internet exposure required.
+
+**`APP_TRAEFIK_ACCESS` is a Traefik middleware setting, not a network exposure setting.** `acc-public` removes Traefik's source-IP allowlist; it does not bypass upstream firewalls. `acc-tailscale` enforces a source-IP allowlist but may reject Tailscale-routed traffic if Docker bridge masquerades the source IP before Traefik sees it — see `UPSTREAM.md` and `TROUBLESHOOTING.md §4.4` for the known caveat and investigation steps.
+
+On the OnlyOffice server, add the Seafile domain to `ONLYOFFICE_ALLOWED_ORIGINS` so browsers can embed the editor in an iframe — see `core/onlyoffice/.env.example`. **Changes to `ONLYOFFICE_ALLOWED_ORIGINS` require container recreation** (`docker compose up -d --force-recreate` on the OnlyOffice server), not just restart — the value is baked into a Traefik label at container creation time.
 
 ## Passwords
 
-Passwords are stored in `.env` (gitignored). Docker Secrets are not used because Seafile's init system (`my_init`) doesn't preserve exported environment variables.
+Passwords are stored in `.env` (gitignored). Docker Secrets are not used because Seafile's init system (`my_init`) doesn't preserve exported environment variables. See UPSTREAM.md for the technical explanation.
+
+## Config injection
+
+`config/seahub_custom.py` is appended to `seahub_settings.py` **once** — on the container start after first boot creates the config files. After that initial injection, the marker prevents it from running again.
+
+Settings that use `os.environ.get()` (OnlyOffice URL, SMTP host, etc.) are evaluated at Django startup on every restart, so changing those values in `.env` takes effect after `docker compose restart app` — no re-injection needed.
+
+Adding a brand-new setting that was absent from `seahub_custom.py` at injection time requires either editing `seahub_settings.py` directly in the volume, or removing the marker line (`# --- Blueprint custom settings ---`) and everything after it, updating `config/seahub_custom.py`, then restarting.
+
+## Backup
+
+| | |
+|---|---|
+| **Database** | MariaDB · container `seafile-pro-db` · **three databases**: `ccnet_db`, `seafile_db`, `seahub_db` · user `seafile` |
+| **Password** | `.secrets/seafile_db_pwd.txt` |
+| **State** | `./volumes/mysql` (databases) · **`./volumes/seafile-data`** — the file store · `./volumes/seadoc-data` |
+| **Reproducible** | `./volumes/redis` (cache) · the Elasticsearch volume · `./volumes/seasearch-data` — both search indexes, rebuildable |
+| **Quiescing** | Not needed for the dumps. Content-addressed blocks tolerate a mid-write copy. |
+
+```yaml
+mariadb_databases:
+    - name: ccnet_db
+      container: seafile-pro-db
+      username: seafile
+      password: "{credential file /srv/docker/apps/seafile-pro/.secrets/seafile_db_pwd.txt}"
+    - name: seafile_db
+      container: seafile-pro-db
+      username: seafile
+      password: "{credential file /srv/docker/apps/seafile-pro/.secrets/seafile_db_pwd.txt}"
+    - name: seahub_db
+      container: seafile-pro-db
+      username: seafile
+      password: "{credential file /srv/docker/apps/seafile-pro/.secrets/seafile_db_pwd.txt}"
+```
+
+**Three databases, not one** — `ccnet_db` for users and groups, `seafile_db` for
+file metadata, `seahub_db` for the web layer and shares. Any one missing restores
+to something that starts and does not work.
+
+The two search indexes are excluded deliberately and cost a reindex after a
+restore. Until it completes, search returns nothing while every file is present —
+which looks like data loss and is not.
+
+**Restore order:** databases first, then the block store, then the app, then
+trigger the reindex.
 
 ## Details
 

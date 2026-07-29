@@ -36,7 +36,7 @@ services:
   # BACKEND (OpenSign Server — Parse Server + Express)
   # --------------------------------------------------------
   api:
-    image: opensign/opensignserver:${APP_TAG}
+    image: opensign/opensignserver:${SERVER_TAG}
     container_name: ${CONTAINER_NAME_API}
     restart: unless-stopped
     depends_on:

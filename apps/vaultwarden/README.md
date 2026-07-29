@@ -1,6 +1,6 @@
 # Vaultwarden
 
-> **Status: ✅ Ready** — v1.36.0 · 2026-06-14
+> **Status: ✅ Ready** — v1.37.0 · 2026-07-26
 
 Self-hosted Bitwarden-compatible password manager.
 
@@ -32,6 +32,7 @@ nano .env
 ```
 
 Set these values:
+
 - `APP_TRAEFIK_HOST` — your domain (e.g. `vault.example.com`)
 - `VW_SIGNUPS_ALLOWED=true` — temporarily for first user creation
 
@@ -63,12 +64,13 @@ sed -i "s|^DB_ROOT_PASSWORD=.*|DB_ROOT_PASSWORD=$(openssl rand -hex 32)|" .env
 ### Step 4: Generate Admin Token (Argon2 Hash)
 
 ```bash
-docker run --rm -it vaultwarden/server:1.36.0 /vaultwarden hash
+docker run --rm -it vaultwarden/server:1.37.0 /vaultwarden hash
 ```
 
 Enter a strong password when prompted. Copy the `$argon2id$...` output.
 
 **In .env:** Replace every `$` with `$$` (Docker Compose escaping), then paste:
+
 ```env
 VW_ADMIN_TOKEN=$$argon2id$$v=19$$m=65540,t=3,p=4$$...your-hash...
 ```
@@ -121,6 +123,7 @@ Push improves real-time sync on mobile and browser extensions. It is **not requi
 3. Set in `.env`:
 
    **Global host** (default — leave relay URIs empty):
+
    ```env
    VW_PUSH_ENABLED=true
    VW_PUSH_INSTALLATION_ID=your-id
@@ -128,6 +131,7 @@ Push improves real-time sync on mobile and browser extensions. It is **not requi
    ```
 
    **EU host** (must set relay URIs — EU credentials without EU URIs cause token errors):
+
    ```env
    VW_PUSH_ENABLED=true
    VW_PUSH_INSTALLATION_ID=your-eu-id
@@ -221,7 +225,7 @@ If `/admin` returns an error in the normal browser but works in Incognito, clear
 
 If **Admin → Diagnostics** shows:
 
-```
+```text
 2FA Connector calls: Header 'x-frame-options' is present while it should not
 ```
 
@@ -230,6 +234,53 @@ This means a proxy (Traefik) is injecting `X-Frame-Options`. Vaultwarden must co
 ### HTTP Response validation error
 
 If **Admin → Diagnostics** shows `HTTP Response validation: Error`, check that the domain in `VW_DOMAIN` (derived from `APP_TRAEFIK_HOST`) matches the actual URL used to access the vault, and that HTTPS is enforced end-to-end.
+
+## Backup
+
+| | |
+|---|---|
+| **Database** | MariaDB · container `vaultwarden-db` · database `vaultwarden` · user `vw_user` |
+| **Password** | `DB_PASSWORD` in `.env` — see the note below |
+| **State** | `./volumes/mysql` (database) · **`./volumes/data`** — `rsa_key.*`, `attachments/`, `sends/` |
+| **Reproducible** | the icon cache inside `./volumes/data` |
+| **Quiescing** | Not needed. The dump is consistent on its own. |
+
+```yaml
+mariadb_databases:
+    - name: vaultwarden
+      container: vaultwarden-db
+      username: vw_user
+      password: "{credential file /srv/docker/apps/vaultwarden/.secrets/db_pwd.txt}"
+```
+
+**The credential file does not exist yet.** This stack holds `DB_PASSWORD` in
+`.env`. Vaultwarden does support `_FILE`, so this is not an upstream dead end —
+the obstacle is that the password sits inside `DATABASE_URL`, a connection
+string, so the secret would have to carry the whole URL or an entrypoint would
+have to assemble it. Until that happens, supply the value to borgmatic another
+way rather than letting two systems read the same password from `.env`.
+
+**`volumes/data/rsa_key.*` signs the authentication tokens.** A database restored
+without those files leaves every client unable to log in, with vaults that are
+present and inaccessible. They are a handful of small files next to a database
+that is useless without them — and the single most common way a Vaultwarden
+restore fails.
+
+`attachments/` and `sends/` are referenced from the database and stored as files.
+Restore both halves from the same archive.
+
+Manual dump, when borgmatic is not in the picture:
+
+```bash
+docker exec -e MYSQL_PWD="$(grep DB_ROOT_PASSWORD .env | cut -d= -f2)" \
+  vaultwarden-db mariadb-dump -u root vaultwarden > backup-$(date +%Y%m%d).sql
+```
+
+This archive holds everybody's passwords in encrypted form. Encryption at rest in
+the borg repository is not optional here, and neither is keeping the repository
+somewhere this host cannot delete from.
+
+**Restore order:** database first, then the app.
 
 ## Details
 

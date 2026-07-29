@@ -1,6 +1,6 @@
 # Easy!Appointments
 
-> **Status: ✅ Ready** — v1.5.x · 2026-05-03
+> **Status: ✅ Ready** — v1.6.0 · 2026-07-26
 
 Self-hosted appointment booking. Established open-source scheduler since 2013. PHP/MySQL — much lighter than Cal.com's Next.js stack. Good choice if you want a simple, stable booking system and don't need Cal.com's breadth.
 
@@ -47,6 +47,7 @@ docker compose logs app --follow
 ```
 
 The installation wizard asks for:
+
 - Admin username / password (pick a strong password)
 - Company name / email / working hours
 
@@ -61,6 +62,30 @@ After install, log in at `/index.php/user/login` (backend) or `/index.php/backen
 - **MariaDB on `app-internal` (`internal: true`)** — DB not reachable from outside.
 - **Default access `acc-public` + `sec-2`** — booking URLs must be reachable by external visitors.
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | MariaDB · container `easyappointments-db` · database `easyappointments` · user `easyappointments` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **State** | `./volumes/mysql` (database) · `./volumes/storage` (uploads, generated files) |
+| **Reproducible** | nothing |
+| **Quiescing** | Not needed. The dump is consistent on its own. |
+
+```yaml
+mariadb_databases:
+    - name: easyappointments
+      container: easyappointments-db
+      username: easyappointments
+      password: "{credential file /srv/docker/apps/easyappointments/.secrets/db_pwd.txt}"
+```
+
+Appointments are database rows. Restoring an older database silently removes
+bookings made since — and unlike most data loss, the people affected still expect
+to be seen. Reconcile against the notification mail before resuming operation.
+
+**Restore order:** database first, then the app.
+
 ## Known Issues
 
 - **`APP_TAG=latest` is not reproducible** — pin to a specific version for stable deployments.
@@ -72,5 +97,4 @@ After install, log in at `/index.php/user/login` (backend) or `/index.php/backen
 ## Details
 
 - [UPSTREAM.md](UPSTREAM.md)
-- Sibling: [`apps/calcom/`](../calcom/) — commercial-support pathway
 - Sibling: [`apps/caldiy/`](../caldiy/) — MIT community edition

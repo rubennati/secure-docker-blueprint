@@ -41,6 +41,25 @@ Host should appear as connected in Dockhand UI.
 
 Docker Socket is mounted directly — Hawser has full Docker access. Socket-proxy is not supported yet ([PR #52](https://github.com/Finsys/hawser/pull/52)). Access is controlled via Dockhand's RBAC.
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | None. |
+| **State** | `./volumes/stacks` — the stack definitions this instance manages · `.secrets/hawser_token.txt` |
+| **Reproducible** | nothing |
+| **Quiescing** | Not needed. Files change only when a stack is edited. |
+
+No database hook. This stack is `source_directories` only.
+
+`volumes/stacks` is small and describes deployments rather than containing their
+data — which makes it easy to overlook and disproportionately annoying to
+reconstruct by hand.
+
+**This container mounts the Docker socket read-write.** That is a documented
+deviation, not an oversight, and it is worth remembering during a restore: bring
+it up after the infrastructure it would otherwise start managing mid-restore.
+
 ## Details
 
 - [UPSTREAM.md](UPSTREAM.md) — Upgrade checklist, known limitations

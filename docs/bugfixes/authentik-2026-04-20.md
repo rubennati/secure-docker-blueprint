@@ -5,7 +5,7 @@
 Fresh install. `docker compose up -d` brings up `db` and `redis` clean,
 but `server` and `worker` enter a crash loop with:
 
-```
+```text
 authentik-worker  | {"event": "Not running as root, disabling permission fixes", "level": "info"}
 authentik-worker  | 2026-04-20 23:17:20 [info] Migration needs to be applied  migration=tenant_files.py
 authentik-worker  | Traceback (most recent call last):
@@ -29,7 +29,7 @@ the same fresh install:
 Recent `goauthentik/server` images run as a non-root user (UID 1000).
 When the image detects it is not running as root it logs:
 
-```
+```text
 Not running as root, disabling permission fixes
 ```
 

@@ -128,6 +128,7 @@ exec "$@"
 ```
 
 **Wrong — set -e does NOT catch a failing cat here:**
+
 ```sh
 export DATABASE_PASSWORD="$(cat /run/secrets/db_pwd)"  # silent failure!
 ```

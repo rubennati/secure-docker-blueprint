@@ -1,6 +1,6 @@
 # NocoDB
 
-> **Status: ✅ Ready** — v0.301.5 · 2026-05-02
+> **Status: 🚧 2026.07.0** — CalVer switch from 0.x; verify migration first · 2026-07-26
 
 Open-source Airtable alternative. Turns any SQL database into a spreadsheet-like UI with views, forms, and a REST + GraphQL API. Commonly paired with **n8n** for low-code automation.
 
@@ -57,6 +57,25 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/api/v1/health        # 200 OK
 - **`no-new-privileges:true`** on the container.
 - **Default access `acc-tailscale` + `sec-3`** — NocoDB holds structured operational data and often API credentials in table cells. VPN-only is a safer default than public. Switch to `acc-public + sec-2` only if you want external share links and are OK with that exposure.
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | SQLite inside `./volumes/data` by default — no database server, no dump hook |
+| **State** | `./volumes/data` (bases, views, uploaded attachments) |
+| **Reproducible** | nothing |
+| **Quiescing** | **Recommended.** Stop the container or snapshot the filesystem rather than copying a live SQLite file. |
+
+No database hook for the default configuration. This stack is
+`source_directories` only, quiesced.
+
+`.secrets/nc_jwt_secret.txt` signs the session tokens — restoring without it logs
+everyone out, which is recoverable but looks like a failed restore.
+
+**If this instance was pointed at an external database instead**, the data is
+there and not in `volumes/data`; back that database up with the appropriate hook
+and treat this directory as configuration only.
+
 ## Using NocoDB with n8n
 
 Typical automation pattern:
@@ -68,6 +87,7 @@ Typical automation pattern:
 5. Store the token as an n8n credential so it encrypts into n8n's credential store.
 
 For n8n and NocoDB to reach each other on an internal network, either:
+
 - Run both in the same `compose.yml`, or
 - Attach n8n's app service to NocoDB's `proxy-public` network and address it as `http://nocodb-app:8080`.
 

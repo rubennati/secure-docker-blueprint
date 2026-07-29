@@ -20,7 +20,7 @@ Every Traefik resource reference (middleware, TLS option, router, service) must 
 
 Omitting the suffix (or mixing them up) produces:
 
-```
+```text
 middleware "sec-2" does not exist
 middleware "my-app-headers@file" does not exist
 ```

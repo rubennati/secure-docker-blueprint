@@ -27,13 +27,25 @@ Five top-level categories, split by **how** each tool accesses the system — no
 
 `monitoring/` and `backup/` are top-level (not under `apps/`) because their access patterns are fundamentally different: they reach across service boundaries and need broader permissions than a typical user-facing app.
 
+**Which category does a new service belong to?** One test question each, applied in order:
+
+| Directory | Test |
+|---|---|
+| `core/` | Does the stack — or a large part of it — break without this, or does it control Docker itself, or is it shared identity, certificates, DNS or WAF? |
+| `monitoring/` | Does it observe one or more other services? |
+| `backup/` | Does it protect data belonging to other services? |
+| `business/` | Is a company needed for this to be useful at all? (issuing invoices, customer helpdesk, compliance) |
+| `apps/` | Everything else — would a homelab user *and* a company both use it? |
+
+The rule was sharpened after an earlier attempt placed `business/` by analogy to `monitoring/` and left ten existing apps stranded. Categorising by **access pattern** rather than by audience is what makes it hold.
+
 ---
 
 ## Networking Model
 
 Every multi-service app uses a **hub-and-spoke** network layout. Two Docker networks per app, with a strict separation of concerns:
 
-```
+```text
 Internet
     │
     ▼
@@ -56,7 +68,7 @@ Databases and caches **never** join `proxy-public`. They have no exposure beyond
 
 Inbound traffic passes through four independent, additive layers before reaching an application:
 
-```
+```text
 Request
     │
     ▼
@@ -96,7 +108,7 @@ Each layer is independent. CrowdSec works without Authentik. Authentik works wit
 
 Every app follows the same directory layout regardless of category:
 
-```
+```text
 <category>/<app>/
 ├── docker-compose.yml   # hardened, standards-aligned
 ├── .env.example         # all variables documented inline, no real values

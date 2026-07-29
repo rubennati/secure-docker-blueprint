@@ -8,7 +8,7 @@
 - **Docker Hub (backend):** https://hub.docker.com/r/opensign/opensignserver
 - **License:** AGPL-3.0
 - **Origin:** India · OpenSign Inc · non-EU
-- **Based on version:** `main` (no semver tags published — see Known Issues in README)
+- **Based on version:** `main`, digest-pinned (no semver tags published — see Known Issues in README)
 - **Last checked:** 2026-05-11
 
 ## What we use
@@ -42,12 +42,14 @@ OpenSign uses Parse Server (Node.js) as the backend API with MongoDB as the data
 1. Check [OpenSign releases](https://github.com/OpenSignLabs/OpenSign/releases) for changelog
 2. **Note:** Docker Hub only has `main` / `staging` / `docker_beta` — no semver tags. Upgrading means pulling the latest `main`.
 3. Back up MongoDB:
+
    ```bash
    docker compose exec db mongodump --username opensign \
      --password "$(cat .secrets/db_root_pwd.txt)" \
      --authenticationDatabase admin --out /tmp/backup
    docker compose cp db:/tmp/backup ./opensign-backup-$(date +%Y%m%d)
    ```
+
 4. `docker compose pull && docker compose up -d`
 5. Verify: log in, upload a document, send for signature
 

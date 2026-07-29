@@ -7,7 +7,7 @@
 - **Docker Hub:** https://hub.docker.com/_/matomo (official image)
 - **License:** GPL-3.0
 - **Origin:** New Zealand · InnoCraft Ltd · non-EU
-- **Based on version:** `5-apache`
+- **Based on version:** `5.12.0-apache`
 - **Last checked:** 2026-04-17
 
 ## What we use
@@ -40,12 +40,14 @@ Matomo's major-version bumps usually include DB schema changes that the web UI p
 
 1. Check [Matomo release notes](https://matomo.org/changelog/) — note any plugin breakage
 2. Back up:
+
    ```bash
    docker compose exec db sh -c \
      'mariadb-dump -u root -p"$(cat /run/secrets/DB_ROOT_PWD)" matomo' \
      > matomo-db-$(date +%Y%m%d).sql
    tar czf matomo-config-$(date +%Y%m%d).tgz volumes/config/ volumes/matomo/
    ```
+
 3. Bump `APP_TAG` and/or `DB_TAG` in `.env`
 4. `docker compose pull && docker compose up -d`
 5. Visit the UI — Matomo prompts to run DB upgrades, click through

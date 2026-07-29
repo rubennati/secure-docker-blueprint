@@ -1,0 +1,38 @@
+# =============================================================================
+# UrBackup — host networking overlay (OPT-IN)
+# =============================================================================
+# Apply only if you want UrBackup to discover clients on the LAN by broadcast
+# instead of adding them by hostname or IP.
+#
+#   docker compose -f docker-compose.yml -f network-host.yml up -d
+#
+# WHAT YOU GAIN
+#   UDP broadcast discovery on the local subnet — new clients appear in the
+#   web interface on their own.
+#
+# WHAT YOU GIVE UP
+#   - Traefik routing. The container is no longer on proxy-public, so the web
+#     interface is reachable only at http://<host>:55414 — plain HTTP, on the
+#     host's address, with no access policy and no TLS in front of it.
+#   - Network isolation. The container shares the host's network namespace and
+#     can reach anything the host can.
+#
+# Because of that second point this is a deliberate trade, not a default. If
+# you apply it, restrict access to port 55414 at the host firewall or expose it
+# only on a VPN interface — the web interface holds every client's file index.
+#
+# Manual client addition works fine WITHOUT this overlay: the server initiates
+# the connection to the client, so outbound from a bridge network is enough.
+# Only the broadcast discovery needs the host namespace.
+# =============================================================================
+
+# Requires Compose >= 2.24 for the `!reset` tag. Check with `docker compose version`.
+services:
+  app:
+    network_mode: host
+    # `network_mode` and `networks` cannot be combined — the list the base file
+    # sets has to be cleared, not merged. That is what `!reset` is for.
+    networks: !reset null
+    # The Traefik labels from the base file stay, and are simply ignored: Traefik
+    # cannot route to a container that has no address on proxy-public. Harmless,
+    # and it keeps this overlay to the one change it is actually about.

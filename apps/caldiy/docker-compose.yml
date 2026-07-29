@@ -23,6 +23,19 @@ services:
     # --- Security ---
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # --- Resources ---
+    # Postgres for a small Cal.com instance; retune after measuring with `docker stats`.
+    # pids folded in here — a top-level pids_limit conflicts with deploy.resources.
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          cpus: "1.00"
+          pids: 100
+        reservations:
+          memory: 256m
 
     # --- Configuration ---
     environment:
@@ -61,6 +74,22 @@ services:
     # --- Security ---
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /run
+      - /tmp
+    # --- Resources ---
+    # Interim caps — retune after measuring with `docker stats`.
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.25"
+          pids: 50
+        reservations:
+          memory: 64m
 
     # --- Storage ---
     volumes:
@@ -95,6 +124,20 @@ services:
     # --- Security ---
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # --- Resources ---
+    # Cal.com's stated minimum is 2 vCPU / 4 GB for app+DB. Size the app for safe
+    # headroom so the cap bounds a runaway/compromised process, not normal load.
+    # Retune after measuring with `docker stats`.
+    deploy:
+      resources:
+        limits:
+          memory: 4g
+          cpus: "2.00"
+          pids: 200
+        reservations:
+          memory: 1g
 
     # --- Configuration ---
     # Custom entrypoint reads all secrets from /run/secrets/ before start.sh runs.
@@ -127,8 +170,9 @@ services:
       NEXT_PUBLIC_SUPPORT_MAIL_ADDRESS: ${NEXT_PUBLIC_SUPPORT_MAIL_ADDRESS}
       # Push notifications (VAPID) — required; app logs an error on every boot without these
       # Generate: docker run --rm node:lts-alpine npx --yes web-push generate-vapid-keys
+      # Public key set here (NEXT_PUBLIC_ prefix exposes it to the browser by design).
+      # Private key injected from Docker Secret — never set VAPID_PRIVATE_KEY in .env.
       NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
-      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY}
       # Legal — self-hosters should set these to their own policy pages
       NEXT_PUBLIC_WEBSITE_PRIVACY_POLICY_URL: ${NEXT_PUBLIC_WEBSITE_PRIVACY_POLICY_URL}
       NEXT_PUBLIC_WEBSITE_TERMS_URL: ${NEXT_PUBLIC_WEBSITE_TERMS_URL}
@@ -140,6 +184,8 @@ services:
       EMAIL_SERVER_USER: ${EMAIL_SERVER_USER}
       # Logging (0=silly … 6=fatal; 3=info+ recommended for production)
       NEXT_PUBLIC_LOGGER_LEVEL: ${NEXT_PUBLIC_LOGGER_LEVEL}
+      # Attack surface — disable public self-registration (see .env)
+      NEXT_PUBLIC_DISABLE_SIGNUP: ${NEXT_PUBLIC_DISABLE_SIGNUP}
       # Calendar integrations — optional; leave empty / false to disable
       GOOGLE_LOGIN_ENABLED: ${GOOGLE_LOGIN_ENABLED}
       GOOGLE_API_CREDENTIALS: ${GOOGLE_API_CREDENTIALS}
@@ -151,6 +197,7 @@ services:
       - ENCRYPTION_KEY
       - CRON_API_KEY
       - SMTP_PASSWORD
+      - VAPID_PRIVATE_KEY
 
     # --- Storage ---
     volumes:
@@ -210,3 +257,5 @@ secrets:
     file: ./.secrets/cron_api_key.txt
   SMTP_PASSWORD:
     file: ./.secrets/smtp_password.txt
+  VAPID_PRIVATE_KEY:
+    file: ./.secrets/vapid_private_key.txt

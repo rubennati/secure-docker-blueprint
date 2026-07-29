@@ -1,6 +1,7 @@
 # Paperless-ngx — Configuration Reference
 
 App-specific configuration options, bucketed by effort-vs-value:
+
 - **Mandatory** — every production instance sets this
 - **Nice-to-have** — recommended default unless there is a reason against it
 - **Use-case-dependent** — only when a concrete need is documented (the use-case is named as the trigger)
@@ -67,9 +68,9 @@ Not mandatory in our definition, but largest ROI in the security bucket:
 
 ---
 
-# 1. Hosting & Security
+## 1. Hosting & Security
 
-## 1.1 Mandatory
+### 1.1 Mandatory
 
 | ENV var | What | Our default | Effort | Rationale / note |
 |---|---|---|---|---|
@@ -78,7 +79,7 @@ Not mandatory in our definition, but largest ROI in the security bucket:
 | `PAPERLESS_ALLOWED_HOSTS` | HTTP host-header allowlist | implicit via `PAPERLESS_URL` — **do not set separately** | — | Default `*` enables host-header injection (password-reset emails with attacker-controlled domain). Covered by `PAPERLESS_URL`. Exception: multi-domain setup → explicit comma list. |
 | `PAPERLESS_TRUSTED_PROXIES` | Accepted reverse-proxy IPs for X-Forwarded-For | `172.16.0.0/12` (Docker default pool) | low | Without this the audit log only shows Traefik's IP; fail2ban/CrowdSec are blind; X-Forwarded-For spoofing possible. Exception: exact `proxy-public` subnet known → set more precisely. |
 
-## 1.2 Nice-to-have
+### 1.2 Nice-to-have
 
 | ENV var | What | Our default | Effort | Rationale / note |
 |---|---|---|---|---|
@@ -87,7 +88,7 @@ Not mandatory in our definition, but largest ROI in the security bucket:
 | `PAPERLESS_PROXY_SSL_HEADER` | Django detects HTTPS via proxy header | `["HTTP_X_FORWARDED_PROTO", "https"]` | medium | We set `X-Forwarded-Proto=https` in Traefik; Django may trust it. Critical for secure session-cookie flag and correct `https://` redirects. **Only valid because Traefik is the sole ingress.** Do not set if any plain-HTTP path can reach the container. |
 | `PAPERLESS_COOKIE_PREFIX` | Session-cookie namespace | unset | low | Needed only when multiple Paperless instances share a host domain (otherwise cookie collision). |
 
-## 1.3 Use-case-dependent
+### 1.3 Use-case-dependent
 
 | Use-case | ENV var | Recommendation | Note |
 |---|---|---|---|
@@ -103,7 +104,7 @@ Not mandatory in our definition, but largest ROI in the security bucket:
 | **Initial admin without `createsuperuser`** | `PAPERLESS_ADMIN_USER` + `ADMIN_PASSWORD` + `ADMIN_MAIL` | Unset — we use `docker compose exec app python manage.py createsuperuser` | Only in Kubernetes/ECS where no interactive exec is available. Does **not** change existing passwords. |
 | **⚠️ Dangerous** | `PAPERLESS_AUTO_LOGIN_USERNAME` | **Never set if publicly reachable** | Bypasses authentication entirely. Only in strictly-internal setups behind another full auth layer. |
 
-## 1.4 Current state vs. repo
+### 1.4 Current state vs. repo
 
 - ✅ `PAPERLESS_URL` — set in `docker-compose.yml`
 - ✅ `PAPERLESS_SECRET_KEY_FILE` — set via Docker Secret
@@ -117,17 +118,17 @@ We already set `X-Forwarded-Proto=https` + `X-Forwarded-Host` in the Traefik mid
 
 ---
 
-# 2. Authentication & SSO
+## 2. Authentication & SSO
 
 Builds on Hosting & Security. In particular: `PAPERLESS_DISABLE_REGULAR_LOGIN` does **not** protect the Django `/admin/` endpoint — that needs a separate Traefik router protection (use-case row there).
 
-## 2.1 Mandatory
+### 2.1 Mandatory
 
 | ENV var | What | Our default | Effort | Rationale / note |
 |---|---|---|---|---|
 | `PAPERLESS_ACCOUNT_ALLOW_SIGNUPS` | Self-registration via login page | `false` (explicit) | low | Default is already `false`, but an archive app must document intent. Prevents regressions on future upstream default changes. Exception: planned signup flow with moderation workflow. |
 
-## 2.2 Nice-to-have
+### 2.2 Nice-to-have
 
 | ENV var | What | Our default | Effort | Rationale / note |
 |---|---|---|---|---|
@@ -136,7 +137,7 @@ Builds on Hosting & Security. In particular: `PAPERLESS_DISABLE_REGULAR_LOGIN` d
 | `PAPERLESS_ACCOUNT_SESSION_REMEMBER` | Enables "remember me" (otherwise cookie ends with browser close) | `true` (default) | low | When `true`: `SESSION_COOKIE_AGE` applies. When `false`: cookie dies with browser — too aggressive for typical Paperless use. |
 | `PAPERLESS_ACCOUNT_EMAIL_VERIFICATION` | Email verification on signup / email change | `mandatory` if SMTP is configured | low | Protects against typos and fake accounts. Paperless automatically sets this to `none` if no SMTP server is reachable — so without SMTP setup the item has no effect. |
 
-## 2.3 Use-case-dependent
+### 2.3 Use-case-dependent
 
 | Use-case | ENV var | Recommendation | Note |
 |---|---|---|---|
@@ -151,7 +152,7 @@ Builds on Hosting & Security. In particular: `PAPERLESS_DISABLE_REGULAR_LOGIN` d
 | **Signups allowed (internal)** | `PAPERLESS_ACCOUNT_DEFAULT_GROUPS` | Comma list; groups must exist | Only relevant when `ACCOUNT_ALLOW_SIGNUPS=true` — not our case |
 | **Privacy / UX** | `PAPERLESS_ACCOUNT_EMAIL_UNKNOWN_ACCOUNTS` | Default `true` | Controls whether password-reset to unknown email sends a mail (`true`) or not (`false`). `false` prevents user enumeration. For internal Paperless default is fine. |
 
-## 2.4 Current state vs. repo
+### 2.4 Current state vs. repo
 
 - ❌ `PAPERLESS_ACCOUNT_ALLOW_SIGNUPS` — missing (default `false` active but not documented)
 - ❌ `PAPERLESS_ACCOUNT_DEFAULT_HTTP_PROTOCOL` — missing
@@ -161,9 +162,9 @@ Builds on Hosting & Security. In particular: `PAPERLESS_DISABLE_REGULAR_LOGIN` d
 
 ---
 
-# 3. Document Consumption
+## 3. Document Consumption
 
-## 3.1 Core consumption logic
+### 3.1 Core consumption logic
 
 | ENV var | What | Our default | Effort | Bucket | Rationale / note |
 |---|---|---|---|---|---|
@@ -174,7 +175,7 @@ Builds on Hosting & Security. In particular: `PAPERLESS_DISABLE_REGULAR_LOGIN` d
 | `PAPERLESS_CONSUMER_RECURSIVE` | Watch subdirs of consume-folder | `false` (default) | low | **Use-case-dependent** | Use-case: required for `SUBDIRS_AS_TAGS` or `COLLATE_DOUBLE_SIDED`. Otherwise off. |
 | `PAPERLESS_CONSUMER_SUBDIRS_AS_TAGS` | Subfolder names → tags | `false` (default) | medium | **Use-case-dependent** | Use-case: scan workflow with pre-sorted folders (`consume/invoices/`, `consume/contracts/`). Requires `RECURSIVE=true`. |
 
-## 3.2 Polling vs. iNotify
+### 3.2 Polling vs. iNotify
 
 | ENV var | What | Our default | Effort | Bucket | Rationale / note |
 |---|---|---|---|---|---|
@@ -183,7 +184,7 @@ Builds on Hosting & Security. In particular: `PAPERLESS_DISABLE_REGULAR_LOGIN` d
 | `PAPERLESS_CONSUMER_POLLING_DELAY` | Pause between retries (s) | default `5` | low | **Use-case-dependent** | Only with polling. Increase on slow network shares where large PDFs are still copying. |
 | `PAPERLESS_CONSUMER_INOTIFY_DELAY` | Settle time after last event before consume | default `0.5` (s) | low | **Nice-to-have** | Raise to `2.0`-`5.0` when scanner/network fires multiple events per file — otherwise double consume. |
 
-## 3.3 Pre/Post-consumption hooks
+### 3.3 Pre/Post-consumption hooks
 
 Powerful but each script is a new dependency and attack surface. Activate only with concrete need.
 
@@ -194,7 +195,7 @@ Powerful but each script is a new dependency and attack surface. Activate only w
 
 **Operational note**: both hooks receive the document as env vars (`DOCUMENT_SOURCE_PATH`, `DOCUMENT_ID`, etc.). When used → append to README "Known Issues": "Pre/Post hooks active, scripts version-controlled in `./config/hooks/`."
 
-## 3.4 Barcodes
+### 3.4 Barcodes
 
 Separate feature cluster. Enable only if a scan workflow with barcode pages exists.
 
@@ -212,7 +213,7 @@ Separate feature cluster. Enable only if a scan workflow with barcode pages exis
 | `PAPERLESS_CONSUMER_ENABLE_TAG_BARCODE` | Assign tags from barcodes | `false` | medium | **Use-case-dependent** | Use-case: scanner workflow with tag stickers/codes. Otherwise not needed. |
 | `PAPERLESS_CONSUMER_TAG_BARCODE_MAPPING` | Regex mapping barcode→tag | default `{"TAG:(.*)": "\\g<1>"}` | medium | **Use-case-dependent** | Only with `ENABLE_TAG_BARCODE`. |
 
-## 3.5 Workflow webhooks (SSRF protection)
+### 3.5 Workflow webhooks (SSRF protection)
 
 Paperless workflows can send outbound webhooks. Without guardrails → SSRF vector (anyone with admin access builds a workflow → request to internal services).
 
@@ -222,7 +223,7 @@ Paperless workflows can send outbound webhooks. Without guardrails → SSRF vect
 | `PAPERLESS_WEBHOOKS_ALLOWED_SCHEMES` | Allowed URL schemes for webhooks | `https` (not default `http,https`) | low | **Nice-to-have** | Webhook payloads may carry sensitive data → no cleartext. |
 | `PAPERLESS_WEBHOOKS_ALLOWED_PORTS` | Whitelist of ports for webhooks | unset (= all ports allowed) | low | **Use-case-dependent** | Use-case: only specific external webhook targets — then `443,8443` or similar. Otherwise leave unset. |
 
-## 3.6 Collate double-sided scans
+### 3.6 Collate double-sided scans
 
 For scanners without duplex. Nice feature when workflow requires it, otherwise off.
 
@@ -232,7 +233,7 @@ For scanners without duplex. Nice feature when workflow requires it, otherwise o
 | `PAPERLESS_CONSUMER_COLLATE_DOUBLE_SIDED_SUBDIR_NAME` | Subdir where collate is active | default `double-sided` | low | **Use-case-dependent** | Only with collate enabled. |
 | `PAPERLESS_CONSUMER_COLLATE_DOUBLE_SIDED_TIFF_SUPPORT` | Allow TIFFs in collate | `false` | low | **Use-case-dependent** | Only with collate + TIFF scanner. |
 
-## 3.7 Thumbnails & dates (side items)
+### 3.7 Thumbnails & dates (side items)
 
 | ENV var | What | Our default | Effort | Bucket | Rationale / note |
 |---|---|---|---|---|---|
@@ -242,7 +243,7 @@ For scanners without duplex. Nice feature when workflow requires it, otherwise o
 | `PAPERLESS_NUMBER_OF_SUGGESTED_DATES` | Alternative dates to suggest | default `3` | low | **Nice-to-have** | Default is useful. `0` disables it for very slow hardware. |
 | `PAPERLESS_THUMBNAIL_FONT_NAME` | Font for plain-text thumbnails | default `LiberationSerif` | low | **—** | Don't touch. |
 
-## 3.8 Current state vs. repo
+### 3.8 Current state vs. repo
 
 | Bucket | Item | State |
 |---|---|---|
@@ -257,16 +258,16 @@ For scanners without duplex. Nice feature when workflow requires it, otherwise o
 
 ---
 
-# 4. OCR Settings
+## 4. OCR Settings
 
-## 4.1 Languages (setup)
+### 4.1 Languages (setup)
 
 | ENV var | What | Our default | Effort | Bucket | Rationale / note |
 |---|---|---|---|---|---|
 | `PAPERLESS_OCR_LANGUAGE` | Primary OCR language(s) (Tesseract codes) | `deu` (DE/AT docs) | low | **Mandatory** | Default `eng`. Without adjustment = significantly worse OCR for non-English documents. Multiple via `+` (`deu+eng`), costs CPU. 3-letter codes per Tesseract (`chi_sim`, not `chi-sim`). |
 | `PAPERLESS_OCR_LANGUAGES` | Additional language packages installed (Docker-only) | `deu` | low | **Mandatory** | Docker-only env var. Installs tesseract-traineddata on container start. Must cover `OCR_LANGUAGE`, otherwise OCR runs empty. Space-separated list. Docker tag `chi-tra` — package names and Tesseract codes sometimes differ. |
 
-## 4.2 OCR mode & output
+### 4.2 OCR mode & output
 
 | ENV var | What | Our default | Effort | Bucket | Rationale / note |
 |---|---|---|---|---|---|
@@ -274,7 +275,7 @@ For scanners without duplex. Nice feature when workflow requires it, otherwise o
 | `PAPERLESS_OCR_SKIP_ARCHIVE_FILE` | Create archive (PDF/A) version | `never` (default) | low | **Use-case-dependent** | Use-case: tight storage + docs already have text → `with_text`. `always` = keep only original (saves space, loses "searchable"-guarantee). |
 | `PAPERLESS_OCR_OUTPUT_TYPE` | PDF variant for archive version | `pdfa` (default) | low | **Nice-to-have** | `pdfa` = PDF/A-2b, archive standard, good default. `pdfa-1` only if external archive system requires PDF/A-1. `pdf` = no PDF/A conversion, smaller files but not archive-standard. |
 
-## 4.3 Image pre-processing
+### 4.3 Image pre-processing
 
 | ENV var | What | Our default | Effort | Bucket | Rationale / note |
 |---|---|---|---|---|---|
@@ -285,20 +286,20 @@ For scanners without duplex. Nice feature when workflow requires it, otherwise o
 | `PAPERLESS_OCR_IMAGE_DPI` | Fallback DPI for images without DPI metadata | unset (auto) | low | **Use-case-dependent** | Use-case: scanner produces DPI-less images → PDF dimensioned wrong. Then set to scanner DPI (e.g. `300` or `600`). |
 | `PAPERLESS_OCR_COLOR_CONVERSION_STRATEGY` | Ghostscript color strategy for PDF/A generation | default (`LeaveColorUnchanged` implicit) | low | **Use-case-dependent** | Use-case: PDF/A creation fails with colour-profile errors → switch to `RGB` or `UseDeviceIndependentColor`. Don't change without cause — some options break archive creation. |
 
-## 4.4 Performance limits
+### 4.4 Performance limits
 
 | ENV var | What | Our default | Effort | Bucket | Rationale / note |
 |---|---|---|---|---|---|
 | `PAPERLESS_OCR_PAGES` | OCR only first N pages | `3` | low | **Nice-to-have** | Default: all pages. Our `3` = aggressive performance decision, good for bulk consume (invoices, contracts usually have relevant content on pages 1-3). For full-text-search-relevant docs: remove / set `0`. **Note**: with `OCR_MODE=redo`/`force`, text on excluded pages is copied verbatim, not re-OCRed. |
 | `PAPERLESS_OCR_MAX_IMAGE_PIXELS` | Pixel limit for OCR input | unset (Pillow default) | low | **Use-case-dependent** | Use-case: very large scans trigger OCR warning and are skipped → raise. Protection against malicious files — change only for real documents affected. |
 
-## 4.5 Advanced — OCRmyPDF user-args
+### 4.5 Advanced — OCRmyPDF user-args
 
 | ENV var | What | Our default | Effort | Bucket | Rationale / note |
 |---|---|---|---|---|---|
 | `PAPERLESS_OCR_USER_ARGS` | JSON with OCRmyPDF API options | `{"invalidate_digital_signatures":true,"continue_on_soft_render_error":true}` | medium | **Mandatory** (with these values) | The two defaults prevent the two most common consume failures: signed PDFs (bank, tax office) block OCR without `invalidate_digital_signatures`. Soft render errors otherwise fail the whole document. Other useful options per use-case: `"optimize": 3` (smaller archive PDFs, +CPU), `"unpaper_args": "--pre-rotate 90"` (special scanner patterns). **Note**: many API options are mutually incompatible — test before setting. |
 
-## 4.6 Important incompatibilities (from upstream docs)
+### 4.6 Important incompatibilities (from upstream docs)
 
 Prevents self-braking combinations:
 
@@ -308,7 +309,7 @@ Prevents self-braking combinations:
 | `OCR_DESKEW=true` + `OCR_MODE=redo` | Deskew automatically disabled |
 | `OCR_PAGES=N` + `OCR_MODE=redo`/`force` | Excluded pages keep original text verbatim — no OCR |
 
-## 4.7 Current state vs. repo
+### 4.7 Current state vs. repo
 
 | Bucket | Item | State |
 |---|---|---|
@@ -323,9 +324,9 @@ Prevents self-braking combinations:
 
 ---
 
-# 5. Software Tweaks
+## 5. Software Tweaks
 
-## 5.1 Performance — worker topology
+### 5.1 Performance — worker topology
 
 Core rule: `TASK_WORKERS × THREADS_PER_WORKER ≤ CPU cores`. Exceed = Paperless becomes extremely slow.
 
@@ -336,7 +337,7 @@ Core rule: `TASK_WORKERS × THREADS_PER_WORKER ≤ CPU cores`. Exceed = Paperles
 | `PAPERLESS_WEBSERVER_WORKERS` | Frontend/API processes (Granian) | `1` (default) | low | **Nice-to-have** | Default fits single-user / small teams. `2-4` only for many concurrent UI users or heavy API integration. Each worker loads the app separately → RAM multiplier. |
 | `PAPERLESS_WORKER_TIMEOUT` | Hard-kill timeout for OCR jobs (s) | default `1800` (30 min) | low | **Use-case-dependent** | Use-case: very large PDFs (100+ pages, weak hardware) get aborted → raise to `3600`. Don't raise pointlessly, otherwise broken jobs hang forever. |
 
-## 5.2 Memory & conversion limits
+### 5.2 Memory & conversion limits
 
 | ENV var | What | Our default | Effort | Bucket | Rationale / note |
 |---|---|---|---|---|---|
@@ -345,7 +346,7 @@ Core rule: `TASK_WORKERS × THREADS_PER_WORKER ≤ CPU cores`. Exceed = Paperles
 | `PAPERLESS_MAX_IMAGE_PIXELS` | Pillow-global pixel limit | unset (Pillow default) | low | **Use-case-dependent** | See OCR section — DoS protection, raise only on purpose. |
 | `PAPERLESS_ENABLE_COMPRESSION` | HTTP gzip compression in webserver | default `true` | low | **—** | Do not set explicitly. Traefik `compress` middleware in `sec-*` chain handles this. Double compression is pointless. Per upstream, proxy-level compression is preferred anyway. |
 
-## 5.3 Database — connection & caching
+### 5.3 Database — connection & caching
 
 | ENV var | What | Our default | Effort | Bucket | Rationale / note |
 |---|---|---|---|---|---|
@@ -355,7 +356,7 @@ Core rule: `TASK_WORKERS × THREADS_PER_WORKER ≤ CPU cores`. Exceed = Paperles
 | `PAPERLESS_READ_CACHE_TTL` | Cache lifetime (s) | default `3600` (1h) | low | **Use-case-dependent** | Only with `DB_READ_CACHE_ENABLED=true`. High TTL = more RAM, longer staleness on manual DB changes. |
 | `PAPERLESS_READ_CACHE_REDIS_URL` | Dedicated Redis instance for read-cache | unset (= main Redis) | high | **Use-case-dependent** | Use-case: cache entries shouldn't compete with scheduled tasks / queues for RAM → separate Redis with `maxmemory-policy allkeys-lru`. Not needed in standard setup. |
 
-## 5.4 Scheduling — cron jobs
+### 5.4 Scheduling — cron jobs
 
 | ENV var | What | Our default | Effort | Bucket | Rationale / note |
 |---|---|---|---|---|---|
@@ -367,20 +368,20 @@ Core rule: `TASK_WORKERS × THREADS_PER_WORKER ≤ CPU cores`. Exceed = Paperles
 
 *(Trash crons `EMPTY_TRASH_TASK_CRON` + `EMPTY_TRASH_DELAY` live in the Audit + Trash + Backup section — not repeated here.)*
 
-## 5.5 NLP & date parsing
+### 5.5 NLP & date parsing
 
 | ENV var | What | Our default | Effort | Bucket | Rationale / note |
 |---|---|---|---|---|---|
 | `PAPERLESS_ENABLE_NLTK` | Natural-language-processing for matching model | `true` (default) | low | **Nice-to-have** | Substantially better auto-classification (tags/correspondents). Disable only for very weak hardware or if matching isn't used. Docker image has NLTK data bundled — no separate download. |
 | `PAPERLESS_DATE_PARSER_LANGUAGES` | Languages for content-date parser | derive from `OCR_LANGUAGE` | low | **Nice-to-have** | **Note**: different format than `OCR_LANGUAGE`! OCR = Tesseract codes (`deu`), date parser = dateparser codes (`de`). Combine via `+` (e.g. `de+en`). Without: Paperless infers from OCR language — usually works, but explicit is more robust. |
 
-## 5.6 Django apps
+### 5.6 Django apps
 
 | ENV var | What | Our default | Effort | Bucket | Rationale / note |
 |---|---|---|---|---|---|
 | `PAPERLESS_APPS` | Load additional Django apps | unset | low | **Use-case-dependent** | Use-case: SSO activation → `allauth.socialaccount.providers.openid_connect`. See Auth section. Only add what you actually need, watch order with multiple apps. |
 
-## 5.7 Current state vs. repo
+### 5.7 Current state vs. repo
 
 | Bucket | Item | State |
 |---|---|---|
@@ -397,11 +398,11 @@ Core rule: `TASK_WORKERS × THREADS_PER_WORKER ≤ CPU cores`. Exceed = Paperles
 
 ---
 
-# 6. Audit, Trash & Backup-Lifecycle
+## 6. Audit, Trash & Backup-Lifecycle
 
 This section mixes ENV-based items with procedures (backup, upgrade, management commands). Both bucketed consistently.
 
-## 6.1 Audit trail
+### 6.1 Audit trail
 
 Paperless maintains an audit log of changes to documents, tags, correspondents, document types. Single switch but important for traceability.
 
@@ -411,7 +412,7 @@ Paperless maintains an audit log of changes to documents, tags, correspondents, 
 
 **Management side**: the `prune_audit_logs` command trims log entries of deleted documents (see Management Commands below).
 
-## 6.2 Trash / retention
+### 6.2 Trash / retention
 
 Paperless has a trash mechanism. Deleted documents go there first and get permanently removed after N days.
 
@@ -421,11 +422,11 @@ Paperless has a trash mechanism. Deleted documents go there first and get perman
 | `PAPERLESS_EMPTY_TRASH_TASK_CRON` | When trash is emptied | default `0 1 * * *` (daily 01:00) | low | **Nice-to-have** | Default fine. Move only when competing I/O runs at 01:00 (backup window). |
 | `PAPERLESS_EMPTY_TRASH_DIR` | Target dir for deleted originals | unset (= hard delete) | low | **Use-case-dependent** | Use-case: extra safety net beyond Paperless trash. Setting to `../media/trash` (or own persistent volume) = originals are moved there instead of deleted. **Important**: volume must be persistent (survives container updates) and needs own retention/cleanup outside Paperless. |
 
-## 6.3 Backup strategy (procedure, not ENV-based)
+### 6.3 Backup strategy (procedure, not ENV-based)
 
 For an archive app, backup is **not** nice-to-have — it is core infrastructure. Paperless offers two approaches.
 
-### What must be backed up
+#### What must be backed up
 
 | Asset | Content | Container path | Host path (our layout) |
 |---|---|---|---|
@@ -437,7 +438,7 @@ For an archive app, backup is **not** nice-to-have — it is core infrastructure
 | **Secrets** | DB password, secret key, SMTP password | — | `./.secrets/` |
 | **Config** | Env, compose | — | `.env` + `docker-compose.yml` |
 
-### Recommended procedures (bucketed)
+#### Recommended procedures (bucketed)
 
 | Procedure | What | Bucket | Note |
 |---|---|---|---|
@@ -449,13 +450,13 @@ For an archive app, backup is **not** nice-to-have — it is core infrastructure
 | **`--data-only` export** | Only DB, no files | **Use-case-dependent** | Use-case: DB major upgrade (PG 16 → 17) without dragging the full media zip. |
 | **Test restore** (periodic) | Restore into separate staging Paperless, verify a few docs | **Use-case-dependent** | Use-case: compliance / audit requirement. Without test-restore, backup claim is unproven. |
 
-### Things to watch when backing up
+#### Things to watch when backing up
 
 - **Stop or very quiet Paperless** during volume backups (otherwise half-written files / DB-vs-files inconsistency)
 - `document_exporter` runs while Paperless runs — but **documents consumed during export** don't land in the export. Exporter records the timestamp.
 - **Do NOT mount `/export/` into the container image** — use a host volume — otherwise lost on container rebuild
 
-## 6.4 Database upgrade strategy
+### 6.4 Database upgrade strategy
 
 | Scenario | Procedure | Bucket |
 |---|---|---|
@@ -463,7 +464,7 @@ For an archive app, backup is **not** nice-to-have — it is core infrastructure
 | **Paperless major upgrade** (2.x → 3.0) | 1. Backup via `document_exporter`. 2. Read release notes. 3. Compose pull. 4. Up. 5. If issues: rollback via restore into empty container. | **Mandatory procedure** to document |
 | **PostgreSQL major upgrade** (16 → 17) | 1. `document_exporter --data-only`. 2. Fresh Postgres instance with new version. 3. Start Paperless against new DB. 4. `document_importer --data-only`. | **Use-case-dependent** — only when PG major is changed |
 
-## 6.5 Management commands (maintenance cheatsheet)
+### 6.5 Management commands (maintenance cheatsheet)
 
 Per command: purpose, when to use. All via `docker compose exec app <cmd>`.
 
@@ -485,7 +486,7 @@ Per command: purpose, when to use. All via `docker compose exec app <cmd>`.
 | `invalidate_cachalot` | Invalidate DB read cache | **Use-case** | Only when `DB_READ_CACHE_ENABLED=true` AND manual DB change happens (restore, external SQL). Otherwise data inconsistency. |
 | `decrypt_documents` | Remove legacy encryption | **—** | Only for ancient instances with pre-0.9 encryption. No longer relevant. |
 
-## 6.6 Incident-response cross-reference
+### 6.6 Incident-response cross-reference
 
 When things break — quick moves that fit this section:
 
@@ -498,7 +499,7 @@ When things break — quick moves that fit this section:
 
 (Full incident-response playbook = separate topic, not part of this CONFIG.md.)
 
-## 6.7 Current state vs. repo
+### 6.7 Current state vs. repo
 
 | Bucket | Item | State |
 |---|---|---|
@@ -513,9 +514,9 @@ When things break — quick moves that fit this section:
 
 ---
 
-# 7. Paths & File-Name-Handling
+## 7. Paths & File-Name-Handling
 
-## 7.1 Paths & folders (mostly Docker-bound)
+### 7.1 Paths & folders (mostly Docker-bound)
 
 Most path vars are for bare-metal installs. In the Docker container they're fixed container paths — the host side is adjusted via volume mounts in `docker-compose.yml`, not via ENV.
 
@@ -531,7 +532,7 @@ Most path vars are for bare-metal installs. In the Docker container they're fixe
 | `PAPERLESS_LOGROTATE_MAX_SIZE` | Log file size before rotation (bytes) | default `1 MiB` | low | **Nice-to-have** | Default fine for most. With active log forwarding (Promtail consumes immediately) keep small; for local debug raise to `10485760` (10 MiB) for better debuggability. |
 | `PAPERLESS_LOGROTATE_MAX_BACKUPS` | Number of rotated log files | default `20` | low | **Nice-to-have** | Default fine. `5-10` usually enough, `50+` for longer forensic window. |
 
-## 7.2 Filename format (main topic of this section)
+### 7.2 Filename format (main topic of this section)
 
 Paperless stores documents under internal UUIDs (`0000123.pdf`) by default. With `PAPERLESS_FILENAME_FORMAT` this becomes a readable structure in the media directory.
 
@@ -542,11 +543,11 @@ Relevance depends on workflow: if you only go through the Paperless UI, filename
 | `PAPERLESS_FILENAME_FORMAT` | Template for filenames/folders in media dir | unset (= UUIDs) | medium | **Use-case-dependent** | Use-case: backup inspection without Paperless, external DMS sync, compliance (human-readable filing). After activation: every new document renamed accordingly. Existing documents only after `document_renamer` command. **Backup before change.** Jinja templates very powerful — see below. |
 | `PAPERLESS_FILENAME_FORMAT_REMOVE_NONE` | Omit empty placeholders instead of writing "none" | `false` (default) | low | **Use-case-dependent** | Only relevant with `FILENAME_FORMAT`. `true` = `{correspondent}/{title}` becomes `/title.pdf` on missing correspondent instead of `none/title.pdf`. Cleaner for UI browsing. |
 
-### Template placeholders (cheatsheet)
+#### Template placeholders (cheatsheet)
 
 Simple variables for `PAPERLESS_FILENAME_FORMAT`:
 
-```
+```text
 {{ title }}                 {{ correspondent }}        {{ document_type }}
 {{ tag_list }}              {{ asn }}                  {{ owner_username }}
 {{ original_name }}         {{ doc_pk }}               {{ storage_path }}
@@ -558,7 +559,7 @@ Simple variables for `PAPERLESS_FILENAME_FORMAT`:
 {{ added_year }}  ...etc
 ```
 
-### Example formats (by complexity)
+#### Example formats (by complexity)
 
 | Format | Result | Use-case |
 |---|---|---|
@@ -567,7 +568,7 @@ Simple variables for `PAPERLESS_FILENAME_FORMAT`:
 | `{{ document_type }}/{{ created }} {{ title }}` | `Invoice/2026-04-15 Invoice_0042.pdf` | Type-centric, ISO date in name |
 | `{{ storage_path }}/{{ title }}` | Uses UI-set storage path + title | Combinable with UI-based storage paths (see below) |
 
-### Advanced — Jinja templates
+#### Advanced — Jinja templates
 
 `PAPERLESS_FILENAME_FORMAT` supports full Jinja templates. With if/else, loops, custom filters (`get_cf_value`, `datetime`, `localize_date`, `slugify`).
 
@@ -579,13 +580,15 @@ Simple variables for `PAPERLESS_FILENAME_FORMAT`:
 | `{{ title \| slugify }}` | URL-safe filename without umlauts / special chars | **Use-case-dependent** — important on unicode-hostile filesystems / sync tools |
 
 **Pitfalls**:
+
 - OS path-length limits (especially Windows/NAS with 260-char cap) — can be exceeded with long `tag_list`
 - Placeholder errors → Paperless silently falls back to default naming (no UI warning, only log)
 - `../` in FILENAME_FORMAT works → files land outside media dir → **lost on Docker rebuild**. Never use.
 
-## 7.3 Storage paths (app-internal, not ENV)
+### 7.3 Storage paths (app-internal, not ENV)
 
 Paperless also has a UI feature called "Storage Paths":
+
 - Filename formats configurable per document in the UI
 - Assigned per document via matching algorithm (like tags/correspondents) or manually
 - Override the global `FILENAME_FORMAT` for assigned documents
@@ -596,7 +599,7 @@ Paperless also has a UI feature called "Storage Paths":
 
 **Relationship to `FILENAME_FORMAT`**: globally, `FILENAME_FORMAT` applies to all docs without a storage path. Docs with a storage path ignore the global format and use the storage-path template. Both can reference each other via the `{{ storage_path }}` placeholder.
 
-## 7.4 Binaries (bare-metal relics)
+### 7.4 Binaries (bare-metal relics)
 
 Only relevant when Paperless does **not** run in our Docker image — there `convert` + `gs` live on standard paths.
 
@@ -605,7 +608,7 @@ Only relevant when Paperless does **not** run in our Docker image — there `con
 | `PAPERLESS_CONVERT_BINARY` | Path to ImageMagick `convert` | Docker default | **—** |
 | `PAPERLESS_GS_BINARY` | Path to Ghostscript `gs` | Docker default | **—** |
 
-## 7.5 Current state vs. repo
+### 7.5 Current state vs. repo
 
 | Bucket | Item | State |
 |---|---|---|
@@ -619,9 +622,9 @@ Only relevant when Paperless does **not** run in our Docker image — there `con
 
 ---
 
-# 8. Docker-Options, Frontend & Monitoring
+## 8. Docker-Options, Frontend & Monitoring
 
-## 8.1 Cross-references (already covered)
+### 8.1 Cross-references (already covered)
 
 | Topic | Where covered |
 |---|---|
@@ -630,14 +633,14 @@ Only relevant when Paperless does **not** run in our Docker image — there `con
 | Worker topology (`WEBSERVER_WORKERS`, `TASK_WORKERS`, `THREADS_PER_WORKER`) | → Software Tweaks |
 | OCR language install (`OCR_LANGUAGES`) | → OCR Settings |
 
-## 8.2 Container network binding (Docker internals)
+### 8.2 Container network binding (Docker internals)
 
 | ENV var | What | Our default | Effort | Bucket | Rationale / note |
 |---|---|---|---|---|---|
 | `PAPERLESS_BIND_ADDR` | IP the webserver listens on inside container | default `::` (all interfaces, IPv6 enabled) | — | **—** | Don't change. Container is internally isolated, external reachability is Traefik's job. Relevant only in very specific Podman multi-container-pod setups. Future name: `GRANIAN_HOST`. |
 | `PAPERLESS_PORT` | Port inside container | default `8000` | — | **—** | Don't change. Traefik labels reference `8000`. External port mapping via `docker-compose.yml` — not needed because Traefik. Future name: `GRANIAN_PORT`. |
 
-## 8.3 User / group mapping
+### 8.3 User / group mapping
 
 | ENV var | What | Our default | Effort | Bucket | Rationale / note |
 |---|---|---|---|---|---|
@@ -646,20 +649,20 @@ Only relevant when Paperless does **not** run in our Docker image — there `con
 
 **Important**: **do NOT set `user:` in the compose file**. Paperless-ngx uses s6-overlay — must start as root to initialise `/run`, then drops to `USERMAP_UID`. Direct `user: 1000:1000` bypasses s6-overlay and kills startup. Already documented in README known-issues.
 
-## 8.4 Frontend branding (non-security)
+### 8.4 Frontend branding (non-security)
 
 | ENV var | What | Our default | Effort | Bucket | Rationale / note |
 |---|---|---|---|---|---|
 | `PAPERLESS_APP_TITLE` | Name override in UI (browser tab, logo label) | unset (= "Paperless-ngx") | low | **Use-case-dependent** | Use-case: multi-instance environment where users need to see instantly which instance they're in. Otherwise cosmetic. |
 | `PAPERLESS_APP_LOGO` | Path to own logo in `/media/logo` dir | unset | low | **Use-case-dependent** | Use-case: branding for internal setup. **Important**: logo is **visible before login** — strip EXIF data before upload (otherwise info leak about author / software / location). |
 
-## 8.5 Monitoring (Celery Flower)
+### 8.5 Monitoring (Celery Flower)
 
 | ENV var | What | Our default | Effort | Bucket | Rationale / note |
 |---|---|---|---|---|---|
 | `PAPERLESS_ENABLE_FLOWER` | Start Celery monitoring UI | unset (= off) | medium | **Use-case-dependent** | Use-case: production instance with many background jobs, Prometheus integration wanted, debug for hanging queues. **Security-relevant**: Flower listens on port 5555 — must be secured separately (Traefik router with `acc-tailscale` + Basic Auth when active). Never expose directly via host port mapping. Config file via volume mount `flowerconfig.py`. |
 
-## 8.6 Custom container init
+### 8.6 Custom container init
 
 Extensibility without custom Docker image build.
 
@@ -667,7 +670,7 @@ Extensibility without custom Docker image build.
 |---|---|---|---|
 | `/custom-cont-init.d` volume mount | Host scripts executed before webserver start | **Use-case-dependent** | Use-case: install extra packages, PostgreSQL client for backup scripts, pdf2pdfocr for pre-consume hook. Scripts must be `root:root` owned, `a=rx` permissions. Runs as root — use `gosu` for user switch. **Can break on upgrade** if Paperless upstream image structure changes. |
 
-## 8.7 Deprecated / ignore
+### 8.7 Deprecated / ignore
 
 | ENV var | Status | Note |
 |---|---|---|
@@ -675,7 +678,7 @@ Extensibility without custom Docker image build.
 | `PAPERLESS_ENABLE_UPDATE_CHECK` | deprecated since v1.9.2 | Update check is now a frontend setting (UI, per user). Ignore. |
 | `PAPERLESS_WEBSERVER_WORKERS` / `PAPERLESS_BIND_ADDR` / `PAPERLESS_PORT` | future-deprecation | Upstream hints at eventual rename to `GRANIAN_WORKERS` / `GRANIAN_HOST` / `GRANIAN_PORT`. Both currently accepted. Check at next major upgrade. |
 
-## 8.8 MySQL caveats (only if MariaDB/MySQL instead of PostgreSQL)
+### 8.8 MySQL caveats (only if MariaDB/MySQL instead of PostgreSQL)
 
 We use PostgreSQL. This section only relevant if someone forks and uses MariaDB.
 
@@ -685,11 +688,11 @@ We use PostgreSQL. This section only relevant if someone forks and uses MariaDB.
 | Timezones | One-time `mariadb-tzinfo-to-sql /usr/share/zoneinfo \| mariadb -u root mysql -p` needed | **—** |
 | Charset | `utf8mb4` mandatory, not `utf8mb3` | **—** |
 
-## 8.9 PDF auto-recovery (no switch, just info)
+### 8.9 PDF auto-recovery (no switch, just info)
 
 On MIME-type errors or broken PDFs Paperless automatically calls `qpdf` to rescue "repairable" PDFs. **No ENV switch**. Mentioned because it sometimes shows in logs and produces "PDF repair" entries — that's intentional, not a warning.
 
-## 8.10 Current state vs. repo
+### 8.10 Current state vs. repo
 
 | Bucket | Item | State |
 |---|---|---|
@@ -702,11 +705,11 @@ On MIME-type errors or broken PDFs Paperless automatically calls `qpdf` to rescu
 
 ---
 
-# 9. Email (Send / Parse / OAuth / GPG)
+## 9. Email (Send / Parse / OAuth / GPG)
 
 Three distinct use-cases: (1) Paperless **sends** mails, (2) Paperless **consumes** mails, (3) OAuth + GPG as special fetch methods.
 
-## 9.1 Email sending (outbound)
+### 9.1 Email sending (outbound)
 
 Paperless itself sends mail on: password reset, event notifications, workflow "email" action, user invitations.
 
@@ -726,7 +729,7 @@ Without SMTP config all of that silently drops — Paperless keeps running, but 
 
 **Upgrade to Mandatory when**: regular login active (password reset must work) OR workflow with email action OR mail-based event notifications planned.
 
-## 9.2 Email parsing (inbound — .eml consumption)
+### 9.2 Email parsing (inbound — .eml consumption)
 
 Paperless can consume `.eml` files (via consume folder or direct IMAP/OAuth fetch). Requires Tika + Gotenberg (see infrastructure) — we have them active.
 
@@ -734,7 +737,7 @@ Paperless can consume `.eml` files (via consume folder or direct IMAP/OAuth fetc
 |---|---|---|---|---|---|
 | `PAPERLESS_EMAIL_PARSE_DEFAULT_LAYOUT` | How mails render into PDFs | default `1` (Text, then HTML) | low | **Nice-to-have** | Relevant only when mails are consumed. Default = prefer readable text, HTML as fallback for mails without a plaintext part. Alternatives: `2` HTML→Text, `3` HTML-only (visually prettier, many tracking pixels and link obfuscation), `4` Text-only (clean, can lose attachments/formatting). **Per mail-rule overridable in UI** — global default is only fallback. |
 
-## 9.3 Mail accounts (UI feature, not ENV)
+### 9.3 Mail accounts (UI feature, not ENV)
 
 Actual mail rules (which IMAP/POP3/OAuth account, which filters, which target tags) are configured **in the UI** — no ENV equivalent. Listed for completeness:
 
@@ -745,7 +748,7 @@ Actual mail rules (which IMAP/POP3/OAuth account, which filters, which target ta
 
 **Cron**: fetch interval is controlled by `PAPERLESS_EMAIL_TASK_CRON` → see Software Tweaks. Without mail accounts the cron does nothing but runs every 10 min dry — hence the `disable` recommendation there when not needed.
 
-## 9.4 Email OAuth (Gmail / Outlook)
+### 9.4 Email OAuth (Gmail / Outlook)
 
 Instead of IMAP password: OAuth flow against Google/Microsoft. Only relevant for `gmail.com` / `outlook.com` / `office365.com` mailboxes. Needs app registration with the provider.
 
@@ -759,7 +762,7 @@ Instead of IMAP password: OAuth flow against Google/Microsoft. Only relevant for
 
 **Important**: OAuth callback happens via the **public** domain (`PAPERLESS_URL`). If Paperless is on `acc-tailscale`, OAuth flow works only from inside the VPN — OAuth providers redirect there, but the user's browser must be able to reach it too. Do initial setup from inside VPN, then token refresh runs in the background.
 
-## 9.5 Encrypted emails (GPG decryption)
+### 9.5 Encrypted emails (GPG decryption)
 
 Paperless can decrypt GPG-encrypted mails **before** consumption — but needs a working `gpg-agent` setup with available private key.
 
@@ -779,11 +782,11 @@ volumes:
 
 Paths host-dependent: find with `gpgconf --list-dir agent-socket`. Setup only worth it when a GPG workflow actually exists — otherwise just don't enable.
 
-## 9.6 Cross-reference: IMAP with self-signed certificate
+### 9.6 Cross-reference: IMAP with self-signed certificate
 
 `PAPERLESS_EMAIL_CERTIFICATE_LOCATION` → see Hosting & Security (listed there as use-case).
 
-## 9.7 Current state vs. repo
+### 9.7 Current state vs. repo
 
 | Bucket | Item | State |
 |---|---|---|
@@ -796,11 +799,11 @@ Paths host-dependent: find with `gpgconf --list-dir agent-socket`. Setup only wo
 
 ---
 
-# 10. Extensions / Integrations
+## 10. Extensions / Integrations
 
 Third-party tools that hook into Paperless. All communicate via Paperless REST API with an API token — no direct DB access. None is currently active in the repo; all are on the TODO list.
 
-## 10.1 Overview
+### 10.1 Overview
 
 | App | Purpose | Communicates via | State in repo |
 |---|---|---|---|
@@ -808,7 +811,7 @@ Third-party tools that hook into Paperless. All communicate via Paperless REST A
 | **paperless-ai** | LLM automation for metadata (title, tags, correspondents, document-type suggestions) | REST API + API token | Not set up — TODO |
 | **paperless-mcp** | MCP server for Claude Code / Desktop to query Paperless docs | REST API + API token, MCP protocol outbound | Template in `inbox/Archiv/paperless-mcp/`, inactive |
 
-## 10.2 Common prerequisites
+### 10.2 Common prerequisites
 
 When one or more are activated:
 
@@ -820,7 +823,7 @@ When one or more are activated:
    - Separate scopes: one for OCR enhance (gpt), one for metadata (ai) — needs per-tool config to touch only "own" fields
    - As workflow trigger: restrict auto-taggers' matching rules to "inbox documents only", not existing ones
 
-## 10.3 paperless-gpt
+### 10.3 paperless-gpt
 
 - **Purpose**: better OCR quality via LLM post-processing (especially for bad scans, handwriting, receipts). Optionally also title/correspondent/tag inference.
 - **Source**: `icereed/paperless-gpt` (GitHub)
@@ -829,7 +832,7 @@ When one or more are activated:
 - **Privacy consideration**: cloud LLM sends document contents to OpenAI. Local Ollama avoids that but needs GPU or patient CPU.
 - **Bucket**: **Use-case-dependent** (only worth it if OCR quality is a real issue)
 
-## 10.4 paperless-ai
+### 10.4 paperless-ai
 
 - **Purpose**: automatic metadata suggestions/assignments on new documents (title, sender, tags, document type)
 - **Source**: `clusterzx/paperless-ai` (GitHub)
@@ -837,7 +840,7 @@ When one or more are activated:
 - **Data flow**: webhook from Paperless workflow or polling → LLM → Paperless API update
 - **Bucket**: **Use-case-dependent** (large backlog of raw docs where manual metadata maintenance is the bottleneck)
 
-## 10.5 paperless-mcp
+### 10.5 paperless-mcp
 
 - **Purpose**: MCP server so Claude Code / Desktop can use Paperless documents, tags, correspondents as context
 - **Source**: community project (template in repo at `inbox/Archiv/paperless-mcp/`)
@@ -845,11 +848,11 @@ When one or more are activated:
 - **Security note**: the MCP endpoint gives **read full access** to all Paperless documents the API-token user can see. Access policy `acc-tailscale` is mandatory when active — template already sets that.
 - **Bucket**: **Use-case-dependent** (AI-assisted document search / analysis without copy-paste into chat)
 
-## 10.6 TODO note
+### 10.6 TODO note
 
 At least one of these tools will be set up later. Requirement: **mutual communication must work** — if several run concurrently they must not block or overwrite each other. To be checked explicitly at setup time.
 
-## 10.7 Architectural options (when eventually set up)
+### 10.7 Architectural options (when eventually set up)
 
 | Variant | Layout | Suitable for |
 |---|---|---|

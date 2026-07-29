@@ -18,7 +18,7 @@ There is no DB container in this setup — the image bundles its own PostgreSQL 
 
 Every editing request carries a signed JWT. Both sides — OnlyOffice and the consuming app — must hold the same secret:
 
-```
+```text
 ┌────────────┐      ┌──────────────┐      ┌──────────────┐
 │ Seafile /  │─────▶│ Traefik      │─────▶│ OnlyOffice   │
 │ Nextcloud  │ JWT  │ (TLS + CSP)  │ JWT  │ (verify)     │
@@ -72,7 +72,7 @@ cp .secrets/jwt_secret.txt ../../apps/nextcloud/.secrets/onlyoffice_jwt_secret.t
 
 Then configure that app to point at:
 
-```
+```text
 https://<APP_TRAEFIK_HOST>/web-apps/apps/api/documents/api.js
 ```
 
@@ -95,12 +95,30 @@ Open an office doc from a connected app and confirm the editor loads in an ifram
 - `ONLYOFFICE_ALLOWED_ORIGINS` is a CSP allowlist. Any domain not listed here is rejected by the browser, even if it holds a valid JWT.
 - `no-new-privileges:true` on the container.
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | None in this stack. |
+| **State** | `.secrets/jwt_secret.txt` — shared with the embedding application |
+| **Reproducible** | `./volumes/data` (document cache) · `./volumes/logs` |
+| **Quiescing** | Not applicable. |
+
+Documents live in the application that embeds this document server and are backed
+up there. What is cached here is a working copy.
+
+The JWT secret is the only thing whose loss is felt: both sides have to hold the
+same value, so regenerating it means updating the embedding application too.
+Editing stays broken until they match, and the error surfaces there rather than
+here.
+
 ## Known Issues
 
 - **Image size is large (~1.5 GB)** — this is upstream; the document server bundles LibreOffice, Node.js, Nginx, PostgreSQL, RabbitMQ, and Redis. No slim variant is available.
 - **Log volume grows quickly.** `./volumes/logs` is mounted so logs persist; rotate or truncate it periodically if disk usage matters.
 - **`APP_TRAEFIK_SECURITY` is not used.** Setting it in `.env` has no effect — the compose file wires the custom middleware chain unconditionally. Left in the `.env.example` with a comment so nobody is surprised.
 - **JWT secret rotation is not automatic.** Rotating means updating the secret file in OnlyOffice _and_ every consuming app, then restarting each.
+- **`ONLYOFFICE_ALLOWED_ORIGINS` changes require container recreation.** The value is embedded in a Traefik label at container startup time — `docker compose restart` does not update it. Run `docker compose up -d --force-recreate` to apply a new or updated allowed origin.
 
 ## Details
 

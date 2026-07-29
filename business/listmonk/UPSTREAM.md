@@ -7,7 +7,7 @@
 - **Docker Hub:** https://hub.docker.com/r/listmonk/listmonk
 - **License:** AGPL-3.0
 - **Origin:** India · Zerodha (Kailash Nadh) · non-EU
-- **Based on version:** `v6.1.0`
+- **Based on version:** `v6.2.0`
 - **Last checked:** 2026-05-03
 
 ## What we use
@@ -43,15 +43,19 @@
 
 1. Check [Listmonk releases](https://github.com/knadh/listmonk/releases)
 2. Back up:
+
    ```bash
    docker compose exec db pg_dump -U listmonk listmonk > listmonk-$(date +%Y%m%d).sql
    ```
+
 3. Bump `APP_TAG` in `.env`
 4. `docker compose pull && docker compose up -d`
 5. Run DB upgrade:
+
    ```bash
    docker compose run --rm app --upgrade
    ```
+
 6. Verify: log in, send a test campaign
 
 ## Useful commands

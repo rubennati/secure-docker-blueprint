@@ -1,6 +1,6 @@
 # WordPress
 
-> **Status: ✅ Ready** — v6.8.3 · 2026-04-15
+> **Status: 🚧 v7.0.2** — major upgrade from 6.x; verify themes/plugins first · 2026-07-26
 
 WordPress CMS with MariaDB database, PHP security hardening, and Apache .htaccess protection.
 
@@ -56,6 +56,7 @@ Three realistic scenarios. Pick the one that fits the site:
 **Scenario C** is for management tools like MainWP that should never be public.
 
 When wp-admin is behind Tailscale or Authentik (Scenario B/C), these plugins are redundant:
+
 - WPS Hide Login — login URL is already unreachable
 - WPS Limit Login — no brute-force possible, Traefik + CrowdSec handle rate limiting
 - Cloudflare Turnstile — no bots reach the login page
@@ -129,6 +130,7 @@ This makes it significantly harder for scanners and bots to detect WordPress or 
 ## .htaccess Hardening
 
 A security template is provided in `config/apache/.htaccess-security`. It blocks:
+
 - PHP execution in `/wp-content/uploads/` (prevents uploaded shells)
 - Direct access to `wp-config.php`, `.htaccess`, `readme.html`
 - Directory listing
@@ -219,6 +221,33 @@ The official `wordpress:*-apache` image does **not** include wp-cli. To use wp-c
 ```bash
 docker run --rm -v ./volumes/wordpress:/var/www/html --network wordpress-internal wordpress:cli plugin list
 ```
+
+## Backup
+
+| | |
+|---|---|
+| **Database** | MariaDB · container `wordpress-db` · database `wordpress` · user `wp_user` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **State** | `./volumes/mysql` (database) · `./volumes/wordpress` (uploads, themes, plugins) |
+| **Reproducible** | WordPress core inside `./volumes/wordpress` — restored from the image on upgrade |
+| **Quiescing** | Not needed. The dump is consistent on its own. |
+
+```yaml
+mariadb_databases:
+    - name: wordpress
+      container: wordpress-db
+      username: wp_user
+      password: "{credential file /srv/docker/apps/wordpress/.secrets/db_pwd.txt}"
+```
+
+Posts are in the database, media and the active theme are in
+`volumes/wordpress/wp-content`. Restoring only the database gives a site whose
+every image is missing and whose theme has reverted.
+
+The salts in `wp-config.php` invalidate all sessions when they change. They are
+generated on first start, so a restore that regenerates them logs everyone out.
+
+**Restore order:** database first, then the app.
 
 ## Details
 

@@ -5,19 +5,31 @@ description: Curated operator guides for self-hosted applications and business t
 
 Application and business-tool guides live here — what an operator deploys and uses day to day, on top of the [Core Infrastructure](/core/) every guide assumes is already running.
 
-Guides cover the full operating path — setup, ongoing use, backup, restore, and updates — not just how to start a container.
+Guides cover setup, ongoing use, backup, restore and updates.
 
-### Vaultwarden
+## Vaultwarden
 
 **Problem it solves:** centralizes credentials — browser, mobile, and desktop — in one self-hosted vault instead of trusting a third-party service with everything you log into.
 
 [Go to the Vaultwarden guide →](/applications/vaultwarden/)
 
-## Why only one guide?
+## Nextcloud
 
-A useful guide has to address what to back up, what restore looks like, and how to update without data loss — that takes time to verify per application. One complete guide is more useful than several incomplete ones.
+**Problem it solves:** keeps files, calendars and contacts on your own server and syncs them to desktops and phones, with sharing and document editing on top.
+
+[Go to the Nextcloud guide →](/applications/nextcloud/)
+
+## Seafile Pro
+
+**Problem it solves:** private cloud file storage and sharing with browser-based Office document editing, collaborative documents, full-text search, and antivirus scanning — without depending on a third-party cloud provider.
+
+[Go to the Seafile Pro guide →](/applications/seafile-pro/)
 
 ## Where to go next
 
-- [Vaultwarden](/applications/vaultwarden/) — the available application guide.
-- [Core Infrastructure](/core/) if Traefik isn't running yet — every application guide needs it first.
+- [Vaultwarden](/applications/vaultwarden/) — password manager
+- [Nextcloud](/applications/nextcloud/) — files, calendars and contacts
+- [Seafile Pro](/applications/seafile-pro/) — file sync and collaborative editing
+- [Core Infrastructure](/core/) if Traefik isn't running yet — every application guide needs it first
+
+Each guide opens with its status, the version it sets up, when that was last checked, and what has not been exercised.

@@ -10,7 +10,7 @@ Based on real issues found during live testing of this blueprint.
 Always work **inside out** — start at the container, then move outward through
 each layer until you find where things break:
 
-```
+```text
 Container (app itself)
   -> Docker Network (can services reach each other?)
     -> Traefik Router (is the route configured?)
@@ -30,6 +30,7 @@ docker ps --format "table {{.Names}}\t{{.Status}}" | grep <app>
 ```
 
 **What to look for:**
+
 - `Up X minutes (healthy)` — good
 - `Up X seconds (health: starting)` — still booting, wait for `start_period`
 - `Restarting` or `exited with code X` — broken, check logs
@@ -54,12 +55,14 @@ docker compose logs --tail 50 app
 > (`/var/log/traefik/traefik.log`, `/var/log/traefik/access.log`), not to
 > stdout. `docker compose logs` only captures stdout/stderr — for Traefik,
 > read the files instead:
+>
 > ```bash
 > docker exec traefik-core cat /var/log/traefik/traefik.log    # startup, ACME, errors
 > docker exec traefik-core cat /var/log/traefik/access.log     # HTTP requests (JSON)
 > # or directly from the host (bind-mounted):
 > cat core/traefik/volumes/logs/traefik.log
 > ```
+>
 > `access.log` is additionally buffered (`TRAEFIK_ACCESSLOG_BUFFER`, default
 > 100 entries) — it may not show very recent requests until the buffer
 > flushes. `traefik.log` is not buffered the same way.
@@ -295,6 +298,7 @@ browser connects over the internet — even if Tailscale is running. The
 not Tailscale.
 
 **Solutions:**
+
 - Use Tailscale MagicDNS or Split-DNS to resolve domains to Tailscale IPs
 - Use `acc-public` for services that need internet access
 - Access via Tailscale IP directly (e.g. `https://100.x.x.x`)
@@ -314,7 +318,7 @@ openssl s_client -connect <domain>:443 -servername <domain> 2>/dev/null | openss
 
 **Symptom:** Browser console shows:
 
-```
+```text
 Mixed Content: The page at 'https://...' was loaded over HTTPS,
 but requested an insecure XMLHttpRequest endpoint 'http://...'
 ```
@@ -341,7 +345,7 @@ the client connected via HTTP and generates HTTP URLs.
 
 **Symptom:** Blank white iframe, browser console:
 
-```
+```text
 Refused to display 'https://...' in a frame because it set 'X-Frame-Options' to 'deny'
 ```
 
@@ -427,7 +431,7 @@ docker network inspect <network> --format='{{range .Containers}}{{.Name}} {{end}
 
 ## Debugging Flowchart
 
-```
+```text
 Browser shows error
 │
 ├─ "Connection refused" / "Site can't be reached"

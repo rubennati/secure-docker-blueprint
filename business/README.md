@@ -2,11 +2,13 @@
 
 Self-hosted apps **that only make sense in a business / company context**. The criterion: *do you need to run a business to meaningfully use this?* If yes → here. If the app is equally useful to a private homelab user (wiki, password manager, URL shortener, …) it belongs in [`apps/`](../apps/).
 
-This keeps `business/` a meaningful category instead of a grab-bag. See [`docs/architecture/directory-layout.md`](../docs/architecture/directory-layout.md) (on the `docs` branch) for the full categorisation rule.
+This keeps `business/` a meaningful category instead of a grab-bag. See [`docs/architecture.md`](../docs/architecture.md#directory-structure) for the categorisation rule across all five top-level directories.
 
 ## Status
 
-✅ Ready · 🚧 Draft · 📋 Planned
+🛡️ Ops-ready · ✅ Ready · 🚧 Preview · 📋 Planned
+
+`🛡️ Ops-ready` means a restore has actually been performed — no service holds it yet. Full definitions: [`docs/standards/status-model.md`](../docs/standards/status-model.md).
 
 ### Project management & planning
 
@@ -47,6 +49,7 @@ This keeps `business/` a meaningful category instead of a grab-bag. See [`docs/a
 | App | Use case | Status | Notes |
 |---|---|---|---|
 | [OpenSign](opensign/) | E-signatures — DocuSign alternative | 🚧 | Mail via Mailgun or SMTP; eIDAS with qualified cert |
+| [Documenso](documenso/) | E-signatures — DocuSign alternative | 🚧 | Remix + Postgres; local signing cert (.p12) |
 | Eramba GRC | Governance / Risk / Compliance mapping (NIS2, DSGVO, ISO-27001) | 📋 | Heavy. For regulated businesses. |
 
 ## Why these and not others
@@ -100,7 +103,7 @@ The `apps/n8n/` + `apps/nocodb/` + `apps/opnform/` cloud-free trio connects ever
 
 Each app subdirectory follows the blueprint structure:
 
-```
+```text
 business/<app>/
 ├── docker-compose.yml
 ├── .env.example

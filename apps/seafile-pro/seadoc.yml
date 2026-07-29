@@ -24,7 +24,7 @@ services:
       - DB_PORT=3306
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${SEAFILE_MYSQL_DB_PASSWORD}
-      - DB_NAME=${SEADOC_DB_NAME:-seahub_db}
+      - DB_NAME=${SEAHUB_DB_NAME:-seahub_db}
       - TIME_ZONE=${TZ}
       - JWT_PRIVATE_KEY=${JWT_PRIVATE_KEY}
       - NON_ROOT=false

@@ -71,11 +71,13 @@ Before enabling geoblocking:
      comparable tool). Do this before adding any country decision.
    - **CrowdSec alerts (if your IP has appeared in logs):** If your admin IP has ever been seen
      in Traefik access logs, its country metadata may appear in alert details:
+
      ```bash
      docker exec crowdsec cscli alerts list --ip <your-admin-ip>
      # If any alert exists, inspect it for country metadata:
      docker exec crowdsec cscli alerts inspect <ALERT_ID>
      ```
+
    Do not skip this step — if your IP resolves to a country you intend to block, you will lose
    SSH access as soon as Phase 3 picks up the decision.
 
@@ -106,6 +108,7 @@ docker exec crowdsec cscli decisions add \
 ```
 
 Both bouncers pick up the decision on their next poll cycle:
+
 - Phase 2 (Traefik): within ~60 s
 - Phase 3 (nftables): within ~10 s
 
@@ -183,6 +186,7 @@ created continuously — any new IP from a listed country receives a ban without
 intervention.
 
 This is the repeatable path for persistent geoblocking, but it requires more care:
+
 - You must maintain a country list appropriate for your deployment
 - Decisions are generated automatically — including for VPNs, monitoring services,
   and search engines originating from listed countries
@@ -212,6 +216,7 @@ docker exec crowdsec cscli scenarios list | grep countries
 > scenario's documentation before writing any config file.
 >
 > After installing the scenario, inspect its source to find the expected config path and format:
+>
 > ```bash
 > # View the scenario definition to find its configuration requirements:
 > docker exec crowdsec cat /etc/crowdsec/hub/scenarios/crowdsecurity/countries-blacklist.yaml
@@ -315,6 +320,7 @@ custom bouncer configuration and is out of scope for this blueprint.
 | **Mitigation** | Behaviour-based detection (the default CrowdSec mode) is more precise — use geoblocking as a supplemental, not primary, control |
 
 Geoblocking does not substitute for:
+
 - CrowdSec's behaviour-based detection scenarios (already active)
 - AppSec / WAF rules (`crowdsecurity/appsec-virtual-patching`, already active)
 - Rate limiting middleware in Traefik

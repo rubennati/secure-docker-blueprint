@@ -70,6 +70,7 @@
 **Fix:** Always set these to the **public HTTPS URL** the browser uses, not the internal container address.
 
 **If already wrong and data was written:** You need a DB migration. Example for OpenSign (Parse Server stores full file URLs):
+
 ```bash
 docker compose exec db mongosh \
   --username opensign --password "$(cat .secrets/db_root_pwd.txt)" \
@@ -94,9 +95,11 @@ docker compose exec db mongosh \
 **Affected apps:** Any app that takes a full DSN string (OpenSign `MONGODB_URI`, etc.).
 
 **Fix:** Generate alphanumeric-only passwords for DSN use:
+
 ```bash
 openssl rand -hex 32   # safe: hex chars only
 ```
+
 Avoid `openssl rand -base64` for DSN passwords — base64 output contains `+`, `/`, `=`.
 
 ---
@@ -118,6 +121,7 @@ Avoid `openssl rand -base64` for DSN passwords — base64 output contains `+`, `
 | Most LSIO images | 1000 (`abc`) |
 
 **Fix:**
+
 ```bash
 sudo chown -R <uid>:<gid> volumes/<dirname>
 # Example for Healthchecks:
@@ -143,6 +147,7 @@ sudo chown -R 999:999 volumes/data
 **Immich-specific:** `machine-learning` sits on `app-internal` (internal) but needs outbound internet to pull CLIP models from HuggingFace on first start. Symptom: `LocalEntryNotFoundError: cannot find the appropriate snapshot folder … check your internet connection`. Fix: add a second `ml-outbound` network (no `internal: true`) to the `machine-learning` service only — DB and Redis stay isolated.
 
 **Rule of thumb:**
+
 - DB-only network (no container needs outbound) → `internal: true` OK
 - App network (app containers need email/webhooks) → no `internal: true`
 - ML/worker containers that pull models/packages on first run → need their own outbound-capable network
@@ -156,18 +161,21 @@ sudo chown -R 999:999 volumes/data
 **Causes in order of likelihood:**
 
 1. **Typo in `APP_TRAEFIK_HOST`** — the most common cause. The label on the container has the wrong hostname.
+
    ```bash
    docker inspect <container> | grep "rule"
    # Check: does the Host() value exactly match the DNS name you're hitting?
    ```
 
 2. **Container not on the correct Docker network** — Traefik can only route to containers on a shared network.
+
    ```bash
    docker inspect <container> --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}} {{end}}'
    # Must include proxy-public (or whatever TRAEFIK_NETWORK is set to)
    ```
 
 3. **Labels not applied** — happens when `docker compose up -d` used an old compose file or the container wasn't recreated after a label change.
+
    ```bash
    docker inspect <container> | grep -A30 '"Labels"'
    # Check traefik.http.routers.* labels are present
@@ -187,6 +195,85 @@ sudo chown -R 999:999 volumes/data
 
 **Fix:** Hard refresh (`Ctrl+Shift+R` / `Cmd+Shift+R`) or open in a private/incognito window.
 
+**The same cache, a worse disguise:** when a record is *corrected* rather than
+created — pointed at a different host — the browser keeps serving the old address
+while `dig` returns the new one. The request then reaches the wrong machine and
+comes back `403 Forbidden`, which looks exactly like an access policy rejecting
+you. Verified on a live host: incognito worked immediately while the normal
+window stayed forbidden.
+
+Before debugging any access policy, rule the cache out:
+
+```bash
+dig +short <host>        # what the resolver says
+```
+
+Then open the same URL in a private window. If that works, it was never the
+policy. Chrome keeps its own cache independent of the system resolver — clear it
+at `chrome://net-internals/#dns`.
+
+---
+
+### 4.4 `acc-tailscale` rejects requests that are actually routed via Tailscale
+
+**Symptom:** A service is reachable, DNS resolves the hostname to a Tailscale
+address, both peers are online in the same tailnet, and traffic provably routes
+through `tailscale0` — but Traefik's `acc-tailscale` middleware answers 403.
+
+**Cause.** `acc-tailscale` allows `100.64.0.0/10` and `fd7a:115c:a1e0::/48`, and
+it matches on the source address of the connection. Tailscale gives every client
+an IPv6 address and prefers it, and a tailnet client connects **directly** — there
+is no proxy in front to record the original address in a header. If the Docker
+network Traefik sits on cannot carry an IPv6 source address end to end, that
+address is gone before Traefik evaluates the allowlist, and no header exists to
+recover it from. The request is then judged on whatever address survived, which is
+never in the allowed ranges.
+
+The full reasoning is in
+[`core/traefik/docs/ipv6-dual-stack.md`](core/traefik/docs/ipv6-dual-stack.md).
+
+**Fix — enable dual-stack. Do not switch to `acc-public`.**
+
+1. `/etc/docker/daemon.json` — `"ipv6": true`, `"ip6tables": true`,
+   `"userland-proxy": false`, then `sudo systemctl restart docker`.
+2. Set `PUBLIC_NETWORK_SUBNET_V4` and `PUBLIC_NETWORK_SUBNET_V6` in
+   `core/traefik/.env`. Generate your own ULA prefix — do not copy the example.
+3. Bring Traefik up with the overlay:
+
+   ```bash
+   docker compose -f docker-compose.yml -f network-dual-stack.yml up -d
+   ```
+
+**Verified on a Debian 13 host, 2026-07-28.** With the above in place, `whoami`
+reported the client's real tailnet address in `X-Real-Ip` for a browser request
+over the tailnet, and the same setup preserved the real client IP over public
+IPv4 and public IPv6. The three daemon flags and the overlay were applied
+together and **not** isolated individually, so which of them is strictly required
+is still open — but the combination is proven.
+
+**Confirm it yourself before blaming the policy:**
+
+```bash
+docker network inspect proxy-public --format '{{range .IPAM.Config}}{{.Subnet}} {{end}}'
+```
+
+Two subnets means dual-stack is active. Then deploy `core/whoami` temporarily and
+read `X-Real-Ip` — if it shows your tailnet address, the path is correct and any
+remaining 403 has another cause.
+
+**Rule out the browser first.** A stale DNS answer produces an identical 403 from
+a different host entirely — see 4.3.
+
+**Why not `acc-public`:** it removes the Traefik-level IP check for everyone, not
+just for your tailnet. It is only defensible when an upstream firewall blocks
+public inbound 80/443 independently, and it silently stops being defensible the
+day that firewall changes. Earlier revisions of this document recommended it as a
+workaround; dual-stack replaces it.
+
+**Related:** `apps/seafile-pro/UPSTREAM.md` carries a note from the 2026-06-24
+Seafile Pro case, which was resolved with the `acc-public` workaround before the
+cause was understood — it should be revisited.
+
 ---
 
 ## 5. Git & Deployment Issues
@@ -198,6 +285,7 @@ sudo chown -R 999:999 volumes/data
 **Root cause:** Commits exist locally but were never pushed. Server's `git pull` has nothing to fetch.
 
 **Fix:**
+
 ```bash
 # On local machine:
 git push origin dev
@@ -218,6 +306,7 @@ docker compose up -d --force-recreate <service>
 **Cause:** The server hasn't pulled the latest commit yet. `force-recreate` re-reads the compose file and `.env` on disk — if they haven't changed on disk, nothing changes.
 
 **Debug:**
+
 ```bash
 git log --oneline -3          # what commit is the server on?
 grep "VAR_NAME" .env          # what does the file actually say?
@@ -231,12 +320,14 @@ docker compose exec svc printenv VAR_NAME   # what did the container get?
 ### 6.0 Before writing any healthcheck — check the image type first
 
 **Rule:** Before writing a healthcheck with `wget`/`curl`/`sh`, always verify the image has those tools:
+
 ```bash
 docker compose exec <service> sh -c "which curl || which wget || echo none"
 # If sh itself fails → scratch image → use healthcheck: disable: true immediately
 ```
 
 **Known scratch/minimal Go images in this blueprint** (no shell, no tools):
+
 | Image | Healthcheck |
 |---|---|
 | `henrygd/beszel` (hub) | `disable: true` |
@@ -255,15 +346,18 @@ If `sh` fails → don't spend time looking for alternatives → `disable: true`.
 **Affected:** Beszel hub (`henrygd/beszel`) — scratch image.
 
 **Fix:** Disable the healthcheck:
+
 ```yaml
 healthcheck:
   disable: true
 ```
 
 **Check before writing a healthcheck:**
+
 ```bash
 docker compose exec <service> sh -c "which curl || which wget || echo none"
 ```
+
 If `sh` itself fails → scratch image → `disable: true`.
 
 ---
@@ -273,11 +367,13 @@ If `sh` itself fails → scratch image → `disable: true`.
 **Symptom:** Container `(unhealthy)` even though the app runs fine and the tool (`wget`, `curl`) is present.
 
 **Causes:**
+
 - Health endpoint path is wrong (e.g. `/api/health` doesn't exist, actual path is `/api/v3/status/`)
 - App hasn't finished starting when healthcheck fires (increase `start_period`)
 - Upstream provides no health endpoint at all
 
 **Debug:**
+
 ```bash
 docker compose exec <service> wget -qO- http://127.0.0.1:<port>/api/health
 # 200 = endpoint exists, 404 = wrong path, connection refused = wrong port
@@ -334,6 +430,7 @@ docker compose exec <service> wget -qO- http://127.0.0.1:<port>/api/health
 **Symptom:** Incorrect redirect URLs, HTTP links in emails instead of HTTPS, wrong `REMOTE_ADDR` in logs.
 
 **Fix:** Tell the app to trust `X-Forwarded-*` headers from Traefik:
+
 - Rails (Zammad): `RAILS_TRUSTED_PROXIES: "0.0.0.0/0"`
 - Django: `USE_X_FORWARDED_HOST = True` + `SECURE_PROXY_SSL_HEADER`
 
@@ -343,7 +440,7 @@ docker compose exec <service> wget -qO- http://127.0.0.1:<port>/api/health
 
 When something doesn't work after deployment, run through this in order:
 
-```
+```text
 1. Is the container running?
    docker compose ps
 

@@ -8,7 +8,7 @@
 - **Config reference:** https://github.com/ONLYOFFICE/DocumentServer/blob/master/Docker/README.md
 - **License:** AGPL-3.0
 - **Origin:** Latvia · Ascensio System SIA · EU
-- **Based on version:** `9.3.1.2` (Document Server Community)
+- **Based on version:** `9.4.0` (Document Server Community)
 - **Last checked:** 2026-06-14
 
 ## What we use
@@ -28,6 +28,24 @@
 | Volumes `/var/www/onlyoffice/Data` and `/var/log/onlyoffice` | Persist uploaded fonts/templates and server logs across container restarts. |
 | `no-new-privileges:true` | Blueprint baseline; the upstream image doesn't need privilege escalation at runtime. |
 | Single `app` service name (instead of `onlyoffice`) | Blueprint convention — `app` is the primary service of the compose project; the project name disambiguates when stacks are merged. |
+
+## Operational notes
+
+### Updating `ONLYOFFICE_ALLOWED_ORIGINS`
+
+`ONLYOFFICE_ALLOWED_ORIGINS` is used in a Traefik label to build the `frame-ancestors`
+CSP directive. Labels are applied at container creation time, not on restart.
+
+After changing `ONLYOFFICE_ALLOWED_ORIGINS` in `.env`:
+
+```bash
+# On the OnlyOffice server — restart alone is NOT sufficient:
+docker compose up -d --force-recreate
+```
+
+A plain `docker compose restart` leaves the old Traefik label (and therefore the old CSP)
+in place. The browser will continue to block the iframe embed for any origin not in the
+original CSP until the container is recreated.
 
 ## Tag pinning
 
@@ -52,22 +70,28 @@ tar czf onlyoffice-logs-$(date +%Y%m%d).tgz ./volumes/logs
 
 1. Read the release notes: https://github.com/ONLYOFFICE/DocumentServer/releases
 2. If users are active, disconnect them first:
+
    ```bash
    docker exec ${CONTAINER_NAME_APP} documentserver-prepare4shutdown.sh
    # Wait up to 5 minutes for sessions to close
    ```
+
 3. Bump `APP_TAG` in `.env`
 4. `docker compose pull && docker compose up -d`
 5. First start can take 1–5 minutes (PostgreSQL init or migration). Watch:
+
    ```bash
    docker compose logs app --follow
    # Look for: "ONLYOFFICE Document Server Community Edition vX.Y.Z is up and running"
    ```
+
 6. Verify health:
+
    ```bash
    curl -fsSI https://<APP_TRAEFIK_HOST>/healthcheck   # expect 200
    curl -fsSI https://<APP_TRAEFIK_HOST>/web-apps/apps/api/documents/api.js   # expect 200
    ```
+
 7. Open a `.docx` from Seafile (and Nextcloud if enabled) and confirm:
    - Editor loads in iframe — no `X-Frame-Options` error in the browser console
    - No `Token is invalid` JWT error in the browser console

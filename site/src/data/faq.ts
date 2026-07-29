@@ -42,7 +42,7 @@ export const faqCategories: FaqCategory[] = [
       {
         question: 'Does this work with Tailscale?',
         answer:
-          'Yes, throughout. Any service can be locked to Tailscale-only access, and Traefik supports dual-stack IPv6 specifically so Tailscale’s IPv6 client addresses are preserved correctly — a real failure mode this Blueprint documents and fixes, not a hypothetical one.',
+          'Yes. Any service can be restricted to Tailscale-only access. Traefik is set up for dual-stack IPv6 because Tailscale hands a client both an IPv4 and an IPv6 address — on an IPv4-only proxy the IPv6 connection arrives with the wrong source address and an IP allowlist rejects it.',
         link: { text: 'Traefik guide', href: '/core/traefik/' },
       },
       {
@@ -57,16 +57,16 @@ export const faqCategories: FaqCategory[] = [
     category: 'Security',
     items: [
       {
-        question: 'What actually protects me if a container gets compromised?',
+        question: 'How are services separated from each other?',
         answer:
-          'Several independent layers, not one. Docker Secrets keep credentials out of environment variables and shell history. A socket proxy means Traefik never touches the Docker socket directly. Each application’s internal services sit on an isolated network, unreachable from other apps. CrowdSec adds optional intrusion detection and blocking on top of all of that.',
+          'Each application’s services run on their own Docker network, so they are not routable from another application’s containers. Credentials are mounted as files rather than set in the environment, which keeps them out of container inspection and shell history. Traefik reads the Docker socket through a proxy instead of mounting it. CrowdSec can be added for detection and blocking. These are separate layers — how far a compromise gets still depends on the container and the image it runs.',
         link: { text: 'CrowdSec guide', href: '/core/crowdsec/' },
       },
       {
         question: 'Will my data be backed up automatically?',
         answer:
-          'No, not yet, for most services — stated directly per service rather than assumed. The Vaultwarden guide covers what to back up manually and how; a documented, tested restore procedure is still being built out.',
-        link: { text: 'Vaultwarden guide — backup', href: '/applications/vaultwarden/#backup-before-real-use' },
+          'No. Backup is a separate setup step: Borgmatic is installed on the host, and the backup guide covers configuring it, dumping databases from running containers, and scheduling it. What to back up for a particular service is on that service’s page.',
+        link: { text: 'Backup and restore', href: '/operations/backup/' },
       },
     ],
   },
@@ -74,14 +74,19 @@ export const faqCategories: FaqCategory[] = [
     category: 'Scope & Status',
     items: [
       {
+        question: 'What do the status labels mean?',
+        answer:
+          'Every guide carries one of three labels at the top. Preview means the stack is on disk and may well work, but it has not been checked end to end here — evaluate it yourself before trusting it with data. Ready means a clean install, working core function and the security baseline were all established. Ops-ready means a restore was performed from a backup, not only written down; no application holds it yet. Alongside the label you get the version the guide sets up, the date it was last checked, and a line naming what has not been exercised.',
+      },
+      {
         question: 'Is this safe to run in production today?',
         answer:
-          'Traefik, CrowdSec, and Vaultwarden are each verified end to end — setup through backup, restore, and updates — and considered stable. Newer additions may still see breaking changes to file paths or variable names before the project reaches its 1.0 milestone.',
+          'The per-service answer is the label at the top of each guide, together with the sentence naming what has not been exercised for it. Two things apply across all of them: no application has had a restore rehearsed, so recovery is your own responsibility to establish, and file paths and variable names can still change before the 1.0 milestone.',
       },
       {
         question: 'What can I actually deploy right now?',
         answer:
-          'Core infrastructure (Traefik, CrowdSec) plus a small, growing set of fully-verified application guides — currently Vaultwarden. New guides are added once they’re verified end to end, not as soon as a container starts.',
+          'Core infrastructure (Traefik, CrowdSec), Borgmatic for backups, and the application guides listed under Applications. Each guide states its own label, the version it sets up and when that was last checked. A guide goes up once the installation has been walked through, not when a container first starts.',
         link: { text: 'Applications', href: '/applications/' },
       },
       {

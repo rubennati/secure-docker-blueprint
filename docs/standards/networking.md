@@ -2,7 +2,7 @@
 
 ## Architecture
 
-```
+```text
 Internet
    │
    ▼
@@ -97,6 +97,7 @@ ports:
 ```
 
 **Avoid.** Only when the service cannot be routed through Traefik:
+
 - dnsmasq (DNS, not HTTP)
 - Hawser standard mode (Docker API, not web)
 

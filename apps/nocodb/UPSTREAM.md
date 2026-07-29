@@ -7,7 +7,7 @@
 - **Docker Hub:** https://hub.docker.com/r/nocodb/nocodb
 - **License:** AGPL-3.0
 - **Origin:** US · NocoDB Inc · non-EU
-- **Based on version:** `0.301.5`
+- **Based on version:** `2026.07.0`
 - **Last verified:** 2026-05-02 (v0.301.5)
 
 ## What we use
@@ -61,15 +61,19 @@ Migrating data from SQLite to Postgres requires running NocoDB's CLI `nc-migrate
 
 1. Check [NocoDB releases](https://github.com/nocodb/nocodb/releases) — minor bumps can be breaking
 2. Back up:
+
    ```bash
    tar czf nocodb-data-$(date +%Y%m%d).tgz volumes/data/
    ```
+
 3. Bump `APP_TAG` in `.env` (pin to a specific version)
 4. `docker compose pull && docker compose up -d`
 5. Watch logs for schema migrations:
+
    ```bash
    docker compose logs app --follow
    ```
+
 6. Verify: log in, open a table, create a row, issue an API call with a stored token
 
 ### Rollback
@@ -99,5 +103,6 @@ Typical automation patterns:
 - **NocoDB → n8n**: use NocoDB Webhooks (Table → Settings → Webhooks) to notify n8n on insert/update/delete — n8n receives at `/webhook/*` paths.
 
 If both apps run on the same host:
+
 - Put `apps/n8n/` and `apps/nocodb/` both on the `proxy-public` network (default) so they can reach each other as `http://nocodb-app:8080` / `http://n8n-app:5678`.
 - Or build a shared `automation` network and attach both app services to it.

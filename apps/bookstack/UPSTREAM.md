@@ -8,7 +8,7 @@
 - **LSIO GitHub:** https://github.com/linuxserver/docker-bookstack
 - **License:** MIT (BookStack) / GPL-3 (LSIO scripts)
 - **Origin:** UK · Dan Brown (BookStack) · non-EU
-- **Based on version:** `version-v25.02` (= BookStack 25.02)
+- **Based on version:** `version-v26.05.2` (= BookStack 26.05.2)
 - **Last verified:** 2026-05-03 (v25.02)
 
 ## What we use
@@ -37,6 +37,7 @@ LSIO tags track BookStack semver as `version-vXX.XX`. Major bumps may require DB
 
 1. Check BookStack [GitHub releases](https://github.com/BookStackApp/BookStack/releases) — breaking changes and required env-var updates
 2. Back up:
+
    ```bash
    # DB dump
    docker compose exec db sh -c \
@@ -45,12 +46,15 @@ LSIO tags track BookStack semver as `version-vXX.XX`. Major bumps may require DB
    # Attachments / config
    tar czf bookstack-config-$(date +%Y%m%d).tgz volumes/config/
    ```
+
 3. Bump `APP_TAG` in `.env` (keep `version-v` prefix)
 4. `docker compose pull && docker compose up -d`
 5. Watch logs for Laravel migration output:
+
    ```bash
    docker compose logs app --follow
    ```
+
 6. Verify: log in, open an existing page, edit and save, upload image
 
 ### Rollback

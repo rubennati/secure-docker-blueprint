@@ -1,6 +1,6 @@
 # Paperless-ngx
 
-> **Status: ✅ Ready** — v2.20.13 · 2026-05-03
+> **Status: 🚧 v3.0.3** — major upgrade from 2.x (breaking changes); verify migration first · 2026-07-26
 
 Self-hosted document archive: scan → OCR → searchable PDF archive. Optimised for paperless offices with a "consume folder" + mobile scan workflow.
 
@@ -24,7 +24,7 @@ Paperless-ngx drives OCR, classification, and archiving itself; it delegates for
 
 Enable via `COMPOSE_FILE` in `.env`:
 
-```
+```env
 COMPOSE_FILE=docker-compose.yml,sso.yml
 ```
 
@@ -123,7 +123,8 @@ Authentik must be running with an OAuth2/OIDC provider configured for Paperless.
    - Copy the Client ID + Client Secret
 
 2. **In Paperless `.env`:**
-   ```
+
+   ```text
    COMPOSE_FILE=docker-compose.yml,sso.yml
    SSO_PROVIDER_ID=authentik
    SSO_PROVIDER_NAME=Single Sign-On
@@ -151,6 +152,40 @@ Drop a PDF into `./volumes/consume/` and watch the logs — it should be consume
 - Redis runs `read_only: true` with tmpfs — no writable root filesystem
 - `no-new-privileges:true` on every service
 - Default access is VPN-only (`acc-tailscale`)
+
+## Backup
+
+| | |
+|---|---|
+| **Database** | PostgreSQL · container `paperless-db` · database `paperless` · user `paperless_user` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **State** | `./volumes/postgres` (database) · **`./volumes/media`** — the archived documents themselves |
+| **Reproducible** | `./volumes/data` (search index — rebuildable) · `./volumes/redis` (queue) · `./volumes/consume` (inbox, transient) · `./volumes/export` |
+| **Quiescing** | Not needed. The dump is consistent on its own. |
+
+```yaml
+postgresql_databases:
+    - name: paperless
+      container: paperless-db
+      username: paperless_user
+      password: "{credential file /srv/docker/apps/paperless-ngx/.secrets/db_pwd.txt}"
+```
+
+**`volumes/media` is the archive.** The database holds tags, correspondents and
+the text extracted from each document; the documents themselves are files. Losing
+media means losing the papers, and no amount of database is a substitute.
+
+`.secrets/secret_key.txt` is required for existing sessions and tokens to remain
+valid.
+
+Paperless also has its own `document_exporter`, which writes documents plus
+metadata into a single self-describing tree. That is the more portable restore
+path — and the one to use when moving between major versions rather than
+restoring in place.
+
+**Restore order:** database first, then media, then the app. Expect the search
+index to rebuild on first start; until it does, search returns nothing while the
+documents are all present.
 
 ## Known Issues
 

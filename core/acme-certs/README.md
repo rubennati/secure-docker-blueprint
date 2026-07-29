@@ -49,7 +49,7 @@ docker compose up -d
 
 Example interactive session:
 
-```
+```text
 Certificate Wizard
 ==================
 
@@ -103,7 +103,7 @@ docker compose exec \
 
 Certificates are exported to `./volumes/output/<domain>/`:
 
-```
+```text
 volumes/output/example.com/
 ├── cert.pem          # Server certificate
 ├── fullchain.pem     # Server cert + intermediate CA
@@ -196,6 +196,26 @@ Fix: use `crond -f` without `-d`. Already fixed in the current docker-compose.ym
 ```bash
 chmod +x scripts/*.sh
 ```
+
+## Backup
+
+| | |
+|---|---|
+| **Database** | None. |
+| **State** | `./volumes/acme` — the acme.sh account key and the issued certificate store · `./.secrets/cf_token.txt` |
+| **Reproducible** | `./volumes/output` — rendered from `volumes/acme` on the next issue or renewal |
+| **Quiescing** | Not needed. Files change only during issuance and renewal. |
+
+No database hook. This stack is `source_directories` only.
+
+**The account key in `volumes/acme` is the part that matters.** Certificates can
+always be reissued; an account key that is gone means re-registering with the CA
+and losing the issuance history and rate-limit standing tied to it. It is small
+and it almost never changes, which makes it easy to leave out of a backup and
+expensive to lose.
+
+**Restore order:** restore `volumes/acme`, then let the tool regenerate
+`volumes/output` rather than restoring it.
 
 ## Details
 

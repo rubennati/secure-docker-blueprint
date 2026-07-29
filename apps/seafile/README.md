@@ -36,7 +36,7 @@ All routers share `APP_TRAEFIK_HOST`. OnlyOffice is _not_ routed through here �
 
 Seafile's init scripts (`utils.py`, `bootstrap.py`, Go binaries) don't consistently support the `_FILE` suffix. Instead, every service is started through a shared wrapper:
 
-```
+```text
 config/entrypoint.sh  →  read /run/secrets/*  →  export as env vars  →  exec original command
 ```
 
@@ -118,7 +118,7 @@ docker compose exec seafile bash -lc \
 
 SMTP is configured through four layers:
 
-```
+```text
 .env (SEAFILE_SMTP_*)
   → .secrets/smtp_pwd.txt  (Docker secret SEAFILE_SMTP_PWD)
     → entrypoint.sh        (exports SEAFILE_SMTP_PASSWORD)
@@ -269,6 +269,7 @@ Mount in macOS Finder: **Go → Connect to Server** → `https://<APP_TRAEFIK_HO
 WebDAV and Seahub (the web UI) use different authentication paths. What works in the browser does not necessarily work in WebDAV.
 
 **Use these credentials:**
+
 - **Username**: Seafile login email (e.g. `user@example.com`)
 - **Password**: account password — **not** the WebDAV token shown in the profile UI
 
@@ -301,6 +302,7 @@ docker compose exec seafile tail -f /shared/seafile/logs/seafdav.log
 #### When not to use WebDAV
 
 Avoid WebDAV for:
+
 - large uploads
 - many small files
 - permanent network drive mounts
@@ -345,6 +347,43 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/notification/
 - Most secrets live as Docker Secrets under `./.secrets/`. The wrapper entrypoint converts them to env vars inside the container. **Exception:** `thumbnail-server` does not use the entrypoint wrapper, so `JWT_PRIVATE_KEY` and `SEAFILE_MYSQL_DB_PASSWORD` must be set as direct environment variables in `.env` matching the secret file contents.
 - `no-new-privileges:true` on every service.
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | MariaDB · container `seafile-db` · **three databases**: `ccnet_db`, `seafile_db`, `seahub_db` · user `seafile` |
+| **Password** | `.secrets/seafile_db_pwd.txt` |
+| **State** | `./volumes/mysql` (databases) · **`./volumes/seafile-data`** — the file store · `./volumes/seadoc-data` |
+| **Reproducible** | `./volumes/redis` (cache) · `./volumes/seafile-data/seafile/logs` |
+| **Quiescing** | Not needed for the dumps. Seafile writes content-addressed blocks, so a file captured mid-write is a new block rather than a corrupted one. |
+
+```yaml
+mariadb_databases:
+    - name: ccnet_db
+      container: seafile-db
+      username: seafile
+      password: "{credential file /srv/docker/apps/seafile/.secrets/seafile_db_pwd.txt}"
+    - name: seafile_db
+      container: seafile-db
+      username: seafile
+      password: "{credential file /srv/docker/apps/seafile/.secrets/seafile_db_pwd.txt}"
+    - name: seahub_db
+      container: seafile-db
+      username: seafile
+      password: "{credential file /srv/docker/apps/seafile/.secrets/seafile_db_pwd.txt}"
+```
+
+**Three databases, not one.** Backing up only `seafile_db` is the classic mistake
+here: it holds the file metadata, while `ccnet_db` holds users and groups and
+`seahub_db` holds the web layer, shares and links. Any one missing produces a
+restore that starts and is unusable.
+
+`volumes/seafile-data` holds the blocks the metadata points at. Restore the
+databases and the block store from the same archive — a newer block store with an
+older database means files exist that no library references.
+
+**Restore order:** databases first, then the block store, then the app.
+
 ## Access policy — OnlyOffice + SeaDoc require `acc-private`
 
 `acc-tailscale` blocks server-to-server callbacks from Docker containers (their IPs are RFC1918, not Tailscale). This breaks both OnlyOffice document editing and SeaDoc collaborative editing:
@@ -371,6 +410,7 @@ The thumbnail server has one important difference from every other Seafile servi
 If `/thumbnail/...` requests return 403, there are two independent root causes:
 
 1. **Missing `JWT_PRIVATE_KEY`** — the thumbnail container started without the key. Verify without printing the secret:
+
    ```bash
    docker compose exec thumbnail-server sh -lc 'printenv JWT_PRIVATE_KEY | wc -c'
    # Expected: non-zero byte count (e.g. 65)
@@ -380,6 +420,7 @@ If `/thumbnail/...` requests return 403, there are two independent root causes:
    ```
 
 2. **Traefik router priority** — the main `seafile` router (catch-all for `Host(…)`) intercepts `/thumbnail/…` before the dedicated thumbnail router. Verify:
+
    ```bash
    docker inspect seafile-thumbnail \
      --format '{{range $k,$v := .Config.Labels}}{{println $k "=" $v}}{{end}}' \
@@ -399,17 +440,23 @@ If applying this fix to a running deployment:
 1. Back up `.env` and the compose files.
 2. Add `JWT_PRIVATE_KEY` and `SEAFILE_MYSQL_DB_PASSWORD` to `.env` (values must match `.secrets/jwt_key.txt` and `.secrets/seafile_db_pwd.txt`).
 3. Validate the merged compose config:
+
    ```bash
    docker compose config --quiet
    ```
+
 4. Recreate only the affected containers:
+
    ```bash
    docker compose up -d --force-recreate seafile thumbnail-server
    ```
+
 5. Verify the key is now present (non-zero byte count, no secret printed):
+
    ```bash
    docker compose exec thumbnail-server sh -lc 'printenv JWT_PRIVATE_KEY | wc -c'
    ```
+
 6. Test thumbnail generation — request a thumbnail URL in the browser and confirm it no longer returns 403.
 
 ## Known Issues

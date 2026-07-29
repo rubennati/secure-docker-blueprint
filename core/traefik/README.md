@@ -47,7 +47,7 @@ docker compose ps
 
 ## Structure
 
-```
+```text
 .env.example                          # All configurable variables
 docker-compose.yml                    # Docker Socket Proxy + Traefik
 network-dual-stack.yml                # Optional overlay: IPv4+IPv6 on proxy-public
@@ -181,11 +181,11 @@ For apps that don't fit any preset, combine building blocks directly:
 ```yaml
 # Example: strict headers with embed + hard rate limit + CrowdSec
 middlewares:
+  - crowdsec-basic@file
   - acc-tailscale@file
   - hdr-strict-embed@file
   - rl-hard@file
   - compress@file
-  - sec-crowdsec@file
 ```
 
 Available building blocks (defined in `security-blocks.yml`):
@@ -231,10 +231,12 @@ One certificate covers every subdomain. Requires DNS at Cloudflare (or any provi
 **Setup:**
 
 1. In `core/traefik/.env` set:
+
    ```env
    ACME_WILDCARD_DOMAIN=example.com
    CF_DNS_API_TOKEN=<real-token-with-Zone:Read-+-DNS:Edit>
    ```
+
 2. Run `bash ops/scripts/render.sh` (generates `acme-wildcard.yml`)
 3. `docker compose up -d`
 
@@ -251,6 +253,7 @@ Each app requests its own cert. Works with any resolver, no wildcard setup.
    - `cloudflare-dns` for DNS-01 (no port 80 exposure needed)
    - `httpResolver` for HTTP-01 (port 80 must be public)
 3. **Uncomment the `tls.certresolver` label** in each app's `docker-compose.yml`:
+
    ```yaml
    - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
    ```
@@ -331,7 +334,7 @@ nano ops/templates/traefik.yml.tmpl
 # Step 5: Enable the middleware in dynamic config
 # -----------------------------------------------
 nano ops/templates/dynamic/integrations.yml.tmpl
-# Uncomment the sec-crowdsec block (the full plugin section)
+# Uncomment the crowdsec-basic block (the full plugin section)
 
 # -----------------------------------------------
 # Step 6: Render and restart
@@ -342,15 +345,16 @@ docker compose restart traefik
 # After this, middleware changes are hot-reloaded.
 
 # -----------------------------------------------
-# Step 7: Add to routers
+# Step 7: Add to routers (start with whoami only)
 # -----------------------------------------------
-# Add sec-crowdsec@file to any router's middleware list.
-# Example in an app's docker-compose.yml labels:
-#   traefik.http.routers.myapp.middlewares=sec-crowdsec@file,acc-public@file,sec-2@file
+# Before attaching to any real app, read core/crowdsec/docs/profiles.md
+# and run the whoami-first validation. Then add crowdsec-basic@file as
+# the FIRST middleware on a router. Example label:
+#   traefik.http.routers.myapp.middlewares=crowdsec-basic@file,acc-public@file,sec-3@file
 #
 # Or in config/dynamic/routers-system.yml for the dashboard:
 #   middlewares:
-#     - sec-crowdsec@file
+#     - crowdsec-basic@file
 #     - acc-tailscale@file
 #     - sec-4@file
 ```
@@ -359,17 +363,17 @@ docker compose restart traefik
 
 ```bash
 # Option A: Remove from specific routers only
-# Remove "sec-crowdsec@file" from the router's middleware list.
+# Remove "crowdsec-basic@file" from the router's middleware list.
 # Hot-reloaded — no restart needed.
 
 # Option B: Disable completely
-# Comment out sec-crowdsec in integrations.yml.tmpl
+# Comment out crowdsec-basic in integrations.yml.tmpl
 # Re-render: ./ops/scripts/render.sh
 # Hot-reloaded — no restart needed (plugin stays loaded but unused).
 
 # Option C: Remove plugin entirely
 # Comment out experimental.plugins in traefik.yml.tmpl
-# Comment out sec-crowdsec in integrations.yml.tmpl
+# Comment out crowdsec-basic in integrations.yml.tmpl
 # Re-render + restart: ./ops/scripts/render.sh && docker compose restart traefik
 ```
 
@@ -492,3 +496,32 @@ Delete all rendered config files (templates stay untouched):
 ```bash
 bash ops/scripts/reset-templates.sh
 ```
+
+## Backup
+
+| | |
+|---|---|
+| **Database** | None. |
+| **State** | `./volumes/letsencrypt` — `acme.json`, holding the ACME account key and every issued certificate |
+| **Reproducible** | `./volumes/logs` · `./volumes/plugins-storage` — plugins are re-downloaded on start |
+| **Quiescing** | Not needed. `acme.json` is rewritten atomically on issuance and renewal. |
+
+No database hook. This stack is `source_directories` only, and the static and
+dynamic configuration under `config/` is versioned in git rather than backed up
+from the host.
+
+**`acme.json` contains private keys.** It is the one file in this repository that
+combines "small enough to overlook" with "grants the ability to impersonate every
+host it covers". Two consequences for the backup plan:
+
+- The archive containing it deserves the same protection as a secret store. It is
+  not merely configuration.
+- Its file mode is `600` and Traefik refuses to start if that is widened. A
+  restore that flattens permissions produces a proxy that will not come up, which
+  during an incident reads as a much larger failure than it is.
+
+Certificates can be reissued, so this is recoverable. But reissuing during an
+outage means DNS or HTTP validation has to work while the proxy is down.
+
+**Restore order:** early. Nothing else in the deployment is reachable until the
+proxy is up.

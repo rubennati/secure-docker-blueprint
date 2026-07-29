@@ -9,8 +9,8 @@
 - **Reference compose:** https://docs.goauthentik.io/docs/installation/docker-compose
 - **License:** MIT
 - **Origin:** Netherlands · Authentik Security · EU
-- **Based on version:** `2026.2.2`
-- **Last verified:** 2026-05-03 (v2026.2.2)
+- **Based on version:** `2026.5.6`
+- **Last verified:** 2026-07-26 (v2026.5.6)
 
 ## What we use
 
@@ -43,17 +43,21 @@
 1. Read the release notes for every intermediate version you skip: https://docs.goauthentik.io/docs/releases/
    - Pay special attention to "Breaking changes" and "Manual action required" sections.
 2. Back up database + media volumes:
+
    ```bash
    docker compose exec db sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' \
      > authentik-db-$(date +%Y%m%d).sql
    tar czf authentik-media-$(date +%Y%m%d).tgz ./volumes/media
    ```
+
 3. Bump `APP_TAG` in `.env`
 4. `docker compose pull && docker compose up -d`
 5. Watch the server container; schema migrations run on first start:
+
    ```bash
    docker compose logs server --follow
    ```
+
    Expect `Applying migration ...` lines and finally `Startup complete`.
 6. Verify:
    - Login still works

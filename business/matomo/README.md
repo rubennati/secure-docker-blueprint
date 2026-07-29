@@ -61,6 +61,33 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 - **`X-Forwarded-Proto=https`** header injected by Traefik middleware so Matomo generates `https://` tracking URLs (avoids Mixed Content on tracked pages).
 - **Default access `acc-public` + `sec-3`** — tracking endpoint must be reachable from every page you track, but the admin UI benefits from the stricter header policy.
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | MariaDB · container `matomo-db` · database `matomo` · user `matomo` · table prefix `mtm_` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **State** | `./volumes/mysql` (database) · `./volumes/config` (`config.ini.php`, holds the salt) |
+| **Reproducible** | `./volumes/logs` · `./volumes/matomo` — the application directory, restored from the image |
+| **Quiescing** | Not needed. The dump is consistent on its own. |
+
+```yaml
+mariadb_databases:
+    - name: matomo
+      container: matomo-db
+      username: matomo
+      password: "{credential file /srv/docker/business/matomo/.secrets/db_pwd.txt}"
+```
+
+**`config/config.ini.php` carries the instance salt.** Restoring the database
+against a freshly generated config invalidates existing sessions and API tokens,
+and any value derived from that salt. It is one small file — back it up.
+
+The database grows with traffic. Check the archive size against the retention
+policy before assuming the defaults in `backup/borgmatic/` fit this stack.
+
+**Restore order:** database first, then the app.
+
 ## Known Issues
 
 - **Console warnings during installation wizard** — the Congratulations step shows a CSP `unsafe-eval` report-only violation (report-only, no action needed), a `Mousetrap is not defined` JS error, and `.map` file 403s from Apache. All cosmetic; they disappear after installation completes.

@@ -34,7 +34,8 @@ volumes:
 ```
 
 If your deploy path is `/path/to/secure-docker-blueprint/core/traefik`, the host path is:
-```
+
+```text
 /path/to/secure-docker-blueprint/core/traefik/volumes/logs/*.log
 ```
 
@@ -60,7 +61,7 @@ sudo cat /var/lib/logrotate/status | grep traefik
 
 ## How it works
 
-```
+```text
 /path/to/secure-docker-blueprint/core/traefik/volumes/logs/*.log {
     daily              # Rotate once per day
     rotate 7           # Keep 7 rotated files (1 week)

@@ -7,7 +7,7 @@
 - **Docker Hub:** https://hub.docker.com/r/kimai/kimai2
 - **License:** AGPL-3.0
 - **Origin:** Germany · Kevin Papst · EU
-- **Based on version:** `apache-2.56.0`
+- **Based on version:** `apache-2.61.0`
 - **Last checked:** 2026-05-03
 
 ## What we use
@@ -30,15 +30,19 @@
 
 1. Check [Kimai releases](https://github.com/kimai/kimai/releases) — tag format is `apache-X.Y.Z`
 2. Back up:
+
    ```bash
    docker compose exec db mysqldump -u ${DB_USER} -p kimai > kimai-$(date +%Y%m%d).sql
    ```
+
 3. Bump `APP_TAG` in `.env`
 4. `docker compose pull && docker compose up -d`
 5. Watch logs for DB migrations:
+
    ```bash
    docker compose logs app --follow
    ```
+
 6. Verify: log in, create a timesheet entry, generate a report
 
 ## Useful commands

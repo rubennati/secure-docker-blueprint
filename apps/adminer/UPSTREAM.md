@@ -7,7 +7,7 @@
 - **GitHub:** https://github.com/vrana/adminer
 - **License:** Apache-2.0
 - **Origin:** Czech Republic · Jakub Vrána · EU
-- **Based on version:** `4.8.1` (standalone variant)
+- **Based on version:** `5.5.0` (standalone variant)
 - **Last verified:** 2026-05-02 (v4.8.1-standalone)
 
 ## What we use

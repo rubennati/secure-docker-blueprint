@@ -20,7 +20,7 @@ Link or reference the issue / discussion that motivated this. If none exists, ex
 
 How was this verified? Commands run, expected output seen. For apps:
 
-```
+```bash
 docker compose up -d
 docker compose ps                # all healthy
 bash ops/scripts/test-security.sh <host>   # if applicable

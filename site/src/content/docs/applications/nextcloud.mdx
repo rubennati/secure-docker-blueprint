@@ -1,0 +1,388 @@
+---
+title: Nextcloud
+description: File sync, sharing and collaboration — installed unattended, restricted by default, with mail working before anyone needs a password reset.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackStatus from '../../../components/StackStatus.astro';
+
+Nextcloud holds documents, calendars and contacts, and it syncs them to desktops
+and phones. It is the stack in this Blueprint with the most moving parts: an
+application container, a separate web server, a database, a cache, and a
+background worker.
+
+<StackStatus stack="apps/nextcloud"
+  note="Verified on a live host: install, mail, hardening, and a backup whose database was restored. Desktop and mobile client sync were not." />
+
+Needs: [Traefik](/core/traefik/) running, a domain, and SMTP credentials.
+
+:::caution
+Configure mail during setup, not later. Nextcloud cannot reset a password without
+it, and the person who discovers this is usually the one already locked out.
+:::
+
+## Installation
+
+There is no setup wizard. The stack installs itself from environment variables
+and secret files — repeatable, reviewable, and with no unauthenticated setup form
+reachable in between.
+
+From `apps/nextcloud/`:
+
+<Steps>
+
+1. ```bash
+   cp .env.example .env
+   ```
+
+2. Nextcloud has to be told which address Traefik talks to it from, or it will
+   think every visitor is Traefik. Print it:
+
+   ```bash
+   docker network inspect proxy-public \
+     --format '{{range .IPAM.Config}}{{.Subnet}} {{end}}'
+   ```
+
+   Copy whatever that prints into `NC_TRUSTED_PROXIES` — **all of it**. If you
+   enabled IPv6 there will be two entries, and leaving one out means everyone
+   shares a single address as far as the login protection is concerned: one
+   person mistyping a password locks out everybody.
+
+   ```ini
+   APP_TRAEFIK_HOST=cloud.example.com
+   NC_TRUSTED_PROXIES=172.30.0.0/16
+   TZ=Europe/Vienna
+   ```
+
+3. Set mail. Use port 465 — it is encrypted from the first byte, where port 587
+   starts unencrypted and switches over partway:
+
+   ```ini
+   SMTP_HOST=smtp.example.com
+   SMTP_PORT=465
+   SMTP_SECURE=ssl
+   SMTP_NAME=your-smtp-login
+   MAIL_FROM_ADDRESS=nextcloud
+   MAIL_DOMAIN=example.com
+   ```
+
+   Note that `MAIL_FROM_ADDRESS` is only the part before the `@`. Together with
+   `MAIL_DOMAIN` above it makes `nextcloud@example.com`, which has to be an
+   address your mail provider has verified for sending.
+
+   :::note[If mail never arrives, the port is the first thing to check]
+   Many hosting companies block port 465 on their servers. Confirm yours can
+   reach it:
+
+   ```bash
+   openssl s_client -connect smtp.example.com:465 -brief </dev/null
+   ```
+
+   `CONNECTION ESTABLISHED` means you are fine. If it hangs or is refused, port
+   465 is blocked — set `SMTP_PORT=587` and `SMTP_SECURE=tls` instead. That still
+   works, it is simply the weaker of the two.
+   :::
+
+4. Create the secrets. All six before the first start:
+
+   ```bash
+   mkdir -p .secrets
+   openssl rand -base64 32 | tr -d '\n' > .secrets/db_pwd.txt
+   openssl rand -base64 32 | tr -d '\n' > .secrets/db_root_pwd.txt
+   openssl rand -hex 32    | tr -d '\n' > .secrets/redis_pwd.txt
+   printf 'admin'                        > .secrets/admin_user.txt
+   openssl rand -base64 24 | tr -d '\n' > .secrets/admin_pwd.txt
+   printf 'your-smtp-key'                > .secrets/smtp_pwd.txt
+   chmod 600 .secrets/*.txt
+   ```
+
+   Two of the six are read by Nextcloud itself while it runs, so it needs
+   permission for those:
+
+   ```bash
+   sudo chown "$USER":82 .secrets/redis_pwd.txt .secrets/smtp_pwd.txt
+   chmod 640 .secrets/redis_pwd.txt .secrets/smtp_pwd.txt
+   ```
+
+   This keeps the files editable for you as well, which matters the day you
+   change a password.
+
+   :::note
+   `82` is the user Nextcloud runs as in these images. Some variants use `33` —
+   check yours with `docker compose exec -u root app id www-data`.
+   :::
+
+5. Read the administrator password once and store it in your password manager —
+   it is generated, never displayed:
+
+   ```bash
+   cat .secrets/admin_pwd.txt
+   ```
+
+6. Start, and watch the install run:
+
+   ```bash
+   docker compose up -d
+   docker compose logs -f app
+   ```
+
+   Expect `Initializing nextcloud` followed by `Nextcloud was successfully
+   installed`. The database has a health check the application waits on, so the
+   first start takes a minute.
+
+</Steps>
+
+## Verify
+
+```bash
+docker compose ps
+docker compose exec -u www-data app php occ status
+docker compose exec -u www-data app php occ config:system:get trusted_proxies
+```
+
+Expected: every container healthy, `installed: true`, and your proxy subnets
+listed.
+
+Then log in and open `/settings/admin/overview`. That page is the acceptance
+test — it runs the project's own checks against the running instance and it is
+more thorough than anything written here. Work until it reports no warnings.
+
+Send a test message before handing the instance to anyone:
+
+```bash
+docker compose exec -u www-data app php occ user:welcome admin
+```
+
+## Harden before the first user
+
+Run these once. Each is `occ config:system:set`, so re-running is harmless.
+
+<Steps>
+
+1. Set the region, so phone numbers in contacts are parsed:
+
+   ```bash
+   docker compose exec -u www-data app php occ \
+     config:system:set default_phone_region --value="AT"
+   ```
+
+2. Move background jobs to a quiet hour — the value is an hour, UTC:
+
+   ```bash
+   docker compose exec -u www-data app php occ \
+     config:system:set maintenance_window_start --value=1 --type=integer
+   ```
+
+3. Stop new accounts being seeded with example files:
+
+   ```bash
+   docker compose exec -u www-data app php occ \
+     config:system:set skeletondirectory --value=""
+   ```
+
+4. Bound preview generation. Thumbnails are produced by PHP workers; without a
+   limit, one large image occupies a worker long enough for users to notice:
+
+   ```bash
+   docker compose exec -u www-data app php occ \
+     config:system:set preview_max_x --value=2048 --type=integer
+   docker compose exec -u www-data app php occ \
+     config:system:set preview_max_y --value=2048 --type=integer
+   docker compose exec -u www-data app php occ \
+     config:system:set preview_max_filesize_image --value=25 --type=integer
+   ```
+
+5. Restrict the administration settings to the networks you administer from.
+   Everything else stays reachable; only `/settings/admin` narrows:
+
+   ```bash
+   docker compose exec -u www-data app php occ \
+     config:system:set allowed_admin_ranges 0 --value="100.64.0.0/10"
+   docker compose exec -u www-data app php occ \
+     config:system:set allowed_admin_ranges 1 --value="fd7a:115c:a1e0::/48"
+   ```
+
+   Those two ranges are Tailscale's. Substitute your own, and confirm you can
+   still reach the page from where you work before you rely on it.
+
+</Steps>
+
+## Going further
+
+### Opening it up
+
+The stack ships `APP_TRAEFIK_ACCESS=acc-private` — reachable from your LAN and
+VPN, and from the Docker gateway, which the instance needs to run its own setup
+checks. Switch to `acc-public` once it is configured, verified, and you have
+logged in successfully. That is a deliberate change to your attack surface.
+
+An office server such as OnlyOffice calls back over the public domain and
+requires `acc-public`.
+
+### Rotating a key
+
+Most editors save by writing a new file and renaming it over the old one. The
+container's mount still points at the file that was replaced, so it keeps reading
+the previous value and `restart` does not help:
+
+```bash
+docker compose up -d --force-recreate app cron
+```
+
+Writing in place — `printf '%s' "$KEY" > .secrets/smtp_pwd.txt` — avoids this.
+
+## Backup
+
+:::note
+This section covers what Borgmatic needs to know **about Nextcloud**. Installing
+it, the repository, the encryption keys, the schedule and the restore mechanics
+are all on [Backup and restore](/operations/backup/) — set that up first, then
+come back here.
+:::
+
+Nextcloud keeps its file index in the database and the files on disk. Capture the
+two at different moments under load and the restore shows files the index does
+not know about, or index entries pointing at nothing. `occ files:scan` repairs the
+first case and not the second. This is the stack in the Blueprint where quiescing
+genuinely matters.
+
+Three things must be captured together — a database dump alone restores an
+instance that cannot read its own files:
+
+| | Where |
+|---|---|
+| Database | dumped through Borgmatic's hook, not copied |
+| Data directory and `config/config.php` | the `nextcloud_html` volume |
+| `.env` and `.secrets/` | the deployment directory |
+
+`config.php` carries the instance secret and the password salt. Restoring the
+database against a regenerated config invalidates sessions and can make encrypted
+content unreadable.
+
+### What to add to `/etc/borgmatic/config.yaml`
+
+<Steps>
+
+1. The data. Deliberately **not** the database volume — the dump below is the
+   consistent copy, the raw files would be a torn one:
+
+   ```yaml
+   source_directories:
+       - /srv/blueprint
+       - /var/lib/docker/volumes/nextcloud_nextcloud_html/_data
+   ```
+
+   Confirm the volume's real name with `docker volume ls`; it is prefixed with
+   your Compose project name.
+
+2. The database. The password is read from the same file the stack already
+   mounts as a secret, so there is no second copy to rotate:
+
+   ```yaml
+   mariadb_databases:
+       - name: nextcloud
+         container: nextcloud-db
+         username: nextcloud
+         password: "{credential file /srv/blueprint/apps/nextcloud/.secrets/db_pwd.txt}"
+         tls: false
+   ```
+
+3. Maintenance mode around the capture. The error hook is what stops a failed run
+   leaving the instance offline:
+
+   ```yaml
+   commands:
+       - before: action
+         when: [create]
+         run:
+             - docker exec -u www-data nextcloud-app php occ maintenance:mode --on
+       - after: action
+         when: [create]
+         run:
+             - docker exec -u www-data nextcloud-app php occ maintenance:mode --off
+       - after: error
+         run:
+             - docker exec -u www-data nextcloud-app php occ maintenance:mode --off
+   ```
+
+4. Validate, then run it once by hand:
+
+   ```bash
+   sudo borgmatic config validate
+   sudo borgmatic create --verbosity 1 --stats
+   ```
+
+</Steps>
+
+### Restoring this stack
+
+Database first, then the file tree, then the application — and leave maintenance
+mode on until both halves are in place.
+
+The flag itself is inside the backup. Any archive taken while the quiescing hook
+was active holds `'maintenance' => true` in `config.php`, so a restored instance
+refuses to serve until you clear it:
+
+```bash
+docker compose exec -u www-data app php occ maintenance:mode --off
+```
+
+:::caution
+A backup you have not restored is not a backup. Rehearse it into a scratch
+location and open a file from the result — the procedure is on
+[Backup and restore](/operations/backup/#prove-it-with-a-restore).
+:::
+
+## Updates
+
+Nextcloud upgrades one major version at a time. Skipping a version is not
+supported, and the web updater is disabled in this stack in favour of replacing
+the image.
+
+<Steps>
+
+1. Read the [release notes](https://nextcloud.com/changelog/) for the version you
+   are moving to.
+2. Back up, and confirm the backup is readable.
+3. Raise `APP_TAG` in `.env` by one major version.
+4. ```bash
+   docker compose pull
+   docker compose up -d
+   docker compose logs -f app
+   ```
+5. Check `occ status` for `needsDbUpgrade: false`, then re-open
+   `/settings/admin/overview`.
+
+</Steps>
+
+## Troubleshooting
+
+**`Permission denied` reading a secret, while the file looks correct on the
+host** — the file was replaced by an editor. Recreate the containers rather than
+restarting them.
+
+**Mail silently does not send, `occ` reports `NOAUTH`** — the web user cannot
+read `redis_pwd.txt` or `smtp_pwd.txt`. Check the group ownership from the
+installation steps. The container still reports healthy in this state.
+
+**Brute-force protection locks out everyone at once** — `NC_TRUSTED_PROXIES` is
+incomplete, so every request appears to come from the proxy. Add the missing
+subnet, including the IPv6 one.
+
+**Setup checks fail to reach the instance itself** — with `acc-tailscale` the
+Docker gateway is not permitted. `acc-private` covers it.
+
+## Repository files
+
+- [`apps/nextcloud/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/nextcloud/README.md) — architecture, network exception, tuning
+- [`apps/nextcloud/.env.example`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/nextcloud/.env.example)
+- [`apps/nextcloud/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/nextcloud/UPSTREAM.md) — pinned versions and upgrade notes
+
+## Official sources
+
+- [Nextcloud administration manual](https://docs.nextcloud.com/server/latest/admin_manual/)
+- [Hardening and security guidance](https://docs.nextcloud.com/server/latest/admin_manual/installation/harden_server.html)
+- [Email configuration](https://docs.nextcloud.com/server/latest/admin_manual/configuration_server/email_configuration.html)
+- [`occ` command reference](https://docs.nextcloud.com/server/latest/admin_manual/occ_command.html)
+- [Official image and its environment variables](https://github.com/nextcloud/docker)
+- [Image on Docker Hub](https://hub.docker.com/_/nextcloud)

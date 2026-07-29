@@ -1,0 +1,31 @@
+# =============================================================================
+# Collabora Online (CODE) — LOCAL test stack (no Traefik)
+# =============================================================================
+# Run standalone on http://localhost:9980 to check it boots.
+#   cp .env.local.example .env.local
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   curl http://localhost:9980/   → "OK"
+# =============================================================================
+
+services:
+
+  app:
+    image: collabora/code:${APP_TAG}
+    container_name: collabora-local-app
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [MKNOD]
+    environment:
+      aliasgroup1: "https://localhost:.*"
+      DONT_GEN_SSL_CERT: "true"
+      extra_params: "--o:ssl.enable=false --o:ssl.termination=true"
+      TZ: ${TZ}
+    ports:
+      - "127.0.0.1:9980:9980"   # localhost only; change to 9980:9980 for LAN access
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'cat < /dev/null > /dev/tcp/127.0.0.1/9980' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s

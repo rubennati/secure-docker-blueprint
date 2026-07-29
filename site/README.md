@@ -31,12 +31,27 @@ npm run preview    # serve the production build locally
 
 ## Structure
 
-```
+```text
 site/
   src/content/docs/    — page content (.md / .mdx)
+  src/pages/           — generated text routes (see below)
   astro.config.mjs     — site config, navigation, sidebar
-  public/              — static assets
+  public/              — static assets served verbatim
 ```
+
+### Generated text routes
+
+`site` in `astro.config.mjs` holds the production address. Canonicals, Open Graph URLs, the sitemap and the three routes below derive from it, so nothing under `public/` should repeat the domain. No `base` — the site runs at the root of its own domain.
+
+| Route | Derived from |
+|---|---|
+| `robots.txt` | `site` |
+| `.well-known/security.txt` | `site`, plus a review date in the route file |
+| `llms.txt` | `site`, plus every page's title and description |
+
+`llms.txt` reads the content collection because the hand-written copy had drifted: it listed one application while three were published. A section matching no pages fails the build.
+
+`@astrojs/sitemap` needs no setup — Starlight registers it, but it emits nothing until `site` is set.
 
 ## Content conventions
 

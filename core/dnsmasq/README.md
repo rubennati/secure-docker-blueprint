@@ -36,12 +36,14 @@ docker compose logs -f
 ## Adding Wildcard Zones
 
 In `.env`:
+
 ```env
 DNS_WILDCARD_1_DOMAIN=test.lab.example.com
 DNS_WILDCARD_1_IP=100.100.100.10
 ```
 
 After changing `.env`, re-render and restart:
+
 ```bash
 ./ops/scripts/render.sh
 docker compose restart
@@ -50,15 +52,18 @@ docker compose restart
 ## Adding Static Records
 
 Edit `config/records.hosts`:
-```
+
+```text
 100.100.100.10    mynas.lab.example.com
 100.100.100.20    printer.lab.example.com
 ```
 
 Reload without restart (SIGHUP):
+
 ```bash
 docker exec dnsmasq kill -HUP 1
 ```
+
 This re-reads `records.hosts` and clears the DNS cache. No downtime.
 
 ## Verify
@@ -95,15 +100,34 @@ nslookup google.com 127.0.0.1
 dnsmasq supports IPv6 natively. Upstream DNS and wildcard zones work for both A and AAAA records.
 
 In `config/records.hosts`:
-```
+
+```text
 fd7a:115c:a1e0::10    mynas.lab.example.com
 100.100.100.10         mynas.lab.example.com
 ```
 
 Test:
+
 ```bash
 nslookup -type=AAAA google.com 127.0.0.1
 ```
+
+## Backup
+
+| | |
+|---|---|
+| **Database** | None. |
+| **State** | None on the host — `config/dnsmasq.conf` and `config/records.hosts` are mounted read-only and versioned in git |
+| **Reproducible** | everything |
+| **Quiescing** | Not applicable. |
+
+Nothing to back up. This stack is configuration only, and that configuration is
+in the repository. Restoring means checking out the repository and starting the
+container.
+
+Worth noting for the wider restore plan: while this container is down, name
+resolution for the internal zones is down with it. Bring it up early rather than
+last.
 
 ## Details
 

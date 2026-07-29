@@ -1,0 +1,225 @@
+# =============================================
+# Borgmatic – Backup configuration
+# =============================================
+# Copy to /etc/borgmatic/config.yaml and adjust every value.
+# Validate before trusting it:  sudo borgmatic config validate
+#
+# This runs on the HOST, not in a container. See ../README.md for why.
+# Requires borgmatic >= 2.0.8 for the `container:` database option.
+# =============================================
+
+# --- Repositories [target] -------------------------------------------------
+# SSH/SFTP is the primary target: any provider offering SSH storage works, and
+# Borg speaks it natively. The `/./` after the port means "relative to the SSH
+# user's home directory". Some providers use a non-standard SSH port.
+#
+# Initialise the repository once, before the first run:
+#   borg init --encryption=repokey-blake2 ssh://backup-user@backup.example.com:22/./borg/myhost
+#
+# Then EXPORT THE KEY and store it off this host — see ../README.md "Keys".
+repositories:
+    - path: ssh://backup-user@backup.example.com:22/./borg/myhost
+      label: offsite
+
+    # A second target on different media completes 3-2-1. Uncomment once the
+    # first one is proven. A locally mounted disk is a reasonable second copy;
+    # note that it is only "off-site" if it physically leaves the building.
+    # - path: /mnt/backup/borg/myhost
+    #   label: local
+
+# --- Encryption [secrets] --------------------------------------------------
+# Never put the passphrase in this file. `{credential file ...}` reads it from
+# a root-only file and strips a trailing newline itself — the exact footgun
+# this repo works around elsewhere with `| tr -d '\n'`.
+#
+# Both the passphrase AND the exported key are required to restore. Losing
+# either loses the backup. See README.md "Keys".
+encryption_passphrase: "{credential file /root/.borg-passphrase}"
+
+# --- What to back up [data] ------------------------------------------------
+# Point this at wherever the blueprint is deployed. Bind-mounted app data
+# (./volumes/), configuration (docker-compose.yml, .env) and secrets
+# (.secrets/) all live under the deployment root — which is why the archive
+# MUST stay encrypted.
+#
+# If this host carries more than one deployment, name paths in full instead of
+# reaching for /var/lib/docker/volumes wholesale — otherwise this configuration
+# quietly captures, and its hooks quietly quiesce, a deployment it was never
+# meant to touch. Prove the scoping after the first run:
+#   sudo borgmatic list --archive latest --find '*the-other-one*' | grep -v '^local:'
+source_directories:
+    - /srv/docker
+
+    # Named volumes. A few stacks in this blueprint use them, and Docker
+    # recommends them generally — so the backup has to cover both kinds.
+    # Docker's storage path differs under rootless Docker or a custom
+    # data-root; confirm yours with:  docker info --format '{{.DockerRootDir}}'
+    #
+    # Reading this path directly while containers write to it can capture an
+    # inconsistent state. It is acceptable for data whose consistency does not
+    # depend on multiple files agreeing, and it is NOT how databases should be
+    # handled — those go through the dump hooks below.
+    #
+    # If this filesystem is btrfs, ZFS or LVM, prefer the snapshot integration
+    # below: borgmatic then backs up a frozen point-in-time view instead of a
+    # live directory, which removes the inconsistency entirely.
+    - /var/lib/docker/volumes
+
+# --- Filesystem snapshots [consistency, optional] --------------------------
+# Borgmatic can take a snapshot itself, back up from it, and discard it. This
+# is the clean answer to "the files changed while I was reading them" — and it
+# is what makes the Docker volume directory above safe to include.
+#
+# Enable the one matching your filesystem; leave all of them off otherwise.
+# This does NOT make snapshots a backup — it uses one as a consistent source
+# for the real backup. See ../README.md "Three layers people conflate".
+#
+# btrfs:
+#     btrfs_command: btrfs
+# zfs:
+#     zfs_command: zfs
+# lvm:
+#     snapshot_size: 10%ORIGIN
+
+exclude_patterns:
+    - '**/volumes/*/cache'
+    - '**/volumes/*/tmp'
+    - '**/node_modules'
+exclude_caches: true
+exclude_if_present:
+    - .nobackup
+
+# --- Retention [policy] ----------------------------------------------------
+# Derive these from your RPO, not from habit. Daily backups mean accepting up
+# to 24 hours of data loss. Keep enough history that a problem discovered late
+# is still recoverable — a week of dailies does not survive a three-week-old
+# deletion nobody noticed.
+keep_daily: 7
+keep_weekly: 4
+keep_monthly: 6
+keep_yearly: 1
+
+# --- Databases [consistency] -----------------------------------------------
+# Copying a running database's files can capture a torn, mid-transaction
+# state that only reveals itself at restore. Always dump.
+#
+# `container:` (borgmatic >= 2.0.8) resolves the container's IP through Docker,
+# so no ports need publishing. The dump command itself still runs ON THE HOST
+# and connects over TCP, so the matching client must be installed there —
+# mariadb-client, postgresql-client, mongodb-database-tools. Without it:
+#   [Errno 2] No such file or directory: 'mariadb-dump'
+#
+# TLS: a distribution client is often newer than the pinned server and will
+# demand TLS the server does not offer. For a host-to-container connection over
+# a local bridge, set `tls: false` on the entry. For a genuinely remote
+# database, configure TLS on the server instead.
+#
+# PASSWORDS: point `{credential file ...}` straight at the same .secrets/ file
+# the stack already mounts as a Docker secret. One copy of the password on the
+# host, nothing exported into borgmatic's environment, and no second place to
+# update when it is rotated.
+#
+# (Borgmatic also has a `{credential container ...}` source that reads Docker
+# secrets from /run/secrets — that one only works when borgmatic itself runs in
+# a container, which it deliberately does not here. See ../README.md.)
+#
+# Keep one entry per database. Delete the engines you do not run.
+
+postgresql_databases:
+    - name: myapp
+      container: myapp-db
+      username: myapp
+      password: "{credential file /srv/docker/apps/myapp/.secrets/db_pwd.txt}"
+      format: custom
+
+mysql_databases:
+    - name: myapp
+      container: myapp-db
+      username: myapp
+      password: "{credential file /srv/docker/apps/myapp/.secrets/db_pwd.txt}"
+
+mariadb_databases:
+    - name: myapp
+      container: myapp-db
+      username: myapp
+      password: "{credential file /srv/docker/apps/myapp/.secrets/db_pwd.txt}"
+      # See the TLS note above. Remove this for a database reached over a
+      # network rather than a local bridge.
+      tls: false
+
+# SQLite is a file, but a live one — dump it rather than copying it.
+sqlite_databases:
+    - name: myapp
+      path: /srv/docker/apps/myapp/volumes/data/database.sqlite
+
+# MongoDB — used by apps/unifi and business/opensign in this blueprint.
+mongodb_databases:
+    - name: myapp
+      container: myapp-db
+      username: myapp
+      password: "{credential file /srv/docker/apps/myapp/.secrets/db_pwd.txt}"
+
+# --- Integrity [proof] -----------------------------------------------------
+# Separate from "did the job run". These detect bit rot and truncation.
+# `data` reads and verifies every chunk — thorough and slow, so run it rarely.
+checks:
+    - name: repository
+      frequency: 2 weeks
+    - name: archives
+      frequency: 1 month
+    - name: data
+      frequency: 3 months
+
+# --- Monitoring [proof] ----------------------------------------------------
+# The failure this catches: the timer stopped six weeks ago and nothing said
+# so. Both services below are already in this blueprint under monitoring/.
+# Use one; two is noise.
+
+healthchecks:
+    ping_url: https://healthchecks.example.com/ping/00000000-0000-0000-0000-000000000000
+    states:
+        - start
+        - finish
+        - fail
+
+# uptime_kuma:
+#     push_url: https://kuma.example.com/api/push/abcd1234
+#     states:
+#         - start
+#         - finish
+#         - fail
+
+# --- Command hooks [optional] ----------------------------------------------
+# v2 syntax. The old before_backup/after_backup keys are deprecated.
+#
+# Needed where the database hooks are not enough on their own — an application
+# whose file tree and database must agree, or one with no dump mechanism at all.
+# If a hook produces data for the backup, make it FAIL LOUDLY: a dump command
+# that errors while the backup continues produces an archive that looks
+# complete and restores nothing. Use `set -e` and a non-zero exit.
+#
+# The example below quiesces Nextcloud, which is the case in this repository
+# where it genuinely matters: the file index lives in the database and the files
+# on disk, and capturing them at different moments under load produces a restore
+# with files the index does not know about.
+#
+# THE ERROR HOOK IS NOT OPTIONAL. Without it, a run that fails between the two
+# leaves the application offline until someone notices. `after: error` carries
+# no `when:`, so it covers every action.
+#
+# Name the container exactly. `docker compose` resolves a project from the
+# working directory and can pick the wrong one on a host with two deployments;
+# `docker exec <name>` cannot.
+#
+# commands:
+#     - before: action
+#       when: [create]
+#       run:
+#           - docker exec -u www-data myapp-app php occ maintenance:mode --on
+#     - after: action
+#       when: [create]
+#       run:
+#           - docker exec -u www-data myapp-app php occ maintenance:mode --off
+#     - after: error
+#       run:
+#           - docker exec -u www-data myapp-app php occ maintenance:mode --off

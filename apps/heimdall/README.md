@@ -1,6 +1,6 @@
 # Heimdall
 
-> **Status: ✅ Ready** — v2.6.3 · 2026-05-02
+> **Status: ✅ Ready** — v2.8.1 · 2026-07-26
 
 Self-hosted application dashboard — a pretty launcher for your homelab apps, with optional widgets that show status / stats per service.
 
@@ -50,6 +50,20 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 - **`ALLOW_INTERNAL_REQUESTS=false`** by default — Heimdall's status-check widgets cannot probe RFC1918 addresses. Flip to `true` if you want widgets to monitor internal app status (e.g. Uptime status of `wordpress-app:80`).
 - **Default access `acc-tailscale`** — VPN-only.
 - **Optional authentication** — Heimdall supports user accounts in its UI. Not enabled by default; add via the UI if you share the instance.
+
+## Backup
+
+| | |
+|---|---|
+| **Database** | SQLite inside `./config` — no database server, no dump hook |
+| **State** | `./config` — dashboard items, uploaded icons, users |
+| **Reproducible** | nothing |
+| **Quiescing** | **Recommended.** Copying a live SQLite file can capture a torn state; stop the container or snapshot the filesystem. |
+
+No database hook. This stack is `source_directories` only, quiesced.
+
+Small and easy to skip — and entirely hand-made. Nothing regenerates a curated
+dashboard, so the cost of losing it is measured in the hour it took to build.
 
 ## Known Issues
 

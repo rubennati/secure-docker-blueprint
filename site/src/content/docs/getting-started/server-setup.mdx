@@ -1,0 +1,220 @@
+---
+title: Preparing a server
+description: From a fresh Linux host to a working foundation — the decisions that are expensive to change later.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Everything else in the Blueprint runs on top of this. Two decisions here are hard to
+reverse once services are running, so they come first.
+
+## Before you start
+
+Needs: a Linux host you may reconfigure (Debian 13 is what this is tested on),
+Docker with the Compose plugin, ports 80 and 443 free, and a domain whose DNS you
+control.
+
+```bash
+docker --version && docker compose version
+ss -tlnp | grep -E ':80 |:443 ' || echo "ports free"
+```
+
+## Decide: will anyone connect through a VPN?
+
+If yes — Tailscale, WireGuard, anything where the client reaches the server
+directly — **enable IPv6 in Docker before starting any service.**
+
+A VPN client connects with no proxy in between, so nothing records the original
+address in a header. The source address of the connection is the only record there
+is, and VPN clients prefer IPv6. On an IPv4-only Docker network that address is
+lost before any access policy can read it, and a policy that allows "only my VPN"
+will reject your VPN.
+
+The symptom is `403 Forbidden` that looks like a permissions problem.
+
+:::caution
+Enabling IPv6 restarts the Docker daemon and stops every container on the host. Do
+it now, while nothing is running.
+:::
+
+<Steps>
+
+1. Write the daemon configuration:
+
+   ```bash
+   sudo tee /etc/docker/daemon.json >/dev/null <<'EOF'
+   {
+     "log-driver": "json-file",
+     "log-opts": { "max-size": "10m", "max-file": "3" },
+     "ipv6": true,
+     "ip6tables": true,
+     "userland-proxy": false
+   }
+   EOF
+   ```
+
+2. Check it parses, then restart:
+
+   ```bash
+   sudo python3 -m json.tool /etc/docker/daemon.json
+   sudo systemctl restart docker
+   ```
+
+</Steps>
+
+The `log-opts` bound container logs — without them they grow until the disk is full.
+
+## Point DNS at the server
+
+A wildcard record covers every service you add later:
+
+```text
+*.apps.example.com    A       203.0.113.10
+*.apps.example.com    AAAA    2001:db8::1
+```
+
+Add the `AAAA` record only if the host has working public IPv6:
+
+```bash
+curl -6 https://api64.ipify.org
+```
+
+Using split DNS on a VPN? Add the same wildcard there, pointing at the server's VPN
+addresses — **both** families. An IPv4-only entry sends all VPN traffic over IPv4
+and leaves the IPv6 path untested.
+
+## Installation
+
+<Steps>
+
+1. Clone into its own directory:
+
+   ```bash
+   sudo mkdir -p /srv/blueprint && sudo chown "$USER" /srv/blueprint
+   cd /srv/blueprint
+   git clone --branch main https://github.com/rubennati/secure-docker-blueprint.git .
+   ```
+
+   :::note
+   Use a fresh directory. Cloning over an older copy mixes old and new
+   configuration, and if that copy has containers running they share a project
+   name and get replaced.
+   :::
+
+2. Set up Traefik — it terminates TLS and routes everything that follows. Follow
+   the [Traefik guide](/core/traefik/), then come back here.
+
+3. If you enabled IPv6, add the two network ranges to `core/traefik/.env` and
+   generate your own IPv6 prefix:
+
+   ```bash
+   RANDOM_HEX=$(openssl rand -hex 5)
+   printf 'PUBLIC_NETWORK_SUBNET_V4=172.30.0.0/16\n'
+   printf 'PUBLIC_NETWORK_SUBNET_V6=fd%s:%s:%s::/64\n' \
+     "${RANDOM_HEX:0:2}" "${RANDOM_HEX:2:4}" "${RANDOM_HEX:6:4}"
+   ```
+
+   Generate rather than copy an example — these are private ranges, and reusing
+   someone else's is the IPv6 equivalent of everyone picking `192.168.1.0/24`.
+
+4. Start Traefik with the dual-stack overlay:
+
+   ```bash
+   cd core/traefik
+   docker compose -f docker-compose.yml -f network-dual-stack.yml up -d
+   ```
+
+   :::caution
+   With IPv6 enabled, that overlay belongs on **every** `docker compose` command
+   for this stack. Leave it off once and the network is rebuilt without IPv6.
+   :::
+
+</Steps>
+
+## Verify
+
+```bash
+docker compose ps
+docker network inspect proxy-public --format '{{range .IPAM.Config}}{{.Subnet}} {{end}}'
+ss -tlnp | grep -E ':80 |:443 '
+```
+
+Expected: containers healthy, **two** subnets from the second command, and
+listeners on both `0.0.0.0` and `[::]`.
+
+One subnet means the overlay was missed.
+
+### Confirm the server sees who is calling
+
+Access policies, rate limits and intrusion detection all depend on this. Deploy the
+diagnostic endpoint:
+
+```bash
+cd ../whoami
+cp .env.example .env
+# set APP_TRAEFIK_HOST, and APP_TRAEFIK_ACCESS=acc-public for the test
+docker compose up -d
+```
+
+Open it and read `X-Real-Ip`. It must show your address — the one
+`curl https://api64.ipify.org` reports. Repeat for each path you care about: public
+IPv4, public IPv6, and through the VPN.
+
+`172.30.0.1` or similar means the real address is being lost — recheck the daemon
+configuration and the overlay.
+
+```bash
+# close it again afterwards
+sed -i 's/^APP_TRAEFIK_ACCESS=.*/APP_TRAEFIK_ACCESS=acc-private/' .env
+docker compose up -d
+```
+
+:::caution
+`whoami` shows container names and internal addresses. Leave it public only for
+the measurement — servers are probed within minutes of a certificate being issued,
+and certificates are public the moment they exist.
+:::
+
+## Going further
+
+### Rotating the proxy's logs
+
+Traefik writes access logs to disk, and Docker's own rotation does not cover them.
+
+```bash
+sudo cp core/traefik/config/logrotate/traefik /etc/logrotate.d/traefik
+sudo sed -i 's|/path/to/secure-docker-blueprint|/srv/blueprint|' /etc/logrotate.d/traefik
+sudo logrotate -d /etc/logrotate.d/traefik
+```
+
+The last command is a dry run — check the path matches before relying on it.
+
+## Troubleshooting
+
+**`403 Forbidden` on a service that should be reachable** — rule out your browser
+first:
+
+```bash
+dig +short traefik.apps.example.com
+```
+
+If that returns the right address but the page stays forbidden, open it in a
+private window. Browsers cache DNS independently of the system, and a *corrected*
+record is the worst case: the old host answers `403`, which is indistinguishable
+from an access policy rejecting you. In Chrome, clear it at
+`chrome://net-internals/#dns`.
+
+**Certificate not issued** — check the DNS provider token has the permissions the
+[Traefik guide](/core/traefik/) lists, and watch `docker compose logs traefik`.
+
+## Repository files
+
+- [`core/traefik/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/traefik/README.md) — full proxy setup
+- [`core/traefik/docs/ipv6-dual-stack.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/traefik/docs/ipv6-dual-stack.md) — why IPv6 matters for VPN access
+- [`docs/standards/logrotate.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/docs/standards/logrotate.md)
+
+## Official sources
+
+- [Docker daemon configuration](https://docs.docker.com/reference/cli/dockerd/#daemon-configuration-file)
+- [Docker IPv6 networking](https://docs.docker.com/engine/daemon/ipv6/)
+- [Traefik documentation](https://doc.traefik.io/traefik/)

@@ -41,9 +41,11 @@ Agents connect to the hub over an SSH key pair — no inbound ports needed on ag
 
 1. Check [Beszel releases](https://github.com/henrygd/beszel/releases) — hub and agent should be kept on the same version
 2. Back up hub data:
+
    ```bash
    cp -r volumes/data/ beszel-backup-$(date +%Y%m%d)/
    ```
+
 3. Bump `APP_TAG` in `.env` for both hub and all agent deployments
 4. Upgrade hub first, then agents
 5. `docker compose pull && docker compose up -d`

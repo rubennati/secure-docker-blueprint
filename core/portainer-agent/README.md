@@ -1,6 +1,6 @@
 # Portainer Agent
 
-> **Status: ✅ Ready** — v2.39.1 · 2026-05-04
+> **Status: ✅ Ready** — v2.39.5 · 2026-07-26
 
 Remote Docker agent for [Portainer](../portainer/). Runs on each additional host that a central Portainer should manage.
 
@@ -11,10 +11,12 @@ Remote Docker agent for [Portainer](../portainer/). Runs on each additional host
 > If you don't want that extra exposure, use [Dockhand + Hawser](../hawser/) instead — equivalent multi-host capability without opening additional ports.
 
 **When you need this:**
+
 - Portainer runs on Host A, you want to manage Docker on Host B, C, D from the same UI
 - You already picked Portainer as your UI and need to scale beyond one host
 
 **When you don't need this:**
+
 - Portainer and Docker are on the same host → [`core/portainer/`](../portainer/) alone is enough
 - You haven't committed to Portainer yet → Dockhand + Hawser is the cleaner multi-host path
 
@@ -76,6 +78,7 @@ docker compose logs -f
 - Agent log shows `Connected` — no `connection refused` loop
 - Central Portainer UI → Environments: the new environment shows as `Connected` within ~30 seconds
 - From another host on the same Tailnet:
+
   ```bash
   # Tailscale interface reachable
   curl --connect-timeout 3 http://<central-tailscale-ip>:8000
@@ -89,6 +92,7 @@ docker compose logs -f
 Only if Edge Mode doesn't fit — e.g. central Portainer has no internet egress. Agent listens on port 9001, central Portainer connects inbound with a shared secret.
 
 See the `docker-compose.yml` comments for the switch. You'll need to:
+
 - Swap environment variables to `AGENT_SECRET` + port 9001 mapping
 - Expose port 9001 only on a trusted interface (Tailscale, private LAN)
 
@@ -98,6 +102,24 @@ See the `docker-compose.yml` comments for the switch. You'll need to:
 - **Direct `/var/run/docker.sock` mount** — Portainer Agent needs broad Docker API access (containers, volumes, networks, images, swarm, tasks, secrets, configs, exec, build). A filtered socket-proxy would have to allow nearly all endpoints, so the security gain is marginal. Same trade-off as [`core/hawser/`](../hawser/).
 - **`/host:ro` mount** — Portainer uses this to show host volumes / paths. Read-only. Drop if host-path browsing isn't needed.
 - **`no-new-privileges:true`** on the container.
+
+## Backup
+
+| | |
+|---|---|
+| **Database** | None. |
+| **State** | None — the agent holds no data of its own |
+| **Reproducible** | everything |
+| **Quiescing** | Not applicable. |
+
+Nothing to back up. The agent is a stateless relay; what it exposes belongs to the
+host it runs on, and what it is used for is stored by the Portainer instance that
+connects to it.
+
+**It mounts `/:/host:ro`** — the security baseline's one documented deviation of
+that kind. For backup purposes that mount is worth knowing about in the other
+direction: it means an agent container can read anything on the host, so its
+placement is a security decision, not a convenience one.
 
 ## Known Issues
 

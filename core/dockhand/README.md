@@ -70,6 +70,32 @@ Socket proxy is the key hardening layer. Dockhand is granted only the API calls 
 
 If Dockhand doesn't need a capability (e.g. no image management from the UI), set the corresponding variable to `"0"` and restart.
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | PostgreSQL · container `dockhand-db` · database `dockhand` · user `dockhand` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **State** | `./volumes/postgres` (database) · `./volumes/data` |
+| **Reproducible** | nothing |
+| **Quiescing** | Not needed. The dump is consistent on its own. |
+
+```yaml
+postgresql_databases:
+    - name: dockhand
+      container: dockhand-db
+      username: dockhand
+      password: "{credential file /srv/docker/core/dockhand/.secrets/db_pwd.txt}"
+```
+
+**`.secrets/encryption_key.txt` decrypts what is stored in the database.** A
+database restored without the matching key holds rows that cannot be read back.
+Back the key up separately from the database and keep a copy off the host — the
+two together are what makes the restore work, and keeping them in one place
+defeats the point of encrypting at rest.
+
+**Restore order:** database first, then the app.
+
 ## Known Issues
 
 None currently documented.

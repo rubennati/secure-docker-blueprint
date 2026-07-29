@@ -1,6 +1,6 @@
 # Homepage (gethomepage)
 
-> **Status: ✅ Ready** — v0.10.9 · 2026-05-03
+> **Status: 🚧 v1.13.2** — major upgrade from 0.x; verify config first · 2026-07-26
 
 Highly-configurable self-hosted dashboard. File-based YAML configuration — one file per concern (services, bookmarks, widgets, settings). Rich set of service integrations and info widgets.
 
@@ -49,6 +49,20 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 - **Default security `sec-3`**.
 - **Docker socket integration disabled by default** — see below.
 - **`no-new-privileges:true`**.
+
+## Backup
+
+| | |
+|---|---|
+| **Database** | None. |
+| **State** | None on the host — `config/` is versioned in git |
+| **Reproducible** | everything |
+| **Quiescing** | Not applicable. |
+
+Nothing to back up, provided the configuration is committed. Homepage writes its
+defaults into `config/` on first start, so check that what is running matches what
+is in the repository before assuming this is true — an uncommitted local edit is
+the one thing here that a restore would lose.
 
 ## Docker integration (optional)
 

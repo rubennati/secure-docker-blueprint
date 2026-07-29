@@ -7,14 +7,14 @@
 - **License:** Elastic License 2.0
 - **Origin:** US · Invoice Ninja LLC · non-EU
 - **Note:** Elastic License 2.0 is not OSI-approved — source-available, not open source. Self-hosting permitted; providing it as a managed service to others is restricted.
-- **Based on version:** 5.13.24
+- **Based on version:** 5.13.26
 - **Last checked:** 2026-06-14
 
 ## Pinned Versions
 
 | Component | Tag | Notes |
 |---|---|---|
-| Invoice Ninja | `5.13.24` | Verified stable on Docker Hub 2026-06-14 |
+| Invoice Ninja | `5.13.26` | Latest release 2026-07-26 |
 | MySQL | `8.4` | LTS — upstream target DB |
 | Redis | `8.6-alpine` | |
 | Nginx | `1.29-alpine` | |
@@ -77,68 +77,11 @@
 - **App healthcheck is not a full liveness check**: `php -r "echo 'ok';"` verifies the PHP binary is callable but not that PHP-FPM is accepting connections or that supervisor processes (queue workers, scheduler) are running. Use `supervisorctl status` inside the container to verify those.
 - **PDF rendering memory**: Snappdf/Chromium can spike past 1G on complex invoices or many concurrent renders. If rendering fails consistently, increase `memory:` on the app service and restart.
 
-## Backup
+## Backup and restore
 
-**Back up before every upgrade.** Invoice Ninja data is split across the MySQL database and the `app_storage` named volume.
-
-### Database backup
-
-```bash
-# Dump the ninja database to a timestamped SQL file
-docker exec invoiceninja-mysql mysqldump \
-  -u root -p"$(grep '^DB_ROOT_PASSWORD=' .env | cut -d= -f2)" ninja \
-  > backup-db-$(date +%Y%m%d-%H%M).sql
-```
-
-### Storage backup (invoices, attachments, logos, templates)
-
-```bash
-# Dump app_storage volume contents via a helper container
-docker run --rm \
-  -v invoiceninja_app_storage:/data:ro \
-  -v "$(pwd)":/out \
-  alpine tar czf /out/backup-storage-$(date +%Y%m%d-%H%M).tar.gz -C /data .
-```
-
-### .env backup
-
-```bash
-cp .env .env.backup-$(date +%Y%m%d)
-```
-
-### What must be backed up
-
-| Item | Why critical |
-|---|---|
-| MySQL `ninja` database | All invoices, clients, payments, settings |
-| `app_storage` volume | Attachments, uploaded logos, generated PDFs, encryption keys |
-| `.env` (especially `APP_KEY`) | Without `APP_KEY` you cannot decrypt any stored data |
-
-## Restore
-
-### Restore database
-
-```bash
-# 1. Bring up only MySQL
-docker compose up -d mysql
-docker compose exec mysql sh -c 'mysql -u root -p"${MYSQL_ROOT_PASSWORD}" ninja' < backup-db-YYYYMMDD-HHMM.sql
-```
-
-### Restore storage
-
-```bash
-# Restore into the named volume via a helper container
-docker run --rm \
-  -v invoiceninja_app_storage:/data \
-  -v "$(pwd)":/in \
-  alpine sh -c "cd /data && tar xzf /in/backup-storage-YYYYMMDD-HHMM.tar.gz"
-```
-
-### Restore .env
-
-```bash
-cp .env.backup-YYYYMMDD .env
-```
+Owned by [`README.md`](README.md#backup) — what must be captured, the borgmatic
+block, and the manual dump/restore commands. Kept there because that is where
+the per-app backup pattern lives and what `lifecycle-report.py` reads.
 
 ## Rollback
 

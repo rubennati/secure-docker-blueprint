@@ -20,7 +20,8 @@ http:
     # sec-2-spa  sec-1 + rl-spa                           VPN-only SPA, basic headers
     # sec-3      sec-2 + strict headers + permissions     Public-facing, hardened
     # sec-3e     ↑ iframe-friendly variant                Hardened, must be embedded
-    # sec-3-spa  sec-3 with rl-spa instead of rl-soft     VPN-only SPA, hardened
+    # sec-3-spa  sec-3 with rl-spa instead of rl-soft     SPA, hardened
+    # sec-3e-spa ↑ iframe-friendly variant                 SPA needing SAMEORIGIN
     # sec-4      sec-3 with rl-hard                       Sensitive (login, admin)
     # sec-5      sec-4 + CSP enforce                      Maximum (CSP-tested only)
     #
@@ -31,12 +32,14 @@ http:
     #   OnlyOffice       → sec-2e     (embeddable in iframes)
     #   Traefik Dashboard→ sec-4      (admin UI, hard rate limit)
     #   Whoami           → sec-5      (static page, perfect for CSP enforce)
-    #   NocoDB / n8n     → sec-3-spa  (VPN-only SPA, many parallel chunk requests)
+    #   NocoDB / n8n     → sec-3-spa  (SPA, many parallel chunk requests)
+    #   Nextcloud        → sec-3e-spa (SPA that also requires SAMEORIGIN)
     #
     # Recommendation: Start with sec-2 for new apps.
     # Upgrade to sec-3 when the app handles strict headers.
     # Use sec-*e only when the app must be embedded in iframes.
-    # Use sec-*-spa only for VPN-gated apps (network-level access control).
+    # sec-*-spa keeps the sustained rate of rl-soft and only widens the burst;
+    # use it wherever an app's first load needs it.
     # ==========================================================
 
     # Debug — no hardening at all
@@ -105,6 +108,16 @@ http:
       chain:
         middlewares:
           - hdr-strict
+          - rl-spa
+          - compress
+          - permissions-policy
+
+    # Hardened, iframe-friendly, SPA burst — apps that need SAMEORIGIN *and*
+    # a large first-load bucket (Nextcloud).
+    sec-3e-spa:
+      chain:
+        middlewares:
+          - hdr-strict-embed
           - rl-spa
           - compress
           - permissions-policy
