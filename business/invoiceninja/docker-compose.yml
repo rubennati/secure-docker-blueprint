@@ -69,6 +69,13 @@ services:
       - IN_PWD
 
     # --- Storage ---
+    # Chromium renders the PDFs and the live design preview, and it uses shared
+    # memory heavily. Docker's default /dev/shm is 64 MB, which is not enough:
+    # the render does not fail, it stalls, and the request dies on the 60-second
+    # timeout with a Chromium command line in the log that looks like a launch
+    # problem. Asynchronous renders in the queue worker still complete, so the
+    # invoice PDF arrives while the preview appears broken.
+    shm_size: 512m
     volumes:
       - ./ops/entrypoint.sh:/entrypoint.sh:ro
       - app_public:/var/www/html/public

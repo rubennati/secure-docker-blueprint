@@ -532,6 +532,37 @@ host itself, and the application logged Traefik's address rather than that
 client. Whether the forwarded chain survives the nginx hop for a genuinely
 external client is not yet established — it needs a request from outside.
 
+## 24. Chromium stalls on Docker's default shared memory
+
+**Observed.** Creating and sending an invoice worked end to end — the mail
+arrived, the client portal loaded, the PDF was attached. But the access log
+carried two `500`s on `POST /api/v1/live_design`, and the application log a
+Chromium command line ending in:
+
+```text
+exceeded the timeout of 60 seconds
+```
+
+**Cause.** `/dev/shm` in the container was Docker's default **64 MB**. Chromium
+uses shared memory heavily; starved of it, it does not fail — it stalls, and the
+request dies on the 60-second timeout.
+
+Two things made this hard to see. The Chromium command line in the log looks like
+a launch failure rather than a timeout, and the *invoice* PDF still arrives,
+because that one is rendered by the queue worker with no HTTP request behind it.
+Only the synchronous preview breaks, which reads as an interface fault.
+
+**Measured after `shm_size: 512m`:** a trivial page renders in **4 seconds**,
+where before the same work exceeded 60. Container memory sat at 534 MiB of the
+1 GB limit, so the shared-memory allocation did not have to come out of the
+application's headroom.
+
+**Wider than this stack.** Any container rendering with headless Chromium is
+affected — PDF generation, screenshotting, preview services. Worth stating
+wherever the repository documents resource limits, since `deploy.resources`
+says nothing about `/dev/shm` and the default is invisible until something
+stalls.
+
 ## What worked, session 2
 
 - The wildcard certificate covered the new subdomain with **no second certificate

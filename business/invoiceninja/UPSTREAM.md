@@ -10,7 +10,7 @@
 - **Origin:** US · Invoice Ninja LLC · non-EU
 - **Note:** Elastic License 2.0 is not OSI-approved — source-available, not open source. Self-hosting permitted; providing it as a managed service to others is restricted.
 - **Based on version:** `5.13.26`
-- **Last verified:** 2026-07-29 (5.13.26) — installed on a live host: migrations, seeding, secrets reaching Laravel, and routing behind Traefik under `acc-tailscale`
+- **Last verified:** 2026-07-29 (5.13.26) — on a live host: install, secrets through the wrapper entrypoint, routing under `acc-tailscale`, and an invoice created, sent by mail and opened in the client portal
 
 ## Pinned Versions
 
@@ -112,7 +112,7 @@ a file-and-database capture cannot give.
 
 ## Known Issues
 
-- **Client-facing features not exercised.** The stack installs, migrates, seeds and answers behind the proxy, and the secrets reach Laravel. Creating an invoice, sending it, and the PDF renderer under load have not been tried.
+- **Exercised end to end.** An invoice was created, sent and opened in the client portal; the mail left through the configured relay. 253 requests through the proxy produced no rate-limit rejection, so `sec-3` holds for this workload. The design preview needed `shm_size`; see finding 24 in `docs/host-session-findings.md`.
 - **App healthcheck is not a full liveness check**: `php -r "echo 'ok';"` verifies the PHP binary is callable but not that PHP-FPM is accepting connections or that supervisor processes (queue workers, scheduler) are running. Use `supervisorctl status` inside the container to verify those.
 - **PDF rendering memory**: Snappdf/Chromium can spike past 1G on complex invoices or many concurrent renders. If rendering fails consistently, increase `memory:` on the app service and restart.
 

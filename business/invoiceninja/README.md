@@ -1,7 +1,8 @@
 # Invoice Ninja
 
-> **Status: 🚧 v5.13.26** — installed on a live host: migrations, secrets and
-> proxy routing verified; invoicing and PDF rendering not yet exercised · 2026-07-29
+> **Status: 🚧 v5.13.26** — exercised on a live host: install, secrets, proxy,
+> an invoice created, sent and opened in the client portal, PDF rendering
+> measured. Restore not yet rehearsed · 2026-07-29
 
 Self-hosted invoicing, quotes, expenses, and time-tracking (Laravel / PHP-FPM).
 
@@ -17,6 +18,11 @@ From the project's own [server requirements](https://www.invoiceninja.org/gettin
 | PHP | 8.1 or higher |
 | Database | MySQL 5.7+ or MariaDB 10.3+ |
 | Web server | Nginx or Apache |
+
+One thing those figures do not mention: **shared memory**. Chromium renders the
+PDFs and the design previews, and Docker gives a container 64 MB of `/dev/shm` by
+default — not enough. The service sets `shm_size: 512m`; see
+[Troubleshooting](#pdf-and-preview-rendering-times-out).
 
 Those figures describe the application alone. This stack runs four containers,
 and the resource limits in `docker-compose.yml` reserve 1 GB for the application
@@ -112,6 +118,37 @@ docker run --rm -v invoiceninja_app_storage:/data -v "$(pwd)":/in \
 failed migration against a database with no dump behind it is not recoverable.
 
 **Restore order:** `.secrets/` and the database first, then storage, then the app.
+
+## Troubleshooting
+
+### PDF and preview rendering times out
+
+**Symptom.** The design preview returns 500, `POST /api/v1/live_design` fails,
+and the application log carries a very long Chromium command line ending in:
+
+```text
+exceeded the timeout of 60 seconds
+```
+
+Invoices still arrive by mail, which makes it look like an interface bug rather
+than a rendering one: those PDFs are produced by the queue worker, which has no
+60-second HTTP request behind it.
+
+**Cause.** Docker's default `/dev/shm` is 64 MB. Chromium uses shared memory
+heavily and does not fail on it — it stalls, and the request dies on the timeout.
+
+**Fix.** Already in `docker-compose.yml` as `shm_size: 512m`. Confirm and
+measure:
+
+```bash
+docker compose exec app df -h /dev/shm
+docker compose exec -u www-data app sh -c '
+  printf "<html><body><h1>x</h1></body></html>" > /tmp/t.html
+  time /usr/bin/google-chrome-stable --headless --disable-gpu --no-sandbox \
+    --print-to-pdf=/tmp/t.pdf /tmp/t.html'
+```
+
+A trivial page renders in a few seconds. If it hangs, `/dev/shm` is still 64 MB.
 
 ## First-Time Setup
 
