@@ -9,7 +9,7 @@
 - **License:** MIT
 - **Origin:** France · CrowdSec SAS · EU
 - **Based on version:** v1.7.8
-- **Last checked:** 2026-04-15
+- **Last verified:** 2026-07-29 (v1.7.8) — engine, bouncer, an enforced ban and the AppSec layer all verified on a live host
 
 ## Architecture
 

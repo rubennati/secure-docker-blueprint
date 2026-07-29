@@ -1,6 +1,6 @@
 # Monica
 
-> **Status: ✅ Ready** — v4.1.2 · 2026-05-04
+> **Status: 🚧 v4.1.2** — verified before the current record format; the claim names no version it was checked against · 2026-05-04
 
 Monica is a personal CRM — remember everything about your friends, family, and business contacts. Built on Laravel (PHP) with a MariaDB backend.
 

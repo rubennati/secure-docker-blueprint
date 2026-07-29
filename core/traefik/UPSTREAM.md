@@ -11,7 +11,7 @@
 - **License:** MIT
 - **Origin:** France · Traefik Labs · EU
 - **Based on versions:** Traefik `v3.6`, docker-socket-proxy `v0.4.2`
-- **Last checked:** 2026-04-16
+- **Last verified:** 2026-07-29 (v3.6) — dual-stack, middleware chains, TLS profiles and the CrowdSec bouncer plugin all exercised on a live host
 
 ## What we use
 

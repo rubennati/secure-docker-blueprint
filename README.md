@@ -94,16 +94,16 @@ Three patterns for secret handling:
 |---------|--------|-------------|
 | [Traefik](core/traefik/) | ✅ | Reverse proxy with Socket Proxy, 5 security levels, 3 TLS profiles, access policies |
 | [Authentik](core/authentik/) | ✅ | SSO / Identity Provider for centralized authentication (Forward-Auth, OAuth2 / OIDC / SAML) |
-| [OnlyOffice](core/onlyoffice/) | ✅ | Document editing server for Seafile, Nextcloud, etc. |
+| [OnlyOffice](core/onlyoffice/) | 🚧 | Document editing server for Seafile, Nextcloud, etc. |
 | [Euro-Office](core/euro-office/) | 🚧 | EU-governed OnlyOffice fork (Nextcloud/IONOS/XWiki/Proton) — drop-in document server |
 | [Collabora](core/collabora/) | 🚧 | Lightweight LibreOffice-based office server (~1 GB) — leaner alternative to OnlyOffice/Euro-Office |
-| [dnsmasq](core/dnsmasq/) | ✅ | DNS forwarder with wildcard zones for Tailscale / split-DNS setups |
-| [acme-certs](core/acme-certs/) | ✅ | Certificate tool (acme.sh) for devices without Traefik (NAS, routers) |
+| [dnsmasq](core/dnsmasq/) | 🚧 | DNS forwarder with wildcard zones for Tailscale / split-DNS setups |
+| [acme-certs](core/acme-certs/) | 🚧 | Certificate tool (acme.sh) for devices without Traefik (NAS, routers) |
 | [CrowdSec](core/crowdsec/) | ✅ | Intrusion detection engine + Traefik bouncer plugin — log analysis, threat decisions, L7 blocking |
 | [Whoami](core/whoami/) | ✅ | Traefik debug service to verify routing, TLS, and middlewares |
-| [Dockhand](core/dockhand/) | ✅ | Docker management with Git-based stacks |
-| [Portainer](core/portainer/) | ✅ | Docker management UI |
-| [Hawser](core/hawser/) | ✅ | Remote Docker agent for Dockhand |
+| [Dockhand](core/dockhand/) | 🚧 | Docker management with Git-based stacks |
+| [Portainer](core/portainer/) | 🚧 | Docker management UI |
+| [Hawser](core/hawser/) | 🚧 | Remote Docker agent for Dockhand |
 | [Portainer Agent](core/portainer-agent/) | ✅ | Remote Docker agent for Portainer (multi-host) |
 | [Infisical](core/infisical/) | 🚧 | Central secret manager (self-hosted) — one place for all servers'/apps' secrets. VPN-only |
 
@@ -122,6 +122,12 @@ The blueprint takes a **choice-matrix** approach: where several tools compete (d
 
 What each symbol promises is defined in [`docs/standards/status-model.md`](docs/standards/status-model.md); the per-stack detail behind it — pinned version, verification date, backup and restore documentation — is in [LIFECYCLE.md](LIFECYCLE.md).
 
+> **Seventeen stacks moved from ✅ to 🚧 on 2026-07-29.** Their verification
+> predates the current record format, which names the version a stack was
+> checked against — theirs do not, so nobody can say what the ✅ was earned on.
+> Nothing about them changed; what changed is that the claim is no longer made
+> without evidence behind it. Each returns to ✅ when it is verified again.
+
 #### Dashboards & launchers
 
 | App | Stack | Status | Description |
@@ -136,7 +142,7 @@ What each symbol promises is defined in [`docs/standards/status-model.md`](docs/
 | App | Stack | Status | Description |
 |---|---|---|---|
 | [Ghost](apps/ghost/) | App + MySQL | ✅ | Blog / CMS with SMTP + optional ActivityPub (Fediverse) |
-| [WordPress](apps/wordpress/) | App + MariaDB | ✅ | Classic CMS, hardened (mu-plugin + test-script) |
+| [WordPress](apps/wordpress/) | App + MariaDB | 🚧 | Classic CMS, hardened (mu-plugin + test-script) |
 | [BookStack](apps/bookstack/) | App (LSIO) + MariaDB | ✅ | Wiki / knowledge base (Laravel) |
 
 #### Photo galleries
@@ -145,11 +151,11 @@ Five options — test and pick what fits your workflow.
 
 | App | Stack | Status | Description |
 |---|---|---|---|
-| [Immich](apps/immich/) | Server + ML + Postgres (pgvectors) + Valkey | ✅ | AI-powered photo backup with mobile apps |
-| [LibrePhotos](apps/librephotos/) | Nginx + Django+ML + React + pgautoupgrade | ✅ | Google-Photos-like (OwnPhotos fork) |
-| [Lychee](apps/lycheeorg/) | App (Laravel) + MariaDB + Redis | ✅ | Clean, fast gallery |
-| [PhotoPrism](apps/photoprism/) | App (Go+TensorFlow) + MariaDB | ✅ | AI classification + WebDAV |
-| [Photoview](apps/photoview/) | App (Go+GraphQL) + MariaDB | ✅ | RAW processing + face recognition |
+| [Immich](apps/immich/) | Server + ML + Postgres (pgvectors) + Valkey | 🚧 | AI-powered photo backup with mobile apps |
+| [LibrePhotos](apps/librephotos/) | Nginx + Django+ML + React + pgautoupgrade | 🚧 | Google-Photos-like (OwnPhotos fork) |
+| [Lychee](apps/lycheeorg/) | App (Laravel) + MariaDB + Redis | 🚧 | Clean, fast gallery |
+| [PhotoPrism](apps/photoprism/) | App (Go+TensorFlow) + MariaDB | 🚧 | AI classification + WebDAV |
+| [Photoview](apps/photoview/) | App (Go+GraphQL) + MariaDB | 🚧 | RAW processing + face recognition |
 
 #### Scheduling & booking
 
@@ -166,9 +172,9 @@ Planned: **Rallly** (group scheduling polls — Doodle alternative, complementar
 
 | App | Stack | Status | Description |
 |---|---|---|---|
-| [Monica](apps/monicahq/) | App (Laravel) + MariaDB | ✅ | Personal CRM for relationships |
+| [Monica](apps/monicahq/) | App (Laravel) + MariaDB | 🚧 | Personal CRM for relationships |
 | [NocoDB](apps/nocodb/) | Single container + SQLite | ✅ | No-code database / spreadsheet UI (Airtable alternative) |
-| [OpnForm](apps/opnform/) | API (Laravel) + UI (Nuxt) + Postgres + Redis | ✅ | Self-hosted form builder (Typeform alternative) |
+| [OpnForm](apps/opnform/) | API (Laravel) + UI (Nuxt) + Postgres + Redis | 🚧 | Self-hosted form builder (Typeform alternative) |
 | [n8n](apps/n8n/) | Single container + SQLite | ✅ | Visual workflow automation (Zapier alternative) |
 
 > **Cloud-free data-collection chain:** `OpnForm → n8n → NocoDB` — forms collect, n8n transforms, NocoDB stores + presents. All three on `proxy-public`, addressable as `http://<app>-app:<port>` for internal calls.
@@ -179,14 +185,14 @@ Planned: **Rallly** (group scheduling polls — Doodle alternative, complementar
 |---|---|---|---|
 | [Nextcloud](apps/nextcloud/) | App + MariaDB + Redis + Nginx + Cron | 🚧 | File sync, collaboration, optional OnlyOffice |
 | [Paperless-ngx](apps/paperless-ngx/) | App + Postgres + Redis + Gotenberg + Tika | ✅ | Document management with OCR, optional Authentik SSO |
-| [Seafile](apps/seafile/) | App + MariaDB + Memcached + optional components | ✅ | File sync & share (community edition) |
-| [Seafile Pro](apps/seafile-pro/) | App + MariaDB + Memcached + SeaDoc + ClamAV + SeaSearch | ✅ | File sync & share (pro edition) |
+| [Seafile](apps/seafile/) | App + MariaDB + Memcached + optional components | 🚧 | File sync & share (community edition) |
+| [Seafile Pro](apps/seafile-pro/) | App + MariaDB + Memcached + SeaDoc + ClamAV + SeaSearch | 🚧 | File sync & share (pro edition) |
 
 #### Identity & security
 
 | App | Stack | Status | Description |
 |---|---|---|---|
-| [Vaultwarden](apps/vaultwarden/) | App + MariaDB | ✅ | Bitwarden-compatible password manager |
+| [Vaultwarden](apps/vaultwarden/) | App + MariaDB | 🚧 | Bitwarden-compatible password manager |
 
 Planned (apps/): Headscale (self-hosted Tailscale control server), PrivateBin, SnapPass.
 

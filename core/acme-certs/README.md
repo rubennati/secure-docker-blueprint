@@ -1,6 +1,6 @@
 # acme-certs
 
-> **Status: ✅ Ready** — cert-ops-tool 0.2.1 · 2026-05-04
+> **Status: 🚧 cert-ops-tool 0.2.1** — verified before the current record format; the claim names no version it was checked against · 2026-05-04
 
 > **Note:** For services behind Traefik, use `core/traefik/` — it handles ACME natively. Use this tool for devices that don't go through Traefik (NAS, routers, mail servers, firewalls).
 

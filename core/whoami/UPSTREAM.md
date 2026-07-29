@@ -5,7 +5,7 @@
 - **Image:** https://hub.docker.com/r/traefik/whoami
 - **GitHub:** https://github.com/traefik/whoami
 - **Based on version:** `v1.11.0`
-- **Last checked:** 2026-04-16
+- **Last verified:** 2026-07-29 (v1.11.0) — used as the validation target for the bouncer; public and restricted paths both exercised
 
 ## What we use
 

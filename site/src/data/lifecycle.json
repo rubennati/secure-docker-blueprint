@@ -91,11 +91,11 @@
   },
   "apps/immich": {
     "backup_docs": "documented",
-    "internal": "baseline-aligned",
+    "internal": "scaffolded",
     "pinned": "APP_TAG=v3.0.3",
-    "public": "ready",
+    "public": "preview",
     "restore_docs": "missing",
-    "symbol": "✅",
+    "symbol": "🚧",
     "verified": "2026-04-17",
     "verified_legacy_field": true
   },
@@ -111,31 +111,31 @@
   },
   "apps/librephotos": {
     "backup_docs": "documented",
-    "internal": "baseline-aligned",
+    "internal": "scaffolded",
     "pinned": "APP_TAG=2026w25",
-    "public": "ready",
+    "public": "preview",
     "restore_docs": "missing",
-    "symbol": "✅",
+    "symbol": "🚧",
     "verified": "2026-04-17",
     "verified_legacy_field": true
   },
   "apps/lycheeorg": {
     "backup_docs": "documented",
-    "internal": "baseline-aligned",
+    "internal": "scaffolded",
     "pinned": "APP_TAG=v7.7.1",
-    "public": "ready",
+    "public": "preview",
     "restore_docs": "missing",
-    "symbol": "✅",
+    "symbol": "🚧",
     "verified": "2026-04-17",
     "verified_legacy_field": true
   },
   "apps/monicahq": {
     "backup_docs": "documented",
-    "internal": "baseline-aligned",
+    "internal": "scaffolded",
     "pinned": "APP_TAG=4.1.2-apache",
-    "public": "ready",
+    "public": "preview",
     "restore_docs": "missing",
-    "symbol": "✅",
+    "symbol": "🚧",
     "verified": "2026-04-17",
     "verified_legacy_field": true
   },
@@ -171,11 +171,11 @@
   },
   "apps/opnform": {
     "backup_docs": "documented",
-    "internal": "baseline-aligned",
+    "internal": "scaffolded",
     "pinned": "APP_TAG=2.2.2",
-    "public": "ready",
+    "public": "preview",
     "restore_docs": "missing",
-    "symbol": "✅",
+    "symbol": "🚧",
     "verified": "2026-04-17",
     "verified_legacy_field": true
   },
@@ -191,41 +191,41 @@
   },
   "apps/photoprism": {
     "backup_docs": "documented",
-    "internal": "baseline-aligned",
+    "internal": "scaffolded",
     "pinned": "APP_TAG=260601",
-    "public": "ready",
+    "public": "preview",
     "restore_docs": "missing",
-    "symbol": "✅",
+    "symbol": "🚧",
     "verified": "2026-04-17",
     "verified_legacy_field": true
   },
   "apps/photoview": {
     "backup_docs": "documented",
-    "internal": "baseline-aligned",
+    "internal": "scaffolded",
     "pinned": "APP_TAG=2.4.0",
-    "public": "ready",
+    "public": "preview",
     "restore_docs": "missing",
-    "symbol": "✅",
+    "symbol": "🚧",
     "verified": "2026-04-17",
     "verified_legacy_field": true
   },
   "apps/seafile": {
     "backup_docs": "documented",
-    "internal": "baseline-aligned",
+    "internal": "scaffolded",
     "pinned": "APP_IMAGE=seafileltd/seafile-mc:13.0.20",
-    "public": "ready",
+    "public": "preview",
     "restore_docs": "missing",
-    "symbol": "✅",
+    "symbol": "🚧",
     "verified": "2026-04-16",
     "verified_legacy_field": true
   },
   "apps/seafile-pro": {
     "backup_docs": "documented",
-    "internal": "baseline-aligned",
+    "internal": "scaffolded",
     "pinned": "APP_TAG=13.0.21",
-    "public": "ready",
+    "public": "preview",
     "restore_docs": "missing",
-    "symbol": "✅",
+    "symbol": "🚧",
     "verified": "2026-04-13",
     "verified_legacy_field": true
   },
@@ -241,21 +241,21 @@
   },
   "apps/vaultwarden": {
     "backup_docs": "documented",
-    "internal": "baseline-aligned",
+    "internal": "scaffolded",
     "pinned": "APP_TAG=1.37.0",
-    "public": "ready",
+    "public": "preview",
     "restore_docs": "missing",
-    "symbol": "✅",
+    "symbol": "🚧",
     "verified": "2026-06-14",
     "verified_legacy_field": true
   },
   "apps/wordpress": {
     "backup_docs": "documented",
-    "internal": "baseline-aligned",
+    "internal": "scaffolded",
     "pinned": "APP_TAG=7.0.2-php8.3-apache",
-    "public": "ready",
+    "public": "preview",
     "restore_docs": "missing",
-    "symbol": "✅",
+    "symbol": "🚧",
     "verified": "2026-04-15",
     "verified_legacy_field": true
   },
@@ -381,11 +381,11 @@
   },
   "core/acme-certs": {
     "backup_docs": "documented",
-    "internal": "baseline-aligned",
+    "internal": "scaffolded",
     "pinned": "APP_TAG=0.2.1",
-    "public": "ready",
+    "public": "preview",
     "restore_docs": "missing",
-    "symbol": "✅",
+    "symbol": "🚧",
     "verified": "2026-04-14",
     "verified_legacy_field": true
   },
@@ -416,26 +416,26 @@
     "public": "ready",
     "restore_docs": "missing",
     "symbol": "✅",
-    "verified": "2026-04-15",
-    "verified_legacy_field": true
+    "verified": "2026-07-29",
+    "verified_legacy_field": false
   },
   "core/dnsmasq": {
     "backup_docs": "documented",
-    "internal": "baseline-aligned",
+    "internal": "scaffolded",
     "pinned": "APP_TAG=2.90-r3",
-    "public": "ready",
+    "public": "preview",
     "restore_docs": "missing",
-    "symbol": "✅",
+    "symbol": "🚧",
     "verified": "2026-04-14",
     "verified_legacy_field": true
   },
   "core/dockhand": {
     "backup_docs": "documented",
-    "internal": "baseline-aligned",
+    "internal": "scaffolded",
     "pinned": "APP_TAG=v1.0.39",
-    "public": "ready",
+    "public": "preview",
     "restore_docs": "missing",
-    "symbol": "✅",
+    "symbol": "🚧",
     "verified": "2026-04-16",
     "verified_legacy_field": true
   },
@@ -451,11 +451,11 @@
   },
   "core/hawser": {
     "backup_docs": "documented",
-    "internal": "baseline-aligned",
+    "internal": "scaffolded",
     "pinned": "APP_TAG=0.2.39",
-    "public": "ready",
+    "public": "preview",
     "restore_docs": "missing",
-    "symbol": "✅",
+    "symbol": "🚧",
     "verified": "2026-04-14",
     "verified_legacy_field": true
   },
@@ -471,21 +471,21 @@
   },
   "core/onlyoffice": {
     "backup_docs": "documented",
-    "internal": "baseline-aligned",
+    "internal": "scaffolded",
     "pinned": "APP_TAG=9.4.0",
-    "public": "ready",
+    "public": "preview",
     "restore_docs": "missing",
-    "symbol": "✅",
+    "symbol": "🚧",
     "verified": "2026-06-14",
     "verified_legacy_field": true
   },
   "core/portainer": {
     "backup_docs": "documented",
-    "internal": "baseline-aligned",
+    "internal": "scaffolded",
     "pinned": "APP_TAG=2.39.5",
-    "public": "ready",
+    "public": "preview",
     "restore_docs": "missing",
-    "symbol": "✅",
+    "symbol": "🚧",
     "verified": "2026-04-16",
     "verified_legacy_field": true
   },
@@ -506,8 +506,8 @@
     "public": "ready",
     "restore_docs": "missing",
     "symbol": "✅",
-    "verified": "2026-04-16",
-    "verified_legacy_field": true
+    "verified": "2026-07-29",
+    "verified_legacy_field": false
   },
   "core/whoami": {
     "backup_docs": "documented",
@@ -516,8 +516,8 @@
     "public": "ready",
     "restore_docs": "missing",
     "symbol": "✅",
-    "verified": "2026-04-16",
-    "verified_legacy_field": true
+    "verified": "2026-07-29",
+    "verified_legacy_field": false
   },
   "monitoring/beszel": {
     "backup_docs": "documented",
