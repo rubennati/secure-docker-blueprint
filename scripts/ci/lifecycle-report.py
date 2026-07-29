@@ -40,6 +40,7 @@ Usage:
 --check exits 1 on FAIL only; the default and --write modes always exit 0.
 """
 
+import json
 import re
 import subprocess
 import sys
@@ -297,6 +298,33 @@ def collect() -> tuple[list[dict], list[dict]]:
     return rows, problems
 
 
+def render_json(rows: list[dict]) -> str:
+    """The same facts as LIFECYCLE.md, in a form the operator site can render.
+
+    A status written twice is a status that drifts. The site imports this rather
+    than restating a symbol in prose — one owner, two renderings. Prose on a
+    stack page then adds only what the data cannot carry: what specifically has
+    and has not been exercised.
+    """
+    payload = {
+        r["stack"]: {
+            "symbol": r["symbol"],
+            "public": r["public"],
+            "internal": r["internal"],
+            # LIFECYCLE.md renders this as markdown; data carries the value.
+            "pinned": r["pinned"].strip("`*"),
+            # The ⚠️ marks the pre-v0.5.1 field; the site wants the date alone
+            # and the fact separately.
+            "verified": r["verified"].replace(" ⚠️", ""),
+            "verified_legacy_field": "⚠️" in r["verified"],
+            "backup_docs": r["backup"],
+            "restore_docs": r["restore"],
+        }
+        for r in rows
+    }
+    return json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+
+
 def strip_stamp(text: str) -> str:
     """The report without its generation date.
 
@@ -400,9 +428,15 @@ def main() -> int:
     generated = render(rows)
     target = Path("LIFECYCLE.md")
 
+    generated_json = render_json(rows)
+    json_target = Path("site/src/data/lifecycle.json")
+
     if mode == "write":
         target.write_text(generated, encoding="utf-8")
+        json_target.parent.mkdir(parents=True, exist_ok=True)
+        json_target.write_text(generated_json, encoding="utf-8")
         print(f"  ✅ LIFECYCLE.md written — {len(rows)} stacks")
+        print(f"  ✅ {json_target} written")
         if problems:
             print(f"  🟡 {len(problems)} consistency problem(s) — run --check for detail")
         return 0
@@ -417,6 +451,13 @@ def main() -> int:
         problems.append({
             "rule": "stale-report", "stack": "LIFECYCLE.md",
             "detail": "out of date with its sources — run --write",
+        })
+
+    if read(json_target) != generated_json:
+        problems.append({
+            "rule": "stale-report", "stack": str(json_target),
+            "detail": "the operator site would render a status the sources no "
+                      "longer support — run --write",
         })
 
     by_rule: dict[str, list[dict]] = {}

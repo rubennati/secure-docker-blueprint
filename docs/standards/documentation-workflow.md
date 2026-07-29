@@ -55,6 +55,40 @@ to find one value.
 This matters most on the operator site, where the reader chose to be there and
 will leave if the first screen is not useful.
 
+### On the operator site, the reader has never seen this repository
+
+They do not know what `LIFECYCLE.md` is, what `baseline-aligned` means, or that
+anything is generated. Every sentence that only makes sense to someone who does
+is noise on their screen, and it pushes the sentence they needed further down.
+
+Three things this rules out, all of which have had to be removed once already:
+
+| Do not write | Because |
+|---|---|
+| Where a fact came from — "generated from the repository, not maintained here" | If they care, they follow the link. If they do not, it is a sentence about our tooling on their page |
+| A general disclaimer — "we do not vouch for this, evaluate it yourself" | It says nothing specific. State the actual gap instead: *client sync is untested*. A named gap is information; a hedge is noise |
+| The same status twice, in a badge and again in prose | The second one is the one that goes stale |
+
+State the facts, then **one sentence naming what specifically has not been
+exercised**. Anything a reader might want behind that goes in the FAQ, once.
+
+Put the command before its justification, too. The reader is following steps;
+they need to know what to run and what they should see. Why it is the safer of
+two options is one short clause, not a paragraph — and if it takes a paragraph,
+it belongs in the repository, not here.
+
+**A heading is a claim.** Every site page carried a section called *Quickstart*
+that generated six secrets, set file ownership, configured mail and read Docker
+subnets. Writing the word did not make it quick; it only told a reader who took
+twenty minutes that they were slow. Worse, *quick*start implies a slower,
+fuller path exists somewhere — and none did. The section is the installation, so
+it is called **Installation**. Name a section for what it contains, and only
+promise speed, simplicity or completeness where the content delivers it.
+
+For the shape of this, the useful precedents are Node.js's stability index and
+MDN's Baseline widget: one compact line at the top, and the explanation behind a
+link.
+
 ### A shared tool gets one page; each stack contributes its own section
 
 Where one host-level tool serves every stack — the backup agent, the reverse

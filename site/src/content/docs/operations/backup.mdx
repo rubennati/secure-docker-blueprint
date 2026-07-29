@@ -4,11 +4,15 @@ description: Borgmatic on the host — install, configure, prove it. A backup no
 ---
 
 import { Steps } from '@astrojs/starlight/components';
+import StackStatus from '../../../components/StackStatus.astro';
 
 Borg does the deduplicated, encrypted storage. Borgmatic adds scheduling,
 retention, database dumps and monitoring on top, and it runs **on the host**
 rather than in a container — a containerised agent would need read access to
 every volume, and therefore every secret, in the deployment.
+
+<StackStatus stack="backup/borgmatic"
+  note="A backup and a restore were both performed on a live host, against a repository on that same machine — the off-site target is written, not demonstrated." />
 
 This page is the general half: installing it, the repository, the keys, the
 schedule, and how a restore works. **What to back up for a particular
@@ -16,13 +20,6 @@ application lives on that application's page** — which database to dump, wheth
 it needs quiescing, what is different when restoring it. One Borgmatic
 installation covers every stack on the host; each stack contributes its own few
 lines to the same configuration file.
-
-:::note[What has been verified]
-Installation, configuration, a first backup and a full restore were carried out
-on a live host. The repository was a directory on that same machine, so the
-mechanism is proven and the off-site half is not. Treat the SSH target and
-append-only enforcement below as written, not demonstrated.
-:::
 
 ## Before you start
 
@@ -41,7 +38,7 @@ host and connects over TCP. Without the client:
 sudo apt install mariadb-client        # or postgresql-client, mongodb-database-tools
 ```
 
-## Quickstart
+## Installation
 
 <Steps>
 

@@ -4,12 +4,15 @@ description: Self-hosted file sync, sharing, and collaborative editing on Docker
 ---
 
 import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+import StackStatus from '../../../components/StackStatus.astro';
 
 Seafile Pro is the Blueprint's file sync and sharing platform — private cloud storage with browser-based Office editing (OnlyOffice), collaborative document editing (SeaDoc), full-text search (SeaSearch), and antivirus scanning (ClamAV). All ten services deploy as a single Compose stack.
 
+<StackStatus stack="apps/seafile-pro" />
+
 Needs: [Traefik](/core/traefik/) running, a hostname, a Seafile Pro commercial license, and an external [OnlyOffice](/core/onlyoffice/) instance for `.docx`/`.xlsx`/`.pptx` editing (optional — all other features work without it).
 
-## Quickstart
+## Installation
 
 From `apps/seafile-pro/`:
 
@@ -172,7 +175,7 @@ docker compose up -d --force-recreate
   </TabItem>
 
   <TabItem label="Antivirus">
-    ClamAV is included in the default `COMPOSE_FILE` and configured automatically when the Blueprint config injection runs (step 8 of the Quickstart). Uploaded files are scanned on write.
+    ClamAV is included in the default `COMPOSE_FILE` and configured automatically when the Blueprint config injection runs (step 8 of the installation). Uploaded files are scanned on write.
 
     To verify ClamAV is active:
 

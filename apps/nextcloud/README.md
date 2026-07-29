@@ -292,19 +292,82 @@ first case and not the second.
 the database against a regenerated config invalidates existing sessions and can
 make encrypted content unreadable.
 
-**Restore order:** database first, then the file tree, then the app — and leave
-maintenance mode on until both halves are in place.
+Working configuration and the run it produced:
+[`backup/borgmatic/`](../../backup/borgmatic/README.md).
 
-The flag itself is captured. `config.php` holds `'maintenance' => true` in any
-archive taken while the quiescing hook was active, so a restored instance refuses
-to serve until it is cleared:
+## Restore
+
+**Order:** database first, then the file tree, then the application — and leave
+maintenance mode on until both halves are in place. The two must come from the
+same archive; a database restored against an older file tree produces exactly the
+divergence the maintenance mode exists to prevent.
+
+### Rehearsal — into a scratch target
+
+Never rehearse into the live instance. Bring up a throwaway database, create the
+empty target, and let borgmatic restore into it:
+
+```bash
+PW=$(openssl rand -hex 16)
+docker run -d --name nextcloud-restore-test \
+  -e MARIADB_ROOT_PASSWORD="$PW" --tmpfs /var/lib/mysql:rw mariadb:10.11
+docker exec nextcloud-restore-test mariadb -uroot -p"$PW" -e 'CREATE DATABASE nextcloud;'
+
+sudo borgmatic restore --archive latest --database nextcloud \
+  --container nextcloud-restore-test --username root --password "$PW"
+```
+
+Then read the result rather than the exit code:
+
+```bash
+docker exec nextcloud-restore-test mariadb -uroot -p"$PW" nextcloud -N -B -e "
+  SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='nextcloud';
+  SELECT COUNT(*) FROM oc_users;
+  SELECT COUNT(*) FROM oc_filecache;"
+
+docker rm -f nextcloud-restore-test
+```
+
+A table count in the low hundreds, the accounts you expect, and a file index that
+is not empty. `--container` matters: it names the target explicitly, so the
+configured live database cannot be hit by a mistyped flag.
+
+### The restored instance comes back in maintenance mode
+
+`config.php` holds `'maintenance' => true` in any archive taken while the
+quiescing hook was active — it is captured along with everything else. A restored
+file therefore differs from the live one by that single line, and the instance
+refuses to serve until it is cleared:
 
 ```bash
 docker compose exec -u www-data app php occ maintenance:mode --off
 ```
 
-Working configuration, the run it produced and the restore rehearsal:
-[`backup/borgmatic/`](../../backup/borgmatic/README.md).
+That is the backup working, and arguably the safer default: nothing is served
+before somebody has looked at it. Expect it, or the first restore looks broken.
+
+### Real restore, into live service
+
+> **Destructive.** Take a dump of the current state first, even if you believe it
+> is broken — a broken state you can inspect later beats one you destroyed.
+
+<!-- markdownlint-disable-next-line MD029 -->
+1. Safety copy, then stop the application but leave the database running:
+
+   ```bash
+   docker compose exec -u www-data app php occ maintenance:mode --on
+   docker compose stop app cron nginx
+   ```
+
+2. Restore the database, then the file tree from the same archive.
+3. Start the stack, clear maintenance mode, and check
+   `/settings/admin/overview` before letting anyone back in.
+
+After a file-tree restore, reconcile the index with what is actually on disk:
+
+```bash
+docker compose exec -u www-data app php occ files:scan --all
+```
 
 ## Server sizing and tuning rationale
 

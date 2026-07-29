@@ -6,14 +6,23 @@ interface Props {
 }
 
 const { categories } = Astro.props;
+
+// These headings are rendered from data, so Starlight's markdown pipeline never
+// sees them and never gives them ids. Without one, no answer can be linked to.
+const slug = (text: string) =>
+  text
+    .toLowerCase()
+    .replace(/[’']/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 ---
 
 {categories.map((cat) => (
   <>
-    <h2>{cat.category}</h2>
+    <h2 id={slug(cat.category)}>{cat.category}</h2>
     {cat.items.map((item) => (
       <>
-        <h3>{item.question}</h3>
+        <h3 id={slug(item.question)}>{item.question}</h3>
         <p>
           {item.answer}
           {item.link && (

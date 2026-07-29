@@ -4,10 +4,13 @@ description: Reverse proxy and TLS termination for every service in the Blueprin
 ---
 
 import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+import StackStatus from '../../../components/StackStatus.astro';
 
 Traefik is the reverse proxy every other service sits behind — it terminates TLS and routes requests to the right container. Set it up first.
 
-## Quickstart
+<StackStatus stack="core/traefik" />
+
+## Installation
 
 This path uses Cloudflare DNS-01 for a wildcard certificate — it doesn't require port 80 to be publicly reachable. Needs: a domain with DNS at Cloudflare, and a Cloudflare API token (My Profile → API Tokens → Custom Token, with `Zone:DNS:Edit` + `Zone:Zone:Read`).
 
@@ -72,7 +75,7 @@ docker exec traefik-core cat /etc/traefik/acme/acme.json | jq '.[] | .Certificat
 
 ### Networking: IPv4-only or dual-stack?
 
-The quickstart above is IPv4-only — works for most setups. Dual-stack (IPv4 **and** IPv6) only matters if you use **Tailscale**: Tailscale always hands a client both addresses, and if it connects over IPv6 while Traefik's network is IPv4-only, Traefik loses the real client IP and may wrongly block Tailscale-only services. Cloudflare-fronted traffic is unaffected either way.
+The installation above is IPv4-only — works for most setups. Dual-stack (IPv4 **and** IPv6) only matters if you use **Tailscale**: Tailscale always hands a client both addresses, and if it connects over IPv6 while Traefik's network is IPv4-only, Traefik loses the real client IP and may wrongly block Tailscale-only services. Cloudflare-fronted traffic is unaffected either way.
 
 <Tabs>
   <TabItem label="IPv4-only (default)">
@@ -131,11 +134,11 @@ The quickstart above is IPv4-only — works for most setups. Dual-stack (IPv4 **
 
 ### Certificate strategy
 
-The quickstart above is one path. Two more work too — the only hard constraint is that wildcard certificates require DNS-01, since Let's Encrypt doesn't issue wildcards over HTTP-01 at all, regardless of this Blueprint.
+The path above is one of three. Two more work too — the only hard constraint is that wildcard certificates require DNS-01, since Let's Encrypt doesn't issue wildcards over HTTP-01 at all, regardless of this Blueprint.
 
 <Tabs>
   <TabItem label="Wildcard">
-    One DNS-01 certificate covers `*.yourdomain.com` — what the quickstart sets up. Needs a Cloudflare account and token; does **not** need port 80 reachable from the internet. Best when all your services live under one domain, and avoids registering every subdomain in public Certificate Transparency logs.
+    One DNS-01 certificate covers `*.yourdomain.com` — what the installation above sets up. Needs a Cloudflare account and token; does **not** need port 80 reachable from the internet. Best when all your services live under one domain, and avoids registering every subdomain in public Certificate Transparency logs.
   </TabItem>
   <TabItem label="Per-domain (DNS-01)">
     Each application requests its own DNS-01 certificate through Cloudflare — still no public port 80 needed. Leave `ACME_WILDCARD_DOMAIN` unset; in each app's `.env` set `APP_TRAEFIK_CERT_RESOLVER=cloudflare-dns`, and uncomment the `tls.certresolver` label in its `docker-compose.yml`.

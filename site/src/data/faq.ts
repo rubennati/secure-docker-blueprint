@@ -74,14 +74,19 @@ export const faqCategories: FaqCategory[] = [
     category: 'Scope & Status',
     items: [
       {
+        question: 'What do the status labels mean?',
+        answer:
+          'Every guide carries one of three labels at the top. Preview means the stack is on disk and may well work, but it has not been verified end to end here — evaluate it yourself before trusting it with data. Ready means a clean install, working core function and the security baseline have all been established. Ops-ready adds the one thing Ready does not promise: a restore has actually been performed from a backup, not merely written down. Alongside the label you get the version the guide sets up, the date it was last checked, and a line naming whatever has not been exercised yet.',
+      },
+      {
         question: 'Is this safe to run in production today?',
         answer:
-          'Traefik, CrowdSec, and Vaultwarden are each verified end to end — setup through backup, restore, and updates — and considered stable. Seafile Pro has been installed and verified in a real deployment, but backup and restore have not yet been tested for this guide, so it should not be treated as production-ready without a tested backup strategy. Newer additions may still see breaking changes to file paths or variable names before the project reaches its 1.0 milestone.',
+          'Traefik, CrowdSec, and Vaultwarden are each verified end to end — setup through backup, restore, and updates — and considered stable. Nextcloud has been installed, hardened and backed up on a live host with its database restored from that backup, but desktop and mobile client sync have not been exercised. Seafile Pro has been installed and verified in a real deployment, but backup and restore have not been tested for this guide. Newer additions may still see breaking changes to file paths or variable names before the project reaches its 1.0 milestone.',
       },
       {
         question: 'What can I actually deploy right now?',
         answer:
-          'Core infrastructure (Traefik, CrowdSec) plus a growing set of application guides — currently Vaultwarden (fully verified including backup and restore) and Seafile Pro (installation verified; backup and restore not yet tested). New guides are added once installation is verified end to end, not as soon as a container starts.',
+          'Core infrastructure (Traefik, CrowdSec), a working backup chain with Borgmatic, plus a growing set of application guides — currently Vaultwarden (fully verified including backup and restore), Nextcloud (installation, hardening and backup verified; client sync not yet) and Seafile Pro (installation verified; backup and restore not yet tested). New guides are added once installation is verified end to end, not as soon as a container starts.',
         link: { text: 'Applications', href: '/applications/' },
       },
       {
