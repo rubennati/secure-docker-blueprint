@@ -227,8 +227,9 @@ Grouped by what it takes to resolve. Detail for each is in
 ### Smaller, mechanical
 
 - [x] Access-log buffer reduced from 100 to 0 (finding 3)
-- [ ] Logrotate is a manual copy step nothing prompts for; add `maxsize` so a
-      burst rotates on size (finding 4)
+- [x] Logrotate: `maxsize 100M` added to the shipped config, with the point that
+      makes it meaningful — the conditions are only evaluated when logrotate
+      runs, daily on Debian. Installed and dry-run on a host (finding 4)
 - [ ] dnsmasq template overwrites hand-added zones on re-render (finding 6)
 - [ ] Dashboard requests its own certificate although the wildcard covers it
       (finding 7)

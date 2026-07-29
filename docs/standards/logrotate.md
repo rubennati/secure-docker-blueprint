@@ -39,6 +39,44 @@ If your deploy path is `/path/to/secure-docker-blueprint/core/traefik`, the host
 /path/to/secure-docker-blueprint/core/traefik/volumes/logs/*.log
 ```
 
+### 3. Prove it matches
+
+A pattern that matches nothing fails silently — the logs simply keep growing.
+The dry run says which files it found:
+
+```bash
+sudo logrotate -d /etc/logrotate.d/traefik
+```
+
+Expect each log listed under `considering log …`, and the size threshold echoed
+back as `log files >= 104857600 are rotated earlier`. `Handling 0 logs` means the
+path is wrong.
+
+### 4. Know when it actually runs
+
+`daily` and `maxsize` describe *conditions*, not a schedule. Nothing rotates
+until logrotate itself runs, which on Debian is a systemd timer:
+
+```bash
+systemctl list-timers logrotate.timer
+```
+
+Daily by default. `maxsize` therefore bounds a file at one day's traffic rather
+than at the size given — which is the point worth understanding, because the
+scenario it exists for is a request flood that fills a disk in minutes. Where
+that matters:
+
+```bash
+sudo systemctl edit logrotate.timer
+# [Timer]
+# OnCalendar=
+# OnCalendar=hourly
+```
+
+From `man logrotate`: *"Log files are rotated when they grow bigger than size
+bytes even before the additionally specified time interval"* — early, yes; but
+only ever at a run.
+
 ### 3. Test (dry run)
 
 ```bash

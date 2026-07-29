@@ -21,6 +21,22 @@
     missingok
     notifempty
     create 0640 root adm
+
+    # Rotate on size as well as on the day, so a request flood does not fill the
+    # disk waiting for tomorrow. Access logs are one line per request: a burst
+    # reaches this in minutes, and the fastest route to a full disk is the log
+    # written about it.
+    #
+    # This only bites when logrotate runs. Debian runs it daily, which bounds
+    # the file at one day's traffic rather than at maxsize. If that matters,
+    # run it hourly:
+    #
+    #   sudo systemctl edit logrotate.timer
+    #   [Timer]
+    #   OnCalendar=
+    #   OnCalendar=hourly
+    maxsize 100M
+
     postrotate
         docker kill --signal=USR1 traefik-core >/dev/null 2>&1 || true
     endscript
