@@ -59,6 +59,41 @@
 #           crowdsecAppsecUnreachableBlock: false
 
     # ------------------------------------------------------
+    # CrowdSec Bouncer + AppSec (WAF)
+    # ------------------------------------------------------
+    # Same decisions as crowdsec-basic, plus synchronous inspection of each
+    # request against the WAF rule sets. Blocks the individual request; it does
+    # not create an IP ban, so a false positive affects one call rather than
+    # locking someone out.
+    #
+    # Prerequisite: the AppSec engine must answer on 7422. Confirm before
+    # attaching this anywhere — from the Traefik container:
+    #   wget -S -O /dev/null http://crowdsec:7422
+    # A 401 is the correct answer (no bouncer key). "Connection refused" means
+    # the engine is not listening and this profile will do nothing, or worse if
+    # you also set the *Block options below to true.
+    #
+    # Both failure modes stay fail-open here on purpose: an AppSec outage must
+    # not take the application down with it. Setting either to true is the
+    # crowdsec-strict profile, and it belongs only on an app whose traffic has
+    # been tested against the rules — see core/crowdsec/docs/appsec.md for the
+    # per-application false positives already known.
+    # ------------------------------------------------------
+#     crowdsec-appsec:
+#       plugin:
+#         bouncer:
+#           enabled: true
+#           crowdsecMode: stream
+#           updateIntervalSeconds: 60
+#           crowdsecLapiScheme: http
+#           crowdsecLapiHost: crowdsec:8080
+#           crowdsecLapiKey: "${CROWDSEC_BOUNCER_KEY}"
+#           crowdsecAppsecEnabled: true
+#           crowdsecAppsecHost: crowdsec:7422
+#           crowdsecAppsecFailureBlock: false
+#           crowdsecAppsecUnreachableBlock: false
+
+    # ------------------------------------------------------
     # Authentik (SSO / Forward Auth)
     # ------------------------------------------------------
     # Requires: core/authentik running + outpost configured.

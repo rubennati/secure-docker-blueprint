@@ -8,7 +8,8 @@ import StackStatus from '../../../components/StackStatus.astro';
 
 CrowdSec watches Traefik's access logs and decides which IPs to ban for attack patterns (brute force, CVE probes, path traversal). On its own it detects but doesn't block — blocking is added separately, in layers you choose.
 
-<StackStatus stack="core/crowdsec" />
+<StackStatus stack="core/crowdsec"
+  note="Verified on a live host: detection, a ban enforced against a real client, and the WAF layer blocking a CVE signature. The host firewall bouncer has not been set up." />
 
 Needs: [Traefik](/core/traefik/) running.
 
@@ -61,6 +62,38 @@ done
 docker exec crowdsec cscli metrics show acquisition
 ```
 :::
+
+## What it can and cannot see
+
+Worth knowing before you decide where to attach it, because the two protective
+layers in this Blueprint do not add up — they take turns.
+
+A request rejected by an access policy never reaches the access log. Measured
+here: **120 requests against a VPN-only host moved CrowdSec's counter by 3.**
+Where `acc-tailscale` or `acc-private` is doing the work, CrowdSec is blind, and
+that is fine — nothing got through. It becomes worth its keep the moment an
+application is public.
+
+### The WAF layer is narrower than the name suggests
+
+The optional AppSec engine inspects each request against rule sets. Measured
+against a public router:
+
+| Request | Result |
+|---|---|
+| `?id=1' OR '1'='1` | passes |
+| `?q=<script>alert(1)</script>` | passes |
+| `?f=../../../../etc/passwd` | passes |
+| `/vendor/phpunit/…/eval-stdin.php` | **blocked** |
+
+The shipped rules are virtual patches for named CVEs plus a small generic set —
+not a general injection filter. It stops the mass scanning that finds any public
+host within minutes of a certificate being issued, which is most of what arrives
+uninvited. It will not stop an attack crafted against your application's own
+parameters, and it is no reason to relax anything about input handling.
+
+The upside of that narrowness: far fewer false positives than a full WAF, which
+makes it a reasonable default for a public app.
 
 ## Going further
 
@@ -154,6 +187,21 @@ Phase 1 above is detection only. Two more layers, each independently optional, a
 </Tabs>
 
 ## Troubleshooting
+
+**The bouncer never polls** — `cscli bouncers list` shows no `Last API pull`.
+Loading the plugin is not enough: the polling loop starts only once a router
+actually uses the middleware. Attach it to one, then check again. There is no
+error message for this.
+
+**A ban you set does not seem to work when you test it from the server itself** —
+it is the test that is wrong. A request made on the host arrives through the
+Docker bridge, so the proxy records the gateway as the client and the address you
+banned never appears as a sender. Read the address out of the access log, ban
+that one, and have the real client retry.
+
+**AppSec refuses every request** — the engine is unreachable and the profile is
+fail-closed. Check that something answers on 7422 from the proxy container; a
+`401` is correct there, `connection refused` is not.
 
 A legitimate IP got banned:
 

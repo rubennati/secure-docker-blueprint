@@ -147,6 +147,13 @@ settled ground.
       to the middleware list, empty by default — the three axes in
       `profiles.md` are now expressible on a router (finding 26)
 - [ ] Roll `APP_TRAEFIK_THREAT` out to the remaining stacks as each is reviewed
+- [x] **CrowdSec verified end to end.** Engine, bouncer, a real ban producing
+      403 for an external client, and AppSec blocking a CVE signature. Two
+      defects found on the way: the AppSec config was mounted where the engine
+      never reads it, and the middleware label had no slot for the threat axis
+      (findings 26–28)
+- [ ] Correct the AppSec documentation: it is virtual patching, not a WAF, and
+      the deferral of `crowdsec-appsec` over false positives overstates the risk
 - [ ] Neither Traefik nor CrowdSec may be the reason an app is slow. Where they
       are, they change
 
