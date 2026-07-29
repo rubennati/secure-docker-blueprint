@@ -8,51 +8,94 @@ services:
     image: invoiceninja/invoiceninja-debian:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}
     restart: unless-stopped
-
-    # --- Security ---
-    security_opt:
-      - no-new-privileges:true
-
-    # --- Configuration ---
-    # NOTE: Invoice Ninja reads DB_PASSWORD and APP_KEY directly from environment.
-    # Laravel has no _FILE support. A custom entrypoint for Docker Secrets injection
-    # is the path to full compliance — tracked as a future improvement.
-    env_file:
-      - ./.env
-
-    # --- Storage ---
-    volumes:
-      # - ./php/php.ini:/usr/local/etc/php/conf.d/invoiceninja.ini:ro
-      - app_public:/var/www/html/public
-      - app_storage:/var/www/html/storage
-
-    # --- Dependencies ---
     depends_on:
       mysql:
         condition: service_healthy
       redis:
         condition: service_healthy
 
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Configuration ---
+    # The image's own entrypoint reads plain environment variables only. This
+    # wrapper reads the secrets first and exports them, then hands over to it.
+    # See ops/entrypoint.sh and UPSTREAM.md.
+    entrypoint: ["/entrypoint.sh"]
+    command: ["supervisord", "-c", "/etc/supervisor/supervisord.conf"]
+    environment:
+      TZ: ${TZ}
+      # Application
+      APP_ENV: ${APP_ENV}
+      APP_DEBUG: ${APP_DEBUG}
+      APP_URL: ${APP_URL}
+      REQUIRE_HTTPS: ${REQUIRE_HTTPS}
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES}
+      IS_DOCKER: "true"
+      NINJA_ENVIRONMENT: selfhost
+      SCOUT_DRIVER: "null"
+      FILESYSTEM_DISK: debian_docker
+      # PDF rendering
+      PDF_GENERATOR: ${PDF_GENERATOR}
+      PHANTOMJS_PDF_GENERATION: "false"
+      # Database — the password arrives from a secret via the entrypoint
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      # Cache, queue and sessions
+      CACHE_DRIVER: redis
+      QUEUE_CONNECTION: redis
+      SESSION_DRIVER: redis
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      # First start only — creates the initial account
+      IN_USER_EMAIL: ${IN_USER_EMAIL}
+      # Mail
+      MAIL_MAILER: ${MAIL_MAILER}
+      MAIL_HOST: ${MAIL_HOST}
+      MAIL_PORT: ${MAIL_PORT}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_ENCRYPTION: ${MAIL_ENCRYPTION}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME}
+    secrets:
+      - DB_PWD
+      - APP_KEY
+      - REDIS_PWD
+      - MAIL_PWD
+      - IN_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./ops/entrypoint.sh:/entrypoint.sh:ro
+      - app_public:/var/www/html/public
+      - app_storage:/var/www/html/storage
+
     # --- Networking ---
     networks:
-      - internal
+      - app-internal
+      - app-egress
 
     # --- Health & Observability ---
-    # TODO: Replace with a FastCGI socket or HTTP-level check once the available
-    # tooling inside invoiceninja-debian is confirmed. Current check only verifies
-    # that the PHP binary is responsive, not that PHP-FPM or the queue workers are up.
+    # Supervisor runs three programs and all three matter: php-fpm serves the
+    # interface, queue-worker sends the mail, scheduler raises the recurring
+    # invoices and reminders. A check that only proves PHP starts would report
+    # healthy with the last two dead.
     healthcheck:
-      test: ["CMD", "php", "-r", "echo 'ok';"]
+      test: ["CMD-SHELL", "supervisorctl -c /etc/supervisor/supervisord.conf status | grep -qv RUNNING && exit 1 || exit 0"]
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 60s
+      start_period: 120s
 
     deploy:
       resources:
         limits:
-          # 1G required: Snappdf/Chromium is used for PDF rendering and live design
-          # previews and can exceed 512M under concurrent load or complex templates.
+          # Chromium renders the PDFs and the live design previews; it exceeds
+          # 512M under concurrent load or with complex templates.
           memory: 1G
           cpus: "1.00"
           pids: 200
@@ -67,10 +110,17 @@ services:
     image: nginx:${NGINX_TAG}
     container_name: ${CONTAINER_NAME_NGINX}
     restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
 
     # --- Security ---
     security_opt:
       - no-new-privileges:true
+
+    # --- Configuration ---
+    environment:
+      TZ: ${TZ}
 
     # --- Storage ---
     volumes:
@@ -78,15 +128,10 @@ services:
       - app_public:/var/www/html/public:ro
       - app_storage:/var/www/html/storage:ro
 
-    # --- Dependencies ---
-    depends_on:
-      app:
-        condition: service_healthy
-
     # --- Networking ---
     networks:
-      - internal
-      - proxy
+      - app-internal
+      - proxy-public
 
     # --- Traefik ---
     labels:
@@ -105,14 +150,12 @@ services:
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
 
     # --- Health & Observability ---
-    # TODO: Replace nginx -t (config check only) with a curl/wget liveness probe
-    # once confirmed available in the pinned nginx:alpine image.
     healthcheck:
-      test: ["CMD", "nginx", "-t"]
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 10s
+      start_period: 20s
 
     deploy:
       resources:
@@ -137,13 +180,18 @@ services:
       - no-new-privileges:true
 
     # --- Configuration ---
-    # DEVIATION: MySQL instead of MariaDB — Invoice Ninja upstream officially targets
-    # MySQL 8. MariaDB works but is untested with this blueprint.
+    # DEVIATION: MySQL rather than MariaDB — upstream targets MySQL 8 and ships
+    # it in its own compose file. MariaDB is offered there only as a commented
+    # alternative and is not exercised here.
     environment:
+      TZ: ${TZ}
       MYSQL_DATABASE: ${DB_DATABASE}
       MYSQL_USER: ${DB_USERNAME}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_PASSWORD_FILE: /run/secrets/DB_PWD
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/DB_ROOT_PWD
+    secrets:
+      - DB_PWD
+      - DB_ROOT_PWD
 
     # --- Storage ---
     volumes:
@@ -151,14 +199,15 @@ services:
 
     # --- Networking ---
     networks:
-      - internal
+      - app-internal
 
     # --- Health & Observability ---
-    # Connects as the app user to the app database — ensures the user and schema
-    # are fully initialized before the app container starts, not just that mysqld
-    # is listening. $${...} is Compose escape syntax: becomes ${...} in the shell.
+    # Connects as the application user to the application database, so the
+    # schema and grants are in place before `app` starts — not merely that
+    # mysqld is listening. Reads the password from the secret, since the
+    # _FILE form means the variable itself is not set.
     healthcheck:
-      test: ["CMD-SHELL", "mysql -h 127.0.0.1 -u$${MYSQL_USER} -p$${MYSQL_PASSWORD} $${MYSQL_DATABASE} -e 'SELECT 1' >/dev/null 2>&1"]
+      test: ["CMD-SHELL", "mysql -h 127.0.0.1 -u\"$${MYSQL_USER}\" -p\"$$(cat /run/secrets/DB_PWD)\" \"$${MYSQL_DATABASE}\" -e 'SELECT 1' >/dev/null 2>&1"]
       interval: 10s
       timeout: 5s
       retries: 12
@@ -186,17 +235,28 @@ services:
     security_opt:
       - no-new-privileges:true
 
+    # --- Configuration ---
+    # The password is read from the secret at startup, so it never appears in
+    # the process environment.
+    command: >
+      sh -c 'exec redis-server
+      --requirepass "$$(cat /run/secrets/REDIS_PWD)"
+      --maxmemory 192mb
+      --maxmemory-policy noeviction'
+    secrets:
+      - REDIS_PWD
+
     # --- Storage ---
     volumes:
       - redis_data:/data
 
     # --- Networking ---
     networks:
-      - internal
+      - app-internal
 
     # --- Health & Observability ---
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", "redis-cli -a \"$$(cat /run/secrets/REDIS_PWD)\" ping | grep -q PONG"]
       interval: 10s
       timeout: 3s
       retries: 10
@@ -228,9 +288,33 @@ volumes:
 # NETWORKS
 # --------------------------------------------------------
 networks:
-  internal:
-    name: ${COMPOSE_PROJECT_NAME}-internal
-    driver: bridge
-  proxy:
+  proxy-public:
     external: true
     name: ${TRAEFIK_NETWORK}
+
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+
+  # Outbound for the application container only — it sends mail, checks for
+  # updates and fetches exchange rates. The database and cache stay on
+  # app-internal alone and have no route out.
+  app-egress:
+    name: ${COMPOSE_PROJECT_NAME}-egress
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  DB_PWD:
+    file: ./.secrets/db_pwd.txt
+  DB_ROOT_PWD:
+    file: ./.secrets/db_root_pwd.txt
+  REDIS_PWD:
+    file: ./.secrets/redis_pwd.txt
+  APP_KEY:
+    file: ./.secrets/app_key.txt
+  MAIL_PWD:
+    file: ./.secrets/mail_pwd.txt
+  IN_PWD:
+    file: ./.secrets/in_pwd.txt

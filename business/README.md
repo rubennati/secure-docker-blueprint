@@ -24,7 +24,7 @@ This keeps `business/` a meaningful category instead of a grab-bag. See [`docs/a
 
 | App | Use case | Status | Notes |
 |---|---|---|---|
-| [Invoice Ninja](invoiceninja/) | Invoicing, billing, quotes, client portal | ✅ | |
+| [Invoice Ninja](invoiceninja/) | Invoicing, billing, quotes, client portal | 🚧 | Credentials moved into Docker Secrets; not yet exercised on a host |
 | [Dolibarr](dolibarr/) | ERP / CRM — accounting, HR, inventory, projects | 🚧 | Migrated from `apps/dolibarr/` |
 | [Kimai](kimai/) | Time tracking per project / customer | 🚧 | Integrates with Invoice Ninja via webhooks |
 

@@ -215,7 +215,7 @@ See [`business/README.md`](business/README.md) for the full category README + ro
 |---|---|---|---|
 | [OpenProject CE](business/openproject/) | Project management | ✅ | Full PM — Gantt, kanban, work packages, time tracking. CE = local accounts only, no SSO. |
 | [Vikunja](business/vikunja/) | Task management | ✅ | Kanban, lists, Gantt — Trello / Planner alternative. Authentik OIDC verified, SSO-only. |
-| [Invoice Ninja](business/invoiceninja/) | Billing | ✅ | Invoicing, quotes, client portal |
+| [Invoice Ninja](business/invoiceninja/) | Billing | 🚧 | Invoicing, quotes, client portal. Credentials moved into Docker Secrets; not yet exercised on a host |
 | [Dolibarr](business/dolibarr/) | ERP / CRM | 🚧 | Accounting, projects, HR, inventory |
 | [Kimai](business/kimai/) | Time tracking | 🚧 | Per-project/customer hours → Invoice Ninja |
 | [Listmonk](business/listmonk/) | Newsletter | 🚧 | Mailing list + transactional mail |

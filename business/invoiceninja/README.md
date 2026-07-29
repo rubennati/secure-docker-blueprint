@@ -1,8 +1,35 @@
 # Invoice Ninja
 
-> **Status: 🔬 Preview** — v5.13.26 · 2026-07-26
+> **Status: 🚧 v5.13.26** — credentials moved into Docker Secrets;
+> not yet exercised on a host · 2026-07-29
 
 Self-hosted invoicing, quotes, expenses, and time-tracking (Laravel / PHP-FPM).
+
+## Minimum requirements
+
+From the project's own [server requirements](https://www.invoiceninja.org/getting-started/):
+
+| | Upstream |
+|---|---|
+| RAM | 1 GB, **2 GB recommended** |
+| CPU | 1 vCPU core |
+| Storage | 20 GB |
+| PHP | 8.1 or higher |
+| Database | MySQL 5.7+ or MariaDB 10.3+ |
+| Web server | Nginx or Apache |
+
+Those figures describe the application alone. This stack runs four containers,
+and the resource limits in `docker-compose.yml` reserve 1 GB for the application
+and 1 GB for MySQL — so **2 GB is the floor and 4 GB is comfortable**. The
+application limit is not padding: Chromium renders the PDFs and the live design
+previews, and it exceeds 512 MB under concurrent load.
+
+The pinned images clear every line above — PHP 8.x in the application image,
+MySQL 8.4, nginx.
+
+PHP extensions (BCMath, Ctype, Fileinfo, JSON, Mbstring, OpenSSL, PDO,
+Tokenizer, XML, GD) come with the official image; the list matters only if you
+depart from it.
 
 ## Services
 
@@ -24,14 +51,15 @@ Supervisor inside the `app` container manages the Laravel scheduler and queue wo
 - `REQUIRE_HTTPS=true` enforced via env
 - `APP_DEBUG=false` in production
 - Access restricted to VPN (`acc-tailscale`) by default
-- Known deviation: secrets in `.env` (Laravel has no `_FILE` support — see UPSTREAM.md)
+- All six credentials in Docker Secrets, injected by `ops/entrypoint.sh`
+- `app-internal` is `internal: true`; only the app container has an outbound path
 
 ## Backup
 
 | | |
 |---|---|
 | **Database** | MySQL · container `invoiceninja-mysql` · database `ninja` · user `ninja` |
-| **Password** | `DB_PASSWORD` in `.env` — see the note below |
+| **Password** | `.secrets/db_pwd.txt` |
 | **State** | `mysql_data` (database) · `app_storage` (attachments, logos, generated PDFs) · **`.env`, especially `APP_KEY`** |
 | **Reproducible** | `redis_data` (cache) · `app_public` — served assets, rebuilt by the image |
 | **Quiescing** | Not needed. The dump is consistent on its own. |
@@ -48,18 +76,14 @@ mysql_databases:
       password: "{credential file /srv/docker/business/invoiceninja/.secrets/db_pwd.txt}"
 ```
 
-**`APP_KEY` in `.env` decrypts the stored data.** Without it a restored database
+**`.secrets/app_key.txt` decrypts the stored data.** Without it a restored database
 is unreadable — this is the single most important line in this section, and it is
 the one thing here that is not in a volume. Back `.env` up with the database, and
 keep a copy of `APP_KEY` somewhere the host cannot reach.
 
-**The credential file above does not exist yet**, because this stack keeps its
-secrets in `.env` rather than in `.secrets/`. That is an upstream limitation, not
-an oversight: Laravel has no `_FILE` support for most variables, `APP_KEY` and
-`DB_PASSWORD` among them, so a custom entrypoint is the path to Docker Secrets
-here — recorded as Phase 2 in [`UPSTREAM.md`](UPSTREAM.md#known-deviations).
-Until then, supply the password to borgmatic another way rather than having two
-systems read it out of `.env`.
+Point borgmatic straight at `.secrets/db_pwd.txt`, the same file the stack
+mounts — one copy of the password on the host, and nothing to update twice when
+it is rotated.
 
 Manual dump and restore, when borgmatic is not in the picture:
 
@@ -105,26 +129,41 @@ Set these values:
 | `IN_USER_EMAIL` | Initial admin email |
 | `MAIL_HOST` / `MAIL_*` | SMTP settings for sending invoices |
 
-### Step 2: Generate Passwords
+### Step 2: Create the secrets
+
+Nothing sensitive goes in `.env`. All six live in `.secrets/`, and the
+application reads them through `ops/entrypoint.sh`.
 
 ```bash
-sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')|" .env
-sed -i "s|^DB_ROOT_PASSWORD=.*|DB_ROOT_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')|" .env
-sed -i "s|^IN_PASSWORD=.*|IN_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')|" .env
+mkdir -p .secrets
+openssl rand -base64 32 | tr -d '\n' > .secrets/db_pwd.txt
+openssl rand -base64 32 | tr -d '\n' > .secrets/db_root_pwd.txt
+openssl rand -hex 32    | tr -d '\n' > .secrets/redis_pwd.txt
+openssl rand -base64 24 | tr -d '\n' > .secrets/in_pwd.txt
+printf 'your-smtp-password'          > .secrets/mail_pwd.txt
+chmod 600 .secrets/*.txt
 ```
 
-### Step 3: Generate APP_KEY (before first boot)
+`in_pwd.txt` is the first administrator's password, used on the first start
+only. Read it once, store it, then change it in the interface.
 
-**APP_KEY must be set before starting the stack for the first time.** Generate it now using `openssl` — no containers required:
+### Step 3: Generate the APP_KEY, before the first start
+
+It has to exist before the stack comes up — starting without it fails during the
+migration. Let the application generate it: Laravel expects the `base64:` prefix
+its own generator produces, which `openssl rand` alone does not give you.
 
 ```bash
-APP_KEY="base64:$(openssl rand -base64 32)"
-sed -i "s|^APP_KEY=.*|APP_KEY=${APP_KEY}|" .env
+docker run --rm invoiceninja/invoiceninja-debian:5.13.26 \
+  php artisan key:generate --show | tr -d '\n' > .secrets/app_key.txt
+chmod 600 .secrets/app_key.txt
 ```
 
-**CRITICAL:** Never change `APP_KEY` after data exists in the database. It encrypts stored payment tokens, gateway credentials, and other sensitive values. If `APP_KEY` changes, that data becomes unreadable.
+**Never change it once data exists.** It encrypts stored payment tokens and
+gateway credentials; if it changes, that data is unreadable.
 
-Save a copy of your `.env` (including `APP_KEY`) in a secure location before starting.
+Store a copy of `app_key.txt` somewhere this host cannot reach — a database
+backup without it restores nothing readable.
 
 ### Step 4: Start
 

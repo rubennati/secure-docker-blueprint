@@ -301,13 +301,13 @@
   },
   "business/invoiceninja": {
     "backup_docs": "documented",
-    "internal": "baseline-aligned",
+    "internal": "scaffolded",
     "pinned": "APP_TAG=5.13.26",
-    "public": "ready",
+    "public": "preview",
     "restore_docs": "missing",
-    "symbol": "✅",
-    "verified": "2026-06-14",
-    "verified_legacy_field": true
+    "symbol": "🚧",
+    "verified": "2026-07-29",
+    "verified_legacy_field": false
   },
   "business/kimai": {
     "backup_docs": "documented",

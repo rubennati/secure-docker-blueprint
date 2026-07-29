@@ -4,7 +4,7 @@
 
 Generated 2026-07-29 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-59 stacks: 0 ops-ready · 39 ready · 20 preview.
+59 stacks: 0 ops-ready · 38 ready · 21 preview.
 
 ## What the columns mean
 
@@ -70,7 +70,7 @@ Generated 2026-07-29 from the sources named in [`docs/standards/status-model.md`
 |---|---|---|---|---|---|---|
 | [`business/documenso`](business/documenso/) | 🚧 `preview` | `scaffolded` | `APP_TAG=v2.15.0` | — | documented | missing |
 | [`business/dolibarr`](business/dolibarr/) | 🚧 `preview` | `scaffolded` | `APP_TAG=23.0.3` | 2026-04-17 ⚠️ | documented | missing |
-| [`business/invoiceninja`](business/invoiceninja/) | ✅ `ready` | `baseline-aligned` | `APP_TAG=5.13.26` | 2026-06-14 ⚠️ | documented | missing |
+| [`business/invoiceninja`](business/invoiceninja/) | 🚧 `preview` | `scaffolded` | `APP_TAG=5.13.26` | 2026-07-29 | documented | missing |
 | [`business/kimai`](business/kimai/) | 🚧 `preview` | `scaffolded` | `APP_TAG=apache-2.61.0` | 2026-05-03 ⚠️ | documented | missing |
 | [`business/listmonk`](business/listmonk/) | 🚧 `preview` | `scaffolded` | `APP_TAG=v6.2.0` | 2026-05-03 ⚠️ | documented | missing |
 | [`business/matomo`](business/matomo/) | 🚧 `preview` | `scaffolded` | `APP_TAG=5.12.0-apache` | 2026-04-17 ⚠️ | documented | missing |
