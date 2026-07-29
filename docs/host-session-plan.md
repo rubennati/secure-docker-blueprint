@@ -70,12 +70,21 @@ hardest patterns. What comes out of it becomes the template for every app after.
       and the secret are in `.env.example`, the transport choice is explained, and
       delivery was confirmed end to end — four test messages sent with `occ
       user:welcome`, all four received
-- [ ] **PHP and container tuning to documented values.** Upload size, memory
-      limit, OPcache, worker count — sourced from the project's own
-      recommendations, not guessed. `pm.max_children = 10` on an eight-core host
-      is worth re-examining
-- [ ] **Minimum requirements stated.** CPU, memory and disk the stack actually
-      needs, so an operator can size a machine before deploying
+- [x] **PHP and container tuning to documented values.** `pm.max_children` now
+      follows Nextcloud's own formula against a measured worker size — 65–107 MB,
+      not the 200–300 MB the file asserted — giving 32 rather than 10. OPcache
+      needed nothing: the official image already ships the recommended settings,
+      verified on the instance
+- [x] **Minimum requirements stated.** Upstream's per-process figures, plus what
+      this stack measured idle, translated into a machine an operator can order
+- [x] **The healthcheck was logging two errors every 30 seconds.** `occ` ran as
+      root, which cannot read the two group-readable secrets, so the instance
+      reported errors in its own log — 2880 entries a day. Now runs as the web
+      user
+- [?] **The database is pinned below the recommended version.** Nextcloud 34
+      recommends MariaDB 11.8; this stack pins 10.11. Supported, but against this
+      repository's own version rule. Closing it is a major upgrade on a live
+      instance — the same work as the upgrade rehearsal
 - [ ] Two-factor: providers are available but not enforced — decide
 - [ ] Rate limits checked against real usage — the app must not stall behind them
 - [ ] Desktop and mobile client connect and sync

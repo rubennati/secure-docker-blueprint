@@ -369,9 +369,45 @@ After a file-tree restore, reconcile the index with what is actually on disk:
 docker compose exec -u www-data app php occ files:scan --all
 ```
 
-## Server sizing and tuning rationale
+## Minimum requirements
 
-This configuration is tuned for a **Hetzner CPX32** (4 vCPU / 8 GB RAM / 160 GB SSD) running a small business collaboration workload: document editing via OnlyOffice, team folders, and normal file sync. It is not intended as a large public file hosting platform.
+Nextcloud states its requirements per PHP process rather than per server, because
+that is the part that scales with use:
+
+| | Upstream | Source |
+|---|---|---|
+| RAM per PHP process | 128 MB minimum, **512 MB recommended** | [System requirements](https://docs.nextcloud.com/server/latest/admin_manual/installation/system_requirements.html) |
+| RAM for the built-in updater | 256 MB | same |
+| PHP | 8.3 · 8.4 · **8.5 recommended** — the pinned image ships 8.5 | same |
+| MariaDB | 10.11 · 11.4 · **11.8 recommended** · 12.3 | same |
+| CPU, disk | not specified upstream | — |
+
+Translating that into a machine, for the reference workload — a small team, this
+stack and nothing else on the host:
+
+| | Minimum | Comfortable |
+|---|---|---|
+| CPU | 2 cores | 4 cores |
+| RAM | 4 GB | 8 GB |
+| Disk | 20 GB plus your data | SSD, 20 GB plus data |
+
+The 4 GB floor is arithmetic, not a guess: MariaDB with the buffer pool this
+stack configures takes ~1.5 GB, Redis 0.5 GB, the OS and nginx 0.5 GB, and what
+remains has to hold the PHP workers. Below 4 GB the pool shrinks to where cron
+and interactive requests compete for it — the 502s described under
+[PHP-FPM worker pool](#php-fpm-worker-pool).
+
+Disk is dominated by user data. Before any: roughly 1 GB for the application
+volume and a few hundred megabytes for an empty database.
+
+An office server (OnlyOffice or similar) on the same host adds roughly 1.5 GB and
+its own CPU demand; size for it separately.
+
+## Tuning rationale
+
+The reference machine below is **4 vCPU / 8 GB RAM / 160 GB SSD** running a small
+business collaboration workload: document editing, team folders, normal file
+sync. It is not sized as a large public file hosting platform.
 
 ### Upload limits
 
@@ -393,16 +429,66 @@ This configuration is tuned for a **Hetzner CPX32** (4 vCPU / 8 GB RAM / 160 GB 
 
 ### PHP-FPM worker pool
 
-The default Nextcloud Docker image ships with `pm.max_children=5`. On this server, cron jobs run every 5 minutes and consume 1–2 workers for 30–120 seconds (file scanning, preview generation, notifications). With only 5 workers, this exhausts the pool during cron execution and causes 502/504 errors that resolve 1–3 minutes later — the characteristic intermittent outage pattern.
+The image ships `pm.max_children=5`. Cron jobs occupy one or two workers for up to
+a couple of minutes every five minutes — file scanning, preview generation,
+notifications — so five workers are exhausted by housekeeping alone, and the
+result is 502/504 errors that clear on their own a minute or three later.
 
-`php-fpm/zz-nextcloud-pool.conf` overrides the pool to `pm.max_children=10`. This file is mounted read-only into both `app` and `cron`. It is loaded after the image's own `zz-docker.conf` (alphabetical order: `zz-nextcloud-pool.conf` > `zz-docker.conf`) so it takes precedence. See the file itself for the full sizing calculation.
+`php-fpm/zz-nextcloud-pool.conf` raises it to **25**, derived by the formula
+Nextcloud documents:
 
-**Verify the mount path before restarting:**
+```text
+pm.max_children = floor(RAM available for PHP / average worker RSS)
+```
+
+Upstream states a typical worker uses 50–100 MB. The shipped default takes the
+top of that band — `2560 MB / 100 MB = 25` — because a value that goes out to
+machines nobody has measured has to hold on the unfavourable end of it.
+
+Then measure and adjust. A stack running preview generation and full-text search
+sits at the top of the band, one without at the bottom, and the difference is
+worth a factor of two in worker count.
+
+> `PHP_MEMORY_LIMIT` (1024 MB) is a per-request ceiling, not an allocation. It
+> bounds one runaway request; it is not what a worker normally holds, and
+> multiplying it by `max_children` describes a state that does not occur. Sizing
+> the pool from it produces a value several times too low.
+
+Measure your own before trusting either number:
+
+```bash
+docker compose exec -u root app sh -c '
+  for p in $(pgrep -f "php-fpm: pool www"); do
+    awk "/VmRSS/{printf \"%6.1f MB\n\", \$2/1024}" /proc/$p/status
+  done'
+```
+
+PHP-FPM says so itself when the value is too low:
+
+```bash
+docker compose logs app | grep max_children
+# WARNING: [pool www] server reached pm.max_children setting (32), …
+```
+
+**Verify the mount before restarting:**
 
 ```bash
 docker compose exec app ls /usr/local/etc/php-fpm.d/
 # Expected: docker.conf  www.conf  zz-docker.conf  zz-nextcloud-pool.conf
+docker compose exec -u root app php-fpm -tt 2>&1 | grep max_children
 ```
+
+### OPcache
+
+Nothing to configure. The official image already ships Nextcloud's recommended
+settings — `save_comments=1`, `revalidate_freq=60`, `interned_strings_buffer=32`,
+`max_accelerated_files=10000`, and the tracing JIT at `jit=1255` with an 8 MB
+buffer. Confirmed on the running instance rather than assumed.
+
+The one value worth knowing is `opcache.memory_consumption`, which the image
+templates from `PHP_OPCACHE_MEMORY_CONSUMPTION` and defaults to 128 MB. Nextcloud
+raises a warning in the admin overview when any OPcache limit passes 90% of its
+allocation — raise the variable if that appears, rather than pre-emptively.
 
 ### Redis
 

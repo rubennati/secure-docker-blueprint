@@ -16,6 +16,18 @@ Nextcloud publishes a major version every four months and maintains each for one
 year. 34 was released 2026-06-09, so it is the newest version carrying a full
 support window — [release schedule](https://github.com/nextcloud/server/wiki/Maintenance-and-Release-Schedule).
 
+### Open: the database is pinned below the recommended version
+
+Nextcloud 34 lists MariaDB 10.11 · 11.4 · **11.8 (recommended)** · 12.3. This
+stack pins `DB_TAG=10.11` — supported, and one of the two versions upstream does
+not single out. That contradicts this repository's own rule of pinning what the
+project recommends, so it is a deviation rather than a choice, and it is open.
+
+Closing it is a major database upgrade on a live instance, which is the same work
+as the upgrade rehearsal the backup milestone calls for: back up, upgrade, and be
+able to return to the state before. Check MariaDB's own upgrade path before
+jumping two majors at once.
+
 ## What we use from upstream
 
 | File | Used as | Notes |

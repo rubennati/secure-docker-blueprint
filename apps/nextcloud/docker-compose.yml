@@ -161,7 +161,11 @@ services:
 
     # --- Health & Observability ---
     healthcheck:
-      test: ["CMD-SHELL", "php -f /var/www/html/occ status 2>/dev/null | grep -q 'installed: true' || exit 1"]
+      # Run occ as the web user, not as root. Two of the secrets are readable by
+      # that user's group and by nobody else, so a root healthcheck logs a
+      # permission error for each of them on every interval — 2880 entries a day,
+      # and the instance's own overview then reports errors in its log.
+      test: ["CMD-SHELL", "su -s /bin/sh www-data -c 'php -f /var/www/html/occ status' 2>/dev/null | grep -q 'installed: true' || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 10
