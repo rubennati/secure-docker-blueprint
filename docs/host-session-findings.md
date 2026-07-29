@@ -691,6 +691,36 @@ remains something to argue for per application, since fail-closed turns any
 engine problem into an outage. And the appsec section of the documentation
 should stop implying WAF-grade coverage.
 
+## 29. SSH detection cannot work on a stock Debian host, and the note said otherwise
+
+**The setup.** `crowdsecurity/sshd` ships enabled in `CROWDSEC_COLLECTIONS`, so
+its rules load on every start. The `auth.log` mount and its acquisition block
+were both commented out, carrying the note *"opt-in — uncomment for SSH
+brute-force detection"*.
+
+That reads as a switch. It is not one.
+
+**Measured on the host.** `rsyslog` is inactive, `/var/log/auth.log` does not
+exist, and the journal holds 987 SSH events over seven days — so there is
+plenty to detect and no file to detect it in. Debian 12 and 13 log to journald.
+
+The obvious alternative does not work either: CrowdSec can read the journal via
+`source: journalctl`, but the official image ships no `journalctl` binary, so a
+containerised engine cannot use it.
+
+**So on a stock Debian host, uncommenting the line achieves nothing** — and it
+is worse than nothing. Docker creates a *directory* at a bind-mount source that
+does not exist, the acquisition then reads an empty path, and the result is
+indistinguishable from working: rules loaded, no errors, no detections.
+
+That is the fourth instance of the same shape tonight, after the AppSec config
+in an unread location, the log path, and this. Rules that load against a source
+that is not there fail in the one way nobody notices.
+
+**Fix.** The mount stays commented, and the note now states the precondition:
+rsyslog has to be installed first, the file has to exist, and there is a command
+to check before touching anything. A one-word "opt-in" was the actual defect.
+
 ## What worked, session 2
 
 - The wildcard certificate covered the new subdomain with **no second certificate

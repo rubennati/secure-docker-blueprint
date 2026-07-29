@@ -57,6 +57,16 @@ services:
     # on-failure: restarts only if migrations fail; stays stopped on success
     restart: on-failure
     command: ["./docker/prod/seeder"]
+    # --- Resources ---
+    # Runs once at start and exits.
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          pids: 100
+        reservations:
+          memory: 64M
+
     depends_on:
       db:
         condition: service_healthy

@@ -15,6 +15,16 @@ services:
     security_opt:
       - no-new-privileges:true
 
+    # --- Resources ---
+    # Search, rendering or ML — generous on purpose. Retune from docker stats.
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          pids: 300
+        reservations:
+          memory: 512M
+
     # --- Configuration ---
     # NOTE: OnlyOffice reads JWT_SECRET from env only — no _FILE support.
     # The entrypoint wrapper reads the Docker Secret and exports it.

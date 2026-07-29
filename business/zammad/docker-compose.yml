@@ -45,6 +45,16 @@ services:
     container_name: ${CONTAINER_NAME_DB}
     restart: unless-stopped
     security_opt: [no-new-privileges:true]
+    # --- Resources ---
+    # Ceiling above the buffer pool, connections and temporary tables.
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          pids: 200
+        reservations:
+          memory: 256M
+
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
@@ -69,6 +79,16 @@ services:
     security_opt: [no-new-privileges:true]
     read_only: true
     tmpfs: [/tmp]
+    # --- Resources ---
+    # The configured maxmemory plus allocator overhead.
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          pids: 50
+        reservations:
+          memory: 32M
+
     volumes:
       - ./volumes/redis:/data
     networks: [app-internal]
@@ -84,6 +104,17 @@ services:
     container_name: ${CONTAINER_NAME_MEMCACHED}
     restart: unless-stopped
     security_opt: [no-new-privileges:true]
+
+    # --- Resources ---
+    # `-m 256M` is configured below; the rest is process overhead.
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          pids: 50
+        reservations:
+          memory: 64M
+
     command: memcached -m 256M
     networks: [app-internal]
 
@@ -95,6 +126,16 @@ services:
     container_name: ${CONTAINER_NAME_ES}
     restart: unless-stopped
     security_opt: [no-new-privileges:true]
+    # --- Resources ---
+    # Search, rendering or ML — generous on purpose. Retune from docker stats.
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          pids: 300
+        reservations:
+          memory: 512M
+
     environment:
       discovery.type: single-node
       ES_JAVA_OPTS: "-Xms512m -Xmx512m"
@@ -116,6 +157,16 @@ services:
     container_name: ${COMPOSE_PROJECT_NAME}-init
     restart: on-failure
     command: ["zammad-init"]
+    # --- Resources ---
+    # Search, rendering or ML — generous on purpose. Retune from docker stats.
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          pids: 300
+        reservations:
+          memory: 512M
+
     depends_on:
       db:
         condition: service_healthy
@@ -130,6 +181,16 @@ services:
     <<: *zammad-shared
     container_name: ${COMPOSE_PROJECT_NAME}-railsserver
     command: ["zammad-railsserver"]
+    # --- Resources ---
+    # Search, rendering or ML — generous on purpose. Retune from docker stats.
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          pids: 300
+        reservations:
+          memory: 512M
+
     depends_on:
       init:
         condition: service_completed_successfully
@@ -141,6 +202,16 @@ services:
     <<: *zammad-shared
     container_name: ${COMPOSE_PROJECT_NAME}-websocket
     command: ["zammad-websocket"]
+    # --- Resources ---
+    # Search, rendering or ML — generous on purpose. Retune from docker stats.
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          pids: 300
+        reservations:
+          memory: 512M
+
     depends_on:
       init:
         condition: service_completed_successfully
@@ -150,6 +221,16 @@ services:
     <<: *zammad-shared
     container_name: ${COMPOSE_PROJECT_NAME}-scheduler
     command: ["zammad-scheduler"]
+    # --- Resources ---
+    # Search, rendering or ML — generous on purpose. Retune from docker stats.
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          pids: 300
+        reservations:
+          memory: 512M
+
     depends_on:
       init:
         condition: service_completed_successfully
@@ -165,6 +246,16 @@ services:
     <<: *zammad-shared
     container_name: ${CONTAINER_NAME_APP}
     command: ["zammad-nginx"]
+    # --- Resources ---
+    # Search, rendering or ML — generous on purpose. Retune from docker stats.
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          pids: 300
+        reservations:
+          memory: 512M
+
     depends_on:
       railsserver:
         condition: service_started

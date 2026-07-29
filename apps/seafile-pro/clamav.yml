@@ -15,6 +15,16 @@ services:
       - no-new-privileges:true
 
     # --- Networking ---
+    # --- Resources ---
+    # The signature database is held in memory.
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          pids: 100
+        reservations:
+          memory: 512M
+
     networks:
       - app-internal
 

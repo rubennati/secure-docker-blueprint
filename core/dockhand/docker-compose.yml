@@ -17,6 +17,16 @@ services:
       - /run
       - /tmp
 
+    # --- Resources ---
+    # Measured in single-digit MB; this is a ceiling, not an appetite.
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          pids: 50
+        reservations:
+          memory: 32M
+
     # --- Configuration ---
     environment:
       CONTAINERS: "1"
@@ -64,6 +74,16 @@ services:
     security_opt:
       - no-new-privileges:true
 
+    # --- Resources ---
+    # Ceiling above the buffer pool, connections and temporary tables.
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          pids: 200
+        reservations:
+          memory: 256M
+
     # --- Configuration ---
     environment:
       POSTGRES_DB: ${DB_NAME}
@@ -100,6 +120,17 @@ services:
     image: fnsys/dockhand:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}
     restart: unless-stopped
+    # --- Resources ---
+    # Generous ceiling: a limit the normal workload reaches is a limit that
+    # kills imports and background jobs. Retune from docker stats, not down to it.
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          pids: 200
+        reservations:
+          memory: 128M
+
     depends_on:
       db:
         condition: service_healthy

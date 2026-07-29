@@ -18,6 +18,16 @@ services:
       - /run
       - /tmp
 
+    # --- Resources ---
+    # Measured in single-digit MB; this is a ceiling, not an appetite.
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          pids: 50
+        reservations:
+          memory: 32M
+
     # --- Configuration ---
     environment:
       CONTAINERS: "1"
@@ -62,6 +72,17 @@ services:
     image: portainer/portainer-ce:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}
     restart: unless-stopped
+    # --- Resources ---
+    # Generous ceiling: a limit the normal workload reaches is a limit that
+    # kills imports and background jobs. Retune from docker stats, not down to it.
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          pids: 200
+        reservations:
+          memory: 128M
+
     depends_on:
       socket-proxy:
         condition: service_healthy

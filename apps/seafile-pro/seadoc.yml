@@ -8,6 +8,16 @@ services:
     image: seafileltd/sdoc-server:${SEADOC_TAG}
     container_name: ${CONTAINER_NAME_SEADOC}
     restart: unless-stopped
+    # --- Resources ---
+    # Collaborative document editing.
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          pids: 200
+        reservations:
+          memory: 128M
+
     depends_on:
       db:
         condition: service_healthy

@@ -14,6 +14,16 @@ services:
       - no-new-privileges:true
 
     # --- Configuration ---
+    # --- Resources ---
+    # Ceiling above the buffer pool, connections and temporary tables.
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          pids: 200
+        reservations:
+          memory: 256M
+
     environment:
       MYSQL_ROOT_PASSWORD_FILE: /run/secrets/DB_ROOT_PWD
       MYSQL_LOG_CONSOLE: "true"
@@ -53,6 +63,16 @@ services:
     entrypoint: memcached -m 256
 
     # --- Networking ---
+    # --- Resources ---
+    # `-m 256M` is configured; the rest is process overhead.
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          pids: 50
+        reservations:
+          memory: 64M
+
     networks:
       - app-internal
 
@@ -75,6 +95,16 @@ services:
       - REDIS_PWD
 
     # --- Storage ---
+    # --- Resources ---
+    # Small cache role in this stack.
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          pids: 50
+        reservations:
+          memory: 32M
+
     volumes:
       - ./volumes/redis:/data
 
@@ -98,6 +128,16 @@ services:
     image: ${APP_IMAGE}
     container_name: ${CONTAINER_NAME_APP}
     restart: unless-stopped
+    # --- Resources ---
+    # The main server process — indexing and file handling. Generous on purpose.
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          pids: 300
+        reservations:
+          memory: 512M
+
     depends_on:
       db:
         condition: service_healthy

@@ -20,6 +20,17 @@ services:
     security_opt:
       - no-new-privileges:true
 
+    # --- Resources ---
+    # Generous ceiling: a limit the normal workload reaches is a limit that
+    # kills imports and background jobs. Retune from docker stats, not down to it.
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          pids: 200
+        reservations:
+          memory: 128M
+
     # --- Configuration ---
     environment:
       TZ: ${TZ}
@@ -40,13 +51,21 @@ services:
       - ./config/appsec.yaml:/etc/crowdsec/acquis.d/appsec.yaml:ro
       # Traefik access logs (read-only, relative path by default)
       - ${TRAEFIK_LOG_PATH}:/var/log/traefik:ro
-      # SSH authentication logs. The sshd collection ships in
-      # CROWDSEC_COLLECTIONS by default, so its rules load either way — without
-      # this mount and a matching block in acquis.yaml they simply have nothing
-      # to read, which looks identical to working. Leave it commented only if
-      # this host has no SSH.
+      # SSH authentication logs — opt-in, and only possible on a host that
+      # writes them to a file. The `sshd` collection ships enabled in
+      # CROWDSEC_COLLECTIONS, so its rules load either way; without a source
+      # they simply match nothing, which looks identical to working.
+      #
+      # Debian 12/13 log to journald and have no /var/log/auth.log. This
+      # container cannot read the journal either — the image ships no
+      # `journalctl`. So on a stock Debian host SSH detection needs rsyslog
+      # installed first, and only then does uncommenting this help.
+      #
+      # Check before uncommenting:  ls -l /var/log/auth.log
+      # An uncommented mount against a missing file makes Docker create a
+      # directory there, and the acquisition silently reads nothing.
       # See docs/firewall-bouncer.md → "SSH detection"
-      - /var/log/auth.log:/var/log/auth.log:ro
+      # - /var/log/auth.log:/var/log/auth.log:ro
 
     # --- Networking ---
     networks:

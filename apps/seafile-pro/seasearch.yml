@@ -16,6 +16,16 @@ services:
       - no-new-privileges:true
 
     # --- Configuration ---
+    # --- Resources ---
+    # Search index.
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          pids: 200
+        reservations:
+          memory: 256M
+
     environment:
       - SS_FIRST_ADMIN_USER=${SEAFILE_ADMIN_EMAIL}
       - SS_FIRST_ADMIN_PASSWORD=${INIT_SEAFILE_ADMIN_PASSWORD}

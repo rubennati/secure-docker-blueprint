@@ -28,8 +28,11 @@ labels:
 #
 # See docs/firewall-bouncer.md → "SSH detection"
 #
----
-filenames:
-  - /var/log/auth.log
-labels:
-  type: syslog
+# Uncomment together with the auth.log mount in docker-compose.yml — and only
+# after confirming the file exists. See the note there: a journald-only host
+# has none, and this container cannot read the journal.
+# ---
+# filenames:
+#   - /var/log/auth.log
+# labels:
+#   type: syslog

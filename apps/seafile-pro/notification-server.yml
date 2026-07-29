@@ -8,6 +8,16 @@ services:
     image: seafileltd/notification-server:${NOTIFICATION_TAG}
     container_name: ${CONTAINER_NAME_NOTIFICATION}
     restart: unless-stopped
+    # --- Resources ---
+    # Small push service.
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          pids: 100
+        reservations:
+          memory: 64M
+
     depends_on:
       db:
         condition: service_healthy

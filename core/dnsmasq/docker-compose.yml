@@ -23,6 +23,16 @@ services:
       - SETGID
       - CHOWN
 
+    # --- Resources ---
+    # Small single-purpose service.
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          pids: 100
+        reservations:
+          memory: 32M
+
     # --- Storage ---
     volumes:
       - ./config/dnsmasq.conf:/etc/dnsmasq.conf:ro

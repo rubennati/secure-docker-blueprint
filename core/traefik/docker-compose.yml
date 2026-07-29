@@ -15,6 +15,16 @@ services:
       - /run
       - /tmp
 
+    # --- Resources ---
+    # Measured in single-digit MB; this is a ceiling, not an appetite.
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          pids: 50
+        reservations:
+          memory: 32M
+
     networks:
       - socket_proxy_net
 
@@ -63,6 +73,16 @@ services:
     image: ${TRAEFIK_IMAGE}
     container_name: ${TRAEFIK_CONTAINER_NAME}
     restart: unless-stopped
+    # --- Resources ---
+    # Measured in single-digit MB; this is a ceiling, not an appetite.
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          pids: 50
+        reservations:
+          memory: 32M
+
     depends_on:
       docker-socket-proxy:
         condition: service_healthy

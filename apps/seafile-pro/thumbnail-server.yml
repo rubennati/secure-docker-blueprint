@@ -8,6 +8,16 @@ services:
     image: seafileltd/thumbnail-server:${THUMBNAIL_TAG}
     container_name: ${CONTAINER_NAME_THUMBNAIL}
     restart: unless-stopped
+    # --- Resources ---
+    # Image conversion; spikes per file.
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          pids: 200
+        reservations:
+          memory: 128M
+
     depends_on:
       db:
         condition: service_healthy

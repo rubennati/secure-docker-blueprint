@@ -8,6 +8,16 @@ services:
     image: seafileltd/seafile-md-server:${MD_TAG}
     container_name: ${CONTAINER_NAME_MD_SERVER}
     restart: unless-stopped
+    # --- Resources ---
+    # Markdown rendering service.
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          pids: 200
+        reservations:
+          memory: 128M
+
     depends_on:
       db:
         condition: service_healthy

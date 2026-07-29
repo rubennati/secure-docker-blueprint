@@ -16,6 +16,16 @@ services:
     security_opt:
       - no-new-privileges:true
 
+    # --- Resources ---
+    # Ceiling above the buffer pool, connections and temporary tables.
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          pids: 200
+        reservations:
+          memory: 256M
+
     # --- Configuration ---
     environment:
       POSTGRES_DB: ${DB_NAME}
@@ -58,6 +68,16 @@ services:
     tmpfs:
       - /tmp
 
+    # --- Resources ---
+    # The configured maxmemory plus allocator overhead.
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          pids: 50
+        reservations:
+          memory: 32M
+
     # --- Storage ---
     volumes:
       - ./volumes/redis:/data
@@ -88,6 +108,16 @@ services:
     security_opt:
       - no-new-privileges:true
 
+    # --- Resources ---
+    # Search, rendering or ML — generous on purpose. Retune from docker stats.
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          pids: 300
+        reservations:
+          memory: 512M
+
     # --- Configuration ---
     environment:
       TZ: ${TZ}
@@ -109,6 +139,16 @@ services:
     image: ghcr.io/immich-app/immich-server:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}
     restart: unless-stopped
+    # --- Resources ---
+    # Search, rendering or ML — generous on purpose. Retune from docker stats.
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          pids: 300
+        reservations:
+          memory: 512M
+
     depends_on:
       db:
         condition: service_healthy

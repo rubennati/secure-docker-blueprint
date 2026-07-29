@@ -14,6 +14,16 @@ services:
       - no-new-privileges:true
 
     # --- Configuration ---
+    # --- Resources ---
+    # Ceiling above the buffer pool, connections and temporary tables.
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          pids: 200
+        reservations:
+          memory: 256M
+
     environment:
       - MYSQL_ROOT_PASSWORD=${INIT_SEAFILE_MYSQL_ROOT_PASSWORD}
       - MYSQL_LOG_CONSOLE=true
@@ -50,6 +60,16 @@ services:
       - no-new-privileges:true
 
     # --- Configuration ---
+    # --- Resources ---
+    # Small cache role in this stack.
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          pids: 50
+        reservations:
+          memory: 32M
+
     command:
       - /bin/sh
       - -c
@@ -81,6 +101,16 @@ services:
     image: seafileltd/seafile-pro-mc:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}
     restart: unless-stopped
+    # --- Resources ---
+    # The main server process — indexing and file handling. Generous on purpose.
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          pids: 300
+        reservations:
+          memory: 512M
+
     depends_on:
       db:
         condition: service_healthy
