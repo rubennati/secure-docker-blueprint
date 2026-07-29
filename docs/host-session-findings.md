@@ -619,6 +619,37 @@ nothing rather than a leading separator Traefik rejects. Applied to
 `apps/_reference` and `core/whoami`; the remaining stacks pick it up as each is
 reviewed.
 
+## 27. The AppSec engine could never have started
+
+**Observed.** Nothing listening on 7422; from Traefik, `connection refused`. The
+engine's own startup log meanwhile reads:
+
+```text
+Adding crowdsecurity/vpatch-CVE-2024-4577 to appsec rules
+```
+
+So the rules load. What does not exist is anything to apply them to.
+
+**Cause.** The compose mounted `./config/appsec.yaml` to
+`/etc/crowdsec/appsec.yaml`. CrowdSec reads acquisition sources from
+`acquis.yaml` and `acquis.d/` — nowhere else. The file was in a location the
+engine never looks at, so the AppSec listener was never configured. No error
+anywhere: rules loaded, port silent.
+
+That combination is what made it invisible. A missing file would have been
+noticed; a file in the wrong place looks like a working configuration.
+
+**Fix.** One line — mount it into `acquis.d/` instead. Verified after: 7422
+listens, and from the Traefik container the endpoint answers `401 Unauthorized`
+rather than refusing the connection, which is the correct response to a request
+without the bouncer key.
+
+**Consequence for the plan.** `crowdsec-appsec` and `crowdsec-strict` are
+described as deferred pending "AppSec reachable". They were not deferred — they
+were impossible. Anyone enabling `crowdsecAppsecEnabled: true` together with
+`crowdsecAppsecUnreachableBlock: true`, which is what `crowdsec-strict`
+specifies, would have had every request answered with 403.
+
 ## What worked, session 2
 
 - The wildcard certificate covered the new subdomain with **no second certificate

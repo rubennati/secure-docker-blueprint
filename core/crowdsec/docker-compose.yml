@@ -34,7 +34,10 @@ services:
       - ./volumes/config:/etc/crowdsec
       # Custom log acquisition and AppSec config
       - ./config/acquis.yaml:/etc/crowdsec/acquis.yaml:ro
-      - ./config/appsec.yaml:/etc/crowdsec/appsec.yaml:ro
+      # Acquisition sources must live in acquis.yaml or acquis.d/. Mounted
+      # anywhere else the file is simply never read: the AppSec rules still
+      # load, nothing listens on 7422, and the bouncer gets connection refused.
+      - ./config/appsec.yaml:/etc/crowdsec/acquis.d/appsec.yaml:ro
       # Traefik access logs (read-only, relative path by default)
       - ${TRAEFIK_LOG_PATH}:/var/log/traefik:ro
       # SSH authentication logs (opt-in — uncomment for SSH brute-force detection)
