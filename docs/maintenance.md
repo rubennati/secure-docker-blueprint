@@ -33,6 +33,8 @@ Four models describe documentation in this repository, each answering one questi
 | Env standards | `docs/standards/env-structure.md` | Every `.env.example` |
 | Security rules | `docs/standards/security-baseline.md` | Every service in every compose |
 | Naming conventions | `docs/standards/naming-conventions.md` | Every compose, env, container name |
+| A symptom and its fix — a failure seen in this blueprint | `TROUBLESHOOTING.md` | Stack READMEs and `UPSTREAM.md` reference a numbered entry |
+| The layer-by-layer debugging method and command reference | `docs/standards/troubleshooting.md` | — |
 | Architecture decisions | `docs/architecture.md` | Category READMEs may summarise |
 | Per-app setup | `<app>/README.md` | Root README one-liner only |
 | Per-app config options | `<app>/CONFIG.md` (where it exists) | No duplication |

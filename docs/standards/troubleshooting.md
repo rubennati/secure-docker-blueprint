@@ -1,7 +1,15 @@
-# Troubleshooting Guide
+# Troubleshooting Method
 
-Systematic approach to debugging Docker services behind Traefik.
-Based on real issues found during live testing of this blueprint.
+How to find which layer is broken when a service behind Traefik does not work,
+and the commands that interrogate each one. Written for whoever has to prove
+where the fault sits before changing anything, and for a contributor bringing up
+a new stack.
+
+**Look in [`TROUBLESHOOTING.md`](../../TROUBLESHOOTING.md) first.** It lists the
+failures this blueprint has hit, by symptom, with the fix — including the
+app-specific traps that no layer model would surface. Come here when the symptom
+is not there, when the fix did not hold, or when the cause has to be isolated
+rather than guessed.
 
 ---
 
@@ -300,8 +308,14 @@ not Tailscale.
 **Solutions:**
 
 - Use Tailscale MagicDNS or Split-DNS to resolve domains to Tailscale IPs
-- Use `acc-public` for services that need internet access
 - Access via Tailscale IP directly (e.g. `https://100.x.x.x`)
+- Use `acc-public` only where the service is *meant* to be reachable from the
+  internet
+
+`acc-public` is not the answer when the traffic genuinely arrives over the
+tailnet and is still refused — that is the IPv6 source-address case, and it is
+fixed at the network level. `acc-public` there removes the IP check for
+everyone. See [`TROUBLESHOOTING.md`](../../TROUBLESHOOTING.md) §4.4.
 
 ---
 

@@ -1,6 +1,20 @@
-# Troubleshooting & Lessons Learned
+# Troubleshooting
 
-**Check this file first.** Every entry here burned real time during live deployment. These are the most common failure patterns across this blueprint — recurring, non-obvious, and often not covered by upstream docs.
+**Start here.** Failures this blueprint has actually hit, listed by what you
+observe: symptom, cause, fix. Most are non-obvious, and several are not covered by
+the upstream project's own documentation.
+
+**When the symptom is not listed here, or the fix does not hold**, work outward
+through the layers with
+[`docs/standards/troubleshooting.md`](docs/standards/troubleshooting.md): it
+isolates whether the container, the Docker network, the Traefik router, a
+middleware, TLS or the client is at fault, and carries the command reference for
+each layer. Each entry below hands over at the point where that becomes the
+faster path.
+
+A single incident with its full cause and lesson lives in
+[`docs/bugfixes/`](docs/bugfixes/) — this file carries the recurring shape, not
+the history.
 
 ---
 

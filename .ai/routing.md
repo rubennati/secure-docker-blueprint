@@ -17,7 +17,7 @@ Every entry below is **in addition to** `state.md`, which is always read first.
 | **Commit, branch, push** | `docs/standards/commit-rules.md` — binding, read before every commit |
 | **Verification and CI** | `quality-gates.md` · `docs/standards/ci.md` |
 | **Continuation after interruption** | `state.md` · `progress.md` · `tasks.md` · `decisions.md` |
-| **Troubleshooting** | `errors.md` · `docs/standards/troubleshooting.md` · `TROUBLESHOOTING.md` · `docs/bugfixes/` |
+| **Troubleshooting** | `TROUBLESHOOTING.md` first — symptom, cause, fix · `docs/standards/troubleshooting.md` when the symptom is not listed — the layer method · `docs/bugfixes/` for one incident in full · `errors.md` for recurring patterns |
 
 ## Documentation route
 
