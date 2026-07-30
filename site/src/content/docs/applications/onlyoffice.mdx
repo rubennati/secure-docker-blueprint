@@ -8,11 +8,12 @@ import StackEvidence from '../../../components/StackEvidence.astro';
 
 OnlyOffice Document Server is a shared editing backend — it provides browser-based Office document editing for any application that integrates with it, such as [Seafile Pro](/applications/seafile-pro/) or Nextcloud. It runs as a single container and serves an editor that embeds as an iframe inside the consuming application.
 
-<StackEvidence stack="core/onlyoffice" />
+<StackEvidence stack="core/onlyoffice"
+  gap="opening a document from a consuming application. The health endpoints answer; the editor path through the iframe has not been run here." />
 
 One OnlyOffice instance can serve multiple consuming applications simultaneously. Each application must hold the same JWT secret and have its origin listed in the allowed-origins setting.
 
-Needs: [Traefik](/core/traefik/) running, a hostname, a JWT secret, and the origin(s) of each application that will embed the editor.
+Needs: [Traefik](/infrastructure/traefik/) running, a hostname, a JWT secret, and the origin(s) of each application that will embed the editor.
 
 ## Installation
 
@@ -92,7 +93,7 @@ OnlyOffice needs a server-to-server network route to each consuming application 
 If the consuming application's hostname resolves to a Tailscale address on the OnlyOffice host, OnlyOffice will route via Tailscale automatically.
 
 :::note
-If the consuming application uses `acc-tailscale` but OnlyOffice connections are still rejected, the source IP Traefik sees may not match the expected Tailscale address — see [Traefik troubleshooting](/core/traefik/#troubleshooting) for the known Docker bridge source-IP caveat.
+If the consuming application uses `acc-tailscale` but OnlyOffice connections are still rejected, the source IP Traefik sees may not match the expected Tailscale address — see [Traefik troubleshooting](/infrastructure/traefik/#troubleshooting) for the known Docker bridge source-IP caveat.
 :::
 
 ## Going further

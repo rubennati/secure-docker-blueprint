@@ -43,13 +43,13 @@ export const faqCategories: FaqCategory[] = [
         question: 'Does this work with Tailscale?',
         answer:
           'Yes. Any service can be restricted to Tailscale-only access. Traefik is set up for dual-stack IPv6 because Tailscale hands a client both an IPv4 and an IPv6 address — on an IPv4-only proxy the IPv6 connection arrives with the wrong source address and an IP allowlist rejects it.',
-        link: { text: 'Traefik guide', href: '/core/traefik/' },
+        link: { text: 'Traefik guide', href: '/infrastructure/traefik/' },
       },
       {
         question: 'Do I need a Cloudflare account?',
         answer:
-          'No. Cloudflare DNS-01 is the Traefik quickstart path because it avoids exposing port 80 publicly, but per-domain certificates via the standard HTTP-01 challenge work with no Cloudflare account at all.',
-        link: { text: 'Traefik guide — certificate strategy', href: '/core/traefik/#certificate-strategy' },
+          'No. Cloudflare DNS-01 is what the Traefik installation uses, because it avoids exposing port 80 publicly, but per-domain certificates via the standard HTTP-01 challenge work with no Cloudflare account at all.',
+        link: { text: 'Traefik guide — certificate strategy', href: '/infrastructure/traefik/#certificate-strategy' },
       },
     ],
   },
@@ -60,7 +60,7 @@ export const faqCategories: FaqCategory[] = [
         question: 'How are services separated from each other?',
         answer:
           'Each application’s services run on their own Docker network, so they are not routable from another application’s containers. Credentials are mounted as files rather than set in the environment, which keeps them out of container inspection and shell history. Traefik reads the Docker socket through a proxy instead of mounting it. CrowdSec can be added for detection and blocking. These are separate layers — how far a compromise gets still depends on the container and the image it runs.',
-        link: { text: 'CrowdSec guide', href: '/core/crowdsec/' },
+        link: { text: 'CrowdSec guide', href: '/infrastructure/crowdsec/' },
       },
       {
         question: 'Will my data be backed up automatically?',
@@ -71,23 +71,28 @@ export const faqCategories: FaqCategory[] = [
     ],
   },
   {
-    category: 'Scope & Status',
+    category: 'Scope & evidence',
     items: [
       {
-        question: 'What do the status labels mean?',
+        question: 'How do I know whether a guide has actually been tested?',
         answer:
-          'Every guide carries one of three labels at the top. Preview means the stack is on disk and may well work, but it has not been checked end to end here — evaluate it yourself before trusting it with data. Ready means a clean install, working core function and the security baseline were all established. Ops-ready means a restore was performed from a backup, not only written down; no application holds it yet. Alongside the label you get the version the guide sets up, the date it was last checked, and a line naming what has not been exercised.',
+          'Each guide says so in one line under its title. Either it names a date and the exact version it was verified against, or it says no verification is recorded for the version it is written against. Underneath, a second line names what was not exercised — a restore, client sync, a specific integration. There is no overall grade to interpret: the date, the version and the named gap are the whole of it.',
       },
       {
         question: 'Is this safe to run in production today?',
         answer:
-          'The per-service answer is the label at the top of each guide, together with the sentence naming what has not been exercised for it. Two things apply across all of them: no application has had a restore rehearsed, so recovery is your own responsibility to establish, and file paths and variable names can still change before the 1.0 milestone.',
+          'Read the two evidence lines on the guide for the service you want, and decide against your own tolerance. Two things apply everywhere regardless: only one application has had a restore performed from a backup, so for the rest recovery is yours to establish before you rely on it, and file paths and variable names can still change before the 1.0 milestone.',
       },
       {
         question: 'What can I actually deploy right now?',
         answer:
-          'Core infrastructure (Traefik, CrowdSec), Borgmatic for backups, and the application guides listed under Applications. Each guide states its own label, the version it sets up and when that was last checked. A guide goes up once the installation has been walked through, not when a container first starts.',
+          'Traefik and CrowdSec for the server itself, Borgmatic for backups, and the applications that have a guide: Vaultwarden, Nextcloud, Invoice Ninja, Seafile Pro and OnlyOffice. The repository ships considerably more services, each with its own README, but a guide here is written only after the installation has been walked through.',
         link: { text: 'Applications', href: '/applications/' },
+      },
+      {
+        question: 'Can I try a service without setting up a server?',
+        answer:
+          'Not by following these guides. Every one of them assumes a host with a domain and a reverse proxy in front, because that is the configuration they were written and checked against. A few stacks in the repository carry a second Compose file intended for localhost, but no guide here covers that path and none of the applications documented on this site has one.',
       },
       {
         question: 'Can I deploy only some services to a new server?',

@@ -11,7 +11,8 @@
  * checked in CI. Nothing here is retyped.
  *
  * `gap` is the authored part: one sentence naming what specifically has not
- * been exercised. A generic disclaimer is noise; a named gap is usable.
+ * been exercised. A generic disclaimer is noise; a named gap is usable — so a
+ * stack with no verification date must supply one, or the build fails.
  *
  * Usage:  <StackEvidence stack="apps/nextcloud" gap="Client sync is untested." />
  */
@@ -48,10 +49,21 @@ const checked =
 // host. That is evidence a reader can weigh, so it is stated as the fact it is
 // rather than as the tier's name.
 const restored = entry.state === 'ops-proven';
-const tone = checked ? (restored ? 'proven' : 'checked') : 'untested';
+
+// Where nothing has been verified, the version alone is not enough to leave a
+// reader with — but a generic hedge ("may well work") is worse than nothing: it
+// warns without saying what to check. So the gap becomes mandatory here, and
+// the build stops rather than shipping a page that gestures at doubt.
+if (!checked && !gap) {
+	throw new Error(
+		`StackEvidence: "${stack}" has no anchored verification date, so it needs ` +
+			`a gap="…" naming what specifically has not been established. A page ` +
+			`without one would carry a warning the reader cannot act on.`,
+	);
+}
 ---
 
-<div class={`evidence evidence--${tone}`}>
+<div class={`evidence evidence--${checked ? (restored ? 'proven' : 'checked') : 'unverified'}`}>
 	{
 		checked ? (
 			<p class="evidence__line">
@@ -61,9 +73,8 @@ const tone = checked ? (restored ? 'proven' : 'checked') : 'untested';
 			</p>
 		) : (
 			<p class="evidence__line">
-				<strong>No verification against a named version is recorded.</strong>
-				{' '}The configuration is here and may well work; nothing has been
-				established about it.
+				<strong>Written against <code>{version}</code></strong> · no verification
+				recorded against that version
 			</p>
 		)
 	}
@@ -82,8 +93,10 @@ const tone = checked ? (restored ? 'proven' : 'checked') : 'untested';
 	.evidence--checked {
 		border-left-color: var(--sl-color-blue);
 	}
-	.evidence--untested {
-		border-left-color: var(--sl-color-orange);
+	/* Grey, not orange: an absent verification is a missing fact, not a hazard.
+	   The named gap underneath is what the reader acts on. */
+	.evidence--unverified {
+		border-left-color: var(--sl-color-gray-4);
 	}
 	.evidence__line {
 		margin: 0;

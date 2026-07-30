@@ -1,0 +1,208 @@
+---
+title: When something is broken
+description: Find which layer is actually at fault before changing anything — the inside-out method, the commands that interrogate each layer, and the failures this stack really produces.
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+Most time lost to a broken service goes into examining the wrong layer. A page
+that will not load has at least six candidate causes, and they are not equally
+likely — but they are cheap to eliminate in order.
+
+Work **outward from the container**. Each step below either clears a layer or
+finds the fault, and the first one that fails is the one to fix.
+
+## Start here if the symptom is familiar
+
+| Symptom | Almost always | Go to |
+|---|---|---|
+| `404 page not found` from the proxy | the router never registered — wrong network, or the container is not running | [Layer 3](#layer-3--is-the-proxy-routing-it) |
+| `403 Forbidden` on a service you should reach | an access policy, and the address the proxy sees is not the one you expect | [Layer 4](#layer-4--is-something-refusing-it) |
+| Certificate warning, or no certificate at all | the DNS provider token, or a resolver mismatch | [Layer 5](#layer-5--tls-and-dns) |
+| Container says `unhealthy` forever | the health check, not the application | [Layer 1](#layer-1--is-the-container-actually-up) |
+| Works from the server, fails from elsewhere | DNS, or a firewall the proxy never sees | [Layer 5](#layer-5--tls-and-dns) |
+| One person cannot reach it, everyone else can | their address is on a blocklist | [that address is banned](#one-person-cannot-reach-it) |
+| It worked yesterday, nothing changed | a certificate renewed, a disk filled, or a dependency restarted first | [Layer 1](#layer-1--is-the-container-actually-up) |
+
+## Layer 1 — is the container actually up
+
+<Steps>
+
+1. ```bash
+   docker compose ps
+   ```
+
+   `Up (healthy)` is the only fully good answer. `health: starting` means wait —
+   some stacks take minutes. `Restarting` or an exit code means read the logs.
+   Not listed at all means it never started.
+
+2. ```bash
+   docker compose logs --tail 50 app
+   ```
+
+   :::caution
+   **Traefik is the exception — its `docker compose logs` output is empty, and
+   that is not a symptom.** It writes to files inside the container rather than
+   stdout:
+
+   ```bash
+   docker exec traefik-core cat /var/log/traefik/traefik.log   # startup, ACME, errors
+   docker exec traefik-core cat /var/log/traefik/access.log    # requests, JSON
+   ```
+
+   The access log is buffered as well, so a request you just made may not appear
+   for a while. The error log is not.
+   :::
+
+3. Ask the application directly, with the proxy out of the picture:
+
+   ```bash
+   docker exec <container> curl -so /dev/null -w "%{http_code}" http://127.0.0.1:<port>/
+   ```
+
+   A `200` or `302` here means the application is fine and the fault is
+   outside it — carry on to Layer 2. A failure here means you are done looking
+   at the proxy.
+
+   Minimal images often have no `curl`. Try `wget -qO- …`, or check with
+   `docker exec <container> which curl wget`.
+
+</Steps>
+
+**What the logs usually mean:**
+
+| Message | Cause |
+|---|---|
+| `password authentication failed` | a trailing newline in the secret file, or a stale database volume from an earlier attempt |
+| `Connection refused` on a dependency | the dependency is not ready, or the hostname is wrong |
+| `FATAL: role "…" does not exist` | the database user was never created — usually a mis-typed variable name |
+| `exec format error` | the image architecture does not match the host |
+| a `_FILE` variable silently ignored | that image does not support the convention and needs the value in the environment |
+
+## Layer 2 — can the containers reach each other
+
+The application starts, but cannot talk to its database or cache.
+
+```bash
+docker exec <app-container> curl -s telnet://database:5432   # or the real port
+docker inspect <app-container> --format '{{json .NetworkSettings.Networks}}'
+```
+
+Each application has two networks — a shared one for the proxy and an isolated
+one for its database. A container attached to only one of them fails in a way
+that looks like an application bug. See
+[how a server fits together](/architecture/) for what should be attached where.
+
+## Layer 3 — is the proxy routing it
+
+A `404` from Traefik means the router does not exist, not that the page is
+missing.
+
+```bash
+docker inspect <container> --format '{{json .Config.Labels}}' | tr ',' '\n' | grep traefik
+docker network inspect proxy-public --format '{{range .Containers}}{{.Name}} {{end}}'
+```
+
+Three things have to be true, and any one of them missing produces the same
+`404`: the container carries the Traefik labels, it is attached to
+`proxy-public`, and the hostname in the label matches the one you typed.
+
+:::note
+Labels are read when the container is created. Changing a value in `.env` and
+running `docker compose restart` leaves the old label in place — use
+`docker compose up -d --force-recreate` for anything that ends up in a label.
+:::
+
+## Layer 4 — is something refusing it
+
+A `403` means the request arrived and was rejected. Two candidates.
+
+<Tabs>
+  <TabItem label="Access policy">
+    The proxy compares the client address against the policy on that router. The
+    address it compares is the one it *sees*, which is not always the one the
+    client has.
+
+    ```bash
+    docker exec traefik-core cat /var/log/traefik/access.log | tail -5
+    ```
+
+    Read `ClientHost`. A Tailscale address (`100.x.x.x` or `fd7a:…`) is correct
+    for a VPN client. A `172.x` address from a remote client means the real
+    address is being lost — the usual cause is IPv6 missing from the Docker
+    network, covered in
+    [preparing a server](/getting-started/server-setup/).
+
+    :::caution
+    Testing with `curl` **on the server itself** will show a `172.x` address and
+    a `403` no matter how the policy is set. That is Docker's own routing, not a
+    fault. Test from a different machine.
+    :::
+  </TabItem>
+  <TabItem label="Middleware name">
+    Traefik resolves middleware names by provider, and a name without the right
+    suffix is simply not found — which it answers with a `403`, not an error.
+
+    Middlewares defined in the proxy's own configuration files need `@file`;
+    those defined in a stack's Compose labels need `@docker`. A bare name is
+    the mistake to look for.
+  </TabItem>
+</Tabs>
+
+### One person cannot reach it
+
+Once CrowdSec's firewall layer is running, this is the first thing to check
+rather than the last. The packet is dropped in the kernel, so no log anywhere
+records the attempt — not the proxy's, not the application's.
+
+```bash
+docker exec crowdsec cscli decisions list --ip <their address>
+docker exec crowdsec cscli decisions delete --ip <their address> --all
+```
+
+Most such decisions did not originate on your server: the engine subscribes to a
+community blocklist of roughly 15,000 addresses, and a shared mobile carrier
+address or a VPN exit can carry a legitimate visitor with it. `--all` matters —
+without it, a decision from that shared list keeps the ban in place.
+
+## Layer 5 — TLS and DNS
+
+```bash
+dig +short <your-hostname>
+curl -sI https://<your-hostname>
+docker exec traefik-core cat /etc/traefik/acme/acme.json | jq '.[] | .Certificates[]?.domain // "none yet"'
+```
+
+Most first-time certificate failures are a DNS provider token missing a zone
+permission, or a mismatch between the wildcard domain and a per-application
+resolver label. The specifics are in the
+[Traefik guide](/infrastructure/traefik/#certificate-strategy).
+
+:::tip
+**A corrected DNS record is the worst case to diagnose**, because the old host
+usually answers `403` — indistinguishable from an access policy rejecting you.
+Browsers cache DNS independently of the system. Retry in a private window, or
+clear it at `chrome://net-internals/#dns`.
+:::
+
+## Before you ask anyone else
+
+```bash
+docker compose config | sed -E 's/((TOKEN|PASSWORD|SECRET|KEY): ).*/\1***REDACTED***/'
+```
+
+`docker compose config` prints every resolved value, API tokens included. Redact
+before pasting it anywhere.
+
+## Where the full symptom list lives
+
+This page is the method plus the failures that come up most. The repository keeps
+the complete catalogue — image pulls, volume permissions, health checks on
+shell-less images, first-run traps in particular applications:
+
+- [`TROUBLESHOOTING.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/TROUBLESHOOTING.md)
+  — symptom, cause and fix, for problems this blueprint has actually hit
+- [`docs/standards/troubleshooting.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/docs/standards/troubleshooting.md)
+  — the layer method in full, with the command reference for each layer
+- Each guide's own *Troubleshooting* section covers what that service produces
+  and nothing else

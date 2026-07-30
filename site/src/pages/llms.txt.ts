@@ -25,17 +25,20 @@ const INTRO = [
 // Section order matches the sidebar. Each prefix claims the pages beneath it;
 // the home page is the header above and is not listed as a link.
 const SECTIONS: { heading: string; prefix: string }[] = [
-  { heading: 'Getting Started', prefix: 'getting-started' },
-  { heading: 'Core Infrastructure', prefix: 'core' },
+  { heading: 'Start', prefix: 'getting-started' },
+  { heading: 'Infrastructure and security', prefix: 'infrastructure' },
   { heading: 'Applications', prefix: 'applications' },
-  { heading: 'Operations', prefix: 'operations' },
+  { heading: 'Operations and recovery', prefix: 'operations' },
+  { heading: 'Architecture and data sovereignty', prefix: 'architecture' },
+  { heading: 'Architecture and data sovereignty', prefix: 'sovereignty' },
   { heading: 'Reference', prefix: 'faq' },
   { heading: 'Reference', prefix: 'project' },
 ];
 
 const NOTES = [
   'Code examples in guide pages are written against the repository structure as of each guide\'s last edit — prefer the linked repository file over re-deriving paths or variable names.',
-  'Each guide opens with a status label, the version it sets up and the date it was last checked. /faq/ defines the labels; /project/ lists the compose defaults and what is out of scope.',
+  'Where a guide has been verified, it says so at the top: the version it was verified against, the date, and a line naming what was not exercised. A guide without that line has no verification behind it — do not infer one.',
+  'Every guide assumes a Linux host with a domain and Traefik in front. There is no localhost or single-machine path documented on this site — do not synthesise one from the compose files.',
 ];
 
 /** Starlight ids are path-like and drop `index`: `core/traefik`, `faq`, `''`. */

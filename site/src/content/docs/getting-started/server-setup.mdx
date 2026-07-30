@@ -1,6 +1,14 @@
 ---
 title: Preparing a server
 description: From a fresh Linux host to a working foundation — the decisions that are expensive to change later.
+# One of the few real sequences on this site: the host has to be ready before
+# the proxy, and the proxy before anything else. Pagination is off elsewhere.
+prev:
+  link: /getting-started/
+  label: What you are setting up
+next:
+  link: /infrastructure/traefik/
+  label: Traefik — routing and TLS
 ---
 
 import { Steps } from '@astrojs/starlight/components';
@@ -102,7 +110,7 @@ and leaves the IPv6 path untested.
    :::
 
 2. Set up Traefik — it terminates TLS and routes everything that follows. Follow
-   the [Traefik guide](/core/traefik/), then come back here.
+   the [Traefik guide](/infrastructure/traefik/), then come back here.
 
 3. If you enabled IPv6, add the two network ranges to `core/traefik/.env` and
    generate your own IPv6 prefix:
@@ -205,7 +213,7 @@ from an access policy rejecting you. In Chrome, clear it at
 `chrome://net-internals/#dns`.
 
 **Certificate not issued** — check the DNS provider token has the permissions the
-[Traefik guide](/core/traefik/) lists, and watch `docker compose logs traefik`.
+[Traefik guide](/infrastructure/traefik/) lists, and watch `docker compose logs traefik`.
 
 ## Repository files
 

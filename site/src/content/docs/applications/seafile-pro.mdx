@@ -8,9 +8,10 @@ import StackEvidence from '../../../components/StackEvidence.astro';
 
 Seafile Pro is the Blueprint's file sync and sharing platform — private cloud storage with browser-based Office editing (OnlyOffice), collaborative document editing (SeaDoc), full-text search (SeaSearch), and antivirus scanning (ClamAV). All ten services deploy as a single Compose stack.
 
-<StackEvidence stack="apps/seafile-pro" />
+<StackEvidence stack="apps/seafile-pro"
+  gap="backup and restore. Three databases, the block store and the search index have to be recovered in order, and none of it has been rehearsed." />
 
-Needs: [Traefik](/core/traefik/) running, a hostname, a Seafile Pro commercial license, and an external [OnlyOffice](/core/onlyoffice/) instance for `.docx`/`.xlsx`/`.pptx` editing (optional — all other features work without it).
+Needs: [Traefik](/infrastructure/traefik/) running, a hostname, a Seafile Pro commercial license, and an external [OnlyOffice](/applications/onlyoffice/) instance for `.docx`/`.xlsx`/`.pptx` editing (optional — all other features work without it).
 
 ## Installation
 
@@ -134,7 +135,7 @@ docker compose up -d --force-recreate
 ```
 
 :::note
-`APP_TRAEFIK_ACCESS` is a Traefik middleware setting, not a network exposure control. `acc-public` removes the source-IP allowlist inside Traefik; it does not bypass an upstream firewall or make the service reachable if it wasn't already. If OnlyOffice traffic arrives via Tailscale but Traefik still rejects it under `acc-tailscale`, the source IP Traefik sees may differ from the actual client address — see [Traefik troubleshooting](/core/traefik/#troubleshooting) for the known caveat and investigation steps.
+`APP_TRAEFIK_ACCESS` is a Traefik middleware setting, not a network exposure control. `acc-public` removes the source-IP allowlist inside Traefik; it does not bypass an upstream firewall or make the service reachable if it wasn't already. If OnlyOffice traffic arrives via Tailscale but Traefik still rejects it under `acc-tailscale`, the source IP Traefik sees may differ from the actual client address — see [Traefik troubleshooting](/infrastructure/traefik/#troubleshooting) for the known caveat and investigation steps.
 :::
 
 ## Going further
@@ -170,7 +171,7 @@ docker compose up -d --force-recreate
     Setting `APP_TRAEFIK_ACCESS=acc-tailscale` enforces a source-IP allowlist for Tailscale addresses, restricting access to clients connected to the same Tailnet. Server-to-server integrations (OnlyOffice, notifications) must also reach Seafile via Tailscale for this to apply to them.
 
     :::note
-    `acc-tailscale` has a known source-IP caveat when traffic arrives through Docker published ports — Traefik may see the Docker bridge gateway address rather than the original Tailscale client address. See [Traefik troubleshooting](/core/traefik/#troubleshooting) for the cause and investigation steps. `acc-public` is the working alternative when this caveat applies.
+    `acc-tailscale` has a known source-IP caveat when traffic arrives through Docker published ports — Traefik may see the Docker bridge gateway address rather than the original Tailscale client address. See [Traefik troubleshooting](/infrastructure/traefik/#troubleshooting) for the cause and investigation steps. `acc-public` is the working alternative when this caveat applies.
     :::
   </TabItem>
 
@@ -203,17 +204,20 @@ docker compose up -d --force-recreate
 
 ## Backup
 
-:::caution
-No backup or restore procedure has been tested for this Blueprint guide yet. Do not treat this installation as production-ready until a backup exists and a restore has been verified.
-
-What needs to be covered before production use:
+[Backup and restore](/operations/backup/) covers the host side — Borgmatic, the
+repository, the schedule and the database hooks. What this stack contributes:
 
 - `volumes/seafile-data/` — all user files and library data
-- `volumes/mysql/` — all databases (Seafile, Seahub, Ccnet)
+- `volumes/mysql/` — all three databases (Seafile, Seahub, Ccnet)
 - `volumes/seadoc-data/` — collaborative document state
 - The `.env` file and any secrets
 
-A restore that recovers the database without the matching file volumes — or vice versa — leaves the installation in an inconsistent state.
+:::caution
+**Nothing here has been rehearsed for this stack.** A restore that recovers the
+databases without the matching file volumes — or the reverse — leaves the
+installation inconsistent rather than merely incomplete, and the three databases
+have to come back together. Establish and test a restore yourself before this
+holds anything you would miss.
 :::
 
 ## Updates
@@ -265,7 +269,7 @@ To silence the Redis warning, set `vm.overcommit_memory = 1` in `/etc/sysctl.con
 :::
 
 :::note
-**`acc-tailscale` returning 403 for a Tailscale client** — see [Traefik troubleshooting](/core/traefik/#troubleshooting) for the source-IP caveat when traffic arrives through Docker published ports.
+**`acc-tailscale` returning 403 for a Tailscale client** — see [Traefik troubleshooting](/infrastructure/traefik/#troubleshooting) for the source-IP caveat when traffic arrives through Docker published ports.
 :::
 
 ## Repository files

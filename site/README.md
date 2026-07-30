@@ -55,7 +55,7 @@ site/
 
 ## Content conventions
 
-Binding for every guide page (Core Infrastructure, Applications, and anything added later). Established after a review found earlier drafts mixing explanation and action, leaving Starlight's component toolkit unused, and including unsourced "planned" claims.
+Binding for every guide page — anything under Infrastructure and security, Applications, or added later. Established after a review found earlier drafts mixing explanation and action, leaving Starlight's component toolkit unused, and including unsourced "planned" claims.
 
 ### Page order
 
@@ -89,3 +89,42 @@ owns those.
 - **"Available now" / "Planned later" / "Coming soon"** or any other status-of-the-site commentary. A guide either exists — link to it — or it doesn't — don't mention it.
 - **Unconfirmed or speculative claims.** A statement about what's planned must trace to an actual source (`ROADMAP.md`, or explicit maintainer confirmation). If it can't be traced, omit it rather than guess.
 - **Repository-internal framing** (directory structure rationale, "core vs. apps" taxonomy, etc.) — that belongs in the repository's own docs, not in a guide aimed at someone installing a service.
+- **The repository's lifecycle vocabulary** — `scaffolded`, `baseline-aligned`, `ops-proven` and the like answer a maintainer's question about what to work on next. A visitor is asking something else. See "Evidence, not status" below.
+
+### Navigation
+
+**Sidebar sections name subjects, not steps.** A heading phrased as an
+instruction ("Set up the foundation") promises an order the site cannot keep —
+Traefik is required, CrowdSec is optional, and a restore is not "after" adding an
+application. Section labels are therefore stable subject areas; page titles stay
+outcome-shaped. A section label must also match the role of everything under it:
+that is why OnlyOffice sits with Applications and not with the infrastructure.
+
+**A sidebar label and its page title must agree.** They need not be identical —
+a section already supplies context, so "What each one is for" under Applications
+is fine for a page titled "What each application is for" — but a reader must not
+have to guess that two names are the same page.
+
+**Pagination is off** (`pagination: false`). Automatic previous/next arrows
+invent a reading order between unrelated guides. Re-enable it per page, in
+frontmatter, only where one page genuinely cannot be done before another. Today
+that is the start path alone: `/getting-started/` → `server-setup` → `traefik`.
+
+**Overview pages orient, they do not describe the site.** An overview answers
+what each thing under it is for, what it needs, and where the choice is not
+obvious. "Which services have a guide" and "What this section covers" describe
+the editorial state of the website, which no visitor came for.
+
+### Evidence, not status
+
+Guide pages carry `<StackEvidence>`, which reads generated facts from
+`src/data/lifecycle.json` and renders only what a visitor can weigh: the version
+the guide is written against, the verification date where one exists, and whether
+data has been restored from a backup on a live host.
+
+- **No repository tier names are rendered**, and no overall grade is implied.
+- **`gap="…"` is mandatory where there is no anchored verification date** — the
+  build fails without one. A stack that has not been checked needs a sentence
+  naming what specifically was not exercised; a generic hedge ("may well work",
+  "nothing has been established") warns without telling anyone what to do.
+- **A named gap is useful on verified stacks too.** Prefer one.

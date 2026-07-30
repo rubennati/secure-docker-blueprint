@@ -34,3 +34,17 @@
   --sl-content-width: 52rem;   /* ~832px instead of 720px */
   --sl-line-height: 1.625;     /* tighter than 1.75, still accessible */
 }
+
+/* Splash hero — Starlight reserves up to 10rem of padding above and below the
+   title. On a 1280x800 screen that put the first content heading at 831px:
+   a visitor saw a slogan and three buttons, and had to scroll to learn that the
+   site contains anything. The hero yields so the first real block is visible.
+   `:root` prefix beats the component's own scoped rule. */
+@media (min-width: 50rem) {
+  :root .hero {
+    padding-block: 3rem;
+  }
+  :root .hero h1 {
+    font-size: clamp(var(--sl-text-3xl), calc(0.25rem + 3vw), var(--sl-text-5xl));
+  }
+}

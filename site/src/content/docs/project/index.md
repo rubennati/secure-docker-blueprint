@@ -30,8 +30,9 @@ Available to every service, switched on per stack:
 
 The first group is enforced mechanically, so it holds for whatever is in the
 repository. The second describes what the image allows, which differs per
-service — the label at the top of each guide says how far that service has been
-taken, and the [FAQ](/faq/) explains what each label means.
+service — each guide opens with the version it was written against, the date it
+was verified where one exists, and a line naming what was not exercised. The
+[FAQ](/faq/) explains how to read that.
 
 [Security baseline →](https://github.com/rubennati/secure-docker-blueprint/blob/main/docs/standards/security-baseline.md)
 

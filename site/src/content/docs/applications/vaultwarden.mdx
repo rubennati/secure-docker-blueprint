@@ -8,9 +8,10 @@ import StackEvidence from '../../../components/StackEvidence.astro';
 
 Vaultwarden is a self-hosted password manager compatible with Bitwarden clients — browser extensions, mobile apps, and the desktop client. It can hold access credentials to everything else you run; treat setup and backup accordingly.
 
-<StackEvidence stack="apps/vaultwarden" />
+<StackEvidence stack="apps/vaultwarden"
+  gap="a restore. The database, the RSA signing keys and the attachments have to come back from the same point in time, and that has not been performed here." />
 
-Needs: [Traefik](/core/traefik/) running, a domain, and SMTP credentials (email verification is on by default).
+Needs: [Traefik](/infrastructure/traefik/) running, a domain, and SMTP credentials (email verification is on by default).
 
 ## Installation
 
@@ -32,7 +33,7 @@ From `apps/vaultwarden/`:
 
    ```ini
    VW_SMTP_HOST=smtp.example.com
-   VW_SMTP_FROM=vault@yourdomain.com
+   VW_SMTP_FROM=vault@example.com
    VW_SMTP_PORT=587
    VW_SMTP_SECURITY=starttls
    VW_SMTP_USERNAME=your-smtp-user
@@ -132,10 +133,17 @@ docker exec -e MYSQL_PWD="$(grep DB_ROOT_PASSWORD .env | cut -d= -f2)" \
   vaultwarden-db mariadb-dump -u root vaultwarden > backup-$(date +%Y%m%d).sql
 ```
 
-No automated backup is included yet — schedule this and the data directories yourself.
+The command above is a one-off dump. To have it run on a schedule alongside the
+data directories, and to hold the archives somewhere the server cannot reach,
+see [backup and restore](/operations/backup/) — Borgmatic on the host, with the
+database dump wired in as a pre-backup hook.
 
 :::caution
-A restore needs the database dump, the RSA signing keys, and any attachments together, from the same point in time — not just the database. No tested restore procedure is documented for this Blueprint yet; don't treat an unverified backup as a recovery plan.
+**The three parts have to be restored together, from the same point in time.**
+The database alone is not enough: without `rsa_key.*` every session breaks even
+though the vault contents are intact, and without the attachments directory
+entries lose their files. A restore of this stack has not been performed — the
+procedure is written down, and that is not the same thing.
 :::
 
 ## Updates

@@ -1,42 +1,72 @@
 ---
-title: Getting Started
-description: The basic operating path for Secure Docker Blueprint — from first server to first running service.
+title: What you are setting up
+description: What a Blueprint server consists of, and the order the steps have to happen in — each one exists because the next cannot be done, or undone cheaply, without it.
+next:
+  link: /getting-started/server-setup/
+  label: Preparing a server
 ---
 
-Start here if you want to understand the basic operating path before running a service with Secure Docker Blueprint.
+A finished setup is one Linux host running one reverse proxy, with each service
+behind it on its own network, its credentials mounted as files rather than set in
+the environment, and a backup you have restored from at least once.
 
-## The basic path
+Nothing here publishes a port to the internet except the proxy. That single
+decision is what makes the rest of it manageable — one place for certificates,
+one place for access rules, one place to look when something is unreachable.
 
-1. **Prepare the server** — Docker 24.0+ with Compose v2 on a Linux host (Debian 12/13 is tested). You also need a domain with DNS pointing to the server.
+## The path, in the order it has to happen
 
-2. **Bring up the foundation** — Traefik handles routing and TLS for every service that follows. Start it first, before adding any applications. See the [Traefik guide](/core/traefik/) for setup, including the IPv4-vs-dual-stack and certificate-strategy decisions.
+The order is not a preference. Each step exists because the next one cannot be
+done — or cannot be undone cheaply — without it.
 
-3. **Check Traefik** — Once Traefik is running, the `proxy-public` Docker network exists and the dashboard should load over HTTPS. Every application connects to Traefik through that network.
+1. **[Prepare the host](/getting-started/server-setup/).** Debian with Docker and
+   Compose, DNS pointed at the machine, and — if anyone will connect over a VPN —
+   IPv6 enabled in Docker *before* the first container runs. Enabling it later
+   restarts the daemon and stops everything on the host.
 
-4. **Add the first application** — Every application follows the same pattern: copy `.env.example` to `.env`, configure your domain and credentials, then `docker compose up -d`. Add one service at a time.
+2. **[Set up Traefik](/infrastructure/traefik/).** It terminates TLS and routes
+   every service that follows. Applications here publish no ports of their own,
+   so until the proxy and its `proxy-public` network exist, there is nothing for
+   them to attach to.
 
-5. **Verify before relying on it** — Check that the service is healthy (`docker compose ps`) and accessible in a browser. Do not add real data until the service is confirmed working.
+3. **Add one application.** Every guide has the same shape: copy `.env.example`
+   to `.env`, set the domain and credentials, `docker compose up -d`, then run the
+   guide's *Verify* section. One at a time — two unfamiliar stacks failing
+   together is much harder to read than one.
 
-6. **Back up before real use** — Configure a backup before putting real data into any service. A backup that has never been tested should not be treated as a recovery plan.
+4. **[Arrange a backup before real data goes in](/operations/backup/).** Not
+   after. The moment a service holds something you would miss is the moment an
+   untested restore starts costing something.
 
-7. **Update deliberately** — Before updating any service, read the release notes for breaking changes. Back up first, then bump the version tag and restart.
+5. **[Add CrowdSec](/infrastructure/crowdsec/) if anything is public.** Optional,
+   and worth its keep exactly when a service is reachable from the open internet.
+   Behind a VPN-only access policy it sees almost nothing, because almost nothing
+   gets that far.
 
-## Choose your starting point
+## If you are not starting from scratch
 
-### New server
+**A server that already runs this blueprint.** The foundation is done — confirm
+the proxy is up and its network exists, then go to the guide for the service you
+are adding:
 
-Start with [Traefik](/core/traefik/) and the shared foundation. Get it running and verified before adding the first application. The foundation only needs to be set up once — every application you add later uses it. Add [CrowdSec](/core/crowdsec/) once Traefik is confirmed working — optional, and not a blocker for adding your first application.
+```bash
+docker network inspect proxy-public --format '{{.Name}}'
+```
 
-### Existing Blueprint server
+**Updating a service you already run.** Read the upstream release notes for
+breaking changes, take a backup, then move the version tag. Each guide has an
+*Updates* section with the specifics — the database dumps and the order of
+operations differ per service.
 
-The foundation is already in place. Verify that Traefik is running and the `proxy-public` network exists, then follow the application guide for the service you want to add.
+**Something is broken.** Start at the layer rather than the application:
+[when something is broken](/operations/troubleshooting/).
 
-### Existing app / update
+## Before deciding anything
 
-Before updating: read the release notes, back up the database and data directory, then bump the version tag and restart. Verify the service is working before considering the update complete.
-
-## Start with the first guides
-
-[Traefik](/core/traefik/) is the foundation — set it up first regardless of which application you're adding. [CrowdSec](/core/crowdsec/) is the optional next step for intrusion detection. The first available application guide covers Vaultwarden — a password manager that walks through setup, hardening, backup, restore, and updates.
-
-[Go to the Traefik guide →](/core/traefik/) · [Go to the Vaultwarden guide →](/applications/vaultwarden/)
+- [What every server needs](/infrastructure/) — the two server-wide pieces, and
+  which of them is genuinely required
+- [What each application is for](/applications/) — the problem each one solves
+- [Choosing between services](/applications/choosing/) — where several
+  services here do the same job
+- [How a server fits together](/architecture/) — the proxy, the networks and the
+  secrets, and why applications publish no ports of their own

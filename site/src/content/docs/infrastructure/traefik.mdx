@@ -1,6 +1,11 @@
 ---
 title: Traefik
 description: Reverse proxy and TLS termination for every service in the Blueprint.
+# End of the start sequence. No `next`: what follows the proxy is whichever
+# application you came for, and the site should not pick one for you.
+prev:
+  link: /getting-started/server-setup/
+  label: Preparing a server
 ---
 
 import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
@@ -8,7 +13,8 @@ import StackEvidence from '../../../components/StackEvidence.astro';
 
 Traefik is the reverse proxy every other service sits behind — it terminates TLS and routes requests to the right container. Set it up first.
 
-<StackEvidence stack="core/traefik" />
+<StackEvidence stack="core/traefik"
+  gap="recovering the proxy from a backup. The certificate store carries file permissions that a careless restore flattens, and nothing else is reachable until Traefik is back." />
 
 ## Installation
 
@@ -138,7 +144,7 @@ The path above is one of three. Two more work too — the only hard constraint i
 
 <Tabs>
   <TabItem label="Wildcard">
-    One DNS-01 certificate covers `*.yourdomain.com` — what the installation above sets up. Needs a Cloudflare account and token; does **not** need port 80 reachable from the internet. Best when all your services live under one domain, and avoids registering every subdomain in public Certificate Transparency logs.
+    One DNS-01 certificate covers `*.example.com` — what the installation above sets up. Needs a Cloudflare account and token; does **not** need port 80 reachable from the internet. Best when all your services live under one domain, and avoids registering every subdomain in public Certificate Transparency logs.
   </TabItem>
   <TabItem label="Per-domain (DNS-01)">
     Each application requests its own DNS-01 certificate through Cloudflare — still no public port 80 needed. Leave `ACME_WILDCARD_DOMAIN` unset; in each app's `.env` set `APP_TRAEFIK_CERT_RESOLVER=cloudflare-dns`, and uncomment the `tls.certresolver` label in its `docker-compose.yml`.

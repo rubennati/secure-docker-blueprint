@@ -22,55 +22,82 @@ export default defineConfig({
 			components: {
 				Head: './src/components/Head.astro',
 			},
-			// Grouped by what the reader is trying to do, not by the repository's
-			// directory split — someone arriving with "I want a password manager"
-			// should not have to know what `core/` and `apps/` mean. The pages
-			// themselves keep the names the repository uses.
+			// A reader arrives at any of these pages, from a search engine as often
+			// as from the home page, and needs to recognise from the section alone
+			// what kind of information sits there. So the top level names subjects,
+			// not steps: a section heading that reads like an instruction promises
+			// an order the site cannot keep — Traefik is required, CrowdSec is
+			// optional, and a restore is not "after" adding an application.
+			//
+			// Ordering runs roughly from first-contact to reference, but only the
+			// Start pages are genuinely sequential, and only they carry prev/next
+			// links (`pagination` below is off by default).
+			//
+			// Page titles stay outcome-shaped. The section is the stable part.
 			sidebar: [
 				{
-					label: 'Start here',
+					label: 'Start',
 					items: [
-						{ label: 'The basic path', link: '/getting-started/' },
-						{ label: 'Setting up a server', link: '/getting-started/server-setup/' },
+						{ label: 'What you are setting up', link: '/getting-started/' },
+						{ label: 'Preparing a server', link: '/getting-started/server-setup/' },
 					],
 				},
 				{
-					label: 'Set up the foundation',
+					// Traefik and CrowdSec share a server-wide scope and nothing else:
+					// one is a prerequisite for every application, the other is an
+					// optional layer. The overview page draws that line — a section
+					// label cannot.
+					label: 'Infrastructure and security',
 					items: [
-						{ label: 'Which services, and why', link: '/core/' },
-						{ label: 'Traefik — routing and TLS', link: '/core/traefik/' },
-						{ label: 'CrowdSec — intrusion detection', link: '/core/crowdsec/' },
-						{ label: 'OnlyOffice — document editing', link: '/core/onlyoffice/' },
+						{ label: 'What every server needs', link: '/infrastructure/' },
+						{ label: 'Traefik — routing and TLS', link: '/infrastructure/traefik/' },
+						{ label: 'CrowdSec — intrusion detection', link: '/infrastructure/crowdsec/' },
 					],
 				},
 				{
-					label: 'Add a service',
+					// OnlyOffice lives here, not with the infrastructure: nothing
+					// breaks without it, and it exists for the applications that
+					// embed it.
+					label: 'Applications',
 					items: [
-						{ label: 'Which services have a guide', link: '/applications/' },
+						{ label: 'What each one is for', link: '/applications/' },
 						{ label: 'Choosing between services', link: '/applications/choosing/' },
 						{ label: 'Vaultwarden — passwords', link: '/applications/vaultwarden/' },
 						{ label: 'Nextcloud — files and calendars', link: '/applications/nextcloud/' },
 						{ label: 'Invoice Ninja — invoicing', link: '/applications/invoiceninja/' },
 						{ label: 'Seafile Pro — file sync', link: '/applications/seafile-pro/' },
+						{ label: 'OnlyOffice — document editing', link: '/applications/onlyoffice/' },
 					],
 				},
 				{
-					label: 'Operate and recover',
+					label: 'Operations and recovery',
 					items: [
-						{ label: 'What this section covers', link: '/operations/' },
+						{ label: 'What running this involves', link: '/operations/' },
 						{ label: 'Backup and restore', link: '/operations/backup/' },
+						{ label: 'When something is broken', link: '/operations/troubleshooting/' },
 					],
 				},
 				{
-					label: 'Data sovereignty',
+					label: 'Architecture and data sovereignty',
 					items: [
+						{ label: 'How a server fits together', link: '/architecture/' },
 						{ label: 'What self-hosting does not answer', link: '/sovereignty/' },
 						{ label: 'Putting a CDN in front', link: '/sovereignty/edge/' },
 					],
 				},
-				{ label: 'FAQ', link: '/faq/' },
-				{ label: 'About the project', link: '/project/' },
+				{
+					label: 'Reference',
+					items: [
+						{ label: 'FAQ', link: '/faq/' },
+						{ label: 'About the project', link: '/project/' },
+					],
+				},
 			],
+			// The site is not a book. Automatic prev/next arrows invent a reading
+			// order across unrelated guides — from CrowdSec to Vaultwarden, as if
+			// one followed the other. Pages that do have a successor declare it in
+			// their own frontmatter.
+			pagination: false,
 		}),
 	],
 });
