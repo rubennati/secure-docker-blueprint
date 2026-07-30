@@ -106,8 +106,8 @@ Derive it, in this order:
 
 Then leave roughly half again on top.
 
-`pids` bounds a fork bomb and costs nothing to set. **CPU limits are deliberately
-not applied by default** — they make a stack slow under load rather than safe,
+`pids` bounds a fork bomb and costs nothing to set. **CPU limits are not applied by
+default** — they make a stack slow under load rather than safe,
 and a busy container is not the failure mode this is guarding against. Set one
 only where a component demonstrably pins a core.
 

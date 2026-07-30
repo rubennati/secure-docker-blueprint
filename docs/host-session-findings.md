@@ -215,8 +215,8 @@ together with `APP_TRAEFIK_SECURITY=sec-3-spa`.
 
 **Why it matters.** The security-chain template states plainly: *"Use `sec-*-spa`
 only for VPN-gated apps (network-level access control)"* — the SPA variants swap
-the standard rate limit for a much looser one, on the reasoning that network-level
-access control is already restricting who can reach the app. Pairing it with
+the standard rate limit for a much looser one, because network-level access
+control is already restricting who can reach the app. Pairing it with
 `acc-public` removes that premise while keeping the loose limit.
 
 **The tension is real, not a typo.** Nextcloud is a code-split SPA and does fire
@@ -558,9 +558,9 @@ where before the same work exceeded 60. Container memory sat at 534 MiB of the
 application's headroom.
 
 **Wider than this stack.** Any container rendering with headless Chromium is
-affected — PDF generation, screenshotting, preview services. Worth stating
-wherever the repository documents resource limits, since `deploy.resources`
-says nothing about `/dev/shm` and the default is invisible until something
+affected — PDF generation, screenshotting, preview services. This belongs
+wherever the repository documents resource limits: `deploy.resources` says
+nothing about `/dev/shm`, and the default is invisible until something
 stalls.
 
 ## 25. CrowdSec runs, and measures how little it can see
@@ -845,8 +845,8 @@ confusing failures if you do not know the option exists.
 
 **Why record it.** `backup/borgmatic/README.md` assumes a straightforward SSH
 target. Naming the two options, without naming any provider, turns a dead end into
-a footnote. Which storage someone uses is their business; that these knobs exist
-is worth knowing.
+a footnote. Which storage someone uses is their business; that the two options
+exist is what the README omits.
 
 ## What was deliberately left out
 

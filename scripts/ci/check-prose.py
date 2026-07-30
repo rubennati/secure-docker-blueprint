@@ -179,6 +179,23 @@ def prose_units(lines: list[str]) -> list[list[tuple[int, str]]]:
     return units
 
 
+CURLY_OPEN, CURLY_CLOSE = "“", "”"
+
+
+def is_citation(text: str, start: int) -> bool:
+    """True when the phrase at `start` is being quoted rather than used.
+
+    An audit, a findings log and this repository's own standard all reproduce
+    the wording in order to record it. Counting the delimiters that open before
+    the match separates the two cases: a phrase inside a code span or a pair of
+    quotation marks is the document's subject, not its voice.
+    """
+    before = text[:start]
+    if before.count("`") % 2 == 1 or before.count('"') % 2 == 1:
+        return True
+    return before.rfind(CURLY_OPEN) > before.rfind(CURLY_CLOSE)
+
+
 def scan_file(path: Path, rel: str) -> list[tuple]:
     """Every phrase occurrence in one file, in source order.
 
@@ -206,6 +223,9 @@ def scan_file(path: Path, rel: str) -> list[tuple]:
         for phrase, (category, hint) in PHRASES.items():
             start = low.find(phrase)
             while start != -1:
+                if is_citation(joined, start):
+                    start = low.find(phrase, start + 1)
+                    continue
                 end = start + len(phrase)
                 touched = [ln for a, b, ln in spans if a < end and b > start]
                 first = touched[0] if touched else unit[0][0]
