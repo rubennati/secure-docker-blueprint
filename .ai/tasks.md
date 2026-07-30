@@ -8,7 +8,7 @@ this file is the short list.
 Ordered run: [`../docs/host-session-v0.7.0.md`](../docs/host-session-v0.7.0.md)
 
 - [ ] Borgmatic: install, initialise repository, first backup, export the key off-host
-- [ ] **Restore rehearsal — this closes v0.7.0** and produces the first `ops-ready` stack
+- [ ] **Restore rehearsal — this closes v0.7.0** and produces the first `ops-proven` stack
 - [ ] UrBackup: verify against the gate list in `backup/urbackup/README.md`
 - [ ] Verify the nine pending major versions
 - [ ] Decide the legacy verification stamps, per app — `LIFECYCLE.md` marks them ⚠️

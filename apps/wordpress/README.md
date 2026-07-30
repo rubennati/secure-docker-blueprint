@@ -1,6 +1,6 @@
 # WordPress
 
-> **Status: 🚧 v7.0.2** — major upgrade from 6.x; verify themes/plugins first · 2026-07-26
+> **Upgrading from 6.x is a major version change.** Verify themes and plugins first.
 
 WordPress CMS with MariaDB database, PHP security hardening, and Apache .htaccess protection.
 

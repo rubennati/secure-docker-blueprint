@@ -1,6 +1,6 @@
 # NocoDB
 
-> **Status: 🚧 2026.07.0** — CalVer switch from 0.x; verify migration first · 2026-07-26
+> **The version scheme switched from 0.x to CalVer.** Verify the migration first.
 
 Open-source Airtable alternative. Turns any SQL database into a spreadsheet-like UI with views, forms, and a REST + GraphQL API. Commonly paired with **n8n** for low-code automation.
 

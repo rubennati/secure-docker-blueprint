@@ -1,7 +1,5 @@
 # Matomo
 
-**Status: ✅ Ready — v5.10.0 · 2026-05-11**
-
 Self-hosted web analytics platform — privacy-respecting, GDPR-compatible alternative to Google Analytics. Two-service stack: PHP/Apache app + MariaDB.
 
 ## Architecture

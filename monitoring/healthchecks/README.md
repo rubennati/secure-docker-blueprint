@@ -1,7 +1,5 @@
 # Healthchecks
 
-**Status: ✅ Ready — v3.13 · 2026-05-11**
-
 Self-hosted cron / scheduled-task monitoring. Each monitored job gets a unique URL — the job pings that URL on schedule, and Healthchecks alerts you (email, webhook, Slack, Discord, ntfy, etc.) when an expected ping doesn't arrive.
 
 ## Architecture

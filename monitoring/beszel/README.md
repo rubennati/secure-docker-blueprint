@@ -1,7 +1,5 @@
 # Beszel
 
-**Status: ✅ Ready — v0.18.7 · 2026-05-11**
-
 Lightweight server monitoring with a hub + agent architecture. Go-based, ~20 MB RAM per agent.
 
 ## Architecture

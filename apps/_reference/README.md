@@ -1,7 +1,7 @@
 # Reference App
 
-> **Status: 🔧 Reference** — not a deployable service. This is the canonical
-> structure every app in this repo follows.
+> **Not a deployable service.** This is the canonical structure every app in
+> this repository follows.
 
 The single source of truth for **file structure, section order, naming, and
 patterns**. It runs (nginx + postgres as neutral stand-ins) so the structure can

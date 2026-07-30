@@ -1,7 +1,5 @@
 # Documenso
 
-> **Status: 🚧 Preview** — v2.15.0 · 2026-07-26 · config complete, **not yet verified on a live server**
-
 Open-source document-signing platform — a self-hosted **DocuSign alternative**. Sibling e-sign
 option: [`business/opensign/`](../opensign/).
 

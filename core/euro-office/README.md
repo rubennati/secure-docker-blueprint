@@ -1,6 +1,6 @@
 # Euro-Office
 
-> **Status: 🚧 Preview** — v9.3.2 · 2026-07-26 · modeled on `core/onlyoffice/`, **not yet verified on a live server**
+> Modeled on [`core/onlyoffice/`](../onlyoffice/).
 
 EU-governed, open-source **fork of OnlyOffice Document Server** — in-browser editing of
 docx / xlsx / pptx / pdf / odt for Seafile, Nextcloud, or any WOPI-compatible app. Backed by

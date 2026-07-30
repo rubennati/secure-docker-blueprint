@@ -48,7 +48,7 @@ a named alternative for operators wanting a UI or object storage.
 
 Public status (what an operator can rely on) and internal status (what the
 maintainer has established) are separate axes with a defined mapping. The ten
-✅ Ready Criteria are the single gate between them. Full definition in
+The baseline-aligned criteria are the single gate between them. Full definition in
 [`../docs/standards/status-model.md`](../docs/standards/status-model.md).
 
 **Reason:** three status systems previously ran in parallel with no derivation

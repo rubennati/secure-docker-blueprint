@@ -47,7 +47,7 @@ Follow [`backup/borgmatic/RESTORE.md`](../backup/borgmatic/RESTORE.md), rehearsa
 
 Then:
 
-- [ ] `backup/borgmatic/README.md` → status `🚧 Preview` → `✅ Ready`
+- [ ] `backup/borgmatic/UPSTREAM.md` → record `Last verified: DATE (vX.Y.Z)`
 - [ ] `backup/borgmatic/` gets an `UPSTREAM.md`-equivalent `Last verified` — or record the date in the README status line
 - [ ] `backup/README.md` and root `README.md` status rows updated
 - [ ] `python3 scripts/ci/lifecycle-report.py --write`
@@ -108,7 +108,7 @@ The date exists, so the evidence probably does too — but converting the field 
 
 v0.7.0 is finished when **one restore has actually been performed and written down**. Not when the configuration is complete, not when the timer runs, not when the archive exists.
 
-That also produces the repository's first `ops-ready` stack — a status nothing currently holds, because there has never been restore evidence for anything here.
+That also produces the repository's first `ops-proven` stack — a state nothing currently holds, because there has never been restore evidence for anything here.
 
 ## If time runs short
 

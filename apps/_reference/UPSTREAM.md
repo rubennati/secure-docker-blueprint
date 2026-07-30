@@ -2,7 +2,7 @@
 
 > **This is the template.** Copy it with the rest of `apps/_reference/` and replace
 > every `__REPLACE_ME__`. Every app in the blueprint carries one of these — it is
-> ✅ Ready criteria 8 and 9, and `scripts/ci/lifecycle-report.py` reads the
+> two of the baseline-aligned criteria, and `scripts/ci/lifecycle-report.py` reads the
 > `Last verified` line out of it.
 
 ## Source

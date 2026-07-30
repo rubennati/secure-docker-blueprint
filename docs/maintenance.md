@@ -70,15 +70,16 @@ Who keeps a file current. This is a role, not ownership of the facts inside the 
 
 ---
 
-## ✅ Ready Criteria
+## Baseline-aligned criteria
 
-An app is marked ✅ when all of the following are true. Apps that do not meet
-every point stay at 🚧 until the gap is closed.
+A stack reaches `baseline-aligned` when all of the following hold. A stack that
+misses any of them stays at the state below it until the gap is closed.
 
-These ten points are the gate between public `preview` and public `ready`, and
-together they are exactly the internal status `baseline-aligned` — see
-[`standards/status-model.md`](standards/status-model.md) for how the two axes map
-onto each other and onto the symbols in the README tables.
+These ten points are what `baseline-aligned` means in practice. Points 1–4 and
+part of 8–10 are enforced by `check-baseline.py` and `check-structure.py`;
+points 5–7 are what the version-anchored `Last verified` date records. See
+[`standards/status-model.md`](standards/status-model.md) for how each state is
+measured.
 
 **Technical**
 

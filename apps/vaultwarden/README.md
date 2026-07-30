@@ -1,7 +1,5 @@
 # Vaultwarden
 
-> **Status: 🚧 v1.37.0** — verified before the current record format; the claim names no version it was checked against · 2026-07-26
-
 Self-hosted Bitwarden-compatible password manager.
 
 ## Services

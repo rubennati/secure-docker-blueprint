@@ -1,7 +1,5 @@
 # Collabora Online (CODE)
 
-> **Status: 🚧 Preview** — v26.04.2.4.1 · 2026-07-26 · config complete, **not yet verified on a live server**
-
 LibreOffice-based online office server — the **lightweight** document-editing option: ~1 GB idle
 (single stateless container) vs ~4 GB for OnlyOffice / Euro-Office (which bundle Postgres, RabbitMQ,
 Redis, Nginx). Embedded via WOPI by Seafile / Nextcloud.

@@ -1,7 +1,8 @@
 # Borgmatic
 
-> **Status: ✅ Ready** — v2.1.6 · 2026-07-29 · backup and restore both performed
-> on a live host; the rehearsal is logged in [`RESTORE.md`](RESTORE.md#rehearsal-log)
+> The rehearsal is logged in [`RESTORE.md`](RESTORE.md#rehearsal-log). It used a
+> repository on the same machine, so the off-site target is written rather than
+> demonstrated.
 
 Host-installed backup for the stacks in this blueprint. Borg does the deduplicated, encrypted, append-capable storage; Borgmatic adds scheduling, retention, database dumps and monitoring on top.
 

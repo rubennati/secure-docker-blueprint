@@ -1,8 +1,6 @@
 # Nextcloud
 
-> **Status: 🚧 v34.0.2** — install, mail, hardening, a backup with a database
-> restore, and a MariaDB major upgrade all carried out on a live host; desktop
-> and mobile client sync not yet exercised · 2026-07-29
+> **Desktop and mobile client sync have not been exercised.**
 
 Self-hosted file sync, calendar, contacts, and collaboration suite. This setup runs Nextcloud as **PHP-FPM behind nginx**, with MariaDB as database and Redis for file locking and session storage.
 

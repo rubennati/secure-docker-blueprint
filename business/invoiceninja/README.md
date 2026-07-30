@@ -1,8 +1,6 @@
 # Invoice Ninja
 
-> **Status: 🚧 v5.13.26** — exercised on a live host: install, secrets, proxy,
-> an invoice created, sent and opened in the client portal, PDF rendering
-> measured. Restore not yet rehearsed · 2026-07-29
+> **A restore has not been rehearsed** for this stack.
 
 Self-hosted invoicing, quotes, expenses, and time-tracking (Laravel / PHP-FPM).
 

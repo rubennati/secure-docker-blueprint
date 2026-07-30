@@ -1,7 +1,5 @@
 # changedetection.io
 
-**Status: ✅ Ready — v0.55.3 · 2026-05-11**
-
 Self-hosted website content change detection. Different axis from uptime monitoring — answers "what changed on this page" instead of "is it up". Good for: restock alerts, price drops, ToS/policy diff tracking, external-dependency defacement detection.
 
 ## Architecture

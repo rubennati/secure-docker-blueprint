@@ -1,7 +1,5 @@
 # PhotoPrism
 
-**Status: ✅ Ready — 260305 · 2026-05-11**
-
 AI-powered self-hosted photo manager with TensorFlow-based classification, face recognition, and location enrichment. Go-based server with MariaDB backend.
 
 ## Architecture

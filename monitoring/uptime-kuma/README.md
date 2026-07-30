@@ -1,7 +1,5 @@
 # Uptime Kuma
 
-**Status: ✅ Ready — v1.23.17 · 2026-05-11**
-
 UI-driven uptime monitoring. Single container, SQLite backend, rich probe types (HTTP, TCP, DNS, docker, steam, …), public status pages, 90+ notification integrations.
 
 Modern successor to Statping — more active (weekly releases), better UI, wider probe support.

@@ -1,7 +1,5 @@
 # Seafile
 
-> **Status: 🚧 v13.0.20** — verified before the current record format; the claim names no version it was checked against · 2026-04-16
-
 Self-hosted file sync + team collaboration server. This setup runs Seafile Community Edition 13 as a **multi-container stack**, split across five compose files so optional components can be toggled on or off without touching the core.
 
 ## Architecture

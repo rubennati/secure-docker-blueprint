@@ -1,7 +1,5 @@
 # Infisical
 
-> **Status: 🚧 Preview** — v0.162.13 · 2026-07-26 · config complete, **not yet verified on a live server**
-
 Self-hosted central secret manager. Instead of distributing and re-filling `.env` files per app
 per server, manage every secret in one place; servers and apps pull what they need over the
 network (CLI / machine identity). An optional, central alternative to per-server Docker Secrets.

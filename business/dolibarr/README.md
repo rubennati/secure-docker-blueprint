@@ -1,7 +1,5 @@
 # Dolibarr
 
-**Status: ✅ Ready — v23.0.2 · 2026-05-11**
-
 Open-source ERP / CRM — invoicing, bookkeeping, project management, HR, inventory. Two-service stack: dolibarr/dolibarr app + MariaDB.
 
 ## Architecture

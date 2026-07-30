@@ -1,7 +1,5 @@
 # Cal.diy
 
-> **Status: ✅ Ready** — v6.2.0-4 · 2026-07-26
-
 > **Note:** Cal.diy is the MIT-licensed community edition of Cal.com, spun out in 2026 when Cal.com moved its production codebase behind a closed-source licence. Upstream explicitly labels Cal.diy as "strictly for personal, non-production use" with no security guarantees. **Do not use for business-critical scheduling** without understanding that trade-off.
 
 > **⚠️ Cloudflare (proxied) is a required layer for this deployment.** Because Cal.diy is community-maintained and not confirmed secure — and because a live instance was compromised once (SMTP credential exfiltrated) — this blueprint runs Cal.diy **behind Cloudflare as a proxy (orange cloud), not DNS-only**, as a mandatory extra layer: WAF, geo allowlist on the human-facing surface, rate limiting, and origin hiding. Exact settings: **[docs/cloudflare.md](docs/cloudflare.md)**. The full post-incident hardening roadmap: **[docs/hardening-plan.md](docs/hardening-plan.md)**.

@@ -1,7 +1,5 @@
 # Photoview
 
-**Status: ✅ Ready — v2.4.0 · 2026-05-11**
-
 Self-hosted photo gallery focused on RAW processing, EXIF-driven organization, and face recognition. Go-based server with MariaDB backend.
 
 ## Architecture

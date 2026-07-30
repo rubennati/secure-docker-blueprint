@@ -1,7 +1,5 @@
 # Beszel Agent
 
-**Status: ✅ Ready — v0.18.7 · 2026-05-11**
-
 Standalone Beszel agent for remote hosts. Deploy this on each additional host that a central [Beszel hub](../beszel/) should monitor.
 
 ## When you need this

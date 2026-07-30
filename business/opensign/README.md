@@ -1,7 +1,5 @@
 # OpenSign
 
-**Status: ✅ Ready — main · 2026-05-11**
-
 Self-hosted electronic signature platform — DocuSign / Adobe Sign alternative. Upload PDF/DOCX, define signing roles, send to signers, audit trail, certificates. GDPR-friendly since everything stays on your infrastructure.
 
 ## Architecture

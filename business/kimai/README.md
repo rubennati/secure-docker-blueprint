@@ -1,7 +1,5 @@
 # Kimai
 
-**Status: ✅ Ready — v2.56.0 · 2026-05-11**
-
 Self-hosted time-tracking for freelancers and small teams. Project/customer hierarchy, timesheet approval, invoicing via plugins, REST API. PHP/Symfony app with MariaDB.
 
 ## Architecture

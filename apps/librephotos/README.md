@@ -1,7 +1,5 @@
 # LibrePhotos
 
-**Status: ✅ Ready** — 2026w14 · 2026-05-11
-
 Self-hosted photo management with face recognition, object detection, location data, and similarity search. Fork of OwnPhotos. Four-service stack: nginx proxy, Django backend with ML workers, React frontend, and PostgreSQL.
 
 ## Architecture

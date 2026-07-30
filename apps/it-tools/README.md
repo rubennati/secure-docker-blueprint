@@ -1,7 +1,5 @@
 # IT-Tools
 
-> **Status: ✅ Ready** — v2024.10.22 · 2026-05-02
-
 A self-hosted collection of handy IT and developer tools: JSON/YAML formatters, hash and UUID generators, regex tester, base64/URL encoders, QR code generator, timezone converters, and dozens more. Pure static SPA — no backend, no database, no accounts.
 
 ## Architecture

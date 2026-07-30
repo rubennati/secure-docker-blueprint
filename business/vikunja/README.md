@@ -1,7 +1,5 @@
 # Vikunja
 
-**Status: ✅ Ready** — v2.3.0 · 2026-05-06
-
 Open-source task management with kanban boards, to-do lists, Gantt views, and table view. Trello / Microsoft Planner alternative. Single binary image (API + frontend combined).
 
 ## Services

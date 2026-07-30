@@ -1,7 +1,5 @@
 # UrBackup Server
 
-> **Status: 🚧 Preview** — 2.5.x · 2026-07-27 · config complete, **not yet verified on a live server**
-
 Client and endpoint backup: laptops, desktops and other machines back up to storage **you** own — your server, your NAS — instead of a proprietary cloud. Clients exist for Windows, macOS and Linux.
 
 This is the other half of [`backup/`](../README.md). [Borgmatic](../borgmatic/) backs up the Docker host; UrBackup backs up the machines around it. They do not overlap and neither replaces the other.

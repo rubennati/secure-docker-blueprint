@@ -98,7 +98,7 @@ Full architecture: [`backup/README.md`](../../backup/README.md).
 
 ## Known Issues
 
-Nothing here has been verified on a host — this stack is `🚧 preview`. The
+Nothing here has been verified on a host — this stack is `scaffolded`. The
 following are the parts most likely to need adjustment, listed so they are checked
 deliberately rather than discovered:
 

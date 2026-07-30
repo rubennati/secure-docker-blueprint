@@ -1,7 +1,5 @@
 # Heimdall
 
-> **Status: ✅ Ready** — v2.8.1 · 2026-07-26
-
 Self-hosted application dashboard — a pretty launcher for your homelab apps, with optional widgets that show status / stats per service.
 
 ## Architecture

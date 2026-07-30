@@ -1,7 +1,5 @@
 # Homarr
 
-> **Status: ✅ Ready** — v1.72.0 · 2026-07-26
-
 Modern self-hosted dashboard focused on integrations — widget-based UI that can show live status of media servers, torrent clients, reverse proxies, Proxmox nodes, weather, calendars, and dozens more.
 
 ## Architecture

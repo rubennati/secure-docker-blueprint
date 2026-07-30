@@ -1,7 +1,5 @@
 # Gatus
 
-**Status: ✅ Ready — v5.34.0 · 2026-05-11**
-
 YAML-driven health checks, status page, and alerting. Go-based, single-container. The config-as-code counterpart to Uptime Kuma's click-UI.
 
 ## Architecture

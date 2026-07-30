@@ -1,7 +1,5 @@
 # Portainer Agent
 
-> **Status: ✅ Ready** — v2.39.5 · 2026-07-26
-
 Remote Docker agent for [Portainer](../portainer/). Runs on each additional host that a central Portainer should manage.
 
 > ⚠️ **Requires an extra port on the central Portainer host.** Unlike the Dockhand + Hawser pair (which stays on standard HTTPS 443 through Traefik), Portainer Edge Agents connect back on TCP 8000 — a separate port that has no TLS and only `EDGE_KEY` as authentication.

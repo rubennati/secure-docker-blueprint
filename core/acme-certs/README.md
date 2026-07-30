@@ -1,7 +1,5 @@
 # acme-certs
 
-> **Status: 🚧 cert-ops-tool 0.2.1** — verified before the current record format; the claim names no version it was checked against · 2026-05-04
-
 > **Note:** For services behind Traefik, use `core/traefik/` — it handles ACME natively. Use this tool for devices that don't go through Traefik (NAS, routers, mail servers, firewalls).
 
 Certificate issuing and renewal tool using [acme.sh](https://github.com/acmesh-official/acme.sh) with Cloudflare DNS-01 challenge.

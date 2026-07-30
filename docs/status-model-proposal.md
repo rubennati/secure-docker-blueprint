@@ -205,12 +205,21 @@ leave it. The site carries evidence and named gaps instead of a badge.
 `apps/nextcloud` and `business/invoiceninja` rose, both verified on a live host
 on 2026-07-29 while their symbols still said preview.
 
+- All 50 stack READMEs lost their own `**Status:**` line. 37 held only a
+  verdict, a version and a date, each owned elsewhere, and were removed. 13
+  carried something an operator needs and keep it as a plain statement: six
+  major-version upgrade warnings, and gaps such as Nextcloud's untested client
+  sync or Borgmatic's off-site target.
+- `ROADMAP.md`, `docs/maintenance.md`, the host-session documents and the `.ai/`
+  workspace no longer name the retired tiers. The ten-point gate in
+  `maintenance.md` is now "baseline-aligned criteria" and says which points a
+  checker enforces and which the verification date records. Progress-log rows
+  keep the old wording, because they record what was true then.
+
 **Not yet applied:**
 
-- 50 stack READMEs still carry their own `**Status:**` line in the retired
-  vocabulary. 28 hold only status, version and date; 22 also carry information
-  worth keeping, such as an upgrade warning.
-- `ROADMAP.md`, `docs/maintenance.md` and the two host-session documents still
-  name the retired tiers.
 - The choice matrices remain in the root README. Moving selection guidance to
   the site is part of the target picture and has not started.
+- Thirty stacks still carry the pre-v0.5.1 `Last checked:` field and sit at
+  `scaffolded`. Each needs verifying against a named version; the field is not
+  converted without evidence.

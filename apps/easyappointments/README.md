@@ -1,7 +1,5 @@
 # Easy!Appointments
 
-> **Status: ✅ Ready** — v1.6.0 · 2026-07-26
-
 Self-hosted appointment booking. Established open-source scheduler since 2013. PHP/MySQL — much lighter than Cal.com's Next.js stack. Good choice if you want a simple, stable booking system and don't need Cal.com's breadth.
 
 ## Architecture

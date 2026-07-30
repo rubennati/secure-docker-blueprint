@@ -1,6 +1,6 @@
 # Seafile Pro
 
-> **Status: 🚧 v13.0** — installation verified, but before the current record format; backup and restore untested · 2026-04-13
+> **Backup and restore are untested** for this stack.
 
 Cloud file storage with collaboration, search, and antivirus scanning.
 

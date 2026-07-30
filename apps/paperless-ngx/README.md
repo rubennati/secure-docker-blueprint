@@ -1,6 +1,6 @@
 # Paperless-ngx
 
-> **Status: 🚧 v3.0.3** — major upgrade from 2.x (breaking changes); verify migration first · 2026-07-26
+> **Upgrading from 2.x is a major version change and carries breaking changes.** Verify the migration first.
 
 Self-hosted document archive: scan → OCR → searchable PDF archive. Optimised for paperless offices with a "consume folder" + mobile scan workflow.
 

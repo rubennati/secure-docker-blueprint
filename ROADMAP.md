@@ -20,7 +20,7 @@ A working infrastructure is worthless without recovery.
 **Done when** one full restore has been performed from a backup this repository
 produced, and written up step by step. Not when the configuration validates, not
 when the timer runs, not when an archive exists. That restore is also what makes
-the `🛡️ ops-ready` tier reachable for the first time.
+the `ops-proven` state reachable for the first time.
 
 **In place:** the five-layer architecture, the reasoning for a host-installed
 agent, and both components — `backup/borgmatic` (configuration, timer, restore
@@ -87,21 +87,21 @@ The criterion: someone else could fork this and deploy it without needing this c
 Before v1.0 is tagged:
 
 - Every app verified at least once on a clean install (continuous — not a last-minute sprint)
-- No `🚧` without a documented reason
+- No stack left at `scaffolded` without a documented reason
 - No `__REPLACE_ME__` in any verified file
-- Honest review of every `🚧 preview` — promote only what was actually verified
+- Honest review of every `scaffolded` stack — a state rises only on evidence
 - CI baseline complete: the jobs exist — compose validation, secret scan, security baseline, canonical structure, status model, checker coverage, docs QA (markdown lint, links, prose register) and workflow supply chain. Two gaps remain: **Trivy runs with `exit-code: 0`** and blocks nothing until the existing CRITICAL findings have been assessed once, and **`Checker coverage`, `Docs QA` and `Workflow supply chain` are not in the required set** — a branch-protection setting, not a file in this repository
 - Secret & Password Generation Standard consolidated into `docs/standards/`
 - Secrets rotation guidance in `docs/standards/`
 - License review — every live app checked against the license policy below
-- **Status freshness system active** — `Last verified` stamps in place, Major upstream updates drop status to `🚧`; tactical work moves to GitHub Issues
+- **Status freshness system active** — `Last verified` stamps in place, a major upstream update retires the verification anchor; tactical work moves to GitHub Issues
 - Status model applied end to end — [`docs/standards/status-model.md`](docs/standards/status-model.md) defines what each symbol promises, [LIFECYCLE.md](LIFECYCLE.md) is generated from the owning files, and CI fails on a status claim that is not backed
 
 ---
 
 ## Continuous — not tied to a version
 
-**App testing runs in parallel to everything above.** Any time there is bandwidth: pick a `🚧` app, run the App Chain, set it to `✅`. This does not block or trigger a release. The bar for `✅` rises with the repo — an app verified today must meet the current ✅ Ready Criteria in [`docs/maintenance.md`](docs/maintenance.md), not the bar from v0.1.
+**App testing runs in parallel to everything above.** Any time there is bandwidth: pick a `scaffolded` app, run the App Chain, record the verified version. This does not block or trigger a release. The bar for the bar rises with the repository — an app verified today must meet the current baseline-aligned criteria in [`docs/maintenance.md`](docs/maintenance.md), not the bar from v0.1.
 
 Apps still to re-verify on a clean install, because the standards have moved since
 they were last checked: Vaultwarden, WordPress, Nextcloud, Seafile / Seafile Pro,
@@ -110,7 +110,7 @@ Invoice Ninja.
 Pinned to a new major during the dependency sweep and not yet run anywhere:
 Paperless-ngx 3.x, WordPress 7.x, Immich 3.x, Healthchecks 4.x, NocoDB (CalVer
 switch), Adminer 5.x, Homepage 1.13.x, OpnForm 2.2.x, Uptime Kuma 2.x. Each is
-`🚧` until it starts on a host — [`LIFECYCLE.md`](LIFECYCLE.md) carries the current
+`scaffolded` until it starts on a host — [`LIFECYCLE.md`](LIFECYCLE.md) carries the current
 pin and status per stack.
 
 **Cal.diY hardening** ([`apps/caldiy/docs/hardening-plan.md`](apps/caldiy/docs/hardening-plan.md))
@@ -182,7 +182,7 @@ This blueprint is for personal self-hosted infrastructure. The following applies
 
 - Proprietary closed-source images with no self-hosting rights
 
-Every app documents its license in `UPSTREAM.md`. The ✅ Ready Criteria require this field to be present before an app is marked as ready.
+Every app documents its license in `UPSTREAM.md`. The baseline-aligned criteria require this field before a stack is recorded as as ready.
 
 ---
 
@@ -219,5 +219,5 @@ Expose selected apps via Model Context Protocol for AI-assisted operation. Candi
 
 ## Out of scope here
 
-- `core/acme-certs/` — being extracted to its own repository. The blueprint stub remains as `🚧 preview` but is no longer actively maintained in this repo.
+- `core/acme-certs/` — being extracted to its own repository. The blueprint stub remains `scaffolded` but is no longer actively maintained in this repo.
 - Paperless-mcp — template exists in the Paperless CONFIG.md extension notes but will live in its own repo once built.
