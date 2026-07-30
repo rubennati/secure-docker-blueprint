@@ -11,15 +11,27 @@ It is aimed at homelabs, self-hosted infrastructure and small-team production sy
 
 ## The defaults
 
-What the compose files are set to, across services:
+Set on every service, and checked on every change before it is merged:
 
-- `cap_drop: ALL` and `no-new-privileges`, plus `read_only` where the image runs under it
-- Credentials as Docker Secrets — mounted as files, read via `_FILE` variables or an entrypoint wrapper, not set in `environment:`
-- Databases and backends on `internal` networks; Traefik is the only service published to the host
-- Every image on a pinned version tag, never `:latest`
-- Traefik middleware for TLS, security headers, rate limiting and IP allowlisting; CrowdSec available as an added layer
+- `no-new-privileges`, so a process inside the container cannot gain rights it was not started with. An exception has to record the reason, the alternatives that were weighed, and an explicit acceptance of the remaining risk
+- No `privileged` container, and no service with the Docker socket mounted into it — the reverse proxy reads the API through a filtering proxy limited to containers, networks and events
+- Databases and caches on `internal` networks, never published to the host
+- Every image pinned to an exact version, never `:latest` and never a major-only tag such as `8` or `v2`
 
-Whether a given service holds all of this is what its status label says. What each label means, and how far each service has come, is in the [FAQ](/faq/).
+Applied wherever the image runs under it, which is not everywhere:
+
+- `read_only` root filesystem, with tmpfs for the paths the image writes to
+- `cap_drop: ALL`, adding back only the capabilities the image needs
+- Credentials as Docker Secrets, mounted as files and read through `_FILE` variables or an entrypoint wrapper. Some images can only take a credential from the environment; those stacks keep it in a gitignored `.env`, and the stack's own documentation names the deviation and why it stands
+
+Available to every service, switched on per stack:
+
+- Traefik middleware for TLS, security headers, rate limiting and IP allowlisting, and CrowdSec as an added layer
+
+The first group is enforced mechanically, so it holds for whatever is in the
+repository. The second describes what the image allows, which differs per
+service — the label at the top of each guide says how far that service has been
+taken, and the [FAQ](/faq/) explains what each label means.
 
 [Security baseline →](https://github.com/rubennati/secure-docker-blueprint/blob/main/docs/standards/security-baseline.md)
 
