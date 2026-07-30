@@ -22,49 +22,53 @@ export default defineConfig({
 			components: {
 				Head: './src/components/Head.astro',
 			},
+			// Grouped by what the reader is trying to do, not by the repository's
+			// directory split — someone arriving with "I want a password manager"
+			// should not have to know what `core/` and `apps/` mean. The pages
+			// themselves keep the names the repository uses.
 			sidebar: [
 				{
-					label: 'Getting Started',
+					label: 'Start here',
 					items: [
 						{ label: 'The basic path', link: '/getting-started/' },
 						{ label: 'Setting up a server', link: '/getting-started/server-setup/' },
 					],
 				},
 				{
-					label: 'Core Infrastructure',
+					label: 'Set up the foundation',
 					items: [
-						{ label: 'Overview', link: '/core/' },
-						{ label: 'Traefik', link: '/core/traefik/' },
-						{ label: 'CrowdSec', link: '/core/crowdsec/' },
-						{ label: 'OnlyOffice', link: '/core/onlyoffice/' },
+						{ label: 'Which services, and why', link: '/core/' },
+						{ label: 'Traefik — routing and TLS', link: '/core/traefik/' },
+						{ label: 'CrowdSec — intrusion detection', link: '/core/crowdsec/' },
+						{ label: 'OnlyOffice — document editing', link: '/core/onlyoffice/' },
 					],
 				},
 				{
-					label: 'Applications',
+					label: 'Add a service',
 					items: [
-						{ label: 'Overview', link: '/applications/' },
-						{ label: 'Vaultwarden', link: '/applications/vaultwarden/' },
-						{ label: 'Nextcloud', link: '/applications/nextcloud/' },
-						{ label: 'Invoice Ninja', link: '/applications/invoiceninja/' },
-						{ label: 'Seafile Pro', link: '/applications/seafile-pro/' },
+						{ label: 'Which services have a guide', link: '/applications/' },
+						{ label: 'Vaultwarden — passwords', link: '/applications/vaultwarden/' },
+						{ label: 'Nextcloud — files and calendars', link: '/applications/nextcloud/' },
+						{ label: 'Invoice Ninja — invoicing', link: '/applications/invoiceninja/' },
+						{ label: 'Seafile Pro — file sync', link: '/applications/seafile-pro/' },
 					],
 				},
 				{
-					label: 'Operations',
+					label: 'Operate and recover',
 					items: [
-						{ label: 'Overview', link: '/operations/' },
+						{ label: 'What this section covers', link: '/operations/' },
 						{ label: 'Backup and restore', link: '/operations/backup/' },
 					],
 				},
 				{
-					label: 'Data Sovereignty',
+					label: 'Data sovereignty',
 					items: [
-						{ label: 'Overview', link: '/sovereignty/' },
+						{ label: 'What self-hosting does not answer', link: '/sovereignty/' },
 						{ label: 'Putting a CDN in front', link: '/sovereignty/edge/' },
 					],
 				},
 				{ label: 'FAQ', link: '/faq/' },
-				{ label: 'Project', link: '/project/' },
+				{ label: 'About the project', link: '/project/' },
 			],
 		}),
 	],

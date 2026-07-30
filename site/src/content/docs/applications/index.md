@@ -7,6 +7,8 @@ Application and business-tool guides live here — what an operator deploys and 
 
 Guides cover setup, ongoing use, backup, restore and updates.
 
+The blueprint ships far more services than have a guide here. A guide is written once a service has been set up and verified end to end, so this list grows slowly and on purpose. The [repository](https://github.com/rubennati/secure-docker-blueprint#whats-included) lists every service it contains, each with its own README.
+
 ## Vaultwarden
 
 **Problem it solves:** centralizes credentials — browser, mobile, and desktop — in one self-hosted vault instead of trusting a third-party service with everything you log into.
