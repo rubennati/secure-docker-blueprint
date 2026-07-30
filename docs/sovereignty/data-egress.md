@@ -155,6 +155,82 @@ those targets see this server's address and its polling pattern. That is the
 function. changedetection's optional AI features additionally send page content
 and diffs to whichever AI provider you configure.
 
+### apps/ and business/ — gone through, 29 stacks
+
+Read from each project's own documentation and source on 2026-07-31. Every
+positive was then checked by a second pass whose job was to refute it; one
+claim did not survive. The full record, per stack with citations, is in
+[`docs/research/egress-apps-business-2026-07-31.json`](../research/egress-apps-business-2026-07-31.json).
+
+None of this was observed on the wire. It establishes that a call exists, not
+that no other one does.
+
+**Six carry a persistent installation identifier.** That is what separates a
+version lookup from a per-install beacon: the vendor can count installations and
+follow each one over time.
+
+| Stack | Sends | Off by |
+|---|---|---|
+| **apps/photoprism** | POST to `my.photoprism.app/v1/hello` on first run and on renewal — persistent `ClientSerial`, version, OS, architecture, CPU core count | **nothing.** `hub.Disable()` is reachable only from test configuration |
+| **business/dolibarr** | POST to `ping.dolibarr.org` — `hash_unique_id`, the company's country code from the ERP's own record, version | install wizard checkbox, **ticked by default** |
+| **business/documenso** | PostHog EU Cloud, `installationId` as the distinct ID; one startup event, then a heartbeat | `DOCUMENSO_DISABLE_TELEMETRY=true` |
+| **apps/homarr** | PostHog at `hog.homarr.dev`; a cuid minted on first run and stored in the database | `NO_EXTERNAL_CONNECTION=true` |
+| **apps/opnform** | OpenPanel at `telemetry.opnform.com`; a UUID in the settings table, cached forever | `OPNFORM_ANONYMOUS_TELEMETRY_DISABLED=true` |
+| **business/openproject** | `releases.openproject.com/v1/check.svg` — uuid, installation type, version | admin setting, or `security_badge_display=false` |
+
+**WordPress sends more than a version.** `api.wordpress.org/core/version-check/`
+carries the PHP and MySQL versions, the locale, **the number of sites and the
+number of users**, and whether multisite is enabled. There is no supported
+environment variable in the official image.
+
+**Seven check a version without identifying the installation.** These are
+downloads rather than beacons — a plain GET, no payload, no identifier. The
+receiving host learns the source IP and the timing.
+
+| Stack | Endpoint | Off by |
+|---|---|---|
+| apps/lycheeorg | `lycheeorg.dev/update.json`, GitHub advisories | `VULNERABILITY_CHECK_ENABLED=false` works; `UPDATE_CHECK_ENABLED=false` **does not** — see below |
+| apps/dashy | `raw.githubusercontent.com/.../package.json` | **nothing in 4.5.0**, despite what the setting suggests |
+| business/invoiceninja | `pdf.invoicing.co/api/version` daily, hardcoded | no variable exists |
+| apps/easyappointments | `easyappointments.org/feed/` | none found |
+| apps/vaultwarden | GitHub releases | reachable only through the admin panel |
+| business/listmonk | `update.listmonk.app` | `app.check_updates`, default on |
+| apps/adminer | `adminer.org` — but from the **browser**, not the server, via an injected iframe | needs a custom build; the admin's own address is what is seen |
+
+**Two documented switches do not work.** Both were found by reading the code
+rather than the documentation, and neither project's own docs say so:
+
+- **Lychee** — `UPDATE_CHECK_ENABLED=false` does not stop the fetch on the
+  `/Admin/UpdateStatus` route. `CheckUpdate` is constructor-injected, and its
+  constructor calls `hydrate()` unconditionally, so the request has already
+  fired before the feature flag is evaluated. Capped at one call per three days
+  by the response cache.
+- **Dashy** — `appConfig.disableUpdateChecks` gates the browser-side check.
+  The server-side one in 4.5.0 has no switch at all.
+
+**Three send data about people rather than about the installation.** Different
+in kind from telemetry, and easier to miss:
+
+- **apps/bookstack** — an MD5 of each user's e-mail address goes to Automattic
+  whenever an avatar is rendered. `DISABLE_EXTERNAL_SERVICES=true`
+- **apps/librephotos** — the GPS coordinates of **every scanned photo** go to
+  OpenStreetMap's Nominatim for reverse geocoding. `FEATURE_REVERSE_GEOCODING=false`
+- **business/zammad** — `images.zammad.com` for avatar and organisation lookups,
+  `geo.zammad.com` for location. Admin UI, Settings → System → Services
+
+**Cal.diY carries a telemetry module that never runs.** `packages/lib/telemetry.ts`
+holds a hardcoded Jitsu endpoint and a server-to-server write key inherited from
+Cal.com, and `.env.example` ships `CALCOM_TELEMETRY_DISABLED` with an opt-out
+comment. None of it executes: `next-collect` is not a dependency, the exported
+configuration has no consumers, and `apps/web` has no `middleware.ts`. Recorded
+because the code reads as active and is not.
+
+**Twelve produced no finding.** Heimdall, Seafile, Seafile Pro, Vikunja,
+OpenSign, IT-Tools, Paperless-ngx, Monica, Photoview, Kimai — each checked
+against its own configuration reference. **UniFi is not in that list in the same
+sense**: the controller is closed-source Java, so no source was readable and
+Ubiquiti's documentation does not settle it. It is unestablished, not clean.
+
 ## What to do with this
 
 There is no setting that makes a stack silent, and chasing one is the wrong
