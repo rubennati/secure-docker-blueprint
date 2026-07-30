@@ -4,11 +4,11 @@ description: Reverse proxy and TLS termination for every service in the Blueprin
 ---
 
 import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
-import StackStatus from '../../../components/StackStatus.astro';
+import StackEvidence from '../../../components/StackEvidence.astro';
 
 Traefik is the reverse proxy every other service sits behind — it terminates TLS and routes requests to the right container. Set it up first.
 
-<StackStatus stack="core/traefik" />
+<StackEvidence stack="core/traefik" />
 
 ## Installation
 

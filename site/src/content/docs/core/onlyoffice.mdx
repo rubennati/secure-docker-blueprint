@@ -4,11 +4,11 @@ description: Shared browser-based Office document editing service for Seafile Pr
 ---
 
 import { Steps } from '@astrojs/starlight/components';
-import StackStatus from '../../../components/StackStatus.astro';
+import StackEvidence from '../../../components/StackEvidence.astro';
 
 OnlyOffice Document Server is a shared editing backend — it provides browser-based Office document editing for any application that integrates with it, such as [Seafile Pro](/applications/seafile-pro/) or Nextcloud. It runs as a single container and serves an editor that embeds as an iframe inside the consuming application.
 
-<StackStatus stack="core/onlyoffice" />
+<StackEvidence stack="core/onlyoffice" />
 
 One OnlyOffice instance can serve multiple consuming applications simultaneously. Each application must hold the same JWT secret and have its origin listed in the allowed-origins setting.
 

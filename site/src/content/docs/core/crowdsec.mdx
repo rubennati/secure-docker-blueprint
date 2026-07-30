@@ -4,12 +4,12 @@ description: Intrusion detection and blocking, layered on Traefik.
 ---
 
 import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
-import StackStatus from '../../../components/StackStatus.astro';
+import StackEvidence from '../../../components/StackEvidence.astro';
 
 CrowdSec watches Traefik's access logs and decides which IPs to ban for attack patterns (brute force, CVE probes, path traversal). On its own it detects but doesn't block — blocking is added separately, in layers you choose.
 
-<StackStatus stack="core/crowdsec"
-  note="Verified on a live host: detection, a ban enforced against a real client, the WAF layer blocking a CVE signature, and the host firewall dropping packets at the kernel." />
+<StackEvidence stack="core/crowdsec"
+  gap="SSH and host log sources — Debian 13 keeps no `auth.log`, so only the proxy layer feeds the engine." />
 
 Needs: [Traefik](/core/traefik/) running.
 

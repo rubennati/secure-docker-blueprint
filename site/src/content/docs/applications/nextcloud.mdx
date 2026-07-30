@@ -4,15 +4,15 @@ description: File sync, sharing and collaboration — installed unattended, rest
 ---
 
 import { Steps } from '@astrojs/starlight/components';
-import StackStatus from '../../../components/StackStatus.astro';
+import StackEvidence from '../../../components/StackEvidence.astro';
 
 Nextcloud holds documents, calendars and contacts, and it syncs them to desktops
 and phones. It is the stack in this Blueprint with the most moving parts: an
 application container, a separate web server, a database, a cache, and a
 background worker.
 
-<StackStatus stack="apps/nextcloud"
-  note="Verified on a live host: install, mail, hardening, a backup whose database was restored, and a MariaDB major upgrade. Desktop and mobile client sync were not." />
+<StackEvidence stack="apps/nextcloud"
+  gap="desktop and mobile client sync." />
 
 Needs: [Traefik](/core/traefik/) running, a domain, and SMTP credentials.
 

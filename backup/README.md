@@ -7,18 +7,14 @@ Backup has two directions, and a self-hoster needs both:
 
 They solve different problems and neither replaces the other. Separate top-level category because backup is ops-cross-cutting (it touches every data-producing service) and needs hardware-close access — block devices, mount points, credentials for remote targets.
 
-## Status
+What has been established about each stack — verified against which version and when, whether a restore was performed — is in [`LIFECYCLE.md`](../LIFECYCLE.md), generated from the repository.
 
-🛡️ Ops-ready · ✅ Ready · 🚧 Preview · 📋 Planned
-
-`🛡️ Ops-ready` means a restore has actually been performed — no service holds it yet. Full definitions: [`docs/standards/status-model.md`](../docs/standards/status-model.md).
-
-| Tool | Direction | Status | Notes |
-|---|---|---|---|
-| [Borgmatic](borgmatic/) | This host → off-site | ✅ | **The documented default for server backup.** Host-installed; a backup and a restore have both been performed and are logged in [`borgmatic/RESTORE.md`](borgmatic/RESTORE.md#rehearsal-log). The repository used was local — the off-site half is written, not yet exercised. |
-| [UrBackup](urbackup/) | Your devices → this host | 🚧 | Client backup for Windows, macOS and Linux; whole-disk image restore on Windows. Configuration complete, not yet verified. |
-| Kopia | either | 📋 | Deduplicating, with a web UI and native object storage. Its repository-server mode is interesting for client backup too — clients never hold the storage credentials. No database hooks, so server-side dumps would need scripting. Candidate for v0.8.0. |
-| Bareos | This host → tape / regulated retention | 📋 | Enterprise: Director, Storage and File daemons. Kept on the list for operators under retention or audit obligations, but **not built out** — the complexity is not justified for the single-operator setups this blueprint targets. |
+| Tool | Direction | Notes |
+|---|---|---|
+| [Borgmatic](borgmatic/) | This host → off-site | **The documented default for server backup.** Host-installed; a backup and a restore have both been performed and are logged in [`borgmatic/RESTORE.md`](borgmatic/RESTORE.md#rehearsal-log). The repository used was local — the off-site half is written, not yet exercised. |
+| [UrBackup](urbackup/) | Your devices → this host | Client backup for Windows, macOS and Linux; whole-disk image restore on Windows. Configuration complete, not yet verified. |
+| Kopia | either | Deduplicating, with a web UI and native object storage. Its repository-server mode is interesting for client backup too — clients never hold the storage credentials. No database hooks, so server-side dumps would need scripting. Candidate for v0.8.0. |
+| Bareos | This host → tape / regulated retention | Enterprise: Director, Storage and File daemons. Kept on the list for operators under retention or audit obligations, but **not built out** — the complexity is not justified for the single-operator setups this blueprint targets. |
 
 For *server* backup pick one deduplicating tool — Borgmatic or Kopia, not both. Two repositories means two retention policies and two things to verify, for no gain. UrBackup is not in that comparison; it does a different job.
 

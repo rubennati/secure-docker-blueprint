@@ -2,48 +2,46 @@
 
 Self-hosted monitoring stack — covers five axes: **uptime**, **cron / scheduled-job monitoring**, **host & container metrics**, **content changes**, **disk health**. Each app in its own subdirectory, drafted and tested independently. Mix-and-match based on what you actually need — you do not need all of them.
 
-## Status
+## What's here
 
-🛡️ Ops-ready · ✅ Ready · 🚧 Preview · 📋 Planned
-
-`🛡️ Ops-ready` means a restore has actually been performed — no service holds it yet. Full definitions: [`docs/standards/status-model.md`](../docs/standards/status-model.md).
+What has been established about each stack — verified against which version and when, whether a restore was performed — is in [`LIFECYCLE.md`](../LIFECYCLE.md), generated from the repository.
 
 ### Uptime & status pages
 
-| App | Approach | Status | Notes |
-|---|---|---|---|
-| [Uptime Kuma](uptime-kuma/) | UI-driven, SQLite | 🚧 | Community default. Click-config, 90+ notification integrations, public status pages. |
-| [Gatus](gatus/) | YAML-as-code, SQLite/Postgres | 🚧 | Config-as-code counterpart. Prometheus export built-in. |
-| [Statping](#) | UI-driven | 📋 | Older alternative to Kuma. Less active, but richer plugin ecosystem. |
-| [ciao](#) | Minimal HTTP checks | 📋 | Ruby, YAML-driven. Tiny — "Gatus without the UI." |
-| [Checkmate](#) | Modern YAML uptime | 📋 | Newer alternative to Gatus, richer UI. |
+| App | Approach | Notes |
+|---|---|---|
+| [Uptime Kuma](uptime-kuma/) | UI-driven, SQLite | Community default. Click-config, 90+ notification integrations, public status pages. |
+| [Gatus](gatus/) | YAML-as-code, SQLite/Postgres | Config-as-code counterpart. Prometheus export built-in. |
+| [Statping](#) | UI-driven | Older alternative to Kuma. Less active, but richer plugin ecosystem. |
+| [ciao](#) | Minimal HTTP checks | Ruby, YAML-driven. Tiny — "Gatus without the UI." |
+| [Checkmate](#) | Modern YAML uptime | Newer alternative to Gatus, richer UI. |
 
 ### Cron & scheduled-job monitoring
 
-| App | Approach | Status | Notes |
-|---|---|---|---|
-| [Healthchecks](healthchecks/) | Dead-man's switch for cron / backup / scheduled jobs | 🚧 | Django + SQLite default. Migrated from `apps/healthchecks/` — structurally belongs in monitoring, not user-facing apps. |
+| App | Approach | Notes |
+|---|---|---|
+| [Healthchecks](healthchecks/) | Dead-man's switch for cron / backup / scheduled jobs | Django + SQLite default. Migrated from `apps/healthchecks/` — structurally belongs in monitoring, not user-facing apps. |
 
 ### Host & container metrics
 
-| App | Approach | Status | Notes |
-|---|---|---|---|
-| [Beszel](beszel/) | Hub + local agent | 🚧 | Lightweight (~20 MB per agent), modern, per-container Docker stats. |
-| [Beszel Agent](beszel-agent/) | Standalone agent for remote hosts | 🚧 | Deploy on each additional host; same hub key, no hub needed on the remote. |
-| [Zabbix](#) | Full NMS (Server + Frontend + Agent + DB) | 📋 | Enterprise-grade. Heavy — use only if you need SNMP, auto-discovery, or complex triggers. |
-| [Grafana + Prometheus](#) | Scrape-and-visualize classic | 📋 | Industry standard. Prometheus stores + Grafana dashboards. Needs scrape targets (Beszel can export; cAdvisor / node-exporter are typical). |
+| App | Approach | Notes |
+|---|---|---|
+| [Beszel](beszel/) | Hub + local agent | Lightweight (~20 MB per agent), modern, per-container Docker stats. |
+| [Beszel Agent](beszel-agent/) | Standalone agent for remote hosts | Deploy on each additional host; same hub key, no hub needed on the remote. |
+| [Zabbix](#) | Full NMS (Server + Frontend + Agent + DB) | Enterprise-grade. Heavy — use only if you need SNMP, auto-discovery, or complex triggers. |
+| [Grafana + Prometheus](#) | Scrape-and-visualize classic | Industry standard. Prometheus stores + Grafana dashboards. Needs scrape targets (Beszel can export; cAdvisor / node-exporter are typical). |
 
 ### Content & web change detection
 
-| App | Approach | Status | Notes |
-|---|---|---|---|
-| [changedetection.io](changedetection/) | Page diff + notification | 🚧 | Restock / price / ToS / defacement watcher. |
+| App | Approach | Notes |
+|---|---|---|
+| [changedetection.io](changedetection/) | Page diff + notification | Restock / price / ToS / defacement watcher. |
 
 ### Disk health
 
-| App | Approach | Status | Notes |
-|---|---|---|---|
-| [Scrutiny](#) | S.M.A.R.T. dashboard | 📋 | Hub + collector on each host with disks. Needs `/dev/sd*` passthrough. |
+| App | Approach | Notes |
+|---|---|---|
+| [Scrutiny](#) | S.M.A.R.T. dashboard | Hub + collector on each host with disks. Needs `/dev/sd*` passthrough. |
 
 ### Notification receivers
 
@@ -52,10 +50,10 @@ these, which is what makes them usable as a single channel across all of them.
 They belong on a different host than the services that publish to them; see
 [Where the receiver runs](#where-the-receiver-runs).
 
-| App | Approach | Status | Notes |
-|---|---|---|---|
-| [ntfy](ntfy/) | Topic-based push over HTTP | 🚧 | Self-hosted, no account. A free public instance exists, so an off-host path costs no second machine. iOS push needs `upstream-base-url`. |
-| [Gotify](#) | Token-based push, own Android app | 📋 | Self-hosting only — no public instance, so it always needs a home. Healthchecks reaches it through Apprise rather than natively. |
+| App | Approach | Notes |
+|---|---|---|
+| [ntfy](ntfy/) | Topic-based push over HTTP | Self-hosted, no account. A free public instance exists, so an off-host path costs no second machine. iOS push needs `upstream-base-url`. |
+| [Gotify](#) | Token-based push, own Android app | Self-hosting only — no public instance, so it always needs a home. Healthchecks reaches it through Apprise rather than natively. |
 
 ## Recommended starter combo
 

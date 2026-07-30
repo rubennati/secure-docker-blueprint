@@ -123,22 +123,22 @@ the choice guidance for that category.
 
 ### Core Infrastructure
 
-| Service | Status | Description |
-|---------|--------|-------------|
-| [Traefik](core/traefik/) | ✅ | Reverse proxy with Socket Proxy, 5 security levels, 3 TLS profiles, access policies |
-| [Authentik](core/authentik/) | ✅ | SSO / Identity Provider for centralized authentication (Forward-Auth, OAuth2 / OIDC / SAML) |
-| [OnlyOffice](core/onlyoffice/) | 🚧 | Document editing server for Seafile, Nextcloud, etc. |
-| [Euro-Office](core/euro-office/) | 🚧 | EU-governed OnlyOffice fork (Nextcloud/IONOS/XWiki/Proton) — drop-in document server |
-| [Collabora](core/collabora/) | 🚧 | Lightweight LibreOffice-based office server (~1 GB) — leaner alternative to OnlyOffice/Euro-Office |
-| [dnsmasq](core/dnsmasq/) | 🚧 | DNS forwarder with wildcard zones for Tailscale / split-DNS setups |
-| [acme-certs](core/acme-certs/) | 🚧 | Certificate tool (acme.sh) for devices without Traefik (NAS, routers) |
-| [CrowdSec](core/crowdsec/) | ✅ | Intrusion detection engine + Traefik bouncer plugin — log analysis, threat decisions, L7 blocking |
-| [Whoami](core/whoami/) | ✅ | Traefik debug service to verify routing, TLS, and middlewares |
-| [Dockhand](core/dockhand/) | 🚧 | Docker management with Git-based stacks |
-| [Portainer](core/portainer/) | 🚧 | Docker management UI |
-| [Hawser](core/hawser/) | 🚧 | Remote Docker agent for Dockhand |
-| [Portainer Agent](core/portainer-agent/) | ✅ | Remote Docker agent for Portainer (multi-host) |
-| [Infisical](core/infisical/) | 🚧 | Central secret manager (self-hosted) — one place for all servers'/apps' secrets. VPN-only |
+| Service | Description |
+|---------|-------------|
+| [Traefik](core/traefik/) | Reverse proxy with Socket Proxy, 5 security levels, 3 TLS profiles, access policies |
+| [Authentik](core/authentik/) | SSO / Identity Provider for centralized authentication (Forward-Auth, OAuth2 / OIDC / SAML) |
+| [OnlyOffice](core/onlyoffice/) | Document editing server for Seafile, Nextcloud, etc. |
+| [Euro-Office](core/euro-office/) | EU-governed OnlyOffice fork (Nextcloud/IONOS/XWiki/Proton) — drop-in document server |
+| [Collabora](core/collabora/) | Lightweight LibreOffice-based office server (~1 GB) — leaner alternative to OnlyOffice/Euro-Office |
+| [dnsmasq](core/dnsmasq/) | DNS forwarder with wildcard zones for Tailscale / split-DNS setups |
+| [acme-certs](core/acme-certs/) | Certificate tool (acme.sh) for devices without Traefik (NAS, routers) |
+| [CrowdSec](core/crowdsec/) | Intrusion detection engine + Traefik bouncer plugin — log analysis, threat decisions, L7 blocking |
+| [Whoami](core/whoami/) | Traefik debug service to verify routing, TLS, and middlewares |
+| [Dockhand](core/dockhand/) | Docker management with Git-based stacks |
+| [Portainer](core/portainer/) | Docker management UI |
+| [Hawser](core/hawser/) | Remote Docker agent for Dockhand |
+| [Portainer Agent](core/portainer-agent/) | Remote Docker agent for Portainer (multi-host) |
+| [Infisical](core/infisical/) | Central secret manager (self-hosted) — one place for all servers'/apps' secrets. VPN-only |
 
 Planned in `core/`: Keycloak (alternative / heavier IAM next to Authentik).
 
@@ -146,95 +146,88 @@ Planned in `core/`: Keycloak (alternative / heavier IAM next to Authentik).
 
 The blueprint takes a **choice-matrix** approach: where several tools compete (dashboards, photo galleries, wikis, form builders), multiple options are included so you can test and pick what fits.
 
-**Status:** 🛡️ Ops-ready · ✅ Ready · 🚧 Preview · 📋 Planned
-
-- **🛡️ Ops-ready** — everything `Ready` promises, plus a restore performed from a backup. No service holds this yet.
-- **✅ Ready** — clean install and core function established, security baseline met, documentation in place. Deploy it.
-- **🚧 Preview** — on disk and it may well work, but the blueprint does not vouch for it. Evaluate it yourself before trusting it with data.
-- **📋 Planned** — named as intended, nothing on disk yet.
-
-Per-stack detail behind each symbol — pinned version, verification date, backup and restore documentation — is in [LIFECYCLE.md](LIFECYCLE.md).
+What has been established about each stack — verified against which version and when, whether a restore was performed — is in [`LIFECYCLE.md`](LIFECYCLE.md), generated from the repository.
 
 #### Dashboards & launchers
 
-| App | Stack | Status | Description |
-|---|---|---|---|
-| [Dashy](apps/dashy/) | Single container | ✅ | Homelab dashboard, YAML-configured |
-| [Heimdall](apps/heimdall/) | Single container (LSIO) | ✅ | App-launcher with widget support |
-| [Homarr](apps/homarr/) | Single container | ✅ | Modern dashboard with rich integrations |
-| [Homepage](apps/homepage/) | Single container | ✅ | File-based YAML dashboard (gethomepage) |
+| App | Stack | Description |
+|---|---|---|
+| [Dashy](apps/dashy/) | Single container | Homelab dashboard, YAML-configured |
+| [Heimdall](apps/heimdall/) | Single container (LSIO) | App-launcher with widget support |
+| [Homarr](apps/homarr/) | Single container | Modern dashboard with rich integrations |
+| [Homepage](apps/homepage/) | Single container | File-based YAML dashboard (gethomepage) |
 
 #### Publishing & knowledge
 
-| App | Stack | Status | Description |
-|---|---|---|---|
-| [Ghost](apps/ghost/) | App + MySQL | ✅ | Blog / CMS with SMTP + optional ActivityPub (Fediverse) |
-| [WordPress](apps/wordpress/) | App + MariaDB | 🚧 | Classic CMS, hardened (mu-plugin + test-script) |
-| [BookStack](apps/bookstack/) | App (LSIO) + MariaDB | ✅ | Wiki / knowledge base (Laravel) |
+| App | Stack | Description |
+|---|---|---|
+| [Ghost](apps/ghost/) | App + MySQL | Blog / CMS with SMTP + optional ActivityPub (Fediverse) |
+| [WordPress](apps/wordpress/) | App + MariaDB | Classic CMS, hardened (mu-plugin + test-script) |
+| [BookStack](apps/bookstack/) | App (LSIO) + MariaDB | Wiki / knowledge base (Laravel) |
 
 #### Photo galleries
 
 Five options — test and pick what fits your workflow.
 
-| App | Stack | Status | Description |
-|---|---|---|---|
-| [Immich](apps/immich/) | Server + ML + Postgres (pgvectors) + Valkey | 🚧 | AI-powered photo backup with mobile apps |
-| [LibrePhotos](apps/librephotos/) | Nginx + Django+ML + React + pgautoupgrade | 🚧 | Google-Photos-like (OwnPhotos fork) |
-| [Lychee](apps/lycheeorg/) | App (Laravel) + MariaDB + Redis | 🚧 | Clean, fast gallery |
-| [PhotoPrism](apps/photoprism/) | App (Go+TensorFlow) + MariaDB | 🚧 | AI classification + WebDAV |
-| [Photoview](apps/photoview/) | App (Go+GraphQL) + MariaDB | 🚧 | RAW processing + face recognition |
+| App | Stack | Description |
+|---|---|---|
+| [Immich](apps/immich/) | Server + ML + Postgres (pgvectors) + Valkey | AI-powered photo backup with mobile apps |
+| [LibrePhotos](apps/librephotos/) | Nginx + Django+ML + React + pgautoupgrade | Google-Photos-like (OwnPhotos fork) |
+| [Lychee](apps/lycheeorg/) | App (Laravel) + MariaDB + Redis | Clean, fast gallery |
+| [PhotoPrism](apps/photoprism/) | App (Go+TensorFlow) + MariaDB | AI classification + WebDAV |
+| [Photoview](apps/photoview/) | App (Go+GraphQL) + MariaDB | RAW processing + face recognition |
 
 #### Scheduling & booking
 
 Three 1:1-booking apps as a choice-matrix (pick one), plus a planned group-polling tool for a different axis.
 
-| App | Stack | Status | When to use |
-|---|---|---|---|
-| [Cal.diy](apps/caldiy/) | Next.js + Postgres + Redis | ✅ | MIT community edition of Cal.com (community fork, personal use). |
-| [Easy!Appointments](apps/easyappointments/) | PHP + MariaDB | ✅ | Lightweight PHP alternative, established 2013, GPL-3.0. |
+| App | Stack | When to use |
+|---|---|---|
+| [Cal.diy](apps/caldiy/) | Next.js + Postgres + Redis | MIT community edition of Cal.com (community fork, personal use). |
+| [Easy!Appointments](apps/easyappointments/) | PHP + MariaDB | Lightweight PHP alternative, established 2013, GPL-3.0. |
 
 Planned: **Rallly** (group scheduling polls — Doodle alternative, complementary not competing with the 1:1 bookers above).
 
 #### Productivity & personal
 
-| App | Stack | Status | Description |
-|---|---|---|---|
-| [Monica](apps/monicahq/) | App (Laravel) + MariaDB | 🚧 | Personal CRM for relationships |
-| [NocoDB](apps/nocodb/) | Single container + SQLite | ✅ | No-code database / spreadsheet UI (Airtable alternative) |
-| [OpnForm](apps/opnform/) | API (Laravel) + UI (Nuxt) + Postgres + Redis | 🚧 | Self-hosted form builder (Typeform alternative) |
-| [n8n](apps/n8n/) | Single container + SQLite | ✅ | Visual workflow automation (Zapier alternative) |
+| App | Stack | Description |
+|---|---|---|
+| [Monica](apps/monicahq/) | App (Laravel) + MariaDB | Personal CRM for relationships |
+| [NocoDB](apps/nocodb/) | Single container + SQLite | No-code database / spreadsheet UI (Airtable alternative) |
+| [OpnForm](apps/opnform/) | API (Laravel) + UI (Nuxt) + Postgres + Redis | Self-hosted form builder (Typeform alternative) |
+| [n8n](apps/n8n/) | Single container + SQLite | Visual workflow automation (Zapier alternative) |
 
 > **Cloud-free data-collection chain:** `OpnForm → n8n → NocoDB` — forms collect, n8n transforms, NocoDB stores + presents. All three on `proxy-public`, addressable as `http://<app>-app:<port>` for internal calls.
 
 #### File sync & documents
 
-| App | Stack | Status | Description |
-|---|---|---|---|
-| [Nextcloud](apps/nextcloud/) | App + MariaDB + Redis + Nginx + Cron | 🚧 | File sync, collaboration, optional OnlyOffice |
-| [Paperless-ngx](apps/paperless-ngx/) | App + Postgres + Redis + Gotenberg + Tika | ✅ | Document management with OCR, optional Authentik SSO |
-| [Seafile](apps/seafile/) | App + MariaDB + Memcached + optional components | 🚧 | File sync & share (community edition) |
-| [Seafile Pro](apps/seafile-pro/) | App + MariaDB + Memcached + SeaDoc + ClamAV + SeaSearch | 🚧 | File sync & share (pro edition) |
+| App | Stack | Description |
+|---|---|---|
+| [Nextcloud](apps/nextcloud/) | App + MariaDB + Redis + Nginx + Cron | File sync, collaboration, optional OnlyOffice |
+| [Paperless-ngx](apps/paperless-ngx/) | App + Postgres + Redis + Gotenberg + Tika | Document management with OCR, optional Authentik SSO |
+| [Seafile](apps/seafile/) | App + MariaDB + Memcached + optional components | File sync & share (community edition) |
+| [Seafile Pro](apps/seafile-pro/) | App + MariaDB + Memcached + SeaDoc + ClamAV + SeaSearch | File sync & share (pro edition) |
 
 #### Identity & security
 
-| App | Stack | Status | Description |
-|---|---|---|---|
-| [Vaultwarden](apps/vaultwarden/) | App + MariaDB | 🚧 | Bitwarden-compatible password manager |
+| App | Stack | Description |
+|---|---|---|
+| [Vaultwarden](apps/vaultwarden/) | App + MariaDB | Bitwarden-compatible password manager |
 
 Planned (apps/): Headscale (self-hosted Tailscale control server), PrivateBin, SnapPass.
 
 #### Networking
 
-| App | Stack | Status | Description |
-|---|---|---|---|
-| [UniFi Network App](apps/unifi/) | Controller (LSIO) + MongoDB 4.4 | 🚧 | Ubiquiti UniFi device controller |
+| App | Stack | Description |
+|---|---|---|
+| [UniFi Network App](apps/unifi/) | Controller (LSIO) + MongoDB 4.4 | Ubiquiti UniFi device controller |
 
 #### Developer & admin tools
 
-| App | Stack | Status | Description |
-|---|---|---|---|
-| [Adminer](apps/adminer/) | Single container | ✅ | Database administration UI (connects to other apps' DBs) |
-| [IT-Tools](apps/it-tools/) | Single container | ✅ | Collection of IT / developer utilities (JSON, hash, regex, etc.) |
+| App | Stack | Description |
+|---|---|---|
+| [Adminer](apps/adminer/) | Single container | Database administration UI (connects to other apps' DBs) |
+| [IT-Tools](apps/it-tools/) | Single container | Collection of IT / developer utilities (JSON, hash, regex, etc.) |
 
 Docker-management tools (Dockhand / Portainer / Hawser) moved to [`core/`](core/) — they're infrastructure, not apps.
 
@@ -244,18 +237,18 @@ Planned (apps/): Wiki.js, Outline, Formbricks, HeyForm, Shlink.
 
 See [`business/README.md`](business/README.md) for the full category README + rollout phases.
 
-| App | Function | Status | Description |
-|---|---|---|---|
-| [OpenProject CE](business/openproject/) | Project management | ✅ | Full PM — Gantt, kanban, work packages, time tracking. CE = local accounts only, no SSO. |
-| [Vikunja](business/vikunja/) | Task management | ✅ | Kanban, lists, Gantt — Trello / Planner alternative. Authentik OIDC verified, SSO-only. |
-| [Invoice Ninja](business/invoiceninja/) | Billing | 🚧 | Invoicing, quotes, client portal. Credentials moved into Docker Secrets; not yet exercised on a host |
-| [Dolibarr](business/dolibarr/) | ERP / CRM | 🚧 | Accounting, projects, HR, inventory |
-| [Kimai](business/kimai/) | Time tracking | 🚧 | Per-project/customer hours → Invoice Ninja |
-| [Listmonk](business/listmonk/) | Newsletter | 🚧 | Mailing list + transactional mail |
-| [Matomo](business/matomo/) | Web analytics | 🚧 | GDPR-compliant, full-featured (Google Analytics alternative) |
-| [Zammad](business/zammad/) | Helpdesk | 🚧 | Full 7-service helpdesk / ticketing / SLA |
-| [OpenSign](business/opensign/) | E-signatures | 🚧 | DocuSign alternative, eIDAS-capable |
-| [Documenso](business/documenso/) | E-signatures | 🚧 | DocuSign alternative (Remix + Postgres, local signing cert) |
+| App | Function | Description |
+|---|---|---|
+| [OpenProject CE](business/openproject/) | Project management | Full PM — Gantt, kanban, work packages, time tracking. CE = local accounts only, no SSO. |
+| [Vikunja](business/vikunja/) | Task management | Kanban, lists, Gantt — Trello / Planner alternative. Authentik OIDC verified, SSO-only. |
+| [Invoice Ninja](business/invoiceninja/) | Billing | Invoicing, quotes, client portal. Credentials moved into Docker Secrets; not yet exercised on a host |
+| [Dolibarr](business/dolibarr/) | ERP / CRM | Accounting, projects, HR, inventory |
+| [Kimai](business/kimai/) | Time tracking | Per-project/customer hours → Invoice Ninja |
+| [Listmonk](business/listmonk/) | Newsletter | Mailing list + transactional mail |
+| [Matomo](business/matomo/) | Web analytics | GDPR-compliant, full-featured (Google Analytics alternative) |
+| [Zammad](business/zammad/) | Helpdesk | Full 7-service helpdesk / ticketing / SLA |
+| [OpenSign](business/opensign/) | E-signatures | DocuSign alternative, eIDAS-capable |
+| [Documenso](business/documenso/) | E-signatures | DocuSign alternative (Remix + Postgres, local signing cert) |
 
 Planned: Ackee, Plausible CE, Live Helper Chat, Eramba GRC.
 
@@ -263,15 +256,15 @@ Planned: Ackee, Plausible CE, Live Helper Chat, Eramba GRC.
 
 See [`monitoring/README.md`](monitoring/README.md) for the full category README.
 
-| App | Axis | Status | Description |
-|---|---|---|---|
-| [Uptime Kuma](monitoring/uptime-kuma/) | Uptime (UI) | 🚧 | Click-config uptime monitor, 90+ notification integrations |
-| [Gatus](monitoring/gatus/) | Uptime (YAML) | 🚧 | Config-as-code health checks with Prometheus export |
-| [Beszel](monitoring/beszel/) | Host metrics (hub) | 🚧 | Lightweight hub + local agent for CPU / RAM / disk / docker stats |
-| [Beszel Agent](monitoring/beszel-agent/) | Host metrics (remote agent) | 🚧 | Standalone agent for additional hosts; pairs with Beszel hub |
-| [changedetection.io](monitoring/changedetection/) | Content watcher | 🚧 | Page diff + notification (restock / price / ToS) |
-| [Healthchecks](monitoring/healthchecks/) | Cron / scheduled-job | 🚧 | Dead-man's switch for backups / cron / scheduled tasks |
-| [ntfy](monitoring/ntfy/) | Notification receiver | 🚧 | Self-hosted push to phone and desktop; belongs on a different host than the services above |
+| App | Axis | Description |
+|---|---|---|
+| [Uptime Kuma](monitoring/uptime-kuma/) | Uptime (UI) | Click-config uptime monitor, 90+ notification integrations |
+| [Gatus](monitoring/gatus/) | Uptime (YAML) | Config-as-code health checks with Prometheus export |
+| [Beszel](monitoring/beszel/) | Host metrics (hub) | Lightweight hub + local agent for CPU / RAM / disk / docker stats |
+| [Beszel Agent](monitoring/beszel-agent/) | Host metrics (remote agent) | Standalone agent for additional hosts; pairs with Beszel hub |
+| [changedetection.io](monitoring/changedetection/) | Content watcher | Page diff + notification (restock / price / ToS) |
+| [Healthchecks](monitoring/healthchecks/) | Cron / scheduled-job | Dead-man's switch for backups / cron / scheduled tasks |
+| [ntfy](monitoring/ntfy/) | Notification receiver | Self-hosted push to phone and desktop; belongs on a different host than the services above |
 
 Planned: Statping, ciao, Checkmate, Zabbix, Grafana + Prometheus, Scrutiny, Gotify.
 
@@ -279,10 +272,10 @@ Planned: Statping, ciao, Checkmate, Zabbix, Grafana + Prometheus, Scrutiny, Goti
 
 Backup runs in two directions — this host outward, and your own devices inward. See [`backup/README.md`](backup/README.md) for the layer model, the host-agent rationale, and what append-only protection actually buys.
 
-| Tool | Direction | Status | Description |
-|---|---|---|---|
-| [Borgmatic](backup/borgmatic/) | This host → off-site | ✅ | Deduplicated encrypted backup over SSH/SFTP, with native database dumps for PostgreSQL, MySQL, MariaDB, SQLite and MongoDB. Host-installed. Backup and restore both performed; the off-site target is written, not yet exercised. |
-| [UrBackup](backup/urbackup/) | Your devices → this host | 🚧 | Client backup for Windows, macOS and Linux — keep laptop and desktop backups on hardware you own. Whole-disk image restore on Windows. |
+| Tool | Direction | Description |
+|---|---|---|
+| [Borgmatic](backup/borgmatic/) | This host → off-site | Deduplicated encrypted backup over SSH/SFTP, with native database dumps for PostgreSQL, MySQL, MariaDB, SQLite and MongoDB. Host-installed. Backup and restore both performed; the off-site target is written, not yet exercised. |
+| [UrBackup](backup/urbackup/) | Your devices → this host | Client backup for Windows, macOS and Linux — keep laptop and desktop backups on hardware you own. Whole-disk image restore on Windows. |
 
 Planned: Kopia, Bareos.
 

@@ -4,11 +4,11 @@ description: Self-hosted Bitwarden-compatible password manager on Docker Compose
 ---
 
 import { Steps } from '@astrojs/starlight/components';
-import StackStatus from '../../../components/StackStatus.astro';
+import StackEvidence from '../../../components/StackEvidence.astro';
 
 Vaultwarden is a self-hosted password manager compatible with Bitwarden clients — browser extensions, mobile apps, and the desktop client. It can hold access credentials to everything else you run; treat setup and backup accordingly.
 
-<StackStatus stack="apps/vaultwarden" />
+<StackEvidence stack="apps/vaultwarden" />
 
 Needs: [Traefik](/core/traefik/) running, a domain, and SMTP credentials (email verification is on by default).
 

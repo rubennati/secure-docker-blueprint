@@ -4,53 +4,51 @@ Self-hosted apps **that only make sense in a business / company context**. The c
 
 This keeps `business/` a meaningful category instead of a grab-bag. See [`docs/architecture.md`](../docs/architecture.md#directory-structure) for the categorisation rule across all five top-level directories.
 
-## Status
+## What's here
 
-🛡️ Ops-ready · ✅ Ready · 🚧 Preview · 📋 Planned
-
-`🛡️ Ops-ready` means a restore has actually been performed — no service holds it yet. Full definitions: [`docs/standards/status-model.md`](../docs/standards/status-model.md).
+What has been established about each stack — verified against which version and when, whether a restore was performed — is in [`LIFECYCLE.md`](../LIFECYCLE.md), generated from the repository.
 
 ### Project management & planning
 
-| App | Use case | Status | Notes |
-|---|---|---|---|
-| [OpenProject CE](openproject/) | Full PM — Gantt, kanban, work packages, time tracking, wikis | ✅ | 6-service stack; Trello + Jira alternative. CE = local accounts only, no SSO. |
-| [Vikunja](vikunja/) | Task management — kanban, lists, Gantt, table view | ✅ | 2-service stack; Authentik OIDC, SSO-ready |
-| Plane | Project management — issues, cycles, modules, analytics | 📋 | Jira alternative; AGPL-3.0; multi-service stack |
-| Leantime | PM for non-project-managers — goals, tasks, time tracking | 📋 | AGPL-3.0; all-in-one single container option available |
-| AppFlowy | Notion alternative — docs, databases, kanban, AI | 📋 | AGPL-3.0; ⚠️ only backend runs in Docker — clients connect via desktop/mobile app, not browser. Needs evaluation fit-check before including. |
+| App | Use case | Notes |
+|---|---|---|
+| [OpenProject CE](openproject/) | Full PM — Gantt, kanban, work packages, time tracking, wikis | 6-service stack; Trello + Jira alternative. CE = local accounts only, no SSO. |
+| [Vikunja](vikunja/) | Task management — kanban, lists, Gantt, table view | 2-service stack; Authentik OIDC, SSO-ready |
+| Plane | Project management — issues, cycles, modules, analytics | Jira alternative; AGPL-3.0; multi-service stack |
+| Leantime | PM for non-project-managers — goals, tasks, time tracking | AGPL-3.0; all-in-one single container option available |
+| AppFlowy | Notion alternative — docs, databases, kanban, AI | AGPL-3.0; ⚠️ only backend runs in Docker — clients connect via desktop/mobile app, not browser. Needs evaluation fit-check before including. |
 
 ### Billing & operations
 
-| App | Use case | Status | Notes |
-|---|---|---|---|
-| [Invoice Ninja](invoiceninja/) | Invoicing, billing, quotes, client portal | 🚧 | Credentials moved into Docker Secrets; not yet exercised on a host |
-| [Dolibarr](dolibarr/) | ERP / CRM — accounting, HR, inventory, projects | 🚧 | Migrated from `apps/dolibarr/` |
-| [Kimai](kimai/) | Time tracking per project / customer | 🚧 | Integrates with Invoice Ninja via webhooks |
+| App | Use case | Notes |
+|---|---|---|
+| [Invoice Ninja](invoiceninja/) | Invoicing, billing, quotes, client portal | Credentials moved into Docker Secrets; not yet exercised on a host |
+| [Dolibarr](dolibarr/) | ERP / CRM — accounting, HR, inventory, projects | Migrated from `apps/dolibarr/` |
+| [Kimai](kimai/) | Time tracking per project / customer | Integrates with Invoice Ninja via webhooks |
 
 ### Marketing & analytics
 
-| App | Use case | Status | Notes |
-|---|---|---|---|
-| [Listmonk](listmonk/) | Newsletter, mailing lists, transactional mail | 🚧 | Two-router pattern documented: admin VPN-only + subscriber paths public |
-| [Matomo](matomo/) | GDPR-compliant web analytics for company / customer sites | 🚧 | Migrated from `apps/matomo/` — primary use-case is the business website |
-| Ackee | Privacy-focused analytics — no cookies, GDPR by design | 📋 | Minimal alternative to Matomo; no files yet |
-| Plausible CE | Privacy-first analytics — clean UI, no cookie banner | 📋 | Middle ground between Matomo (heavy) and Ackee (minimal); AGPL-3.0 |
+| App | Use case | Notes |
+|---|---|---|
+| [Listmonk](listmonk/) | Newsletter, mailing lists, transactional mail | Two-router pattern documented: admin VPN-only + subscriber paths public |
+| [Matomo](matomo/) | GDPR-compliant web analytics for company / customer sites | Migrated from `apps/matomo/` — primary use-case is the business website |
+| Ackee | Privacy-focused analytics — no cookies, GDPR by design | Minimal alternative to Matomo; no files yet |
+| Plausible CE | Privacy-first analytics — clean UI, no cookie banner | Middle ground between Matomo (heavy) and Ackee (minimal); AGPL-3.0 |
 
 ### Customer support
 
-| App | Use case | Status | Notes |
-|---|---|---|---|
-| [Zammad](zammad/) | Full helpdesk / ticketing / SLA | 🚧 | 7-service stack, ≥ 4 GB RAM |
-| Live Helper Chat | Real-time visitor chat on company website | 📋 | PHP, lighter than Zammad, for pre-sales chat |
+| App | Use case | Notes |
+|---|---|---|
+| [Zammad](zammad/) | Full helpdesk / ticketing / SLA | 7-service stack, ≥ 4 GB RAM |
+| Live Helper Chat | Real-time visitor chat on company website | PHP, lighter than Zammad, for pre-sales chat |
 
 ### Legal & compliance
 
-| App | Use case | Status | Notes |
-|---|---|---|---|
-| [OpenSign](opensign/) | E-signatures — DocuSign alternative | 🚧 | Mail via Mailgun or SMTP; eIDAS with qualified cert |
-| [Documenso](documenso/) | E-signatures — DocuSign alternative | 🚧 | Remix + Postgres; local signing cert (.p12) |
-| Eramba GRC | Governance / Risk / Compliance mapping (NIS2, DSGVO, ISO-27001) | 📋 | Heavy. For regulated businesses. |
+| App | Use case | Notes |
+|---|---|---|
+| [OpenSign](opensign/) | E-signatures — DocuSign alternative | Mail via Mailgun or SMTP; eIDAS with qualified cert |
+| [Documenso](documenso/) | E-signatures — DocuSign alternative | Remix + Postgres; local signing cert (.p12) |
+| Eramba GRC | Governance / Risk / Compliance mapping (NIS2, DSGVO, ISO-27001) | Heavy. For regulated businesses. |
 
 ## Why these and not others
 

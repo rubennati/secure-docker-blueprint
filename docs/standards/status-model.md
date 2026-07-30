@@ -1,110 +1,94 @@
 # Status Model
 
-Two people ask different questions about the same stack:
+One lifecycle, for one reader: a maintainer deciding what to work on. It answers
+*what has been established about this stack*, and nothing else.
 
-- **An operator deciding whether to deploy it** asks: *can I rely on this?*
-- **A maintainer deciding what to work on** asks: *what have we actually established?*
-
-One checkmark cannot answer both. Before this standard the repository tried anyway, and the result was predictable: the root README, the category READMEs, and `LIFECYCLE.md` each carried their own status, none derived from another, and they drifted apart — twelve services claimed ✅ in one file and 🚧 in the file that owned the claim.
-
-This standard defines the two axes, how they map onto each other, and which file owns which fact.
-
----
-
-## Axis 1 — Public status
-
-*What an operator can rely on.* This is what the README tables show, as a symbol.
-
-| Symbol | Status | What it promises |
-|---|---|---|
-| 📋 | `planned` | Named as intended. Nothing on disk yet. |
-| 🚧 | `preview` | On disk, and it may well work — but the blueprint does not vouch for it. Evaluate it yourself before trusting it with data. |
-| ✅ | `ready` | Clean install and core function established, security baseline met, documentation in place. Deploy it. |
-| 🛡️ | `ops-ready` | `ready`, plus a restore has actually been performed from a backup — not merely documented. |
-
-`ops-ready` is defined here but **no stack holds it yet**: the blueprint has no restore evidence for any service. It becomes reachable with the v0.7.0 backup milestone.
-
-The symbol is nevertheless listed in every status legend from the start, and the legends say plainly that nothing holds it. A vocabulary that only appears once something earns it hides the bar it sets; the empty tier states that no restore has been performed.
-
-## Axis 2 — Internal status
-
-*What the maintainer has established.* This lives in [`LIFECYCLE.md`](../../LIFECYCLE.md), never in the README tables.
-
-| Status | Meaning |
-|---|---|
-| `scaffolded` | The structure exists. Nothing beyond that is claimed. |
-| `verified` | Clean install and core function established on a real host. |
-| `baseline-aligned` | `verified`, plus the security baseline is met — or every deviation is documented. |
-| `ops-proven` | `baseline-aligned`, plus restore evidence. |
-
-## How the two map
-
-| Internal | Public | Symbol |
-|---|---|---|
-| *(nothing on disk)* | `planned` | 📋 |
-| `scaffolded` | `preview` | 🚧 |
-| `verified` | `preview` | 🚧 |
-| `baseline-aligned` | `ready` | ✅ |
-| `ops-proven` | `ops-ready` | 🛡️ |
-
-Note that `verified` still maps to 🚧. Running correctly is not the same as being safe to hand to someone else — the security baseline is part of what ✅ promises, so a stack that boots and works but has not been checked against the baseline is still a preview.
-
-## The gate between 🚧 and ✅
-
-The [✅ Ready Criteria](../maintenance.md#-ready-criteria) are that gate. They were already the internal definition; this standard names them as such and maps them onto the axis:
-
-| Criteria | Establishes |
-|---|---|
-| 5–7 — clean install, core function, Traefik routing | `verified` |
-| 1–4 — pinned tag, healthcheck, security baseline, no hardcoded values | the baseline half of `baseline-aligned` |
-| 8–10 — `UPSTREAM.md` with `Last verified`, license, complete `.env.example` | the documentation half |
-
-**All ten together are exactly `baseline-aligned`, which is exactly public `ready`, which is exactly ✅.** One gate, three names for the same bar, no independent judgement anywhere.
+It carries no promise to an operator. Whether a stack suits a deployment is a
+question the repository cannot answer, because it does not know the deployment.
+That belongs on the operator site, in the form of concrete evidence and named
+gaps — see [`writing-style.md`](writing-style.md#audience-per-file).
 
 ---
+
+## The lifecycle
+
+Four states. Each is **measured from an artefact**, never typed into a table.
+
+| State | Established by | Read from |
+|---|---|---|
+| `scaffolded` | the stack exists | a compose file in the stack directory, or a host-installed component its category README lists |
+| `verified` | it ran, against a named version | `Last verified: DATE (vX.Y.Z)` in `<stack>/UPSTREAM.md` |
+| `baseline-aligned` | `verified`, and the security baseline holds | `check-baseline.py` and `check-structure.py` report no failure for that stack |
+| `ops-proven` | `baseline-aligned`, and its data came back | the stack appears in the rehearsal log of [`backup/borgmatic/RESTORE.md`](../../backup/borgmatic/RESTORE.md#rehearsal-log) |
+
+A date without a version does not reach `verified`. Which version was checked is
+what makes the claim usable a year later; a bare date says only that someone
+looked.
+
+**`verified` and `baseline-aligned` currently hold the same set.** Both checkers
+report zero failures across the repository, so every stack that clears the date
+also clears the baseline. The two separate the moment a checker fails for one
+stack, which is what the tier is for.
+
+## Why it is measured
+
+The previous model had a public axis of symbols typed into README tables and an
+internal axis derived from those symbols by lookup. The internal axis therefore
+carried no information the public one did not, and both depended on somebody
+remembering to edit a table.
+
+They fell behind. `apps/nextcloud` and `business/invoiceninja` were built,
+hardened and verified on a live host on 2026-07-29; their symbols still said
+preview when this standard was rewritten. Measurement moved both without anyone
+typing anything.
 
 ## Who owns which fact
 
-Every fact below has exactly one owner. Everything else derives from it. When two files disagree, the owner wins — and the derived file was generated from stale input, which is a bug in the generator or a missed run, not a judgement call.
+Every fact has one owner. Everything else derives from it. When two files
+disagree, the owner wins, and the derived file was generated from stale input.
 
-| Fact | Owner | Derived into |
-|---|---|---|
-| Public status symbol — `business/`, `monitoring/`, `backup/` | that category's `README.md` | root `README.md`, `LIFECYCLE.md` |
-| Public status symbol — `core/`, `apps/` | root `README.md` | `LIFECYCLE.md` |
-| Pinned image version | `<stack>/.env.example` | `LIFECYCLE.md` |
-| Last verified date + version | `<stack>/UPSTREAM.md` | `LIFECYCLE.md` |
-| Security baseline alignment | `<stack>/docker-compose.yml`, checked by `scripts/ci/check-baseline.py` and `check-structure.py` | `LIFECYCLE.md` |
-| Restore evidence | `docs/maintenance.md` Progress Log | `LIFECYCLE.md` |
+| Fact | Owner |
+|---|---|
+| Pinned image version | `<stack>/.env.example` |
+| Last verified date and version | `<stack>/UPSTREAM.md` |
+| Security baseline alignment | `<stack>/docker-compose.yml`, checked by `check-baseline.py` and `check-structure.py` |
+| Restore evidence | `backup/borgmatic/RESTORE.md`, rehearsal log |
+| Backup and restore documentation | `<stack>/README.md` |
 
-`core/` and `apps/` have no category README — those two categories are documented per service in the root README tables instead. That is a deliberate exception, not an oversight, and it is why the root README owns their status.
+Restore evidence sits in the rehearsal log because that is where it is produced:
+the log records the archive, the scope, the result and the numbers. The log's
+`Stack` column names the repository key, which is what makes it machine-readable.
 
 ## LIFECYCLE.md is generated
 
-`LIFECYCLE.md` is produced by `scripts/ci/lifecycle-report.py` and **must not be edited by hand**. Every column is read from the owner listed above.
-
-This is the point of the whole standard. The previous hand-maintained version covered 6 of 54 stacks and its version data was three months stale, because keeping a parallel table current by hand is work nobody does twice. A generated file cannot drift: either it is regenerated and correct, or CI fails because it is out of date.
-
-Regenerate after any change to a status, a pin, or an `UPSTREAM.md`:
+`scripts/ci/lifecycle-report.py` produces [`LIFECYCLE.md`](../../LIFECYCLE.md)
+and `site/src/data/lifecycle.json`. **Neither is edited by hand.**
 
 ```bash
 python3 scripts/ci/lifecycle-report.py --write
 ```
 
+A generated file cannot drift: either it is current, or CI fails because it is
+not.
+
 ## What CI enforces
 
-`scripts/ci/lifecycle-report.py --check` fails when:
+`lifecycle-report.py --check` fails when:
 
-- a stack's status disagrees between its owner and the root README mirror
-- `LIFECYCLE.md` is out of date with respect to its sources
-- a stack claims ✅ while missing `Last verified:` in `UPSTREAM.md` (criterion 8 unmet)
+- `LIFECYCLE.md` or `lifecycle.json` is out of date with respect to its sources
+- a stack directory carries no `UPSTREAM.md`
+- the rehearsal log names a stack that does not exist
 
-The third rule is the one that would have caught the twelve mismatched services at the commit that introduced them, rather than months later by hand.
+It reports without failing when a stack still carries the pre-v0.5.1
+`Last checked: DATE` field. Thirty stacks do. They sit at `scaffolded` until
+someone verifies them against a named version — the field is not converted
+automatically, because writing `verified` asserts that evidence exists.
 
 ---
 
 ## Related
 
-- [`../maintenance.md`](../maintenance.md) — the ✅ Ready Criteria themselves, and the chains that apply them
 - [`../../LIFECYCLE.md`](../../LIFECYCLE.md) — the generated per-stack view
-- [`security-baseline.md`](security-baseline.md) — what "baseline met" means concretely
-- [`documentation-workflow.md`](documentation-workflow.md) — when each document must be updated
+- [`security-baseline.md`](security-baseline.md) — what the baseline requires
+- [`writing-style.md`](writing-style.md) — which reader each file serves
+- [`../maintenance.md`](../maintenance.md) — the chains that apply these

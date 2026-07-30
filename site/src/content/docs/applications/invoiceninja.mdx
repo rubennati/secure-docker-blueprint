@@ -4,14 +4,14 @@ description: Self-hosted invoicing, quotes and a client portal — installed fro
 ---
 
 import { Steps } from '@astrojs/starlight/components';
-import StackStatus from '../../../components/StackStatus.astro';
+import StackEvidence from '../../../components/StackEvidence.astro';
 
 Invoice Ninja issues invoices and quotes, tracks payments, and gives each client
 a portal to view and pay them. Four containers: the application with its
 scheduler and queue workers, a web server, a database, and a cache.
 
-<StackStatus stack="business/invoiceninja"
-  note="Exercised on a live host: install, secrets, proxy, and an invoice created, sent and opened in the client portal. A restore has not been rehearsed." />
+<StackEvidence stack="business/invoiceninja"
+  gap="a restore — the backup is configured but has not been rehearsed." />
 
 Needs: [Traefik](/core/traefik/) running, a domain, and SMTP credentials.
 

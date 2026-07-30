@@ -4,15 +4,15 @@ description: Borgmatic on the host — install, configure, prove it. A backup no
 ---
 
 import { Steps } from '@astrojs/starlight/components';
-import StackStatus from '../../../components/StackStatus.astro';
+import StackEvidence from '../../../components/StackEvidence.astro';
 
 Borg does the deduplicated, encrypted storage. Borgmatic adds scheduling,
 retention, database dumps and monitoring on top, and it runs **on the host**
 rather than in a container — a containerised agent would need read access to
 every volume, and therefore every secret, in the deployment.
 
-<StackStatus stack="backup/borgmatic"
-  note="A backup and a restore were both performed on a live host, against a repository on that same machine — the off-site target is written, not demonstrated." />
+<StackEvidence stack="backup/borgmatic"
+  gap="the off-site target. The rehearsal used a repository on the same machine, so append-only enforcement over SSH is written rather than demonstrated." />
 
 This page is the general half: installing it, the repository, the keys, the
 schedule, and how a restore works. **What to back up for a particular

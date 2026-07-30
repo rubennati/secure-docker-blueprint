@@ -2,31 +2,44 @@
 """
 Lifecycle report generator for secure-docker-blueprint.
 
-Derives the per-stack lifecycle view defined in docs/standards/status-model.md
-and writes it to LIFECYCLE.md. Every column is read from the file that owns the
-fact — nothing here is a judgement call, and LIFECYCLE.md is never hand-edited.
+Derives the per-stack lifecycle defined in docs/standards/status-model.md and
+writes it to LIFECYCLE.md. Every state is measured from an artefact. Nothing is
+typed into a table, and LIFECYCLE.md is never hand-edited.
 
-Owners (see status-model.md):
-  public status   category README for business/monitoring/backup,
-                  root README for core/apps
+The lifecycle serves a maintainer deciding what to work on. It carries no
+promise to an operator — that belongs on the site, as evidence and named gaps.
+
+States, and what establishes each:
+  scaffolded        a compose file exists, or the stack is host-installed
+  verified          `Last verified: DATE (vX.Y.Z)` in <stack>/UPSTREAM.md
+  baseline-aligned  verified, and both baseline checkers pass
+  ops-proven        baseline-aligned, and the stack appears in the rehearsal log
+                    of backup/borgmatic/RESTORE.md
+
+A date without a version stays at `scaffolded`. Which version was checked is
+what makes the claim usable later; a bare date says only that someone looked.
+
+Baseline alignment is taken from the exit codes of check-baseline.py and
+check-structure.py, run once per invocation. A failure in either withholds
+`baseline-aligned` from every stack in that run rather than from the one that
+caused it — the two checkers truncate their own output, so a per-stack answer
+cannot be read back reliably. Both block CI, so a committed state never carries
+a partial answer.
+
+Other owners (see status-model.md):
   pinned version  <stack>/.env.example  (APP_TAG, else APP_IMAGE, else first pin)
-  last verified   <stack>/UPSTREAM.md   ("Last verified:", legacy "Last checked:")
   backup/restore  <stack>/README.md     (presence of the corresponding section)
-  restore tested  docs/maintenance.md Progress Log — no stack qualifies yet
 
 Consistency rules (--check):
 
-FAIL — a status claim that is not backed:
-  status-mismatch      owner and root-README mirror disagree on a status
-  ready-unverified     ✅ claimed while UPSTREAM.md carries no verification date
-                       at all (✅ Ready criterion 8) — catches a status claim at
-                       the commit that makes it, rather than months later
-  stale-report         LIFECYCLE.md differs from what the sources produce
+FAIL:
+  stale-report         LIFECYCLE.md or lifecycle.json differs from the sources
+  unknown-stack        the rehearsal log names a stack that does not exist
 
 WARN — evidence probably exists, the record is in the old shape:
-  legacy-stamp         ✅ with the pre-v0.5.1 `Last checked: DATE` field instead
-                       of `Last verified: DATE (vX.Y.Z)`. Converting it requires
-                       knowing the evidence is real, so it is never automatic.
+  legacy-stamp         the pre-v0.5.1 `Last checked: DATE` field instead of
+                       `Last verified: DATE (vX.Y.Z)`. Converting it asserts
+                       that evidence is real, so it is never automatic.
   backup-docs-split    UPSTREAM.md documents the backup or restore procedure as
                        well. Two owners for one fact — and because this report
                        only reads the README, the stack shows up as "missing"
@@ -49,19 +62,8 @@ from pathlib import Path
 
 CATEGORIES = ["core", "apps", "business", "monitoring", "backup"]
 
-# Categories whose status is owned by their own README; the rest fall back to
-# the root README. Deliberate: core/ and apps/ have no category README.
-OWN_README = {"business", "monitoring", "backup"}
-
-SYMBOLS = {"✅": "ready", "🚧": "preview", "📋": "planned", "🛡️": "ops-ready"}
-
-# Public → internal, per the mapping table in status-model.md.
-INTERNAL = {
-    "planned": "—",
-    "preview": "scaffolded",
-    "ready": "baseline-aligned",
-    "ops-ready": "ops-proven",
-}
+# The lifecycle, weakest first. A stack holds the highest state it establishes.
+STATES = ["scaffolded", "verified", "baseline-aligned", "ops-proven"]
 
 # Stacks that are structurally exempt, with the reason.
 EXCEPT = {"apps/_reference": "the canonical reference itself"}
@@ -69,11 +71,21 @@ EXCEPT = {"apps/_reference": "the canonical reference itself"}
 # Rules that report drift without blocking CI.
 WARN_RULES = {"legacy-stamp", "backup-docs-split"}
 
-ROW = re.compile(r"^\|.*\]\((?P<path>[a-z0-9._-]+)/\)")
-STATUS_CELL = re.compile(r"\|\s*(✅|🚧|📋|🛡️)\s*\|")
+# `Last verified: 2026-07-29 (34.0.2-fpm-alpine)` — the version in parentheses
+# is what separates this from the legacy field.
+ANCHORED = re.compile(
+    r"Last\s+verified:\s*(\d{4}-\d{2}-\d{2})\s*\(([^)]+)\)", re.I
+)
 VERIFIED = re.compile(r"Last\s+verified:\s*(\d{4}-\d{2}-\d{2})", re.I)
 CHECKED = re.compile(r"Last\s+checked:\s*(\d{4}-\d{2}-\d{2})", re.I)
 SECTION = re.compile(r"^#{2,4}\s+.*\b(backup|restore)\b", re.I)
+
+RESTORE_LOG = Path("backup/borgmatic/RESTORE.md")
+# A rehearsal row: | date | `apps/nextcloud` | … | … | Pass | … |
+REHEARSAL = re.compile(
+    r"^\|\s*\d{4}-\d{2}-\d{2}\s*\|\s*`([a-z0-9/_-]+)`\s*\|.*?\|\s*Pass\s*\|",
+    re.I,
+)
 
 MARKER = "<!-- generated by scripts/ci/lifecycle-report.py — do not edit by hand -->"
 
@@ -89,19 +101,46 @@ def plain(text: str) -> str:
     return text.replace("*", "")
 
 
-def statuses_from(readme: Path, prefix: str = "") -> dict[str, str]:
-    """Map stack name → symbol, from every table row in a README."""
-    found: dict[str, str] = {}
-    for line in read(readme).splitlines():
-        if prefix and f"]({prefix}" not in line:
-            continue
-        m = re.search(rf"\]\({re.escape(prefix)}([a-z0-9._-]+)/\)", line)
+def baseline_ok() -> bool:
+    """True when both baseline checkers pass.
+
+    Run once per invocation. Their own output truncates its finding lists, so a
+    per-stack answer cannot be read back from it — the exit code is what is
+    reliable. A failure therefore withholds `baseline-aligned` from every stack
+    in the run. Both checkers block CI, so no committed state depends on the
+    distinction.
+    """
+    here = Path(__file__).parent
+    for script in ("check-baseline.py", "check-structure.py"):
+        try:
+            done = subprocess.run(
+                [sys.executable, str(here / script)],
+                capture_output=True, text=True, timeout=180,
+            )
+        except (OSError, subprocess.SubprocessError):
+            return False
+        if done.returncode != 0:
+            return False
+    return True
+
+
+def restored_stacks() -> tuple[set[str], list[str]]:
+    """(stack keys with a passing restore, keys named that do not exist).
+
+    Read from the rehearsal log, which is where the evidence is produced — the
+    archive, the scope, the result and the numbers are recorded together.
+    """
+    found, unknown = set(), []
+    for line in read(RESTORE_LOG).splitlines():
+        m = REHEARSAL.match(line)
         if not m:
             continue
-        cell = STATUS_CELL.search(line)
-        if cell:
-            found[m.group(1)] = cell.group(1)
-    return found
+        key = m.group(1)
+        if Path(key).is_dir():
+            found.add(key)
+        else:
+            unknown.append(key)
+    return found, unknown
 
 
 def has_compose(stack: Path) -> bool:
@@ -144,9 +183,14 @@ def last_verified(stack: Path) -> tuple[str, bool]:
     text = plain(read(stack / "UPSTREAM.md"))
     if not text:
         return "—", False
-    m = VERIFIED.search(text)
+    m = ANCHORED.search(text)
     if m:
         return m.group(1), True
+    # A date without the version in parentheses names no anchor, so it does not
+    # establish `verified` — same treatment as the legacy field.
+    m = VERIFIED.search(text)
+    if m:
+        return f"{m.group(1)} ⚠️", False
     m = CHECKED.search(text)
     if m:
         return f"{m.group(1)} ⚠️", False
@@ -213,52 +257,43 @@ def doc_sections_raw(stack: Path) -> tuple[str, str]:
 
 
 def collect() -> tuple[list[dict], list[dict]]:
-    """Return (rows, problems)."""
-    root_status = {c: statuses_from(Path("README.md"), f"{c}/") for c in CATEGORIES}
+    """Return (rows, problems). Each row's state is measured, not read back."""
     rows: list[dict] = []
     problems: list[dict] = []
+
+    baseline = baseline_ok()
+    restored, unknown = restored_stacks()
+    for key in unknown:
+        problems.append({
+            "rule": "unknown-stack", "stack": key,
+            "detail": f"named in {RESTORE_LOG} but no such directory exists",
+        })
+
+    if not baseline:
+        problems.append({
+            "rule": "baseline-failing", "stack": "—",
+            "detail": "a baseline checker did not pass, so no stack is reported "
+                      "as baseline-aligned in this run. If the repository is "
+                      "otherwise clean, check that PyYAML is available to "
+                      f"{Path(sys.executable).name} — the checkers need it, and "
+                      "a missing import is indistinguishable from a real failure",
+        })
 
     for category in CATEGORIES:
         cat_dir = Path(category)
         if not cat_dir.is_dir():
             continue
 
-        owner_map = (
-            statuses_from(cat_dir / "README.md")
-            if category in OWN_README
-            else root_status[category]
-        )
-        owner_file = (
-            f"{category}/README.md" if category in OWN_README else "README.md"
-        )
-
         for stack in sorted(p for p in cat_dir.iterdir() if p.is_dir()):
-            # A component qualifies if it ships compose files — including stacks
-            # split across one file per component, which have no
-            # `docker-compose.yml` — or if the owning README gives it a status
-            # row, which is how host-installed components like backup/borgmatic
-            # get a lifecycle despite having no compose file at all.
-            if not has_compose(stack) and stack.name not in owner_map:
-                continue
             key = f"{category}/{stack.name}"
             if key in EXCEPT:
                 continue
-
-            symbol = owner_map.get(stack.name)
-            if symbol is None:
-                problems.append({
-                    "rule": "status-mismatch", "stack": key,
-                    "detail": f"no status row in {owner_file}",
-                })
-                symbol = "🚧"
-
-            # Mirror check — only meaningful where owner and mirror differ.
-            mirrored = root_status[category].get(stack.name)
-            if category in OWN_README and mirrored and mirrored != symbol:
-                problems.append({
-                    "rule": "status-mismatch", "stack": key,
-                    "detail": f"{owner_file} says {symbol}, root README says {mirrored}",
-                })
+            # A stack qualifies on its own artefacts: compose files — including
+            # stacks split across one file per component — or an UPSTREAM.md,
+            # which is what a host-installed component like backup/borgmatic has
+            # instead.
+            if not has_compose(stack) and not (stack / "UPSTREAM.md").is_file():
+                continue
 
             if backup_docs_elsewhere(stack):
                 problems.append({
@@ -268,29 +303,36 @@ def collect() -> tuple[list[dict], list[dict]]:
                               "this report reads. Leave a pointer there instead",
                 })
 
-            public = SYMBOLS.get(symbol, "preview")
             verified, current_format = last_verified(stack)
 
-            if public in ("ready", "ops-ready") and not current_format:
-                if verified == "—":
-                    problems.append({
-                        "rule": "ready-unverified", "stack": key,
-                        "detail": "claims ✅ but UPSTREAM.md carries no verification "
-                                  "date at all (✅ Ready criterion 8)",
-                    })
-                else:
-                    problems.append({
-                        "rule": "legacy-stamp", "stack": key,
-                        "detail": f"claims ✅ with the pre-v0.5.1 `Last checked: "
-                                  f"{verified.split()[0]}` — needs converting to "
-                                  f"`Last verified: DATE (vX.Y.Z)` once the evidence "
-                                  f"is confirmed",
-                    })
+            state = "scaffolded"
+            if current_format:
+                state = "verified"
+                if baseline:
+                    state = "baseline-aligned"
+                    if key in restored:
+                        state = "ops-proven"
+
+            if verified != "—" and not current_format:
+                problems.append({
+                    "rule": "legacy-stamp", "stack": key,
+                    "detail": f"carries the pre-v0.5.1 `Last checked: "
+                              f"{verified.split()[0]}` — stays at `scaffolded` "
+                              f"until converted to `Last verified: DATE (vX.Y.Z)` "
+                              f"against confirmed evidence",
+                })
+
+            if key in restored and state != "ops-proven":
+                problems.append({
+                    "rule": "legacy-stamp", "stack": key,
+                    "detail": f"a passing restore is logged in {RESTORE_LOG}, but "
+                              f"the stack is only `{state}` — it needs a version-"
+                              f"anchored verification date to reach ops-proven",
+                })
 
             backup_docs, restore_docs = doc_sections(stack)
             rows.append({
-                "stack": key, "category": category, "symbol": symbol,
-                "public": public, "internal": INTERNAL[public],
+                "stack": key, "category": category, "state": state,
                 "pinned": pinned_version(stack), "verified": verified,
                 "backup": backup_docs, "restore": restore_docs,
             })
@@ -299,24 +341,23 @@ def collect() -> tuple[list[dict], list[dict]]:
 
 
 def render_json(rows: list[dict]) -> str:
-    """The same facts as LIFECYCLE.md, in a form the operator site can render.
+    """The same facts as LIFECYCLE.md, for anything that renders them.
 
-    A status written twice is a status that drifts. The site imports this rather
-    than restating a symbol in prose — one owner, two renderings. Prose on a
-    stack page then adds only what the data cannot carry: what specifically has
-    and has not been exercised.
+    The site does not show the lifecycle: a development state is a maintainer's
+    answer, and a visitor's question is what has been established about this
+    stack and what has not. The site reads the evidence fields — the verified
+    date and version, and the backup and restore documentation — and states the
+    gaps in its own words.
     """
     payload = {
         r["stack"]: {
-            "symbol": r["symbol"],
-            "public": r["public"],
-            "internal": r["internal"],
+            "state": r["state"],
             # LIFECYCLE.md renders this as markdown; data carries the value.
             "pinned": r["pinned"].strip("`*"),
-            # The ⚠️ marks the pre-v0.5.1 field; the site wants the date alone
-            # and the fact separately.
+            # The ⚠️ marks a date with no version anchor; the site wants the
+            # date alone and the fact separately.
             "verified": r["verified"].replace(" ⚠️", ""),
-            "verified_legacy_field": "⚠️" in r["verified"],
+            "verified_anchored": "⚠️" not in r["verified"] and r["verified"] != "—",
             "backup_docs": r["backup"],
             "restore_docs": r["restore"],
         }
@@ -344,9 +385,9 @@ def render(rows: list[dict]) -> str:
     today = datetime.now(timezone.utc).date().isoformat()
     counts: dict[str, int] = {}
     for r in rows:
-        counts[r["public"]] = counts.get(r["public"], 0) + 1
+        counts[r["state"]] = counts.get(r["state"], 0) + 1
     summary = " · ".join(
-        f"{counts.get(k, 0)} {k}" for k in ("ops-ready", "ready", "preview")
+        f"{counts.get(k, 0)} {k}" for k in reversed(STATES) if counts.get(k)
     )
 
     out = [
@@ -360,21 +401,23 @@ def render(rows: list[dict]) -> str:
         "",
         f"{len(rows)} stacks: {summary}.",
         "",
+        "This is the maintainer's view: what has been established about each "
+        "stack. It makes no statement about whether a stack suits a given "
+        "deployment.",
+        "",
         "## What the columns mean",
         "",
-        "- **Public** — what an operator can rely on: `preview` · `ready` · `ops-ready`.",
-        "- **Internal** — what the maintainer has established: `scaffolded` · "
-        "`verified` · `baseline-aligned` · `ops-proven`.",
-        "- **Last verified** — from the stack's `UPSTREAM.md`. A ⚠️ marks the legacy "
-        "`Last checked:` field, which predates the current format and does not "
-        "satisfy ✅ Ready criterion 8.",
-        "- **Backup / Restore docs** — whether the stack README has such a section. "
-        "Says nothing about whether either was ever performed. `n/a` marks a stack "
-        "where the section would be circular — the backup tool cannot describe "
-        "backing itself up with itself.",
-        "- **Restore tested** — omitted deliberately: the blueprint holds no restore "
-        "evidence for any stack yet. The column returns with the v0.7.0 backup "
-        "milestone, which is what makes `ops-ready` reachable.",
+        "- **State** — `scaffolded` · `verified` · `baseline-aligned` · "
+        "`ops-proven`, each measured from an artefact. See "
+        "[`status-model.md`](docs/standards/status-model.md).",
+        "- **Last verified** — from the stack's `UPSTREAM.md`. A ⚠️ marks a date "
+        "with no version in parentheses, which names no anchor and leaves the "
+        "stack at `scaffolded`.",
+        "- **Backup / Restore docs** — whether the stack README has such a "
+        "section. Says nothing about whether either was performed; that is what "
+        "`ops-proven` records. `n/a` marks a stack where the section would be "
+        "circular — the backup tool cannot describe backing itself up with "
+        "itself.",
         "",
     ]
 
@@ -385,13 +428,13 @@ def render(rows: list[dict]) -> str:
         out += [
             f"## `{category}/`",
             "",
-            "| Stack | Public | Internal | Pinned | Last verified | Backup docs | Restore docs |",
-            "|---|---|---|---|---|---|---|",
+            "| Stack | State | Pinned | Last verified | Backup docs | Restore docs |",
+            "|---|---|---|---|---|---|",
         ]
         for r in group:
             out.append(
-                f"| [`{r['stack']}`]({r['stack']}/) | {r['symbol']} `{r['public']}` "
-                f"| `{r['internal']}` | {r['pinned']} | {r['verified']} "
+                f"| [`{r['stack']}`]({r['stack']}/) | `{r['state']}` "
+                f"| {r['pinned']} | {r['verified']} "
                 f"| {r['backup']} | {r['restore']} |"
             )
         out.append("")
@@ -401,9 +444,11 @@ def render(rows: list[dict]) -> str:
         "",
         "- Stack implementation: the stack's `docker-compose.yml` + `.env.example`.",
         "- Lifecycle procedure: the stack's `README.md` and `UPSTREAM.md`.",
+        "- Restore evidence: [`backup/borgmatic/RESTORE.md`]"
+        "(backup/borgmatic/RESTORE.md#rehearsal-log).",
         "- Security baseline definition: [`docs/standards/security-baseline.md`]"
         "(docs/standards/security-baseline.md).",
-        "- Status definitions and ownership: [`docs/standards/status-model.md`]"
+        "- State definitions and ownership: [`docs/standards/status-model.md`]"
         "(docs/standards/status-model.md).",
         "",
     ]
@@ -478,10 +523,12 @@ def main() -> int:
 
     counts: dict[str, int] = {}
     for r in rows:
-        counts[r["public"]] = counts.get(r["public"], 0) + 1
+        counts[r["state"]] = counts.get(r["state"], 0) + 1
+    tally = "  ·  ".join(
+        f"{counts[k]} {k}" for k in reversed(STATES) if counts.get(k)
+    )
     status = "❌" if fails else "✅"
-    print(f"  {status} {len(rows)} stacks  ·  "
-          f"{counts.get('ready', 0)} ready  ·  {counts.get('preview', 0)} preview  ·  "
+    print(f"  {status} {len(rows)} stacks  ·  {tally}  ·  "
           f"{fails} failure(s)  ·  {warns} warning(s)")
     if EXCEPT:
         print(f"     {len(EXCEPT)} excepted: {', '.join(EXCEPT)}")
@@ -490,9 +537,8 @@ def main() -> int:
     if args:
         lines = [
             "## Lifecycle\n",
-            f"{status} {len(rows)} stacks — {counts.get('ready', 0)} ready, "
-            f"{counts.get('preview', 0)} preview, **{fails} failure(s)**, "
-            f"{warns} warning(s)\n",
+            f"{status} {len(rows)} stacks — {tally.replace('  ·  ', ', ')}, "
+            f"**{fails} failure(s)**, {warns} warning(s)\n",
         ]
         if problems:
             lines += ["| Level | Rule | Stack | Detail |", "|---|---|---|---|"]

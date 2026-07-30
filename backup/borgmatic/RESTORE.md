@@ -218,6 +218,9 @@ If `borg compact` has already run since the deletion, the data is gone. That is 
 
 ## Rehearsal log
 
-| Date | Archive | Scope | Result | Notes |
-|---|---|---|---|---|
-| 2026-07-29 | first archive of a Nextcloud stack — 27,840 files, 912 MB → 440 MB deduplicated, 22 s | `config.php` from the archive against the live file; full MariaDB dump into a throwaway container | Pass | 131 tables, the expected account, 114 rows in the file index. The extracted `config.php` differed by one line, `'maintenance' => true` — the quiescing hook, captured as intended. Three things had to be fixed first: the packaged borgmatic was too old, `mariadb-dump` was missing on the host, and the distribution client demanded TLS the pinned server does not offer. |
+The `Stack` column carries the repository key, which is what
+`scripts/ci/lifecycle-report.py` reads to award `ops-proven`.
+
+| Date | Stack | Archive | Scope | Result | Notes |
+|---|---|---|---|---|---|
+| 2026-07-29 | `apps/nextcloud` | first archive of a Nextcloud stack — 27,840 files, 912 MB → 440 MB deduplicated, 22 s | `config.php` from the archive against the live file; full MariaDB dump into a throwaway container | Pass | 131 tables, the expected account, 114 rows in the file index. The extracted `config.php` differed by one line, `'maintenance' => true` — the quiescing hook, captured as intended. Three things had to be fixed first: the packaged borgmatic was too old, `mariadb-dump` was missing on the host, and the distribution client demanded TLS the pinned server does not offer. |
