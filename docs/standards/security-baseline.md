@@ -108,12 +108,20 @@ secrets:
     file: ./.secrets/db_pwd.txt
 ```
 
-Supported by: PostgreSQL, MySQL/MariaDB, Paperless-ngx.
-Not supported by: OnlyOffice, Seafile, Vaultwarden, Dockhand (use Pattern 2).
+Supported by: PostgreSQL, MySQL/MariaDB, Paperless-ngx, Vaultwarden.
+Not supported by: OnlyOffice, Seafile, Dockhand (use Pattern 2).
+
+Vaultwarden supports `_FILE` but is not on Pattern 1 today: its password sits
+inside `DATABASE_URL`, so the secret has to carry the whole connection string
+(`DATABASE_URL_FILE`) or an entrypoint has to assemble it. Support for `_FILE` is
+therefore not the same question as whether a stack is already on Pattern 1 — check
+the stack's `UPSTREAM.md` for what actually blocks it.
 
 ### Pattern 2: Custom entrypoint
 
-When the image doesn't support `_FILE` (Vaultwarden, Dockhand, Hawser, Vikunja):
+When the image doesn't support `_FILE` (Dockhand, Hawser, Vikunja), or when it
+does but the value is a connection string the secret would have to carry whole
+(Vaultwarden):
 
 ```sh
 #!/bin/sh

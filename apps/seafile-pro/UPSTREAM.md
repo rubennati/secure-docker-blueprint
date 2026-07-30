@@ -128,9 +128,11 @@ When Traefik receives a connection through Docker published ports, `docker-proxy
 replace the original source IP with the Docker bridge gateway (`172.17.0.1`) before
 Traefik sees the packet. Traefik then cannot match the Tailscale IP range, and
 `acc-tailscale` rejects the request even though the traffic arrived via Tailscale.
-The working workaround is `acc-public`. If an upstream firewall (e.g. Hetzner) blocks
-public inbound 80/443, `acc-public` does not expose the service to the internet.
-See `TROUBLESHOOTING.md §4.4` for investigation steps.
+The fix is to make `proxy-public` dual-stack so the client's IPv6 source address
+survives to the allowlist — `TROUBLESHOOTING.md` §4.4 carries the daemon
+prerequisites, the overlay and how to verify it. `acc-public` was the earlier
+workaround here; it removes Traefik's IP check for every caller and is only
+defensible while an upstream firewall independently blocks public inbound 80/443.
 
 **On the OnlyOffice server**, the Seafile domain must be added to `ONLYOFFICE_ALLOWED_ORIGINS`
 so browsers are permitted to embed the editor in an iframe. This is a CSP `frame-ancestors`
@@ -281,7 +283,7 @@ docker inspect --format='{{json .Config.Entrypoint}} {{json .Config.Cmd}}' <imag
 | ClamAV connection refused | Missing clamd-remote.conf mount | Mount config with TCPAddr clamav |
 | OnlyOffice not loading | seahub_custom.py not injected | `docker compose restart app` (auto-injects) |
 | ClamAV not scanning | virus_scan not in seafile.conf | `docker compose restart app` (auto-injects), or check manually with `grep virus_scan seafile.conf` |
-| `acc-tailscale` rejects Tailscale-routed requests | Docker bridge (`docker-proxy`) replaces original source IP with `172.17.0.1` before Traefik sees it | Use `acc-public` as workaround (safe if upstream firewall blocks public inbound); see `TROUBLESHOOTING.md §4.4` |
+| `acc-tailscale` rejects Tailscale-routed requests | A tailnet client connects over IPv6 and an IPv4-only `proxy-public` loses that source address before the allowlist is evaluated | Enable dual-stack — `TROUBLESHOOTING.md` §4.4 carries the daemon prerequisites and the overlay. `acc-public` was the earlier workaround and removes the IP check for everyone |
 | Redis `WARNING Memory overcommit must be enabled` in logs | Host sysctl not tuned | Add `vm.overcommit_memory = 1` to `/etc/sysctl.conf`, then `sysctl -p`; non-blocking until then |
 | MariaDB `io_uring_queue_init() failed with EPERM` in logs | Kernel restricts io_uring (`io_uring_disabled=2`) | Non-blocking — MariaDB falls back to libaio automatically; no action needed |
 

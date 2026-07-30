@@ -32,7 +32,7 @@ Compose files:
 docker compose config --quiet          # in the stack directory
 ```
 
-## CI — 10 checks on `main`
+## CI jobs
 
 | Job | Blocks on |
 |---|---|

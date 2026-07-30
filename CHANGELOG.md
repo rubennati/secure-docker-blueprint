@@ -10,6 +10,8 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ### Added
 
+- **A memory and pid ceiling on every service** (all stacks): no container can now exhaust the host through a leak or a runaway process. Ceilings are derived per component — from what it budgets for itself where it has such a setting, from a measured peak where it does not — and deliberately generous, because a limit the normal workload reaches kills an import and presents as an application fault. The structure checker's `no-resources` rule went from 121 services to none. The values are starting points: `docs/resource-measurement.md` covers turning them into measured ones, which is the v0.9.0 milestone.
+- **A healthcheck decision for every service** (all stacks): each service either defines one or states in the compose file why the image cannot have it — no shell in a scratch image, or one inherited from the image itself. The checker accepts the declared reason and warns on anything else, so a service can no longer pass unexamined. Five images turned out to ship no shell at all, which is only visible by pulling them.
 - **`sec-3e-spa` security chain** (`core/traefik/`): strict headers with `X-Frame-Options: SAMEORIGIN` combined with the wider first-load burst. The combination did not exist — the chains name ten of sixteen possible combinations of header strictness, frame policy and rate limit, and the one Nextcloud needs was among the six missing. Also corrected the claim that SPA rate limits belong behind a VPN only: `rl-soft` and `rl-spa` share the same sustained rate of 100 and differ only in burst size, so the restriction produced 429s during normal use without adding protection.
 
 ### Changed

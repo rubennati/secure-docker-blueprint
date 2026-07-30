@@ -51,6 +51,7 @@ Listed with context in [`state.md`](state.md). Nothing proceeds on these until d
       steep first step for a user who only wants to see whether the app suits
       them. Also the natural entry point for the operator site: *try it locally*
       before *deploy it properly*
-- [ ] Decide the `TROUBLESHOOTING.md` / `docs/standards/troubleshooting.md` overlap
+- [x] Decide the `TROUBLESHOOTING.md` / `docs/standards/troubleshooting.md` overlap
+      — index and method, declared in both files and in the File Map
 - [ ] Add `Checker coverage`, `Docs QA` and `Workflow supply chain` to the required
       checks in branch protection — all three run, but nothing blocks on them yet

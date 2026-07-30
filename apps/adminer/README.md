@@ -87,7 +87,7 @@ For DBs on other machines, enter the hostname/IP directly in the Adminer login f
 
 ## Variants (not in this install by default)
 
-- **Bundled MariaDB for throwaway local DB testing** — the original import source included a standalone MariaDB next to Adminer for development-only use cases. Dropped from the blueprint version because Adminer's main purpose is managing existing app DBs. The pattern still makes sense for isolated local dev; reference compose and rationale live under `docs/apps/adminer/setup-notes.md` on the repository's `docs` branch.
+- **Bundled MariaDB for throwaway local DB testing** — a standalone MariaDB next to Adminer, for development-only use. Not shipped here: Adminer's purpose in this blueprint is managing the databases of apps that already run. The pattern still makes sense for isolated local work — add a `mariadb` service on the same internal network and point Adminer at it; `apps/_reference/` shows the shape.
 
 ## Backup
 

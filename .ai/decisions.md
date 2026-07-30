@@ -6,6 +6,23 @@ this file is the index and covers decisions that have no other home.
 
 ---
 
+## 2026-07 · Two troubleshooting documents, one entry point
+
+`TROUBLESHOOTING.md` is the symptom index and the place to start: what you
+observe, its cause, its fix, including app-specific traps. `docs/standards/troubleshooting.md`
+is the method — which layer is broken, and the commands that interrogate each one.
+Both were catalogues without a stated relationship; neither is merged, because the
+deep links from Traefik, CrowdSec and the IPv6 documentation already follow that
+split. Owners are in the File Map.
+
+## 2026-07 · Register follows the section purpose, not the repository
+
+The neutral-language rule was written for German drafts and its scope over the
+English documentation was never stated. Resolved at `writing-style.md`: imperative
+and direct address where the reader performs steps, declarative and neutral where
+they establish what is true. No repository-wide language rule overrides a section
+contract.
+
 ## 2026-07 · Backup agent runs on the host
 
 A containerised backup agent needs `/:/host:ro` or `--privileged` to reach other
@@ -18,7 +35,8 @@ Database consistency still reaches into containers: Borgmatic's `container:` opt
 
 **Open:** this conflicts with the portability design goal in `architecture.md`
 ("no host-specific assumptions beyond Debian + Docker"). Needs to be recorded there
-as an explicit exception, or revisited. See `state.md` open decision 6.
+as an explicit exception, or revisited — carried in `state.md` as the open decision
+on the host-installed agent.
 
 ## 2026-07 · Backup covers two directions
 

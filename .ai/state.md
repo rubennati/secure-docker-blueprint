@@ -25,9 +25,9 @@
   interface behind Traefik, host-networking overlay opt-in. Never started.
 - Status model unified (`docs/standards/status-model.md`); `LIFECYCLE.md` generated
   by `scripts/ci/lifecycle-report.py`; both structure and status enforced in CI.
-- CI: 10 jobs, all green. Seven are required on `main`; `Checker coverage`,
-  `Docs QA` and `Workflow supply chain` run without blocking until branch
-  protection is updated.
+- CI jobs and what each one blocks on: [`quality-gates.md`](quality-gates.md),
+  documented per job in `docs/standards/ci.md`. `Checker coverage`, `Docs QA` and
+  `Workflow supply chain` run without blocking until branch protection is updated.
 
 ## Immediate next steps
 
@@ -61,14 +61,7 @@ not.
 → *Recommendation:* correct the standard to match the practice. The practice is
 what everyone actually reads.
 
-**2. Two troubleshooting documents** — 5 minutes
-`TROUBLESHOOTING.md` (root, 400+ lines) and `docs/standards/troubleshooting.md`
-(470 lines) both open with symptom catalogues and overlap substantially.
-→ *Recommendation:* root file becomes the operator-facing index of common
-failures; the standards file keeps the systematic inside-out debugging method.
-Whichever way, one of the two must stop being a catalogue.
-
-**3. Backup repository isolation** — 5 minutes
+**2. Backup repository isolation** — 5 minutes
 `docs/architecture.md:132` states one repository per app as a rule.
 `backup/README.md:176` presents it as a trade-off. The File Map makes
 `architecture.md` the owner, so the two disagree and the mirror is winning.
@@ -77,38 +70,40 @@ is the more honest text — separate repositories multiply the rehearsals, and a
 rehearsal nobody runs is worse than a shared repository that has been restored
 from.
 
-**4. Host-installed backup agent vs. the portability goal**
+**3. Host-installed backup agent vs. the portability goal**
 `docs/architecture.md` promises "no host-specific assumptions beyond Debian +
 Docker". `backup/borgmatic` is installed on the host by design, with the
 reasoning in `backup/README.md`.
 → *Recommendation:* record it in `architecture.md` as a named exception with its
 reason. The reasoning is sound; only the contradiction is unrecorded.
 
-**5. Neutral language scope**
-The "documentation addresses no one personally" rule is clear for German drafts.
-Whether it governs the English documentation has never been stated, and the
-English text is inconsistent as a result.
-→ *Recommendation:* apply it to both. It is already the majority style.
-
-**6. Commit procedure**
+**4. Commit procedure**
 `docs/standards/commit-rules.md` requires asking before every commit; an external
 standard would allow an agent to commit to non-`main` branches unprompted.
 → *Recommendation:* keep the local rule. It has caught real mistakes, and the
 cost is one question per commit.
 
-**7. Dependency automation** — see
+**5. Dependency automation** — see
 [`../docs/renovate-proposal.md`](../docs/renovate-proposal.md)
 Three sub-questions: explicit `# renovate:` markers vs. normalising 28 outlying
 comments · Renovate App vs. self-hosted Action · whether `site/`'s unwatched
 `package-lock.json` rides along. Nothing runs until these are answered.
 
-**8. What belongs in `core/`**
+**6. What belongs in `core/`**
 The test in `docs/architecture.md:34` asks whether the stack breaks the
 deployment, controls Docker, or provides shared identity, certificates, DNS or
 WAF. `core/onlyoffice`, `core/euro-office` and `core/collabora` are document
 servers — nothing breaks without them, so they fail that test.
 → *Recommendation:* apply the existing test rather than write a new rule. This is
 a structural change, so it belongs after the host session, not before.
+
+**7. CPU limits — standard against implementation**
+The profile table in `docs/standards/security-baseline.md` prescribes a `cpus`
+value per service profile. The sweep that set every ceiling deliberately left CPU
+limits off, on the grounds that they make a stack slow under load rather than
+safe; memory and `pids` were applied everywhere. Most services therefore carry no
+`cpus` value — a measurement, not the decision. Resolving this means changing
+either the standard or the compose files; the structure checker enforces neither.
 
 ## Active constraints
 
