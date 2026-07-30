@@ -39,7 +39,7 @@ bash ops/scripts/test-security.sh <host>   # if applicable
 ## For documentation changes
 
 - [ ] Preflight done before writing — readers, document purpose, section objective, what is explicitly out of scope, and the canonical owner of each changing fact ([purpose preflight](../docs/standards/documentation-workflow.md#before-drafting-the-purpose-preflight))
-- [ ] `python3 scripts/ci/check-prose.py --changed-only --base HEAD` passes on the changed lines
+- [ ] `python3 scripts/ci/check-prose.py` reports no blocking finding
 
 ## For new apps specifically
 

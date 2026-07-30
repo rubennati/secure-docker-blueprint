@@ -156,19 +156,21 @@ came back; it does not need aphorism or dramatic emphasis either.
 ## Checking
 
 ```bash
-python3 scripts/ci/check-prose.py                            # the whole repository
-python3 scripts/ci/check-prose.py --changed-only --base HEAD # the lines a change touches
-python3 scripts/ci/check-prose.py --hints                    # with the suggested replacement
+python3 scripts/ci/check-prose.py --hints                    # the whole repository
+python3 scripts/ci/check-prose.py --changed-only --base HEAD # only what a change touches
 ```
 
-The full run is an inventory. It still reports findings in reader-facing files
-that predate this list, so it is not green, and clearing them is separate work.
+The full run is the gate: CI executes it in the `Docs QA` job, and a phrase in a
+reader-facing file fails it. Maintainer files report the same findings as
+warnings — an audit or a findings log quotes wording in order to record it, and
+that is the document's subject.
 
-The differential run is the gate: CI executes it in the `Docs QA` job against the
-base commit of the event, and a finding on a line the change writes fails the
-job. That a file carries older findings does not make them right — it makes them
-unblocked. A line being edited is held to the current standard, whatever the rest
-of the file still contains.
+`--changed-only` stays available for reviewing one change locally.
+
+Matching works on prose units rather than lines: a paragraph, a list item or a
+block quote is joined before the phrase list is applied, so wrapping a sentence
+across two lines no longer hides a phrase. A heading, a table row, a fence or a
+blank line ends the unit.
 
 The checker matches an exact phrase list, not a general pattern. It finds the
 recurring formulations and nothing else — passing it is not evidence that a file

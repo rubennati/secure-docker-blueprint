@@ -112,24 +112,108 @@ def is_documentation(path: Path) -> bool:
     return path.suffix.startswith(".md")
 
 
+# Each of these starts its own unit. A heading, a table row, a thematic break or
+# a tag line also ends there — joining one to the paragraph beneath it would
+# assemble a sentence the author never wrote.
+ALONE = re.compile(r"^\s*(\#{1,6}\s|\||(-{3,}|\*{3,}|_{3,})\s*$|<)")
+# A list item and a block quote open a unit that its own continuation lines join:
+# both wrap like any other prose.
+LIST_ITEM = re.compile(r"^\s*([-*+]|\d+[.)])\s")
+QUOTE = re.compile(r"^\s*>")
+
+
+def prose_units(lines: list[str]) -> list[list[tuple[int, str]]]:
+    """Consecutive lines that form one piece of prose, as the author wrote it.
+
+    Markdown wraps a sentence at whatever column suits the editor, so a phrase
+    can sit across two lines while belonging to one paragraph — or to one list
+    item. Matching per line misses exactly those. A unit continues while the
+    following line belongs to the same piece: plain prose continues a paragraph,
+    an indented line continues a list item, and a `>` line continues a quote.
+    """
+    units: list[list[tuple[int, str]]] = []
+    current: list[tuple[int, str]] = []
+    kind = None          # None | "prose" | "list" | "quote"
+    in_code = False
+
+    def flush() -> None:
+        nonlocal current, kind
+        if current:
+            units.append(current)
+        current, kind = [], None
+
+    for n, line in enumerate(lines, 1):
+        if line.lstrip().startswith("```"):
+            in_code = not in_code
+            flush()
+            continue
+        if in_code:
+            continue
+        if not line.strip():
+            flush()
+            continue
+
+        if ALONE.match(line):
+            flush()
+            units.append([(n, line)])
+            continue
+
+        if LIST_ITEM.match(line):
+            flush()                      # a new marker ends the previous item
+            current, kind = [(n, line)], "list"
+            continue
+
+        if QUOTE.match(line):
+            if kind != "quote":
+                flush()
+                kind = "quote"
+            current.append((n, line.lstrip().lstrip(">").lstrip()))
+            continue
+
+        if kind == "quote":              # the quote ended at this line
+            flush()
+        if kind is None:
+            kind = "prose"
+        current.append((n, line))        # continues a paragraph or a list item
+    flush()
+    return units
+
+
 def scan_file(path: Path, rel: str) -> list[tuple]:
-    """Every phrase occurrence in one file, in line order."""
+    """Every phrase occurrence in one file, in source order.
+
+    A row carries the line the phrase starts on and the set of lines it spans,
+    so a wrapped match is still attributable to a diff.
+    """
     try:
         lines = path.read_text(encoding="utf-8").splitlines()
     except (OSError, UnicodeDecodeError):
         return []
 
-    rows, in_code = [], False
-    for n, line in enumerate(lines, 1):
-        if line.lstrip().startswith("```"):
-            in_code = not in_code
-            continue
-        if in_code:
-            continue
-        low = line.lower()
+    rows = []
+    for unit in prose_units(lines):
+        # Join with a single space and remember where each source line lands,
+        # so a match offset maps back to the line the author typed.
+        spans, parts, cursor = [], [], 0
+        for n, line in enumerate([t[1] for t in unit], 0):
+            text = line.strip()
+            spans.append((cursor, cursor + len(text), unit[n][0]))
+            parts.append(text)
+            cursor += len(text) + 1
+        joined = " ".join(parts)
+        low = joined.lower()
+
         for phrase, (category, hint) in PHRASES.items():
-            if phrase in low:
-                rows.append((rel, n, phrase, category, hint, line.strip()))
+            start = low.find(phrase)
+            while start != -1:
+                end = start + len(phrase)
+                touched = [ln for a, b, ln in spans if a < end and b > start]
+                first = touched[0] if touched else unit[0][0]
+                excerpt = joined[max(0, start - 40):end + 40].strip()
+                rows.append((rel, first, phrase, category, hint, excerpt,
+                             frozenset(touched)))
+                start = low.find(phrase, start + 1)
+    rows.sort(key=lambda r: (r[1], r[2]))
     return rows
 
 
@@ -227,13 +311,13 @@ def scan_changed(base_sha: str) -> tuple[list[tuple], list[tuple], list[tuple]]:
         if not touched:
             continue
         checked.append((rel, len(touched)))
-        rows.extend(row for row in scan_file(path, rel) if row[1] in touched)
+        rows.extend(row for row in scan_file(path, rel) if row[6] & touched)
     fails, warns = split_by_audience(rows)
     return fails, warns, checked
 
 
 def report(rows: list[tuple], hints: bool) -> None:
-    for rel, n, phrase, category, hint, text in rows:
+    for rel, n, phrase, category, hint, text, _lines in rows:
         print(f"   {rel}:{n}  “{phrase}” — {category}")
         print(f"      {text[:110]}")
         if hints:

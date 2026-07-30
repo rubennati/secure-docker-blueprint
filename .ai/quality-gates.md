@@ -13,7 +13,7 @@ python3 scripts/ci/check-coverage.py         # content no checker covers
 python3 scripts/ci/check-links.py            # broken relative links and anchors
 npx markdownlint-cli2                        # markdown style
 python3 scripts/ci/check-workflows.py        # action pinning, workflow permissions
-python3 scripts/ci/check-prose.py --changed-only --base HEAD   # what CI gates on
+python3 scripts/ci/check-prose.py            # register — what CI gates on
 ```
 
 `--hints` adds the suggested replacement to each finding, in either mode.
@@ -44,7 +44,7 @@ docker compose config --quiet          # in the stack directory
 | Canonical structure | `:latest` or major-only tags, plaintext secrets, unprotected `.secrets/`, a datastore on the public network |
 | Status model | owner and mirror disagreeing on a status, ✅ without a verification date, stale `LIFECYCLE.md`; warns when `UPSTREAM.md` duplicates the README's backup procedure |
 | Checker coverage | a content directory no checker enumerates, a top-level directory declared nowhere |
-| Docs QA | markdown style drift, a link to a missing file, a link to a missing heading, a prose-register phrase on a line this change writes |
+| Docs QA | markdown style drift, a link to a missing file, a link to a missing heading, a prose-register phrase anywhere in a reader-facing file |
 | Workflow supply chain | an action pinned to a mutable tag, a SHA without a version comment, a workflow without `permissions:` |
 
 The required-check names must match the job `name:` fields in
@@ -65,28 +65,32 @@ classes in both modes:
 | Reader-facing | root `README.md`, `CHANGELOG.md`, `ROADMAP.md`, `CONTRIBUTING.md`, `SECURITY.md`, every `<stack>/README.md`, everything under `site/` | failure — the run exits non-zero |
 | Maintainer | everything else, including `docs/` and `.ai/` | warning — the exit code stays 0 |
 
-**Full run** — the inventory:
+**Full run** — the gate:
 
 ```bash
-python3 scripts/ci/check-prose.py
+python3 scripts/ci/check-prose.py --hints
 ```
 
-Every Markdown file in the repository. It reports findings older than the phrase
-list and is not green today. Clearing that backlog is separate work; the number
-is read from the run, never recorded here.
+Every Markdown file in the repository. This is what the `Docs QA` job runs: a
+phrase in a reader-facing file fails it, a phrase in a maintainer file is
+reported and does not. The reader-facing inventory is clear, which is what makes
+the whole tree gateable.
 
-**Differential run** — the gate:
+**Differential run** — for reviewing one change locally:
 
 ```bash
 python3 scripts/ci/check-prose.py --changed-only --base HEAD
 ```
 
-Only the lines the diff adds or changes. This is what the `Docs QA` job runs, so
-a finding on a line this change writes blocks, while findings elsewhere in the
-same file do not. `--base HEAD` covers uncommitted work; CI passes the base
-commit of the event through `PROSE_DIFF_BASE` instead. There is no default base —
-a missing or unresolvable one exits 2 rather than checking a wrong range. An
-untracked file is in no diff; the run names it and says to `git add` it.
+Only the lines the diff adds or changes. `--base HEAD` covers uncommitted work.
+There is no default base — a missing or unresolvable one exits 2 rather than
+checking a wrong range. An untracked file is in no diff; the run names it and
+says to `git add` it.
+
+Prose is matched per unit — a paragraph, a list item or a block quote is joined
+first, so a phrase split by an ordinary line wrap is found. A heading, a table
+row, a fence or a blank line ends the unit.
+`python3 -m unittest discover -s scripts/ci` covers that behaviour and runs in CI.
 
 What neither mode covers:
 

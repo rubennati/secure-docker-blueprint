@@ -64,16 +64,15 @@ The CI pipeline is the automated test suite for this configuration project. It r
 | Canonical structure | No `:latest` or major-only image tags, no plaintext secrets, no datastore on the public network |
 | Status model | Owner and mirror agree on a status, `LIFECYCLE.md` is current, ✅ carries a verification date |
 | Checker coverage | No content directory that no checker looks at |
-| Documentation | Markdown style, internal links and anchors, and the prose register on changed lines |
+| Documentation | Markdown style, internal links and anchors, and the prose register across the repository |
 | Workflow supply chain | Actions pinned by SHA, every workflow declares `permissions:` |
 
 See [`docs/standards/ci.md`](docs/standards/ci.md) for full documentation of each job.
 
-**Documentation quality is checked.** The prose register is applied
-differentially: a phrase from the [writing-style](docs/standards/writing-style.md)
-list on a line your change writes fails the build, while findings elsewhere in
-the same file do not. Older findings in a file are therefore not a licence to add
-more, and not a reason to clean up unrelated text in your pull request.
+**Documentation quality is checked.** A phrase from the
+[writing-style](docs/standards/writing-style.md) list in a reader-facing file —
+the root documents, any stack `README.md`, anything under `site/` — fails the
+build. Maintainer files report the same findings without blocking.
 
 ### Running checks locally
 
@@ -88,7 +87,7 @@ This validates every compose file against the security baseline rules and prints
 Before pushing, the checks most likely to fail on a documentation or structure change:
 
 ```bash
-python3 scripts/ci/check-prose.py --changed-only --base HEAD
+python3 scripts/ci/check-prose.py
 python3 scripts/ci/check-links.py
 npx markdownlint-cli2
 python3 scripts/ci/check-structure.py
