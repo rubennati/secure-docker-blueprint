@@ -9,6 +9,7 @@
 - **Docs:** https://cal.diy/docs
 - **License:** MIT
 - **Relationship:** Community-edition spin-out of Cal.com (2026, after Cal.com moved its production code behind a closed-source licence). This blueprint consumes the **hardened fork**, not upstream directly.
+- **Origin:** Fork · rubennati · upstream: US · Cal.com Inc · non-EU
 - **Based on version:** `v6.2.0` (fork release `v6.2.0-4`)
 - **Last verified:** 2026-07-26 (v6.2.0-3)
 

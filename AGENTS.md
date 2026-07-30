@@ -50,6 +50,7 @@ Conditional:
 - PR checklist and review readiness: `.github/pull_request_template.md`
 - Architecture rationale and system model: `docs/architecture.md`
 - Ongoing maintenance chains and owner/mirror mapping: `docs/maintenance.md`
+- Licence, jurisdiction, outbound calls, and what a CDN changes: `docs/sovereignty/`
 
 ## Conflict Rule
 

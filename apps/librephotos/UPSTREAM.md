@@ -6,7 +6,7 @@
 - **GitHub:** https://github.com/LibrePhotos/librephotos
 - **Docker Hub:** https://hub.docker.com/u/reallibrephotos
 - **License:** MIT
-- **Origin:** Community · no single company
+- **Origin:** Community · no single company · no single jurisdiction
 - **Based on version:** `latest` weekly build (2026-06-21)
 - **Last checked:** 2026-04-17
 

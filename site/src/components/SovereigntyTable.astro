@@ -1,0 +1,231 @@
+---
+/**
+ * Licence and origin for every stack, from `src/data/sovereignty.json`.
+ *
+ * Generated from each stack's own UPSTREAM.md and checked in CI, so this cannot
+ * drift from the repository. Nothing here is retyped.
+ *
+ * The filters are plain DOM — 59 rows is enough that scanning for "which of
+ * these are non-EU" by eye is work, and not enough to justify a dependency.
+ */
+import sovereignty from '../data/sovereignty.json';
+
+type Entry = {
+	license: string;
+	license_class: string;
+	origin: string;
+	country: string;
+	entity: string;
+	bloc: string;
+};
+
+const rows = Object.entries(sovereignty as Record<string, Entry>)
+	.map(([stack, e]) => {
+		const [category, name] = stack.split('/');
+		return { stack, category, name, ...e };
+	})
+	.sort((a, b) => a.name.localeCompare(b.name));
+
+const count = (key: 'bloc' | 'license_class', value: string) =>
+	rows.filter((r) => r[key] === value).length;
+
+const BLOC_LABEL: Record<string, string> = {
+	EU: 'EU',
+	'non-EU': 'non-EU',
+	none: 'no single jurisdiction',
+	unknown: 'unstated',
+};
+
+const LICENSE_LABEL: Record<string, string> = {
+	osi: 'Open source',
+	mixed: 'Open core',
+	'source-available': 'Source-available',
+	proprietary: 'Proprietary',
+	unknown: 'unstated',
+};
+---
+
+<div class="sov">
+	<div class="sov__summary">
+		<span><strong>{rows.length}</strong> stacks</span>
+		<span><strong>{count('bloc', 'EU')}</strong> EU</span>
+		<span><strong>{count('bloc', 'non-EU')}</strong> non-EU</span>
+		<span><strong>{count('license_class', 'osi')}</strong> open source</span>
+	</div>
+
+	<div class="sov__filters">
+		<label>
+			Jurisdiction
+			<select data-filter="bloc">
+				<option value="">all</option>
+				{
+					['EU', 'non-EU', 'none'].map((v) => (
+						<option value={v}>
+							{BLOC_LABEL[v]} ({count('bloc', v)})
+						</option>
+					))
+				}
+			</select>
+		</label>
+		<label>
+			Licence
+			<select data-filter="license">
+				<option value="">all</option>
+				{
+					['osi', 'mixed', 'source-available', 'proprietary'].map((v) => (
+						<option value={v}>
+							{LICENSE_LABEL[v]} ({count('license_class', v)})
+						</option>
+					))
+				}
+			</select>
+		</label>
+	</div>
+
+	<div class="sov__scroll">
+		<table>
+			<thead>
+				<tr>
+					<th>Stack</th>
+					<th>Licence</th>
+					<th>Who owns it</th>
+				</tr>
+			</thead>
+			<tbody>
+				{
+					rows.map((r) => (
+						<tr data-bloc={r.bloc} data-license={r.license_class}>
+							<td>
+								<strong>{r.name}</strong>
+								<span class="sov__cat">{r.category}</span>
+							</td>
+							<td>
+								<span class={`sov__pill sov__pill--${r.license_class}`}>
+									{LICENSE_LABEL[r.license_class]}
+								</span>
+								<span class="sov__lic">{r.license.split(/[(\[—]/)[0].trim()}</span>
+							</td>
+							<td>
+								<span class={`sov__bloc sov__bloc--${r.bloc.replace('-', '')}`}>
+									{r.country || r.entity}
+								</span>
+								{r.country && r.entity !== r.country && (
+									<span class="sov__entity">{r.entity}</span>
+								)}
+							</td>
+						</tr>
+					))
+				}
+			</tbody>
+		</table>
+	</div>
+	<p class="sov__empty" hidden>Nothing matches both filters.</p>
+</div>
+
+<script>
+	const root = document.querySelector('.sov');
+	if (root) {
+		const rows = [...root.querySelectorAll<HTMLTableRowElement>('tbody tr')];
+		const empty = root.querySelector<HTMLElement>('.sov__empty');
+		const selects = [...root.querySelectorAll<HTMLSelectElement>('select[data-filter]')];
+
+		const apply = () => {
+			let shown = 0;
+			for (const row of rows) {
+				const ok = selects.every((s) => {
+					const want = s.value;
+					return !want || row.dataset[s.dataset.filter!] === want;
+				});
+				row.hidden = !ok;
+				if (ok) shown++;
+			}
+			if (empty) empty.hidden = shown > 0;
+		};
+
+		for (const s of selects) s.addEventListener('change', apply);
+	}
+</script>
+
+<style>
+	.sov__summary {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem 1.4rem;
+		font-size: 0.9rem;
+		padding-bottom: 0.75rem;
+		border-bottom: 1px solid var(--sl-color-gray-5);
+	}
+	.sov__filters {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 1rem;
+		margin-block: 1rem;
+		font-size: 0.85rem;
+	}
+	.sov__filters label {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		color: var(--sl-color-gray-2);
+	}
+	.sov__filters select {
+		font: inherit;
+		padding: 0.2rem 0.4rem;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.25rem;
+		background: var(--sl-color-bg);
+		color: var(--sl-color-white);
+	}
+	.sov__scroll {
+		overflow-x: auto;
+	}
+	.sov table {
+		width: 100%;
+		font-size: 0.85rem;
+	}
+	.sov td {
+		vertical-align: top;
+	}
+	.sov__cat,
+	.sov__entity,
+	.sov__lic {
+		display: block;
+		font-size: 0.78rem;
+		color: var(--sl-color-gray-3);
+	}
+	.sov__pill {
+		display: inline-block;
+		padding: 0.05rem 0.4rem;
+		border-radius: 0.6rem;
+		font-size: 0.72rem;
+		font-weight: 600;
+		white-space: nowrap;
+		background: var(--sl-color-gray-6);
+		color: var(--sl-color-gray-1);
+	}
+	.sov__pill--osi {
+		background: color-mix(in srgb, var(--sl-color-green) 22%, transparent);
+	}
+	.sov__pill--mixed {
+		background: color-mix(in srgb, var(--sl-color-blue) 22%, transparent);
+	}
+	.sov__pill--source-available {
+		background: color-mix(in srgb, var(--sl-color-orange) 26%, transparent);
+	}
+	.sov__pill--proprietary {
+		background: color-mix(in srgb, var(--sl-color-red) 24%, transparent);
+	}
+	.sov__bloc {
+		font-weight: 600;
+	}
+	.sov__bloc--EU {
+		color: var(--sl-color-green-high);
+	}
+	.sov__bloc--nonEU {
+		color: var(--sl-color-orange-high);
+	}
+	.sov__empty {
+		font-size: 0.85rem;
+		color: var(--sl-color-gray-3);
+	}
+</style>

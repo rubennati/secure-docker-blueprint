@@ -56,6 +56,13 @@ export default defineConfig({
 						{ label: 'Backup and restore', link: '/operations/backup/' },
 					],
 				},
+				{
+					label: 'Data Sovereignty',
+					items: [
+						{ label: 'Overview', link: '/sovereignty/' },
+						{ label: 'Putting a CDN in front', link: '/sovereignty/edge/' },
+					],
+				},
 				{ label: 'FAQ', link: '/faq/' },
 				{ label: 'Project', link: '/project/' },
 			],

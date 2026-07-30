@@ -5,6 +5,8 @@
 - **Image:** https://hub.docker.com/r/fnsys/dockhand
 - **GitHub:** https://github.com/finsys/dockhand
 - **Docs:** Project-internal (see image description on Docker Hub)
+- **License:** BSL 1.1 — source-available, **not** open source; converts to Apache-2.0 on 2029-01-01. Free for personal, internal business, non-profit and educational use; offering it as a hosted service is not permitted
+- **Origin:** Finsys · **no country or legal entity stated** — no imprint on fnsys.pro or dockhand.pro
 - **Based on version:** `v1.0.39`
 - **Last checked:** 2026-04-16
 

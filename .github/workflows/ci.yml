@@ -166,6 +166,12 @@ jobs:
       - name: Check status consistency and LIFECYCLE.md freshness
         run: python3 scripts/ci/lifecycle-report.py --check "$GITHUB_STEP_SUMMARY"
 
+      # A stack that loses its licence or origin loses it silently — the field
+      # is prose in a file nothing reads. Twelve stacks had already drifted
+      # before anyone looked. This is what stops it happening again.
+      - name: Check licence and origin are complete and current
+        run: python3 scripts/ci/sovereignty-report.py --check
+
   # ─────────────────────────────────────────────
   # 8. CHECKER COVERAGE
   # Inverts the question the other jobs ask: not "does this stack comply?" but

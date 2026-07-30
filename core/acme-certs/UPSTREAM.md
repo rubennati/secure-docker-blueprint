@@ -4,6 +4,8 @@
 
 - **Repo:** https://github.com/acmesh-official/acme.sh
 - **Docker:** https://hub.docker.com/r/neilpang/acme.sh
+- **License:** GPL-3.0
+- **Origin:** Austria · ZeroSSL GmbH · EU (original author Neil Pang, independent)
 - **Based on version:** 3.1.2
 - **Last checked:** 2026-04-14
 

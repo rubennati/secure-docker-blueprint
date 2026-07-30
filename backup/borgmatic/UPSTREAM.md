@@ -6,6 +6,7 @@
 - **Repo:** https://projects.torsion.org/borgmatic-collective/borgmatic
 - **Docs:** https://torsion.org/borgmatic/#documentation
 - **License:** GPL-3.0-or-later
+- **Origin:** Community · borgmatic-collective (Dan Helfman) · no single jurisdiction
 - **Author:** Dan Helfman
 - **Based on version:** `2.1.6`
 - **Last verified:** 2026-07-29 (2.1.6)

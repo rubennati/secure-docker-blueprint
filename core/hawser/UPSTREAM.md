@@ -4,6 +4,8 @@
 
 - **Repo:** https://github.com/Finsys/hawser
 - **Docs:** https://github.com/Finsys/hawser/blob/main/README.md
+- **License:** MIT
+- **Origin:** Finsys · **no country or legal entity stated** — no imprint on fnsys.pro
 - **Based on version:** 0.2.39
 - **Last checked:** 2026-04-14
 

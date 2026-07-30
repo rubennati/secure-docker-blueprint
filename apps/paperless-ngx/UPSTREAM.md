@@ -8,7 +8,7 @@
 - **Release notes:** https://github.com/paperless-ngx/paperless-ngx/releases
 - **Config reference:** https://docs.paperless-ngx.com/configuration/
 - **License:** MIT
-- **Origin:** Community · no single company
+- **Origin:** Community · no single company · no single jurisdiction
 - **Based on version:** `3.0.3`
 - **Last verified:** 2026-05-03 (v2.20.13)
 

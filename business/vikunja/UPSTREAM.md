@@ -7,6 +7,8 @@
 - **Repository:** https://github.com/go-vikunja/vikunja
 - **Docker Hub:** https://hub.docker.com/r/vikunja/vikunja
 - **Docs:** https://vikunja.io/docs/
+- **License:** AGPL-3.0
+- **Origin:** Germany · Konrad Langenberg Software · EU
 
 ## License
 

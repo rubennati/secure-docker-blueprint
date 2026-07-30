@@ -180,6 +180,18 @@ The `Last verified: YYYY-MM-DD (vX.Y.Z)` line is what `scripts/ci/lifecycle-repo
 reads and what the ✅ in the README rests on — set it only once the app was actually
 verified on a clean install. A filled-in example: `apps/dashy/UPSTREAM.md`.
 
+Two fields are read by a second checker and cannot be left blank:
+
+- [ ] **`- **License:**`** — from the project's own `LICENSE` file, in its
+      spelling. If it is genuinely split, say both halves.
+- [ ] **`- **Origin:**`** — `Country · Entity · EU|non-EU`, from the project's
+      imprint or legal page. If it states no country, write that — an honest
+      blank beats a plausible guess.
+
+`scripts/ci/sovereignty-report.py --check` fails on a missing field or an
+unrecognised licence spelling, so a new licence forces a decision about which
+class it belongs to. See [Provenance](../sovereignty/provenance.md).
+
 ---
 
 ## 8. Write the `## Backup` section

@@ -1,0 +1,115 @@
+---
+title: Putting a CDN in front
+description: What proxying through Cloudflare changes, and which encryption mode to use.
+---
+
+Cloudflare's dashboard shows a cloud icon next to each DNS record. Grey means
+DNS-only, orange means proxied. They are entirely different arrangements, and the
+difference is easy to click past.
+
+This page uses Cloudflare because that is what this blueprint's certificate
+setup integrates with. The reasoning applies to any service that fronts your
+traffic.
+
+## Grey cloud: DNS only
+
+Cloudflare answers the name lookup. Visitors then connect straight to your
+server, and their traffic never touches Cloudflare.
+
+DNS records are public by design — anyone can query them, and they exist to be
+queried. Publishing yours through Cloudflare rather than another provider is not
+a data-protection question.
+
+## Orange cloud: proxied
+
+The name now resolves to Cloudflare's own addresses. Visitors connect to
+Cloudflare; Cloudflare connects to you.
+
+**Cloudflare decrypts the traffic.** Requests are unwrapped at their edge — URLs,
+headers, cookies, form contents, session tokens. This is not a flaw to configure
+around; a CDN cannot cache, filter or rewrite what it cannot read.
+
+In exchange you get real things: attacks that would saturate your connection are
+absorbed before reaching it, your server's address is hidden, and static content
+is served closer to visitors.
+
+The trade in one line: **proxying buys DDoS absorption, caching and edge
+filtering at the price of a third party seeing your plaintext traffic.**
+Cloudflare is a US company, so US jurisdiction applies to the operator of that
+network whichever datacentre a request passes through.
+
+Whether that price is acceptable depends on what you run. For a public marketing
+site it is close to free. For health records, legal files or payroll it is the
+whole question — and "the server is in Germany" does not answer it.
+
+## If you proxy, use Full (strict)
+
+Cloudflare offers five encryption modes. The names mislead: "Full" is not full.
+
+| Mode | Visitor → Cloudflare | Cloudflare → your server | Your certificate checked |
+|---|---|---|---|
+| Off | plaintext | plaintext | — |
+| Flexible | encrypted | **plaintext** | — |
+| Full | encrypted | encrypted | **no** |
+| **Full (strict)** | encrypted | encrypted | **yes** |
+| Strict (SSL-Only Origin Pull) | always encrypted | always encrypted | yes |
+
+**Flexible is the one to avoid.** The visitor's browser shows a padlock while the
+leg from Cloudflare to your server crosses the public internet unencrypted. The
+padlock tells the user something untrue about most of the path. It exists for
+servers that cannot do TLS at all — yours can.
+
+**Full accepts any certificate**, including an expired one, a self-signed one, or
+one presented by whoever has got into the path. It encrypts without
+authenticating.
+
+**Full (strict)** verifies. This stack already obtains a valid certificate
+automatically, so the requirement is met with no extra work. There is no reason
+to pick anything else.
+
+## Filtering at the edge, or on your server
+
+Cloudflare offers a web application firewall, rate limiting and geoblocking. This
+blueprint runs CrowdSec on the server. They sit in different places:
+
+| | At Cloudflare | On your server |
+|---|---|---|
+| Stops traffic before | it reaches your connection | it reaches the application |
+| Absorbs volumetric attacks | yes | no — the traffic already arrived |
+| Reads request content | yes, necessarily | yes, locally |
+| Where you read the logs | their dashboard | your own disk |
+| Works with the grey cloud | no | yes |
+
+Edge filtering is genuinely better at the one thing a server cannot do for
+itself: stopping traffic that would fill your uplink. By the time a packet
+reaches you, the bandwidth is spent.
+
+Server-side filtering is better at everything after that, and it keeps the
+evidence somewhere you can query it. They are complementary rather than
+alternatives — but choosing edge filtering means accepting decryption, because a
+firewall cannot inspect what it cannot read.
+
+**Geoblocking is the weakest of the three.** It cuts opportunistic scanning from
+regions you have no users in, which quietens the logs. It does not stop a
+motivated attacker, who will come from a VPN exit or a compromised machine in
+your own country, and it will lock out legitimate users who travel. Treat it as
+noise reduction, not as protection.
+
+## The server underneath
+
+The hosting provider's jurisdiction applies to the machine — and the provider's
+corporate parent matters as much as the datacentre's address. A German
+datacentre operated by a US-owned company sits under different pressures than one
+operated by a German company, whatever the data-residency page says.
+
+That choice is outside what a set of configuration files can make for you. But it
+sits underneath everything above, and being careful about licences and telemetry
+while running on infrastructure nobody examined optimises the smaller variable.
+
+## The short version
+
+- **Grey cloud:** no traffic exposure.
+- **Orange cloud:** Cloudflare reads your plaintext. Worth deciding deliberately.
+- **If orange, Full (strict).** Never Flexible.
+- **Edge and server filtering complement each other.**
+- **Geoblocking reduces noise, not risk.**

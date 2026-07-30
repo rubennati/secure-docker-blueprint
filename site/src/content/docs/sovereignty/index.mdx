@@ -1,0 +1,78 @@
+---
+title: Data sovereignty
+description: Who owns the software, what still leaves the server, and who sits in front of it.
+---
+
+import SovereigntyTable from '../../../components/SovereigntyTable.astro';
+
+Running software on your own server answers one question: where the data sits. It
+does not answer who governs the software, what it still sends outward, or who
+reads the traffic on its way in.
+
+Those are three separate questions. Self-hosting only settles the first.
+
+## Who owns the software
+
+Every stack records its licence and the entity behind it. The table is generated
+from those records, so it cannot fall out of step with what actually ships.
+
+<SovereigntyTable />
+
+Two things to read out of it.
+
+**"Open source" is claimed more often than it applies.** Four stacks are open
+core — the base is free, some features are not. Three publish their source under
+a licence that restricts use: Dockhand, Invoice Ninja and n8n all permit personal
+and internal business use but not reselling the software as a hosted service.
+Seafile Pro is commercial outright. None of that is a reason to avoid them; it is
+a reason to read the licence before building a business on reselling one.
+
+**The entity governs, not the developers.** Documenso is built largely from
+Hamburg but the company is US-registered — a court order reaches the company, not
+the postcode of whoever wrote the code. Where a project states no company and no
+country at all, the table says so rather than guessing.
+
+## What still leaves the server
+
+Some components talk to their vendor by design, and two do so by their own
+default.
+
+**CrowdSec exchanges data both ways.** It receives around 15,000 blocked
+addresses from other installations, and sends its own detections back: the
+address, which attack pattern matched, a timestamp. Not the request itself —
+URLs, headers and bodies stay on your machine. The exchange is what makes the
+blocklist work, and it can be switched off, which also ends the incoming half.
+
+**Traefik's version check is off here.** Upstream it is on by default and sends
+your server's public IP to the vendor, who state it is used to identify companies
+running Traefik and approach them about support contracts. This blueprint
+disables it.
+
+**Every certificate publishes its hostname.** Certificates are logged publicly
+the moment they are issued — this is mandatory and no issuer can opt out. A
+hostname like `backup-admin.example.com` becomes searchable within minutes of
+getting its certificate. A wildcard certificate publishes only `*.example.com`,
+which is the reason to use one when the names themselves are worth not
+advertising.
+
+That last one surprises people, and it is worth being precise about what it
+means: a hostname nobody has listed is unlisted, not protected. Anything
+reachable from the internet has to survive being found.
+
+## Who sits in front of it
+
+The biggest decision here is usually made by clicking an icon in a DNS panel. If
+a CDN proxies your traffic, it decrypts it — that is not a misconfiguration, it
+is how a CDN works.
+
+[What proxying actually changes →](/sovereignty/edge/)
+
+## What this is not
+
+Not legal advice, and not a compliance statement. Where software comes from and
+where personal data is processed are related questions but not the same one: a
+US-owned project running entirely on your own server may be perfectly fine, and
+an EU-owned one that reports home may not be.
+
+These are the inputs. The weighing depends on what you are running — a public
+blog and a practice's patient records do not share a threshold.

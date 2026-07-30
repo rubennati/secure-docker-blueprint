@@ -1,0 +1,474 @@
+{
+  "apps/adminer": {
+    "bloc": "EU",
+    "country": "Czech Republic",
+    "entity": "Jakub Vrána",
+    "license": "Apache-2.0",
+    "license_class": "osi",
+    "origin": "Czech Republic · Jakub Vrána · EU"
+  },
+  "apps/bookstack": {
+    "bloc": "non-EU",
+    "country": "UK",
+    "entity": "Dan Brown (BookStack)",
+    "license": "MIT (BookStack) / GPL-3 (LSIO scripts)",
+    "license_class": "osi",
+    "origin": "UK · Dan Brown (BookStack) · non-EU"
+  },
+  "apps/caldiy": {
+    "bloc": "non-EU",
+    "country": "Fork",
+    "entity": "rubennati",
+    "license": "MIT",
+    "license_class": "osi",
+    "origin": "Fork · rubennati · upstream: US · Cal.com Inc · non-EU"
+  },
+  "apps/dashy": {
+    "bloc": "non-EU",
+    "country": "UK",
+    "entity": "Alicia Sykes (Lissy93)",
+    "license": "MIT",
+    "license_class": "osi",
+    "origin": "UK · Alicia Sykes (Lissy93) · non-EU"
+  },
+  "apps/easyappointments": {
+    "bloc": "EU",
+    "country": "Greece",
+    "entity": "Alex Tselegidis",
+    "license": "GPL-3.0",
+    "license_class": "osi",
+    "origin": "Greece · Alex Tselegidis · EU"
+  },
+  "apps/ghost": {
+    "bloc": "EU",
+    "country": "Ireland",
+    "entity": "Ghost Foundation",
+    "license": "MIT",
+    "license_class": "osi",
+    "origin": "Ireland · Ghost Foundation · EU"
+  },
+  "apps/heimdall": {
+    "bloc": "non-EU",
+    "country": "UK",
+    "entity": "linuxserver.io community",
+    "license": "MIT",
+    "license_class": "osi",
+    "origin": "UK · linuxserver.io community · non-EU"
+  },
+  "apps/homarr": {
+    "bloc": "EU",
+    "country": "Community",
+    "entity": "homarr-labs",
+    "license": "MIT (fork heritage: originally forked from `ajnart/homarr`; current maintainer `homarr-labs`)",
+    "license_class": "osi",
+    "origin": "Community · homarr-labs · EU contributors"
+  },
+  "apps/homepage": {
+    "bloc": "non-EU",
+    "country": "US",
+    "entity": "community (gethomepage)",
+    "license": "GPL-3.0",
+    "license_class": "osi",
+    "origin": "US · community (gethomepage) · non-EU"
+  },
+  "apps/immich": {
+    "bloc": "non-EU",
+    "country": "US",
+    "entity": "Alex Tran",
+    "license": "AGPL-3.0",
+    "license_class": "osi",
+    "origin": "US · Alex Tran · non-EU"
+  },
+  "apps/it-tools": {
+    "bloc": "EU",
+    "country": "France",
+    "entity": "CorentinTh",
+    "license": "GNU GPL v3.0",
+    "license_class": "osi",
+    "origin": "France · CorentinTh · EU"
+  },
+  "apps/librephotos": {
+    "bloc": "none",
+    "country": "Community",
+    "entity": "no single company",
+    "license": "MIT",
+    "license_class": "osi",
+    "origin": "Community · no single company · no single jurisdiction"
+  },
+  "apps/lycheeorg": {
+    "bloc": "EU",
+    "country": "Community",
+    "entity": "LycheeOrg",
+    "license": "MIT",
+    "license_class": "osi",
+    "origin": "Community · LycheeOrg · EU contributors"
+  },
+  "apps/monicahq": {
+    "bloc": "non-EU",
+    "country": "Canada",
+    "entity": "Monica HQ",
+    "license": "AGPL-3.0",
+    "license_class": "osi",
+    "origin": "Canada · Monica HQ · non-EU"
+  },
+  "apps/n8n": {
+    "bloc": "EU",
+    "country": "Germany",
+    "entity": "n8n GmbH",
+    "license": "[Sustainable Use License](https://docs.n8n.io/sustainable-use-license/) (source-available; free for internal + commercial use up to limits)",
+    "license_class": "source-available",
+    "origin": "Germany · n8n GmbH · EU"
+  },
+  "apps/nextcloud": {
+    "bloc": "EU",
+    "country": "Germany",
+    "entity": "Nextcloud GmbH",
+    "license": "AGPL-3.0",
+    "license_class": "osi",
+    "origin": "Germany · Nextcloud GmbH · EU"
+  },
+  "apps/nocodb": {
+    "bloc": "non-EU",
+    "country": "US",
+    "entity": "NocoDB Inc",
+    "license": "AGPL-3.0",
+    "license_class": "osi",
+    "origin": "US · NocoDB Inc · non-EU"
+  },
+  "apps/opnform": {
+    "bloc": "EU",
+    "country": "France",
+    "entity": "Julien Nahum",
+    "license": "AGPL-3.0",
+    "license_class": "osi",
+    "origin": "France · Julien Nahum · EU"
+  },
+  "apps/paperless-ngx": {
+    "bloc": "none",
+    "country": "Community",
+    "entity": "no single company",
+    "license": "MIT",
+    "license_class": "osi",
+    "origin": "Community · no single company · no single jurisdiction"
+  },
+  "apps/photoprism": {
+    "bloc": "EU",
+    "country": "Germany",
+    "entity": "PhotoPrism AG",
+    "license": "AGPL-3.0",
+    "license_class": "osi",
+    "origin": "Germany · PhotoPrism AG · EU"
+  },
+  "apps/photoview": {
+    "bloc": "EU",
+    "country": "Denmark",
+    "entity": "community",
+    "license": "GPL-3.0",
+    "license_class": "osi",
+    "origin": "Denmark · community · EU"
+  },
+  "apps/seafile": {
+    "bloc": "non-EU",
+    "country": "China",
+    "entity": "Seafile Ltd",
+    "license": "AGPL-3.0",
+    "license_class": "osi",
+    "origin": "China · Seafile Ltd · non-EU"
+  },
+  "apps/seafile-pro": {
+    "bloc": "non-EU",
+    "country": "China",
+    "entity": "Seafile Ltd",
+    "license": "Commercial",
+    "license_class": "proprietary",
+    "origin": "China · Seafile Ltd · non-EU"
+  },
+  "apps/unifi": {
+    "bloc": "non-EU",
+    "country": "US",
+    "entity": "Ubiquiti Inc",
+    "license": "EULA (Ubiquiti) / GPL-3 (LSIO scripts)",
+    "license_class": "mixed",
+    "origin": "US · Ubiquiti Inc · non-EU"
+  },
+  "apps/vaultwarden": {
+    "bloc": "none",
+    "country": "Community",
+    "entity": "unofficial Bitwarden reimplementation",
+    "license": "GPL-3.0",
+    "license_class": "osi",
+    "origin": "Community · unofficial Bitwarden reimplementation · no single jurisdiction"
+  },
+  "apps/wordpress": {
+    "bloc": "non-EU",
+    "country": "US",
+    "entity": "Automattic / WordPress Foundation",
+    "license": "GPL-2.0",
+    "license_class": "osi",
+    "origin": "US · Automattic / WordPress Foundation · non-EU"
+  },
+  "backup/borgmatic": {
+    "bloc": "none",
+    "country": "Community",
+    "entity": "borgmatic-collective (Dan Helfman)",
+    "license": "GPL-3.0-or-later",
+    "license_class": "osi",
+    "origin": "Community · borgmatic-collective (Dan Helfman) · no single jurisdiction"
+  },
+  "backup/urbackup": {
+    "bloc": "EU",
+    "country": "Germany",
+    "entity": "Martin Raiber (uroni)",
+    "license": "AGPL-3.0-or-later — self-hosting for personal or commercial use is explicitly permitted",
+    "license_class": "osi",
+    "origin": "Germany · Martin Raiber (uroni) · EU"
+  },
+  "business/documenso": {
+    "bloc": "non-EU",
+    "country": "US",
+    "entity": "Documenso Inc",
+    "license": "AGPL-3.0",
+    "license_class": "osi",
+    "origin": "US · Documenso Inc · non-EU (development largely from Hamburg, Germany)"
+  },
+  "business/dolibarr": {
+    "bloc": "EU",
+    "country": "France",
+    "entity": "Dolibarr Association",
+    "license": "GPL-3.0",
+    "license_class": "osi",
+    "origin": "France · Dolibarr Association · EU"
+  },
+  "business/invoiceninja": {
+    "bloc": "non-EU",
+    "country": "US",
+    "entity": "Invoice Ninja LLC",
+    "license": "Elastic License 2.0",
+    "license_class": "source-available",
+    "origin": "US · Invoice Ninja LLC · non-EU"
+  },
+  "business/kimai": {
+    "bloc": "EU",
+    "country": "Germany",
+    "entity": "Kevin Papst",
+    "license": "AGPL-3.0",
+    "license_class": "osi",
+    "origin": "Germany · Kevin Papst · EU"
+  },
+  "business/listmonk": {
+    "bloc": "non-EU",
+    "country": "India",
+    "entity": "Zerodha (Kailash Nadh)",
+    "license": "AGPL-3.0",
+    "license_class": "osi",
+    "origin": "India · Zerodha (Kailash Nadh) · non-EU"
+  },
+  "business/matomo": {
+    "bloc": "non-EU",
+    "country": "New Zealand",
+    "entity": "InnoCraft Ltd",
+    "license": "GPL-3.0",
+    "license_class": "osi",
+    "origin": "New Zealand · InnoCraft Ltd · non-EU"
+  },
+  "business/openproject": {
+    "bloc": "EU",
+    "country": "Germany",
+    "entity": "OpenProject GmbH",
+    "license": "GPL-3.0 (Community Edition; Enterprise features are separately licensed)",
+    "license_class": "mixed",
+    "origin": "Germany · OpenProject GmbH · EU"
+  },
+  "business/opensign": {
+    "bloc": "non-EU",
+    "country": "India",
+    "entity": "OpenSign Inc",
+    "license": "AGPL-3.0",
+    "license_class": "osi",
+    "origin": "India · OpenSign Inc · non-EU"
+  },
+  "business/vikunja": {
+    "bloc": "EU",
+    "country": "Germany",
+    "entity": "Konrad Langenberg Software",
+    "license": "AGPL-3.0",
+    "license_class": "osi",
+    "origin": "Germany · Konrad Langenberg Software · EU"
+  },
+  "business/zammad": {
+    "bloc": "EU",
+    "country": "Germany",
+    "entity": "Zammad GmbH",
+    "license": "AGPL-3.0",
+    "license_class": "osi",
+    "origin": "Germany · Zammad GmbH · EU"
+  },
+  "core/acme-certs": {
+    "bloc": "EU",
+    "country": "Austria",
+    "entity": "ZeroSSL GmbH",
+    "license": "GPL-3.0",
+    "license_class": "osi",
+    "origin": "Austria · ZeroSSL GmbH · EU (original author Neil Pang, independent)"
+  },
+  "core/authentik": {
+    "bloc": "EU",
+    "country": "Netherlands",
+    "entity": "Authentik Security",
+    "license": "MIT",
+    "license_class": "osi",
+    "origin": "Netherlands · Authentik Security · EU"
+  },
+  "core/collabora": {
+    "bloc": "non-EU",
+    "country": "UK",
+    "entity": "Collabora Productivity Ltd",
+    "license": "MPL-2.0",
+    "license_class": "osi",
+    "origin": "UK · Collabora Productivity Ltd · non-EU"
+  },
+  "core/crowdsec": {
+    "bloc": "EU",
+    "country": "France",
+    "entity": "CrowdSec SAS",
+    "license": "MIT",
+    "license_class": "osi",
+    "origin": "France · CrowdSec SAS · EU"
+  },
+  "core/dnsmasq": {
+    "bloc": "non-EU",
+    "country": "UK",
+    "entity": "Simon Kelley",
+    "license": "GPL-2.0 or GPL-3.0, at your discretion",
+    "license_class": "osi",
+    "origin": "UK · Simon Kelley · non-EU"
+  },
+  "core/dockhand": {
+    "bloc": "none",
+    "country": "Finsys",
+    "entity": "**no country or legal entity stated** — no imprint on fnsys.pro or dockhand.pro",
+    "license": "BSL 1.1 — source-available, **not** open source; converts to Apache-2.0 on 2029-01-01. Free for personal, internal business, non-profit and educational use; offering it as a hosted service is not permitted",
+    "license_class": "source-available",
+    "origin": "Finsys · **no country or legal entity stated** — no imprint on fnsys.pro or dockhand.pro"
+  },
+  "core/euro-office": {
+    "bloc": "EU",
+    "country": "EU",
+    "entity": "euro-office consortium (Nextcloud, IONOS, XWiki, Proton)",
+    "license": "AGPL-3.0 (as OnlyOffice Document Server)",
+    "license_class": "osi",
+    "origin": "EU · euro-office consortium (Nextcloud, IONOS, XWiki, Proton) · EU"
+  },
+  "core/hawser": {
+    "bloc": "none",
+    "country": "Finsys",
+    "entity": "**no country or legal entity stated** — no imprint on fnsys.pro",
+    "license": "MIT",
+    "license_class": "osi",
+    "origin": "Finsys · **no country or legal entity stated** — no imprint on fnsys.pro"
+  },
+  "core/infisical": {
+    "bloc": "non-EU",
+    "country": "US",
+    "entity": "Infisical Inc",
+    "license": "MIT (core; some features under a separate enterprise licence)",
+    "license_class": "mixed",
+    "origin": "US · Infisical Inc · non-EU"
+  },
+  "core/onlyoffice": {
+    "bloc": "EU",
+    "country": "Latvia",
+    "entity": "Ascensio System SIA",
+    "license": "AGPL-3.0",
+    "license_class": "osi",
+    "origin": "Latvia · Ascensio System SIA · EU"
+  },
+  "core/portainer": {
+    "bloc": "non-EU",
+    "country": "New Zealand",
+    "entity": "Portainer.io Ltd",
+    "license": "zlib",
+    "license_class": "osi",
+    "origin": "New Zealand · Portainer.io Ltd · non-EU"
+  },
+  "core/portainer-agent": {
+    "bloc": "non-EU",
+    "country": "New Zealand",
+    "entity": "Portainer.io Ltd",
+    "license": "zlib (https://github.com/portainer/agent/blob/develop/LICENSE)",
+    "license_class": "osi",
+    "origin": "New Zealand · Portainer.io Ltd · non-EU (official agent for the Portainer platform)"
+  },
+  "core/traefik": {
+    "bloc": "EU",
+    "country": "France",
+    "entity": "Traefik Labs",
+    "license": "MIT",
+    "license_class": "osi",
+    "origin": "France · Traefik Labs · EU"
+  },
+  "core/whoami": {
+    "bloc": "EU",
+    "country": "France",
+    "entity": "Traefik Labs",
+    "license": "Apache-2.0",
+    "license_class": "osi",
+    "origin": "France · Traefik Labs · EU"
+  },
+  "monitoring/beszel": {
+    "bloc": "non-EU",
+    "country": "US",
+    "entity": "Henry Gd (community)",
+    "license": "MIT",
+    "license_class": "osi",
+    "origin": "US · Henry Gd (community) · non-EU"
+  },
+  "monitoring/beszel-agent": {
+    "bloc": "non-EU",
+    "country": "US",
+    "entity": "Henry Gd (community)",
+    "license": "MIT",
+    "license_class": "osi",
+    "origin": "US · Henry Gd (community) · non-EU"
+  },
+  "monitoring/changedetection": {
+    "bloc": "non-EU",
+    "country": "Australia",
+    "entity": "dgtlmoon",
+    "license": "Apache-2.0",
+    "license_class": "osi",
+    "origin": "Australia · dgtlmoon · non-EU"
+  },
+  "monitoring/gatus": {
+    "bloc": "non-EU",
+    "country": "Canada",
+    "entity": "TwinProduction",
+    "license": "Apache-2.0",
+    "license_class": "osi",
+    "origin": "Canada · TwinProduction · non-EU"
+  },
+  "monitoring/healthchecks": {
+    "bloc": "EU",
+    "country": "Latvia",
+    "entity": "Pēteris Caune",
+    "license": "BSD 3-Clause",
+    "license_class": "osi",
+    "origin": "Latvia · Pēteris Caune · EU"
+  },
+  "monitoring/ntfy": {
+    "bloc": "EU",
+    "country": "Germany",
+    "entity": "Philipp Heckel",
+    "license": "Apache-2.0 / GPL-2.0 (dual-licensed)",
+    "license_class": "mixed",
+    "origin": "Germany · Philipp Heckel · EU"
+  },
+  "monitoring/uptime-kuma": {
+    "bloc": "non-EU",
+    "country": "Hong Kong",
+    "entity": "Louis Lam",
+    "license": "MIT",
+    "license_class": "osi",
+    "origin": "Hong Kong · Louis Lam · non-EU"
+  }
+}

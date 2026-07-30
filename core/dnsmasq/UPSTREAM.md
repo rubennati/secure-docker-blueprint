@@ -4,6 +4,8 @@
 
 - **Image:** https://hub.docker.com/r/4km3/dnsmasq
 - **dnsmasq docs:** https://thekelleys.org.uk/dnsmasq/doc.html
+- **License:** GPL-2.0 or GPL-3.0, at your discretion
+- **Origin:** UK · Simon Kelley · non-EU
 - **Based on version:** 2.90
 - **Last checked:** 2026-04-14
 

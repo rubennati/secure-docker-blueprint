@@ -8,6 +8,8 @@
 - **Docker Compose repo:** https://github.com/opf/openproject-docker-compose
 - **Docker Hub:** https://hub.docker.com/r/openproject/openproject
 - **Docs:** https://www.openproject.org/docs/installation-and-operations/installation/docker-compose/
+- **License:** GPL-3.0 (Community Edition; Enterprise features are separately licensed)
+- **Origin:** Germany · OpenProject GmbH · EU
 
 ## License
 
