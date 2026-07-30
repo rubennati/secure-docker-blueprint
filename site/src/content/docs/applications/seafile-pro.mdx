@@ -154,10 +154,12 @@ docker compose up -d --force-recreate
     SEAFILE_SMTP_PASSWORD=your-smtp-password
     ```
 
-    Then restart the app to pick up the new values:
+    Then recreate the app so it picks up the new values — `docker compose
+    restart` keeps the environment the container was created with, so a changed
+    `.env` would have no effect:
 
     ```bash
-    docker compose restart app
+    docker compose up -d app
     ```
 
     :::caution

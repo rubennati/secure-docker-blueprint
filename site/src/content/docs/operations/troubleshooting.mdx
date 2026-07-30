@@ -157,13 +157,16 @@ records the attempt — not the proxy's, not the application's.
 
 ```bash
 docker exec crowdsec cscli decisions list --ip <their address>
-docker exec crowdsec cscli decisions delete --ip <their address> --all
+docker exec crowdsec cscli decisions delete --ip <their address>
+docker exec crowdsec cscli decisions list --ip <their address>   # expect nothing
 ```
 
 Most such decisions did not originate on your server: the engine subscribes to a
 community blocklist of roughly 15,000 addresses, and a shared mobile carrier
-address or a VPN exit can carry a legitimate visitor with it. `--all` matters —
-without it, a decision from that shared list keeps the ban in place.
+address or a VPN exit can carry a legitimate visitor with it. If a decision
+survives the delete, it came from one of those other origins — see
+[the CrowdSec guide](/infrastructure/crowdsec/#troubleshooting) for how to widen
+the removal, and why that step deserves a look before you run it.
 
 ## Layer 5 — TLS and DNS
 

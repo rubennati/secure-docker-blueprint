@@ -59,8 +59,8 @@ export const faqCategories: FaqCategory[] = [
       {
         question: 'How are services separated from each other?',
         answer:
-          'Each application’s services run on their own Docker network, so they are not routable from another application’s containers. Credentials are mounted as files rather than set in the environment, which keeps them out of container inspection and shell history. Traefik reads the Docker socket through a proxy instead of mounting it. CrowdSec can be added for detection and blocking. These are separate layers — how far a compromise gets still depends on the container and the image it runs.',
-        link: { text: 'CrowdSec guide', href: '/infrastructure/crowdsec/' },
+          'Each application’s database and backend containers sit on an internal network of their own, with no route to the internet and none to another application. That part is genuine isolation. The web-facing container is different: it also joins the shared proxy network, and containers on a shared Docker network can reach each other directly on any port, so a compromised front end can address the other front ends without going through the proxy. That network is part of the threat model rather than outside it. Traefik reads the Docker socket through a filtering proxy instead of mounting it, and CrowdSec can be added on top. How far a compromise gets still depends on the container and the image it runs.',
+        link: { text: 'How a server fits together', href: '/architecture/' },
       },
       {
         question: 'Will my data be backed up automatically?',

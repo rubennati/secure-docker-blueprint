@@ -47,17 +47,35 @@ From `apps/vaultwarden/`:
    sed -i "s|^DB_ROOT_PASSWORD=.*|DB_ROOT_PASSWORD=$(openssl rand -hex 32)|" .env
    ```
 
-5. Generate the admin token — must be an Argon2 hash, never plain text:
+5. Generate the admin token. Vaultwarden accepts a plain-text token as well;
+   this setup deliberately does not, because a plain token in `.env` is readable
+   by anything that can read the file or inspect the container:
 
    ```bash
-   docker run --rm -it vaultwarden/server:${APP_TAG} /vaultwarden hash
+   docker compose run --rm --no-deps app /vaultwarden hash
    ```
+
+   :::note
+   Use `docker compose run`, not `docker run`. A plain `docker run` does not read
+   this directory's `.env`, so `${APP_TAG}` would expand to nothing and the image
+   reference would be invalid. Compose resolves it from the service definition.
+   :::
 
    Copy the full `$argon2id$...` output, then paste it into `.env` with every `$` doubled (Compose escaping):
 
    ```ini
    VW_ADMIN_TOKEN=$$argon2id$$v=19$$m=65540,t=3,p=4$$...your-hash...
    ```
+
+   :::caution
+   **This stack is a documented exception to the file-based credential
+   handling.** The admin token and the database password reach the container as
+   environment variables rather than as mounted secret files — the database
+   credential is embedded in a connection URL, which a `_FILE` variable cannot
+   express without an entrypoint assembling it. The practical consequence: both
+   values are visible in `docker inspect` and in `docker compose config` output.
+   Treat `.env` accordingly, and redact before pasting that output anywhere.
+   :::
 
 6. Allow signups for your first account — you'll turn this off again right after:
 
@@ -98,10 +116,23 @@ Open `https://your-domain` — the login page should load over TLS.
    ```
 
    ```bash
-   docker compose restart app
+   docker compose up -d --force-recreate app
    ```
 
-   Confirm "Create Account" no longer appears on the login page.
+   :::caution
+   **`docker compose restart` will not do this.** Restarting stops and starts the
+   existing container, which keeps the environment it was created with — the
+   vault would keep accepting signups while the login page suggests otherwise.
+   Recreating is what applies a changed `.env`.
+   :::
+
+   Confirm it took effect against the container rather than against the page:
+
+   ```bash
+   docker compose exec app env | grep SIGNUPS_ALLOWED   # expect false
+   ```
+
+   Then reload the login page — "Create Account" should be gone.
 
 3. At `https://your-domain/admin`, set:
 

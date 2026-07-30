@@ -180,9 +180,19 @@ Phase 1 above is detection only. Two more layers, each independently optional, a
     1. Install and register:
 
        ```bash
-       sudo apt install crowdsec-firewall-bouncer   # Debian 13
+       sudo apt install crowdsec-firewall-bouncer   # Debian 13, from Debian main
        docker exec crowdsec cscli bouncers add firewall-bouncer
        ```
+
+       :::note
+       **The package name depends on where you get it from.** Debian 13 ships
+       one package, `crowdsec-firewall-bouncer`, from its own archive — that is
+       what the line above installs, and no extra repository is needed. CrowdSec's
+       own repository splits it by backend into
+       `crowdsec-firewall-bouncer-nftables` and `-iptables`, so guides written
+       against that source name a package Debian 13 does not have. Check with
+       `apt policy crowdsec-firewall-bouncer` before assuming either.
+       :::
 
     2. Edit `/etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml.local` — never the base `.yaml`, the package manages that:
 
@@ -208,11 +218,32 @@ Phase 1 above is detection only. Two more layers, each independently optional, a
     ```
 
     :::note
-    Banned IPs live in an nftables **set**, not as individual rules — `nft list chain ip crowdsec crowdsec-chain` shows the rule but not which IPs are currently banned. Check the set instead: `sudo nft list set ip crowdsec crowdsec-blacklists`.
+    Banned IPs live in an nftables **set**, not as individual rules — `nft list chain ip crowdsec crowdsec-chain` shows the rule but not which IPs are currently banned. There is one set per address family:
+
+    ```bash
+    sudo nft list set ip  crowdsec  crowdsec-blacklists     # IPv4
+    sudo nft list set ip6 crowdsec6 crowdsec6-blacklists    # IPv6
+    ```
     :::
 
     :::caution
-    **Emergency — remove all active bans:** use `sudo nft flush set ip crowdsec crowdsec-blacklists`, not `flush chain`. Flushing the chain deletes the enforcement rule itself, leaving the host with no active drop logic until the bouncer service is restarted.
+    **Emergency — stop enforcement now.** Flush the sets, not the chain: flushing
+    the chain deletes the enforcement rule itself, leaving the host with no drop
+    logic until the service is restarted.
+
+    ```bash
+    sudo nft flush set ip  crowdsec  crowdsec-blacklists
+    sudo nft flush set ip6 crowdsec6 crowdsec6-blacklists
+    ```
+
+    **Both lines, or you have only half-stopped it** — IPv4 and IPv6 are separate
+    tables, and clearing one leaves the other enforcing.
+
+    This buys you minutes, not a resolution: the bouncer keeps polling the engine
+    and refills the sets on its next cycle. To actually stop enforcement, stop
+    the service (`sudo systemctl stop crowdsec-firewall-bouncer`); to lift a ban
+    permanently, delete the decision at the engine, because the firewall is only
+    applying what the engine decided.
     :::
   </TabItem>
 </Tabs>
@@ -251,13 +282,35 @@ that one, and have the real client retry.
 fail-closed. Check that something answers on 7422 from the proxy container; a
 `401` is correct there, `connection refused` is not.
 
-A legitimate IP got banned:
+A legitimate IP got banned. Start narrow, and check the result rather than
+assuming it:
+
+```bash
+docker exec crowdsec cscli decisions list --ip <ip>      # what exists, and from which origin
+docker exec crowdsec cscli decisions delete --ip <ip>
+docker exec crowdsec cscli decisions list --ip <ip>      # expect nothing
+```
+
+If a decision survives, it came from a different origin — usually the community
+blocklist — and removing it needs `--all`:
 
 ```bash
 docker exec crowdsec cscli decisions delete --ip <ip> --all
 ```
 
-Use `--all` — without it, a decision from a non-local source (like the shared community blocklist) can keep the IP banned.
+:::caution
+**Check what `--all` does on your version before using it.** The flag's own help
+text reads "delete all decisions", and combining it with `--ip` is documented in
+this blueprint as scoping that to the one address across every origin. Those two
+readings differ by everything. Run `cscli decisions list | wc -l` before and
+after: if the count dropped by more than the entries for your address, it removed
+more than you meant, and the community blocklist will take time to repopulate.
+:::
+
+A ban that keeps coming back is a different problem — the engine is still seeing
+the behaviour that caused it. A whitelist entry stops decisions being created at
+all, which is the right tool for your own monitoring, office address or a known
+crawler.
 
 Full operational reference — health checks, whitelisting, false positives, SSH detection, geo-blocking, emergency procedures: [`core/crowdsec/docs/runbook.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/crowdsec/docs/runbook.md).
 
