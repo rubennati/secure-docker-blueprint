@@ -107,7 +107,7 @@ One verified service per axis, plus **one alerting channel proven to actually ar
 
 Disk health is out of scope: Scrutiny needs physical-disk passthrough, which is host-specific.
 
-Whether an alert also arrives while the sending host itself is down is a property of the deployment, not of this milestone. Verifying it means the receiver is not on the monitored host — which is the point of Block 1's placement question, and is answered where the deployment is.
+Whether an alert also arrives while the sending host itself is down is a property of the deployment, not of this milestone. Verifying that means the receiver is not on the monitored host — the placement question Block 1 raises, answered where the deployment is.
 
 ## If time runs short
 

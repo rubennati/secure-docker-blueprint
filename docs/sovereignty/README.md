@@ -20,7 +20,8 @@ detection reports to an external API.
 Ranking the stacks 1–10 would compress "AGPL, German GmbH, no outbound calls"
 and "source-available, no stated jurisdiction, reports to a vendor API" onto one
 axis. The argument then moves to the weighting instead of to the facts, and the
-number ages badly — a licence change or an acquisition silently invalidates it.
+number goes stale silently — a licence change or an acquisition invalidates it
+without anything failing.
 
 So this publishes the facts and their sources, and leaves the weighing to the
 operator. What counts as acceptable depends on the deployment: a public blog and

@@ -108,4 +108,4 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 | `db` | `postgres` | Native `_FILE` secrets (`POSTGRES_PASSWORD_FILE`) |
 | `app` | `nginx` | Images **without** `_FILE` → `config/entrypoint.sh` wrapper |
 
-Both secret patterns appear in one place, which is the point.
+Both secret patterns appear in one place, so a new stack can copy whichever one its image needs.

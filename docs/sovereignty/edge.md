@@ -33,13 +33,13 @@ connect to Cloudflare, Cloudflare connects to you. That means:
   (San Francisco, NYSE: NET), so US jurisdiction applies to the operator of that
   network regardless of which datacentre a given request passes through.
 
-The trade is straightforward and worth stating in one line: **proxied mode buys
+**Proxied mode buys
 DDoS absorption, caching and edge filtering at the price of a third party seeing
 your plaintext traffic.**
 
 Whether that price is acceptable is a deployment question, not a general one. For
 a public marketing site it is close to free. For a stack handling health records,
-legal files or payroll it is the whole question, and "but the server is in
+legal files or payroll it decides the deployment, and "but the server is in
 Germany" does not answer it.
 
 ## The five encryption modes
@@ -55,9 +55,7 @@ misleading — "Full" is not full.
 | **Full (strict)** | encrypted | encrypted | yes |
 | Strict (SSL-Only Origin Pull) | always encrypted | always encrypted | yes |
 
-Two rows deserve attention.
-
-**Flexible is the dangerous one.** The visitor's browser shows a padlock. The
+**Flexible encrypts the browser-to-Cloudflare leg only.** The visitor's browser shows a padlock. The
 connection from Cloudflare to your server is unencrypted HTTP across the public
 internet. The padlock is telling the user something that is not true for most of
 the path. It exists for origins that cannot do TLS at all; this blueprint's
@@ -70,7 +68,7 @@ achieve.
 
 **Use Full (strict).** Traefik already obtains a valid Let's Encrypt certificate,
 so the requirement is met with no extra work. Cloudflare recommends Full or Full
-(strict); between those two, strict is the one that actually verifies.
+(strict); of those two, only strict verifies the origin certificate.
 
 ## Filtering at the edge or at your server
 
@@ -85,8 +83,8 @@ CrowdSec. They sit in different places and the difference matters:
 | You can read the logs | in their dashboard | on your disk |
 | Works when proxying is off | no | yes |
 
-Edge filtering is genuinely better at the thing your server cannot do: stopping
-traffic that would saturate your uplink. It cannot be done locally, because by
+Edge filtering stops traffic that would saturate your uplink — the thing your
+server cannot do for itself. It cannot be done locally, because by
 the time a packet reaches you the bandwidth is already spent.
 
 Local filtering is better at everything downstream of that, and it keeps the
@@ -94,8 +92,8 @@ evidence where you can query it. The honest position is that they are
 complementary, and that choosing edge filtering means accepting decryption — you
 cannot have a WAF inspect requests it cannot read.
 
-**Geoblocking is the weakest of the three.** It stops opportunistic scanning from
-regions you have no users in, which reduces log noise. It does not stop a
+**Geoblocking stops opportunistic scanning from regions you have no users in**,
+which reduces log noise. It does not stop a
 motivated attacker, who will use a VPN exit or a compromised host in your own
 country, and it will block travelling legitimate users. Treat it as noise
 reduction, not as a control.
@@ -110,10 +108,10 @@ says about data residency.
 
 This is out of the blueprint's hands — it configures software, not procurement.
 But it is the layer underneath everything above, and a stack that is careful
-about licences and telemetry while running on infrastructure nobody looked at has
+about licences and telemetry while running on unexamined infrastructure has
 optimised the smaller variable.
 
-## The short version
+## What to decide
 
 - **DNS-only through Cloudflare:** no traffic exposure. Fine.
 - **Proxied:** Cloudflare reads your plaintext. A real decision, worth making

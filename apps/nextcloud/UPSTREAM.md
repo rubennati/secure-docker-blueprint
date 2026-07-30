@@ -22,7 +22,7 @@ support window — [release schedule](https://github.com/nextcloud/server/wiki/M
 12.3.
 
 It was reached by upgrading a running instance from 10.11, not by installing
-fresh, so the path is documented rather than assumed:
+fresh, so the documented path is the one that was taken:
 
 - **Skipping majors is supported** for a standalone server; only Galera requires
   one step at a time.

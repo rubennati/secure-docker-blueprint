@@ -239,8 +239,8 @@ while the list is what reached everyone else first.
 
 Turning sharing off also ends the pull; the two are one arrangement. CrowdSec is
 a French company, so for EU deployments the data leaving is at least staying
-inside that jurisdiction — but it is a data flow, and it should be a decision
-rather than a default nobody looked at.
+inside that jurisdiction — but it is a data flow, and it should be a decision, not
+a default.
 
 **The cost is not security, it is diagnosis.** A packet dropped by the firewall
 bouncer produces no log line anywhere — not in the proxy's access log, not in the

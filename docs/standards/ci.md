@@ -180,9 +180,9 @@ secrets.
 | **WARN** | `structure-blind` | Covered by the lifecycle report only — no compose file, so tags and secrets are verified by hand |
 
 Adding a new top-level category therefore fails CI until the category is either
-added to a checker's roots or declared in `NON_STACK_ROOTS` with the reason. That
-is the point: three coverage gaps surfaced by accident within one day, and each
-had let real stacks go unchecked for months.
+added to a checker's roots or declared in `NON_STACK_ROOTS` with the reason.
+Three coverage gaps surfaced by accident within one day, and each had let real
+stacks go unchecked for months.
 
 **Blocks merge:** not yet — the job runs, but adding it to the required set is a
 branch-protection setting.

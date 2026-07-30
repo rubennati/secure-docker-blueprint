@@ -24,7 +24,7 @@ This standard defines the two axes, how they map onto each other, and which file
 
 `ops-ready` is defined here but **no stack holds it yet**: the blueprint has no restore evidence for any service. It becomes reachable with the v0.7.0 backup milestone.
 
-The symbol is nevertheless listed in every status legend from the start, and the legends say plainly that nothing holds it. A vocabulary that only appears once something earns it hides the bar it sets — showing the empty tier is itself the statement that a restore has not been performed.
+The symbol is nevertheless listed in every status legend from the start, and the legends say plainly that nothing holds it. A vocabulary that only appears once something earns it hides the bar it sets; the empty tier states that no restore has been performed.
 
 ## Axis 2 — Internal status
 

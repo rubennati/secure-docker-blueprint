@@ -18,7 +18,7 @@ They solve different problems and neither replaces the other. Separate top-level
 | [Borgmatic](borgmatic/) | This host → off-site | ✅ | **The documented default for server backup.** Host-installed; a backup and a restore have both been performed and are logged in [`borgmatic/RESTORE.md`](borgmatic/RESTORE.md#rehearsal-log). The repository used was local — the off-site half is written, not yet exercised. |
 | [UrBackup](urbackup/) | Your devices → this host | 🚧 | Client backup for Windows, macOS and Linux; whole-disk image restore on Windows. Configuration complete, not yet verified. |
 | Kopia | either | 📋 | Deduplicating, with a web UI and native object storage. Its repository-server mode is interesting for client backup too — clients never hold the storage credentials. No database hooks, so server-side dumps would need scripting. Candidate for v0.8.0. |
-| Bareos | This host → tape / regulated retention | 📋 | Enterprise: Director, Storage and File daemons. Kept on the list for operators under retention or audit obligations, but **deliberately not built out** — the complexity is not justified for the single-operator setups this blueprint targets. |
+| Bareos | This host → tape / regulated retention | 📋 | Enterprise: Director, Storage and File daemons. Kept on the list for operators under retention or audit obligations, but **not built out** — the complexity is not justified for the single-operator setups this blueprint targets. |
 
 For *server* backup pick one deduplicating tool — Borgmatic or Kopia, not both. Two repositories means two retention policies and two things to verify, for no gain. UrBackup is not in that comparison; it does a different job.
 
@@ -153,7 +153,7 @@ Do not build all of this at once. In order of risk reduction per unit of work:
 
 **Stage 3 — harden it.** A second copy on different media. Append-only or storage-level immutability, configured with its real limits understood. *At this point ransomware costs you time instead of everything.*
 
-**Stage 4 — retain it.** Archive tier for anything with a long-term or legal retention need, verified for readability rather than assumed.
+**Stage 4 — retain it.** Archive tier for anything with a long-term or legal retention need, with readability verified.
 
 Prioritise by what hurts most to lose: databases first, then configuration and application data, then anything reproducible.
 

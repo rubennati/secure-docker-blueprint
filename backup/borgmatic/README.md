@@ -20,7 +20,7 @@ Host-installed backup for the stacks in this blueprint. Borg does the deduplicat
 ## Requirements
 
 - **Borgmatic ≥ 2.0.8** — earlier versions have no `container:` option for databases, and the v2 configuration format differs from v1. Check with `borgmatic --version`.
-- **A client for every database engine you back up, on the host.** `mariadb-client`, `postgresql-client`, `mongodb-database-tools` as applicable. See [Databases](#databases) — this surprises people, and it is not optional.
+- **A client for every database engine you back up, on the host.** `mariadb-client`, `postgresql-client`, `mongodb-database-tools` as applicable. See [Databases](#databases). The dump command runs on the host, so a missing client fails the backup of that engine.
 - **`python3-llfuse`**, if you want to browse an archive rather than extract from it. `borg mount` fails without it; `list` and `extract` do not need it.
 - An SSH-reachable target. Any provider offering SSH/SFTP storage works; so does another machine you control.
 - Root on the Docker host.
@@ -261,4 +261,4 @@ Borgmatic writes its own configuration into the archive so the credentials neede
 - **Exercised against a local repository, not an SSH target.** Backup, archive inspection and restore have all been performed; the target was a directory on the same host. The SSH path and append-only enforcement are still written rather than proven.
 - **Prune under append-only fails by design.** Plan where retention runs before enabling it.
 - **`/var/lib/docker/volumes` read live.** Fine for ordinary files, not for databases — which is what the dump hooks are for. Verify your Docker root with `docker info --format '{{.DockerRootDir}}'`; rootless and custom data-root setups differ.
-- **One host, one configuration.** Per-app repositories are possible via `/etc/borgmatic.d/` but are deliberately not the starting point — see [`../README.md`](../README.md#per-app-separation--an-option-not-a-rule).
+- **One host, one configuration.** Per-app repositories are possible via `/etc/borgmatic.d/` but are not the starting point — see [`../README.md`](../README.md#per-app-separation--an-option-not-a-rule).

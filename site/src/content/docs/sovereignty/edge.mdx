@@ -33,14 +33,14 @@ In exchange you get real things: attacks that would saturate your connection are
 absorbed before reaching it, your server's address is hidden, and static content
 is served closer to visitors.
 
-The trade in one line: **proxying buys DDoS absorption, caching and edge
-filtering at the price of a third party seeing your plaintext traffic.**
+**Proxying buys DDoS absorption, caching and edge filtering at the price of a
+third party seeing your plaintext traffic.**
 Cloudflare is a US company, so US jurisdiction applies to the operator of that
 network whichever datacentre a request passes through.
 
 Whether that price is acceptable depends on what you run. For a public marketing
-site it is close to free. For health records, legal files or payroll it is the
-whole question — and "the server is in Germany" does not answer it.
+site it is close to free. For health records, legal files or payroll it decides
+the deployment — and "the server is in Germany" does not answer it.
 
 ## If you proxy, use Full (strict)
 
@@ -54,10 +54,10 @@ Cloudflare offers five encryption modes. The names mislead: "Full" is not full.
 | **Full (strict)** | encrypted | encrypted | **yes** |
 | Strict (SSL-Only Origin Pull) | always encrypted | always encrypted | yes |
 
-**Flexible is the one to avoid.** The visitor's browser shows a padlock while the
-leg from Cloudflare to your server crosses the public internet unencrypted. The
-padlock tells the user something untrue about most of the path. It exists for
-servers that cannot do TLS at all — yours can.
+**Flexible encrypts the browser-to-Cloudflare leg only.** The leg from Cloudflare
+to your server crosses the public internet unencrypted while the browser still
+shows a padlock, so the padlock covers a fraction of the path. It exists for
+servers that cannot terminate TLS at all — yours can.
 
 **Full accepts any certificate**, including an expired one, a self-signed one, or
 one presented by whoever has got into the path. It encrypts without
@@ -80,19 +80,19 @@ blueprint runs CrowdSec on the server. They sit in different places:
 | Where you read the logs | their dashboard | your own disk |
 | Works with the grey cloud | no | yes |
 
-Edge filtering is genuinely better at the one thing a server cannot do for
-itself: stopping traffic that would fill your uplink. By the time a packet
-reaches you, the bandwidth is spent.
+Edge filtering stops traffic that would fill your uplink — the one thing a server
+cannot do for itself, because by the time a packet reaches you the bandwidth is
+already spent.
 
 Server-side filtering is better at everything after that, and it keeps the
 evidence somewhere you can query it. They are complementary rather than
 alternatives — but choosing edge filtering means accepting decryption, because a
 firewall cannot inspect what it cannot read.
 
-**Geoblocking is the weakest of the three.** It cuts opportunistic scanning from
-regions you have no users in, which quietens the logs. It does not stop a
-motivated attacker, who will come from a VPN exit or a compromised machine in
-your own country, and it will lock out legitimate users who travel. Treat it as
+**Geoblocking cuts opportunistic scanning from regions you have no users in**,
+which quietens the logs. It does not stop an attacker who comes from a VPN exit
+or a compromised machine inside your own country, and it locks out legitimate
+users who travel. Treat it as
 noise reduction, not as protection.
 
 ## The server underneath
@@ -106,7 +106,7 @@ That choice is outside what a set of configuration files can make for you. But i
 sits underneath everything above, and being careful about licences and telemetry
 while running on infrastructure nobody examined optimises the smaller variable.
 
-## The short version
+## What to decide
 
 - **Grey cloud:** no traffic exposure.
 - **Orange cloud:** Cloudflare reads your plaintext. Worth deciding deliberately.

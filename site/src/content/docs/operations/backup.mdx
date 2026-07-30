@@ -26,9 +26,9 @@ lines to the same configuration file.
 Needs: root on the Docker host, somewhere to put the repository, and a client for
 each database engine you run.
 
-That last one surprises people. Borgmatic's `container:` option resolves a
-container's IP address and nothing more — the dump command itself runs on the
-host and connects over TCP. Without the client:
+Borgmatic's `container:` option resolves a container's IP address and nothing
+more — the dump command itself runs on the host and connects over TCP. Without
+the client:
 
 ```text
 [Errno 2] No such file or directory: 'mariadb-dump'

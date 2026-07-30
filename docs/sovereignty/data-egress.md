@@ -48,8 +48,8 @@ global:
 ```
 
 `sendAnonymousUsage` is opt-in upstream and already off; it is set explicitly so
-that reading the file answers the question. `checkNewVersion` is the one that
-actually changes behaviour.
+that reading the file answers the question. `checkNewVersion` is the setting that
+changes behaviour.
 
 Trade-off: you no longer get told about new releases. This repository tracks
 versions in `UPSTREAM.md` and via Renovate instead, so nothing is lost that was
@@ -82,8 +82,8 @@ stay out of the log. That is the reason to prefer the DNS-01 wildcard path in
 worth not advertising — not convenience.
 
 It is not a reason to skip TLS, and not a reason to rely on it: a hostname
-absent from CT is unlisted, not protected. Anything reachable needs to survive
-being found.
+absent from CT is harder to find. It is not protected by that absence — anything
+reachable needs to survive being found.
 
 ### Container registries
 
@@ -95,10 +95,8 @@ is not a secret from the registries involved.
 
 ### Monitoring — gone through, stack by stack
 
-Monitoring was the category most likely to phone home, on the reasoning that a
-tool whose job is watching things tends to want to report. It is better than
-expected: two of seven make an unrequested outbound call, and only one of those
-sends anything about the installation.
+Each monitoring stack was read individually. Two of seven make an unrequested
+outbound call, and only one of those sends anything about the installation.
 
 None of these stacks has been run on a host yet, so every line below is read from
 upstream's source, not observed on the wire.
@@ -114,8 +112,8 @@ upstream's source, not observed on the wire.
 
 ### The last two rows are a weaker claim than the first two
 
-Finding a call proves it exists. Not finding one proves that the searches ran —
-nothing more. A source search only covers the shapes somebody thought to search
+Finding a call establishes that it exists. Not finding one establishes only that
+the searches ran. A source search covers the shapes somebody thought to search
 for, and this repository has already been bitten four times by the same class of
 error: a thing that was configured, looked correct, and silently did nothing
 because it was never actually reached. "I looked and found nothing" becoming
@@ -130,17 +128,17 @@ enough to be missed by a short observation.
 Until then, treat the bottom two rows as *not currently known to*, not as
 *does not*.
 
-**changedetection is the one worth naming.** The GUID is persistent, so the daily
+**changedetection sends a persistent GUID.** The GUID does not rotate, so the daily
 request is a per-installation beacon rather than a version lookup, and the watch
 count is usage data. Neither is hidden — the environment variable to stop it is
 documented — but nothing in a compose file would have told you.
 
-**Uptime Kuma's is milder and cannot be pre-set.** It sends no data about the
-instance; the vendor learns that an installation exists at your address. The
+**Uptime Kuma's call carries no payload and cannot be pre-set.** It sends no data
+about the instance; the vendor learns that an installation exists at your address. The
 setting lives in the database, so it is a post-install step alongside creating
 the owner account. Upstream defaults it on.
 
-**ntfy is the interesting case, because it is not really telemetry.** A
+**ntfy's outbound call is not telemetry.** A
 self-hosted server cannot deliver instant iOS notifications by itself — Apple
 does not permit it. Setting `upstream-base-url` sends a poll request to ntfy.sh
 carrying the message ID and a SHA256 of the topic URL, never the content; the
@@ -151,8 +149,8 @@ Google own that leg.
 It is commented out in `server.example.yml`, which is the right default —
 Android and desktop work without it, and only an iOS receiver needs the trade.
 
-**What all three probing tools do by design** is worth stating once: gatus,
-Uptime Kuma and changedetection all reach out to whatever you point them at, so
+**All three probing tools reach outward by design:** gatus,
+Uptime Kuma and changedetection all contact whatever you point them at, so
 those targets see this server's address and its polling pattern. That is the
 function. changedetection's optional AI features additionally send page content
 and diffs to whichever AI provider you configure.
@@ -160,7 +158,7 @@ and diffs to whichever AI provider you configure.
 ## What to do with this
 
 There is no setting that makes a stack silent, and chasing one is the wrong
-goal. The useful version is narrower:
+goal. The narrower question:
 
 1. **Know which calls are on.** The ones above are the ones this repository
    ships. A new stack should have its outbound calls checked before it is marked

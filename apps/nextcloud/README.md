@@ -551,9 +551,9 @@ docker compose exec -u root app php-fpm -tt 2>&1 | grep max_children
 Nothing to configure. The official image already ships Nextcloud's recommended
 settings — `save_comments=1`, `revalidate_freq=60`, `interned_strings_buffer=32`,
 `max_accelerated_files=10000`, and the tracing JIT at `jit=1255` with an 8 MB
-buffer. Confirmed on the running instance rather than assumed.
+buffer.
 
-The one value worth knowing is `opcache.memory_consumption`, which the image
+The value that can need attention is `opcache.memory_consumption`, which the image
 templates from `PHP_OPCACHE_MEMORY_CONSUMPTION` and defaults to 128 MB. Nextcloud
 raises a warning in the admin overview when any OPcache limit passes 90% of its
 allocation — raise the variable if that appears, rather than pre-emptively.

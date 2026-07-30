@@ -62,8 +62,8 @@ systemctl list-timers logrotate.timer
 ```
 
 Daily by default. `maxsize` therefore bounds a file at one day's traffic rather
-than at the size given — which is the point worth understanding, because the
-scenario it exists for is a request flood that fills a disk in minutes. Where
+than at the size given. That matters because the scenario it exists for is a
+request flood that fills a disk in minutes. Where
 that matters:
 
 ```bash

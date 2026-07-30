@@ -96,8 +96,8 @@ firewall layer existed, that ban applied only to HTTP through the proxy.
 
 ## What it can and cannot see
 
-Worth knowing before you decide where to attach it, because the two protective
-layers in this Blueprint do not add up — they take turns.
+The two protective layers in this Blueprint do not add up — they take turns, and
+that determines where it is worth attaching.
 
 A request rejected by an access policy never reaches the access log. Measured
 here: **120 requests against a VPN-only host moved CrowdSec's counter by 3.**
@@ -232,9 +232,9 @@ docker exec crowdsec cscli decisions delete --ip <their address>
 
 Most of those decisions did not come from your server. The engine subscribes to
 CrowdSec's community blocklist, which on a running host means around 15,000
-addresses other installations reported. That is the point of it — but it also
-means a shared CGNAT address, a VPN exit or a compromised neighbour can take a
-legitimate visitor with it.
+addresses other installations reported. That is what the subscription delivers,
+and it also means a shared CGNAT address, a VPN exit or a compromised neighbour
+can take a legitimate visitor with it.
 
 **The bouncer never polls** — `cscli bouncers list` shows no `Last API pull`.
 Loading the plugin is not enough: the polling loop starts only once a router

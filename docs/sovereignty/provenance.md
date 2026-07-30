@@ -29,14 +29,13 @@ flattering half: `EULA (Ubiquiti) / GPL-3 (LSIO scripts)`.
 
 That last row is a real finding, not a gap in the research. Two `core/` stacks
 come from an organisation that publishes no imprint, no country and no legal
-entity. Recording that is the point; quietly leaving the field blank would hide
-it.
+entity. The row records that; leaving the field blank would hide it.
 
 **The entity governs, not the developers.** Documenso's founder works from
 Hamburg, but Documenso Inc is a US company — a US court order reaches the
 company, not the postcode of whoever wrote the commit. The country of
-development goes in parentheses because it is worth knowing and is not the
-answer.
+development goes in parentheses because it locates the people, not the legal
+reach.
 
 ## Licence classes
 
@@ -50,8 +49,8 @@ more often than it applies:
 | `source-available` | source published, use restricted | 3 |
 | `proprietary` | neither | 1 |
 
-The three source-available ones are worth knowing by name, since each restricts
-something a self-hoster might assume they may do:
+The three source-available ones are named here, since each restricts something a
+self-hoster might assume they may do:
 
 - **`core/dockhand`** — BSL 1.1. Free for personal, internal business,
   non-profit and educational use; offering it as a hosted service is not

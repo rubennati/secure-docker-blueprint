@@ -117,9 +117,8 @@ host it runs on, and what it is used for is stored by the Portainer instance tha
 connects to it.
 
 **It mounts `/:/host:ro`** — the security baseline's one documented deviation of
-that kind. For backup purposes that mount is worth knowing about in the other
-direction: it means an agent container can read anything on the host, so its
-placement is a security decision, not a convenience one.
+that kind. It also matters for backup: an agent container can read anything on the
+host, so where it runs is a security decision, not a convenience one.
 
 ## Known Issues
 

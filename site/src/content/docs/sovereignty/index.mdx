@@ -18,8 +18,6 @@ from those records, so it cannot fall out of step with what actually ships.
 
 <SovereigntyTable />
 
-Two things to read out of it.
-
 **"Open source" is claimed more often than it applies.** Four stacks are open
 core — the base is free, some features are not. Three publish their source under
 a licence that restricts use: Dockhand, Invoice Ninja and n8n all permit personal
@@ -55,13 +53,12 @@ getting its certificate. A wildcard certificate publishes only `*.example.com`,
 which is the reason to use one when the names themselves are worth not
 advertising.
 
-That last one surprises people, and it is worth being precise about what it
-means: a hostname nobody has listed is unlisted, not protected. Anything
-reachable from the internet has to survive being found.
+A hostname absent from the certificate logs is harder to find. It is not
+protected by that absence — anything reachable from the internet has to survive
+being found.
 
-**Monitoring tools were checked one by one**, on the reasoning that software
-whose job is watching things tends to want to report. Of the seven, two make a
-call nobody asked for. One sends a daily message carrying a permanent
+**Monitoring tools were checked one by one.** Of the seven, two make an outbound
+call the operator did not request. One sends a daily message carrying a permanent
 installation identifier and how many pages it is watching — that is switched off
 here. The other asks its vendor for the current version every two days and sends
 nothing about you; it is switched off after first login, because the setting

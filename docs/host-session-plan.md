@@ -202,7 +202,7 @@ Closes v0.7.0. The proof is a restore, not a configuration.
 
 ## Phase C — Operating documentation
 
-- [ ] The `occ` commands worth knowing, with what each is for
+- [ ] The `occ` commands an operator needs, with what each is for
 - [ ] Update versus upgrade: what differs, what to do before each
 - [ ] Maintenance window — what actually needs doing, and how often
 - [ ] Incident response: what to check first, in what order
