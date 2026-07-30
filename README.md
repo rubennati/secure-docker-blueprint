@@ -17,7 +17,7 @@ Hardened configurations for 40+ services — standardized security baseline, Doc
 </div>
 
 > **Pre-1.0** — structure is stable and core services are ready to use, but paths, env variables, and defaults can still change before v1.0. See [ROADMAP.md](ROADMAP.md) for the v1.0 criteria.
-Quick Navigation: [Features](#features) · [Quick Start](#quick-start) · [Core Infrastructure](#core-infrastructure) · [Applications](#applications) · [Business apps](#business-apps) · [Monitoring](#monitoring) · [Backup](#backup)
+Quick Navigation: [Features](#features) · [Installation](#installation) · [Core Infrastructure](#core-infrastructure) · [Applications](#applications) · [Business apps](#business-apps) · [Monitoring](#monitoring) · [Backup](#backup)
 
 ---
 
@@ -32,44 +32,71 @@ Quick Navigation: [Features](#features) · [Quick Start](#quick-start) · [Core 
 - **Modular** — use any combination of services, each works independently
 - **Zero Hardcoded Values** — everything configurable via `.env`
 
-## Quick Start
+## Installation
+
+This reaches a working Traefik with TLS, which every app routes through. The app
+itself is installed from its own README — the steps differ per stack, and that
+README is the procedure. Check [Requirements](#requirements) first; `envsubst` is
+needed before the first command.
 
 ```bash
-# Clone
-git clone https://github.com/your-user/secure-docker-blueprint.git
+git clone https://github.com/rubennati/secure-docker-blueprint.git
 cd secure-docker-blueprint
-
-# 1. Start Traefik (required for all apps)
-cd core/traefik
-cp .env.example .env              # Edit: domain, email, DNS provider
-./ops/scripts/render.sh           # Render config templates
-docker compose up -d
-
-# 2. Add an app (e.g. Vaultwarden)
-cd ../../apps/vaultwarden
-cp .env.example .env              # Edit: domain, security level
-
-mkdir -p .secrets
-openssl rand -base64 32 | tr -d '\n' > .secrets/db_pwd.txt
-openssl rand -base64 32 | tr -d '\n' > .secrets/db_root_pwd.txt
-
-docker compose up -d
 ```
 
-Every app follows the same workflow: copy `.env.example` → create secrets → `docker compose up -d`.
+### 1. Traefik
+
+```bash
+cd core/traefik
+cp .env.example .env
+```
+
+Set at least `ACME_EMAIL`, `TRAEFIK_DASHBOARD_HOST` and the DNS provider token
+for your certificate resolver — `CF_DNS_API_TOKEN` ships as `__REPLACE_ME__` and
+DNS-01 fails until it holds a real token.
+[`core/traefik/README.md`](core/traefik/README.md#setup) lists every variable and
+what it controls.
+
+```bash
+bash ops/scripts/validate.sh    # required variables present
+bash ops/scripts/render.sh      # .tmpl → config files
+bash ops/scripts/validate.sh    # nothing left unresolved
+docker compose up -d
+docker compose ps               # traefik and the socket proxy report healthy
+```
+
+The dashboard answers at `https://<TRAEFIK_DASHBOARD_HOST>`, reachable from the
+VPN only by default. If it does not answer, or an app later returns 403 or 404,
+[TROUBLESHOOTING.md](TROUBLESHOOTING.md) lists the symptom, its cause and the
+fix.
+
+### 2. An app
+
+Every stack shares the same shape — copy `.env.example`, set the values it names,
+create the secrets it lists, `docker compose up -d` — but which values, which
+secrets and in what order is per stack, and some steps have to happen before the
+first start. Vaultwarden needs working SMTP configured before an account can be
+created; Nextcloud installs itself unattended from the admin credentials.
+
+Start from the stack's own README: [Vaultwarden](apps/vaultwarden/README.md) ·
+[Nextcloud](apps/nextcloud/README.md) · or any entry in
+[What's Included](#whats-included).
 
 ## Security Model
 
-Every service in this blueprint enforces:
+Some of these hold for every service, the rest are applied where the image runs
+under them. [`docs/standards/security-baseline.md`](docs/standards/security-baseline.md)
+is the binding version; `scripts/ci/check-baseline.py` enforces the required
+rules on every pull request.
 
-| Rule | How |
-|------|-----|
-| No privilege escalation | `no-new-privileges:true` on every container |
-| Secrets isolated | Docker Secrets (`_FILE` or custom entrypoint); deviations documented per app |
-| No direct socket access | Socket Proxy with granular API filtering |
-| Network isolation | Internal networks for databases and backend services |
-| Read-only filesystem | Where the image supports it |
-| Minimal capabilities | `cap_drop: ALL` where possible |
+| Rule | Scope | How |
+|------|-------|-----|
+| No privilege escalation | required | `no-new-privileges:true` on every service; each exception carries a written justification |
+| Secrets isolated | required | Docker Secrets (`_FILE` or custom entrypoint), never in `environment:`; deviations documented per app |
+| No direct socket access | required | Socket Proxy with granular API filtering |
+| Network isolation | required | Databases and backends on internal networks, never published to the host |
+| Read-only filesystem | where supported | `read_only: true` plus tmpfs for the paths the image writes |
+| Minimal capabilities | where supported | `cap_drop: ALL`, with `cap_add` only for what the image needs |
 
 Three patterns for secret handling:
 
@@ -83,10 +110,16 @@ Three patterns for secret handling:
 
 - **Docker** 24.0+ with Compose v2
 - **Linux** host (tested on Debian 12/13)
+- **`envsubst`** — package `gettext-base` on Debian/Ubuntu; Traefik's config is rendered from templates and `render.sh` stops without it
 - **Domain** with a DNS provider supported by Traefik (e.g. Cloudflare)
 - **Optional:** Tailscale for `acc-tailscale` access policies
 
 ## What's Included
+
+`core/` and `apps/` are documented per service — the tables below are their
+overview, and each row links to the stack that carries the full procedure.
+`business/`, `monitoring/` and `backup/` additionally have a category README with
+the choice guidance for that category.
 
 ### Core Infrastructure
 
