@@ -69,6 +69,20 @@ the reason the remaining application stacks got a catalogue entry rather than a
 guide: fifteen are listed with what they solve and what they cost, and the page
 says plainly that nobody has walked their installation here.
 
+**Two external reviews, and what they cost**
+
+The first ran against `main` and was largely obsolete on arrival; two of its six
+urgent findings did not hold against the tree — the access log filters `200-599`,
+not `400-599`, and `crowdsec-firewall-bouncer` is the correct Debian 13 package
+name. The second ran against `dev` and was worth its weight: a destructive
+`cscli decisions delete --all` removed, the Docker socket claim corrected (the
+socket proxy does mount it), Borg's `repokey` model corrected, two withdrawn NIST
+revisions replaced, and the "requests reach applications only through the proxy"
+claim scoped to arrival from outside the host.
+
+The pattern across both: check the finding against the repository before acting
+on it, and check what the site currently says before believing a quotation of it.
+
 **Open — not started, rather than half-built**
 
 1. Guide content pass — Nextcloud, Invoice Ninja, Seafile Pro and the backup
