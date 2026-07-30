@@ -20,8 +20,8 @@ statement about security at all.
 | **Encoding** | yes, by anyone | nothing | — |
 
 **Base64 is not encryption.** It is a transport format. A Kubernetes secret and
-a JWT payload are both Base64 and both readable by anyone holding them. This
-mistake is common enough to be worth naming explicitly.
+a JWT payload are both Base64 and both readable by anyone holding them, with no
+key involved.
 
 **A hash is not encryption either.** It has no key and no inverse. Storing a
 password as a hash is correct; "encrypting" a password so the application can

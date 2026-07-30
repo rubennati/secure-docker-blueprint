@@ -14,7 +14,7 @@ This folder contains the source for the Operator Site: an Astro/Starlight static
 
 **The repository is the technical source of truth.** Compose files, secrets handling, configuration, and implementation details live in the repository root. This site provides guided documentation for operators working with the Blueprint.
 
-Public publication is planned for the v0.9.0 milestone. This scaffold is built and validated in CI, but not yet deployed.
+Deployment is held until v1.0.0. The site is built and checked in CI on every push, and nothing publishes it — `.github/workflows/site.yml` has no deploy job. `ROADMAP.md` still names v0.9.0 as the launch milestone; that is the older decision.
 
 ## Local development
 
@@ -23,6 +23,42 @@ cd site
 npm install
 npm run dev        # dev server at http://localhost:4321
 ```
+
+## Checks
+
+Two gates, both run in `.github/workflows/site.yml`. Run them before pushing:
+
+```bash
+npm run check:self   # do the rules still catch what they claim?
+npm run build
+npm run check        # the gate itself — needs dist/, so it runs after the build
+```
+
+[`scripts/check-content.mjs`](scripts/check-content.mjs) exists because this site
+tells people to paste commands into a root shell. That makes it a distribution
+channel: anyone who can land text in these pages can land a command in someone's
+terminal. Ten rules cover pipe-to-shell installs, disabled TLS verification,
+`chmod 777`, recursive deletes an unset variable turns into a delete from `/`,
+`--privileged`, a mounted Docker socket, `:latest`, reverse-shell shapes,
+credential-looking literals and private hostnames. Dead internal links and
+anchors are checked against `dist/` in the same pass.
+
+**A rule can be waived only in the `ALLOW` list in that file, and only with a
+reason** — four pages discuss `--privileged` and the socket as the thing to
+avoid. A waiver without a reason fails the run.
+
+**Every rule carries a fixture it must catch and a near-miss it must not**, and
+`check:self` runs before the gate in CI. A regex that has quietly stopped
+matching reports "clean", which is worse than having no rule at all; this is not
+hypothetical, the private-hostname rule shipped matching only one label and the
+self-test caught it.
+
+The repository-wide checks in `scripts/ci/` also cover this folder — in
+particular `check-prose.py`, which treats everything under `site/` as
+reader-facing and **blocks** on register violations there while only warning
+elsewhere. Ranking importance for the reader ("worth knowing", "the one that
+actually matters"), self-justification and aphorisms are the usual ones to trip
+over.
 
 ## Build
 

@@ -9,9 +9,9 @@ Everything else on this site configures containers. This page is about the
 machine underneath them, and it is the layer these Compose files do not touch at
 all.
 
-That gap is worth stating without softening: **a perfectly hardened container
-stack on an unpatched host with password SSH is not a secure system.** Container
-hardening limits what a compromised *application* can reach. It does nothing
+**A perfectly hardened container stack on an unpatched host with password SSH is
+not a secure system.** Container hardening limits what a compromised
+*application* can reach. It does nothing
 about a compromise that arrives through the host.
 
 ## The host baseline
@@ -73,8 +73,7 @@ This is where the equivalent effort belongs.
 
 ### 3. Files that other people give you
 
-**This is the one that actually matters for the services on this site.** A
-service that stores files other people supply — file sync, mail, a document
+A service that stores files other people supply — file sync, mail, a document
 system, anything with an upload form — is in a different position from a service
 that does not.
 

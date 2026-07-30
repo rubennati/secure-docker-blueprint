@@ -85,12 +85,11 @@ traffic through the proxy.
 
 [How this blueprint fits the model →](/architecture/)
 
-## Two things worth knowing before you rely on a layer
+## Two layers that do less than they appear to
 
 ### Docker rewrites your host firewall
 
-This is the one that catches people, and it is worth stating without hedging:
-**a host firewall does not protect a published container port.**
+**A host firewall does not protect a published container port.**
 
 Publishing a port makes Docker install its own packet-filter rules. They are
 evaluated ahead of the ones a host firewall like `ufw` manages, and the traffic

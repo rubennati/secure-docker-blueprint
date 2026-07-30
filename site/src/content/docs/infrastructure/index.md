@@ -44,7 +44,7 @@ and Redis of its own — it is a service to operate, not a setting to switch on.
 The configuration is checked and the stack has been brought up; there is no
 walked-through guide here.
 
-## What is deliberately not on this page
+## Server-wide, and covered elsewhere
 
 **Document editing.** OnlyOffice is also set up once and shared by several
 applications, which makes it look like it belongs here. It does not: nothing

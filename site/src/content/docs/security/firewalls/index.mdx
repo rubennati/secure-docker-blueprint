@@ -17,8 +17,8 @@ points. Which one you have determines which traffic you can actually stop.
 
 ## Docker rewrites the host firewall
 
-The single most important practical fact on this page, and the one that surprises
-people who did everything else right.
+A host firewall configured correctly, and a container port open despite it, are
+a normal combination rather than a contradiction.
 
 **Publishing a container port makes Docker install its own packet-filter rules.**
 They are evaluated ahead of the rules your host firewall manages, and the traffic
@@ -86,9 +86,8 @@ container level the one worth doing properly.
 
 ## IP allowlists, and why they are weaker than they look
 
-Restricting a service to known addresses is a genuine reduction in exposure and
-worth having. It also fails in ways that are worth knowing before you rely on it
-alone.
+Restricting a service to known addresses reduces exposure. It also has three
+failure modes, and each of them applies while the rule itself looks correct.
 
 **The address you filter on has to be the real one.** Behind a reverse proxy the
 connection comes from the proxy, so the original address arrives in a header —

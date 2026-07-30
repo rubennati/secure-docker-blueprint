@@ -39,9 +39,9 @@ sit on it, and that is all. Each application also gets its own internal network
 that has no route to the internet and no route to any other application. The
 database and cache live only there.
 
-The consequence is worth stating plainly: an application that gets compromised
-cannot reach another application's database, because there is no network path to
-it. Not a rule someone has to remember — an absent route.
+An application that gets compromised cannot reach another application's
+database, because there is no network path to it. Not a rule someone has to
+remember — an absent route.
 
 ## Who is allowed to reach what
 
