@@ -144,7 +144,7 @@ Planned in `core/`: Keycloak (alternative / heavier IAM next to Authentik).
 
 ### Applications
 
-The blueprint takes a **choice-matrix** approach: where several tools compete (dashboards, photo galleries, wikis, form builders), multiple options are included so you can test and pick what fits.
+Where several tools compete — dashboards, photo galleries, wikis, form builders — the blueprint ships more than one. What separates them is on the operator site: [Choosing between services](https://secure-docker.rubennati.at/applications/choosing/).
 
 What has been established about each stack — verified against which version and when, whether a restore was performed — is in [`LIFECYCLE.md`](LIFECYCLE.md), generated from the repository.
 

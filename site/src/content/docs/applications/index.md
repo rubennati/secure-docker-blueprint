@@ -7,6 +7,8 @@ Application and business-tool guides live here — what an operator deploys and 
 
 Guides cover setup, ongoing use, backup, restore and updates.
 
+Where several services solve the same problem — dashboards, photo libraries, file sync — [Choosing between services](/applications/choosing/) says what separates them.
+
 The blueprint ships far more services than have a guide here. A guide is written once a service has been set up and verified end to end, so this list grows slowly and on purpose. The [repository](https://github.com/rubennati/secure-docker-blueprint#whats-included) lists every service it contains, each with its own README.
 
 ## Vaultwarden

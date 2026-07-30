@@ -47,6 +47,7 @@ export default defineConfig({
 					label: 'Add a service',
 					items: [
 						{ label: 'Which services have a guide', link: '/applications/' },
+						{ label: 'Choosing between services', link: '/applications/choosing/' },
 						{ label: 'Vaultwarden — passwords', link: '/applications/vaultwarden/' },
 						{ label: 'Nextcloud — files and calendars', link: '/applications/nextcloud/' },
 						{ label: 'Invoice Ninja — invoicing', link: '/applications/invoiceninja/' },

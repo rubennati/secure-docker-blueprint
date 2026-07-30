@@ -1,0 +1,136 @@
+---
+title: Choosing between services
+description: Where several services solve the same problem, what actually separates them.
+---
+
+The blueprint ships several services for some problems. Where that happens it is
+because they suit different situations, not because one is a spare.
+
+This page covers the cases where a choice exists. Services that solve a problem
+nobody else here solves are in the [overview](/applications/).
+
+## Files and sync
+
+| | Nextcloud | Seafile | Seafile Pro |
+|---|---|---|---|
+| Beyond file sync | calendar, contacts, apps | none | none |
+| Shape | five containers | multi-container | multi-container |
+| Sync over large trees | slower | its design goal | its design goal |
+| Full-text search, antivirus | via apps | no | yes |
+| Licence | AGPL-3.0 | AGPL-3.0 | commercial |
+| Company | Nextcloud GmbH, Germany | Seafile Ltd, China | Seafile Ltd, China |
+
+**Nextcloud** if you want one system for files, calendars and contacts, and
+accept a heavier stack for it. It is the only one here that replaces several
+services at once. [Guide →](/applications/nextcloud/)
+
+**Seafile** if sync performance over large directory trees is the deciding
+factor. It does file sync and does not try to be a suite.
+
+**Seafile Pro** adds full-text search and antivirus scanning under a commercial
+licence. [Guide →](/applications/seafile-pro/)
+
+The company behind Seafile is Chinese and behind Nextcloud is German. Whether
+that matters depends on what you store and who might ask about it — see
+[data sovereignty](/sovereignty/).
+
+**Paperless-ngx** sits next to these rather than against them: it takes scanned
+paper, runs OCR, and gives back a searchable archive. Pair it with either.
+
+## Document editing in the browser
+
+All three plug into Nextcloud or Seafile as a shared backend.
+
+**Collabora** is the light one — around 1 GB idle, LibreOffice underneath. Take
+it when the host is small.
+
+**OnlyOffice** stays closest to Microsoft formats. Take it when documents move
+back and forth with people using Word and Excel. [Guide →](/core/onlyoffice/)
+
+**Euro-Office** is an EU-governed fork of OnlyOffice, maintained by a group that
+includes Nextcloud, IONOS, XWiki and Proton. Same editor, different governance.
+Take it when the supplier's jurisdiction is part of the decision.
+
+## Dashboards
+
+Four, and what separates them is how you configure them.
+
+**Dashy** — one YAML file, and the interface rebuilds when it changes. The
+simplest to keep in version control.
+
+**Homepage** — also file-based YAML, but split by concern: services, bookmarks,
+widgets and settings each in their own file. More structure for a larger setup.
+
+**Homarr** — configured in the browser and built around integrations. It shows
+live state from media servers, download clients and reverse proxies rather than
+only linking to them.
+
+**Heimdall** — a launcher first. Quick to set up, with optional per-service
+status widgets. Take it when you want links on a page and not a control panel.
+
+## Photo libraries
+
+Five, separated by what they are for.
+
+**Immich** is the phone-backup one. Mobile apps upload automatically, with
+machine-learning search and face recognition.
+
+**PhotoPrism** manages an existing library — TensorFlow classification, face
+recognition, and strong handling of large collections already on disk.
+
+**Photoview** is built around RAW files and EXIF. Take it if you shoot RAW and
+want the folder structure to stay the organising principle.
+
+**Lychee** presents rather than manages: fast browsing, clean galleries, little
+machinery.
+
+**LibrePhotos** covers face and object recognition and location data, closest to
+PhotoPrism in scope.
+
+## Publishing
+
+**Ghost** for a publication — newsletters and paid memberships are built in.
+
+**WordPress** for a site that will need plugins and themes, and where other
+people will edit it.
+
+**BookStack** for a wiki. Shelves, books, chapters and pages, and no attempt to
+be a CMS.
+
+## Appointments
+
+**Easy!Appointments** has run since 2013 on PHP and MySQL, and installs without a
+build step.
+
+**Cal.diy** is the community edition of Cal.com. It is the newer of the two and
+asks more of the host.
+
+## E-signature
+
+**OpenSign** and **Documenso** both replace DocuSign for self-hosted signing.
+Documenso is US-registered with development largely from Hamburg; OpenSign is
+registered in India. Neither has a guide here yet.
+
+## Uptime monitoring
+
+**Uptime Kuma** is configured in its interface. Rich probe types, SQLite behind
+it, quick to get running.
+
+**Gatus** is configured in YAML and nothing else, which is what you want when the
+monitoring configuration belongs in the same repository as everything else.
+
+## Project management
+
+**OpenProject** is the full platform — Gantt, work packages, time tracking,
+wikis. The Community Edition has no OIDC or SSO.
+
+**Vikunja** is task management: kanban, lists, Gantt and table views, closer to
+Trello than to a planning suite.
+
+## Where to go next
+
+- [Data sovereignty](/sovereignty/) — licence, jurisdiction, and what each
+  service sends outward
+- [Applications](/applications/) — the services that have a full guide
+- The [repository](https://github.com/rubennati/secure-docker-blueprint#whats-included)
+  lists every service it ships, each with its own README
