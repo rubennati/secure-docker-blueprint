@@ -201,18 +201,52 @@ jobs:
   #
   # External URLs are deliberately not fetched — they fail for reasons unrelated
   # to the commit under test.
+  #
+  # The prose register is checked differentially: the repository carries findings
+  # older than the phrase list, and gating the whole tree would block every
+  # unrelated change until they are cleared. What blocks is a line this change
+  # writes. Full history is needed because the diff is taken from the merge base
+  # of the event's base commit and HEAD.
   # ─────────────────────────────────────────────
   docs-qa:
     name: Docs QA
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
 
       - name: Lint Markdown
         run: npx --yes markdownlint-cli2
 
       - name: Check internal links and anchors
         run: python3 scripts/ci/check-links.py "$GITHUB_STEP_SUMMARY"
+
+      - name: Determine the documentation diff base
+        id: prose-base
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          case "$EVENT_NAME" in
+            pull_request) base="$PR_BASE_SHA" ;;
+            push)         base="$PUSH_BEFORE_SHA" ;;
+            *)            base="" ;;
+          esac
+          # A new branch reports an all-zero "before"; schedule and
+          # workflow_dispatch carry no base at all. Both leave the step below out
+          # rather than inventing a range.
+          if [ "$base" = "0000000000000000000000000000000000000000" ]; then
+            base=""
+          fi
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+
+      - name: Check prose register on changed documentation only
+        if: steps.prose-base.outputs.base != ''
+        env:
+          PROSE_DIFF_BASE: ${{ steps.prose-base.outputs.base }}
+        run: python3 scripts/ci/check-prose.py --changed-only --hints
 
   # ─────────────────────────────────────────────
   # 10. WORKFLOW SUPPLY CHAIN

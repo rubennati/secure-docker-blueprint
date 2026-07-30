@@ -16,6 +16,20 @@ Before any non-trivial task, read the shared `.ai/` workspace:
 
 `.ai/` coordinates work. It never overrides the documents listed under Rule Precedence.
 
+## Documentation — hard rules
+
+Applies to every change that writes or edits documentation. These are pointers to
+rules defined elsewhere, not a second definition of them.
+
+1. **Before writing**, name the reader, the document purpose, the section objective and what is explicitly out of scope — [preflight](docs/standards/documentation-workflow.md#before-drafting-the-purpose-preflight).
+2. **Include only what helps** the reader act, decide, verify, diagnose, or understand a dependency they need.
+3. **Correct is not relevant.** A correct sentence in the wrong context is a documentation defect.
+4. **One canonical owner per changing fact** — [File Map](docs/maintenance.md#file-map--single-source-of-truth). Other files use, summarise, reference or generate it for their own purpose; a second independent version is prohibited.
+5. **Keep current state, planned work and history apart** — `ROADMAP.md`, `CHANGELOG.md`, `docs/bugfixes/`, `docs/audits/` and `.ai/` each own their part.
+6. **State the consequence for the reader**, not the author's reasoning or how the result was reached.
+7. **Register follows the section purpose** — imperative where the reader performs steps, declarative where they establish what is true. No global language rule overrides it: [address and mood](docs/standards/writing-style.md#address-and-mood).
+8. **Check what changed** — the [relevance test](docs/standards/documentation-workflow.md#the-relevance-test) per paragraph, then the checks in [`.ai/quality-gates.md`](.ai/quality-gates.md).
+
 ## Rule Precedence
 
 1. `docs/standards/*.md`
@@ -33,8 +47,14 @@ Read these first for any non-trivial task:
 - `SECURITY.md`
 - `docs/standards/commit-rules.md`
 - `docs/standards/documentation-workflow.md`
+- `docs/standards/writing-style.md`
 - `docs/standards/security-baseline.md`
 - `docs/maintenance.md`
+
+The three that own documentation are `documentation-workflow.md` (purpose,
+readers, section contracts, relevance, ownership modes, update rules),
+`writing-style.md` (register and wording) and `docs/maintenance.md` (File Map —
+which source owns a changing fact, and who keeps each file current).
 
 Conditional:
 
@@ -43,7 +63,8 @@ Conditional:
 ## Task Routing
 
 - Commit, branch, and push behavior: `docs/standards/commit-rules.md`
-- Required documentation updates when code changes: `docs/standards/documentation-workflow.md`
+- Documentation purpose, relevance, ownership modes and update rules: `docs/standards/documentation-workflow.md`
+- How documentation reads — register, address, the seven forms: `docs/standards/writing-style.md`
 - Container hardening, secrets, socket access, and network isolation: `docs/standards/security-baseline.md`
 - Traefik access policies, middleware chains, and TLS profiles: `docs/standards/traefik-security.md`
 - Vulnerability reporting and disclosure process: `SECURITY.md`

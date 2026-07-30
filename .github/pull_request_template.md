@@ -35,7 +35,11 @@ bash ops/scripts/test-security.sh <host>   # if applicable
 - [ ] App-level `README.md`, `UPSTREAM.md`, `CONFIG.md` updated if relevant
 - [ ] No real data in the diff — no real domains, IPs, tokens, or personal paths
 - [ ] Secrets via Docker Secrets or `.env` (gitignored), never hardcoded
-- [ ] Pre-commit verification run (see go-live guide in `docs` branch)
+
+## For documentation changes
+
+- [ ] Preflight done before writing — readers, document purpose, section objective, what is explicitly out of scope, and the canonical owner of each changing fact ([purpose preflight](../docs/standards/documentation-workflow.md#before-drafting-the-purpose-preflight))
+- [ ] `python3 scripts/ci/check-prose.py --changed-only --base HEAD` passes on the changed lines
 
 ## For new apps specifically
 

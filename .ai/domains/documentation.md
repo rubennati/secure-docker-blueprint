@@ -1,18 +1,23 @@
 # Domain — Documentation
 
 **Specs:** [`documentation-workflow.md`](../../docs/standards/documentation-workflow.md) ·
+[`writing-style.md`](../../docs/standards/writing-style.md) ·
 [`maintenance.md`](../../docs/maintenance.md) File Map ·
 [`status-model.md`](../../docs/standards/status-model.md)
+
+An operative summary for a working session. It owns nothing; on any disagreement
+the specs above win.
 
 ## Same change set, not later
 
 Code and its documentation go into the same commit. What is not written while the
 reasons are fresh is lost — the rationale that is obvious today is gone in two weeks.
 
-## One owner per fact
+## One canonical owner per fact
 
-The File Map in `docs/maintenance.md` names the owner of every fact. A mirror never
-overrides its owner. If an owning document looks wrong, propose changing it *there*.
+The File Map in `docs/maintenance.md` names the canonical owner of every fact, and
+separately who keeps each file current. A mirror never overrides its owner. If an
+owning document looks wrong, propose changing it *there*.
 
 Derived files are regenerated, never retyped:
 
@@ -35,14 +40,17 @@ python3 scripts/ci/lifecycle-report.py --write
 
 ## Writing
 
-- English in the repository, German in chat and on the `docs` branch.
-- Neutral or imperative — documentation addresses no one personally.
+- English in the repository, German in chat.
+- Register follows the section's purpose — imperative and direct address where the
+  reader is performing steps, declarative and neutral where the reader is
+  establishing what is true. No global language rule overrides a
+  [section contract](../../docs/standards/documentation-workflow.md#section-contracts).
 - Never name another product or vendor negatively. State what this project does.
 - No real domains, IPs, hostnames or personal data — `example.com` and documentation
   ranges only.
 - No session context, personal attribution or self-critical wording in public files.
-- No links to the `docs` branch from public files — a dead end for anyone who cloned
-  normally.
+- No links from public files to material a normal clone does not contain — a dead
+  end for the reader.
 
 ## Status claims
 

@@ -50,10 +50,10 @@ Never state that an image contains a tool, that a flag exists, or that a version
 current without checking. `docker inspect`, the upstream documentation, the registry
 API — then the claim. "I do not know, I will check" is a valid answer.
 
-## Nothing may be lost
+## Preserved at its owner, not everywhere
 
-Every decision with its reason. Every rejected alternative with why. Every failure
-with cause, fix and lesson. Where each of those belongs:
+A decision that shapes the system, a failure with its cause and fix, and a
+limitation that still applies are kept — each at the place that owns it:
 
 | What | Where |
 |---|---|
@@ -63,11 +63,22 @@ with cause, fix and lesson. Where each of those belongs:
 | Failures | `docs/bugfixes/<app>-<date>.md`, patterns in `errors.md` |
 | Session state | `state.md`, `progress.md` |
 
+Preservation is never a reason to leave content in the wrong document or in the
+reader's path. A fact that belongs elsewhere is moved to its canonical owner, not
+kept in both places.
+
+A rejected alternative is recorded when knowing it changes something later —
+architecture, maintenance, a migration, a repeat of the same mistake, or a
+limitation that still applies. An alternative that fails that test is dropped
+when the decision is made. This is not an instruction to conserve session
+context.
+
 ## Ownership
 
-One fact, one owner — the map is in `docs/maintenance.md`. Never change a fact from a
-document that only mirrors it. If an owning document looks wrong, propose changing it
-*at the owner*.
+One fact, one **canonical owner** — the map is the File Map in
+`docs/maintenance.md`, which also names who keeps each file current. Never change
+a fact from a document that only mirrors it. If an owning document looks wrong,
+propose changing it *at the owner*.
 
 ## Scope discipline
 
@@ -76,8 +87,13 @@ approval. Keep changes reviewable by a human.
 
 ## Language and tone
 
+Owner: [`writing-style.md`](../docs/standards/writing-style.md#address-and-mood).
+
 - Repository content: English. Chat: German.
-- Documentation addresses no one personally — neutral or imperative, not "you must".
+- Register follows the section's purpose: imperative, and direct address where the
+  reader is performing steps; declarative and neutral where the reader is
+  establishing what is true. No global language rule overrides a section's
+  purpose.
 - Never name other products or vendors negatively. State what this project does, not
   what others do badly.
 - No real domains, IPs, hostnames, credentials or personal data. `example.com` and

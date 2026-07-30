@@ -60,8 +60,8 @@ Binding for every guide page (Core Infrastructure, Applications, and anything ad
 ### Page order
 
 1. **One-sentence framing** — what the service does for the reader. No explanation of how this repository or "the Blueprint" is organized; the reader came to install something, not to learn the project's internal taxonomy.
-2. **Quickstart** — the shortest path to a working result, using sensible defaults. No decision content (alternatives, trade-offs, "it depends") blocks this section — if a choice exists, the quickstart takes the simplest default and links to where the alternative lives.
-3. **Verify** — concrete checks that the quickstart worked.
+2. **Installation** — the shortest path to a working result, using sensible defaults. No decision content (alternatives, trade-offs, "it depends") blocks this section — if a choice exists, it takes the simplest default and links to where the alternative lives. The name is `Installation` wherever there is one path. `Quickstart` is reserved for an optional, objectively shorter entry that exists *alongside* the full installation, and it says what it leaves out — see [section contracts](../docs/standards/documentation-workflow.md#section-contracts).
+3. **Verify** — concrete checks that the installation worked.
 4. **Going further** — decisions, alternatives, and hardening that aren't needed for a first working setup. This is where "should I use X or Y" content lives.
 5. **Troubleshooting** — real, confirmed problems and their fixes.
 6. **Updates**
@@ -75,12 +75,16 @@ Use Starlight's built-in components instead of plain prose/tables for these case
 
 | Use this | For |
 |---|---|
-| `<Steps>` | Any ordered sequence of commands (the Quickstart section, primarily) |
+| `<Steps>` | Any ordered sequence of commands (the Installation section, primarily) |
 | `<Aside type="caution">` | A real, confirmed gotcha — not a hypothetical one |
 | `<Aside type="tip">` / `<Aside type="note">` | Optional context that would otherwise be a bolded paragraph |
-| `<Tabs>` | Mutually exclusive choices (e.g. IPv4-only vs. dual-stack) instead of a decision table that blocks the Quickstart |
+| `<Tabs>` | Mutually exclusive choices (e.g. IPv4-only vs. dual-stack) instead of a decision table that blocks the installation |
 
 ### What does not belong on this site
+
+Site-specific, in addition to the register rules that apply everywhere — the
+customer row in [`writing-style.md`](../docs/standards/writing-style.md#audience-per-file)
+owns those.
 
 - **"Available now" / "Planned later" / "Coming soon"** or any other status-of-the-site commentary. A guide either exists — link to it — or it doesn't — don't mention it.
 - **Unconfirmed or speculative claims.** A statement about what's planned must trace to an actual source (`ROADMAP.md`, or explicit maintainer confirmation). If it can't be traced, omit it rather than guess.

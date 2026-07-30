@@ -7,14 +7,27 @@ this repository, and reports where those phrases occur.
 
 Reader-facing files fail. Maintainer files warn, because a findings log has a
 different job and its cleanup is not urgent — the register rules still apply
-there, they are just not a merge gate yet.
+there, they are just not a merge gate.
+
+`--changed-only` reports the same findings for the lines a diff touches, and
+nothing else. That is what CI gates on: a file may carry older findings without
+blocking a change, but a line this change writes has to meet the standard.
 
 Usage:
-    scripts/ci/check-prose.py            # report
-    scripts/ci/check-prose.py --hints    # with the suggested replacement
+    scripts/ci/check-prose.py                             # whole repository
+    scripts/ci/check-prose.py --hints                     # with the suggested replacement
+    scripts/ci/check-prose.py --changed-only --base REF   # only lines the diff touches
+    PROSE_DIFF_BASE=REF scripts/ci/check-prose.py --changed-only
+
+The base is required in `--changed-only`; there is no default, because guessing
+one silently checks the wrong range. Locally, `--base HEAD` covers uncommitted
+work. The diff is taken from the merge base of REF and HEAD, so a base branch
+that has moved on does not drag unrelated commits into the range.
 """
 
+import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -93,32 +106,130 @@ def audience(path: str) -> str:
     return "maintainer"
 
 
-def scan() -> tuple[list[tuple], list[tuple]]:
-    fails, warns = [], []
-    for path in sorted(Path(".").rglob("*.md*")):
-        if any(part in SKIP_DIRS for part in path.parts):
-            continue
-        rel = str(path)
-        if rel in SKIP_FILES:
-            continue
-        try:
-            lines = path.read_text(encoding="utf-8").splitlines()
-        except (OSError, UnicodeDecodeError):
-            continue
+def is_documentation(path: Path) -> bool:
+    if any(part in SKIP_DIRS for part in path.parts):
+        return False
+    return path.suffix.startswith(".md")
 
-        in_code = False
-        for n, line in enumerate(lines, 1):
-            if line.lstrip().startswith("```"):
-                in_code = not in_code
-                continue
-            if in_code:
-                continue
-            low = line.lower()
-            for phrase, (category, hint) in PHRASES.items():
-                if phrase in low:
-                    row = (rel, n, phrase, category, hint, line.strip())
-                    (fails if audience(rel) == "reader-facing" else warns).append(row)
+
+def scan_file(path: Path, rel: str) -> list[tuple]:
+    """Every phrase occurrence in one file, in line order."""
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeDecodeError):
+        return []
+
+    rows, in_code = [], False
+    for n, line in enumerate(lines, 1):
+        if line.lstrip().startswith("```"):
+            in_code = not in_code
+            continue
+        if in_code:
+            continue
+        low = line.lower()
+        for phrase, (category, hint) in PHRASES.items():
+            if phrase in low:
+                rows.append((rel, n, phrase, category, hint, line.strip()))
+    return rows
+
+
+def split_by_audience(rows: list[tuple]) -> tuple[list[tuple], list[tuple]]:
+    fails, warns = [], []
+    for row in rows:
+        (fails if audience(row[0]) == "reader-facing" else warns).append(row)
     return fails, warns
+
+
+def scan() -> tuple[list[tuple], list[tuple]]:
+    rows = []
+    for path in sorted(Path(".").rglob("*.md*")):
+        rel = str(path)
+        if not is_documentation(path) or rel in SKIP_FILES:
+            continue
+        rows.extend(scan_file(path, rel))
+    return split_by_audience(rows)
+
+
+# ── differential mode ────────────────────────────────────────────────────────
+
+HUNK = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@")
+
+
+class GitError(RuntimeError):
+    pass
+
+
+def git(*args: str) -> str:
+    """Run git without a shell, so paths with spaces stay intact."""
+    proc = subprocess.run(["git", *args], capture_output=True, text=True)
+    if proc.returncode != 0:
+        raise GitError(proc.stderr.strip() or f"`git {' '.join(args)}` failed")
+    return proc.stdout
+
+
+def resolve_base(ref: str) -> str:
+    """The commit the diff is taken from: the merge base of ref and HEAD."""
+    try:
+        sha = git("rev-parse", "--verify", f"{ref}^{{commit}}").strip()
+    except GitError:
+        raise GitError(
+            f"diff base {ref!r} is not a commit in this repository — "
+            "pass --base <ref> or set PROSE_DIFF_BASE to one that is"
+        )
+    try:
+        return git("merge-base", sha, "HEAD").strip()
+    except GitError:
+        print(f"   note: no merge base with HEAD, comparing against {ref} directly")
+        return sha
+
+
+def changed_documentation(base_sha: str) -> list[str]:
+    """Documentation files added, copied, modified or renamed since base.
+
+    Deletions are excluded by --diff-filter: a file that is gone has no line to
+    check, and reading it would fail.
+    """
+    out = git("diff", "--name-only", "-z", "-M", "--diff-filter=ACMR", base_sha)
+    return [p for p in out.split("\0") if p]
+
+
+def untracked_documentation() -> list[str]:
+    """Documentation git cannot see yet.
+
+    `git diff` compares commits and tracked files, so a new file that has not
+    been added is in no diff and would pass unexamined. In CI there are none;
+    locally this is the file someone just created.
+    """
+    out = git("ls-files", "--others", "--exclude-standard", "-z")
+    return [p for p in out.split("\0") if p and is_documentation(Path(p))]
+
+
+def changed_lines(base_sha: str, rel: str) -> set[int]:
+    """Line numbers on the new side of the diff for one file."""
+    out = git("diff", "--unified=0", "--no-color", "-M", base_sha, "--", rel)
+    touched: set[int] = set()
+    for line in out.splitlines():
+        m = HUNK.match(line)
+        if m:
+            start = int(m.group(1))
+            count = 1 if m.group(2) is None else int(m.group(2))
+            touched.update(range(start, start + count))
+    return touched
+
+
+def scan_changed(base_sha: str) -> tuple[list[tuple], list[tuple], list[tuple]]:
+    rows, checked = [], []
+    for rel in changed_documentation(base_sha):
+        path = Path(rel)
+        if not is_documentation(path) or rel in SKIP_FILES or not path.is_file():
+            continue
+        touched = changed_lines(base_sha, rel)
+        if not touched:
+            continue
+        checked.append((rel, len(touched)))
+        rows.extend(row for row in scan_file(path, rel) if row[1] in touched)
+    fails, warns = split_by_audience(rows)
+    return fails, warns, checked
 
 
 def report(rows: list[tuple], hints: bool) -> None:
@@ -129,8 +240,67 @@ def report(rows: list[tuple], hints: bool) -> None:
             print(f"      → {hint}")
 
 
+def base_from_args(argv: list[str]) -> str | None:
+    if "--base" in argv:
+        i = argv.index("--base")
+        if i + 1 < len(argv) and not argv[i + 1].startswith("--"):
+            return argv[i + 1]
+        return None
+    return os.environ.get("PROSE_DIFF_BASE") or None
+
+
+def run_changed_only(argv: list[str], hints: bool) -> int:
+    ref = base_from_args(argv)
+    if not ref:
+        print("❌ --changed-only needs a diff base")
+        print("   pass --base <ref>, or set PROSE_DIFF_BASE=<ref>")
+        print("   locally, --base HEAD covers uncommitted work")
+        return 2
+
+    try:
+        base_sha = resolve_base(ref)
+        fails, warns, checked = scan_changed(base_sha)
+        untracked = untracked_documentation()
+    except GitError as exc:
+        print(f"❌ {exc}")
+        return 2
+
+    print(f"Changed documentation since {base_sha[:12]} ({ref}):")
+    for rel, count in checked:
+        print(f"   {rel} — {count} changed line(s)")
+    if not checked:
+        print("   none")
+
+    for rel in untracked:
+        print(f"   {rel} — untracked, not in any diff; `git add` it to have it checked")
+
+    if not checked:
+        print("\n✅ no changed documentation lines in this diff")
+        return 0
+
+    if fails:
+        print(f"\n❌ {len(fails)} on changed lines in reader-facing files")
+        report(fails, hints)
+    if warns:
+        print(f"\n🟡 {len(warns)} on changed lines in maintainer files (not a gate)")
+        report(warns, hints)
+
+    total = len(fails) + len(warns)
+    print(f"\n{'❌' if fails else '✅'} {total} phrase(s) on changed lines · "
+          f"{len(fails)} blocking · {len(warns)} warning(s) · "
+          f"{len(checked)} file(s) checked")
+    if not hints and total:
+        print("   run with --hints for the suggested replacement")
+    print("   findings outside these lines are reported by a run without --changed-only")
+    return 1 if fails else 0
+
+
 def main() -> int:
-    hints = "--hints" in sys.argv
+    argv = sys.argv[1:]
+    hints = "--hints" in argv
+    if "--changed-only" in argv:
+        return run_changed_only(argv, hints)
+
     fails, warns = scan()
 
     if fails:

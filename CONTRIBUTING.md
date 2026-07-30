@@ -56,15 +56,24 @@ See [`docs/standards/commit-rules.md`](docs/standards/commit-rules.md) for the d
 
 The CI pipeline is the automated test suite for this configuration project. It runs on every push and pull request. **All checks must pass before merge.**
 
-| Job | What it validates |
+| Area | What it validates |
 |---|---|
-| Secret scan | No credentials committed to git history |
-| Compose validation | All compose files parse and resolve correctly |
-| Structure check | Every service directory has `README.md`, `.env.example`, no `:latest` image tags |
-| Sentinel check | No `__REPLACE_ME__` values in committed `.env` files |
+| Secrets | No credentials in the commit history, no `__REPLACE_ME__` left in a committed `.env` |
+| Compose | Every compose file parses and resolves; every stack has a `README.md` and a `.env.example` |
 | Security baseline | `no-new-privileges:true` present, no `privileged: true`, socket proxy pattern enforced |
+| Canonical structure | No `:latest` or major-only image tags, no plaintext secrets, no datastore on the public network |
+| Status model | Owner and mirror agree on a status, `LIFECYCLE.md` is current, ✅ carries a verification date |
+| Checker coverage | No content directory that no checker looks at |
+| Documentation | Markdown style, internal links and anchors, and the prose register on changed lines |
+| Workflow supply chain | Actions pinned by SHA, every workflow declares `permissions:` |
 
 See [`docs/standards/ci.md`](docs/standards/ci.md) for full documentation of each job.
+
+**Documentation quality is checked.** The prose register is applied
+differentially: a phrase from the [writing-style](docs/standards/writing-style.md)
+list on a line your change writes fails the build, while findings elsewhere in
+the same file do not. Older findings in a file are therefore not a licence to add
+more, and not a reason to clean up unrelated text in your pull request.
 
 ### Running checks locally
 
@@ -75,6 +84,15 @@ python3 scripts/ci/check-baseline.py
 ```
 
 This validates every compose file against the security baseline rules and prints all violations and documented exceptions.
+
+Before pushing, the checks most likely to fail on a documentation or structure change:
+
+```bash
+python3 scripts/ci/check-prose.py --changed-only --base HEAD
+python3 scripts/ci/check-links.py
+npx markdownlint-cli2
+python3 scripts/ci/check-structure.py
+```
 
 ## Questions?
 

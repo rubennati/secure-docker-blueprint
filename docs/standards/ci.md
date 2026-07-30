@@ -189,6 +189,47 @@ branch-protection setting.
 
 ---
 
+### 9 — Docs QA
+
+Three checks over the documentation:
+
+| Check | Command | Scope |
+|---|---|---|
+| Markdown style | `npx markdownlint-cli2` | every tracked Markdown file |
+| Internal links and anchors | `scripts/ci/check-links.py` | relative paths and heading anchors — external URLs fail for reasons unrelated to the commit and are excluded |
+| Prose register | `scripts/ci/check-prose.py --changed-only` | only the lines this change touches |
+
+#### How the diff base is determined
+
+| Event | Base commit |
+|---|---|
+| `pull_request` | `github.event.pull_request.base.sha` |
+| `push` | `github.event.before` |
+| `schedule`, `workflow_dispatch`, first push of a new branch | none — the prose step is skipped rather than given an invented range |
+
+The commit is passed to the script as `PROSE_DIFF_BASE`, and the script takes the
+diff from the merge base of that commit and `HEAD`, so a base branch that has
+moved on does not pull unrelated commits into the range. The job checks out with
+`fetch-depth: 0` because that history has to be present. A base that does not
+resolve exits 2 with a message instead of checking a wrong range.
+
+#### What the prose check blocks
+
+A phrase from the [writing-style](writing-style.md) list on a line the diff adds
+or changes, in a reader-facing file. Findings on lines the change did not touch
+do not block: the repository carries findings older than the phrase list, and a
+full run — `python3 scripts/ci/check-prose.py`, without `--changed-only` — still
+reports them. That run is a local inventory and is not green today.
+
+The checker matches phrases. Whether a paragraph belongs to the purpose of its
+section is [the relevance test](documentation-workflow.md#the-relevance-test),
+which no checker can perform and which stays a review step.
+
+**Blocks merge:** not yet — the job runs, but adding it to the required set is a
+branch-protection setting.
+
+---
+
 ## Running locally
 
 ```bash
@@ -200,6 +241,9 @@ python3 scripts/ci/check-baseline.py
 python3 scripts/ci/check-structure.py
 python3 scripts/ci/lifecycle-report.py --check
 python3 scripts/ci/check-coverage.py
+
+# What the Docs QA prose gate will see — uncommitted work included
+python3 scripts/ci/check-prose.py --changed-only --base HEAD
 ```
 
 Output:

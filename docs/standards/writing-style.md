@@ -1,10 +1,15 @@
 # Writing Style
 
-How documentation in this repository is written. Enforced by
-`scripts/ci/check-prose.py`.
+How documentation in this repository reads, at the level of the sentence and the
+paragraph.
 
-[Documentation Workflow](documentation-workflow.md) says *when* a file is
-updated and *what* belongs in it. This says how the text reads.
+[`documentation-workflow.md`](documentation-workflow.md) owns purpose, readers,
+section contracts, relevance and information ownership — *whether* a sentence
+belongs in a given document. This file owns *how* it reads once it does. A
+sentence has to pass both; neither file overrides the other.
+
+`scripts/ci/check-prose.py` covers part of what is below —
+[Checking](#checking) states which part.
 
 ---
 
@@ -86,6 +91,26 @@ two facts let the reader rank them. "Milder" does not.
 
 ---
 
+## Address and mood
+
+English in the repository. German only in the exchange with the maintainer.
+
+Whether a text addresses its reader directly follows from what the section is
+for, not from a repository-wide preference:
+
+| The reader is | Register |
+|---|---|
+| Performing steps — installation, operations, troubleshooting, verification | Imperative, and direct address where that makes the action clearer: *run this*, *set it to `false`*, *check that the container reports healthy* |
+| Establishing what is true — reference, architecture, policy, status, decision records | Declarative and neutral. The subject is the system, not the reader |
+
+Neither register licenses the other's failure mode. An imperative step still
+states what happens when the value is wrong; a declarative reference still names
+the action a value causes.
+
+No repository-wide language rule overrides the purpose of a document or a
+section. Where the two appear to conflict, the [section
+contract](documentation-workflow.md#section-contracts) decides.
+
 ## Audience per file
 
 The status model already assigns [one owner per
@@ -131,12 +156,24 @@ came back; it does not need aphorism or dramatic emphasis either.
 ## Checking
 
 ```bash
-python3 scripts/ci/check-prose.py           # report
-python3 scripts/ci/check-prose.py --fix-hint # with the suggested replacement
+python3 scripts/ci/check-prose.py                            # the whole repository
+python3 scripts/ci/check-prose.py --changed-only --base HEAD # the lines a change touches
+python3 scripts/ci/check-prose.py --hints                    # with the suggested replacement
 ```
+
+The full run is an inventory. It still reports findings in reader-facing files
+that predate this list, so it is not green, and clearing them is separate work.
+
+The differential run is the gate: CI executes it in the `Docs QA` job against the
+base commit of the event, and a finding on a line the change writes fails the
+job. That a file carries older findings does not make them right — it makes them
+unblocked. A line being edited is held to the current standard, whatever the rest
+of the file still contains.
 
 The checker matches an exact phrase list, not a general pattern. It finds the
 recurring formulations and nothing else — passing it is not evidence that a file
-reads well, only that it avoids the seven known shapes.
+reads well, only that it avoids the seven known shapes. Purpose, relevance and
+whether a fact sits in the document that owns it are review questions, decided
+against [`documentation-workflow.md`](documentation-workflow.md).
 
 Add a phrase when it appears twice. A one-off gets fixed in review.

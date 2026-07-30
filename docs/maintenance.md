@@ -16,14 +16,16 @@ No chain needs to be run in full every time. Run only what the trigger requires.
 
 ## File Map — Single Source of Truth
 
-Each piece of information has exactly one owner. When two files disagree, the owner wins and the mirror is corrected.
+Each changing fact has exactly one **canonical owner** — the source that defines it. When two files disagree, the canonical owner wins and the mirror is corrected. Which role keeps a file current is a separate question, answered under [Maintenance responsibility](#maintenance-responsibility).
 
-| Information | Owner | Mirrors / references it |
+Four models describe documentation in this repository, each answering one question. This File Map answers **which source owns a changing fact**. [`standards/documentation-workflow.md`](standards/documentation-workflow.md) answers **what a document or section is for, and when it has to be updated**. [`standards/writing-style.md`](standards/writing-style.md) answers **how the content is written** once it belongs. [`../.ai/domains/documentation.md`](../.ai/domains/documentation.md) is a short operative summary of all three for a working session, and is never a canonical owner.
+
+| Information | Canonical owner | Mirrors / references it |
 |---|---|---|
 | Status definitions (what ✅ / 🚧 / 📋 promise) | `docs/standards/status-model.md` | Root README legend, `LIFECYCLE.md` |
 | App status — `business/`, `monitoring/`, `backup/` | Category README | Root README tables, `LIFECYCLE.md` |
 | App status — `core/`, `apps/` | Root README tables | `LIFECYCLE.md` |
-| Per-stack lifecycle detail | *generated* — `scripts/ci/lifecycle-report.py` | `LIFECYCLE.md` (never hand-edited) |
+| Per-stack lifecycle detail | the sources listed in [`standards/status-model.md`](standards/status-model.md#who-owns-which-fact) — status, pin, `Last verified`, baseline | `LIFECYCLE.md`, *generated* by `scripts/ci/lifecycle-report.py`, never hand-edited |
 | App location (category) | Directory structure | README tables |
 | Shipped work | `CHANGELOG.md` | — |
 | Direction / planned work | `ROADMAP.md` | Category READMEs reference, do not duplicate |
@@ -45,6 +47,24 @@ Each piece of information has exactly one owner. When two files disagree, the ow
 ```bash
 python3 scripts/ci/lifecycle-report.py --write
 ```
+
+**Generated is a presentation mode, not a second owner.** `LIFECYCLE.md` holds no fact of its own: every column is read from the canonical source named above, the file is written only by `scripts/ci/lifecycle-report.py --write`, and it is never edited by hand. A wrong value in it is corrected at that source and the file regenerated — editing the generated file changes nothing that survives the next run.
+
+---
+
+## Maintenance responsibility
+
+Who keeps a file current. This is a role, not ownership of the facts inside the file: a file may carry facts owned elsewhere, and the role below keeps the file — its content, its references and its mirrors — correct.
+
+| Document | Maintenance responsibility | When to touch |
+|---|---|---|
+| `README.md` | Maintainer | Any user-visible change |
+| `ROADMAP.md` | Maintainer | Planning, milestones |
+| `SECURITY.md` | Maintainer | Policy updates |
+| `docs/standards/*` | Maintainer | Standard evolution |
+| `docs/bugfixes/*` | Whoever fixed the bug | At the event |
+| App `README.md` | App contributor | When changing that app |
+| App `UPSTREAM.md` | App contributor | At version bumps |
 
 ---
 
