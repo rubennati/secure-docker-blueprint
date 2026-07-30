@@ -32,6 +32,7 @@ export default defineConfig({
 			components: {
 				Head: './src/components/Head.astro',
 				SiteTitle: './src/components/SiteTitle.astro',
+				Footer: './src/components/Footer.astro',
 			},
 			// A reader arrives at any of these pages, from a search engine as often
 			// as from the home page, and needs to recognise from the section alone

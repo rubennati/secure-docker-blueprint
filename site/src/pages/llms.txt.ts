@@ -38,6 +38,11 @@ const SECTIONS: { heading: string; prefix: string }[] = [
   { heading: 'Reference', prefix: 'faq' },
   { heading: 'Reference', prefix: 'sources' },
   { heading: 'Reference', prefix: 'project' },
+  // Footer-only pages: reachable from every page, deliberately not in the
+  // sidebar, but part of the site and so part of this index.
+  { heading: 'Reference', prefix: 'accessibility' },
+  { heading: 'Reference', prefix: 'legal' },
+  { heading: 'Reference', prefix: 'privacy' },
 ];
 
 const NOTES = [

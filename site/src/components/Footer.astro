@@ -1,0 +1,119 @@
+---
+/**
+ * Site footer.
+ *
+ * Wraps Starlight's default rather than replacing it — the default carries the
+ * prev/next links, which three pages in the start path rely on.
+ *
+ * Three groups, because they answer three different questions: what this is,
+ * whether it can be trusted, and who is responsible for it. "Report a problem"
+ * builds a GitHub issue that already knows which page it came from, so a reader
+ * who spots an error does not have to describe where they were.
+ */
+import Default from '@astrojs/starlight/components/Footer.astro';
+import { siteContentLicence } from '../data/site-config';
+
+const REPO = 'https://github.com/rubennati/secure-docker-blueprint';
+
+const { title, id } = Astro.locals.starlightRoute.entry.data
+	? { title: Astro.locals.starlightRoute.entry.data.title, id: Astro.locals.starlightRoute.id }
+	: { title: '', id: '' };
+
+const pageUrl = new URL(id === '' ? '/' : `/${id}/`, Astro.site ?? Astro.url.origin).href;
+
+const issueUrl =
+	`${REPO}/issues/new?` +
+	new URLSearchParams({
+		title: `Documentation: ${title}`,
+		body: `**Page:** ${title}\n**URL:** ${pageUrl}\n\n**What is wrong or unclear:**\n\n`,
+	}).toString();
+
+const year = new Date().getUTCFullYear();
+---
+
+<Default {...Astro.props} />
+
+<div class="sitefoot">
+	<div class="sitefoot__cols">
+		<nav aria-labelledby="foot-project">
+			<h2 id="foot-project">Project</h2>
+			<ul>
+				<li><a href="/project/">About this project</a></li>
+				<li><a href={REPO}>Technical repository</a></li>
+				<li><a href={`${REPO}/blob/main/CONTRIBUTING.md`}>Contribute</a></li>
+				<li><a href={issueUrl}>Report a problem with this page</a></li>
+			</ul>
+		</nav>
+
+		<nav aria-labelledby="foot-trust">
+			<h2 id="foot-trust">Trust</h2>
+			<ul>
+				<li><a href="/sources/">How sources are checked</a></li>
+				<li><a href="/project/#reporting-a-security-issue">Report a vulnerability</a></li>
+				<li><a href="/accessibility/">Accessibility</a></li>
+				<li><a href="/.well-known/security.txt">security.txt</a></li>
+			</ul>
+		</nav>
+
+		<nav aria-labelledby="foot-legal">
+			<h2 id="foot-legal">Legal</h2>
+			<ul>
+				<li><a href="/legal/">Legal notice</a></li>
+				<li><a href="/privacy/">Privacy</a></li>
+				<li><a href={`${REPO}/blob/main/LICENSE`}>Apache-2.0 (code)</a></li>
+			</ul>
+		</nav>
+	</div>
+
+	<p class="sitefoot__fine">
+		© {year} SecDockBlue · built on{' '}
+		<a href={REPO}>Secure Docker Blueprint</a><br />
+		Repository code: Apache-2.0 · Site content: {siteContentLicence}
+	</p>
+</div>
+
+<style>
+	.sitefoot {
+		margin-block-start: 3rem;
+		padding-block-start: 1.5rem;
+		border-top: 1px solid var(--sl-color-hairline);
+		font-size: var(--sl-text-sm);
+	}
+	.sitefoot__cols {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+		gap: 1.5rem 2rem;
+	}
+	.sitefoot h2 {
+		margin: 0 0 0.5rem;
+		font-size: var(--sl-text-xs);
+		font-weight: 600;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		color: var(--sl-color-gray-3);
+	}
+	.sitefoot ul {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: grid;
+		gap: 0.35rem;
+	}
+	.sitefoot li {
+		margin: 0;
+	}
+	.sitefoot a {
+		color: var(--sl-color-gray-2);
+		text-decoration: none;
+	}
+	.sitefoot a:hover {
+		color: var(--sl-color-white);
+		text-decoration: underline;
+	}
+	.sitefoot__fine {
+		margin-block-start: 1.5rem;
+		font-size: var(--sl-text-xs);
+		line-height: 1.7;
+		color: var(--sl-color-gray-3);
+	}
+</style>

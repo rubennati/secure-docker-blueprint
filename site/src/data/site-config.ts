@@ -26,3 +26,13 @@ export const externalLinkInterstitial: 'always' | 'once-per-session' | 'off' = '
  * these are exempt from the confirmation — they still open in a new tab.
  */
 export const ownHosts: string[] = ['github.com', 'secdockblue.rubennati.at'];
+
+/**
+ * Licence for the site's own text, diagrams and page structure.
+ *
+ * Deliberately separate from the repository's Apache-2.0, which covers code.
+ * Applying a software licence to prose by default would be an assumption
+ * nobody made — so this stays an explicit placeholder until it is decided,
+ * rather than a claim the footer quietly starts making.
+ */
+export const siteContentLicence = 'not yet decided — see /legal/';

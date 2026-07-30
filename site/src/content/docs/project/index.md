@@ -58,14 +58,43 @@ was verified where one exists, and a line naming what was not exercised. The
 
 ## Reporting a security issue
 
-Please do not open a public issue for a vulnerability. Use GitHub's private advisory form — the discussion stays closed until a fix is released.
+**Not as a public issue.** Use GitHub's private advisory form — the discussion
+stays closed until a fix is released, so the report does not become an
+advertisement for an unpatched problem.
 
 [Report a vulnerability →](https://github.com/rubennati/secure-docker-blueprint/security/advisories/new)
 
-Expect acknowledgement within 7 days and an assessment within 14. Machine-readable contact details are at [`/.well-known/security.txt`](/.well-known/security.txt).
+Useful in a report: which stack and version, what you did, what happened, and
+what you expected. A working reproduction is worth more than a severity rating.
 
-## License and contributing
+Expect acknowledgement within 7 days and an assessment within 14. Machine-readable
+contact details are at [`/.well-known/security.txt`](/.well-known/security.txt),
+per RFC 9116.
 
-[Apache 2.0](https://github.com/rubennati/secure-docker-blueprint/blob/main/LICENSE) — free to use, fork and modify with attribution.
+## Reporting a problem with the documentation
 
-Contributions are welcome. [CONTRIBUTING.md](https://github.com/rubennati/secure-docker-blueprint/blob/main/CONTRIBUTING.md) covers the workflow, and [ROADMAP.md](https://github.com/rubennati/secure-docker-blueprint/blob/main/ROADMAP.md) sets out what is planned.
+Anything that is wrong, out of date or unclear on this site: a normal public
+issue is the right place. Every page's footer has a link that opens one with the
+page title and URL already filled in.
+
+[Open a documentation issue →](https://github.com/rubennati/secure-docker-blueprint/issues/new)
+
+Particularly worth reporting: a command that does not work as written, a claim a
+cited source does not actually support, and a guide whose stated version no
+longer matches what the repository pins.
+
+## Contributing
+
+Contributions are welcome. [CONTRIBUTING.md](https://github.com/rubennati/secure-docker-blueprint/blob/main/CONTRIBUTING.md)
+covers the workflow, and [ROADMAP.md](https://github.com/rubennati/secure-docker-blueprint/blob/main/ROADMAP.md)
+sets out what is planned.
+
+## Licence
+
+The repository's code — Compose files, scripts, configuration — is
+[Apache 2.0](https://github.com/rubennati/secure-docker-blueprint/blob/main/LICENSE):
+free to use, fork and modify with attribution.
+
+**This site's text and diagrams are a separate question and not yet settled.**
+A software licence does not extend to prose by default, and nothing here claims
+one until it is chosen. See the [legal notice](/legal/).
