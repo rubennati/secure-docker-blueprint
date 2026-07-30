@@ -103,14 +103,32 @@ sends anything about the installation.
 None of these stacks has been run on a host yet, so every line below is read from
 upstream's source, not observed on the wire.
 
-| Stack | Unrequested outbound call | Off by |
-|---|---|---|
-| **changedetection** | daily POST to `changedetection.io/check-ver.php` — version, **persistent install GUID**, watch count | `DISABLE_VERSION_CHECK=yes`, now set in compose |
-| **uptime-kuma** | GET `uptime.kuma.pet/version` every 48 h — no payload | Settings → About, post-install only |
-| **ntfy** | none unless you enable iOS push | already commented out |
-| beszel · beszel-agent | none — the agent dials the hub, nothing else | — |
-| gatus | none | — |
-| healthchecks | none | — |
+| Stack | Unrequested outbound call | Off by | How well established |
+|---|---|---|---|
+| **changedetection** | daily POST to `changedetection.io/check-ver.php` — version, **persistent install GUID**, watch count | `DISABLE_VERSION_CHECK=yes`, now set in compose | the call is in `flask_app.py` |
+| **uptime-kuma** | GET `uptime.kuma.pet/version` every 48 h — no payload | Settings → About, post-install only | URL and interval in `check-version.js`; default in `Settings.vue` |
+| **ntfy** | none unless you enable iOS push | already commented out | documented upstream |
+| beszel · beszel-agent | none automatically — but `beszel update` fetches from `api.github.com` (or `gh.beszel.dev` with the mirror flag) | it is a subcommand, not a timer | invocation traced to `case subcommand == "update"` |
+| gatus | none found | — | **searched, nothing found** |
+| healthchecks | none found | — | vendor documents its outbound integrations; search found nothing |
+
+### The last two rows are a weaker claim than the first two
+
+Finding a call proves it exists. Not finding one proves that the searches ran —
+nothing more. A source search only covers the shapes somebody thought to search
+for, and this repository has already been bitten four times by the same class of
+error: a thing that was configured, looked correct, and silently did nothing
+because it was never actually reached. "I looked and found nothing" becoming
+"there is nothing" is the same mistake pointed the other way.
+
+**The only thing that settles it is watching the wire**, and none of these
+stacks has been run yet. When monitoring is deployed for v0.8.0, the test is
+cheap: attach the stack to a network with a default-deny egress rule and read
+what gets refused, over at least 48 hours — Uptime Kuma's interval is long
+enough to be missed by a short observation.
+
+Until then, treat the bottom two rows as *not currently known to*, not as
+*does not*.
 
 **changedetection is the one worth naming.** The GUID is persistent, so the daily
 request is a per-installation beacon rather than a version lookup, and the watch

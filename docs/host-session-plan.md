@@ -147,6 +147,12 @@ settled ground.
       to the middleware list, empty by default — the three axes in
       `profiles.md` are now expressible on a router (finding 26)
 - [ ] Roll `APP_TRAEFIK_THREAT` out to the remaining stacks as each is reviewed
+- [ ] **Prove the egress claims on the wire, when monitoring is deployed.**
+      Reading source establishes that a call exists; it cannot establish that
+      none does. gatus and healthchecks are recorded as *not currently known
+      to* rather than *does not*. Attach the stack to a default-deny egress
+      network and read the refusals for 48 h — long enough to catch Uptime
+      Kuma's interval
 - [?] **The community blocklist is a two-way arrangement, on by default.**
       15,880 addresses arrive; this host's own detections leave. Not the request
       content — `context` is off. Worth it by the numbers (14 hours of local
