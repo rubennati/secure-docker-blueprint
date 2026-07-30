@@ -64,8 +64,12 @@ sudo apt install mariadb-client        # or postgresql-client, mongodb-database-
    `PATH` does not include.
    :::
 
-3. Create the passphrase and the repository. Both the passphrase **and** the
-   exported key are needed to read a backup; losing either loses everything:
+3. Create the passphrase and the repository. With `repokey` the encrypted key
+   lives **inside** the repository and the passphrase unlocks it, so the
+   passphrase is what reading a backup depends on. Exporting the key adds an
+   independent recovery copy for the case where the repository's own copy is
+   lost or damaged — restoring from that export needs the export *and* its
+   original passphrase:
 
    ```bash
    openssl rand -base64 32 | tr -d '\n' | sudo tee /root/.borg-passphrase > /dev/null
@@ -147,9 +151,12 @@ certificate for:
 TLS/SSL error: SSL is required, but the server does not support it
 ```
 
-This connection runs from the host to a container over a local bridge and never
-reaches a network, so a certificate lifecycle for it would buy nothing. For a
-database that genuinely is remote, configure TLS on the server instead.
+This connection runs from the host to a container over a local bridge. Leaving it
+unencrypted is an accepted trust assumption about that bridge rather than a
+statement that TLS would achieve nothing — it would still cover a
+misconfiguration that put the database somewhere less local than you think. The
+trade here is a certificate lifecycle for a link that does not leave the machine.
+For a database that genuinely is remote, configure TLS on the server.
 
 ## Quiescing, where the files and the database must agree
 

@@ -131,7 +131,11 @@ tested and the thing running are different at some unknown point.
 
 `no-new-privileges` and dropped capabilities on every service, checked before a
 change is merged. Read-only root filesystems and non-root users where the image
-allows. No privileged containers, and no service with the Docker socket mounted.
+allows. No privileged containers. Neither the proxy nor any application container
+mounts the Docker socket — one dedicated filtering proxy does, and it is the only
+thing that does, exposing only the API operations discovery needs. Note that
+mounting a Unix socket `:ro` does not make the API read-only; the filtering rules
+are what limit it.
 One internal network per application.
 
 The choice of runtime, the host kernel, and whether a workload deserves a VM

@@ -113,6 +113,19 @@ export const sources: Source[] = [
 			'Practical baseline measures for small organisations, including backup, multi-factor authentication and patching.',
 	},
 
+	{
+		id: 'gdpr-art-33',
+		title: 'GDPR Article 33 — Notification of a personal data breach to the supervisory authority',
+		publisher: 'European Union (EUR-Lex)',
+		jurisdiction: 'EU',
+		kind: 'legislation',
+		published: '2016-04-27',
+		lastChecked: '2026-07-31',
+		url: 'https://eur-lex.europa.eu/eli/reg/2016/679/art_33/oj',
+		supports:
+			'A controller notifies the supervisory authority without undue delay and, where feasible, within 72 hours of becoming aware of a personal data breach, unless it is unlikely to result in a risk to the rights and freedoms of natural persons; a processor notifies its controller without undue delay.',
+	},
+
 	// --- International -----------------------------------------------------
 	{
 		id: 'nist-sp800-41',
@@ -196,12 +209,16 @@ export const sources: Source[] = [
 	},
 	{
 		id: 'nist-sp800-63b',
-		title: 'SP 800-63B — Digital Identity Guidelines: Authentication and Lifecycle Management',
+		title: 'SP 800-63B-4 — Digital Identity Guidelines: Authentication and Authenticator Management',
 		publisher: 'NIST',
 		jurisdiction: 'International',
 		kind: 'standard',
-		lastChecked: '2026-07-30',
-		url: 'https://pages.nist.gov/800-63-3/sp800-63b.html',
+		published: '2025-07-31',
+		// Revision 3 was cited here until 2026-07-31 and had been withdrawn since
+		// August 2025 — an outdated official document is exactly what the
+		// precedence note above says must not win.
+		lastChecked: '2026-07-31',
+		url: 'https://csrc.nist.gov/pubs/sp/800/63/b/4/final',
 		supports:
 			'Length matters more than composition rules; forced periodic password expiry is not recommended without evidence of compromise; SMS is a weaker authenticator than an authenticator app or a hardware key.',
 	},
@@ -243,15 +260,17 @@ export const sources: Source[] = [
 	},
 	{
 		id: 'nist-sp800-61',
-		title: 'SP 800-61 Rev. 2 — Computer Security Incident Handling Guide',
+		title: 'SP 800-61 Rev. 3 — Incident Response Recommendations and Considerations',
 		publisher: 'NIST',
 		jurisdiction: 'International',
-		published: '2012-08-06',
-		lastChecked: '2026-07-30',
+		published: '2025-04-03',
+		// Revision 2 was cited here until 2026-07-31; it was superseded in April
+		// 2025 and subsequently withdrawn.
+		lastChecked: '2026-07-31',
 		kind: 'standard',
-		url: 'https://csrc.nist.gov/pubs/sp/800/61/r2/final',
+		url: 'https://csrc.nist.gov/pubs/sp/800/61/r3/final',
 		supports:
-			'Incident response is a cycle — preparation, detection and analysis, containment, eradication and recovery, then post-incident learning — and the preparation half decides how the rest goes.',
+			'Incident response is a continuous cycle rather than a procedure run once, and preparation determines how the rest of it goes.',
 	},
 	{
 		id: 'nist-sp800-34',

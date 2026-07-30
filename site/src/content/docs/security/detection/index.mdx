@@ -96,9 +96,13 @@ Write the answers down somewhere that is not on the server.
 - **Which credentials get rotated,** in what order, and where are they all listed?
 - **How do I reach the machine** if the usual path is what was compromised? See
   the break-glass account in [identity and privileged access](/security/identity/).
-- **Who has to be told, and within what deadline?** Personal data breaches carry
-  a statutory notification window. That clock does not wait for you to finish
-  investigating.
+- **Who has to be told, and within what deadline?** If personal data may be
+  involved, decide first whether the incident is a personal data breach under the
+  GDPR. A controller notifies the competent supervisory authority without undue
+  delay and, where feasible, within 72 hours — unless the breach is unlikely to
+  result in a risk to people's rights and freedoms. A processor notifies its
+  controller without undue delay instead. That clock does not wait for you to
+  finish investigating.
 - **Which backup do I restore from,** given that the most recent one may be
   newer than the intrusion? This is the question that makes versioned backups
   worth their cost.
@@ -125,4 +129,4 @@ notification delivery — with their own READMEs. **There is no guide on this si
 for any of them, and no central log collection is set up for you.** Incident
 response is entirely yours.
 
-<Sources ids={['cisa-logging', 'nist-sp800-61', 'eu-enisa-sme']} />
+<Sources ids={['cisa-logging', 'nist-sp800-61', 'gdpr-art-33', 'eu-enisa-sme']} />

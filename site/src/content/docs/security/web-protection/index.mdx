@@ -92,11 +92,13 @@ actual route, and there is no error message for the gap.
 
 Two consequences worth carrying:
 
-**Behind a VPN, detection sees almost nothing.** Requests refused by an access
-policy never reach the log the engine reads. Measured on this blueprint: 120
+**Behind a VPN, detection sees almost nothing.** Measured on this blueprint: 120
 requests against a VPN-only host moved the counter by three. That is not a
 failure — nothing got through — but it means the layer earns its keep when
-something is public, and barely before.
+something is public, and barely before. Why the gap is that wide has not been
+established; the explanation usually given, that refused requests never reach the
+log, does not fit a proxy configured to log `200-599` answering them with a
+`403`.
 
 **The community blocklist is most of the volume.** Subscribing brings in roughly
 15,000 addresses reported by other installations. The same exchange also means a

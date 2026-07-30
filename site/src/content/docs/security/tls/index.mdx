@@ -63,12 +63,17 @@ the host.
 The cost is that your certificate tooling now holds an API credential that can
 change your DNS. Scope that token to the single zone and to DNS editing only.
 
-## Every certificate publishes its hostname
+## Every publicly trusted certificate publishes its hostname
 
-Certificate Transparency logs are append-only, public, and mandatory — no
-issuer can opt out. The moment `backup-admin.example.com` gets a certificate,
-that name is searchable, and scanners watch those logs in real time. A new
-hostname typically sees its first unsolicited request within minutes.
+Certificate Transparency logs are append-only, public, and mandatory for
+publicly trusted certificates — no public issuer can opt out. The moment
+`backup-admin.example.com` gets one, that name is searchable, and scanners watch
+those logs in real time. A new hostname typically sees its first unsolicited
+request within minutes.
+
+Certificates from an internal CA are the exception: they are not submitted to
+these logs, which is one reason to use one for names that never leave your own
+network.
 
 A wildcard certificate publishes only `*.example.com`, which is the reason to use
 one when the names themselves are worth not advertising.

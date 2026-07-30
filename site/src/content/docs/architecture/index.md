@@ -28,10 +28,15 @@ before *changing* something.
         database, cache  database, cache  database, cache
 ```
 
-The applications publish no ports. A request reaches an application only by
-passing through the proxy, which is why there is exactly one place where TLS is
-configured, one place where rate limits live, and one place to look when
-something is unreachable.
+The applications publish no ports. **From outside the host**, an application is
+reached through the proxy and nowhere else, which is why there is exactly one
+place where TLS is configured, one place where rate limits live, and one place
+to look when something is unreachable.
+
+Inside the shared proxy network it is not a guarantee: containers on one Docker
+network address each other directly, so a compromised front end can reach
+another front end without the proxy in between. That is the lateral path the
+architecture leaves open, and it is treated as part of the threat model below.
 
 **Two networks per application, and they do different jobs.**
 `proxy-public` is shared: the proxy and each application's web-facing container

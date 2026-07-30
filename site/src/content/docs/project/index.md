@@ -28,7 +28,7 @@ It is aimed at homelabs, self-hosted infrastructure and small-team production sy
 Set on every service, and checked on every change before it is merged:
 
 - `no-new-privileges`, so a process inside the container cannot gain rights it was not started with. An exception has to record the reason, the alternatives that were weighed, and an explicit acceptance of the remaining risk
-- No `privileged` container, and no service with the Docker socket mounted into it — the reverse proxy reads the API through a filtering proxy limited to containers, networks and events
+- No `privileged` container. Neither the reverse proxy nor any application mounts the Docker socket; a dedicated filtering proxy is the only service that does, and it exposes only containers, networks and events
 - Databases and caches on `internal` networks, never published to the host
 - Every image pinned to an exact version, never `:latest` and never a major-only tag such as `8` or `v2`
 

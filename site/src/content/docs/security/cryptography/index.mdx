@@ -61,9 +61,16 @@ the most misunderstood one: disk encryption on a running server does not protect
 against an intruder on that server.
 
 **At rest, in the application or database.** Specific fields encrypted by the
-application, or a database with encryption applied to particular columns. This
-is the only one that survives an attacker who is already inside — and it costs
-you searchability on those fields, which is why it is applied narrowly.
+application, or a database with encryption applied to particular columns. This is
+the one that still helps when the *database* is what leaked — a stolen dump,
+storage taken from underneath, an SQL injection reading rows — provided the keys
+are held somewhere the database is not.
+
+It is not a defence against a compromise of the application itself. The
+application has to reach those keys to do its job, so whoever controls the
+running process can reach them too. "Encrypted at rest" is a statement about
+which component leaked, not a general one, and it costs searchability on those
+fields, which is why it is applied narrowly.
 
 For backups the distinction sharpens: an encrypted archive at an off-site
 provider is protecting against that provider and against anyone who obtains the

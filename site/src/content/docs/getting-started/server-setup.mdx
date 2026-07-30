@@ -164,9 +164,19 @@ cp .env.example .env
 docker compose up -d
 ```
 
-Open it and read `X-Real-Ip`. It must show your address — the one
-`curl https://api64.ipify.org` reports. Repeat for each path you care about: public
-IPv4, public IPv6, and through the VPN.
+Open it and read `X-Real-Ip`. What it should say depends on the path you came in
+on, so test each one you care about and check it against the right expectation:
+
+| Arrived over | `X-Real-Ip` should be |
+|---|---|
+| public IPv4 | your public IPv4 — what `curl -4 https://api64.ipify.org` reports |
+| public IPv6 | your public IPv6 — `curl -6 https://api64.ipify.org` |
+| Tailscale, directly | a Tailscale address: `100.x.x.x`, or `fd7a:115c:a1e0::…` |
+| another VPN | that tunnel's client address |
+| a CDN or upstream proxy | whatever that service forwards — check its own documentation |
+
+The failure to look for is the same in every row: an address from the Docker
+network rather than the client's.
 
 `172.30.0.1` or similar means the real address is being lost — recheck the daemon
 configuration and the overlay.

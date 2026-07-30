@@ -46,8 +46,9 @@ your server's public IP to the vendor, who state it is used to identify companie
 running Traefik and approach them about support contracts. This blueprint
 disables it.
 
-**Every certificate publishes its hostname.** Certificates are logged publicly
-the moment they are issued — this is mandatory and no issuer can opt out. A
+**Every publicly trusted certificate publishes its hostname.** They are logged
+publicly the moment they are issued — mandatory, and no public issuer can opt
+out. Certificates from an internal CA are not logged this way. A
 hostname like `backup-admin.example.com` becomes searchable within minutes of
 getting its certificate. A wildcard certificate publishes only `*.example.com`,
 which is the reason to use one when the names themselves are worth not
@@ -87,3 +88,20 @@ an EU-owned one that reports home may not be.
 
 These are the inputs. The weighing depends on what you are running — a public
 blog and a practice's patient records do not share a threshold.
+
+## Where these facts come from
+
+The table is generated from per-stack records in the repository, so it cannot
+drift from what ships. Those records were compiled by reading each project's own
+licence and company details, and they carry no external citation of the kind the
+security pages use — [how sources are chosen and checked](/sources/) explains
+that standard, and this page does not yet meet it.
+
+**Corporate ownership, registration and licensing change**, and a fork or an
+acquisition can move a project between jurisdictions without the software
+looking any different. Read anything here as of **31 July 2026** and verify the
+entries that matter to your decision against the project itself.
+
+The telemetry findings are different in kind: they come from reading the
+configuration and watching what the stacks actually do here, and are dated by
+the verification dates on the stacks concerned.

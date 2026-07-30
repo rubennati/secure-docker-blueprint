@@ -81,7 +81,9 @@ docker exec traefik-core cat /etc/traefik/acme/acme.json | jq '.[] | .Certificat
 
 ### Networking: IPv4-only or dual-stack?
 
-The installation above is IPv4-only — works for most setups. Dual-stack (IPv4 **and** IPv6) only matters if you use **Tailscale**: Tailscale always hands a client both addresses, and if it connects over IPv6 while Traefik's network is IPv4-only, Traefik loses the real client IP and may wrongly block Tailscale-only services. Cloudflare-fronted traffic is unaffected either way.
+The installation above is IPv4-only, which works for most setups. The failure dual-stack exists to prevent, in this architecture, is **Tailscale**: it always hands a client both addresses, and if the client connects over IPv6 while Traefik's network is IPv4-only, Traefik loses the real client address and may wrongly refuse a Tailscale-only service.
+
+That is the case this blueprint has hit, not the only one IPv6 matters for — another VPN that assigns IPv6, or a service reached directly over public IPv6 rather than through a proxy, raises the same question. Traffic arriving through a Cloudflare-proxied (orange-cloud) record is unaffected, because the real address is recovered from a trusted forwarded header instead of from the connection.
 
 <Tabs>
   <TabItem label="IPv4-only (default)">

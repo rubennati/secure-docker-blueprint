@@ -40,7 +40,9 @@ From `apps/vaultwarden/`:
    VW_SMTP_PASSWORD=your-smtp-password
    ```
 
-4. Generate database passwords (the connection string needs hex-only values):
+4. Generate database passwords. Hex is a convention here, not a requirement:
+   the password ends up inside a connection URL, and hex avoids having to
+   URL-encode characters that would otherwise break it.
 
    ```bash
    sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=$(openssl rand -hex 32)|" .env
@@ -182,7 +184,10 @@ procedure is written down, and that is not the same thing.
 <Steps>
 
 1. Check the [release notes](https://github.com/dani-garcia/vaultwarden/releases) for breaking changes.
-2. Back up the database (see above).
+2. Back up **all three parts together** — the database dump, `volumes/data/rsa_key.*`
+   and `volumes/data/attachments/`. A database-only snapshot is not something you
+   can roll back to: restoring it without the matching signing keys breaks every
+   session even though the vault contents are intact.
 3. Update `APP_TAG` in `.env`.
 4. ```bash
    docker compose pull

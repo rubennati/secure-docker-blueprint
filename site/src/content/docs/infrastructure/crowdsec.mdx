@@ -99,11 +99,20 @@ firewall layer existed, that ban applied only to HTTP through the proxy.
 The two protective layers in this Blueprint do not add up — they take turns, and
 that determines where it is worth attaching.
 
-A request rejected by an access policy never reaches the access log. Measured
-here: **120 requests against a VPN-only host moved CrowdSec's counter by 3.**
-Where `acc-tailscale` or `acc-private` is doing the work, CrowdSec is blind, and
-that is fine — nothing got through. It becomes worth its keep the moment an
-application is public.
+Measured here: **120 requests against a VPN-only host moved CrowdSec's counter by
+3.** Behind `acc-tailscale` or `acc-private`, the engine sees close to nothing —
+which is not a problem, because nothing got through either. It becomes worth its
+keep the moment an application is public.
+
+:::note
+**That measurement is a result, not an explanation.** The obvious reading is that
+rejected requests never reach the log the engine reads, but the proxy's access
+log is configured for status codes `200-599` and a rejected request is answered
+with a `403`, so those lines should be there. The gap could equally be log
+buffering, which parser the acquisition applies, or what that particular counter
+counts. The number is what was observed; the cause has not been established here,
+and a targeted look at the log would settle it.
+:::
 
 ### The WAF layer is narrower than the name suggests
 
@@ -291,21 +300,25 @@ docker exec crowdsec cscli decisions delete --ip <ip>
 docker exec crowdsec cscli decisions list --ip <ip>      # expect nothing
 ```
 
-If a decision survives, it came from a different origin — usually the community
-blocklist — and removing it needs `--all`:
+:::caution
+**Do not reach for `--all`.** Upstream documents that flag as *delete all
+decisions* — every ban on the engine, local and community alike, not the ones
+for your address. It is not a wider form of `--ip`, and there is no situation on
+this page where it is the right answer.
+:::
+
+If the decision comes back after you delete it, deleting harder is not the fix.
+Find out where it comes from:
 
 ```bash
-docker exec crowdsec cscli decisions delete --ip <ip> --all
+docker exec crowdsec cscli decisions list --ip <ip> -o json   # origin, scenario, duration
+docker exec crowdsec cscli alerts list --ip <ip>              # what triggered it
 ```
 
-:::caution
-**Check what `--all` does on your version before using it.** The flag's own help
-text reads "delete all decisions", and combining it with `--ip` is documented in
-this blueprint as scoping that to the one address across every origin. Those two
-readings differ by everything. Run `cscli decisions list | wc -l` before and
-after: if the count dropped by more than the entries for your address, it removed
-more than you meant, and the community blocklist will take time to repopulate.
-:::
+An `origin` of `crowdsec` means your own engine decided it and will decide it
+again from the same traffic. `lists` or `CAPI` means it arrived with the
+community blocklist. A local re-detection needs a whitelist entry, not a
+deletion.
 
 A ban that keeps coming back is a different problem — the engine is still seeing
 the behaviour that caused it. A whitelist entry stops decisions being created at
