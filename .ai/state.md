@@ -97,13 +97,14 @@ servers — nothing breaks without them, so they fail that test.
 → *Recommendation:* apply the existing test rather than write a new rule. This is
 a structural change, so it belongs after the host session, not before.
 
-**7. CPU limits — standard against implementation**
-The profile table in `docs/standards/security-baseline.md` prescribes a `cpus`
-value per service profile. The sweep that set every ceiling deliberately left CPU
-limits off, on the grounds that they make a stack slow under load rather than
-safe; memory and `pids` were applied everywhere. Most services therefore carry no
-`cpus` value — a measurement, not the decision. Resolving this means changing
-either the standard or the compose files; the structure checker enforces neither.
+**7. CPU limits — two standards disagree**
+`docs/standards/security-baseline.md` prescribes a `cpus` value per service
+profile. `docs/standards/compose-structure.md` states that CPU limits are not
+applied by default, because they make a stack slow under load rather than safe,
+and that one is set only where a component demonstrably pins a core. The compose
+files follow the second. Most services therefore carry no `cpus` value — a
+measurement, not the decision. One of the two standards has to yield; the
+structure checker enforces neither.
 
 ## Active constraints
 

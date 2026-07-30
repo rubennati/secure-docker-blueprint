@@ -931,3 +931,135 @@ PyYAML is absent from the system interpreter; `check-structure.py`,
 `check-coverage.py` and the service-level measurement ran in a temporary
 virtual environment outside the repository. No repository dependency was
 changed.
+
+---
+
+## Remediation status — 2026-07-30
+
+Appended after the work. Everything above is the audit as written on the day; it
+is not edited to read as though the defects never existed.
+
+**Audited commit:** `d2fd9cf` · branch `dev`, worktree and index clean.
+
+### What was implemented
+
+Nine commits, in the order they landed:
+
+| Commit | Change group |
+|---|---|
+| `270290b` | PKG-1 — the root README entry path |
+| `2497216` | PKG-2 — generated lifecycle facts decoupled from `.ai/` |
+| `bae8c48` | PKG-3 — the security baseline stated by its actual scope |
+| `3048ced` | PKG-4 — the roadmap returned to remaining work |
+| `a2e43ad` | PKG-5 — symptom index and diagnostic method separated |
+| `c323316` | Repository-side pass — contradictions, missing shipped history, AI working state |
+| `a70923c` | Operator-site pass — navigation, scope, copied version |
+| `7d60be5` | Register pass — the 27 blocking and 32 of the warning findings |
+| `d2fd9cf` | Checker and CI — per-unit matching, full-repository gate, 24 regression tests |
+
+### Status of every finding
+
+Verified against the current tree, not against which files changed.
+
+| # | Status | Evidence today | Addressed by |
+|---|---|---|---|
+| F-01 | **Resolved** | No `your-user`, `db_root_pwd` or `rand -base64` in `README.md`; the Traefik sequence ran end to end on a clean copy | `270290b` |
+| F-02 | **Resolved** | No stack count in `.ai/state.md`; it references `LIFECYCLE.md` | `2497216` |
+| F-03 | **Resolved** | `/project/` groups required, conditional and per-stack controls; no cross-service claim the configuration does not hold | `bae8c48` |
+| F-04 | **Resolved** | `## Installation`; no `## Quick Start` | `270290b` |
+| F-05 | **Resolved** | No dated shipped section in `ROADMAP.md`; all seven releases verified present in `CHANGELOG.md` before removal | `3048ced` |
+| F-06 | **Resolved** | No "Since v0.6.0" section; all five rows verified in `CHANGELOG.md` | `3048ced` |
+| F-07 | **Resolved** | No `host-session` link in `ROADMAP.md`; the precondition is stated instead | `3048ced` |
+| F-08 | **Resolved** | Both troubleshooting documents state their own scope and the other's; two File Map rows name the owners | `a2e43ad` |
+| F-09 | **Resolved** | `README.md` links `TROUBLESHOOTING.md` where a failing first run sends the reader | `270290b` |
+| F-10 | **Resolved** | Title is `# Troubleshooting`; history is pointed to `docs/bugfixes/` | `a2e43ad` |
+| F-11 | **Resolved** | Per-stack status references `LIFECYCLE.md`, not the process document | `3048ced` |
+| F-12 | **Resolved** | No legacy-stamp count anywhere in `.ai/` | `2497216` |
+| F-13 | **Deferred — host evidence** | 30 `UPSTREAM.md` still carry only `Last checked` | — |
+| F-14 | **Deferred — low priority** | 18 stack READMEs still have no verification section | — |
+| F-15 | **Resolved** | No hardcoded image version in site content; the command reads `APP_TAG` from the operator's `.env` | `a70923c` |
+| F-16 | **Resolved** | No `docs`-branch pointer in `apps/adminer/`; the instruction replaced it | `c323316` |
+| F-17 | **Resolved** | `/operations/` states what it covers, what sits with each service, and what is not covered yet | `a70923c` |
+| F-18 | **Resolved** | `README.md` Security Model carries a Scope column matching the graded standard | `270290b` |
+| F-19 | **Superseded** | Covered by the register pass; the sampled sentence was deleted rather than reworded. No prose finding remains in any stack README | `7d60be5` |
+| F-20 | **Deferred — low priority** | The dated dependency sweep still sits in `docs/maintenance.md` | — |
+| F-21 | **Deferred — low priority** | Four `docs/host-session-*.md` files, no stated order | — |
+| F-22 | **Deferred — decision required** | The reader-facing half is done: `/applications/` states that guides cover a selection and links the repository list. A mechanism reporting which stacks lack a guide is a generated-data system and a product decision | partly `a70923c` |
+| F-23 | **Not a defect** | Deliberate layering: the eight hard rules live in `AGENTS.md`, which every adapter points to. Duplicating them across four files was the alternative | — |
+| F-24 | **Resolved** | `README.md` states that `core/` and `apps/` are documented per service | `270290b` |
+| F-25 | **Not a defect** | Re-checked: `CONTRIBUTING.md` calls `CONFIG.md` "encouraged … but not required" and the PR template says "if app has non-trivial configuration". Both conditional, both accurate | — |
+| F-26 | **Resolved** | Page title names the result; the slogan remains as the on-screen hero heading | `a70923c` |
+| F-27 | **Resolved** | Sidebar groups are reader goals; page titles keep the repository's terms | `a70923c` |
+
+**19 resolved · 2 not a defect · 1 superseded · 1 host evidence · 3 low priority ·
+1 decision required.**
+
+### Decisions that remain
+
+None can be derived from the repository. All are carried in `.ai/state.md`.
+
+| Subject | Conflict |
+|---|---|
+| CPU limits | `security-baseline.md` prescribes a `cpus` per profile; `compose-structure.md` states they are not applied by default and the compose files follow that. One standard has to yield |
+| Backup repository isolation | `docs/architecture.md` states one isolated repository per app as a rule; `backup/README.md` presents it as an option and recommends starting with one host-level configuration |
+| Host-installed backup agent | `docs/architecture.md` promises no host-specific assumptions; `backup/borgmatic` is installed on the host by design, and the exception is unrecorded at the owner |
+| Commit message format | The standard prescribes `scope: subject`; every recent commit uses conventional commits |
+| Dependency automation | The three questions in `docs/renovate-proposal.md` |
+| What belongs in `core/` | Three document servers fail the test `docs/architecture.md` states |
+| Site coverage (F-22) | Which stacks should get a guide, and whether a checker should report the gap |
+
+### Work needing a host
+
+- **F-13** — converting a stack's `Last checked` to `Last verified: DATE (vX.Y.Z)`
+  asserts the evidence is real. That is a judgement per app, made where the stack
+  runs.
+- The v0.7.0 restore, the v0.8.0 monitoring verification and the v0.9.0
+  measurements are milestones rather than audit findings; `ROADMAP.md` owns them.
+
+### Prose warnings that remain
+
+`check-prose.py` reports **0 blocking and 16 warnings**. All sit in records:
+
+| Where | Count | Why it stays |
+|---|---|---|
+| This audit file | 11 | The interpretation table quotes each finding verbatim. Rewriting the quotes removes the evidence |
+| `docs/host-session-findings.md` | 3 | A findings log's subject is how something was established |
+| `docs/maintenance.md` | 1 | A dated Progress Log row — rewriting it edits the record |
+| `docs/standards/compose-structure.md` | 1 | States the CPU-limit decision; wording follows from the open decision above |
+
+### Branch protection
+
+`Docs QA` must be configured as a **required check** for the full prose gate to
+prevent a merge. Until then the job reports without blocking, together with
+`Checker coverage` and `Workflow supply chain`. This is a repository setting, not
+a file in here.
+
+### Verification at closeout
+
+| Check | Result |
+|---|---|
+| `python3 -m unittest discover -s scripts/ci` | 24 tests, OK |
+| `check-prose.py` | 0 blocking · 16 warnings · exit 0 |
+| `check-prose.py --hints` | exit 0 |
+| `markdownlint-cli2` | 0 issues |
+| `check-links.py` | 223 files, 0 broken links |
+| `check-baseline.py` | 56 files, no violations |
+| `lifecycle-report.py --check` | 59 stacks, 0 failures |
+| `check-structure.py` | 58 apps, 0 failures, 0 warnings |
+| `check-coverage.py` | 0 failures, 1 known warning (`backup/borgmatic`) |
+| `check-workflows.py` | 4 workflows, 0 failures |
+| `npm run build --prefix site` | 19 pages |
+| `git diff --check` | clean |
+
+No test fixture, build output or generated artefact is tracked.
+
+### Is the remediation complete?
+
+**Yes for everything the repository could decide.** Every P0 and P1 finding is
+resolved, the reader-facing prose inventory is empty and gated, and the two
+findings that looked like defects were disproved rather than quietly closed.
+
+**No for six decisions and one host session.** Those are listed above, each with
+the conflict written so it can be answered without reading this file. They were
+not closed by choosing an answer, because choosing would have meant deciding
+architecture, security policy or product scope on the audit's behalf.
