@@ -60,6 +60,16 @@ docker compose logs railsserver --follow
 - **`no-new-privileges:true`** on all services.
 - **Default access `acc-public` + `sec-3`** — customers submit tickets via public web form `/customer_ticket_new`; agents log in at `/#login`. For agent-only VPN access, see the two-router split pattern (see `business/listmonk/README.md` for the pattern).
 
+## What it sends outward
+
+Three vendor services are contacted as the application is used, not on a timer:
+`images.zammad.com` for avatar and organisation lookups — which sends the
+address or domain being looked up — and `geo.zammad.com` for location and
+calendar data.
+
+No persistent installation identifier and no version string is sent. Turn them
+off in **Settings → System → Services**.
+
 ## Backup
 
 | | |

@@ -77,6 +77,10 @@ services:
 
     # --- Configuration ---
     environment:
+      # Reverse geocoding sends the GPS coordinates of every scanned photo to
+      # OpenStreetMap's Nominatim, one request per photo. Off here; the cost is
+      # that place names no longer appear. Set true to accept the trade.
+      FEATURE_REVERSE_GEOCODING: "false"
       TZ: ${TZ}
       SECRET_KEY: ${SECRET_KEY}
       BACKEND_HOST: backend

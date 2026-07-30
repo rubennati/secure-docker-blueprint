@@ -120,6 +120,10 @@ services:
 
     # --- Configuration ---
     environment:
+      # Upstream reports to OpenPanel at telemetry.opnform.com, keyed on a UUID
+      # in the settings table that is cached for the life of the install. Off
+      # here, and on every service that boots the application.
+      OPNFORM_ANONYMOUS_TELEMETRY_DISABLED: "true"
       TZ: ${TZ}
       APP_ENV: production
       APP_DEBUG: "false"
@@ -215,6 +219,10 @@ services:
 
     # --- Configuration ---
     environment:
+      # Upstream reports to OpenPanel at telemetry.opnform.com, keyed on a UUID
+      # in the settings table that is cached for the life of the install. Off
+      # here, and on every service that boots the application.
+      OPNFORM_ANONYMOUS_TELEMETRY_DISABLED: "true"
       TZ: ${TZ}
       APP_ENV: production
       APP_KEY: ${APP_KEY}
@@ -290,6 +298,10 @@ services:
 
     # --- Configuration ---
     environment:
+      # Upstream reports to OpenPanel at telemetry.opnform.com, keyed on a UUID
+      # in the settings table that is cached for the life of the install. Off
+      # here, and on every service that boots the application.
+      OPNFORM_ANONYMOUS_TELEMETRY_DISABLED: "true"
       TZ: ${TZ}
       APP_ENV: production
       APP_KEY: ${APP_KEY}

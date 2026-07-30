@@ -62,6 +62,17 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/api/v1/status  # 200 OK
 - **`PHOTOPRISM_UID` / `PHOTOPRISM_GID`** — app drops to these after init. Must match owner of `ORIGINALS_PATH`.
 - **WebDAV is enabled by default** — Finder/iOS can mount `/originals` via `https://<HOST>/originals/`. Disable via `PHOTOPRISM_DISABLE_WEBDAV: "true"` if not needed.
 
+## What it sends outward
+
+On first run and on renewal, PhotoPrism posts to `my.photoprism.app/v1/hello`
+with a **persistent client serial**, the version, the operating system, the
+architecture and the CPU core count. The serial does not rotate, so the vendor
+can follow this installation over time.
+
+**There is no supported way to switch it off.** `hub.Disable()` exists but is
+reachable only through the test configuration. Blocking it needs an egress rule
+on the host or the network.
+
 ## Backup
 
 | | |

@@ -222,6 +222,16 @@ The official `wordpress:*-apache` image does **not** include wp-cli. To use wp-c
 docker run --rm -v ./volumes/wordpress:/var/www/html --network wordpress-internal wordpress:cli plugin list
 ```
 
+## What it sends outward
+
+The core update check contacts `api.wordpress.org` and carries more than a
+version: the PHP and MySQL versions, the locale, **the number of sites and the
+number of users**, and whether multisite is enabled. Plugin and theme checks
+follow the same path.
+
+The official image exposes no environment variable for it. Switching it off
+means a `must-use` plugin or an egress rule.
+
 ## Backup
 
 | | |

@@ -71,6 +71,15 @@ docker compose ps
 | TLS termination | ✅ | Traefik — `OPENPROJECT_HTTPS=true` set |
 | SSO / OIDC | ✗ | Enterprise Edition only — not available in CE |
 
+## What it sends outward
+
+The security badge requests `releases.openproject.com/v1/check.svg` with a
+**uuid**, the installation type and the version. It is on by default.
+
+Turn it off in **Administration → System settings → General**, or set
+`security_badge_display=false`. It is stored in the database, so it is a step
+after the first login.
+
 ## Backup
 
 | | |

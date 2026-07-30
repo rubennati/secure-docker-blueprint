@@ -91,6 +91,11 @@ services:
 
     # --- Configuration ---
     environment:
+      # Gravatar avatars send an MD5 of each user's e-mail address to
+      # Automattic every time one is rendered. This also turns off the Draw.IO
+      # diagram integration, which is the cost. Set AVATAR_URL to point
+      # avatars somewhere else, or drop this line to accept the Gravatar call.
+      DISABLE_EXTERNAL_SERVICES: "true"
       TZ: ${TZ}
       PUID: ${PUID}
       PGID: ${PGID}

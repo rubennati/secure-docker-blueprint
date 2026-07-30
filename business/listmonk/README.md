@@ -55,6 +55,15 @@ For "admin VPN-only + subscriber endpoints public", add a second Traefik router:
 - **Postgres on `app-internal` (`internal: true`)** — not reachable from outside.
 - **SMTP credentials** live in the admin UI (Settings → SMTP) after setup — not in `.env`. They're stored encrypted in the DB.
 
+## What it sends outward
+
+Listmonk requests `update.listmonk.app` to see whether a newer version exists.
+It is a plain GET with no payload and no installation identifier — the vendor
+learns the source address and the timing.
+
+On by default. Turn it off in **Settings → General → Check for updates**; the
+setting lives in the database.
+
 ## Backup
 
 | | |

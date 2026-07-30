@@ -96,6 +96,9 @@ services:
     entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
     command: ["sh", "start.sh"]
     environment:
+      # Upstream sends a startup event and a periodic heartbeat to PostHog EU,
+      # keyed on an installation ID stored in this database. Off here.
+      DOCUMENSO_DISABLE_TELEMETRY: "true"
       TZ: ${TZ}
       PORT: "3000"
       # DB credentials used by entrypoint.sh to build the connection URL

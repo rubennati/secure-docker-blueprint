@@ -48,6 +48,19 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 - **Docker integration is disabled by default** — see below.
 - **`no-new-privileges:true`**.
 
+## What it sends outward
+
+Homarr reports weekly to a PostHog instance at `hog.homarr.dev`, keyed on an ID
+minted on first run and stored in this stack's database. It also checks GitHub
+for a new version at startup.
+
+Turn the telemetry off after first login: **Manage → Settings → Analytics**,
+switch off `general`. It is a database setting, so it cannot be pre-set here.
+
+`NO_EXTERNAL_CONNECTION=true` stops both calls, but it also stops the icon
+repository refreshing, which is most of what Homarr is for. The UI switch is the
+narrower instrument.
+
 ## Backup
 
 | | |
