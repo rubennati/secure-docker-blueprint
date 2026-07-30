@@ -35,6 +35,15 @@ the open internet, and not much before.
 
 [CrowdSec — intrusion detection →](/infrastructure/crowdsec/)
 
+## Also server-wide, without a guide
+
+**Single sign-on.** [Authentik](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/authentik/README.md)
+is set up once and then attached per route as a proxy middleware, so several
+applications can share one login. Seven containers, and it needs SMTP, a database
+and Redis of its own — it is a service to operate, not a setting to switch on.
+The configuration is checked and the stack has been brought up; there is no
+walked-through guide here.
+
 ## What is deliberately not on this page
 
 **Document editing.** OnlyOffice is also set up once and shared by several

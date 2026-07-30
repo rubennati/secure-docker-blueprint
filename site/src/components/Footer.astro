@@ -72,9 +72,9 @@ const year = new Date().getUTCFullYear();
 	*/}
 	<p class="sitefoot__fine">
 		<span>© {year} SecDockBlue</span>
-		<span aria-hidden="true">·</span>
+		<span class="sitefoot__sep" aria-hidden="true">·</span>
 		<span>Code <a href={`${REPO}/blob/main/LICENSE`}>Apache-2.0</a></span>
-		<span aria-hidden="true">·</span>
+		<span class="sitefoot__sep" aria-hidden="true">·</span>
 		<span>Site content <a href="/legal/">{siteContentLicence}</a></span>
 	</p>
 </div>
@@ -136,5 +136,17 @@ const year = new Date().getUTCFullYear();
 	}
 	.sitefoot__fine a:hover {
 		color: var(--sl-color-white);
+	}
+	/* On a narrow screen the parts wrap anyway, which leaves a separator
+	   stranded at the end of a line looking like a typo. Below this width they
+	   become their own lines and the separators go away entirely. */
+	@media (max-width: 30rem) {
+		.sitefoot__fine {
+			flex-direction: column;
+			gap: 0.4rem;
+		}
+		.sitefoot__sep {
+			display: none;
+		}
 	}
 </style>
