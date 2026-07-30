@@ -65,10 +65,17 @@ const year = new Date().getUTCFullYear();
 		</nav>
 	</div>
 
+	{/*
+	  No repository name here. It is already a link in the Project column, and
+	  spelling it out puts "Docker" in the footer of every page — narrowing the
+	  site to one runtime that the brand deliberately does not commit to.
+	*/}
 	<p class="sitefoot__fine">
-		© {year} SecDockBlue · built on{' '}
-		<a href={REPO}>Secure Docker Blueprint</a><br />
-		Repository code: Apache-2.0 · Site content: {siteContentLicence}
+		<span>© {year} SecDockBlue</span>
+		<span aria-hidden="true">·</span>
+		<span>Code <a href={`${REPO}/blob/main/LICENSE`}>Apache-2.0</a></span>
+		<span aria-hidden="true">·</span>
+		<span>Site content <a href="/legal/">{siteContentLicence}</a></span>
 	</p>
 </div>
 
@@ -110,10 +117,24 @@ const year = new Date().getUTCFullYear();
 		color: var(--sl-color-white);
 		text-decoration: underline;
 	}
+	/* Flex with wrapping separators, so a narrow screen breaks between the
+	   parts instead of stranding a link's external-link marker on its own
+	   line. */
 	.sitefoot__fine {
-		margin-block-start: 1.5rem;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem 0.6rem;
+		margin-block-start: 1.75rem;
 		font-size: var(--sl-text-xs);
-		line-height: 1.7;
+		line-height: 1.6;
 		color: var(--sl-color-gray-3);
+	}
+	.sitefoot__fine a {
+		color: inherit;
+		text-decoration: underline;
+		text-underline-offset: 0.2em;
+	}
+	.sitefoot__fine a:hover {
+		color: var(--sl-color-white);
 	}
 </style>

@@ -30,6 +30,19 @@ jobs:
         working-directory: site
         run: npm ci
 
+      # Before the content gate runs, prove the gate still works. A rule whose
+      # regex has quietly stopped matching would otherwise report "clean".
+      - name: Verify the content checks catch what they claim
+        working-directory: site
+        run: npm run check:self
+
       - name: Build site
         working-directory: site
         run: npm run build
+
+      # Blocks dangerous or unpinned commands in documented instructions, and
+      # internal links or anchors that do not resolve. Runs after the build
+      # because the link checks read dist/.
+      - name: Check content
+        working-directory: site
+        run: npm run check
