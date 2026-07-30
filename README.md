@@ -115,18 +115,12 @@ The blueprint takes a **choice-matrix** approach: where several tools compete (d
 
 **Status:** 🛡️ Ops-ready · ✅ Ready · 🚧 Preview · 📋 Planned
 
-- **🛡️ Ops-ready** — everything `Ready` promises, plus a restore actually performed from a backup. *No service holds this yet* — it becomes reachable with the v0.7.0 backup milestone.
+- **🛡️ Ops-ready** — everything `Ready` promises, plus a restore performed from a backup. No service holds this yet.
 - **✅ Ready** — clean install and core function established, security baseline met, documentation in place. Deploy it.
 - **🚧 Preview** — on disk and it may well work, but the blueprint does not vouch for it. Evaluate it yourself before trusting it with data.
 - **📋 Planned** — named as intended, nothing on disk yet.
 
-What each symbol promises is defined in [`docs/standards/status-model.md`](docs/standards/status-model.md); the per-stack detail behind it — pinned version, verification date, backup and restore documentation — is in [LIFECYCLE.md](LIFECYCLE.md).
-
-> **Seventeen stacks moved from ✅ to 🚧 on 2026-07-29.** Their verification
-> predates the current record format, which names the version a stack was
-> checked against — theirs do not, so nobody can say what the ✅ was earned on.
-> Nothing about them changed; what changed is that the claim is no longer made
-> without evidence behind it. Each returns to ✅ when it is verified again.
+Per-stack detail behind each symbol — pinned version, verification date, backup and restore documentation — is in [LIFECYCLE.md](LIFECYCLE.md).
 
 #### Dashboards & launchers
 

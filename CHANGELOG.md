@@ -12,6 +12,10 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 - **`sec-3e-spa` security chain** (`core/traefik/`): strict headers with `X-Frame-Options: SAMEORIGIN` combined with the wider first-load burst. The combination did not exist — the chains name ten of sixteen possible combinations of header strictness, frame policy and rate limit, and the one Nextcloud needs was among the six missing. Also corrected the claim that SPA rate limits belong behind a VPN only: `rl-soft` and `rl-spa` share the same sustained rate of 100 and differ only in burst size, so the restriction produced 429s during normal use without adding protection.
 
+### Changed
+
+- **Seventeen stacks moved from ✅ to 🚧 on 2026-07-29.** Their verification records predate the format that names the version a stack was checked against, so the version behind each ✅ is unknown. The configurations are unchanged. Each returns to ✅ once verified against a named version.
+
 ### Fixed
 
 - **`.well-known/caldav` returned no redirect.** The stack's own nginx configuration already issued the `301` that the Nextcloud documentation prescribes, but a Traefik `replacepathregex` middleware rewrote the path before nginx saw it, so the redirect never fired and clients could not discover the DAV endpoint. The middleware was removed rather than corrected — nginx had it right. With this and the chain above, Nextcloud's own setup checks report 60 passing, no warnings and no errors.

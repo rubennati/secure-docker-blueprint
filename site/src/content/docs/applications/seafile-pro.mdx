@@ -190,7 +190,7 @@ docker compose up -d --force-recreate
   <TabItem label="Search">
     SeaSearch is the default full-text search backend. It is lightweight and configured automatically by the config injection step — no manual setup required.
 
-    Elasticsearch is available in the repository as a reference compose file (`elasticsearch.yml`) but is **not active** by default and not included in `COMPOSE_FILE`. Do not add it alongside SeaSearch — both cannot run simultaneously. See `apps/seafile-pro/UPSTREAM.md` for switching instructions.
+    Elasticsearch is available in the repository as a reference compose file (`elasticsearch.yml`) but is **not active** by default and not included in `COMPOSE_FILE`. Do not add it alongside SeaSearch — both cannot run simultaneously.
 
     Trigger a manual index rebuild after bulk uploads or a first install:
 
@@ -259,7 +259,9 @@ This update sequence has not been tested end-to-end in this Blueprint guide — 
 :::
 
 :::note
-**MariaDB `io_uring` warning or Redis memory overcommit warning** — both are host-level configuration notices, not application errors. The stack continues to function. See `apps/seafile-pro/UPSTREAM.md` for the optional sysctl change that silences the Redis warning.
+**MariaDB `io_uring` warning or Redis memory overcommit warning** — both are host-level configuration notices, not application errors. The stack continues to function.
+
+To silence the Redis warning, set `vm.overcommit_memory = 1` in `/etc/sysctl.conf` on the host and apply it with `sysctl -p`. The MariaDB notice needs no action — it falls back to libaio on its own.
 :::
 
 :::note
