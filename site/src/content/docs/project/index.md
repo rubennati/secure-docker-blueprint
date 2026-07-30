@@ -1,9 +1,23 @@
 ---
-title: Project
-description: What Secure Docker Blueprint is, what its defaults are set to, and how to report a security issue.
+title: About this project
+description: What SecDockBlue and Secure Docker Blueprint each are, what the compose defaults are set to, and how to report a security issue.
 ---
 
-Secure Docker Blueprint is a set of Docker Compose configurations for self-hosted services. Each service ships with a reverse proxy setup, secrets handling, network layout and update policy already written, so those decisions are not made per service.
+## Two names
+
+**SecDockBlue** is this site — operator guidance, security knowledge, and the
+material that holds whether or not you use any particular configuration file.
+
+**Secure Docker Blueprint** is the repository it stands on: a set of Docker
+Compose configurations for self-hosted services. Each service ships with a
+reverse proxy setup, secrets handling, network layout and update policy already
+written, so those decisions are not made per service. It remains the technical
+source of truth — where a page here describes a configuration, the repository is
+what it describes, and the repository wins on any disagreement.
+
+The site is allowed to go further than the repository. The security section
+does: it describes layers the Compose files do not touch, including some the
+project deliberately leaves to you.
 
 It is aimed at homelabs, self-hosted infrastructure and small-team production systems.
 

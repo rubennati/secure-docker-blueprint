@@ -1,0 +1,133 @@
+---
+title: TLS, certificates and browser security
+description: What a certificate proves and what it does not, how the issuance challenges differ, why every hostname becomes public, and what security headers actually change.
+---
+
+import Sources from '../../../../components/Sources.astro';
+
+Say TLS, not SSL. The SSL protocols have been deprecated for years; the name
+survives in product names and habit. Current connections are TLS, and TLS 1.3 is
+what a modern configuration negotiates.
+
+## What a certificate proves
+
+Exactly one thing: that the server you reached controls the name in the
+certificate.
+
+That is genuinely valuable — it is what stops someone between you and the server
+from impersonating it — and it is routinely over-read. A valid certificate does
+**not** mean the site is trustworthy, the operator is legitimate, the software is
+patched, or the content is safe. Phishing sites have valid certificates, because
+obtaining one requires only control of a domain.
+
+The padlock means the connection is private and the name matches. Nothing else.
+
+## Domain validation, and the tiers above it
+
+**Domain Validation (DV)** — proves control of the domain. Automated, free,
+issued in seconds. This is what Let's Encrypt and the other ACME certificate
+authorities issue, and it is what almost everything uses.
+
+**Organisation and Extended Validation (OV/EV)** — additionally check that a
+legal entity exists. Browsers stopped displaying this distinction years ago, so
+the security benefit to a visitor is now close to zero. They persist where a
+contract or an auditor requires them.
+
+**Internal CA** — an organisation runs its own authority and distributes its root
+to its own machines. Correct for internal-only services; those certificates mean
+nothing to anyone outside.
+
+**Self-signed** — proves nothing about identity, encrypts the connection, and
+trains people to click through warnings. Defensible in a closed test
+environment, and it should stay there.
+
+Let's Encrypt is not the only free ACME authority — ZeroSSL, Buypass and Google
+Trust Services also issue via ACME, and the value of that is not price. It is
+that having a second configured authority means an outage or a policy change at
+one does not leave you unable to renew.
+
+## The two challenges, and why the choice matters
+
+| | HTTP-01 | DNS-01 |
+|---|---|---|
+| Proves | you serve a file on that host | you control the domain's DNS |
+| Needs | port 80 reachable from the internet | API access to your DNS provider |
+| Wildcards | not possible | the only way |
+| Works when the host is private | no | yes |
+
+**DNS-01 is the one that fits a private server.** A service behind a VPN, with no
+public port 80, cannot answer an HTTP-01 challenge at all — but it can still hold
+a publicly trusted certificate, because the proof happens in DNS rather than on
+the host.
+
+The cost is that your certificate tooling now holds an API credential that can
+change your DNS. Scope that token to the single zone and to DNS editing only.
+
+## Every certificate publishes its hostname
+
+Certificate Transparency logs are append-only, public, and mandatory — no
+issuer can opt out. The moment `backup-admin.example.com` gets a certificate,
+that name is searchable, and scanners watch those logs in real time. A new
+hostname typically sees its first unsolicited request within minutes.
+
+A wildcard certificate publishes only `*.example.com`, which is the reason to use
+one when the names themselves are worth not advertising.
+
+**This is not a security control.** A name absent from the logs is harder to
+find; it is not protected. Anything reachable from the internet has to survive
+being found, and "nobody knows the URL" has never been a defence.
+
+## Renewal is where it breaks
+
+Certificates expire. Automated renewal is standard and still the most common
+cause of an unplanned outage on a small server, because the failure is silent
+until the moment it is total.
+
+- **Monitor the expiry date from outside the host.** A renewal process that has
+  stopped will not report that it has stopped.
+- **Protect the private key's file permissions.** A restore that flattens them
+  produces a proxy that will not start, and that failure happens exactly when you
+  are already recovering from something else.
+- **Renewal failures are usually DNS credentials** — a token that expired, or a
+  permission that was narrowed.
+
+## Security headers
+
+Response headers that instruct the browser to constrain itself. They mitigate
+specific browser-side attacks. They are not application security, and they are
+not a substitute for a filter in front.
+
+| Header | Constrains |
+|---|---|
+| `Strict-Transport-Security` | forces HTTPS for this host for a stated period |
+| `Content-Security-Policy` | where scripts, styles and frames may come from |
+| `X-Content-Type-Options: nosniff` | stops the browser guessing a different content type |
+| `Referrer-Policy` | how much of the current URL is sent onward |
+| `frame-ancestors` (CSP) | who may embed this page — the current form of frame protection |
+| `Permissions-Policy` | which browser features the page may use |
+
+Cookies carry their own three: `Secure` (HTTPS only), `HttpOnly` (not readable
+by scripts, which blunts session theft via XSS) and `SameSite` (whether the
+cookie rides along on cross-site requests, which is the CSRF lever).
+
+**HSTS has a first-visit gap.** The browser only knows the policy after it has
+been to the site once over HTTPS. Preloading closes that, and preloading is
+effectively irreversible for a long time — do not preload a domain you are still
+experimenting with.
+
+**CSP is the one with real teeth and real cost.** A policy tight enough to stop
+injected scripts will break inline scripts and styles, including ones your
+application ships. Deploy it in report-only mode first, and be honest that a
+policy full of `unsafe-inline` is close to no policy at all.
+
+## What this blueprint covers
+
+The reverse proxy terminates TLS, obtains certificates over ACME with either
+challenge, renews them, and applies header and rate-limit middleware per service.
+The certificate strategy — wildcard or per-domain, DNS-01 or HTTP-01 — is a
+configuration choice; see the [Traefik guide](/infrastructure/traefik/).
+
+Content Security Policy is left to the application, because a policy that works
+is specific to what the application loads.
+
+<Sources ids={['rfc-8446', 'rfc-6797', 'rfc-9162', 'letsencrypt-challenges', 'owasp-secure-headers']} />

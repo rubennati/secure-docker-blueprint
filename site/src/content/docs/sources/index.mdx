@@ -1,0 +1,83 @@
+---
+title: How sources are chosen and checked
+description: Which sources this site cites, in what order of precedence, how often they are re-checked, and how a recommendation here is distinguished from a fact someone else established.
+---
+
+Security advice ages badly and circulates without attribution. So on this site a
+claim that goes beyond describing this project's own files carries a source, and
+that source is named rather than merely linked.
+
+## What gets a source, and what does not
+
+**Cited:** technical claims about how something behaves, legal statements,
+security boundaries, and any recommendation stated as more than a preference.
+
+**Not cited:** descriptions of this project's own configuration. The Compose
+files are the source for those, and they are linked directly.
+
+## Precedence
+
+Applied in this order, and only where the source actually covers the point:
+
+1. **Austria** — for legal questions, and for guidance aimed at operators here
+2. **Germany** — the BSI and IT-Grundschutz, where they are more specific
+3. **European Union** — ENISA, the EDPB, EUR-Lex
+4. **International** — IETF, W3C, NIST, OWASP, CISA, and vendor documentation
+
+**Nationality alone is not a tiebreaker.** For a legal claim, jurisdiction
+decides — Austrian law is answered from Austrian sources. For a technical claim,
+the most competent current primary source decides. A national page that has not
+been revised in eight years does not outrank a current specification, and being
+official does not make a document current.
+
+## What "checked" means
+
+Each entry in the register carries a `lastChecked` date and one line stating
+what it is cited **for**. That second field is the point: a link that still
+resolves is not the same as a source that still supports the claim. Re-checking
+means opening it and confirming the statement is still there — moving the date
+without doing that would make the whole thing decorative.
+
+The register is validated when the site is built. An entry without an HTTPS URL,
+without a check date, or without the line saying what it supports stops the
+build. A citation pointing at an unknown entry stops the build too, so a source
+cannot quietly vanish when a page is edited.
+
+What that does **not** cover: whether the page still says what it said. No
+automated check can establish that, and this site does not pretend otherwise.
+
+## Recommendation or fact
+
+Where this site recommends something that no cited source states in those terms,
+it says so in place, so the two are never confused:
+
+> **Site recommendation** — put administrative interfaces behind a VPN rather
+> than an IP allowlist alone.
+> **Source basis** — ENISA and BSI baseline guidance on remote administration,
+> plus this project's own access model.
+
+An unattributed sentence is this site's own reasoning. Read it as such.
+
+## Leaving this site
+
+Links to sources open in a new tab and are marked. Before following one you see
+the publisher, the jurisdiction, the date and the destination host, and a
+confirmation names the domain you are about to visit. None of those sites are
+operated by this project, and a citation is not an endorsement of everything
+else on the page.
+
+## When a source and this site disagree
+
+The source wins on facts, and the page gets corrected. If the disagreement is
+about a judgement rather than a fact — how much a measure is worth, whether it
+is proportionate — the page says both, and says which one it is following.
+
+If you find a claim here that its source does not support, or a source that has
+moved on, that is a documentation bug and worth reporting.
+
+## What is deliberately absent
+
+No source is cited for a claim about a stack having been verified. Those
+statements come from this project's own records and appear at the top of each
+guide with a date and a named gap. Nobody outside this project has audited any
+of it, and no external reference would make that any more true.

@@ -1,0 +1,140 @@
+---
+title: Containers, VMs and isolation
+description: Containers share a kernel, virtual machines do not — what that actually means for a compromise, where Podman and hypervisors differ, and which container settings matter most.
+---
+
+import Sources from '../../../../components/Sources.astro';
+
+A container is an isolated process. A virtual machine is a whole operating
+system with its own kernel. Almost everything else follows from that one
+sentence, including where each is the right answer.
+
+## The boundary, stated plainly
+
+| | Container | Virtual machine |
+|---|---|---|
+| Kernel | shared with the host and every other container | its own |
+| Isolated by | namespaces, cgroups, capabilities, seccomp, LSM | the hypervisor |
+| Escape means | a kernel or runtime flaw, or a misconfiguration | a hypervisor flaw |
+| Starts in | under a second | tens of seconds |
+| Costs | a process | a full OS's memory and disk |
+| Patching | the host kernel, once | every guest kernel, separately |
+
+**A shared kernel is a shared risk.** A kernel vulnerability exploitable from
+inside a container is a vulnerability affecting every container on that host at
+once. A hypervisor boundary is meaningfully harder to cross — the attack surface
+is smaller and more scrutinised — which is why it is the one you want between
+things that must not reach each other.
+
+That does not make containers unsafe or VMs safe. It makes them different-sized
+boundaries, and the useful question is what you are separating.
+
+## When the stronger boundary is worth it
+
+**Reach for a VM when:**
+
+- the workload runs code you did not write and do not trust — customer
+  submissions, untrusted plugins, anything arbitrary
+- a compromise of one tenant must not reach another, and the tenants are not
+  yours
+- a compliance requirement names the boundary
+- the workload needs its own kernel version or kernel modules
+
+**Containers are the right answer when:**
+
+- the workloads are all yours, and a compromise of one is already a bad day for
+  all of them
+- you want reproducible deployment and fast iteration
+- the resource budget is one server
+
+For a self-hosted setup the honest reading is usually: the applications on your
+host all belong to you, so container-level isolation limits *lateral* damage —
+application A cannot read application B's database — while a host compromise
+still takes everything. That is a reasonable trade for one machine, and it should
+be a conscious one rather than an assumption.
+
+**Grouping matters more than people expect.** Putting workloads of very different
+sensitivity on the same host is a named risk. A public-facing forum and your
+password vault on one kernel is a choice, not a detail.
+
+## Podman, and what the daemon has to do with it
+
+Docker runs a privileged long-lived daemon; containers are its children. That
+daemon's socket is effectively root on the host, which is why exposing it to a
+container is such a serious step — anything that can talk to it can start a
+privileged container and own the machine.
+
+Podman has no such daemon. Containers are ordinary child processes, and it
+supports **rootless** operation, where the whole stack runs under an
+unprivileged user account and container "root" maps to a normal user on the host
+via user namespaces. An escape then lands you as that unprivileged user rather
+than as root.
+
+That is a genuine improvement in blast radius, and it costs: rootless networking
+and low port binding need extra handling, some images assume a daemon, and
+tooling built around the Docker socket needs adapting. Docker also supports user
+namespace remapping, which addresses the same problem from the other direction
+and is less commonly enabled.
+
+The blueprint here uses Docker. Where the proxy needs container metadata, it
+reads the API through a filtering proxy restricted to containers, networks and
+events, rather than mounting the socket — the socket is never handed to a
+service directly.
+
+## The container settings that carry the weight
+
+In rough order of how much they matter:
+
+**Do not mount the Docker socket.** It is root on the host with extra steps.
+If something genuinely needs container metadata, put a filtering proxy in
+front of it and restrict it to what it actually reads.
+
+**Do not run `privileged`.** It disables essentially all of the isolation at
+once. Almost every real need behind it is one specific capability.
+
+**Drop capabilities and add back only what breaks.** `cap_drop: ALL` first, then
+restore individually. Note that some images genuinely need a few: an official
+database image typically needs `CHOWN`, `SETUID` and `SETGID` at start-up
+because its entrypoint prepares the data directory and drops privileges. Removing
+those without testing produces a container that will not start.
+
+**`no-new-privileges`.** Stops a process gaining rights it was not started with
+via setuid binaries. Cheap and almost never breaks anything.
+
+**Read-only root filesystem**, with `tmpfs` for the paths the image writes to.
+Turns "attacker writes a payload into the container" into an error. Not every
+image tolerates it.
+
+**Run as a non-root user** where the image supports it, and be aware that many
+still do not.
+
+**Bind mounts are a hole you choose.** A host directory mounted writable is a
+path out of the container's filesystem isolation by design. Mount the narrowest
+directory, read-only where possible.
+
+**Pin images by version, ideally by digest.** `:latest` means the thing you
+tested and the thing running are different at some unknown point.
+
+## What isolation does not give you
+
+- **It is not a boundary against untrusted code.** Container isolation is good;
+  it is not designed to hold arbitrary hostile code away from a shared kernel.
+- **It does not patch anything.** A hardened container running an outdated
+  application is an outdated application.
+- **It does not stop application-level attacks.** An injection inside the
+  container is fully inside the container, which is where your data is.
+- **It does not survive the host.** Everything on this page is scoped to one
+  machine that you still have to keep patched — see
+  [host and malware protection](/security/host/).
+
+## What this blueprint covers
+
+`no-new-privileges` and dropped capabilities on every service, checked before a
+change is merged. Read-only root filesystems and non-root users where the image
+allows. No privileged containers, and no service with the Docker socket mounted.
+One internal network per application.
+
+The choice of runtime, the host kernel, and whether a workload deserves a VM
+instead are yours.
+
+<Sources ids={['nist-sp800-190', 'docker-userns', 'podman-rootless']} />

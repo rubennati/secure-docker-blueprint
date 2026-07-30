@@ -1,0 +1,155 @@
+---
+title: Security architecture for a self-hosted server
+description: The full chain of protection in front of a self-hosted service — what each layer stops, what it does not, where it is implemented, and which parts this blueprint covers.
+---
+
+import Sources from '../../../components/Sources.astro';
+
+This section is about running services on your own server safely. It is written
+so it holds whether or not you use this project's Compose files — the blueprint
+appears as a worked example, not as the subject.
+
+No single control here is sufficient on its own. Each one has a specific reach,
+and the useful question is never "is this secure" but "which layer would have
+stopped this, and do I have it".
+
+## The chain a request passes through
+
+```text
+Internet
+   ↓
+Network firewall · router · VLAN          ← stops traffic before the machine
+   ↓
+Host firewall                             ← stops traffic on the machine
+   ↓
+VPN, or public exposure                   ← decides who may attempt at all
+   ↓
+Reverse proxy · TLS · security headers    ← identity of the server, transport, browser rules
+   ↓
+Rate limiting · WAF · IDS/IPS             ← what the request looks like
+   ↓
+Application container                     ← what the software itself allows
+   ↓
+Internal container network                ← what a compromise can reach next
+   ↓
+Database and storage                      ← what it can read once it is there
+   ↓
+Logging · monitoring · incident response  ← whether you find out
+   ↓
+Backup · restore · off-site               ← whether it matters afterwards
+```
+
+The last two are the ones people postpone, and they are the ones that decide the
+size of a bad day. Everything above them reduces the chance of an incident. Only
+those two change what an incident costs.
+
+## Four questions per layer
+
+Every page in this section answers the same four, in the same order, because the
+third is the one that usually goes unasked:
+
+1. **What does it stop?**
+2. **What does it not stop?** — where the layer is silently blind
+3. **Where is it implemented?** — network device, host, proxy, container, application
+4. **What does this blueprint cover?** — and what remains yours
+
+## What this blueprint covers, and what it does not
+
+The distinction that matters is not "secure or insecure" but who is responsible.
+Three states: the blueprint does it, the blueprint prepares it and you switch it
+on, or it is outside the Compose files entirely.
+
+| Layer | This blueprint | You |
+|---|---|---|
+| Container hardening — no new privileges, dropped capabilities, read-only root where the image allows | applied, and checked before merge | — |
+| Container network isolation — one internal network per application, databases never published | applied | — |
+| Reverse proxy and TLS | configured, certificates renew themselves | a domain and its DNS |
+| Security headers, rate limiting, access policies | available, set per service | choose the policy per service |
+| Credentials as mounted files rather than environment values | applied where the image supports it | keep the files off the machine's backups' blast radius |
+| Intrusion detection — log analysis, community blocklist | shipped, optional | switch on and operate |
+| HTTP blocking at the proxy | shipped, optional | switch on |
+| Host firewall blocking — packets dropped before any port | configuration and procedure documented; the agent is a host package | install and operate it |
+| Network firewall, VLAN, upstream segmentation | not covered | provide, if your environment has one |
+| Host patching, SSH hardening, endpoint protection | **not covered at all** | required, and entirely yours |
+| Malware scanning of uploaded files | available in some applications | choose and operate it |
+| Logging and monitoring | stacks are in the repository | operate them; no guide here yet |
+| Backup and restore | configuration, schedule and procedure | an off-site target, and a rehearsed restore |
+
+Two rows deserve emphasis because they are the most common gap in a self-hosted
+setup. **Host patching and SSH hardening are absent from this project.** No
+`sshd_config`, no unattended upgrades, nothing. A perfectly hardened container on
+an unpatched host with password SSH is not a secure system. And **a host
+firewall is reachable here but not automatic** — the intrusion detection engine
+can drive one, and until you install its agent, a ban only applies to HTTP
+traffic through the proxy.
+
+[How this blueprint fits the model →](/architecture/)
+
+## Two things worth knowing before you rely on a layer
+
+### Docker rewrites your host firewall
+
+This is the one that catches people, and it is worth stating without hedging:
+**a host firewall does not protect a published container port.**
+
+Publishing a port makes Docker install its own packet-filter rules. They are
+evaluated ahead of the ones a host firewall like `ufw` manages, and the traffic
+is forwarded rather than delivered locally — so the host firewall's rules are
+not consulted on the path that matters. `ufw deny 8080` and a container
+published on `8080` coexist happily, and the port is open.
+
+```bash
+# Reachable despite the deny rule — verify rather than assume:
+sudo ufw status | grep 8080
+curl -sI http://<server>:8080
+```
+
+Three ways out, in the order they cost you least:
+
+- **Publish to `127.0.0.1` only** — `"127.0.0.1:8080:8080"`. The port never
+  reaches a network interface. This is what the stacks here do, and it is why
+  the reverse proxy is the only thing that binds publicly.
+- **Put rules in the `DOCKER-USER` chain** — the documented place for filtering
+  that has to run before Docker's own rules.
+- **Have something upstream that does not pass the port at all.** A router or
+  network firewall in front is unaffected by anything the host's rule table does
+  later. That is its distinct value here: it is the layer that still holds when
+  a port is published on the host by accident — a stray `ports:` entry, a
+  copied compose file, a forgotten test.
+
+None of that makes the host firewall pointless. It is the layer that can see
+traffic between containers and outbound connections from them, which nothing in
+front of the machine ever sees. The two cover different failure modes; the
+mistake is assuming the host one covers published ports, because it does not.
+
+### A filter is not a fix for the software behind it
+
+A web application firewall recognises the shapes of known attacks. It does not
+know your application's permissions model, and it does not see a request that
+reaches the application by another route.
+
+**An upload endpoint is the clearest example of how one feature opens several
+exits at once.** Take a site that accepts file uploads, perhaps without
+requiring an account. The same feature can produce, independently:
+
+- an **injection**, depending on how the file is stored — a filename or metadata
+  reaching a query or a path, or a stored file being served back in a context
+  where it executes
+- a **hosted payload**: malware now sits on your server, and if the store is
+  publicly readable, your domain distributes it to everyone who downloads it
+- **resource exhaustion**, from something that is neither
+
+They need different controls, and a scanner covers only the second. The point is
+not that these are easily confused — it is that one careless upload feature is
+several problems, and fixing the one you thought of leaves the others.
+
+**A backup that has never been restored** is the same category of assumption.
+
+## Where to go from here
+
+- **Understand this blueprint specifically:** [how a server fits together](/architecture/)
+- **Set up the pieces:** [what every server needs](/infrastructure/)
+- **Make an incident survivable:** [backup and restore](/operations/backup/)
+- **Something is wrong now:** [when something is broken](/operations/troubleshooting/)
+
+<Sources ids={['docker-packet-filtering', 'nist-sp800-41', 'cisa-microsegmentation', 'owasp-wstg', 'eu-enisa-sme', 'de-bsi-grundschutz', 'at-cert']} />

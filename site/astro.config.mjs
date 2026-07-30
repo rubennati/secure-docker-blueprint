@@ -10,17 +10,28 @@ export default defineConfig({
 	//
 	// No `base` on purpose: this is an apex-style custom domain, so every
 	// internal path stays root-relative and llms.txt keeps working as written.
-	site: 'https://secure-docker.rubennati.at',
+	site: 'https://secdockblue.rubennati.at',
 	integrations: [
 		starlight({
-			title: 'Secure Docker Blueprint',
+			// Two names, deliberately, because they are two things:
+			//
+			//   SecDockBlue           this site — guidance, security knowledge, and
+			//                         the operator-facing product
+			//   Secure Docker Blueprint   the repository — Compose files, the
+			//                         technical source of truth
+			//
+			// The name does not fully explain itself, which is why the descriptive
+			// line sits directly under it on every surface that carries it. Prose
+			// referring to the Compose files keeps calling them the Blueprint.
+			title: 'SecDockBlue',
 			customCss: ['./src/styles/custom.css'],
-			description: 'Security-focused Docker Compose infrastructure with Traefik, CrowdSec, Docker Secrets and operational guidance for self-hosted services.',
+			description: 'Secure self-hosting blueprints and operator guidance — deploying, protecting, operating and recovering self-hosted services.',
 			social: [
 				{ icon: 'github', label: 'GitHub', href: 'https://github.com/rubennati/secure-docker-blueprint' },
 			],
 			components: {
 				Head: './src/components/Head.astro',
+				SiteTitle: './src/components/SiteTitle.astro',
 			},
 			// A reader arrives at any of these pages, from a search engine as often
 			// as from the home page, and needs to recognise from the section alone
@@ -47,7 +58,11 @@ export default defineConfig({
 					// one is a prerequisite for every application, the other is an
 					// optional layer. The overview page draws that line — a section
 					// label cannot.
-					label: 'Infrastructure and security',
+					//
+					// "and security" was dropped when Security became its own section:
+					// these two are implementations, and the concepts they implement
+					// are explained once, over there.
+					label: 'Infrastructure',
 					items: [
 						{ label: 'What every server needs', link: '/infrastructure/' },
 						{ label: 'Traefik — routing and TLS', link: '/infrastructure/traefik/' },
@@ -62,11 +77,14 @@ export default defineConfig({
 					items: [
 						{ label: 'What each one is for', link: '/applications/' },
 						{ label: 'Choosing between services', link: '/applications/choosing/' },
-						{ label: 'Vaultwarden — passwords', link: '/applications/vaultwarden/' },
-						{ label: 'Nextcloud — files and calendars', link: '/applications/nextcloud/' },
+						// The two orientation pages first, then the guides A–Z. Nothing
+						// about one service makes it belong before another, so the order
+						// is the one a reader can predict.
 						{ label: 'Invoice Ninja — invoicing', link: '/applications/invoiceninja/' },
-						{ label: 'Seafile Pro — file sync', link: '/applications/seafile-pro/' },
+						{ label: 'Nextcloud — files and calendars', link: '/applications/nextcloud/' },
 						{ label: 'OnlyOffice — document editing', link: '/applications/onlyoffice/' },
+						{ label: 'Seafile Pro — file sync', link: '/applications/seafile-pro/' },
+						{ label: 'Vaultwarden — passwords', link: '/applications/vaultwarden/' },
 					],
 				},
 				{
@@ -78,9 +96,36 @@ export default defineConfig({
 					],
 				},
 				{
-					label: 'Architecture and data sovereignty',
+					// Standalone operator knowledge: it holds whether or not the reader
+					// uses this project's Compose files, and the blueprint appears only
+					// as a worked example. The architecture page sits here because the
+					// question it answers — what of the chain does this blueprint
+					// cover — belongs next to the chain itself.
+					// Not alphabetical, unlike the application list: these follow the
+					// chain a request passes through, from the outside in, and that
+					// order is the argument. Goals come first because a control can
+					// only be judged against one.
+					label: 'Security',
 					items: [
-						{ label: 'How a server fits together', link: '/architecture/' },
+						{ label: 'The whole chain', link: '/security/' },
+						{ label: 'What you are protecting', link: '/security/goals/' },
+						{ label: 'Firewalls and segmentation', link: '/security/firewalls/' },
+						{ label: 'TLS and certificates', link: '/security/tls/' },
+						{ label: 'WAF, IDS and IPS', link: '/security/web-protection/' },
+						{ label: 'Containers, VMs and isolation', link: '/security/isolation/' },
+						{ label: 'Host and malware protection', link: '/security/host/' },
+						{ label: 'Identity and privileged access', link: '/security/identity/' },
+						{ label: 'Cryptography and key management', link: '/security/cryptography/' },
+						{ label: 'Detection and incident response', link: '/security/detection/' },
+						{ label: 'Backup and resilience', link: '/security/resilience/' },
+						{ label: 'How this blueprint fits it', link: '/architecture/' },
+					],
+				},
+				{
+					// A different question from defence: not "can someone get in" but
+					// "who governs this software, and what leaves the machine anyway".
+					label: 'Data sovereignty',
+					items: [
 						{ label: 'What self-hosting does not answer', link: '/sovereignty/' },
 						{ label: 'Putting a CDN in front', link: '/sovereignty/edge/' },
 					],

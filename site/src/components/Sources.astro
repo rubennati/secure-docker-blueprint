@@ -1,0 +1,90 @@
+---
+/**
+ * "Sources and further reading" — the citation block at the foot of a page.
+ *
+ * Pages pass source ids, never URLs. An unknown id fails the build, so a
+ * citation cannot quietly disappear when a page is edited.
+ *
+ * The publisher, jurisdiction and target host are shown *before* the reader
+ * follows the link. That is the point: someone should be able to judge whether
+ * a source is worth their click without taking it, and should never be
+ * surprised about whose site they land on.
+ *
+ * Usage:  <Sources ids={['nist-sp800-41', 'cisa-microsegmentation']} />
+ */
+import { getSources, hostOf } from '../data/sources';
+
+interface Props {
+	ids: string[];
+	/** Heading override, for pages where "further reading" is the wrong framing. */
+	title?: string;
+}
+
+const { ids, title = 'Sources and further reading' } = Astro.props;
+const entries = getSources(ids);
+
+const fmt = (iso: string) =>
+	new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+---
+
+<section class="sources" aria-labelledby="sources-heading">
+	<h2 id="sources-heading">{title}</h2>
+	<ul>
+		{
+			entries.map((s) => (
+				<li>
+					<a href={s.url} data-external-link>
+						{s.title}
+					</a>
+					<p class="sources__meta">
+						{s.publisher} · {s.jurisdiction} ·{' '}
+						{s.published && <>published {fmt(s.published)} · </>}
+						checked {fmt(s.lastChecked)} · <code>{hostOf(s.url)}</code>
+					</p>
+					<p class="sources__supports">{s.supports}</p>
+				</li>
+			))
+		}
+	</ul>
+	<p class="sources__note">
+		Where this site makes a recommendation that goes beyond what a source states, it says
+		so in place. <a href="/sources/">How sources are chosen and checked</a>.
+	</p>
+</section>
+
+<style>
+	.sources {
+		margin-block-start: 3rem;
+		padding-block-start: 1rem;
+		border-top: 1px solid var(--sl-color-hairline);
+	}
+	.sources h2 {
+		font-size: var(--sl-text-lg);
+		margin-block-end: 0.75rem;
+	}
+	.sources ul {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		display: grid;
+		gap: 1rem;
+	}
+	.sources li {
+		margin: 0;
+	}
+	.sources__meta,
+	.sources__supports {
+		margin: 0.15rem 0 0;
+		font-size: 0.8rem;
+		color: var(--sl-color-gray-3);
+		line-height: 1.5;
+	}
+	.sources__supports {
+		color: var(--sl-color-gray-2);
+	}
+	.sources__note {
+		margin-block-start: 1.25rem;
+		font-size: 0.8rem;
+		color: var(--sl-color-gray-3);
+	}
+</style>

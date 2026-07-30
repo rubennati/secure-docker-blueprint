@@ -44,12 +44,12 @@ All three plug into Nextcloud or Seafile as a shared backend.
 **Collabora** is the light one — around 1 GB idle, LibreOffice underneath. Take
 it when the host is small.
 
-**OnlyOffice** stays closest to Microsoft formats. Take it when documents move
-back and forth with people using Word and Excel. [Guide →](/applications/onlyoffice/)
-
 **Euro-Office** is an EU-governed fork of OnlyOffice, maintained by a group that
 includes Nextcloud, IONOS, XWiki and Proton. Same editor, different governance.
 Take it when the supplier's jurisdiction is part of the decision.
+
+**OnlyOffice** stays closest to Microsoft formats. Take it when documents move
+back and forth with people using Word and Excel. [Guide →](/applications/onlyoffice/)
 
 ## Dashboards
 
@@ -58,15 +58,15 @@ Four, and what separates them is how you configure them.
 **Dashy** — one YAML file, and the interface rebuilds when it changes. The
 simplest to keep in version control.
 
-**Homepage** — also file-based YAML, but split by concern: services, bookmarks,
-widgets and settings each in their own file. More structure for a larger setup.
+**Heimdall** — a launcher first. Quick to set up, with optional per-service
+status widgets. Take it when you want links on a page and not a control panel.
 
 **Homarr** — configured in the browser and built around integrations. It shows
 live state from media servers, download clients and reverse proxies rather than
 only linking to them.
 
-**Heimdall** — a launcher first. Quick to set up, with optional per-service
-status widgets. Take it when you want links on a page and not a control panel.
+**Homepage** — also file-based YAML, but split by concern: services, bookmarks,
+widgets and settings each in their own file. More structure for a larger setup.
 
 ## Photo libraries
 
@@ -75,49 +75,49 @@ Five, separated by what they are for.
 **Immich** is the phone-backup one. Mobile apps upload automatically, with
 machine-learning search and face recognition.
 
+**LibrePhotos** covers face and object recognition and location data, closest to
+PhotoPrism in scope.
+
+**Lychee** presents rather than manages: fast browsing, clean galleries, little
+machinery.
+
 **PhotoPrism** manages an existing library — TensorFlow classification, face
 recognition, and strong handling of large collections already on disk.
 
 **Photoview** is built around RAW files and EXIF. Take it if you shoot RAW and
 want the folder structure to stay the organising principle.
 
-**Lychee** presents rather than manages: fast browsing, clean galleries, little
-machinery.
-
-**LibrePhotos** covers face and object recognition and location data, closest to
-PhotoPrism in scope.
-
 ## Publishing
+
+**BookStack** for a wiki. Shelves, books, chapters and pages, and no attempt to
+be a CMS.
 
 **Ghost** for a publication — newsletters and paid memberships are built in.
 
 **WordPress** for a site that will need plugins and themes, and where other
 people will edit it.
 
-**BookStack** for a wiki. Shelves, books, chapters and pages, and no attempt to
-be a CMS.
-
 ## Appointments
-
-**Easy!Appointments** has run since 2013 on PHP and MySQL, and installs without a
-build step.
 
 **Cal.diy** is the community edition of Cal.com. It is the newer of the two and
 asks more of the host.
 
+**Easy!Appointments** has run since 2013 on PHP and MySQL, and installs without a
+build step.
+
 ## E-signature
 
-**OpenSign** and **Documenso** both replace DocuSign for self-hosted signing.
+**Documenso** and **OpenSign** both replace DocuSign for self-hosted signing.
 Documenso is US-registered with development largely from Hamburg; OpenSign is
 registered in India. Neither has a guide here yet.
 
 ## Uptime monitoring
 
-**Uptime Kuma** is configured in its interface. Rich probe types, SQLite behind
-it, quick to get running.
-
 **Gatus** is configured in YAML and nothing else, which is what you want when the
 monitoring configuration belongs in the same repository as everything else.
+
+**Uptime Kuma** is configured in its interface. Rich probe types, SQLite behind
+it, quick to get running.
 
 ## Project management
 

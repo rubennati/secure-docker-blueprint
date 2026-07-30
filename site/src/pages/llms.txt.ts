@@ -15,22 +15,26 @@ const SUMMARY =
   'Security-focused Docker Compose infrastructure for self-hosted services: hardened defaults, Docker Secrets, a Traefik reverse proxy with optional dual-stack IPv6, CrowdSec intrusion detection, and standards-consistent service definitions. Apache 2.0.';
 
 const INTRO = [
-  'This is the operator-facing guide site for Secure Docker Blueprint. The',
-  '[GitHub repository](https://github.com/rubennati/secure-docker-blueprint) is the',
-  'technical source of truth — compose files, `.env.example` templates and full',
-  'per-service READMEs for every stack live there. This site curates guided',
-  'documentation for the services and topics that benefit most from it.',
+  'SecDockBlue is the operator-facing site. Secure Docker Blueprint is the',
+  'repository underneath it —',
+  '[github.com/rubennati/secure-docker-blueprint](https://github.com/rubennati/secure-docker-blueprint)',
+  '— and it remains the technical source of truth: compose files, `.env.example`',
+  'templates and full per-service READMEs for every stack live there. The two',
+  'names refer to two different things and are not interchangeable. The security',
+  'material on this site is standalone operator knowledge and applies whether or',
+  'not those compose files are used.',
 ].join(' ');
 
 // Section order matches the sidebar. Each prefix claims the pages beneath it;
 // the home page is the header above and is not listed as a link.
 const SECTIONS: { heading: string; prefix: string }[] = [
   { heading: 'Start', prefix: 'getting-started' },
-  { heading: 'Infrastructure and security', prefix: 'infrastructure' },
+  { heading: 'Infrastructure', prefix: 'infrastructure' },
   { heading: 'Applications', prefix: 'applications' },
   { heading: 'Operations and recovery', prefix: 'operations' },
-  { heading: 'Architecture and data sovereignty', prefix: 'architecture' },
-  { heading: 'Architecture and data sovereignty', prefix: 'sovereignty' },
+  { heading: 'Security', prefix: 'security' },
+  { heading: 'Security', prefix: 'architecture' },
+  { heading: 'Data sovereignty', prefix: 'sovereignty' },
   { heading: 'Reference', prefix: 'faq' },
   { heading: 'Reference', prefix: 'project' },
 ];
@@ -46,7 +50,7 @@ const toPath = (id: string) => (id === '' ? '/' : `/${id}/`);
 
 export const GET: APIRoute = async ({ site }) => {
   const docs = await getCollection('docs');
-  const lines: string[] = ['# Secure Docker Blueprint', '', `> ${SUMMARY}`, '', INTRO, ''];
+  const lines: string[] = ['# SecDockBlue', '', `> ${SUMMARY}`, '', INTRO, ''];
 
   // Two prefixes may share a heading, so collect first and emit once.
   const grouped = new Map<string, string[]>();

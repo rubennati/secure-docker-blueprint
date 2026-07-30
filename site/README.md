@@ -1,4 +1,14 @@
-# Secure Docker Blueprint — Operator Site
+# SecDockBlue — the operator site
+
+The public brand for this site is **SecDockBlue**; the repository it stands on
+keeps the name **Secure Docker Blueprint**. They are two things and the names
+are not interchangeable — the site is the operator-facing product, the
+repository is the technical source of truth. Prose about the Compose files still
+calls them the Blueprint.
+
+The wordmark is one word. Never `SEC DOCK BLUE`, never hyphenated: the three
+parts are distinguished by weight and colour in
+[`SiteTitle.astro`](src/components/SiteTitle.astro) and by nothing else.
 
 This folder contains the source for the Operator Site: an Astro/Starlight static site published via GitHub Pages.
 

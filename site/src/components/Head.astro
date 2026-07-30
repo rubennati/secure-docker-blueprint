@@ -11,6 +11,7 @@
 import Default from '@astrojs/starlight/components/Head.astro';
 import type { FAQPage, WithContext } from 'schema-dts';
 import { faqCategories } from '../data/faq';
+import ExternalLinks from './ExternalLinks.astro';
 
 const isFaqPage = Astro.locals.starlightRoute?.id === 'faq';
 
@@ -34,3 +35,4 @@ const schema: WithContext<FAQPage> | null = isFaqPage
 
 <Default {...Astro.props} />
 {schema && <script type="application/ld+json" set:html={JSON.stringify(schema)} />}
+<ExternalLinks />

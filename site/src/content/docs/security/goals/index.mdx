@@ -1,0 +1,90 @@
+---
+title: What you are actually protecting
+description: Confidentiality, integrity, availability, authenticity and accountability — what each one means, which measures serve which, and why they pull against each other.
+---
+
+import Sources from '../../../../components/Sources.astro';
+
+A control can only be judged against a goal. "Is this secure" has no answer;
+"does this keep the data readable only to the right people" does, and it has a
+different answer from "does this let me prove who changed it".
+
+Naming the goal first is not academic. It is what stops you from buying a
+measure that protects something you were not worried about while leaving the
+thing you were worried about untouched.
+
+## The five
+
+| Goal | Means | Served by |
+|---|---|---|
+| **Confidentiality** | only the intended parties can read it | encryption in transit and at rest, access control, secret management |
+| **Integrity** | it has not been altered without that being detectable | hashes, signatures, restrictive write permissions, audit logs |
+| **Availability** | it is reachable, and recoverable when it is not | redundancy, monitoring, backup, a rehearsed restore |
+| **Authenticity** | the party or system is who it claims to be | certificates, multi-factor authentication, signatures |
+| **Accountability** | an action can be attributed to someone | individual accounts, logging, privileged-access records |
+
+The first three are the classic triad. The last two get dropped from summaries
+and are usually the ones a real incident turns on: not "was the data secret" but
+"who did this, and can we show it".
+
+## They pull against each other
+
+This is the part worth internalising, because every uncomfortable security
+decision is one of these trades.
+
+**Confidentiality against availability.** Encrypt a backup properly and you have
+made it useless to a thief — and useless to yourself if the key is gone. The
+strongest confidentiality control on a backup is also the most reliable way to
+lose the data permanently.
+
+**Availability against integrity.** Restoring quickly from the most recent
+snapshot gets the service back. If the intrusion is older than the snapshot, you
+have restored the intrusion with it.
+
+**Accountability against convenience.** A shared administrative account is
+faster for a team of two and destroys attribution. Nobody notices until the
+question "who ran this" has to be answered.
+
+**Confidentiality against accountability.** Logs detailed enough to reconstruct
+an incident contain the things you were trying not to store.
+
+There is no configuration that maximises all five. What you can do is state
+which one dominates for a given system and let that decide, rather than
+discovering the trade after the fact.
+
+## Applied to one server
+
+For a self-hosted service the weighting is usually not what people assume.
+
+- **Availability is mostly yours to lose.** One host, one proxy, one disk. Most
+  outages here are self-inflicted — a failed update, a full disk, an expired
+  something — not attacks.
+- **Integrity is the quiet one.** A compromise that changes data rather than
+  stealing it is harder to spot and harder to undo, and versioned backups are
+  the only thing that makes the "since when" question answerable.
+- **Accountability is usually absent.** A single-operator setup has one account
+  and no attribution. That is acceptable until someone else gets access, at
+  which point separate accounts stop being bureaucracy.
+
+## Safety is a different word
+
+Security protects systems and information against deliberate or unauthorised
+action. **Safety** protects people, the environment and physical property from
+harm.
+
+For a file server or an invoicing application, safety is not a consideration.
+For building automation, industrial control, medical devices or anything else
+where software moves something physical, safety is usually the *dominant*
+requirement, and it can invert the usual answers — a fail-closed door is a
+security default and a safety hazard.
+
+If your system can hurt someone, security guidance written for web services does
+not transfer without checking, and this site is written for web services.
+
+## Where to go from here
+
+- [Cryptography and key management](/security/cryptography/) — the mechanics behind confidentiality and integrity
+- [Identity and privileged access](/security/identity/) — authenticity and accountability in practice
+- [Backup, restore and resilience](/security/resilience/) — availability when the other four have already failed
+
+<Sources ids={['de-bsi-grundschutz', 'eu-enisa-sme', 'nist-sp800-34']} />

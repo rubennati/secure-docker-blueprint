@@ -1,0 +1,121 @@
+---
+title: Backup, restore and resilience
+description: Backup is not restore, versioning is not protection against stolen credentials, and a copy the server can reach is a copy an intruder can reach. What makes a backup actually recover you.
+---
+
+import Sources from '../../../../components/Sources.astro';
+
+This is the layer that decides what an incident costs. Everything before it
+reduces the probability; only this changes the outcome once something has
+already gone wrong — and it works the same whether the cause was ransomware, a
+failed upgrade, or a mistyped command.
+
+## Backup is not restore
+
+A backup is a copy. A restore is a demonstrated capability. Most people have the
+first and assume the second, and the assumption is tested for the first time on
+the worst day available.
+
+**A backup that has never been restored is a hypothesis.** The failures it hides
+are mundane and total: an archive that was never actually written, a database
+dump taken while the database was running and therefore torn, a passphrase
+nobody wrote down, an archive that restores to a version of the software that no
+longer exists, permissions flattened so the service will not start.
+
+Restoring is the only way to find these. Do it once deliberately, write down how
+long it took, and note what you discovered — because you will discover
+something.
+
+## What "recovered" has to mean
+
+State it before judging any plan:
+
+- **How much data can you afford to lose?** That sets the backup interval. Daily
+  means up to a day.
+- **How long can it be down?** That sets what the restore path has to be, and it
+  is usually the harder number.
+- **What does whole mean?** For most services: the database, the file storage,
+  the configuration, and the keys — from *the same point in time*. Partial
+  restores of coupled data produce something that starts and is wrong, which is
+  worse than something that does not start.
+
+## Databases need dumping, not copying
+
+Copying a running database's files captures a torn, mid-transaction state. It
+usually appears to work and reveals itself at restore.
+
+Use the engine's own dump mechanism, and where an application couples files and
+database records, quiesce it — maintenance mode, or briefly stopped — so the two
+agree.
+
+## Where the copy lives is most of the question
+
+| | Protects against |
+|---|---|
+| Snapshot on the same disk | a mistake you notice quickly |
+| Copy on the same host | a lost file; **not** a lost host |
+| Copy on another machine you control | a lost host; not a compromise of your account |
+| Off-site, credentials the server does not hold | a compromise of the server |
+| Offline or immutable | an intruder holding all your credentials |
+
+The rows matter in that order, and most setups stop after the second.
+
+**Versioning is not protection against stolen credentials.** Keeping thirty days
+of versions defends against a mistake. It does not defend against someone who
+holds the credentials that manage those versions and can delete them —
+deliberately, because deleting the backups first is standard practice.
+
+**Append-only and immutability are what change that.** A repository the server
+can add to but not delete from, or storage with a retention lock the account
+cannot lift, means credentials taken from the server are not enough to destroy
+the history. This is the single highest-value upgrade to a backup arrangement,
+and it is usually a configuration change rather than a purchase.
+
+**Anything the server can reach with the credentials it holds, an intruder on
+that server can reach too.** That sentence is the whole design constraint.
+
+## Encryption cuts both ways
+
+Encrypt off-site archives — you are handing them to a third party. Then accept
+the consequence: **the key is now a single point of total loss.**
+
+Store the passphrase somewhere the server cannot reach and you can. A password
+manager, or paper. Not in the repository, not in the `.env` on the machine being
+backed up, not only in your head. See
+[cryptography and key management](/security/cryptography/).
+
+Test that the key you stored is the key that works. This is not paranoia; it is
+the second most common way a rehearsed-looking backup fails.
+
+## The restore that finds real problems
+
+A restore test that only proves the archive opens has proved very little. A
+useful one restores to a *separate* environment and then checks the service
+actually works:
+
+1. Restore the database, the files and the configuration to a clean target
+2. Start the service and log in
+3. Check something that spans the coupled parts — a record whose attachment
+   should still be there
+4. Note what was missing, and what the procedure did not say
+
+Things this surfaces that nothing else does: a restored instance that comes back
+paused or in maintenance mode, a search index that has to be rebuilt separately,
+signing keys without which sessions break even though the data is intact, and
+file permissions that stop a service from starting.
+
+## What this blueprint covers
+
+Backup configuration, retention, database dump hooks, a schedule, run
+monitoring, and a documented restore procedure — Borgmatic installed on the
+host. Encrypted, deduplicated archives.
+
+What is yours: **an off-site target**, and the rehearsal. The blueprint's own
+restore was performed against a repository on the same machine, which means
+append-only enforcement over a remote connection is written down rather than
+demonstrated. One application has had its data restored on a live host; the rest
+say so on their own pages rather than implying otherwise.
+
+[Backup and restore →](/operations/backup/)
+
+<Sources ids={['nist-sp800-34', 'cisa-stopransomware', 'eu-enisa-sme']} />

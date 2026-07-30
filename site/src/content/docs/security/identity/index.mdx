@@ -1,0 +1,128 @@
+---
+title: Identity, credentials and privileged access
+description: Password managers, secret managers, privileged access and multi-factor authentication — which tool is for humans, which is for machines, and what each one does not solve.
+---
+
+import Sources from '../../../../components/Sources.astro';
+
+Most incidents on small infrastructure do not begin with an exploit. They begin
+with a credential that was valid — reused, stolen, left in a repository, or
+still working long after the person who created it stopped needing it.
+
+This page is about the credentials themselves: where they live, who holds them,
+and how they stop working when they should.
+
+## Two different problems, two different tools
+
+They get confused constantly, and using one for the other is how secrets end up
+in places nobody can audit.
+
+| | Password manager | Secret manager |
+|---|---|---|
+| **For** | people | systems and applications |
+| **Holds** | login credentials, recovery codes, personal MFA seeds | API keys, database passwords, tokens, certificate keys |
+| **Accessed by** | a human, interactively, after unlocking | a workload, non-interactively, at start-up or on demand |
+| **Rotation** | when something changes or leaks | on a schedule, ideally without a human present |
+| **Audit question** | "who knows this password" | "which service read this secret, when" |
+
+**A password manager holding your application's database password is a smell.**
+It works, and it means a human is in the delivery path for a machine credential —
+so rotation requires that human, and the value passes through a clipboard.
+
+**A secret manager holding a person's login is the same mistake reversed.** It
+removes the individual attribution that makes accountability possible.
+
+For a single-operator server, the honest answer is usually: a password manager
+for yourself, files on disk with restricted permissions for the machine, and a
+clear-eyed view that this is a deliberate simplification rather than a
+best-practice implementation. It stops being adequate the moment a second person
+or a second environment appears.
+
+## Passwords, as the current evidence has them
+
+Guidance changed and a lot of received wisdom did not keep up.
+
+- **Length beats composition.** A long passphrase is stronger than a short string
+  with a symbol bolted on, and composition rules push people toward predictable
+  substitutions.
+- **Scheduled expiry is not recommended.** Forcing a change every 90 days
+  produces incremental variations of the same password. Change on evidence of
+  compromise, not on the calendar.
+- **Check against known-breached lists** rather than against complexity rules.
+- **Uniqueness is the one that actually matters.** Reuse is what turns someone
+  else's breach into your incident, and it is the only property a manager can
+  guarantee for you.
+
+Where you store other people's passwords — an application you run — they are
+hashed with a slow, salted password-hashing function. Argon2id or bcrypt; not
+SHA-256, whose speed is a feature everywhere except here.
+
+## Privileged access
+
+**PAM is Privileged Access Management** — the handling of accounts that can
+change the system rather than use it. Root, administrator, the database
+superuser, the shared account for a technical service.
+
+The full discipline covers time-bounded elevation, approval workflows, session
+recording, and just-in-time access. Most of that is disproportionate for one
+server. Three parts are not:
+
+- **A break-glass account, and knowing how it works.** One credential that gets
+  you back in when the usual path fails — MFA device lost, SSO broken, VPN down.
+  Stored offline, never used routinely, and tested at least once, because an
+  emergency credential nobody has ever tried is a guess.
+- **Separate accounts per person the moment there is more than one person.** A
+  shared login is not a shortcut, it is the deletion of accountability.
+- **Elevation that leaves a trace.** `sudo` with logging rather than a root
+  shell, so "what was done as root" has an answer.
+
+## API tokens are not configuration values
+
+A token is a credential that authenticates without a human, which makes it more
+dangerous than a password, not less — nothing prompts, nothing notices.
+
+- **Scope it down.** A token that can read one thing should not be able to write
+  everything. Most APIs offer this and most people take the default.
+- **One per service and per environment.** A shared token cannot be revoked
+  without breaking everything that shares it — which is exactly why nobody
+  revokes it.
+- **Give it an expiry** where the API allows one. An unlimited token is a
+  permanent decision made in a hurry.
+- **Never in an image, a repository, or a log.** Build arguments and environment
+  dumps are the usual leaks. `docker compose config` prints every token in
+  plaintext.
+- **Know how to revoke it before you need to.** Find the revocation page once,
+  while nothing is on fire.
+
+## Multi-factor authentication
+
+Required for anything privileged or reachable from the internet. Beyond that,
+the methods differ more than the marketing suggests:
+
+| Method | Notes |
+|---|---|
+| **Hardware key / passkey** | Phishing-resistant: the credential is bound to the origin, so a lookalike domain gets nothing |
+| **Authenticator app (TOTP)** | Good. Phishable — the code can be relayed by an attacker in the middle in real time |
+| **Push approval** | Convenient, and vulnerable to fatigue: people approve prompts to make them stop |
+| **SMS** | Weakest. SIM swapping and interception are practical, not theoretical |
+
+**What MFA does not do:** it protects the *moment of authentication*. A session
+token stolen afterwards — from a browser, from a proxy in the middle — is
+already past it. That is why session lifetime, revocation, and re-authentication
+before genuinely destructive actions belong to the same picture.
+
+**Service accounts do not get MFA**, because nothing is there to complete a
+challenge. The equivalent is short-lived credentials, certificate-based
+authentication, or restricting where the credential may be used from.
+
+## What this blueprint covers
+
+Credentials are mounted into containers as files rather than set as environment
+values, where the image supports it — that keeps them out of `docker inspect`
+and out of process listings. Some images can only read a value from the
+environment; those stacks say so.
+
+Everything on this page above that line — your password manager, your MFA, your
+SSH keys, the tokens you issue — is outside the Compose files entirely.
+
+<Sources ids={['nist-sp800-63b', 'owasp-password-storage', 'at-onlinesicherheit', 'eu-enisa-sme']} />

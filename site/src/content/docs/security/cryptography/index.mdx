@@ -1,0 +1,119 @@
+---
+title: Cryptography and key management
+description: Encryption, hashing, signatures and encoding are four different things — what each one is for, and why the handling of the key decides how much any of it is worth.
+---
+
+import Sources from '../../../../components/Sources.astro';
+
+Encryption is the most over-claimed control in infrastructure. "The data is
+encrypted" is offered as an answer without stating encrypted against whom, at
+which moment, and who holds the key — and without those three, it is not a
+statement about security at all.
+
+## Four things that are not the same
+
+| | Reversible | Protects | Answers |
+|---|---|---|---|
+| **Encryption** | yes, with the key | confidentiality | can someone else read it |
+| **Hashing** | no, by design | integrity, password storage | has this changed; is this the same input |
+| **Signature** | verifiable, not reversible | integrity and origin | did *this* party produce it, unaltered |
+| **Encoding** | yes, by anyone | nothing | — |
+
+**Base64 is not encryption.** It is a transport format. A Kubernetes secret and
+a JWT payload are both Base64 and both readable by anyone holding them. This
+mistake is common enough to be worth naming explicitly.
+
+**A hash is not encryption either.** It has no key and no inverse. Storing a
+password as a hash is correct; "encrypting" a password so the application can
+read it back is a design that has already lost.
+
+## Hashing, where it actually matters
+
+Two uses, with opposite requirements:
+
+**Integrity checking** — a checksum over a downloaded file, a manifest digest, a
+container image pinned by digest rather than by tag. Here you want speed, and
+SHA-256 is right. Note that a checksum published on the same server as the file
+proves very little; the value of pinning an image by digest is that the digest
+lives in your repository and the image does not.
+
+**Password storage** — here you want *slowness*, deliberately. Argon2id or
+bcrypt, salted per record, with a work factor set high enough to hurt an
+attacker who has the database. Using SHA-256 for passwords is a real and common
+failure: a general-purpose hash is fast, and fast is exactly what an offline
+cracking run wants.
+
+## Encryption at three different moments
+
+They protect against different adversaries, and having one says nothing about
+the others.
+
+**In transit.** TLS between a client and your server, and between your services.
+Protects against someone reading or altering traffic on the path. Says nothing
+about what happens at either end — and note that a reverse proxy terminating TLS
+is, by construction, one of those ends. See
+[TLS and certificates](/security/tls/).
+
+**At rest, on the disk.** Full-disk or filesystem encryption protects a *stolen
+or decommissioned* machine. It does nothing at all while the machine is running,
+because the filesystem is mounted and readable to anything with access. This is
+the most misunderstood one: disk encryption on a running server does not protect
+against an intruder on that server.
+
+**At rest, in the application or database.** Specific fields encrypted by the
+application, or a database with encryption applied to particular columns. This
+is the only one that survives an attacker who is already inside — and it costs
+you searchability on those fields, which is why it is applied narrowly.
+
+For backups the distinction sharpens: an encrypted archive at an off-site
+provider is protecting against that provider and against anyone who obtains the
+archive. That is a real threat and worth the key-management burden it brings.
+
+## Keys decide everything above
+
+Every property on this page reduces to a question about a key. The algorithm is
+almost never the weak part.
+
+**Generation.** From a cryptographic random source. `openssl rand`,
+`/dev/urandom`, your language's crypto RNG — never a timestamp, a hostname, or
+anything a person invented.
+
+**Storage.** Not in the repository. Not in the image. Restricted file permissions
+at minimum; a dedicated secret store when there is more than one machine or more
+than one person. Note that a key in a `.env` file next to the encrypted data
+protects the data from nobody who can read the directory.
+
+**Rotation.** Planned, with a path that does not require downtime you cannot
+afford. The awkward part is not generating a new key — it is that both sides have
+to change together, and anything holding the old one breaks. Work that out
+before you need to do it in a hurry.
+
+**Backup of the key, separately from the data.** This is the failure that
+actually happens. An encrypted backup whose key was only on the machine that
+died is not a backup. Keys and the data they protect must be recoverable
+independently, or the encryption has quietly converted an availability risk into
+a certainty.
+
+**Compromise.** A leaked key means everything it protected is readable, including
+archives from before the leak. Rotating afterwards protects future data and does
+nothing for what already left. Plan for what you would actually have to
+re-encrypt, and what you could not.
+
+## Two sentences worth keeping
+
+> Encrypted data with an unrecoverable key is destroyed data. A recoverable key
+> stored beside the data it protects is not protection.
+
+Everything in key management is the tension between those two.
+
+## What this blueprint covers
+
+TLS in transit, via the reverse proxy, with certificates that renew themselves.
+Credentials mounted as files rather than environment values. Encrypted,
+deduplicated backup archives, where the passphrase is yours to store somewhere
+the server cannot reach.
+
+Disk encryption, key escrow, and field-level encryption inside applications are
+outside it.
+
+<Sources ids={['nist-sp800-57', 'owasp-password-storage', 'rfc-8446', 'cisa-stopransomware']} />

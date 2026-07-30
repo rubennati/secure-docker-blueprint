@@ -1,0 +1,51 @@
+---
+/**
+ * The wordmark.
+ *
+ * `SecDockBlue` is one word, not three categories, so it is never spaced or
+ * capitalised apart. The three parts are distinguished by weight and colour
+ * only — Sec carries the emphasis, Dock stays neutral, Blue takes the accent —
+ * and the whole thing degrades to plain text wherever styling does not apply.
+ *
+ * `aria-label` and `translate="no"` keep it a name: a screen reader announces
+ * "SecDockBlue" rather than three fragments, and no translation layer turns
+ * "Blue" into a colour.
+ *
+ * Replaces Starlight's default so the split can exist at all — the default
+ * renders `title` as a single text node.
+ */
+const { siteTitleHref } = Astro.locals.starlightRoute;
+---
+
+<a href={siteTitleHref} class="site-title sl-flex" aria-label="SecDockBlue">
+	<span translate="no" aria-hidden="true"
+		><span class="wordmark__sec">Sec</span><span class="wordmark__dock">Dock</span><span
+			class="wordmark__blue">Blue</span
+		></span
+	>
+</a>
+
+<style>
+	.site-title {
+		align-items: center;
+		gap: var(--sl-nav-gap);
+		text-decoration: none;
+		white-space: nowrap;
+		min-width: 0;
+	}
+	.site-title span {
+		overflow: hidden;
+	}
+	.wordmark__sec {
+		font-weight: 700;
+		color: var(--sl-color-white);
+	}
+	.wordmark__dock {
+		font-weight: 400;
+		color: var(--sl-color-gray-2);
+	}
+	.wordmark__blue {
+		font-weight: 600;
+		color: var(--sl-color-text-accent);
+	}
+</style>

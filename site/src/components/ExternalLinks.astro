@@ -1,0 +1,146 @@
+---
+/**
+ * Marks every link that leaves this site, and — depending on
+ * `externalLinkInterstitial` in src/data/site-config.ts — asks before following
+ * one.
+ *
+ * Runs on all pages via the Head override. Nothing is rendered server-side:
+ * the dialog is built on first use, so a reader who never clicks an external
+ * link never pays for it, and the markup cannot go stale against the config.
+ *
+ * Accessibility notes, because this is exactly the kind of feature that breaks
+ * keyboard use:
+ *   - a native <dialog> opened with showModal() gives Escape, focus trapping
+ *     and inertness for free
+ *   - focus returns to the link that opened it
+ *   - the destination host is announced, not just shown
+ *   - "opens in a new tab" is in the accessible name *before* activation (W3C
+ *     G200), not signalled only by the icon
+ */
+---
+
+<script>
+	import { externalLinkInterstitial, ownHosts } from '../data/site-config';
+
+	const SESSION_KEY = 'sdb:left-site-acknowledged';
+
+	const isExternal = (a: HTMLAnchorElement) =>
+		a.hostname !== '' && a.hostname !== location.hostname;
+
+	/** Strip `www.` so the reader sees the name they would recognise. */
+	const displayHost = (a: HTMLAnchorElement) => a.hostname.replace(/^www\./, '');
+
+	function markExternalLinks() {
+		const links = document.querySelectorAll<HTMLAnchorElement>('a[href]');
+		for (const a of links) {
+			if (!isExternal(a) || a.dataset.externalReady) continue;
+			a.dataset.externalReady = 'true';
+			a.dataset.externalHost = displayHost(a);
+			a.target = '_blank';
+			a.rel = 'noopener noreferrer';
+
+			// Put the destination and the new-tab behaviour into the accessible
+			// name, so a screen reader announces both before the link is followed.
+			const label = a.getAttribute('aria-label') ?? a.textContent?.trim() ?? '';
+			a.setAttribute('aria-label', `${label} (${displayHost(a)}, opens in a new tab)`);
+		}
+	}
+
+	let dialog: HTMLDialogElement | null = null;
+	let pending: { href: string; opener: HTMLAnchorElement } | null = null;
+
+	function buildDialog() {
+		const el = document.createElement('dialog');
+		el.className = 'leaving';
+		el.innerHTML = `
+			<h2 class="leaving__title">You are leaving this site</h2>
+			<p class="leaving__body">
+				This link goes to <strong class="leaving__host"></strong>, which is not
+				operated by this project. It opens in a new tab.
+			</p>
+			<form method="dialog" class="leaving__actions">
+				<button value="cancel" class="leaving__btn">Stay here</button>
+				<button value="continue" class="leaving__btn leaving__btn--primary" autofocus>
+					Continue
+				</button>
+			</form>`;
+		el.setAttribute('aria-labelledby', 'leaving-title');
+		el.querySelector('.leaving__title')!.id = 'leaving-title';
+
+		// Escape has to close this, and the browser's own handling cannot be
+		// relied on: something else on the page cancels the key before the
+		// dialog's default close runs, which was verified rather than assumed.
+		// Closing explicitly makes the behaviour ours and independent of that.
+		el.addEventListener('keydown', (event) => {
+			if (event.key !== 'Escape') return;
+			event.stopPropagation();
+			event.preventDefault();
+			el.close('cancel');
+		});
+
+		// Clicking the backdrop means the same thing as "Stay here". The dialog
+		// element covers the whole viewport when modal, so a click that lands on
+		// it rather than on its contents is a click outside the box.
+		el.addEventListener('click', (event) => {
+			if (event.target === el) el.close('cancel');
+		});
+
+		el.addEventListener('close', () => {
+			const target = pending;
+			pending = null;
+			// Focus goes back where it came from, whichever button was used.
+			target?.opener.focus();
+			if (el.returnValue === 'continue' && target) {
+				if (externalLinkInterstitial === 'once-per-session') {
+					try {
+						sessionStorage.setItem(SESSION_KEY, '1');
+					} catch {
+						/* private mode — ask again rather than fail */
+					}
+				}
+				window.open(target.href, '_blank', 'noopener,noreferrer');
+			}
+		});
+
+		document.body.append(el);
+		return el;
+	}
+
+	function shouldConfirm(a: HTMLAnchorElement) {
+		if (externalLinkInterstitial === 'off') return false;
+		if (ownHosts.includes(displayHost(a))) return false;
+		if (externalLinkInterstitial === 'once-per-session') {
+			try {
+				return sessionStorage.getItem(SESSION_KEY) !== '1';
+			} catch {
+				return true;
+			}
+		}
+		return true;
+	}
+
+	function onClick(event: MouseEvent) {
+		// Leave the reader's own intent alone: modified clicks and middle-clicks
+		// already mean "open this my way".
+		if (event.defaultPrevented || event.button !== 0) return;
+		if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+		const a = (event.target as Element | null)?.closest<HTMLAnchorElement>('a[href]');
+		if (!a || !isExternal(a) || !shouldConfirm(a)) return;
+
+		event.preventDefault();
+		dialog ??= buildDialog();
+		dialog.querySelector('.leaving__host')!.textContent = displayHost(a);
+		pending = { href: a.href, opener: a };
+		dialog.showModal();
+	}
+
+	function init() {
+		markExternalLinks();
+		document.addEventListener('click', onClick);
+	}
+
+	init();
+	// Starlight swaps content on client-side navigation; re-mark what arrived.
+	document.addEventListener('astro:page-load', markExternalLinks);
+</script>

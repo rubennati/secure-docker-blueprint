@@ -1,19 +1,28 @@
 ---
-title: Self-hosted services you can operate, not just start
-description: Security-focused Docker Compose infrastructure with Traefik, CrowdSec, Docker Secrets and operational guidance for self-hosted services.
+title: SecDockBlue
+description: Secure self-hosting blueprints and operator guidance — deploying, protecting, operating and recovering self-hosted services.
+# The page title and the site title are the same word here, which Starlight
+# would otherwise render as "SecDockBlue | SecDockBlue". The tab gets the name
+# plus what the site is, which is also what a search result needs.
+head:
+  - tag: title
+    content: SecDockBlue — secure self-hosting blueprints and operator guidance
 template: splash
 hero:
-  title: Self-hosted services you can operate, not just start
-  tagline: Hardened Docker Compose stacks for the reverse proxy, secrets, intrusion detection and backup that every service needs — with guides that say what has been verified and what has not.
+  # The name does not explain itself, so the descriptive line is not optional
+  # decoration — it is the sentence that makes the brand legible on first
+  # contact. Sec · Dock · Blue: security, containers, blueprint.
+  title: SecDockBlue
+  tagline: Secure self-hosting blueprints and operator guidance.
   actions:
-    - text: Start here
+    - text: Deploy to a server
       link: /getting-started/
       icon: right-arrow
-    - text: Choose an application
-      link: /applications/
-      icon: puzzle
+    - text: Explore security topics
+      link: /security/
+      icon: approve-check
       variant: secondary
-    - text: Repository
+    - text: View the technical repository
       link: https://github.com/rubennati/secure-docker-blueprint
       icon: external
       variant: minimal
@@ -21,38 +30,54 @@ hero:
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
 
+Deploy self-hosted applications securely, and understand the infrastructure,
+access, protection and recovery measures around them.
+
 Starting a container is one command. Keeping the service reachable only to the
 people who should reach it, patched, and recoverable when the disk goes — that
-is what these guides are about.
+is what this is about.
 
-## What the guides cover
+## Why are you here?
 
 <CardGrid>
-  <Card title="Infrastructure and security" icon="setting">
-    Traefik terminates TLS and routes every service; nothing else publishes a
-    port. CrowdSec is the optional layer that watches and blocks.
+  <Card title="I have a machine and nothing on it yet" icon="rocket">
+    Start with the host decisions that are expensive to reverse, then the proxy
+    everything else sits behind.
 
-    [What every server needs →](/infrastructure/)
+    [The path, in order →](/getting-started/)
   </Card>
-  <Card title="Applications" icon="puzzle">
+  <Card title="I know what I want to run" icon="puzzle">
     Passwords, files and calendars, invoicing, file sync, document editing —
-    each with installation, verification, backup and updates.
+    installation, verification, backup and updates for each.
 
-    [What each one is for →](/applications/)
+    [What each one is for →](/applications/) · [Where several compete →](/applications/choosing/)
   </Card>
-  <Card title="Operations and recovery" icon="approve-check">
-    Backups with Borgmatic and the restore that proves them, plus a method for
-    finding which layer is actually broken.
+  <Card title="I need to decide something and want the reasoning" icon="approve-check">
+    Firewalls, TLS, credentials, isolation, detection, recovery — what each
+    measure stops, and just as importantly what it does not.
+
+    [The whole chain →](/security/)
+  </Card>
+  <Card title="It is running, and now it has to keep running" icon="setting">
+    A backup you have restored from, and a method for finding which layer is
+    actually broken rather than guessing.
 
     [What running this involves →](/operations/)
   </Card>
-  <Card title="Architecture and sovereignty" icon="open-book">
-    How the proxy, networks and secrets fit together — and which of these
-    services still talk to their vendor, under whose jurisdiction.
-
-    [How a server fits together →](/architecture/)
-  </Card>
 </CardGrid>
+
+## Two names, two things
+
+**SecDockBlue** is this site: the guidance, the security knowledge, and the
+operator-facing product.
+
+**[Secure Docker Blueprint](https://github.com/rubennati/secure-docker-blueprint)**
+is the repository underneath it: the Compose files, the `.env` templates and the
+per-service READMEs. It stays the technical source of truth, and where a page
+here describes a configuration, the repository is what it describes.
+
+The security material goes further than the repository does, and holds whether
+or not you use those files.
 
 ## What is claimed about testing
 

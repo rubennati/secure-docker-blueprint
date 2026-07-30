@@ -1,0 +1,135 @@
+---
+title: Host and malware protection
+description: The layer this blueprint does not touch — patching, SSH, and the four different places malware scanning belongs, including the upload endpoint that opens several problems at once.
+---
+
+import Sources from '../../../../components/Sources.astro';
+
+Everything else on this site configures containers. This page is about the
+machine underneath them, and it is the layer these Compose files do not touch at
+all.
+
+That gap is worth stating without softening: **a perfectly hardened container
+stack on an unpatched host with password SSH is not a secure system.** Container
+hardening limits what a compromised *application* can reach. It does nothing
+about a compromise that arrives through the host.
+
+## The host baseline
+
+**Automatic security updates.** Debian can install security updates on its own
+via `unattended-upgrades` — it is a package you add and configure, not a default
+of the base system. The alternative is patching by hand, which in practice means
+patching when something reminds you.
+
+**SSH.** Keys only, root login disabled, and the daemon reachable only over the
+VPN if you have one. Password authentication on a public SSH port attracts
+continuous brute force from the moment the host exists, and rate limiting is
+not an answer to a credential that can be guessed.
+
+**Fewer packages.** Anything installed is something to patch. A server that also
+became a workstation has a much larger surface than anyone intended.
+
+**Know what is listening.** Not what you believe is listening:
+
+```bash
+ss -tlnp                    # every listening socket and its process
+systemctl list-units --type=service --state=running
+```
+
+**Reboot when the kernel changes.** A patched kernel that has not been booted is
+an unpatched kernel, and container isolation depends on that kernel.
+
+None of this is exotic. It is also, consistently, where small self-hosted
+setups actually fail — not on the sophisticated parts.
+
+## Malware, in four separate places
+
+"Do I need antivirus on a Linux server" is the wrong question because it merges
+four different problems with four different answers.
+
+### 1. The host itself
+
+Classic on-access antivirus on a Linux server catches relatively little and costs
+real resources. What is worth more:
+
+- **File integrity monitoring** — noticing that a system binary or configuration
+  changed when nothing should have changed it
+- **Endpoint detection** in an environment that already runs it centrally
+- **Outbound monitoring** — a compromised host usually has to talk to something,
+  and that is often the most visible symptom
+
+For a single self-hosted server, patching and reducing surface buy more than a
+scanner does.
+
+### 2. The images you run
+
+This is where the equivalent effort belongs.
+
+- Images from a source you can name, pinned to a version, ideally by digest
+- Scan them for known vulnerabilities, and re-scan — an image that was clean six
+  months ago is not clean now
+- Rebuild rather than patch inside a running container; the change disappears on
+  the next deploy either way
+
+### 3. Files that other people give you
+
+**This is the one that actually matters for the services on this site.** A
+service that stores files other people supply — file sync, mail, a document
+system, anything with an upload form — is in a different position from a service
+that does not.
+
+Consider an upload endpoint, possibly without requiring an account. The same
+feature produces several independent problems:
+
+- **An injection**, depending on how the file is handled. A filename or metadata
+  reaching a query or a path; a file stored somewhere it can be served back in a
+  context where it executes.
+- **A hosted payload.** The malware now sits on your server. If the store is
+  publicly readable, your domain distributes it to everyone who downloads it —
+  and it is your name on that.
+- **Onward infection of your own users**, who trust the file because it came
+  from your system.
+- **Resource exhaustion**, from something that is neither.
+
+These need different controls, and a scanner addresses only the second and third.
+The point is not that they are easy to confuse — it is that **one careless upload
+feature is several problems at once, and fixing the one you thought of leaves the
+others standing.**
+
+Where files are stored and shared, scanning them is proportionate. Several of
+the applications here can do it natively rather than needing a host scanner.
+
+### 4. What the application does with input
+
+Input validation, parameterised queries, output encoding, and refusing file
+types you have no reason to accept. This is the layer that stops injection, and
+no scanner substitutes for it — just as no amount of input validation stops a
+clean-looking document from carrying a macro to whoever downloads it.
+
+## Detecting a compromised host
+
+If the host is taken, container-level logging is not a reliable witness — the
+same access that took the host can edit it.
+
+- Ship logs somewhere the host cannot reach. A log that only exists on the
+  compromised machine is evidence an intruder controls.
+- Watch for the boring signals: unexpected outbound connections, a CPU that is
+  busy with nothing, an account that appeared, a scheduled task nobody created.
+- Alert somewhere off the host, so a machine that is down can still tell you.
+
+See [logging, monitoring and incident response](/security/detection/).
+
+## What this blueprint covers
+
+Of this page: nothing. There is no `sshd_config`, no `unattended-upgrades`
+configuration, no host hardening role. The Compose files configure containers.
+
+Two things at the boundary: the daemon configuration in
+[preparing a server](/getting-started/server-setup/) bounds container log growth
+so logs cannot fill the disk, and the optional host-level blocking agent in
+[web protection](/security/web-protection/) writes firewall rules on the host.
+
+Everything else here is yours, and it is the layer most likely to be the one that
+matters.
+
+<Sources ids={['debian-unattended-upgrades', 'de-bsi-grundschutz', 'eu-enisa-sme', 'owasp-wstg', 'nist-sp800-190']} />

@@ -1,0 +1,127 @@
+---
+title: Web protection — WAF, IDS and IPS
+description: Detection and prevention are different jobs. What a web application firewall catches, what it misses, where CrowdSec sits, and what a decision with no enforcer attached actually does.
+---
+
+import Sources from '../../../../components/Sources.astro';
+
+Between the network and your application sits a set of components that inspect
+requests rather than route them. They are frequently described as one thing.
+They are not, and the difference decides what happens when one of them is right.
+
+## Detect, or prevent
+
+**Detection** observes and reports. A false positive costs you an alert to
+dismiss.
+
+**Prevention** acts on the traffic. A false positive costs a legitimate user
+their access, silently, and usually without either of you knowing why.
+
+That asymmetry is the whole design question. Detection can be tuned loosely
+because being wrong is cheap. Prevention has to be tuned conservatively because
+being wrong denies service — and the more aggressive the rules, the more often
+you are answering "why can't this person log in".
+
+The usual sequence is therefore: run in detection for long enough to see what
+normal looks like, then enable prevention for the categories you now trust.
+
+## The components
+
+| | Where | Sees | Acts by |
+|---|---|---|---|
+| **Reverse proxy** | in front of every service | the decrypted request | routing, headers, rate limits, access policy |
+| **WAF** | at the proxy, or in front of it | the decrypted request | rejecting requests matching rules |
+| **IDS** | log or traffic analysis | what it is fed | reporting a decision |
+| **IPS / bouncer** | proxy, or host firewall | the decision list | refusing the request, or dropping the packet |
+
+A key point about a WAF: it needs to see the request in cleartext, which means
+it lives where TLS terminates. If a request can reach your application without
+passing that point — a container port published by mistake, a backend addressed
+directly by hostname — it did not pass the WAF either. **A filter you can go
+around is not a filter.**
+
+## What a WAF actually catches
+
+Rule sets recognise the shapes of known attacks: injection patterns, traversal
+attempts, requests for known-vulnerable paths, and virtual patches for specific
+published vulnerabilities.
+
+That is genuinely worth having, because the overwhelming majority of unsolicited
+traffic to a small public server is exactly this: mass scanning that finds any
+public host within minutes of a certificate appearing in the transparency logs.
+
+**What it does not catch:**
+
+- **Business logic.** A request that changes someone else's invoice using your
+  own valid session looks completely normal. No rule set knows your permissions
+  model.
+- **Authorisation flaws.** Incrementing an ID in a URL is a well-formed request.
+- **Anything novel.** Rules describe attacks that have been described.
+- **Anything encrypted end-to-end past the inspection point.**
+
+A narrow rule set produces far fewer false positives than an aggressive one,
+which is what makes it a reasonable default in front of a public application. It
+is not a reason to relax input handling anywhere.
+
+## Where CrowdSec sits, in three levels
+
+The layering is the part worth understanding, because a level enabled without
+the one that enforces it does nothing at all.
+
+```text
+1  Detection only
+   The engine reads the proxy's access log and writes decisions to a list.
+   Nothing is blocked. This is the baseline, and on its own it changes nothing
+   about who can reach you.
+
+2  Application-layer blocking
+   A component inside the proxy polls that list and answers matching requests
+   with a 403. Covers HTTP, sees the URL, can say why it refused.
+
+3  Host-level blocking
+   An agent on the host applies the same list as firewall rules. Covers every
+   port, not just HTTP — SSH brute force, port scans, anything that never
+   reaches the proxy. The packet is dropped before a connection exists.
+```
+
+**A decision with no enforcer attached does nothing.** This is the most common
+misconfiguration: the engine is running, the list is filling up, and nothing is
+acting on it. Loading a plugin is not enough either — in the blueprint's case
+the proxy component only begins polling once its middleware is attached to an
+actual route, and there is no error message for the gap.
+
+Two consequences worth carrying:
+
+**Behind a VPN, detection sees almost nothing.** Requests refused by an access
+policy never reach the log the engine reads. Measured on this blueprint: 120
+requests against a VPN-only host moved the counter by three. That is not a
+failure — nothing got through — but it means the layer earns its keep when
+something is public, and barely before.
+
+**The community blocklist is most of the volume.** Subscribing brings in roughly
+15,000 addresses reported by other installations. That is the point, and it also
+means a shared mobile carrier address, a VPN exit or a compromised neighbour can
+take a legitimate visitor with it. When one person cannot reach a service and
+everyone else can, check the decision list first — at level 3 the packet is
+dropped in the kernel and no log anywhere records the attempt.
+
+## Rate limiting is the underrated one
+
+Simpler than all of the above, and it addresses things a rule set does not:
+credential stuffing, scraping, and one client exhausting a resource. It needs no
+knowledge of attack shapes.
+
+It also needs the real client address to be correct — see
+[firewalls and segmentation](/security/firewalls/) — or it limits your proxy.
+
+## What this blueprint covers
+
+The proxy, its header and rate-limit middleware, and the access policies are
+configured. The intrusion detection engine ships and is optional. Level 2 is a
+proxy component you enable; level 3 is a host package you install, with the
+procedure documented.
+
+[CrowdSec guide](/infrastructure/crowdsec/) has the concrete steps and the
+measurements behind the claims above.
+
+<Sources ids={['nist-sp800-94', 'owasp-wstg', 'cisa-logging']} />

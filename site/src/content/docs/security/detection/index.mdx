@@ -1,0 +1,128 @@
+---
+title: Logging, monitoring and incident response
+description: What to log, where it has to live to still be evidence, which signals are worth an alert, and the steps to have decided before you need them.
+---
+
+import Sources from '../../../../components/Sources.astro';
+
+Every layer before this one reduces the chance of an incident. This one decides
+whether you find out, how long it takes, and whether you can reconstruct what
+happened afterwards.
+
+It is also where small setups are weakest — not because logging is hard, but
+because logs get collected and never looked at, and nothing alerts.
+
+## The cycle
+
+```text
+Log        →  it was recorded somewhere durable
+Detect     →  something noticed the pattern
+Alert      →  a human found out, off this machine
+Investigate→  the records were enough to reconstruct it
+Contain    →  it stopped spreading
+Recover    →  service restored, cleanly
+Improve    →  the same thing is now harder or louder
+```
+
+The expensive half is the preparation. Every step after "alert" goes badly if
+the decisions were not made in advance, because they are being made under time
+pressure by someone who has been awake too long.
+
+## What to record
+
+| Source | Answers |
+|---|---|
+| Reverse proxy access log | who asked for what, from where, and what they got |
+| Authentication events | successful and failed logins, password changes, MFA changes |
+| Host authentication | SSH sessions, `sudo` use, new accounts |
+| Container lifecycle | what started, stopped, restarted, and when |
+| Application logs | what the software itself considered notable |
+| Configuration changes | what changed, when, by whom |
+| Resource usage | the baseline that makes an anomaly visible |
+
+**One rule matters more than the list: logs have to leave the machine.** A log
+that exists only on the compromised host is under the control of whoever
+compromised it. Anything with root can edit it, and editing it is standard
+practice. Shipping logs elsewhere is what turns them from a convenience into
+evidence.
+
+**Bound them, or they will fill the disk.** An unbounded log is an availability
+incident waiting for a busy week. Rotation and size limits are part of logging,
+not an afterthought.
+
+**Logs contain the things you were trying not to store.** Access logs carry
+addresses and URLs, which can carry identifiers and occasionally tokens. Set a
+retention period deliberately and be able to say what it is.
+
+## What deserves an alert
+
+An alert nobody acts on trains everybody to ignore alerts. Keep the list short
+enough to stay credible:
+
+- **Failed logins in a pattern** — many for one account, or one attempt across
+  many accounts
+- **A successful login after those**
+- **Privilege escalation**, and any new account
+- **Backups that stopped running.** The most common real finding, and it fails
+  silently by nature
+- **Certificate expiry approaching**, checked from outside the host
+- **Disk filling**, before it is full
+- **A service down**, checked from somewhere else
+
+**Alert off the host.** A monitoring system on the machine it monitors cannot
+tell you the machine is gone. This is the single most common design flaw in
+self-hosted monitoring, and it is invisible until the day it matters.
+
+## Detection needs a baseline
+
+"Unusual" only exists relative to usual. Without a few weeks of normal traffic
+and normal resource use recorded, an anomaly is unrecognisable — the reason to
+start collecting before you need it, rather than during the incident.
+
+The signals worth having a normal for: request volume and its shape over a day,
+outbound connections, CPU and memory at idle, and how often authentication
+normally fails.
+
+## Decide these before you need them
+
+Write the answers down somewhere that is not on the server.
+
+- **How do I take a service offline** without destroying the state I will need
+  to understand what happened? Stopping a container preserves more than deleting
+  it.
+- **What do I preserve first?** Logs and volumes before you start changing
+  things — investigation and remediation compete, and remediation usually wins by
+  default.
+- **Which credentials get rotated,** in what order, and where are they all listed?
+- **How do I reach the machine** if the usual path is what was compromised? See
+  the break-glass account in [identity and privileged access](/security/identity/).
+- **Who has to be told, and within what deadline?** Personal data breaches carry
+  a statutory notification window. That clock does not wait for you to finish
+  investigating.
+- **Which backup do I restore from,** given that the most recent one may be
+  newer than the intrusion? This is the question that makes versioned backups
+  worth their cost.
+
+## Containment before eradication
+
+The instinct is to clean up. The order that works is: stop it spreading, then
+understand it, then remove it, then restore. Cleaning first destroys the answer
+to "how did they get in", which means the same door is still open.
+
+For a single host, containment usually means: disconnect it from the network
+rather than power it off, keep the disk, and work from a copy.
+
+## What this blueprint covers
+
+The proxy writes access and error logs to disk with rotation configured. The
+Docker daemon configuration in
+[preparing a server](/getting-started/server-setup/) bounds container log growth.
+The backup layer can report each run to a monitoring endpoint, so a run that
+stops happening is visible.
+
+The repository ships several monitoring stacks — uptime checks, dashboards,
+notification delivery — with their own READMEs. **There is no guide on this site
+for any of them, and no central log collection is set up for you.** Incident
+response is entirely yours.
+
+<Sources ids={['cisa-logging', 'nist-sp800-61', 'eu-enisa-sme']} />

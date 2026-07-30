@@ -9,11 +9,11 @@ running first; they publish no ports themselves and are reached through it.
 
 | | Solves | Also needs |
 |---|---|---|
-| [Vaultwarden](/applications/vaultwarden/) | credentials in one vault, synced to browser, phone and desktop, instead of a third party holding everything you log into | SMTP, for email verification |
-| [Nextcloud](/applications/nextcloud/) | files, calendars and contacts on your own server, synced to desktops and phones, with sharing on top | SMTP |
 | [Invoice Ninja](/applications/invoiceninja/) | invoices and quotes, what has been paid, and a portal where each client can view and settle them | SMTP |
-| [Seafile Pro](/applications/seafile-pro/) | file sync built for large directory trees, with full-text search and antivirus scanning | a commercial licence; OnlyOffice for in-browser editing |
+| [Nextcloud](/applications/nextcloud/) | files, calendars and contacts on your own server, synced to desktops and phones, with sharing on top | SMTP |
 | [OnlyOffice](/applications/onlyoffice/) | opening `.docx`, `.xlsx` and `.pptx` in the browser, embedded inside another application | an application to embed it — it is not used on its own |
+| [Seafile Pro](/applications/seafile-pro/) | file sync built for large directory trees, with full-text search and antivirus scanning | a commercial licence; OnlyOffice for in-browser editing |
+| [Vaultwarden](/applications/vaultwarden/) | credentials in one vault, synced to browser, phone and desktop, instead of a third party holding everything you log into | SMTP, for email verification |
 
 ## Where the choice is not obvious
 
@@ -37,11 +37,11 @@ that line before trusting a service with data.
 
 ## What is not here
 
-The repository ships considerably more services than these — dashboards, photo
-libraries, monitoring, e-signature, project management — each with its own
+The repository ships considerably more services than these — dashboards,
+e-signature, monitoring, photo libraries, project management — each with its own
 README and Compose files.
 [The full list is in the repository](https://github.com/rubennati/secure-docker-blueprint#whats-included),
-and [choosing between alternatives](/applications/choosing/) covers what separates
+and [choosing between services](/applications/choosing/) covers what separates
 them where several compete.
 
 ## Where to go from here

@@ -1,0 +1,123 @@
+---
+title: Firewalls and network segmentation
+description: Network firewall, host firewall, VLAN and container network — where each one sits, what it can and cannot see, and why Docker makes the host firewall a special case.
+---
+
+import Sources from '../../../../components/Sources.astro';
+
+Four different things get called "the firewall", and they sit at four different
+points. Which one you have determines which traffic you can actually stop.
+
+| | Sits | Sees | Blind to |
+|---|---|---|---|
+| **Network firewall** — router, appliance, cloud security group | in front of the machine | everything entering and leaving | anything between containers on the host |
+| **Host firewall** — `nftables`, `ufw`, `firewalld` | on the machine | traffic to, from and through this host, including between containers | other machines; and **not** published container ports, see below |
+| **VLAN / network segmentation** | the network fabric | which machines can address which | anything inside one machine |
+| **Container network** | the container runtime | which containers can address which | the network outside the host |
+
+## Docker rewrites the host firewall
+
+The single most important practical fact on this page, and the one that surprises
+people who did everything else right.
+
+**Publishing a container port makes Docker install its own packet-filter rules.**
+They are evaluated ahead of the rules your host firewall manages, and the traffic
+is forwarded rather than delivered locally — so `ufw`'s rules are never consulted
+on that path.
+
+```bash
+sudo ufw deny 8080          # accepted, and irrelevant
+docker run -p 8080:80 nginx # port 8080 is now open to the internet
+```
+
+Both statements above are true at the same time. There is no error and no
+warning.
+
+Three responses, in the order they cost least:
+
+- **Bind published ports to `127.0.0.1`.** `"127.0.0.1:8080:8080"` never reaches
+  a network interface. This is the approach these stacks take, and it is why the
+  reverse proxy is the only thing bound publicly.
+- **Put your rules in the `DOCKER-USER` chain**, the documented place for
+  filtering that must run before Docker's own.
+- **Have something upstream that does not pass the port at all.**
+
+That third one is the argument for a network firewall in front, and it is not
+about it being "stronger". It is that it is unaffected by what the host's rule
+table does afterwards — so it still holds when a port gets published on the host
+by accident: a stray `ports:` entry, a compose file copied from somewhere, a
+test nobody cleaned up. It is the layer that survives your own mistakes.
+
+The host firewall keeps a distinct job that nothing in front of the machine can
+do: it is the only place that sees traffic *between* containers, and outbound
+connections *from* them. That is where it earns its place — including the
+usually-neglected case of a container that is already compromised and trying to
+reach out.
+
+Verify rather than assume:
+
+```bash
+ss -tlnp                                  # what is actually listening, and on which address
+sudo nft list ruleset | grep -A5 DOCKER   # what the runtime added
+curl -sI http://<public-ip>:8080          # from somewhere else, not from the host
+```
+
+## VLAN and container network are not alternatives
+
+They constrain different lateral movement, and the words get swapped as if they
+were interchangeable.
+
+**A VLAN separates machines.** The database server cannot be addressed from the
+guest network. If someone takes the web server, the VLAN decides what other
+*hosts* they can now reach.
+
+**A container network separates services on one machine.** Application A's
+containers have no route to application B's database. If someone takes
+application A, this decides what else on *this host* they can reach.
+
+Neither substitutes for the other. A single server with excellent container
+isolation still sits on a flat network with everything else in the building.
+A well-segmented network still has one host where twelve applications share a
+kernel.
+
+Segmentation is worth doing at whichever level you actually control. Most
+self-hosters control the container level and not the VLAN level, which makes the
+container level the one worth doing properly.
+
+## IP allowlists, and why they are weaker than they look
+
+Restricting a service to known addresses is a genuine reduction in exposure and
+worth having. It also fails in ways that are worth knowing before you rely on it
+alone.
+
+**The address you filter on has to be the real one.** Behind a reverse proxy the
+connection comes from the proxy, so the original address arrives in a header —
+and a header is only trustworthy if the proxy sets it and nothing upstream can
+forge it. A trusted-proxy range configured too broadly means anyone can claim any
+address. This, not packet-level source spoofing, is where address-based access
+control usually breaks in practice.
+
+**Spoofing, precisely.** Forging a source address on a TCP connection does not
+get an attacker a working session: the handshake response goes to the address
+they forged, not to them. It matters for reflection and amortised attacks, and
+for UDP. The realistic risks to an allowlist are the header problem above, a
+backend reachable directly without passing the proxy, and addresses that change
+hands — a shared carrier address, a VPN exit, a reassigned cloud IP.
+
+**An identity check is more robust than an address check.** A VPN or an
+authenticating proxy establishes who, not where-from. Keep the allowlist as an
+additional layer; do not make it the only one.
+
+## What this blueprint covers
+
+One internal network per application, with databases and caches never published
+and no route between applications. Published ports bound to loopback except the
+proxy. Access policies enforced at the proxy — public, local network, VPN,
+defined range, or nothing.
+
+The host firewall is reachable through the intrusion-detection layer's optional
+agent — see [web protection](/security/web-protection/). A network firewall,
+VLANs and upstream segmentation are outside the Compose files entirely, and
+depend on an environment this project makes no assumptions about.
+
+<Sources ids={['docker-packet-filtering', 'nist-sp800-41', 'cisa-microsegmentation']} />

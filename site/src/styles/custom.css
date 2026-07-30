@@ -35,6 +35,83 @@
   --sl-line-height: 1.625;     /* tighter than 1.75, still accessible */
 }
 
+/* External links and the leave-site confirmation.
+   Global rather than component-scoped: the dialog is created at runtime by
+   ExternalLinks.astro, so a scoped class would never match it. */
+
+/* The destination host sits in the markup already (data-external-host), so the
+   marker only has to say "this goes elsewhere" — the source block prints the
+   publisher and domain in full. */
+a[data-external-ready]::after {
+  content: '↗';
+  display: inline-block;
+  margin-inline-start: 0.15em;
+  font-size: 0.85em;
+  line-height: 1;
+  text-decoration: none;
+  opacity: 0.7;
+}
+/* The site header's own icon links carry their own labels. */
+.site-title a[data-external-ready]::after,
+a[data-external-ready]:has(svg)::after {
+  content: none;
+}
+
+dialog.leaving {
+  /* The reset zeroes margins, which strands a modal dialog in the top-left
+     corner instead of letting the UA centre it. */
+  margin: auto;
+  max-width: min(28rem, calc(100vw - 2rem));
+  padding: 1.5rem;
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 0.5rem;
+  background: var(--sl-color-bg);
+  color: var(--sl-color-text);
+}
+dialog.leaving::backdrop {
+  background: rgb(0 0 0 / 0.55);
+}
+.leaving__title {
+  margin: 0 0 0.5rem;
+  font-size: var(--sl-text-lg);
+  color: var(--sl-color-white);
+}
+.leaving__body {
+  margin: 0;
+  font-size: var(--sl-text-sm);
+  line-height: 1.6;
+}
+.leaving__host {
+  color: var(--sl-color-white);
+  word-break: break-all;
+}
+.leaving__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-block-start: 1.25rem;
+}
+.leaving__btn {
+  padding: 0.4rem 1rem;
+  font: inherit;
+  font-size: var(--sl-text-sm);
+  color: var(--sl-color-text);
+  background: none;
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+.leaving__btn--primary {
+  color: var(--sl-color-black);
+  background: var(--sl-color-text-accent);
+  border-color: var(--sl-color-text-accent);
+}
+.leaving__btn:focus-visible {
+  outline: 2px solid var(--sl-color-text-accent);
+  outline-offset: 2px;
+}
+
 /* Splash hero — Starlight reserves up to 10rem of padding above and below the
    title. On a 1280x800 screen that put the first content heading at 831px:
    a visitor saw a slogan and three buttons, and had to scroll to learn that the
