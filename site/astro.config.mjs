@@ -64,9 +64,13 @@ export default defineConfig({
 					// are explained once, over there.
 					label: 'Infrastructure',
 					items: [
+						// Product entries are the product name and nothing else. A
+						// "— what it does" suffix wraps to a second line at this sidebar
+						// width and turns a scannable list into paragraphs; the overview
+						// page is where each one is explained.
 						{ label: 'What every server needs', link: '/infrastructure/' },
-						{ label: 'Traefik — routing and TLS', link: '/infrastructure/traefik/' },
-						{ label: 'CrowdSec — intrusion detection', link: '/infrastructure/crowdsec/' },
+						{ label: 'Traefik', link: '/infrastructure/traefik/' },
+						{ label: 'CrowdSec', link: '/infrastructure/crowdsec/' },
 					],
 				},
 				{
@@ -76,15 +80,15 @@ export default defineConfig({
 					label: 'Applications',
 					items: [
 						{ label: 'What each one is for', link: '/applications/' },
-						{ label: 'Choosing between services', link: '/applications/choosing/' },
+						{ label: 'Choosing between them', link: '/applications/choosing/' },
 						// The two orientation pages first, then the guides A–Z. Nothing
 						// about one service makes it belong before another, so the order
 						// is the one a reader can predict.
-						{ label: 'Invoice Ninja — invoicing', link: '/applications/invoiceninja/' },
-						{ label: 'Nextcloud — files and calendars', link: '/applications/nextcloud/' },
-						{ label: 'OnlyOffice — document editing', link: '/applications/onlyoffice/' },
-						{ label: 'Seafile Pro — file sync', link: '/applications/seafile-pro/' },
-						{ label: 'Vaultwarden — passwords', link: '/applications/vaultwarden/' },
+						{ label: 'Invoice Ninja', link: '/applications/invoiceninja/' },
+						{ label: 'Nextcloud', link: '/applications/nextcloud/' },
+						{ label: 'OnlyOffice', link: '/applications/onlyoffice/' },
+						{ label: 'Seafile Pro', link: '/applications/seafile-pro/' },
+						{ label: 'Vaultwarden', link: '/applications/vaultwarden/' },
 					],
 				},
 				{
@@ -107,18 +111,21 @@ export default defineConfig({
 					// only be judged against one.
 					label: 'Security',
 					items: [
+						// Short enough to sit on one line at the sidebar width. The full
+						// scope of each is in its own title; a menu entry that wraps is
+						// a paragraph pretending to be a label.
 						{ label: 'The whole chain', link: '/security/' },
-						{ label: 'What you are protecting', link: '/security/goals/' },
-						{ label: 'Firewalls and segmentation', link: '/security/firewalls/' },
+						{ label: 'What you protect', link: '/security/goals/' },
+						{ label: 'Firewalls', link: '/security/firewalls/' },
 						{ label: 'TLS and certificates', link: '/security/tls/' },
 						{ label: 'WAF, IDS and IPS', link: '/security/web-protection/' },
-						{ label: 'Containers, VMs and isolation', link: '/security/isolation/' },
-						{ label: 'Host and malware protection', link: '/security/host/' },
-						{ label: 'Identity and privileged access', link: '/security/identity/' },
-						{ label: 'Cryptography and key management', link: '/security/cryptography/' },
-						{ label: 'Detection and incident response', link: '/security/detection/' },
+						{ label: 'Containers and VMs', link: '/security/isolation/' },
+						{ label: 'Host and malware', link: '/security/host/' },
+						{ label: 'Identity and access', link: '/security/identity/' },
+						{ label: 'Cryptography', link: '/security/cryptography/' },
+						{ label: 'Detection and response', link: '/security/detection/' },
 						{ label: 'Backup and resilience', link: '/security/resilience/' },
-						{ label: 'How this blueprint fits it', link: '/architecture/' },
+						{ label: 'This blueprint in it', link: '/architecture/' },
 					],
 				},
 				{
@@ -126,7 +133,7 @@ export default defineConfig({
 					// "who governs this software, and what leaves the machine anyway".
 					label: 'Data sovereignty',
 					items: [
-						{ label: 'What self-hosting does not answer', link: '/sovereignty/' },
+						{ label: 'Limits of self-hosting', link: '/sovereignty/' },
 						{ label: 'Putting a CDN in front', link: '/sovereignty/edge/' },
 					],
 				},
