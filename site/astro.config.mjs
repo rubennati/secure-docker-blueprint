@@ -141,6 +141,7 @@ export default defineConfig({
 					label: 'Reference',
 					items: [
 						{ label: 'FAQ', link: '/faq/' },
+						{ label: 'How sources are checked', link: '/sources/' },
 						{ label: 'About the project', link: '/project/' },
 					],
 				},

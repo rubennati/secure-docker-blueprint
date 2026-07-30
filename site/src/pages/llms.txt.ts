@@ -36,6 +36,7 @@ const SECTIONS: { heading: string; prefix: string }[] = [
   { heading: 'Security', prefix: 'architecture' },
   { heading: 'Data sovereignty', prefix: 'sovereignty' },
   { heading: 'Reference', prefix: 'faq' },
+  { heading: 'Reference', prefix: 'sources' },
   { heading: 'Reference', prefix: 'project' },
 ];
 
