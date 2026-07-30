@@ -36,6 +36,23 @@ docker compose logs app --follow
 - **Data volume** (`volumes/data/`) holds every snapshot of every watched page. Can grow large — set retention per-watch in Settings.
 - **`no-new-privileges:true`** on the container.
 
+## What it sends outward
+
+Two paths, and only the second is a decision the compose file can make for you.
+
+**By design:** it fetches the pages you tell it to watch. Those sites see this
+server's address and its request pattern — that is the function, not a leak. If
+you enable the optional AI features, page content and diffs are sent to whichever
+AI provider you configure.
+
+**Turned off here:** upstream POSTs to `changedetection.io/check-ver.php` once a
+day carrying the version, a **persistent installation GUID**, and the number of
+watches configured. The GUID makes that a per-install beacon rather than a
+version lookup, and the watch count is usage data. `DISABLE_VERSION_CHECK=yes`
+is set in the compose file, which stops the thread from starting at all.
+
+Read from upstream's `flask_app.py`; this stack has not been run on a host yet.
+
 ## Notification integrations
 
 Built-in support (via [Apprise](https://github.com/caronc/apprise)):

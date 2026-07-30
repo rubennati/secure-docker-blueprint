@@ -93,6 +93,52 @@ avoids this short of running a pull-through cache or a private registry, which
 is out of scope here — but it means "which software does this organisation run"
 is not a secret from the registries involved.
 
+### Monitoring — gone through, stack by stack
+
+Monitoring was the category most likely to phone home, on the reasoning that a
+tool whose job is watching things tends to want to report. It is better than
+expected: two of seven make an unrequested outbound call, and only one of those
+sends anything about the installation.
+
+None of these stacks has been run on a host yet, so every line below is read from
+upstream's source, not observed on the wire.
+
+| Stack | Unrequested outbound call | Off by |
+|---|---|---|
+| **changedetection** | daily POST to `changedetection.io/check-ver.php` — version, **persistent install GUID**, watch count | `DISABLE_VERSION_CHECK=yes`, now set in compose |
+| **uptime-kuma** | GET `uptime.kuma.pet/version` every 48 h — no payload | Settings → About, post-install only |
+| **ntfy** | none unless you enable iOS push | already commented out |
+| beszel · beszel-agent | none — the agent dials the hub, nothing else | — |
+| gatus | none | — |
+| healthchecks | none | — |
+
+**changedetection is the one worth naming.** The GUID is persistent, so the daily
+request is a per-installation beacon rather than a version lookup, and the watch
+count is usage data. Neither is hidden — the environment variable to stop it is
+documented — but nothing in a compose file would have told you.
+
+**Uptime Kuma's is milder and cannot be pre-set.** It sends no data about the
+instance; the vendor learns that an installation exists at your address. The
+setting lives in the database, so it is a post-install step alongside creating
+the owner account. Upstream defaults it on.
+
+**ntfy is the interesting case, because it is not really telemetry.** A
+self-hosted server cannot deliver instant iOS notifications by itself — Apple
+does not permit it. Setting `upstream-base-url` sends a poll request to ntfy.sh
+carrying the message ID and a SHA256 of the topic URL, never the content; the
+device then fetches the real message from your server. Same shape as Nextcloud's
+push path: self-hosting the server does not self-host the push, because Apple and
+Google own that leg.
+
+It is commented out in `server.example.yml`, which is the right default —
+Android and desktop work without it, and only an iOS receiver needs the trade.
+
+**What all three probing tools do by design** is worth stating once: gatus,
+Uptime Kuma and changedetection all reach out to whatever you point them at, so
+those targets see this server's address and its polling pattern. That is the
+function. changedetection's optional AI features additionally send page content
+and diffs to whichever AI provider you configure.
+
 ## What to do with this
 
 There is no setting that makes a stack silent, and chasing one is the wrong
@@ -109,7 +155,17 @@ goal. The useful version is narrower:
 
 ## Open
 
-Not yet checked stack by stack. The list above is what has been established, not
-a survey. Anything with an update checker, a telemetry setting, or a
-vendor-hosted component belongs on it — `monitoring/` in particular has not been
-looked at, and it is the category most likely to phone home.
+`core/`, `monitoring/` and the stacks named above have been gone through.
+`apps/` and `business/` have not — only Nextcloud and Invoice Ninja were looked
+at, because those are the two that have been run.
+
+The pattern to check for, in order of how often it turns up:
+
+1. **A version check with an installation identifier.** The check itself is
+   harmless; a persistent GUID turns it into a beacon. changedetection was the
+   one instance of this so far.
+2. **A vendor-hosted push relay.** Anything delivering to iOS or Android phones
+   has one, because Apple and Google require it. ntfy and Nextcloud both do.
+3. **An app store or update feed** the application queries at runtime.
+4. **Optional AI features**, which send content to a third-party provider by
+   definition.

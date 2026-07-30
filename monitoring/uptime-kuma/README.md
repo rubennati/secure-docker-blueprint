@@ -48,6 +48,24 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/        # 200 OK
 
 - **`no-new-privileges:true`**.
 
+## What it sends outward
+
+**By design:** it probes the endpoints you configure, and delivers alerts through
+whichever notification provider you pick. Both are the function.
+
+**On by default, and not settable from compose:** every 48 hours it requests
+`https://uptime.kuma.pet/version`. It is a plain GET carrying no data about this
+instance, so what the vendor learns is that an installation exists at your
+address. The default is on — upstream's `Settings.vue` sets `checkUpdate = true`
+when the value is unset.
+
+Turn it off after first login under **Settings → About → "Show update if
+available"**. It is stored in the database, so it cannot be pre-set in the
+compose file — it is a post-install step, like the owner account.
+
+Read from upstream's `check-version.js` and `Settings.vue`; this stack has not
+been run on a host yet.
+
 ## Backup
 
 | | |

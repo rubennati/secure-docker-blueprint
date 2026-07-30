@@ -59,6 +59,20 @@ That last one surprises people, and it is worth being precise about what it
 means: a hostname nobody has listed is unlisted, not protected. Anything
 reachable from the internet has to survive being found.
 
+**Monitoring tools were checked one by one**, on the reasoning that software
+whose job is watching things tends to want to report. Of the seven, two make a
+call nobody asked for. One sends a daily message carrying a permanent
+installation identifier and how many pages it is watching — that is switched off
+here. The other asks its vendor for the current version every two days and sends
+nothing about you; it is switched off after first login, because the setting
+lives in the application rather than in its configuration.
+
+Push notifications to phones are the exception that cannot be switched off.
+Apple and Google will only accept push from a registered application, so any
+service that reaches your phone routes a small relay message through the
+project's own servers. What travels is a message identifier — the content stays
+on your machine, and the phone comes back to fetch it.
+
 ## Who sits in front of it
 
 The biggest decision here is usually made by clicking an icon in a DNS panel. If

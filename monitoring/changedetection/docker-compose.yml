@@ -36,6 +36,12 @@ services:
       # cors_allowed_origins check. Without this, WebSocket upgrades from
       # the browser are rejected with "not an accepted origin" (HTTP 400).
       SOCKETIO_CORS_ORIGINS: https://${APP_TRAEFIK_HOST}
+      # Upstream POSTs to changedetection.io/check-ver.php once a day with the
+      # version, a persistent installation GUID and how many watches are
+      # configured. The GUID makes it a per-install beacon rather than a
+      # version lookup, and the watch count is usage data. Off here; version
+      # tracking is UPSTREAM.md's job.
+      DISABLE_VERSION_CHECK: "yes"
       # Uncomment to use the playwright browser service for JS-heavy
       # sites. Without it, only plain HTTP fetches are supported
       # (fine for most static pages + APIs).
