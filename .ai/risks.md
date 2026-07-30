@@ -7,7 +7,7 @@ for deployments — that is `docs/security-verification.md`.
 |---|---|---|---|
 | **No restore evidence anywhere** | A backup that has never been restored may not be one. Applies to every stack. | Restore procedure written and rehearsable | v0.7.0 Block 2 — one performed, documented restore |
 | **Nine major versions pinned but never started** | Paperless 3.x, WordPress 7.x, Immich 3.x and others are advertised at a version nobody has run. Paperless needs a search-index migration. | Flagged in `docs/maintenance.md`; status honest | Host session, Block 4 |
-| **22 stacks with legacy verification stamps** | `Last checked:` predates the current format; the evidence behind ✅ is older than the claim | Reported as `legacy-stamp`, non-blocking | Per-app judgement during the host session |
+| **Legacy verification stamps** | `Last checked:` predates the current format; the evidence behind ✅ is older than the claim | Marked ⚠️ per stack in `LIFECYCLE.md`; `legacy-stamp` reports the ✅ ones, non-blocking | Per-app judgement during the host session |
 | **Single maintainer** | No second reviewer; a mistaken decision has no second pair of eyes | CI gates catch mechanical errors; branch protection on `main` | Structural — accepted |
 | **Author-maintained container images** | `uroni/urbackup-server` and the Cal.diY fork are not vendor-official releases | Digest-pinned; documented in each `UPSTREAM.md` | Re-pin on upgrade; watch upstream |
 | **Rolling upstream tags** | Some projects publish no exact semver (`2.5.x`, `main`) | Digest pinning, re-resolved per upgrade | Upstream would have to change |

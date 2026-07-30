@@ -11,7 +11,7 @@ Ordered run: [`../docs/host-session-v0.7.0.md`](../docs/host-session-v0.7.0.md)
 - [ ] **Restore rehearsal — this closes v0.7.0** and produces the first `ops-ready` stack
 - [ ] UrBackup: verify against the gate list in `backup/urbackup/README.md`
 - [ ] Verify the nine pending major versions
-- [ ] Decide the 22 legacy verification stamps, per app
+- [ ] Decide the legacy verification stamps, per app — `LIFECYCLE.md` marks them ⚠️
 - [ ] Verify `monitoring/healthchecks` and `monitoring/uptime-kuma` — borgmatic's run
       monitoring points at them, so backup's proof layer depends on them
 - [ ] Verify `monitoring/ntfy` — `read_only: true`, the `sec-3` rate limit under a
@@ -25,9 +25,10 @@ Listed with context in [`state.md`](state.md). Nothing proceeds on these until d
 
 ## Doable without a host
 
-- [x] Fill the `## Backup` section in every stack README — done, 58 of 59.
-      `backup/borgmatic` is `n/a` by declaration: the backup tool cannot describe
-      backing itself up with itself
+- [x] Fill the `## Backup` section in every stack README — done for every stack
+      except `backup/borgmatic`, which is `n/a` by declaration: the backup tool
+      cannot describe backing itself up with itself. Coverage is the Backup docs
+      column in `LIFECYCLE.md`
 - [ ] `backup/urbackup` has no restore section — restoring a *client* backup is a
       real procedure and the one gap left in that column
 - [ ] **`apps/vaultwarden` → Docker Secrets.** The blocker recorded in `UPSTREAM.md`
@@ -40,7 +41,8 @@ Listed with context in [`state.md`](state.md). Nothing proceeds on these until d
 - [ ] Decide the three questions in [`../docs/renovate-proposal.md`](../docs/renovate-proposal.md):
       marker comments vs. normalising 28 outliers · Renovate App vs. self-hosted
       Action · whether `site/` npm rides along. Nothing runs until then
-- [ ] **`docker-compose.local.yml` for every stack — 6 of 57 have one.** The
+- [ ] **`docker-compose.local.yml` for every stack** — `git ls-files
+      '*docker-compose.local.yml'` lists the ones that have it. The
       pattern is canonical in `apps/_reference/`: no Traefik, no certificates, no
       Docker Secrets, a published port and plain environment variables. It exists
       so someone can try an app — locally, on a laptop, on a lab box — without

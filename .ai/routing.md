@@ -11,7 +11,7 @@ Every entry below is **in addition to** `state.md`, which is always read first.
 | **Traefik, routing, middleware, TLS** | `docs/standards/traefik-security.md` · `traefik-labels.md` · `networking.md` |
 | **Security hardening** | `docs/standards/security-baseline.md` · `docs/security-verification.md` · `SECURITY.md` |
 | **Documentation change** | `domains/documentation.md` · `docs/standards/documentation-workflow.md` · `docs/standards/writing-style.md` · `docs/maintenance.md` File Map — roles below |
-| **Status or lifecycle** | `docs/standards/status-model.md` · `docs/maintenance.md` ✅ Ready Criteria |
+| **Status or lifecycle** | `docs/standards/status-model.md` · `docs/maintenance.md` ✅ Ready Criteria · `LIFECYCLE.md` for the current per-stack figures (generated — never hand-edited) |
 | **Architecture question** | `domains/architecture.md` · `docs/architecture.md` · `decisions.md` |
 | **Release** | `domains/release.md` · `docs/maintenance.md` Release Chain · `ROADMAP.md` |
 | **Commit, branch, push** | `docs/standards/commit-rules.md` — binding, read before every commit |

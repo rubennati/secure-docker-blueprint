@@ -12,9 +12,11 @@
 
 ## Snapshot
 
-- 59 stacks tracked. 39 `ready`, 20 `preview`, **0 `ops-ready`** — no stack has
-  restore evidence, which is exactly what v0.7.0 changes. Numbers come from
-  `LIFECYCLE.md`; regenerate rather than editing them here.
+- Stack inventory, per-stack status, pinned version and verification date:
+  [`../LIFECYCLE.md`](../LIFECYCLE.md). Read it for any current figure — it is
+  generated from the owners in `docs/standards/status-model.md`, and no count is
+  repeated in this file. After a status change or a pin, regenerate with
+  `python3 scripts/ci/lifecycle-report.py --write`.
 - Backup architecture designed (`backup/README.md`): five layers, host-installed
   agent, snapshot/backup/archive kept distinct.
 - `backup/borgmatic/` — configuration, systemd timer, setup and restore playbook.
@@ -118,8 +120,9 @@ a structural change, so it belongs after the host session, not before.
   domain and real secrets and is gitignored. Committed files use `example.com`
   and documentation IP ranges only. This matters more during a host session than
   at any other time, because that is when real values are at hand.
-- Nine major version bumps are pinned but never started; 22 stacks still carry the
-  pre-v0.5.1 `Last checked:` field. Both ride along with the host session.
+- Nine major version bumps are pinned but never started, and the stacks still
+  carrying the pre-v0.5.1 `Last checked:` field are marked ⚠️ in `LIFECYCLE.md`.
+  Both ride along with the host session.
 - Public repository: no real domains, IPs, hostnames or personal data; no session
   context or personal attribution in committed content. `.ai/` is committed and
   therefore public — it holds working context, never internal process detail.
