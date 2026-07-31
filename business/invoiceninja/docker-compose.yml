@@ -25,6 +25,13 @@ services:
     entrypoint: ["/entrypoint.sh"]
     command: ["supervisord", "-c", "/etc/supervisor/supervisord.conf"]
     environment:
+      # Crash reports go to the vendor's own Sentry with the account key as
+      # the user id, so they identify this installation. The payload carries
+      # stack traces and breadcrumbs — log lines, cache operations, SQL
+      # statements without their parameters. Empty disables it; the wire
+      # test on 2026-07-31 showed it was the busiest destination this stack
+      # had, four times the version check.
+      SENTRY_LARAVEL_DSN: ""
       TZ: ${TZ}
       # Application
       APP_ENV: ${APP_ENV}

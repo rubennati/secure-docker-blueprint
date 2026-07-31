@@ -67,7 +67,13 @@ identifier that survives restarts.** Without one, the maker learns that somebody
 somewhere is running the software. With one, they can count installations and
 follow yours over time.
 
-**Six carry such an identifier.** Documenso, OpnForm and Homarr each report to
+**Seven carry such an identifier.** Invoice Ninja is one of them, and it took
+watching the traffic to see how much: its crash reporter sends stack traces and
+the surrounding log lines to the vendor, tagged with the account's own key, and
+over an hour it was four times busier than the version check that gets more
+attention. It is switched off in the shipped configuration.
+
+The other six: Documenso, OpnForm and Homarr each report to
 an analytics service keyed on an ID stored in their own database. OpenProject's
 security badge sends one with the version. Dolibarr posts a unique hash together
 with **your company's country, taken from the record inside the software** — and

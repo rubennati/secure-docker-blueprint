@@ -130,9 +130,24 @@ scripts/ops/egress-probe.sh stop  apps/nextcloud   # take it back out
 
 It watches two things, because either alone has a blind spot. A resolver that
 logs every query records anything reaching a host by name, including names no
-allowlist would have guessed — and it answers `0.0.0.0`, so the attempt is
-recorded without the call completing. An nftables rule logs and drops the
-subnet's egress, which catches calls to a literal address that skip DNS.
+allowlist would have guessed. It forwards rather than blackholes, so the stack
+keeps working and keeps making the calls worth seeing. An nftables rule logs and
+drops the subnet's egress, which catches calls to a literal address that skip
+DNS, and is the half to leave out where dropping is not acceptable.
+
+**The first run changed an emphasis.** Armed against Invoice Ninja on
+2026-07-31, the log after an hour read:
+
+```text
+20  sentry2.invoicing.co
+ 5  pdf.invoicing.co
+```
+
+Reading the source had found both, and this document led with the version
+check because it has no off switch. On the wire the crash reporter is four
+times as busy, carries far more — stack traces, SQL statements, log lines —
+and identifies the installation by its account key. It also has a switch. The
+ranking was wrong, and only running it said so.
 
 Run it for at least 48 hours. Some checks are daily and Uptime Kuma's is every
 48; a shorter observation returns a clean result that only means nobody watched
@@ -196,6 +211,7 @@ follow each one over time.
 | **apps/homarr** | PostHog at `hog.homarr.dev`; a cuid minted on first run and stored in the database | `NO_EXTERNAL_CONNECTION=true` |
 | **apps/opnform** | OpenPanel at `telemetry.opnform.com`; a UUID in the settings table, cached forever | `OPNFORM_ANONYMOUS_TELEMETRY_DISABLED=true` |
 | **business/openproject** | `releases.openproject.com/v1/check.svg` — uuid, installation type, version | admin setting, or `security_badge_display=false` |
+| **business/invoiceninja** | crash reports to the vendor's Sentry with the **account key as the user id** — stack traces and breadcrumbs including log lines, cache operations and SQL statements without their parameters | `SENTRY_LARAVEL_DSN=""`, now set in compose |
 
 **WordPress sends more than a version.** `api.wordpress.org/core/version-check/`
 carries the PHP and MySQL versions, the locale, **the number of sites and the
@@ -210,7 +226,7 @@ receiving host learns the source IP and the timing.
 |---|---|---|
 | apps/lycheeorg | `lycheeorg.dev/update.json`, GitHub advisories | `VULNERABILITY_CHECK_ENABLED=false` works; `UPDATE_CHECK_ENABLED=false` **does not** — see below |
 | apps/dashy | `raw.githubusercontent.com/.../package.json` | **nothing in 4.5.0**, despite what the setting suggests |
-| business/invoiceninja | `pdf.invoicing.co/api/version` daily, hardcoded | no variable exists |
+| business/invoiceninja | `pdf.invoicing.co/api/version` daily, hardcoded | no variable exists — the Sentry path above is the larger one |
 | apps/easyappointments | `easyappointments.org/feed/` | none found |
 | apps/vaultwarden | GitHub releases | reachable only through the admin panel |
 | business/listmonk | `update.listmonk.app` | `app.check_updates`, default on |
