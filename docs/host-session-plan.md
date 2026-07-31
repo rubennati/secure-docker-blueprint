@@ -197,8 +197,8 @@ Closes v0.7.0. The proof is a restore, not a configuration.
       rather than by rolling this one back
 - [ ] Retention tied to a stated recovery objective
 - [ ] Run monitoring reporting somewhere it will be noticed
-- [ ] An SSH target and append-only — the local repository proved the mechanism,
-      not the off-site half
+- [ ] Append-only over a remote repository — the local one proved everything
+      else; this property lives in the connection
 - [~] Site: backup and restore from the operator's point of view
 
 ## Phase C — Operating documentation

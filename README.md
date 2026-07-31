@@ -276,7 +276,7 @@ Backup runs in two directions — this host outward, and your own devices inward
 
 | Tool | Direction | Description |
 |---|---|---|
-| [Borgmatic](backup/borgmatic/) | This host → off-site | Deduplicated encrypted backup over SSH/SFTP, with native database dumps for PostgreSQL, MySQL, MariaDB, SQLite and MongoDB. Host-installed. Backup and restore both performed; the off-site target is written, not yet exercised. |
+| [Borgmatic](backup/borgmatic/) | This host → off-site | Deduplicated encrypted backup over SSH/SFTP, with native database dumps for PostgreSQL, MySQL, MariaDB, SQLite and MongoDB. Host-installed. Backup and restore both performed; append-only enforcement is the one mechanism a local rehearsal cannot establish. |
 | [UrBackup](backup/urbackup/) | Your devices → this host | Client backup for Windows, macOS and Linux — keep laptop and desktop backups on hardware you own. Whole-disk image restore on Windows. |
 
 Planned: Kopia, Bareos.
