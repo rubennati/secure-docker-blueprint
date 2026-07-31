@@ -136,7 +136,13 @@ subnet's egress, which catches calls to a literal address that skip DNS.
 
 Run it for at least 48 hours. Some checks are daily and Uptime Kuma's is every
 48; a shorter observation returns a clean result that only means nobody watched
-long enough.
+long enough. This was confirmed the cheap way on 2026-07-31: across thirteen
+containers that had been up for two days, a snapshot of open connections showed
+**no** public destination at all. The calls are periodic, so a snapshot cannot
+see them.
+
+The probe needs nftables for the packet half and a stack restart for the
+resolver. Root is not required.
 
 Until then, treat the bottom two rows as *not currently known to*, not as
 *does not*.

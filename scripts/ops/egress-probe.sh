@@ -16,6 +16,15 @@
 # Neither is a firewall for production use — the point is to watch, not to
 # protect. Run it against a stack you can break.
 #
+# Preconditions, both checked on a host where they were absent:
+#   - nftables on the host, for the packet half. Without it, run the DNS half
+#     alone; it is the more informative of the two anyway.
+#   - the ability to restart the stack, because the resolver is reached through
+#     a `dns:` entry and Docker resolves that at container start.
+# Root is not needed. Reading /proc/net/nf_conntrack instead would need it, and
+# it would not help: a snapshot of open connections misses a daily or 48-hourly
+# call by construction. Only a recording over time answers this.
+#
 # Usage:
 #   scripts/ops/egress-probe.sh start <stack-dir>   # arm the probe, start the stack
 #   scripts/ops/egress-probe.sh read  <stack-dir>   # what has been attempted so far
@@ -58,7 +67,12 @@ subnet_of() {
 case "${1:-}" in
 
 start)
-  command -v nft >/dev/null || die "nftables not found — install nftables"
+  # nftables is optional. Without it the DNS half still runs, and it is the
+  # half that names destinations — the packet rule only adds calls made to a
+  # literal address. Failing here would withhold the useful observation over
+  # the absence of the lesser one.
+  HAVE_NFT=1
+  command -v nft >/dev/null || HAVE_NFT=0
   mkdir -p "$STATE_DIR"
 
   # A resolver that writes every query it is asked, and answers nothing else.
@@ -93,6 +107,13 @@ start)
   packet rule — the subnet does not exist until they do.
 
 EOF
+
+  if [ "$HAVE_NFT" -eq 0 ]; then
+    echo "  nftables is not installed — the DNS half above is armed and is the"
+    echo "  half that names destinations. Calls made to a literal address will"
+    echo "  not be recorded."
+    exit 0
+  fi
 
   SUBNETS=$(subnet_of || true)
   if [ -z "$SUBNETS" ]; then
