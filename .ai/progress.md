@@ -13,11 +13,11 @@ session-level detail is in the Progress Log of
 | v0.5.0 | 2026-05-03 | Authentik Forward-Auth, two reusable patterns proven end-to-end |
 | v0.5.1 | 2026-05-03 | Network isolation fix, tag pinning standard, ✅ Ready Criteria formalised |
 | v0.6.0 | 2026-06-04 | CrowdSec complete — firewall bouncer, runbook, AppSec and geoblocking guidance |
-| v0.7.0 | in progress | Backup — designed and configured; closes with one performed restore |
+| v0.7.0 | 2026-07-31 | Backup — one archive created and one restore performed against a live stack, checked by query; first `ops-proven` stack |
 
 **The through line:** every release since v0.2.0 is defined by something *proven on a
 fresh install*, not by something written. That is why status carries verification
-dates, why ✅ has ten criteria, and why v0.7.0 does not end with a working
+dates, why ✅ has ten criteria, and why v0.7.0 did not end with a working
 configuration.
 
 ## Since v0.6.0, outside the plan

@@ -1,6 +1,6 @@
 # Roadmap
 
-Direction reviewed 2026-07-30.
+Direction reviewed 2026-07-31.
 
 What remains to be built, what blocks it, and what proves it finished. Shipped
 work belongs to [`CHANGELOG.md`](CHANGELOG.md), per-stack status to the tables in
@@ -12,25 +12,6 @@ per-category detail to the `README.md` in each top-level directory.
 ## Direction
 
 Pre-1.0 tags are set when a natural milestone is reached, not on a fixed cadence. The single criterion for v1.0 is: **could someone fork this and run it without needing my mental model?** — subjective but unambiguous when met.
-
-### v0.7.0 — Backup
-
-A working infrastructure is worthless without recovery.
-
-**Done when** one full restore has been performed from a backup this repository
-produced, and written up step by step. Not when the configuration validates, not
-when the timer runs, not when an archive exists. That restore is also what makes
-the `ops-proven` state reachable for the first time.
-
-**In place:** the five-layer architecture, the reasoning for a host-installed
-agent, and both components — `backup/borgmatic` (configuration, timer, restore
-playbook) and `backup/urbackup`. All of it is designed in
-[`backup/README.md`](backup/README.md) and none of it has run.
-
-**Blocked by** a host that may be broken, filled with throwaway data and restored
-into. The proof layer additionally depends on v0.8.0: borgmatic's run monitoring
-reports to Healthchecks or Uptime Kuma, so those have to work before the timer is
-switched on.
 
 ### v0.8.0 — Monitoring
 
@@ -51,8 +32,9 @@ Six services are already in place, spanning the axes described in [`monitoring/R
 
 Log aggregation (Loki/Grafana) stays out of scope — heavier infrastructure for a later pass.
 
-**Blocked by** the same host as v0.7.0, and v0.7.0's proof layer depends on this
-one, so the two close together.
+**Blocked by** the same host the backup milestone ran on. Backup's proof layer
+waits here too: borgmatic's run monitoring reports to Healthchecks or Uptime
+Kuma, so those have to work before the timer is switched on.
 
 ### v0.9.0 — Measured resource limits and Operator Site launch
 
@@ -144,7 +126,7 @@ which are named only:
 
 - [`monitoring/README.md`](monitoring/README.md) — the five monitoring axes plus the notification receiver; planned additions include Grafana + Prometheus and Scrutiny
 - [`business/README.md`](business/README.md) — planned additions include Plane, Leantime, AppFlowy, Ackee, Plausible CE, Live Helper Chat and Eramba GRC
-- [`backup/README.md`](backup/README.md) — Borgmatic and UrBackup are on disk for v0.7.0 above; Kopia and Bareos are named, not built
+- [`backup/README.md`](backup/README.md) — Borgmatic has been backed up from and restored from; what remains there is the off-site target, which is written and not yet exercised, and UrBackup, which has never been started. Kopia and Bareos are named, not built
 
 ### Project management — to evaluate
 

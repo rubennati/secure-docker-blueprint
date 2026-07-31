@@ -1,6 +1,14 @@
 # Host session — closing v0.7.0
 
-Everything left for v0.7.0 needs a reachable host. This is that work in one ordered run, so it happens once instead of four times.
+**Blocks 1 and 2 ran on 2026-07-29 and closed the milestone** — the rehearsal is
+logged in [`backup/borgmatic/RESTORE.md`](../backup/borgmatic/RESTORE.md#rehearsal-log),
+what the run corrected is in [`host-session-findings.md`](host-session-findings.md).
+Two things were deliberately left: the repository sits on the same machine, so
+the off-site target is still only written, and the timer stays off until
+Healthchecks or Uptime Kuma exists to notice a failed run — that is v0.8.0.
+**Blocks 3 to 5 remain open** and still need the host.
+
+Everything left for v0.7.0 needs a reachable host. This is that work in one ordered run, so it happens once instead of four times. The checklists stay as written: they are the procedure for repeating this, not only the record of one run.
 
 **Ordered so a failure blocks as little as possible.** Each block is independent — if one fails, note it and move on; only Block 2 depends on Block 1.
 

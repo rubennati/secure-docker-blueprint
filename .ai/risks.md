@@ -5,7 +5,7 @@ for deployments — that is `docs/security-verification.md`.
 
 | Risk | Impact | Current mitigation | What would close it |
 |---|---|---|---|
-| **No restore evidence anywhere** | A backup that has never been restored may not be one. Applies to every stack. | Restore procedure written and rehearsable | v0.7.0 Block 2 — one performed, documented restore |
+| **Restore evidence covers one stack** | A backup that has never been restored may not be one. One stack has been restored from; the other 58 have a procedure, not a record. | Rehearsal logged in `backup/borgmatic/RESTORE.md`; `LIFECYCLE.md` awards `ops-proven` only where one exists | One rehearsal per stack whose loss would matter, and the off-site target exercised once |
 | **Nine major versions pinned but never started** | Paperless 3.x, WordPress 7.x, Immich 3.x and others are advertised at a version nobody has run. Paperless needs a search-index migration. | Flagged in `docs/maintenance.md`; status honest | Host session, Block 4 |
 | **Legacy verification stamps** | `Last checked:` predates the current format; the evidence behind ✅ is older than the claim | Marked ⚠️ per stack in `LIFECYCLE.md`; `legacy-stamp` reports the ✅ ones, non-blocking | Per-app judgement during the host session |
 | **Single maintainer** | No second reviewer; a mistaken decision has no second pair of eyes | CI gates catch mechanical errors; branch protection on `main` | Structural — accepted |

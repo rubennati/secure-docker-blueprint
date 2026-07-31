@@ -2,13 +2,12 @@
 
 > If this file conflicts with git (branch, commits, tags), trust git.
 
-**Last updated:** 2026-07-28
+**Last updated:** 2026-07-31
 
-- **Phase:** pre-1.0. Latest tag `v0.6.0` (2026-06-04). Work happens on `dev`.
-- **Current milestone:** v0.7.0 — Backup.
-- **Definition of done for v0.7.0:** one restore performed and written down. Not
-  when the configuration validates, not when the timer runs, not when an archive
-  exists.
+- **Phase:** pre-1.0. Latest tag `v0.7.0` (2026-07-31). Work happens on `dev`.
+- **Current milestone:** v0.8.0 — Monitoring.
+- **Definition of done for v0.8.0:** one verified service per axis, and at least
+  one alert that arrived on a real device. Not a green dashboard.
 
 ## Snapshot
 
@@ -20,7 +19,9 @@
 - Backup architecture designed (`backup/README.md`): five layers, host-installed
   agent, snapshot/backup/archive kept distinct.
 - `backup/borgmatic/` — configuration, systemd timer, setup and restore playbook.
-  Host-installed, no Compose stack. Never exercised on a host.
+  Host-installed, no Compose stack. Backed up from and restored from on
+  2026-07-29; the rehearsal is logged in `backup/borgmatic/RESTORE.md`. The
+  off-site target is written and not yet exercised.
 - `backup/urbackup/` — client and endpoint backup, bridge networking with the web
   interface behind Traefik, host-networking overlay opt-in. Never started.
 - Status model unified (`docs/standards/status-model.md`); `LIFECYCLE.md` generated
@@ -31,15 +32,15 @@
 
 ## Immediate next steps
 
-A disposable host is being prepared. Both remaining milestones run on it, in
-this order:
+The disposable host carried v0.7.0. What runs on it next, in this order:
 
-1. **v0.7.0** — [`../docs/host-session-v0.7.0.md`](../docs/host-session-v0.7.0.md).
-   Blocks 1 and 2 (first backup, restore rehearsal) are the milestone; the rest
-   shares the precondition but does not gate the tag.
-2. **v0.8.0** — [`../docs/host-session-v0.8.0.md`](../docs/host-session-v0.8.0.md).
+1. **v0.8.0** — [`../docs/host-session-v0.8.0.md`](../docs/host-session-v0.8.0.md).
    Ordered by dependency: the receiver first, then the closed-circuit monitor,
    then the observing ones.
+2. **What v0.7.0's session left open** —
+   [`../docs/host-session-v0.7.0.md`](../docs/host-session-v0.7.0.md) Blocks 3
+   and 4: UrBackup has never been started, and nine major versions are pinned
+   and never run. Neither gated the tag; both still need the host.
 3. **Feeding v0.9.0** — start the sampler in
    [`../docs/resource-measurement.md`](../docs/resource-measurement.md) before the
    first stack comes up. Every container started is a measurement opportunity,
@@ -111,7 +112,7 @@ structure checker enforces neither.
 - **A host to experiment on, not a host at all.** The blueprint's stacks run in
   production; what the open milestones need is a machine that may be broken,
   filled with throwaway data and restored into. That is the single precondition
-  behind v0.7.0, v0.8.0 and v0.9.0 — three milestones, one blocker.
+  behind v0.8.0 and v0.9.0, and it is what v0.7.0 needed before it could close.
 - **Real values never enter the repository.** On the host, `.env` carries the real
   domain and real secrets and is gitignored. Committed files use `example.com`
   and documentation IP ranges only. This matters more during a host session than

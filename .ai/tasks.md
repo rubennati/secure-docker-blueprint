@@ -5,10 +5,13 @@ this file is the short list.
 
 ## Blocked on a host
 
-Ordered run: [`../docs/host-session-v0.7.0.md`](../docs/host-session-v0.7.0.md)
+Ordered run: [`../docs/host-session-v0.8.0.md`](../docs/host-session-v0.8.0.md);
+what v0.7.0's session left open is in
+[`../docs/host-session-v0.7.0.md`](../docs/host-session-v0.7.0.md)
 
-- [ ] Borgmatic: install, initialise repository, first backup, export the key off-host
-- [ ] **Restore rehearsal — this closes v0.7.0** and produces the first `ops-proven` stack
+- [x] Borgmatic: install, initialise repository, first backup, export the key off-host
+- [x] **Restore rehearsal — closed v0.7.0** and produced the first `ops-proven` stack
+- [ ] Exercise the off-site target — the restore ran, the remote repository has not
 - [ ] UrBackup: verify against the gate list in `backup/urbackup/README.md`
 - [ ] Verify the nine pending major versions
 - [ ] Decide the legacy verification stamps, per app — `LIFECYCLE.md` marks them ⚠️
