@@ -8,13 +8,17 @@
 # Method: two observations, because either alone has a blind spot.
 #
 #   1. DNS. Anything reaching a host by name resolves it first, so a resolver
-#      that logs its queries records the intent even when the connection is
-#      then refused. It sees names an allowlist would never have guessed.
+#      that logs its queries records every destination. It sees names an
+#      allowlist would never have guessed.
 #   2. Dropped packets. A call to a literal address skips DNS entirely. An
 #      nftables rule that logs and drops the subnet's egress catches those.
 #
-# Neither is a firewall for production use — the point is to watch, not to
-# protect. Run it against a stack you can break.
+# The resolver forwards rather than blackholes. Answering 0.0.0.0 would also
+# record the attempt, but it takes the stack's own outbound with it — Invoice
+# Ninja would stop sending mail. Observing does not require blocking, and a
+# stack that keeps working is one that keeps making the calls worth seeing.
+#
+# The packet rule does drop, so add it only where that is acceptable.
 #
 # Preconditions, both checked on a host where they were absent:
 #   - nftables on the host, for the packet half. Without it, run the DNS half
@@ -75,14 +79,25 @@ start)
   command -v nft >/dev/null || HAVE_NFT=0
   mkdir -p "$STATE_DIR"
 
-  # A resolver that writes every query it is asked, and answers nothing else.
+  # A resolver that writes down every query and then answers it normally.
   docker rm -f "egress-probe-dns-$SAFE" >/dev/null 2>&1 || true
+  # Attach it to the stack's own egress network, so the containers can reach it.
+  NET=$(docker compose -f "$STACK/docker-compose.yml" ps -q 2>/dev/null | head -1 \
+        | xargs -r docker inspect --format \
+          '{{range $k, $v := .NetworkSettings.Networks}}{{$k}}{{"\n"}}{{end}}' \
+        | grep -m1 -v internal || true)
+  [ -n "$NET" ] || die "no running container to read a network from — start the stack first"
+
+  UPSTREAM=$(awk '/^nameserver/ {print $2; exit}' /etc/resolv.conf)
+  [ -n "$UPSTREAM" ] || die "no nameserver in /etc/resolv.conf to forward to"
+
   docker run -d --name "egress-probe-dns-$SAFE" \
     --restart unless-stopped \
+    --network "$NET" \
     -v "$STATE_DIR:/log" \
-    4km3/dnsmasq:2.90-r0 \
+    4km3/dnsmasq:2.90-r3 \
     --keep-in-foreground --log-facility=/log/"$SAFE".dns.log \
-    --log-queries --no-resolv --address=/#/0.0.0.0 >/dev/null
+    --log-queries --no-resolv --server="$UPSTREAM" >/dev/null
 
   DNS_IP=$(docker inspect "egress-probe-dns-$SAFE" \
     --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}')
@@ -92,16 +107,26 @@ start)
 
   Resolver up at $DNS_IP, logging to $LOG
 
-  Point the stack at it and start it — add to every service in
-  $STACK/docker-compose.yml:
+  Point the stack at it without touching the tracked compose file — write an
+  overlay and bring the service back up with both:
 
-      dns:
-        - $DNS_IP
+      cat > $STATE_DIR/$SAFE.probe.yml <<YAML
+      services:
+        app:
+          dns:
+            - $DNS_IP
+      YAML
 
-  Then: docker compose -f $STACK/docker-compose.yml up -d
+      docker compose -f $STACK/docker-compose.yml \
+                     -f $STATE_DIR/$SAFE.probe.yml up -d app
 
-  Every name the stack tries to resolve is answered with 0.0.0.0 and written to
-  the log. Nothing reaches the internet, and the attempt is recorded either way.
+  Docker keeps its own resolver at 127.0.0.11 and forwards outward to this one,
+  so container names still resolve and the stack keeps working. Every external
+  name it asks for is written to the log.
+
+  Read the log through the container — dnsmasq writes it as root:
+
+      docker exec egress-probe-dns-$SAFE cat /log/$SAFE.dns.log
 
   Once the containers are up, run this script again with 'start' to add the
   packet rule — the subnet does not exist until they do.
@@ -138,12 +163,13 @@ EOF
 read)
   echo
   echo "  ── names the stack tried to resolve ──"
-  if [ -f "$LOG" ]; then
-    grep -oE 'query\[[A-Z]+\] [^ ]+' "$LOG" 2>/dev/null \
+  if docker ps --format '{{.Names}}' | grep -qx "egress-probe-dns-$SAFE"; then
+    docker exec "egress-probe-dns-$SAFE" \
+      grep -oE 'query\[[A-Z]+\] [^ ]+' "/log/$SAFE.dns.log" 2>/dev/null \
       | awk '{print $2}' | sort | uniq -c | sort -rn | head -40 \
       || echo "  (none yet)"
   else
-    echo "  no log at $LOG — was 'start' run?"
+    echo "  resolver egress-probe-dns-$SAFE is not running — was 'start' run?"
   fi
 
   echo
