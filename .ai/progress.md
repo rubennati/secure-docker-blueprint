@@ -31,9 +31,9 @@ model with a generated lifecycle view. None of it changed the milestone order.
 
 The site became a product of its own rather than a mirror of the repository. It
 is named **SecDockBlue**; `secure-docker-blueprint` stays the repository name and
-the technical source of truth. Domain moved to `secdockblue.rubennati.at` —
-still one line in `site/astro.config.mjs`, still no deploy job, still held to
-v1.0.0. 37 pages.
+the technical source of truth. Domain is `secdockblue.rubennati.at`, still one
+line in `site/astro.config.mjs`. 37 pages, **live since 2026-07-31** — the
+launch was brought forward past both dates that had been named for it.
 
 **What changed structurally**
 

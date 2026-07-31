@@ -13,6 +13,13 @@ on:
 permissions:
   contents: read
 
+# One deployment at a time, and a superseded run is cancelled rather than
+# queued: the newer commit is the one that should be live, and two runs racing
+# to publish decide the result by finishing order.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
 jobs:
   build:
     name: Build Astro/Starlight site
@@ -46,3 +53,30 @@ jobs:
       - name: Check content
         working-directory: site
         run: npm run check
+
+      # Only what passed everything above becomes a publishable artifact, and
+      # only from main. A pull request builds and is checked; it does not
+      # produce something that could be deployed.
+      - name: Package the built site for Pages
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: site/dist
+
+  deploy:
+    name: Publish to GitHub Pages
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    # Scoped to this job rather than the file: publishing is the only step that
+    # needs write access, and `id-token` is what lets Pages verify the artifact
+    # came from this workflow.
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0

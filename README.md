@@ -17,6 +17,8 @@ Hardened configurations for 40+ services — standardized security baseline, Doc
 </div>
 
 > **Pre-1.0** — structure is stable and core services are ready to use, but paths, env variables, and defaults can still change before v1.0. See [ROADMAP.md](ROADMAP.md) for the v1.0 criteria.
+> **Reading rather than deploying?** [SecDockBlue](https://secdockblue.rubennati.at) is the operator-facing site: guided documentation, and a security section that stands on its own. This repository stays the technical source of truth — the Compose files, the secrets handling, the defaults.
+
 Quick Navigation: [Features](#features) · [Installation](#installation) · [Core Infrastructure](#core-infrastructure) · [Applications](#applications) · [Business apps](#business-apps) · [Monitoring](#monitoring) · [Backup](#backup)
 
 ---

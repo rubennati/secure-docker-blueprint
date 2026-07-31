@@ -36,7 +36,7 @@ Log aggregation (Loki/Grafana) stays out of scope — heavier infrastructure for
 waits here too: borgmatic's run monitoring reports to Healthchecks or Uptime
 Kuma, so those have to work before the timer is switched on.
 
-### v0.9.0 — Measured resource limits and Operator Site launch
+### v0.9.0 — Measured resource limits
 
 **Every service now carries a ceiling**, and the healthcheck question is decided
 for every service — either one is defined or the compose file states why the image
@@ -58,9 +58,7 @@ owns the target values.
 **Done when** every `✅` stack's limits come from a measurement on a real install
 rather than from the derivation rule.
 
-The Operator Site — an Astro/Starlight site published via GitHub Pages — also reaches its official published state at this milestone. The site is the operator-facing entry point; the repository remains the technical source of truth and nothing moves out of it. The site starts deliberately small and curated, not as a mirror of the full repository.
-
-**The content and the pipeline are in place already**: Home, Getting Started, Applications (with Vaultwarden as the first full reference guide), Core, Operations, FAQ and Project/Governance all exist, and `.github/workflows/site.yml` builds and deploys. What remains for the milestone is the declaration that it is official — a review pass over the existing pages, and the root README routing operator-focused users to it.
+**The Operator Site is live** at [secdockblue.rubennati.at](https://secdockblue.rubennati.at) since 2026-07-31, ahead of the milestone that used to hold it. It is the operator-facing entry point; the repository remains the technical source of truth and nothing moved out of it. Deliberately small and curated rather than a mirror of the repository, so it grows by review rather than by export.
 
 ### v1.0 — Complete and hand-off ready
 
@@ -99,7 +97,7 @@ pin and status per stack.
 runs on its own track, tied to no version. Phase 0 and Phase 1 configuration has
 landed; the Phase 0 acceptance checks are open and Phases 2 and 3 have not started.
 
-**Operator Site work can happen continuously before v0.9.0** — content drafts, structure, and review loops are ongoing. Public, operator-facing publication is gated by the v0.9.0 milestone.
+**Operator Site work is continuous and tied to no version** — content, structure and review loops are ongoing, and each push to `main` that touches `site/` publishes. What is written there is public the moment it lands, which is the reason for the content gate in front of it.
 
 ---
 
