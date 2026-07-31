@@ -47,11 +47,16 @@ terms:
 
 - **The repository's code** — Compose files, scripts, configuration — is under
   the [Apache License 2.0](https://github.com/rubennati/secure-docker-blueprint/blob/main/LICENSE).
-- **This site's text, diagrams and page structure** are `<TO BE DECIDED>`.
-  Applying a software licence to prose by default would be an assumption nobody
-  made, so nothing here claims one until it is chosen.
+- **This site's text, diagrams and page structure** are under
+  [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/): use them, adapt
+  them, use them commercially — name the source and link the licence.
 
-Until that is settled, treat the written material as all rights reserved.
+The two do not merge where they meet. A Compose file or command quoted on these
+pages stays under Apache 2.0, whichever page you found it on, so the same
+snippet does not carry different terms depending on where it was read.
+
+This site cites its sources on every page it can. Being citable in return is the
+same position from the other side.
 
 ## Links to other sites
 

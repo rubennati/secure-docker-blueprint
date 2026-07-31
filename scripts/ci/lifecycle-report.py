@@ -50,9 +50,12 @@ Usage:
   python3 scripts/ci/lifecycle-report.py --write    # regenerate LIFECYCLE.md
   python3 scripts/ci/lifecycle-report.py --check [github-summary-path]
 
---check exits 1 on FAIL only; the default and --write modes always exit 0.
+--check exits 1 on FAIL only; the default and --write modes otherwise exit 0.
+Every mode exits 2 without writing when the baseline checkers cannot be run at
+all — see BaselineUndetermined for why that is not the same as them failing.
 """
 
+import importlib.util
 import json
 import re
 import subprocess
@@ -101,15 +104,37 @@ def plain(text: str) -> str:
     return text.replace("*", "")
 
 
+class BaselineUndetermined(RuntimeError):
+    """A baseline checker could not run, which is not the same as failing.
+
+    Both outcomes leave this script without a passing checker, and treating them
+    alike is what makes the failure dangerous: an answer of "no stack is
+    baseline-aligned" is a legitimate finding, while "I could not ask" is an
+    absent one. Written out, the two produce a byte-identical report — every
+    stack demoted, `ops-proven` gone, and nothing on the page saying why.
+    """
+
+
 def baseline_ok() -> bool:
     """True when both baseline checkers pass.
 
     Run once per invocation. Their own output truncates its finding lists, so a
     per-stack answer cannot be read back from it — the exit code is what is
-    reliable. A failure therefore withholds `baseline-aligned` from every stack
-    in the run. Both checkers block CI, so no committed state depends on the
-    distinction.
+    reliable. A failure withholds `baseline-aligned` from every stack in the
+    run. Both checkers block CI, so no committed state depends on that.
+
+    Raises `BaselineUndetermined` where the exit code establishes nothing: a
+    missing dependency, a checker that could not be started, or one that died on
+    a traceback. A Python traceback also exits 1, so the exit code alone cannot
+    separate "found violations" from "crashed" — the stderr is what does.
     """
+    if importlib.util.find_spec("yaml") is None:
+        raise BaselineUndetermined(
+            f"PyYAML is not importable by {Path(sys.executable).name} — the "
+            "checkers need it to read compose files. Install it with "
+            "`pip install --require-hashes -r scripts/ci/requirements.txt`"
+        )
+
     here = Path(__file__).parent
     for script in ("check-baseline.py", "check-structure.py"):
         try:
@@ -117,8 +142,13 @@ def baseline_ok() -> bool:
                 [sys.executable, str(here / script)],
                 capture_output=True, text=True, timeout=180,
             )
-        except (OSError, subprocess.SubprocessError):
-            return False
+        except (OSError, subprocess.SubprocessError) as exc:
+            raise BaselineUndetermined(f"{script} could not be run: {exc}") from exc
+        if done.returncode != 0 and "Traceback (most recent call last)" in done.stderr:
+            last = done.stderr.strip().splitlines()[-1]
+            raise BaselineUndetermined(
+                f"{script} exited on an exception rather than a finding: {last}"
+            )
         if done.returncode != 0:
             return False
     return True
@@ -272,11 +302,8 @@ def collect() -> tuple[list[dict], list[dict]]:
     if not baseline:
         problems.append({
             "rule": "baseline-failing", "stack": "—",
-            "detail": "a baseline checker did not pass, so no stack is reported "
-                      "as baseline-aligned in this run. If the repository is "
-                      "otherwise clean, check that PyYAML is available to "
-                      f"{Path(sys.executable).name} — the checkers need it, and "
-                      "a missing import is indistinguishable from a real failure",
+            "detail": "a baseline checker reported findings, so no stack is "
+                      "reported as baseline-aligned in this run",
         })
 
     for category in CATEGORIES:
@@ -469,7 +496,15 @@ def main() -> int:
         print("error: run from the repository root", file=sys.stderr)
         return 2
 
-    rows, problems = collect()
+    try:
+        rows, problems = collect()
+    except BaselineUndetermined as exc:
+        print(f"  ❌ cannot establish any stack's state: {exc}", file=sys.stderr)
+        print("     Nothing written — a report produced without the baseline "
+              "checkers would demote every stack and look exactly like a clean "
+              "run that found nothing.", file=sys.stderr)
+        return 2
+
     generated = render(rows)
     target = Path("LIFECYCLE.md")
 
