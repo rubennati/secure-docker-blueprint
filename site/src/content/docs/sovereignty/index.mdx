@@ -58,14 +58,52 @@ A hostname absent from the certificate logs is harder to find. It is not
 protected by that absence — anything reachable from the internet has to survive
 being found.
 
-**Monitoring tools were checked one by one.** Of the seven, two make an outbound
-call the operator did not request. One sends a daily message carrying a permanent
-installation identifier and how many pages it is watching — that is switched off
-here. The other asks its vendor for the current version every two days and sends
-nothing about you; it is switched off after first login, because the setting
-lives in the application rather than in its configuration.
+### Every service was checked, one at a time
 
-Push notifications to phones are the exception that cannot be switched off.
+Thirty-six applications, read against each project's own documentation and
+source. What matters is not whether a service contacts its maker — many do, to
+see whether a newer version exists — but **whether the message carries an
+identifier that survives restarts.** Without one, the maker learns that somebody
+somewhere is running the software. With one, they can count installations and
+follow yours over time.
+
+**Six carry such an identifier.** Documenso, OpnForm and Homarr each report to
+an analytics service keyed on an ID stored in their own database. OpenProject's
+security badge sends one with the version. Dolibarr posts a unique hash together
+with **your company's country, taken from the record inside the software** — and
+the checkbox that enables it is ticked during installation, so it is easy to
+click past.
+
+**PhotoPrism cannot be stopped.** It sends a permanent serial number with the
+version, operating system and processor count, and the project offers no setting
+to prevent it. The only remedy is a firewall rule on the server. If that matters
+to you, the [other photo libraries](/applications/choosing/#photo-libraries) do
+not do it.
+
+**WordPress reports its size.** Alongside the version it sends the number of
+sites and **the number of user accounts**. There is no setting in the official
+image.
+
+**Two published switches do not work.** Lychee and Dashy both document a way to
+turn their update check off, and in both cases the call still happens. This was
+found by reading the code; neither project's documentation says so.
+
+**Three send information about people rather than about the installation** — the
+easiest kind to miss:
+
+- BookStack sends a fingerprint of every user's e-mail address to Gravatar
+  whenever an avatar is displayed
+- LibrePhotos sends the **location of every photo you scan** to a mapping service
+  to turn coordinates into place names
+- Zammad looks up contacts and organisations against its own servers as you work
+
+**What was switched off here.** Where a setting exists and costs nothing,
+telemetry is off in the shipped configuration. Where it costs a feature — Gravatar
+avatars, photo place names — the configuration says so on the line above, so it
+can be reversed in one edit. Where the setting lives inside the application and
+cannot be pre-set, the service's page says where to find it after installation.
+
+**Push notifications to phones are the exception that cannot be switched off.**
 Apple and Google will only accept push from a registered application, so any
 service that reaches your phone routes a small relay message through the
 project's own servers. What travels is a message identifier — the content stays
@@ -102,6 +140,9 @@ acquisition can move a project between jurisdictions without the software
 looking any different. Read anything here as of **31 July 2026** and verify the
 entries that matter to your decision against the project itself.
 
-The telemetry findings are different in kind: they come from reading the
-configuration and watching what the stacks actually do here, and are dated by
-the verification dates on the stacks concerned.
+The telemetry findings come from reading each project's own documentation and
+source code, and each positive was then checked a second time by someone trying
+to disprove it — one claim did not survive that and was dropped. **They were not
+observed on the wire.** Reading the code establishes that a call exists; it
+cannot establish that no other one does. Where nothing was found, this page says
+nothing rather than calling a service clean.
