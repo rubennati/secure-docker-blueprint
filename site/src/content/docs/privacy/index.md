@@ -3,11 +3,9 @@ title: Privacy
 description: What this site stores, what it loads, and what the hosting platform records — a short answer, because a static site with no analytics has little to describe.
 ---
 
-:::caution[Placeholder while unpublished]
-The controller's details are not filled in, and this site is not deployed. The
-technical description below is accurate for the build as it stands; the
-responsible party and the hosting arrangement have to be completed before
-publication.
+:::caution[If you are reading this in a fork]
+The controller named below is the original author. Replace it with your own
+before you publish, or remove the page.
 :::
 
 ## Short version
@@ -21,8 +19,8 @@ sections below say where data still arises anyway.
 
 ## Who is responsible
 
-`<TO BE COMPLETED — controller name, address and contact>`. See the
-[legal notice](/legal/).
+Ruben-Paul Nati, Spittelauer Lände 25, 1090 Vienna, Austria. Contact and the
+full disclosure are in the [legal notice](/legal/).
 
 ## What the site itself stores
 
@@ -40,13 +38,20 @@ that could keep a record.
 
 ## What the hosting platform sees
 
-Serving a page requires a request, and a request has a sender. The host
-`<TO BE COMPLETED — hosting provider>` processes what any web server processes:
-IP address, time, the page requested, the referring page and the browser's
+Serving a page requires a request, and a request has a sender. This site is
+served by **GitHub Pages** (GitHub, Inc., 88 Colin P. Kelly Jr. Street, San
+Francisco, CA 94107, USA), which processes what any web server processes: IP
+address, time, the page requested, the referring page and the browser's
 user-agent string, in server logs it keeps under its own terms and retention.
 
 This is technically necessary to deliver the page and is not used here for
-anything else. We do not receive, read or analyse those logs.
+anything else. We do not receive, read or analyse those logs, and the platform
+offers no setting that would switch them off.
+
+GitHub is a US provider, so serving a page transfers the request data to a third
+country. GitHub states it relies on the EU Standard Contractual Clauses for
+that transfer; its terms are in the
+[GitHub Privacy Statement](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement).
 
 ## What happens when you follow a link
 

@@ -3,13 +3,10 @@ title: Legal notice
 description: Who operates this site, how to reach them, and what licence covers the content as distinct from the code.
 ---
 
-:::caution[This page is a template, not a legal notice]
-The details below are placeholders. **Nobody has filled them in yet, and this
-site is not published.** If you are reading this in a fork or a local build, the
-obligation to complete it is yours, not the original author's — a disclosure
-naming someone else is worse than none at all.
-
-Delete this box once the fields are real.
+:::caution[If you are reading this in a fork]
+The details below name the original author. **A disclosure naming someone else
+is worse than none at all** — replace them with your own before you publish, or
+remove the page. The obligation follows whoever determines the content.
 :::
 
 ## Who operates this site
@@ -17,12 +14,16 @@ Delete this box once the fields are real.
 <!-- markdownlint-disable-next-line -->
 | | |
 |---|---|
-| Name or company | `<TO BE COMPLETED>` |
-| Address | `<TO BE COMPLETED — a physical address, not a PO box>` |
-| Email | `<TO BE COMPLETED>` |
-| Company register number and court | `<if registered>` |
-| VAT identification number | `<if applicable>` |
-| Chamber or professional body | `<if applicable>` |
+| Operator | Ruben-Paul Nati, MSc |
+| Registered as | rnati it solutions e.U. |
+| Address | Spittelauer Lände 25, 1090 Wien, Austria |
+| Email | <secdockblue@m.rubennati.at> |
+| Company register | FN 510221a, Handelsgericht Wien |
+| VAT identification number | ATU74404968 |
+
+**Purpose of this site:** documentation on operating self-hosted services
+securely. It sells nothing, carries no advertising and collects no data — see
+[privacy](/privacy/).
 
 ## Why hosting does not decide this
 
