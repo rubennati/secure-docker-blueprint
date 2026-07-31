@@ -152,7 +152,8 @@ settled ground.
       none does. gatus and healthchecks are recorded as *not currently known
       to* rather than *does not*. Attach the stack to a default-deny egress
       network and read the refusals for 48 h — long enough to catch Uptime
-      Kuma's interval
+      Kuma's interval. `scripts/ops/egress-probe.sh` does the setup; it needs
+      nftables on the host
 - [?] **The community blocklist is a two-way arrangement, on by default.**
       15,880 addresses arrive; this host's own detections leave. Not the request
       content — `context` is off. Worth it by the numbers (14 hours of local

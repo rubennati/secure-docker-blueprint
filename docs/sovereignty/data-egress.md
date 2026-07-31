@@ -119,11 +119,24 @@ error: a thing that was configured, looked correct, and silently did nothing
 because it was never actually reached. "I looked and found nothing" becoming
 "there is nothing" is the same mistake pointed the other way.
 
-**The only thing that settles it is watching the wire**, and none of these
-stacks has been run yet. When monitoring is deployed for v0.8.0, the test is
-cheap: attach the stack to a network with a default-deny egress rule and read
-what gets refused, over at least 48 hours — Uptime Kuma's interval is long
-enough to be missed by a short observation.
+**The only thing that settles it is watching the wire.** That is what
+[`scripts/ops/egress-probe.sh`](../../scripts/ops/egress-probe.sh) is for:
+
+```bash
+scripts/ops/egress-probe.sh start apps/nextcloud   # arm it
+scripts/ops/egress-probe.sh read  apps/nextcloud   # what has been attempted
+scripts/ops/egress-probe.sh stop  apps/nextcloud   # take it back out
+```
+
+It watches two things, because either alone has a blind spot. A resolver that
+logs every query records anything reaching a host by name, including names no
+allowlist would have guessed — and it answers `0.0.0.0`, so the attempt is
+recorded without the call completing. An nftables rule logs and drops the
+subnet's egress, which catches calls to a literal address that skip DNS.
+
+Run it for at least 48 hours. Some checks are daily and Uptime Kuma's is every
+48; a shorter observation returns a clean result that only means nobody watched
+long enough.
 
 Until then, treat the bottom two rows as *not currently known to*, not as
 *does not*.
