@@ -110,11 +110,12 @@ Backup configuration, retention, database dump hooks, a schedule, run
 monitoring, and a documented restore procedure — Borgmatic installed on the
 host. Encrypted, deduplicated archives.
 
-What is yours: **an off-site target**, and the rehearsal. The blueprint's own
-restore was performed against a repository on the same machine, which means
-append-only enforcement over a remote connection is written down rather than
-demonstrated. One application has had its data restored on a live host; the rest
-say so on their own pages rather than implying otherwise.
+What is yours: **where the archives go**, and rehearsing the restore on your own
+data. The blueprint proves the mechanism — one application has had its data
+backed up, extracted and restored on a live host, checked by query. The rest say
+so on their own pages rather than implying otherwise. Append-only enforcement is
+the exception: it is a property of the remote connection, so a local rehearsal
+cannot establish it.
 
 [Backup and restore →](/operations/backup/)
 

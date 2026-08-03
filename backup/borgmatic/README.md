@@ -1,8 +1,10 @@
 # Borgmatic
 
-> The rehearsal is logged in [`RESTORE.md`](RESTORE.md#rehearsal-log). It used a
-> repository on the same machine, so the off-site target is written rather than
-> demonstrated.
+> Backup, archive inspection and restore have all been performed against a live
+> stack, and the rehearsal is logged in [`RESTORE.md`](RESTORE.md#rehearsal-log).
+> Where the repository lives is your configuration — see
+> [Known limitations](#known-limitations) for the one mechanism that has not been
+> exercised.
 
 Host-installed backup for the stacks in this blueprint. Borg does the deduplicated, encrypted, append-capable storage; Borgmatic adds scheduling, retention, database dumps and monitoring on top.
 
@@ -259,7 +261,7 @@ Borgmatic writes its own configuration into the archive so the credentials neede
 
 ## Known limitations
 
-- **Exercised against a local repository, not an SSH target.** Backup, archive inspection and restore have all been performed; the target was a directory on the same host. The SSH path and append-only enforcement are still written rather than proven.
+- **Append-only enforcement has not been exercised.** Backup, archive inspection and restore have; the repository they ran against was a directory, which does not exercise the remote path. Append-only is a property of the *connection*, so it is the one documented mechanism here that a local rehearsal cannot establish. Everything else on this page has been run.
 - **Prune under append-only fails by design.** Plan where retention runs before enabling it.
 - **`/var/lib/docker/volumes` read live.** Fine for ordinary files, not for databases — which is what the dump hooks are for. Verify your Docker root with `docker info --format '{{.DockerRootDir}}'`; rootless and custom data-root setups differ.
 - **One host, one configuration.** Per-app repositories are possible via `/etc/borgmatic.d/` but are not the starting point — see [`../README.md`](../README.md#per-app-separation--an-option-not-a-rule).

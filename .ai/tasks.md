@@ -11,7 +11,9 @@ what v0.7.0's session left open is in
 
 - [x] Borgmatic: install, initialise repository, first backup, export the key off-host
 - [x] **Restore rehearsal — closed v0.7.0** and produced the first `ops-proven` stack
-- [ ] Exercise the off-site target — the restore ran, the remote repository has not
+- [ ] Exercise append-only over a remote repository — the one Borgmatic mechanism
+      a local rehearsal cannot establish. Not about owning an off-site target;
+      about whether the documented protection behaves as written
 - [ ] UrBackup: verify against the gate list in `backup/urbackup/README.md`
 - [ ] Verify the nine pending major versions
 - [ ] Decide the legacy verification stamps, per app — `LIFECYCLE.md` marks them ⚠️

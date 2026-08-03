@@ -20,8 +20,10 @@
   agent, snapshot/backup/archive kept distinct.
 - `backup/borgmatic/` — configuration, systemd timer, setup and restore playbook.
   Host-installed, no Compose stack. Backed up from and restored from on
-  2026-07-29; the rehearsal is logged in `backup/borgmatic/RESTORE.md`. The
-  off-site target is written and not yet exercised.
+  2026-07-29; the rehearsal is logged in `backup/borgmatic/RESTORE.md`. Where a
+  repository lives is the adopter's configuration, not this repository's debt —
+  append-only enforcement is the one documented mechanism a local rehearsal
+  cannot establish.
 - `backup/urbackup/` — client and endpoint backup, bridge networking with the web
   interface behind Traefik, host-networking overlay opt-in. Never started.
 - Status model unified (`docs/standards/status-model.md`); `LIFECYCLE.md` generated

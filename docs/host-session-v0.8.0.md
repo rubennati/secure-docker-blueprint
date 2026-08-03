@@ -14,7 +14,7 @@ Six monitoring stacks are configured and none has ever run. This is that work in
 
 - [ ] Host reachable, Docker running, Traefik up with a working certificate
 - [ ] A device that is supposed to receive alerts, with the ntfy app installed on it
-- [ ] Decided: does the receiver run on **this** host, or elsewhere? Running it here is fine for verifying the chain, but it cannot stay there — see [`monitoring/README.md`](../monitoring/README.md#where-the-receiver-runs)
+- [ ] The receiver runs on **this** host. That is what verifies the chain; where it belongs in a real deployment is the adopter's call and is documented in [`monitoring/README.md`](../monitoring/README.md#where-the-receiver-runs), not decided here
 - [ ] Decided: Uptime Kuma **or** Gatus for the uptime axis. Both is allowed, one is required
 
 ---

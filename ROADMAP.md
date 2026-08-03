@@ -124,7 +124,7 @@ which are named only:
 
 - [`monitoring/README.md`](monitoring/README.md) — the five monitoring axes plus the notification receiver; planned additions include Grafana + Prometheus and Scrutiny
 - [`business/README.md`](business/README.md) — planned additions include Plane, Leantime, AppFlowy, Ackee, Plausible CE, Live Helper Chat and Eramba GRC
-- [`backup/README.md`](backup/README.md) — Borgmatic has been backed up from and restored from; what remains there is the off-site target, which is written and not yet exercised, and UrBackup, which has never been started. Kopia and Bareos are named, not built
+- [`backup/README.md`](backup/README.md) — Borgmatic has been backed up from and restored from; UrBackup has never been started. Kopia and Bareos are named, not built
 
 ### Project management — to evaluate
 
