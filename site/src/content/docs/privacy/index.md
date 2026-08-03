@@ -28,7 +28,7 @@ full disclosure are in the [legal notice](/legal/).
 |---|---|
 | Cookies | none |
 | Analytics | none |
-| Embedded third-party content | none — no external fonts, scripts, images or video |
+| Embedded third-party content | none — no external fonts, scripts, images or video. The browser does send network error reports to Cloudflare; see [below](#one-automatic-report) |
 | Forms | none |
 | Local storage | none |
 | Session storage | one flag, only if the leave-site confirmation is set to ask once per visit. It records that you were asked. It leaves your browser at no point and is discarded when the tab closes. |
@@ -36,22 +36,43 @@ full disclosure are in the [legal notice](/legal/).
 The site is static: pages are files, and there is no application behind them
 that could keep a record.
 
-## What the hosting platform sees
+## Who handles a request on its way here
 
-Serving a page requires a request, and a request has a sender. This site is
-served by **GitHub Pages** (GitHub, Inc., 88 Colin P. Kelly Jr. Street, San
-Francisco, CA 94107, USA), which processes what any web server processes: IP
-address, time, the page requested, the referring page and the browser's
-user-agent string, in server logs it keeps under its own terms and retention.
+Serving a page requires a request, and a request has a sender. Three companies
+touch it before it reaches you, each processing what any web server processes:
+IP address, time, the page requested, the referring page and the browser's
+user-agent string, in logs they keep under their own terms and retention.
 
-This is technically necessary to deliver the page and is not used here for
-anything else. We do not receive, read or analyse those logs, and the platform
-offers no setting that would switch them off.
+| Who | Role | Where |
+|---|---|---|
+| **Cloudflare, Inc.** | the address this domain resolves to. It terminates the encrypted connection, so it handles the request in clear text, and it caches and forwards | USA |
+| **GitHub, Inc.** — GitHub Pages | holds the files and answers what Cloudflare does not serve from cache | USA |
+| **Fastly, Inc.** | the delivery network GitHub Pages itself runs behind | USA |
 
-GitHub is a US provider, so serving a page transfers the request data to a third
-country. GitHub states it relies on the EU Standard Contractual Clauses for
-that transfer; its terms are in the
-[GitHub Privacy Statement](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement).
+Cloudflare being in front means the connection is decrypted there rather than
+at the origin. That is how a content delivery network works and is not a
+misconfiguration — the same trade this site
+[describes elsewhere](/sovereignty/edge/), applied to itself.
+
+This is technically necessary to deliver the page and is used here for nothing
+else. We do not receive, read or analyse those logs, and none of the three
+platforms offers a setting that would switch them off.
+
+**All three are US companies, so a request transfers data to a third country.**
+Cloudflare states it relies on the European Commission's Standard Contractual
+Clauses and is additionally certified under the EU-U.S. Data Privacy Framework
+([Cloudflare, GDPR](https://www.cloudflare.com/trust-hub/gdpr/)). GitHub states
+it relies on the Standard Contractual Clauses
+([GitHub Privacy Statement](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement)).
+Fastly is engaged by GitHub rather than by this site, and its handling falls
+under GitHub's arrangements.
+
+### One automatic report
+
+Cloudflare's response asks the browser to send network error reports to
+`a.nel.cloudflare.com` when a request fails. It is set by the platform, carries
+no content of the page, and is the one outbound request this site causes that
+is not a request for the page itself.
 
 ## What happens when you follow a link
 
