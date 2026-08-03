@@ -144,7 +144,7 @@ jobs:
     name: Canonical structure
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Install PyYAML
         run: pip install --require-hashes -r scripts/ci/requirements.txt --quiet
@@ -161,7 +161,7 @@ jobs:
     name: Status model
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Check status consistency and LIFECYCLE.md freshness
         run: python3 scripts/ci/lifecycle-report.py --check "$GITHUB_STEP_SUMMARY"
@@ -184,7 +184,7 @@ jobs:
     name: Checker coverage
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Install PyYAML
         run: pip install --require-hashes -r scripts/ci/requirements.txt --quiet
@@ -212,7 +212,7 @@ jobs:
     name: Docs QA
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Lint Markdown
         run: npx --yes markdownlint-cli2
@@ -237,7 +237,7 @@ jobs:
     name: Workflow supply chain
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Check action pinning and workflow permissions
         run: python3 scripts/ci/check-workflows.py "$GITHUB_STEP_SUMMARY"
