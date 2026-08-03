@@ -11,10 +11,11 @@
   --sl-color-accent-high: oklch(82% 0.12 258);
 }
 
-/* Compact, subtle site title */
+/* The site title sat at --sl-text-sm, which is what a sidebar link uses, so the
+   name read as one more menu entry. One step up separates it without shouting. */
 .site-title {
-  font-size: var(--sl-text-sm) !important;
-  font-weight: 500 !important;
+  font-size: var(--sl-text-base) !important;
+  font-weight: 600 !important;
   letter-spacing: 0.01em;
 }
 
@@ -46,6 +47,11 @@
 
 :root {
   --sl-sidebar-width: 15rem;   /* 240px instead of 300px */
+  /* Measured: a sidebar link lands 17px right of --sl-sidebar-pad-x, because
+     the link carries its own indent on top of it. Raising the variable to match
+     the header's 1.5rem therefore moved the text further out, not into line —
+     9px of offset became 17px. Left at the default until the link's own indent
+     is accounted for rather than guessed at. */
   --sl-content-width: 52rem;   /* ~832px instead of 720px */
   --sl-line-height: 1.625;     /* tighter than 1.75, still accessible */
 }
@@ -138,5 +144,15 @@ dialog.leaving::backdrop {
   }
   :root .hero h1 {
     font-size: clamp(var(--sl-text-3xl), calc(0.25rem + 3vw), var(--sl-text-5xl));
+  }
+}
+
+/* Starlight pins the article to the right of its pane above 72rem, so it sits
+   next to the table of contents. With the wider content column and narrower
+   sidebar set above, the pane grows and that `auto` margin turned into a 296px
+   void on a 2000px screen. Centring it splits the remainder evenly instead. */
+@media (min-width: 72rem) {
+  .content-panel .sl-container {
+    margin-inline: auto;
   }
 }
