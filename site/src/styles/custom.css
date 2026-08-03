@@ -147,43 +147,20 @@ dialog.leaving::backdrop {
   }
 }
 
-/* Cap the whole layout on wide screens and centre it.
+/* Wide screens: left as Starlight ships it.
 
-   Starlight lets the layout grow with the window. Past roughly 1600px that
-   leaves the header, the sidebar and the article anchored to the left with the
-   remainder as empty space on the right, rather than a block sitting in the
-   middle of the screen.
+   Starlight documents one layout variable, --sl-content-width, and no supported
+   way to cap or centre the page. A hand-rolled version was tried and reverted:
+   the header, the sidebar and the table of contents are all `position: fixed`,
+   so each had to be shifted by hand, and shifting the table of contents by its
+   end edge alone left its start edge at -199px. Off-screen at 2000px, bleeding
+   into the page at the widths in between.
 
-   Capping the page alone does nothing here: the header, the sidebar and the
-   table of contents are all `position: fixed`, so they measure against the
-   viewport and ignore any container width. Each one has to be moved by the
-   same gutter the centred block leaves.
+   The measurement showing that was taken before it shipped and read past.
 
-   Below the cap nothing changes — the media query does not apply, and the
-   layout stays exactly as it is at 1280px, where it already reads well. */
-@media (min-width: 100rem) {
-  :root {
-    --site-max: 100rem;
-    --site-gutter: calc((100vw - var(--site-max)) / 2);
-  }
+   Above roughly 1600px the layout therefore still grows with the window rather
+   than sitting in the middle. That is Starlight's own behaviour, and a correct
+   layout is worth more than a centred one that breaks. Centring properly means
+   overriding Starlight's page layout component, which is a deliberate piece of
+   work rather than a stylesheet patch. */
 
-  /* The bar itself keeps running edge to edge — only what sits inside it moves
-     in, so the title lines up with the sidebar below rather than floating on
-     its own. Insetting the element instead would leave its background short of
-     the window edge. */
-  header.header {
-    padding-inline: calc(var(--site-gutter) + var(--sl-nav-pad-x));
-  }
-
-  .sidebar-pane {
-    inset-inline-start: var(--site-gutter);
-  }
-
-  .main-frame {
-    margin-inline: var(--site-gutter);
-  }
-
-  .right-sidebar {
-    inset-inline-end: var(--site-gutter);
-  }
-}
