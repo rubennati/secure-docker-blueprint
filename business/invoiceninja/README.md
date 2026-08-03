@@ -1,7 +1,5 @@
 # Invoice Ninja
 
-> **A restore has not been rehearsed** for this stack.
-
 Self-hosted invoicing, quotes, expenses, and time-tracking (Laravel / PHP-FPM).
 
 ## Minimum requirements
@@ -34,130 +32,6 @@ MySQL 8.4, nginx.
 PHP extensions (BCMath, Ctype, Fileinfo, JSON, Mbstring, OpenSSL, PDO,
 Tokenizer, XML, GD) come with the official image; the list matters only if you
 depart from it.
-
-## Services
-
-| Service | Image | Purpose |
-|---|---|---|
-| app | invoiceninja/invoiceninja-debian | PHP-FPM + Supervisor (scheduler + 2 queue workers) |
-| nginx | nginx | Web server — static assets + FastCGI proxy to app:9000 |
-| mysql | mysql | Database (MySQL 8.x — upstream requirement) |
-| redis | redis | Cache / queue broker / sessions |
-
-Supervisor inside the `app` container manages the Laravel scheduler and queue workers — no separate cron or worker container is needed.
-
-## Security Features
-
-- `no-new-privileges:true` on all services
-- All services isolated on an internal bridge network
-- nginx is the only public-facing service (on `proxy-public`)
-- MySQL and Redis are not exposed on the host
-- `REQUIRE_HTTPS=true` enforced via env
-- `APP_DEBUG=false` in production
-- Access restricted to VPN (`acc-tailscale`) by default
-- All six credentials in Docker Secrets, injected by `ops/entrypoint.sh`
-- `app-internal` is `internal: true`; only the app container has an outbound path
-
-## Backup
-
-| | |
-|---|---|
-| **Database** | MySQL · container `invoiceninja-mysql` · database `ninja` · user `ninja` |
-| **Password** | `.secrets/db_pwd.txt` |
-| **State** | `mysql_data` (database) · `app_storage` (attachments, logos, generated PDFs) · **`.secrets/app_key.txt`** |
-| **Reproducible** | `redis_data` (cache) · `app_public` — served assets, rebuilt by the image |
-| **Quiescing** | Not needed. The dump is consistent on its own. |
-
-This stack uses **named volumes**, not bind mounts. Their host paths are
-`/var/lib/docker/volumes/invoiceninja_<name>/_data` — that is what goes into
-`source_directories`, not a path under the stack directory:
-
-```yaml
-source_directories:
-    - /srv/blueprint
-    - /var/lib/docker/volumes/invoiceninja_app_storage/_data
-```
-
-`app_public` is the image's own served assets, rebuilt on start, and is left
-out. `mysql_data` is left out deliberately as well — the dump below is the
-consistent copy, the raw files would be a torn one.
-
-```yaml
-mysql_databases:
-    - name: ninja
-      container: invoiceninja-mysql
-      username: ninja
-      password: "{credential file /srv/blueprint/business/invoiceninja/.secrets/db_pwd.txt}"
-      tls: false
-```
-
-**`.secrets/app_key.txt` decrypts the stored data.** Without it a restored
-database is unreadable — the single most important line in this section, and the
-one thing here that lives in no volume. Capture `.secrets/` with the database,
-and keep a second copy of the key somewhere this host cannot reach.
-
-Point borgmatic straight at `.secrets/db_pwd.txt`, the same file the stack
-mounts — one copy of the password on the host, and nothing to update twice when
-it is rotated.
-
-Manual dump and restore, when borgmatic is not in the picture:
-
-```bash
-# Dump
-docker exec invoiceninja-mysql mysqldump \
-  -u root -p"$(cat .secrets/db_root_pwd.txt)" ninja \
-  > backup-db-$(date +%Y%m%d-%H%M).sql
-
-docker run --rm -v invoiceninja_app_storage:/data:ro -v "$(pwd)":/out \
-  alpine tar czf /out/backup-storage-$(date +%Y%m%d-%H%M).tar.gz -C /data .
-
-tar czf secrets-$(date +%Y%m%d).tar.gz .secrets .env
-
-# Restore — database first, with only MySQL running
-docker compose up -d mysql
-docker compose exec -T mysql sh -c \
-  'mysql -u root -p"$(cat /run/secrets/DB_ROOT_PWD)" ninja' \
-  < backup-db-YYYYMMDD-HHMM.sql
-
-docker run --rm -v invoiceninja_app_storage:/data -v "$(pwd)":/in \
-  alpine sh -c "cd /data && tar xzf /in/backup-storage-YYYYMMDD-HHMM.tar.gz"
-```
-
-**Back up before every upgrade.** Invoice Ninja runs migrations on start, and a
-failed migration against a database with no dump behind it is not recoverable.
-
-**Restore order:** `.secrets/` and the database first, then storage, then the app.
-
-## Troubleshooting
-
-### PDF and preview rendering times out
-
-**Symptom.** The design preview returns 500, `POST /api/v1/live_design` fails,
-and the application log carries a very long Chromium command line ending in:
-
-```text
-exceeded the timeout of 60 seconds
-```
-
-Invoices still arrive by mail, which makes it look like an interface bug rather
-than a rendering one: those PDFs are produced by the queue worker, which has no
-60-second HTTP request behind it.
-
-**Cause.** Docker's default `/dev/shm` is 64 MB. Chromium uses shared memory
-heavily and does not fail on it — it stalls, and the request dies on the timeout.
-
-**Fix.** Already in `docker-compose.yml` as `shm_size: 512m`. Confirm and
-measure:
-
-```bash
-docker compose exec app df -h /dev/shm
-docker compose exec -u www-data app sh -c '
-  printf "<html><body><h1>x</h1></body></html>" > /tmp/t.html
-  time /usr/bin/google-chrome-stable --headless --disable-gpu --no-sandbox \
-    --print-to-pdf=/tmp/t.pdf /tmp/t.html'
-```
-
-A trivial page renders in a few seconds. If it hangs, `/dev/shm` is still 64 MB.
 
 ## First-Time Setup
 
@@ -263,6 +137,133 @@ curl -sI https://your-domain/            # 200 or 302
 - [ ] Backup strategy in place (see UPSTREAM.md)
 - [ ] Upgrade check: verify `APP_TAG` against latest stable release (see UPSTREAM.md)
 - [ ] Consider tightening `TRUSTED_PROXIES` from `*` to the Traefik network CIDR
+
+## Services
+
+| Service | Image | Purpose |
+|---|---|---|
+| app | invoiceninja/invoiceninja-debian | PHP-FPM + Supervisor (scheduler + 2 queue workers) |
+| nginx | nginx | Web server — static assets + FastCGI proxy to app:9000 |
+| mysql | mysql | Database (MySQL 8.x — upstream requirement) |
+| redis | redis | Cache / queue broker / sessions |
+
+Supervisor inside the `app` container manages the Laravel scheduler and queue workers — no separate cron or worker container is needed.
+
+## Security Features
+
+- `no-new-privileges:true` on all services
+- All services isolated on an internal bridge network
+- nginx is the only public-facing service (on `proxy-public`)
+- MySQL and Redis are not exposed on the host
+- `REQUIRE_HTTPS=true` enforced via env
+- `APP_DEBUG=false` in production
+- Access restricted to VPN (`acc-tailscale`) by default
+- All six credentials in Docker Secrets, injected by `ops/entrypoint.sh`
+- `app-internal` is `internal: true`; only the app container has an outbound path
+
+## Backup
+
+A restore has not been rehearsed for this stack — the procedure below is written
+from the compose file, not from a run.
+
+| | |
+|---|---|
+| **Database** | MySQL · container `invoiceninja-mysql` · database `ninja` · user `ninja` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **State** | `mysql_data` (database) · `app_storage` (attachments, logos, generated PDFs) · **`.secrets/app_key.txt`** |
+| **Reproducible** | `redis_data` (cache) · `app_public` — served assets, rebuilt by the image |
+| **Quiescing** | Not needed. The dump is consistent on its own. |
+
+This stack uses **named volumes**, not bind mounts. Their host paths are
+`/var/lib/docker/volumes/invoiceninja_<name>/_data` — that is what goes into
+`source_directories`, not a path under the stack directory:
+
+```yaml
+source_directories:
+    - /srv/blueprint
+    - /var/lib/docker/volumes/invoiceninja_app_storage/_data
+```
+
+`app_public` is the image's own served assets, rebuilt on start, and is left
+out. `mysql_data` is left out deliberately as well — the dump below is the
+consistent copy, the raw files would be a torn one.
+
+```yaml
+mysql_databases:
+    - name: ninja
+      container: invoiceninja-mysql
+      username: ninja
+      password: "{credential file /srv/blueprint/business/invoiceninja/.secrets/db_pwd.txt}"
+      tls: false
+```
+
+**`.secrets/app_key.txt` decrypts the stored data.** Without it a restored
+database is unreadable — the single most important line in this section, and the
+one thing here that lives in no volume. Capture `.secrets/` with the database,
+and keep a second copy of the key somewhere this host cannot reach.
+
+Point borgmatic straight at `.secrets/db_pwd.txt`, the same file the stack
+mounts — one copy of the password on the host, and nothing to update twice when
+it is rotated.
+
+Manual dump and restore, when borgmatic is not in the picture:
+
+```bash
+# Dump
+docker exec invoiceninja-mysql mysqldump \
+  -u root -p"$(cat .secrets/db_root_pwd.txt)" ninja \
+  > backup-db-$(date +%Y%m%d-%H%M).sql
+
+docker run --rm -v invoiceninja_app_storage:/data:ro -v "$(pwd)":/out \
+  alpine tar czf /out/backup-storage-$(date +%Y%m%d-%H%M).tar.gz -C /data .
+
+tar czf secrets-$(date +%Y%m%d).tar.gz .secrets .env
+
+# Restore — database first, with only MySQL running
+docker compose up -d mysql
+docker compose exec -T mysql sh -c \
+  'mysql -u root -p"$(cat /run/secrets/DB_ROOT_PWD)" ninja' \
+  < backup-db-YYYYMMDD-HHMM.sql
+
+docker run --rm -v invoiceninja_app_storage:/data -v "$(pwd)":/in \
+  alpine sh -c "cd /data && tar xzf /in/backup-storage-YYYYMMDD-HHMM.tar.gz"
+```
+
+**Back up before every upgrade.** Invoice Ninja runs migrations on start, and a
+failed migration against a database with no dump behind it is not recoverable.
+
+**Restore order:** `.secrets/` and the database first, then storage, then the app.
+
+## Troubleshooting
+
+### PDF and preview rendering times out
+
+**Symptom.** The design preview returns 500, `POST /api/v1/live_design` fails,
+and the application log carries a very long Chromium command line ending in:
+
+```text
+exceeded the timeout of 60 seconds
+```
+
+Invoices still arrive by mail, which makes it look like an interface bug rather
+than a rendering one: those PDFs are produced by the queue worker, which has no
+60-second HTTP request behind it.
+
+**Cause.** Docker's default `/dev/shm` is 64 MB. Chromium uses shared memory
+heavily and does not fail on it — it stalls, and the request dies on the timeout.
+
+**Fix.** Already in `docker-compose.yml` as `shm_size: 512m`. Confirm and
+measure:
+
+```bash
+docker compose exec app df -h /dev/shm
+docker compose exec -u www-data app sh -c '
+  printf "<html><body><h1>x</h1></body></html>" > /tmp/t.html
+  time /usr/bin/google-chrome-stable --headless --disable-gpu --no-sandbox \
+    --print-to-pdf=/tmp/t.pdf /tmp/t.html'
+```
+
+A trivial page renders in a few seconds. If it hangs, `/dev/shm` is still 64 MB.
 
 ## Diagnostics
 

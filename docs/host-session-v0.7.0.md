@@ -3,9 +3,9 @@
 **Blocks 1 and 2 ran on 2026-07-29 and closed the milestone** — the rehearsal is
 logged in [`backup/borgmatic/RESTORE.md`](../backup/borgmatic/RESTORE.md#rehearsal-log),
 what the run corrected is in [`host-session-findings.md`](host-session-findings.md).
-Two things were deliberately left: the repository sits on the same machine, so
-the off-site target is still only written, and the timer stays off until
-Healthchecks or Uptime Kuma exists to notice a failed run — that is v0.8.0.
+Left open on purpose: append-only enforcement, which is a property of the remote
+connection and cannot be established against a local repository, and the timer,
+which stays off until Healthchecks or Uptime Kuma exists to notice a failed run.
 **Blocks 3 to 5 remain open** and still need the host.
 
 Everything left for v0.7.0 needs a reachable host. This is that work in one ordered run, so it happens once instead of four times. The checklists stay as written: they are the procedure for repeating this, not only the record of one run.
@@ -19,7 +19,7 @@ Everything left for v0.7.0 needs a reachable host. This is that work in one orde
 ## Before you start
 
 - [ ] Host reachable, Docker running, blueprint deployed
-- [ ] An SSH-reachable backup target exists and you can log into it
+- [ ] Somewhere for the repository to live. **A directory on this host is enough** — it exercises everything except append-only, which needs a remote connection. Use an SSH target only if that is the thing you want to test
 - [ ] Somewhere off this host to put the repository key and passphrase — a password manager is fine
 
 ---

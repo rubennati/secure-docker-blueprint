@@ -12,7 +12,7 @@ rather than in a container — a containerised agent would need read access to
 every volume, and therefore every secret, in the deployment.
 
 <StackEvidence stack="backup/borgmatic"
-  gap="the off-site target. The rehearsal used a repository on the same machine, so append-only enforcement over SSH is written rather than demonstrated." />
+  gap="append-only enforcement, which is a property of the remote connection and cannot be established by a local rehearsal. Backup, archive inspection and restore have all been performed." />
 
 This page is the general half: installing it, the repository, the keys, the
 schedule, and how a restore works. **What to back up for a particular
