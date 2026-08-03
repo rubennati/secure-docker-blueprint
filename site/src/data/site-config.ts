@@ -35,4 +35,4 @@ export const ownHosts: string[] = ['github.com', 'secdockblue.rubennati.at'];
  * nobody made — so this stays an explicit placeholder until it is decided,
  * rather than a claim the footer quietly starts making.
  */
-export const siteContentLicence = 'licence not yet decided';
+export const siteContentLicence = 'CC BY-NC 4.0';

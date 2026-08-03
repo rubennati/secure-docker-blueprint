@@ -48,8 +48,14 @@ terms:
 - **The repository's code** — Compose files, scripts, configuration — is under
   the [Apache License 2.0](https://github.com/rubennati/secure-docker-blueprint/blob/main/LICENSE).
 - **This site's text, diagrams and page structure** are under
-  [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/): use them, adapt
-  them, use them commercially — name the source and link the licence.
+  [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/): use them and
+  adapt them for anything that is not commercial — name the source and link the
+  licence.
+
+Creative Commons defines a commercial use as one *"primarily intended for or
+directed toward commercial advantage or monetary compensation"*. Running a
+server for your employer using what you read here is not that. Selling these
+guides, or republishing them to earn from the traffic, is.
 
 The two do not merge where they meet. A Compose file or command quoted on these
 pages stays under Apache 2.0, whichever page you found it on, so the same
