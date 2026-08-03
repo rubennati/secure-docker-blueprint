@@ -147,12 +147,43 @@ dialog.leaving::backdrop {
   }
 }
 
-/* Starlight pins the article to the right of its pane above 72rem, so it sits
-   next to the table of contents. With the wider content column and narrower
-   sidebar set above, the pane grows and that `auto` margin turned into a 296px
-   void on a 2000px screen. Centring it splits the remainder evenly instead. */
-@media (min-width: 72rem) {
-  .content-panel .sl-container {
-    margin-inline: auto;
+/* Cap the whole layout on wide screens and centre it.
+
+   Starlight lets the layout grow with the window. Past roughly 1600px that
+   leaves the header, the sidebar and the article anchored to the left with the
+   remainder as empty space on the right, rather than a block sitting in the
+   middle of the screen.
+
+   Capping the page alone does nothing here: the header, the sidebar and the
+   table of contents are all `position: fixed`, so they measure against the
+   viewport and ignore any container width. Each one has to be moved by the
+   same gutter the centred block leaves.
+
+   Below the cap nothing changes — the media query does not apply, and the
+   layout stays exactly as it is at 1280px, where it already reads well. */
+@media (min-width: 100rem) {
+  :root {
+    --site-max: 100rem;
+    --site-gutter: calc((100vw - var(--site-max)) / 2);
+  }
+
+  /* The bar itself keeps running edge to edge — only what sits inside it moves
+     in, so the title lines up with the sidebar below rather than floating on
+     its own. Insetting the element instead would leave its background short of
+     the window edge. */
+  header.header {
+    padding-inline: calc(var(--site-gutter) + var(--sl-nav-pad-x));
+  }
+
+  .sidebar-pane {
+    inset-inline-start: var(--site-gutter);
+  }
+
+  .main-frame {
+    margin-inline: var(--site-gutter);
+  }
+
+  .right-sidebar {
+    inset-inline-end: var(--site-gutter);
   }
 }
