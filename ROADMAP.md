@@ -101,6 +101,62 @@ landed; the Phase 0 acceptance checks are open and Phases 2 and 3 have not start
 
 ---
 
+## A public repository should not carry personal data
+
+The legal notice and the privacy statement hold a name, a postal address and an
+e-mail. The repository is public and meant to be forked, so those values travel
+with every copy.
+
+The case to prevent is not someone taking them deliberately. It is the fork
+that builds and goes live without anyone looking — and then a stranger's site
+carries this author's imprint, and the people who read it write to **him** about
+a site he has nothing to do with. Nobody had to act in bad faith for that to
+happen.
+
+Beyond the nuisance, a template that anyone can fork and build ought to be free
+of its author's identity by construction. Keeping personal data out of a
+public, copyable artefact is both the cleaner engineering answer and the correct
+one under data-protection law.
+
+**Direction, not yet a decision.** Encrypt the pages that carry personal data,
+commit the ciphertext, and ship a placeholder in their place. What is secret is
+the key, not the file: the repository holds a blob anyone can copy and nobody
+can read, and a fork inherits a template that visibly asks for its own details.
+It still builds on the first try, because the placeholder is a valid page.
+
+`age` looks like the right size: one binary, no keyring, no web of trust, no
+expiry, and a key pair that is two lines of text. SOPS earns its place when
+single fields inside a YAML stay readable, which is not the case here — whole
+files are encrypted, so it would be one layer over the same age. A repository
+secret alone will not do either: a secret holds a value, so the imprint would
+become an unversioned blob in a form field instead of a file with a history and
+a diff.
+
+Two key holders, both able to decrypt:
+
+| Where | Holds |
+|---|---|
+| GitHub Actions secret | the key the deploy uses, decrypting into the runner's own workspace |
+| a password manager | the same key for local editing, alongside the SSH keys already kept there |
+
+An offline backup recipient belongs in the recipients file as well, so a lost
+laptop does not take the imprint with it.
+
+**Two things to settle before building it.** How far the scope reaches — the two
+legal pages are certain, but the domain, the repository URLs and the contact
+address appear elsewhere too, and a fork inherits all of them. And whether a
+fork should build a page with empty fields or no page at all.
+
+**One trap, and it belongs in the same change.** Decrypting locally overwrites
+the placeholder in the working tree. One thoughtless `git add` puts the real
+values back, and the history keeps them. Either decrypt to a temporary file and
+edit only that, or add a pre-commit hook that refuses real values in the
+placeholder.
+
+This concerns the site. The rule that no secret-management tooling belongs in
+the blueprint itself stands: no stack gains a dependency, and none of this is
+offered to an operator as a way to hold their own credentials.
+
 ## In the backlog — individual app paths
 
 App-level work that does not drive version tags.
