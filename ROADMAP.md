@@ -142,10 +142,22 @@ Two key holders, both able to decrypt:
 An offline backup recipient belongs in the recipients file as well, so a lost
 laptop does not take the imprint with it.
 
-**Two things to settle before building it.** How far the scope reaches — the two
-legal pages are certain, but the domain, the repository URLs and the contact
-address appear elsewhere too, and a fork inherits all of them. And whether a
-fork should build a page with empty fields or no page at all.
+**Scope: everything personal, not only the two legal pages.** A fork inherits
+the name and address in the legal notice, the contact address in
+`security.txt`, the domain in `astro.config.mjs`, and the repository URLs in
+the footer and the reference lists. Encrypting the imprint alone would still
+leave a stranger's site pointing at this one.
+
+**A fork builds, with the fields empty.** The placeholder is a valid page that
+visibly asks for its own details, so nobody has to fix anything before the
+first build succeeds.
+
+That works for prose. It does not work for every value: the site URL feeds the
+canonical tags and the sitemap, and an empty one produces a broken build rather
+than an obvious gap. Values the build needs get a neutral placeholder —
+`example.com` and the repository's own URL — while name, address and e-mail go
+empty. The distinction is between a field a reader should notice is blank and a
+value the build cannot do without.
 
 **One trap, and it belongs in the same change.** Decrypting locally overwrites
 the placeholder in the working tree. One thoughtless `git add` puts the real
