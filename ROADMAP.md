@@ -159,11 +159,30 @@ than an obvious gap. Values the build needs get a neutral placeholder —
 empty. The distinction is between a field a reader should notice is blank and a
 value the build cannot do without.
 
-**One trap, and it belongs in the same change.** Decrypting locally overwrites
-the placeholder in the working tree. One thoughtless `git add` puts the real
-values back, and the history keeps them. Either decrypt to a temporary file and
-edit only that, or add a pre-commit hook that refuses real values in the
-placeholder.
+**One data module rather than encrypted pages.** The values live in a single
+module the pages and the config import. `site.ts` is committed and holds the
+placeholders; `site.local.ts` is decrypted, gitignored, and wins when present.
+That is a better shape than encrypting the markdown: one file to encrypt, one
+import to resolve, and nothing in the working tree that a fork could mistake
+for its own.
+
+It also dissolves most of the trap. Decrypting over a committed placeholder
+invites a thoughtless `git add` that puts real values back into a history that
+keeps them; a gitignored file cannot be added by accident. A pre-commit hook
+guarding against a forced add is then a belt on top of braces rather than the
+only thing standing between the repository and a permanent mistake.
+
+Locally the key never reaches the filesystem, because process substitution
+hands `age` a descriptor instead of a path:
+
+```bash
+age -d -i <(op read "op://Private/age-signing-key/notesPlain") \
+    -o site/src/data/site.local.ts secrets/site.age
+```
+
+The runner needs the same care for the opposite reason: writing the key to a
+file and deleting it afterwards leaves a window, however short, so the key
+should reach `age` on a descriptor there too.
 
 This concerns the site. The rule that no secret-management tooling belongs in
 the blueprint itself stands: no stack gains a dependency, and none of this is
