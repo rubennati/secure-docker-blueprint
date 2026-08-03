@@ -39,11 +39,30 @@ recorded as the one outbound request the site causes beyond fetching the page.
 **Confirm with a lawyer** whether naming Fastly as engaged by GitHub rather than
 by this site is the right construction.
 
-### 2. `.well-known/security.txt` was missing — fixed
+### 2. `security.txt` exists and is not served — cause found
 
-`https://secdockblue.rubennati.at/.well-known/security.txt` answered 404.
-Added at `site/public/.well-known/security.txt` per RFC 9116, with both contact
-channels, an `Expires` under a year out, `Canonical` and `Policy`.
+`https://secdockblue.rubennati.at/.well-known/security.txt` answered 404, and
+the same 404 came back from GitHub Pages directly, so it was not a Cloudflare
+cache.
+
+The file was not missing. `site/src/pages/.well-known/security.txt.ts` has
+generated it since `eaa6338`, it was present at the commit main pointed to
+before this review, and the build emits it. It was never served.
+
+The pattern says why: `robots.txt` and `llms.txt` are served, and they carry no
+dot in their path. GitHub Pages excludes paths beginning with a dot unless a
+`.nojekyll` marker is present, and the repository had none. Added at
+`site/public/.nojekyll`; both it and `.well-known/security.txt` are in the build
+output.
+
+**This has not been confirmed live** — it takes the next deployment to main.
+If the 404 persists, the cause is elsewhere and this note is wrong.
+
+A duplicate was created and removed during this review: a static
+`site/public/.well-known/security.txt` written before the existing route was
+found. It also contradicted it, listing an e-mail address that `SECURITY.md`
+deliberately keeps off the public record. The route derives its `Expires` from a
+review date so the two cannot drift, which the static file did not.
 
 ### 3. No security headers — cannot be fixed in this repository
 

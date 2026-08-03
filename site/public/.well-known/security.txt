@@ -1,9 +1,0 @@
-# Security contact for secdockblue.rubennati.at and the repository behind it.
-# Format: RFC 9116.
-
-Contact: mailto:secdockblue@m.rubennati.at
-Contact: https://github.com/rubennati/secure-docker-blueprint/security/advisories/new
-Expires: 2027-07-30T00:00:00.000Z
-Preferred-Languages: de, en
-Canonical: https://secdockblue.rubennati.at/.well-known/security.txt
-Policy: https://github.com/rubennati/secure-docker-blueprint/blob/main/SECURITY.md
