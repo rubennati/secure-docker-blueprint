@@ -265,6 +265,11 @@ networks:
   internal:
     name: ${COMPOSE_PROJECT_NAME}-internal
     driver: bridge
+    # No route out. `web` also joins `proxy` and keeps its outbound path; `db`,
+    # `cache`, `worker`, `cron` and `seeder` sit here alone and lose theirs.
+    # Background jobs deliver mail from `worker` — unverified on a host, see
+    # the network section in README.md.
+    internal: true
   proxy:
     external: true
     name: ${TRAEFIK_NETWORK}

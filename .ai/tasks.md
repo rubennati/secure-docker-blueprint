@@ -23,6 +23,10 @@ what v0.7.0's session left open is in
       publish burst, and one message proven to arrive on a real device. Its Known
       Issues list is the check list.
 - [ ] Boot `apps/_reference/` once to confirm the template actually runs
+- [ ] `business/openproject` after `internal: true` — whether mail leaves `worker`
+      and whether first-run seeding completes without an outbound path. If either
+      fails, `worker` and `cron` get a second network, not a removed flag.
+      `business/vikunja` carries the same change with only `db` behind it
 
 ## Open decisions for the maintainer
 

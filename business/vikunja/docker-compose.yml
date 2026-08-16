@@ -245,6 +245,9 @@ networks:
   internal:
     name: ${COMPOSE_PROJECT_NAME}-internal
     driver: bridge
+    # No route out. `db` sits here alone; `vikunja` also joins `proxy` and keeps
+    # the outbound path its mailer needs.
+    internal: true
   proxy:
     external: true
     name: ${TRAEFIK_NETWORK}
