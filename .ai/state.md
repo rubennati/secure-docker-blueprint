@@ -116,3 +116,7 @@ a structural change, so it belongs after the host session, not before.
 - Public repository: no real domains, IPs, hostnames or personal data; no session
   context or personal attribution in committed content. `.ai/` is committed and
   therefore public — it holds working context, never internal process detail.
+  This is the rule, not a description of the tree. `site/` is the named exception
+  and still carries the domain, the legal notice and a contact address; the
+  direction that removes them is in [`../ROADMAP.md`](../ROADMAP.md), and the
+  inventory there is not yet complete.
