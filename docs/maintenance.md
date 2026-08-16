@@ -29,9 +29,9 @@ Four models describe documentation in this repository, each answering one questi
 | App location (category) | Directory structure | README tables |
 | Shipped work | `CHANGELOG.md` | — |
 | Direction / planned work | `ROADMAP.md` | Category READMEs reference, do not duplicate |
-| Compose standards | `docs/standards/compose-structure.md` | Every `docker-compose.yml` |
+| Compose standards, and every rule that carries a value — resource limits and their derivation | `docs/standards/compose-structure.md` | Every `docker-compose.yml`; `security-baseline.md` references it |
 | Env standards | `docs/standards/env-structure.md` | Every `.env.example` |
-| Security rules | `docs/standards/security-baseline.md` | Every service in every compose |
+| Security rules that are on or off — privileges, capabilities, secrets, socket access, network isolation | `docs/standards/security-baseline.md` | Every service in every compose |
 | Naming conventions | `docs/standards/naming-conventions.md` | Every compose, env, container name |
 | A symptom and its fix — a failure seen in this blueprint | `TROUBLESHOOTING.md` | Stack READMEs and `UPSTREAM.md` reference a numbered entry |
 | The layer-by-layer debugging method and command reference | `docs/standards/troubleshooting.md` | — |

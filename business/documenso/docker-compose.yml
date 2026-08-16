@@ -31,6 +31,7 @@ services:
       resources:
         limits:
           memory: 512m
+          # cpus: derived starting value, not measured — v0.9.0
           cpus: "0.50"
           pids: 100
         reservations:
@@ -84,6 +85,7 @@ services:
       resources:
         limits:
           memory: 1g
+          # cpus: derived starting value, not measured — v0.9.0
           cpus: "1.00"
           pids: 200
         reservations:

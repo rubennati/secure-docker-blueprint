@@ -2,7 +2,7 @@
 
 > If this file conflicts with git (branch, commits, tags), trust git.
 
-**Last updated:** 2026-07-31
+**Last updated:** 2026-08-16
 
 - **Phase:** pre-1.0. Latest tag `v0.7.0` (2026-07-31). Work happens on `dev`.
 - **Current milestone:** v0.8.0 — Monitoring.
@@ -99,15 +99,6 @@ WAF. `core/onlyoffice`, `core/euro-office` and `core/collabora` are document
 servers — nothing breaks without them, so they fail that test.
 → *Recommendation:* apply the existing test rather than write a new rule. This is
 a structural change, so it belongs after the host session, not before.
-
-**7. CPU limits — two standards disagree**
-`docs/standards/security-baseline.md` prescribes a `cpus` value per service
-profile. `docs/standards/compose-structure.md` states that CPU limits are not
-applied by default, because they make a stack slow under load rather than safe,
-and that one is set only where a component demonstrably pins a core. The compose
-files follow the second. Most services therefore carry no `cpus` value — a
-measurement, not the decision. One of the two standards has to yield; the
-structure checker enforces neither.
 
 ## Active constraints
 

@@ -1,12 +1,14 @@
 # Measuring resource limits
 
 How to turn a running host into the numbers v0.9.0 needs. This is the procedure;
-the values themselves are owned by the profile table in
-[`standards/security-baseline.md`](standards/security-baseline.md).
+the values themselves and the rule that derives them are owned by
+[`standards/compose-structure.md`](standards/compose-structure.md#block-rules).
 
-Roughly 121 services currently carry no `deploy.resources.limits` — the current
-count comes from `python3 scripts/ci/check-structure.py`, and v0.9.0 is the pass
-that closes it.
+Every service carries a `memory` and a `pids` ceiling, so nothing is unbounded —
+`python3 scripts/ci/check-structure.py` reports any service that loses one. What
+v0.9.0 closes is their basis: the ceilings in place come from the derivation rule,
+and the `cpus` values that remain are marked in the compose files as derived rather
+than measured.
 
 ## Why this is not a desk task
 
