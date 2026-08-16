@@ -219,7 +219,7 @@ labels:
   - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
   - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
   - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
-  - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+  - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=9000"
 
   # --- Second router: /admin only, with Forward-Auth ---
   - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/admin`)"

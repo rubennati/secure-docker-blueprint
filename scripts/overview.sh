@@ -45,8 +45,14 @@ scan_component() {
   local domain="" port="" project=""
 
   domain="$(grep -E '^APP_TRAEFIK_HOST=' "$env_file" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '"' || true)"
-  port="$(grep -E '^APP_INTERNAL_PORT=' "$env_file" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '"' || true)"
   project="$(grep -E '^COMPOSE_PROJECT_NAME=' "$env_file" 2>/dev/null | head -1 | cut -d= -f2- | tr -d '"' || true)"
+
+  # The container-internal port is a property of the image, so it is a literal in
+  # the Traefik label rather than a variable in the env file. Anchor on the
+  # unsuffixed service name: overlays add further routers on their own ports
+  # (ghost's activitypub, seafile's seadoc), and those are not the app's port.
+  port="$(grep -hoE 'services\.\$\{COMPOSE_PROJECT_NAME\}\.loadbalancer\.server\.port=[0-9]+' \
+          "${dir}"/*.yml 2>/dev/null | head -1 | cut -d= -f2 || true)"
 
   # Traefik special case
   if [ -z "$domain" ]; then

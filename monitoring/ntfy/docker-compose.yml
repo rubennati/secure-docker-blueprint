@@ -69,14 +69,15 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
       # Middlewares
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
-      # Service
-      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+      # Service — container-internal port, and it must match listen-http in
+      # config/server.yml. Traefik reports a 502 when the two disagree.
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
 
     # --- Health & Observability ---
     # ntfy serves /v1/health and the image ships wget. Checking the payload
     # rather than the status code — a reachable server can still report unhealthy.
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --tries=1 -O - http://127.0.0.1:${APP_INTERNAL_PORT}/v1/health | grep -q '\"healthy\":true' || exit 1"]
+      test: ["CMD-SHELL", "wget -q --tries=1 -O - http://127.0.0.1:80/v1/health | grep -q '\"healthy\":true' || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3

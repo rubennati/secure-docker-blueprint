@@ -182,14 +182,14 @@ services:
       # Middlewares — order matters: WHO may reach it, then WHAT headers apply.
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
       # Service — the container-internal port, not a host port.
-      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8080"
 
     # --- Health & Observability ---
     # Use whatever the image actually ships (wget here, curl or node elsewhere).
     # start_period must cover a cold start incl. migrations, or Docker will
     # restart-loop a healthy-but-slow app.
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO/dev/null http://127.0.0.1:${APP_INTERNAL_PORT}/ || exit 1"]
+      test: ["CMD-SHELL", "wget -qO/dev/null http://127.0.0.1:8080/ || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
