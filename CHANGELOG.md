@@ -28,6 +28,7 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ### Security
 
+- **`business/zammad` pinned past 18 advisories** (`.env.example`, `UPSTREAM.md`, `README.md`): `APP_TAG` moves from `7.1.1-0036` to `7.1.2-0013`. The advisories were published 2026-08-04 and all name `7.1.2` as the patched version — one critical (account takeover through unverified e-mail matching during SSO auto-link, `GHSA-86cc-3ggh-mf2m`) and four high, including remote code execution through the AI Agent template sanitizer (`GHSA-gp3x-9xm8-rcj6`). The pin is the highest build of the release rather than the first: `7.1.2-0001` and `7.1.2-0013` are both `7.1.2` and are different images. The README's service table carried `7.0.1` — a version this stack has not shipped since the 2026-07-26 sweep — and now references `${APP_TAG}` so it cannot drift again.
 - **`business/openproject` and `business/vikunja` had no outbound isolation**: both named a network `internal` without setting `internal: true`, so it was a plain bridge. Ingress was closed — no published port, not on the proxy network — and both READMEs read that as isolation. `db`, `cache`, `worker`, `cron` and `seeder` now have no route out; the web-facing container keeps its outbound path through the proxy network. Whether OpenProject still delivers mail from `worker` is unverified on a host.
 - **Branch protection on `main`** requires seven status checks and no approving review. The 0.7.0 entry below records five checks and one approving review; that is not the live configuration.
 

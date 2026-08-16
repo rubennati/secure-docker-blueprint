@@ -262,7 +262,9 @@ it-tools (2024.10.22, dormant) · beszel + agent (0.18.7)
 
 **Genuinely open — awkward tag scheme, decide before pinning:**
 
-- zammad — Docker Hub uses `X.Y.Z-BUILD` (e.g. `7.1.1-0036`) or floating `7`/`7.1`; pinned `7.0.1`. Pick a scheme.
+- zammad — scheme decided: pin `X.Y.Z-NNNN` at the **highest** build of the target release. A release
+  keeps receiving builds after it ships, so the first build of a version is not the version. Now at
+  `7.1.2-0013`.
 - uptime-kuma — `2.4.0` exists but 1.x→2.x is a major transition; verify before leaving `1.23.17`.
 
 The sweep is otherwise complete: every registry-checkable service is verified or bumped.

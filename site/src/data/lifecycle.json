@@ -297,10 +297,10 @@
   },
   "business/zammad": {
     "backup_docs": "documented",
-    "pinned": "APP_TAG=7.1.1-0036",
+    "pinned": "APP_TAG=7.1.2-0013",
     "restore_docs": "missing",
     "state": "scaffolded",
-    "verified": "2026-05-11",
+    "verified": "2026-08-16",
     "verified_anchored": false
   },
   "core/acme-certs": {
