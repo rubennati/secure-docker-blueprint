@@ -95,6 +95,7 @@ Modular middleware components. Used by the sec-* chains, or individually for cus
 | Block | Limits |
 |-------|--------|
 | `rl-soft` | 100 requests/s average, 50 burst |
+| `rl-spa` | 100 requests/s average, 200 burst — same sustained rate as `rl-soft`, wider bucket for an application start |
 | `rl-hard` | 20 requests/s average, 40 burst |
 
 ### Extras
@@ -126,6 +127,9 @@ Presets that combine building blocks. Each level builds on the previous — high
 | `sec-2e` | hdr-basic-embed, rl-soft, compress | Standard + iframe-friendly |
 | `sec-3` | hdr-strict, rl-soft, compress, permissions-policy | Public-facing, hardened |
 | `sec-3e` | hdr-strict-embed, rl-soft, compress, permissions-policy | Public-facing + iframe-friendly |
+| `sec-2-spa` | hdr-basic, rl-spa, compress | Standard, first load exceeds a burst of 50 |
+| `sec-3-spa` | hdr-strict, rl-spa, compress, permissions-policy | Hardened, first load exceeds a burst of 50 |
+| `sec-3e-spa` | hdr-strict-embed, rl-spa, compress, permissions-policy | Hardened, needs SAMEORIGIN and the wider burst |
 | `sec-4` | hdr-strict, rl-hard, compress, permissions-policy | Sensitive apps, login pages, admin panels |
 | `sec-5` | hdr-strict, rl-hard, compress, permissions-policy, csp-enforce | Maximum — only for CSP-tested apps |
 
@@ -237,7 +241,7 @@ the next person cannot safely change.
 | Portainer | `sec-4` + `acc-tailscale` | Admin tool, VPN-only |
 | Vaultwarden | `sec-3e` + `acc-tailscale` | Password manager: strict + SAMEORIGIN (iframe-friendly for browser extension) |
 | OnlyOffice | `sec-2e` | Must be embeddable in iframes |
-| Nextcloud | `sec-3` + `acc-public` | Public-facing, hardened |
+| Nextcloud | `sec-3e-spa` + `acc-private` | Needs SAMEORIGIN for its own framing and the wider first-load burst; reachable from LAN and VPN |
 | Paperless | `sec-3` + `acc-tailscale` | Hardened, VPN-only |
 | Seafile Pro | `sec-3` | Public-facing |
 | Authentik | `sec-3` | Auth provider, should be hardened |
