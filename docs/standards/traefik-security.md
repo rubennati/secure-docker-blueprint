@@ -129,6 +129,58 @@ Presets that combine building blocks. Each level builds on the previous — high
 | `sec-4` | hdr-strict, rl-hard, compress, permissions-policy | Sensitive apps, login pages, admin panels |
 | `sec-5` | hdr-strict, rl-hard, compress, permissions-policy, csp-enforce | Maximum — only for CSP-tested apps |
 
+### Choosing the level for an app
+
+The level is not a judgement about how important the app is. It follows from four
+properties of the application, answered in this order. Answer them against the
+running app, not from the category it belongs to.
+
+**1. Does the app set `X-Frame-Options` or `frame-ancestors` itself?**
+
+```bash
+curl -sI https://app.example.com/ | grep -iE 'x-frame-options|content-security-policy'
+```
+
+If it does, the chain must not add a second one. Two `X-Frame-Options` values on
+one response is not stricter — it is undefined, and the endpoints the app meant to
+be embeddable stop loading. Apply the level in the compose file and follow it with
+a per-app middleware that clears the header, as `business/matomo` and
+`apps/vaultwarden` do.
+
+**2. Is the app embedded in another site, or does it embed itself?**
+
+Being framed is the app's own attack surface: a page any site may frame is a page
+any site can overlay, and the user acts on what they think they see. Keep the
+denying default unless embedding is a feature the operator uses, and when it is,
+name the parent origins with `frame-ancestors` rather than removing the header.
+`sec-*e` only permits same-origin framing and does not cover a different site.
+
+**3. How many requests does one first load issue?**
+
+`rl-soft` allows a burst of 50 per client address. Measure rather than assume — a
+single-page app, a gallery grid and a dashboard all look alike from outside:
+
+```bash
+# Load the app in a private window with the network tab open, then read the
+# request count for the first paint. Or, from the host, count what arrives:
+docker compose -f core/traefik/docker-compose.yml logs --since 1m app \
+  | grep -c "$(date +%Y-%m-%d)"
+```
+
+Above 50 in the initial burst, use the `-spa` variant. It keeps `average: 100`
+unchanged and only widens the bucket to 200, so the sustained limit — the one that
+bounds abuse — is identical. A 429 on first load presents as a blank page or a
+half-rendered interface, which nobody attributes to the proxy.
+
+**4. Is the surface a login, an admin panel, or an API holding credentials?**
+
+`sec-4` swaps `rl-soft` for `rl-hard` (average 20, burst 40). Appropriate where
+requests are few and each one is worth slowing an attacker down. It is the wrong
+choice for anything a browser loads assets from.
+
+Record the answer where the value lives. A level with no stated reason is a level
+the next person cannot safely change.
+
 ### Changes vs. Previous System
 
 | What | Before | After |
