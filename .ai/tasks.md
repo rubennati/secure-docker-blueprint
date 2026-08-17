@@ -29,7 +29,8 @@ what v0.7.0's session left open is in
       is the shape that exceeds it. `apps/immich` already needed `sec-2-spa` for the
       same reason. The method is in `docs/standards/traefik-security.md` under
       Choosing the level for an app; above 50 the answer is the `-spa` variant, which
-      leaves the sustained rate untouched
+      leaves the sustained rate untouched. `apps/it-tools` is the same question — a
+      Vue single-page app at `sec-3`, never counted
 - [ ] Decide `APP_TRAEFIK_SECURITY` for Seafile's four path-scoped routers.
       They carry the access policy; the chain is deliberately absent until an
       instance shows what it survives. `/sdoc-server` is the open one — `sec-2`

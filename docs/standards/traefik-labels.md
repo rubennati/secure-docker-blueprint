@@ -95,7 +95,7 @@ Which profile suits which app is [`core/crowdsec/docs/profiles.md`](../../core/c
 
 ## Security Levels
 
-Each level builds on the previous. `e` variants = iframe-friendly (SAMEORIGIN).
+Each level builds on the previous. `e` variants send `SAMEORIGIN` instead of `DENY` — an app may frame its own pages, and nothing else. A different subdomain is a different origin, so `e` does not let one stack embed another; that needs a `frame-ancestors` middleware on the target. See [traefik-security.md](traefik-security.md#choosing-the-level-for-an-app).
 
 | Level | What it includes | Recommended for |
 |-------|-----------------|-----------------|

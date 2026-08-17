@@ -115,7 +115,7 @@ Modular middleware components. Used by the sec-* chains, or individually for cus
 
 ## Policy Chains (`security-chains.yml`)
 
-Presets that combine building blocks. Each level builds on the previous — higher = stricter. `e` suffix = iframe-friendly.
+Presets that combine building blocks. Each level builds on the previous — higher = stricter. `e` suffix = `SAMEORIGIN` instead of `DENY`, which permits an app to frame **its own** pages and nothing else — a different subdomain is a different origin. See [Choosing the level for an app](#choosing-the-level-for-an-app).
 
 | Level | Building Blocks | Recommended for |
 |-------|----------------|-----------------|
@@ -153,7 +153,28 @@ Being framed is the app's own attack surface: a page any site may frame is a pag
 any site can overlay, and the user acts on what they think they see. Keep the
 denying default unless embedding is a feature the operator uses, and when it is,
 name the parent origins with `frame-ancestors` rather than removing the header.
-`sec-*e` only permits same-origin framing and does not cover a different site.
+
+**`sec-*e` is narrower than "iframe-friendly" suggests.** It sends
+`X-Frame-Options: SAMEORIGIN`, and same origin means the same scheme, host and
+port. `dash.example.com` embedding `paperless.example.com` is a different origin,
+so the frame is refused exactly as it would be under `DENY`. The `e` variants
+cover an app framing *its own* pages — `business/listmonk`'s campaign preview is
+that case. They do nothing for one stack embedding another.
+
+That matters here, because this blueprint ships four dashboards — `apps/dashy`,
+`apps/heimdall`, `apps/homarr`, `apps/homepage` — and the iframe widgets in them
+point at the other stacks. Every stack denies framing, so those widgets stay
+blank, and moving the target to an `e` variant does not change it. The working
+answer is a per-app middleware on the **target**, naming the dashboard's origin:
+
+```yaml
+- "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-frame-dash.headers.customResponseHeaders.X-Frame-Options="
+- "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-frame-dash.headers.contentSecurityPolicy=frame-ancestors 'self' https://dash.example.com;"
+```
+
+Applied to the one stack that needs to appear in the dashboard, not to all of
+them. A dashboard tile that opens the app in a new tab costs nothing and needs
+none of this.
 
 **3. How many requests does one first load issue?**
 
