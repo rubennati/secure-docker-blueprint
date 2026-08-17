@@ -140,10 +140,41 @@ Note: Custom middlewares defined in Docker labels use `@docker` suffix. File-pro
 ### Multiple routers (e.g. Seafile + Thumbnail)
 
 ```yaml
-# Main router
+# Main router — catch-all
 - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
-# Additional router with PathPrefix
+- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.priority=1"
+- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+# Path-scoped router — repeats the access policy
 - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/thumbnail`)"
+- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.priority=100"
+- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.middlewares=${APP_TRAEFIK_ACCESS}@file"
+```
+
+A middleware attaches to a router, not to a host. A second router is a second
+entry point with its own policy, and a path-scoped router runs at a higher
+priority than the catch-all it sits in front of, so it decides the request.
+**`APP_TRAEFIK_ACCESS` goes on every router.** An operator who sets
+`acc-tailscale` means the host, not one path of it.
+
+**`APP_TRAEFIK_SECURITY` is decided per router**, because the chain interacts
+with what the endpoint does:
+
+| Endpoint | What the chain does to it |
+|---|---|
+| WebSocket — `/socket.io`, notification streams | `rl-*` meters reconnects on a long-lived connection |
+| Embedded editor or viewer | `hdr-basic` sets `frameDeny`; the frame does not load. Use an `e` variant |
+| Asset or thumbnail service | one page view issues many parallel requests against `rl-soft`, which is average 100, burst 50 |
+
+Where the level has not been established against a running instance, set the
+access policy alone and record beside the label what is still open. The access
+policy is an address check and cannot break a protocol; a header or a rate limit
+can.
+
+Where a router needs a middleware of its own, the access policy comes first and
+the path rewrite last, because access is decided before the path changes:
+
+```yaml
+- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.middlewares=${APP_TRAEFIK_ACCESS}@file,seadoc-strip@docker"
 ```
 
 ### No Traefik

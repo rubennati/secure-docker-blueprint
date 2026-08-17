@@ -23,6 +23,13 @@ what v0.7.0's session left open is in
       publish burst, and one message proven to arrive on a real device. Its Known
       Issues list is the check list.
 - [ ] Boot `apps/_reference/` once to confirm the template actually runs
+- [ ] Decide `APP_TRAEFIK_SECURITY` for Seafile's four path-scoped routers.
+      They carry the access policy; the chain is deliberately absent until an
+      instance shows what it survives. `/sdoc-server` is the open one — `sec-2`
+      sets `frameDeny` and upstream documents neither the header nor whether
+      SeaDoc is framed, so it is `sec-2` or `sec-2e` and only a running editor
+      answers it. `/socket.io` and `/notification` are WebSockets and
+      `/thumbnail` issues many parallel requests, all against `rl-soft`
 - [ ] `business/openproject` after `internal: true` — whether mail leaves `worker`
       and whether first-run seeding completes without an outbound path. If either
       fails, `worker` and `cron` get a second network, not a removed flag.
