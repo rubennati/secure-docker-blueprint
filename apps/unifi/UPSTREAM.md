@@ -14,7 +14,7 @@
 ## What we use
 
 - LSIO `lscr.io/linuxserver/unifi-network-application`
-- Official `mongo:4.4` (highest Mongo version UniFi supports)
+- Official `mongo:8.0` — supported from UniFi 9.0 onward per the image documentation
 - Docker Secrets for Mongo root + application user passwords
 - Bind-mount `./volumes/mongodb` and `./volumes/config`
 - Custom init script (`./init-mongo.sh`) to create the app user from secrets
@@ -92,5 +92,9 @@ docker compose exec app cat /config/data/system.properties
 
 ## Constraints
 
-- **MongoDB 4.4 only** — UniFi does not yet support MongoDB 5+ or 6+. Do NOT bump `DB_TAG` past 4.4 until Ubiquiti adds support.
+- **MongoDB 8.0.** The image's own documentation states: MongoDB 3.6 through 7.0 are supported from UniFi Network Application 8.1, and 8.0 additionally from 9.0. This stack pins `APP_TAG=10.4.57`, so 8.0 is in range. The previous note here said UniFi supports nothing past 4.4 — that was not correct, and 4.4 reached end of life in February 2024, so the stack was shipping a database with no security fixes.
+
+  Two things came with the version: the legacy `mongo` shell was removed in MongoDB 6.0, so `init-mongo.sh` and the healthcheck use `mongosh`. And on x86_64 the image needs a CPU with AVX support for anything above 4.4 — `grep -o avx /proc/cpuinfo | head -1` on the host before deploying.
+
+  **Upgrading an existing install** is not a tag change. MongoDB moves one major at a time and each step has to complete and be verified before the next: 4.4 → 5.0 → 6.0 → 7.0 → 8.0. Take a `mongodump` first, and set `featureCompatibilityVersion` to the new major after each step, or the following upgrade refuses to start. A fresh install has none of this — it begins at 8.0 with an empty volume.
 - **Device inform URL** — devices adopted on a previous IP/host keep their old `set-inform` URL. After migrating the controller, either SSH into each device and update it manually or use DHCP option 43 to point new devices at the controller.

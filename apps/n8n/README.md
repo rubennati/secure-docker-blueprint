@@ -54,7 +54,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/healthz  # 200 OK
 
 - **Basic auth in front of the UI** — the Community Edition has no built-in multi-user auth unless you enable it. Basic auth gates access to everything.
 - **`N8N_ENCRYPTION_KEY`** encrypts every credential stored in n8n (OAuth tokens, API keys, SMTP passwords). Stored in `.secrets/n8n_encryption_key.txt`. **Back this file up off-host** — losing it means re-entering every credential.
-- **Default access `acc-tailscale` + `sec-3`** — n8n stores API tokens for many third parties; VPN-only is a safer default than public. Switch to `acc-public + sec-2` only if you really need external webhook endpoints and are willing to accept the exposure.
+- **Default access `acc-tailscale` + `sec-3-spa`** — n8n stores API tokens for many third parties; VPN-only is a safer default than public. Switch to `acc-public + sec-2` only if you really need external webhook endpoints and are willing to accept the exposure.
 - **`N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: true`** — n8n refuses to start if its config file is world-readable.
 - **`N8N_RUNNERS_ENABLED: true`** — uses task runners for isolated code execution (n8n >= 1.53).
 - **`no-new-privileges:true`** on the container.

@@ -32,7 +32,7 @@ These controls block merges if violated. Evidence is the CI output from `.github
 |-------|-------|
 | **Implemented?** | Yes |
 | **Enforcement** | CI FAIL — `scripts/ci/check-baseline.py` |
-| **Coverage** | 50 / 50 compose files |
+| **Coverage** | 143 / 145 services. Two documented exceptions: `apps/nextcloud` `app` and `cron` |
 | **Location** | Every `docker-compose.yml` under `core/`, `apps/`, `business/`, `monitoring/` |
 | **Verification** | `python3 scripts/ci/check-baseline.py` — exits 1 if any service is missing the flag |
 | **Exceptions** | 2 services documented with `reason` / `alternatives` / `risk acceptance` fields: `apps/nextcloud` app + cron (s6-overlay requires root at startup) |
@@ -44,7 +44,7 @@ These controls block merges if violated. Evidence is the CI output from `.github
 |-------|-------|
 | **Implemented?** | Yes |
 | **Enforcement** | CI FAIL — `scripts/ci/check-baseline.py` |
-| **Coverage** | 0 violations across 50 compose files |
+| **Coverage** | 0 violations across 71 compose files |
 | **Verification** | `grep -r "privileged: true" --include="docker-compose.yml"` returns nothing |
 | **Gaps** | No exception path exists — `privileged: true` is always a hard failure with no allowlist |
 
@@ -84,7 +84,7 @@ These controls block merges if violated. Evidence is the CI output from `.github
 | Field | Value |
 |-------|-------|
 | **Implemented?** | Yes |
-| **Enforcement** | CI FAIL — `docker compose config --quiet` on all 50 compose files |
+| **Enforcement** | CI FAIL — `docker compose config --quiet` on all 71 compose files |
 | **Scope** | All compose files in `core/`, `apps/`, `business/`, `monitoring/` |
 | **Method** | Each compose file is tested with its `.env.example` substituted as `.env` |
 | **Gaps** | Validates YAML syntax and compose schema, but does not catch semantic errors (e.g. a volume referencing a path that will not exist at runtime) |
@@ -187,7 +187,7 @@ These controls are enforced by Traefik configuration rendered from templates in 
 | Field | Value |
 |-------|-------|
 | **Implemented?** | Yes |
-| **Coverage** | 27 / 50 compose files use `internal: true` networks |
+| **Coverage** | 35 / 71 compose files declare a network with `internal: true` |
 | **Pattern** | Database and internal services on `app-internal` (internal: true). Web services on `proxy-public` + `app-internal`. No database ports exposed on host. |
 | **Gaps** | Not CI-enforced. Nothing prevents a developer from adding a database to `proxy-public`. Several apps intentionally do NOT mark `app-internal` as internal (e.g. Nextcloud — documented in README). |
 
@@ -208,12 +208,12 @@ These are in `docs/standards/security-baseline.md` and applied inconsistently ac
 
 | Control | Coverage | Standard Location | CI-Enforced? |
 |---------|----------|------------------|-------------|
-| `read_only: true` | ~14 / 50 compose files | `docs/standards/security-baseline.md` | No |
-| `cap_drop: ALL` | ~10 / 50 compose files | `docs/standards/security-baseline.md` | No |
-| Non-root `user:` | 1 / 50 compose files | `docs/standards/security-baseline.md` | No |
-| Resource limits (`deploy.resources`) | 3 / 50 compose files | `docs/standards/security-baseline.md` | No |
+| `read_only: true` | 18 / 145 services | `docs/standards/security-baseline.md` | No |
+| `cap_drop: ALL` | 32 / 145 services | `docs/standards/security-baseline.md` | No |
+| Non-root `user:` | 1 / 145 services | `docs/standards/security-baseline.md` | No |
+| Resource limits (`deploy.resources`) | 145 / 145 services — `memory` and `pids` on every one | `docs/standards/security-baseline.md` | No |
 | Config mounts with `:ro` | Inconsistent | `docs/standards/security-baseline.md` | No |
-| Docker Secrets (no raw passwords in `environment:`) | 30 / 50 compose files | `docs/standards/security-baseline.md` | No |
+| Docker Secrets (no raw passwords in `environment:`) | 67 / 145 services use a `secrets:` block | `docs/standards/security-baseline.md` | No |
 
 The soft controls are well-documented but application is inconsistent. `read_only` and `cap_drop` appear to be applied only when the developer remembered to do so, not systematically.
 
@@ -228,26 +228,26 @@ Based on **CIS Docker Benchmark v1.6.0**.
 
 | CIS Control | Status | Evidence | Notes |
 |-------------|--------|----------|-------|
-| **4.1** Create user for container | ⚠ Partial | `user:` in 1/50 files; `no-new-privileges` in 50/50 | Most containers run as image-defined users. No systematic non-root enforcement. |
+| **4.1** Create user for container | ⚠ Partial | `user:` on 1/145 services; `no-new-privileges` on 143/145 | Most containers run as image-defined users. No systematic non-root enforcement. |
 | **4.2** Use trusted base images | ⚠ Partial | Well-known registries (ghcr.io, docker.io). No image signing or digest pinning. | Tags pinned but not digests. No provenance verification. |
 | **4.3** Do not install unnecessary packages | ℹ N/A | Not applicable to compose blueprint — image content is upstream responsibility | |
-| **4.4** Scan images for vulnerabilities | ⚠ Partial | `trivy.yml` scans ~11 high-risk images for CRITICAL/HIGH CVEs; IaC config scan covers all compose files | Not exhaustive — ~40 compose files not image-scanned; see Missing Verification |
+| **4.4** Scan images for vulnerabilities | ⚠ Partial | `trivy.yml` scans 28 images from 11 hand-listed compose files; IaC config scan covers all compose files | Not exhaustive — the tree holds 97 image references across 71 files, so 69 are never image-scanned; see Missing Verification |
 | **4.5** Enable Content Trust | ❌ Not implemented | No `DOCKER_CONTENT_TRUST=1`, no cosign verification | |
 | **4.6** Add HEALTHCHECK | ✅ Partial | Most compose files include healthchecks. Some scratch images correctly use `disable: true` | |
 | **4.7** Do not use update in Dockerfile | ℹ N/A | No Dockerfiles in this repository | |
 | **4.9** Use COPY not ADD | ℹ N/A | No Dockerfiles | |
 | **5.1** AppArmor profile | ❌ Not implemented | No `--security-opt apparmor:` in any compose file | |
 | **5.2** SELinux options | ❌ Not implemented | No `--security-opt label:` in any compose file | |
-| **5.3** Capabilities (cap_drop) | ⚠ Partial | Applied in ~10/50 compose files | `cap_drop: ALL` documented as recommended, not enforced |
+| **5.3** Capabilities (cap_drop) | ⚠ Partial | Applied on 32/145 services | `cap_drop: ALL` documented as recommended, not enforced |
 | **5.4** Privileged containers | ✅ Enforced | CI FAIL — `scripts/ci/check-baseline.py` | Zero violations |
 | **5.5** Sensitive host paths | ✅ Enforced | Docker socket via proxy only — CI FAIL for direct mounts | Documented exceptions |
 | **5.6** SSH in containers | ✅ Not present | No SSH daemon in any service | |
 | **5.7** Privileged ports | ✅ Not needed | Traefik handles port binding; app containers use internal ports | |
 | **5.8** Open ports | ✅ Minimal | Only Traefik 80/443 exposed. No DB port exposure on host. | |
 | **5.9** Shared host network | ⚠ Documented | `network_mode: host` in 2 services (dnsmasq, Beszel agent) — documented exceptions | |
-| **5.10** Memory limits | ❌ Partial | Resource limits in 3/50 compose files | Documented as recommended, rarely applied |
+| **5.10** Memory limits | ✅ | `memory` and `pids` on 145/145 services | Values are derived rather than measured — v0.9.0 |
 | **5.11** CPU limits | ❌ Partial | Same as memory limits | |
-| **5.12** Read-only root FS | ⚠ Partial | Applied in ~14/50 compose files | Not CI-enforced |
+| **5.12** Read-only root FS | ⚠ Partial | Applied on 18/145 services | Not CI-enforced; many images write to their root filesystem |
 | **5.14** Bind only to required interfaces | ✅ Yes | `ping` entryPoint bound to `127.0.0.1:8082` | |
 | **5.15** `docker.sock` mount | ✅ Enforced | CI FAIL — socket proxy pattern enforced | Documented exceptions with risk acceptance |
 | **5.25** Restart policy | ✅ Yes | All services use `restart: unless-stopped` | |
@@ -265,10 +265,10 @@ Based on **OWASP Docker Security Cheat Sheet**.
 | Use specific image tags | ✅ Enforced | CI FAIL for `:latest` tags | Not pinned to digest |
 | Do not store secrets in images | ✅ Yes | Docker Secrets pattern; `.gitignore` covers `.env` | Redis password exception documented |
 | Use non-root users | ⚠ Partial | `no-new-privileges` enforced; explicit `user:` in 1 file only | |
-| Use read-only filesystems | ⚠ Partial | ~14/50 files | Not systematically enforced |
-| Drop capabilities | ⚠ Partial | ~10/50 files | |
+| Use read-only filesystems | ⚠ Partial | 18/145 services | Not systematically enforced |
+| Drop capabilities | ⚠ Partial | 32/145 services | |
 | Disable inter-container communication | ✅ Yes | `internal: true` networks isolate DB tier | |
-| Set resource limits | ❌ Partial | 3/50 files | Documented baseline, not applied |
+| Set resource limits | ✅ | 145/145 services | `memory` and `pids` on every service |
 | Use security profiles (AppArmor/SELinux) | ❌ No | None configured | Significant gap |
 | Enable Docker Content Trust | ❌ No | Not configured | |
 | Scan for vulnerabilities | ⚠ Partial | `trivy.yml` scans ~11 high-risk images for CVEs; IaC config scan covers all compose files | Not exhaustive — see Missing Verification section |
@@ -292,7 +292,7 @@ Based on **OWASP Docker Security Cheat Sheet**.
 
 **Job 2: Compose syntax validation**
 
-- Runs `docker compose config --quiet` on all 50 compose files
+- Runs `docker compose config --quiet` on all 71 compose files
 - Substitutes `.env.example` as `.env` for validation
 - Catches YAML errors and undefined variable references
 
@@ -333,7 +333,7 @@ Based on **OWASP Docker Security Cheat Sheet**.
 - Scans each image with Trivy for CRITICAL CVEs (`--ignore-unfixed`)
 - Fails the job if any CRITICAL CVE is found
 - Reports HIGH CVEs in logs as informational (non-blocking)
-- Limitation: covers ~11 of 50 compose files; not all images are scanned
+- Limitation: 28 images from 11 hand-listed compose files, against 97 image references in the tree
 
 ---
 
@@ -357,10 +357,11 @@ The following controls are absent from CI. Ordered by security value.
 
 | Gap | Status | Remaining limitation |
 |-----|--------|----------------------|
-| **CVE / vulnerability scanning** | ⚠ Partial — `trivy.yml` scans ~11 high-risk compose files | ~39 compose files not covered; image scanning is not exhaustive |
+| **CVE / vulnerability scanning** | ⚠ Partial — `trivy.yml` scans the 11 compose files listed in `scripts/ci/list-images.sh`, which resolve to 28 images | The tree holds 97 unique image references across 71 compose files, so 69 images are never scanned. The list is hand-maintained, so a new stack is unscanned until someone adds it |
 | **IaC static analysis** | ⚠ Partial — `trivy.yml` config scan runs but is non-blocking | Overlaps with `check-baseline.py`; Trivy config scan exit-code is 0 |
+| **Resource limits coverage** | ✅ Addressed — 145 of 145 services carry a `memory` and a `pids` limit, and `check-structure.py`'s `no-resources` rule names which of the two is missing | Reported as a warning, not a failure. The values are derived rather than measured — v0.9.0 |
 | **`__REPLACE_ME__` sentinel check** | ✅ Addressed — `ci.yml` sentinel job | Only covers committed `.env` files; runtime `.env` files are gitignored and unchecked |
-| **OpenSSF Scorecard** | ✅ Addressed — `scorecard.yml` | Score is a posture signal, not a blocking control |
+| **OpenSSF Scorecard** — ✅ done, `scorecard.yml` | ✅ Addressed — `scorecard.yml` | Score is a posture signal, not a blocking control |
 
 ### Not implemented — still missing
 
@@ -370,13 +371,12 @@ The following controls are absent from CI. Ordered by security value.
 | **Image signing / provenance** | No verification that images come from the claimed publisher. | cosign, SLSA provenance, Sigstore |
 | **SBOM generation** | No Software Bill of Materials. Unknown what packages are in running containers. | Syft, Trivy SBOM mode |
 | **GitHub Actions pinning** | ✅ Addressed — all workflow actions pinned to commit SHA in Batch 1/2 (ci.yml, trivy.yml, scorecard.yml) | Dependabot (`github-actions` ecosystem) keeps pins current |
-| **`read_only: true` coverage** | Applied in ~28% of compose files. No CI enforcement. | Extension to `check-baseline.py` |
-| **`cap_drop` coverage** | Applied in ~20% of files. No CI enforcement. | Extension to `check-baseline.py` |
-| **Resource limits coverage** | Applied in 6% of files. A compromised container can exhaust host memory. | Extension to `check-baseline.py` |
+| **`read_only: true` coverage** | 18 of 145 services (12%), in 17 of 71 compose files. No CI enforcement. Many images write to their root filesystem and cannot take it. | Extension to `check-baseline.py` |
+| **`cap_drop` coverage** | 32 of 145 services (22%), in 25 of 71 compose files. No CI enforcement. | Extension to `check-baseline.py` |
 | **Dependency review** | No automated check for newly introduced vulnerable dependencies on PRs. | `dependency-review-action` |
 | **Docker Bench for Security** | Runtime checks against host Docker daemon config. Not coverable in CI without host access. | Docker Bench for Security |
 | **TLS profile enforcement** | No CI check that each app uses an appropriate TLS profile. | Extension to structure check |
-| **Exhaustive image scanning** | Trivy covers ~11 of 50 compose files. Remaining ~39 files are unscanned. | Extend `scripts/ci/list-images.sh` |
+| **Exhaustive image scanning** | Trivy covers 28 images from 11 hand-listed compose files. The tree holds 97 image references across 71 files. | Have `list-images.sh` read the compose files `check-structure.py` already discovers, instead of a hand-kept list |
 
 ---
 
@@ -396,7 +396,7 @@ CI enforces 4 categories of controls that block merges on violation. The excepti
 
 ### Verification: 3 / 5 *(updated)*
 
-CVE scanning is now in place for a curated set of high-risk images via `trivy.yml`. OpenSSF Scorecard provides a supply chain posture signal. The sentinel value check closes a specific gap. The score moves from 2 to 3 because basic vulnerability visibility now exists. It is not 4 because image scanning is not exhaustive (~11/50 compose files), IaC scanning is non-blocking, and runtime security is still absent.
+CVE scanning is now in place for a curated set of high-risk images via `trivy.yml`. OpenSSF Scorecard provides a supply chain posture signal. The sentinel value check closes a specific gap. The score moves from 2 to 3 because basic vulnerability visibility now exists. It is not 4 because image scanning is not exhaustive (28 of 97 images), IaC scanning is non-blocking, and runtime security is still absent.
 
 ### Supply Chain Security: 2 / 5 *(updated)*
 
@@ -412,10 +412,10 @@ These close the largest gaps with the least complexity. Implement before anythin
 
 | Item | What | Complexity | Maintenance | Security Value |
 |------|------|-----------|-------------|----------------|
-| **Trivy in CI** | Scan all images referenced in compose files for CVEs. Run on push, fail on CRITICAL. | Low — one new CI job | Low — automated | High — CVE visibility |
-| **`__REPLACE_ME__` CI check** | Add step that fails if any `.env` file (not `.env.example`) contains `__REPLACE_ME__`. Catches deployment of unsubstituted configs. | Trivial — 3-line grep | None | Medium — prevents silent misconfigurations |
+| **Trivy in CI** — ⚠ partly done: `trivy.yml` runs weekly, but over 11 hand-listed compose files rather than all of them, and non-blocking | Scan all images referenced in compose files for CVEs. Run on push, fail on CRITICAL. | Low — one new CI job | Low — automated | High — CVE visibility |
+| **`__REPLACE_ME__` CI check** — ✅ done, `ci.yml` sentinel job | Add step that fails if any `.env` file (not `.env.example`) contains `__REPLACE_ME__`. Catches deployment of unsubstituted configs. | Trivial — 3-line grep | None | Medium — prevents silent misconfigurations |
 | **`read_only: true` CI enforcement** | Extend `check-baseline.py` to WARN (not FAIL initially) for services missing `read_only: true`. Add to exception system. | Low | Low | Medium |
-| **GitHub Actions SHA pinning** | Pin `actions/checkout`, `gitleaks-action` etc. to commit SHAs instead of floating tags. | Trivial | Low (Renovate automates updates) | Medium — supply chain |
+| **GitHub Actions SHA pinning** — ✅ done, enforced by `check-workflows.py` | Pin `actions/checkout`, `gitleaks-action` etc. to commit SHAs instead of floating tags. | Trivial | Low (Renovate automates updates) | Medium — supply chain |
 | **`cap_drop` CI check** | Extend `check-baseline.py` to WARN for services missing `cap_drop: [ALL]`. | Low | Low | Medium |
 
 ### Priority 2 — Significant verification improvement
@@ -426,7 +426,7 @@ These materially improve the "evidence vs. claims" ratio.
 |------|------|-----------|-------------|----------------|
 | **Digest pinning for critical images** | Pin high-risk images (Traefik, Authentik, Vaultwarden, database images) to `@sha256:` in addition to version tag. | Medium — manual or Renovate | Medium — requires update process | High — prevents tag overwrite attacks |
 | **Checkov scan** | Run Checkov against all compose files. Accept initial noise and build a suppression list. Catches resource limits, port exposure, missing healthchecks. | Medium — tune suppressions | Low once baseline established | High — broadens static coverage |
-| **Resource limits CI enforcement** | Extend `check-baseline.py` to WARN for services missing `deploy.resources.limits`. Start with WARN, graduate to FAIL. | Low | Low | Medium — prevents resource exhaustion from compromised container |
+| **Resource limits CI enforcement** — ✅ done: `check-structure.py`'s `no-resources` rule requires `memory` and `pids` and names which is missing. Still a warning, not a failure | Extend `check-baseline.py` to WARN for services missing `deploy.resources.limits`. Start with WARN, graduate to FAIL. | Low | Low | Medium — prevents resource exhaustion from compromised container |
 | **OpenSSF Scorecard** | Add `ossf/scorecard-action` to CI. Scores the repository on branch protection, dependency review, code review, vulnerability disclosure, pinned dependencies. | Low — GitHub Action | None | Medium — public signal and internal audit |
 
 ### Priority 3 — Advanced controls

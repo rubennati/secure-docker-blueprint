@@ -48,8 +48,26 @@ docker compose logs app --follow   # watch migrations + server start
 | SMTP password | Docker Secret |
 | Postgres | `app-internal` (`internal: true`) — not reachable from host |
 | Privilege escalation | `no-new-privileges:true` + `cap_drop: ALL` |
-| HTTP security headers | Traefik `sec-3` chain (public-facing, stores PII) |
+| HTTP security headers | Traefik `sec-3` chain (public-facing, stores PII). Sets `X-Frame-Options: DENY` — see below |
 | Resource limits | `deploy.resources` (memory/cpus/pids) |
+
+### Embedding is blocked by default, deliberately
+
+Documenso's [embedding SDKs](https://docs.documenso.com/developers/embedding) put
+the signing flow in an iframe on another site, and there are official packages for
+React, Vue, Svelte, Angular, Solid and Preact plus a web component. `sec-3` sends
+`X-Frame-Options: DENY`, so none of them work against this stack as shipped.
+
+That is the intended default. Signing is the action a signature has legal weight
+for, and a page that any site may frame is a page any site can overlay — the user
+clicks what they believe is your button and signs what someone else put underneath
+it. The header is what prevents that.
+
+To use the SDKs, allow the specific parent origins rather than removing the header:
+move the router to `sec-3e` for same-origin framing, or add a per-app middleware
+that replaces `X-Frame-Options` with a `frame-ancestors` list naming the sites you
+embed into. `business/matomo` and `apps/vaultwarden` show the middleware shape.
+Neither has been run against Documenso's embed flow here.
 
 ## Backup
 

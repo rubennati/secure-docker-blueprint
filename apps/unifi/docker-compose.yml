@@ -1,7 +1,7 @@
 services:
 
   # --------------------------------------------------------
-  # DATABASE (MongoDB 4.4 — UniFi does NOT support MongoDB 5+)
+  # DATABASE (MongoDB — the image supports up to 8.0 from UniFi 9.0 onward)
   # --------------------------------------------------------
   db:
     # --- Identity ---
@@ -47,7 +47,8 @@ services:
 
     # --- Health & Observability ---
     healthcheck:
-      test: ["CMD", "mongo", "--quiet", "--eval", "db.runCommand({ping:1}).ok"]
+      # mongosh, not mongo: the legacy shell was removed in MongoDB 6.0.
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ping:1}).ok"]
       interval: 10s
       timeout: 5s
       retries: 5

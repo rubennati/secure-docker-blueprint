@@ -58,6 +58,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 - **MariaDB on `app-internal` (`internal: true`)** — not reachable from outside.
 - **`X-Forwarded-Proto=https`** header injected by Traefik middleware so Matomo generates `https://` tracking URLs (avoids Mixed Content on tracked pages).
 - **Default access `acc-public` + `sec-3`** — tracking endpoint must be reachable from every page you track, but the admin UI benefits from the stricter header policy.
+- **The proxy sends no `X-Frame-Options`; Matomo sets it itself.** `sec-3` is applied in the compose file and a per-app `strip-xfo` middleware removes the header afterwards. Matomo varies it per endpoint — `deny` on the reporting UI, absent on the [Widgetize](https://matomo.org/guide/reporting-tools/embedding-matomo/) endpoints, which exist to be embedded in another page. A header from the proxy reaches the widget responses as a second, conflicting value and the embedded reports stop loading. `APP_TRAEFIK_SECURITY` is therefore unused here: the chain needs a middleware after the security level, which one variable cannot express.
 
 ## Backup
 

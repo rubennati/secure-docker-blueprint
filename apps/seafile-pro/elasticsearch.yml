@@ -3,6 +3,11 @@ services:
     image: ${SEAFILE_ELASTICSEARCH_IMAGE:-elasticsearch:8.15.0}
     container_name: seafile-elasticsearch
     restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
     # --- Resources ---
     # JVM heap plus off-heap. Retune together with ES_JAVA_OPTS.
     deploy:

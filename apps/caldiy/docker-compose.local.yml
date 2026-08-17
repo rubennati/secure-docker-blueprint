@@ -19,6 +19,9 @@ services:
     restart: unless-stopped
     security_opt: [no-new-privileges:true]
     cap_drop: [ALL]
+    # Entrypoint starts as root, fixes data-dir ownership, then drops to the
+    # service user. Without these it never starts. Verified 2026-08-16.
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
@@ -40,6 +43,9 @@ services:
     restart: unless-stopped
     security_opt: [no-new-privileges:true]
     cap_drop: [ALL]
+    # Entrypoint starts as root, fixes data-dir ownership, then drops to the
+    # service user. Without these it never starts. Verified 2026-08-16.
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
     read_only: true
     tmpfs: [/run, /tmp]
     volumes:

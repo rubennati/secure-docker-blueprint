@@ -5,7 +5,9 @@ http:
     # SECURITY POLICY CHAINS (presets)
     # ==========================================================
     # Pick a level per router. Higher = stricter.
-    # "e" variants   = iframe-friendly (SAMEORIGIN instead of DENY).
+    # "e" variants   = SAMEORIGIN instead of DENY. The app may frame its own
+    #                  pages; a different subdomain is a different origin, so
+    #                  this does not let one stack embed another.
     # "spa" variants = high-burst rate limit for code-split SPAs (VPN-only).
     #
     # Building blocks are defined in security-blocks.yml.
@@ -27,7 +29,6 @@ http:
     #
     # Examples:
     #   WordPress        → sec-2      (CMS with inline scripts)
-    #   Nextcloud        → sec-3      (public-facing, hardened)
     #   Vaultwarden      → sec-3e     (strict + SAMEORIGIN for browser extension)
     #   OnlyOffice       → sec-2e     (embeddable in iframes)
     #   Traefik Dashboard→ sec-4      (admin UI, hard rate limit)

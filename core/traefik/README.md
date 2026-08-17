@@ -141,7 +141,7 @@ middlewares:
 
 ### Security Levels
 
-Each level builds on the previous one. `e` = embed/iframe-friendly (SAMEORIGIN instead of DENY).
+Each level builds on the previous one. `e` = `SAMEORIGIN` instead of `DENY`: the app may frame its own pages, but a different subdomain is a different origin, so `e` does not let one stack embed another. See [Choosing the level for an app](../../docs/standards/traefik-security.md#choosing-the-level-for-an-app).
 
 | Level | What it includes | Recommended for |
 |-------|-----------------|-----------------|
