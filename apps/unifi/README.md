@@ -7,7 +7,7 @@ Controller for Ubiquiti UniFi access points, switches, and gateways. Runs as an 
 | Service | Image | Purpose |
 |---------|-------|---------|
 | `app` | `lscr.io/linuxserver/unifi-network-application:latest` | Web UI (port 8443) + device inform (8080) + STUN (3478/udp) + discovery (10001/udp) |
-| `db` | `mongo:4.4` | Primary store — UniFi does **not** support MongoDB 5+ |
+| `db` | `mongo:8.0` | Primary store. The image supports 3.6–7.0 from UniFi 8.1, and 8.0 from UniFi 9.0 |
 
 The web UI goes through Traefik (HTTPS). The L2/L3 device ports are exposed directly on the host because Traefik cannot proxy UDP discovery or device-inform broadcasts.
 
@@ -93,7 +93,9 @@ database is the configuration and history, not the network.
 ## Known Issues
 
 - **Live-tested: no.** Expect minor surprises, especially first-run Mongo init timing.
-- **MongoDB is pinned to 4.4** — do NOT bump to 5+. UniFi will refuse to start. Upstream has not yet supported newer Mongo versions.
+- **MongoDB is pinned to 8.0, and used to be pinned to 4.4 on a wrong premise.** The image documents 3.6 to 7.0 as supported from UniFi 8.1, and 8.0 as well from UniFi 9.0; this stack runs 10.x. The old note said UniFi refuses anything past 4.4, which was not the case, and 4.4 stopped receiving fixes in February 2024.
+- **On x86_64, any MongoDB above 4.4 needs a CPU with AVX support.** Check the host with `grep -o avx /proc/cpuinfo | head -1` before deploying. Without it the database will not start.
+- **An existing install cannot go straight from 4.4 to 8.0.** MongoDB upgrades one major version at a time and each step must complete before the next. The path is in `UPSTREAM.md`; a fresh install starts at 8.0 with nothing to migrate.
 - **`DB_APP_PWD_INLINE` duplicates the application password** — LSIO's UniFi image reads `MONGO_PASS` from env only. MongoDB side uses the secret file; app needs the same value inline.
 - **Adoption requires `STUN` / `inform` ports on the same broadcast domain as the devices** — if your controller is not on the LAN, you must either:
   - Configure each device with `set-inform http://<host>:8080/inform` via SSH, or

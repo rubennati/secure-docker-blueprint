@@ -19,7 +19,7 @@ set -euo pipefail
 ROOT_PWD="$(cat /run/secrets/DB_ROOT_PWD)"
 APP_PWD="$(cat /run/secrets/DB_APP_PWD)"
 
-mongo --quiet <<EOF
+mongosh --quiet <<EOF
 use admin
 db.auth("${MONGO_INITDB_ROOT_USERNAME}", "${ROOT_PWD}")
 
