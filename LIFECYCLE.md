@@ -39,14 +39,14 @@ This is the maintainer's view: what has been established about each stack. It ma
 |---|---|---|---|---|---|
 | [`apps/adminer`](apps/adminer/) | `baseline-aligned` | `APP_TAG=5.5.0-standalone` | 2026-05-02 | documented | missing |
 | [`apps/bookstack`](apps/bookstack/) | `baseline-aligned` | `APP_TAG=version-v26.05.2` | 2026-05-03 | documented | missing |
-| [`apps/caldiy`](apps/caldiy/) | `baseline-aligned` | `APP_TAG=v6.2.0-4@sha256:9818a0be6404…` | 2026-07-26 | documented | missing |
+| [`apps/caldiy`](apps/caldiy/) | `baseline-aligned` | `APP_TAG=v6.2.0-5@sha256:c2facc284b28…` | 2026-07-26 | documented | missing |
 | [`apps/dashy`](apps/dashy/) | `baseline-aligned` | `APP_TAG=4.5.0` | 2026-05-02 | documented | missing |
 | [`apps/easyappointments`](apps/easyappointments/) | `baseline-aligned` | `APP_TAG=1.6.0` | 2026-05-03 | documented | missing |
 | [`apps/ghost`](apps/ghost/) | `baseline-aligned` | `APP_TAG=6.54.0-alpine` | 2026-07-26 | documented | missing |
 | [`apps/heimdall`](apps/heimdall/) | `baseline-aligned` | `APP_TAG=2.8.1` | 2026-05-02 | documented | missing |
 | [`apps/homarr`](apps/homarr/) | `baseline-aligned` | `APP_TAG=v1.72.0` | 2026-05-02 | documented | missing |
 | [`apps/homepage`](apps/homepage/) | `baseline-aligned` | `APP_TAG=v1.13.2` | 2026-05-03 | documented | missing |
-| [`apps/immich`](apps/immich/) | `scaffolded` | `APP_TAG=v3.0.3` | 2026-04-17 ⚠️ | documented | missing |
+| [`apps/immich`](apps/immich/) | `scaffolded` | `APP_TAG=v3.0.3` | 2026-04-17 ⚠️ | documented | documented |
 | [`apps/it-tools`](apps/it-tools/) | `baseline-aligned` | `APP_TAG=2024.10.22-7ca5933` | 2026-05-02 | documented | missing |
 | [`apps/librephotos`](apps/librephotos/) | `scaffolded` | `APP_TAG=2026w25` | 2026-04-17 ⚠️ | documented | missing |
 | [`apps/lycheeorg`](apps/lycheeorg/) | `scaffolded` | `APP_TAG=v7.7.1` | 2026-04-17 ⚠️ | documented | missing |

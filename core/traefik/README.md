@@ -383,10 +383,19 @@ docker compose restart traefik
 |---------|---------|-------------|
 | `crowdsecMode` | `stream` | `stream` |
 | `crowdsecAppsecEnabled` | `false` | `true` (WAF protection) |
-| `crowdsecAppsecFailureBlock` | `false` | `true` (block if WAF errors) |
-| `crowdsecAppsecUnreachableBlock` | `false` | `true` (block if WAF unreachable) |
 
 Minimum = IP blocking only (no WAF). Recommended = IP blocking + WAF.
+
+**The two fail-closed flags are not a recommended default.** This table used to
+list `crowdsecAppsecFailureBlock` and `crowdsecAppsecUnreachableBlock` as
+`true` under Recommended.
+[`core/crowdsec/docs/appsec.md`](../crowdsec/docs/appsec.md#enabling-appsec-safely) is the
+owner of that guidance and says the opposite: if AppSec is unreachable at the
+moment Traefik evaluates a request and `crowdsecAppsecUnreachableBlock` is `true`,
+every request returns 403 — the Traefik dashboard and every service behind the
+proxy included. Both flags belong at the end of the incremental progression
+documented there, after AppSec has run long enough for its false-positive rate to
+be known, and not before.
 
 ### Geo-blocking
 
@@ -455,7 +464,29 @@ Traefik writes two log files into `volumes/logs/` (bind-mounted from the host):
 | File | What it contains |
 |------|-----------------|
 | `traefik.log` | Startup, config reload, TLS, errors |
-| `access.log` | Every HTTP request (JSON) |
+| `access.log` | HTTP requests answered with `200-599`, one JSON object per line |
+
+### What the access log contains, and what it costs
+
+`traefik.yml` filters on `statusCodes: 200-599`. That is wider than the error-only
+filter it is easy to assume, and it is deliberate — CrowdSec parses this file, and
+a scenario about successful activity cannot fire on a log that holds only errors.
+
+What it means in practice:
+
+| | |
+|---|---|
+| **Included** | every request answered `2xx`, `4xx` and `5xx` |
+| **Excluded** | `1xx` and `3xx`. Redirects do not appear, so the global HTTP-to-HTTPS redirect is invisible here and no scenario can match on it |
+| **Volume** | one line per successful request rather than per failed one. On a busy host that is orders of magnitude more, which is why logrotate below is not optional |
+| **Query strings appear** | the request URI is logged whole. Anything an application accepts as a query parameter — a share token, a search term, an id — lands in this file and in every backup that includes it |
+| **Not logged** | request bodies, cookies and `Authorization` headers. Traefik does not record them by default and nothing here turns that on |
+
+Narrowing to `400-599` is a supported choice if the volume or the query strings
+matter more than detection breadth. CrowdSec's shipped scenarios are built around
+4xx and 5xx patterns — probing, sensitive file access, path traversal, CVE scans —
+and keep working either way. What a narrower filter removes is the ability to write
+a scenario about authenticated activity later.
 
 **`docker compose logs traefik` shows nothing — this is expected.** Both files above are configured via `log.filePath` / `accessLog.filePath` in `traefik.yml`, so Traefik writes to files, not stdout. Read the logs directly instead:
 

@@ -82,13 +82,13 @@ See [Immich hwaccel docs](https://docs.immich.app/features/ml-hardware-accelerat
 # Shell into the app
 docker compose exec app bash
 
-# Manual DB backup (pg_dump)
+# Manual DB backup — stop the server first, see README "Restore"
+docker compose stop app
 docker compose exec -T db sh -c \
-  'pg_dump --clean --if-exists -U "$POSTGRES_USER" "$POSTGRES_DB"' > dump.sql
+  'pg_dump --clean --if-exists -U "$POSTGRES_USER" "$POSTGRES_DB"' | gzip > dump.sql.gz
+docker compose start app
 
-# Restore DB
-cat dump.sql | docker compose exec -T db sh -c \
-  'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+# Restore is not the inverse of this command — see README "Restore"
 
 # Immich CLI (inside the container)
 docker compose exec app immich --help

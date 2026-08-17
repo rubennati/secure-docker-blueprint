@@ -81,7 +81,6 @@ services:
       NEXT_PUBLIC_WEBSITE_URL: http://localhost:3000
       NEXT_PUBLIC_EMBED_LIB_URL: http://localhost:3000/embed/embed.js
       ALLOWED_HOSTNAMES: '"localhost"'
-      CALCOM_TELEMETRY_DISABLED: "1"
       NEXT_PUBLIC_LICENSE_CONSENT: agree
       NEXT_PUBLIC_DISABLE_SIGNUP: "false"
       NEXT_PUBLIC_LOGGER_LEVEL: "3"

@@ -56,7 +56,7 @@ Then in the hub UI: **+ Add System** (top right) → enter this host's Name, Tai
 |---|---|
 | **Auth** | Ed25519 SSH key — only the hub with the matching private key can connect. |
 | **Port 45876 on host network** | The agent binds directly on the host's network stack (not behind Traefik). This is not an HTTP service — SSH/TCP only. Restrict port 45876 to the hub's IP via Tailscale ACLs or host firewall (`ufw allow from <hub-tailscale-ip> to any port 45876`). |
-| **Docker socket** | Mounted read-only (`:ro`). Agent reads stats but cannot control Docker. Remove the volume if container-level metrics are not needed. |
+| **Docker socket** | Mounted `:ro`, which prevents the socket file being replaced and nothing else — the agent can issue any Docker API call, including POST. Upstream supports `DOCKER_HOST` against a socket proxy (`CONTAINERS=1`), which is the fix and is pending the first host run. Remove the volume if container-level metrics are not needed. |
 | **network_mode: host** | Required for accurate host network interface stats (eth0, tailscale0 etc.). Without it, the agent reports only the container's veth interface. CPU / RAM / disk work fine with bridge networking if you prefer isolation over accurate network stats. |
 
 ## Backup

@@ -15,7 +15,7 @@
 |---|---|
 | Edge Mode as default | No inbound port needed — works behind NAT, firewalls, Tailscale. Classic mode documented as alternative in compose comments. |
 | Direct Docker socket mount | Portainer Agent requires broad Docker API access (containers, volumes, networks, images, exec, build). A filtered socket proxy would need to allow nearly everything — direct mount is the upstream-recommended and only supported approach. Documented exception in `scripts/ci/check-baseline.py`. |
-| `/:/host:ro` bind mount | Required for Portainer to display host volume paths and browse container filesystems in the UI. Read-only. |
+| `/:/host:ro` bind mount | **Commented out.** Upstream marks it optional — the agent runs without it, and it is needed only for Portainer's host-management views. It grants read access to every file on the host, `.env` and `.secrets/` of every stack included. Uncomment deliberately if you use those views. |
 
 ## Version alignment
 

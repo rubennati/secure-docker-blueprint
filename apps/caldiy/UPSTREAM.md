@@ -10,7 +10,7 @@
 - **License:** MIT
 - **Relationship:** Community-edition spin-out of Cal.com (2026, after Cal.com moved its production code behind a closed-source licence). This blueprint consumes the **hardened fork**, not upstream directly.
 - **Origin:** Fork · rubennati · upstream: US · Cal.com Inc · non-EU
-- **Based on version:** `v6.2.0` (fork release `v6.2.0-4`)
+- **Based on version:** `v6.2.0` (fork release `v6.2.0-5`)
 - **Last verified:** 2026-07-26 (v6.2.0-3)
 
 ## Why a fork?
@@ -40,7 +40,7 @@ Consume **only** a reviewed tag or digest from `release` — never `latest`.
 
 ## What we use
 
-- `ghcr.io/rubennati/cal.diy:v6.2.0-4` — built from the `rubennati/cal.diy` (cal.forte) fork's `release` branch
+- `ghcr.io/rubennati/cal.diy:v6.2.0-5` — built from the `rubennati/cal.diy` (cal.forte) fork's `release` branch
 - `postgres:17.4` as primary backend
 - `redis:7.4-alpine` for session cache and job queue (required by upstream)
 - Custom entrypoint (`config/entrypoint.sh`) injects all secrets from Docker Secret files
@@ -60,7 +60,7 @@ Consume **only** a reviewed tag or digest from `release` — never `latest`.
 | `DATABASE_HOST: db:5432` | Required by `start.sh` for wait-for-it gate before Prisma migrations |
 | `ALLOWED_HOSTNAMES` set to deployment hostname | Prevents host header injection |
 | `CRON_API_KEY` randomised | Upstream default is a public string — protects `/api/cron/*` endpoints |
-| Telemetry disabled (`CALCOM_TELEMETRY_DISABLED=1`) | Blueprint default |
+| Telemetry code removed from the fork | The upstream telemetry module is deleted and its absence is guard-enforced at build time. `CALCOM_TELEMETRY_DISABLED` was set here as well and has been removed: the variable switches off code that is not in the image, so carrying it suggested a control that was doing nothing |
 | `NEXTAUTH_URL` set to `https://${host}/api/auth` | Without `/api/auth` path the container gets `CLIENT_FETCH_ERROR` |
 | VAPID keys in `.env.example` | Required env vars — without them Cal.diy logs an error on every boot |
 | Branding vars exposed | `NEXT_PUBLIC_APP_NAME`, `NEXT_PUBLIC_COMPANY_NAME`, `NEXT_PUBLIC_SUPPORT_MAIL_ADDRESS` |

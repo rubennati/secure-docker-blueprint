@@ -27,7 +27,7 @@ See `monitoring/beszel/UPSTREAM.md` for the full architecture overview.
 | Change from upstream | Reason |
 |---|---|
 | **`security_opt: no-new-privileges:true`** | Baseline hardening |
-| **Docker socket mounted read-only** | Agent only needs read access for container stats |
+| **Docker socket mounted read-only** | The agent only needs container stats, but `:ro` does not enforce that — it guards the socket file, not the API. `DOCKER_HOST` against a socket proxy with `CONTAINERS=1` is what would enforce it; pending the first host run |
 | **SSH public key in env, not baked in** | Blueprint: no credentials in image |
 
 ## Upgrade checklist

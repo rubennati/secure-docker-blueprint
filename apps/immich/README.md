@@ -85,6 +85,32 @@ metadata, all of which can be rebuilt from the originals. The reverse is not tru
 Immich's database uses a vector extension; restore into the same image version
 that produced the dump, not into a stock `postgres` image.
 
+## Restore
+
+**A plain `psql < dump.sql` does not restore this database**, and it does not
+report that it failed. Three parts of the [upstream
+procedure](https://docs.immich.app/administration/backup-and-restore) are load
+bearing:
+
+```bash
+gunzip --stdout dump.sql.gz \
+  | sed "s/SELECT pg_catalog.set_config('search_path', '', false);/SELECT pg_catalog.set_config('search_path', 'public, pg_catalog', true);/g" \
+  | docker compose exec -T db sh -c \
+      'psql --dbname="$POSTGRES_DB" --username="$POSTGRES_USER" \
+            --single-transaction --set ON_ERROR_STOP=on'
+```
+
+| Part | What it does |
+|---|---|
+| the `sed` | rewrites `search_path` so the vector extension's types and functions resolve. Without it the objects that depend on them are not created |
+| `--single-transaction` | a failure rolls the whole restore back instead of leaving a half-populated database that starts and looks plausible |
+| `ON_ERROR_STOP=on` | without it `psql` continues past errors and exits 0. This is the part that turns a failed restore into one you find out about later |
+
+Two preconditions upstream states, both of which invalidate a restore if missed:
+
+- **Stop `app` before taking the dump.** A dump taken while the server writes can capture a torn state.
+- **Restore only into a fresh install** — a database the Immich server has never started against. If the server has run, recreate the volume first. Where the database cannot be started on its own, set `DB_SKIP_MIGRATIONS=true` before bringing the stack up, so the server does not migrate a database that is about to be replaced.
+
 **Restore order:** database first, then the library, then the app.
 
 ## Known Issues

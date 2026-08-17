@@ -184,7 +184,6 @@ services:
       # Multiple hostnames: set ALLOWED_HOSTNAMES='"host1","host2"' in .env to override
       ALLOWED_HOSTNAMES: '"${APP_TRAEFIK_HOST}"'
       # Telemetry disabled
-      CALCOM_TELEMETRY_DISABLED: "1"
       # Licence — MIT community edition
       NEXT_PUBLIC_LICENSE_CONSENT: agree
       # Branding — shown in UI and support links

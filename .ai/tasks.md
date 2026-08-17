@@ -19,9 +19,23 @@ what v0.7.0's session left open is in
 - [ ] Decide the legacy verification stamps, per app — `LIFECYCLE.md` marks them ⚠️
 - [ ] Verify `monitoring/healthchecks` and `monitoring/uptime-kuma` — borgmatic's run
       monitoring points at them, so backup's proof layer depends on them
+- [ ] Point `monitoring/beszel` and `monitoring/beszel-agent` at a socket proxy while
+      bringing them up. Upstream supports `DOCKER_HOST`, and documents a proxy with
+      `CONTAINERS=1` as the safer setup — so the exception's old claim that Beszel
+      has no proxy support was wrong. The agent runs in host network mode, so the
+      proxy binds `127.0.0.1:2375`. Until then the agent holds the full Docker API,
+      which is root on the host; `:ro` on the socket does not change that
 - [ ] Verify `monitoring/ntfy` — `read_only: true`, the `sec-3` rate limit under a
       publish burst, and one message proven to arrive on a real device. Its Known
       Issues list is the check list.
+- [ ] Validate `apps/caldiy` on `v6.2.0-5` — the pin and the documentation moved,
+      the verification did not. `UPSTREAM.md` still reads `Last verified: 2026-07-26
+      (v6.2.0-3)`, so the stamp is now two fork releases behind the pin. Issue #30
+      lists what has to pass: entrypoint against the non-root `node` user, every
+      mounted secret readable without widening permissions, database migration,
+      `/api/health` and the container healthcheck, login plus one booking, SMTP and
+      cron, and a log read for permission or migration errors. Rollback pin is in
+      `.env.example`
 - [ ] Boot `apps/_reference/` once to confirm the template actually runs
 - [ ] Count the first-load requests for the four photo galleries — `apps/photoprism`,
       `apps/librephotos`, `apps/lycheeorg`, `apps/photoview`. All four sit at `sec-2`,

@@ -16,6 +16,7 @@ services:
       context: .
       args:
         APP_TAG: ${APP_TAG}
+        APP_DIGEST: ${APP_DIGEST}
     image: vikunja-local:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}
     restart: unless-stopped

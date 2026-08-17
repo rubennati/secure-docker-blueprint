@@ -68,7 +68,7 @@ SOCKET_EXCEPTIONS: dict[str, dict[str, Exception]] = {
                             "exposes a filtered Docker API to the Portainer container so that "
                             "Portainer itself never touches the raw socket.",
             "alternatives": "There is no upstream proxy to route through; this is the proxy layer. "
-                            "Read-only socket mount (:ro) is applied to limit write access.",
+                            "The socket is bound :ro, which is defence in depth against the file being replaced — it does not limit the API surface. That limiting is the proxy's allow-list.",
             "risk":         "Accepted and by design. Portainer CE is constrained to the filtered "
                             "API surface exposed by this proxy.",
         },
@@ -79,7 +79,7 @@ SOCKET_EXCEPTIONS: dict[str, dict[str, Exception]] = {
                             "a filtered Docker API to the Dockhand application so it never "
                             "touches the raw socket directly.",
             "alternatives": "There is no upstream proxy to route through; this is the proxy layer. "
-                            "Read-only socket mount (:ro) is applied.",
+                            "The socket is bound :ro against the file being replaced; the API surface is limited by the proxy's allow-list, not by the mount.",
             "risk":         "Accepted and by design. Dockhand is constrained to the filtered API "
                             "surface exposed by this proxy.",
         },
@@ -114,20 +114,18 @@ SOCKET_EXCEPTIONS: dict[str, dict[str, Exception]] = {
         "agent": {
             "reason":       "Beszel agent needs Docker socket to enumerate containers and collect "
                             "per-container CPU/memory/network metrics.",
-            "alternatives": "Beszel has no built-in support for a socket proxy. Read-only socket "
-                            "mount (:ro) is used to reduce the attack surface.",
-            "risk":         "Accepted — low risk. The socket is mounted read-only. The agent has "
-                            "no write path to the Docker daemon.",
+            "alternatives": "Beszel supports DOCKER_HOST, and upstream documents pointing it at a "
+                            "socket proxy with CONTAINERS=1 as the more secure setup. That is not done here yet — the stack has never been started, so the change cannot be verified. It belongs to the v0.8.0 host session.",
+            "risk":         "Accepted, and not low. A read-only bind of a UNIX socket prevents replacing or unlinking the socket file. It restricts no API call: the socket is a bidirectional channel, and a client holding a connection can issue any request the daemon accepts, POST included. A compromise of this agent is full Docker API access, which is root on the host. It is accepted because the agent is on an operator-controlled network and the alternative above is not yet verified — not because :ro contains it.",
         },
     },
     "monitoring/beszel-agent": {
         "agent": {
             "reason":       "Beszel standalone agent needs Docker socket to enumerate containers and "
                             "collect per-container CPU/memory/network metrics.",
-            "alternatives": "Beszel has no built-in support for a socket proxy. Read-only socket "
-                            "mount (:ro) is used to reduce the attack surface.",
-            "risk":         "Accepted — low risk. The socket is mounted read-only. The agent has "
-                            "no write path to the Docker daemon.",
+            "alternatives": "Beszel supports DOCKER_HOST, and upstream documents pointing it at a "
+                            "socket proxy with CONTAINERS=1 as the more secure setup. That is not done here yet — the stack has never been started, so the change cannot be verified. It belongs to the v0.8.0 host session.",
+            "risk":         "Accepted, and not low. A read-only bind of a UNIX socket prevents replacing or unlinking the socket file. It restricts no API call: the socket is a bidirectional channel, and a client holding a connection can issue any request the daemon accepts, POST included. A compromise of this agent is full Docker API access, which is root on the host. It is accepted because the agent is on an operator-controlled network and the alternative above is not yet verified — not because :ro contains it.",
         },
     },
 }

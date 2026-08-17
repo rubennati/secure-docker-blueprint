@@ -17,7 +17,7 @@
   },
   "apps/caldiy": {
     "backup_docs": "documented",
-    "pinned": "APP_TAG=v6.2.0-4@sha256:9818a0be6404…",
+    "pinned": "APP_TAG=v6.2.0-5@sha256:c2facc284b28…",
     "restore_docs": "missing",
     "state": "baseline-aligned",
     "verified": "2026-07-26",
@@ -74,7 +74,7 @@
   "apps/immich": {
     "backup_docs": "documented",
     "pinned": "APP_TAG=v3.0.3",
-    "restore_docs": "missing",
+    "restore_docs": "documented",
     "state": "scaffolded",
     "verified": "2026-04-17",
     "verified_anchored": false

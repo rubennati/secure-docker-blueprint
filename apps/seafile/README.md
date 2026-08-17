@@ -389,11 +389,16 @@ older database means files exist that no library references.
 - **OnlyOffice**: fetches and saves files via callback to Seafile's URL. The OnlyOffice container IP is not a Tailscale IP → Traefik blocks it → documents fail to open/save.
 - **SeaDoc**: makes internal API calls back to Seafile for token validation and file content. Same issue.
 
-**Fix: set `ACC_TAILSCALE` → `acc-private` in `.env`:**
+**`acc-private` is the shipped default for exactly this reason:**
 
 ```env
 APP_TRAEFIK_ACCESS=acc-private
 ```
+
+This section used to describe it as a fix to apply, which read as though the
+stack shipped `acc-tailscale`. It shipped `acc-public` — under which the callbacks
+work because nothing is filtered at all, and the file store answers the open
+internet from first boot. Opening it is now the deliberate step, not closing it.
 
 `acc-private` = Tailscale/VPN + LAN (RFC1918). Docker container IPs (172.x.x.x) fall into the LAN range and pass. External internet still blocked.
 
