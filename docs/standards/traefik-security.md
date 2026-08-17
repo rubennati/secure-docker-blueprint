@@ -195,6 +195,20 @@ half-rendered interface, which nobody attributes to the proxy.
 
 **4. Is the surface a login, an admin panel, or an API holding credentials?**
 
+**No chain combines a hard rate limit with a large first-load burst.** `sec-4` uses
+`rl-hard`: 20 requests per second, burst 40. The `-spa` variants use `rl-spa`: 100
+per second, burst 200. There is nothing between the two.
+
+This shows up on admin interfaces that are single-page apps. `core/dockhand` and
+`core/infisical` run `sec-3-spa`, so their first load fits and their sustained
+limit is 100/s instead of 20/s. `core/portainer` runs `sec-4`, so its sustained
+limit is 20/s and its first load has to fit into 40 requests — which nobody has
+counted.
+
+If an app turns out to need both, add one rate-limit block with `average: 20` and
+`burst: 200` and a chain that uses it. Add it at the point an app needs it, not
+before.
+
 `sec-4` swaps `rl-soft` for `rl-hard` (average 20, burst 40). Appropriate where
 requests are few and each one is worth slowing an attacker down. It is the wrong
 choice for anything a browser loads assets from.

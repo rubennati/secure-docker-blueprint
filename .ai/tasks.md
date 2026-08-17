@@ -30,7 +30,9 @@ what v0.7.0's session left open is in
       same reason. The method is in `docs/standards/traefik-security.md` under
       Choosing the level for an app; above 50 the answer is the `-spa` variant, which
       leaves the sustained rate untouched. `apps/it-tools` is the same question — a
-      Vue single-page app at `sec-3`, never counted
+      Vue single-page app at `sec-3`, never counted. `core/portainer` first: it runs
+      `sec-4`, whose burst is 40, and its interface is a single-page app. Load it
+      once with an empty cache and read the request count
 - [ ] Decide `APP_TRAEFIK_SECURITY` for Seafile's four path-scoped routers.
       They carry the access policy; the chain is deliberately absent until an
       instance shows what it survives. `/sdoc-server` is the open one — `sec-2`
