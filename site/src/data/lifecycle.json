@@ -74,7 +74,7 @@
   "apps/immich": {
     "backup_docs": "documented",
     "pinned": "APP_TAG=v3.0.3",
-    "restore_docs": "missing",
+    "restore_docs": "documented",
     "state": "scaffolded",
     "verified": "2026-04-17",
     "verified_anchored": false

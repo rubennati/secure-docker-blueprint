@@ -383,10 +383,19 @@ docker compose restart traefik
 |---------|---------|-------------|
 | `crowdsecMode` | `stream` | `stream` |
 | `crowdsecAppsecEnabled` | `false` | `true` (WAF protection) |
-| `crowdsecAppsecFailureBlock` | `false` | `true` (block if WAF errors) |
-| `crowdsecAppsecUnreachableBlock` | `false` | `true` (block if WAF unreachable) |
 
 Minimum = IP blocking only (no WAF). Recommended = IP blocking + WAF.
+
+**The two fail-closed flags are not a recommended default.** This table used to
+list `crowdsecAppsecFailureBlock` and `crowdsecAppsecUnreachableBlock` as
+`true` under Recommended.
+[`core/crowdsec/docs/appsec.md`](../crowdsec/docs/appsec.md#enabling-appsec-safely) is the
+owner of that guidance and says the opposite: if AppSec is unreachable at the
+moment Traefik evaluates a request and `crowdsecAppsecUnreachableBlock` is `true`,
+every request returns 403 — the Traefik dashboard and every service behind the
+proxy included. Both flags belong at the end of the incremental progression
+documented there, after AppSec has run long enough for its false-positive rate to
+be known, and not before.
 
 ### Geo-blocking
 

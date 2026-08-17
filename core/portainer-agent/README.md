@@ -114,9 +114,15 @@ Nothing to back up. The agent is a stateless relay; what it exposes belongs to t
 host it runs on, and what it is used for is stored by the Portainer instance that
 connects to it.
 
-**It mounts `/:/host:ro`** — the security baseline's one documented deviation of
-that kind. It also matters for backup: an agent container can read anything on the
-host, so where it runs is a security decision, not a convenience one.
+**It can mount `/:/host:ro`, and does not by default.** The mount is commented out
+in the compose file: upstream marks it optional, and it is needed only for
+Portainer's host-management views. Uncommented, the agent can read every file on
+the host — which is every stack's `.env` and `.secrets/`. `backup/README.md`
+rejects the same mount for a backup container on exactly that ground.
+
+No checker sees this. `check-baseline.py` has rules for the Docker socket and for
+network placement, none for a host filesystem bind, so the decision lives in this
+file and in the compose comment rather than in CI.
 
 ## Known Issues
 

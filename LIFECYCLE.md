@@ -46,7 +46,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/heimdall`](apps/heimdall/) | `baseline-aligned` | `APP_TAG=2.8.1` | 2026-05-02 | documented | missing |
 | [`apps/homarr`](apps/homarr/) | `baseline-aligned` | `APP_TAG=v1.72.0` | 2026-05-02 | documented | missing |
 | [`apps/homepage`](apps/homepage/) | `baseline-aligned` | `APP_TAG=v1.13.2` | 2026-05-03 | documented | missing |
-| [`apps/immich`](apps/immich/) | `scaffolded` | `APP_TAG=v3.0.3` | 2026-04-17 ⚠️ | documented | missing |
+| [`apps/immich`](apps/immich/) | `scaffolded` | `APP_TAG=v3.0.3` | 2026-04-17 ⚠️ | documented | documented |
 | [`apps/it-tools`](apps/it-tools/) | `baseline-aligned` | `APP_TAG=2024.10.22-7ca5933` | 2026-05-02 | documented | missing |
 | [`apps/librephotos`](apps/librephotos/) | `scaffolded` | `APP_TAG=2026w25` | 2026-04-17 ⚠️ | documented | missing |
 | [`apps/lycheeorg`](apps/lycheeorg/) | `scaffolded` | `APP_TAG=v7.7.1` | 2026-04-17 ⚠️ | documented | missing |

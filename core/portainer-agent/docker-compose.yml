@@ -58,9 +58,18 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /var/lib/docker/volumes:/var/lib/docker/volumes
-      # Read-only bind of the entire host filesystem — required for Portainer
-      # to display host volume paths and browse container filesystems in the UI.
-      - /:/host:ro
+      # Read-only bind of the entire host filesystem. Commented out on purpose.
+      #
+      # Upstream marks it optional: the agent works without it, and it is needed
+      # only for Portainer's host-management views. What it grants is not narrow —
+      # every file on the host, which includes every stack's .env and .secrets/.
+      # backup/README.md rejects exactly this mount for a backup container, with
+      # the reasoning that read access to every volume is read access to every
+      # secret. The same sentence applies here.
+      #
+      # Uncomment if you use host management, and treat where this agent runs as a
+      # security decision rather than a convenience one.
+      #- /:/host:ro
 
 # --------------------------------------------------------
 # ALTERNATIVE: Classic Agent mode (inbound TCP 9001)
