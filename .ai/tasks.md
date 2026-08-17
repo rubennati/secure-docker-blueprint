@@ -19,6 +19,12 @@ what v0.7.0's session left open is in
 - [ ] Decide the legacy verification stamps, per app — `LIFECYCLE.md` marks them ⚠️
 - [ ] Verify `monitoring/healthchecks` and `monitoring/uptime-kuma` — borgmatic's run
       monitoring points at them, so backup's proof layer depends on them
+- [ ] Point `monitoring/beszel` and `monitoring/beszel-agent` at a socket proxy while
+      bringing them up. Upstream supports `DOCKER_HOST`, and documents a proxy with
+      `CONTAINERS=1` as the safer setup — so the exception's old claim that Beszel
+      has no proxy support was wrong. The agent runs in host network mode, so the
+      proxy binds `127.0.0.1:2375`. Until then the agent holds the full Docker API,
+      which is root on the host; `:ro` on the socket does not change that
 - [ ] Verify `monitoring/ntfy` — `read_only: true`, the `sec-3` rate limit under a
       publish burst, and one message proven to arrive on a real device. Its Known
       Issues list is the check list.

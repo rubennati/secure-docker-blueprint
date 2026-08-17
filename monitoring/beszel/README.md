@@ -71,7 +71,7 @@ After this first setup, `docker compose up -d` starts both hub and agent togethe
 | **Hub ↔ Agent auth** | Ed25519 SSH key — cryptographically strong. Agents reject any connection without the matching private key. |
 | **Port 45876 on host network** | The agent binds on the host's network stack directly (not behind Traefik). This is required for accurate host network stats and is a deliberate exception — same pattern as `core/portainer-agent/` and `core/hawser/`. Protect with Tailscale ACLs or host firewall (accept 45876 from hub IP only). |
 | **Hub web UI** | `acc-tailscale` + `sec-3` via Traefik — VPN-only access. |
-| **Docker socket** | Agent mounts `/var/run/docker.sock:ro` — read-only, agent cannot control Docker. Accepted exception for monitoring agents; no Socket Proxy equivalent covers docker-stats reads. Remove if container metrics are not needed. |
+| **Docker socket** | Agent mounts `/var/run/docker.sock:ro`. The `:ro` stops the socket file being replaced; it does not restrict a single API call, because a UNIX socket is bidirectional. A compromise of this agent is full Docker API access, which is root on the host. Upstream supports `DOCKER_HOST` pointed at a socket proxy with `CONTAINERS=1` — not done here yet, because the stack has never been started. Accepted exception for monitoring agents; no Socket Proxy equivalent covers docker-stats reads. Remove if container metrics are not needed. |
 | **Hub data** | SQLite + SSH private key in `volumes/hub-data/`. Back this up — losing it means re-keying all agents. |
 
 ## Alerting
