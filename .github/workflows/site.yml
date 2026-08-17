@@ -16,8 +16,13 @@ permissions:
 # One deployment at a time, and a superseded run is cancelled rather than
 # queued: the newer commit is the one that should be live, and two runs racing
 # to publish decide the result by finishing order.
+#
+# The group is scoped per ref. An unscoped `pages` put every pull request in the
+# same group as the deploy from `main`, so opening one PR cancelled the checks on
+# another — the cancelled run reports as a failed check, and the pull request
+# looks broken when nothing about it is.
 concurrency:
-  group: pages
+  group: pages-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

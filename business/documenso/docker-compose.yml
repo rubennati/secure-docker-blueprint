@@ -25,6 +25,16 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
+    # Re-added deliberately: the official entrypoint starts as root, fixes ownership
+    # on the data directory, then drops to the service user. With cap_drop: ALL alone
+    # postgres exits on `chown: Operation not permitted` and redis on
+    # `setpriv: setresuid failed` — neither server ever starts. Verified 2026-08-16.
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
 
     # --- Resources ---
     deploy:

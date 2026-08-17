@@ -93,11 +93,10 @@ on it, and check what the site currently says before believing a quotation of it
    and it has a real trap worth documenting — `DB_PWD_INLINE` must match
    `.secrets/db_pwd.txt` verbatim, because BookStack cannot read the password
    from a file. A local run cannot verify TLS, routing or access policy.
-3. The local-evaluation path stays unwritten. `docker-compose.local.yml` does not
-   start: the postgres services carry `cap_drop: [ALL]` while the official
-   entrypoint needs `CHOWN`, `FOWNER`, `DAC_OVERRIDE`, `SETUID` and `SETGID`.
-   Verified by isolation test, affects `_reference` (production file too),
-   caldiy, documenso and infisical. **This blocks the site's best entry point.**
+3. The local-evaluation path stays unwritten — but the blocker under it is gone.
+   The datastores now carry the `cap_add` their entrypoints need, in the
+   production files and the local overlays alike. What remains is the writing,
+   not a stack that cannot start.
 4. No 404 page.
 
 Decided since: the site content licence is CC BY-NC 4.0, held in
