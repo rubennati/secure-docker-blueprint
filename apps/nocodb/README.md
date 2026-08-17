@@ -55,7 +55,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/api/v1/health        # 200 OK
 - **`NC_AUTH_JWT_SECRET_FILE`** — Docker Secret. Encrypts every API token NocoDB issues. Losing the key makes all stored API tokens invalid. Back up `.secrets/nc_jwt_secret.txt` off-host.
 - **`NC_DISABLE_TELE=true`** — disables usage telemetry.
 - **`no-new-privileges:true`** on the container.
-- **Default access `acc-tailscale` + `sec-3`** — NocoDB holds structured operational data and often API credentials in table cells. VPN-only is a safer default than public. Switch to `acc-public + sec-2` only if you want external share links and are OK with that exposure.
+- **Default access `acc-tailscale` + `sec-3-spa`** — NocoDB holds structured operational data and often API credentials in table cells. VPN-only is a safer default than public. Switch to `acc-public + sec-2` only if you want external share links and are OK with that exposure.
 
 ## Backup
 

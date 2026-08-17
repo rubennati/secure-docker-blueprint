@@ -25,6 +25,16 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
+    # Re-added deliberately: the official entrypoint starts as root, fixes ownership
+    # on the data directory, then drops to the service user. With cap_drop: ALL alone
+    # postgres exits on `chown: Operation not permitted` and redis on
+    # `setpriv: setresuid failed` — neither server ever starts. Verified 2026-08-16.
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
     # --- Resources ---
     # Postgres for a small Cal.com instance; retune after measuring with `docker stats`.
     # pids folded in here — a top-level pids_limit conflicts with deploy.resources.
@@ -32,6 +42,7 @@ services:
       resources:
         limits:
           memory: 1g
+          # cpus: derived starting value, not measured — v0.9.0
           cpus: "1.00"
           pids: 100
         reservations:
@@ -76,6 +87,16 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
+    # Re-added deliberately: the official entrypoint starts as root, fixes ownership
+    # on the data directory, then drops to the service user. With cap_drop: ALL alone
+    # postgres exits on `chown: Operation not permitted` and redis on
+    # `setpriv: setresuid failed` — neither server ever starts. Verified 2026-08-16.
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
     read_only: true
     tmpfs:
       - /run
@@ -86,6 +107,7 @@ services:
       resources:
         limits:
           memory: 256m
+          # cpus: derived starting value, not measured — v0.9.0
           cpus: "0.25"
           pids: 50
         reservations:
@@ -134,6 +156,7 @@ services:
       resources:
         limits:
           memory: 4g
+          # cpus: derived starting value, not measured — v0.9.0
           cpus: "2.00"
           pids: 200
         reservations:
@@ -222,7 +245,7 @@ services:
       # Middlewares
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
       # Service
-      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=3000"
 
     # --- Health & Observability ---
     healthcheck:

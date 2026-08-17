@@ -41,6 +41,16 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
+    # Re-added deliberately: the official entrypoint starts as root, fixes ownership
+    # on the data directory, then drops to the service user. With cap_drop: ALL alone
+    # postgres exits on `chown: Operation not permitted` and redis on
+    # `setpriv: setresuid failed` — neither server ever starts. Verified 2026-08-16.
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
 
     # --- Resources ---
     # A compromised or looping container must not take the host down. Start with
@@ -50,6 +60,7 @@ services:
       resources:
         limits:
           memory: 512m
+          # cpus: derived starting value, not measured — v0.9.0
           cpus: "0.50"
           pids: 100
         reservations:
@@ -119,6 +130,7 @@ services:
       resources:
         limits:
           memory: 512m
+          # cpus: derived starting value, not measured — v0.9.0
           cpus: "1.00"
           pids: 200
         reservations:
@@ -180,14 +192,14 @@ services:
       # Middlewares — order matters: WHO may reach it, then WHAT headers apply.
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
       # Service — the container-internal port, not a host port.
-      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_INTERNAL_PORT}"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8080"
 
     # --- Health & Observability ---
     # Use whatever the image actually ships (wget here, curl or node elsewhere).
     # start_period must cover a cold start incl. migrations, or Docker will
     # restart-loop a healthy-but-slow app.
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO/dev/null http://127.0.0.1:${APP_INTERNAL_PORT}/ || exit 1"]
+      test: ["CMD-SHELL", "wget -qO/dev/null http://127.0.0.1:8080/ || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5

@@ -68,6 +68,12 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc-ws.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/socket.io/`)"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc-ws.entrypoints=websecure"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc-ws.priority=100"
+      # Access policy repeated: this router runs at priority=100 and outranks the
+      # main one, so it decides the request. Without this, acc-tailscale on the
+      # stack leaves this path answering wherever the host answers.
+      # WebSocket endpoint (/socket.io, required by SeaDoc). Access policy only —
+      # see the sibling router for why the sec-* chain is not applied here either.
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc-ws.middlewares=${APP_TRAEFIK_ACCESS}@file"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc-ws.tls=true"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc-ws.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc-ws.service=${COMPOSE_PROJECT_NAME}-seadoc"
@@ -77,7 +83,7 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.priority=100"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.tls=true"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.middlewares=seadoc-strip@docker"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.middlewares=${APP_TRAEFIK_ACCESS}@file,seadoc-strip@docker"
       - "traefik.http.middlewares.seadoc-strip.stripprefix.prefixes=/sdoc-server"
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}-seadoc.loadbalancer.server.port=80"

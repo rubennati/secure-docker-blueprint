@@ -8,6 +8,38 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
+### Added
+
+- **The operator site is live** (`site/`): published from `main` on every push that touches `site/`. Every document that named a future launch date now names the live one.
+- **`security.txt`** (`site/public/.well-known/security.txt`): the reporting address, served under the dot path GitHub Pages drops by default.
+- **Sub-processor disclosure** (`site/src/content/docs/privacy/index.md`): every company that handles a request to the site is named, not the hosting provider alone.
+
+### Changed
+
+- **Resource limits have one owner** (`docs/standards/`): `security-baseline.md` keeps the controls that are on or off, `compose-structure.md` owns every rule that carries a number together with the derivation behind it. The two files previously held separate value tables that disagreed on whether a CPU limit is set by default. `memory` and `pids` are required on every service. A `cpus` value stands where a component pins a core, or where the compose file marks it as derived rather than measured — `scripts/ci/check-structure.py` now names the missing limit instead of reporting the block as absent.
+- **The container-internal Traefik port is a literal again** (39 compose files): `${APP_INTERNAL_PORT}` is gone from every label, healthcheck and `.env.example`. `docs/standards/traefik-labels.md` had specified this from the start and the tree had drifted from it. Changing the value never moved the port the image listens on, only the route to it.
+- **Site content licence** (`site/src/content/docs/legal/index.md`): CC BY-NC 4.0 for the prose. The legal page states where the boundary to the repository's Apache-2.0 runs, which covers code only.
+- **Direction for the personal data the site carries** (`ROADMAP.md`): one committed data module holding placeholders, a decrypted local override that is gitignored, and a key that reaches `age` on a file descriptor instead of the filesystem. A fork builds on the first try with the fields empty.
+
+### Fixed
+
+- **GitHub Pages dropped every dot path on upload** (`.github/workflows/site.yml`): `security.txt` under `.well-known/` stayed unreachable until `.nojekyll` was added and the upload stopped filtering.
+- **A layout cap broke the table of contents** (`site/src/styles/custom.css`): reverted; the title keeps its own size.
+
+### Fixed
+
+- **Every PostgreSQL and Redis service was configured never to start** (12 services across `apps/_reference`, `apps/caldiy`, `business/documenso`, `core/infisical` and their local overlays): `cap_drop: ALL` with no `cap_add` removes what the official entrypoints need to fix ownership on the data directory and drop to the service user. PostgreSQL exits on `chown: Operation not permitted`, Redis on `setpriv: setresuid failed`. Both now carry `CHOWN`, `DAC_OVERRIDE`, `FOWNER`, `SETGID` and `SETUID`, established by running each image against `--cap-drop ALL` and adding back what the log named. `docs/standards/security-baseline.md` carries the rule and the method, because no checker can see a capability that is missing — only a container that never becomes healthy.
+- **The whole-host restore left four stacks without their file data** (`backup/borgmatic/RESTORE.md`): step 3 extracted `srv/docker` only. `apps/nextcloud`, `business/invoiceninja`, `business/vikunja` and `business/openproject` keep file data in Docker named volumes under `/var/lib/docker/volumes`, which `config.yaml.example` does back up. The stacks came back, answered, and were missing their files.
+
+### Security
+
+- **`business/matomo` sent a second, conflicting `X-Frame-Options`** (`docker-compose.yml`, `.env.example`, `README.md`): Matomo sets that header itself and varies it per endpoint — `deny` on the reporting UI, absent on the Widgetize endpoints, which exist to be embedded elsewhere. `sec-3` added its own on top, which reaches the widget responses as a conflicting value and stops the embedded reports from loading. `sec-3` now runs from the compose file followed by a per-app `strip-xfo` middleware, so the application decides. `apps/vaultwarden` already had this treatment for the same reason.
+- **Eight Seafile routers were outside the access policy** (`apps/seafile/`, `apps/seafile-pro/`): `/notification`, `/socket.io/`, `/sdoc-server` and `/thumbnail` carried no `APP_TRAEFIK_ACCESS` in either stack, and each runs at `priority=100` against the main router's `priority=1` — so the unprotected router decided the request, and `acc-tailscale` on the stack left four paths answering wherever the host answers. All eight now carry it. The `sec-*` chain is deliberately **not** applied to them: `sec-2` includes `hdr-basic`, which sets `frameDeny`, and the SeaDoc editor behind `X-Frame-Options: DENY` would not load — upstream documents neither the header nor whether SeaDoc is framed. `.ai/tasks.md` carries the per-endpoint decision for a host. `docs/standards/traefik-labels.md` taught the gap: its multi-router example showed a second router with no middlewares, and now separates the two axes — the access policy belongs on every router, the security chain is decided per endpoint.
+- **The security baseline never saw fifteen compose files** (`scripts/ci/check-baseline.py`): discovery was a private copy that omitted `backup/` and could not find split-compose stacks, so both Seafile stacks and `backup/urbackup` were outside the job while `docs/standards/ci.md` said every compose file was validated. It now imports `check-structure.py`'s discovery, the way `check-coverage.py` already did. The run went from 56 files to 71 and immediately found two services with no `no-new-privileges` — `apps/seafile-pro/elasticsearch.yml` and `apps/seafile-pro/seafile-ai.yml`, both now fixed.
+- **`business/zammad` pinned past 18 advisories** (`.env.example`, `UPSTREAM.md`, `README.md`): `APP_TAG` moves from `7.1.1-0036` to `7.1.2-0013`. The advisories were published 2026-08-04 and all name `7.1.2` as the patched version — one critical (account takeover through unverified e-mail matching during SSO auto-link, `GHSA-86cc-3ggh-mf2m`) and four high, including remote code execution through the AI Agent template sanitizer (`GHSA-gp3x-9xm8-rcj6`). The pin is the highest build of the release rather than the first: `7.1.2-0001` and `7.1.2-0013` are both `7.1.2` and are different images. The README's service table carried `7.0.1` — a version this stack has not shipped since the 2026-07-26 sweep — and now references `${APP_TAG}` so it cannot drift again.
+- **`business/openproject` and `business/vikunja` had no outbound isolation**: both named a network `internal` without setting `internal: true`, so it was a plain bridge. Ingress was closed — no published port, not on the proxy network — and both READMEs read that as isolation. `db`, `cache`, `worker`, `cron` and `seeder` now have no route out; the web-facing container keeps its outbound path through the proxy network. Whether OpenProject still delivers mail from `worker` is unverified on a host.
+- **Branch protection on `main`** requires seven status checks and no approving review. The 0.7.0 entry below records five checks and one approving review; that is not the live configuration.
+
 ## [0.7.0] — 2026-07-31
 
 ### Added

@@ -20,7 +20,7 @@ WARN (reported — structural drift):
   section-order     .env.example sections out of canonical order
   container-name    CONTAINER_NAME_* not derived from ${COMPOSE_PROJECT_NAME}
   env-file          `env_file:` used instead of an explicit `environment:` map
-  no-resources      service without deploy.resources limits
+  no-resources      service without a memory or pids limit
   no-healthcheck    service without a healthcheck
   tls-options       Traefik tls.options without the @file suffix
   real-domain       a hostname that is not *.example.com
@@ -235,10 +235,17 @@ def check_one_compose(app: Path, path: Path, findings: list[dict]) -> None:
                              "detail": "uses env_file: — prefer an explicit environment: map"})
 
         # -- resources (WARN) -------------------------------------------------
-        limits = ((svc.get("deploy") or {}).get("resources") or {}).get("limits")
-        if not limits:
+        # `memory` and `pids` are the two limits that bound the host: an unbounded
+        # leak reaches the OOM-killer, which does not necessarily select the process
+        # that allocated, and a fork bomb exhausts the global pid space. `cpus` is
+        # not checked — it bounds neither, and compose-structure.md states the two
+        # cases in which one is set.
+        limits = ((svc.get("deploy") or {}).get("resources") or {}).get("limits") or {}
+        absent = [k for k in ("memory", "pids") if k not in limits]
+        if absent:
             findings.append({"level": "WARN", "rule": "no-resources", "service": name,
-                             "detail": "no deploy.resources.limits — unbounded container"})
+                             "detail": f"deploy.resources.limits without {' and '.join(absent)}"
+                                       " — unbounded container"})
 
         # -- healthcheck (WARN) -----------------------------------------------
         # A service can legitimately have none: some images ship their own, which

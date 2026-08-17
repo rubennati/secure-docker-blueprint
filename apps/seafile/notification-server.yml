@@ -67,6 +67,12 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-notification.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/notification`)"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-notification.entrypoints=websecure"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-notification.priority=100"
+      # Access policy repeated: this router runs at priority=100 and outranks the
+      # main one, so it decides the request. Without this, acc-tailscale on the
+      # stack leaves this path answering wherever the host answers.
+      # WebSocket endpoint. The access policy applies; the sec-* chain is left off —
+      # rl-soft would meter a long-lived connection's reconnects and nobody has run it.
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-notification.middlewares=${APP_TRAEFIK_ACCESS}@file"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-notification.tls=true"
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-notification.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-notification.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"

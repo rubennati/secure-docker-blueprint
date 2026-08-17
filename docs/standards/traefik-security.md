@@ -95,6 +95,7 @@ Modular middleware components. Used by the sec-* chains, or individually for cus
 | Block | Limits |
 |-------|--------|
 | `rl-soft` | 100 requests/s average, 50 burst |
+| `rl-spa` | 100 requests/s average, 200 burst — same sustained rate as `rl-soft`, wider bucket for an application start |
 | `rl-hard` | 20 requests/s average, 40 burst |
 
 ### Extras
@@ -115,7 +116,7 @@ Modular middleware components. Used by the sec-* chains, or individually for cus
 
 ## Policy Chains (`security-chains.yml`)
 
-Presets that combine building blocks. Each level builds on the previous — higher = stricter. `e` suffix = iframe-friendly.
+Presets that combine building blocks. Each level builds on the previous — higher = stricter. `e` suffix = `SAMEORIGIN` instead of `DENY`, which permits an app to frame **its own** pages and nothing else — a different subdomain is a different origin. See [Choosing the level for an app](#choosing-the-level-for-an-app).
 
 | Level | Building Blocks | Recommended for |
 |-------|----------------|-----------------|
@@ -126,8 +127,98 @@ Presets that combine building blocks. Each level builds on the previous — high
 | `sec-2e` | hdr-basic-embed, rl-soft, compress | Standard + iframe-friendly |
 | `sec-3` | hdr-strict, rl-soft, compress, permissions-policy | Public-facing, hardened |
 | `sec-3e` | hdr-strict-embed, rl-soft, compress, permissions-policy | Public-facing + iframe-friendly |
+| `sec-2-spa` | hdr-basic, rl-spa, compress | Standard, first load exceeds a burst of 50 |
+| `sec-3-spa` | hdr-strict, rl-spa, compress, permissions-policy | Hardened, first load exceeds a burst of 50 |
+| `sec-3e-spa` | hdr-strict-embed, rl-spa, compress, permissions-policy | Hardened, needs SAMEORIGIN and the wider burst |
 | `sec-4` | hdr-strict, rl-hard, compress, permissions-policy | Sensitive apps, login pages, admin panels |
 | `sec-5` | hdr-strict, rl-hard, compress, permissions-policy, csp-enforce | Maximum — only for CSP-tested apps |
+
+### Choosing the level for an app
+
+The level is not a judgement about how important the app is. It follows from four
+properties of the application, answered in this order. Answer them against the
+running app, not from the category it belongs to.
+
+**1. Does the app set `X-Frame-Options` or `frame-ancestors` itself?**
+
+```bash
+curl -sI https://app.example.com/ | grep -iE 'x-frame-options|content-security-policy'
+```
+
+If it does, the chain must not add a second one. Two `X-Frame-Options` values on
+one response is not stricter — it is undefined, and the endpoints the app meant to
+be embeddable stop loading. Apply the level in the compose file and follow it with
+a per-app middleware that clears the header, as `business/matomo` and
+`apps/vaultwarden` do.
+
+**2. Is the app embedded in another site, or does it embed itself?**
+
+Being framed is the app's own attack surface: a page any site may frame is a page
+any site can overlay, and the user acts on what they think they see. Keep the
+denying default unless embedding is a feature the operator uses, and when it is,
+name the parent origins with `frame-ancestors` rather than removing the header.
+
+**`sec-*e` is narrower than "iframe-friendly" suggests.** It sends
+`X-Frame-Options: SAMEORIGIN`, and same origin means the same scheme, host and
+port. `dash.example.com` embedding `paperless.example.com` is a different origin,
+so the frame is refused exactly as it would be under `DENY`. The `e` variants
+cover an app framing *its own* pages — `business/listmonk`'s campaign preview is
+that case. They do nothing for one stack embedding another.
+
+That matters here, because this blueprint ships four dashboards — `apps/dashy`,
+`apps/heimdall`, `apps/homarr`, `apps/homepage` — and the iframe widgets in them
+point at the other stacks. Every stack denies framing, so those widgets stay
+blank, and moving the target to an `e` variant does not change it. The working
+answer is a per-app middleware on the **target**, naming the dashboard's origin:
+
+```yaml
+- "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-frame-dash.headers.customResponseHeaders.X-Frame-Options="
+- "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-frame-dash.headers.contentSecurityPolicy=frame-ancestors 'self' https://dash.example.com;"
+```
+
+Applied to the one stack that needs to appear in the dashboard, not to all of
+them. A dashboard tile that opens the app in a new tab costs nothing and needs
+none of this.
+
+**3. How many requests does one first load issue?**
+
+`rl-soft` allows a burst of 50 per client address. Measure rather than assume — a
+single-page app, a gallery grid and a dashboard all look alike from outside:
+
+```bash
+# Load the app in a private window with the network tab open, then read the
+# request count for the first paint. Or, from the host, count what arrives:
+docker compose -f core/traefik/docker-compose.yml logs --since 1m app \
+  | grep -c "$(date +%Y-%m-%d)"
+```
+
+Above 50 in the initial burst, use the `-spa` variant. It keeps `average: 100`
+unchanged and only widens the bucket to 200, so the sustained limit — the one that
+bounds abuse — is identical. A 429 on first load presents as a blank page or a
+half-rendered interface, which nobody attributes to the proxy.
+
+**4. Is the surface a login, an admin panel, or an API holding credentials?**
+
+**No chain combines a hard rate limit with a large first-load burst.** `sec-4` uses
+`rl-hard`: 20 requests per second, burst 40. The `-spa` variants use `rl-spa`: 100
+per second, burst 200. There is nothing between the two.
+
+This shows up on admin interfaces that are single-page apps. `core/dockhand` and
+`core/infisical` run `sec-3-spa`, so their first load fits and their sustained
+limit is 100/s instead of 20/s. `core/portainer` runs `sec-4`, so its sustained
+limit is 20/s and its first load has to fit into 40 requests — which nobody has
+counted.
+
+If an app turns out to need both, add one rate-limit block with `average: 20` and
+`burst: 200` and a chain that uses it. Add it at the point an app needs it, not
+before.
+
+`sec-4` swaps `rl-soft` for `rl-hard` (average 20, burst 40). Appropriate where
+requests are few and each one is worth slowing an attacker down. It is the wrong
+choice for anything a browser loads assets from.
+
+Record the answer where the value lives. A level with no stated reason is a level
+the next person cannot safely change.
 
 ### Changes vs. Previous System
 
@@ -150,7 +241,7 @@ Presets that combine building blocks. Each level builds on the previous — high
 | Portainer | `sec-4` + `acc-tailscale` | Admin tool, VPN-only |
 | Vaultwarden | `sec-3e` + `acc-tailscale` | Password manager: strict + SAMEORIGIN (iframe-friendly for browser extension) |
 | OnlyOffice | `sec-2e` | Must be embeddable in iframes |
-| Nextcloud | `sec-3` + `acc-public` | Public-facing, hardened |
+| Nextcloud | `sec-3e-spa` + `acc-private` | Needs SAMEORIGIN for its own framing and the wider first-load burst; reachable from LAN and VPN |
 | Paperless | `sec-3` + `acc-tailscale` | Hardened, VPN-only |
 | Seafile Pro | `sec-3` | Public-facing |
 | Authentik | `sec-3` | Auth provider, should be hardened |

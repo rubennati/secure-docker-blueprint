@@ -30,9 +30,8 @@ export const ownHosts: string[] = ['github.com', 'secdockblue.rubennati.at'];
 /**
  * Licence for the site's own text, diagrams and page structure.
  *
- * Deliberately separate from the repository's Apache-2.0, which covers code.
- * Applying a software licence to prose by default would be an assumption
- * nobody made — so this stays an explicit placeholder until it is decided,
- * rather than a claim the footer quietly starts making.
+ * Deliberately separate from the repository's Apache-2.0, which covers code:
+ * applying a software licence to prose would be an assumption nobody made.
+ * The legal page states where the boundary between the two runs.
  */
 export const siteContentLicence = 'CC BY-NC 4.0';

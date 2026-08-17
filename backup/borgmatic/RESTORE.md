@@ -188,7 +188,21 @@ The database must already exist — Borgmatic will not create it.
 
 1. Install Docker and borgmatic on the new host.
 2. Place the passphrase at `/root/.borg-passphrase` and, if the repository key is not reachable, import it: `borg key import <repo> /path/to/exported-key.txt`
-3. Extract the deployment: `sudo borgmatic extract --archive latest --path srv/docker --destination /`
+3. Extract the deployment **and the named volumes**:
+
+   ```bash
+   sudo borgmatic extract --archive latest \
+     --path srv/docker --path var/lib/docker/volumes --destination /
+   ```
+
+   Both paths, not just the first. `srv/docker` carries the compose files, `.env`, `.secrets/` and every bind mount — which is most stacks. Four stacks keep their file data in Docker named volumes instead: `apps/nextcloud` (`nextcloud_html`), `business/invoiceninja` (`app_public`, `app_storage`), `business/vikunja` (`vikunja_files`) and `business/openproject` (`op_assets`). Those live under `/var/lib/docker/volumes`, `config.yaml.example` backs them up, and extracting only `srv/docker` leaves them in the archive. The stacks then start, answer, and are missing their files.
+
+   Confirm your Docker root first — rootless and custom `data-root` setups put it elsewhere:
+
+   ```bash
+   docker info --format '{{.DockerRootDir}}'
+   ```
+
 4. Check `.env` and `.secrets/` came through — these are what make the stack runnable, and they are the reason the archive is encrypted.
 5. Start the databases only, restore each one, then start the applications.
 6. Repoint DNS once the stack answers locally.

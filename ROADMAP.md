@@ -51,9 +51,9 @@ like an application fault. Several stacks say so in the compose file: *starting
 values, not measured ones*. Turning them into measured values needs a running
 install per stack, which is why this milestone is late rather than early. The
 procedure is in [`docs/resource-measurement.md`](docs/resource-measurement.md) —
-what to sample, under which load states, and how a peak becomes a limit; the
-profile table in [`docs/standards/security-baseline.md`](docs/standards/security-baseline.md)
-owns the target values.
+what to sample, under which load states, and how a peak becomes a limit;
+[`docs/standards/compose-structure.md`](docs/standards/compose-structure.md)
+owns the target values and the rule that derives them.
 
 **Done when** every `✅` stack's limits come from a measurement on a real install
 rather than from the derivation rule.

@@ -29,9 +29,9 @@ Four models describe documentation in this repository, each answering one questi
 | App location (category) | Directory structure | README tables |
 | Shipped work | `CHANGELOG.md` | — |
 | Direction / planned work | `ROADMAP.md` | Category READMEs reference, do not duplicate |
-| Compose standards | `docs/standards/compose-structure.md` | Every `docker-compose.yml` |
+| Compose standards, and every rule that carries a value — resource limits and their derivation | `docs/standards/compose-structure.md` | Every `docker-compose.yml`; `security-baseline.md` references it |
 | Env standards | `docs/standards/env-structure.md` | Every `.env.example` |
-| Security rules | `docs/standards/security-baseline.md` | Every service in every compose |
+| Security rules that are on or off — privileges, capabilities, secrets, socket access, network isolation | `docs/standards/security-baseline.md` | Every service in every compose |
 | Naming conventions | `docs/standards/naming-conventions.md` | Every compose, env, container name |
 | A symptom and its fix — a failure seen in this blueprint | `TROUBLESHOOTING.md` | Stack READMEs and `UPSTREAM.md` reference a numbered entry |
 | The layer-by-layer debugging method and command reference | `docs/standards/troubleshooting.md` | — |
@@ -248,6 +248,37 @@ it-tools (2024.10.22, dormant) · beszel + agent (0.18.7)
 - **Floating major tags** — matomo `5-apache`, opnform/invoiceninja nginx `1`/`1.29`, clamav `1.4`. Pin specific (contrast: caldiy is digest-pinned).
 - **`main` and `dev` diverged** — Dependabot bumps on `main`, app work on `dev`. Converge.
 
+### Registry check (2026-08-16)
+
+Every image reference in the tree resolved through its `.env.example` and compared
+against its registry — 98 references. The script is in the session scratchpad and
+is not part of CI; `scripts/ci/list-images.sh` covers 11 stacks by hand and is the
+thing worth replacing with the discovery `check-structure.py` already has.
+
+**Three comparisons in that run were wrong.** A comparison that parses only
+numbers reads `2021.11.28` as newer than `2.8.1` (`apps/heimdall`), `20220121` as
+newer than `260601` (`apps/photoprism`, which tags `YYMMDD`), and the build number
+`511` as newer than `5.13.26` (`business/invoiceninja`). All three of those stacks
+are current. A tag comparison has to reject a candidate whose scheme differs from
+the pinned one.
+
+**Acted on:**
+
+| Stack | Was | Now | Why |
+|---|---|---|---|
+| `business/zammad` | `7.1.1-0036` | `7.1.2-0013` | 18 advisories published 2026-08-04, one critical |
+| `apps/unifi` | `mongo:4.4` | `mongo:8.0` | 4.4 reached end of life in February 2024. The pin rested on a claim the image's own documentation contradicts — it supports 3.6–7.0 from UniFi 8.1 and 8.0 from 9.0, and this stack runs 10.x |
+
+**Still behind, not acted on:**
+
+- `business/opensign` runs `mongo:6.0`, which reached end of life in July 2025. What OpenSign supports has not been checked against upstream, so the version to move to is unknown.
+- Database and runtime bases are a major behind in several stacks — PostgreSQL 16/17 against 18, MariaDB 10.11/11.4 against 12, Redis 7.4 against 8, Elasticsearch 8.15 against 9. All of these are on supported branches; being behind is not the same as being unsupported, and a database major is a migration rather than a pin change.
+- Roughly a dozen stacks are one minor or patch behind. Nothing there is security-driven as far as this check can tell.
+
+**The check is incomplete.** Docker Hub rate-limits after about a hundred tag
+queries, so the run degraded partway through and the figures above cover what
+completed. Re-running it needs either pacing or an authenticated token.
+
 ### Sweep status (2026-07-26)
 
 **Verified current (no action):** it-tools · beszel(+agent) · monicahq 4.1.2 · photoview 2.4.0
@@ -262,7 +293,9 @@ it-tools (2024.10.22, dormant) · beszel + agent (0.18.7)
 
 **Genuinely open — awkward tag scheme, decide before pinning:**
 
-- zammad — Docker Hub uses `X.Y.Z-BUILD` (e.g. `7.1.1-0036`) or floating `7`/`7.1`; pinned `7.0.1`. Pick a scheme.
+- zammad — scheme decided: pin `X.Y.Z-NNNN` at the **highest** build of the target release. A release
+  keeps receiving builds after it ships, so the first build of a version is not the version. Now at
+  `7.1.2-0013`.
 - uptime-kuma — `2.4.0` exists but 1.x→2.x is a major transition; verify before leaving `1.23.17`.
 
 The sweep is otherwise complete: every registry-checkable service is verified or bumped.
@@ -318,3 +351,5 @@ One row per session or chain run. The next session starts here — not at the to
 | 2026-07-31 | Standards | What `apps/` and `business/` send outward | 29 stacks read from documentation and source, every positive re-checked by a pass whose job was to refute it — one claim did not survive. Six carry a persistent installation identifier; **two documented off switches do not work and neither project says so** (Lychee, Dashy). Telemetry switched off in the four stacks that accept a variable for it, with the cost written beside the two where there is one. `scripts/ops/egress-probe.sh` makes the wire observable — DNS plus dropped packets, forwarding rather than blackholing so the stack keeps making the calls worth seeing. | UniFi unestablished rather than clean — closed source, vendor documentation does not settle it |
 | 2026-07-31 | Session | First wire test — Invoice Ninja | An hour of outbound DNS: 20 calls to Sentry against 5 to the PDF service. Reading the source had found both and led with the version check; on the wire the ranking and the significance are the other way round. Sentry carries stack traces, breadcrumbs and an id keyed to the account, so the reports identify the installation across restarts. `SENTRY_LARAVEL_DSN` emptied. | The point of running a wire test rather than only reading — the other 28 stacks have been read, not watched |
 | 2026-07-31 | Session | Release v0.7.0 | CHANGELOG `[Unreleased]` → `[0.7.0]`, with the work from 2026-07-29 onward written up — it had not been recorded. ROADMAP: v0.7.0 section removed, the backup remainder moved to where it belongs. `.ai/state.md`, `tasks.md`, `progress.md`, `risks.md` moved to v0.8.0. README badge bumped. Git tag + GitHub Release. | — |
+| 2026-08-03 | Session | Site publication and fork safety | Site live and every document that named a future date corrected. `security.txt` added under `.well-known/`, which needed `.nojekyll` and an upload that stops filtering dot paths before GitHub Pages would serve it. Privacy page names every company handling a request. Content licence decided as CC BY-NC 4.0. ROADMAP gained the direction for the personal data a fork would inherit: one data module, placeholders committed, the real values in a gitignored override decrypted from `age`. | The Session Chain was not run for this session — `[Unreleased]`, this row and `.ai/state.md` were written on 2026-08-16 |
+| 2026-08-16 | Standards | Resource-limit ownership, port literal, egress | The resource block was defined in two standards with two value tables that disagreed on CPU limits. Split by kind: `security-baseline.md` owns controls that are on or off, `compose-structure.md` owns anything carrying a number. `cpus` is not part of the baseline — it bounds neither of the two failures that take a host down, and the sentence claiming otherwise went with the table. 23 surviving `cpus` values marked as derived so v0.9.0 can find them. `${APP_INTERNAL_PORT}` removed from 39 compose files and 40 `.env.example` — the standard had always said literal. `business/openproject` and `business/vikunja` had a network named `internal` that was a plain bridge. | OpenProject mail from `worker` unverified after the isolation — in `.ai/tasks.md` |

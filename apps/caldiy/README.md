@@ -105,6 +105,19 @@ Cal.diy defaults to the **`sec-3`** Traefik middleware chain (`APP_TRAEFIK_SECUR
 
 > **⚠️ HSTS `includeSubDomains` + `preload` is browser-sticky.** The header applies to **the exact host that served it** (`APP_TRAEFIK_HOST`) and, with `includeSubDomains`, to **any subdomain below that host** — it does **not** affect sibling hosts or the parent domain unless those serve the header themselves. Scope examples: `calendar.example.com` covers `*.calendar.example.com` but **not** `www.example.com` or `example.com`; an apex host `example.com` covers `*.example.com` (the whole zone). Rolling back to `sec-2` stops *sending* the header, but browsers that already received `max-age=63072000` keep enforcing HTTPS for the in-scope hosts until it expires (~2 years) or the user clears HSTS state. **Before enabling in production, confirm every subdomain *below the Cal.diy hostname* is HTTPS-capable**, and treat `preload` as a deliberate, hard-to-reverse choice. A dedicated leaf host with no child subdomains carries much lower practical scope; an apex host carries the most.
 
+**`X-Frame-Options: DENY` blocks the booking embed.** Cal.com's inline, pop-up and
+button widgets put a booking page in an iframe on another site, and they work
+against a self-hosted instance — but not against this stack as shipped, because
+`sec-2` and `sec-3` both send `DENY`. Upstream controls framing through its own
+`frame-ancestors` policy, which the proxy header overrides.
+
+That default is kept on purpose. This is a fork hardened after a compromise, the
+embed is opt-in, and a booking page any site may frame is a booking page any site
+can overlay. If you do want embeds, name the parent origins rather than dropping
+the header: `sec-3e` for same-origin, or a per-app middleware replacing
+`X-Frame-Options` with a `frame-ancestors` allowlist — `business/matomo` shows the
+shape. Neither has been run against the embed here.
+
 **Rollback:** set `APP_TRAEFIK_SECURITY=sec-2` in `.env` and recreate the app container — `docker compose up -d --force-recreate app`. Traefik hot-reloads the middleware reference; no Traefik restart needed. See [docs/ops-runbook.md](docs/ops-runbook.md) → "Traefik security chain rollout" for the full procedure and the HSTS caveat.
 
 ## Backup

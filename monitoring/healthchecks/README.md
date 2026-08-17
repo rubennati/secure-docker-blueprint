@@ -56,6 +56,17 @@ Create a test check in the UI:
 
 ## Security Model
 
+- **Switching to `acc-public` opens the admin UI, not just the ping endpoints.** One service serves both, so an access policy set for the pings applies to the login page and the check list as well. Keep `acc-tailscale` and give the ping path its own router instead:
+
+  ```yaml
+  - "traefik.http.routers.hc-ping.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/ping/`)"
+  - "traefik.http.routers.hc-ping.priority=100"
+  - "traefik.http.routers.hc-ping.middlewares=acc-public@file,${APP_TRAEFIK_SECURITY}@file"
+  - "traefik.http.routers.hc-ping.service=${COMPOSE_PROJECT_NAME}"
+  ```
+
+  The catch-all router keeps `acc-tailscale`, and the path-scoped one runs at the higher priority so it decides requests to `/ping/`. `monitoring/uptime-kuma` documents the mirror image of this for its public status pages.
+
 - **Access policy `acc-tailscale` by default** — assumes monitored jobs live on the same Tailscale network. Switch to `acc-public` if you monitor cron jobs running on public servers or third-party hosts.
 - **`no-new-privileges:true`** — baseline hardening.
 - **Registration closed (`HC_REGISTRATION_OPEN=False`)** by default — only the superuser you create can log in and invite others. Flip to `True` if you want self-service signup (only for trusted networks).

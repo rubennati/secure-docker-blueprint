@@ -2,7 +2,7 @@
 
 > If this file conflicts with git (branch, commits, tags), trust git.
 
-**Last updated:** 2026-07-31
+**Last updated:** 2026-08-16
 
 - **Phase:** pre-1.0. Latest tag `v0.7.0` (2026-07-31). Work happens on `dev`.
 - **Current milestone:** v0.8.0 — Monitoring.
@@ -100,15 +100,6 @@ servers — nothing breaks without them, so they fail that test.
 → *Recommendation:* apply the existing test rather than write a new rule. This is
 a structural change, so it belongs after the host session, not before.
 
-**7. CPU limits — two standards disagree**
-`docs/standards/security-baseline.md` prescribes a `cpus` value per service
-profile. `docs/standards/compose-structure.md` states that CPU limits are not
-applied by default, because they make a stack slow under load rather than safe,
-and that one is set only where a component demonstrably pins a core. The compose
-files follow the second. Most services therefore carry no `cpus` value — a
-measurement, not the decision. One of the two standards has to yield; the
-structure checker enforces neither.
-
 ## Active constraints
 
 - **A host to experiment on, not a host at all.** The blueprint's stacks run in
@@ -125,3 +116,7 @@ structure checker enforces neither.
 - Public repository: no real domains, IPs, hostnames or personal data; no session
   context or personal attribution in committed content. `.ai/` is committed and
   therefore public — it holds working context, never internal process detail.
+  This is the rule, not a description of the tree. `site/` is the named exception
+  and still carries the domain, the legal notice and a contact address; the
+  direction that removes them is in [`../ROADMAP.md`](../ROADMAP.md), and the
+  inventory there is not yet complete.

@@ -8,7 +8,7 @@ Heavy stack — 9 services. Upstream default deployment.
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `nginx` (= `app`) | `ghcr.io/zammad/zammad:7.0.1` + `zammad-nginx` | Web gateway, static assets, reverse-proxy to rails + websocket |
+| `nginx` (= `app`) | `ghcr.io/zammad/zammad:${APP_TAG}` + `zammad-nginx` | Web gateway, static assets, reverse-proxy to rails + websocket |
 | `railsserver` | same + `zammad-railsserver` | Rails app (API + core logic) |
 | `websocket` | same + `zammad-websocket` | Agent live updates |
 | `scheduler` | same + `zammad-scheduler` | Background jobs (email import, SLA checks) |
@@ -102,7 +102,8 @@ remaining services once it has exited cleanly.
 
 - **First boot is slow** — Elasticsearch warmup + schema migrations ~3-5 min.
 - **Elasticsearch vm.max_map_count** — required host-level sysctl. If not set, ES crashes on start.
-- **`APP_TAG=7.0.1` is pinned** — update to a newer specific release tag for upgrades; do not use a floating tag like `7`.
+- **Pin the highest build of a release, not the first** — Zammad tags as `X.Y.Z-NNNN`, and a release keeps receiving builds after it ships. `7.1.2-0001` and `7.1.2-0013` are both `7.1.2` and carry different images. Do not use a floating tag like `7` or `7.1`.
+- **7.1.2 closes 18 advisories published 2026-08-04**, one critical (account takeover through unverified e-mail matching during SSO auto-link) and four high, including remote code execution through the AI Agent template sanitizer. Anything at `7.1.1` or below is affected.
 - **bitnami/elasticsearch is no longer free** — switched to `docker.elastic.co/elasticsearch/elasticsearch`. xpack security is disabled via env (`xpack.security.enabled=false`) since ES is on `app-internal` only.
 - **nginx needs DB credentials to pass the readiness check** — nginx runs `bundle exec rails r 'Translation.any? || raise'` in a loop until init has seeded the DB. This requires all `POSTGRESQL_*` env vars. The nginx service therefore merges `*zammad-env` (same as railsserver/scheduler) even though nginx itself doesn't query the DB at runtime.
 - **Setup wizard email step: select SMTP, not Local MTA** — no sendmail/postfix is present in the container. Choosing "Local MTA" fails with `exitstatus 1`. Select "SMTP - configure your own outgoing SMTP settings" or click Skip and configure later under Admin → Channels → Email.

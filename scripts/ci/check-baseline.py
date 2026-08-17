@@ -26,9 +26,20 @@ Add a new exception here only after reviewing the deviation. Never suppress a
 finding without completing all three fields.
 """
 
+import importlib.util
 import sys
 import yaml
 from pathlib import Path
+
+# Stack discovery is owned by check-structure.py and imported rather than
+# repeated. Keeping a second copy here is how `backup/` and both split-compose
+# Seafile stacks — fifteen files — stayed outside the security baseline while
+# `docs/standards/ci.md` said every compose file was validated.
+_spec = importlib.util.spec_from_file_location(
+    "check_structure", Path(__file__).parent / "check-structure.py"
+)
+_structure = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_structure)
 
 # ── Exception type ─────────────────────────────────────────────────────────────
 # Each value is a dict with keys: reason, alternatives, risk
@@ -298,10 +309,8 @@ def check_compose(path: Path) -> list[dict]:
 
 
 def main() -> int:
-    roots = ["core", "apps", "business", "monitoring"]
     compose_files = sorted(
-        p for root in roots
-        for p in Path(root).rglob("docker-compose.yml")
+        f for app in _structure.find_apps() for f in _structure.compose_files(app)
     )
 
     total_files = 0
