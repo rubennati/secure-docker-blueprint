@@ -111,6 +111,7 @@ services:
           # Chromium renders the PDFs and the live design previews; it exceeds
           # 512M under concurrent load or with complex templates.
           memory: 1G
+          # cpus: derived starting value, not measured — v0.9.0
           cpus: "1.00"
           pids: 200
         reservations:
@@ -186,6 +187,7 @@ services:
       resources:
         limits:
           memory: 128M
+          # cpus: derived starting value, not measured — v0.9.0
           cpus: "0.25"
           pids: 50
         reservations:
@@ -242,6 +244,7 @@ services:
       resources:
         limits:
           memory: 1G
+          # cpus: derived starting value, not measured — v0.9.0
           cpus: "1.00"
           pids: 200
         reservations:
@@ -291,6 +294,7 @@ services:
       resources:
         limits:
           memory: 256M
+          # cpus: derived starting value, not measured — v0.9.0
           cpus: "0.25"
           pids: 50
         reservations:

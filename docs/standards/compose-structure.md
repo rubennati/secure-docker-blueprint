@@ -108,8 +108,19 @@ Then leave roughly half again on top.
 
 `pids` bounds a fork bomb and costs nothing to set. **CPU limits are not applied by
 default** — they make a stack slow under load rather than safe,
-and a busy container is not the failure mode this is guarding against. Set one
-only where a component demonstrably pins a core.
+and a busy container is not the failure mode this is guarding against.
+
+A `cpus` value stands in two cases: where a component demonstrably pins a core, and
+where a derived starting value is carried until v0.9.0 measures it. The second case
+is declared beside the value in the compose file, so a reader can tell a measurement
+from a derivation:
+
+```yaml
+# cpus: derived starting value, not measured — v0.9.0
+cpus: "1.00"
+```
+
+A value carrying neither justification is removed rather than kept.
 
 | Role | Typical limit | Basis |
 |---|---|---|
@@ -119,7 +130,12 @@ only where a component demonstrably pins a core.
 | Application | measured peak + ~50% | workers × measured RSS, or the renderer's peak |
 
 Put `pids` inside `deploy.resources.limits` — a top-level `pids_limit` alongside
-`deploy.resources` is rejected by Compose.
+`deploy.resources` is rejected by Compose. Use `deploy:` rather than the top-level
+`mem_limit`, which is deprecated and does not apply in Swarm mode.
+
+`memory` and `pids` are required on every service. `cpus` is the exception, set
+only where a component demonstrably pins a core; [`security-baseline.md`](security-baseline.md#resource-limits)
+states which host failure each of the three bounds.
 
 **Configuration** (required)
 

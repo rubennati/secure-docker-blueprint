@@ -146,7 +146,7 @@ Planned in `core/`: Keycloak (alternative / heavier IAM next to Authentik).
 
 ### Applications
 
-Where several tools compete — dashboards, photo galleries, wikis, form builders — the blueprint ships more than one. What separates them is on the operator site: [Choosing between services](https://secure-docker.rubennati.at/applications/choosing/).
+Where several tools compete — dashboards, photo galleries, wikis, form builders — the blueprint ships more than one. What separates them is on the operator site: [Choosing between services](https://secdockblue.rubennati.at/applications/choosing/).
 
 What has been established about each stack — verified against which version and when, whether a restore was performed — is in [`LIFECYCLE.md`](LIFECYCLE.md), generated from the repository.
 
