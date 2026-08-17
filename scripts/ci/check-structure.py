@@ -321,6 +321,20 @@ def check_files(app: Path, findings: list[dict], root_gi: str) -> None:
 
 
 def main() -> int:
+    # `--list` prints one compose file per line and exits. It exists so the shell
+    # jobs in ci.yml can consume this discovery instead of keeping their own: a
+    # `find … -name docker-compose.yml` misses every split-compose stack and every
+    # root this file knows about, which left fifteen files unvalidated while the
+    # Python checkers reported full coverage.
+    # EXCEPT_DIRS is not applied here. It waives the structure rules for
+    # apps/_reference, not the file's existence — the canonical template still has
+    # to parse, and check-baseline.py scans it for the same reason.
+    if "--list" in sys.argv[1:]:
+        for app in find_apps():
+            for f in compose_files(app):
+                print(f)
+        return 0
+
     results: list[tuple[Path, list[dict]]] = []
     fails = warns = 0
     root_gi = root_gitignore()

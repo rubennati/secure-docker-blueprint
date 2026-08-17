@@ -38,22 +38,35 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Install PyYAML
+        run: pip install --require-hashes -r scripts/ci/requirements.txt --quiet
+
+      # Validated per stack directory, not per file. A split-compose stack's
+      # fragments do not stand alone — apps/seafile/seadoc.yml declares a service
+      # that depends on `db`, which lives in seafile-server.yml, so validating it
+      # by itself fails on a stack that is entirely correct. Running `docker
+      # compose config` inside the directory picks up COMPOSE_FILE from the .env,
+      # which is what the operator runs and what therefore has to parse.
+      #
+      # The directory list comes from check-structure.py --list, so there is one
+      # discovery in this repository. The `find` this used to run missed all
+      # fourteen Seafile fragments and backup/urbackup — fifteen files that were
+      # never syntax-validated while the Python checkers reported full coverage.
       - name: Validate all compose files
         run: |
           failed=0
-          while IFS= read -r file; do
-            dir=$(dirname "$file")
+          while IFS= read -r dir; do
             [ -f "$dir/.env.example" ] && cp "$dir/.env.example" "$dir/.env"
-            echo -n "  checking $file ... "
-            if docker compose -f "$file" config --quiet 2>/dev/null; then
+            echo -n "  checking $dir ... "
+            if (cd "$dir" && docker compose config --quiet 2>/dev/null); then
               echo "ok"
             else
               echo "FAIL"
-              docker compose -f "$file" config 2>&1 | head -20
+              (cd "$dir" && docker compose config 2>&1 | head -20)
               failed=1
             fi
             [ -f "$dir/.env" ] && rm -f "$dir/.env"
-          done < <(find core apps business monitoring -name "docker-compose.yml" | sort)
+          done < <(python3 scripts/ci/check-structure.py --list | xargs -n1 dirname | sort -u)
           exit $failed
 
   # ─────────────────────────────────────────────
@@ -69,11 +82,13 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Install PyYAML
+        run: pip install --require-hashes -r scripts/ci/requirements.txt --quiet
+
       - name: Every stack has a README and a .env.example
         run: |
           failed=0
-          while IFS= read -r compose; do
-            dir=$(dirname "$compose")
+          while IFS= read -r dir; do
             [[ "$dir" == *"templates"* ]] && continue
             if [ ! -f "$dir/README.md" ]; then
               echo "  MISSING README.md    : $dir"
@@ -83,7 +98,7 @@ jobs:
               echo "  MISSING .env.example : $dir"
               failed=1
             fi
-          done < <(find core apps business monitoring -name "docker-compose.yml" | sort)
+          done < <(python3 scripts/ci/check-structure.py --list | xargs -n1 dirname | sort -u)
 
           [ "$failed" -eq 0 ] && echo "  all stacks documented"
           exit $failed

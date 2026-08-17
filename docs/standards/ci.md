@@ -27,8 +27,18 @@ API keys, passwords, tokens, private keys.
 
 ### 2 — Compose validation
 
-Runs `docker compose config --quiet` on every `docker-compose.yml` found under
-`core/`, `apps/`, `business/`, and `monitoring/`.
+Runs `docker compose config --quiet` once per stack directory, over the 59
+directories `python3 scripts/ci/check-structure.py --list` reports. That is the
+single discovery in this repository; jobs 2 and 3 and `check-baseline.py` all use
+it. The `find` this job used to run returned 56 files against the checkers' 71 —
+the fourteen Seafile split-compose fragments and `backup/urbackup` were never
+syntax-validated.
+
+Validation is per directory rather than per file because a split-compose
+fragment does not stand alone: `apps/seafile/seadoc.yml` declares a service that
+depends on `db`, which lives in `seafile-server.yml`. Running inside the directory
+also picks up `COMPOSE_FILE` from the `.env`, so what parses is what the operator
+starts.
 
 Before validation, any `.env.example` in the same directory is temporarily
 copied to `.env` so variable substitution does not cause false failures.
