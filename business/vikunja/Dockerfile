@@ -12,11 +12,17 @@
 # "unable to find user" for both names and numeric UIDs.
 # COPY --chown sets directory ownership in the new image layer without
 # executing any commands, which works on scratch-based images.
+# Both the tag and the digest come from .env, which is where this repository
+# keeps a pin. The tag alone is mutable — a registry push can replace it without
+# the name changing — so the digest is what actually fixes the image, and the tag
+# stays because it is the readable half. Re-resolve both together on an upgrade:
+#   docker buildx imagetools inspect vikunja/vikunja:<tag> --format '{{.Manifest.Digest}}'
 ARG APP_TAG=2.3.0
+ARG APP_DIGEST=sha256:f6b80393c1998cd5cd0dc38d24762c59ab4c10000a6f1032ef5b554e262cab93
 FROM busybox:1.38.0-musl@sha256:8635836765b0c4c43970660219739baa58b0883c2e429e4b8918f7dd1519455c AS shell
 RUN mkdir /files-init
 
-FROM vikunja/vikunja:${APP_TAG}
+FROM vikunja/vikunja:${APP_TAG}@${APP_DIGEST}
 COPY --from=shell /bin/sh /bin/sh
 COPY --from=shell /bin/cat /bin/cat
 COPY --from=shell /bin/wget /bin/wget
