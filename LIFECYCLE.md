@@ -39,7 +39,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 |---|---|---|---|---|---|
 | [`apps/adminer`](apps/adminer/) | `baseline-aligned` | `APP_TAG=5.5.0-standalone` | 2026-05-02 | documented | missing |
 | [`apps/bookstack`](apps/bookstack/) | `baseline-aligned` | `APP_TAG=version-v26.05.2` | 2026-05-03 | documented | missing |
-| [`apps/caldiy`](apps/caldiy/) | `baseline-aligned` | `APP_TAG=v6.2.0-4@sha256:9818a0be6404…` | 2026-07-26 | documented | missing |
+| [`apps/caldiy`](apps/caldiy/) | `baseline-aligned` | `APP_TAG=v6.2.0-5@sha256:c2facc284b28…` | 2026-07-26 | documented | missing |
 | [`apps/dashy`](apps/dashy/) | `baseline-aligned` | `APP_TAG=4.5.0` | 2026-05-02 | documented | missing |
 | [`apps/easyappointments`](apps/easyappointments/) | `baseline-aligned` | `APP_TAG=1.6.0` | 2026-05-03 | documented | missing |
 | [`apps/ghost`](apps/ghost/) | `baseline-aligned` | `APP_TAG=6.54.0-alpine` | 2026-07-26 | documented | missing |
