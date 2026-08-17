@@ -8,6 +8,30 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
+### Added
+
+- **The operator site is live** (`site/`): published from `main` on every push that touches `site/`. Every document that named a future launch date now names the live one.
+- **`security.txt`** (`site/public/.well-known/security.txt`): the reporting address, served under the dot path GitHub Pages drops by default.
+- **Sub-processor disclosure** (`site/src/content/docs/privacy/index.md`): every company that handles a request to the site is named, not the hosting provider alone.
+
+### Changed
+
+- **Resource limits have one owner** (`docs/standards/`): `security-baseline.md` keeps the controls that are on or off, `compose-structure.md` owns every rule that carries a number together with the derivation behind it. The two files previously held separate value tables that disagreed on whether a CPU limit is set by default. `memory` and `pids` are required on every service. A `cpus` value stands where a component pins a core, or where the compose file marks it as derived rather than measured — `scripts/ci/check-structure.py` now names the missing limit instead of reporting the block as absent.
+- **The container-internal Traefik port is a literal again** (39 compose files): `${APP_INTERNAL_PORT}` is gone from every label, healthcheck and `.env.example`. `docs/standards/traefik-labels.md` had specified this from the start and the tree had drifted from it. Changing the value never moved the port the image listens on, only the route to it.
+- **Site content licence** (`site/src/content/docs/legal/index.md`): CC BY-NC 4.0 for the prose. The legal page states where the boundary to the repository's Apache-2.0 runs, which covers code only.
+- **Direction for the personal data the site carries** (`ROADMAP.md`): one committed data module holding placeholders, a decrypted local override that is gitignored, and a key that reaches `age` on a file descriptor instead of the filesystem. A fork builds on the first try with the fields empty.
+
+### Fixed
+
+- **GitHub Pages dropped every dot path on upload** (`.github/workflows/site.yml`): `security.txt` under `.well-known/` stayed unreachable until `.nojekyll` was added and the upload stopped filtering.
+- **A layout cap broke the table of contents** (`site/src/styles/custom.css`): reverted; the title keeps its own size.
+
+### Security
+
+- **`business/zammad` pinned past 18 advisories** (`.env.example`, `UPSTREAM.md`, `README.md`): `APP_TAG` moves from `7.1.1-0036` to `7.1.2-0013`. The advisories were published 2026-08-04 and all name `7.1.2` as the patched version — one critical (account takeover through unverified e-mail matching during SSO auto-link, `GHSA-86cc-3ggh-mf2m`) and four high, including remote code execution through the AI Agent template sanitizer (`GHSA-gp3x-9xm8-rcj6`). The pin is the highest build of the release rather than the first: `7.1.2-0001` and `7.1.2-0013` are both `7.1.2` and are different images. The README's service table carried `7.0.1` — a version this stack has not shipped since the 2026-07-26 sweep — and now references `${APP_TAG}` so it cannot drift again.
+- **`business/openproject` and `business/vikunja` had no outbound isolation**: both named a network `internal` without setting `internal: true`, so it was a plain bridge. Ingress was closed — no published port, not on the proxy network — and both READMEs read that as isolation. `db`, `cache`, `worker`, `cron` and `seeder` now have no route out; the web-facing container keeps its outbound path through the proxy network. Whether OpenProject still delivers mail from `worker` is unverified on a host.
+- **Branch protection on `main`** requires seven status checks and no approving review. The 0.7.0 entry below records five checks and one approving review; that is not the live configuration.
+
 ## [0.7.0] — 2026-07-31
 
 ### Added

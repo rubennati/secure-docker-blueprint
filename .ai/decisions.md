@@ -6,6 +6,70 @@ this file is the index and covers decisions that have no other home.
 
 ---
 
+## 2026-08 · Binary controls and values have separate owners
+
+`security-baseline.md` owns the controls that are on or off: `no-new-privileges`,
+`cap_drop`, secrets through Docker Secrets or `_FILE`, socket access, network
+isolation. `compose-structure.md` owns every rule that carries a number, together
+with the derivation that produces it.
+
+Resource limits were defined in both. `security-baseline.md` held a profile table
+with fixed `memory`, `cpus` and `pids` values and called the block optional;
+`compose-structure.md` held a role table with the same limits, their basis, and
+called it required. Neither file appeared in the File Map for this fact, so the two
+versions had no defined relationship and drifted apart on whether a CPU limit is set
+by default.
+
+The split follows what each file can answer. A binary control is met or it is not,
+and a checker decides it. A value has a derivation behind it and a failure mode when
+it is set too low, which is the treatment the deriving text already carries.
+
+This applies beyond the resource block: a rule that carries a number belongs in
+`compose-structure.md`.
+
+## 2026-08 · Memory and pids bound the host, CPU does not
+
+An unbounded memory leak runs until the kernel OOM-killer fires, and the process it
+selects is not necessarily the one that allocated. A fork bomb exhausts the global
+pid space, after which the host starts no further process, including a login shell.
+`memory` and `pids` are set on every service for that reason.
+
+A CPU limit addresses a different failure. Under contention the scheduler distributes
+cycles, so a container spinning on the CPU makes other containers slow rather than
+unavailable. `cpus` is therefore not part of the baseline.
+
+Two dozen services carry one anyway, with the values of the profile table that was
+removed — a derivation, not a measurement. `compose-structure.md` admits that state
+explicitly and requires the compose file to declare it beside the value, so a reader
+can tell a derived ceiling from a measured one. v0.9.0 resolves it per service.
+
+`security-baseline.md` stated that `deploy.resources` "caps memory and CPU so a
+single container cannot exhaust the host under load or during a memory leak". That
+holds for memory and not for CPU, and it was the reasoning behind the `cpus` column
+in its profile table. Both were removed with the section.
+
+## 2026-08 · The Traefik service port stays a literal
+
+`traefik-labels.md` states that the container-internal port is hardcoded per app,
+because it is a property of the image rather than of the deployment. 39 of 51 label
+lines used `${APP_INTERNAL_PORT}` instead, including `apps/_reference`, and the
+variable was defined in no standard.
+
+The tree was brought to the standard rather than the reverse. `APP_INTERNAL_PORT` is
+removed from every compose file, from the four healthchecks that read it, and from
+every `.env.example`. Changing the value moves the label away from the port the image
+listens on, so it breaks routing instead of relocating it.
+
+## 2026-08 · No review gate on `main`
+
+Branch protection on `main` requires seven status checks and no approving review.
+With a single maintainer, a required review is satisfied by the author approving
+their own pull request, which records an approval that nobody performed. The status
+checks are the part of the gate that reports a result.
+
+`CHANGELOG.md` recorded five checks and one approving review. That was not the live
+configuration.
+
 ## 2026-07 · Two troubleshooting documents, one entry point
 
 `TROUBLESHOOTING.md` is the symptom index and the place to start: what you
@@ -48,7 +112,7 @@ a named alternative for operators wanting a UI or object storage.
 
 Public status (what an operator can rely on) and internal status (what the
 maintainer has established) are separate axes with a defined mapping. The ten
-The baseline-aligned criteria are the single gate between them. Full definition in
+baseline-aligned criteria are the single gate between them. Full definition in
 [`../docs/standards/status-model.md`](../docs/standards/status-model.md).
 
 **Reason:** three status systems previously ran in parallel with no derivation

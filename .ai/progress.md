@@ -98,6 +98,8 @@ on it, and check what the site currently says before believing a quotation of it
    entrypoint needs `CHOWN`, `FOWNER`, `DAC_OVERRIDE`, `SETUID` and `SETGID`.
    Verified by isolation test, affects `_reference` (production file too),
    caldiy, documenso and infisical. **This blocks the site's best entry point.**
-4. Licence for site content — undecided, and the footer says so rather than
-   assuming the repository's Apache-2.0 extends to prose.
-5. No 404 page.
+4. No 404 page.
+
+Decided since: the site content licence is CC BY-NC 4.0, held in
+`site/src/data/site-config.ts` with the boundary to the repository's Apache-2.0
+stated on the legal page.

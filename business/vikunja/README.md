@@ -165,7 +165,7 @@ VIKUNJA_PRIVACYURL=https://your-domain.com/privacy
 |---|---|---|
 | `no-new-privileges` | ✅ | Both containers |
 | Secrets | ✅ | All credentials in Docker Secrets, never in environment variables |
-| Database | ✅ | Not reachable from outside — internal network only |
+| Database | ✅ | `internal: true` — no route in and none out. `vikunja` also joins the proxy network, so the mailer still reaches its relay |
 | Docker socket | ✅ | Not mounted |
 | SSO | ✅ | Authentik OIDC — live-tested |
 | Auto-redirect | ✅ | Login page redirects directly to Authentik |

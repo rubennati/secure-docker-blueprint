@@ -66,10 +66,21 @@ docker compose ps
 |---|---|---|
 | `no-new-privileges` | ✅ | On all services |
 | Secrets | ✅ | SECRET_KEY_BASE + DB password via Docker Secrets |
-| Database isolation | ✅ | `db` and `cache` on internal network only |
+| Network isolation | ✅ | `internal: true` — `db`, `cache`, `worker`, `cron` and `seeder` have no route out |
 | Docker socket | ✅ | Not mounted (autoheal service omitted by design) |
 | TLS termination | ✅ | Traefik — `OPENPROJECT_HTTPS=true` set |
 | SSO / OIDC | ✗ | Enterprise Edition only — not available in CE |
+
+### What the isolated network costs
+
+`web` also joins the proxy network and keeps its outbound path. The other five
+services do not have one. OpenProject delivers mail from background jobs in
+`worker`, so a configured SMTP relay outside the host is unreachable from there.
+
+This has not been run on a host yet. If mail does not leave, or an outbound step
+during first-run seeding fails, give `worker` and `cron` a second network rather
+than removing `internal: true` — the pattern and what it costs are documented in
+[`apps/nextcloud/README.md`](../../apps/nextcloud/README.md#network-exception--why-the-application-containers-reach-the-internet).
 
 ## What it sends outward
 
