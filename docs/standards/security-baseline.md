@@ -37,6 +37,32 @@ cap_add:
 
 Ideal for lightweight services (Whoami, dnsmasq).
 
+**An image that drops privileges itself needs capabilities to do it.** The official
+PostgreSQL and Redis entrypoints start as root, fix ownership on the data directory,
+and then switch to the service user. `cap_drop: ALL` alone removes what that
+sequence needs, and the container exits before the server starts — PostgreSQL on
+`chown: Operation not permitted`, Redis on `setpriv: setresuid failed`. Both need:
+
+```yaml
+cap_add:
+  - CHOWN
+  - DAC_OVERRIDE
+  - FOWNER
+  - SETGID
+  - SETUID
+```
+
+No checker catches this, because a missing capability is not visible in the compose
+file — only in a container that never becomes healthy. Establish the set the same
+way it was established here, against the image the stack pins:
+
+```bash
+docker run --rm --cap-drop ALL <image>     # read the first denial in the log
+```
+
+Add back what the log names, one capability at a time, and record the result beside
+the `cap_add` block. A set copied from another stack is a guess.
+
 ### Non-root User
 
 ```yaml
