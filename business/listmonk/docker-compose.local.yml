@@ -1,0 +1,68 @@
+# Listmonk — local
+#
+#   cp .env.local.example .env.local
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   docker compose -f docker-compose.local.yml --env-file .env.local logs app -f
+#   http://localhost:9000
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  db:
+    image: postgres:${DB_TAG}
+    container_name: listmonk-local-db
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      TZ: ${TZ}
+    volumes:
+      - ./volumes/local/postgres:/var/lib/postgresql/data
+    networks: [listmonk-local]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  app:
+    image: listmonk/listmonk:${APP_TAG}
+    container_name: listmonk-local-app
+    restart: unless-stopped
+    depends_on:
+      db: {condition: service_healthy}
+    command: ["sh", "-c", "./listmonk --install --idempotent --yes --config '' && ./listmonk --upgrade --yes --config '' && ./listmonk --config ''"]
+    security_opt: [no-new-privileges:true]
+    environment:
+      TZ: ${TZ}
+      LISTMONK_app__address: "0.0.0.0:9000"
+      LISTMONK_app__root_url: "http://localhost:9000"
+      LISTMONK_db__host: db
+      LISTMONK_db__port: "5432"
+      LISTMONK_db__user: ${DB_USER}
+      LISTMONK_db__password: ${DB_PASSWORD}
+      LISTMONK_db__database: ${DB_NAME}
+      LISTMONK_db__ssl_mode: disable
+      LISTMONK_db__max_open: "25"
+      LISTMONK_db__max_idle: "25"
+      LISTMONK_db__max_lifetime: "300s"
+    volumes:
+      - ./volumes/local/uploads:/listmonk/uploads
+    ports:
+      - "127.0.0.1:9000:9000"
+    networks: [listmonk-local]
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 9000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+networks:
+  listmonk-local:
+    name: listmonk-local

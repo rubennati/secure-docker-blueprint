@@ -193,6 +193,20 @@ Some services legitimately have none, and the compose file says which:
 `check-structure.py` accepts either marker and warns on anything else, so the
 exemption cannot be used to wave a service through without stating why.
 
+**`healthcheck: {disable: true}` is not a way to declare you have none.** The key
+suppresses a `HEALTHCHECK` baked into the image — it never defines one, so a
+service using it is a service without a healthcheck and needs the same written
+marker. Four services carried it with a reason in prose and none was reported,
+because the dict is truthy and the rule tested `if not hc`. Use it only where the
+image really does declare a check that has to be turned off, and say so:
+
+```yaml
+    # healthcheck: none — upstream removed the built-in check in 2025.10.2. The
+    # image still declares one, so it is disabled explicitly.
+    healthcheck:
+      disable: true
+```
+
 ## Service Names
 
 Use short, generic names:
@@ -323,6 +337,54 @@ Complex stacks like Paperless (App + DB + Redis + Gotenberg + Tika) or Seafile:
 
 ---
 
+## Local test stack
+
+A stack may carry `docker-compose.local.yml` beside the production file, for
+running it on one machine without a proxy, DNS or certificate.
+`apps/_reference/docker-compose.local.yml` is the form.
+
+| | |
+|---|---|
+| Ports | published on `127.0.0.1` only |
+| Credentials | plain values from `.env.local`, covered by the root `.gitignore` |
+| Network | one, named `<stack>-local`, not `internal` |
+| Container names | `<stack>-local-<service>` |
+| Volumes | `./volumes/local/<name>` |
+| Hardening, healthchecks | as in the production file |
+| Absent | Traefik labels, `proxy-public`, `secrets:`, `/run/secrets`, secret `*_FILE` variables |
+
+Its companion `.env.local.example` carries only the variables the local file
+uses, with `__REPLACE_ME__` for anything secret and the generating command above
+it.
+
+The header is the app name and the commands, and nothing else:
+
+```yaml
+# BookStack — local
+#
+#   cp .env.local.example .env.local
+#   mkdir -p volumes/local/config volumes/local/mysql
+#   sudo chown -R 1000:1000 volumes/local/config
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   http://localhost:8080 — first login admin@admin.com / password
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+```
+
+No statement of what the file is for, no comparison with the production file, no
+justification for a setting. A comment belongs in the file only when removing it
+stops someone running the stack.
+
+A stack that shows nothing when run alone gets none: a reverse proxy, an agent
+reporting to a central instance elsewhere, something that needs host networking,
+or a client for another stack's data. `LIFECYCLE.md` lists which stacks have the
+file.
+
+For split-compose stacks the file is excluded from the production set by
+`scripts/ci/check-structure.py`, which otherwise counts every `*.yml` in the
+directory.
+
+---
+
 ## Checklist
 
 - [ ] Block order correct (Identity > Security > Configuration > Storage > Networking > Traefik > Health)
@@ -337,3 +399,4 @@ Complex stacks like Paperless (App + DB + Redis + Gotenberg + Tika) or Seafile:
 - [ ] `traefik.docker.network=${TRAEFIK_NETWORK}` label when service has multiple networks
 - [ ] Healthcheck on every service where possible (app-specific, no forced standard)
 - [ ] Service names: `app`, `db`, `redis`, `nginx`
+- [ ] `docker-compose.local.yml`, where the stack shows something run alone

@@ -1,0 +1,135 @@
+---
+title: Homarr
+description: A dashboard built around live integrations — installed with the encryption key that every stored API token depends on kept beside the data.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackEvidence from '../../../components/StackEvidence.astro';
+
+Homarr is a dashboard whose tiles show live state rather than only links — it
+talks to the services behind them through their APIs. One container with its own
+SQLite database.
+
+<StackEvidence stack="apps/homarr"
+  gap="a restore. The data directory and the encryption key have to come back together, and that has not been performed here." />
+
+Needs: [Traefik](/infrastructure/traefik/) running and a domain.
+
+:::caution
+`HOMARR_SECRET_ENCRYPTION_KEY` encrypts the API tokens Homarr stores for the
+services it queries. Restore the data directory against a different key and the
+boards are intact while every integration fails to authenticate.
+:::
+
+## Installation
+
+From `apps/homarr/`:
+
+<Steps>
+
+1. Copy the environment file and set `APP_TRAEFIK_HOST` and `TZ`:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Generate the encryption key and put it into `.env` as
+   `HOMARR_SECRET_ENCRYPTION_KEY`:
+
+   ```bash
+   openssl rand -hex 32
+   ```
+
+3. Create the data directory:
+
+   ```bash
+   mkdir -p volumes/appdata
+   ```
+
+4. Start it:
+
+   ```bash
+   docker compose up -d
+   ```
+
+5. Open `https://<APP_TRAEFIK_HOST>` — a setup wizard runs on the first visit.
+
+</Steps>
+
+## Verify
+
+```bash
+docker compose ps                       # one service, healthy
+curl -fsSI https://<APP_TRAEFIK_HOST>/  # 200
+```
+
+Then add one integration and confirm its tile shows live data. That is the check
+that covers the encryption key; a dashboard renders fine without it working.
+
+## Going further
+
+### Live container status
+
+Homarr can show container state and offer start and stop buttons, which needs
+access to the Docker daemon. A direct socket mount gives the container full
+control of Docker — root on the host in practice.
+
+Route it through a filtering socket proxy instead, exposing only the endpoints it
+needs. [Dockhand](/infrastructure/dockhand/) shows the same pattern.
+
+### Who can reach it
+
+The stack ships `acc-tailscale`. A dashboard with working integrations holds API
+tokens for everything it displays, which makes it worth more than the tiles
+suggest.
+
+## Backup
+
+| | |
+|---|---|
+| **Database** | SQLite inside `volumes/appdata` — no server, no dump hook |
+| **State** | `volumes/appdata` — boards, integrations, users, encrypted credentials |
+| **Also needed** | the encryption key, wherever `.env` is kept |
+| **Quiescing** | Required. Stop the container or snapshot the filesystem rather than copying a live SQLite file. |
+
+For [borgmatic](/operations/backup/) this stack is `source_directories` only,
+with quiescing.
+
+**The key is not in the data directory.** It comes from the environment, so the
+two have to be treated as one restore unit — the data alone is not enough.
+
+## Updates
+
+<Steps>
+
+1. Read the [release notes](https://github.com/homarr-labs/homarr/releases).
+
+2. Back up `volumes/appdata` with the container stopped, and the key with it.
+
+3. Raise `APP_TAG` in `.env`, then:
+
+   ```bash
+   docker compose pull && docker compose up -d
+   ```
+
+4. Open a board with an integration on it. A migration that touched the encrypted
+   columns shows up there.
+
+</Steps>
+
+## Troubleshooting
+
+**Every integration stopped authenticating.** The encryption key changed or is
+missing. Put the original back and restart.
+
+**Container state does not appear.** Homarr has no route to the Docker daemon.
+See above before mounting the socket directly.
+
+## Repository files
+
+- [`apps/homarr/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/homarr/README.md) — setup, security model, the Docker options
+- [`apps/homarr/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/homarr/UPSTREAM.md) — source and upgrade checklist
+
+## Official sources
+
+- [Homarr documentation](https://homarr.dev/docs/)

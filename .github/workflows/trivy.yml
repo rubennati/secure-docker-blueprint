@@ -3,13 +3,13 @@ name: Trivy
 # Trivy scans for:
 #   1. IaC misconfigurations — all config files in the repository (fast, no image pulls)
 #      Results are uploaded to the GitHub Security tab as SARIF.
-#   2. CVEs in container images — curated high-priority image list (scripts/ci/list-images.sh)
+#   2. CVEs in container images — every image the checkers discover (scripts/ci/list-images.sh)
 #      Results appear in CI logs. Non-blocking while CVE baseline is being established.
 #
 # Triggers: push/PR to main, weekly Monday 04:00 UTC, manual dispatch.
 #
 # Limitations (documented in docs/security-verification.md):
-#   - Image scanning covers ~11 high-risk compose files, not all 50+.
+#   - Image scanning covers every compose file check-structure.py --list reports.
 #   - Images are pulled at scan time; new CVEs only detected on next scheduled run.
 #   - Tags are pinned to versions but not to digest.
 #   - --ignore-unfixed: CVEs with no available fix are skipped to reduce noise.
@@ -67,13 +67,16 @@ jobs:
   # ─────────────────────────────────────────────────────────────────────────
   # 2. IMAGE CVE SCAN
   # ─────────────────────────────────────────────────────────────────────────
-  # Scans container images from the curated high-risk list for known CVEs.
+  # Scans every image list-images.sh resolves.
   # Results appear in CI logs. Non-blocking (exit-code 0) while baseline is reviewed.
   image-scan:
     name: Image CVE scan
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install PyYAML (list-images.sh discovers compose files via check-structure.py)
+        run: pip install --require-hashes -r scripts/ci/requirements.txt --quiet
 
       - name: Install gettext (provides envsubst for image list resolution)
         run: sudo apt-get install -y gettext-base --quiet
@@ -102,13 +105,30 @@ jobs:
         # Findings are visible in the job log. To make this blocking once the
         # baseline is reviewed, change --exit-code to 1.
         run: |
+          # An image that cannot be pulled does not end the run, but it is
+          # counted and named, so an unscanned image is not read as a clean one.
+          # Causes: Docker Hub rate limits on anonymous pulls, and the
+          # apps/seafile-pro images, which need a licence.
+          failed=0
+          total=0
           while IFS= read -r image; do
+            total=$((total + 1))
             echo "── $image"
-            trivy image \
+            if ! trivy image \
               --quiet \
               --no-progress \
               --ignore-unfixed \
               --severity CRITICAL,HIGH \
               --exit-code 0 \
-              "$image" || true
+              "$image"; then
+              failed=$((failed + 1))
+              echo "   NOT SCANNED: $image" >> /tmp/unscanned.txt
+            fi
           done < /tmp/images.txt
+
+          echo
+          echo "Scanned $((total - failed)) of $total images."
+          if [ "$failed" -gt 0 ]; then
+            echo "$failed could not be scanned — unreachable, rate-limited or licensed:"
+            cat /tmp/unscanned.txt
+          fi

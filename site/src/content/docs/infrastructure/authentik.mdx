@@ -1,0 +1,196 @@
+---
+title: Authentik — one login for several services
+description: A self-hosted identity provider, installed so that Traefik can put a login in front of any service without the service knowing about it.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackEvidence from '../../../components/StackEvidence.astro';
+
+Authentik is an identity provider: one account, one login page, and any number of
+services behind it. Traefik can delegate authentication to it without the service
+being changed at all, and applications that speak OAuth2, OIDC or SAML can use it
+directly.
+
+<StackEvidence stack="core/authentik"
+  gap="a restore. The database, the secret key and the signing certificates have to come back together, and that has not been performed here." />
+
+Needs: [Traefik](/infrastructure/traefik/) running, a domain, and SMTP
+credentials.
+
+Five containers: the web server, a background worker, PostgreSQL, Redis, and a
+one-shot init container that runs for half a second at every start.
+
+:::danger
+`/if/flow/initial-setup/` is open to anyone until an administrator exists.
+Complete that step immediately after the first start — whoever reaches the URL
+first becomes the administrator.
+:::
+
+## Installation
+
+From `core/authentik/`:
+
+<Steps>
+
+1. Copy the environment file and set `APP_TRAEFIK_HOST`, `TZ` and the `SMTP_*`
+   block:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Generate the secrets:
+
+   ```bash
+   mkdir -p .secrets
+   openssl rand -base64 32 | tr -d '\n' > .secrets/db_pwd.txt
+   openssl rand -base64 60 | tr -d '\n' > .secrets/authentik_secret_key.txt
+   printf '%s' 'YOUR-SMTP-PASSWORD' > .secrets/smtp_password.txt
+   ```
+
+   Authentik reads values written as `file://…`, so no entrypoint wrapper is
+   involved.
+
+3. Start it. No `sudo` on the host is needed — the init container creates the
+   bind-mount directories and hands them to UID 1000 before the server and
+   worker start:
+
+   ```bash
+   docker compose up -d
+   docker compose logs server --follow
+   ```
+
+   Wait for `Startup complete`.
+
+4. Open `https://<APP_TRAEFIK_HOST>/if/flow/initial-setup/` and create the
+   administrator now. The URL stops working once an account exists.
+
+</Steps>
+
+## Verify
+
+```bash
+docker compose ps                                      # five services
+curl -fsSI https://<APP_TRAEFIK_HOST>/-/health/live/   # 200
+curl -fsSI https://<APP_TRAEFIK_HOST>/-/health/ready/  # 200
+```
+
+Then trigger a password reset for a test account and confirm the mail arrives.
+Password resets, invitations and event notifications all fail silently when SMTP
+is wrong, and nothing else surfaces it.
+
+## Putting a login in front of a service
+
+Traefik asks Authentik about every request first. An authenticated user passes
+through; anyone else is redirected to the login page. The service itself is not
+modified and does not need to support any of this.
+
+<Steps>
+
+1. In `core/traefik/ops/templates/dynamic/integrations.yml.tmpl`, uncomment the
+   `sec-authentik` middleware, then re-render and redeploy:
+
+   ```bash
+   cd core/traefik
+   ./ops/scripts/render.sh
+   docker compose up -d
+   ```
+
+   The middleware is then available to any router as `sec-authentik@file`.
+
+2. In the Authentik interface under **Applications → Outposts**, confirm the
+   embedded outpost exists and is healthy. No extra container is required.
+
+3. Create a provider and an application in Authentik for the service you are
+   protecting, then add `sec-authentik@file` to that service's middleware chain.
+
+</Steps>
+
+The middleware address does not have to be on this host. One Authentik instance
+can protect services on several machines, as long as Traefik can reach it.
+
+The per-application steps, including the variant that protects only part of a
+service, are in
+[`core/authentik/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/authentik/README.md).
+
+## Backup
+
+| | |
+|---|---|
+| **Database** | PostgreSQL, container `authentik-db`, database `authentik`, user `authentik` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **State** | `volumes/postgres` · `volumes/data` · `volumes/certs` · `volumes/custom-templates` |
+| **Also needed** | `.secrets/authentik_secret_key.txt` |
+| **Rebuildable** | `volumes/redis` |
+| **Quiescing** | Not needed — the dump is consistent on its own. |
+
+For [borgmatic](/operations/backup/):
+
+```yaml
+postgresql_databases:
+    - name: authentik
+      container: authentik-db
+      username: authentik
+      password: "{credential file /srv/docker/core/authentik/.secrets/db_pwd.txt}"
+```
+
+**This is the stack whose loss cascades.** Every service behind it depends on it,
+so a failed restore locks people out of all of them at once rather than out of
+Authentik alone. Rehearse this restore before the services that sit behind it.
+
+Two files outside the database decide whether a restore works.
+`authentik_secret_key.txt` derives session and token values — without it every
+session and issued token is invalid. `volumes/certs` holds the signing keypairs,
+and without them SAML assertions no longer validate against the metadata that
+relying parties already hold.
+
+Restore order: database, then `server`, then `worker`.
+
+## Updates
+
+<Steps>
+
+1. Read the [release notes](https://github.com/goauthentik/authentik/releases).
+   Authentik uses date-based versions and ships schema migrations.
+
+2. Back up the database, `volumes/certs` and the secret key together.
+
+3. Raise `APP_TAG` in `.env`, then:
+
+   ```bash
+   docker compose pull && docker compose up -d
+   docker compose logs server --follow
+   ```
+
+4. Log in, then load one service that sits behind the middleware. A migration
+   that changed the outpost or provider configuration shows up there rather than
+   in Authentik itself.
+
+</Steps>
+
+## Troubleshooting
+
+**Someone else became the administrator.** `/if/flow/initial-setup/` was reachable
+before you used it. There is no recovery other than rebuilding the instance.
+
+**Password resets and invitations never arrive.** SMTP is wrong. The flows report
+success regardless, so test with a real account after any mail change.
+
+**`PermissionError` on start after moving volumes.** The init container fixes
+ownership on the paths it knows about. If mount paths changed, update them for
+both `server` and `worker` — they share `volumes/data` and
+`volumes/custom-templates`.
+
+**Everyone is signed out after an upgrade.** `AUTHENTIK_SECRET_KEY` changed.
+Rotating it invalidates every session and API token, so it needs a maintenance
+window.
+
+## Repository files
+
+- [`core/authentik/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/authentik/README.md) — setup, the per-application integration patterns, known issues
+- [`core/authentik/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/authentik/UPSTREAM.md) — source, upgrade checklist, version pinning
+
+## Official sources
+
+- [Authentik documentation](https://docs.goauthentik.io/)
+- [Forward-auth with Traefik](https://docs.goauthentik.io/docs/add-secure-apps/providers/proxy/server_traefik)

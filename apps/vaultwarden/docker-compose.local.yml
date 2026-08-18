@@ -1,0 +1,90 @@
+# Vaultwarden — local
+#
+#   cp .env.local.example .env.local
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   http://localhost:8080
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  db:
+    image: mariadb:${DB_TAG}
+    container_name: vaultwarden-local-db
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [CHOWN, SETUID, SETGID, DAC_OVERRIDE]
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          pids: 200
+        reservations:
+          memory: 256M
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MARIADB_AUTO_UPGRADE: "1"
+      TZ: ${TZ}
+    volumes:
+      - ./volumes/local/mysql:/var/lib/mysql
+    networks: [vaultwarden-local]
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 20s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  app:
+    image: vaultwarden/server:${APP_TAG}
+    container_name: vaultwarden-local-app
+    restart: unless-stopped
+    depends_on:
+      db: {condition: service_healthy}
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs: [/tmp]
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          pids: 200
+        reservations:
+          memory: 128M
+    environment:
+      DOMAIN: http://localhost:8080
+      DATABASE_URL: mysql://${DB_USER}:${DB_PASSWORD}@db:3306/${DB_NAME}
+      TZ: ${TZ}
+      SIGNUPS_ALLOWED: ${VW_SIGNUPS_ALLOWED}
+      SIGNUPS_VERIFY: "false"
+      INVITATIONS_ALLOWED: "false"
+      PASSWORD_HINTS_ALLOWED: "false"
+      SHOW_PASSWORD_HINT: "false"
+      ADMIN_TOKEN: ${VW_ADMIN_TOKEN}
+      ADMIN_RATELIMIT_SECONDS: "300"
+      ADMIN_RATELIMIT_MAX_BURST: "3"
+      ADMIN_SESSION_LIFETIME: "20"
+      LOGIN_RATELIMIT_SECONDS: "60"
+      LOGIN_RATELIMIT_MAX_BURST: "10"
+      PASSWORD_ITERATIONS: "600000"
+      LOG_LEVEL: ${VW_LOG_LEVEL}
+      EXTENDED_LOGGING: "true"
+    volumes:
+      - ./volumes/local/data:/data
+    ports:
+      - "127.0.0.1:8080:80"
+    networks: [vaultwarden-local]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:80/alive"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+networks:
+  vaultwarden-local:
+    name: vaultwarden-local

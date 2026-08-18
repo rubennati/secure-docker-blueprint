@@ -1,0 +1,34 @@
+# IT-Tools — local
+#
+#   cp .env.local.example .env.local
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   # open http://localhost:8080
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  app:
+    image: ghcr.io/corentinth/it-tools:${APP_TAG}
+    container_name: it-tools-local-app
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx
+      - /var/run
+    environment:
+      TZ: ${TZ}
+    ports:
+      - "127.0.0.1:8080:80"
+    networks: [it-tools-local]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fso /dev/null http://127.0.0.1:80"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+networks:
+  it-tools-local:
+    name: it-tools-local

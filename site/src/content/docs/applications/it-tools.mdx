@@ -1,0 +1,95 @@
+---
+title: IT-Tools
+description: Formatters, generators and converters on your own server — installed in one step, with nothing leaving the browser.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackEvidence from '../../../components/StackEvidence.astro';
+
+IT-Tools is a collection of small utilities: JSON and YAML formatters, hash and
+UUID generators, a regular-expression tester, encoders, QR codes, timezone
+conversion. One container serving a static page.
+
+<StackEvidence stack="apps/it-tools"
+  gap="a restore. There is nothing here to restore — the stack holds no state at all." />
+
+Needs: [Traefik](/infrastructure/traefik/) running and a domain.
+
+## Installation
+
+From `apps/it-tools/`:
+
+<Steps>
+
+1. Copy the environment file and set `APP_TRAEFIK_HOST` and `TZ`:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Start it:
+
+   ```bash
+   docker compose up -d
+   ```
+
+3. Open `https://<APP_TRAEFIK_HOST>`. There is no setup, no account and no
+   configuration.
+
+</Steps>
+
+## Verify
+
+```bash
+docker compose ps                       # one service, healthy
+curl -fsSI https://<APP_TRAEFIK_HOST>/  # 200
+```
+
+The tool list loads immediately. There is no setup page to get past.
+
+## Going further
+
+### Nothing is sent anywhere
+
+Every tool runs in the browser. The container serves static files and has no API
+and no data endpoint, which is the reason to host it: pasting a token into a
+formatter on someone else's site sends the token to that site.
+
+### Who can reach it
+
+The stack ships `acc-tailscale` — VPN-only, because a personal toolbox does not
+need to be public. Switching to `acc-public` is defensible here in a way it is not
+for most stacks: there is no data to expose and no login to attack.
+
+## Backup
+
+Nothing to back up. No database, no volumes, no state. Restoring means starting
+the container.
+
+## Updates
+
+<Steps>
+
+1. Raise `APP_TAG` in `.env`, then:
+
+   ```bash
+   docker compose pull && docker compose up -d
+   ```
+
+2. Load the page. A static site either serves or it does not.
+
+</Steps>
+
+## Troubleshooting
+
+**A tool behaves differently after an update.** The tools are upstream's, and the
+container only serves them. Check the upstream repository for that tool.
+
+## Repository files
+
+- [`apps/it-tools/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/it-tools/README.md) — setup and security model
+- [`apps/it-tools/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/it-tools/UPSTREAM.md) — source and upgrade checklist
+
+## Official sources
+
+- [IT-Tools](https://it-tools.tech/)

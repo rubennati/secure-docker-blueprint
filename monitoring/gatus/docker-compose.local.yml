@@ -1,0 +1,41 @@
+# Gatus — local
+#
+#   cp .env.local.example .env.local
+#   mkdir -p config
+#   cp config.example.yaml config/config.yaml
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   http://localhost:8080
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  app:
+    image: twinproduction/gatus:${APP_TAG}
+    container_name: gatus-local-app
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    tmpfs: [/tmp]
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          pids: 100
+        reservations:
+          memory: 32M
+    environment:
+      TZ: ${TZ}
+      GATUS_CONFIG_PATH: /config
+      GATUS_LOG_LEVEL: ${LOG_LEVEL}
+    volumes:
+      - ./config:/config:ro
+      - ./volumes/local/data:/data
+    ports:
+      - "127.0.0.1:8080:8080"
+    networks: [gatus-local]
+    healthcheck:
+      disable: true
+
+networks:
+  gatus-local:
+    name: gatus-local

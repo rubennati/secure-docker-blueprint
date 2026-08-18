@@ -7,12 +7,12 @@
 - **Docker Hub:** https://hub.docker.com/r/louislam/uptime-kuma
 - **License:** MIT
 - **Origin:** Hong Kong · Louis Lam · non-EU
-- **Based on version:** `2.4.0` (🚧 major 1.x→2.x — verify DB migration before deploy)
-- **Last checked:** 2026-05-03
+- **Based on version:** `2.4.0`
+- **Last checked:** 2026-08-18
 
 ## What we use
 
-- Official `louislam/uptime-kuma` image (v1 stable — v2 is in beta as of 2026-05)
+- Official `louislam/uptime-kuma` image
 - Built-in SQLite database (stored in `./volumes/data/`)
 - No external database service required
 - Traefik labels for HTTPS routing
@@ -28,9 +28,9 @@
 
 ## Version notes
 
-- v1 (current): stable, feature-complete, `1.23.x` is the latest stable branch
-- v2 (beta as of 2026-05): full rewrite with multi-user support — wait for stable before upgrading
-- Upgrading from v1 to v2 will require data migration
+- `2.x` carries breaking changes against `1.x`. Upstream publishes a migration
+  guide for an existing v1 instance:
+  https://github.com/louislam/uptime-kuma/wiki/Migration-From-v1-To-v2
 
 ## Upgrade checklist
 

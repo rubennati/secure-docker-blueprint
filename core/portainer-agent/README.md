@@ -98,7 +98,8 @@ See the `docker-compose.yml` comments for the switch. You'll need to:
 
 - **`EDGE_KEY` (or `AGENT_SECRET`)** is the only authentication — treat it like a root password for Docker on this host.
 - **Direct `/var/run/docker.sock` mount** — Portainer Agent needs broad Docker API access (containers, volumes, networks, images, swarm, tasks, secrets, configs, exec, build). A filtered socket-proxy would have to allow nearly all endpoints, so the security gain is marginal. Same trade-off as [`core/hawser/`](../hawser/).
-- **`/host:ro` mount** — Portainer uses this to show host volumes / paths. Read-only. Drop if host-path browsing isn't needed.
+- **`/var/lib/docker/volumes` is bound read-write** — that is every named volume on the host, eleven in this repository, holding the file data of `apps/nextcloud`, `business/invoiceninja`, `business/vikunja` and `business/openproject`. Upstream lists the mount so Portainer can browse and edit volume contents. Unlike the socket, `:ro` here would be a real restriction — this is a filesystem bind, so read-only actually prevents writes — at the cost of Portainer's file editing, which has not been tested here. No checker sees this mount: `check-baseline.py` has rules for the Docker socket and for network placement, none for a host filesystem bind.
+- **`/:/host:ro` mount** — commented out; see above.
 - **`no-new-privileges:true`** on the container.
 
 ## Backup

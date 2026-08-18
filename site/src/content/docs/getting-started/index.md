@@ -6,9 +6,9 @@ next:
   label: Preparing a server
 ---
 
-A finished setup is one Linux host running one reverse proxy, with each service
-behind it on its own network, its credentials mounted as files rather than set in
-the environment, and a backup you have restored from at least once.
+A service set up from this blueprint sits behind a reverse proxy on its own
+network, with its credentials mounted as files rather than set in the
+environment, and a backup you have restored from at least once.
 
 Nothing here publishes a port to the internet except the proxy. That single
 decision is what makes the rest of it manageable — one place for certificates,

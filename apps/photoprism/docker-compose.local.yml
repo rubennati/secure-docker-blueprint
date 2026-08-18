@@ -1,0 +1,111 @@
+# PhotoPrism — local
+#
+#   cp .env.local.example .env.local
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   http://localhost:2342
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  db:
+    image: mariadb:${DB_TAG}
+    container_name: photoprism-local-db
+    restart: unless-stopped
+    stop_grace_period: 15s
+    security_opt:
+      - no-new-privileges:true
+      # uncomment the next two lines if MariaDB crashes on start
+      # - seccomp:unconfined
+      # - apparmor:unconfined
+    cap_drop: [ALL]
+    cap_add: [CHOWN, SETUID, SETGID, DAC_OVERRIDE]
+    environment:
+      MARIADB_AUTO_UPGRADE: "1"
+      MARIADB_INITDB_SKIP_TZINFO: "1"
+      MARIADB_DATABASE: ${DB_NAME}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      TZ: ${TZ}
+    command:
+      - --innodb-buffer-pool-size=512M
+      - --transaction-isolation=READ-COMMITTED
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --max-connections=512
+      - --innodb-rollback-on-timeout=OFF
+      - --innodb-lock-wait-timeout=120
+    volumes:
+      - ./volumes/local/database:/var/lib/mysql
+    networks: [photoprism-local]
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 20s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  app:
+    image: photoprism/photoprism:${APP_TAG}
+    container_name: photoprism-local-app
+    restart: unless-stopped
+    stop_grace_period: 15s
+    working_dir: "/photoprism"
+    depends_on:
+      db: {condition: service_healthy}
+    security_opt: [no-new-privileges:true]
+    environment:
+      TZ: ${TZ}
+      PHOTOPRISM_UID: ${PUID}
+      PHOTOPRISM_GID: ${PGID}
+      PHOTOPRISM_SITE_URL: http://localhost:2342/
+      PHOTOPRISM_SITE_TITLE: ${SITE_TITLE}
+      PHOTOPRISM_SITE_CAPTION: ${SITE_CAPTION}
+      PHOTOPRISM_DEFAULT_LOCALE: ${DEFAULT_LOCALE}
+      PHOTOPRISM_PLACES_LOCALE: ${PLACES_LOCALE}
+      PHOTOPRISM_DISABLE_TLS: "true"
+      PHOTOPRISM_DEFAULT_TLS: "false"
+      PHOTOPRISM_AUTH_MODE: "password"
+      PHOTOPRISM_ADMIN_USER: ${ADMIN_USER}
+      PHOTOPRISM_ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      PHOTOPRISM_LOG_LEVEL: "info"
+      PHOTOPRISM_READONLY: "false"
+      PHOTOPRISM_EXPERIMENTAL: "false"
+      PHOTOPRISM_DISABLE_WEBDAV: "false"
+      PHOTOPRISM_DISABLE_SETTINGS: "false"
+      PHOTOPRISM_DISABLE_TENSORFLOW: "false"
+      PHOTOPRISM_DISABLE_FACES: "false"
+      PHOTOPRISM_DISABLE_CLASSIFICATION: "false"
+      PHOTOPRISM_DISABLE_RAW: "false"
+      PHOTOPRISM_SIDECAR_YAML: "true"
+      PHOTOPRISM_BACKUP_ALBUMS: "true"
+      PHOTOPRISM_BACKUP_DATABASE: "true"
+      PHOTOPRISM_BACKUP_SCHEDULE: "daily"
+      PHOTOPRISM_DETECT_NSFW: "false"
+      PHOTOPRISM_UPLOAD_NSFW: "true"
+      PHOTOPRISM_UPLOAD_ARCHIVES: "true"
+      PHOTOPRISM_UPLOAD_LIMIT: "5000"
+      PHOTOPRISM_ORIGINALS_LIMIT: "5000"
+      PHOTOPRISM_HTTP_COMPRESSION: "gzip"
+      PHOTOPRISM_DATABASE_DRIVER: "mysql"
+      PHOTOPRISM_DATABASE_SERVER: "db:3306"
+      PHOTOPRISM_DATABASE_NAME: ${DB_NAME}
+      PHOTOPRISM_DATABASE_USER: ${DB_USER}
+      PHOTOPRISM_DATABASE_PASSWORD: ${DB_PASSWORD}
+      PHOTOPRISM_INIT: "tensorflow"
+    volumes:
+      - ${ORIGINALS_PATH}:/photoprism/originals
+      - ./volumes/local/storage:/photoprism/storage
+    ports:
+      - "127.0.0.1:2342:2342"
+    networks: [photoprism-local]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sS -o /dev/null --max-time 5 http://127.0.0.1:2342/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+networks:
+  photoprism-local:
+    name: photoprism-local

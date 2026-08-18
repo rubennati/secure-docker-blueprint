@@ -73,6 +73,10 @@ limitation that still applies. An alternative that fails that test is dropped
 when the decision is made. This is not an instruction to conserve session
 context.
 
+Test environments, local configuration, session state and this repository's own
+history are evidence, not specification. They are promoted here only where they
+establish a reusable property, requirement, limitation or procedure.
+
 ## Ownership
 
 One fact, one **canonical owner** — the map is the File Map in

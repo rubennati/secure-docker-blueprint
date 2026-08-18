@@ -1,0 +1,251 @@
+---
+title: Paperless-ngx
+description: Scanned paper becoming a searchable archive — installed from secrets, VPN-only by default, with OCR languages set before the first document goes in.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackEvidence from '../../../components/StackEvidence.astro';
+
+Paperless-ngx turns scanned paper into a searchable archive: a document dropped
+into a folder is OCR'd, classified and filed, and its text becomes searchable.
+Five containers — the application with its workers and consumer, a database, a
+cache, and two converters it hands other formats to.
+
+<StackEvidence stack="apps/paperless-ngx"
+  gap="a restore. The database and the document archive have to come back from the same point in time, and that has not been performed here." />
+
+Needs: [Traefik](/infrastructure/traefik/) running, a domain, and the OCR
+languages you intend to use. SMTP is optional.
+
+:::caution
+Set `PAPERLESS_OCR_LANGUAGES` before the first document is consumed. Without the
+language pack installed, Tesseract falls back to English silently — the document
+is archived, the text is wrong, and nothing reports an error.
+:::
+
+## Installation
+
+From `apps/paperless-ngx/`:
+
+<Steps>
+
+1. Copy the environment file and set the values for this host:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   | Variable | What it is |
+   |---|---|
+   | `APP_TRAEFIK_HOST` | the hostname Traefik routes to this stack |
+   | `PAPERLESS_OCR_LANGUAGE` | the language used when a document carries no language metadata |
+   | `PAPERLESS_OCR_LANGUAGES` | every language pack to install, comma-separated |
+   | `USERMAP_UID` / `USERMAP_GID` | the host user that owns `volumes/` — `1000:1000` on a default Debian install |
+   | `TZ` | the timezone timestamps are written in |
+
+   Language codes are ISO 639-2, three letters: `deu`, `eng`, `fra`, `spa`, `ita`,
+   `ron`. The [Tesseract language
+   data](https://github.com/tesseract-ocr/tessdata) lists the rest.
+
+2. Generate the two secrets. `tr -d '\n'` is not optional — a trailing newline is
+   part of the value, and authentication fails with a password that looks right:
+
+   ```bash
+   mkdir -p .secrets
+   openssl rand -base64 32 | tr -d '\n' > .secrets/db_pwd.txt
+   openssl rand -base64 48 | tr -d '\n' > .secrets/secret_key.txt
+   ```
+
+3. Create the volumes and hand them to the user the application drops to:
+
+   ```bash
+   mkdir -p volumes/{data,media,consume,export,postgres,redis}
+   sudo chown -R 1000:1000 volumes/data volumes/media volumes/consume volumes/export
+   ```
+
+   Use the same UID and GID you set in step 1. A mismatch surfaces as permission
+   errors on the consume folder rather than as a startup failure.
+
+4. Start the stack:
+
+   ```bash
+   docker compose up -d
+   ```
+
+5. Watch the migrations finish:
+
+   ```bash
+   docker compose logs app --follow
+   ```
+
+   Wait for `Listening at: http://0.0.0.0:8000`.
+
+6. Create the first account:
+
+   ```bash
+   docker compose exec app python manage.py createsuperuser
+   ```
+
+7. Open `https://<APP_TRAEFIK_HOST>` and log in.
+
+</Steps>
+
+## Verify
+
+```bash
+docker compose ps                               # five services, all healthy
+docker compose exec app python manage.py check  # Django reports no issues
+```
+
+Then put a PDF into `volumes/consume/` and watch it arrive:
+
+```bash
+docker compose logs app --follow
+```
+
+The document is consumed, OCR'd and appears in the interface. Open it and read
+the extracted text — a document that appears with empty or wrong text means the
+language pack in `PAPERLESS_OCR_LANGUAGES` does not cover it.
+
+## Going further
+
+### Who can reach it
+
+The stack ships `acc-tailscale` with `sec-3`: reachable over your VPN, refused
+from everywhere else. Paperless holds whatever you scan, which is usually the
+most personal data on the server. Change `APP_TRAEFIK_ACCESS` in `.env` only
+deliberately, and consider single sign-on at the same time.
+
+### Single sign-on through Authentik
+
+`sso.yml` overlays OpenID Connect. With it active, username and password login is
+disabled and every request redirects to Authentik.
+
+In Authentik: an application with the slug `paperless`, an OAuth2/OIDC provider
+bound to it, and the redirect URI
+`https://<APP_TRAEFIK_HOST>/accounts/oidc/<SSO_PROVIDER_ID>/login/callback/`.
+Then in `.env`:
+
+```env
+COMPOSE_FILE=docker-compose.yml,sso.yml
+SSO_PROVIDER_ID=authentik
+SSO_CLIENT_ID=<from authentik>
+SSO_CLIENT_SECRET=<from authentik>
+SSO_SERVER_URL=https://auth.example.com/application/o/paperless/.well-known/openid-configuration
+```
+
+`SSO_CLIENT_SECRET` lives in `.env` rather than in `.secrets/`. Paperless builds
+its provider configuration as a single JSON environment variable and has no
+`_FILE` form for a value inside it.
+
+### Mail
+
+Used for password resets, workflow notifications and document share links. Write
+the password to a file and set the host in `.env`:
+
+```bash
+echo -n 'your-smtp-password' > .secrets/email_pwd.txt
+```
+
+```env
+PAPERLESS_EMAIL_HOST=smtp.example.com
+PAPERLESS_EMAIL_PORT=587
+PAPERLESS_EMAIL_USE_TLS=true
+```
+
+Port 465 instead: `PAPERLESS_EMAIL_USE_TLS=false` with
+`PAPERLESS_EMAIL_PORT=465`. An empty `PAPERLESS_EMAIL_HOST` disables outgoing
+mail.
+
+## Backup
+
+| | |
+|---|---|
+| **Database** | PostgreSQL, container `paperless-db`, database `paperless`, user `paperless_user` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **The archive** | `volumes/media` — the documents themselves |
+| **Also needed** | `.secrets/secret_key.txt`, or existing sessions and tokens stop working |
+| **Rebuildable** | `volumes/data` (search index) · `volumes/redis` · `volumes/consume` · `volumes/export` |
+
+For [borgmatic](/operations/backup/):
+
+```yaml
+postgresql_databases:
+    - name: paperless
+      container: paperless-db
+      username: paperless_user
+      password: "{credential file /srv/docker/apps/paperless-ngx/.secrets/db_pwd.txt}"
+```
+
+No quiescing — the dump is consistent on its own.
+
+**`volumes/media` is the archive.** The database holds tags, correspondents and
+the extracted text; the documents are files on disk. A database restored without
+media leaves every record pointing at a document that is gone.
+
+Restore order: database, then media, then the application. The search index
+rebuilds on first start; until it finishes, search returns nothing while every
+document is present.
+
+Paperless also ships `document_exporter`, which writes documents and metadata
+into one self-describing tree. That is the path to use when moving between major
+versions rather than restoring in place.
+
+## Updates
+
+Paperless runs schema migrations on every minor bump, and the classifier model
+may need rebuilding.
+
+<Steps>
+
+1. Read the [release notes](https://github.com/paperless-ngx/paperless-ngx/releases)
+   for breaking changes.
+
+2. Export, then dump — the exporter knows what belongs together:
+
+   ```bash
+   docker compose exec -u paperless app \
+     document_exporter /usr/src/paperless/export --compare-checksums --use-filename-format
+   tar czf paperless-export-$(date +%Y%m%d).tgz volumes/export volumes/media
+   docker compose exec db sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' \
+     > paperless-db-$(date +%Y%m%d).sql
+   ```
+
+3. Raise `APP_TAG` in `.env`, then:
+
+   ```bash
+   docker compose pull && docker compose up -d
+   docker compose logs app --follow
+   ```
+
+</Steps>
+
+## Troubleshooting
+
+**Permission errors on the consume or media folder.** `USERMAP_UID` and
+`USERMAP_GID` do not match the host user that owns `volumes/`. Correct the values
+in `.env` or the ownership on disk, then recreate the app container.
+
+**Login is refused with a password that is definitely right.** A secret file has
+a trailing newline. Paperless compares `"password\n"` against `"password"`.
+Regenerate with `tr -d '\n'`.
+
+**The first OCR of a large document takes minutes.** Tesseract loads language
+data on first use; subsequent documents in the same language are fast.
+
+**Adding `user:` to the app service breaks startup.** Paperless uses s6-overlay,
+which needs root to set up `/run` before it drops privileges. The blueprint
+leaves the directive off for that reason.
+
+## Repository files
+
+- [`apps/paperless-ngx/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/paperless-ngx/README.md) — setup, security model, known issues
+- [`apps/paperless-ngx/CONFIG.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/paperless-ngx/CONFIG.md) — full configuration reference
+- [`apps/paperless-ngx/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/paperless-ngx/UPSTREAM.md) — upgrade checklist and tuning
+- [`apps/paperless-ngx/sso.yml`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/paperless-ngx/sso.yml) — the Authentik overlay
+
+## Official sources
+
+- [Paperless-ngx documentation](https://docs.paperless-ngx.com/)
+- [Configuration reference](https://docs.paperless-ngx.com/configuration/)
+- [Tesseract language data](https://github.com/tesseract-ocr/tessdata)

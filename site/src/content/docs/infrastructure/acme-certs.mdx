@@ -1,0 +1,156 @@
+---
+title: Certificates for devices behind no proxy
+description: Issuing and renewing TLS certificates for a NAS, a router or a mail server — the things that never pass through Traefik.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackEvidence from '../../../components/StackEvidence.astro';
+
+Some things on a network need a valid certificate and cannot sit behind a reverse
+proxy — a NAS, a firewall, a router, a mail server. This stack issues and renews
+certificates for them and writes the files somewhere you can upload from. One
+container.
+
+<StackEvidence stack="core/acme-certs"
+  gap="everything below. The stack has never been brought up here: issuing against a real zone, the renewal timer and the export format are read from the stack's files rather than observed." />
+
+Needs: a domain whose DNS is at Cloudflare, and a scoped API token for it.
+
+:::note
+For anything that *does* go through the proxy, use
+[Traefik](/infrastructure/traefik/) — it obtains certificates itself, and running
+both for the same name means two certificates for one host.
+:::
+
+## Installation
+
+From `core/acme-certs/`:
+
+<Steps>
+
+1. Copy the environment file and set `ACME_EMAIL` and `CERT_DOMAIN`:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Create the Cloudflare API token as a secret. It needs **Zone → DNS → Edit** on
+   the target zone — a scoped token, not the global API key:
+
+   ```bash
+   mkdir -p .secrets
+   printf '%s' 'your-cloudflare-api-token' > .secrets/cf_token.txt
+   ```
+
+3. Start the container. It runs a scheduler in the background and issues nothing
+   on its own:
+
+   ```bash
+   docker compose up -d
+   ```
+
+4. Issue the first certificate:
+
+   ```bash
+   ./scripts/wizard.sh nas.example.com
+   ```
+
+   The wizard asks for the key type and the certificate authority, then writes
+   the files. For a wildcard, add `-w`.
+
+</Steps>
+
+## Verify
+
+```bash
+ls volumes/output/nas.example.com/
+```
+
+Four files: `cert.pem`, `fullchain.pem`, `privkey.pem` and `ca.pem`. Upload one
+of them to a device and load the page — a certificate that exists on disk and one
+a browser accepts are different claims.
+
+## Using the files
+
+Most devices want `fullchain.pem` and `privkey.pem`. These four ask for
+something else:
+
+| Device | Upload |
+|---|---|
+| Synology DSM | `cert.pem`, `privkey.pem`, `ca.pem` as the intermediate |
+| OPNsense, pfSense | `cert.pem`, `privkey.pem`, `ca.pem` |
+| Nginx Proxy Manager | `fullchain.pem` and `privkey.pem`, `ca.pem` optional |
+| Windows, IIS, .NET | a PFX bundle — see below |
+
+Windows and IIS do not read PEM. Convert with a password you choose, and enter
+the same one when importing:
+
+```bash
+docker compose exec acme-certs \
+  /scripts/convert-to-pfx.sh example.com your-chosen-password
+```
+
+## Going further
+
+### Renewal
+
+The container renews on its own through a scheduler that runs inside it. What it
+does not do is upload anything — a renewed certificate lands in
+`volumes/output/` and every device still points at the copy you gave it. Plan for
+that: either a script that pushes the new file, or a calendar entry.
+
+To renew by hand:
+
+```bash
+docker compose exec -e CERT_DOMAIN=example.com acme-certs /scripts/renew.sh
+```
+
+### Issuing without the wizard
+
+For scripting:
+
+```bash
+docker compose exec \
+  -e CERT_DOMAIN=example.com \
+  -e CERT_SAN='*.example.com' \
+  acme-certs /scripts/issue.sh
+```
+
+### Certificate authority
+
+`ACME_SERVER` in `.env` selects it: Let's Encrypt by default, with ZeroSSL and
+Buypass as alternatives. ZeroSSL registers the address in `ACME_EMAIL` first.
+
+## Backup
+
+| | |
+|---|---|
+| **State** | `volumes/output/` — the issued certificates and their private keys · the acme.sh account data |
+| **Also needed** | `.secrets/cf_token.txt` |
+| **Database** | None. |
+
+The private keys under `volumes/output/` are what a device is trusting. They can
+be reissued from scratch, so losing them costs a round of uploads rather than
+data — but anyone who reads them can impersonate the device until the
+certificates expire.
+
+## Troubleshooting
+
+**Issuing fails at the DNS challenge.** The token is missing `Zone → DNS → Edit`
+on that zone, or it is a global key rather than a scoped token.
+
+**The device rejects the file.** Check the table above — several want `cert.pem`
+with a separate CA rather than `fullchain.pem`.
+
+**A device shows an expired certificate although renewal ran.** Renewal writes to
+`volumes/output/` and does not upload. The device still holds the old copy.
+
+## Repository files
+
+- [`core/acme-certs/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/acme-certs/README.md) — setup, per-device import steps, script reference
+- [`core/acme-certs/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/acme-certs/UPSTREAM.md) — source and upgrade checklist
+
+## Official sources
+
+- [acme.sh](https://github.com/acmesh-official/acme.sh)
+- [Cloudflare API tokens](https://developers.cloudflare.com/fundamentals/api/get-started/create-token/)

@@ -1,8 +1,8 @@
 # Progress
 
 Milestone-level history. Per-release detail is in [`../CHANGELOG.md`](../CHANGELOG.md);
-session-level detail is in the Progress Log of
-[`../docs/maintenance.md`](../docs/maintenance.md).
+session-level detail is in
+[`../docs/maintenance-log.md`](../docs/maintenance-log.md).
 
 | Release | Date | What it established |
 |---|---|---|
@@ -93,10 +93,11 @@ on it, and check what the site currently says before believing a quotation of it
    and it has a real trap worth documenting — `DB_PWD_INLINE` must match
    `.secrets/db_pwd.txt` verbatim, because BookStack cannot read the password
    from a file. A local run cannot verify TLS, routing or access policy.
-3. The local-evaluation path stays unwritten — but the blocker under it is gone.
-   The datastores now carry the `cap_add` their entrypoints need, in the
-   production files and the local overlays alike. What remains is the writing,
-   not a stack that cannot start.
+3. ~~The local-evaluation path stays unwritten.~~ Written: every stack that shows
+   something run alone carries `docker-compose.local.yml`, the shape is in
+   `docs/standards/compose-structure.md`, and the site opens
+   [What every server needs](../site/src/content/docs/infrastructure/index.md)
+   with it, ahead of Traefik. The Local column in `LIFECYCLE.md` holds the count.
 4. No 404 page.
 
 Decided since: the site content licence is CC BY-NC 4.0, held in

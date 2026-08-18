@@ -7,10 +7,37 @@ Two things here are installed once on a host and then shared by everything that
 runs on it. They do not have the same standing, and treating them as if they did
 is how a server ends up with an intrusion detector and no working certificates.
 
+## First — a server is not needed to try an application
+
+Most stacks ship a `docker-compose.local.yml` next to the production one. It
+publishes the application on `127.0.0.1`, reads plain values from `.env.local`,
+and involves no proxy, no DNS and no certificate:
+
+```bash
+cd apps/vaultwarden
+cp .env.local.example .env.local
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+```
+
+Each file's header carries its own commands and the address to open — some stacks
+need a directory created or its ownership set first. Check whether the one you
+want has the file:
+
+```bash
+ls apps/<name>/docker-compose.local.yml
+```
+
+Eight stacks have none, because running them alone shows nothing: `adminer`,
+`traefik`, `acme-certs`, `dnsmasq`, `crowdsec`, `hawser`, `portainer-agent` and
+`beszel-agent`.
+
+The rest of this page is for serving an application to someone other than
+yourself.
+
 ## Traefik — required
 
-**Without it, nothing else in this blueprint is reachable.** The applications
-publish no ports of their own. They attach to a Docker network called
+**Without it, nothing else in this blueprint is reachable over the network.** The
+applications publish no ports of their own. They attach to a Docker network called
 `proxy-public` and expect something in front to terminate TLS and route requests
 by hostname. Traefik is that something, and it also carries the middleware each
 service switches on: security headers, rate limits, and the access rules that
@@ -35,14 +62,28 @@ the open internet, and not much before.
 
 [CrowdSec — intrusion detection →](/infrastructure/crowdsec/)
 
+## Set up once, used by everything after
+
+**[Dockhand](/infrastructure/dockhand/)** manages Compose stacks from a Git
+repository and reaches the Docker daemon through a filtered proxy rather than the
+socket. Anything that manages Docker is equivalent to root on the host, which is
+why it ships VPN-only.
+
+**[dnsmasq](/infrastructure/dnsmasq/)** answers names on your own network —
+wildcard zones, static records for machines with no DNS entry, and a cache in
+front of an upstream resolver. It runs on host networking and is not behind the
+proxy, because it is the name layer the proxy relies on.
+
+**[Certificates for devices behind no proxy](/infrastructure/acme-certs/)** issues
+and renews TLS certificates for the things Traefik never sees — a NAS, a router,
+a mail server.
+
 ## Also server-wide, without a guide
 
-**Single sign-on.** [Authentik](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/authentik/README.md)
-is set up once and then attached per route as a proxy middleware, so several
-applications can share one login. Seven containers, and it needs SMTP, a database
-and Redis of its own — it is a service to operate, not a setting to switch on.
-The configuration is checked and the stack has been brought up; there is no
-walked-through guide here.
+**Single sign-on.** [Authentik](/infrastructure/authentik/) is set up once and
+then attached per route as a proxy middleware, so several applications can share
+one login. Five containers, and it needs SMTP, a database and Redis of its own —
+it is a service to operate, not a setting to switch on.
 
 ## Server-wide, and covered elsewhere
 

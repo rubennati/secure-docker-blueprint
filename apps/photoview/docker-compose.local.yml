@@ -1,0 +1,75 @@
+# Photoview — local
+#
+#   cp .env.local.example .env.local
+#   mkdir -p ./volumes/local/photos
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   http://localhost:8080
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  db:
+    image: mariadb:${DB_TAG}
+    container_name: photoview-local-db
+    hostname: photoview-mariadb
+    restart: unless-stopped
+    stop_grace_period: 5s
+    security_opt:
+      - no-new-privileges:true
+      # uncomment the next two lines if MariaDB crashes on start
+      # - seccomp:unconfined
+      # - apparmor:unconfined
+    cap_drop: [ALL]
+    cap_add: [CHOWN, SETUID, SETGID, DAC_OVERRIDE]
+    environment:
+      MARIADB_AUTO_UPGRADE: "1"
+      MARIADB_DATABASE: ${DB_NAME}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      TZ: ${TZ}
+    command:
+      - mariadbd
+      - --innodb-buffer-pool-size=512M
+      - --transaction-isolation=READ-COMMITTED
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --max-connections=512
+      - --innodb-rollback-on-timeout=OFF
+      - --innodb-lock-wait-timeout=120
+    volumes:
+      - ./volumes/local/mariadb:/var/lib/mysql
+    networks: [photoview-local]
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 30s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
+  app:
+    image: photoview/photoview:${APP_TAG}
+    container_name: photoview-local-app
+    hostname: photoview
+    restart: unless-stopped
+    stop_grace_period: 10s
+    depends_on:
+      db: {condition: service_healthy}
+    security_opt: [no-new-privileges:true]
+    environment:
+      TZ: ${TZ}
+      PHOTOVIEW_DATABASE_DRIVER: "mysql"
+      PHOTOVIEW_MYSQL_URL: "${DB_USER}:${DB_PASSWORD}@tcp(db)/${DB_NAME}"
+      PHOTOVIEW_LISTEN_IP: "0.0.0.0"
+      MAPBOX_TOKEN: ${MAPBOX_TOKEN}
+      PHOTOVIEW_VIDEO_HARDWARE_ACCELERATION: ${PHOTOVIEW_VIDEO_HARDWARE_ACCELERATION}
+    volumes:
+      - ./volumes/local/media-cache:/home/photoview/media-cache
+      - ${MEDIA_ROOT}:/photos:ro
+    ports:
+      - "127.0.0.1:8080:80"
+    networks: [photoview-local]
+
+networks:
+  photoview-local:
+    name: photoview-local

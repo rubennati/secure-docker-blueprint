@@ -146,7 +146,7 @@ The path above is one of three. Two more work too — the only hard constraint i
 
 <Tabs>
   <TabItem label="Wildcard">
-    One DNS-01 certificate covers `*.example.com` — what the installation above sets up. Needs a Cloudflare account and token; does **not** need port 80 reachable from the internet. Best when all your services live under one domain, and avoids registering every subdomain in public Certificate Transparency logs.
+    One DNS-01 certificate covers `*.example.com` — what the installation above sets up. Needs a Cloudflare account and token; does **not** need port 80 reachable from the internet. Best when several services share one domain, and avoids registering every subdomain in public Certificate Transparency logs.
   </TabItem>
   <TabItem label="Per-domain (DNS-01)">
     Each application requests its own DNS-01 certificate through Cloudflare — still no public port 80 needed. Leave `ACME_WILDCARD_DOMAIN` unset; in each app's `.env` set `APP_TRAEFIK_CERT_RESOLVER=cloudflare-dns`, and uncomment the `tls.certresolver` label in its `docker-compose.yml`.

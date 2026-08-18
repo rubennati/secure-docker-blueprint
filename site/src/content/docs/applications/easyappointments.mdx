@@ -1,0 +1,144 @@
+---
+title: Easy!Appointments
+description: Appointment booking on a PHP stack — installed with the storage ownership set, because without it every login silently loops.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackEvidence from '../../../components/StackEvidence.astro';
+
+Easy!Appointments lets customers book time slots with a provider. Two containers
+— PHP with Apache, and MariaDB. No build step and no Node.js.
+
+<StackEvidence stack="apps/easyappointments"
+  gap="a restore. The database and the storage directory have to come back from the same point in time, and that has not been performed here." />
+
+Needs: [Traefik](/infrastructure/traefik/) running and a domain.
+
+:::caution
+Set the ownership on `volumes/storage` before the first login. Apache runs as
+uid 33, and without write access the session is never stored — the login form
+accepts the password and returns you to the login form, with nothing in the log.
+:::
+
+## Installation
+
+From `apps/easyappointments/`:
+
+<Steps>
+
+1. Copy the environment file and set `APP_TRAEFIK_HOST` and `TZ`:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Create the directories and the secrets, and mirror the password into `.env`:
+
+   ```bash
+   mkdir -p .secrets volumes/mysql volumes/storage
+   openssl rand -base64 32 | tr -d '\n' > .secrets/db_pwd.txt
+   openssl rand -base64 32 | tr -d '\n' > .secrets/db_root_pwd.txt
+   sed -i "s|^DB_PWD_INLINE=.*|DB_PWD_INLINE=$(cat .secrets/db_pwd.txt)|" .env
+   ```
+
+3. Hand the storage directory to the user Apache runs as:
+
+   ```bash
+   sudo chown -R 33:33 volumes/storage
+   ```
+
+4. Start it:
+
+   ```bash
+   docker compose up -d
+   docker compose logs app --follow
+   ```
+
+   Wait for `apache2 -D FOREGROUND`.
+
+5. Open `https://<APP_TRAEFIK_HOST>/index.php/installation` — the install wizard
+   creates the administrator account. Afterwards log in at
+   `/index.php/user/login`.
+
+</Steps>
+
+## Verify
+
+```bash
+docker compose ps   # two services, healthy
+```
+
+Then log in, create one service and one provider, and book an appointment from a
+private browser window. Logging in successfully is what proves step 3 worked.
+
+## Going further
+
+### Choosing this over Cal.diY
+
+Both book appointments. This one is PHP and MariaDB with a long track record and a
+small footprint; [Cal.diY](/applications/caldiy/) is a Next.js application with
+routing forms, team scheduling and workflows — and a heavier stack. If the need is
+one-to-one booking on a host with a modest memory budget, this is the simpler
+answer.
+
+## Backup
+
+| | |
+|---|---|
+| **Database** | MariaDB, container `easyappointments-db`, database `easyappointments`, user `easyappointments` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **State** | `volumes/mysql` (database) · `volumes/storage` (uploads, generated files) |
+| **Quiescing** | Not needed — the dump is consistent on its own. |
+
+For [borgmatic](/operations/backup/):
+
+```yaml
+mariadb_databases:
+    - name: easyappointments
+      container: easyappointments-db
+      username: easyappointments
+      password: "{credential file /srv/docker/apps/easyappointments/.secrets/db_pwd.txt}"
+```
+
+:::caution
+Appointments are database rows. Restoring an older database removes bookings made
+since — and the people who made them still expect to be seen. Reconcile against
+the notification mail before resuming.
+:::
+
+Restore order: database, then the application.
+
+## Updates
+
+<Steps>
+
+1. Read the [release notes](https://github.com/alextselegidis/easyappointments/releases).
+
+2. Back up the database and `volumes/storage` together.
+
+3. Raise `APP_TAG` in `.env`, then:
+
+   ```bash
+   docker compose pull && docker compose up -d
+   ```
+
+4. Log in and open the calendar. A schema change surfaces there.
+
+</Steps>
+
+## Troubleshooting
+
+**Login returns to the login page with no error.** Sessions cannot be written.
+`volumes/storage` is not owned by uid 33 — this is the failure step 3 prevents.
+
+**The install wizard appears again after setup.** The database is empty or
+unreachable. Check `docker compose logs db`.
+
+## Repository files
+
+- [`apps/easyappointments/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/easyappointments/README.md) — setup, the comparison table, known issues
+- [`apps/easyappointments/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/easyappointments/UPSTREAM.md) — source and upgrade checklist
+
+## Official sources
+
+- [Easy!Appointments](https://easyappointments.org/)

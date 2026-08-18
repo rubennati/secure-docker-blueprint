@@ -1,0 +1,190 @@
+---
+title: Documenso
+description: Document signing you host yourself — installed with a signing certificate you generate, and framing blocked so nobody can overlay the signature button.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackEvidence from '../../../components/StackEvidence.astro';
+
+Documenso sends documents for signature and records the result. Two containers —
+the application and PostgreSQL.
+
+<StackEvidence stack="business/documenso"
+  gap="everything below. The stack has never been brought up here: the entrypoint that injects the secrets, the signing certificate, and a document actually being signed are all read from the stack's files rather than observed." />
+
+Needs: [Traefik](/infrastructure/traefik/) running, a domain, SMTP credentials,
+and OpenSSL to create the signing certificate.
+
+:::caution
+Documenso ships no signing certificate. You generate it during installation, and
+every signature this instance produces is made with it. It is not interchangeable
+— see [Backup](#backup).
+:::
+
+## Installation
+
+From `business/documenso/`:
+
+<Steps>
+
+1. Copy the environment file and set `APP_TRAEFIK_HOST`, `TZ` and the `SMTP_*`
+   block:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Generate the four secrets:
+
+   ```bash
+   mkdir -p .secrets volumes/postgres
+   openssl rand -hex 32 > .secrets/db_pwd.txt
+   openssl rand -base64 32 | tr -d '\n' > .secrets/nextauth_secret.txt
+   openssl rand -base64 32 | tr -d '\n' > .secrets/encryption_key.txt
+   openssl rand -base64 32 | tr -d '\n' > .secrets/encryption_secondary_key.txt
+   printf '%s' 'YOUR-SMTP-PASSWORD' > .secrets/smtp_password.txt
+   ```
+
+   Documenso has no `_FILE` form, so the stack's entrypoint reads these files and
+   exports the values before starting the application.
+
+3. Create the signing certificate and its passphrase:
+
+   ```bash
+   openssl req -x509 -newkey rsa:4096 -keyout /tmp/k.pem -out /tmp/c.pem \
+     -days 3650 -nodes -subj "/CN=Documenso"
+   PASS="$(openssl rand -hex 16)"
+   printf '%s' "$PASS" > .secrets/signing_passphrase.txt
+   openssl pkcs12 -export -out .secrets/cert.p12 -inkey /tmp/k.pem -in /tmp/c.pem \
+     -passout pass:"$PASS"
+   rm /tmp/k.pem /tmp/c.pem
+   ```
+
+   Copy `cert.p12` and its passphrase off the host now.
+
+4. Start it. First boot runs database migrations:
+
+   ```bash
+   docker compose up -d
+   docker compose logs app --follow
+   ```
+
+5. Open `https://<APP_TRAEFIK_HOST>`. The first account becomes the
+   administrator.
+
+</Steps>
+
+## Verify
+
+```bash
+docker compose ps                                # two services, healthy
+docker inspect documenso-app | grep -c SECRET    # 0 — nothing injected is visible here
+```
+
+Then send one document to yourself and sign it. A signed document is the only
+check that covers the certificate and the passphrase together; both can be wrong
+while the application runs normally.
+
+## Going further
+
+### Embedding is blocked by default
+
+Documenso ships embedding SDKs that put the signing flow in an iframe on another
+site. The stack sends `X-Frame-Options: DENY` through `sec-3`, so none of them
+work as shipped.
+
+Signing is the moment a signature acquires legal weight. A page any site may
+frame is a page any site can overlay — the person clicks what looks like your
+button and signs whatever was placed underneath. The header is what prevents
+that.
+
+To use the SDKs, name the parent origins rather than removing the header: `sec-3e`
+for same-origin framing, or a per-app middleware replacing `X-Frame-Options` with
+a `frame-ancestors` allowlist. Neither has been run against Documenso's embed
+flow here.
+
+### Trying it without a proxy
+
+`docker-compose.local.yml` runs the stack on `http://localhost:3000` with no
+Traefik, DNS or certificate. Generate `cert.p12` first — the local stack mounts
+the same file.
+
+```bash
+cp .env.local.example .env.local
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+```
+
+## Backup
+
+| | |
+|---|---|
+| **Database** | PostgreSQL, container `documenso-db`, database `documenso`, user `documenso` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **State** | `volumes/postgres` |
+| **Also needed** | `.secrets/cert.p12` and `.secrets/signing_passphrase.txt` |
+| **Quiescing** | Not needed — the dump is consistent on its own. |
+
+For [borgmatic](/operations/backup/):
+
+```yaml
+postgresql_databases:
+    - name: documenso
+      container: documenso-db
+      username: documenso
+      password: "{credential file /srv/docker/business/documenso/.secrets/db_pwd.txt}"
+```
+
+**`cert.p12` is not a secret like the others.** Every signature this instance has
+ever produced was made with it, so a database restored against a freshly
+generated certificate leaves signed documents that no longer validate. Back it up
+with the same care as the database and keep a copy off the host.
+
+Restore order: database, then the application.
+
+## Updates
+
+<Steps>
+
+1. Read the [release notes](https://github.com/documenso/documenso/releases).
+
+2. Back up the database, the certificate and the passphrase together.
+
+3. Raise `APP_TAG` in `.env`, then:
+
+   ```bash
+   docker compose pull && docker compose up -d
+   docker compose logs app --follow
+   ```
+
+   Migrations run on boot.
+
+4. Sign one document. A migration that touched the signature tables shows up
+   there and not in the log.
+
+</Steps>
+
+## Troubleshooting
+
+**Documents cannot be signed, but the application runs.** The certificate or the
+passphrase is wrong. `cert.p12` is mounted read-only at
+`/opt/documenso/cert.p12`, and the passphrase comes from
+`.secrets/signing_passphrase.txt` — the two have to match the pair created in
+step 3.
+
+**The embed shows a blank frame.** `X-Frame-Options: DENY` from `sec-3`. See
+[Embedding](#embedding-is-blocked-by-default).
+
+**Signature request mail never arrives.** The `SMTP_*` block or
+`.secrets/smtp_password.txt`. Nothing else in the stack depends on mail, so the
+application itself gives no sign of it.
+
+## Repository files
+
+- [`business/documenso/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/business/documenso/README.md) — setup, security model, the first-deploy gate
+- [`business/documenso/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/business/documenso/UPSTREAM.md) — source, upgrade checklist, deviations
+- [`business/opensign/`](https://github.com/rubennati/secure-docker-blueprint/blob/main/business/opensign/README.md) — the alternative signing stack
+
+## Official sources
+
+- [Documenso documentation](https://docs.documenso.com/)
+- [Self-hosting guide](https://docs.documenso.com/developers/self-hosting)

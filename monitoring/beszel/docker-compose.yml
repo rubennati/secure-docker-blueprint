@@ -55,8 +55,9 @@ services:
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8090"
 
     # --- Health & Observability ---
-    # Beszel runs a minimal Go binary image — no wget/curl available.
-    # Health is inferred from the container restart policy instead.
+    # healthcheck: none — the hub image is a minimal Go binary with no shell,
+    # wget or curl to probe with. Liveness comes from the restart policy, and
+    # the hub is the one component nothing else watches (see monitoring/README).
     healthcheck:
       disable: true
 
@@ -98,10 +99,12 @@ services:
       EXTRA_FILESYSTEMS: ${EXTRA_FILESYSTEMS}
 
     # --- Storage ---
-    # Docker socket (read-only): agent reads container stats but cannot
-    # start/stop/delete containers. Accepted exception — no Socket Proxy
-    # equivalent covers docker-stats-style reads. Remove if container-level
-    # metrics are not needed.
+    # Docker socket. The :ro stops the socket file being replaced; it does not
+    # restrict a single API call, because a UNIX socket is bidirectional — this
+    # container can start, stop and delete containers, which is root on the host.
+    # Beszel supports DOCKER_HOST against a socket proxy with CONTAINERS=1, which
+    # is the fix and is pending the first host run (.ai/tasks.md). Remove the
+    # volume entirely if container-level metrics are not needed.
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
 
@@ -117,8 +120,8 @@ services:
     network_mode: host
 
     # --- Health & Observability ---
-    # Agent runs on Alpine but upstream provides no healthcheck endpoint.
-    # Hub status in the UI is the reliable liveness signal for the agent.
+    # healthcheck: none — the agent exposes no endpoint to probe. Its liveness
+    # signal is the hub: an agent that stops reporting shows as down there.
     healthcheck:
       disable: true
 

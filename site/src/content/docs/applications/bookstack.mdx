@@ -1,0 +1,151 @@
+---
+title: BookStack
+description: A wiki with real structure — installed with the Laravel key generated first, and the images understood as living outside the database.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackEvidence from '../../../components/StackEvidence.astro';
+
+BookStack organises documentation in shelves, books, chapters and pages. Two
+containers — the application and MariaDB.
+
+<StackEvidence stack="apps/bookstack"
+  gap="a restore. The database and the upload directory have to come back from the same point in time, and that has not been performed here." />
+
+Needs: [Traefik](/infrastructure/traefik/) running and a domain.
+
+## Installation
+
+From `apps/bookstack/`:
+
+<Steps>
+
+1. Copy the environment file and set `APP_TRAEFIK_HOST`, `TZ` and
+   `PUID`/`PGID`:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Generate the Laravel application key and paste the `base64:…` output into
+   `APP_KEY` in `.env`:
+
+   ```bash
+   docker run --rm --entrypoint /bin/bash \
+     lscr.io/linuxserver/bookstack:version-v26.05.2 appkey
+   ```
+
+3. Generate the database secrets and mirror the password into `.env`:
+
+   ```bash
+   mkdir -p .secrets
+   openssl rand -base64 32 | tr -d '\n' > .secrets/db_pwd.txt
+   openssl rand -base64 32 | tr -d '\n' > .secrets/db_root_pwd.txt
+   sed -i "s|^DB_PWD_INLINE=.*|DB_PWD_INLINE=$(cat .secrets/db_pwd.txt)|" .env
+   ```
+
+   BookStack cannot read the password from a file, so the value exists twice —
+   once as the secret for MariaDB, once inline.
+
+4. Create the volumes and hand the config directory to the user the image drops
+   to:
+
+   ```bash
+   mkdir -p volumes/config volumes/mysql
+   sudo chown -R 1000:1000 volumes/config
+   ```
+
+5. Start it and wait for the first-run migrations:
+
+   ```bash
+   docker compose up -d
+   docker compose logs app --follow
+   ```
+
+6. Open `https://<APP_TRAEFIK_HOST>` and log in with the default account —
+   `admin@admin.com` with the password `password` — then change both immediately.
+
+</Steps>
+
+## Verify
+
+```bash
+docker compose ps   # two services, healthy
+```
+
+Then create a page and paste an image into it. The image is the check: page text
+goes to the database, the file goes to the upload directory, and only the second
+depends on the ownership from step 4.
+
+## Going further
+
+### Public by default
+
+The stack ships `acc-public` with `sec-2`. A wiki people are meant to read has to
+be readable; BookStack's own permissions decide who sees what. If the content is
+internal, `acc-tailscale` in `.env` is the change.
+
+## Backup
+
+| | |
+|---|---|
+| **Database** | MariaDB, container `bookstack-db`, database `bookstack`, user `bookstack` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **State** | `volumes/mysql` (database) · `volumes/config` (images, attachments) |
+| **Quiescing** | Not needed — the dump is consistent on its own. |
+
+For [borgmatic](/operations/backup/):
+
+```yaml
+mariadb_databases:
+    - name: bookstack
+      container: bookstack-db
+      username: bookstack
+      password: "{credential file /srv/docker/apps/bookstack/.secrets/db_pwd.txt}"
+```
+
+Page content is in the database; the images inside those pages are in
+`volumes/config`. A database-only restore gives a wiki where every page renders
+with broken images — recovered on paper, not in practice.
+
+Restore order: database, then the application.
+
+## Updates
+
+<Steps>
+
+1. Read the [release notes](https://github.com/BookStackApp/BookStack/releases).
+
+2. Back up the database and `volumes/config` together.
+
+3. Raise `APP_TAG` in `.env`, then:
+
+   ```bash
+   docker compose pull && docker compose up -d
+   docker compose logs app --follow
+   ```
+
+4. Open a page with an image. A migration that touched the attachment tables
+   shows up there.
+
+</Steps>
+
+## Troubleshooting
+
+**Uploads fail with a permission error.** `volumes/config` is not owned by the
+`PUID`/`PGID` from `.env`. Re-run the `chown` from step 4.
+
+**The application reports a missing or invalid key.** `APP_KEY` is empty or was
+pasted without the `base64:` prefix.
+
+**Adding `user:` to the app service breaks startup.** The image starts as root to
+set up its process supervisor and drops privileges itself.
+
+## Repository files
+
+- [`apps/bookstack/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/bookstack/README.md) — setup, security model, known issues
+- [`apps/bookstack/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/bookstack/UPSTREAM.md) — source and upgrade checklist
+
+## Official sources
+
+- [BookStack documentation](https://www.bookstackapp.com/docs/)

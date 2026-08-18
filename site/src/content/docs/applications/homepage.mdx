@@ -1,0 +1,121 @@
+---
+title: Homepage
+description: A dashboard configured in YAML files — installed from the example configs, with the configuration belonging in git rather than in a backup.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackEvidence from '../../../components/StackEvidence.astro';
+
+Homepage is a dashboard described entirely in YAML: one file for services, one for
+bookmarks, one for widgets, one for settings. One container, no database.
+
+<StackEvidence stack="apps/homepage"
+  gap="a restore. There is nothing here to restore as long as the configuration is committed — which is the assumption, not a verified fact." />
+
+Needs: [Traefik](/infrastructure/traefik/) running and a domain.
+
+## Installation
+
+From `apps/homepage/`:
+
+<Steps>
+
+1. Copy the environment file and set `APP_TRAEFIK_HOST` and `TZ`:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Create the configuration from the examples:
+
+   ```bash
+   cd config
+   for f in *.example.yaml; do cp "$f" "${f/.example/}"; done
+   cd ..
+   ```
+
+3. Start it:
+
+   ```bash
+   docker compose up -d
+   ```
+
+4. Open `https://<APP_TRAEFIK_HOST>`.
+
+</Steps>
+
+Further configuration is editing the files in `config/`. Homepage reloads on
+change, so no restart is needed.
+
+## Verify
+
+```bash
+docker compose ps                       # one service, healthy
+curl -fsSI https://<APP_TRAEFIK_HOST>/  # 200
+```
+
+Then add a service to `config/services.yaml` and watch it appear without a
+restart. That confirms the mount and the reload together.
+
+## Going further
+
+### Discovering services from Docker
+
+Homepage can read labels on other containers and show live container state, which
+needs access to the Docker daemon. A direct socket mount gives it read-write
+control of Docker, so any code-execution bug in Homepage becomes control of the
+host.
+
+Route it through a filtering socket proxy exposing only what it needs —
+containers, networks and info — and point Homepage's Docker configuration at the
+proxy instead. [Dockhand](/infrastructure/dockhand/) shows the pattern.
+
+## Backup
+
+Nothing to back up, provided the configuration is committed. There is no database
+and no state the container creates on its own.
+
+The one thing to check before relying on that: Homepage writes its defaults into
+`config/` on first start, so confirm the running configuration matches what is in
+the repository. An uncommitted local edit is the only thing here a restore would
+lose.
+
+## Updates
+
+<Steps>
+
+1. Read the [release notes](https://github.com/gethomepage/homepage/releases).
+   The step from 0.x to 1.x changed the configuration format.
+
+2. Commit the current configuration.
+
+3. Raise `APP_TAG` in `.env`, then:
+
+   ```bash
+   docker compose pull && docker compose up -d
+   ```
+
+4. Load the dashboard. A configuration key removed upstream shows up as a missing
+   section rather than as a failed start.
+
+</Steps>
+
+## Troubleshooting
+
+**A section is missing after an update.** A configuration key changed upstream.
+Compare your file against the current example in `config/`.
+
+**Changes have no effect.** The file is not where the container reads it, or the
+YAML does not parse. Check `docker compose logs app`.
+
+**Container state does not appear.** Homepage has no route to the Docker daemon.
+See above.
+
+## Repository files
+
+- [`apps/homepage/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/homepage/README.md) — setup, security model, the Docker options
+- [`apps/homepage/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/homepage/UPSTREAM.md) — source and upgrade checklist
+
+## Official sources
+
+- [Homepage documentation](https://gethomepage.dev/)

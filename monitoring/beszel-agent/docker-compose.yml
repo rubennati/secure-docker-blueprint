@@ -41,10 +41,12 @@ services:
       EXTRA_FILESYSTEMS: ${EXTRA_FILESYSTEMS}
 
     # --- Storage ---
-    # Docker socket (read-only): agent reads container stats but cannot
-    # start/stop/delete containers. Accepted exception — no Socket Proxy
-    # equivalent covers docker-stats-style reads. Remove if container-level
-    # metrics are not needed.
+    # Docker socket. The :ro stops the socket file being replaced; it does not
+    # restrict a single API call, because a UNIX socket is bidirectional — this
+    # container can start, stop and delete containers, which is root on the host.
+    # Beszel supports DOCKER_HOST against a socket proxy with CONTAINERS=1, which
+    # is the fix and is pending the first host run (.ai/tasks.md). Remove the
+    # volume entirely if container-level metrics are not needed.
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
 

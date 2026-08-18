@@ -1,0 +1,43 @@
+# n8n — local
+#
+#   cp .env.local.example .env.local
+#   mkdir -p volumes/local/data volumes/local/files
+#   sudo chown -R 1000:1000 volumes/local/data volumes/local/files
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   http://localhost:5678
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  app:
+    image: docker.n8n.io/n8nio/n8n:${APP_TAG}
+    container_name: n8n-local-app
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    environment:
+      TZ: ${TZ}
+      GENERIC_TIMEZONE: ${TZ}
+      NODE_ENV: production
+      N8N_HOST: localhost
+      N8N_PORT: "5678"
+      N8N_PROTOCOL: http
+      WEBHOOK_URL: http://localhost:5678/
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
+    volumes:
+      - ./volumes/local/data:/home/node/.n8n
+      - ./volumes/local/files:/files
+    ports:
+      - "127.0.0.1:5678:5678"
+    networks: [n8n-local]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO /dev/null http://127.0.0.1:5678/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+networks:
+  n8n-local:
+    name: n8n-local

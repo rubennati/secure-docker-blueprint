@@ -1,0 +1,45 @@
+# ntfy — local
+#
+#   cp .env.local.example .env.local
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   curl -d "hello from the shell" http://localhost:8080/mytopic
+#   http://localhost:8080/mytopic
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  app:
+    image: binwiederhier/ntfy:${APP_TAG}
+    container_name: ntfy-local-app
+    restart: unless-stopped
+    command: ["serve"]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs: [/tmp]
+    environment:
+      TZ: ${TZ}
+      NTFY_BASE_URL: http://localhost:8080
+      NTFY_LISTEN_HTTP: ":80"
+      NTFY_CACHE_FILE: /var/cache/ntfy/cache.db
+      NTFY_CACHE_DURATION: 12h
+      NTFY_ATTACHMENT_CACHE_DIR: /var/cache/ntfy/attachments
+      NTFY_AUTH_FILE: /var/lib/ntfy/user.db
+      NTFY_AUTH_DEFAULT_ACCESS: read-write
+      NTFY_LOG_LEVEL: info
+    volumes:
+      - ./volumes/local/cache:/var/cache/ntfy
+      - ./volumes/local/lib:/var/lib/ntfy
+    ports:
+      - "127.0.0.1:8080:80"
+    networks: [ntfy-local]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --tries=1 -O - http://127.0.0.1:80/v1/health | grep -q '\"healthy\":true' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+networks:
+  ntfy-local:
+    name: ntfy-local

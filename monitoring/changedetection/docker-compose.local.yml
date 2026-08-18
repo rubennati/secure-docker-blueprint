@@ -1,0 +1,35 @@
+# changedetection.io — local
+#
+#   cp .env.local.example .env.local
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   http://localhost:5000
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  app:
+    image: ghcr.io/dgtlmoon/changedetection.io:${APP_TAG}
+    container_name: changedetection-local-app
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          pids: 200
+        reservations:
+          memory: 128M
+    environment:
+      TZ: ${TZ}
+      BASE_URL: http://localhost:5000
+      SOCKETIO_CORS_ORIGINS: http://localhost:5000
+      DISABLE_VERSION_CHECK: "yes"
+    volumes:
+      - ./volumes/local/data:/datastore
+    ports:
+      - "127.0.0.1:5000:5000"
+    networks: [changedetection-local]
+
+networks:
+  changedetection-local:
+    name: changedetection-local

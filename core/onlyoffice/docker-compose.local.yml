@@ -1,0 +1,36 @@
+# OnlyOffice Document Server — local
+#
+#   cp .env.local.example .env.local
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   http://localhost:8080/
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  app:
+    image: onlyoffice/documentserver:${APP_TAG}
+    container_name: onlyoffice-local-app
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    entrypoint: ["/app/ds/run-document-server.sh"]
+    environment:
+      JWT_ENABLED: "true"
+      JWT_SECRET: ${JWT_SECRET}
+      WOPI_ENABLED: "true"
+      TZ: ${TZ}
+    volumes:
+      - ./volumes/local/data:/var/www/onlyoffice/Data
+      - ./volumes/local/logs:/var/log/onlyoffice
+    ports:
+      - "127.0.0.1:8080:80"
+    networks: [onlyoffice-local]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1/healthcheck >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+networks:
+  onlyoffice-local:
+    name: onlyoffice-local

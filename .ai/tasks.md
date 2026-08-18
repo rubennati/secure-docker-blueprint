@@ -81,17 +81,22 @@ Listed with context in [`state.md`](state.md). Nothing proceeds on these until d
 - [ ] Decide the three questions in [`../docs/renovate-proposal.md`](../docs/renovate-proposal.md):
       marker comments vs. normalising 28 outliers · Renovate App vs. self-hosted
       Action · whether `site/` npm rides along. Nothing runs until then
-- [ ] **`docker-compose.local.yml` for every stack** — `git ls-files
-      '*docker-compose.local.yml'` lists the ones that have it. The
-      pattern is canonical in `apps/_reference/`: no Traefik, no certificates, no
-      Docker Secrets, a published port and plain environment variables. It exists
-      so someone can try an app — locally, on a laptop, on a lab box — without
-      first standing up a reverse proxy, DNS and a certificate chain. Today the
-      blueprint asks for the whole pipeline before anything runs, which is a
-      steep first step for a user who only wants to see whether the app suits
-      them. Also the natural entry point for the operator site: *try it locally*
-      before *deploy it properly*
+- [x] **`docker-compose.local.yml` per stack** — the Local column in
+      [`../LIFECYCLE.md`](../LIFECYCLE.md) holds the count. Eight have none,
+      because run alone they show nothing: `apps/adminer`, `core/traefik`,
+      `core/acme-certs`, `core/dnsmasq`, `core/crowdsec`, `core/hawser`,
+      `core/portainer-agent`, `monitoring/beszel-agent`. The rule is in
+      `docs/standards/compose-structure.md`; the site's entry point is
+      `site/src/content/docs/infrastructure/index.md`, ahead of Traefik
 - [x] Decide the `TROUBLESHOOTING.md` / `docs/standards/troubleshooting.md` overlap
       — index and method, declared in both files and in the File Map
 - [ ] Add `Checker coverage`, `Docs QA` and `Workflow supply chain` to the required
       checks in branch protection — all three run, but nothing blocks on them yet
+- [ ] Decide `-f` per HTTP healthcheck. 19 checks across 17 files run
+      `curl -sS -o /dev/null --max-time 5`, which succeeds on any answer including
+      a 5xx — a broken application reports healthy and only a connection error or
+      timeout fails the check. The comment blamed redirects; `curl --fail` triggers
+      at 400 and above and never on a 3xx, so that reason was wrong and the
+      comments are corrected. What each endpoint answers during startup decides
+      whether `-f` can go in. `core/euro-office`, `core/dockhand` and
+      `apps/paperless-ngx` already use `curl -fsS`

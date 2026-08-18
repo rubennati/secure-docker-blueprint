@@ -1,0 +1,32 @@
+# Uptime Kuma — local
+#
+#   cp .env.local.example .env.local
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   http://localhost:3001
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  app:
+    image: louislam/uptime-kuma:${APP_TAG}
+    container_name: uptime-kuma-local-app
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    environment:
+      TZ: ${TZ}
+      UPTIME_KUMA_PORT: "3001"
+    volumes:
+      - ./volumes/local/data:/app/data
+    ports:
+      - "127.0.0.1:3001:3001"
+    networks: [uptime-kuma-local]
+    healthcheck:
+      test: ["CMD", "extra/healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+networks:
+  uptime-kuma-local:
+    name: uptime-kuma-local

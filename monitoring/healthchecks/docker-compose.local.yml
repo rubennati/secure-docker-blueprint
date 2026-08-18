@@ -1,0 +1,36 @@
+# Healthchecks — local
+#
+#   cp .env.local.example .env.local
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   docker compose -f docker-compose.local.yml --env-file .env.local \
+#     exec app python /opt/healthchecks/manage.py createsuperuser
+#   http://localhost:8000
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  app:
+    image: healthchecks/healthchecks:${APP_TAG}
+    container_name: healthchecks-local-app
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    environment:
+      TZ: ${TZ}
+      DB: sqlite
+      DB_NAME: /data/hc.sqlite
+      DEBUG: "False"
+      SECRET_KEY: ${HC_SECRET_KEY}
+      ALLOWED_HOSTS: localhost,127.0.0.1
+      SITE_ROOT: http://localhost:8000
+      SITE_NAME: Healthchecks (local)
+      USE_PAYMENTS: "False"
+      REGISTRATION_OPEN: "False"
+    volumes:
+      - ./volumes/local/data:/data
+    ports:
+      - "127.0.0.1:8000:8000"
+    networks: [healthchecks-local]
+
+networks:
+  healthchecks-local:
+    name: healthchecks-local

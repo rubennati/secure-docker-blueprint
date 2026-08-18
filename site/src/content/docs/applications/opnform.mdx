@@ -1,0 +1,170 @@
+---
+title: OpnForm
+description: A form builder you host yourself — installed as seven services behind one entry point, with the uploaded files understood as separate from the answers.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackEvidence from '../../../components/StackEvidence.astro';
+
+OpnForm builds forms with a drag-and-drop editor, conditional logic, file uploads
+and webhooks. Seven containers — a Laravel API with its worker and scheduler, a
+Nuxt frontend, nginx in front of both, PostgreSQL and Redis.
+
+<StackEvidence stack="apps/opnform"
+  gap="everything below. The stack has never been brought up here: the seven-service startup order, the storage permissions the entrypoint sets, and a form submission with an attachment are read from the stack's files rather than observed." />
+
+Needs: [Traefik](/infrastructure/traefik/) running, a domain, and SMTP if forms
+should notify anyone.
+
+Traefik routes to nginx alone. Everything else is reached through it — `/api/*`
+goes to the Laravel backend, the rest to the frontend.
+
+## Installation
+
+From `apps/opnform/`:
+
+<Steps>
+
+1. Copy the environment file and set `APP_TRAEFIK_HOST`, `TZ` and
+   `MAIL_FROM_ADDRESS`:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Generate the three application secrets and paste each into `.env`:
+
+   ```bash
+   echo "base64:$(openssl rand -base64 32)"   # APP_KEY
+   openssl rand -base64 32                    # JWT_SECRET
+   openssl rand -base64 32                    # FRONT_API_SECRET
+   ```
+
+   Laravel has no `_FILE` form for these, so they live in `.env` rather than in
+   `.secrets/`.
+
+3. Generate the database password and mirror it into `.env`:
+
+   ```bash
+   mkdir -p .secrets
+   openssl rand -base64 32 | tr -d '\n' > .secrets/db_pwd.txt
+   sed -i "s|^DB_PWD_INLINE=.*|DB_PWD_INLINE=$(cat .secrets/db_pwd.txt)|" .env
+   ```
+
+4. Create the volumes. The API entrypoint creates the subdirectories and sets
+   their ownership on first start:
+
+   ```bash
+   mkdir -p volumes/storage volumes/postgres volumes/redis
+   ```
+
+5. Start it and watch all seven come up:
+
+   ```bash
+   docker compose up -d
+   docker compose logs -f
+   ```
+
+   Wait for `ready to handle connections` on the API, then `Listening on` from
+   the frontend.
+
+6. Open `https://<APP_TRAEFIK_HOST>` and create the first account.
+
+</Steps>
+
+## Verify
+
+```bash
+docker compose ps   # seven services
+```
+
+Then build one form, submit it with a file attached, and confirm both the answer
+and the file are there. That covers the frontend, the API, the queue worker and
+the storage mount — the parts that fail independently of each other.
+
+## Going further
+
+### Upload size
+
+`NGINX_MAX_BODY_SIZE` in `.env` caps what a respondent can attach, at 64 MB by
+default. nginx rejects anything larger before the API sees it, so raising it in
+the application alone has no effect.
+
+### The worker and the scheduler
+
+Notifications and webhooks run through the queue worker; scheduled tasks through
+the scheduler. Both are separate containers using the same image as the API. A
+form that saves answers but sends no notifications is usually the worker rather
+than the mail configuration.
+
+## Backup
+
+| | |
+|---|---|
+| **Database** | PostgreSQL, container `opnform-db`, database `opnform`, user `opnform` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **State** | `volumes/postgres` · `volumes/storage` (files submitted through forms) |
+| **Rebuildable** | `volumes/redis` |
+| **Quiescing** | Not needed — the dump is consistent on its own. |
+
+For [borgmatic](/operations/backup/):
+
+```yaml
+postgresql_databases:
+    - name: opnform
+      container: opnform-db
+      username: opnform
+      password: "{credential file /srv/docker/apps/opnform/.secrets/db_pwd.txt}"
+```
+
+Answers are database rows; anything a respondent uploaded is in
+`volumes/storage`. A database-only restore gives submissions whose attachments
+are gone — and unlike most losses, that data cannot be regenerated without asking
+the people who sent it.
+
+Restore order: database, then the application. The worker and scheduler come up
+with it; a queue restored mid-flight retries.
+
+## Updates
+
+<Steps>
+
+1. Read the [release notes](https://github.com/JhumanJ/OpnForm/releases). The
+   step from 1.x to 2.x is a major change.
+
+2. Back up the database and `volumes/storage` together.
+
+3. Raise `APP_TAG` in `.env`, then:
+
+   ```bash
+   docker compose pull && docker compose up -d
+   docker compose logs -f
+   ```
+
+4. Open one existing form in the editor and submit it. A migration that changed
+   the form schema surfaces there.
+
+</Steps>
+
+## Troubleshooting
+
+**404s for `/api/_nuxt_icon/…` in the browser console.** The icon proxy path is
+routed to the Laravel API instead of the frontend's icon server. Upstream issue,
+cosmetic — the application works.
+
+**Uploads fail with a permissions error.** The entrypoint sets ownership on
+`volumes/storage` at first start. If it could not, correct the ownership on the
+host and restart the API container.
+
+**A form saves answers but sends nothing.** Check the queue worker container
+before the mail settings.
+
+## Repository files
+
+- [`apps/opnform/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/opnform/README.md) — setup, the service split, known issues
+- [`apps/opnform/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/opnform/UPSTREAM.md) — source and upgrade checklist
+
+## Official sources
+
+- [OpnForm on GitHub](https://github.com/JhumanJ/OpnForm)
+- [Self-hosting guide](https://docs.opnform.com/deployment/docker)

@@ -1,0 +1,153 @@
+# Seafile Pro — local
+#
+#   cp .env.local.example .env.local
+#   mkdir -p volumes/local/mysql volumes/local/redis volumes/local/seafile-data
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   docker compose -f docker-compose.local.yml --env-file .env.local logs -f app
+#   http://localhost:8001
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  db:
+    image: mariadb:${DB_TAG}
+    container_name: seafile-pro-local-db
+    restart: unless-stopped
+
+    security_opt:
+      - no-new-privileges:true
+
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          pids: 200
+        reservations:
+          memory: 256M
+
+    environment:
+      MYSQL_ROOT_PASSWORD: ${INIT_SEAFILE_MYSQL_ROOT_PASSWORD}
+      MYSQL_LOG_CONSOLE: "true"
+      MARIADB_AUTO_UPGRADE: "1"
+      TZ: ${TZ}
+
+    volumes:
+      - ./volumes/local/mysql:/var/lib/mysql
+
+    networks:
+      - seafile-pro-local
+
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--mariadbupgrade", "--innodb_initialized"]
+      interval: 20s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  redis:
+    image: redis:${REDIS_TAG}
+    container_name: seafile-pro-local-redis
+    restart: unless-stopped
+
+    security_opt:
+      - no-new-privileges:true
+
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          pids: 50
+        reservations:
+          memory: 32M
+
+    command:
+      - /bin/sh
+      - -c
+      - redis-server --requirepass "$$REDIS_PASSWORD"
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+
+    volumes:
+      - ./volumes/local/redis:/data
+
+    networks:
+      - seafile-pro-local
+
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep PONG"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  app:
+    image: seafileltd/seafile-pro-mc:${APP_TAG}
+    container_name: seafile-pro-local-app
+    restart: unless-stopped
+
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          pids: 300
+        reservations:
+          memory: 512M
+
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    security_opt:
+      - no-new-privileges:true
+
+    environment:
+      INIT_SEAFILE_MYSQL_ROOT_PASSWORD: ${INIT_SEAFILE_MYSQL_ROOT_PASSWORD}
+      SEAFILE_MYSQL_DB_HOST: db
+      SEAFILE_MYSQL_DB_PORT: "3306"
+      SEAFILE_MYSQL_DB_USER: ${DB_USER}
+      SEAFILE_MYSQL_DB_PASSWORD: ${SEAFILE_MYSQL_DB_PASSWORD}
+      SEAFILE_MYSQL_DB_CCNET_DB_NAME: ccnet_db
+      SEAFILE_MYSQL_DB_SEAFILE_DB_NAME: seafile_db
+      SEAFILE_MYSQL_DB_SEAHUB_DB_NAME: ${SEAHUB_DB_NAME}
+      SEAFILE_SERVER_HOSTNAME: localhost:8001
+      SEAFILE_SERVER_PROTOCOL: http
+      SITE_ROOT: /
+      NON_ROOT: "false"
+      SEAFILE_LOG_TO_STDOUT: "false"
+      ENABLE_GO_FILESERVER: "true"
+      JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY}
+      INIT_SEAFILE_ADMIN_EMAIL: ${SEAFILE_ADMIN_EMAIL}
+      INIT_SEAFILE_ADMIN_PASSWORD: ${INIT_SEAFILE_ADMIN_PASSWORD}
+      CACHE_PROVIDER: redis
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      ENABLE_SEADOC: "false"
+      ENABLE_NOTIFICATION_SERVER: "false"
+      ENABLE_SEAFILE_AI: "false"
+      ENABLE_FACE_RECOGNITION: "false"
+      SEAF_SERVER_STORAGE_TYPE: disk
+      TIME_ZONE: ${TZ}
+      TZ: ${TZ}
+
+    volumes:
+      - ./volumes/local/seafile-data:/shared
+
+    ports:
+      - "127.0.0.1:8001:80"
+
+    networks:
+      - seafile-pro-local
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:80/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 180s
+
+networks:
+  seafile-pro-local:
+    name: seafile-pro-local

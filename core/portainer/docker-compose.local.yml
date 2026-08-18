@@ -1,0 +1,61 @@
+# Portainer CE — local
+#
+#   cp .env.local.example .env.local
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   http://localhost:9000
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  socket-proxy:
+    image: lscr.io/linuxserver/socket-proxy:${SOCKET_PROXY_TAG}
+    container_name: portainer-local-socket-proxy
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    tmpfs: [/run, /tmp]
+    environment:
+      CONTAINERS: "1"
+      SERVICES: "1"
+      NETWORKS: "1"
+      VOLUMES: "1"
+      IMAGES: "1"
+      INFO: "1"
+      EVENTS: "1"
+      PING: "1"
+      VERSION: "1"
+      SYSTEM: "1"
+      EXEC: "1"
+      POST: "1"
+      DELETE: "1"
+      ALLOW_START: "1"
+      ALLOW_STOP: "1"
+      ALLOW_RESTARTS: "1"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks: [portainer-local]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:2375/_ping >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  app:
+    image: portainer/portainer-ce:${APP_TAG}
+    container_name: portainer-local-app
+    restart: unless-stopped
+    depends_on:
+      socket-proxy: {condition: service_healthy}
+    security_opt: [no-new-privileges:true]
+    environment:
+      TZ: ${TZ}
+    command: --host tcp://socket-proxy:2375
+    volumes:
+      - ./volumes/local/data:/data
+    ports:
+      - "127.0.0.1:9000:9000"
+    networks: [portainer-local]
+
+networks:
+  portainer-local:
+    name: portainer-local

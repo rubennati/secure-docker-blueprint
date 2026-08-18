@@ -174,7 +174,13 @@ settled ground.
       never reads it, and the middleware label had no slot for the threat axis
       (findings 26–28)
 - [ ] Correct the AppSec documentation: it is virtual patching, not a WAF, and
-      the deferral of `crowdsec-appsec` over false positives overstates the risk
+      the deferral of `crowdsec-appsec` over false positives overstates the risk.
+      `SECURITY.md` is done — it was the one place the claim reached a reader
+      before they report something. Around forty other mentions remain, in
+      `core/crowdsec/README.md` and `docs/`, `core/traefik/README.md`,
+      `docs/architecture.md` and `.ai/domains/architecture.md`. Repeat the
+      measurement from finding 28 first, so the correction rests on this host
+      rather than on the previous one
 - [ ] Neither Traefik nor CrowdSec may be the reason an app is slow. Where they
       are, they change
 
@@ -275,7 +281,7 @@ Grouped by what it takes to resolve. Detail for each is in
 - [ ] Non-standard backup targets: port and remote-path options (finding 11)
 - [ ] Stale artefacts from an earlier deployment block a fresh one — no guidance
       exists for deploying alongside one (finding 14)
-- [ ] `docker-compose.local.yml` for every stack — 6 of 57 have one
+- [x] `docker-compose.local.yml` per stack — the Local column in `LIFECYCLE.md`; the stacks without one show nothing run alone
 - [x] Secret rotation replaces the file's identity and the mount keeps the old
       one; every stack mounting a secret as a single file is affected. Written up
       in `docs/standards/compose-structure.md` alongside the `uid`/`mode` trap

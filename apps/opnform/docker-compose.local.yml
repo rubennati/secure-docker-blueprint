@@ -1,0 +1,216 @@
+# OpnForm — local
+#
+#   cp .env.local.example .env.local
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   docker compose -f docker-compose.local.yml --env-file .env.local logs -f api
+#   http://localhost:8080
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  db:
+    image: postgres:${DB_TAG}
+    container_name: opnform-local-db
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      TZ: ${TZ}
+    volumes:
+      - ./volumes/local/postgres:/var/lib/postgresql/data
+    networks: [opnform-local]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  redis:
+    image: redis:${REDIS_TAG}
+    container_name: opnform-local-redis
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    tmpfs: [/tmp]
+    volumes:
+      - ./volumes/local/redis:/data
+    networks: [opnform-local]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    image: jhumanj/opnform-api:${APP_TAG}
+    container_name: opnform-local-api
+    restart: unless-stopped
+    depends_on:
+      db: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    security_opt: [no-new-privileges:true]
+    environment:
+      OPNFORM_ANONYMOUS_TELEMETRY_DISABLED: "true"
+      TZ: ${TZ}
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_URL: http://localhost:8080
+      FRONT_URL: http://localhost:8080
+      APP_KEY: ${APP_KEY}
+      APP_TRUSTED_PROXIES: "*"
+      JWT_SECRET: ${JWT_SECRET}
+      FRONT_API_SECRET: ${FRONT_API_SECRET}
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_DATABASE: ${DB_NAME}
+      DB_USERNAME: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      CACHE_DRIVER: redis
+      QUEUE_CONNECTION: redis
+      SESSION_DRIVER: redis
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      FILESYSTEM_DRIVER: local
+      LOCAL_FILESYSTEM_VISIBILITY: public
+      PHP_MEMORY_LIMIT: "1G"
+      PHP_MAX_EXECUTION_TIME: "600"
+      PHP_UPLOAD_MAX_FILESIZE: "64M"
+      PHP_POST_MAX_SIZE: "64M"
+      MAIL_MAILER: log
+      MAIL_FROM_ADDRESS: opnform@localhost
+      MAIL_FROM_NAME: OpnForm
+      SELF_HOSTED: "true"
+    volumes:
+      - ./volumes/local/storage:/usr/share/nginx/html/storage
+    networks: [opnform-local]
+    healthcheck:
+      test: ["CMD-SHELL", "php /usr/share/nginx/html/artisan about || exit 1"]
+      interval: 30s
+      timeout: 15s
+      retries: 3
+      start_period: 60s
+
+  api-worker:
+    image: jhumanj/opnform-api:${APP_TAG}
+    container_name: opnform-local-api-worker
+    restart: unless-stopped
+    command: ["php", "artisan", "queue:work"]
+    depends_on:
+      api: {condition: service_healthy}
+    security_opt: [no-new-privileges:true]
+    environment:
+      OPNFORM_ANONYMOUS_TELEMETRY_DISABLED: "true"
+      TZ: ${TZ}
+      APP_ENV: production
+      APP_KEY: ${APP_KEY}
+      JWT_SECRET: ${JWT_SECRET}
+      FRONT_API_SECRET: ${FRONT_API_SECRET}
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_DATABASE: ${DB_NAME}
+      DB_USERNAME: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      CACHE_DRIVER: redis
+      QUEUE_CONNECTION: redis
+      SESSION_DRIVER: redis
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      FILESYSTEM_DRIVER: local
+      LOCAL_FILESYSTEM_VISIBILITY: public
+      MAIL_MAILER: log
+      MAIL_FROM_ADDRESS: opnform@localhost
+      MAIL_FROM_NAME: OpnForm
+      SELF_HOSTED: "true"
+    volumes:
+      - ./volumes/local/storage:/usr/share/nginx/html/storage
+    networks: [opnform-local]
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'php artisan queue:work' > /dev/null || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  api-scheduler:
+    image: jhumanj/opnform-api:${APP_TAG}
+    container_name: opnform-local-api-scheduler
+    restart: unless-stopped
+    command: ["php", "artisan", "schedule:work"]
+    depends_on:
+      api: {condition: service_healthy}
+    security_opt: [no-new-privileges:true]
+    environment:
+      OPNFORM_ANONYMOUS_TELEMETRY_DISABLED: "true"
+      TZ: ${TZ}
+      APP_ENV: production
+      APP_KEY: ${APP_KEY}
+      JWT_SECRET: ${JWT_SECRET}
+      FRONT_API_SECRET: ${FRONT_API_SECRET}
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_DATABASE: ${DB_NAME}
+      DB_USERNAME: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      CACHE_DRIVER: redis
+      QUEUE_CONNECTION: redis
+      SESSION_DRIVER: redis
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      FILESYSTEM_DRIVER: local
+      LOCAL_FILESYSTEM_VISIBILITY: public
+      SELF_HOSTED: "true"
+    volumes:
+      - ./volumes/local/storage:/usr/share/nginx/html/storage
+    networks: [opnform-local]
+
+  ui:
+    image: jhumanj/opnform-client:${APP_TAG}
+    container_name: opnform-local-ui
+    restart: unless-stopped
+    depends_on:
+      api: {condition: service_healthy}
+    security_opt: [no-new-privileges:true]
+    environment:
+      NUXT_PUBLIC_APP_URL: http://localhost:8080
+      NUXT_PUBLIC_API_BASE: /api
+      NUXT_PRIVATE_API_BASE: http://nginx/api
+      NUXT_API_SECRET: ${FRONT_API_SECRET}
+    networks: [opnform-local]
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:3000/login || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+
+  nginx:
+    image: nginx:${NGINX_TAG}
+    container_name: opnform-local-nginx
+    restart: unless-stopped
+    depends_on:
+      api: {condition: service_started}
+      ui: {condition: service_started}
+    security_opt: [no-new-privileges:true]
+    environment:
+      NGINX_MAX_BODY_SIZE: ${NGINX_MAX_BODY_SIZE:-64m}
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/templates/default.conf.template:ro
+    ports:
+      - "127.0.0.1:8080:80"
+    networks: [opnform-local]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sS -o /dev/null --max-time 5 http://127.0.0.1:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+networks:
+  opnform-local:
+    name: opnform-local

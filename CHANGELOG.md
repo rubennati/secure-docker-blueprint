@@ -10,6 +10,15 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ### Added
 
+- **Local test stacks** (`docker-compose.local.yml` in every stack that shows something run alone): publishes the application on `127.0.0.1`, reads plain values from `.env.local`, and needs no proxy, DNS or certificate. Shape, header and the rule for which stacks get one are in `docs/standards/compose-structure.md`; `LIFECYCLE.md` gained a generated **Local** column, so the coverage figure has one owner and cannot drift. Eight stacks have none, because alone they show nothing: `apps/adminer`, `core/traefik`, `core/acme-certs`, `core/dnsmasq`, `core/crowdsec`, `core/hawser`, `core/portainer-agent`, `monitoring/beszel-agent`.
+- **`**/.env.local` is gitignored at the root**: local stacks hold their credentials in clear text, and the rule was previously declared per stack — in the six that already had a local file, leaving the other 52 unprotected the moment one was added.
+
+### Changed
+
+- **Trivy scans every image the checkers discover** (`scripts/ci/list-images.sh`): the script read eleven hand-listed paths, resolving to 28 of the tree's 97 image references — no database image, no `monitoring/` image, nothing from `apps/seafile-pro`. It now consumes `check-structure.py --list`, the same discovery `check-baseline.py` and both shell jobs in `ci.yml` use, and covers 96. A stack added tomorrow is scanned the day it lands. `--exit-code 0` is unchanged; widening coverage and switching to blocking together would produce an unreviewed backlog.
+- **An image Trivy cannot pull is reported rather than passed over** (`.github/workflows/trivy.yml`): failures are counted and named at the end of the job. Docker Hub rate-limits anonymous pulls and the `apps/seafile-pro` images need a licence, so at this coverage some failures are expected — and a scan of nothing no longer reads as a clean scan.
+- **The site describes one application, not a fleet** (`site/`): the DNS step asked for a wildcard record covering "every service you add later" and the entry page defined a finished setup as one host running one reverse proxy. Both described the machine this repository is developed on. DNS is now one record per hostname, and *What every server needs* opens with the local test stack — no proxy, no DNS, no certificate — before Traefik, which is required for reaching a service over the network.
+
 - **The operator site is live** (`site/`): published from `main` on every push that touches `site/`. Every document that named a future launch date now names the live one.
 - **`security.txt`** (`site/public/.well-known/security.txt`): the reporting address, served under the dot path GitHub Pages drops by default.
 - **Sub-processor disclosure** (`site/src/content/docs/privacy/index.md`): every company that handles a request to the site is named, not the hosting provider alone.

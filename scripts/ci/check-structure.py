@@ -102,7 +102,10 @@ def compose_files(app: Path) -> list[Path]:
     main = app / "docker-compose.yml"
     if main.exists():
         return [main]
-    return sorted(p for p in app.glob("*.yml") if is_compose(p))
+    # For a split stack the glob decides what counts as production, so the
+    # local test stack must be excluded from it.
+    return sorted(p for p in app.glob("*.yml")
+                  if is_compose(p) and not p.name.endswith(".local.yml"))
 
 
 def find_apps() -> list[Path]:
@@ -180,7 +183,10 @@ def check_env(app: Path, findings: list[dict]) -> None:
 
         # -- real domains (WARN) ----------------------------------------------
         if key.endswith("_HOST") and value and "TRAEFIK" in key:
-            if not value.endswith("example.com") and "${" not in value:
+            # endswith alone accepts any host whose name merely ends in those
+            # characters, without a label boundary in front of them.
+            reserved = value == "example.com" or value.endswith(".example.com")
+            if not reserved and "${" not in value:
                 findings.append({"level": "WARN", "rule": "real-domain",
                                  "detail": f"{key}={value} — use *.example.com in a committed file"})
 
@@ -259,10 +265,16 @@ def check_one_compose(app: Path, path: Path, findings: list[dict]) -> None:
         #
         # Anything else still warns, so the escape hatch cannot be used to wave
         # a service through quietly.
+        # `healthcheck: {disable: true}` counts as having none. The dict is truthy,
+        # so a bare `if not hc` waved it through — four services used it and none
+        # was reported. In Compose the key suppresses a HEALTHCHECK baked into the
+        # image; it never defines one, so the service still needs the same written
+        # reason as a service with no healthcheck block at all.
         hc = svc.get("healthcheck")
-        if not hc and not _healthcheck_waived(raw_text, name):
+        disabled = isinstance(hc, dict) and hc.get("disable")
+        if (not hc or disabled) and not _healthcheck_waived(raw_text, name):
             findings.append({"level": "WARN", "rule": "no-healthcheck", "service": name,
-                             "detail": "no healthcheck"})
+                             "detail": "healthcheck disabled" if disabled else "no healthcheck"})
 
         # -- traefik tls.options needs @file (WARN) ---------------------------
         labels = svc.get("labels") or []
@@ -321,6 +333,20 @@ def check_files(app: Path, findings: list[dict], root_gi: str) -> None:
 
 
 def main() -> int:
+    # `--list` prints one compose file per line and exits. It exists so the shell
+    # jobs in ci.yml can consume this discovery instead of keeping their own: a
+    # `find … -name docker-compose.yml` misses every split-compose stack and every
+    # root this file knows about, which left fifteen files unvalidated while the
+    # Python checkers reported full coverage.
+    # EXCEPT_DIRS is not applied here. It waives the structure rules for
+    # apps/_reference, not the file's existence — the canonical template still has
+    # to parse, and check-baseline.py scans it for the same reason.
+    if "--list" in sys.argv[1:]:
+        for app in find_apps():
+            for f in compose_files(app):
+                print(f)
+        return 0
+
     results: list[tuple[Path, list[dict]]] = []
     fails = warns = 0
     root_gi = root_gitignore()

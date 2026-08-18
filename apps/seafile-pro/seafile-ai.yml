@@ -1,7 +1,7 @@
 services:
   seafile-ai:
     image: ${SEAFILE_AI_IMAGE:-seafileltd/seafile-ai:13.0-latest}
-    container_name: seafile-ai
+    container_name: ${CONTAINER_NAME_AI}
     restart: unless-stopped
 
     # --- Security ---
@@ -19,7 +19,7 @@ services:
           memory: 256M
 
     volumes:
-      - ${SEAFILE_VOLUME:-/opt/seafile-data}:/shared
+      - ./volumes/seafile-data:/shared
     # ports:
     #   - 8888:8888
     environment:
@@ -37,7 +37,7 @@ services:
       - REDIS_PORT=${REDIS_PORT:-6379}
       - REDIS_PASSWORD=${REDIS_PASSWORD:-}
     depends_on:
-      seafile:
+      app:
         condition: service_healthy
     # --- Health & Observability ---
     # healthcheck: none — the image could not be pulled to establish what it
@@ -46,8 +46,9 @@ services:
     #   docker run --rm --entrypoint sh <image> -c 'command -v curl wget nc'
 
     networks:
-      - seafile-net
+      - app-internal
 
 networks:
-  seafile-net:
-    name: seafile-net
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true

@@ -1,0 +1,192 @@
+---
+title: Ghost
+description: Publishing with newsletters and paid memberships — installed with mail working before the first login, because Ghost 6 will not let you in without it.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackEvidence from '../../../components/StackEvidence.astro';
+
+Ghost is a publishing platform: posts, newsletters sent to subscribers, and paid
+memberships. Two containers — the application and its MySQL database. Fediverse
+federation is available as an optional overlay.
+
+<StackEvidence stack="apps/ghost"
+  gap="a restore. The database and the content directory have to come back from the same point in time, and that has not been performed here." />
+
+Needs: [Traefik](/infrastructure/traefik/) running, a domain, and SMTP
+credentials.
+
+:::danger
+Configure mail before the first login, not after. Ghost 6 emails a verification
+code for every login from a new device — including the first one. With SMTP
+missing or wrong, the code never arrives and there is no way into the
+administration interface.
+:::
+
+## Installation
+
+From `apps/ghost/`:
+
+<Steps>
+
+1. Copy the environment file:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Set `APP_TRAEFIK_HOST`, `TZ`, and the mail block — `GHOST_MAIL_HOST`,
+   `GHOST_MAIL_PORT`, `GHOST_MAIL_USER`, `GHOST_MAIL_FROM`. Port 587 with
+   `GHOST_MAIL_SECURE=false` is the common combination; 465 needs
+   `GHOST_MAIL_SECURE=true`.
+
+2. Generate the secrets, including the SMTP password:
+
+   ```bash
+   mkdir -p .secrets
+   openssl rand -base64 32 | tr -d '\n' > .secrets/db_pwd.txt
+   openssl rand -base64 32 | tr -d '\n' > .secrets/db_root_pwd.txt
+   printf '%s' 'YOUR-SMTP-PASSWORD' > .secrets/mail_pwd.txt
+   ```
+
+   Ghost has no `_FILE` form for these, so the stack's entrypoint reads the files
+   at start and exports the values before handing off.
+
+3. Start it:
+
+   ```bash
+   docker compose up -d
+   ```
+
+   First start runs database migrations and can take 30 to 60 seconds. The
+   healthcheck allows for it; on slow storage the container may show `unhealthy`
+   briefly before recovering.
+
+4. Open `https://<APP_TRAEFIK_HOST>/ghost/` and complete the setup wizard. The
+   login code arrives by mail — if it does not, stop here and fix mail rather
+   than working around it.
+
+</Steps>
+
+## Verify
+
+```bash
+docker compose ps                  # two services, healthy
+docker compose logs app --tail 50  # migrations completed
+docker compose logs db --tail 20   # ready for connections
+```
+
+Then register a test member on the public site and confirm the verification mail
+arrives. That is the check that matters: signups fail silently when mail is
+broken, so a working site tells you nothing about it.
+
+## Going further
+
+### Public by default
+
+Ghost ships `acc-public` with `sec-2` — a blog nobody can read is not a blog.
+It is the one application in this section reachable from the open internet by
+default; the others ship VPN-only, so the settings differ for that reason rather
+than by oversight.
+
+### Mail that arrives rather than mail that sends
+
+Ghost uses the `Mail-From` domain as written. SPF, DKIM and DMARC for the domain
+in `GHOST_MAIL_FROM` have to exist at your DNS provider, or member mail lands in
+spam while the send itself reports success.
+
+### Fediverse federation
+
+`activitypub.yml` adds two services — the federation backend and a one-shot
+migration runner. Enable it with `COMPOSE_FILE=docker-compose.yml:activitypub.yml`
+in `.env`.
+
+On a deployment where MySQL already holds data, create the ActivityPub database
+once before enabling the overlay:
+
+```bash
+docker exec ghost-db sh /docker-entrypoint-initdb.d/01-activitypub-db.sh
+```
+
+Then `docker compose up -d`. Check the migration ran and exited cleanly:
+
+```bash
+docker compose logs activitypub-migrate
+docker compose logs activitypub --tail 30
+```
+
+## Backup
+
+| | |
+|---|---|
+| **Database** | MySQL, container `ghost-db`, database `ghost`, user `ghost_user` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **State** | `volumes/mysql` (database) · `volumes/content` (themes, images, member data) |
+| **Quiescing** | Not needed — the dump is consistent on its own. |
+
+For [borgmatic](/operations/backup/):
+
+```yaml
+mysql_databases:
+    - name: ghost
+      container: ghost-db
+      username: ghost_user
+      password: "{credential file /srv/docker/apps/ghost/.secrets/db_pwd.txt}"
+```
+
+**`volumes/content` holds the active theme**, not only uploads. A database-only
+restore brings every post back and renders them with the default theme, which
+looks like a broken site rather than a partial restore.
+
+Restore order: database, then the application.
+
+## Updates
+
+<Steps>
+
+1. Read the [release notes](https://github.com/TryGhost/Ghost/releases) —
+   Ghost's major versions carry migrations.
+
+2. Back up the database and the content directory together.
+
+3. Raise `APP_TAG` in `.env`, then:
+
+   ```bash
+   docker compose pull && docker compose up -d
+   docker compose logs app --follow
+   ```
+
+4. Load the public site and the administration interface. A theme incompatible
+   with the new version shows up on the front page, not in the log.
+
+</Steps>
+
+## Troubleshooting
+
+**The login code never arrives, and there is no way in.** Mail is not working.
+Check `GHOST_MAIL_*` in `.env` and the password in `.secrets/mail_pwd.txt`, then
+recreate the app container. This blocks administration entirely, so treat it as
+the first thing to fix.
+
+**Member signups do nothing.** The same cause. The signup form reports success
+and the confirmation mail never leaves.
+
+**Member mail arrives in spam.** SPF, DKIM and DMARC for the `GHOST_MAIL_FROM`
+domain are missing at the DNS provider.
+
+**The container is `unhealthy` for the first minute.** First-start migrations.
+It recovers on its own; if it does not, read `docker compose logs app`.
+
+**Federation shows redirect errors after a configuration change.** Browsers cache
+redirect chains. Confirm in a private window before changing anything else.
+
+## Repository files
+
+- [`apps/ghost/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/ghost/README.md) — setup, secret handling, known issues
+- [`apps/ghost/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/ghost/UPSTREAM.md) — source and upgrade checklist
+- [`apps/ghost/activitypub.yml`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/ghost/activitypub.yml) — the federation overlay
+
+## Official sources
+
+- [Ghost documentation](https://ghost.org/docs/)
+- [Configuration reference](https://ghost.org/docs/config/)

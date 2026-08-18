@@ -2,7 +2,7 @@
 
 > If this file conflicts with git (branch, commits, tags), trust git.
 
-**Last updated:** 2026-08-16
+**Last updated:** 2026-08-18
 
 - **Phase:** pre-1.0. Latest tag `v0.7.0` (2026-07-31). Work happens on `dev`.
 - **Current milestone:** v0.8.0 — Monitoring.
@@ -28,6 +28,12 @@
   interface behind Traefik, host-networking overlay opt-in. Never started.
 - Status model unified (`docs/standards/status-model.md`); `LIFECYCLE.md` generated
   by `scripts/ci/lifecycle-report.py`; both structure and status enforced in CI.
+- Local test stacks: `docker-compose.local.yml` wherever a stack shows something
+  run alone, so an application can be tried before any server exists. Shape in
+  `docs/standards/compose-structure.md`, coverage in the generated Local column.
+- Trivy scans every image the checkers discover rather than a hand-kept list, and
+  reports images it could not pull instead of passing over them. Still
+  `--exit-code 0`.
 - CI jobs and what each one blocks on: [`quality-gates.md`](quality-gates.md),
   documented per job in `docs/standards/ci.md`. `Checker coverage`, `Docs QA` and
   `Workflow supply chain` run without blocking until branch protection is updated.

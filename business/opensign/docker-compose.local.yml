@@ -1,0 +1,85 @@
+# OpenSign — local
+#
+#   cp .env.local.example .env.local
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   docker compose -f docker-compose.local.yml --env-file .env.local logs -f api
+#   http://localhost:3000
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  db:
+    image: mongo:${DB_TAG}
+    container_name: opensign-local-db
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${DB_ROOT_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${DB_ROOT_PWD}
+      MONGO_INITDB_DATABASE: ${DB_NAME}
+      TZ: ${TZ}
+    volumes:
+      - ./volumes/local/mongodb:/data/db
+    networks: [opensign-local]
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ping:1}).ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  api:
+    image: opensign/opensignserver:${SERVER_TAG}
+    container_name: opensign-local-api
+    restart: unless-stopped
+    depends_on:
+      db: {condition: service_healthy}
+    security_opt: [no-new-privileges:true]
+    environment:
+      TZ: ${TZ}
+      APP_ID: opensign
+      appName: ${APP_NAME}
+      MASTER_KEY: ${MASTER_KEY}
+      MONGODB_URI: "mongodb://${DB_ROOT_USER}:${DB_ROOT_PWD}@db:27017/${DB_NAME}?authSource=admin"
+      PARSE_MOUNT: /app
+      SERVER_URL: "http://localhost:8080/app"
+      PUBLIC_URL: "http://localhost:3000"
+      USE_LOCAL: "true"
+      PFX_BASE64: ${PFX_BASE64}
+      PASS_PHRASE: ${PASS_PHRASE}
+    volumes:
+      - ./volumes/local/api-files:/usr/src/app/files
+    ports:
+      - "127.0.0.1:8080:8080"
+    networks: [opensign-local]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sS -o /dev/null --max-time 5 http://127.0.0.1:8080/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  ui:
+    image: opensign/opensign:${APP_TAG}
+    container_name: opensign-local-ui
+    restart: unless-stopped
+    depends_on:
+      - api
+    security_opt: [no-new-privileges:true]
+    environment:
+      TZ: ${TZ}
+      REACT_APP_SERVERURL: "http://localhost:8080/app"
+      REACT_APP_APPID: opensign
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks: [opensign-local]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sS -o /dev/null --max-time 5 http://127.0.0.1:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+networks:
+  opensign-local:
+    name: opensign-local

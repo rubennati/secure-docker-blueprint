@@ -1,0 +1,124 @@
+# Authentik — local
+#
+#   cp .env.local.example .env.local
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   http://localhost:9000/if/flow/initial-setup/
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  init-perms:
+    image: ${INIT_IMAGE}
+    container_name: authentik-local-init-perms
+    user: "0:0"
+    restart: "no"
+    entrypoint: ["/bin/sh", "/init.sh"]
+    security_opt: [no-new-privileges:true]
+    volumes:
+      - ./ops/scripts/init-volumes.sh:/init.sh:ro
+      - ./volumes/local/data:/mnt/data
+      - ./volumes/local/certs:/mnt/certs
+      - ./volumes/local/custom-templates:/mnt/custom-templates
+    networks: [authentik-local]
+
+  db:
+    image: postgres:${DB_TAG}
+    container_name: authentik-local-db
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      TZ: ${TZ}
+    volumes:
+      - ./volumes/local/postgres:/var/lib/postgresql/data
+    networks: [authentik-local]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME} -h 127.0.0.1 || exit 1"]
+      start_period: 30s
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  redis:
+    image: redis:${REDIS_TAG}
+    container_name: authentik-local-redis
+    restart: unless-stopped
+    command: --save 60 1 --loglevel warning
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    tmpfs:
+      - /tmp
+    volumes:
+      - ./volumes/local/redis:/data
+    networks: [authentik-local]
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      start_period: 20s
+      interval: 30s
+      timeout: 3s
+      retries: 5
+
+  server:
+    image: ghcr.io/goauthentik/server:${APP_TAG}
+    container_name: authentik-local-server
+    restart: unless-stopped
+    command: server
+    depends_on:
+      init-perms: {condition: service_completed_successfully}
+      db: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    security_opt: [no-new-privileges:true]
+    environment:
+      AUTHENTIK_REDIS__HOST: redis
+      AUTHENTIK_POSTGRESQL__HOST: db
+      AUTHENTIK_POSTGRESQL__USER: ${DB_USER}
+      AUTHENTIK_POSTGRESQL__NAME: ${DB_NAME}
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${DB_PASSWORD}
+      AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY}
+      AUTHENTIK_ERROR_REPORTING__ENABLED: "false"
+      TZ: ${TZ}
+    volumes:
+      - ./volumes/local/data:/data
+      - ./volumes/local/custom-templates:/templates
+    ports:
+      - "127.0.0.1:9000:9000"
+    networks: [authentik-local]
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:9000/-/health/live/').status==200 else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  worker:
+    image: ghcr.io/goauthentik/server:${APP_TAG}
+    container_name: authentik-local-worker
+    restart: unless-stopped
+    command: worker
+    depends_on:
+      init-perms: {condition: service_completed_successfully}
+      db: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    security_opt: [no-new-privileges:true]
+    environment:
+      AUTHENTIK_REDIS__HOST: redis
+      AUTHENTIK_POSTGRESQL__HOST: db
+      AUTHENTIK_POSTGRESQL__USER: ${DB_USER}
+      AUTHENTIK_POSTGRESQL__NAME: ${DB_NAME}
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${DB_PASSWORD}
+      AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY}
+      AUTHENTIK_ERROR_REPORTING__ENABLED: "false"
+      TZ: ${TZ}
+    volumes:
+      - ./volumes/local/data:/data
+      - ./volumes/local/certs:/certs
+      - ./volumes/local/custom-templates:/templates
+    networks: [authentik-local]
+    healthcheck:
+      disable: true
+
+networks:
+  authentik-local:
+    name: authentik-local
