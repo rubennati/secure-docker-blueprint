@@ -362,6 +362,7 @@ def collect() -> tuple[list[dict], list[dict]]:
                 "stack": key, "category": category, "state": state,
                 "pinned": pinned_version(stack), "verified": verified,
                 "backup": backup_docs, "restore": restore_docs,
+                "local": "✅" if (stack / "docker-compose.local.yml").exists() else "—",
             })
 
     return rows, problems
@@ -387,6 +388,7 @@ def render_json(rows: list[dict]) -> str:
             "verified_anchored": "⚠️" not in r["verified"] and r["verified"] != "—",
             "backup_docs": r["backup"],
             "restore_docs": r["restore"],
+            "local_stack": r["local"],
         }
         for r in rows
     }
@@ -426,7 +428,8 @@ def render(rows: list[dict]) -> str:
         "[`docs/standards/status-model.md`](docs/standards/status-model.md). "
         "**Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.",
         "",
-        f"{len(rows)} stacks: {summary}.",
+        f"{len(rows)} stacks: {summary}. "
+        f"{sum(1 for r in rows if r['local'] == '✅')} carry a local test stack.",
         "",
         "This is the maintainer's view: what has been established about each "
         "stack. It makes no statement about whether a stack suits a given "
@@ -440,6 +443,11 @@ def render(rows: list[dict]) -> str:
         "- **Last verified** — from the stack's `UPSTREAM.md`. A ⚠️ marks a date "
         "with no version in parentheses, which names no anchor and leaves the "
         "stack at `scaffolded`.",
+        "- **Local** — whether the stack carries "
+        "`docker-compose.local.yml`, which runs it on one machine without a "
+        "proxy, DNS or certificate. A `—` marks a stack that shows nothing run "
+        "alone. See [`compose-structure.md`]"
+        "(docs/standards/compose-structure.md#local-test-stack).",
         "- **Backup / Restore docs** — whether the stack README has such a "
         "section. Says nothing about whether either was performed; that is what "
         "`ops-proven` records. `n/a` marks a stack where the section would be "
@@ -455,13 +463,14 @@ def render(rows: list[dict]) -> str:
         out += [
             f"## `{category}/`",
             "",
-            "| Stack | State | Pinned | Last verified | Backup docs | Restore docs |",
-            "|---|---|---|---|---|---|",
+            "| Stack | State | Pinned | Last verified | Local | "
+            "Backup docs | Restore docs |",
+            "|---|---|---|---|---|---|---|",
         ]
         for r in group:
             out.append(
                 f"| [`{r['stack']}`]({r['stack']}/) | `{r['state']}` "
-                f"| {r['pinned']} | {r['verified']} "
+                f"| {r['pinned']} | {r['verified']} | {r['local']} "
                 f"| {r['backup']} | {r['restore']} |"
             )
         out.append("")

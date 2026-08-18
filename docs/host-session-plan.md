@@ -281,7 +281,7 @@ Grouped by what it takes to resolve. Detail for each is in
 - [ ] Non-standard backup targets: port and remote-path options (finding 11)
 - [ ] Stale artefacts from an earlier deployment block a fresh one — no guidance
       exists for deploying alongside one (finding 14)
-- [ ] `docker-compose.local.yml` for every stack — 6 of 57 have one
+- [x] `docker-compose.local.yml` per stack — the Local column in `LIFECYCLE.md`; the stacks without one show nothing run alone
 - [x] Secret rotation replaces the file's identity and the mount keeps the old
       one; every stack mounting a secret as a single file is affected. Written up
       in `docs/standards/compose-structure.md` alongside the `uid`/`mode` trap

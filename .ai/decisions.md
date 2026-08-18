@@ -151,6 +151,33 @@ monitoring. Documented per category README.
 repositories mean two retention policies and two restore rehearsals — a real
 operational cost that does not exist for monitoring tools covering different axes.
 
+## 2026-08 · Artefacts stand alone; the test environment is evidence, not specification
+
+Every file is written for whoever opens it, and states the final result and the
+facts needed to use, operate or verify it. The route taken — experiments, the
+test host, rejected alternatives, how it differs from another file — is working
+context and stays out. A `docker-compose.local.yml` says how to run it, and
+nothing else.
+
+The environment this repository is developed and tested on is evidence about the
+software, never part of its specification. No requirement, dependency, default,
+deployment assumption or documentation obligation follows from it alone. The
+test host runs every stack behind one proxy; a reader takes one stack. The
+working unit for repository-facing docs: an instruction has to be true for
+someone running exactly one stack.
+
+## 2026-08 · A local test stack per stack, where one means anything
+
+`docker-compose.local.yml` beside the production file, publishing on
+`127.0.0.1` with plain credentials, so an application can be tried without a
+proxy, DNS or certificate. Shape and header in
+`docs/standards/compose-structure.md`; the Local column in `LIFECYCLE.md` is
+generated, so the coverage figure cannot drift.
+
+Stacks that show nothing run alone have none — a reverse proxy, an agent
+reporting to a central instance, something needing host networking, a client for
+another stack's data. A reasoned absence is the outcome, not a gap.
+
 ## 2026-04 · Hub-and-spoke networking per app
 
 `proxy-public` shared and external; `app-internal` per app with `internal: true`.
