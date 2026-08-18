@@ -74,22 +74,25 @@ The `log-opts` bound container logs — without them they grow until the disk is
 
 ## Point DNS at the server
 
-A wildcard record covers every service you add later:
+One record per hostname you serve:
 
 ```text
-*.apps.example.com    A       203.0.113.10
-*.apps.example.com    AAAA    2001:db8::1
+app.example.com    A       203.0.113.10
 ```
 
-Add the `AAAA` record only if the host has working public IPv6:
+Add an `AAAA` record when the host has working public IPv6:
 
 ```bash
 curl -6 https://api64.ipify.org
 ```
 
-Using split DNS on a VPN? Add the same wildcard there, pointing at the server's VPN
-addresses — **both** families. An IPv4-only entry sends all VPN traffic over IPv4
-and leaves the IPv6 path untested.
+```text
+app.example.com    AAAA    2001:db8::1
+```
+
+Reaching it over a VPN? Add the same names to your split DNS, pointing at the
+server's VPN addresses — **both** families. An IPv4-only entry sends all VPN
+traffic over IPv4 and leaves the IPv6 path untested.
 
 ## Installation
 

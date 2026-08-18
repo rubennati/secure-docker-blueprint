@@ -7,10 +7,37 @@ Two things here are installed once on a host and then shared by everything that
 runs on it. They do not have the same standing, and treating them as if they did
 is how a server ends up with an intrusion detector and no working certificates.
 
+## First — a server is not needed to try an application
+
+Most stacks ship a `docker-compose.local.yml` next to the production one. It
+publishes the application on `127.0.0.1`, reads plain values from `.env.local`,
+and involves no proxy, no DNS and no certificate:
+
+```bash
+cd apps/vaultwarden
+cp .env.local.example .env.local
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+```
+
+Each file's header carries its own commands and the address to open — some stacks
+need a directory created or its ownership set first. Check whether the one you
+want has the file:
+
+```bash
+ls apps/<name>/docker-compose.local.yml
+```
+
+Eight stacks have none, because running them alone shows nothing: `adminer`,
+`traefik`, `acme-certs`, `dnsmasq`, `crowdsec`, `hawser`, `portainer-agent` and
+`beszel-agent`.
+
+The rest of this page is for serving an application to someone other than
+yourself.
+
 ## Traefik — required
 
-**Without it, nothing else in this blueprint is reachable.** The applications
-publish no ports of their own. They attach to a Docker network called
+**Without it, nothing else in this blueprint is reachable over the network.** The
+applications publish no ports of their own. They attach to a Docker network called
 `proxy-public` and expect something in front to terminate TLS and route requests
 by hostname. Traefik is that something, and it also carries the middleware each
 service switches on: security headers, rate limits, and the access rules that
