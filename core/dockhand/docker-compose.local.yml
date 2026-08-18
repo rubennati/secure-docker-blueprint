@@ -1,0 +1,102 @@
+# Dockhand — local
+#
+#   cp .env.local.example .env.local
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   http://localhost:3000
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  socket-proxy:
+    image: tecnativa/docker-socket-proxy:${SOCKET_PROXY_TAG}
+    container_name: dockhand-local-socket-proxy
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    tmpfs: [/run, /tmp]
+    environment:
+      CONTAINERS: "1"
+      SERVICES: "1"
+      NETWORKS: "1"
+      VOLUMES: "1"
+      IMAGES: "1"
+      INFO: "1"
+      EVENTS: "1"
+      PING: "1"
+      VERSION: "1"
+      SYSTEM: "1"
+      EXEC: "0"
+      POST: "1"
+      DELETE: "0"
+      ALLOW_START: "1"
+      ALLOW_STOP: "1"
+      ALLOW_RESTARTS: "1"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks: [dockhand-local]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:2375/_ping >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  db:
+    image: postgres:${DB_TAG}
+    container_name: dockhand-local-db
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_INITDB_ARGS: --data-checksums
+      TZ: ${TZ}
+    volumes:
+      - ./volumes/local/postgres:/var/lib/postgresql/data
+    shm_size: 256mb
+    networks: [dockhand-local]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME} -h 127.0.0.1 || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 20s
+
+  app:
+    image: fnsys/dockhand:${APP_TAG}
+    container_name: dockhand-local-app
+    restart: unless-stopped
+    depends_on:
+      db: {condition: service_healthy}
+      socket-proxy: {condition: service_healthy}
+    security_opt: [no-new-privileges:true]
+    tmpfs: [/tmp]
+    entrypoint: ["node", "server.js"]
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_USER: ${DB_USER}
+      DB_NAME: ${DB_NAME}
+      DATABASE_URL: postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      DATA_DIR: /app/data
+      GIT_REPOS_DIR: /app/data/git-repos
+      DOCKER_HOST: tcp://socket-proxy:2375
+      PUID: ${APP_PUID}
+      PGID: ${APP_PGID}
+      TZ: ${TZ}
+    volumes:
+      - ./volumes/local/data:/app/data
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks: [dockhand-local]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:3000/ >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+networks:
+  dockhand-local:
+    name: dockhand-local

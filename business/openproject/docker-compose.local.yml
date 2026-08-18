@@ -1,0 +1,115 @@
+# OpenProject CE — local
+#
+#   cp .env.local.example .env.local
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   docker compose -f docker-compose.local.yml --env-file .env.local logs -f seeder
+#   http://localhost:8080 — first login admin / admin
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+x-op-app: &op-app
+  image: openproject/openproject:${APP_TAG}
+  restart: unless-stopped
+  security_opt: [no-new-privileges:true]
+  environment:
+    OPENPROJECT_HOST__NAME: "localhost:8080"
+    OPENPROJECT_HTTPS: "false"
+    OPENPROJECT_HSTS: "false"
+    OPENPROJECT_RAILS__CACHE__STORE: "memcache"
+    OPENPROJECT_CACHE__MEMCACHE__SERVER: "cache:11211"
+    SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+    DATABASE_URL: "postgres://${DB_USER}:${DB_PASSWORD}@db/${DB_NAME}?pool=20&encoding=unicode&reconnect=true"
+    OPENPROJECT_DEFAULT__LANGUAGE: "${OPENPROJECT_DEFAULT_LANGUAGE:-en}"
+    IMAP_ENABLED: "false"
+    TZ: ${TZ}
+  volumes:
+    - op_assets_local:/var/openproject/assets
+  networks: [openproject-local]
+  depends_on:
+    db: {condition: service_healthy}
+    cache: {condition: service_started}
+
+services:
+
+  seeder:
+    <<: *op-app
+    container_name: openproject-local-seeder
+    restart: on-failure
+    command: ["./docker/prod/seeder"]
+
+  web:
+    <<: *op-app
+    container_name: openproject-local-web
+    command: ["./docker/prod/web"]
+    depends_on:
+      db: {condition: service_healthy}
+      cache: {condition: service_started}
+      seeder: {condition: service_completed_successfully}
+    ports:
+      - "127.0.0.1:8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health_checks/default"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+  worker:
+    <<: *op-app
+    container_name: openproject-local-worker
+    command: ["./docker/prod/worker"]
+    depends_on:
+      db: {condition: service_healthy}
+      cache: {condition: service_started}
+      seeder: {condition: service_completed_successfully}
+
+  cron:
+    <<: *op-app
+    container_name: openproject-local-cron
+    command: ["./docker/prod/cron"]
+    depends_on:
+      db: {condition: service_healthy}
+      cache: {condition: service_started}
+      seeder: {condition: service_completed_successfully}
+
+  cache:
+    image: memcached:${MEMCACHED_TAG}
+    container_name: openproject-local-cache
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    networks: [openproject-local]
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 11211"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  db:
+    image: postgres:${DB_TAG}
+    container_name: openproject-local-db
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      TZ: ${TZ}
+    volumes:
+      - ./volumes/local/postgres:/var/lib/postgresql/data
+    networks: [openproject-local]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+volumes:
+  op_assets_local:
+    name: openproject-local-assets
+
+networks:
+  openproject-local:
+    name: openproject-local

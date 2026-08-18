@@ -1,0 +1,97 @@
+# UniFi Network Application — local
+#
+#   cp .env.local.example .env.local
+#   mkdir -p volumes/local/mongodb volumes/local/config
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   docker compose -f docker-compose.local.yml --env-file .env.local logs -f app
+#   https://localhost:8443
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  db:
+    image: mongo:${DB_TAG}
+    container_name: unifi-local-db
+    restart: unless-stopped
+
+    security_opt:
+      - no-new-privileges:true
+
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          pids: 200
+        reservations:
+          memory: 256M
+
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${DB_ROOT_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${DB_NAME}
+
+    volumes:
+      - ./volumes/local/mongodb:/data/db
+
+    networks:
+      - unifi-local
+
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ping:1}).ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  app:
+    image: lscr.io/linuxserver/unifi-network-application:${APP_TAG}
+    container_name: unifi-local-app
+    restart: unless-stopped
+
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          pids: 200
+        reservations:
+          memory: 128M
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+    security_opt:
+      - no-new-privileges:true
+
+    environment:
+      TZ: ${TZ}
+      PUID: ${PUID}
+      PGID: ${PGID}
+      MEM_LIMIT: ${MEM_LIMIT}
+      MEM_STARTUP: ${MEM_LIMIT}
+      MONGO_HOST: db
+      MONGO_PORT: "27017"
+      MONGO_DBNAME: ${DB_NAME}
+      MONGO_USER: ${DB_ROOT_USER}
+      MONGO_PASS: ${DB_ROOT_PASSWORD}
+      MONGO_AUTHSOURCE: admin
+
+    volumes:
+      - ./volumes/local/config:/config
+
+    ports:
+      - "127.0.0.1:8443:8443"
+
+    networks:
+      - unifi-local
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sS -o /dev/null --max-time 5 http://127.0.0.1:8080/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+networks:
+  unifi-local:
+    name: unifi-local

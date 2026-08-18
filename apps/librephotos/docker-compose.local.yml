@@ -1,0 +1,101 @@
+# LibrePhotos — local
+#
+#   cp .env.local.example .env.local
+#   mkdir -p volumes/local/pictures
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   # open http://localhost:8080
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  db:
+    image: pgautoupgrade/pgautoupgrade:${DB_TAG}
+    container_name: librephotos-local-db
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      TZ: ${TZ}
+    volumes:
+      - ./volumes/local/db:/var/lib/postgresql
+    networks: [librephotos-local]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  backend:
+    image: reallibrephotos/librephotos:${APP_TAG}
+    container_name: librephotos-local-backend
+    restart: unless-stopped
+    depends_on:
+      db: {condition: service_healthy}
+    security_opt: [no-new-privileges:true]
+    environment:
+      FEATURE_REVERSE_GEOCODING: "false"
+      TZ: ${TZ}
+      SECRET_KEY: ${SECRET_KEY}
+      BACKEND_HOST: backend
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_USERNAME: ${ADMIN_USERNAME}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      DB_BACKEND: postgresql
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASSWORD}
+      DB_HOST: db
+      DB_PORT: "5432"
+      MAPBOX_API_KEY: ""
+      WEB_CONCURRENCY: "2"
+      SKIP_PATTERNS: ""
+      ALLOW_UPLOAD: "true"
+      CSRF_TRUSTED_ORIGINS: http://localhost:8080
+      DEBUG: "0"
+    volumes:
+      - ${SCAN_DIRECTORY}:/data
+      - ./volumes/local/protected_media:/protected_media
+      - ./volumes/local/logs:/logs
+      - ./volumes/local/cache:/root/.cache
+    networks: [librephotos-local]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sS -o /dev/null --max-time 5 http://127.0.0.1:8001/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  frontend:
+    image: reallibrephotos/librephotos-frontend:${APP_TAG}
+    container_name: librephotos-local-frontend
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    networks: [librephotos-local]
+
+  proxy:
+    image: reallibrephotos/librephotos-proxy:${APP_TAG}
+    container_name: librephotos-local-proxy
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - frontend
+    security_opt: [no-new-privileges:true]
+    volumes:
+      - ${SCAN_DIRECTORY}:/data:ro
+      - ./volumes/local/protected_media:/protected_media:ro
+    ports:
+      - "127.0.0.1:8080:80"
+    networks: [librephotos-local]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sS -o /dev/null --max-time 5 http://127.0.0.1:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+networks:
+  librephotos-local:
+    name: librephotos-local

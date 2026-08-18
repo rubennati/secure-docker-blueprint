@@ -1,13 +1,9 @@
-# =============================================================================
-# Euro-Office — LOCAL test stack (no Traefik, no Docker Secrets)
-# =============================================================================
-# Run the document server standalone on http://localhost:8080 to check it boots.
-# JWT is disabled for local-only convenience — NOT for production.
-# Production uses docker-compose.yml (Traefik + JWT via Docker Secret).
+# Euro-Office — local
 #
+#   cp .env.local.example .env.local
 #   docker compose -f docker-compose.local.yml --env-file .env.local up -d
-#   # http://localhost:8080/healthcheck  → "true";  http://localhost:8080/ → welcome page
-# =============================================================================
+#   http://localhost:8080/
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
 
 services:
 
@@ -17,14 +13,14 @@ services:
     restart: unless-stopped
     security_opt: [no-new-privileges:true]
     environment:
-      JWT_ENABLED: "false"   # local only — never disable JWT in production
+      JWT_ENABLED: "false"
       WOPI_ENABLED: "true"
       TZ: ${TZ}
     volumes:
       - ./volumes/local/data:/var/www/onlyoffice/Data
       - ./volumes/local/logs:/var/log/onlyoffice
     ports:
-      - "127.0.0.1:8080:80"   # localhost only; change to 8080:80 for LAN access
+      - "127.0.0.1:8080:80"
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://127.0.0.1/healthcheck >/dev/null || exit 1"]
       interval: 30s

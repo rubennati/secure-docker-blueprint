@@ -1,0 +1,47 @@
+# Beszel — local
+#
+#   cp .env.local.example .env.local
+#   mkdir -p volumes/local/hub-data
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d hub
+#   http://localhost:8090 — create the owner account
+#   "+ Add System": name = local, host = agent, port = 45876, copy the key
+#   put it in .env.local as AGENT_KEY=ssh-ed25519 AAAA...
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d agent
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  hub:
+    image: henrygd/beszel:${APP_TAG}
+    container_name: beszel-local-hub
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    environment:
+      TZ: ${TZ}
+    volumes:
+      - ./volumes/local/hub-data:/beszel_data
+    ports:
+      - "127.0.0.1:8090:8090"
+    networks: [beszel-local]
+    healthcheck:
+      disable: true
+
+  agent:
+    image: henrygd/beszel-agent:${APP_TAG}
+    container_name: beszel-local-agent
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    environment:
+      TZ: ${TZ}
+      PORT: "45876"
+      KEY: ${AGENT_KEY}
+      EXTRA_FILESYSTEMS: ${EXTRA_FILESYSTEMS}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks: [beszel-local]
+    healthcheck:
+      disable: true
+
+networks:
+  beszel-local:
+    name: beszel-local

@@ -1,15 +1,9 @@
-# =============================================================================
-# Cal.diy — LOCAL test stack (no Traefik, no Cloudflare, no Docker Secrets)
-# =============================================================================
-# Run the app standalone on http://localhost:3000 for quick local testing.
-# Secrets come as plain env from .env.local (gitignored) — NOT for production.
-# Production deployment uses docker-compose.yml (Traefik + Docker Secrets).
+# Cal.diy — local
 #
-#   cp .env.local.example .env.local   # then fill the values (see that file)
+#   cp .env.local.example .env.local
 #   docker compose -f docker-compose.local.yml --env-file .env.local up -d
-#   docker compose -f docker-compose.local.yml --env-file .env.local logs app -f
-#   # open http://localhost:3000  — signup is ON so you can create the first user
-# =============================================================================
+#   http://localhost:3000
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
 
 services:
 
@@ -19,8 +13,6 @@ services:
     restart: unless-stopped
     security_opt: [no-new-privileges:true]
     cap_drop: [ALL]
-    # Entrypoint starts as root, fixes data-dir ownership, then drops to the
-    # service user. Without these it never starts. Verified 2026-08-16.
     cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
     environment:
       POSTGRES_DB: ${DB_NAME}
@@ -43,8 +35,6 @@ services:
     restart: unless-stopped
     security_opt: [no-new-privileges:true]
     cap_drop: [ALL]
-    # Entrypoint starts as root, fixes data-dir ownership, then drops to the
-    # service user. Without these it never starts. Verified 2026-08-16.
     cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
     read_only: true
     tmpfs: [/run, /tmp]
@@ -67,13 +57,11 @@ services:
       redis: {condition: service_healthy}
     security_opt: [no-new-privileges:true]
     cap_drop: [ALL]
-    # No secret-injector entrypoint here: all secrets arrive as plain env below.
     entrypoint: ["/bin/sh", "-c", "exec /calcom/scripts/start.sh"]
     environment:
       TZ: ${TZ}
       NODE_ENV: production
       DATABASE_HOST: db:5432
-      # DB password is hex (URL-safe) so no percent-encoding is needed here.
       DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
       DATABASE_DIRECT_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
       NEXTAUTH_URL: http://localhost:3000/api/auth
@@ -89,14 +77,13 @@ services:
       CRON_API_KEY: ${CRON_API_KEY}
       NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY}
-      # SMTP optional locally — leave blank and emails just no-op.
       EMAIL_FROM: ${EMAIL_FROM}
       EMAIL_SERVER_HOST: ${EMAIL_SERVER_HOST}
       EMAIL_SERVER_PORT: ${EMAIL_SERVER_PORT}
       EMAIL_SERVER_USER: ${EMAIL_SERVER_USER}
       EMAIL_SERVER_PASSWORD: ${EMAIL_SERVER_PASSWORD}
     ports:
-      - "127.0.0.1:3000:3000"   # localhost only; change to 3000:3000 for LAN access
+      - "127.0.0.1:3000:3000"
     networks: [caldiy-local]
     healthcheck:
       test: ["CMD-SHELL", "wget -qO/dev/null http://127.0.0.1:3000/api/health 2>&1 | grep -q '200\\|301\\|302' || nc -z 127.0.0.1 3000"]

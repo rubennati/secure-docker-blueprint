@@ -1,0 +1,72 @@
+# BookStack — local
+#
+#   cp .env.local.example .env.local
+#   mkdir -p volumes/local/config volumes/local/mysql
+#   sudo chown -R 1000:1000 volumes/local/config
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   http://localhost:8080 — first login admin@admin.com / password
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  db:
+    image: mariadb:${DB_TAG}
+    container_name: bookstack-local-db
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [CHOWN, SETUID, SETGID, DAC_OVERRIDE]
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MARIADB_AUTO_UPGRADE: "1"
+      TZ: ${TZ}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - ./volumes/local/mysql:/var/lib/mysql
+    networks: [bookstack-local]
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 20s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  app:
+    image: lscr.io/linuxserver/bookstack:${APP_TAG}
+    container_name: bookstack-local-app
+    restart: unless-stopped
+    depends_on:
+      db: {condition: service_healthy}
+    security_opt: [no-new-privileges:true]
+    environment:
+      DISABLE_EXTERNAL_SERVICES: "true"
+      TZ: ${TZ}
+      PUID: ${PUID}
+      PGID: ${PGID}
+      APP_URL: http://localhost:8080
+      APP_KEY: ${APP_KEY}
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_DATABASE: ${DB_NAME}
+      DB_USERNAME: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - ./volumes/local/config:/config
+    ports:
+      - "127.0.0.1:8080:80"
+    networks: [bookstack-local]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sS -o /dev/null --max-time 5 http://127.0.0.1:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+networks:
+  bookstack-local:
+    name: bookstack-local

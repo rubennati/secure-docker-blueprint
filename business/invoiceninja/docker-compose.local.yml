@@ -1,0 +1,142 @@
+# Invoice Ninja — local
+#
+#   cp .env.local.example .env.local
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   http://localhost:8080
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  app:
+    image: invoiceninja/invoiceninja-debian:${APP_TAG}
+    container_name: invoiceninja-local-app
+    restart: unless-stopped
+    depends_on:
+      mysql: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    security_opt: [no-new-privileges:true]
+    command: ["supervisord", "-c", "/etc/supervisor/supervisord.conf"]
+    environment:
+      SENTRY_LARAVEL_DSN: ""
+      TZ: ${TZ}
+      APP_ENV: production
+      APP_DEBUG: ${APP_DEBUG}
+      APP_URL: http://localhost:8080
+      REQUIRE_HTTPS: "false"
+      TRUSTED_PROXIES: ""
+      IS_DOCKER: "true"
+      NINJA_ENVIRONMENT: selfhost
+      SCOUT_DRIVER: "null"
+      FILESYSTEM_DISK: debian_docker
+      APP_KEY: ${APP_KEY}
+      PDF_GENERATOR: snappdf
+      PHANTOMJS_PDF_GENERATION: "false"
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      CACHE_DRIVER: redis
+      QUEUE_CONNECTION: redis
+      SESSION_DRIVER: redis
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      IN_USER_EMAIL: ${IN_USER_EMAIL}
+      IN_PASSWORD: ${IN_PASSWORD}
+      MAIL_MAILER: log
+      MAIL_FROM_ADDRESS: invoiceninja@localhost
+      MAIL_FROM_NAME: Invoice Ninja
+    shm_size: 512m
+    volumes:
+      - app_public:/var/www/html/public
+      - app_storage:/var/www/html/storage
+    networks: [invoiceninja-local]
+    healthcheck:
+      test: ["CMD-SHELL", "supervisorctl -c /etc/supervisor/supervisord.conf status | grep -qv RUNNING && exit 1 || exit 0"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+  nginx:
+    image: nginx:${NGINX_TAG}
+    container_name: invoiceninja-local-nginx
+    restart: unless-stopped
+    depends_on:
+      app: {condition: service_healthy}
+    security_opt: [no-new-privileges:true]
+    environment:
+      TZ: ${TZ}
+    volumes:
+      - ./nginx:/etc/nginx/conf.d:ro
+      - app_public:/var/www/html/public:ro
+      - app_storage:/var/www/html/storage:ro
+    ports:
+      - "127.0.0.1:8080:80"
+    networks: [invoiceninja-local]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  mysql:
+    image: mysql:${MYSQL_TAG}
+    container_name: invoiceninja-local-mysql
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    environment:
+      TZ: ${TZ}
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks: [invoiceninja-local]
+    healthcheck:
+      test: ["CMD-SHELL", "mysql -h 127.0.0.1 -u\"$${MYSQL_USER}\" -p\"$${MYSQL_PASSWORD}\" \"$${MYSQL_DATABASE}\" -e 'SELECT 1' >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+
+  redis:
+    image: redis:${REDIS_TAG}
+    container_name: invoiceninja-local-redis
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    environment:
+      TZ: ${TZ}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    command: >
+      sh -c 'exec redis-server
+      --requirepass "$$REDIS_PASSWORD"
+      --maxmemory 192mb
+      --maxmemory-policy noeviction'
+    volumes:
+      - redis_data:/data
+    networks: [invoiceninja-local]
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep -q PONG"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  app_public:
+    name: invoiceninja-local-app-public
+  app_storage:
+    name: invoiceninja-local-app-storage
+  mysql_data:
+    name: invoiceninja-local-mysql-data
+  redis_data:
+    name: invoiceninja-local-redis-data
+
+networks:
+  invoiceninja-local:
+    name: invoiceninja-local

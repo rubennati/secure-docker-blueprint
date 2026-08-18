@@ -1,0 +1,34 @@
+# Homepage — local
+#
+#   cp .env.local.example .env.local
+#   mkdir -p volumes/local/config
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   http://localhost:3000
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  app:
+    image: ghcr.io/gethomepage/homepage:${APP_TAG}
+    container_name: homepage-local-app
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    environment:
+      TZ: ${TZ}
+      HOMEPAGE_ALLOWED_HOSTS: "localhost:3000,127.0.0.1:3000"
+    volumes:
+      - ./volumes/local/config:/app/config
+      # - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks: [homepage-local]
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+networks:
+  homepage-local:
+    name: homepage-local

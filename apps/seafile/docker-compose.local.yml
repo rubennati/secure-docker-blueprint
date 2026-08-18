@@ -1,0 +1,178 @@
+# Seafile CE — local
+#
+#   cp .env.local.example .env.local
+#   mkdir -p volumes/local/mysql volumes/local/redis volumes/local/seafile-data
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   http://localhost:8000
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  db:
+    image: mariadb:${DB_TAG}
+    container_name: seafile-local-db
+    restart: unless-stopped
+
+    security_opt:
+      - no-new-privileges:true
+
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          pids: 200
+        reservations:
+          memory: 256M
+
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_LOG_CONSOLE: "true"
+      MARIADB_AUTO_UPGRADE: "1"
+      TZ: ${TZ}
+
+    volumes:
+      - ./volumes/local/mysql:/var/lib/mysql
+
+    networks:
+      - seafile-local
+
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--mariadbupgrade", "--innodb_initialized"]
+      interval: 20s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  memcached:
+    image: memcached:${MEMCACHED_TAG}
+    container_name: seafile-local-memcached
+    restart: unless-stopped
+
+    security_opt:
+      - no-new-privileges:true
+    entrypoint: memcached -m 256
+
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          pids: 50
+        reservations:
+          memory: 64M
+
+    networks:
+      - seafile-local
+
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 11211"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  redis:
+    image: redis:${REDIS_TAG}
+    container_name: seafile-local-redis
+    restart: unless-stopped
+
+    security_opt:
+      - no-new-privileges:true
+
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          pids: 50
+        reservations:
+          memory: 32M
+
+    command: ["/bin/sh", "-c", "redis-server --requirepass \"$$REDIS_PASSWORD\""]
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+
+    volumes:
+      - ./volumes/local/redis:/data
+
+    networks:
+      - seafile-local
+
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep PONG"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  seafile:
+    image: seafileltd/seafile-mc:${APP_TAG}
+    container_name: seafile-local-app
+    restart: unless-stopped
+
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          pids: 300
+        reservations:
+          memory: 512M
+
+    depends_on:
+      db:
+        condition: service_healthy
+      memcached:
+        condition: service_started
+      redis:
+        condition: service_healthy
+
+    security_opt:
+      - no-new-privileges:true
+
+    environment:
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_USER: ${SEAFILE_DB_USER}
+      DB_PASSWORD: ${SEAFILE_DB_PASSWORD}
+      INIT_SEAFILE_MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      SEAFILE_MYSQL_DB_HOST: db
+      SEAFILE_MYSQL_DB_USER: ${SEAFILE_DB_USER}
+      SEAFILE_MYSQL_DB_PASSWORD: ${SEAFILE_DB_PASSWORD}
+      SEAFILE_MYSQL_DB_CCNET_DB_NAME: ccnet_db
+      SEAFILE_MYSQL_DB_SEAFILE_DB_NAME: seafile_db
+      SEAFILE_MYSQL_DB_SEAHUB_DB_NAME: seahub_db
+      CACHE_PROVIDER: redis
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      SEAFILE_SERVER_HOSTNAME: localhost:8000
+      SEAFILE_SERVER_PROTOCOL: http
+      SITE_ROOT: /
+      ENABLE_GO_FILESERVER: "true"
+      NON_ROOT: "false"
+      SEAFILE_LOG_TO_STDOUT: "false"
+      JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY}
+      INIT_SEAFILE_ADMIN_EMAIL: ${SEAFILE_ADMIN_EMAIL}
+      INIT_SEAFILE_ADMIN_PASSWORD: ${SEAFILE_ADMIN_PASSWORD}
+      ENABLE_SEADOC: "false"
+      ENABLE_NOTIFICATION_SERVER: "false"
+      TIME_ZONE: ${TZ}
+      TZ: ${TZ}
+
+    volumes:
+      - ./volumes/local/seafile-data:/shared
+
+    ports:
+      - "127.0.0.1:8000:80"
+
+    networks:
+      - seafile-local
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:80/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 180s
+
+networks:
+  seafile-local:
+    name: seafile-local

@@ -1,0 +1,68 @@
+# Ghost — local
+#
+#   cp .env.local.example .env.local
+#   mkdir -p volumes/local/content
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   http://localhost:2368/ghost/
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  db:
+    image: mysql:${DB_TAG}
+    container_name: ghost-local-db
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [CHOWN, SETUID, SETGID, DAC_OVERRIDE]
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      TZ: ${TZ}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - ./volumes/local/mysql:/var/lib/mysql
+    networks: [ghost-local]
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -p\"$${MYSQL_ROOT_PASSWORD}\" -h 127.0.0.1"]
+      interval: 20s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  app:
+    image: ghost:${APP_TAG}
+    container_name: ghost-local-app
+    restart: unless-stopped
+    depends_on:
+      db: {condition: service_healthy}
+    security_opt: [no-new-privileges:true]
+    environment:
+      url: http://localhost:2368
+      database__client: mysql
+      database__connection__host: db
+      database__connection__port: "3306"
+      database__connection__user: ${DB_USER}
+      database__connection__password: ${DB_PASSWORD}
+      database__connection__database: ${DB_NAME}
+      NODE_ENV: production
+      TZ: ${TZ}
+    volumes:
+      - ./volumes/local/content:/var/lib/ghost/content
+    ports:
+      - "127.0.0.1:2368:2368"
+    networks: [ghost-local]
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://127.0.0.1:2368/',r=>{process.exit(0)}).on('error',()=>process.exit(1))\""]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 45s
+
+networks:
+  ghost-local:
+    name: ghost-local

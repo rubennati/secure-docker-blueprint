@@ -1,0 +1,85 @@
+# Vikunja — local
+#
+#   cp .env.local.example .env.local
+#   docker compose -f docker-compose.local.yml --env-file .env.local build
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   http://localhost:3456
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  vikunja:
+    build:
+      context: .
+      args:
+        APP_TAG: ${APP_TAG}
+        APP_DIGEST: ${APP_DIGEST}
+    image: vikunja-local:${APP_TAG}
+    container_name: vikunja-local-app
+    restart: unless-stopped
+    depends_on:
+      db: {condition: service_healthy}
+    security_opt: [no-new-privileges:true]
+    environment:
+      VIKUNJA_SERVICE_PUBLICURL: "http://localhost:3456"
+      VIKUNJA_SERVICE_SECRET: ${JWT_KEY}
+      VIKUNJA_DATABASE_PASSWORD: ${DB_PASSWORD}
+
+      VIKUNJA_DATABASE_TYPE: postgres
+      VIKUNJA_DATABASE_HOST: db
+      VIKUNJA_DATABASE_USER: ${DB_USER}
+      VIKUNJA_DATABASE_DATABASE: ${DB_NAME}
+
+      VIKUNJA_SERVICE_ENABLEREGISTRATION: "true"
+      VIKUNJA_AUTH_LOCAL_ENABLED: "true"
+
+      VIKUNJA_DEFAULTSETTINGS_WEEK_START: "1"
+      VIKUNJA_DEFAULTSETTINGS_TIMEZONE: ${TZ}
+      VIKUNJA_DEFAULTSETTINGS_AVATAR_PROVIDER: initials
+
+      VIKUNJA_SERVICE_ENABLELINKSHARING: "true"
+      VIKUNJA_BACKGROUNDS_ENABLED: "true"
+      VIKUNJA_SERVICE_ENABLECALDAV: "true"
+      VIKUNJA_SERVICE_ENABLETOTP: "true"
+      VIKUNJA_WEBHOOKS_ENABLED: "true"
+
+      TZ: ${TZ}
+    volumes:
+      - vikunja-local-files:/app/vikunja/files
+    ports:
+      - "127.0.0.1:3456:3456"
+    networks: [vikunja-local]
+    healthcheck:
+      test: ["CMD", "/bin/wget", "-qO-", "http://localhost:3456/api/v1/info"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  db:
+    image: postgres:${DB_TAG}
+    container_name: vikunja-local-db
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      TZ: ${TZ}
+    volumes:
+      - ./volumes/local/postgres:/var/lib/postgresql/data
+    networks: [vikunja-local]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+volumes:
+  vikunja-local-files:
+    driver: local
+
+networks:
+  vikunja-local:
+    name: vikunja-local

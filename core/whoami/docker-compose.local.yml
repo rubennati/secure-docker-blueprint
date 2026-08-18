@@ -1,0 +1,24 @@
+# Whoami — local
+#
+#   cp .env.local.example .env.local
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   curl http://localhost:8080/
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  whoami:
+    image: traefik/whoami:${APP_TAG}
+    container_name: whoami-local-whoami
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs: [/tmp]
+    ports:
+      - "127.0.0.1:8080:80"
+    networks: [whoami-local]
+
+networks:
+  whoami-local:
+    name: whoami-local

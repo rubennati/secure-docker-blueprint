@@ -1,0 +1,121 @@
+# Paperless-ngx — local
+#
+#   cp .env.local.example .env.local
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   http://localhost:8000
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  db:
+    image: postgres:${DB_TAG}
+    container_name: paperless-local-db
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      TZ: ${TZ}
+    volumes:
+      - ./volumes/local/postgres:/var/lib/postgresql/data
+    networks: [paperless-local]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  redis:
+    image: redis:${REDIS_TAG}
+    container_name: paperless-local-redis
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    tmpfs: [/tmp]
+    volumes:
+      - ./volumes/local/redis:/data
+    networks: [paperless-local]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  gotenberg:
+    image: gotenberg/gotenberg:${GOTENBERG_TAG}
+    container_name: paperless-local-gotenberg
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    command:
+      - "gotenberg"
+      - "--chromium-disable-javascript=true"
+      - "--chromium-allow-list=file:///tmp/.*"
+    networks: [paperless-local]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sS -o /dev/null --max-time 5 http://127.0.0.1:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  tika:
+    image: apache/tika:${TIKA_TAG}
+    container_name: paperless-local-tika
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    networks: [paperless-local]
+
+  app:
+    image: ghcr.io/paperless-ngx/paperless-ngx:${APP_TAG}
+    container_name: paperless-local-app
+    restart: unless-stopped
+    depends_on:
+      db: {condition: service_healthy}
+      redis: {condition: service_healthy}
+      gotenberg: {condition: service_started}
+      tika: {condition: service_started}
+    security_opt: [no-new-privileges:true]
+    environment:
+      USERMAP_UID: ${USERMAP_UID}
+      USERMAP_GID: ${USERMAP_GID}
+      PAPERLESS_URL: http://localhost:8000
+      PAPERLESS_APP_TITLE: ${PAPERLESS_APP_TITLE}
+      PAPERLESS_DBHOST: db
+      PAPERLESS_DBNAME: ${DB_NAME}
+      PAPERLESS_DBUSER: ${DB_USER}
+      PAPERLESS_DBPASS: ${DB_PASSWORD}
+      PAPERLESS_SECRET_KEY: ${SECRET_KEY}
+      PAPERLESS_ADMIN_USER: ${ADMIN_USER}
+      PAPERLESS_ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      PAPERLESS_REDIS: redis://redis:6379
+      PAPERLESS_TIKA_ENABLED: "1"
+      PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://gotenberg:3000
+      PAPERLESS_TIKA_ENDPOINT: http://tika:9998
+      PAPERLESS_TIME_ZONE: ${TZ}
+      PAPERLESS_OCR_LANGUAGE: ${PAPERLESS_OCR_LANGUAGE}
+      PAPERLESS_OCR_LANGUAGES: ${PAPERLESS_OCR_LANGUAGES}
+      PAPERLESS_OCR_PAGES: ${PAPERLESS_OCR_PAGES}
+      PAPERLESS_OCR_USER_ARGS: '{"invalidate_digital_signatures":true,"continue_on_soft_render_error":true}'
+      PAPERLESS_WEBSERVER_WORKERS: "1"
+      PAPERLESS_TASK_WORKERS: "1"
+      PAPERLESS_THREADS_PER_WORKER: "2"
+    volumes:
+      - ./volumes/local/data:/usr/src/paperless/data
+      - ./volumes/local/media:/usr/src/paperless/media
+      - ./volumes/local/consume:/usr/src/paperless/consume
+      - ./volumes/local/export:/usr/src/paperless/export
+    ports:
+      - "127.0.0.1:8000:8000"
+    networks: [paperless-local]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+networks:
+  paperless-local:
+    name: paperless-local

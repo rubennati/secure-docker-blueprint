@@ -1,0 +1,43 @@
+# UrBackup Server — local
+#
+#   cp .env.local.example .env.local
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   http://localhost:55414
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  app:
+    image: uroni/urbackup-server:${APP_TAG}
+    container_name: urbackup-local-app
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    #cap_add: [SYS_ADMIN]
+    deploy:
+      resources:
+        limits:
+          memory: ${APP_MEM_LIMIT}
+          cpus: ${APP_CPU_LIMIT}
+          pids: 500
+        reservations:
+          memory: 512m
+    environment:
+      TZ: ${TZ}
+    volumes:
+      - ${BACKUP_STORAGE_PATH}:/backups
+      - ./volumes/local/database:/var/urbackup
+    ports:
+      - "127.0.0.1:55414:55414"
+      #- "127.0.0.1:55415:55415"
+    networks: [urbackup-local]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fso /dev/null http://127.0.0.1:55414/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+networks:
+  urbackup-local:
+    name: urbackup-local

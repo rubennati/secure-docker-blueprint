@@ -1,0 +1,86 @@
+# Immich — local
+#
+#   cp .env.local.example .env.local
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   http://localhost:2283
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  db:
+    image: ghcr.io/immich-app/postgres:${DB_TAG}
+    container_name: immich-local-db
+    restart: unless-stopped
+    shm_size: 128mb
+    security_opt: [no-new-privileges:true]
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--data-checksums"
+      TZ: ${TZ}
+    volumes:
+      - ./volumes/local/postgres:/var/lib/postgresql/data
+    networks: [immich-local]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  redis:
+    image: valkey/valkey:${REDIS_TAG}
+    container_name: immich-local-redis
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    tmpfs: [/tmp]
+    volumes:
+      - ./volumes/local/redis:/data
+    networks: [immich-local]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  machine-learning:
+    image: ghcr.io/immich-app/immich-machine-learning:${APP_TAG}
+    container_name: immich-local-ml
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    environment:
+      TZ: ${TZ}
+    volumes:
+      - ./volumes/local/model-cache:/cache
+    networks: [immich-local]
+
+  app:
+    image: ghcr.io/immich-app/immich-server:${APP_TAG}
+    container_name: immich-local-app
+    restart: unless-stopped
+    depends_on:
+      db: {condition: service_healthy}
+      redis: {condition: service_healthy}
+      machine-learning: {condition: service_started}
+    security_opt: [no-new-privileges:true]
+    environment:
+      TZ: ${TZ}
+      DB_HOSTNAME: db
+      DB_PORT: "5432"
+      DB_DATABASE_NAME: ${DB_NAME}
+      DB_USERNAME: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOSTNAME: redis
+      REDIS_PORT: "6379"
+      IMMICH_MACHINE_LEARNING_URL: http://machine-learning:3003
+    volumes:
+      - ${UPLOAD_LOCATION}:/data
+    ports:
+      - "127.0.0.1:2283:2283"
+    networks: [immich-local]
+
+networks:
+  immich-local:
+    name: immich-local

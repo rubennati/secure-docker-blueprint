@@ -1,15 +1,9 @@
-# =============================================================================
-# Infisical — LOCAL test stack (no Traefik, no Docker Secrets)
-# =============================================================================
-# Run Infisical standalone on http://localhost:8080 for quick local testing.
-# Secrets come as plain env from .env.local (gitignored) — NOT for production.
-# Production deployment uses docker-compose.yml (Traefik + Docker Secrets, VPN-only).
+# Infisical — local
 #
-#   cp .env.local.example .env.local   # then fill the values (see that file)
+#   cp .env.local.example .env.local
 #   docker compose -f docker-compose.local.yml --env-file .env.local up -d
-#   docker compose -f docker-compose.local.yml --env-file .env.local logs app -f
-#   # open http://localhost:8080 — create the first (admin) account
-# =============================================================================
+#   http://localhost:8080
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
 
 services:
 
@@ -19,8 +13,6 @@ services:
     restart: unless-stopped
     security_opt: [no-new-privileges:true]
     cap_drop: [ALL]
-    # Entrypoint starts as root, fixes data-dir ownership, then drops to the
-    # service user. Without these it never starts. Verified 2026-08-16.
     cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
     environment:
       POSTGRES_DB: ${DB_NAME}
@@ -43,8 +35,6 @@ services:
     restart: unless-stopped
     security_opt: [no-new-privileges:true]
     cap_drop: [ALL]
-    # Entrypoint starts as root, fixes data-dir ownership, then drops to the
-    # service user. Without these it never starts. Verified 2026-08-16.
     cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
     read_only: true
     tmpfs: [/tmp]
@@ -67,7 +57,6 @@ services:
       redis: {condition: service_healthy}
     security_opt: [no-new-privileges:true]
     cap_drop: [ALL]
-    # No secret-injector entrypoint here: all secrets arrive as plain env below.
     environment:
       TZ: ${TZ}
       DB_CONNECTION_URI: postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
@@ -77,7 +66,7 @@ services:
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
       AUTH_SECRET: ${AUTH_SECRET}
     ports:
-      - "127.0.0.1:8080:8080"   # localhost only; change to 8080:8080 for LAN access
+      - "127.0.0.1:8080:8080"
     networks: [infisical-local]
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:8080/api/status',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]

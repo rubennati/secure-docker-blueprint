@@ -1,0 +1,34 @@
+# Heimdall — local
+#
+#   cp .env.local.example .env.local
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   http://localhost:8080
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  app:
+    image: lscr.io/linuxserver/heimdall:${APP_TAG}
+    container_name: heimdall-local-app
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    environment:
+      TZ: ${TZ}
+      PUID: ${PUID}
+      PGID: ${PGID}
+      ALLOW_INTERNAL_REQUESTS: ${ALLOW_INTERNAL_REQUESTS}
+    volumes:
+      - ./volumes/local/config:/config
+    ports:
+      - "127.0.0.1:8080:80"
+    networks: [heimdall-local]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fso /dev/null http://127.0.0.1:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+networks:
+  heimdall-local:
+    name: heimdall-local

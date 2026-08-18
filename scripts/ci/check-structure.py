@@ -102,7 +102,10 @@ def compose_files(app: Path) -> list[Path]:
     main = app / "docker-compose.yml"
     if main.exists():
         return [main]
-    return sorted(p for p in app.glob("*.yml") if is_compose(p))
+    # For a split stack the glob decides what counts as production, so the
+    # local test stack must be excluded from it.
+    return sorted(p for p in app.glob("*.yml")
+                  if is_compose(p) and not p.name.endswith(".local.yml"))
 
 
 def find_apps() -> list[Path]:
