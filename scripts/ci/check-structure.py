@@ -259,10 +259,16 @@ def check_one_compose(app: Path, path: Path, findings: list[dict]) -> None:
         #
         # Anything else still warns, so the escape hatch cannot be used to wave
         # a service through quietly.
+        # `healthcheck: {disable: true}` counts as having none. The dict is truthy,
+        # so a bare `if not hc` waved it through — four services used it and none
+        # was reported. In Compose the key suppresses a HEALTHCHECK baked into the
+        # image; it never defines one, so the service still needs the same written
+        # reason as a service with no healthcheck block at all.
         hc = svc.get("healthcheck")
-        if not hc and not _healthcheck_waived(raw_text, name):
+        disabled = isinstance(hc, dict) and hc.get("disable")
+        if (not hc or disabled) and not _healthcheck_waived(raw_text, name):
             findings.append({"level": "WARN", "rule": "no-healthcheck", "service": name,
-                             "detail": "no healthcheck"})
+                             "detail": "healthcheck disabled" if disabled else "no healthcheck"})
 
         # -- traefik tls.options needs @file (WARN) ---------------------------
         labels = svc.get("labels") or []

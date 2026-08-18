@@ -112,7 +112,11 @@ services:
       - /tmp
 
     # --- Resources ---
-    # The configured maxmemory plus allocator overhead.
+    # No maxmemory is configured, so this is a ceiling rather than a value
+    # derived from a budget — compose-structure.md asks for the second.
+    # Setting maxmemory changes eviction behaviour, so it belongs with the
+    # v0.9.0 measurement rather than here. apps/nextcloud and
+    # business/invoiceninja show the shape once it is set.
     deploy:
       resources:
         limits:
@@ -313,9 +317,9 @@ services:
       - app-internal
 
     # --- Health & Observability ---
-    # Upstream removed the built-in worker healthcheck in 2025.10.2.
-    # Explicitly disabled so Docker does not report a spurious
-    # "starting" state indefinitely.
+    # healthcheck: none — upstream removed the built-in worker healthcheck in
+    # 2025.10.2. The image still declares one, so it is disabled explicitly;
+    # left in place Docker reports "starting" indefinitely.
     healthcheck:
       disable: true
 

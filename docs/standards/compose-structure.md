@@ -193,6 +193,20 @@ Some services legitimately have none, and the compose file says which:
 `check-structure.py` accepts either marker and warns on anything else, so the
 exemption cannot be used to wave a service through without stating why.
 
+**`healthcheck: {disable: true}` is not a way to declare you have none.** The key
+suppresses a `HEALTHCHECK` baked into the image — it never defines one, so a
+service using it is a service without a healthcheck and needs the same written
+marker. Four services carried it with a reason in prose and none was reported,
+because the dict is truthy and the rule tested `if not hc`. Use it only where the
+image really does declare a check that has to be turned off, and say so:
+
+```yaml
+    # healthcheck: none — upstream removed the built-in check in 2025.10.2. The
+    # image still declares one, so it is disabled explicitly.
+    healthcheck:
+      disable: true
+```
+
 ## Service Names
 
 Use short, generic names:

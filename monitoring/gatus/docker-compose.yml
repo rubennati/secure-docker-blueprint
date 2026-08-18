@@ -58,8 +58,8 @@ services:
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8080"
 
     # --- Health & Observability ---
-    # Gatus runs a minimal Go binary image — no wget/curl/shell available.
-    # Liveness is inferred from the container restart policy instead.
+    # healthcheck: none — minimal Go binary image, no shell, wget or curl to
+    # probe with. Liveness comes from the restart policy.
     healthcheck:
       disable: true
 

@@ -80,7 +80,11 @@ services:
     read_only: true
     tmpfs: [/tmp]
     # --- Resources ---
-    # The configured maxmemory plus allocator overhead.
+    # No maxmemory is configured, so this is a ceiling rather than a value
+    # derived from a budget — compose-structure.md asks for the second.
+    # Setting maxmemory changes eviction behaviour, so it belongs with the
+    # v0.9.0 measurement rather than here. apps/nextcloud and
+    # business/invoiceninja show the shape once it is set.
     deploy:
       resources:
         limits:
