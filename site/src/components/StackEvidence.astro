@@ -40,8 +40,20 @@ const hostInstalled = version === 'host-installed';
 // pinned today — a later bump moves the pin without re-running anything. Naming
 // the pin next to the date would credit it with a check it never had.
 const verifiedVersion = entry.verified_version || '';
+
+// Compare what the two actually name, not how they are written: UPSTREAM.md
+// tends to carry a leading `v`, a pin may repeat the image name or append a
+// digest, and none of that makes it a different version.
+const sameVersion = (a, b) => {
+	const norm = (s) =>
+		String(s)
+			.split('@')[0]
+			.replace(/^[a-z0-9._/-]+:(?=[\dv])/i, '')
+			.replace(/^v/i, '');
+	return norm(a) === norm(b);
+};
 const pinMoved =
-	Boolean(verifiedVersion) && !hostInstalled && verifiedVersion !== version;
+	Boolean(verifiedVersion) && !hostInstalled && !sameVersion(verifiedVersion, version);
 
 const checked =
 	entry.verified_anchored && entry.verified !== '—'
