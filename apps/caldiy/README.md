@@ -2,7 +2,7 @@
 
 > **Note:** Cal.diy is the MIT-licensed community edition of Cal.com, spun out in 2026 when Cal.com moved its production codebase behind a closed-source licence. Upstream explicitly labels Cal.diy as "strictly for personal, non-production use" with no security guarantees. **Do not use for business-critical scheduling** without understanding that trade-off.
 
-> **⚠️ Cloudflare (proxied) is a required layer for this deployment.** Because Cal.diy is community-maintained and not confirmed secure — and because a live instance was compromised once (SMTP credential exfiltrated) — this blueprint runs Cal.diy **behind Cloudflare as a proxy (orange cloud), not DNS-only**, as a mandatory extra layer: WAF, geo allowlist on the human-facing surface, rate limiting, and origin hiding. Exact settings: **[docs/cloudflare.md](docs/cloudflare.md)**. The full post-incident hardening roadmap: **[docs/hardening-plan.md](docs/hardening-plan.md)**.
+> **Cloudflare (proxied) is the recommended edge layer for the internet-facing deployment.** Cal.diy is community-maintained and not confirmed secure, and a live instance of it was compromised once (SMTP credential exfiltrated), so for an internet-facing deployment this guide recommends running Cal.diy **behind Cloudflare as a proxy (orange cloud), not DNS-only**: WAF, geo allowlist on the human-facing surface, rate limiting, and origin hiding. The application itself does not depend on Cloudflare and runs without it locally — see [Local testing](#local-testing-no-traefik). Exact settings: **[docs/cloudflare.md](docs/cloudflare.md)**. The full post-incident hardening roadmap: **[docs/hardening-plan.md](docs/hardening-plan.md)**.
 
 For an alternative with an established track record and no build dependency, see [`apps/easyappointments/`](../easyappointments/) (PHP + MariaDB, GPL-3.0).
 
@@ -50,8 +50,8 @@ docker compose logs app --follow
 ```
 
 > **Before exposing publicly:** put the host behind Cloudflare (proxied) and apply
-> [docs/cloudflare.md](docs/cloudflare.md) — WAF, geo allowlist, and origin hiding are part of
-> this deployment's security model, not optional extras.
+> [docs/cloudflare.md](docs/cloudflare.md) — WAF, geo allowlist, and origin hiding are the edge
+> half of the security model for a public deployment.
 
 ## Local testing (no Traefik)
 
@@ -69,7 +69,7 @@ Secrets are plain env in `.env.local` (gitignored) — **local only**, never pro
 
 | Concern | How handled |
 |---------|-------------|
-| Edge protection (Cloudflare) | **Required** proxied layer — WAF, geo allowlist on the human surface, rate limiting, origin hiding. See [docs/cloudflare.md](docs/cloudflare.md) |
+| Edge protection (Cloudflare) | Recommended proxied layer for the internet-facing deployment — WAF, geo allowlist on the human surface, rate limiting, origin hiding. See [docs/cloudflare.md](docs/cloudflare.md) |
 | DB password | Docker Secret (`db_pwd.txt`) — never in `.env` |
 | `NEXTAUTH_SECRET` | Docker Secret (`nextauth_secret.txt`) — never in `.env` |
 | `CALENDSO_ENCRYPTION_KEY` | Docker Secret (`encryption_key.txt`) — never in `.env` |
@@ -197,7 +197,7 @@ For the emergency rotation procedure and ongoing monitoring, see [docs/ops-runbo
 ## Details
 
 - [docs/hardening-plan.md](docs/hardening-plan.md) — post-incident hardening roadmap (surface reduction, CrowdSec, geo)
-- [docs/cloudflare.md](docs/cloudflare.md) — required Cloudflare settings (WAF, geo allowlist, rate limiting, origin hiding)
+- [docs/cloudflare.md](docs/cloudflare.md) — Cloudflare edge settings for a public deployment (WAF, geo allowlist, rate limiting, origin hiding)
 - [UPSTREAM.md](UPSTREAM.md) — fork (cal.forte) reference, upgrade checklist, gotchas
 - [docs/ops-runbook.md](docs/ops-runbook.md) — deployment, secret rotation, SMTP, CrowdSec, emergency kill-switch
 - Sibling: [`apps/easyappointments/`](../easyappointments/) — PHP-stack alternative, no build dependency

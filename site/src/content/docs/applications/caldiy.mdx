@@ -1,36 +1,34 @@
 ---
 title: Cal.diY
-description: Self-service appointment booking — installed behind Cloudflare with six secrets, signup closed, and the encryption key that connected calendars depend on kept off the host.
+description: Self-service appointment booking against your own calendar — run it locally in one command, or deploy it with signup closed and the calendar encryption key kept off the host.
 ---
 
 import { Steps } from '@astrojs/starlight/components';
 import StackEvidence from '../../../components/StackEvidence.astro';
 
 Cal.diY gives people a page where they book time with you, against your own
-calendar. Three containers — the application, PostgreSQL and Redis.
+calendar. They pick a free slot, it appears in your calendar, and both sides get
+a confirmation mail. Three containers — the application, PostgreSQL and Redis.
 
-<StackEvidence stack="apps/caldiy"
-  gap="a restore. The database and the encryption key have to come back together, and that has not been performed here." />
+## Try it locally
 
-Needs: [Traefik](/infrastructure/traefik/) running, a domain on Cloudflare, SMTP
-credentials, and a way to generate VAPID keys.
+One command on your own machine — no proxy, no domain, no certificate, no mail.
+From `apps/caldiy/`:
 
-:::caution
-Upstream Cal.diy describes itself as intended for personal, non-production use.
-This blueprint does not install upstream directly — it installs **cal.forte**, a
-separately maintained hardened fork. It does not provide vendor support or a
-vendor incident-response commitment.
+```bash
+cp .env.local.example .env.local
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+```
 
-Because of that, this Cal.diY stack requires a **proxied Cloudflare zone** as part
-of its security model. No other application in this blueprint carries a mandatory
-edge layer. If you would rather not run one,
-[Easy!Appointments](/applications/easyappointments/) does the same job with a
-longer track record and no such requirement.
-:::
+The file carries the `openssl` one-liners for the values it asks for. Open
+`http://localhost:3000`: signup is open here, so you can create the first user
+and click through the booking flow. Mail is unset, so no confirmations are sent.
 
 ## Installation
 
-From `apps/caldiy/`:
+For a deployment on a server. From `apps/caldiy/` — the stack's compose file
+routes through [Traefik](/infrastructure/traefik/), so have it running with a
+hostname pointing at the host.
 
 <Steps>
 
@@ -40,8 +38,10 @@ From `apps/caldiy/`:
    cp .env.example .env
    ```
 
-   Set `APP_TRAEFIK_HOST`, `TZ`, the `EMAIL_*` block and the branding variables.
-   Then set `ALLOWED_HOSTNAMES` to match the host exactly:
+   Set `APP_TRAEFIK_HOST`, `TZ` and the branding variables. The `EMAIL_*` block
+   is what sends booking confirmations and invitations — without it the
+   application runs and nobody is told about their appointment. Then set
+   `ALLOWED_HOSTNAMES` to match the host exactly:
 
    ```env
    ALLOWED_HOSTNAMES='"cal.example.com"'
@@ -71,22 +71,7 @@ From `apps/caldiy/`:
    Public key into `VAPID_PUBLIC_KEY` in `.env`; private key into
    `.secrets/vapid_private_key.txt`.
 
-4. Set the host's DNS records in Cloudflare to **proxied** — the orange cloud —
-   before the origin is reachable. Publish only the address family the origin
-   actually serves: an `A` record for IPv4, an `AAAA` record for IPv6, or both.
-   Whichever exist have to be proxied. A record left on DNS-only sends traffic
-   straight to the origin, and none of the edge protection applies to it.
-
-   ```bash
-   dig +short cal.example.com     # a Cloudflare address, not your origin
-   ```
-
-   The rest of the edge configuration — the managed WAF, a geo allowlist on the
-   human-facing surface, rate limiting, origin hiding, and which parts need a paid
-   plan — is in
-   [`docs/cloudflare.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/caldiy/docs/cloudflare.md).
-
-5. Start it:
+4. Start it:
 
    ```bash
    docker compose up -d
@@ -95,7 +80,7 @@ From `apps/caldiy/`:
 
    Wait for `ready on port 3000`.
 
-6. Open `https://<APP_TRAEFIK_HOST>`. The setup wizard runs on first visit and
+5. Open `https://<APP_TRAEFIK_HOST>`. The setup wizard runs on first visit and
    the first account becomes the owner. Public self-registration stays disabled —
    `NEXT_PUBLIC_DISABLE_SIGNUP=true`.
 
@@ -116,6 +101,29 @@ incompatibility. The healthcheck uses a TCP probe instead, and the application
 itself runs normally.
 
 ## Going further
+
+### Putting a booking page on the public internet
+
+A booking page is meant to be reached by people you have not met, which makes it
+the surface in this blueprint most worth putting an edge layer in front of.
+Upstream Cal.diy describes itself as intended for personal, non-production use,
+and neither it nor the cal.forte fork comes with vendor support or an
+incident-response commitment — worth weighing before it carries real bookings.
+
+For an internet-facing deployment this guide recommends Cloudflare as that layer.
+Cal.diY itself does not depend on it.
+[`docs/cloudflare.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/caldiy/docs/cloudflare.md)
+has the settings: the managed WAF, a geo allowlist on the human-facing surface,
+rate limiting, origin hiding, and which parts need a paid plan.
+
+If you do use Cloudflare, publish only the address family the origin actually
+serves — an `A` record for IPv4, an `AAAA` record for IPv6, or both — and proxy
+whichever exist. A record left on DNS-only reaches the origin directly, and none
+of the edge protection applies to it:
+
+```bash
+dig +short cal.example.com     # a Cloudflare address, not your origin
+```
 
 ### Stricter headers than the rest of the blueprint
 
@@ -199,8 +207,9 @@ Restore order: database, then the application.
 
 ## Updates
 
-The image comes from a review-gated fork that publishes versioned tags to GHCR,
-never `latest`, and the pin carries a digest.
+The image is the hardened **cal.forte** fork rather than upstream Cal.diy,
+published to GHCR under versioned tags — never `latest` — and pinned with a
+digest.
 
 <Steps>
 
@@ -235,10 +244,15 @@ healthcheck uses TCP instead and the application is unaffected.
 **Features from Cal.com are missing.** Teams, organisations, advanced insights,
 SSO and workflows are not part of the community edition.
 
+## Verification details
+
+<StackEvidence stack="apps/caldiy"
+  gap="a restore. The database and the encryption key have to come back together, and that has not been performed here." />
+
 ## Repository files
 
 - [`apps/caldiy/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/caldiy/README.md) — setup, security model, known issues
-- [`apps/caldiy/docs/cloudflare.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/caldiy/docs/cloudflare.md) — the required Cloudflare settings
+- [`apps/caldiy/docs/cloudflare.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/caldiy/docs/cloudflare.md) — the Cloudflare edge settings
 - [`apps/caldiy/docs/ops-runbook.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/caldiy/docs/ops-runbook.md) — secret rotation and emergency procedures
 - [`apps/caldiy/docs/hardening-plan.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/caldiy/docs/hardening-plan.md) — the post-incident roadmap
 - [`apps/caldiy/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/caldiy/UPSTREAM.md) — the fork, upgrade checklist, gotchas

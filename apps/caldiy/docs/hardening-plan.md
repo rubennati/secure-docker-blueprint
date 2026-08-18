@@ -5,7 +5,8 @@
 > **Progress:** Phase 0 (release hygiene) and Phase 1 (surface reduction) config has **landed in
 > the repo** (`.env.example`, `docker-compose.yml`, `UPSTREAM.md`, `README.md`); their live-host
 > acceptance checks are still open. Phase 2 (CrowdSec) and Phase 3 (geo) not started. Cloudflare
-> is now a **required** layer for Cal.diy — see [cloudflare.md](cloudflare.md).
+> is the **recommended** edge layer for the internet-facing deployment — see
+> [cloudflare.md](cloudflare.md).
 
 Post-incident hardening plan for Cal.diY on the secure-docker-blueprint. Written after an
 incident on a live server in which the **SMTP credential was exfiltrated**. This document is the
@@ -192,11 +193,12 @@ dependency"). Confirm which is true before building the rule.
 | **Human-only scope** | One rule: block if `country ∉ {allow}` AND path ∉ {`/api/integrations`, `/api/auth`} | Split routers: geo middleware on the human router, webhook paths on a separate router without it |
 | **Fits** | If you run CF proxy anyway | The blueprint's "portable, no host-specific assumptions" goal |
 
-**Decision (Cal.diy):** Cloudflare proxy is a **required** layer for this app (see
+**Decision (Cal.diy):** the internet-facing deployment runs behind the Cloudflare proxy (see
 [README](../README.md) + [cloudflare.md](cloudflare.md)), so geo is implemented as **Path A** — a
 Cloudflare WAF custom rule (country + path exception). Full settings live in
 [cloudflare.md](cloudflare.md) §3. Path B (Traefik GeoIP plugin as a `geo-*` profile) is retained
-only as a documented fallback for a deployment that genuinely cannot put Cloudflare in front.
+as the fallback concept for a deployment without Cloudflare; its implementation is
+not covered here.
 
 ### 3.3 Scope caveat (why "human-only")
 
@@ -233,7 +235,7 @@ Emergency kill-switch for the whole app remains `APP_TRAEFIK_ACCESS=acc-deny` (r
 
 ## See also
 
-- [`cloudflare.md`](cloudflare.md) — required Cloudflare settings (edge WAF, geo allowlist, origin lock)
+- [`cloudflare.md`](cloudflare.md) — Cloudflare edge settings (edge WAF, geo allowlist, origin lock)
 - [`ops-runbook.md`](ops-runbook.md) — deploy, secret rotation, SMTP emergency, kill-switch
 - [`UPSTREAM.md`](../UPSTREAM.md) — fork (cal.forte) model, upgrade checklist
 - [`core/crowdsec/docs/profiles.md`](../../../core/crowdsec/docs/profiles.md) — CrowdSec profile architecture
