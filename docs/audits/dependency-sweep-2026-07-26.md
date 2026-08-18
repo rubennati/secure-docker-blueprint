@@ -9,7 +9,7 @@ Repo-wide check of pinned image tags vs. current upstream releases (~30 of ~50 s
 rest listed below to finish). Update path = Version Chain above; prefer digest-pinning on bump
 (reference: `apps/caldiy`).
 
-### Applied this session (security-critical)
+## Applied this session (security-critical)
 
 | Service | From | To |
 |---|---|---|
@@ -21,7 +21,7 @@ rest listed below to finish). Update path = Version Chain above; prefer digest-p
 | apps/paperless-ngx | 2.20.13 | **3.0.3** (🚧 major — verify: Python 3.11+, API v1 removed, search Whoosh→tantivy reindex) |
 | business/invoiceninja | 5.13.24 | **5.13.26** |
 
-### Pending — verified, security-relevant (apply next)
+## Pending — verified, security-relevant (apply next)
 
 **Applied 2026-07-26** (second wave): wordpress **7.0.2** 🚧, listmonk **v6.2.0**, portainer(+agent)
 **2.39.5**, dolibarr **23.0.3**, changedetection **0.55.8**, photoprism **260601**, bookstack
@@ -33,21 +33,21 @@ Still pending:
 |---|---|---|---|
 | core/traefik | v3.6 | **3.7.9** | floating `v3.6` auto-patches to 3.6.24; evaluate 3.7 (deliberate minor upgrade) |
 
-### Feature/minor — applied 2026-07-26
+## Feature/minor — applied 2026-07-26
 
 n8n 2.31.6 · homarr v1.72.0 · onlyoffice 9.4.0 · nocodb 2026.07.0 (🚧 CalVer switch) · openproject 17.6.0 · dashy 4.5.0 · kimai 2.61.0 · gatus v5.36.0
 
-### Up-to-date (no action)
+## Up-to-date (no action)
 
 it-tools (2024.10.22, dormant) · beszel + agent (0.18.7)
 
-### Structural (fix regardless of version)
+## Structural (fix regardless of version)
 
 - ~~business/opensign pinned to `main`~~ — **fixed 2026-07-26: digest-pinned.** Upstream ships no semver tags (only `main`/`staging`/`docker_beta`), so both images pinned to `main@sha256:…` for reproducibility (re-pin on upgrade).
 - **Floating major tags** — matomo `5-apache`, opnform/invoiceninja nginx `1`/`1.29`, clamav `1.4`. Pin specific (contrast: caldiy is digest-pinned).
 - **`main` and `dev` diverged** — Dependabot bumps on `main`, app work on `dev`. Converge.
 
-### Registry check (2026-08-16)
+## Registry check (2026-08-16)
 
 Every image reference in the tree resolved through its `.env.example` and compared
 against its registry — 98 references. The script is in the session scratchpad and
@@ -78,7 +78,7 @@ the pinned one.
 queries, so the run degraded partway through and the figures above cover what
 completed. Re-running it needs either pacing or an authenticated token.
 
-### Sweep status (2026-07-26)
+## Sweep status (2026-07-26)
 
 **Verified current (no action):** it-tools · beszel(+agent) · monicahq 4.1.2 · photoview 2.4.0
 
