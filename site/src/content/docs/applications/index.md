@@ -35,26 +35,30 @@ in its `UPSTREAM.md` comes from. What does **not** exist for them is a walked-th
 installation on this site, and **no restore has been rehearsed for any of them.**
 
 The repository README for each is the working instruction. Treat the effort
-column as the honest signal: a two-container stack is an evening, an
-eighteen-container one is not.
+column as the honest signal: a one-container stack is an evening, a
+six-container one is not.
+
+All but Adminer also ship a `docker-compose.local.yml`, which runs the service on
+your own machine with no proxy, DNS or certificate — see [what every server
+needs](/infrastructure/).
 
 | | Solves | Needs beyond the proxy | Containers |
 |---|---|---|---|
-| [Adminer](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/adminer/README.md) | a web interface onto an existing database — MySQL, MariaDB, PostgreSQL, SQLite and more | a database to point it at | 2 |
-| [BookStack](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/bookstack/README.md) | a wiki with real structure: shelves, books, chapters, pages | database | 4 |
-| [Cal.diY](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/caldiy/README.md) | appointment booking pages people can self-serve — the Cal.com community edition | SMTP, database, Redis | 5 |
-| [Dashy](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/dashy/README.md) | one page linking everything you run, configured in a single YAML file | — | 2 |
-| [Easy!Appointments](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/easyappointments/README.md) | appointment booking on PHP and MySQL, running since 2013 and with no build step | database | 4 |
-| [Ghost](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/ghost/README.md) | publishing with newsletters and paid memberships built in | SMTP, database | 4 |
-| [Heimdall](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/heimdall/README.md) | a launcher page for your services, with optional per-service status | — | 2 |
-| [Homarr](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/homarr/README.md) | a dashboard built around integrations, showing live state rather than only links | — | 2 |
-| [Homepage](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/homepage/README.md) | a dashboard configured in YAML, split by concern across several files | — | 2 |
-| [IT-Tools](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/it-tools/README.md) | formatters, hash and UUID generators, regex testing, encoders — without pasting your data into someone else's site | — | 2 |
-| [n8n](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/n8n/README.md) | chaining HTTP calls, webhooks and scheduled jobs into workflows visually | — | 2 |
-| [NocoDB](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/nocodb/README.md) | a spreadsheet-like interface and an API over a SQL database | — | 2 |
-| [OpenProject](https://github.com/rubennati/secure-docker-blueprint/blob/main/business/openproject/README.md) | the full project platform — Gantt, work packages, time tracking, wikis | database | 18 |
-| [Paperless-ngx](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/paperless-ngx/README.md) | scanned paper becoming a searchable archive, via OCR and a consume folder | SMTP, database, Redis | 7 |
-| [Vikunja](https://github.com/rubennati/secure-docker-blueprint/blob/main/business/vikunja/README.md) | task management — kanban, lists, Gantt and table views | SMTP, database | 10 |
+| [Adminer](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/adminer/README.md) | a web interface onto an existing database — MySQL, MariaDB, PostgreSQL, SQLite and more | a database to point it at | 1 |
+| [BookStack](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/bookstack/README.md) | a wiki with real structure: shelves, books, chapters, pages | database | 2 |
+| [Cal.diY](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/caldiy/README.md) | appointment booking pages people can self-serve — the Cal.com community edition | SMTP, database, Redis | 3 |
+| [Dashy](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/dashy/README.md) | one page linking everything you run, configured in a single YAML file | — | 1 |
+| [Easy!Appointments](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/easyappointments/README.md) | appointment booking on PHP and MySQL, running since 2013 and with no build step | database | 2 |
+| [Ghost](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/ghost/README.md) | publishing with newsletters and paid memberships built in | SMTP, database | 2 |
+| [Heimdall](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/heimdall/README.md) | a launcher page for your services, with optional per-service status | — | 1 |
+| [Homarr](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/homarr/README.md) | a dashboard built around integrations, showing live state rather than only links | — | 1 |
+| [Homepage](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/homepage/README.md) | a dashboard configured in YAML, split by concern across several files | — | 1 |
+| [IT-Tools](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/it-tools/README.md) | formatters, hash and UUID generators, regex testing, encoders — without pasting your data into someone else's site | — | 1 |
+| [n8n](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/n8n/README.md) | chaining HTTP calls, webhooks and scheduled jobs into workflows visually | — | 1 |
+| [NocoDB](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/nocodb/README.md) | a spreadsheet-like interface and an API over a SQL database | — | 1 |
+| [OpenProject](https://github.com/rubennati/secure-docker-blueprint/blob/main/business/openproject/README.md) | the full project platform — Gantt, work packages, time tracking, wikis | database | 6 |
+| [Paperless-ngx](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/paperless-ngx/README.md) | scanned paper becoming a searchable archive, via OCR and a consume folder | SMTP, database, Redis | 5 |
+| [Vikunja](https://github.com/rubennati/secure-docker-blueprint/blob/main/business/vikunja/README.md) | task management — kanban, lists, Gantt and table views | SMTP, database | 2 |
 
 **Access defaults differ, and are not all restrictive.** Four of them —
 BookStack, Cal.diY, Easy!Appointments and Ghost — ship reachable from the open
