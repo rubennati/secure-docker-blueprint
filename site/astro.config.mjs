@@ -72,6 +72,7 @@ export default defineConfig({
 						{ label: 'What every server needs', link: '/infrastructure/' },
 						{ label: 'Traefik', link: '/infrastructure/traefik/' },
 						{ label: 'CrowdSec', link: '/infrastructure/crowdsec/' },
+						{ label: 'Authentik', link: '/infrastructure/authentik/' },
 					],
 				},
 				{
@@ -85,7 +86,11 @@ export default defineConfig({
 						// The two orientation pages first, then the guides A–Z. Nothing
 						// about one service makes it belong before another, so the order
 						// is the one a reader can predict.
+						{ label: 'Cal.diY', link: '/applications/caldiy/' },
+						{ label: 'Dashy', link: '/applications/dashy/' },
+						{ label: 'Ghost', link: '/applications/ghost/' },
 						{ label: 'Invoice Ninja', link: '/applications/invoiceninja/' },
+						{ label: 'n8n', link: '/applications/n8n/' },
 						{ label: 'Nextcloud', link: '/applications/nextcloud/' },
 						{ label: 'OnlyOffice', link: '/applications/onlyoffice/' },
 						{ label: 'Paperless-ngx', link: '/applications/paperless-ngx/' },

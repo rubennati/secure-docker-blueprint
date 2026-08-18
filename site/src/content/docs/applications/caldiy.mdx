@@ -1,0 +1,235 @@
+---
+title: Cal.diY
+description: Self-service appointment booking — installed behind Cloudflare with six secrets, signup closed, and the encryption key that connected calendars depend on kept off the host.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackEvidence from '../../../components/StackEvidence.astro';
+
+Cal.diY gives people a page where they book time with you, against your own
+calendar. Three containers — the application, PostgreSQL and Redis.
+
+<StackEvidence stack="apps/caldiy"
+  gap="a restore. The database and the encryption key have to come back together, and that has not been performed here." />
+
+Needs: [Traefik](/infrastructure/traefik/) running, a domain on Cloudflare, SMTP
+credentials, and a way to generate VAPID keys.
+
+:::danger
+This deployment runs behind Cloudflare as a proxy — the orange cloud, not
+DNS-only. It is part of the security model rather than an option: this instance
+is community-maintained, and one running instance was compromised through an
+exfiltrated SMTP credential. Upstream labels the project as being for personal,
+non-production use. If scheduling is business-critical, read that sentence again
+before choosing this over
+[Easy!Appointments](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/easyappointments/README.md).
+:::
+
+## Installation
+
+From `apps/caldiy/`:
+
+<Steps>
+
+1. Copy the environment file:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Set `APP_TRAEFIK_HOST`, `TZ`, the `EMAIL_*` block and the branding variables.
+   Then set `ALLOWED_HOSTNAMES` to match the host exactly:
+
+   ```env
+   ALLOWED_HOSTNAMES='"cal.example.com"'
+   ```
+
+2. Generate the secrets:
+
+   ```bash
+   mkdir -p .secrets volumes/postgres volumes/redis
+   openssl rand -hex 32 > .secrets/db_pwd.txt
+   openssl rand -base64 32 | tr -d '\n' > .secrets/nextauth_secret.txt
+   openssl rand -base64 24 | tr -d '\n' > .secrets/encryption_key.txt
+   openssl rand -hex 16 | tr -d '\n' > .secrets/cron_api_key.txt
+   printf '%s' 'YOUR-SMTP-PASSWORD' > .secrets/smtp_password.txt
+   ```
+
+   Use a dedicated SMTP credential for this deployment, not one shared with
+   another application.
+
+3. Generate the VAPID key pair — the application logs an error on every request
+   without it:
+
+   ```bash
+   docker run --rm node:lts-alpine npx --yes web-push generate-vapid-keys
+   ```
+
+   Public key into `VAPID_PUBLIC_KEY` in `.env`; private key into
+   `.secrets/vapid_private_key.txt`.
+
+4. Apply the Cloudflare settings before the host is reachable — WAF, geo
+   allowlist on the human-facing surface, rate limiting and origin hiding are
+   documented in
+   [`docs/cloudflare.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/caldiy/docs/cloudflare.md).
+
+5. Start it:
+
+   ```bash
+   docker compose up -d
+   docker compose logs app --follow
+   ```
+
+   Wait for `ready on port 3000`.
+
+6. Open `https://<APP_TRAEFIK_HOST>`. The setup wizard runs on first visit and
+   the first account becomes the owner. Public self-registration stays disabled —
+   `NEXT_PUBLIC_DISABLE_SIGNUP=true`.
+
+</Steps>
+
+## Verify
+
+```bash
+docker compose ps   # three services, healthy
+```
+
+Then create one event type and book it from a private browser window. The booking
+confirmation arriving by mail is the check — the SMTP path is the one this
+deployment cares most about.
+
+`/api/health` returns 500 on this image because of a Node.js stream
+incompatibility. The healthcheck uses a TCP probe instead, and the application
+itself runs normally.
+
+## Going further
+
+### Stricter headers than the rest of the blueprint
+
+The stack ships `sec-3` rather than `sec-2`: HSTS with `includeSubDomains` and
+`preload`, a referrer policy, a permissions policy denying device APIs the
+application never uses, and a report-only content security policy. No request is
+blocked at the proxy and the rate limit is unchanged — the difference is headers.
+
+**HSTS with `preload` is hard to reverse.** Browsers that received it keep
+enforcing HTTPS for the host and everything below it for about two years, whether
+or not you stop sending the header. Confirm every subdomain below the Cal.diY
+hostname is HTTPS-capable first. A dedicated leaf host carries much less scope
+than an apex.
+
+Rolling back:
+
+```bash
+# APP_TRAEFIK_SECURITY=sec-2 in .env, then
+docker compose up -d --force-recreate app
+```
+
+### The booking embed does not work as shipped
+
+Cal.com's inline, pop-up and button widgets put a booking page in an iframe on
+another site. Both `sec-2` and `sec-3` send `X-Frame-Options: DENY`, which
+overrides the application's own framing policy and blocks it.
+
+That default is deliberate: a booking page any site may frame is a booking page
+any site can overlay. If you want embeds, name the parent origins rather than
+dropping the header — `sec-3e` for same-origin, or a per-app middleware replacing
+`X-Frame-Options` with a `frame-ancestors` allowlist. Neither has been run
+against the embed here.
+
+### Redeploying after a compromise
+
+If the previous instance was breached, every secret is burned and none of them
+can be reused. Revoke the SMTP credential at the provider **before** starting the
+new stack, then generate all six secret files fresh — never copy `.secrets/`
+across.
+
+Two of them carry consequences beyond the rotation itself: rotating
+`CALENDSO_ENCRYPTION_KEY` invalidates every stored calendar token, so all
+connected users re-authorise; rotating `NEXTAUTH_SECRET` signs everyone out
+immediately. The per-secret procedure is in
+[`docs/ops-runbook.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/caldiy/docs/ops-runbook.md).
+
+### Keeping the mail credential contained
+
+Set a daily sending cap at the provider and an alert at half of it, delivered to
+a channel other than the Cal.diY mailbox. Send from a dedicated address or
+subdomain rather than a personal one.
+
+## Backup
+
+| | |
+|---|---|
+| **Database** | PostgreSQL, container `caldiy-db`, database `caldiy`, user `caldiy` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **State** | `volumes/postgres` |
+| **Also needed** | `.secrets/encryption_key.txt` and `.secrets/nextauth_secret.txt`, kept off this host |
+| **Rebuildable** | `volumes/redis` |
+| **Quiescing** | Not needed — the dump is consistent on its own. |
+
+For [borgmatic](/operations/backup/):
+
+```yaml
+postgresql_databases:
+    - name: caldiy
+      container: caldiy-db
+      username: caldiy
+      password: "{credential file /srv/docker/apps/caldiy/.secrets/db_pwd.txt}"
+```
+
+**`encryption_key.txt` decrypts the connected calendar tokens.** A database
+restored without it leaves every integration broken and reconnectable only by
+hand. Given this stack's history, a restore rehearsal should cover that credential
+path, not only whether the rows came back.
+
+Restore order: database, then the application.
+
+## Updates
+
+The image comes from a review-gated fork that publishes versioned tags to GHCR,
+never `latest`, and the pin carries a digest.
+
+<Steps>
+
+1. Read the fork's release notes and re-resolve the digest for the new tag.
+
+2. Back up the database and the secret files together.
+
+3. Raise `APP_TAG` in `.env` — tag and digest — then:
+
+   ```bash
+   docker compose pull && docker compose up -d
+   docker compose logs app --follow
+   ```
+
+4. Log in and open one event type. A migration that touched the encrypted
+   columns shows up there.
+
+</Steps>
+
+## Troubleshooting
+
+**`Error: No key set vapidDetails.publicKey` on every request.** The VAPID keys
+were not generated. Go back to installation step 3.
+
+**`CLIENT_FETCH_ERROR` in the browser console.** `NEXTAUTH_URL` has to include
+the `/api/auth` path. The compose file sets it correctly, so check for a local
+override.
+
+**`/api/health` returns 500.** Known for this image version; the container
+healthcheck uses TCP instead and the application is unaffected.
+
+**Features from Cal.com are missing.** Teams, organisations, advanced insights,
+SSO and workflows are not part of the community edition.
+
+## Repository files
+
+- [`apps/caldiy/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/caldiy/README.md) — setup, security model, known issues
+- [`apps/caldiy/docs/cloudflare.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/caldiy/docs/cloudflare.md) — the required Cloudflare settings
+- [`apps/caldiy/docs/ops-runbook.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/caldiy/docs/ops-runbook.md) — secret rotation and emergency procedures
+- [`apps/caldiy/docs/hardening-plan.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/caldiy/docs/hardening-plan.md) — the post-incident roadmap
+- [`apps/caldiy/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/caldiy/UPSTREAM.md) — the fork, upgrade checklist, gotchas
+
+## Official sources
+
+- [cal.diy](https://github.com/rubennati/cal.diy) — the fork this image is built from
+- [Cal.com self-hosting documentation](https://cal.com/docs/self-hosting)

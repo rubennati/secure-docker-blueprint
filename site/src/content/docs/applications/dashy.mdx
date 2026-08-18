@@ -1,0 +1,118 @@
+---
+title: Dashy
+description: One page linking everything you run — a single YAML file is the dashboard, kept in git rather than edited in the browser.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackEvidence from '../../../components/StackEvidence.astro';
+
+Dashy is a start page for the services on your server: sections, links, and
+optional live status for each one. One container, no database — a single YAML
+file describes the whole dashboard.
+
+<StackEvidence stack="apps/dashy"
+  gap="nothing on this stack has been restored, though there is nothing to restore — the configuration file is the only state and it lives in git." />
+
+Needs: [Traefik](/infrastructure/traefik/) running and a domain.
+
+## Installation
+
+From `apps/dashy/`:
+
+<Steps>
+
+1. Copy the environment file and set `APP_TRAEFIK_HOST` and `TZ`:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Create the dashboard configuration from the starter file:
+
+   ```bash
+   mkdir -p config
+   cp config/conf.example.yml config/conf.yml
+   ```
+
+   Edit `config/conf.yml` — sections, items and bookmarks. The
+   [Dashy configuring guide](https://dashy.to/docs/configuring) documents the
+   schema.
+
+3. Start it:
+
+   ```bash
+   docker compose up -d
+   ```
+
+4. Open `https://<APP_TRAEFIK_HOST>`.
+
+</Steps>
+
+## Verify
+
+```bash
+docker compose ps                       # one service, healthy
+curl -fsSI https://<APP_TRAEFIK_HOST>/  # 200
+```
+
+## Going further
+
+### Changing the dashboard
+
+`config/conf.yml` is mounted read-only, so the in-app editor cannot write to it.
+Edit the file and restart:
+
+```bash
+docker compose restart app
+```
+
+The file is the source of truth and belongs in version control, which is also
+why a change needs the restart to take effect.
+
+### Who can reach it
+
+The stack ships `acc-tailscale` with `sec-3` — reachable over your VPN, refused
+from everywhere else. A dashboard names every service you run, which is a map
+worth keeping off the open internet.
+
+## Backup
+
+Nothing to back up. There is no database, and the container holds no state of
+its own — `config/conf.yml` is the entire configuration and it is versioned in
+git. Restoring means checking out the repository and starting the container.
+
+## Updates
+
+<Steps>
+
+1. Read the [release notes](https://github.com/Lissy93/dashy/releases).
+
+2. Raise `APP_TAG` in `.env`, then:
+
+   ```bash
+   docker compose pull && docker compose up -d
+   ```
+
+3. Load the dashboard and confirm the sections render — a schema change in
+   `conf.yml` shows up as missing items rather than as a failed start.
+
+</Steps>
+
+## Troubleshooting
+
+**A configuration change has no effect.** The container reads `conf.yml` at
+start. Restart the app service.
+
+**The in-app editor refuses to save.** The mount is read-only by design. Change
+the file instead.
+
+## Repository files
+
+- [`apps/dashy/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/dashy/README.md) — setup, security model, known issues
+- [`apps/dashy/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/dashy/UPSTREAM.md) — source and upgrade checklist
+- [`apps/dashy/config/conf.example.yml`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/dashy/config/conf.example.yml) — the starter configuration
+
+## Official sources
+
+- [Dashy documentation](https://dashy.to/docs/)
+- [Configuring reference](https://dashy.to/docs/configuring)

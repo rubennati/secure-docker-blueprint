@@ -1,0 +1,178 @@
+---
+title: n8n
+description: Visual workflow automation — installed behind basic auth and a VPN, with the encryption key that every stored credential depends on backed up before the first workflow.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackEvidence from '../../../components/StackEvidence.astro';
+
+n8n chains HTTP calls, webhooks and scheduled jobs into workflows you build
+visually, with a large library of third-party integrations. One container with
+its own SQLite database.
+
+<StackEvidence stack="apps/n8n"
+  gap="a restore. The data directory and the encryption key have to come back together, and that has not been performed here." />
+
+Needs: [Traefik](/infrastructure/traefik/) running and a domain.
+
+:::caution
+`N8N_ENCRYPTION_KEY` encrypts every credential n8n stores — OAuth tokens, API
+keys, SMTP passwords. Restore the data directory without the matching key and n8n
+generates a fresh one instead of reporting the mismatch: the workflows are all
+there and none of them can authenticate. Back the key up off the host, separately
+from the data.
+:::
+
+## Installation
+
+From `apps/n8n/`:
+
+<Steps>
+
+1. Copy the environment file and set `APP_TRAEFIK_HOST`, `TZ` and
+   `BASIC_AUTH_USER`:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Generate the basic-auth password and write it into `.env`:
+
+   ```bash
+   BAUTH_PWD=$(openssl rand -base64 24 | tr -d '\n')
+   sed -i "s|^BASIC_AUTH_PASSWORD=.*|BASIC_AUTH_PASSWORD=${BAUTH_PWD}|" .env
+   echo "Basic auth password: ${BAUTH_PWD}"
+   ```
+
+3. Generate the encryption key:
+
+   ```bash
+   mkdir -p .secrets
+   openssl rand -hex 32 > .secrets/n8n_encryption_key.txt
+   ```
+
+   Copy this file somewhere off the host now, not later.
+
+4. Create the volumes and hand them to the user n8n runs as:
+
+   ```bash
+   mkdir -p volumes/data volumes/files
+   sudo chown -R 1000:1000 volumes/data volumes/files
+   ```
+
+5. Start it:
+
+   ```bash
+   docker compose up -d
+   ```
+
+6. Open `https://<APP_TRAEFIK_HOST>`. Basic auth comes first, then n8n's own
+   owner-account wizard.
+
+</Steps>
+
+## Verify
+
+```bash
+docker compose ps                              # one service, running
+curl -fsSI https://<APP_TRAEFIK_HOST>/healthz  # 200
+```
+
+Then build one workflow with a manual trigger and run it. A workflow that saves
+and executes confirms the data directory is writable, which the healthcheck does
+not cover.
+
+## Going further
+
+### Two layers of authentication, and why
+
+The Community Edition has no multi-user authentication unless it is enabled, so
+basic auth sits in front of everything as the gate. n8n's own owner account is
+the second layer, and it is what the interface uses.
+
+### Who can reach it
+
+The stack ships `acc-tailscale` with `sec-3-spa` — VPN-only. n8n holds API
+tokens for every service it talks to, which makes it a more valuable target than
+what it automates.
+
+### Webhooks from outside
+
+A webhook called by GitHub, Stripe or any other external service does not reach
+n8n behind a VPN-only policy. Reaching them means a second Traefik router with
+`acc-public` scoped to `/webhook/*`. That router is not configured here — adding
+it is a deliberate exposure decision, not a setting.
+
+### When SQLite is not enough
+
+Under heavy webhook load SQLite becomes the bottleneck. n8n supports PostgreSQL
+through `DB_TYPE=postgresdb` and its related variables, which needs a `db`
+service added to the stack. Upstream documents queue mode and worker services for
+throughput beyond a single executor.
+
+## Backup
+
+| | |
+|---|---|
+| **Database** | SQLite inside `volumes/data` — no server, no dump hook |
+| **State** | `volumes/data` (workflows, executions, credentials) · `volumes/files` |
+| **Also needed** | `.secrets/n8n_encryption_key.txt`, kept separately |
+| **Quiescing** | Required. Copying a live SQLite file can capture a torn state — stop the container or snapshot the filesystem. |
+
+For [borgmatic](/operations/backup/) this stack is `source_directories` only,
+with quiescing. There is no database hook to configure.
+
+Execution history is the bulk of `volumes/data` and the least useful part of it.
+If archive size becomes a problem, prune executions inside n8n rather than
+excluding the directory — the credentials live there too.
+
+## Updates
+
+n8n ships breaking changes in minor bumps.
+
+<Steps>
+
+1. Read the [release notes](https://github.com/n8n-io/n8n/releases) for the
+   versions you are crossing.
+
+2. Stop the container and copy the data directory and the key:
+
+   ```bash
+   docker compose stop app
+   tar czf n8n-backup-$(date +%Y%m%d).tgz volumes/ .secrets/n8n_encryption_key.txt
+   ```
+
+3. Raise `APP_TAG` in `.env`, then:
+
+   ```bash
+   docker compose pull && docker compose up -d
+   docker compose logs app --follow
+   ```
+
+4. Open a workflow that uses a stored credential and run it. A migration that
+   left the encryption in place shows up here and nowhere else.
+
+</Steps>
+
+## Troubleshooting
+
+**Every credential is suddenly invalid after a restore.** The data directory came
+back without the matching `n8n_encryption_key.txt`, and n8n generated a new key
+on start. Put the original key back and restart.
+
+**n8n refuses to start, complaining about file permissions.**
+`N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS` is on and the settings file is
+world-readable. Correct the permissions inside `volumes/data`.
+
+**Permission errors writing to the data directory.** `volumes/data` is not owned
+by UID 1000. Re-run the `chown` from step 4.
+
+## Repository files
+
+- [`apps/n8n/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/n8n/README.md) — setup, security model, known issues
+- [`apps/n8n/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/n8n/UPSTREAM.md) — source and upgrade checklist
+
+## Official sources
+
+- [n8n documentation](https://docs.n8n.io/)
+- [Self-hosting guide](https://docs.n8n.io/hosting/)

@@ -64,12 +64,10 @@ the open internet, and not much before.
 
 ## Also server-wide, without a guide
 
-**Single sign-on.** [Authentik](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/authentik/README.md)
-is set up once and then attached per route as a proxy middleware, so several
-applications can share one login. Seven containers, and it needs SMTP, a database
-and Redis of its own — it is a service to operate, not a setting to switch on.
-The configuration is checked and the stack has been brought up; there is no
-walked-through guide here.
+**Single sign-on.** [Authentik](/infrastructure/authentik/) is set up once and
+then attached per route as a proxy middleware, so several applications can share
+one login. Five containers, and it needs SMTP, a database and Redis of its own —
+it is a service to operate, not a setting to switch on.
 
 ## Server-wide, and covered elsewhere
 

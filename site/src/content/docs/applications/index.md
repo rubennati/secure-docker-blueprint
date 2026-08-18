@@ -21,6 +21,10 @@ up, how to update it, and the failures that service really produces.
 | [Nextcloud](/applications/nextcloud/) | files, calendars and contacts on your own server, synced to desktops and phones, with sharing on top | SMTP |
 | [OnlyOffice](/applications/onlyoffice/) | opening `.docx`, `.xlsx` and `.pptx` in the browser, embedded inside another application | an application to embed it — it is not used on its own |
 | [Paperless-ngx](/applications/paperless-ngx/) | scanned paper becoming a searchable archive, via OCR and a consume folder | the OCR language packs you need; SMTP is optional |
+| [Cal.diY](/applications/caldiy/) | appointment booking pages people can self-serve — the Cal.com community edition | SMTP, a Cloudflare-proxied domain |
+| [Dashy](/applications/dashy/) | one page linking everything you run, configured in a single YAML file | nothing beyond the proxy |
+| [Ghost](/applications/ghost/) | publishing with newsletters and paid memberships built in | SMTP, which also gates the first login |
+| [n8n](/applications/n8n/) | chaining HTTP calls, webhooks and scheduled jobs into workflows visually | nothing beyond the proxy |
 | [Seafile Pro](/applications/seafile-pro/) | file sync built for large directory trees, with full-text search and antivirus scanning | a commercial licence; OnlyOffice for in-browser editing |
 | [Vaultwarden](/applications/vaultwarden/) | credentials in one vault, synced to browser, phone and desktop, instead of a third party holding everything you log into | SMTP, for email verification |
 
@@ -47,15 +51,11 @@ needs](/infrastructure/).
 |---|---|---|---|
 | [Adminer](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/adminer/README.md) | a web interface onto an existing database — MySQL, MariaDB, PostgreSQL, SQLite and more | a database to point it at | 1 |
 | [BookStack](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/bookstack/README.md) | a wiki with real structure: shelves, books, chapters, pages | database | 2 |
-| [Cal.diY](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/caldiy/README.md) | appointment booking pages people can self-serve — the Cal.com community edition | SMTP, database, Redis | 3 |
-| [Dashy](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/dashy/README.md) | one page linking everything you run, configured in a single YAML file | — | 1 |
 | [Easy!Appointments](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/easyappointments/README.md) | appointment booking on PHP and MySQL, running since 2013 and with no build step | database | 2 |
-| [Ghost](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/ghost/README.md) | publishing with newsletters and paid memberships built in | SMTP, database | 2 |
 | [Heimdall](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/heimdall/README.md) | a launcher page for your services, with optional per-service status | — | 1 |
 | [Homarr](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/homarr/README.md) | a dashboard built around integrations, showing live state rather than only links | — | 1 |
 | [Homepage](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/homepage/README.md) | a dashboard configured in YAML, split by concern across several files | — | 1 |
 | [IT-Tools](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/it-tools/README.md) | formatters, hash and UUID generators, regex testing, encoders — without pasting your data into someone else's site | — | 1 |
-| [n8n](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/n8n/README.md) | chaining HTTP calls, webhooks and scheduled jobs into workflows visually | — | 1 |
 | [NocoDB](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/nocodb/README.md) | a spreadsheet-like interface and an API over a SQL database | — | 1 |
 | [OpenProject](https://github.com/rubennati/secure-docker-blueprint/blob/main/business/openproject/README.md) | the full project platform — Gantt, work packages, time tracking, wikis | database | 6 |
 | [Vikunja](https://github.com/rubennati/secure-docker-blueprint/blob/main/business/vikunja/README.md) | task management — kanban, lists, Gantt and table views | SMTP, database | 2 |
