@@ -84,7 +84,7 @@ Adding a brand-new setting that was absent from `seahub_custom.py` at injection 
 | | |
 |---|---|
 | **Database** | MariaDB · container `seafile-pro-db` · **three databases**: `ccnet_db`, `seafile_db`, `seahub_db` · user `seafile` |
-| **Password** | `.secrets/seafile_db_pwd.txt` |
+| **Password** | `SEAFILE_MYSQL_DB_PASSWORD` in `.env`. **This stack creates no `.secrets/` file** — see Passwords above — so the borgmatic snippet below needs one written for it: `printf '%s' "$SEAFILE_MYSQL_DB_PASSWORD" > .secrets/seafile_db_pwd.txt`. Borgmatic reads credentials from a file, a container, KeePassXC or systemd; there is no form that reads a `.env` entry directly |
 | **State** | `./volumes/mysql` (databases) · **`./volumes/seafile-data`** — the file store · `./volumes/seadoc-data` |
 | **Reproducible** | `./volumes/redis` (cache) · the Elasticsearch volume · `./volumes/seasearch-data` — both search indexes, rebuildable |
 | **Quiescing** | Not needed for the dumps. Content-addressed blocks tolerate a mid-write copy. |

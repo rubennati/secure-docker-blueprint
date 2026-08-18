@@ -1,7 +1,7 @@
 services:
   elasticsearch:
     image: ${SEAFILE_ELASTICSEARCH_IMAGE:-elasticsearch:8.15.0}
-    container_name: seafile-elasticsearch
+    container_name: ${CONTAINER_NAME_ELASTICSEARCH}
     restart: unless-stopped
 
     # --- Security ---
@@ -27,9 +27,8 @@ services:
       memlock:
         soft: -1
         hard: -1
-    mem_limit: 4g
     volumes:
-      - "${SEAFILE_ELASTICSEARCH_VOLUME:-/opt/seafile-elasticsearch/data}:/usr/share/elasticsearch/data"
+      - ./volumes/elasticsearch:/usr/share/elasticsearch/data
     # --- Health & Observability ---
     # Any HTTP answer means the server is serving, including a 5xx —
     # `-f` is deliberately absent, but not for the reason once written here.
@@ -45,8 +44,9 @@ services:
       start_period: 60s
 
     networks:
-      - seafile-net
+      - app-internal
 
 networks:
-  seafile-net:
-    name: seafile-net
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true

@@ -21,8 +21,8 @@
 | `thumbnail-server.yml` | Adapted | Caddy labels → Traefik labels |
 | `seasearch.yml` | Adapted | Blueprint naming |
 | `clamav.yml` | Adapted | Blueprint naming |
-| `elasticsearch.yml` | Kept as reference | Not in COMPOSE_FILE, use SeaSearch instead |
-| `seafile-ai.yml` | Kept as reference | Not in COMPOSE_FILE, enable later |
+| `elasticsearch.yml` | Adapted | Not in COMPOSE_FILE — SeaSearch replaced it upstream. Converted to the blueprint schema so the swap below actually works |
+| `seafile-ai.yml` | Adapted | Not in COMPOSE_FILE — optional, `ENABLE_SEAFILE_AI` |
 
 ## What we changed and why
 
@@ -152,7 +152,7 @@ in a Traefik label at container creation time and is not re-read on restart.
 If you need Elasticsearch instead of SeaSearch:
 
 1. Replace `seasearch.yml` with `elasticsearch.yml` in `COMPOSE_FILE`
-2. Set permissions: `mkdir -p volumes/elasticsearch && chmod 777 volumes/elasticsearch`
+2. Set permissions: `mkdir -p volumes/elasticsearch && chmod 777 volumes/elasticsearch` — this is the path the compose file mounts
 3. In `seafevents.conf`: remove `[SEASEARCH]` section, set `[INDEX FILES] enabled = true`
 4. See: https://manual.seafile.com/13.0/docker/pro/deploy_seafile_pro_with_docker/
 
