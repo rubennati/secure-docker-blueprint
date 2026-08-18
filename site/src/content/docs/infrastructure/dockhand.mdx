@@ -1,0 +1,162 @@
+---
+title: Dockhand — managing stacks from Git
+description: A Docker management interface that deploys Compose stacks from a Git repository, installed so it never touches the Docker socket directly.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackEvidence from '../../../components/StackEvidence.astro';
+
+Dockhand deploys and updates Compose stacks by watching a Git repository: you
+push, it applies. Three containers — the interface, PostgreSQL, and a proxy that
+stands between it and the Docker daemon.
+
+<StackEvidence stack="core/dockhand"
+  gap="everything below. The stack has never been brought up here: the first login, adding the local environment through the socket proxy and a Git-driven deploy are read from the stack's files rather than observed." />
+
+Needs: [Traefik](/infrastructure/traefik/) running and a domain.
+
+:::caution
+Anything that manages Docker on a host is equivalent to root on that host. This
+stack ships VPN-only for that reason, and reaches the daemon through a filtered
+proxy rather than the socket itself.
+:::
+
+## Installation
+
+From `core/dockhand/`:
+
+<Steps>
+
+1. Copy the environment file and set `APP_TRAEFIK_HOST`, `TZ` and
+   `APP_PUID`/`APP_PGID`:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Generate the two secrets:
+
+   ```bash
+   mkdir -p .secrets
+   openssl rand -base64 32 | tr -d '\n' > .secrets/db_pwd.txt
+   openssl rand -base64 32 | tr -d '\n' > .secrets/encryption_key.txt
+   ```
+
+   Copy the encryption key off the host now — see [Backup](#backup).
+
+3. Start it:
+
+   ```bash
+   docker compose up -d
+   ```
+
+4. Open `https://<APP_TRAEFIK_HOST>` and create the first account.
+
+5. Add the Docker environment when Dockhand asks for one. For the daemon on this
+   host:
+
+   | Field | Value |
+   |---|---|
+   | Connection type | `Direct connection` |
+   | Host | `socket-proxy` |
+   | Port | `2375` |
+   | Protocol | `HTTP` |
+   | Public IP | leave empty |
+
+   Plain HTTP is correct here: the proxy is reachable only from containers on the
+   stack's internal network, never from the host or the internet.
+
+</Steps>
+
+## Verify
+
+```bash
+docker compose ps   # three services, healthy
+```
+
+Then use **Test connection** in the environment dialog — it turns green — and
+confirm the container list appears afterwards. A running interface says nothing
+about whether the proxy is answering.
+
+## Going further
+
+### The proxy is the hardening
+
+Dockhand never sees `/var/run/docker.sock`. It talks to
+`tcp://socket-proxy:2375`, and the proxy decides which API calls are allowed.
+The current set covers container management, networks, volumes, and the `POST`,
+`EXEC` and `DELETE` calls that deploying a stack needs.
+
+Each permission is an environment variable on the `socket-proxy` service. If you
+do not manage images from the interface, set that variable to `"0"` and restart —
+the surface shrinks with it.
+
+### Managing more than one host
+
+`core/hawser` is the agent for a second machine. It is not covered by a guide
+here.
+
+## Backup
+
+| | |
+|---|---|
+| **Database** | PostgreSQL, container `dockhand-db`, database `dockhand`, user `dockhand` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **State** | `volumes/postgres` · `volumes/data` |
+| **Also needed** | `.secrets/encryption_key.txt`, stored somewhere other than the database |
+| **Quiescing** | Not needed — the dump is consistent on its own. |
+
+For [borgmatic](/operations/backup/):
+
+```yaml
+postgresql_databases:
+    - name: dockhand
+      container: dockhand-db
+      username: dockhand
+      password: "{credential file /srv/docker/core/dockhand/.secrets/db_pwd.txt}"
+```
+
+**`encryption_key.txt` decrypts what the database holds.** A database restored
+without the matching key contains rows that cannot be read back. Keep the key and
+the database in different places — storing them together removes the reason for
+encrypting at rest.
+
+Restore order: database, then the application.
+
+## Updates
+
+<Steps>
+
+1. Read the release notes for the version you are moving to.
+
+2. Back up the database and the encryption key together.
+
+3. Raise `APP_TAG` in `.env`, then:
+
+   ```bash
+   docker compose pull && docker compose up -d
+   ```
+
+4. Open the environment and confirm the container list still loads. A change in
+   the proxy's permission set surfaces there.
+
+</Steps>
+
+## Troubleshooting
+
+**Test connection fails.** The environment fields do not match the proxy: host
+`socket-proxy`, port `2375`, protocol HTTP. The proxy is not reachable by any
+other address.
+
+**An action in the interface reports a permission error.** The socket proxy
+denies that API call. Find the corresponding variable on the `socket-proxy`
+service and decide whether the capability should be granted.
+
+**A restored instance shows rows it cannot read.** The encryption key does not
+match the database.
+
+## Repository files
+
+- [`core/dockhand/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/dockhand/README.md) — setup, security model, the environment dialog
+- [`core/dockhand/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/dockhand/UPSTREAM.md) — source and upgrade checklist
+- [`core/hawser/`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/hawser/README.md) — the agent for additional hosts

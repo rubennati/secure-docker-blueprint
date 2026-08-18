@@ -73,6 +73,9 @@ export default defineConfig({
 						{ label: 'Traefik', link: '/infrastructure/traefik/' },
 						{ label: 'CrowdSec', link: '/infrastructure/crowdsec/' },
 						{ label: 'Authentik', link: '/infrastructure/authentik/' },
+						{ label: 'Dockhand', link: '/infrastructure/dockhand/' },
+						{ label: 'dnsmasq', link: '/infrastructure/dnsmasq/' },
+						{ label: 'Certificates without a proxy', link: '/infrastructure/acme-certs/' },
 					],
 				},
 				{

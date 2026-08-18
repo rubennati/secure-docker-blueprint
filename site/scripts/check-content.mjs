@@ -37,6 +37,11 @@ const ALLOW = [
 		reason: 'Describes that the proxy does NOT mount the socket.',
 	},
 	{
+		rule: 'docker-socket',
+		file: 'infrastructure/dockhand.mdx',
+		reason: 'States that Dockhand does NOT see the socket — it reaches the daemon through the proxy.',
+	},
+	{
 		rule: 'privileged',
 		file: 'security/isolation/index.mdx',
 		reason: 'Names `privileged` as the setting to avoid.',

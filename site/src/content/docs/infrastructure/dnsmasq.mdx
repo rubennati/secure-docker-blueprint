@@ -1,0 +1,143 @@
+---
+title: dnsmasq — names on your own network
+description: A DNS forwarder and cache for internal and VPN names, installed on host networking with its configuration rendered from a template.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackEvidence from '../../../components/StackEvidence.astro';
+
+dnsmasq answers names on your own network: wildcard zones that point a whole
+subdomain at one address, static records for machines that have no DNS entry, and
+a cache in front of an upstream resolver. One container.
+
+<StackEvidence stack="core/dnsmasq"
+  gap="everything below. The stack has never been brought up here: the rendered configuration, resolution over the VPN interface and the reload behaviour are read from the stack's files rather than observed." />
+
+Needs: a host where port 53 is free, and — if it should answer over a VPN — that
+interface present.
+
+This stack sits outside the usual pattern in two ways. It uses host networking,
+because it binds directly to the interfaces it serves. And it is not behind
+Traefik: it *is* the name layer, so nothing routes to it by hostname.
+
+## Installation
+
+From `core/dnsmasq/`:
+
+<Steps>
+
+1. Copy the environment file:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Set the interfaces it listens on — `lo` and the VPN interface are the shipped
+   defaults — the upstream resolvers, and the wildcard zones:
+
+   ```env
+   DNS_INTERFACE_1=lo
+   DNS_INTERFACE_2=tailscale0
+   DNS_WILDCARD_1_DOMAIN=test.lab.example.com
+   DNS_WILDCARD_1_IP=100.100.100.10
+   ```
+
+   It listens on the named interfaces only, not on everything the host has.
+
+2. Add static records, if any, to `config/records.hosts`:
+
+   ```text
+   100.100.100.10    nas.lab.example.com
+   100.100.100.20    printer.lab.example.com
+   ```
+
+3. Render the configuration. The container mounts the result read-only, and
+   editing `config/dnsmasq.conf` directly is overwritten by the next render:
+
+   ```bash
+   ./ops/scripts/render.sh
+   ```
+
+4. Start it:
+
+   ```bash
+   docker compose up -d
+   docker compose logs -f
+   ```
+
+</Steps>
+
+## Verify
+
+```bash
+nslookup anything.test.lab.example.com 127.0.0.1   # the wildcard answers
+nslookup nas.lab.example.com 127.0.0.1             # a static record
+nslookup example.com 127.0.0.1                     # forwarding upstream works
+```
+
+All three matter separately: a wildcard can answer while forwarding is broken,
+and the reverse.
+
+## Going further
+
+### Applying a change
+
+Which change needs which action:
+
+| Changed | Apply with |
+|---|---|
+| `config/records.hosts` | `docker exec dnsmasq kill -HUP 1` — re-reads records and clears the cache, no downtime |
+| wildcard zones, upstream resolvers, interfaces in `.env` | `./ops/scripts/render.sh` then `docker compose restart` |
+
+### IPv6
+
+Wildcards and upstream forwarding cover AAAA records as well. A machine with both
+gets two lines in `config/records.hosts`, one per family:
+
+```text
+fd7a:115c:a1e0::10    nas.lab.example.com
+100.100.100.10        nas.lab.example.com
+```
+
+## Backup
+
+The rendered configuration comes from `.env` and the template, and
+`config/records.hosts` is the only file written by hand. Both belong in version
+control rather than in a backup archive; restoring means checking out the
+repository, running the render script and starting the container.
+
+## Updates
+
+<Steps>
+
+1. Raise `APP_TAG` in `.env`.
+
+2. ```bash
+   docker compose pull && docker compose up -d
+   ```
+
+3. Re-run the three checks from [Verify](#verify). A configuration directive
+   removed upstream shows up as a container that starts and answers nothing.
+
+</Steps>
+
+## Troubleshooting
+
+**Nothing answers on the VPN address.** The interface is not in the
+`DNS_INTERFACE_*` list, or it did not exist when the container started.
+
+**A record change has no effect.** `records.hosts` needs the reload signal;
+`.env` needs a re-render and a restart. The two are not interchangeable.
+
+**Port 53 is already in use.** A resolver on the host holds it —
+`systemd-resolved` is the usual one. It has to release the port before this
+container can bind it.
+
+## Repository files
+
+- [`core/dnsmasq/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/dnsmasq/README.md) — setup, wildcard zones, reload behaviour
+- [`core/dnsmasq/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/dnsmasq/UPSTREAM.md) — source and upgrade checklist
+
+## Official sources
+
+- [dnsmasq documentation](https://thekelleys.org.uk/dnsmasq/doc.html)

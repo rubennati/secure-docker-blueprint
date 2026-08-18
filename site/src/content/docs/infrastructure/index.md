@@ -62,6 +62,22 @@ the open internet, and not much before.
 
 [CrowdSec — intrusion detection →](/infrastructure/crowdsec/)
 
+## Set up once, used by everything after
+
+**[Dockhand](/infrastructure/dockhand/)** manages Compose stacks from a Git
+repository and reaches the Docker daemon through a filtered proxy rather than the
+socket. Anything that manages Docker is equivalent to root on the host, which is
+why it ships VPN-only.
+
+**[dnsmasq](/infrastructure/dnsmasq/)** answers names on your own network —
+wildcard zones, static records for machines with no DNS entry, and a cache in
+front of an upstream resolver. It runs on host networking and is not behind the
+proxy, because it is the name layer the proxy relies on.
+
+**[Certificates for devices behind no proxy](/infrastructure/acme-certs/)** issues
+and renews TLS certificates for the things Traefik never sees — a NAS, a router,
+a mail server.
+
 ## Also server-wide, without a guide
 
 **Single sign-on.** [Authentik](/infrastructure/authentik/) is set up once and
