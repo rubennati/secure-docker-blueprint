@@ -97,7 +97,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | Stack | State | Pinned | Last verified | Local | Backup docs | Restore docs |
 |---|---|---|---|---|---|---|
 | [`backup/borgmatic`](backup/borgmatic/) | `baseline-aligned` | *host-installed* | 2026-07-29 | — | n/a | documented |
-| [`backup/urbackup`](backup/urbackup/) | `scaffolded` | `APP_TAG=2.5.x@sha256:e2fdc0d59071…` | — | ✅ | documented | missing |
+| [`backup/urbackup`](backup/urbackup/) | `scaffolded` | `APP_TAG=2.5.x@sha256:e2fdc0d59071…` | — | ✅ | documented | documented |
 
 ## Source of truth
 

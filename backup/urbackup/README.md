@@ -105,6 +105,40 @@ This stack is the second direction of `backup/` — it protects the machines aro
 the host, while `backup/borgmatic` protects the host. Neither backs up the other,
 and neither is a substitute.
 
+## Restore
+
+Documented from upstream's administration manual, not yet runtime-verified
+against this stack.
+
+### The storage tree
+
+A file backup is a plain copy of the client's tree under the backup storage path,
+one directory per client, then one per run named `YYMMDD-HHMM` (newest last):
+
+```bash
+ls "$BACKUP_STORAGE_PATH/<client>"
+cp -a "$BACKUP_STORAGE_PATH/<client>/<run>/<path>" /tmp/restored
+```
+
+Works without the web interface or a live UrBackup process. Upstream can also
+export a run over SMB, FTP/SFTP or WebDAV for a client to pull from directly.
+
+### The web interface
+
+Files and directories download as a ZIP, capped by upstream at 4 GB. Pushing a
+restore back to the client instead requires that client to be **online** — the
+server asks it to confirm before it writes anything.
+
+### The client
+
+`urbackupclientctl browse` lists what the server holds for that machine;
+`urbackupclientctl restore-start` begins the restore. On Windows, the tray icon
+carries the same under "Access/restore backups".
+
+### Image backups
+
+Restore from a bootable Debian-based CD/USB, for Windows clients only.
+
 ## Known limitations
 
 - **Whole-disk image backup is Windows-only.** macOS and Linux clients back up files.

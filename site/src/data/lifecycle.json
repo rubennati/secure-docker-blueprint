@@ -246,7 +246,7 @@
     "backup_docs": "documented",
     "local_stack": "✅",
     "pinned": "APP_TAG=2.5.x@sha256:e2fdc0d59071…",
-    "restore_docs": "missing",
+    "restore_docs": "documented",
     "state": "scaffolded",
     "verified": "—",
     "verified_anchored": false
