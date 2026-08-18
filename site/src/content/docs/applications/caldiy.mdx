@@ -15,14 +15,17 @@ calendar. Three containers — the application, PostgreSQL and Redis.
 Needs: [Traefik](/infrastructure/traefik/) running, a domain on Cloudflare, SMTP
 credentials, and a way to generate VAPID keys.
 
-:::danger
-This deployment runs behind Cloudflare as a proxy — the orange cloud, not
-DNS-only. It is part of the security model rather than an option: this instance
-is community-maintained, and one running instance was compromised through an
-exfiltrated SMTP credential. Upstream labels the project as being for personal,
-non-production use. If scheduling is business-critical, read that sentence again
-before choosing this over
-[Easy!Appointments](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/easyappointments/README.md).
+:::caution
+Upstream Cal.diy describes itself as intended for personal, non-production use.
+This blueprint does not install upstream directly — it installs **cal.forte**, a
+separately maintained hardened fork. It does not provide vendor support or a
+vendor incident-response commitment.
+
+Because of that, this Cal.diY stack requires a **proxied Cloudflare zone** as part
+of its security model. No other application in this blueprint carries a mandatory
+edge layer. If you would rather not run one,
+[Easy!Appointments](/applications/easyappointments/) does the same job with a
+longer track record and no such requirement.
 :::
 
 ## Installation
@@ -68,9 +71,19 @@ From `apps/caldiy/`:
    Public key into `VAPID_PUBLIC_KEY` in `.env`; private key into
    `.secrets/vapid_private_key.txt`.
 
-4. Apply the Cloudflare settings before the host is reachable — WAF, geo
-   allowlist on the human-facing surface, rate limiting and origin hiding are
-   documented in
+4. Set the host's DNS records in Cloudflare to **proxied** — the orange cloud —
+   before the origin is reachable. Publish only the address family the origin
+   actually serves: an `A` record for IPv4, an `AAAA` record for IPv6, or both.
+   Whichever exist have to be proxied. A record left on DNS-only sends traffic
+   straight to the origin, and none of the edge protection applies to it.
+
+   ```bash
+   dig +short cal.example.com     # a Cloudflare address, not your origin
+   ```
+
+   The rest of the edge configuration — the managed WAF, a geo allowlist on the
+   human-facing surface, rate limiting, origin hiding, and which parts need a paid
+   plan — is in
    [`docs/cloudflare.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/caldiy/docs/cloudflare.md).
 
 5. Start it:
@@ -94,9 +107,9 @@ From `apps/caldiy/`:
 docker compose ps   # three services, healthy
 ```
 
-Then create one event type and book it from a private browser window. The booking
-confirmation arriving by mail is the check — the SMTP path is the one this
-deployment cares most about.
+Then create one event type and book it from a private browser window. Check both
+outcomes separately: the booking appears in the interface, and the confirmation
+mail arrives at the address that made it. Either can fail without the other.
 
 `/api/health` returns 500 on this image because of a Node.js stream
 incompatibility. The healthcheck uses a TCP probe instead, and the application
@@ -133,8 +146,8 @@ overrides the application's own framing policy and blocks it.
 That default is deliberate: a booking page any site may frame is a booking page
 any site can overlay. If you want embeds, name the parent origins rather than
 dropping the header — `sec-3e` for same-origin, or a per-app middleware replacing
-`X-Frame-Options` with a `frame-ancestors` allowlist. Neither has been run
-against the embed here.
+`X-Frame-Options` with a `frame-ancestors` allowlist. Neither option is part of
+the currently verified path.
 
 ### Redeploying after a compromise
 
@@ -176,10 +189,11 @@ postgresql_databases:
       password: "{credential file /srv/docker/apps/caldiy/.secrets/db_pwd.txt}"
 ```
 
-**`encryption_key.txt` decrypts the connected calendar tokens.** A database
-restored without it leaves every integration broken and reconnectable only by
-hand. Given this stack's history, a restore rehearsal should cover that credential
-path, not only whether the rows came back.
+**`encryption_key.txt` decrypts the connected calendar tokens.** The key and the
+database are stored separately and a restore needs both: brought back without the
+key, every calendar integration is broken and reconnectable only by hand. A
+rehearsal therefore has to reach the point where a calendar reconnects, not stop
+at the row count.
 
 Restore order: database, then the application.
 
