@@ -75,7 +75,12 @@ For **high-stakes production environments** (critical infrastructure, financial 
 - **Network segmentation** — databases and backends in internal networks, no internet exposure
 - **Socket proxy pattern** — no direct Docker socket mounts on app containers
 - **Pinned versions** — every image tagged with a specific version, never `:latest`
-- **Defense in depth** — multiple layers (IP allowlist, security headers, rate limiting, WAF via CrowdSec AppSec)
+- **Defense in depth** — the layers in every request path are the IP allowlist, the security headers and the rate limit.
+  CrowdSec adds reputation-based IP blocking, and its AppSec engine adds virtual patching: signatures for named CVEs.
+  It is **not** a web application firewall and this repository does not treat it as one — measured against a public
+  router, SQL injection, cross-site scripting, path traversal and a JNDI payload each returned 200, while a known CVE
+  path returned 403. It covers the mass-scanning traffic that reaches any public host; it will not stop an injection
+  against an application's own parameters, and it is no reason to relax input handling.
 
 See [`docs/standards/security-baseline.md`](docs/standards/security-baseline.md) for the full security baseline.
 
