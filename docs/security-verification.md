@@ -231,7 +231,7 @@ Based on **CIS Docker Benchmark v1.6.0**.
 | **4.1** Create user for container | ⚠ Partial | `user:` on 1/145 services; `no-new-privileges` on 143/145 | Most containers run as image-defined users. No systematic non-root enforcement. |
 | **4.2** Use trusted base images | ⚠ Partial | Well-known registries (ghcr.io, docker.io). No image signing or digest pinning. | Tags pinned but not digests. No provenance verification. |
 | **4.3** Do not install unnecessary packages | ℹ N/A | Not applicable to compose blueprint — image content is upstream responsibility | |
-| **4.4** Scan images for vulnerabilities | ⚠ Partial | `trivy.yml` scans 28 images from 11 hand-listed compose files; IaC config scan covers all compose files | Not exhaustive — the tree holds 97 image references across 71 files, so 69 are never image-scanned; see Missing Verification |
+| **4.4** Scan images for vulnerabilities | ⚠ Partial | `trivy.yml` scans 96 images — every compose file `check-structure.py --list` reports; IaC config scan covers all compose files | Coverage is complete, enforcement is not: the scan runs `--exit-code 0`, so a CRITICAL finding reports and does not fail the job. The one image left out is `vikunja-local`, built from a Dockerfile with no registry copy to scan |
 | **4.5** Enable Content Trust | ❌ Not implemented | No `DOCKER_CONTENT_TRUST=1`, no cosign verification | |
 | **4.6** Add HEALTHCHECK | ✅ Partial | Most compose files include healthchecks. Some scratch images correctly use `disable: true` | |
 | **4.7** Do not use update in Dockerfile | ℹ N/A | No Dockerfiles in this repository | |
@@ -333,7 +333,7 @@ Based on **OWASP Docker Security Cheat Sheet**.
 - Scans each image with Trivy for CRITICAL CVEs (`--ignore-unfixed`)
 - Fails the job if any CRITICAL CVE is found
 - Reports HIGH CVEs in logs as informational (non-blocking)
-- Limitation: 28 images from 11 hand-listed compose files, against 97 image references in the tree
+- Coverage: 96 of the tree's 97 image references. `list-images.sh` reads the same discovery as the checkers, so a new stack is scanned the day it lands. Excluded: `vikunja-local`, built locally
 
 ---
 
@@ -357,7 +357,7 @@ The following controls are absent from CI. Ordered by security value.
 
 | Gap | Status | Remaining limitation |
 |-----|--------|----------------------|
-| **CVE / vulnerability scanning** | ⚠ Partial — `trivy.yml` scans the 11 compose files listed in `scripts/ci/list-images.sh`, which resolve to 28 images | The tree holds 97 unique image references across 71 compose files, so 69 images are never scanned. The list is hand-maintained, so a new stack is unscanned until someone adds it |
+| **CVE / vulnerability scanning** | ⚠ Partial — `trivy.yml` scans 96 images, resolved from every compose file the checkers discover | Coverage is no longer the gap; blocking is. The job runs `--exit-code 0`, so findings are reported to the Security tab and nothing fails. Widening coverage and switching to blocking in one step would have produced an unreviewed backlog |
 | **IaC static analysis** | ⚠ Partial — `trivy.yml` config scan runs but is non-blocking | Overlaps with `check-baseline.py`; Trivy config scan exit-code is 0 |
 | **Resource limits coverage** | ✅ Addressed — 145 of 145 services carry a `memory` and a `pids` limit, and `check-structure.py`'s `no-resources` rule names which of the two is missing | Reported as a warning, not a failure. The values are derived rather than measured — v0.9.0 |
 | **`__REPLACE_ME__` sentinel check** | ✅ Addressed — `ci.yml` sentinel job | Only covers committed `.env` files; runtime `.env` files are gitignored and unchecked |
@@ -376,7 +376,7 @@ The following controls are absent from CI. Ordered by security value.
 | **Dependency review** | No automated check for newly introduced vulnerable dependencies on PRs. | `dependency-review-action` |
 | **Docker Bench for Security** | Runtime checks against host Docker daemon config. Not coverable in CI without host access. | Docker Bench for Security |
 | **TLS profile enforcement** | No CI check that each app uses an appropriate TLS profile. | Extension to structure check |
-| **Exhaustive image scanning** | Trivy covers 28 images from 11 hand-listed compose files. The tree holds 97 image references across 71 files. | Have `list-images.sh` read the compose files `check-structure.py` already discovers, instead of a hand-kept list |
+| **Blocking on CVE findings** | Trivy covers 96 of 97 image references since `list-images.sh` moved to the shared discovery (the exception is the locally built `vikunja-local`). The job still runs `--exit-code 0` | Read the backlog the widened scan produces, then decide which severity blocks. Turning both on at once was deliberately avoided |
 
 ---
 
@@ -412,7 +412,7 @@ These close the largest gaps with the least complexity. Implement before anythin
 
 | Item | What | Complexity | Maintenance | Security Value |
 |------|------|-----------|-------------|----------------|
-| **Trivy in CI** — ⚠ partly done: `trivy.yml` runs weekly, but over 11 hand-listed compose files rather than all of them, and non-blocking | Scan all images referenced in compose files for CVEs. Run on push, fail on CRITICAL. | Low — one new CI job | Low — automated | High — CVE visibility |
+| **Trivy in CI** — ⚠ partly done: `trivy.yml` runs weekly over every discovered compose file, and stays non-blocking | Decide the severity that fails the job, once the widened scan's backlog has been read. | Low — one flag | Medium — a blocking scan stops merges | High — CVE visibility |
 | **`__REPLACE_ME__` CI check** — ✅ done, `ci.yml` sentinel job | Add step that fails if any `.env` file (not `.env.example`) contains `__REPLACE_ME__`. Catches deployment of unsubstituted configs. | Trivial — 3-line grep | None | Medium — prevents silent misconfigurations |
 | **`read_only: true` CI enforcement** | Extend `check-baseline.py` to WARN (not FAIL initially) for services missing `read_only: true`. Add to exception system. | Low | Low | Medium |
 | **GitHub Actions SHA pinning** — ✅ done, enforced by `check-workflows.py` | Pin `actions/checkout`, `gitleaks-action` etc. to commit SHAs instead of floating tags. | Trivial | Low (Renovate automates updates) | Medium — supply chain |
