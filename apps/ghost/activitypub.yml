@@ -30,6 +30,21 @@ services:
       db:
         condition: service_healthy
 
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+
+    # --- Resources ---
+    # Runs the schema migration once and exits. Same shape as
+    # core/authentik's init-perms, which is the one-shot pattern here.
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          pids: 100
+        reservations:
+          memory: 64M
+
     # --- Configuration ---
     # The migrations image expects a MYSQL_DB DSN string.
     # We construct it in the entrypoint wrapper because Docker Secrets
@@ -67,6 +82,17 @@ services:
     # --- Security ---
     security_opt:
       - no-new-privileges:true
+
+    # --- Resources ---
+    # Node service alongside Ghost. Starting values, not measured ones — the
+    # federation backend's working set has not been sampled here (v0.9.0).
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          pids: 200
+        reservations:
+          memory: 128M
 
     # --- Configuration ---
     # ActivityPub does not support _FILE env vars — ops/activitypub-entrypoint.sh

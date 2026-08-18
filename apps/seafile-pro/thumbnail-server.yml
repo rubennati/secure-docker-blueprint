@@ -50,9 +50,12 @@ services:
       - ./volumes/seafile-data:/shared
 
     # --- Health & Observability ---
-    # Any HTTP answer means the server is serving. Deliberately no `-f`:
-    # treating a redirect as failure would take the container out of
-    # Traefik's load balancer and surface as a 404.
+    # Any HTTP answer means the server is serving, including a 5xx —
+    # `-f` is deliberately absent, but not for the reason once written here.
+    # curl --fail triggers at 400 and above; it does not fail on a redirect,
+    # so a 3xx passes either way. What omitting it really buys is that a
+    # broken application still reports healthy. Add `-f` once the response
+    # this endpoint gives during startup is known (v0.8.0 / .ai/tasks.md).
     healthcheck:
       test: ["CMD-SHELL", "curl -sS -o /dev/null --max-time 5 http://127.0.0.1:80/"]
       interval: 30s

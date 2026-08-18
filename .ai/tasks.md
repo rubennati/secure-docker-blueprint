@@ -95,3 +95,11 @@ Listed with context in [`state.md`](state.md). Nothing proceeds on these until d
       — index and method, declared in both files and in the File Map
 - [ ] Add `Checker coverage`, `Docs QA` and `Workflow supply chain` to the required
       checks in branch protection — all three run, but nothing blocks on them yet
+- [ ] Decide `-f` per HTTP healthcheck. 19 checks across 17 files run
+      `curl -sS -o /dev/null --max-time 5`, which succeeds on any answer including
+      a 5xx — a broken application reports healthy and only a connection error or
+      timeout fails the check. The comment blamed redirects; `curl --fail` triggers
+      at 400 and above and never on a 3xx, so that reason was wrong and the
+      comments are corrected. What each endpoint answers during startup decides
+      whether `-f` can go in. `core/euro-office`, `core/dockhand` and
+      `apps/paperless-ngx` already use `curl -fsS`
