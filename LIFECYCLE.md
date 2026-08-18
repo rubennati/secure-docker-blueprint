@@ -90,7 +90,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`monitoring/gatus`](monitoring/gatus/) | `scaffolded` | `APP_TAG=v5.36.0` | 2026-05-03 ⚠️ | ✅ | documented | missing |
 | [`monitoring/healthchecks`](monitoring/healthchecks/) | `scaffolded` | `APP_TAG=v4.2` | 2026-04-17 ⚠️ | ✅ | documented | missing |
 | [`monitoring/ntfy`](monitoring/ntfy/) | `scaffolded` | `APP_TAG=v2.26.3` | — | ✅ | documented | missing |
-| [`monitoring/uptime-kuma`](monitoring/uptime-kuma/) | `scaffolded` | `APP_TAG=2.4.0` | 2026-05-03 ⚠️ | ✅ | documented | missing |
+| [`monitoring/uptime-kuma`](monitoring/uptime-kuma/) | `scaffolded` | `APP_TAG=2.4.0` | 2026-08-18 ⚠️ | ✅ | documented | missing |
 
 ## `backup/`
 

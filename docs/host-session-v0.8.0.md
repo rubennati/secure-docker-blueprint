@@ -15,7 +15,8 @@ Six monitoring stacks are configured and none has ever run. This is that work in
 - [ ] Host reachable, Docker running, Traefik up with a working certificate
 - [ ] A device that is supposed to receive alerts, with the ntfy app installed on it
 - [ ] The receiver runs on **this** host. That is what verifies the chain; where it belongs in a real deployment is the adopter's call and is documented in [`monitoring/README.md`](../monitoring/README.md#where-the-receiver-runs), not decided here
-- [ ] Decided: Uptime Kuma **or** Gatus for the uptime axis. Both is allowed, one is required
+- [x] Decided: **Uptime Kuma** for the uptime axis. `monitoring/gatus` stays in the
+      repository as the alternative and is not part of this milestone
 
 ---
 
@@ -54,11 +55,8 @@ The scheduled-job axis, and the only service here that alerts on *absence*. Also
 
 **Watch for:** `INTEGRATIONS_ALLOW_PRIVATE_IPS` defaults to false. If ntfy sits on a private address, webhook delivery is refused until it is enabled.
 
-## Block 3 · Uptime Kuma or Gatus — the uptime axis (~40 min)
+## Block 3 · Uptime Kuma — the uptime axis (~40 min)
 
-One of the two, not both. They are a preference pair.
-
-- [ ] Pending major version if Kuma: `1.x → 2.x` is a real migration — take the database backup first
 - [ ] `docker compose up -d`, container healthy, interface reachable
 - [ ] Add one monitor against a service that is actually running
 - [ ] Configure the ntfy notification on it
