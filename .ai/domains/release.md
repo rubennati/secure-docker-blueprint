@@ -18,7 +18,7 @@ Under 1.0, forks should expect snapshots rather than stability guarantees.
 3. `CHANGELOG.md`: `[Unreleased]` → `[X.Y.Z]`, comparison links updated
 4. `ROADMAP.md`: milestone moved to Shipped, "Last updated" bumped
 5. `README.md`: version badge
-6. `docs/maintenance.md`: Progress Log row
+6. `docs/maintenance-log.md`: add a row
 7. Every `🚧` re-checked for honesty; every `✅` re-checked against dependency updates
 8. Tag, then `gh release create vX.Y.0 --draft` for minor versions — patch versions
    are git tags only

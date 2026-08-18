@@ -4,7 +4,7 @@ Six monitoring stacks are configured and none has ever run. This is that work in
 
 **Ordered by dependency, not by importance.** Block 1 is the receiver everything else alerts into, so it comes first — a monitor verified before there is anywhere for its alert to go has to be revisited. Blocks 3–5 are independent of each other.
 
-> Update `docs/maintenance.md` (Progress Log) and each stack's `UPSTREAM.md` as you go, not afterwards from memory.
+> Update `docs/maintenance-log.md` and each stack's `UPSTREAM.md` as you go, not afterwards from memory.
 
 **Shares a precondition with v0.7.0.** Borgmatic's run monitoring pings Healthchecks or Uptime Kuma, so backup's proof layer depends on Block 2 here. If both sessions happen on the same host, do Block 1 and 2 before `backup/borgmatic` is switched on.
 
@@ -94,7 +94,7 @@ The scheduled-job axis, and the only service here that alerts on *absence*. Also
 - [ ] `CHANGELOG.md`: `[Unreleased]` → `[0.8.0]`, comparison links
 - [ ] `ROADMAP.md`: v0.8.0 into "Shipped", "Last updated" bumped
 - [ ] `README.md`: version badge → `v0.8.0`
-- [ ] Progress Log row
+- [ ] `maintenance-log.md` row
 - [ ] `git tag v0.8.0` and `gh release create v0.8.0 --draft`
 
 ---

@@ -12,7 +12,7 @@ Everything left for v0.7.0 needs a reachable host. This is that work in one orde
 
 **Ordered so a failure blocks as little as possible.** Each block is independent — if one fails, note it and move on; only Block 2 depends on Block 1.
 
-> Update `docs/maintenance.md` (Progress Log) and the rehearsal log in `backup/borgmatic/RESTORE.md` as you go, not afterwards from memory.
+> Update `docs/maintenance-log.md` and the rehearsal log in `backup/borgmatic/RESTORE.md` as you go, not afterwards from memory.
 
 ---
 
@@ -107,7 +107,7 @@ The date exists, so the evidence probably does too — but converting the field 
 - [ ] `CHANGELOG.md`: `[Unreleased]` → `[0.7.0]`, comparison links
 - [ ] `ROADMAP.md`: v0.7.0 into "Shipped", "Last updated" bumped
 - [ ] `README.md`: version badge → `v0.7.0`
-- [ ] Progress Log row
+- [ ] `maintenance-log.md` row
 - [ ] `git tag v0.7.0` and `gh release create v0.7.0 --draft`
 
 ---

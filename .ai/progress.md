@@ -1,8 +1,8 @@
 # Progress
 
 Milestone-level history. Per-release detail is in [`../CHANGELOG.md`](../CHANGELOG.md);
-session-level detail is in the Progress Log of
-[`../docs/maintenance.md`](../docs/maintenance.md).
+session-level detail is in
+[`../docs/maintenance-log.md`](../docs/maintenance-log.md).
 
 | Release | Date | What it established |
 |---|---|---|

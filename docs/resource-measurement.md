@@ -143,7 +143,7 @@ Per service, in the same change set as the limit itself:
 - The peak that was measured, and under which load state
 - Anything that landed in a different profile than expected
 
-`docs/maintenance.md` Progress Log carries the session-level summary. A limit
+`docs/maintenance-log.md` carries the session-level summary. A limit
 committed without a note of what it was measured against is indistinguishable
 from a guessed one six months later — which is the failure this whole procedure
 exists to avoid.

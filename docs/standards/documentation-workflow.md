@@ -232,7 +232,7 @@ None of that material is discarded. Each part has an owner:
 | Deviation from upstream, upgrade rationale | the stack's `UPSTREAM.md` |
 | Dated inspection of a state | `docs/audits/` |
 | One incident — symptom, cause, fix, lesson | `docs/bugfixes/` |
-| What a session established, in sequence | `docs/maintenance.md` Progress Log, `docs/host-session-*.md` |
+| What a session established, in sequence | `docs/maintenance-log.md`, `docs/host-session-*.md` |
 | Active working state | `.ai/state.md`, `.ai/tasks.md`, `.ai/progress.md` |
 
 The lower half of that table is narrative by purpose: a findings log records how
