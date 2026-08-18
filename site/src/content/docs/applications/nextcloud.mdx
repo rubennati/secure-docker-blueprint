@@ -16,10 +16,8 @@ background worker.
 
 Needs: [Traefik](/infrastructure/traefik/) running, a domain, and SMTP credentials.
 
-:::caution
-Configure mail during setup, not later. Nextcloud cannot reset a password without
-it, and the person who discovers this is usually the one already locked out.
-:::
+Configure mail during setup rather than afterwards: Nextcloud cannot reset a
+password without it.
 
 ## Installation
 
@@ -233,12 +231,10 @@ Writing in place — `printf '%s' "$KEY" > .secrets/smtp_pwd.txt` — avoids thi
 
 ## Backup
 
-:::note
 This section covers what Borgmatic needs to know **about Nextcloud**. Installing
 it, the repository, the encryption keys, the schedule and the restore mechanics
 are all on [Backup and restore](/operations/backup/) — set that up first, then
 come back here.
-:::
 
 Nextcloud keeps its file index in the database and the files on disk. Capture the
 two at different moments under load and the restore shows files the index does
@@ -327,11 +323,9 @@ refuses to serve until you clear it:
 docker compose exec -u www-data app php occ maintenance:mode --off
 ```
 
-:::caution
-A backup you have not restored is not a backup. Rehearse it into a scratch
-location and open a file from the result — the procedure is on
+Rehearse the restore into a scratch location and open a file from the result. The
+procedure is on
 [Backup and restore](/operations/backup/#prove-it-with-a-restore).
-:::
 
 ## Updates
 

@@ -16,12 +16,6 @@ vector extensions, and Valkey for the job queue.
 Needs: [Traefik](/infrastructure/traefik/) running, a domain, and storage for the
 library.
 
-:::danger
-Register the first account immediately after starting. Immich makes the first
-account to sign up the administrator, and until you claim it, anyone who reaches
-the page can.
-:::
-
 ## Installation
 
 From `apps/immich/`:
@@ -63,7 +57,9 @@ From `apps/immich/`:
 
    Wait for `Immich Server is listening on`.
 
-5. Open `https://<APP_TRAEFIK_HOST>` and create the administrator account now.
+5. Open `https://<APP_TRAEFIK_HOST>` and register immediately. The first account
+   to sign up becomes the administrator, and until it is claimed anyone who
+   reaches the page can claim it.
 
 </Steps>
 
@@ -106,11 +102,7 @@ anything.
 
 ## Restore
 
-:::danger
-A plain `psql < dump.sql` does not restore this database, and it does not report
-that it failed. The result starts, looks plausible and is missing the objects
-that depend on the vector extension.
-:::
+Restore the dump exactly as below. Each part of the pipeline is required:
 
 ```bash
 gunzip --stdout dump.sql.gz \
@@ -160,8 +152,10 @@ There is no recovery other than rebuilding the instance.
 **The database refuses the password.** Immich accepts only letters and digits. A
 password containing `+`, `/` or `=` is rejected — regenerate it as in step 2.
 
-**A restored instance starts but albums and search are empty.** The restore did
-not use the documented path. See [Restore](#restore).
+**A restored instance starts but albums and search are empty.** The dump was
+loaded without the `search_path` rewrite, so the objects depending on the vector
+extension were never created. The load reports no error. Restore again as shown
+under [Restore](#restore).
 
 **Search returns nothing while photos are present.** The machine-learning worker
 has not finished, or the model cache did not download. Check

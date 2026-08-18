@@ -116,13 +116,10 @@ postgresql_databases:
       password: "{credential file /srv/docker/business/listmonk/.secrets/db_pwd.txt}"
 ```
 
-:::caution
-Restoring an older database here is not a neutral act. Subscriptions and their
-opt-in state are rows, so an older snapshot can bring back addresses that
-unsubscribed after it was taken — and the next campaign mails them again. Compare
-the subscriber table against the unsubscribe log before the first send following
-a restore.
-:::
+Subscriptions and their opt-in state are rows, so an older snapshot brings back
+addresses that unsubscribed after it was taken, and the next campaign mails them
+again. Compare the subscriber table against the unsubscribe log before the first
+send following a restore.
 
 Restore order: database, then the application.
 

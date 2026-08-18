@@ -15,11 +15,8 @@ scheduler and queue workers, a web server, a database, and a cache.
 
 Needs: [Traefik](/infrastructure/traefik/) running, a domain, and SMTP credentials.
 
-:::caution
-Mail is not a nice-to-have here. Invoices, quotes, reminders and payment
-receipts all leave the system by mail — configure it during setup, not when the
-first invoice is due.
-:::
+Invoices, quotes, reminders and payment receipts all leave the system by mail.
+Configure it during setup, not when the first invoice is due.
 
 ## Installation
 
@@ -144,11 +141,9 @@ and change it.
 
 ## Backup
 
-:::note
 This covers what the backup needs to know **about Invoice Ninja**. Installing
 Borgmatic, the repository, the keys and the schedule are on
 [Backup and restore](/operations/backup/).
-:::
 
 Two things carry the state, and one of them is not in a volume:
 

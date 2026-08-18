@@ -15,14 +15,6 @@ its own SQLite database.
 
 Needs: [Traefik](/infrastructure/traefik/) running and a domain.
 
-:::caution
-`N8N_ENCRYPTION_KEY` encrypts every credential n8n stores — OAuth tokens, API
-keys, SMTP passwords. Restore the data directory without the matching key and n8n
-generates a fresh one instead of reporting the mismatch: the workflows are all
-there and none of them can authenticate. Back the key up off the host, separately
-from the data.
-:::
-
 ## Installation
 
 From `apps/n8n/`:
@@ -44,7 +36,9 @@ From `apps/n8n/`:
    echo "Basic auth password: ${BAUTH_PWD}"
    ```
 
-3. Generate the encryption key:
+3. Generate the encryption key. It encrypts every credential n8n stores — OAuth
+   tokens, API keys, SMTP passwords — and the data directory is unusable without
+   it:
 
    ```bash
    mkdir -p .secrets

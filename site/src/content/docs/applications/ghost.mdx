@@ -16,13 +16,6 @@ federation is available as an optional overlay.
 Needs: [Traefik](/infrastructure/traefik/) running, a domain, and SMTP
 credentials.
 
-:::danger
-Configure mail before the first login, not after. Ghost 6 emails a verification
-code for every login from a new device — including the first one. With SMTP
-missing or wrong, the code never arrives and there is no way into the
-administration interface.
-:::
-
 ## Installation
 
 From `apps/ghost/`:
@@ -62,9 +55,9 @@ From `apps/ghost/`:
    healthcheck allows for it; on slow storage the container may show `unhealthy`
    briefly before recovering.
 
-4. Open `https://<APP_TRAEFIK_HOST>/ghost/` and complete the setup wizard. The
-   login code arrives by mail — if it does not, stop here and fix mail rather
-   than working around it.
+4. Open `https://<APP_TRAEFIK_HOST>/ghost/` and complete the setup wizard. Ghost
+   mails a verification code for every login from a new device, including this
+   one, so mail has to work before the wizard can be finished.
 
 </Steps>
 

@@ -130,13 +130,9 @@ OnlyOffice embeds a browser-based Office editor into Seafile. It runs as a separ
 **Allowed origins:** On the OnlyOffice server, add the Seafile origin to `ONLYOFFICE_ALLOWED_ORIGINS` in its `.env` so browsers are permitted to embed the editor in an iframe. In the Blueprint's `core/onlyoffice` stack this value is embedded in a Traefik label — changing it takes effect only after recreating the container, not after a plain restart:
 
 ```bash
-# On the OnlyOffice server — restart is NOT enough:
+# On the OnlyOffice server:
 docker compose up -d --force-recreate
 ```
-
-:::note
-`APP_TRAEFIK_ACCESS` is a Traefik middleware setting, not a network exposure control. `acc-public` removes the source-IP allowlist inside Traefik; it does not bypass an upstream firewall or make the service reachable if it wasn't already. If OnlyOffice traffic arrives via Tailscale but Traefik still rejects it under `acc-tailscale`, the source IP Traefik sees may differ from the actual client address — see [Traefik troubleshooting](/infrastructure/traefik/#troubleshooting) for the known caveat and investigation steps.
-:::
 
 ## Going further
 
@@ -214,13 +210,9 @@ repository, the schedule and the database hooks. What this stack contributes:
 - `volumes/seadoc-data/` — collaborative document state
 - The `.env` file and any secrets
 
-:::caution
-**Nothing here has been rehearsed for this stack.** A restore that recovers the
-databases without the matching file volumes — or the reverse — leaves the
-installation inconsistent rather than merely incomplete, and the three databases
-have to come back together. Establish and test a restore yourself before this
-holds anything you would miss.
-:::
+The databases and the file volumes have to come back from the same point in time,
+and all three databases together. A restore that recovers one side without the
+other leaves the installation inconsistent rather than merely incomplete.
 
 ## Updates
 
@@ -246,33 +238,17 @@ holds anything you would miss.
 
 </Steps>
 
-:::caution
-This update sequence has not been tested end-to-end in this Blueprint guide — it follows the upstream documented procedure. Read the Seafile release notes before running it.
-:::
-
 ## Troubleshooting
 
-:::caution
-**OnlyOffice editor not loading** — the most common causes are a JWT mismatch (`ONLYOFFICE_JWT_SECRET` in `apps/seafile-pro/.env` must match the secret on the OnlyOffice server exactly) or the Seafile origin missing from `ONLYOFFICE_ALLOWED_ORIGINS` on the OnlyOffice side.
-:::
+**OnlyOffice editor not loading:** either a JWT mismatch — `ONLYOFFICE_JWT_SECRET` in `apps/seafile-pro/.env` has to match the secret on the OnlyOffice server exactly — or the Seafile origin is missing from `ONLYOFFICE_ALLOWED_ORIGINS` on the OnlyOffice side.
 
-:::caution
-**Allowed-origins change has no effect** — `ONLYOFFICE_ALLOWED_ORIGINS` is embedded in a Traefik label at container creation time. A plain `docker compose restart` on the OnlyOffice server does not pick up a new value. Recreate the container: `docker compose up -d --force-recreate` on the OnlyOffice server.
-:::
+**Allowed-origins change has no effect:** `ONLYOFFICE_ALLOWED_ORIGINS` is embedded in a Traefik label at container creation time, so a plain `docker compose restart` does not pick up a new value. Run `docker compose up -d --force-recreate` on the OnlyOffice server.
 
-:::note
-**ClamAV socket warning in startup logs** — the line `Clamd was NOT notified: Can't connect to clamd through /tmp/clamd.sock` is a timing race during container initialisation and is non-fatal. Run the EICAR test in Verify to confirm scanning is active.
-:::
+**ClamAV socket warning in startup logs:** the line `Clamd was NOT notified: Can't connect to clamd through /tmp/clamd.sock` is a timing race during container initialisation and is non-fatal. Run the EICAR test in Verify to confirm scanning is active.
 
-:::note
-**MariaDB `io_uring` warning or Redis memory overcommit warning** — both are host-level configuration notices, not application errors. The stack continues to function.
+**MariaDB `io_uring` warning or Redis memory overcommit warning:** both are host-level configuration notices, not application errors. To silence the Redis warning, set `vm.overcommit_memory = 1` in `/etc/sysctl.conf` on the host and apply it with `sysctl -p`. The MariaDB notice needs no action — it falls back to libaio on its own.
 
-To silence the Redis warning, set `vm.overcommit_memory = 1` in `/etc/sysctl.conf` on the host and apply it with `sysctl -p`. The MariaDB notice needs no action — it falls back to libaio on its own.
-:::
-
-:::note
-**`acc-tailscale` returning 403 for a Tailscale client** — see [Traefik troubleshooting](/infrastructure/traefik/#troubleshooting) for the source-IP caveat when traffic arrives through Docker published ports.
-:::
+**`acc-tailscale` returning 403 for a Tailscale client:** see [Traefik troubleshooting](/infrastructure/traefik/#troubleshooting) for the source-IP caveat when traffic arrives through Docker published ports.
 
 ## Repository files
 

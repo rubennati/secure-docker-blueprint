@@ -171,13 +171,10 @@ data directories, and to hold the archives somewhere the server cannot reach,
 see [backup and restore](/operations/backup/) — Borgmatic on the host, with the
 database dump wired in as a pre-backup hook.
 
-:::caution
 **The three parts have to be restored together, from the same point in time.**
 The database alone is not enough: without `rsa_key.*` every session breaks even
 though the vault contents are intact, and without the attachments directory
-entries lose their files. A restore of this stack has not been performed — the
-procedure is written down, and that is not the same thing.
-:::
+entries lose their files.
 
 ## Updates
 
@@ -199,13 +196,9 @@ procedure is written down, and that is not the same thing.
 
 ## Troubleshooting
 
-:::caution
-**Container not starting** — check `docker compose logs app` and `docker compose logs db`. Common causes: MariaDB not yet healthy (the app waits for it), or incorrect `$$` escaping in `VW_ADMIN_TOKEN`.
-:::
+**Container not starting:** check `docker compose logs app` and `docker compose logs db`. Common causes: MariaDB not yet healthy (the app waits for it), or incorrect `$$` escaping in `VW_ADMIN_TOKEN`.
 
-:::note
-**Login page not loading but the container is healthy** — check Traefik logs and confirm `APP_TRAEFIK_HOST` matches your DNS record exactly.
-:::
+**Login page not loading but the container is healthy:** check Traefik logs and confirm `APP_TRAEFIK_HOST` matches your DNS record exactly.
 
 **Email verification not arriving:** send a test email from `/admin` → Settings, and check your SMTP provider's outbound log if it fails.
 

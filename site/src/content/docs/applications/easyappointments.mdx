@@ -14,12 +14,6 @@ Easy!Appointments lets customers book time slots with a provider. Two containers
 
 Needs: [Traefik](/infrastructure/traefik/) running and a domain.
 
-:::caution
-Set the ownership on `volumes/storage` before the first login. Apache runs as
-uid 33, and without write access the session is never stored — the login form
-accepts the password and returns you to the login form, with nothing in the log.
-:::
-
 ## Installation
 
 From `apps/easyappointments/`:
@@ -41,7 +35,8 @@ From `apps/easyappointments/`:
    sed -i "s|^DB_PWD_INLINE=.*|DB_PWD_INLINE=$(cat .secrets/db_pwd.txt)|" .env
    ```
 
-3. Hand the storage directory to the user Apache runs as:
+3. Hand the storage directory to the user Apache runs as, uid 33. Sessions are
+   written there, and without write access no login can complete:
 
    ```bash
    sudo chown -R 33:33 volumes/storage
@@ -100,11 +95,9 @@ mariadb_databases:
       password: "{credential file /srv/docker/apps/easyappointments/.secrets/db_pwd.txt}"
 ```
 
-:::caution
-Appointments are database rows. Restoring an older database removes bookings made
-since — and the people who made them still expect to be seen. Reconcile against
-the notification mail before resuming.
-:::
+Appointments are database rows, so an older database comes back without the
+bookings made since — and the people who made them still expect to be seen.
+Reconcile against the notification mail before resuming.
 
 Restore order: database, then the application.
 

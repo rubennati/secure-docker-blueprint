@@ -15,12 +15,6 @@ SQLite database.
 
 Needs: [Traefik](/infrastructure/traefik/) running and a domain.
 
-:::caution
-`HOMARR_SECRET_ENCRYPTION_KEY` encrypts the API tokens Homarr stores for the
-services it queries. Restore the data directory against a different key and the
-boards are intact while every integration fails to authenticate.
-:::
-
 ## Installation
 
 From `apps/homarr/`:
@@ -34,7 +28,8 @@ From `apps/homarr/`:
    ```
 
 2. Generate the encryption key and put it into `.env` as
-   `HOMARR_SECRET_ENCRYPTION_KEY`:
+   `HOMARR_SECRET_ENCRYPTION_KEY`. It encrypts the API tokens Homarr stores for
+   the services it queries:
 
    ```bash
    openssl rand -hex 32

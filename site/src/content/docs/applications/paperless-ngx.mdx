@@ -17,12 +17,6 @@ cache, and two converters it hands other formats to.
 Needs: [Traefik](/infrastructure/traefik/) running, a domain, and the OCR
 languages you intend to use. SMTP is optional.
 
-:::caution
-Set `PAPERLESS_OCR_LANGUAGES` before the first document is consumed. Without the
-language pack installed, Tesseract falls back to English silently — the document
-is archived, the text is wrong, and nothing reports an error.
-:::
-
 ## Installation
 
 From `apps/paperless-ngx/`:
@@ -46,6 +40,10 @@ From `apps/paperless-ngx/`:
    Language codes are ISO 639-2, three letters: `deu`, `eng`, `fra`, `spa`, `ita`,
    `ron`. The [Tesseract language
    data](https://github.com/tesseract-ocr/tessdata) lists the rest.
+
+   Set them now, before the first document is consumed. A language pack that is
+   not installed is not an error: Tesseract falls back to English, and the
+   document is archived with the wrong text.
 
 2. Generate the two secrets. `tr -d '\n'` is not optional — a trailing newline is
    part of the value, and authentication fails with a password that looks right:
@@ -229,6 +227,10 @@ in `.env` or the ownership on disk, then recreate the app container.
 **Login is refused with a password that is definitely right.** A secret file has
 a trailing newline. Paperless compares `"password\n"` against `"password"`.
 Regenerate with `tr -d '\n'`.
+
+**A document is archived with wrong or garbled text.** Its language is not in
+`PAPERLESS_OCR_LANGUAGES`, so Tesseract read it as English. Add the language,
+recreate the app container, and re-run OCR on the affected documents.
 
 **The first OCR of a large document takes minutes.** Tesseract loads language
 data on first use; subsequent documents in the same language are fast.
