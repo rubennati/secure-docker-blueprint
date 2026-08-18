@@ -1,0 +1,161 @@
+---
+title: Vikunja
+description: Task management with boards, lists and Gantt views — installed from a locally built image, because the upstream one ships without a shell.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackEvidence from '../../../components/StackEvidence.astro';
+
+Vikunja manages tasks in kanban boards, lists, Gantt and table views. Two
+containers — a single binary serving both API and interface, and PostgreSQL.
+
+<StackEvidence stack="business/vikunja"
+  gap="a restore. The database, the attachment volume and the session key have to come back together, and that has not been performed here." />
+
+Needs: [Traefik](/infrastructure/traefik/) running, a domain, and a build step —
+this stack builds its image locally.
+
+:::note
+The upstream image contains nothing but the binary — no shell, no utilities. This
+stack adds the minimum on top: a shell to read the secret files at start, and a
+tool for the healthcheck. That is why installation includes a build.
+:::
+
+## Installation
+
+From `business/vikunja/`:
+
+<Steps>
+
+1. Copy the environment file and set `APP_TRAEFIK_HOST` and `TZ`:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Generate the secrets. The last two are placeholders that have to exist even
+   when the features are off:
+
+   ```bash
+   mkdir -p .secrets
+   openssl rand -base64 48 | tr -d '\n' > .secrets/jwt_key.txt
+   openssl rand -base64 32 | tr -d '\n' > .secrets/db_pwd.txt
+   printf 'placeholder' > .secrets/oidc_secret.txt
+   printf 'placeholder' > .secrets/smtp_pwd.txt
+   ```
+
+3. Build the image:
+
+   ```bash
+   docker compose build
+   ```
+
+4. Start it:
+
+   ```bash
+   docker compose up -d
+   ```
+
+5. Open `https://<APP_TRAEFIK_HOST>` and register the first account.
+
+</Steps>
+
+## Verify
+
+```bash
+docker compose ps   # two services, healthy
+```
+
+Then create a project, add a task and attach a file. The attachment lives in a
+separate volume from the database, so it is the part a database-only backup would
+miss.
+
+## Going further
+
+### Single sign-on through Authentik
+
+Vikunja can authenticate against [Authentik](/infrastructure/authentik/). Two
+things are easy to miss: the application in Authentik needs at least one group or
+user binding, or the login endpoint answers 403; and the container has to be able
+to resolve the Authentik hostname, which is automatic with public DNS and needs a
+host entry on a server without it.
+
+Replace the placeholder in `.secrets/oidc_secret.txt` when enabling it.
+
+### Why the healthcheck is an HTTP request
+
+Vikunja's built-in `vikunja healthcheck` command starts without the database
+password and therefore always fails. The stack checks the running server over
+HTTP instead.
+
+### Named volumes rather than bind mounts
+
+Data lives in Docker named volumes, not under the stack directory. Their host
+paths are `/var/lib/docker/volumes/vikunja_<name>/_data`.
+
+## Backup
+
+| | |
+|---|---|
+| **Database** | PostgreSQL, container `vikunja-db`, database `vikunja`, user `vikunja` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **State** | `db_data` (database) · `vikunja_files` (task attachments) |
+| **Also needed** | `.secrets/jwt_key.txt` |
+| **Quiescing** | Not needed — the dump is consistent on its own. |
+
+For [borgmatic](/operations/backup/):
+
+```yaml
+postgresql_databases:
+    - name: vikunja
+      container: vikunja-db
+      username: vikunja
+      password: "{credential file /srv/docker/business/vikunja/.secrets/db_pwd.txt}"
+```
+
+`jwt_key.txt` signs the session tokens. Restoring without it logs everyone out —
+recoverable, but it happens without explanation.
+
+Restore order: database, then the application.
+
+## Updates
+
+<Steps>
+
+1. Read the [release notes](https://kolaente.dev/vikunja/vikunja/releases).
+
+2. Back up the database, the attachment volume and the key together.
+
+3. Raise `APP_TAG` in `.env`, then rebuild — the local layer has to be applied to
+   the new upstream image:
+
+   ```bash
+   docker compose build --pull
+   docker compose up -d
+   ```
+
+4. Open a project with an attachment.
+
+</Steps>
+
+## Troubleshooting
+
+**Login through Authentik returns 403.** The application in Authentik has no
+group or user binding.
+
+**The container cannot reach Authentik.** It cannot resolve the hostname. Add it
+to the Docker host's `/etc/hosts` where public DNS does not cover it.
+
+**`docker compose up` fails with a missing image.** The build step was skipped.
+This stack does not pull a ready-made image.
+
+**Everyone is logged out after a restore.** `jwt_key.txt` does not match.
+
+## Repository files
+
+- [`business/vikunja/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/business/vikunja/README.md) — setup, the custom build, known issues
+- [`business/vikunja/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/business/vikunja/UPSTREAM.md) — source and upgrade checklist
+
+## Official sources
+
+- [Vikunja documentation](https://vikunja.io/docs/)

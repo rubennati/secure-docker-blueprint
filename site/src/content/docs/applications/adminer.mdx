@@ -1,0 +1,137 @@
+---
+title: Adminer
+description: A database interface for the stacks you already run — installed with no database of its own, and reached over the VPN only.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackEvidence from '../../../components/StackEvidence.astro';
+
+Adminer is a browser interface for a database — browsing tables, running queries,
+editing rows. One container, and no database of its own: it connects to the
+databases other stacks already run.
+
+<StackEvidence stack="apps/adminer"
+  gap="a restore. There is nothing here to restore — no database, no volumes, no stored credentials." />
+
+Needs: [Traefik](/infrastructure/traefik/) running, a domain, and a database
+somewhere to point it at.
+
+:::danger
+Adminer gives whoever reaches it full database access, including `DROP TABLE`.
+The stack ships VPN-only with a hard rate limit for that reason, and it must not
+be made public without something else in front of it.
+:::
+
+## Installation
+
+From `apps/adminer/`:
+
+<Steps>
+
+1. Copy the environment file and set `APP_TRAEFIK_HOST` and `TZ`:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Start it:
+
+   ```bash
+   docker compose up -d
+   ```
+
+3. Open `https://<APP_TRAEFIK_HOST>`. There is no setup and no account to create
+   — you type database credentials at each login, and nothing is stored.
+
+</Steps>
+
+## Verify
+
+```bash
+docker compose ps   # one service, healthy
+```
+
+The login form appearing is all the stack itself can demonstrate. Whether it can
+*reach* a database is the next section.
+
+## Reaching a database
+
+Blueprint stacks keep their databases on internal networks, so Adminer cannot see
+them by default. That is deliberate — the isolation is the point — and connecting
+means joining a network on purpose.
+
+### One database, for as long as you need it
+
+```bash
+docker network connect wordpress-internal adminer-app
+```
+
+Then in the login form:
+
+| Field | Value |
+|---|---|
+| Server | `wordpress-db` |
+| Username | `wordpress_user` |
+| Password | from `apps/wordpress/.secrets/db_pwd.txt` |
+| Database | `wordpress` |
+
+Disconnect when you are done:
+
+```bash
+docker network disconnect wordpress-internal adminer-app
+```
+
+### The same few databases, permanently
+
+Add the networks to `docker-compose.yml` and declare each as `external: true`.
+Every target stack has to be running before Adminer starts.
+
+### A database on another machine
+
+Enter the hostname or address in the login form directly. What it takes to reach
+it depends on your network rather than on this stack.
+
+## Where it earns its place
+
+Adminer has nothing to back up, and it is useful in the other direction: after
+restoring a database, bring Adminer up, confirm the tables hold the rows you
+expect, and take it down again. That is a check on the restore without installing
+a database client on the host.
+
+## Updates
+
+<Steps>
+
+1. Read the [release notes](https://github.com/vrana/adminer/releases). The step
+   from 4.x to 5.x is a major change.
+
+2. Raise `APP_TAG` in `.env`, then:
+
+   ```bash
+   docker compose pull && docker compose up -d
+   ```
+
+3. Log in to one database. There is no state to migrate, so a version that works
+   works immediately.
+
+</Steps>
+
+## Troubleshooting
+
+**The login form rejects a server name that exists.** Adminer is not on that
+stack's network. Connect it as shown above.
+
+**Sessions end after about twenty minutes idle.** Upstream behaviour for an
+administration tool. Long query sessions need re-authentication.
+
+**Queries are gone after logging out.** Adminer keeps no history between
+sessions. Keep anything you want to reuse in a local file.
+
+## Repository files
+
+- [`apps/adminer/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/adminer/README.md) — setup, the three connection options, security model
+- [`apps/adminer/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/adminer/UPSTREAM.md) — source and upgrade checklist
+
+## Official sources
+
+- [Adminer](https://www.adminer.org/)

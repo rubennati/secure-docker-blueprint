@@ -1,0 +1,144 @@
+---
+title: NocoDB
+description: A spreadsheet interface and an API over a database — installed with signup closed and the token-signing secret kept off the host.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackEvidence from '../../../components/StackEvidence.astro';
+
+NocoDB puts a spreadsheet-like interface and a REST API over a database: tables,
+views, forms. One container with its own SQLite store by default.
+
+<StackEvidence stack="apps/nocodb"
+  gap="a restore. The data directory and the signing secret have to come back together, and that has not been performed here." />
+
+Needs: [Traefik](/infrastructure/traefik/) running and a domain.
+
+:::danger
+The first account to sign up becomes super-admin. `NC_INVITE_ONLY_SIGNUP` is
+`true` in the shipped configuration, which closes it afterwards — but claim the
+first account immediately.
+:::
+
+## Installation
+
+From `apps/nocodb/`:
+
+<Steps>
+
+1. Copy the environment file and set `APP_TRAEFIK_HOST` and `TZ`:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Generate the secret that signs every API token NocoDB issues:
+
+   ```bash
+   mkdir -p .secrets
+   openssl rand -hex 64 > .secrets/nc_jwt_secret.txt
+   ```
+
+   Copy it off the host now.
+
+3. Create the data directory:
+
+   ```bash
+   mkdir -p volumes/data
+   ```
+
+4. Start it and wait for the first-boot initialisation, around thirty seconds:
+
+   ```bash
+   docker compose up -d
+   docker compose logs app --follow
+   ```
+
+   Wait for the dashboard line.
+
+5. Open `https://<APP_TRAEFIK_HOST>` and create the super-admin account.
+
+</Steps>
+
+## Verify
+
+```bash
+docker compose ps   # one service, healthy
+```
+
+Then create a table, add a row, and create an API token under **Details → API
+Tokens**. Calling the API with that token is what confirms the signing secret is
+in place.
+
+## Going further
+
+### Pairing it with n8n
+
+A table plus an API token is a data source for automation. In
+[n8n](/applications/n8n/), point an HTTP request at the internal Docker hostname
+if the two share a network, or at the Traefik hostname otherwise.
+
+### Using an external database
+
+NocoDB can sit on top of a database you already run rather than its own SQLite
+store. If you point it there, that database holds the data and `volumes/data`
+becomes configuration only — which changes what the backup has to cover.
+
+## Backup
+
+| | |
+|---|---|
+| **Database** | SQLite inside `volumes/data` by default — no server, no dump hook |
+| **State** | `volumes/data` — bases, views, uploaded attachments |
+| **Also needed** | `.secrets/nc_jwt_secret.txt` |
+| **Quiescing** | Required. Stop the container or snapshot the filesystem rather than copying a live SQLite file. |
+
+For [borgmatic](/operations/backup/) the default configuration is
+`source_directories` only, with quiescing.
+
+The signing secret is what makes issued tokens valid. Restoring without it signs
+everyone out — recoverable, but it looks like a failed restore.
+
+**If this instance points at an external database**, back that database up with
+the matching hook. `volumes/data` then holds configuration rather than the data.
+
+## Updates
+
+<Steps>
+
+1. Read the [release notes](https://github.com/nocodb/nocodb/releases). The
+   version scheme moved from `0.x` to calendar versions, so the numbers no longer
+   compare the way they used to.
+
+2. Back up `volumes/data` with the container stopped, and the secret with it.
+
+3. Raise `APP_TAG` in `.env`, then:
+
+   ```bash
+   docker compose pull && docker compose up -d
+   docker compose logs app --follow
+   ```
+
+4. Open a base and call the API with an existing token. A migration that touched
+   the token tables shows up on the second, not the first.
+
+</Steps>
+
+## Troubleshooting
+
+**Everyone is signed out after a restore.** The signing secret does not match.
+Put the original back.
+
+**Someone else is super-admin.** The first signup claimed it before you did.
+
+**API tokens stop working after an update.** Check the release notes for the
+versions crossed — the token format has changed across major steps.
+
+## Repository files
+
+- [`apps/nocodb/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/nocodb/README.md) — setup, the n8n pattern, known issues
+- [`apps/nocodb/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/nocodb/UPSTREAM.md) — source and upgrade checklist
+
+## Official sources
+
+- [NocoDB documentation](https://docs.nocodb.com/)

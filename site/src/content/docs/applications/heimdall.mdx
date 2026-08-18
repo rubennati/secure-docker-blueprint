@@ -1,0 +1,127 @@
+---
+title: Heimdall
+description: A launcher page for the services you run — installed with the config directory owned correctly, because that is where all of it lives.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackEvidence from '../../../components/StackEvidence.astro';
+
+Heimdall is a start page for your services: tiles you arrange yourself, with
+optional per-service status. One container, and a SQLite database inside its
+configuration directory.
+
+<StackEvidence stack="apps/heimdall"
+  gap="a restore. The configuration directory holds the whole dashboard and has not been restored from a backup here." />
+
+Needs: [Traefik](/infrastructure/traefik/) running and a domain.
+
+## Installation
+
+From `apps/heimdall/`:
+
+<Steps>
+
+1. Copy the environment file and set `APP_TRAEFIK_HOST`, `TZ` and
+   `PUID`/`PGID` — the last two have to match the host user that owns `config/`:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Create the configuration directory and hand it to that user:
+
+   ```bash
+   mkdir -p config
+   sudo chown -R 1000:1000 config
+   ```
+
+3. Start it. The first boot takes around thirty seconds while the database is
+   created:
+
+   ```bash
+   docker compose up -d
+   docker compose logs app --follow
+   ```
+
+4. Open `https://<APP_TRAEFIK_HOST>`. There is no login at first — everything
+   else, from tiles to accounts, is configured in the interface.
+
+</Steps>
+
+## Verify
+
+```bash
+docker compose ps                       # one service, healthy
+curl -fsSI https://<APP_TRAEFIK_HOST>/  # 200
+```
+
+Then add one tile and reload. A dashboard that keeps the tile confirms the
+configuration directory is writable, which the healthcheck does not cover.
+
+## Going further
+
+### Status widgets and internal addresses
+
+`ALLOW_INTERNAL_REQUESTS` is `false`, so the status widgets cannot probe private
+addresses. Setting it to `true` lets a tile show whether the service behind it is
+up — and lets the container reach anything on your internal network, which is the
+trade in the other direction.
+
+### Accounts
+
+Until you create a user, the dashboard is a single shared view. Accounts are added
+in the interface under **Users**, not through the environment file.
+
+## Backup
+
+| | |
+|---|---|
+| **Database** | SQLite inside `config/` — no server, no dump hook |
+| **State** | `config/` — tiles, uploaded icons, users |
+| **Quiescing** | Required. Copying a live SQLite file can capture a torn state — stop the container or snapshot the filesystem. |
+
+For [borgmatic](/operations/backup/) this stack is `source_directories` only,
+with quiescing. There is no database hook.
+
+Small enough to skip, and entirely hand-made. Nothing regenerates a curated
+dashboard, so what a loss costs is the hour it took to build.
+
+## Updates
+
+<Steps>
+
+1. Read the [release notes](https://github.com/linuxserver/docker-heimdall/releases).
+
+2. Back up `config/` with the container stopped.
+
+3. Raise `APP_TAG` in `.env`, then:
+
+   ```bash
+   docker compose pull && docker compose up -d
+   ```
+
+4. Load the dashboard. A database migration surfaces there rather than in the
+   log.
+
+</Steps>
+
+## Troubleshooting
+
+**Icon uploads fail with a permission error.** `config/` is not owned by the
+`PUID`/`PGID` from `.env`. Re-run the `chown` from step 2.
+
+**Adding `user:` to the service breaks startup.** The image starts as root to set
+up its process supervisor and drops privileges itself. The blueprint leaves the
+directive off for that reason.
+
+**Status widgets show nothing for internal services.** `ALLOW_INTERNAL_REQUESTS`
+is `false`. See above before changing it.
+
+## Repository files
+
+- [`apps/heimdall/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/heimdall/README.md) — setup, security model, known issues
+- [`apps/heimdall/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/heimdall/UPSTREAM.md) — source and upgrade checklist
+
+## Official sources
+
+- [Heimdall](https://heimdall.site/)

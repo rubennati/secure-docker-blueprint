@@ -1,0 +1,149 @@
+---
+title: OpenProject
+description: Project management with Gantt charts and work packages — installed as six services where a one-shot seeder runs first.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackEvidence from '../../../components/StackEvidence.astro';
+
+OpenProject covers work packages, Gantt charts, boards, time tracking and wikis.
+Six containers — the application server, a background worker, a scheduler, a
+one-shot seeder, memcached and PostgreSQL.
+
+<StackEvidence stack="business/openproject"
+  gap="a restore. The database and the attachment volume have to come back from the same point in time, and that has not been performed here." />
+
+Needs: [Traefik](/infrastructure/traefik/) running and a domain.
+
+:::note
+The Community Edition has local accounts only — no OIDC and no single sign-on. If
+you run [Authentik](/infrastructure/authentik/), OpenProject cannot use it.
+:::
+
+## Installation
+
+From `business/openproject/`:
+
+<Steps>
+
+1. Copy the environment file and set `APP_TRAEFIK_HOST`, `TZ` and
+   `OPENPROJECT_DEFAULT_LANGUAGE`:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Generate the secrets:
+
+   ```bash
+   mkdir -p .secrets
+   openssl rand -base64 64 | tr -d '\n' > .secrets/secret_key_base.txt
+   openssl rand -base64 32 | tr -d '\n' > .secrets/db_pwd.txt
+   ```
+
+3. Start it. The seeder runs first, applies the migrations and seeds initial data,
+   then exits — the other services wait for it:
+
+   ```bash
+   docker compose up -d
+   docker compose logs seeder --follow
+   ```
+
+   Around two minutes on first start.
+
+4. Open `https://<APP_TRAEFIK_HOST>` and log in with the default administrator
+   account, then change the password.
+
+</Steps>
+
+## Verify
+
+```bash
+docker compose ps   # the seeder has exited; five services running
+```
+
+A seeder still running or restarting means the migrations did not complete, and
+the application will not work regardless of what the web container reports.
+
+Then create a project and a work package with an attachment. The attachment goes
+to a separate volume from the database.
+
+## Going further
+
+### Named volumes rather than bind mounts
+
+This stack stores data in Docker named volumes, not in `volumes/` under the stack
+directory. Their host paths are
+`/var/lib/docker/volumes/openproject_<name>/_data`, which is what a backup has to
+name.
+
+### Why `tls-basic`
+
+The stack ships `APP_TRAEFIK_TLS_OPTION=tls-basic`. OpenProject is reached by
+whatever browsers a team already has, and the stricter profile turns away older
+clients.
+
+## Backup
+
+| | |
+|---|---|
+| **Database** | PostgreSQL, container `openproject-db`, database `openproject`, user `openproject` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **State** | `db_data` (database) · `op_assets` (work-package attachments) |
+| **Quiescing** | Not needed for the dump. Attachments are written during use and each file is independent. |
+
+For [borgmatic](/operations/backup/):
+
+```yaml
+postgresql_databases:
+    - name: openproject
+      container: openproject-db
+      username: openproject
+      password: "{credential file /srv/docker/business/openproject/.secrets/db_pwd.txt}"
+```
+
+The attachment volume belongs in `source_directories` by its host path. A
+database-only restore gives work packages whose attachments are gone.
+
+Restore order: database, then the application.
+
+## Updates
+
+<Steps>
+
+1. Read the [release notes](https://www.openproject.org/docs/release-notes/).
+   OpenProject ships migrations with most releases.
+
+2. Back up the database and the attachment volume together.
+
+3. Raise `APP_TAG` in `.env`, then:
+
+   ```bash
+   docker compose pull && docker compose up -d
+   docker compose logs seeder --follow
+   ```
+
+   The seeder runs the migrations again on the new version.
+
+4. Open a project once the seeder has exited.
+
+</Steps>
+
+## Troubleshooting
+
+**The seeder keeps restarting.** Migrations are failing. Read
+`docker compose logs seeder` — the web container is not the place to look.
+
+**Attachments are missing after a restore.** The `op_assets` volume was not part
+of the backup. Its host path is under `/var/lib/docker/volumes/`.
+
+**Single sign-on cannot be configured.** The Community Edition does not have it.
+
+## Repository files
+
+- [`business/openproject/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/business/openproject/README.md) — setup, the service split, known issues
+- [`business/openproject/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/business/openproject/UPSTREAM.md) — source and upgrade checklist
+
+## Official sources
+
+- [OpenProject documentation](https://www.openproject.org/docs/)
