@@ -6,7 +6,8 @@
     "restore_docs": "missing",
     "state": "baseline-aligned",
     "verified": "2026-05-02",
-    "verified_anchored": true
+    "verified_anchored": true,
+    "verified_version": "v4.8.1-standalone"
   },
   "apps/bookstack": {
     "backup_docs": "documented",
@@ -15,7 +16,8 @@
     "restore_docs": "missing",
     "state": "baseline-aligned",
     "verified": "2026-05-03",
-    "verified_anchored": true
+    "verified_anchored": true,
+    "verified_version": "v25.02"
   },
   "apps/caldiy": {
     "backup_docs": "documented",
@@ -24,7 +26,8 @@
     "restore_docs": "missing",
     "state": "baseline-aligned",
     "verified": "2026-07-26",
-    "verified_anchored": true
+    "verified_anchored": true,
+    "verified_version": "v6.2.0-3"
   },
   "apps/dashy": {
     "backup_docs": "documented",
@@ -33,7 +36,8 @@
     "restore_docs": "missing",
     "state": "baseline-aligned",
     "verified": "2026-05-02",
-    "verified_anchored": true
+    "verified_anchored": true,
+    "verified_version": "v4.0.4"
   },
   "apps/easyappointments": {
     "backup_docs": "documented",
@@ -42,7 +46,8 @@
     "restore_docs": "missing",
     "state": "baseline-aligned",
     "verified": "2026-05-03",
-    "verified_anchored": true
+    "verified_anchored": true,
+    "verified_version": "1.5.x"
   },
   "apps/ghost": {
     "backup_docs": "documented",
@@ -51,7 +56,8 @@
     "restore_docs": "missing",
     "state": "baseline-aligned",
     "verified": "2026-07-26",
-    "verified_anchored": true
+    "verified_anchored": true,
+    "verified_version": "v6.54.0-alpine"
   },
   "apps/heimdall": {
     "backup_docs": "documented",
@@ -60,7 +66,8 @@
     "restore_docs": "missing",
     "state": "baseline-aligned",
     "verified": "2026-05-02",
-    "verified_anchored": true
+    "verified_anchored": true,
+    "verified_version": "v2.6.3"
   },
   "apps/homarr": {
     "backup_docs": "documented",
@@ -69,7 +76,8 @@
     "restore_docs": "missing",
     "state": "baseline-aligned",
     "verified": "2026-05-02",
-    "verified_anchored": true
+    "verified_anchored": true,
+    "verified_version": "v1.60.0"
   },
   "apps/homepage": {
     "backup_docs": "documented",
@@ -78,7 +86,8 @@
     "restore_docs": "missing",
     "state": "baseline-aligned",
     "verified": "2026-05-03",
-    "verified_anchored": true
+    "verified_anchored": true,
+    "verified_version": "v0.10.9"
   },
   "apps/immich": {
     "backup_docs": "documented",
@@ -87,7 +96,8 @@
     "restore_docs": "documented",
     "state": "scaffolded",
     "verified": "2026-04-17",
-    "verified_anchored": false
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "apps/it-tools": {
     "backup_docs": "documented",
@@ -96,7 +106,8 @@
     "restore_docs": "missing",
     "state": "baseline-aligned",
     "verified": "2026-05-02",
-    "verified_anchored": true
+    "verified_anchored": true,
+    "verified_version": "v2024.10.22-7ca5933"
   },
   "apps/librephotos": {
     "backup_docs": "documented",
@@ -105,7 +116,8 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-04-17",
-    "verified_anchored": false
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "apps/lycheeorg": {
     "backup_docs": "documented",
@@ -114,7 +126,8 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-04-17",
-    "verified_anchored": false
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "apps/monicahq": {
     "backup_docs": "documented",
@@ -123,7 +136,8 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-04-17",
-    "verified_anchored": false
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "apps/n8n": {
     "backup_docs": "documented",
@@ -132,7 +146,8 @@
     "restore_docs": "missing",
     "state": "baseline-aligned",
     "verified": "2026-05-02",
-    "verified_anchored": true
+    "verified_anchored": true,
+    "verified_version": "v2.19.2"
   },
   "apps/nextcloud": {
     "backup_docs": "documented",
@@ -141,7 +156,8 @@
     "restore_docs": "documented",
     "state": "ops-proven",
     "verified": "2026-07-29",
-    "verified_anchored": true
+    "verified_anchored": true,
+    "verified_version": "34.0.2-fpm-alpine"
   },
   "apps/nocodb": {
     "backup_docs": "documented",
@@ -150,7 +166,8 @@
     "restore_docs": "missing",
     "state": "baseline-aligned",
     "verified": "2026-05-02",
-    "verified_anchored": true
+    "verified_anchored": true,
+    "verified_version": "v0.301.5"
   },
   "apps/opnform": {
     "backup_docs": "documented",
@@ -159,7 +176,8 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-04-17",
-    "verified_anchored": false
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "apps/paperless-ngx": {
     "backup_docs": "documented",
@@ -168,7 +186,8 @@
     "restore_docs": "missing",
     "state": "baseline-aligned",
     "verified": "2026-05-03",
-    "verified_anchored": true
+    "verified_anchored": true,
+    "verified_version": "v2.20.13"
   },
   "apps/photoprism": {
     "backup_docs": "documented",
@@ -177,7 +196,8 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-04-17",
-    "verified_anchored": false
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "apps/photoview": {
     "backup_docs": "documented",
@@ -186,7 +206,8 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-04-17",
-    "verified_anchored": false
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "apps/seafile": {
     "backup_docs": "documented",
@@ -195,7 +216,8 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-04-16",
-    "verified_anchored": false
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "apps/seafile-pro": {
     "backup_docs": "documented",
@@ -204,7 +226,8 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-04-13",
-    "verified_anchored": false
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "apps/unifi": {
     "backup_docs": "documented",
@@ -213,7 +236,8 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-04-17",
-    "verified_anchored": false
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "apps/vaultwarden": {
     "backup_docs": "documented",
@@ -222,7 +246,8 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-06-14",
-    "verified_anchored": false
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "apps/wordpress": {
     "backup_docs": "documented",
@@ -231,7 +256,8 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-04-15",
-    "verified_anchored": false
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "backup/borgmatic": {
     "backup_docs": "n/a",
@@ -240,7 +266,8 @@
     "restore_docs": "documented",
     "state": "baseline-aligned",
     "verified": "2026-07-29",
-    "verified_anchored": true
+    "verified_anchored": true,
+    "verified_version": "2.1.6"
   },
   "backup/urbackup": {
     "backup_docs": "documented",
@@ -249,7 +276,8 @@
     "restore_docs": "documented",
     "state": "scaffolded",
     "verified": "—",
-    "verified_anchored": false
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "business/documenso": {
     "backup_docs": "documented",
@@ -258,7 +286,8 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "—",
-    "verified_anchored": false
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "business/dolibarr": {
     "backup_docs": "documented",
@@ -267,7 +296,8 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-04-17",
-    "verified_anchored": false
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "business/invoiceninja": {
     "backup_docs": "documented",
@@ -276,7 +306,8 @@
     "restore_docs": "missing",
     "state": "baseline-aligned",
     "verified": "2026-07-29",
-    "verified_anchored": true
+    "verified_anchored": true,
+    "verified_version": "5.13.26"
   },
   "business/kimai": {
     "backup_docs": "documented",
@@ -285,7 +316,8 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-05-03",
-    "verified_anchored": false
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "business/listmonk": {
     "backup_docs": "documented",
@@ -294,7 +326,8 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-05-03",
-    "verified_anchored": false
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "business/matomo": {
     "backup_docs": "documented",
@@ -303,7 +336,8 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-04-17",
-    "verified_anchored": false
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "business/openproject": {
     "backup_docs": "documented",
@@ -312,7 +346,8 @@
     "restore_docs": "missing",
     "state": "baseline-aligned",
     "verified": "2026-05-06",
-    "verified_anchored": true
+    "verified_anchored": true,
+    "verified_version": "v17.3.1"
   },
   "business/opensign": {
     "backup_docs": "documented",
@@ -321,7 +356,8 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-05-11",
-    "verified_anchored": false
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "business/vikunja": {
     "backup_docs": "documented",
@@ -330,7 +366,8 @@
     "restore_docs": "missing",
     "state": "baseline-aligned",
     "verified": "2026-05-06",
-    "verified_anchored": true
+    "verified_anchored": true,
+    "verified_version": "v2.3.0"
   },
   "business/zammad": {
     "backup_docs": "documented",
@@ -339,7 +376,8 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-08-16",
-    "verified_anchored": false
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "core/acme-certs": {
     "backup_docs": "documented",
@@ -348,7 +386,8 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-04-14",
-    "verified_anchored": false
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "core/authentik": {
     "backup_docs": "documented",
@@ -357,7 +396,8 @@
     "restore_docs": "missing",
     "state": "baseline-aligned",
     "verified": "2026-07-26",
-    "verified_anchored": true
+    "verified_anchored": true,
+    "verified_version": "v2026.5.6"
   },
   "core/collabora": {
     "backup_docs": "documented",
@@ -366,7 +406,8 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "—",
-    "verified_anchored": false
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "core/crowdsec": {
     "backup_docs": "documented",
@@ -375,7 +416,8 @@
     "restore_docs": "missing",
     "state": "baseline-aligned",
     "verified": "2026-07-29",
-    "verified_anchored": true
+    "verified_anchored": true,
+    "verified_version": "v1.7.8"
   },
   "core/dnsmasq": {
     "backup_docs": "documented",
@@ -384,7 +426,8 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-04-14",
-    "verified_anchored": false
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "core/dockhand": {
     "backup_docs": "documented",
@@ -393,7 +436,8 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-04-16",
-    "verified_anchored": false
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "core/euro-office": {
     "backup_docs": "documented",
@@ -402,7 +446,8 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "—",
-    "verified_anchored": false
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "core/hawser": {
     "backup_docs": "documented",
@@ -411,7 +456,8 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-04-14",
-    "verified_anchored": false
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "core/infisical": {
     "backup_docs": "documented",
@@ -420,7 +466,8 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "—",
-    "verified_anchored": false
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "core/onlyoffice": {
     "backup_docs": "documented",
@@ -429,7 +476,8 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-06-14",
-    "verified_anchored": false
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "core/portainer": {
     "backup_docs": "documented",
@@ -438,7 +486,8 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-04-16",
-    "verified_anchored": false
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "core/portainer-agent": {
     "backup_docs": "documented",
@@ -447,7 +496,8 @@
     "restore_docs": "missing",
     "state": "baseline-aligned",
     "verified": "2026-05-05",
-    "verified_anchored": true
+    "verified_anchored": true,
+    "verified_version": "v2.39.1"
   },
   "core/traefik": {
     "backup_docs": "documented",
@@ -456,7 +506,8 @@
     "restore_docs": "missing",
     "state": "baseline-aligned",
     "verified": "2026-07-29",
-    "verified_anchored": true
+    "verified_anchored": true,
+    "verified_version": "v3.6"
   },
   "core/whoami": {
     "backup_docs": "documented",
@@ -465,7 +516,8 @@
     "restore_docs": "missing",
     "state": "baseline-aligned",
     "verified": "2026-07-29",
-    "verified_anchored": true
+    "verified_anchored": true,
+    "verified_version": "v1.11.0"
   },
   "monitoring/beszel": {
     "backup_docs": "documented",
@@ -474,7 +526,8 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-05-03",
-    "verified_anchored": false
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "monitoring/beszel-agent": {
     "backup_docs": "documented",
@@ -483,7 +536,8 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-05-03",
-    "verified_anchored": false
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "monitoring/changedetection": {
     "backup_docs": "documented",
@@ -492,7 +546,8 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-05-03",
-    "verified_anchored": false
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "monitoring/gatus": {
     "backup_docs": "documented",
@@ -501,7 +556,8 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-05-03",
-    "verified_anchored": false
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "monitoring/healthchecks": {
     "backup_docs": "documented",
@@ -510,7 +566,8 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-04-17",
-    "verified_anchored": false
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "monitoring/ntfy": {
     "backup_docs": "documented",
@@ -519,7 +576,8 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "—",
-    "verified_anchored": false
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "monitoring/uptime-kuma": {
     "backup_docs": "documented",
@@ -528,6 +586,7 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-08-18",
-    "verified_anchored": false
+    "verified_anchored": false,
+    "verified_version": ""
   }
 }

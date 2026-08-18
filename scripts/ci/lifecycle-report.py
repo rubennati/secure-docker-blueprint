@@ -208,23 +208,28 @@ def shorten(value: str) -> str:
     return re.sub(r"(sha256:[0-9a-f]{12})[0-9a-f]+", r"\1…", value)
 
 
-def last_verified(stack: Path) -> tuple[str, bool]:
-    """(date-or-dash, is_current_format). Legacy `Last checked:` is not current."""
+def last_verified(stack: Path) -> tuple[str, bool, str]:
+    """(date-or-dash, is_current_format, version-or-empty).
+
+    The version is what the date refers to. A pin that moved afterwards leaves
+    the two describing different things, so both are carried rather than the
+    date alone. Legacy `Last checked:` is not current format.
+    """
     text = plain(read(stack / "UPSTREAM.md"))
     if not text:
-        return "—", False
+        return "—", False, ""
     m = ANCHORED.search(text)
     if m:
-        return m.group(1), True
+        return m.group(1), True, m.group(2).strip()
     # A date without the version in parentheses names no anchor, so it does not
     # establish `verified` — same treatment as the legacy field.
     m = VERIFIED.search(text)
     if m:
-        return f"{m.group(1)} ⚠️", False
+        return f"{m.group(1)} ⚠️", False, ""
     m = CHECKED.search(text)
     if m:
-        return f"{m.group(1)} ⚠️", False
-    return "—", False
+        return f"{m.group(1)} ⚠️", False, ""
+    return "—", False, ""
 
 
 # Stacks for which a `## Backup` section would be circular: the tool that performs
@@ -330,7 +335,7 @@ def collect() -> tuple[list[dict], list[dict]]:
                               "this report reads. Leave a pointer there instead",
                 })
 
-            verified, current_format = last_verified(stack)
+            verified, current_format, verified_version = last_verified(stack)
 
             state = "scaffolded"
             if current_format:
@@ -361,6 +366,7 @@ def collect() -> tuple[list[dict], list[dict]]:
             rows.append({
                 "stack": key, "category": category, "state": state,
                 "pinned": pinned_version(stack), "verified": verified,
+                "verified_version": verified_version,
                 "backup": backup_docs, "restore": restore_docs,
                 "local": "✅" if (stack / "docker-compose.local.yml").exists() else "—",
             })
@@ -386,6 +392,9 @@ def render_json(rows: list[dict]) -> str:
             # date alone and the fact separately.
             "verified": r["verified"].replace(" ⚠️", ""),
             "verified_anchored": "⚠️" not in r["verified"] and r["verified"] != "—",
+            # What the date refers to. Where the pin has moved on since, the
+            # site must not present the current pin as the verified one.
+            "verified_version": r["verified_version"],
             "backup_docs": r["backup"],
             "restore_docs": r["restore"],
             "local_stack": r["local"],

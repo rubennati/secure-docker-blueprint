@@ -36,6 +36,13 @@ if (!entry) {
 const version = String(entry.pinned).split('=').pop();
 const hostInstalled = version === 'host-installed';
 
+// The date refers to the version that was exercised, which is not always the one
+// pinned today — a later bump moves the pin without re-running anything. Naming
+// the pin next to the date would credit it with a check it never had.
+const verifiedVersion = entry.verified_version || '';
+const pinMoved =
+	Boolean(verifiedVersion) && !hostInstalled && verifiedVersion !== version;
+
 const checked =
 	entry.verified_anchored && entry.verified !== '—'
 		? new Date(entry.verified).toLocaleDateString('en-GB', {
@@ -68,8 +75,19 @@ if (!checked && !gap) {
 		checked ? (
 			<p class="evidence__line">
 				<strong>Verified {checked}</strong>
-				{!hostInstalled && <> against <code>{version}</code></>}
+				{!hostInstalled && (
+					<>
+						{' '}
+						against <code>{verifiedVersion || version}</code>
+					</>
+				)}
 				{restored && <> · data restored from a backup on a live host</>}
+				{pinMoved && (
+					<>
+						{' '}
+						· pinned at <code>{version}</code> since, which has not been run here
+					</>
+				)}
 			</p>
 		) : (
 			<p class="evidence__line">
