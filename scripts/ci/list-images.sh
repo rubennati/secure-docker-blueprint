@@ -1,34 +1,17 @@
 #!/usr/bin/env bash
 # list-images.sh — extract resolved image:tag references from compose files.
 #
-# For each compose file, sources the sibling .env.example then uses envsubst to
-# resolve ${VAR} references in image: lines.
-#
 # Output: one image:tag per line, deduplicated, sorted.
 # Usage:  scripts/ci/list-images.sh [compose-file ...]
-#         With no arguments it takes every compose file the checkers see, via
-#         `check-structure.py --list`.
+#         With no arguments it takes every compose file
+#         `scripts/ci/check-structure.py --list` reports.
 #
-# The default used to be eleven hand-listed paths, which resolved to 28 of the
-# tree's 97 image references — no database image, no monitoring image, and
-# nothing from apps/seafile-pro. A stack added afterwards stayed unscanned until
-# someone remembered to edit this file. Discovery now comes from the same place
-# check-baseline.py and the two shell jobs in ci.yml use, so a new stack is
-# covered the moment it exists.
+# Resolution order per file: source the sibling .env.example, then envsubst for
+# ${VAR}, then sed for ${VAR:-default}. That sed takes the inline default even
+# when .env.example sets the variable.
 #
-# envsubst does not understand ${VAR:-default}; the sed after it substitutes the
-# default. Without that, two apps/seafile-pro images were dropped without a word —
-# the exact failure this rewrite exists to remove.
-#
-# That sed takes the inline default even when .env.example sets the variable,
-# which is the opposite of what compose does. It holds today because neither of
-# the two references using that form has the variable set — checked, not assumed.
-# Set one and this script would scan the wrong tag silently. Resolving it properly
-# means reading the variable per occurrence rather than a blanket substitution.
-#
-# Limitation: only images whose tags resolve from the sibling .env.example or from
-# an inline default are emitted. A compose-level override or a build: block may be
-# skipped.
+# Not emitted: locally built images (*-local:*), and images whose tag resolves
+# from neither the sibling .env.example nor an inline default.
 
 set -uo pipefail
 

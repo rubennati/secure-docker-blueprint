@@ -67,7 +67,7 @@ jobs:
   # ─────────────────────────────────────────────────────────────────────────
   # 2. IMAGE CVE SCAN
   # ─────────────────────────────────────────────────────────────────────────
-  # Scans every image list-images.sh resolves — 96 of the tree's 97 references.
+  # Scans every image list-images.sh resolves.
   # Results appear in CI logs. Non-blocking (exit-code 0) while baseline is reviewed.
   image-scan:
     name: Image CVE scan
@@ -105,12 +105,10 @@ jobs:
         # Findings are visible in the job log. To make this blocking once the
         # baseline is reviewed, change --exit-code to 1.
         run: |
-          # `|| true` keeps one unreachable image from ending the run, but on its
-          # own it also reports a pull that never happened as a clean scan. At 28
-          # images that was survivable; at 96 it is not — Docker Hub rate-limits
-          # anonymous pulls, and the apps/seafile-pro images need a licence. So
-          # count the failures and print them. The job still does not fail: what
-          # changes is that a scan of nothing no longer looks like a scan.
+          # An image that cannot be pulled does not end the run, but it is
+          # counted and named, so an unscanned image is not read as a clean one.
+          # Causes: Docker Hub rate limits on anonymous pulls, and the
+          # apps/seafile-pro images, which need a licence.
           failed=0
           total=0
           while IFS= read -r image; do
