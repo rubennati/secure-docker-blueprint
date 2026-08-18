@@ -183,7 +183,10 @@ def check_env(app: Path, findings: list[dict]) -> None:
 
         # -- real domains (WARN) ----------------------------------------------
         if key.endswith("_HOST") and value and "TRAEFIK" in key:
-            if not value.endswith("example.com") and "${" not in value:
+            # endswith alone passes mycompanyexample.com and notexample.com —
+            # the label boundary is what makes it the documentation domain.
+            reserved = value == "example.com" or value.endswith(".example.com")
+            if not reserved and "${" not in value:
                 findings.append({"level": "WARN", "rule": "real-domain",
                                  "detail": f"{key}={value} — use *.example.com in a committed file"})
 

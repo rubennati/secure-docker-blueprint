@@ -60,7 +60,7 @@ import json
 import re
 import subprocess
 import sys
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 
 CATEGORIES = ["core", "apps", "business", "monitoring", "backup"]
@@ -455,8 +455,7 @@ def render(rows: list[dict]) -> str:
         "- **Local** — whether the stack carries "
         "`docker-compose.local.yml`, which runs it on one machine without a "
         "proxy, DNS or certificate. A `—` marks a stack that shows nothing run "
-        "alone. See [`compose-structure.md`]"
-        "(docs/standards/compose-structure.md#local-test-stack).",
+        "alone. See [`compose-structure.md`](docs/standards/compose-structure.md#local-test-stack).",
         "- **Backup / Restore docs** — whether the stack README has such a "
         "section. Says nothing about whether either was performed; that is what "
         "`ops-proven` records. `n/a` marks a stack where the section would be "
@@ -472,8 +471,7 @@ def render(rows: list[dict]) -> str:
         out += [
             f"## `{category}/`",
             "",
-            "| Stack | State | Pinned | Last verified | Local | "
-            "Backup docs | Restore docs |",
+            "| Stack | State | Pinned | Last verified | Local | Backup docs | Restore docs |",
             "|---|---|---|---|---|---|---|",
         ]
         for r in group:
