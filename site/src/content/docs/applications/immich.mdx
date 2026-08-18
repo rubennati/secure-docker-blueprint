@@ -1,0 +1,178 @@
+---
+title: Immich
+description: Photo and video backup from your phone — installed with the library path understood, and a restore that fails silently unless it is done the documented way.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackEvidence from '../../../components/StackEvidence.astro';
+
+Immich backs up photos and videos from phones and searches them by what is in
+them. Four containers — the server, a machine-learning worker, PostgreSQL with
+vector extensions, and Valkey for the job queue.
+
+<StackEvidence stack="apps/immich"
+  gap="everything below. The stack has never been brought up here: the first-run migrations, mobile app upload and the restore path are read from the stack's files and upstream documentation rather than observed." />
+
+Needs: [Traefik](/infrastructure/traefik/) running, a domain, and storage for the
+library.
+
+:::danger
+Register the first account immediately after starting. Immich makes the first
+account to sign up the administrator, and until you claim it, anyone who reaches
+the page can.
+:::
+
+## Installation
+
+From `apps/immich/`:
+
+<Steps>
+
+1. Copy the environment file and set `APP_TRAEFIK_HOST`, `TZ` and
+   `UPLOAD_LOCATION` — the last one is where photos are stored and may point
+   outside the stack directory:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Generate the database password. Immich accepts only letters and digits, so
+   the base64 output is stripped of its punctuation:
+
+   ```bash
+   mkdir -p .secrets
+   openssl rand -base64 32 | tr -d '/+=\n' > .secrets/db_pwd.txt
+   sed -i "s|^DB_PWD_INLINE=.*|DB_PWD_INLINE=$(cat .secrets/db_pwd.txt)|" .env
+   ```
+
+   The value appears twice: as the secret file for PostgreSQL and inline for
+   Immich, which has no `_FILE` form.
+
+3. Create the volumes:
+
+   ```bash
+   mkdir -p volumes/postgres volumes/redis volumes/model-cache volumes/library
+   ```
+
+4. Start it. First-run migrations take around two minutes:
+
+   ```bash
+   docker compose up -d
+   docker compose logs app --follow
+   ```
+
+   Wait for `Immich Server is listening on`.
+
+5. Open `https://<APP_TRAEFIK_HOST>` and create the administrator account now.
+
+</Steps>
+
+## Verify
+
+```bash
+docker compose ps                                      # four services, healthy
+curl -fsS https://<APP_TRAEFIK_HOST>/api/server/ping    # {"res":"pong"}
+```
+
+Then upload one photo from the mobile app and confirm it appears with a
+thumbnail, and that search finds it by content. Those three together cover the
+server, the library path and the machine-learning worker; the ping covers only
+the first.
+
+## Backup
+
+| | |
+|---|---|
+| **Database** | PostgreSQL in Immich's own image, container `immich-db`, database `immich`, user `immich` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **The library** | `UPLOAD_LOCATION` — the photos and videos, which may sit outside the stack directory |
+| **Rebuildable** | `volumes/redis` · `volumes/model-cache` |
+| **Quiescing** | Not needed for the dump. Pause uploads while copying a large library if the two halves must match exactly. |
+
+For [borgmatic](/operations/backup/):
+
+```yaml
+postgresql_databases:
+    - name: immich
+      container: immich-db
+      username: immich
+      password: "{credential file /srv/docker/apps/immich/.secrets/db_pwd.txt}"
+```
+
+`UPLOAD_LOCATION` points outside the stack directory, which is why it gets
+forgotten. It is also the only irreplaceable part: albums, faces and metadata can
+all be rebuilt from the originals, and the originals cannot be rebuilt from
+anything.
+
+## Restore
+
+:::danger
+A plain `psql < dump.sql` does not restore this database, and it does not report
+that it failed. The result starts, looks plausible and is missing the objects
+that depend on the vector extension.
+:::
+
+```bash
+gunzip --stdout dump.sql.gz \
+  | sed "s/SELECT pg_catalog.set_config('search_path', '', false);/SELECT pg_catalog.set_config('search_path', 'public, pg_catalog', true);/g" \
+  | docker compose exec -T db sh -c \
+      'psql --dbname="$POSTGRES_DB" --username="$POSTGRES_USER" \
+            --single-transaction --set ON_ERROR_STOP=on'
+```
+
+| Part | What it does |
+|---|---|
+| the `sed` | rewrites `search_path` so the vector extension's types and functions resolve — without it the objects depending on them are never created |
+| `--single-transaction` | a failure rolls the whole restore back rather than leaving a half-populated database that starts |
+| `ON_ERROR_STOP=on` | stops at the first error instead of continuing past it |
+
+Restore into the same database image version that produced the dump, not a stock
+`postgres` image.
+
+Restore order: database, then the library, then the application.
+
+## Updates
+
+<Steps>
+
+1. Read the [release notes](https://github.com/immich-app/immich/releases).
+   Immich changes quickly and migrations are frequent.
+
+2. Back up the database and the library together.
+
+3. Raise `APP_TAG` in `.env`, then:
+
+   ```bash
+   docker compose pull && docker compose up -d
+   docker compose logs app --follow
+   ```
+
+4. Open the library and run a search. A migration that touched the embeddings
+   surfaces there rather than at start.
+
+</Steps>
+
+## Troubleshooting
+
+**Someone else is the administrator.** The first account to register claimed it.
+There is no recovery other than rebuilding the instance.
+
+**The database refuses the password.** Immich accepts only letters and digits. A
+password containing `+`, `/` or `=` is rejected — regenerate it as in step 2.
+
+**A restored instance starts but albums and search are empty.** The restore did
+not use the documented path. See [Restore](#restore).
+
+**Search returns nothing while photos are present.** The machine-learning worker
+has not finished, or the model cache did not download. Check
+`docker compose logs machine-learning`.
+
+## Repository files
+
+- [`apps/immich/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/immich/README.md) — setup, security model, the full restore procedure
+- [`apps/immich/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/immich/UPSTREAM.md) — source and upgrade checklist
+
+## Official sources
+
+- [Immich documentation](https://docs.immich.app/)
+- [Backup and restore](https://docs.immich.app/administration/backup-and-restore)

@@ -17,16 +17,23 @@ up, how to update it, and the failures that service really produces.
 
 | | Solves | Also needs |
 |---|---|---|
-| [Invoice Ninja](/applications/invoiceninja/) | invoices and quotes, what has been paid, and a portal where each client can view and settle them | SMTP |
-| [Nextcloud](/applications/nextcloud/) | files, calendars and contacts on your own server, synced to desktops and phones, with sharing on top | SMTP |
-| [OnlyOffice](/applications/onlyoffice/) | opening `.docx`, `.xlsx` and `.pptx` in the browser, embedded inside another application | an application to embed it — it is not used on its own |
-| [Paperless-ngx](/applications/paperless-ngx/) | scanned paper becoming a searchable archive, via OCR and a consume folder | the OCR language packs you need; SMTP is optional |
 | [Cal.diY](/applications/caldiy/) | appointment booking pages people can self-serve — the Cal.com community edition | SMTP, a Cloudflare-proxied domain |
 | [Dashy](/applications/dashy/) | one page linking everything you run, configured in a single YAML file | nothing beyond the proxy |
+| [Documenso](/applications/documenso/) | document signing you host yourself, with a signing certificate you generate | SMTP, OpenSSL for the certificate |
 | [Ghost](/applications/ghost/) | publishing with newsletters and paid memberships built in | SMTP, which also gates the first login |
+| [Immich](/applications/immich/) | photo and video backup from phones, searchable by what is in the picture | storage for the library |
+| [Invoice Ninja](/applications/invoiceninja/) | invoices and quotes, what has been paid, and a portal where each client can view and settle them | SMTP |
+| [Listmonk](/applications/listmonk/) | newsletters, subscriber lists and double opt-in | an SMTP relay entered after setup |
 | [n8n](/applications/n8n/) | chaining HTTP calls, webhooks and scheduled jobs into workflows visually | nothing beyond the proxy |
+| [Nextcloud](/applications/nextcloud/) | files, calendars and contacts on your own server, synced to desktops and phones, with sharing on top | SMTP |
+| [OnlyOffice](/applications/onlyoffice/) | opening `.docx`, `.xlsx` and `.pptx` in the browser, embedded inside another application | an application to embed it — it is not used on its own |
+| [OpnForm](/applications/opnform/) | a form builder with conditional logic, uploads and webhooks | SMTP for notifications |
+| [Paperless-ngx](/applications/paperless-ngx/) | scanned paper becoming a searchable archive, via OCR and a consume folder | the OCR language packs you need; SMTP is optional |
+| [PhotoPrism](/applications/photoprism/) | a photo library that indexes and classifies itself | disk space for the models |
+| [Seafile](/applications/seafile/) | file sync and sharing with desktop and mobile clients | SMTP for invitations |
 | [Seafile Pro](/applications/seafile-pro/) | file sync built for large directory trees, with full-text search and antivirus scanning | a commercial licence; OnlyOffice for in-browser editing |
 | [Vaultwarden](/applications/vaultwarden/) | credentials in one vault, synced to browser, phone and desktop, instead of a third party holding everything you log into | SMTP, for email verification |
+| [WordPress](/applications/wordpress/) | the CMS, with PHP and Apache hardened | an SMTP relay via plugin |
 
 Each opens with the version it is written against and the date it was verified,
 followed by a line naming what has not been exercised. Read that line before

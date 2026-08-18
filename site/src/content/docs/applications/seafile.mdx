@@ -1,0 +1,213 @@
+---
+title: Seafile
+description: File sync and sharing, Community Edition — installed as eight services across five compose files, with the second start that the settings block depends on.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackEvidence from '../../../components/StackEvidence.astro';
+
+Seafile syncs files between devices and shares them with other people, with
+desktop and mobile clients and optional collaborative editing. Eight containers,
+split across five compose files so the optional parts can be switched off.
+
+<StackEvidence stack="apps/seafile"
+  gap="everything below. The stack has never been brought up here: the first-boot settings injection, the optional components and client sync are read from the stack's files rather than observed." />
+
+Needs: [Traefik](/infrastructure/traefik/) running, a domain, and SMTP if the
+server should send invitations or reset links.
+
+:::caution
+The blueprint settings block is missing after the first start, every time. The
+container writes it before Seafile creates the file it belongs in, so a second
+start is part of the installation rather than a workaround — see step 6.
+:::
+
+## What is in the stack
+
+`COMPOSE_FILE` in `.env` decides which parts run. Removing a filename and running
+`docker compose up -d` again switches that component off.
+
+| File | Services | Required |
+|---|---|---|
+| `seafile-server.yml` | the server, MariaDB, memcached, Redis | yes |
+| `seadoc.yml` | collaborative document editor | optional |
+| `notification-server.yml` | push notifications for file changes | optional |
+| `md-server.yml` | file metadata and extended properties | optional |
+| `thumbnail-server.yml` | image and video thumbnails | optional |
+
+All of them are served under one hostname; Traefik routes by path.
+
+## Installation
+
+From `apps/seafile/`:
+
+<Steps>
+
+1. Copy the environment file and set `APP_TRAEFIK_HOST`, `SEAFILE_ADMIN_EMAIL`
+   and `TIMEZONE`:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Generate the secrets:
+
+   ```bash
+   mkdir -p .secrets
+   openssl rand -base64 32 | tr -d '\n' > .secrets/db_root_pwd.txt
+   openssl rand -base64 32 | tr -d '\n' > .secrets/seafile_db_pwd.txt
+   openssl rand -base64 32 | tr -d '\n' > .secrets/seafile_admin_pwd.txt
+   openssl rand -base64 48 | tr -d '\n' > .secrets/jwt_key.txt
+   openssl rand -base64 32 | tr -d '\n' > .secrets/redis_pwd.txt
+   ```
+
+3. Create the SMTP secret file even if mail stays off — compose mounts it
+   unconditionally:
+
+   ```bash
+   touch .secrets/smtp_pwd.txt                          # mail disabled
+   # printf '%s' 'SMTP-PASSWORD' > .secrets/smtp_pwd.txt  # mail enabled
+   ```
+
+4. Start it. The first boot initialises the databases and runs migrations, which
+   takes two to four minutes:
+
+   ```bash
+   docker compose up -d
+   docker compose logs seafile --follow
+   ```
+
+   Wait for `Seafile server started`.
+
+5. Recreate the server container once. On the first boot Seafile writes
+   `seahub_settings.py` after the entrypoint has already run, so the blueprint
+   block — mail, document editing, metadata, thumbnails — is not in it yet:
+
+   ```bash
+   docker compose up -d --force-recreate seafile
+   ```
+
+6. Confirm the block arrived:
+
+   ```bash
+   docker compose exec seafile bash -lc \
+     'grep -n "# --- Blueprint custom settings ---" /shared/seafile/conf/seahub_settings.py \
+      || echo "STILL MISSING — check entrypoint logs"'
+   ```
+
+7. Open `https://<APP_TRAEFIK_HOST>` and log in as `SEAFILE_ADMIN_EMAIL` with the
+   password from `.secrets/seafile_admin_pwd.txt`.
+
+</Steps>
+
+## Verify
+
+```bash
+docker compose ps   # eight services with the default COMPOSE_FILE
+```
+
+Then upload a file through the web interface and sync it with a desktop client.
+Sync is what this stack exists for and it exercises paths the web interface does
+not.
+
+If mail is enabled, invite a user and confirm the message arrives. Without the
+settings block from step 5, Seafile reports that the mail service is not
+configured.
+
+## Going further
+
+### Private by default
+
+The stack ships `acc-private` with `sec-2`. Seafile holds whatever people put in
+it, and the sync clients reach it over the same hostname, so widening the access
+policy is a decision about every client at once.
+
+### Document editing
+
+`seadoc.yml` adds the collaborative editor for `.sdoc` files. OnlyOffice is a
+separate stack with its own hostname and is not routed through here — see
+[OnlyOffice](/applications/onlyoffice/).
+
+## Backup
+
+| | |
+|---|---|
+| **Databases** | MariaDB, container `seafile-db`, **three databases**: `ccnet_db`, `seafile_db`, `seahub_db`, user `seafile` |
+| **Password** | `.secrets/seafile_db_pwd.txt` |
+| **State** | `volumes/mysql` · `volumes/seafile-data` (the file store) · `volumes/seadoc-data` |
+| **Rebuildable** | `volumes/redis` · the log directory under `volumes/seafile-data` |
+| **Quiescing** | Not needed. Seafile writes content-addressed blocks, so a file captured mid-write is a new block rather than a damaged one. |
+
+For [borgmatic](/operations/backup/):
+
+```yaml
+mariadb_databases:
+    - name: ccnet_db
+      container: seafile-db
+      username: seafile
+      password: "{credential file /srv/docker/apps/seafile/.secrets/seafile_db_pwd.txt}"
+    - name: seafile_db
+      container: seafile-db
+      username: seafile
+      password: "{credential file /srv/docker/apps/seafile/.secrets/seafile_db_pwd.txt}"
+    - name: seahub_db
+      container: seafile-db
+      username: seafile
+      password: "{credential file /srv/docker/apps/seafile/.secrets/seafile_db_pwd.txt}"
+```
+
+:::caution
+Three databases, not one. `seafile_db` holds the file metadata, `ccnet_db` the
+users and groups, `seahub_db` the web layer with shares and links. Backing up
+only the first is the common mistake — any one of the three missing produces a
+restore that starts and is unusable.
+:::
+
+Restore order: the three databases, then the file store, then the application.
+
+## Updates
+
+<Steps>
+
+1. Read the [release notes](https://manual.seafile.com/latest/changelog/server-changelog/).
+   Seafile's major versions carry database migrations.
+
+2. Back up all three databases and `volumes/seafile-data` together.
+
+3. Raise the image variables in `.env`, then:
+
+   ```bash
+   docker compose pull && docker compose up -d
+   docker compose logs seafile --follow
+   ```
+
+4. Log in and sync one file. A migration that touched the metadata tables shows
+   up in the client rather than in the interface.
+
+</Steps>
+
+## Troubleshooting
+
+**"Email service is not properly configured" right after installing.** The
+settings block is missing. Run installation step 5, then check with step 6.
+
+**Document editing, metadata or thumbnails are absent after a fresh install.**
+Same cause, same fix.
+
+**A restored instance starts but shares and links are gone.** Only some of the
+three databases came back. All three are required.
+
+**A component should be switched off.** Remove its filename from `COMPOSE_FILE`
+in `.env` and run `docker compose up -d` again.
+
+## Repository files
+
+- [`apps/seafile/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/seafile/README.md) — setup, the five-file split, secret handling
+- [`apps/seafile/config/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/seafile/config/README.md) — how the entrypoint injects settings
+- [`apps/seafile/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/seafile/UPSTREAM.md) — source and upgrade checklist
+- [`apps/seafile-pro/`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/seafile-pro/README.md) — the commercial edition, covered by its own guide
+
+## Official sources
+
+- [Seafile manual](https://manual.seafile.com/latest/)
+- [Docker deployment](https://manual.seafile.com/latest/setup/setup_ce_by_docker/)

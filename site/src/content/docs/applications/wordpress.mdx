@@ -1,0 +1,159 @@
+---
+title: WordPress
+description: WordPress with hardened PHP and Apache rules — installed in two containers, with the .htaccess step that only works after the installer has run.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackEvidence from '../../../components/StackEvidence.astro';
+
+WordPress with a MariaDB database, PHP settings tightened, and a set of Apache
+rules applied after installation. Two containers.
+
+<StackEvidence stack="apps/wordpress"
+  gap="everything below. The stack has never been brought up here: the installer, the .htaccess hardening step and the upgrade path from 6.x are read from the stack's files rather than observed." />
+
+Needs: [Traefik](/infrastructure/traefik/) running, a domain, and an SMTP relay
+for anything WordPress sends.
+
+## Installation
+
+From `apps/wordpress/`:
+
+<Steps>
+
+1. Copy the environment file and set `APP_TRAEFIK_HOST` and `TZ`:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Generate the database secrets:
+
+   ```bash
+   mkdir -p .secrets
+   openssl rand -base64 32 | tr -d '\n' > .secrets/db_pwd.txt
+   openssl rand -base64 32 | tr -d '\n' > .secrets/db_root_pwd.txt
+   ```
+
+3. Start it:
+
+   ```bash
+   docker compose up -d
+   ```
+
+4. Open `https://<APP_TRAEFIK_HOST>` and run the WordPress installer.
+
+5. Apply the Apache hardening — **after** the installer has finished, because it
+   writes `.htaccess` itself and would overwrite the additions:
+
+   ```bash
+   docker compose exec app bash -c \
+     'cat /config/.htaccess-security >> /var/www/html/.htaccess'
+   ```
+
+</Steps>
+
+## Verify
+
+```bash
+docker compose ps   # two services, healthy
+```
+
+Then load the site, log in to `/wp-admin`, and publish one post with an image.
+The upload path and the database are separate failures, and only the second is
+visible from the front page.
+
+## Going further
+
+### Plugins are attack surface
+
+The stack takes a minimal approach: install what the site needs and remove the
+rest. Four categories are worth having from the start — an SMTP plugin, so
+WordPress mail goes through a relay rather than the local PHP mailer;
+time-based two-factor authentication on logins; a consent banner where the site
+is subject to GDPR; and a backup plugin writing to somewhere other than this
+host.
+
+The specific plugin choices and the three approaches to restricting `/wp-admin`
+are in
+[`apps/wordpress/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/wordpress/README.md).
+
+### Why `tls-basic` rather than `tls-aplus`
+
+The stack ships `APP_TRAEFIK_TLS_OPTION=tls-basic`. A public site is visited by
+whatever the visitor happens to run, and the stricter profile turns away older
+clients that a blog usually still wants to serve.
+
+## Backup
+
+| | |
+|---|---|
+| **Database** | MariaDB, container `wordpress-db`, database `wordpress`, user `wp_user` |
+| **Password** | `.secrets/db_pwd.txt` |
+| **State** | `volumes/mysql` (database) · `volumes/wordpress` (uploads, themes, plugins) |
+| **Rebuildable** | WordPress core inside `volumes/wordpress`, restored from the image on upgrade |
+| **Quiescing** | Not needed — the dump is consistent on its own. |
+
+For [borgmatic](/operations/backup/):
+
+```yaml
+mariadb_databases:
+    - name: wordpress
+      container: wordpress-db
+      username: wp_user
+      password: "{credential file /srv/docker/apps/wordpress/.secrets/db_pwd.txt}"
+```
+
+Posts are in the database; media and the active theme are in
+`volumes/wordpress/wp-content`. A database-only restore gives a site where every
+image is missing and the theme has reverted to the default.
+
+The salts in `wp-config.php` are generated at first start and invalidate every
+session when they change, so a restore that regenerates them signs all users out.
+
+Restore order: database, then the application.
+
+## Updates
+
+<Steps>
+
+1. Read the [release notes](https://wordpress.org/documentation/wordpress-version/).
+   The step from 6.x to 7.x is a major change — check themes and plugins against
+   it first.
+
+2. Back up the database and `volumes/wordpress` together.
+
+3. Raise `APP_TAG` in `.env`, then:
+
+   ```bash
+   docker compose pull && docker compose up -d
+   ```
+
+4. Load the front page and the administration area. A theme or plugin that did
+   not survive the version shows up on one of the two, not in the log.
+
+</Steps>
+
+## Troubleshooting
+
+**The hardening rules are gone after running the installer.** WordPress rewrote
+`.htaccess`. Re-run installation step 5 — the order matters.
+
+**WordPress sends no mail.** The container has no local mail transport by design.
+Configure an SMTP plugin against your relay.
+
+**Uploads fail after a restore.** Ownership on `volumes/wordpress/wp-content` no
+longer matches the user Apache runs as inside the container.
+
+**Everyone is logged out after a restore.** The salts in `wp-config.php` were
+regenerated. Expected; users log in again.
+
+## Repository files
+
+- [`apps/wordpress/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/wordpress/README.md) — setup, plugin approach, wp-admin protection
+- [`apps/wordpress/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/wordpress/UPSTREAM.md) — source and upgrade checklist
+
+## Official sources
+
+- [WordPress documentation](https://wordpress.org/documentation/)
+- [Hardening WordPress](https://developer.wordpress.org/advanced-administration/security/hardening/)
