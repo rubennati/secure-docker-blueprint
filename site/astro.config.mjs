@@ -88,6 +88,7 @@ export default defineConfig({
 						{ label: 'Invoice Ninja', link: '/applications/invoiceninja/' },
 						{ label: 'Nextcloud', link: '/applications/nextcloud/' },
 						{ label: 'OnlyOffice', link: '/applications/onlyoffice/' },
+						{ label: 'Paperless-ngx', link: '/applications/paperless-ngx/' },
 						{ label: 'Seafile Pro', link: '/applications/seafile-pro/' },
 						{ label: 'Vaultwarden', link: '/applications/vaultwarden/' },
 					],

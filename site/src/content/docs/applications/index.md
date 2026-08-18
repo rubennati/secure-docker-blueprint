@@ -20,6 +20,7 @@ up, how to update it, and the failures that service really produces.
 | [Invoice Ninja](/applications/invoiceninja/) | invoices and quotes, what has been paid, and a portal where each client can view and settle them | SMTP |
 | [Nextcloud](/applications/nextcloud/) | files, calendars and contacts on your own server, synced to desktops and phones, with sharing on top | SMTP |
 | [OnlyOffice](/applications/onlyoffice/) | opening `.docx`, `.xlsx` and `.pptx` in the browser, embedded inside another application | an application to embed it — it is not used on its own |
+| [Paperless-ngx](/applications/paperless-ngx/) | scanned paper becoming a searchable archive, via OCR and a consume folder | the OCR language packs you need; SMTP is optional |
 | [Seafile Pro](/applications/seafile-pro/) | file sync built for large directory trees, with full-text search and antivirus scanning | a commercial licence; OnlyOffice for in-browser editing |
 | [Vaultwarden](/applications/vaultwarden/) | credentials in one vault, synced to browser, phone and desktop, instead of a third party holding everything you log into | SMTP, for email verification |
 
@@ -57,7 +58,6 @@ needs](/infrastructure/).
 | [n8n](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/n8n/README.md) | chaining HTTP calls, webhooks and scheduled jobs into workflows visually | — | 1 |
 | [NocoDB](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/nocodb/README.md) | a spreadsheet-like interface and an API over a SQL database | — | 1 |
 | [OpenProject](https://github.com/rubennati/secure-docker-blueprint/blob/main/business/openproject/README.md) | the full project platform — Gantt, work packages, time tracking, wikis | database | 6 |
-| [Paperless-ngx](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/paperless-ngx/README.md) | scanned paper becoming a searchable archive, via OCR and a consume folder | SMTP, database, Redis | 5 |
 | [Vikunja](https://github.com/rubennati/secure-docker-blueprint/blob/main/business/vikunja/README.md) | task management — kanban, lists, Gantt and table views | SMTP, database | 2 |
 
 **Access defaults differ, and are not all restrictive.** Four of them —
