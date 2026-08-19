@@ -158,9 +158,7 @@ docker compose up -d --force-recreate
     docker compose up -d app
     ```
 
-    :::caution
-    SMTP delivery is not verified end-to-end in this Blueprint guide. After configuring, send a test email from the Seafile admin panel to confirm delivery before relying on it for password resets.
-    :::
+    Send a test email from the Seafile admin panel before relying on this for password resets. Mail delivery has not been exercised for this stack.
   </TabItem>
 
   <TabItem label="Access">
@@ -168,9 +166,7 @@ docker compose up -d --force-recreate
 
     Setting `APP_TRAEFIK_ACCESS=acc-tailscale` enforces a source-IP allowlist for Tailscale addresses, restricting access to clients connected to the same Tailnet. Server-to-server integrations (OnlyOffice, notifications) must also reach Seafile via Tailscale for this to apply to them.
 
-    :::note
-    `acc-tailscale` has a known source-IP caveat when traffic arrives through Docker published ports — Traefik may see the Docker bridge gateway address rather than the original Tailscale client address. See [Traefik troubleshooting](/infrastructure/traefik/#troubleshooting) for the cause and investigation steps. `acc-public` is the working alternative when this caveat applies.
-    :::
+    Where traffic arrives through Docker published ports, `acc-tailscale` can reject a legitimate client because Traefik sees the Docker bridge gateway address instead — `acc-public` is the working alternative in that case. See [Troubleshooting](#troubleshooting).
   </TabItem>
 
   <TabItem label="Antivirus">
@@ -215,6 +211,9 @@ and all three databases together. A restore that recovers one side without the
 other leaves the installation inconsistent rather than merely incomplete.
 
 ## Updates
+
+This sequence follows the upstream Docker upgrade guide. Neither an upgrade nor
+a restore has been exercised for this stack.
 
 <Steps>
 

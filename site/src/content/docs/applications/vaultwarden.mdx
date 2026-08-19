@@ -57,27 +57,19 @@ From `apps/vaultwarden/`:
    docker compose run --rm --no-deps app /vaultwarden hash
    ```
 
-   :::note
-   Use `docker compose run`, not `docker run`. A plain `docker run` does not read
-   this directory's `.env`, so `${APP_TAG}` would expand to nothing and the image
-   reference would be invalid. Compose resolves it from the service definition.
-   :::
-
    Copy the full `$argon2id$...` output, then paste it into `.env` with every `$` doubled (Compose escaping):
 
    ```ini
    VW_ADMIN_TOKEN=$$argon2id$$v=19$$m=65540,t=3,p=4$$...your-hash...
    ```
 
-   :::caution
-   **This stack is a documented exception to the file-based credential
-   handling.** The admin token and the database password reach the container as
-   environment variables rather than as mounted secret files — the database
-   credential is embedded in a connection URL, which a `_FILE` variable cannot
-   express without an entrypoint assembling it. The practical consequence: both
-   values are visible in `docker inspect` and in `docker compose config` output.
-   Treat `.env` accordingly, and redact before pasting that output anywhere.
-   :::
+   This stack has no Docker Secrets. Every credential it uses is read from `.env`
+   and passed to the containers as an environment variable, including the database
+   passwords, the admin token, and the SMTP and push values once those are set.
+   Anything passed that way appears in `docker inspect` and in `docker compose
+   config` — treat both outputs as credential material and redact them before
+   pasting either anywhere, and keep `.env` as tightly permissioned as a secrets
+   directory.
 
 6. Allow signups for your first account — you'll turn this off again right after:
 
@@ -117,16 +109,11 @@ Open `https://your-domain` — the login page should load over TLS.
    VW_SIGNUPS_ALLOWED=false
    ```
 
+   Recreate the app container so it loads the changed environment:
+
    ```bash
    docker compose up -d --force-recreate app
    ```
-
-   :::caution
-   **`docker compose restart` will not do this.** Restarting stops and starts the
-   existing container, which keeps the environment it was created with — the
-   vault would keep accepting signups while the login page suggests otherwise.
-   Recreating is what applies a changed `.env`.
-   :::
 
    Confirm it took effect against the container rather than against the page:
 

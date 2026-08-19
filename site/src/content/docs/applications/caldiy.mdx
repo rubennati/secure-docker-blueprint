@@ -1,6 +1,6 @@
 ---
 title: Cal.diY
-description: Self-service appointment booking against your own calendar — run it locally in one command, or deploy it with signup closed and the calendar encryption key kept off the host.
+description: Self-service appointment booking against your own calendar — run it locally first, or deploy it with signup closed and the calendar encryption key kept off the host.
 ---
 
 import { Steps } from '@astrojs/starlight/components';
@@ -12,17 +12,30 @@ a confirmation mail. Three containers — the application, PostgreSQL and Redis.
 
 ## Try it locally
 
-One command on your own machine — no proxy, no domain, no certificate, no mail.
-From `apps/caldiy/`:
+On your own machine, with no proxy, domain, certificate or mail. From
+`apps/caldiy/`:
 
 ```bash
 cp .env.local.example .env.local
+```
+
+`.env.local` ships six `__REPLACE_ME__` values that all have to be filled in.
+Four are `openssl` one-liners printed above each line in the file; the fifth and
+sixth are the VAPID pair, which comes from:
+
+```bash
+docker run --rm node:lts-alpine npx --yes web-push generate-vapid-keys
+```
+
+Then start it:
+
+```bash
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 ```
 
-The file carries the `openssl` one-liners for the values it asks for. Open
-`http://localhost:3000`: signup is open here, so you can create the first user
-and click through the booking flow. Mail is unset, so no confirmations are sent.
+It listens on `127.0.0.1:3000` only. Open `http://localhost:3000`: signup is open
+here, so you can create the first user and click through the booking flow. Mail
+is unset, so no confirmations are sent.
 
 ## Installation
 

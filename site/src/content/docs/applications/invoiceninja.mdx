@@ -61,20 +61,9 @@ From `business/invoiceninja/`:
    MAIL_FROM_ADDRESS=invoices@example.com
    ```
 
-   :::note
-   `MAIL_FROM_ADDRESS` here is the **full address**. Laravel differs from
-   Nextcloud, which takes only the part before the `@`.
-
-   If mail never arrives, check the port first — many hosting companies block
-   465 outbound:
-
-   ```bash
-   openssl s_client -connect smtp.example.com:465 -brief </dev/null
-   ```
-
-   `CONNECTION ESTABLISHED` means you are fine. Otherwise use `MAIL_PORT=587`
-   with `MAIL_ENCRYPTION=tls`.
-   :::
+   `MAIL_FROM_ADDRESS` is the full address here, not just the part before the
+   `@`. Many hosting companies block port 465 outbound; if yours does, use
+   `MAIL_PORT=587` with `MAIL_ENCRYPTION=tls`.
 
 5. Create the secrets. Nothing sensitive goes in `.env`:
 
@@ -204,7 +193,14 @@ docker compose exec app df -h /dev/shm     # expect 512M, not 64M
 Traefik drops unhealthy containers from the load balancer. Check
 `docker compose ps` before looking at routing.
 
-**Mail does not leave** — check the port first, as above, then
+**Mail does not leave** — check whether port 465 is open from the host:
+
+```bash
+openssl s_client -connect smtp.example.com:465 -brief </dev/null
+```
+
+`CONNECTION ESTABLISHED` means the port is open; otherwise use `MAIL_PORT=587`
+with `MAIL_ENCRYPTION=tls`. If the port is fine, read
 `docker compose logs app | grep -i mail`.
 
 ## Repository files

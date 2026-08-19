@@ -68,18 +68,8 @@ From `apps/nextcloud/`:
    `MAIL_DOMAIN` above it makes `nextcloud@example.com`, which has to be an
    address your mail provider has verified for sending.
 
-   :::note[If mail never arrives, the port is the first thing to check]
-   Many hosting companies block port 465 on their servers. Confirm yours can
-   reach it:
-
-   ```bash
-   openssl s_client -connect smtp.example.com:465 -brief </dev/null
-   ```
-
-   `CONNECTION ESTABLISHED` means you are fine. If it hangs or is refused, port
-   465 is blocked — set `SMTP_PORT=587` and `SMTP_SECURE=tls` instead. That still
-   works, it is simply the weaker of the two.
-   :::
+   Many hosting companies block port 465 outbound. If yours does, use
+   `SMTP_PORT=587` with `SMTP_SECURE=tls` — the weaker of the two, and it works.
 
 4. Create the secrets. All six before the first start:
 
@@ -103,12 +93,9 @@ From `apps/nextcloud/`:
    ```
 
    This keeps the files editable for you as well, which matters the day you
-   change a password.
-
-   :::note
-   `82` is the user Nextcloud runs as in these images. Some variants use `33` —
-   check yours with `docker compose exec -u root app id www-data`.
-   :::
+   change a password. `82` is the user Nextcloud runs as in these images; some
+   variants use `33`, which `docker compose exec -u root app id www-data`
+   reports.
 
 5. Read the administrator password once and store it in your password manager —
    it is generated, never displayed:
@@ -358,6 +345,21 @@ restarting them.
 **Mail silently does not send, `occ` reports `NOAUTH`** — the web user cannot
 read `redis_pwd.txt` or `smtp_pwd.txt`. Check the group ownership from the
 installation steps. The container still reports healthy in this state.
+
+**Mail never arrives and the log shows no error** — port 465 is blocked
+outbound, which many hosting companies do. Check it from the host:
+
+```bash
+openssl s_client -connect smtp.example.com:465 -brief </dev/null
+```
+
+`CONNECTION ESTABLISHED` means the port is open. If it hangs or is refused, set
+`SMTP_PORT=587` and `SMTP_SECURE=tls`, then recreate both containers that send
+mail:
+
+```bash
+docker compose up -d --force-recreate app cron
+```
 
 **Brute-force protection locks out everyone at once** — `NC_TRUSTED_PROXIES` is
 incomplete, so every request appears to come from the proxy. Add the missing

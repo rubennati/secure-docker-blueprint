@@ -8,12 +8,12 @@ part of it. Every one of them expects [Traefik](/infrastructure/traefik/) to be
 running first; they publish no ports themselves and are reached through it.
 
 Each one has a guide: installation walked through, a *Verify* section, what to
-back up, how to update it, and the failures that service really produces. What
-each guide states at the top is how much of it has been confirmed on a running
-host — some were brought up and checked, some are written from the repository
-files and have never been started here. Nextcloud is the one whose data has been
-restored from a backup on a live host; for the rest, the restore is documented
-and unrehearsed.
+back up, how to update it, and the failures that service really produces. Each
+guide also states how much of it has been confirmed on a running host — some
+were brought up and checked, some are written from the repository files and have
+never been started here. Nextcloud is the one whose data has been restored from
+a backup on a live host; for the rest, the restore is documented and
+unrehearsed.
 
 Most also ship a `docker-compose.local.yml`, which runs the service on your own
 machine with no proxy, DNS or certificate — see [what every server
@@ -26,7 +26,7 @@ to point at rather than one of its own.
 |---|---|---|
 | [Adminer](/applications/adminer/) | a web interface onto a database another stack already runs | a database to point it at |
 | [BookStack](/applications/bookstack/) | a wiki with real structure: shelves, books, chapters, pages | nothing beyond the proxy |
-| [Cal.diY](/applications/caldiy/) | appointment booking pages people can self-serve — the Cal.com community edition | SMTP, a Cloudflare-proxied domain |
+| [Cal.diY](/applications/caldiy/) | appointment booking pages people can self-serve — the Cal.com community edition | SMTP for confirmation mail; Cloudflare recommended if it faces the internet |
 | [Dashy](/applications/dashy/) | one page linking everything you run, configured in a single YAML file | nothing beyond the proxy |
 | [Documenso](/applications/documenso/) | document signing you host yourself, with a signing certificate you generate | SMTP, OpenSSL for the certificate |
 | [Easy!Appointments](/applications/easyappointments/) | appointment booking on a PHP stack, with no build step | nothing beyond the proxy |
@@ -52,8 +52,9 @@ to point at rather than one of its own.
 | [Vikunja](/applications/vikunja/) | task management — boards, lists, Gantt and table views | a local build step |
 | [WordPress](/applications/wordpress/) | the CMS, with PHP and Apache hardened | an SMTP relay via plugin |
 
-Each opens with the version it is written against and the date it was verified,
-followed by a line naming what has not been exercised. Read that line before
+Every guide names the version it is written against and what has not been
+exercised. Where a check against a specific version is on record, the date is
+shown with it; where none is, the guide says so instead. Read that before
 trusting a service with data.
 
 ## Where the choice is not obvious
@@ -68,10 +69,10 @@ appetites for host resources.
 
 ## What is deliberately absent
 
-The repository ships around sixty stacks. The two tables above cover the ones
-with a verification date behind them; the rest are configured but have never been
-brought up here, so listing them alongside would suggest a standing they do not
-have. They are in the repository with their own READMEs, and
+The repository ships around sixty stacks. The table above lists the ones a guide
+has been written for; being on it says nothing about how much of a stack has been
+exercised — that is what each guide's evidence line is for. The rest are in the
+repository with their own READMEs, and
 [the full list](https://github.com/rubennati/secure-docker-blueprint#whats-included)
 is there rather than here.
 
