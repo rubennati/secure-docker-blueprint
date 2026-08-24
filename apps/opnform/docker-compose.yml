@@ -179,10 +179,12 @@ services:
       - ./volumes/storage:/usr/share/nginx/html/storage
 
     # --- Networking ---
-    # proxy-public gives outbound internet access (email, OAuth, etc.)
-    # app-internal reaches db and redis
+    # app-internal reaches db and redis and, being an ordinary bridge rather
+    # than `internal: true`, also carries this service's outbound SMTP. See the
+    # network note at the bottom of this file for why it is not internal.
+    # Traefik routes to nginx, and no other stack consumes this service, so it
+    # has no reason to join the shared proxy network.
     networks:
-      - proxy-public
       - app-internal
 
     # --- Health & Observability ---
@@ -260,8 +262,11 @@ services:
       - ./volumes/storage:/usr/share/nginx/html/storage
 
     # --- Networking ---
+    # As for api: app-internal carries both the datastore traffic and the
+    # outbound SMTP this worker sends for queued jobs. Nothing routes to it and
+    # no other stack consumes it, so it has no reason to join the shared proxy
+    # network.
     networks:
-      - proxy-public
       - app-internal
 
     # --- Health & Observability ---
