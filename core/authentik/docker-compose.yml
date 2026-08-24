@@ -144,7 +144,7 @@ services:
   # --------------------------------------------------------
   # AUTHENTIK SERVER (Web UI + API)
   # --------------------------------------------------------
-  server:
+  authentik-server:
     # --- Identity ---
     image: ghcr.io/goauthentik/server:${APP_TAG}
     container_name: ${CONTAINER_NAME_SERVER}
