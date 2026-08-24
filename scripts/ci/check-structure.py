@@ -37,7 +37,9 @@ Exit code is 1 only when a FAIL rule triggers, so WARN drift can be paid down
 gradually without blocking work.
 """
 
+import functools
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -81,6 +83,40 @@ EXCEPT_DIRS = {
 }
 
 
+@functools.lru_cache(maxsize=1)
+def repository_files() -> frozenset[str] | None:
+    """Paths Git considers part of the repository, or None when Git is absent.
+
+    `--cached` is what is tracked, `--others --exclude-standard` adds files that
+    are new but not ignored. Together they are exactly "the repository as it
+    would be committed", which is what a blueprint gate should judge.
+
+    What this deliberately leaves out is material the working tree carries but
+    the repository does not own: `.gitignore`d runtime directories and anything
+    listed in `.git/info/exclude`. Walking the filesystem instead made local
+    scratch space and generated volume data indistinguishable from blueprint
+    content, and a checker that fails on those is reporting on the machine
+    rather than on the repository.
+
+    Returning None (no Git, e.g. a source tarball) falls back to the filesystem
+    walk, so the checker still runs — it simply cannot make the distinction.
+    """
+    try:
+        out = subprocess.run(
+            ["git", "ls-files", "--cached", "--others", "--exclude-standard"],
+            capture_output=True, text=True, check=True, timeout=30,
+        ).stdout
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return frozenset(line for line in out.splitlines() if line)
+
+
+def in_repository(path: Path) -> bool:
+    """True when Git owns this path, or when Git cannot be consulted."""
+    known = repository_files()
+    return True if known is None else path.as_posix() in known
+
+
 def is_compose(path: Path) -> bool:
     """True when a YAML file declares Compose services."""
     try:
@@ -100,21 +136,22 @@ def compose_files(app: Path) -> list[Path]:
     were invisible to this checker until every part was picked up.
     """
     main = app / "docker-compose.yml"
-    if main.exists():
+    if main.exists() and in_repository(main):
         return [main]
     # For a split stack the glob decides what counts as production, so the
     # local test stack must be excluded from it.
     return sorted(p for p in app.glob("*.yml")
-                  if is_compose(p) and not p.name.endswith(".local.yml"))
+                  if in_repository(p) and is_compose(p) and not p.name.endswith(".local.yml"))
 
 
 def find_apps() -> list[Path]:
-    apps = {p.parent for root in ROOTS for p in Path(root).rglob("docker-compose.yml")}
+    apps = {p.parent for root in ROOTS for p in Path(root).rglob("docker-compose.yml")
+            if in_repository(p)}
     # Split-compose stacks: a directory with compose files but no docker-compose.yml.
     for root in ROOTS:
         for candidate in Path(root).iterdir() if Path(root).is_dir() else []:
             if candidate.is_dir() and candidate not in apps:
-                if any(is_compose(p) for p in candidate.glob("*.yml")):
+                if any(in_repository(p) and is_compose(p) for p in candidate.glob("*.yml")):
                     apps.add(candidate)
     return sorted(apps)
 
