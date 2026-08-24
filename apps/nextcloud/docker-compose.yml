@@ -206,7 +206,7 @@ services:
   # --------------------------------------------------------
   # NGINX (Web Server)
   # --------------------------------------------------------
-  nginx:
+  nextcloud-nginx:
     # --- Identity ---
     image: nginx:${NGINX_TAG}
     container_name: ${CONTAINER_NAME_NGINX}

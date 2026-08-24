@@ -6,11 +6,11 @@ Self-hosted form builder — Typeform / Google Forms alternative. Drag-and-drop 
 
 ## Architecture
 
-Seven services — nginx is the single Traefik entry point:
+Seven services — `opnform-nginx` is the single Traefik entry point:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `nginx` | `nginx:1` | HTTP entry point — routes `/api/*` to php-fpm, everything else to Nuxt |
+| `opnform-nginx` | `nginx:1` | HTTP entry point — routes `/api/*` to php-fpm, everything else to Nuxt |
 | `api` | `jhumanj/opnform-api:1.13.2` | Laravel backend — php-fpm on port 9000 |
 | `api-worker` | same | `artisan queue:work` — processes async jobs (notifications, webhooks) |
 | `api-scheduler` | same | `artisan schedule:work` — runs scheduled tasks |
@@ -18,7 +18,7 @@ Seven services — nginx is the single Traefik entry point:
 | `db` | `postgres:16-alpine` | Primary store (forms, responses, users, workspaces) |
 | `redis` | `redis:7.4-alpine` | Cache, queue, sessions |
 
-Traefik routes to **nginx only** (port 80). nginx handles path-based routing internally.
+Traefik routes to **`opnform-nginx` only** (port 80). It handles path-based routing internally.
 
 ## Setup
 
@@ -57,8 +57,8 @@ docker compose logs -f
 
 ```bash
 docker compose ps                                    # all seven services up
-curl -fsSI https://<APP_TRAEFIK_HOST>/               # 200 OK  (UI via nginx)
-curl -fsSI https://<APP_TRAEFIK_HOST>/api/health     # 200 OK  (API via nginx → php-fpm)
+curl -fsSI https://<APP_TRAEFIK_HOST>/               # 200 OK  (UI via opnform-nginx)
+curl -fsSI https://<APP_TRAEFIK_HOST>/api/health     # 200 OK  (API via opnform-nginx → php-fpm)
 ```
 
 ## Security Model
@@ -69,10 +69,10 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/api/health     # 200 OK  (API via nginx �
 - **`FRONT_API_SECRET` / `NUXT_API_SECRET`** is a shared secret between the Laravel API and the Nuxt SSR layer. Both must have the same value.
 - **`DB_PWD_INLINE` duplicates the DB password** — Laravel reads `DB_PASSWORD` from env only (no `_FILE` support). Postgres side uses `POSTGRES_PASSWORD_FILE`.
 - **`APP_TRUSTED_PROXIES: "*"`** — required so Laravel honours `X-Forwarded-Proto=https` from Traefik.
-- **`NUXT_PRIVATE_API_BASE=http://nginx/api`** — Nuxt SSR calls the API via the internal Docker network (not the public URL), avoiding DNS resolution failures on private networks.
+- **`NUXT_PRIVATE_API_BASE=http://opnform-nginx/api`** — Nuxt SSR calls the API via the internal Docker network (not the public URL), avoiding DNS resolution failures on private networks.
 - **`no-new-privileges:true`** on all services.
 - **`sec-2` sends `X-Frame-Options: DENY`, which blocks the form embed.** Putting a form in another page — a website, a [Notion page](https://help.opnform.com/en/article/can-i-embed-my-form-in-a-notion-page-or-site-x7guph/) — is a documented OpnForm feature and how most forms are distributed. The default stays denying because the form pages and the workspace admin share one hostname, so relaxing the header for the forms relaxes it for form management as well. To embed, add a per-app middleware replacing `X-Frame-Options` with a `frame-ancestors` list naming the sites you embed into; `business/matomo` shows the shape. `sec-2e` does not help — it permits same-origin framing only, and an embed is by definition another origin.
-- **`app-internal` is not `internal: true`** — the Nuxt SSR server calls `api.iconify.design` at startup to resolve icons; blocking outbound internet causes `EAI_AGAIN` DNS failures. Isolation is enforced at the Traefik layer: only `nginx` is on `proxy-public` and exposed to the reverse proxy. `db` and `redis` are on `app-internal` only and therefore unreachable from outside Docker.
+- **`app-internal` is not `internal: true`** — the Nuxt SSR server calls `api.iconify.design` at startup to resolve icons; blocking outbound internet causes `EAI_AGAIN` DNS failures. Isolation is enforced at the Traefik layer: only `opnform-nginx` is on `proxy-public` and exposed to the reverse proxy. `db` and `redis` are on `app-internal` only and therefore unreachable from outside Docker.
 
 ## Backup
 
@@ -110,7 +110,7 @@ with it; a queue restored mid-flight simply retries.
   docker compose exec api chmod -R 775 /usr/share/nginx/html/storage
   ```
 
-- **Startup 502s in UI logs** — on first start the Nuxt SSR makes internal requests to `http://nginx/api` while the API is still initialising. These resolve once the API healthcheck passes (~60 seconds). Not an error.
+- **Startup 502s in UI logs** — on first start the Nuxt SSR makes internal requests to `http://opnform-nginx/api` while the API is still initialising. These resolve once the API healthcheck passes (~60 seconds). Not an error.
 - **`DB_PWD_INLINE` duplicates the DB password** — OpnForm's Laravel config reads `DB_PASSWORD` from env only. Postgres uses `POSTGRES_PASSWORD_FILE`; the API needs the same value inline.
 - **Queue worker required for async features** — email notifications, webhook integrations, and file processing are handled by `api-worker`. If it's not running, those features silently fail.
 - **Storage volume path** — the api image stores files at `/usr/share/nginx/html/storage`. All three api services (api, api-worker, api-scheduler) must mount the same path.

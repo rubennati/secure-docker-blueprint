@@ -182,8 +182,8 @@ services:
     # app-internal reaches db and redis and, being an ordinary bridge rather
     # than `internal: true`, also carries this service's outbound SMTP. See the
     # network note at the bottom of this file for why it is not internal.
-    # Traefik routes to nginx, and no other stack consumes this service, so it
-    # has no reason to join the shared proxy network.
+    # Traefik routes to opnform-nginx, and no other stack consumes this
+    # service, so it has no reason to join the shared proxy network.
     networks:
       - app-internal
 
@@ -375,12 +375,13 @@ services:
 
     # --- Configuration ---
     environment:
-      # Public (browser-facing) API base — relative path, nginx routes it
+      # Public (browser-facing) API base — relative path, opnform-nginx routes it
       NUXT_PUBLIC_APP_URL: https://${APP_TRAEFIK_HOST}
       NUXT_PUBLIC_API_BASE: /api
-      # Private (SSR server-side) API base — goes directly to nginx inside Docker,
-      # bypasses public DNS and avoids EAI_AGAIN errors on internal networks
-      NUXT_PRIVATE_API_BASE: http://nginx/api
+      # Private (SSR server-side) API base — goes directly to opnform-nginx
+      # inside Docker, bypasses public DNS and avoids EAI_AGAIN errors on
+      # internal networks
+      NUXT_PRIVATE_API_BASE: http://opnform-nginx/api
       # Shared secret with the API (must match FRONT_API_SECRET)
       NUXT_API_SECRET: ${FRONT_API_SECRET}
 
@@ -399,7 +400,7 @@ services:
   # --------------------------------------------------------
   # NGINX (HTTP entry point — routes to api:9000 or ui:3000)
   # --------------------------------------------------------
-  nginx:
+  opnform-nginx:
     # --- Identity ---
     image: nginx:${NGINX_TAG}
     container_name: ${CONTAINER_NAME_NGINX}
@@ -477,8 +478,9 @@ networks:
     # internal: false (default) — outbound internet access required.
     # The Nuxt UI server calls api.iconify.design at SSR startup to resolve icons.
     # Setting internal: true blocks that and causes EAI_AGAIN DNS failures in the
-    # ui container. Isolation is provided at the Traefik layer (only nginx is
-    # exposed); db and redis are not on proxy-public, so they remain unreachable
+    # ui container. Isolation is provided at the Traefik layer (only
+    # opnform-nginx is exposed); db and redis are not on proxy-public, so they
+    # remain unreachable
     # from outside Docker regardless.
 
 # --------------------------------------------------------

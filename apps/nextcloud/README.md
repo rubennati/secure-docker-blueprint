@@ -11,16 +11,16 @@ Five services:
 | Service | Image | Purpose |
 |---------|-------|---------|
 | `app` | `nextcloud:34.0.2-fpm-alpine` | PHP-FPM — the Nextcloud application |
-| `nginx` | `nginx:1.29-alpine-slim` | Web server, speaks HTTP to Traefik and FastCGI to `app` |
+| `nextcloud-nginx` | `nginx:1.29-alpine-slim` | Web server, speaks HTTP to Traefik and FastCGI to `app` |
 | `db` | `mariadb:11.8` | Primary data store |
 | `redis` | `redis:7.4-alpine` | File locking + session cache |
 | `cron` | `nextcloud:34.0.2-fpm-alpine` | Runs Nextcloud's scheduled jobs (`cron.php` every 5 minutes) |
 
-Traefik routes to `nginx`, which proxies PHP requests to `app` via FastCGI on port 9000. `cron` uses the same image as `app` but with `entrypoint: /cron.sh` and no HTTP listener.
+Traefik routes to `nextcloud-nginx`, which proxies PHP requests to `app` via FastCGI on port 9000. `cron` uses the same image as `app` but with `entrypoint: /cron.sh` and no HTTP listener.
 
 ### Why FPM + nginx instead of Apache
 
-The Alpine FPM image is lighter and gives nginx full control over static asset serving, caching headers, and the CalDAV/CardDAV redirects. The `-apache` variant is a supported alternative upstream; switching to it means dropping the `nginx` service, mounting the configuration into `app` instead, and moving the Traefik labels there with port 80.
+The Alpine FPM image is lighter and gives nginx full control over static asset serving, caching headers, and the CalDAV/CardDAV redirects. The `-apache` variant is a supported alternative upstream; switching to it means dropping the `nextcloud-nginx` service, mounting the configuration into `app` instead, and moving the Traefik labels there with port 80.
 
 ## Setup
 
@@ -174,15 +174,15 @@ Check the admin overview at `https://<APP_TRAEFIK_HOST>/settings/admin/overview`
 
 ### Network layout
 
-- `proxy-public` — only `nginx` joins; this is where Traefik routes in
-- `app-internal` — `app`, `db`, `redis`, `nginx`, `cron`; flagged `internal: true`, no route out
+- `proxy-public` — only `nextcloud-nginx` joins; this is where Traefik routes in
+- `app-internal` — `app`, `db`, `redis`, `nextcloud-nginx`, `cron`; flagged `internal: true`, no route out
 - `app-egress` — `app` and `cron` only; the narrow outbound path
 
-The database and the cache hold everything worth stealing and reach `app-internal` alone. Only the two application containers can open outbound connections, and neither is reachable from outside — Traefik routes to `nginx`. See [Network exception](#network-exception--why-the-application-containers-reach-the-internet) for what that buys and what it costs.
+The database and the cache hold everything worth stealing and reach `app-internal` alone. Only the two application containers can open outbound connections, and neither is reachable from outside — Traefik routes to `nextcloud-nginx`. See [Network exception](#network-exception--why-the-application-containers-reach-the-internet) for what that buys and what it costs.
 
 ### Per-service hardening
 
-- `no-new-privileges:true` on `db`, `redis`, `nginx`
+- `no-new-privileges:true` on `db`, `redis`, `nextcloud-nginx`
 - **NOT** set on `app` and `cron` — the Nextcloud entrypoint runs as root to chown `config.php` before dropping to www-data; with `no-new-privileges` the file ends up owned by root and FPM gets a 503. Documented in the compose file.
 - All six credentials → Docker Secrets (`.secrets/*.txt`): database, database root, Redis, administrator name and password, SMTP key. Nothing sensitive lives in `.env`.
 - Redis reads its password from the secret at startup (`--requirepass "$(cat /run/secrets/REDIS_PWD)"`), so the value never appears in the process environment. Use `openssl rand -hex 32` — `+/=` characters break URL encoding in the PHP Redis session handler.
@@ -190,7 +190,7 @@ The database and the cache hold everything worth stealing and reach `app-interna
 
 ### Traefik middlewares
 
-`nginx` carries the access and security chains and nothing else:
+`nextcloud-nginx` carries the access and security chains and nothing else:
 
 ```text
 ${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file
@@ -223,7 +223,7 @@ performance.
 ### What the exception costs, precisely
 
 `app` and `cron` can open outbound connections. They are not reachable from
-outside: only `nginx` is published through the proxy.
+outside: only `nextcloud-nginx` is published through the proxy.
 
 The data stays where it was. `db` and `redis` hold everything worth stealing and
 remain on the isolated network with no route out. Verify at any time:
@@ -355,7 +355,7 @@ before somebody has looked at it. Expect it, or the first restore looks broken.
 
    ```bash
    docker compose exec -u www-data app php occ maintenance:mode --on
-   docker compose stop app cron nginx
+   docker compose stop app cron nextcloud-nginx
    ```
 
 2. Restore the database, then the file tree from the same archive.
@@ -410,7 +410,7 @@ sudo borgmatic create --stats
 
 # 2. Quiesce the application; leave the database running
 docker compose exec -u www-data app php occ maintenance:mode --on
-docker compose stop app cron nginx
+docker compose stop app cron nextcloud-nginx
 
 # 3. Raise DB_TAG, bring only the database up, and watch it upgrade
 docker compose up -d db
