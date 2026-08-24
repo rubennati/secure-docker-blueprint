@@ -6,7 +6,7 @@ services:
   # integration library (service status, torrent clients,
   # media servers, Proxmox, etc.).
   # --------------------------------------------------------
-  app:
+  homarr-app:
     # --- Identity ---
     image: ghcr.io/homarr-labs/homarr:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}

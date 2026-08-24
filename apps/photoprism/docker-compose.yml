@@ -78,7 +78,7 @@ services:
   # --------------------------------------------------------
   # PHOTOPRISM (Go app + TensorFlow)
   # --------------------------------------------------------
-  app:
+  photoprism-app:
     # --- Identity ---
     image: photoprism/photoprism:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}

@@ -58,7 +58,7 @@ services:
   # --------------------------------------------------------
   # VAULTWARDEN
   # --------------------------------------------------------
-  app:
+  vaultwarden-app:
     # --- Identity ---
     image: vaultwarden/server:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}

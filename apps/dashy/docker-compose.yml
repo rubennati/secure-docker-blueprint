@@ -5,7 +5,7 @@ services:
   # Self-hosted dashboard for your homelab services.
   # Config-driven (YAML), static UI, no external database.
   # --------------------------------------------------------
-  app:
+  dashy-app:
     # --- Identity ---
     image: lissy93/dashy:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}

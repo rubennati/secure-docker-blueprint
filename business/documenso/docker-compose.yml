@@ -75,7 +75,7 @@ services:
   # --------------------------------------------------------
   # DOCUMENSO (Remix web app + API)
   # --------------------------------------------------------
-  app:
+  documenso-app:
     # --- Identity ---
     image: documenso/documenso:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}

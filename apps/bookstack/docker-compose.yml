@@ -64,7 +64,7 @@ services:
   # --------------------------------------------------------
   # BOOKSTACK
   # --------------------------------------------------------
-  app:
+  bookstack-app:
     # --- Identity ---
     image: lscr.io/linuxserver/bookstack:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}

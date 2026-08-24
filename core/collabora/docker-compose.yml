@@ -6,7 +6,7 @@ services:
   # server (~1 GB idle vs ~4 GB for OnlyOffice/Euro-Office). Stateless,
   # single container. Embedded via WOPI by Seafile / Nextcloud.
   # --------------------------------------------------------
-  app:
+  collabora-app:
     # --- Identity ---
     image: collabora/code:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}

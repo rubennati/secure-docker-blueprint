@@ -5,7 +5,7 @@ services:
   # --------------------------------------------------------
   # Monitors web pages for content changes — restock alerts,
   # price drops, terms-of-service diffs, defacement detection.
-  app:
+  changedetection-app:
     # --- Identity ---
     image: ghcr.io/dgtlmoon/changedetection.io:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}

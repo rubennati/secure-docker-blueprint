@@ -57,7 +57,7 @@ services:
   # --------------------------------------------------------
   # UNIFI NETWORK APPLICATION (LSIO build)
   # --------------------------------------------------------
-  app:
+  unifi-app:
     # --- Identity ---
     image: lscr.io/linuxserver/unifi-network-application:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}

@@ -5,7 +5,7 @@ services:
   # Stateless web-based database administration tool.
   # Connects to other apps' databases (no DB of its own).
   # --------------------------------------------------------
-  app:
+  adminer-app:
     # --- Identity ---
     image: adminer:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}

@@ -6,7 +6,7 @@ services:
   # Classic LinuxServer.io image — PUID/PGID pattern,
   # uses s6-overlay internally.
   # --------------------------------------------------------
-  app:
+  heimdall-app:
     # --- Identity ---
     image: lscr.io/linuxserver/heimdall:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}
