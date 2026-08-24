@@ -12,6 +12,31 @@ Use short, generic names in `docker-compose.yml`:
 | Web server | `nginx` |
 | Docker socket proxy | `socket-proxy` |
 
+## Services on a Shared External Network
+
+The short role names above apply to services that stay on a stack's private
+networks. Only services that need a shared external network join one.
+
+A service attached to `proxy-public` — or any other shared external network —
+uses an application-specific service key, so independently deployable blueprints
+do not publish ambiguous Docker DNS names into the same network. Compose
+publishes the service key as a discoverable name on every network the service
+joins, and Docker does not guarantee which container a shared network-wide name
+resolves to.
+
+Use `<stack>-<role>` where the role suffix adds useful meaning:
+
+| Stack | Private services | Service on `proxy-public` |
+|---|---|---|
+| Cal.diy | `db`, `redis` | `caldiy-app` |
+| Nextcloud | `app`, `db`, `redis` | `nextcloud-nginx` |
+| Paperless-ngx | `db`, `redis` | `paperless-app` |
+
+A service name that is already inherently application-specific, such as
+`seafile`, needs no redundant role suffix.
+
+`container_name` is a separate container identity and is unchanged by this rule.
+
 ## Container Names
 
 Derived from `COMPOSE_PROJECT_NAME` via variables:
