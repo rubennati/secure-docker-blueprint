@@ -48,7 +48,7 @@ over time; AppSec catches known attack signatures in individual requests.
 | AppSec port | Listening on `crowdsec:7422` (internal Docker network only) |
 | AppSec rule sets | Installed via `CROWDSEC_COLLECTIONS` in `.env` |
 | AppSec enforcement | **Disabled by default** (`crowdsecAppsecEnabled: false` in the Traefik bouncer config) |
-| Applications using AppSec | None — no application router currently includes `sec-crowdsec@file` as middleware |
+| Applications using AppSec | None — no application router currently includes `crowdsec-appsec@file` as middleware |
 
 The AppSec engine is ready to receive requests but the Traefik bouncer is not sending any.
 No change to `config/appsec.yaml` or any app configuration is needed to keep AppSec in
@@ -94,8 +94,9 @@ instance.
 
 ## Enabling AppSec safely
 
-AppSec is enabled in one place: `crowdsecAppsecEnabled` in the `sec-crowdsec` middleware
-block in `core/traefik/ops/templates/dynamic/integrations.yml.tmpl`.
+AppSec is enabled in one place: `crowdsecAppsecEnabled` in the `crowdsec-appsec` middleware
+block in `core/traefik/ops/templates/dynamic/integrations.yml.tmpl`. `crowdsec-basic`
+leaves it off; the two profiles differ in exactly this flag.
 
 **Do not flip this switch directly to fail-closed.** If AppSec is unreachable at the
 moment Traefik evaluates a request and `crowdsecAppsecUnreachableBlock` is `true`, every

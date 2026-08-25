@@ -233,12 +233,12 @@ Recorded so the eventual attachment is unambiguous — **not implemented; do not
 | Item | State |
 |------|-------|
 | Traefik plugin block | Commented in `traefik.yml.tmpl` (operator enables locally) |
-| `crowdsec-*` profile middlewares | **Not yet defined** in `integrations.yml.tmpl` — the single legacy `sec-crowdsec` block is its precursor and will be renamed `crowdsec-basic` when implemented |
+| `crowdsec-*` profile middlewares | `crowdsec-basic` and `crowdsec-appsec` are defined in `integrations.yml.tmpl`, commented out — the operator uncomments one locally |
 | `crowdsec-basic` | Designed here; lowest-risk primitive; implement + whoami-validate next |
 | `crowdsec-appsec`, `crowdsec-strict` | Designed here; deferred behind AppSec testing / recovery-path gates |
 | `geo-*` family | Deferred; mechanism undecided (edge vs Traefik geo plugin) |
 | Any app attachment (incl. Cal.diy) | None — whoami-first, then per-app opt-in |
-| `docs/standards/traefik-security.md` Integrations + App-Assignment rows | Still reference the single `sec-crowdsec`; update when `crowdsec-*` is implemented |
+| `docs/standards/traefik-security.md` Integrations rows | List `crowdsec-basic` and `crowdsec-appsec` as supported optional middlewares, both default-off |
 
 Nothing in this batch enables runtime enforcement. This document is architecture and
 roadmap only.
@@ -247,18 +247,20 @@ roadmap only.
 
 ## Open design questions
 
-1. **Per-app selection mechanism.** Today the operator prepends `crowdsec-*@file` to a
-   specific app's label (explicit, no fleet-wide change). A future convenience is a
-   third `.env` slot (e.g. `APP_TRAEFIK_CROWDSEC`) added to every router label —
-   attractive, but an empty default would render a dangling comma and must be handled
-   carefully. Decide before mass-editing labels.
+1. **Per-app selection mechanism.** Settled: the router label carries a third `.env`
+   slot, `APP_TRAEFIK_THREAT`, which the operator sets to `crowdsec-basic@file,`
+   including the trailing comma. It defaults to empty, so a stack that does not set it
+   renders the same middleware list as before. `apps/_reference` and `core/whoami`
+   carry the slot; the dangling-comma problem is handled by keeping the comma inside
+   the value rather than in the label.
 2. **Geo mechanism.** Cloudflare edge rules vs a Traefik GeoIP plugin vs global
    CrowdSec country blocklist — pick one before introducing any `geo-*` name.
 3. **Bouncer key strategy.** One shared key (simple) vs per-profile keys (per-profile
    metrics). Default to one until metrics separation is actually needed.
-4. **Naming migration.** Confirm `crowdsec-*` over `sec-crowdsec-*`, then update the
-   integrations template comment, the Traefik README enable steps, and the
-   traefik-security standard in the implementation batch.
+4. **Naming migration.** Settled: the `crowdsec-*` names are the current ones, and
+   current-state documentation uses them. Historical records — `CHANGELOG.md` and
+   `docs/bugfixes/traefik-crowdsec-plugin-2026-04-20.md` — keep the old `sec-crowdsec`
+   name because they describe what was configured at the time.
 
 ---
 
