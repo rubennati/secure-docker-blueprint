@@ -153,17 +153,17 @@ Phase 1 above is detection only. Two more layers, each independently optional, a
 
     2. In `core/traefik/.env`, add `CROWDSEC_BOUNCER_KEY=<key>`.
 
-    3. Uncomment the plugin block in `ops/templates/traefik.yml.tmpl` and the `sec-crowdsec` middleware in `ops/templates/dynamic/integrations.yml.tmpl`, then:
+    3. Uncomment the plugin block in `ops/templates/traefik.yml.tmpl` and the `crowdsec-basic` middleware in `ops/templates/dynamic/integrations.yml.tmpl`, then render and **restart** Traefik. The plugin lives in the static configuration, which is read only at startup — a hot reload will not pick it up:
 
        ```bash
        bash ops/scripts/render.sh
        docker compose up -d --force-recreate traefik
        ```
 
-    4. Add `sec-crowdsec@file` to at least one router's middleware list, then recreate that app:
+    4. Add `crowdsec-basic@file` to at least one router's middleware list, then recreate that app:
 
        ```yaml
-       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=sec-crowdsec@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=crowdsec-basic@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
        ```
 
     </Steps>

@@ -149,6 +149,9 @@ jobs:
       - name: Run baseline check
         run: python3 scripts/ci/check-baseline.py "$GITHUB_STEP_SUMMARY"
 
+      - name: CrowdSec remediation ships default-off
+        run: python3 scripts/ci/check-crowdsec-config.py --templates
+
   # ─────────────────────────────────────────────
   # 6. CANONICAL STRUCTURE (docs/standards/*-structure.md)
   # Fails only on the dangerous rules — :latest tags, plaintext secrets,

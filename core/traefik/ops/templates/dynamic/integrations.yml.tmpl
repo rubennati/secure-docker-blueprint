@@ -14,7 +14,11 @@
 #   3. Add "<name>@file" to the router middleware list of each
 #      router that should use it
 #
-# Traefik hot-reloads — no restart needed.
+# This file is dynamic configuration: Traefik hot-reloads it, so steps
+# 1-3 need no restart. The CrowdSec middlewares additionally require the
+# plugin in traefik.yml (static configuration), and that one is read only
+# at startup — enabling or changing it needs `docker compose restart
+# traefik`. Uncommenting both files is therefore not restart-free.
 # ==========================================================
 
 # http:

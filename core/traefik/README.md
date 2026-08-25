@@ -328,7 +328,7 @@ nano ops/templates/traefik.yml.tmpl
 #     plugins:
 #       bouncer:
 #         moduleName: "github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin"
-#         version: "v1.4.5"
+#         version: "v1.7.1"
 
 # -----------------------------------------------
 # Step 5: Enable the middleware in dynamic config
@@ -340,9 +340,17 @@ nano ops/templates/dynamic/integrations.yml.tmpl
 # Step 6: Render and restart
 # -----------------------------------------------
 ./ops/scripts/render.sh
+./ops/scripts/validate.sh
 docker compose restart traefik
 # Restart needed because the plugin is in static config.
 # After this, middleware changes are hot-reloaded.
+#
+# Once a crowdsec-* middleware is present in the rendered config,
+# validate.sh parses it and refuses an empty CROWDSEC_BOUNCER_KEY —
+# envsubst would otherwise render one silently. That check needs
+# python3 with PyYAML on this host; without them validate.sh fails
+# rather than skipping the check. A default-off install never
+# reaches it and needs neither.
 
 # -----------------------------------------------
 # Step 7: Add to routers (start with whoami only)

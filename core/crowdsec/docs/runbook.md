@@ -73,9 +73,9 @@ docker compose -f ../traefik/docker-compose.yml logs traefik 2>&1 \
   | grep -iE "plugin|bouncer" | tail -5
 # Healthy: "Plugin bouncer loaded" with no "Plugins are disabled" lines
 
-# sec-crowdsec middleware status: Traefik dashboard
+# crowdsec-basic middleware status: Traefik dashboard
 # https://<traefik-host>/dashboard/#/http/middlewares
-# sec-crowdsec@file must show green "Success"
+# crowdsec-basic@file must show green "Success"
 ```
 
 ### Phase 3 — Firewall Bouncer
@@ -429,8 +429,8 @@ docker exec crowdsec cscli decisions delete --all
 
 **Option C — Disable the Traefik bouncer plugin entirely (config change required):**
 
-Remove `sec-crowdsec@file` from the router middleware lists in Traefik config, then
-reload Traefik. Phase 3 nftables rules remain active. See `core/traefik/README.md`
+Remove `crowdsec-basic@file` (or `crowdsec-appsec@file`) from the router middleware
+lists in Traefik config, then reload Traefik. Phase 3 nftables rules remain active. See `core/traefik/README.md`
 for the configuration location. This is the only approach that truly isolates Phase 2.
 
 ### Disable CrowdSec entirely — engine + all enforcement
@@ -619,7 +619,7 @@ docker compose -f ../traefik/docker-compose.yml logs traefik 2>&1 \
   | grep -iE "plugin|bouncer" | tail -5
 # Must show "Plugin bouncer loaded"
 
-# Is sec-crowdsec@file attached to the router?
+# Is crowdsec-basic@file attached to the router?
 # Check the router's middleware list in the Traefik dashboard or compose file
 ```
 
@@ -685,7 +685,7 @@ docker compose logs crowdsec | grep -i "database\|db\|sqlite" | tail -20
 ### Traefik bouncer unhealthy
 
 Symptoms: `cscli bouncers list` shows no recent pull, or the Traefik dashboard shows
-`sec-crowdsec@file` as red / missing.
+`crowdsec-basic@file` as red / missing.
 
 ```bash
 # 1. Is the plugin loaded?
