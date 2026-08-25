@@ -328,7 +328,7 @@ nano ops/templates/traefik.yml.tmpl
 #     plugins:
 #       bouncer:
 #         moduleName: "github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin"
-#         version: "v1.4.5"
+#         version: "v1.7.1"
 
 # -----------------------------------------------
 # Step 5: Enable the middleware in dynamic config

@@ -71,7 +71,7 @@ shapes the whole design below.
 
 ## Capability reality — per-app vs global
 
-What the maxlerebourg CrowdSec Traefik plugin (`v1.4.5`) and the CrowdSec engine can
+What the maxlerebourg CrowdSec Traefik plugin (`v1.7.1`) and the CrowdSec engine can
 actually do, grounded in [appsec.md](appsec.md) and [geoblocking.md](geoblocking.md):
 
 | Question | Answer | Consequence for the model |

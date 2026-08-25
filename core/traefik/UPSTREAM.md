@@ -44,7 +44,9 @@
 
 - `traefik:v3.6` is pinned to the 3.6 minor line. Traefik v2 → v3 was a breaking upgrade; **do not** jump majors without reading the migration guide: https://doc.traefik.io/traefik/migration/v2-to-v3/
 - `tecnativa/docker-socket-proxy:v0.4.2` is pinned. Minor releases change the set of default-enabled endpoints — re-confirm `CONTAINERS`/`NETWORKS`/`ALLOW_*` flags after each bump.
-- CrowdSec plugin is pinned to `v1.4.5` in `traefik.yml.tmpl`. Pin to a newer tag only after verifying it compiles against the running Traefik version.
+- CrowdSec bouncer plugin is pinned to `v1.7.1` in `traefik.yml.tmpl`, inside the block that ships commented out. Releases: https://github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin/releases
+  - The options this blueprint uses — `crowdsecMode`, `crowdsecLapiScheme`, `crowdsecLapiHost`, `crowdsecLapiKey`, `updateIntervalSeconds`, `crowdsecAppsecEnabled`, `crowdsecAppsecHost`, `crowdsecAppsecFailureBlock`, `crowdsecAppsecUnreachableBlock` — are unchanged from `v1.4.5` through `v1.7.1`. The only deprecations in that range are `BanHTMLFilePath` → `BanFilePath` and `CaptchaHTMLFilePath` → `CaptchaFilePath` (v1.7.0), neither of which this blueprint sets.
+  - Verified against the upstream release notes only. The default configuration does not load the plugin, so no release in this range has been exercised at runtime by this repository — the first operator to enable Phase 2 is also the first to run it. Pin to a newer tag only after verifying it compiles against the running Traefik version. Traefik fetches and interprets the plugin at startup, so a bump takes effect on restart, not on reload.
 
 ## Upgrade checklist
 
