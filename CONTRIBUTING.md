@@ -54,7 +54,7 @@ See [`docs/standards/commit-rules.md`](docs/standards/commit-rules.md) for the d
 
 ## CI and testing
 
-The CI pipeline is the automated test suite for this configuration project. It runs on every push and pull request. **All checks must pass before merge.**
+The CI pipeline is the automated test suite for this configuration project. It runs on every pull request targeting `dev` or `main`, on every push to those branches, and nightly. **All checks must pass before merge.**
 
 | Area | What it validates |
 |---|---|
