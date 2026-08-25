@@ -4,7 +4,7 @@ on:
   push:
     branches: [dev, main]
   pull_request:
-    branches: [main]
+    branches: [dev, main]
   schedule:
     # Nightly at 03:00 UTC — catches stale configs even without commits
     - cron: '0 3 * * *'

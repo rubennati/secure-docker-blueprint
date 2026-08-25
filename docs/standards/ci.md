@@ -1,14 +1,22 @@
 # CI Pipeline
 
 All checks run automatically on every push to `dev` and `main`, on pull requests
-targeting `main`, and nightly at 03:00 UTC.
+targeting `dev` or `main`, and nightly at 03:00 UTC.
 
 ```text
-push (dev/main) ──┐
-pull_request      ├──▶  CI
-schedule 03:00 UTC┤
-workflow_dispatch ┘
+push         (dev, main) ──┐
+pull_request (dev, main) ──┤
+schedule     03:00 UTC   ──┼──▶  CI
+workflow_dispatch        ──┘
 ```
+
+A pull request is checked before it is merged, and the branch is checked again
+after the merge lands. The two runs answer different questions: the pull request
+tests its own head merged into the base as it stood at check time, while the push
+tests the branch that actually resulted.
+
+The nightly run uses the default branch, `main`. It is not a safety net for
+`dev`.
 
 ---
 
