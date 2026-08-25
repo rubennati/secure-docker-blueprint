@@ -75,7 +75,7 @@ class RepositoryScopedDiscovery(unittest.TestCase):
         return app / "docker-compose.yml"
 
     def test_tracked_compose_file_is_checked(self):
-        f = self._stack("apps/tracked")
+        self._stack("apps/tracked")
         _git(self.root, "add", "apps/tracked/docker-compose.yml")
         _git(self.root, "commit", "-qm", "add stack")
         cs.repository_files.cache_clear()
