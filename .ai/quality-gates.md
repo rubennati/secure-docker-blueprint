@@ -7,6 +7,7 @@ in [`../docs/standards/ci.md`](../docs/standards/ci.md).
 
 ```bash
 python3 scripts/ci/check-baseline.py         # security baseline per container
+python3 scripts/ci/check-crowdsec-config.py --templates   # CrowdSec ships default-off
 python3 scripts/ci/check-structure.py        # canonical structure, tags, secrets
 python3 scripts/ci/lifecycle-report.py --check   # status consistency + LIFECYCLE freshness
 python3 scripts/ci/check-coverage.py         # content no checker covers
@@ -40,7 +41,7 @@ docker compose config --quiet          # in the stack directory
 | Compose validation | a compose file that does not parse or resolve |
 | Required files | a stack without `README.md` or `.env.example` |
 | Sentinel value check | `__REPLACE_ME__` in a committed `.env` |
-| Security baseline | missing `no-new-privileges`, `privileged: true`, socket-proxy violations |
+| Security baseline | missing `no-new-privileges`, `privileged: true`, socket-proxy violations; a CrowdSec plugin declaration or `crowdsec-*` middleware active in the shipped Traefik templates |
 | Canonical structure | `:latest` or major-only tags, plaintext secrets, unprotected `.secrets/`, a datastore on the public network |
 | Status model | owner and mirror disagreeing on a status, ✅ without a verification date, stale `LIFECYCLE.md`; warns when `UPSTREAM.md` duplicates the README's backup procedure |
 | Checker coverage | a content directory no checker enumerates, a top-level directory declared nowhere |
