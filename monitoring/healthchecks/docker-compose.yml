@@ -7,7 +7,7 @@ services:
   # when expected pings are missed.
   # SQLite by default — suitable for personal use / small teams.
   # --------------------------------------------------------
-  app:
+  healthchecks-app:
     # --- Identity ---
     image: healthchecks/healthchecks:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}

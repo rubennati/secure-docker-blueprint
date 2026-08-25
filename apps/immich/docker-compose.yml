@@ -142,7 +142,7 @@ services:
   # --------------------------------------------------------
   # IMMICH SERVER (web UI + API)
   # --------------------------------------------------------
-  app:
+  immich-app:
     # --- Identity ---
     image: ghcr.io/immich-app/immich-server:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}

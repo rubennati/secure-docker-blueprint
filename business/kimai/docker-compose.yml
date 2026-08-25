@@ -53,7 +53,7 @@ services:
   # --------------------------------------------------------
   # KIMAI (time tracking)
   # --------------------------------------------------------
-  app:
+  kimai-app:
     image: kimai/kimai2:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}
     restart: unless-stopped

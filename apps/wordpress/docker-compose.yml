@@ -64,7 +64,7 @@ services:
   # --------------------------------------------------------
   # WORDPRESS
   # --------------------------------------------------------
-  app:
+  wordpress-app:
     # --- Identity ---
     image: wordpress:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}

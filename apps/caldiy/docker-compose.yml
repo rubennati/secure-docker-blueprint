@@ -132,7 +132,7 @@ services:
   # --------------------------------------------------------
   # CAL.DIY (community edition)
   # --------------------------------------------------------
-  app:
+  caldiy-app:
     # --- Identity ---
     image: ghcr.io/rubennati/cal.diy:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}

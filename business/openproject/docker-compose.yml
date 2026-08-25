@@ -3,7 +3,7 @@
 # slim image and base environment. This anchor avoids duplication.
 #
 # Services omitted from the upstream compose:
-#   proxy      — Traefik terminates TLS and routes directly to web:8080
+#   proxy      — Traefik terminates TLS and routes directly to openproject-web:8080
 #   autoheal   — requires docker.sock direct mount (not permitted without exception)
 #   hocuspocus — real-time collaborative editing; omitted from this setup
 #
@@ -82,7 +82,7 @@ services:
         condition: service_started
 
   # ─── Web: application server ───────────────────────────────────────────────
-  web:
+  openproject-web:
     <<: *op-app
     container_name: ${CONTAINER_NAME_WEB}
     command: ["./docker/prod/web"]
@@ -265,8 +265,9 @@ networks:
   internal:
     name: ${COMPOSE_PROJECT_NAME}-internal
     driver: bridge
-    # No route out. `web` also joins `proxy` and keeps its outbound path; `db`,
-    # `cache`, `worker`, `cron` and `seeder` sit here alone and lose theirs.
+    # No route out. `openproject-web` also joins `proxy` and keeps its outbound
+    # path; `db`, `cache`, `worker`, `cron` and `seeder` sit here alone and lose
+    # theirs.
     # Background jobs deliver mail from `worker` — unverified on a host, see
     # the network section in README.md.
     internal: true

@@ -9,7 +9,7 @@ services:
   #
   # This compose runs the hub + one LOCAL agent on the same host.
   # For additional hosts deploy monitoring/beszel-agent/ there.
-  hub:
+  beszel-hub:
     # --- Identity ---
     image: henrygd/beszel:${APP_TAG}
     container_name: ${CONTAINER_NAME_HUB}

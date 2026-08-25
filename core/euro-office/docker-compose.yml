@@ -6,7 +6,7 @@ services:
   # XWiki, Proton). Drop-in replacement for onlyoffice/documentserver —
   # same API, same JWT + iframe integration. Used by Seafile / Nextcloud.
   # --------------------------------------------------------
-  app:
+  euro-office-app:
     # --- Identity ---
     image: ghcr.io/euro-office/documentserver:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}

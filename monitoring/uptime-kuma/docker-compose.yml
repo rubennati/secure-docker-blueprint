@@ -3,7 +3,7 @@ services:
   # --------------------------------------------------------
   # UPTIME KUMA (UI-driven uptime monitoring)
   # --------------------------------------------------------
-  app:
+  uptime-kuma-app:
     # --- Identity ---
     image: louislam/uptime-kuma:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}

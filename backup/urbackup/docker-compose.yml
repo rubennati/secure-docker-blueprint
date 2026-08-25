@@ -20,7 +20,7 @@ services:
   # URBACKUP SERVER
   # Single service — UrBackup keeps its own SQLite database, no DB container.
   # --------------------------------------------------------
-  app:
+  urbackup-app:
     # --- Identity ---
     # Digest-pinned: upstream publishes only rolling series tags (2.5.x), which
     # move. The digest makes the deployment reproducible — re-pin on upgrade.

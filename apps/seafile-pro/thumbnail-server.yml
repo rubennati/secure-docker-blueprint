@@ -3,7 +3,7 @@ services:
   # --------------------------------------------------------
   # THUMBNAIL SERVER (Image/Video Thumbnail Generation)
   # --------------------------------------------------------
-  thumbnail-server:
+  seafile-pro-thumbnail:
     # --- Identity ---
     image: seafileltd/thumbnail-server:${THUMBNAIL_TAG}
     container_name: ${CONTAINER_NAME_THUMBNAIL}
@@ -21,7 +21,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      app:
+      seafile-pro-app:
         condition: service_healthy
 
     # --- Security ---
@@ -41,7 +41,7 @@ services:
       - JWT_PRIVATE_KEY=${JWT_PRIVATE_KEY}
       - SEAFILE_LOG_TO_STDOUT=false
       - SITE_ROOT=/
-      - INNER_SEAHUB_SERVICE_URL=http://app:80
+      - INNER_SEAHUB_SERVICE_URL=http://seafile-pro-app:80
       - THUMBNAIL_IMAGE_ORIGINAL_SIZE_LIMIT=${THUMBNAIL_SIZE_LIMIT:-256}
       - SEAF_SERVER_STORAGE_TYPE=${SEAF_SERVER_STORAGE_TYPE:-disk}
 

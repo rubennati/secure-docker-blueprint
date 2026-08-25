@@ -77,7 +77,7 @@ services:
   # --------------------------------------------------------
   # PHOTOVIEW (Go app + GraphQL)
   # --------------------------------------------------------
-  app:
+  photoview-app:
     # --- Identity ---
     image: photoview/photoview:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}

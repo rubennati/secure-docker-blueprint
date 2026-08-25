@@ -5,7 +5,7 @@ services:
   # Highly-configurable self-hosted dashboard with file-based
   # YAML configs per concern (services, bookmarks, widgets, etc.).
   # --------------------------------------------------------
-  app:
+  homepage-app:
     # --- Identity ---
     image: ghcr.io/gethomepage/homepage:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}

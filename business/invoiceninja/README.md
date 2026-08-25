@@ -143,7 +143,7 @@ curl -sI https://your-domain/            # 200 or 302
 | Service | Image | Purpose |
 |---|---|---|
 | app | invoiceninja/invoiceninja-debian | PHP-FPM + Supervisor (scheduler + 2 queue workers) |
-| nginx | nginx | Web server — static assets + FastCGI proxy to app:9000 |
+| invoiceninja-nginx | nginx | Web server — static assets + FastCGI proxy to app:9000 |
 | mysql | mysql | Database (MySQL 8.x — upstream requirement) |
 | redis | redis | Cache / queue broker / sessions |
 
@@ -153,7 +153,7 @@ Supervisor inside the `app` container manages the Laravel scheduler and queue wo
 
 - `no-new-privileges:true` on all services
 - All services isolated on an internal bridge network
-- nginx is the only public-facing service (on `proxy-public`)
+- `invoiceninja-nginx` is the only public-facing service (on `proxy-public`)
 - MySQL and Redis are not exposed on the host
 - `REQUIRE_HTTPS=true` enforced via env
 - `APP_DEBUG=false` in production
@@ -310,7 +310,7 @@ Invoice Ninja uses Snappdf (Chromium) for PDF rendering. If `/api/v1/live_design
 1. **504 from nginx** — FastCGI read timeout exceeded. Check nginx access log for the upstream response time:
 
    ```bash
-   docker compose logs nginx --tail=50 | grep "live_design\|live_preview"
+   docker compose logs invoiceninja-nginx --tail=50 | grep "live_design\|live_preview"
    ```
 
    The nginx FastCGI timeouts are set to 300s in `nginx/laravel.conf`. If renders still time out, Chromium may be crashing — check app logs.
@@ -344,7 +344,7 @@ The actionable errors are HTTP **504** on `/api/v1/live_design` and **500** on `
 
 ```bash
 docker compose logs app --tail=50           # PHP-FPM + supervisor output
-docker compose logs nginx --tail=20         # Access and error logs
+docker compose logs invoiceninja-nginx --tail=20         # Access and error logs
 docker compose logs mysql --tail=20         # DB startup and errors
 ```
 

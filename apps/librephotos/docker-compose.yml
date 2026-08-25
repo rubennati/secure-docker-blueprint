@@ -163,7 +163,7 @@ services:
   # --------------------------------------------------------
   # PROXY (nginx — routes /api → backend, / → frontend, /media → disk)
   # --------------------------------------------------------
-  proxy:
+  librephotos-proxy:
     # --- Identity ---
     image: reallibrephotos/librephotos-proxy:${APP_TAG}
     container_name: ${CONTAINER_NAME_PROXY}

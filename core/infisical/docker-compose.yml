@@ -134,7 +134,7 @@ services:
   # --------------------------------------------------------
   # INFISICAL (backend + web UI + API)
   # --------------------------------------------------------
-  app:
+  infisical-app:
     # --- Identity ---
     image: infisical/infisical:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}

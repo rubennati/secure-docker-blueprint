@@ -8,8 +8,8 @@ Three-service stack with Traefik path-based split (same pattern as OpnForm):
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `ui` | `opensign/opensign:main` | React frontend |
-| `api` | `opensign/opensignserver:main` | Parse Server backend + PDF signing engine |
+| `opensign-ui` | `opensign/opensign:main` | React frontend |
+| `opensign-api` | `opensign/opensignserver:main` | Parse Server backend + PDF signing engine |
 | `db` | `mongo:6` | Documents, templates, users, audit log |
 
 Traefik routes `PathPrefix(/app)` to the API (priority 100), everything else to the UI (priority 1). No `/api` prefix — Traefik routes directly to Parse's mount path without stripping (unlike Caddy in the upstream default).
@@ -45,7 +45,7 @@ rm /tmp/opensign.key /tmp/opensign.crt /tmp/opensign.pfx
 # Configure mail in .env (Mailgun OR SMTP)
 
 docker compose up -d
-docker compose logs api --follow
+docker compose logs opensign-api --follow
 # Watch for: "opensign-server running on port 8080."
 # Then: "SUCCESS  Successfully run migrations."
 
@@ -89,7 +89,7 @@ wrong database and fails.
 the signature metadata that points at them. Either one alone restores to an
 e-signature service that cannot produce the documents it claims to have signed.
 
-**Restore order:** database first, then `api`, then `ui`.
+**Restore order:** database first, then `opensign-api`, then `opensign-ui`.
 
 ## Mail configuration
 
@@ -124,6 +124,20 @@ Without a working mail config, signature request emails do not go out and the fl
       }}}}]
     )'
   ```
+
+  The matched string is whatever Parse Server stored at upload time. Check an
+  existing document before running the update:
+
+  ```bash
+  docker compose exec db mongosh --quiet \
+    --username opensign --password "$(cat .secrets/db_root_pwd.txt)" \
+    --authenticationDatabase admin OpenSignDB \
+    --eval 'db.contracts_Document.findOne({}, { URL: 1 })'
+  ```
+
+  If an installation stored an internal API URL after the service rename, the
+  corresponding legacy value may be `http://opensign-api:8080`. Use the value
+  that installation actually holds as the `$regex` and `find` value.
 
 - **OCR / keyword detection** for auto-placement of signature fields requires the `OPENSIGN_OCR` side-car — not included here.
 
