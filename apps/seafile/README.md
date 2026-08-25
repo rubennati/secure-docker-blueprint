@@ -9,10 +9,10 @@ Seafile 13 is a collection of cooperating services, not a single container. The 
 | File | Services | Required? | Purpose |
 |------|----------|-----------|---------|
 | `seafile-server.yml` | `db`, `memcached`, `redis`, `seafile` | Yes | Core server + its backing services |
-| `seadoc.yml` | `seadoc` | Optional | Collaborative document editor (sdoc files) |
-| `notification-server.yml` | `notification-server` | Optional | Push notifications for file changes |
+| `seadoc.yml` | `seafile-seadoc` | Optional | Collaborative document editor (sdoc files) |
+| `notification-server.yml` | `seafile-notification` | Optional | Push notifications for file changes |
 | `md-server.yml` | `seafile-md-server` | Optional | File metadata / extended properties |
-| `thumbnail-server.yml` | `thumbnail-server` | Optional | Image and video thumbnails |
+| `thumbnail-server.yml` | `seafile-thumbnail` | Optional | Image and video thumbnails |
 
 ### Why split into five files
 
@@ -23,10 +23,10 @@ Seafile 13 is a collection of cooperating services, not a single container. The 
 Multiple services are exposed under the same host:
 
 - `/` → `seafile` (main UI + API)
-- `/socket.io/` → `seadoc` (real-time collaboration)
-- `/sdoc-server` → `seadoc` (sdoc API, prefix stripped)
-- `/notification` → `notification-server` (WebSocket push)
-- `/thumbnail` → `thumbnail-server`
+- `/socket.io/` → `seafile-seadoc` (real-time collaboration)
+- `/sdoc-server` → `seafile-seadoc` (sdoc API, prefix stripped)
+- `/notification` → `seafile-notification` (WebSocket push)
+- `/thumbnail` → `seafile-thumbnail`
 
 All routers share `APP_TRAEFIK_HOST`. OnlyOffice is _not_ routed through here — it has its own domain (`ONLYOFFICE_HOST`).
 
@@ -332,7 +332,7 @@ Test SeaDoc (if enabled):
 curl -fsSI https://<APP_TRAEFIK_HOST>/sdoc-server/
 ```
 
-Test notification-server (if enabled):
+Test seafile-notification (if enabled):
 
 ```bash
 curl -fsSI https://<APP_TRAEFIK_HOST>/notification/
@@ -341,8 +341,8 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/notification/
 ## Security Model
 
 - Database, Redis, and Memcached are only on `app-internal` (which is `internal: true`). None of them can reach the outside network directly.
-- The `seafile` main container is on both `proxy-public` (for Traefik) and `app-internal` (for DB + Redis). The optional web-facing services (`seadoc`, `notification-server`, `thumbnail-server`) follow the same pattern.
-- Most secrets live as Docker Secrets under `./.secrets/`. The wrapper entrypoint converts them to env vars inside the container. **Exception:** `thumbnail-server` does not use the entrypoint wrapper, so `JWT_PRIVATE_KEY` and `SEAFILE_MYSQL_DB_PASSWORD` must be set as direct environment variables in `.env` matching the secret file contents.
+- The `seafile` main container is on both `proxy-public` (for Traefik) and `app-internal` (for DB + Redis). The optional web-facing services (`seafile-seadoc`, `seafile-notification`, `seafile-thumbnail`) follow the same pattern.
+- Most secrets live as Docker Secrets under `./.secrets/`. The wrapper entrypoint converts them to env vars inside the container. **Exception:** `seafile-thumbnail` does not use the entrypoint wrapper, so `JWT_PRIVATE_KEY` and `SEAFILE_MYSQL_DB_PASSWORD` must be set as direct environment variables in `.env` matching the secret file contents.
 - `no-new-privileges:true` on every service.
 
 ## Backup
@@ -415,10 +415,10 @@ If `/thumbnail/...` requests return 403, there are two independent root causes:
 1. **Missing `JWT_PRIVATE_KEY`** — the thumbnail container started without the key. Verify without printing the secret:
 
    ```bash
-   docker compose exec thumbnail-server sh -lc 'printenv JWT_PRIVATE_KEY | wc -c'
+   docker compose exec seafile-thumbnail sh -lc 'printenv JWT_PRIVATE_KEY | wc -c'
    # Expected: non-zero byte count (e.g. 65)
    # If 0: JWT_PRIVATE_KEY is not in .env, or .env was not loaded
-   docker compose exec thumbnail-server sh -lc 'printenv SEAFILE_MYSQL_DB_PASSWORD | wc -c'
+   docker compose exec seafile-thumbnail sh -lc 'printenv SEAFILE_MYSQL_DB_PASSWORD | wc -c'
    # Expected: non-zero byte count
    ```
 
@@ -451,13 +451,13 @@ If applying this fix to a running deployment:
 4. Recreate only the affected containers:
 
    ```bash
-   docker compose up -d --force-recreate seafile thumbnail-server
+   docker compose up -d --force-recreate seafile seafile-thumbnail
    ```
 
 5. Verify the key is now present (non-zero byte count, no secret printed):
 
    ```bash
-   docker compose exec thumbnail-server sh -lc 'printenv JWT_PRIVATE_KEY | wc -c'
+   docker compose exec seafile-thumbnail sh -lc 'printenv JWT_PRIVATE_KEY | wc -c'
    ```
 
 6. Test thumbnail generation — request a thumbnail URL in the browser and confirm it no longer returns 403.

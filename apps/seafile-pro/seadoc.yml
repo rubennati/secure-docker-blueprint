@@ -3,7 +3,7 @@ services:
   # --------------------------------------------------------
   # SEADOC (Collaborative Document Editing)
   # --------------------------------------------------------
-  seadoc:
+  seafile-pro-seadoc:
     # --- Identity ---
     image: seafileltd/sdoc-server:${SEADOC_TAG}
     container_name: ${CONTAINER_NAME_SEADOC}
@@ -21,7 +21,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      app:
+      seafile-pro-app:
         condition: service_healthy
 
     # --- Security ---
@@ -38,7 +38,7 @@ services:
       - TIME_ZONE=${TZ}
       - JWT_PRIVATE_KEY=${JWT_PRIVATE_KEY}
       - NON_ROOT=false
-      - SEAHUB_SERVICE_URL=http://app
+      - SEAHUB_SERVICE_URL=http://seafile-pro-app
 
     # --- Storage ---
     volumes:

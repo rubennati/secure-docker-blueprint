@@ -3,7 +3,7 @@ services:
   # --------------------------------------------------------
   # THUMBNAIL SERVER (image/video thumbnails – optional)
   # --------------------------------------------------------
-  thumbnail-server:
+  seafile-thumbnail:
     # --- Identity ---
     image: ${THUMBNAIL_SERVER_IMAGE}
     container_name: ${CONTAINER_NAME_THUMBNAIL}

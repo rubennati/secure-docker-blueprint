@@ -3,7 +3,7 @@ services:
   # --------------------------------------------------------
   # NOTIFICATION SERVER (real-time file change updates – optional)
   # --------------------------------------------------------
-  notification-server:
+  seafile-notification:
     # --- Identity ---
     image: ${NOTIFICATION_SERVER_IMAGE}
     container_name: ${CONTAINER_NAME_NOTIFICATION}

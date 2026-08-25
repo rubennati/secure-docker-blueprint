@@ -47,7 +47,7 @@
 ## Known limitations
 
 - **Passwords in .env**: Docker Secrets via entrypoint wrapper didn't work with Phusion's `my_init` init system. Passwords are stored in `.env` (gitignored). TODO: revisit when Seafile adds native `_FILE` support. The same limitation applies to the SMTP password — `SEAFILE_SMTP_PASSWORD` is in `.env`, not a Docker Secret.
-- **One restart needed after first start**: `docker compose restart app` triggers automatic config injection for seahub_settings.py, seafevents.conf, and seafile.conf. No manual editing needed.
+- **One restart needed after first start**: `docker compose restart seafile-pro-app` triggers automatic config injection for seahub_settings.py, seafevents.conf, and seafile.conf. No manual editing needed.
 - **SeaDoc/Thumbnail Nginx check**: These containers check for Nginx/Caddy on startup. With Traefik, they need to be in `proxy-public` network with Traefik labels to pass this check.
 - **SEAHUB_DB_NAME is permanent**: Database names are chosen on first init. Changing `SEAHUB_DB_NAME` in `.env` after first start does not rename the database — it causes a mismatch. Migration requires manual database work.
 - **`DB_USER` may not control the actual MariaDB username**: On Seafile Pro 13.0, the database user created during first init was `seafile` regardless of the `DB_USER` value in `.env`. Operators setting a custom `DB_USER` (e.g. `seafileu`) should verify the actual MariaDB username after first boot — the configured value may be silently ignored. The `.env.example` defaults to `DB_USER=seafile`, which matches observed behaviour.
@@ -64,7 +64,7 @@ docker compose ps
 #    - seahub_settings.py (OnlyOffice + Metadata + Thumbnail)
 #    - seafevents.conf (SeaSearch — replaces Elasticsearch)
 #    - seafile.conf (ClamAV virus scanning)
-docker compose restart app
+docker compose restart seafile-pro-app
 
 # 3. Verify all configs were injected
 docker exec seafile-pro-app grep "Blueprint" /shared/seafile/conf/seahub_settings.py
@@ -88,7 +88,7 @@ marker `# --- Blueprint custom settings ---` prevents it from running again. Thi
 different from Seafile CE, which re-injects on every container start.
 
 - Settings that use `os.environ.get()` (OnlyOffice URL, SMTP host, etc.) are evaluated at
-  Django startup. Changing those values in `.env` and running `docker compose restart app`
+  Django startup. Changing those values in `.env` and running `docker compose restart seafile-pro-app`
   takes effect immediately — no re-injection needed.
 - Adding a brand-new setting that was absent from `config/seahub_custom.py` at injection
   time requires removing the marker line and everything after it from `seahub_settings.py`,
@@ -164,9 +164,9 @@ When bumping the Seafile Pro version:
 2. Check [upgrade notes](https://manual.seafile.com/13.0/upgrade/upgrade_docker/)
 3. Bump `APP_TAG` and related service tags in `.env`
 4. `docker compose pull` → `docker compose up -d`
-5. Check `docker compose logs -f app` for migration output
+5. Check `docker compose logs -f seafile-pro-app` for migration output
 6. Verify login and file access
-7. Re-run search index: `docker exec app pro.py search --update`
+7. Re-run search index: `docker exec seafile-pro-app pro.py search --update`
 
 ## Troubleshooting & Verification
 
@@ -202,7 +202,7 @@ curl -s https://your-domain/notification/ping
 # Expected: {"ret": "pong"}
 
 # Thumbnail server reachable from app?
-docker exec seafile-pro-app curl -sI http://thumbnail-server/thumbnail/ping
+docker exec seafile-pro-app curl -sI http://seafile-pro-thumbnail/thumbnail/ping
 # Expected: HTTP 405 (Method Not Allowed = server runs, just doesn't accept HEAD)
 
 # ClamAV reachable from app?
@@ -242,10 +242,10 @@ docker exec seafile-pro-app cat /shared/seafile/logs/seafevents.log | grep -i "v
 docker exec seafile-pro-seasearch cat /opt/seasearch/data/log/seasearch.log | tail -20
 
 # Individual service logs
-docker compose logs --tail=20 seadoc
-docker compose logs --tail=20 notification-server
+docker compose logs --tail=20 seafile-pro-seadoc
+docker compose logs --tail=20 seafile-pro-notification
 docker compose logs --tail=20 md-server
-docker compose logs --tail=20 thumbnail-server
+docker compose logs --tail=20 seafile-pro-thumbnail
 docker compose logs --tail=20 seasearch
 ```
 
@@ -278,11 +278,11 @@ docker inspect --format='{{json .Config.Entrypoint}} {{json .Config.Cmd}}' <imag
 | Service exit code 127 | Wrong entrypoint/command path | Check original CMD with `docker inspect` |
 | "Waiting Nginx" loop | Missing Traefik labels + proxy-public | Add labels like CE reference |
 | Thumbnail 403 | Router priority or missing JWT | Set priority=100, check env vars |
-| Search "No results" | SeaSearch not configured in seafevents.conf | `docker compose restart app` (auto-injects), or check manually with `grep SEASEARCH seafevents.conf` |
+| Search "No results" | SeaSearch not configured in seafevents.conf | `docker compose restart seafile-pro-app` (auto-injects), or check manually with `grep SEASEARCH seafevents.conf` |
 | env vars empty in app | my_init clears exports | Use .env directly, not Docker Secrets |
 | ClamAV connection refused | Missing clamd-remote.conf mount | Mount config with TCPAddr clamav |
-| OnlyOffice not loading | seahub_custom.py not injected | `docker compose restart app` (auto-injects) |
-| ClamAV not scanning | virus_scan not in seafile.conf | `docker compose restart app` (auto-injects), or check manually with `grep virus_scan seafile.conf` |
+| OnlyOffice not loading | seahub_custom.py not injected | `docker compose restart seafile-pro-app` (auto-injects) |
+| ClamAV not scanning | virus_scan not in seafile.conf | `docker compose restart seafile-pro-app` (auto-injects), or check manually with `grep virus_scan seafile.conf` |
 | `acc-tailscale` rejects Tailscale-routed requests | A tailnet client connects over IPv6 and an IPv4-only `proxy-public` loses that source address before the allowlist is evaluated | Enable dual-stack — `TROUBLESHOOTING.md` §4.4 carries the daemon prerequisites and the overlay. `acc-public` was the earlier workaround and removes the IP check for everyone |
 | Redis `WARNING Memory overcommit must be enabled` in logs | Host sysctl not tuned | Add `vm.overcommit_memory = 1` to `/etc/sysctl.conf`, then `sysctl -p`; non-blocking until then |
 | MariaDB `io_uring_queue_init() failed with EPERM` in logs | Kernel restricts io_uring (`io_uring_disabled=2`) | Non-blocking — MariaDB falls back to libaio automatically; no action needed |
