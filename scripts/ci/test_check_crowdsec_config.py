@@ -102,15 +102,21 @@ class ConditionalKeyRequirement(unittest.TestCase):
         self.assertEqual(code, 0)
 
     def test_key_value_is_never_printed(self):
-        """Output goes to operator terminals and CI logs; the key stays out of it."""
-        secret = "REAL-KEY-DO-NOT-LEAK"
-        self._write(active("crowdsec-appsec", secret))
+        """Output goes to operator terminals and CI logs; the key stays out of it.
+
+        The marker below is a fixed, meaningless string, not a credential and not
+        shaped like one. What is under test is whether the checker copies a key
+        value into its output, and any distinguishable string proves that — so
+        there is no reason to write something credential-looking to disk.
+        """
+        sentinel = "NON-SENSITIVE-TEST-SENTINEL"
+        self._write(active("crowdsec-appsec", sentinel))
         _, passing = run(cc.check_rendered, self.config)
         self._write(active("crowdsec-appsec", "").replace(
-            'crowdsecLapiKey: ""', f'crowdsecLapiKey: ""  # was {secret}'))
+            'crowdsecLapiKey: ""', f'crowdsecLapiKey: ""  # was {sentinel}'))
         _, failing = run(cc.check_rendered, self.config)
-        self.assertNotIn(secret, passing)
-        self.assertNotIn(secret, failing)
+        self.assertNotIn(sentinel, passing)
+        self.assertNotIn(sentinel, failing)
 
     def test_whitespace_only_key_counts_as_empty(self):
         self._write(active("crowdsec-basic", "   "))
