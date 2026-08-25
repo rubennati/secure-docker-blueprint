@@ -1,22 +1,24 @@
 # CI Pipeline
 
-All checks run automatically on every push to `dev` and `main`, on pull requests
-targeting `dev` or `main`, and nightly at 03:00 UTC.
+All checks run automatically on pull requests targeting `dev` or `main`, on every
+push to `main`, and nightly at 03:00 UTC.
 
 ```text
-push         (dev, main) ──┐
-pull_request (dev, main) ──┤
+pull_request (dev, main) ──┐
+push         (main)      ──┤
 schedule     03:00 UTC   ──┼──▶  CI
 workflow_dispatch        ──┘
 ```
 
-A pull request is checked before it is merged, and the branch is checked again
-after the merge lands. The two runs answer different questions: the pull request
-tests its own head merged into the base as it stood at check time, while the push
-tests the branch that actually resulted.
+There is no post-merge run on `dev`, and none is needed. The `Protect dev`
+ruleset requires a pull request and requires the branch to be up to date before
+merging, so the pull-request run already tests the integration that lands. A
+second run afterwards would repeat work already done.
 
-The nightly run uses the default branch, `main`. It is not a safety net for
-`dev`.
+`main` keeps both: the pull request from `dev` is checked before merge, and the
+push is checked again after it.
+
+The nightly run uses the default branch, `main`.
 
 ---
 
@@ -202,8 +204,8 @@ added to a checker's roots or declared in `NON_STACK_ROOTS` with the reason.
 Three coverage gaps surfaced by accident within one day, and each had let real
 stacks go unchecked for months.
 
-**Blocks merge:** not yet — the job runs, but adding it to the required set is a
-branch-protection setting.
+**Blocks merge:** on `dev`, yes — the `Protect dev` ruleset requires this job.
+Whether it is required on `main` is a separate branch-protection setting.
 
 ---
 
@@ -239,8 +241,8 @@ change. The checker matches phrases; whether a paragraph belongs to the purpose
 of its section is [the relevance test](documentation-workflow.md#the-relevance-test),
 which no checker can perform and which stays a review step.
 
-**Blocks merge:** not yet — the job runs, but adding it to the required set is a
-branch-protection setting.
+**Blocks merge:** on `dev`, yes — the `Protect dev` ruleset requires this job.
+Whether it is required on `main` is a separate branch-protection setting.
 
 ---
 
