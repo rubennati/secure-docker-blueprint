@@ -73,16 +73,33 @@ takes to the LAPI on `crowdsec:8080` and to AppSec on `crowdsec:7422`. The engin
 not join `proxy-public`: no application has a reason to reach it. Keep
 `CROWDSEC_SECURITY_NETWORK` identical in both `.env` files.
 
+A deployment where the engine already runs on `proxy-public` follows
+[Migrating an existing installation](#migrating-an-existing-installation) instead of
+the setup below.
+
 ### Setup
 
 ```bash
 # 1. Create .env
 cp .env.example .env
-# Review: TZ, TRAEFIK_LOG_PATH, CROWDSEC_LOG_GID
+# Review: TZ, TRAEFIK_LOG_PATH, CROWDSEC_LOG_GID, CROWDSEC_SECURITY_NETWORK
+#   CROWDSEC_SECURITY_NETWORK must hold the same value as in core/traefik/.env
 
-# 2. Start the engine
+# 2. Bring up Traefik first — it creates crowdsec-security
+(cd ../traefik && docker compose up -d)
+
+# 3. Start the engine
 docker compose up -d
+
+# 4. Both containers on the dedicated network?
+docker network inspect "$(grep ^CROWDSEC_SECURITY_NETWORK= .env | cut -d= -f2)" \
+  --format '{{range .Containers}}{{.Name}} {{end}}'
+# Expected: the Traefik container and crowdsec
 ```
+
+A fresh install has no migration state: the engine joins `crowdsec-security` on first
+start and never joins `proxy-public`. Phase 2 and AppSec stay off until you enable
+them — step 4 finishing means the path exists, not that anything is enforced.
 
 No secrets needed — the engine generates its own internal credentials on first start.
 
@@ -272,6 +289,142 @@ docker exec crowdsec cscli decisions delete --ip <address>
 Note that the firewall bouncer cannot filter by origin — it enforces every
 decision or none. Keeping community decisions at the proxy layer only, where a
 403 at least leaves a log line, is not something the current tooling offers.
+
+## Migrating an existing installation
+
+Only for a deployment where the engine already runs on `proxy-public`. A fresh install
+has nothing to migrate — use [Setup](#setup).
+
+The engine used to share `proxy-public` with every routed application; it now sits on
+`crowdsec-security`, which `core/traefik` creates. That is topology hardening —
+control-plane segmentation and defense in depth. The migration exists because the
+network's ownership and membership change, not because anything is broken today.
+
+**What can go wrong is losing the Traefik-to-CrowdSec path during the move, not the new
+network.** While that path is down, a middleware built from the repository defaults
+keeps serving traffic: both AppSec failure flags ship as `false`. A middleware where
+either is effectively `true` answers HTTP 403 on every route that uses it. Phase 3 is
+untouched throughout — the firewall bouncer talks to `127.0.0.1` on the host and never
+used `proxy-public`.
+
+The order is additive before subtractive: Traefik gains the new network, the engine
+joins both, the new path is proven, and only then does the old one go.
+
+### Pre-flight
+
+Have a way back in that does not depend on a router carrying a CrowdSec middleware — a
+Tailscale or LAN path, or the provider's console.
+
+Then read the failure flags out of the **rendered** configuration rather than the
+template, because the rendered file is what Traefik loaded:
+
+```bash
+grep -iE "appsec(Failure|Unreachable)Block" \
+  ../traefik/config/dynamic/integrations.yml
+```
+
+Both must read `false`. A missing line is not `false`: the plugin defaults both to
+`true`, so a middleware that omits them is fail-closed. If either is effectively `true`,
+set both to `false` in `../traefik/ops/templates/dynamic/integrations.yml.tmpl`, run
+`../traefik/ops/scripts/render.sh`, and restore your setting after step 3.
+
+### Step 1 — Traefik joins the new network
+
+Nothing is removed here. Traefik and the engine both stay on `proxy-public`.
+
+```bash
+cd ../traefik
+# add CROWDSEC_SECURITY_NETWORK to .env, matching core/crowdsec/.env
+docker compose up -d
+docker network inspect "$(grep ^CROWDSEC_SECURITY_NETWORK= .env | cut -d= -f2)" \
+  --format '{{range .Containers}}{{.Name}} {{end}}'
+# Expected: the Traefik container
+```
+
+### Step 2 — the engine on both networks, for the migration only
+
+Temporarily put `proxy-public` back beside `crowdsec-security` in
+`docker-compose.yml`, so the new path can be proven while the old one still carries
+traffic:
+
+```yaml
+    networks:
+      - crowdsec-security
+      - proxy-public          # temporary — removed again in step 3
+
+networks:
+  crowdsec-security:
+    external: true
+    name: ${CROWDSEC_SECURITY_NETWORK}
+  proxy-public:               # temporary — removed again in step 3
+    external: true
+```
+
+```bash
+cd ../crowdsec
+docker compose up -d --force-recreate crowdsec
+```
+
+Verify before going further:
+
+```bash
+# 1. Both containers on the dedicated network?
+docker network inspect "$(grep ^CROWDSEC_SECURITY_NETWORK= .env | cut -d= -f2)" \
+  --format '{{range .Containers}}{{.Name}} {{end}}'
+
+# 2. Does the bouncer still pull? This is the signal that Phase 2 survived.
+docker exec crowdsec cscli bouncers list
+# Expected: traefik-bouncer with a "Last API pull" inside the last ~60 s.
+# The recorded IP moves to the new subnet — that is the move landing, not a fault.
+```
+
+With AppSec enabled, also run the reachability check in
+[docs/appsec.md](docs/appsec.md) "Step 1", then send one request through a route that
+carries `crowdsec-appsec@file` and confirm it answers as before.
+
+### Step 3 — remove `proxy-public` from the engine
+
+Only once step 2 is green. Restore `docker-compose.yml` to the shipped form —
+`crowdsec-security` alone — and recreate:
+
+```bash
+docker compose up -d --force-recreate crowdsec
+```
+
+Verify:
+
+```bash
+# 1. The engine is gone from the shared network; Traefik is still on both.
+docker network inspect proxy-public --format '{{range .Containers}}{{.Name}} {{end}}'
+docker network inspect "$(grep ^CROWDSEC_SECURITY_NETWORK= .env | cut -d= -f2)" \
+  --format '{{range .Containers}}{{.Name}} {{end}}'
+
+# 2. The bouncer pull is still fresh.
+docker exec crowdsec cscli bouncers list
+
+# 3. The isolation landed: from one application container on proxy-public,
+#    the engine no longer resolves.
+docker exec <an-app-container> getent hosts crowdsec
+# Expected: no output, non-zero exit.
+```
+
+One application container is enough — every stack on `proxy-public` is in the same
+position. Restore the AppSec failure flags if pre-flight changed them.
+
+### Rollback
+
+Put `proxy-public` back on the engine in the step 2 form and recreate:
+
+```bash
+cd ../crowdsec
+docker compose up -d --force-recreate crowdsec
+docker exec crowdsec cscli bouncers list   # pull fresh again?
+```
+
+Traefik keeps `crowdsec-security`; step 1 costs nothing and stays valid. Find out why
+the dedicated path failed before retrying step 2.
+
+---
 
 ## Phase 2: Traefik Bouncer Plugin
 
