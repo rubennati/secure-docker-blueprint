@@ -96,6 +96,7 @@ services:
     networks:
       - public
       - socket_proxy_net
+      - crowdsec-security
 
     ports:
       - "${TRAEFIK_HTTP_PORT}:80/tcp"
@@ -150,3 +151,17 @@ networks:
   socket_proxy_net:
     name: ${SOCKET_PROXY_NETWORK}
     internal: true
+
+  # Core-to-core only: Traefik reaches the CrowdSec LAPI (8080) and AppSec
+  # (7422) here. No application joins it. Declared here rather than in
+  # core/crowdsec because Traefik is always deployed and CrowdSec is optional.
+  #
+  # Not internal: true — CrowdSec uses this normal bridge for outbound access
+  # required by hub updates, CAPI and blocklists. Making it internal would
+  # require a separate egress network without improving the intended member
+  # isolation.
+  #
+  # IPv4-only: container-to-container traffic, no client source IP to preserve.
+  crowdsec-security:
+    name: ${CROWDSEC_SECURITY_NETWORK}
+    driver: bridge

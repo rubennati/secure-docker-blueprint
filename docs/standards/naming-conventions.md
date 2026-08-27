@@ -35,6 +35,10 @@ Use `<stack>-<role>` where the role suffix adds useful meaning:
 A service name that is already inherently application-specific, such as
 `seafile`, needs no redundant role suffix.
 
+The rule addresses networks that independently deployable stacks join. A
+core-to-core network such as `crowdsec-security` is outside it: its members are
+named in this repository rather than open to any stack that attaches.
+
 `container_name` is a separate container identity and is unchanged by this rule.
 
 ## Container Names
@@ -85,6 +89,7 @@ APP_TAG=6.7-php8.3-fpm-alpine
 | Name | Type | Created by |
 |------|------|-----------|
 | `proxy-public` | `external: true` | core/traefik |
+| `crowdsec-security` | `external: true` | core/traefik |
 | `{app}-internal` | `name: ${COMPOSE_PROJECT_NAME}-internal` | Each app |
 
 ## Secrets

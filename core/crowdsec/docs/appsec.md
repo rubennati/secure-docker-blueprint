@@ -45,7 +45,7 @@ over time; AppSec catches known attack signatures in individual requests.
 | Item | State |
 |---|---|
 | AppSec engine | Installed and running inside the CrowdSec container |
-| AppSec port | Listening on `crowdsec:7422` (internal Docker network only) |
+| AppSec port | Listening on `crowdsec:7422`, reachable only on the `crowdsec-security` network |
 | AppSec rule sets | Installed via `CROWDSEC_COLLECTIONS` in `.env` |
 | AppSec enforcement | **Disabled by default** (`crowdsecAppsecEnabled: false` in the Traefik bouncer config) |
 | Applications using AppSec | None — no application router currently includes `crowdsec-appsec@file` as middleware |
@@ -115,14 +115,16 @@ docker exec traefik wget -q --spider http://crowdsec:7422/ 2>&1
 # Exit code 0 or a "Connection refused" → port exists.
 # "Name resolution failure" → containers are not on the same network.
 
-# Alternative: check that both containers share the proxy-public network:
+# Alternative: check that both containers share the crowdsec-security network:
 docker inspect crowdsec | grep -A5 '"Networks"'
 docker inspect traefik | grep -A5 '"Networks"'
-# Both must show proxy-public.
+# Both must show crowdsec-security.
 ```
 
-If CrowdSec is not on the proxy-public network, AppSec will always be unreachable from
-Traefik regardless of the flag settings.
+`crowdsec-security` is created by `core/traefik` and joined by `core/crowdsec` as an
+external network. If either container is missing from it, AppSec is unreachable from
+Traefik regardless of the flag settings. CrowdSec does not join `proxy-public`, so its
+absence there is the intended state and not the fault.
 
 #### Step 2 — Enable AppSec with fail-open
 

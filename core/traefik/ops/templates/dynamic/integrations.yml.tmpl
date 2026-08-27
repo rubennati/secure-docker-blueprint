@@ -28,7 +28,7 @@
     # CrowdSec Bouncer Plugin
     # ------------------------------------------------------
     # Prerequisites:
-    #   1. core/crowdsec running + on proxy-public network
+    #   1. core/crowdsec running + on crowdsec-security (created by core/traefik)
     #   2. Plugin loaded in traefik.yml (experimental.plugins)
     #   3. Bouncer key: docker exec crowdsec cscli bouncers add traefik-bouncer
     #   4. CROWDSEC_BOUNCER_KEY=<key> in .env

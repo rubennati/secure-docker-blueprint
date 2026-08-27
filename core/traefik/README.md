@@ -449,7 +449,7 @@ docker exec crowdsec cscli decisions delete --ip 1.2.3.4
 | Plugin not loading | `docker compose logs traefik` — look for plugin errors. Did you uncomment `experimental.plugins`? |
 | 403 for legitimate IPs | `docker exec crowdsec cscli decisions list` — check if the IP is banned. Remove with `cscli decisions delete --ip X.X.X.X` |
 | WAF blocking valid requests | Set `crowdsecAppsecEnabled: false` temporarily. Check CrowdSec logs for false positives |
-| Bouncer not connecting | `docker exec crowdsec cscli bouncers list` — check last heartbeat. Verify both containers are on `proxy-public` network |
+| Bouncer not connecting | `docker exec crowdsec cscli bouncers list` — check last heartbeat. Verify both containers are on the `crowdsec-security` network |
 | High latency | Verify `crowdsecMode: stream` (not `live`). Stream mode has no per-request overhead |
 
 ## Incident Quickmoves
