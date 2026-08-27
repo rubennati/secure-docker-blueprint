@@ -122,15 +122,17 @@ main       ← stable, tested, public
    └─ feature/*  ← short-lived branches; the only way into dev
 ```
 
-### Workflow rule: dev receives pull requests
+### Workflow rule: both branches receive pull requests
 
-All changes reach `dev` through a pull request from a short-lived branch. The
-`Protect dev` ruleset rejects direct pushes and requires the repository gates to
-pass against the current `dev` state before a merge is possible, so
-work-in-progress lives on the branch rather than on `dev`.
+All changes reach `dev` through a pull request from a short-lived branch, and
+reach `main` through a pull request from `dev`. Both branches carry an active
+ruleset that rejects direct pushes and requires the ten repository CI jobs to
+pass against the current state of the target branch before a merge is possible,
+so work-in-progress lives on the short-lived branch rather than on either
+protected branch.
 
-Changes from `dev` reach `main` through a pull request as the normal release
-workflow.
+Neither ruleset has a standing bypass actor. CodeQL runs on both branches as a
+reporting check: it surfaces findings and does not block a merge.
 
 Rationale:
 
@@ -147,7 +149,7 @@ Rationale:
 | New app, hardening, refactoring | branch from `dev` → pull request to `dev` |
 | Bugfix | branch from `dev` → pull request to `dev` |
 | Release | pull request from `dev` to `main` after test |
-| Emergency fix | `main` directly (rare, document why in commit) |
+| Emergency fix | see [Break-glass](#break-glass) — never a direct push |
 
 ### Merge workflow
 
@@ -164,15 +166,36 @@ If `dev` moves while the pull request is open, bring the branch up to date befor
 merging. The ruleset requires it, so the gates run against the integration that
 actually lands.
 
-If conflicts: resolve them on the branch, never by merging into `dev` locally.
+For a release, open the pull request from `dev` to `main` the same way. Both
+rulesets require the branch to be up to date before merging, so the gates run
+against the integration that actually lands.
+
+If conflicts: resolve them on the branch, never by merging into a protected
+branch locally.
+
+### Break-glass
+
+Normal changes always go through a pull request. There is no permanent bypass on
+either branch, and none should be added.
+
+If an emergency genuinely cannot wait for the normal path, the maintainer
+temporarily changes the GitHub ruleset, performs the action, and restores the
+ruleset immediately afterwards. The reason belongs in the commit message and in
+whatever incident record the change relates to.
+
+This is a deliberate, audited exception. It is not a development workflow, and
+nothing in this repository should be built on the assumption that it is
+available.
 
 ### Rules per branch
 
 **main:**
 
-- Everything tested
+- Only receives merged pull requests from `dev`; direct pushes are rejected
+- Everything tested, and the ten repository CI jobs passed against current `main`
 - Commit messages in English
-- Only updated via merge from `dev` (or rare direct commits for emergency)
+- Full CI runs again on the push that results from the merge — that run checks
+  the integrated branch rather than the pull request's merge preview
 
 **dev:**
 
@@ -198,13 +221,16 @@ Push only what should be public. Always push refs explicitly.
 ### Explicit push commands
 
 ```bash
-# Good — explicit refs
-git push origin main
+# Good — explicit ref, and on this repository the only ref you push
 git push -u origin fix/my-change
 
 # Avoid — pushes every local branch
 git push --all
 ```
+
+`main` and `dev` are not push targets: both rulesets reject a direct push, so the
+day-to-day push is always to a short-lived branch. The bootstrap commands below
+apply to a fresh remote that has no protection yet.
 
 ### Push-time checklist
 

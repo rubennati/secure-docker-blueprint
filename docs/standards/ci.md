@@ -10,13 +10,20 @@ schedule     03:00 UTC   ──┼──▶  CI
 workflow_dispatch        ──┘
 ```
 
-There is no post-merge run on `dev`, and none is needed. The `Protect dev`
-ruleset requires a pull request and requires the branch to be up to date before
-merging, so the pull-request run already tests the integration that lands. A
-second run afterwards would repeat work already done.
+Both `dev` and `main` are protected by an active ruleset that requires a pull
+request, requires all ten jobs below, and requires the branch to be up to date
+before merging. Neither ruleset has a standing bypass actor, so the pull-request
+run is what decides whether a change can land on either branch.
 
-`main` keeps both: the pull request from `dev` is checked before merge, and the
-push is checked again after it.
+That is why `dev` has no post-merge run: the branch had to be current, so the
+pull-request run already tested the integration that lands, and a second run
+would repeat it. `main` keeps its push run anyway. The extra cost is accepted on
+the branch that is published, tagged and released from, where a check against the
+resulting commit itself — rather than against a merge preview — is worth having.
+That push also drives the Pages deployment and the scheduled scanners.
+
+CodeQL runs on pull requests to both branches and reports its findings. It is
+deliberately **not** a required check and does not block a merge.
 
 The nightly run uses the default branch, `main`.
 
@@ -149,6 +156,8 @@ NO_NEW_PRIVILEGES_EXCEPTIONS: dict[str, dict[str, Exception]] = {
 The key is the **relative path to the directory** containing `docker-compose.yml`
 (e.g. `apps/myapp`, not `apps/myapp/docker-compose.yml`).
 
+**Blocks merge:** yes, on `dev` and on `main`.
+
 ---
 
 ### 5 — Sentinel value check
@@ -204,8 +213,7 @@ added to a checker's roots or declared in `NON_STACK_ROOTS` with the reason.
 Three coverage gaps surfaced by accident within one day, and each had let real
 stacks go unchecked for months.
 
-**Blocks merge:** on `dev`, yes — the `Protect dev` ruleset requires this job.
-Whether it is required on `main` is a separate branch-protection setting.
+**Blocks merge:** yes, on `dev` and on `main`.
 
 ---
 
@@ -241,8 +249,25 @@ change. The checker matches phrases; whether a paragraph belongs to the purpose
 of its section is [the relevance test](documentation-workflow.md#the-relevance-test),
 which no checker can perform and which stays a review step.
 
-**Blocks merge:** on `dev`, yes — the `Protect dev` ruleset requires this job.
-Whether it is required on `main` is a separate branch-protection setting.
+**Blocks merge:** yes, on `dev` and on `main`.
+
+---
+
+### 10 — Workflow supply chain
+
+Runs `scripts/ci/check-workflows.py` over `.github/workflows/`. A workflow is
+build infrastructure with write access to the repository, so it is checked the
+way the stacks are.
+
+Three rules:
+
+| Rule | What triggers it |
+|---|---|
+| Action pinned to a mutable ref | `uses:` naming a tag or branch instead of a commit SHA — a tag can be moved to different code after review |
+| SHA without a version comment | a pinned SHA with no `# vX.Y.Z` beside it, which leaves nobody able to tell which release is pinned or when it aged |
+| Workflow without `permissions:` | no explicit token scope, so the job inherits the repository default rather than stating what it needs |
+
+**Blocks merge:** yes, on `dev` and on `main`.
 
 ---
 
