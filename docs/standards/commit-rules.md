@@ -119,12 +119,18 @@ main       ← stable, tested, public
 │
 └─ dev     ← active work, merges into main after test
    │
-   └─ feature/*  ← optional, short-lived feature branches
+   └─ feature/*  ← short-lived branches; the only way into dev
 ```
 
-### Workflow rule: work in dev
+### Workflow rule: dev receives pull requests
 
-All changes go through `dev` first. Direct commits to `main` are avoided. Only exception: commits that update branch-tracking / meta files when they were first introduced.
+All changes reach `dev` through a pull request from a short-lived branch. The
+`Protect dev` ruleset rejects direct pushes and requires the repository gates to
+pass against the current `dev` state before a merge is possible, so
+work-in-progress lives on the branch rather than on `dev`.
+
+Changes from `dev` reach `main` through a pull request as the normal release
+workflow.
 
 Rationale:
 
@@ -137,26 +143,28 @@ Rationale:
 
 | Change type | Branch |
 |-------------|--------|
-| Any code change | `dev` → merge to `main` after test |
-| New app, hardening, refactoring | `dev` → merge to `main` after test |
-| Bugfix | `dev` → merge to `main` after test |
-| Larger, isolated work | `feature/<name>` from `dev`, merge back into `dev` |
+| Any code change | branch from `dev` → pull request to `dev` |
+| New app, hardening, refactoring | branch from `dev` → pull request to `dev` |
+| Bugfix | branch from `dev` → pull request to `dev` |
+| Release | pull request from `dev` to `main` after test |
 | Emergency fix | `main` directly (rare, document why in commit) |
 
 ### Merge workflow
 
 ```bash
-# Feature merged into dev
-git checkout dev
-git merge feature/my-change
-git branch -d feature/my-change
+# Work on a branch off dev
+git switch dev && git pull --ff-only
+git switch -c fix/my-change
 
-# dev merged into main (only after test)
-git checkout main
-git merge dev
+# Publish it, then open a pull request against dev and merge it there
+git push -u origin fix/my-change
 ```
 
-If conflicts: resolve on the incoming branch first, then merge clean.
+If `dev` moves while the pull request is open, bring the branch up to date before
+merging. The ruleset requires it, so the gates run against the integration that
+actually lands.
+
+If conflicts: resolve them on the branch, never by merging into `dev` locally.
 
 ### Rules per branch
 
@@ -168,8 +176,9 @@ If conflicts: resolve on the incoming branch first, then merge clean.
 
 **dev:**
 
-- Work-in-progress allowed, but commits should build
-- Will be merged into `main` after test
+- Only receives merged pull requests; direct pushes are rejected
+- Represents integrated development state that has passed the gates
+- Merged into `main` through a pull request after test
 
 **feature/\*:**
 
@@ -180,7 +189,7 @@ If conflicts: resolve on the incoming branch first, then merge clean.
 ### Merge rules
 
 - `dev` → `main`: only after live testing passed and tests green
-- `feature/*` → `dev`: after the feature works and is self-contained
+- `feature/*` → `dev`: through a pull request, once the feature works and is self-contained
 
 ## Push Strategy
 
@@ -191,7 +200,7 @@ Push only what should be public. Always push refs explicitly.
 ```bash
 # Good — explicit refs
 git push origin main
-git push origin main dev
+git push -u origin fix/my-change
 
 # Avoid — pushes every local branch
 git push --all
@@ -214,7 +223,6 @@ git remote add origin git@github.com:<user>/<repo>.git
 
 # Optional: configure which refs get pushed by default
 git config --add remote.origin.push refs/heads/main
-git config --add remote.origin.push refs/heads/dev
 
 # Verify config
 git config --get-all remote.origin.push
@@ -232,7 +240,6 @@ git push --dry-run origin
 
 # 3. Actual push
 git push origin main
-git push origin dev
 ```
 
 ### Pre-push audit

@@ -52,13 +52,14 @@ The required-check names must match the job `name:` fields in
 `.github/workflows/ci.yml` exactly. Renaming a job without updating branch
 protection leaves every pull request waiting on a check that can never report.
 
-> `Checker coverage`, `Docs QA` and `Workflow supply chain` run but are **not yet in the required set** — adding it to
-> branch protection is a repository setting, not a file in here.
+All ten jobs above are required on a pull request into `dev`, `Checker coverage`,
+`Docs QA` and `Workflow supply chain` included. The `Protect dev` ruleset also
+requires the branch to be up to date before merging, so the run that gates the
+merge is the run against the integration that lands. CodeQL reports on the same
+pull request and is deliberately **not** required.
 
-Only `main` is a protected branch. Every job reports on a pull request into `dev`
-as well, but nothing there is required: the checks inform the review, they do not
-block the merge. Making them block is a branch-protection change on `dev`, not a
-change to this file.
+Which checks are required on `main` is a separate branch-protection setting and
+is not asserted here.
 
 ## Prose register — two modes
 
