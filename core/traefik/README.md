@@ -484,8 +484,9 @@ What it means in practice:
 
 | | |
 |---|---|
-| **Included** | every request answered `2xx`, `4xx` and `5xx` |
-| **Excluded** | `1xx` and `3xx`. Redirects do not appear, so the global HTTP-to-HTTPS redirect is invisible here and no scenario can match on it |
+| **Included** | every request answered `2xx`, `3xx`, `4xx` and `5xx`. The range is inclusive at both ends, so `300-399` is inside it — a backend's `302` login redirect or a `304` reaches the log like any other response |
+| **Excluded** | `1xx` |
+| **The global redirect is still missing** | the HTTP-to-HTTPS redirect on the `web` entrypoint writes no access log line at all, so no scenario can match on it. That is not the status filter — widening or narrowing the range does not bring it back |
 | **Volume** | one line per successful request rather than per failed one. On a busy host that is orders of magnitude more, which is why logrotate below is not optional |
 | **Query strings appear** | the request URI is logged whole. Anything an application accepts as a query parameter — a share token, a search term, an id — lands in this file and in every backup that includes it |
 | **Not logged** | request bodies, cookies and `Authorization` headers. Traefik does not record them by default and nothing here turns that on |
@@ -494,7 +495,8 @@ Narrowing to `400-599` is a supported choice if the volume or the query strings
 matter more than detection breadth. CrowdSec's shipped scenarios are built around
 4xx and 5xx patterns — probing, sensitive file access, path traversal, CVE scans —
 and keep working either way. What a narrower filter removes is the ability to write
-a scenario about authenticated activity later.
+a scenario about authenticated activity, or about a backend's redirect behaviour,
+later.
 
 **`docker compose logs traefik` shows nothing — this is expected.** Both files above are configured via `log.filePath` / `accessLog.filePath` in `traefik.yml`, so Traefik writes to files, not stdout. Read the logs directly instead:
 
