@@ -699,7 +699,7 @@ docker exec crowdsec cscli bouncers list
 # Then update CROWDSEC_BOUNCER_KEY in core/traefik/.env and re-render templates
 
 # 3. Can Traefik reach CrowdSec?
-# Both containers must be on the same Docker network (proxy-public)
+# Both containers must be on the same Docker network (crowdsec-security)
 docker inspect crowdsec | grep -A5 '"Networks"'
 docker inspect traefik | grep -A5 '"Networks"'
 ```

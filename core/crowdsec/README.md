@@ -66,6 +66,13 @@ The `.env` vars that matter:
 - Traefik side (`core/traefik/.env`): `TRAEFIK_ACCESSLOG_FORMAT=json` and `TRAEFIK_ACCESSLOG_FILE=/var/log/traefik/access.log`
 - CrowdSec side (`core/crowdsec/.env`): `TRAEFIK_LOG_PATH=../traefik/volumes/logs` (relative path — override with absolute if Traefik lives elsewhere)
 
+**Start `core/traefik` first.** It creates `crowdsec-security`, the network this engine
+joins as an external one, so starting this stack before that network exists fails
+immediately. Traefik joins the same network — that is the path the Phase 2 bouncer
+takes to the LAPI on `crowdsec:8080` and to AppSec on `crowdsec:7422`. The engine does
+not join `proxy-public`: no application has a reason to reach it. Keep
+`CROWDSEC_SECURITY_NETWORK` identical in both `.env` files.
+
 ### Setup
 
 ```bash
