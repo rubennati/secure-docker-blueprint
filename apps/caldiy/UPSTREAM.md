@@ -10,7 +10,7 @@
 - **License:** MIT
 - **Relationship:** Community-edition spin-out of Cal.com (2026, after Cal.com moved its production code behind a closed-source licence). This blueprint consumes the **hardened fork**, not upstream directly.
 - **Origin:** Fork · rubennati · upstream: US · Cal.com Inc · non-EU
-- **Based on version:** `v6.2.0` (fork release `v6.2.0-5`)
+- **Based on version:** `v6.2.0` (fork release `v6.2.0-6`)
 - **Last verified:** 2026-07-26 (v6.2.0-3)
 
 ## Why a fork?
@@ -40,7 +40,7 @@ Consume **only** a reviewed tag or digest from `release` — never `latest`.
 
 ## What we use
 
-- `ghcr.io/rubennati/cal.diy:v6.2.0-5` — built from the `rubennati/cal.diy` (cal.forte) fork's `release` branch
+- `ghcr.io/rubennati/cal.diy:v6.2.0-6` — built from the `rubennati/cal.diy` (cal.forte) fork's `release` branch
 - `postgres:17.4` as primary backend
 - `redis:7.4-alpine` for session cache and job queue (required by upstream)
 - Custom entrypoint (`config/entrypoint.sh`) injects all secrets from Docker Secret files
@@ -120,6 +120,36 @@ cat dump.sql | docker compose exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$PO
 # Check app logs
 docker compose logs app --follow --tail 50
 ```
+
+## Fork release v6.2.0-6
+
+Source commit `9b9df424e3f3ad94fd4a5fc4c5387764f1dbce65`, tree
+`8db16d911d822c19331aaabb406eb846cacec673`. Published, not a prerelease. Pull the
+digest and restart — no schema, no configuration and no API migration.
+
+Containment and security work in the release:
+
+- Zoho credential-host validation
+- authenticated, signed Intercom configure handling
+- owner-scoped public slot lookup
+- PBAC placeholders changed from fail-open to fail-closed
+- restored API-key tRPC adapter
+- MIT LICENSE included in the runtime image
+- patched Vitest
+- stronger enforced release gates
+
+**What the release does not fix.** It narrows exposure; it does not make the fork
+hardened, and the pin should not be read as that claim:
+
+- PBAC is not implemented
+- Teams remain unsupported and not fully secured
+- fork issue #14 is containment rather than full remediation
+- two CRITICAL fixable library findings stay report-only — stdlib `CVE-2025-68121`
+  and tar `CVE-2026-59873`
+- fork issue #46 is an accepted P3 runtime-validation defect
+
+None of it is exercised on a host from this repository: **Last verified** above still
+reads `2026-07-26 (v6.2.0-3)`.
 
 ## Known limitations
 
