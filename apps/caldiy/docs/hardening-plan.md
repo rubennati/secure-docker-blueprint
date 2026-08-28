@@ -144,7 +144,9 @@ on. Full steps: [`core/crowdsec/docs/profiles.md`](../../../core/crowdsec/docs/p
    `core/traefik/ops/templates/dynamic/integrations.yml.tmpl` (block already scaffolded).
 3. **Validate on `core/whoami` first** — ban a test IP (never your admin IP), confirm 403, roll
    back. Do not touch the Cal.diY router until this passes.
-4. Attach to the Cal.diY router as the **first** middleware:
+4. Attach to the Cal.diY router as the **first** middleware by setting
+   `APP_TRAEFIK_THREAT=crowdsec-basic@file,` in `apps/caldiy/.env` — note the trailing
+   comma — and recreating the app. The rendered chain becomes
    `crowdsec-basic@file, acc-public@file, sec-3@file`.
 
 ### 2.2 `crowdsec-appsec` (WAF, fail-open) — the layer that most directly addresses the incident
