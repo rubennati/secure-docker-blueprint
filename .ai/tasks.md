@@ -28,9 +28,9 @@ what v0.7.0's session left open is in
 - [ ] Verify `monitoring/ntfy` — `read_only: true`, the `sec-3` rate limit under a
       publish burst, and one message proven to arrive on a real device. Its Known
       Issues list is the check list.
-- [ ] Validate `apps/caldiy` on `v6.2.0-5` — the pin and the documentation moved,
+- [ ] Validate `apps/caldiy` on `v6.2.0-6` — the pin and the documentation moved,
       the verification did not. `UPSTREAM.md` still reads `Last verified: 2026-07-26
-      (v6.2.0-3)`, so the stamp is now two fork releases behind the pin. Issue #30
+      (v6.2.0-3)`, so the stamp is now three fork releases behind the pin. Issue #30
       lists what has to pass: entrypoint against the non-root `node` user, every
       mounted secret readable without widening permissions, database migration,
       `/api/health` and the container healthcheck, login plus one booking, SMTP and

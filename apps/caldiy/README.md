@@ -10,7 +10,7 @@ For an alternative with an established track record and no build dependency, see
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `ghcr.io/rubennati/cal.diy:v6.2.0-5` | Next.js web app + scheduling engine |
+| `app` | `ghcr.io/rubennati/cal.diy:v6.2.0-6` | Next.js web app + scheduling engine |
 | `db` | `postgres:17.4` | Users, event types, bookings, team memberships |
 | `redis` | `redis:7.4-alpine` | Session cache + job queue |
 
