@@ -549,16 +549,6 @@
     "verified_anchored": true,
     "verified_version": "v1.11.0"
   },
-  "core/workbench": {
-    "backup_docs": "missing",
-    "local_stack": "—",
-    "pinned": "APP_TAG=1.29-alpine",
-    "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "—",
-    "verified_anchored": false,
-    "verified_version": ""
-  },
   "monitoring/beszel": {
     "backup_docs": "documented",
     "local_stack": "✅",

@@ -4,7 +4,7 @@
 
 Generated 2026-09-07 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-63 stacks: 1 ops-proven · 30 baseline-aligned · 32 scaffolded. 53 carry a local test stack.
+62 stacks: 1 ops-proven · 30 baseline-aligned · 31 scaffolded. 53 carry a local test stack.
 
 This is the maintainer's view: what has been established about each stack. It makes no statement about whether a stack suits a given deployment.
 
@@ -34,7 +34,6 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`core/portainer-agent`](core/portainer-agent/) | `baseline-aligned` | `APP_TAG=2.39.5` | 2026-05-05 | — | documented | missing |
 | [`core/traefik`](core/traefik/) | `baseline-aligned` | `TRAEFIK_IMAGE=traefik:v3.6` | 2026-07-29 | — | documented | missing |
 | [`core/whoami`](core/whoami/) | `baseline-aligned` | `APP_TAG=v1.11.0` | 2026-07-29 | ✅ | documented | missing |
-| [`core/workbench`](core/workbench/) | `scaffolded` | `APP_TAG=1.29-alpine` | — | — | missing | missing |
 
 ## `apps/`
 
