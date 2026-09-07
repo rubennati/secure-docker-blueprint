@@ -209,6 +209,34 @@ monitoring. Documented per category README.
 repositories mean two retention policies and two restore rehearsals — a real
 operational cost that does not exist for monitoring tools covering different axes.
 
+## 2026-09 · Capabilities, with one reference implementation each
+
+The blueprint is a set of capabilities — Foundation, Reverse Proxy, Identity & Access,
+Threat Detection & Remediation, Web Application Security, Network Security — and each has
+at most one product that this repository actually configures and tests. The capability
+answers whether a deployment needs the function; the product is replaceable. Both
+questions were previously answered by naming a product.
+
+`docs/architecture.md` owns the model: the capability table, the Foundation boundary, the
+exposure classification, the state-ownership rule and the application contract. Stack
+READMEs stay product documentation. The directory split by access pattern is unchanged —
+the capability model is a layer above it, not a replacement for it.
+
+Three states are kept apart: **implemented** (configured and exercised here),
+**documented alternative** (described so a fork can choose it, not maintained here) and
+**evaluation candidate** (no claim of support). Current: Traefik, Authentik and CrowdSec
+implemented; CrowdSec AppSec the current Web Application Security reference with Coraza +
+OWASP CRS a documented alternative — mature engine, but the Traefik open-source
+integration is not mature enough to adopt; Suricata an evaluation candidate for passive
+network IDS, not implemented and not baseline. SIEM, XDR and SOC platforms are out of
+scope: different operating model, and a secure Docker host does not need one.
+
+**An application does not intrinsically require Traefik.** It requires the reverse-proxy
+capability when served over a network, and most stacks ship a local compose file that uses
+no proxy at all. The concrete integration vocabulary stays Traefik-specific
+(`APP_TRAEFIK_*`, `acc-tailscale`) because the implementation genuinely is — renaming
+waits for a second implementation that creates the need.
+
 ## 2026-09 · CrowdSec has a Core and two independent remediation points
 
 "Phase 1 / 2 / 3" is retired from current documentation. It implied an order that the

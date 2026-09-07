@@ -34,14 +34,19 @@ Eight stacks have none, because running them alone shows nothing: `adminer`,
 The rest of this page is for serving an application to someone other than
 yourself.
 
-## Traefik — required
+## A reverse proxy — required
 
-**Without it, nothing else in this blueprint is reachable over the network.** The
+**Without one, nothing else in this blueprint is reachable over the network.** The
 applications publish no ports of their own. They attach to a Docker network called
 `proxy-public` and expect something in front to terminate TLS and route requests
-by hostname. Traefik is that something, and it also carries the middleware each
-service switches on: security headers, rate limits, and the access rules that
-decide whether a service answers the open internet or only your VPN.
+by hostname. That job — the reverse proxy — is what every served application needs.
+
+**Traefik is what this blueprint provides for it**, and it also carries the
+middleware each service switches on: security headers, rate limits, and the access
+rules that decide whether a service answers the open internet or only your VPN.
+Another reverse proxy could do the routing, but the middleware, the certificate
+handling and the per-application labels here are written for Traefik — swapping it
+means replacing those, and the blueprint does not maintain a second set.
 
 One certificate strategy, one set of access policies, one place to change them.
 
