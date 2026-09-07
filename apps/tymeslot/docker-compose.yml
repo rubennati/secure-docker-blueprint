@@ -1,0 +1,240 @@
+# =============================================================================
+# Tymeslot — meeting scheduling platform (Elixir / Phoenix LiveView)
+# =============================================================================
+# Booking pages, calendar sync and automated mail on your own server.
+#
+# Image: luka1thb/tymeslot (https://hub.docker.com/r/luka1thb/tymeslot)
+# Source: https://github.com/tymeslot/tymeslot
+#
+# The `-slim` tag carries no PostgreSQL server; the database is the `db`
+# service below, the shape upstream's docker-compose.with-postgres.yml
+# describes. The plain tag bundles PostgreSQL inside the app container, which
+# would put the database on proxy-public.
+# =============================================================================
+
+services:
+
+  # --------------------------------------------------------
+  # DATABASE (PostgreSQL)
+  # --------------------------------------------------------
+  db:
+    # --- Identity ---
+    image: postgres:${DB_TAG}
+    container_name: ${CONTAINER_NAME_DB}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # Re-added deliberately: the official entrypoint starts as root, fixes
+    # ownership on the data directory, then drops to the service user. With
+    # cap_drop: ALL alone postgres exits on `chown: Operation not permitted`.
+    # Set established in apps/_reference on 2026-08-16.
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+
+    # --- Resources ---
+    # A small scheduling database; retune after measuring with `docker stats`.
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          # cpus: derived starting value, not measured — v0.9.0
+          cpus: "0.50"
+          pids: 100
+        reservations:
+          memory: 128m
+
+    # --- Configuration ---
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/DB_PWD
+      TZ: ${TZ}
+    secrets:
+      - DB_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/postgres:/var/lib/postgresql/data
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER} -h 127.0.0.1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  # --------------------------------------------------------
+  # TYMESLOT (web app and Oban job runner in one BEAM)
+  # --------------------------------------------------------
+  tymeslot-app:
+    # --- Identity ---
+    image: luka1thb/tymeslot:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+
+    # --- Security ---
+    # The image starts as root: start-docker.sh prepares /app/data, then drops
+    # to the unprivileged `app` user (uid 1000) with `su -p` for the migrations
+    # and the server. Established against luka1thb/tymeslot:1.15.1-slim on
+    # 2026-09-07 by removing capabilities one at a time:
+    #   SETUID, SETGID  `su` cannot switch to `app` without them
+    #   DAC_OVERRIDE    root's `mkdir -p /app/data/tzdata` inside the app-owned
+    #                   data directory fails with "Permission denied"
+    #   CHOWN           `chown -R app:app /app/data` fails with "Operation not
+    #                   permitted" on the directories root has just created
+    #   FOWNER          not needed — the script runs no chmod in external
+    #                   database mode
+    # The root filesystem is read-only. The release copies its sys.config to
+    # /app/tmp at boot, and the application writes only below /app/data.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - SETGID
+      - SETUID
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /run
+      - /app/tmp:uid=1000,gid=1000,mode=0755
+
+    # --- Resources ---
+    # Starting values for one BEAM node serving the web UI and the job queue.
+    # Retune after measuring a booking flow with `docker stats`.
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          # cpus: derived starting value, not measured — v0.9.0
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 256m
+
+    # --- Configuration ---
+    # No _FILE support for any secret: config/entrypoint.sh exports them from
+    # /run/secrets/ and then hands over to the image's own start script.
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
+    command: ["/app/start-docker.sh"]
+    environment:
+      TZ: ${TZ}
+      # Public identity. Generated links, the LiveView origin check and the
+      # secure cookie flag all derive from these two.
+      PHX_HOST: ${APP_TRAEFIK_HOST}
+      URL_SCHEME: https
+      # Database as discrete variables; the password arrives as
+      # POSTGRES_PASSWORD from the entrypoint. A host other than localhost
+      # switches the start script to external mode, which skips every
+      # bundled-database step.
+      DATABASE_HOST: db
+      DATABASE_PORT: "5432"
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      DATABASE_POOL_SIZE: ${DATABASE_POOL_SIZE}
+      # The first account to register becomes admin. Close registration
+      # afterwards — here, or from /admin, which overrides this value.
+      REGISTRATION_ENABLED: ${REGISTRATION_ENABLED}
+      # Mail. `test` discards every message silently; `smtp` needs a host, a
+      # username and a non-empty password or the app refuses to boot. Port 587
+      # forces STARTTLS, 465 implicit TLS, any other port opportunistic TLS.
+      EMAIL_ADAPTER: ${EMAIL_ADAPTER}
+      EMAIL_FROM_NAME: ${EMAIL_FROM_NAME}
+      EMAIL_FROM_ADDRESS: ${EMAIL_FROM_ADDRESS}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USERNAME: ${SMTP_USERNAME}
+      # Social login stays off. Calendar and video OAuth are separate: each
+      # user connects them from the dashboard once the provider credentials
+      # (GOOGLE_*, OUTLOOK_*, ZOOM_*) are added to this block.
+      ENABLE_GOOGLE_AUTH: "false"
+      ENABLE_GITHUB_AUTH: "false"
+      ENABLE_OAUTH_AUTH: "false"
+      # WEBHOOK_BASE_URL stays unset. Calendar push notifications need a host
+      # the providers can reach from the public internet; without it the sync
+      # falls back to polling every 15 minutes.
+    secrets:
+      - SECRET_KEY_BASE
+      - DATA_ENCRYPTION_KEY
+      - DB_PWD
+      - SMTP_PASSWORD
+
+    # --- Storage ---
+    volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
+      - ./volumes/data:/app/data
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+      - app-internal
+
+    # --- Traefik ---
+    labels:
+      # Router
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      # TLS
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Middlewares
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      # Service
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=4000"
+
+    # --- Health & Observability ---
+    # The image ships neither curl nor wget; bash's /dev/tcp issues the request.
+    # /healthcheck answers 200 only when the database and the job queue both
+    # respond, and rate-limits itself at 30 requests per minute per address.
+    # start_period covers the migrations on a first boot.
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/4000 && printf 'GET /healthcheck HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && head -n1 <&3 | grep -q ' 200 '"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  SECRET_KEY_BASE:
+    file: ./.secrets/secret_key_base.txt
+  DATA_ENCRYPTION_KEY:
+    file: ./.secrets/data_encryption_key.txt
+  DB_PWD:
+    file: ./.secrets/db_pwd.txt
+  SMTP_PASSWORD:
+    file: ./.secrets/smtp_password.txt

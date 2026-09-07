@@ -188,6 +188,7 @@ Three 1:1-booking apps as a choice-matrix (pick one), plus a planned group-polli
 |---|---|---|
 | [Cal.diy](apps/caldiy/) | Next.js + Postgres + Redis | MIT community edition of Cal.com (community fork, personal use). |
 | [Easy!Appointments](apps/easyappointments/) | PHP + MariaDB | Lightweight PHP alternative, established 2013, GPL-3.0. |
+| [Tymeslot](apps/tymeslot/) | Elixir/Phoenix + Postgres | Calendar sync with Google, Outlook, Apple and CalDAV, video links, reminder mail; AGPL-3.0, releases several times a week. |
 
 Planned: **Rallly** (group scheduling polls — Doodle alternative, complementary not competing with the 1:1 bookers above).
 
@@ -231,6 +232,7 @@ Planned (apps/): Headscale (self-hosted Tailscale control server), PrivateBin, S
 |---|---|---|
 | [Adminer](apps/adminer/) | Single container | Database administration UI (connects to other apps' DBs) |
 | [IT-Tools](apps/it-tools/) | Single container | Collection of IT / developer utilities (JSON, hash, regex, etc.) |
+| [Mailpit](apps/mailpit/) | Single container | SMTP sink for trying out the stacks that send mail — accepts every message, shows it, delivers nothing |
 
 Docker-management tools (Dockhand / Portainer / Hawser) moved to [`core/`](core/) — they're infrastructure, not apps.
 
@@ -323,8 +325,8 @@ secure-docker-blueprint/
 │   ├── immich/  paperless-ngx/  nextcloud/  seafile/  seafile-pro/
 │   ├── vaultwarden/
 │   ├── nocodb/  n8n/  opnform/  monicahq/
-│   ├── caldiy/  easyappointments/
-│   ├── adminer/  it-tools/  unifi/
+│   ├── caldiy/  easyappointments/  tymeslot/
+│   ├── adminer/  it-tools/  mailpit/  unifi/
 │   └── ...
 │
 ├── business/                    # Company-only apps

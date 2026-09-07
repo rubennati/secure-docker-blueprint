@@ -129,6 +129,16 @@
     "verified_anchored": false,
     "verified_version": ""
   },
+  "apps/mailpit": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=v1.31.1",
+    "restore_docs": "missing",
+    "state": "baseline-aligned",
+    "verified": "2026-09-07",
+    "verified_anchored": true,
+    "verified_version": "v1.31.1"
+  },
   "apps/monicahq": {
     "backup_docs": "documented",
     "local_stack": "✅",
@@ -228,6 +238,16 @@
     "verified": "2026-04-13",
     "verified_anchored": false,
     "verified_version": ""
+  },
+  "apps/tymeslot": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=1.15.1-slim@sha256:4bde62fd9bb1…",
+    "restore_docs": "missing",
+    "state": "baseline-aligned",
+    "verified": "2026-09-07",
+    "verified_anchored": true,
+    "verified_version": "v1.15.1"
   },
   "apps/unifi": {
     "backup_docs": "documented",

@@ -38,6 +38,7 @@ to point at rather than one of its own.
 | [Invoice Ninja](/applications/invoiceninja/) | invoices and quotes, what has been paid, and a portal where each client can view and settle them | SMTP |
 | [IT-Tools](/applications/it-tools/) | formatters, generators and converters that never leave the browser | nothing beyond the proxy |
 | [Listmonk](/applications/listmonk/) | newsletters, subscriber lists and double opt-in | an SMTP relay entered after setup |
+| [Mailpit](/applications/mailpit/) | reading the mail a stack sends without a relay or a mailbox — accepted, kept, shown, never delivered | nothing beyond the proxy |
 | [n8n](/applications/n8n/) | chaining HTTP calls, webhooks and scheduled jobs into workflows visually | nothing beyond the proxy |
 | [Nextcloud](/applications/nextcloud/) | files, calendars and contacts on your own server, synced to desktops and phones, with sharing on top | SMTP |
 | [NocoDB](/applications/nocodb/) | a spreadsheet interface and an API over a database | nothing beyond the proxy |
@@ -48,6 +49,7 @@ to point at rather than one of its own.
 | [PhotoPrism](/applications/photoprism/) | a photo library that indexes and classifies itself | disk space for the models |
 | [Seafile](/applications/seafile/) | file sync and sharing with desktop and mobile clients | SMTP for invitations |
 | [Seafile Pro](/applications/seafile-pro/) | file sync built for large directory trees, with full-text search and antivirus scanning | a commercial licence; OnlyOffice for in-browser editing |
+| [Tymeslot](/applications/tymeslot/) | booking pages against your own calendar, with the confirmation and reminder mail | SMTP; provider credentials for Google, Outlook or Zoom |
 | [Vaultwarden](/applications/vaultwarden/) | credentials in one vault, synced to browser, phone and desktop, instead of a third party holding everything you log into | SMTP, for email verification |
 | [Vikunja](/applications/vikunja/) | task management — boards, lists, Gantt and table views | a local build step |
 | [WordPress](/applications/wordpress/) | the CMS, with PHP and Apache hardened | an SMTP relay via plugin |
@@ -62,8 +64,8 @@ trusting a service with data.
 Several of these solve overlapping problems. **Nextcloud and Seafile both do file
 sync** — one is a suite, the other is a sync engine, and the decision is not a
 matter of taste. **Four dashboards** differ mainly in how you configure them.
-**Cal.diY and Easy!Appointments** book appointments with very different
-appetites for host resources.
+**Cal.diY, Easy!Appointments and Tymeslot** book appointments with very
+different appetites for host resources.
 
 [Choosing between services →](/applications/choosing/)
 
