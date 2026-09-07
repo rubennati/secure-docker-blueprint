@@ -1,0 +1,209 @@
+---
+title: Tymeslot
+description: Booking pages against your own calendar, with the confirmation mail to match — run it locally first, or deploy it with registration closed once the first account exists.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackEvidence from '../../../components/StackEvidence.astro';
+
+Tymeslot gives people a page where they book time with you. They pick a free
+slot, it lands in your calendar — Google, Outlook, Apple, Nextcloud or any
+CalDAV server — and both sides get a confirmation, later a reminder. Video
+links for Meet, Teams, Zoom or your own room come with it. Two containers: the
+application and PostgreSQL.
+
+## Try it locally
+
+On your own machine, with no proxy, domain, certificate or mail. From
+`apps/tymeslot/`:
+
+```bash
+cp .env.local.example .env.local
+```
+
+`.env.local` ships three `__REPLACE_ME__` values, each with its `openssl`
+one-liner printed above the line. Fill them in, then:
+
+```bash
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+```
+
+It listens on `127.0.0.1:4000` only. The first boot runs the migrations, about
+thirty seconds. Open `http://localhost:4000`, register — the first account is
+the admin — create a meeting type, and open its booking page in a private
+window. Mail is discarded here, so no confirmation is sent.
+
+## Installation
+
+For a deployment on a server. From `apps/tymeslot/` — the stack routes through
+[Traefik](/infrastructure/traefik/), so have it running with a hostname
+pointing at the host.
+
+<Steps>
+
+1. Copy the environment file:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Set `APP_TRAEFIK_HOST`, `TZ` and the `EMAIL_FROM_*` values. The SMTP block
+   is what sends confirmations and reminders — with the default
+   `EMAIL_ADAPTER=test` the application runs and every message is discarded
+   without an error.
+
+2. Generate the secrets:
+
+   ```bash
+   mkdir -p .secrets volumes/postgres volumes/data
+   openssl rand -base64 64 | tr -d '\n' > .secrets/secret_key_base.txt
+   openssl rand -base64 48 | tr -d '\n' > .secrets/data_encryption_key.txt
+   openssl rand -hex 32    | tr -d '\n' > .secrets/db_pwd.txt
+   touch .secrets/smtp_password.txt
+   chmod 700 .secrets && chmod 600 .secrets/*.txt
+   ```
+
+   `data_encryption_key.txt` encrypts the calendar credentials users connect
+   later. Keep it with the backups and never rotate it.
+
+3. Start it:
+
+   ```bash
+   docker compose up -d
+   ```
+
+4. Open `https://<APP_TRAEFIK_HOST>` and register. **The first account becomes
+   the admin.** Then close registration — `REGISTRATION_ENABLED=false` in
+   `.env` and `docker compose up -d`, or the switch at `/admin`.
+
+</Steps>
+
+## Verify
+
+```bash
+docker compose ps                        # both services healthy
+curl -fsSI https://<APP_TRAEFIK_HOST>/   # 302 to the login page
+```
+
+Register, create a meeting type, open its booking page in a private window and
+book a slot. If mail is configured, the confirmation arrives; with
+[Mailpit](/applications/mailpit/) pointed at, it appears in its inbox instead.
+
+## Going further
+
+### Who may reach the booking page
+
+A booking page exists for people you have not met, so a production instance
+carries `acc-public`. The stack ships `acc-tailscale` — VPN only — and leaves
+that step to you. When you open it, put `crowdsec-basic@file,` in
+`APP_TRAEFIK_THREAT` so a banned address is refused before the application does
+any work, and keep registration closed: guests book without an account.
+
+### What works over a VPN alone
+
+Connecting a Google, Outlook or Zoom account works from a VPN client, because
+the OAuth callback is a browser redirect to this host. Two things do not:
+calendar push notifications, which need the provider to reach the host from
+the public internet — leave `WEBHOOK_BASE_URL` unset and the sync polls every
+15 minutes — and anything delivered by inbound webhook: Stripe payments, Slack
+OAuth, the shared Telegram bot.
+
+A CalDAV server or a MiroTalk room on a private address is refused by the
+application's SSRF guard until `ALLOW_PRIVATE_IPS_FOR_CALENDAR=true` or
+`ALLOW_PRIVATE_IPS_FOR_VIDEO=true` is set. The two switches are separate so
+relaxing one does not open the other.
+
+### Mail
+
+`EMAIL_ADAPTER=smtp` needs a host, a username and a non-empty password in
+`.secrets/smtp_password.txt`; the application refuses to boot otherwise. The
+port sets the encryption: 587 forces STARTTLS, 465 implicit TLS, any other
+port opportunistic TLS.
+
+### The booking embed does not work as shipped
+
+Booking pages can be embedded in another site (`embed.js`). Both `sec-2` and
+`sec-3` send `X-Frame-Options: DENY`, which refuses that. If you want embeds,
+name the parent origins with a per-app `frame-ancestors` middleware on the
+embed routes rather than dropping the header.
+
+### Stricter headers than most of the blueprint
+
+The stack ships `sec-3`: HSTS with `includeSubDomains` and `preload`, a
+referrer policy, a permissions policy and a report-only content security
+policy beside the application's own enforcing one. HSTS with `preload` is hard
+to reverse — browsers keep enforcing HTTPS for the host and everything below
+it for about two years. A dedicated leaf host carries little scope; an apex
+carries the whole zone.
+
+## Backup
+
+The database, the uploads under `volumes/data/uploads`, and two secrets:
+`secret_key_base.txt` and `data_encryption_key.txt`. Stored calendar
+credentials are encrypted with them, and a restore without them leaves every
+integration disconnected. Restore the secrets first, then the database, then
+start the application — it migrates at boot, and a half-restored database
+would be migrated over.
+
+The `## Backup` section of the
+[README](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/tymeslot/README.md)
+has the borgmatic block.
+
+## Updates
+
+Releases are frequent — eight in the first week of September 2026 — and every
+one migrates the database at boot.
+
+<Steps>
+
+1. Read the [release notes](https://github.com/tymeslot/tymeslot/releases) for
+   data changes, and diff `start-docker.sh` between the pinned and the new tag;
+   the commands are in `UPSTREAM.md`. The secret-injection entrypoint relies on
+   that script forwarding the environment.
+
+2. Back up the database and `volumes/data`.
+
+3. Set `APP_TAG` to the new `-slim` tag with its digest, then:
+
+   ```bash
+   docker compose pull && docker compose up -d
+   docker compose logs tymeslot-app | grep -E 'migrations completed|Running TymeslotWeb'
+   ```
+
+</Steps>
+
+## Troubleshooting
+
+**The container exits with `SECRET_KEY_BASE is missing`.** The secret file is
+empty or absent. The entrypoint refuses to start with an empty secret rather
+than letting the application run with one.
+
+**The container exits with `EMAIL_ADAPTER=smtp is not usable`.** `SMTP_HOST`
+or `SMTP_USERNAME` is empty, or `smtp_password.txt` is. All three are required
+for the `smtp` adapter.
+
+**Nobody receives any mail, and nothing is logged.** `EMAIL_ADAPTER=test`. It
+discards every message by design.
+
+**A connected calendar updates only every 15 minutes.** Push notifications
+need `WEBHOOK_BASE_URL` and a host the provider can reach from the public
+internet. Polling is the fallback, and on a VPN-only host the only mode.
+
+**The healthcheck flips to unhealthy under load.** `/healthcheck` rate-limits
+itself at 30 requests per minute per address. Docker's check runs every 30
+seconds; anything else polling it counts against the same budget.
+
+## Verification details
+
+<StackEvidence stack="apps/tymeslot"
+  gap="a booking from the guest's side, and a restore. Registration, the dashboard and the verification mail were exercised on a running host; the booking flow and the restore have not been." />
+
+## Repository files
+
+- [`apps/tymeslot/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/tymeslot/README.md) — setup, mail, integrations, security model, backup
+- [`apps/tymeslot/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/tymeslot/UPSTREAM.md) — source, licence, upgrade checklist
+
+## Official sources
+
+- [Tymeslot](https://tymeslot.app/)
+- [Documentation](https://tymeslot.app/docs)

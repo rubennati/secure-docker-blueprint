@@ -187,6 +187,7 @@ Three 1:1-booking apps as a choice-matrix (pick one), plus a planned group-polli
 |---|---|---|
 | [Cal.diy](apps/caldiy/) | Next.js + Postgres + Redis | MIT community edition of Cal.com (community fork, personal use). |
 | [Easy!Appointments](apps/easyappointments/) | PHP + MariaDB | Lightweight PHP alternative, established 2013, GPL-3.0. |
+| [Tymeslot](apps/tymeslot/) | Elixir/Phoenix + Postgres | Calendar sync with Google, Outlook, Apple and CalDAV, video links, reminder mail; AGPL-3.0, releases several times a week. |
 
 Planned: **Rallly** (group scheduling polls — Doodle alternative, complementary not competing with the 1:1 bookers above).
 
@@ -323,7 +324,7 @@ secure-docker-blueprint/
 │   ├── immich/  paperless-ngx/  nextcloud/  seafile/  seafile-pro/
 │   ├── vaultwarden/
 │   ├── nocodb/  n8n/  opnform/  monicahq/
-│   ├── caldiy/  easyappointments/
+│   ├── caldiy/  easyappointments/  tymeslot/
 │   ├── adminer/  it-tools/  mailpit/  unifi/
 │   └── ...
 │

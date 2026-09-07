@@ -114,6 +114,7 @@ export default defineConfig({
 						{ label: 'PhotoPrism', link: '/applications/photoprism/' },
 						{ label: 'Seafile', link: '/applications/seafile/' },
 						{ label: 'Seafile Pro', link: '/applications/seafile-pro/' },
+						{ label: 'Tymeslot', link: '/applications/tymeslot/' },
 						{ label: 'Vaultwarden', link: '/applications/vaultwarden/' },
 						{ label: 'Vikunja', link: '/applications/vikunja/' },
 						{ label: 'WordPress', link: '/applications/wordpress/' },

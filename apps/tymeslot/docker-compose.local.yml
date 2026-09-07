@@ -1,0 +1,78 @@
+# Tymeslot — local
+#
+#   cp .env.local.example .env.local          # fill in the openssl one-liners
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   http://localhost:4000 — the first account to register becomes admin
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  db:
+    image: postgres:${DB_TAG}
+    container_name: tymeslot-local-db
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      TZ: ${TZ}
+    volumes:
+      - ./volumes/local/postgres:/var/lib/postgresql/data
+    networks: [tymeslot-local]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER} -h 127.0.0.1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  app:
+    image: luka1thb/tymeslot:${APP_TAG}
+    container_name: tymeslot-local-app
+    restart: unless-stopped
+    depends_on:
+      db: {condition: service_healthy}
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, SETGID, SETUID]
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /run
+      - /app/tmp:uid=1000,gid=1000,mode=0755
+    environment:
+      TZ: ${TZ}
+      PHX_HOST: localhost
+      URL_SCHEME: http
+      DATABASE_HOST: db
+      DATABASE_PORT: "5432"
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      DATA_ENCRYPTION_KEY: ${DATA_ENCRYPTION_KEY}
+      REGISTRATION_ENABLED: "true"
+      EMAIL_ADAPTER: test
+      EMAIL_FROM_NAME: Tymeslot
+      EMAIL_FROM_ADDRESS: tymeslot@example.com
+      ENABLE_GOOGLE_AUTH: "false"
+      ENABLE_GITHUB_AUTH: "false"
+      ENABLE_OAUTH_AUTH: "false"
+    volumes:
+      - ./volumes/local/data:/app/data
+    ports:
+      - "127.0.0.1:4000:4000"
+    networks: [tymeslot-local]
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/4000 && printf 'GET /healthcheck HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && head -n1 <&3 | grep -q ' 200 '"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+networks:
+  tymeslot-local:
+    name: tymeslot-local
