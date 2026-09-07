@@ -2,7 +2,7 @@
 
 > If this file conflicts with git (branch, commits, tags), trust git.
 
-**Last updated:** 2026-08-27
+**Last updated:** 2026-09-07
 
 - **Phase:** pre-1.0. Latest tag `v0.7.0` (2026-07-31). Work happens on a
   short-lived branch and reaches `dev` through a pull request; `dev` reaches
@@ -42,10 +42,83 @@
   up to date before merging. CodeQL reports on the same pull requests and is not
   a required check.
 
+## Capability architecture — established 2026-09
+
+The blueprint is described as **capabilities** with at most one maintained
+**reference implementation** each. `docs/architecture.md` owns the model; stack
+READMEs stay product documentation. The directory split by access pattern is
+unchanged — the capability model is a layer above it.
+
+| Capability | Reference | State |
+|---|---|---|
+| Foundation (Host thin · Docker · Network · Secrets · Backup · Updates · Lifecycle) | the standards | prerequisite |
+| Reverse Proxy | Traefik | implemented |
+| Identity & Access | Authentik | implemented, per app |
+| Threat Detection & Remediation | CrowdSec | implemented |
+| Web Application Security | CrowdSec AppSec | implemented, opt-in |
+| Network Security / IDS | — | evaluation candidate |
+
+Three states are kept apart: **implemented**, **documented alternative**,
+**evaluation candidate**. Controls follow exposure, not a numbered ladder. An
+application does not intrinsically require Traefik — it requires the reverse-proxy
+capability when served over a network.
+
+### CrowdSec
+
+"Phase 1 / 2 / 3" is retired from current documentation. The model is **Core**, and
+two independent remediation points below it — **Reverse-Proxy Remediation** and
+**Host-Firewall Remediation**. Neither depends on the other. Core detects and serves
+decisions and blocks nothing on its own.
+
+**Verified on a live host:** set-only behaviour and its IPv4/IPv6 asymmetries, the
+prepare/cleanup lifecycle including restart, the four-condition readiness gate,
+fail-open of the scope companion, the shape of the scoped FORWARD rules (one rule
+per family, ingress-interface match, no INPUT chain, no management-interface rule),
+restart ordering with enforcement active, structural management-plane exclusion, and
+the outbound half of `ct original`.
+
+**Blocked, not defective:** enforcement against real traffic. Five tests need one
+prerequisite the test host lacked — a second machine whose traffic the operator
+controls, reachable over both the management network and the public internet:
+peer-initiated management-path adverse test, controlled public IPv4 drop, controlled
+public IPv6 drop, inbound/mid-session `ct original`, guarded reboot acceptance.
+Tracked in [`tasks.md`](tasks.md) → "Blocked on a host"; sequence and evidence in
+`core/crowdsec/docs/firewall-bouncer.md` → "Verification status".
+
+**Known limitation.** `crowdsec-firewall-bouncer 0.0.25-5+b11` enforces individual
+IPv4 and IPv6 source-IP decisions correctly. A CIDR/range decision degrades silently
+to its network address, and interval-capable nftables sets cannot be populated by
+this version at all — so `flags interval` must not be set. Version-specific;
+re-evaluate on upgrade. Owner: `core/crowdsec/UPSTREAM.md`.
+
+### Traefik certificates
+
+The dashboard follows the selected certificate strategy instead of always requesting
+its own certificate. Coverage is validated as the real relationship between
+`TRAEFIK_DASHBOARD_HOST` and `ACME_WILDCARD_DOMAIN`. The shipped `.env.example`
+preselects no strategy and validation stops until one is chosen — three strategies
+are supported and none is prescribed. Migration is forward-looking only: Traefik
+renews every certificate in its ACME storage regardless of router references and
+documents no way to retire one.
+
+### Names kept as they are
+
+`APP_TRAEFIK_*` and `acc-tailscale` keep their names — they honestly describe the
+current reference implementation, and no maintained second implementation justifies
+a migration. A future architectural consideration, not debt.
+
+Suricata and Coraza are evaluation entries in [`../ROADMAP.md`](../ROADMAP.md) →
+"Evaluating"; neither is implemented. SIEM/XDR/SOC platforms are out of scope there.
+
 ## Immediate next steps
+
+Open pull request: **#62** `feat/capability-architecture` → `dev`, all CI green,
+`BEHIND` since `dev` moved — bring the branch up to date before merging.
 
 The disposable host carried v0.7.0. What runs on it next, in this order:
 
+0. **Finish CrowdSec host-firewall acceptance** once a controllable second client
+   exists — see the blocker above. Nothing else in CrowdSec is waiting.
 1. **v0.8.0** — [`../docs/host-session-v0.8.0.md`](../docs/host-session-v0.8.0.md).
    Ordered by dependency: the receiver first, then the closed-circuit monitor,
    then the observing ones.

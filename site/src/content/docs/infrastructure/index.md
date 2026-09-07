@@ -34,9 +34,10 @@ Eight stacks have none, because running them alone shows nothing: `adminer`,
 The rest of this page is for serving an application to someone other than
 yourself.
 
-## A reverse proxy — required
+## A reverse proxy — for anything you serve
 
-**Without one, nothing else in this blueprint is reachable over the network.** The
+**Without one, nothing here is reachable over the network.** That is what this half
+of the page is about; a stack you only run for yourself needs none of it. The
 applications publish no ports of their own. They attach to a Docker network called
 `proxy-public` and expect something in front to terminate TLS and route requests
 by hostname. That job — the reverse proxy — is what every served application needs.

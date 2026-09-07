@@ -36,7 +36,8 @@ Quick Navigation: [Features](#features) · [Installation](#installation) · [Cor
 
 ## Installation
 
-This reaches a working Traefik with TLS, which every app routes through. The app
+This reaches a working Traefik with TLS, which every app routes through once it is
+served over the network. The app
 itself is installed from its own README — the steps differ per stack, and that
 README is the procedure. Check [Requirements](#requirements) first; `envsubst` is
 needed before the first command.
