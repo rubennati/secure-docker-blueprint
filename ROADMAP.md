@@ -229,6 +229,33 @@ Evaluation criteria: self-hosted Docker complexity, SSO/OIDC support, `_FILE` se
 
 ## Evaluating
 
+### Network IDS — Suricata (evaluation, nothing committed)
+
+A passive network IDS sees what log-driven detection cannot: packets, flows,
+protocol anomalies, TLS metadata, DNS and file hashes. Whether that is worth its
+cost here is an open question, not a plan.
+
+An evaluation would have to answer: which of that visibility is actually useful on
+a single Docker host; what container traffic is visible and from where; who reads
+the alerts, because an IDS nobody monitors is a log producer; resource cost under
+deep packet inspection; and the false-positive load of the free rule set.
+
+Passive IDS first. Inline IPS stays out: the queueing methods drop traffic when the engine is not running, which is the failure mode this
+blueprint spends effort avoiding elsewhere.
+
+### Web application firewall — Coraza re-evaluation
+
+CrowdSec AppSec is the current reference implementation of the Web Application
+Security capability. Coraza with the OWASP Core Rule Set is the documented
+alternative: the engine is mature and an OWASP project, and the rule set is broader
+than AppSec's virtual-patching focus.
+
+What blocks adoption is the integration, not the engine — the open-source Traefik
+connector describes itself as experimental and its authors point production users at
+a commercial path. Revisit when a maintained integration is available. Running both
+inline is not the answer: two engines inspecting the same request means two rule
+sets to tune and one hiding the other's blocks.
+
 ### License policy
 
 This blueprint is for personal self-hosted infrastructure. The following applies:
@@ -286,5 +313,6 @@ Expose selected apps via Model Context Protocol for AI-assisted operation. Candi
 
 ## Out of scope here
 
+- SIEM, XDR and SOC platforms (Wazuh and comparable) — a different operating model: agents, central collection and someone to read the output. A secure Docker host does not require one, and carrying it here would widen the blueprint past what it claims to be.
 - `core/acme-certs/` — being extracted to its own repository. The blueprint stub remains `scaffolded` but is no longer actively maintained in this repo.
 - Paperless-mcp — template exists in the Paperless CONFIG.md extension notes but will live in its own repo once built.

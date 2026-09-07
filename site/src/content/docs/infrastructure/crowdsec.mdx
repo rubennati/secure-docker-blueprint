@@ -74,11 +74,17 @@ does nothing at all.
 |---|---|---|
 | **Engine** | reads the proxy's access log | decides — blocks nothing itself |
 | **Proxy plugin** | inside Traefik, per request | HTTP attacks; answers 403 and sees the decrypted request |
-| **Firewall bouncer** | nftables on the host | everything, on every port — the packet is dropped before a connection exists |
+| **Firewall bouncer** | nftables on the host, scoped to the public interface | any port arriving from outside — the packet is dropped before a connection exists |
 
 The proxy plugin has the better view: it knows the URL and can say why it
-refused. The firewall bouncer has the wider one — SSH, port scans and anything
-not behind the proxy never reach Traefik at all.
+refused. The firewall bouncer has the wider one — port scans and anything not
+behind the proxy never reach Traefik at all.
+
+Neither replaces the provider firewall in front of the machine. That decides
+which ports may enter at all; CrowdSec decides which sources may continue
+through the ports already open. And neither applies to the VPN you administer
+the host over — that interface is deliberately outside the enforcement path, for
+reasons the firewall section explains.
 
 Running both is not redundancy. Measured here: a decision reaches the kernel in
 about 15 seconds and clears again in about 10, while the proxy plugin acts on
@@ -88,7 +94,7 @@ its own polling cycle in between.
 
 The engine subscribes to CrowdSec's community blocklist from the start. On this
 host that had quietly accumulated **roughly 15,800 addresses** — known-bad, with
-nothing enforcing them, because Phase 1 only decides.
+nothing enforcing them, because the engine only decides.
 
 Alongside them sat one the engine had found itself: an address probing this host
 for common exploit paths, eleven events, banned three hours earlier. Until the
@@ -137,10 +143,10 @@ makes it a reasonable default for a public app.
 
 ## Going further
 
-Phase 1 above is detection only. Two more layers, each independently optional, add blocking.
+The engine above is detection only. Two enforcement layers add blocking. They are independent of each other — pick by what you expose, not in order.
 
 <Tabs>
-  <TabItem label="Phase 2 — HTTP blocking">
+  <TabItem label="Reverse proxy — HTTP blocking">
     Rejects requests from banned IPs with a 403, inside Traefik.
 
     <Steps>
@@ -179,81 +185,93 @@ Phase 1 above is detection only. Two more layers, each independently optional, a
     # Expect an IP address and a recent "Last API pull"
     ```
   </TabItem>
-  <TabItem label="Phase 3 — network-layer blocking">
-    Drops packets from banned IPs at the host firewall — every port, not just HTTP. Runs as a host package, not a container.
-
-    Worth it mainly if SSH is reachable from the public internet (Traefik never sees SSH brute force). Skip if SSH is Tailscale-only.
-
-    <Steps>
-
-    1. Install and register:
-
-       ```bash
-       sudo apt install crowdsec-firewall-bouncer   # Debian 13, from Debian main
-       docker exec crowdsec cscli bouncers add firewall-bouncer
-       ```
-
-       :::note
-       **The package name depends on where you get it from.** Debian 13 ships
-       one package, `crowdsec-firewall-bouncer`, from its own archive — that is
-       what the line above installs, and no extra repository is needed. CrowdSec's
-       own repository splits it by backend into
-       `crowdsec-firewall-bouncer-nftables` and `-iptables`, so guides written
-       against that source name a package Debian 13 does not have. Check with
-       `apt policy crowdsec-firewall-bouncer` before assuming either.
-       :::
-
-    2. Edit `/etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml.local` — never the base `.yaml`, the package manages that:
-
-       ```yaml
-       api_url: http://127.0.0.1:8080/
-       api_key: <key from above>
-       mode: nftables
-       ```
-
-    3. Start:
-
-       ```bash
-       sudo systemctl enable --now crowdsec-firewall-bouncer
-       ```
-
-    </Steps>
-
-    Verify:
-
-    ```bash
-    sudo systemctl status crowdsec-firewall-bouncer
-    docker exec crowdsec cscli bouncers list
-    ```
-
-    :::note
-    Banned IPs live in an nftables **set**, not as individual rules — `nft list chain ip crowdsec crowdsec-chain` shows the rule but not which IPs are currently banned. There is one set per address family:
-
-    ```bash
-    sudo nft list set ip  crowdsec  crowdsec-blacklists     # IPv4
-    sudo nft list set ip6 crowdsec6 crowdsec6-blacklists    # IPv6
-    ```
-    :::
+  <TabItem label="Host firewall — network-layer blocking">
+    Drops packets from banned IPs at the host firewall, before Docker and Traefik see them. Runs as a host package, not a container.
 
     :::caution
-    **Emergency — stop enforcement now.** Flush the sets, not the chain: flushing
-    the chain deletes the enforcement rule itself, leaving the host with no drop
-    logic until the service is restarted.
+    **Do not attach automated source-IP blocking globally on a host you administer over a VPN.**
 
-    ```bash
-    sudo nft flush set ip  crowdsec  crowdsec-blacklists
-    sudo nft flush set ip6 crowdsec6 crowdsec6-blacklists
+    The bouncer enforces every decision the engine gives it, and the engine also subscribes to a community blocklist neither you nor this project controls. A detection scenario cannot tell an administrator from an attacker — a browser producing 403 and 404 responses is exactly what probe detection measures. If the blocking rule is not restricted to the public interface, a decision against your own address takes your administrative access with it.
+
+    The rule is general: **never attach automated source-IP enforcement globally when the same host carries a private management plane.** Scope it to the public interface, so a decision cannot reach the management path whatever the blocklist contains.
+    :::
+
+    **Status: lifecycle and readiness verified; scoped enforcement not yet accepted.** The engine-level part is in place, and the way the firewall state is built up, rebuilt on restart and torn down again has been verified on a running host. The blocking rules themselves have not, so this tab describes the model rather than offering a switch to flip. The current verification status is in the repository reference.
+
+    **What it will cover: individual banned addresses, IPv4 and IPv6.** CrowdSec can also decide against a whole address range, and those are *not* enforced correctly at the host firewall by the packaged bouncer — a range ends up protecting only its first address. It blocks less than you might expect, never more, and it cannot affect your management access. Treat host enforcement as covering single addresses, and leave range decisions to the proxy layer.
+
+    ### How the safe model works
+
+    Two ownership changes make the difference.
+
+    **The bouncer runs in `set-only` mode.** It keeps the two lists of banned addresses — one IPv4, one IPv6 — up to date, and installs no blocking rule of its own. The Blueprint owns everything else: the lists themselves, the containers they live in, and the blocking rule, because the rule is where the scope lives. The Blueprint also rebuilds that state from empty every time the bouncer starts, so a stale entry from a previous run can never end up being enforced.
+
+    **The rule matches the public interface explicitly.** Traffic arriving on the VPN interface cannot match it. That is a property of the rule rather than of a list, so it holds even if an allowlist is wrong, missing, or ignored.
+
+    ```text
+    Internet
+       │
+       ▼
+    Provider firewall          which ports may enter at all
+       │
+       ▼
+    public interface
+       │
+       ├── CrowdSec host enforcement    banned source → dropped here
+       │
+       ▼
+    Docker → Traefik → applications
+
+    VPN management
+       │
+       ▼
+    management interface
+       │
+       └── never enters CrowdSec host enforcement
     ```
 
-    **Both lines, or you have only half-stopped it** — IPv4 and IPv6 are separate
-    tables, and clearing one leaves the other enforcing.
+    ### Two things that are easy to get wrong
 
-    This buys you minutes, not a resolution: the bouncer keeps polling the engine
-    and refills the sets on its next cycle. To actually stop enforcement, stop
-    the service (`sudo systemctl stop crowdsec-firewall-bouncer`); to lift a ban
-    permanently, delete the decision at the engine, because the firewall is only
-    applying what the engine decided.
+    **Published container ports are not host traffic.** Docker rewrites the destination and forwards the packet, so it never passes the host's inbound path. A blocking rule attached there filters no application traffic at all — while still being able to drop administrative traffic, which does take that path. The rule belongs on the forwarding path.
+
+    **A VPN range is not a private range.** CrowdSec's built-in exemptions cover the classic private networks and loopback. Tailscale's IPv4 range is carrier-grade NAT space used by real ISP customers, and its IPv6 range is not named either — so neither is exempt by default, and CGNAT addresses do appear in community blocklists.
+
+    The engine-level fix is a native allowlist, and it is worth having on its own even without host enforcement, because it also stops the proxy layer refusing your own browser:
+
+    ```bash
+    docker exec crowdsec cscli allowlists create tailnet \
+      -d "Trusted VPN management plane"
+    docker exec crowdsec cscli allowlists add tailnet 100.64.0.0/10 fd7a:115c:a1e0::/48
+    docker exec crowdsec cscli allowlists check <an-address-in-that-range>
+    ```
+
+    Substitute your own VPN ranges. Adding the allowlist also clears decisions it already covers.
+
+    ### Changing a host firewall safely
+
+    Two rules, both from experience rather than caution.
+
+    **No firewall change may depend on the session applying it.** Arm an independent timed rollback first, prove it is armed, then apply. Test from a **second** machine, and open **new** connections — an existing one survives on connection state and tells you nothing.
+
+    **Test both address families.** IPv6 is not a spare key. A ban lands on one address, so the other family keeps working until it does not; the same machine can be banned on both within hours.
+
+    A reboot needs its own guard, because a timer does not survive one.
+
+    :::danger
+    **Recovery: stop the service.** Stopping it tears down the Blueprint's firewall state along with the blocking rule, so this is a complete disable and the fastest way back in.
+
+    ```bash
+    sudo systemctl stop crowdsec-firewall-bouncer
+    ```
+
+    Do not assume the bouncer cleans up by itself. In this mode it leaves its firewall tables behind — the teardown is the Blueprint's, and if you are running the bouncer without it, remove those tables by name as well.
+
+    Never `nft flush ruleset`, and never restore a whole-firewall snapshot. Docker and the VPN daemon own large parts of that state and rewrite it continuously — flushing takes their rules with it, and a snapshot reinstates a picture that has since moved on. Recovery must name only CrowdSec's own objects.
+
+    To lift a ban rather than stop enforcement, delete the decision at the engine: the firewall only applies what the engine decided.
     :::
+
+    Setup, the exact rules, the service lifecycle, the rollback and the current verification status are in the repository reference — [`core/crowdsec/docs/firewall-bouncer.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/crowdsec/docs/firewall-bouncer.md).
   </TabItem>
 </Tabs>
 
@@ -320,6 +338,11 @@ again from the same traffic. `lists` or `CAPI` means it arrived with the
 community blocklist. A local re-detection needs a whitelist entry, not a
 deletion.
 
+A whitelist parser only covers what your own engine derives from its logs —
+community-blocklist decisions arrive ready-made and never pass it. To exempt an
+address whatever the source, use an allowlist (`cscli allowlists`), which applies
+to every decision the engine serves.
+
 A ban that keeps coming back is a different problem — the engine is still seeing
 the behaviour that caused it. A whitelist entry stops decisions being created at
 all, which is the right tool for your own monitoring, office address or a known
@@ -331,4 +354,4 @@ Full operational reference — health checks, whitelisting, false positives, SSH
 
 - [`core/crowdsec/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/crowdsec/README.md) — full setup for all three phases
 - [`core/crowdsec/docs/runbook.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/crowdsec/docs/runbook.md) — day-to-day operations
-- [`core/crowdsec/docs/firewall-bouncer.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/crowdsec/docs/firewall-bouncer.md) — Phase 3 in depth, including SSH detection
+- [`core/crowdsec/docs/firewall-bouncer.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/crowdsec/docs/firewall-bouncer.md) — host-firewall remediation in depth, including SSH detection

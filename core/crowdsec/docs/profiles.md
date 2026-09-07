@@ -60,7 +60,7 @@ per-app behaviour from a global control).
 | 4 | **Parsers / scenarios / collections** | `core/crowdsec/` engine + Hub | Global. Detection logic; not per app. |
 | 5 | **AppSec / WAF** engine + rules | `core/crowdsec/` (port `7422`) | Engine + rule sets are **global**; *invocation* is per-middleware (axis 2). |
 | 6 | **Geo enforcement** | CrowdSec country decisions (global) **or** an edge/geo mechanism (deferred) | See the `geo-*` profiles in [§ The profile family](#the-profile-family). Country decisions are global, not per app. |
-| 7 | **Firewall bouncer** (Phase 3, nftables) | Host apt package | Global, all ports. Not per app. See [firewall-bouncer.md](firewall-bouncer.md). |
+| 7 | **Host-firewall remediation** (nftables bouncer) | Host apt package | Global, all ports. Not per app. See [firewall-bouncer.md](firewall-bouncer.md). |
 | 8 | **App-level profile selection** | the app's router middleware label | Per app. Operator prepends the chosen `crowdsec-*@file`. |
 
 The profile model only controls axes **2** and **8**. Axes 3–7 are global engine
@@ -269,6 +269,6 @@ roadmap only.
 - [README.md](../README.md) — CrowdSec engine + the three-phase model
 - [appsec.md](appsec.md) — WAF mechanics, per-app false positives, fail-open/closed
 - [geoblocking.md](geoblocking.md) — why geo is global blocklist, not per-app allowlist
-- [firewall-bouncer.md](firewall-bouncer.md) — Phase 3 host-level (global) enforcement
+- [firewall-bouncer.md](firewall-bouncer.md) — host-firewall remediation, global rather than per app
 - [`core/traefik/README.md`](../../traefik/README.md) — plugin enable/disable steps
 - [`docs/standards/traefik-security.md`](../../../docs/standards/traefik-security.md) — the `acc-*` / `sec-N` axes this composes with

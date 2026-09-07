@@ -290,6 +290,36 @@ cause was understood — it should be revisited.
 
 ---
 
+### 4.5 Browser certificate warning — Traefik serves `TRAEFIK DEFAULT CERT`
+
+**Symptom:** HTTPS answers and the app works, but the browser warns about the
+certificate. `traefik.log` shows nothing at `INFO`. Traefik presents its own
+self-signed certificate:
+
+```bash
+openssl s_client -connect <domain>:443 -servername <domain> 2>/dev/null \
+  | openssl x509 -noout -subject -issuer
+# subject=CN=TRAEFIK DEFAULT CERT      <- no certificate matched this hostname
+# subject=CN=example.com (SAN *.example.com) or subject=CN=<domain>  <- correct
+```
+
+**Cause:** no certificate in Traefik's store matches the hostname, and the
+fallback is silent. On the per-domain path (`ACME_WILDCARD_DOMAIN` unset) this is
+the `tls.certresolver` label still commented out in the app's
+`docker-compose.yml`; on the wildcard path it is a hostname outside
+`*.${ACME_WILDCARD_DOMAIN}`, or a wildcard that was never issued (token
+permissions, `acme.json` empty).
+
+**Fix:** per-domain — uncomment the `tls.certresolver` label, set
+`APP_TRAEFIK_CERT_RESOLVER` in the app `.env`, `docker compose up -d
+--force-recreate <service>`, re-run the `openssl` check. Wildcard — put the
+hostname under the wildcard domain, or opt that app into its own certificate
+with the same label. Which line goes where: `docs/standards/traefik-labels.md`
+→ "Enabling certresolver"; the two strategies: `core/traefik/README.md` →
+"Certificate strategy".
+
+---
+
 ## 5. Git & Deployment Issues
 
 ### 5.1 Server running old code after local commits

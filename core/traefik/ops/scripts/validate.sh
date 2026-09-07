@@ -32,7 +32,6 @@ REQUIRED=(
   TRAEFIK_DASHBOARD_HOST
   TLS_DEFAULT_OPTION
   TRAEFIK_DASHBOARD_TLS_OPTION
-  TRAEFIK_DASHBOARD_CERT_RESOLVER
   TRAEFIK_LOG_LEVEL
   TRAEFIK_LOG_FORMAT
   TRAEFIK_LOG_FILE
@@ -57,6 +56,43 @@ done
 # Warn about sentinel values (not a hard fail – HTTP-01 users don't need this)
 if [ "${CF_DNS_API_TOKEN:-}" = "__REPLACE_ME__" ]; then
   echo "WARNING: CF_DNS_API_TOKEN is still set to __REPLACE_ME__. DNS-01 (wildcard certs) will fail."
+fi
+
+# Dashboard certificate strategy.
+# The dashboard follows the same rule as application routers: a wildcard that
+# covers its hostname makes a per-router resolver unnecessary. Coverage is a
+# string relationship between two independent variables, not an assumption --
+# *.example.com matches exactly one label, so traefik.admin.example.com and a
+# dashboard on a different domain are NOT covered.
+dashboard_covered_by_wildcard() {
+  local host="$1" wild="${2:-}" label
+  [ -n "$wild" ] || return 1
+  [ "$host" = "$wild" ] && return 0          # apex, carried by the cert's main domain
+  label="${host%".$wild"}"
+  [ "$label" = "$host" ] && return 1         # different domain entirely
+  [ -n "$label" ] || return 1
+  [ "${label#*.}" = "$label" ]               # exactly one label below the wildcard
+}
+
+if dashboard_covered_by_wildcard "${TRAEFIK_DASHBOARD_HOST}" "${ACME_WILDCARD_DOMAIN:-}"; then
+  if [ -n "${TRAEFIK_DASHBOARD_CERT_RESOLVER:-}" ]; then
+    echo "WARNING: *.${ACME_WILDCARD_DOMAIN} already covers ${TRAEFIK_DASHBOARD_HOST}, and TRAEFIK_DASHBOARD_CERT_RESOLVER is set."
+    echo "         Traefik will request a second certificate for that hostname, publishing it in Certificate Transparency logs."
+    echo "         Leave the variable empty to serve the wildcard instead."
+  fi
+elif [ -z "${TRAEFIK_DASHBOARD_CERT_RESOLVER:-}" ]; then
+  echo "SELECT A CERTIFICATE STRATEGY — neither is configured for ${TRAEFIK_DASHBOARD_HOST}."
+  echo
+  echo "  Wildcard    set ACME_WILDCARD_DOMAIN to the parent domain of that host,"
+  echo "              and leave TRAEFIK_DASHBOARD_CERT_RESOLVER empty."
+  echo "  Per-domain  set TRAEFIK_DASHBOARD_CERT_RESOLVER to a resolver name"
+  echo "              (${ACME_RESOLVER_DNS} for DNS-01, ${ACME_RESOLVER_HTTP} for HTTP-01)."
+  echo
+  echo "  Both are supported. The shipped .env.example picks neither on purpose, so"
+  echo "  the choice is made rather than inherited. Until one is set, Traefik would"
+  echo "  answer HTTPS for that host with its self-signed default certificate."
+  echo "  See core/traefik/README.md -> Certificate strategy."
+  exit 1
 fi
 
 # Runtime files (after render)

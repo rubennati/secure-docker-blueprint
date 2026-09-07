@@ -36,7 +36,8 @@ Quick Navigation: [Features](#features) · [Installation](#installation) · [Cor
 
 ## Installation
 
-This reaches a working Traefik with TLS, which every app routes through. The app
+This reaches a working Traefik with TLS, which every app routes through once it is
+served over the network. The app
 itself is installed from its own README — the steps differ per stack, and that
 README is the procedure. Check [Requirements](#requirements) first; `envsubst` is
 needed before the first command.
@@ -134,7 +135,7 @@ the choice guidance for that category.
 | [Collabora](core/collabora/) | Lightweight LibreOffice-based office server (~1 GB) — leaner alternative to OnlyOffice/Euro-Office |
 | [dnsmasq](core/dnsmasq/) | DNS forwarder with wildcard zones for Tailscale / split-DNS setups |
 | [acme-certs](core/acme-certs/) | Certificate tool (acme.sh) for devices without Traefik (NAS, routers) |
-| [CrowdSec](core/crowdsec/) | Intrusion detection engine + Traefik bouncer plugin — log analysis, threat decisions, L7 blocking |
+| [CrowdSec](core/crowdsec/) | Threat detection engine — log analysis, scenarios, threat decisions. Enforcement is a separate choice: reverse-proxy or host-firewall remediation |
 | [Whoami](core/whoami/) | Traefik debug service to verify routing, TLS, and middlewares |
 | [Dockhand](core/dockhand/) | Docker management with Git-based stacks |
 | [Portainer](core/portainer/) | Docker management UI |

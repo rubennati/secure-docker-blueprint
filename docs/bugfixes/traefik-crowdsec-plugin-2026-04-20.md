@@ -216,7 +216,7 @@ Declaring the plugin (`experimental.plugins.bouncer` in
 it does not run it. The bouncer plugin's polling loop (the thing that
 produces `Last API pull`) only starts once the middleware is actually
 **attached to at least one router's middleware list**. This is
-[step 5 in the README's "Wire the plugin" section](../../core/crowdsec/README.md#phase-2-traefik-bouncer-plugin) —
+[step 5 in the README's "Wire the plugin" section](../../core/crowdsec/README.md#reverse-proxy-remediation--traefik-bouncer-plugin) —
 easy to skip because steps 1–4 (key, plugin, middleware, render +
 restart) already make the plugin *look* fully configured, and the
 4-step verify sequence right after it can be run (and fail silently

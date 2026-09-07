@@ -8,7 +8,7 @@ Opt-in country-level blocking for CrowdSec decisions.
 
 CrowdSec makes decisions per IP address. Country-level decisions extend that: instead of
 banning a single IP, a decision targets every IP that resolves to a given country code. Both
-Phase 2 (Traefik bouncer) and Phase 3 (nftables bouncer) understand country-scope decisions
+Reverse-proxy remediation and host-firewall remediation both understand country-scope decisions
 and enforce them the same way they enforce IP-scope bans.
 
 **GeoIP enrichment is already active.** The `crowdsecurity/traefik` collection installed by
@@ -38,7 +38,7 @@ acts only on where it is located.
 | You host APIs that receive webhooks from third-party services | Risky — payment processors, OAuth providers, and CI/CD runners use globally distributed infrastructure |
 | You rely on external monitoring (UptimeRobot, Freshping, StatusCake) | Risky — monitoring probes originate from nodes in many countries including commonly blocked ones |
 | You depend on search engine indexing | Risky — Googlebot, Bingbot, and other crawlers use IPs in many countries; blocking can affect SEO |
-| Phase 3 (nftables) is active | Requires extra caution — country blocks affect all ports including SSH, not just HTTP |
+| Host-firewall remediation is active | Requires extra caution — country blocks affect all ports including SSH, not just HTTP |
 
 GeoIP databases are not perfect. IP block reassignments lag, VPN and proxy services route traffic
 through many countries, and CDN edge nodes can appear in unexpected locations. A country decision
@@ -49,7 +49,7 @@ security researchers, and services you have not anticipated.
 
 ## Before enabling — self-lockout prevention
 
-Country-level decisions enforced by Phase 3 (nftables) block traffic at the packet layer across
+Country-level decisions enforced by host-firewall remediation block traffic at the packet layer across
 **all ports**. If you add a country decision and you are connecting to the server from an IP
 that resolves to that country (including via a VPN exit node in that country), you will be
 locked out of SSH.
@@ -79,7 +79,7 @@ Before enabling geoblocking:
      ```
 
    Do not skip this step — if your IP resolves to a country you intend to block, you will lose
-   SSH access as soon as Phase 3 picks up the decision.
+   SSH access as soon as host-firewall remediation picks up the decision.
 
 3. **Whitelist your own IP or subnet first.** If you have a stable IP, add it to the
    permanent whitelist before adding any country decision. See
@@ -109,8 +109,8 @@ docker exec crowdsec cscli decisions add \
 
 Both bouncers pick up the decision on their next poll cycle:
 
-- Phase 2 (Traefik): within ~60 s
-- Phase 3 (nftables): within ~10 s
+- Reverse-proxy remediation: within ~60 s
+- Host-firewall remediation: within ~10 s
 
 ### Verify the decision is active
 
@@ -123,7 +123,7 @@ docker exec crowdsec cscli decisions list --scope Country
 #  ID  │ Source │ Scope   │ Value │ Action │ Country │ Expiration
 #  ... │ manual │ Country │ XX    │ ban    │ ...     │ 24h
 
-# Confirm Phase 3 enforcement (if nftables bouncer is active):
+# Confirm host-firewall enforcement (if the nftables bouncer is active):
 # Country-scope decisions generate a different rule type — verify the bouncer
 # is still actively polling:
 docker exec crowdsec cscli bouncers list
@@ -140,7 +140,7 @@ docker exec crowdsec cscli decisions add \
   --ip <test-ip> \
   --duration 5m --reason "test-verify"
 
-# Confirm Phase 2 returns 403 for that IP after ~60 s, then clean up:
+# Confirm reverse-proxy remediation returns 403 for that IP after ~60 s, then clean up:
 docker exec crowdsec cscli decisions delete --ip <test-ip>
 ```
 
@@ -173,7 +173,7 @@ docker exec crowdsec cscli decisions delete \
 docker exec crowdsec cscli decisions list --scope Country
 # Expected: empty output, or remaining rows for other countries only
 
-# Phase 2 clears within ~60 s. Phase 3 clears within ~10 s.
+# Reverse-proxy remediation clears within ~60 s, host-firewall within ~10 s.
 ```
 
 ---
@@ -272,26 +272,26 @@ docker compose up -d --force-recreate crowdsec
 
 ---
 
-## Phase 2 vs Phase 3 — what each layer blocks
+## What each remediation point blocks
 
 Country-scope decisions are enforced at both layers when both are active. The difference
 is what traffic they cover.
 
 | Layer | Scope | Blocks |
 |---|---|---|
-| Phase 2 — Traefik bouncer | HTTP traffic through Traefik only | Requests to services behind Traefik — returns HTTP 403 |
-| Phase 3 — nftables bouncer | All ports, all protocols | Entire network connection — packet is dropped before any service sees it |
+| Reverse-proxy remediation | HTTP traffic through Traefik only | Requests to services behind Traefik — returns HTTP 403 |
+| Host-firewall remediation | All ports, all protocols | Entire network connection — packet is dropped before any service sees it |
 
-**Phase 3 blocks SSH.** A country decision enforced by Phase 3 drops every packet from
+**Host-firewall remediation blocks every port, SSH included.** A country decision enforced there drops every packet from
 that country, including SSH connections. If you are administering the server from an IP
 that resolves to a blocked country — including via a VPN exit node — you will be locked out.
 
-If Phase 3 is active and you are considering geoblocking, re-read the
+If host-firewall remediation is active and you are considering geoblocking, re-read the
 [self-lockout prevention](#before-enabling--self-lockout-prevention) section and confirm
 your out-of-band access path before adding any country decision.
 
 If you want HTTP-only country blocking without SSH risk, you can restrict the Traefik
-bouncer's enforcement without enabling Phase 3 for country decisions. However, this requires
+bouncer's enforcement without enabling host-firewall remediation for country decisions. However, this requires
 custom bouncer configuration and is out of scope for this blueprint.
 
 ---
@@ -307,7 +307,7 @@ custom bouncer configuration and is out of scope for this blueprint.
 
 | | |
 |---|---|
-| **Benefit** | Drops attack traffic early (Phase 3) or at the proxy layer (Phase 2) before it consumes application resources |
+| **Benefit** | Drops attack traffic early (host firewall) or at the proxy layer before it consumes application resources |
 | **Risk** | GeoIP databases are not 100% accurate — IPs are reassigned, CDN edge nodes appear in unexpected countries, cloud providers route through many regions |
 | **Operational impact** | False positive rate is invisible until a legitimate user or service reports being blocked |
 | **Mitigation** | Monitor `cscli decisions list --scope Country` and cross-reference with any access issues reported after enabling |
@@ -340,9 +340,9 @@ docker exec crowdsec cscli decisions delete --scope Country
 docker exec crowdsec cscli decisions list --scope Country
 # Expected: empty output
 
-# 3. Phase 2 (Traefik) clears within ~60 s.
-#    Phase 3 (nftables) clears within ~10 s.
-#    If Phase 3 is not clearing, flush the chain directly:
+# 3. Reverse-proxy remediation clears within ~60 s.
+#    Host-firewall remediation clears within ~10 s.
+#    If it is not clearing, flush the chain directly:
 sudo nft flush chain ip crowdsec crowdsec-chain
 
 # 4. If Mechanism B (automated scenario) is active, the scenario will continue
@@ -361,4 +361,4 @@ Full emergency procedures: [`docs/runbook.md`](runbook.md) → §5 Emergency Pro
 - No changes to `docker-compose.yml`, `.env`, or CrowdSec config files are required
 - GeoIP database customization (e.g., using a custom MaxMind account key) is not covered
 - Country-weighted profiles (applying different ban durations based on country) are not covered
-- IPv6 country blocking follows the same mechanism; Phase 3 handles both address families automatically
+- IPv6 country blocking follows the same mechanism; host-firewall remediation handles both address families automatically

@@ -36,6 +36,15 @@ what v0.7.0's session left open is in
       `/api/health` and the container healthcheck, login plus one booking, SMTP and
       cron, and a log read for permission or migration errors. Rollback pin is in
       `.env.example`
+- [ ] Finish CrowdSec host-firewall remediation acceptance. Lifecycle, readiness,
+      fail-open, restart ordering and the shape of the scoped rules are verified;
+      enforcement against real traffic is not. Blocked on one prerequisite: a second
+      machine whose traffic the operator controls, reachable both over the management
+      network and from the public internet. It gates five tests — the peer-initiated
+      management-path adverse test, controlled public IPv4 and IPv6 drops, the
+      inbound/mid-session `ct original` case, and the guarded reboot acceptance.
+      Sequence and evidence: `core/crowdsec/docs/firewall-bouncer.md` → "Verification
+      status"
 - [ ] Boot `apps/_reference/` once to confirm the template actually runs
 - [ ] Count the first-load requests for the four photo galleries — `apps/photoprism`,
       `apps/librephotos`, `apps/lycheeorg`, `apps/photoview`. All four sit at `sec-2`,

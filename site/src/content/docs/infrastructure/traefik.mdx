@@ -146,17 +146,19 @@ The path above is one of three. Two more work too — the only hard constraint i
 
 <Tabs>
   <TabItem label="Wildcard">
-    One DNS-01 certificate covers `*.example.com` — what the installation above sets up. Needs a Cloudflare account and token; does **not** need port 80 reachable from the internet. Best when several services share one domain, and avoids registering every subdomain in public Certificate Transparency logs.
+    One DNS-01 certificate covers `*.example.com` — what the installation above sets up. Needs a Cloudflare account and token; does **not** need port 80 reachable from the internet. Best when several services share one domain, and keeps covered service names out of public Certificate Transparency logs — including the Traefik dashboard, which uses the same certificate. Leave `TRAEFIK_DASHBOARD_CERT_RESOLVER` empty for that. A wildcard matches exactly one label: `traefik.example.com` is covered, `traefik.admin.example.com` is not.
   </TabItem>
   <TabItem label="Per-domain (DNS-01)">
     Each application requests its own DNS-01 certificate through Cloudflare — still no public port 80 needed. Leave `ACME_WILDCARD_DOMAIN` unset; in each app's `.env` set `APP_TRAEFIK_CERT_RESOLVER=cloudflare-dns`, and uncomment the `tls.certresolver` label in its `docker-compose.yml`.
   </TabItem>
   <TabItem label="Per-domain (HTTP-01)">
-    Each application requests its own certificate via the standard HTTP-01 challenge — no Cloudflare account or token at all. Requires port 80 to be publicly reachable on this server. Leave `ACME_WILDCARD_DOMAIN` unset; in each app's `.env` set `APP_TRAEFIK_CERT_RESOLVER=httpResolver`, and uncomment the `tls.certresolver` label.
+    Each application requests its own certificate via the standard HTTP-01 challenge — no Cloudflare account or token at all. Requires port 80 to be publicly reachable on this server. Leave `ACME_WILDCARD_DOMAIN` unset; in each app's `.env` set `APP_TRAEFIK_CERT_RESOLVER=httpResolver`, and uncomment the `tls.certresolver` label. On both per-domain paths the dashboard needs `TRAEFIK_DASHBOARD_CERT_RESOLVER` set as well.
   </TabItem>
 </Tabs>
 
 These combine, too: keep a wildcard for your main domain and let individual apps opt into their own certificate (either resolver) via the same per-app label.
+
+The setup check refuses the one combination that fails silently — no wildcard covering a hostname and no resolver for it — because Traefik answers such a request with its own self-signed certificate and writes nothing to the log. When upgrading a wildcard installation that already issued a separate dashboard certificate, emptying the variable stops further requests for it; the certificate already stored keeps renewing, and a hostname already in the transparency logs stays there.
 
 Cloudflare's proxy status (orange-cloud vs. DNS-only) is a separate, per-record choice — independent of certificate strategy and resolver, and irrelevant to the HTTP-01 path above.
 
