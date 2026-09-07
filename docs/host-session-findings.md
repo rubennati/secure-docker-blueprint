@@ -150,6 +150,15 @@ undermined by its own default.
 `ACME_WILDCARD_DOMAIN` is set, and `validate.sh` is the natural place to catch
 the combination.
 
+**Resolved.** A later investigation confirmed the behaviour independently and
+implemented the fix with one correction to the rule proposed here: a wildcard
+being configured does not by itself mean it covers the dashboard. The two
+hostnames are independent variables, and a wildcard matches exactly one label, so
+`validate.sh` checks the actual relationship between `TRAEFIK_DASHBOARD_HOST` and
+`ACME_WILDCARD_DOMAIN` instead of testing whether the wildcard variable is set.
+The reasoning is in [`.ai/decisions.md`](../.ai/decisions.md); the rule is in
+[`core/traefik/README.md`](../core/traefik/README.md) → "Certificate strategy".
+
 ---
 
 **Session 2 — 2026-07-28.** Nextcloud deployed from a clean clone.

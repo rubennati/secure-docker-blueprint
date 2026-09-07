@@ -234,6 +234,39 @@ lifecycle, the readiness gate, fail-open, the range limitation and the rollback 
 models all stand unchanged under Host-Firewall Remediation. Historical records keep the
 old numbering — it is accurate for the architecture of their time.
 
+## 2026-09 · The dashboard follows the certificate strategy, like every router
+
+The Traefik dashboard router carried `tls.certResolver` unconditionally, so a
+wildcard deployment issued a second certificate for its dashboard hostname and
+published that name in Certificate Transparency — the exact outcome the wildcard
+path exists to avoid. No rationale for the exception existed anywhere; the
+configuration could not express the consistent alternative, because `validate.sh`
+required the variable to be non-empty.
+
+The dashboard now follows the selected strategy: empty resolver under a covering
+wildcard, its own resolver otherwise. Coverage is checked as the actual
+relationship between `TRAEFIK_DASHBOARD_HOST` and `ACME_WILDCARD_DOMAIN`, not as
+"a wildcard is configured somewhere" — the two are independent free-form
+variables, and `*.example.com` matches exactly one label. An explicit resolver
+under a covering wildcard stays supported and warns, because refusing it would
+fail validation on every existing installation over a privacy preference rather
+than a fault.
+
+Migration is forward-looking only. Traefik loads every certificate in `acme.json`
+at startup regardless of router references and renews it on expiry alone, and it
+documents no way to retire a single stored certificate. An existing dashboard
+certificate therefore keeps being served and renewed, and a published hostname
+stays in the append-only logs.
+
+**How this was found matters for how the next report is read.** External field
+feedback reported an HTTP-01 deployment silently receiving Traefik's default
+certificate and proposed enabling `certresolver` across the Compose files. That
+proposal was declined: the operator had chosen a documented alternative path and
+skipped its documented requirement, and the commented label is what makes the
+wildcard path work. Investigating the claim is what surfaced the real defect,
+one the report never mentioned — in the dashboard, not the applications.
+Evidence to investigate, not a specification to implement.
+
 ## 2026-08 · Host-firewall remediation stays scoped, and ships without range enforcement
 
 Host CrowdSec enforcement keeps its shape: `hook forward`, priority `filter - 10`,

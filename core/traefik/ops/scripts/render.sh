@@ -26,7 +26,9 @@ echo "Rendering dynamic configs..."
 for f in "${TPL_DIR}/dynamic/"*.yml.tmpl; do
   base="$(basename "${f%.tmpl}")"
 
-  # Skip optional templates when their key var is empty
+  out="${CFG_DIR}/dynamic/${base}"
+
+  # Optional templates and optional lines, keyed off the certificate strategy
   case "$base" in
     acme-wildcard.yml)
       if [ -z "${ACME_WILDCARD_DOMAIN:-}" ]; then
@@ -34,9 +36,19 @@ for f in "${TPL_DIR}/dynamic/"*.yml.tmpl; do
         continue
       fi
       ;;
+    routers-system.yml)
+      # An empty dashboard resolver means the wildcard covers the dashboard
+      # host, so the router carries no certResolver and Traefik serves the
+      # wildcard through SNI — the same way application routers work. Drop the
+      # line rather than render "certResolver:" with no value.
+      if [ -z "${TRAEFIK_DASHBOARD_CERT_RESOLVER:-}" ]; then
+        envsubst < "$f" | sed '/^[[:space:]]*certResolver:[[:space:]]*$/d' > "$out"
+        echo " -> ${base} (dashboard uses the wildcard – no certResolver)"
+        continue
+      fi
+      ;;
   esac
 
-  out="${CFG_DIR}/dynamic/${base}"
   envsubst < "$f" > "$out"
   echo " -> ${base}"
 done

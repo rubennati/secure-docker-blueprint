@@ -242,6 +242,10 @@ One certificate covers every subdomain. Requires DNS at Cloudflare (or any provi
 
 **Apps:** leave the `tls.certresolver` label commented out in every `docker-compose.yml`. Traefik serves the wildcard for any subdomain via SNI.
 
+**Dashboard:** leave `TRAEFIK_DASHBOARD_CERT_RESOLVER` empty. It follows the same rule as the apps — `render.sh` omits the router's `certResolver` and Traefik serves the wildcard. A resolver set here requests a second certificate and publishes the dashboard hostname in Certificate Transparency logs; `validate.sh` warns when both are set.
+
+`*.example.com` matches exactly one label: `traefik.example.com` is covered, `traefik.admin.example.com` is not. `validate.sh` checks the actual relationship between `TRAEFIK_DASHBOARD_HOST` and `ACME_WILDCARD_DOMAIN`, and refuses a configuration where neither a covering wildcard nor a resolver exists.
+
 ### Path B — Per-domain (one cert per subdomain)
 
 Each app requests its own cert. Works with any resolver, no wildcard setup.
@@ -258,6 +262,30 @@ Each app requests its own cert. Works with any resolver, no wildcard setup.
    - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
    ```
 
+4. Set `TRAEFIK_DASHBOARD_CERT_RESOLVER` — without a wildcard the dashboard needs its own certificate.
+
+### Migrating an existing wildcard deployment
+
+Before this rule existed, the dashboard always carried a resolver, so a wildcard
+deployment also holds a separate certificate for its dashboard hostname. Emptying
+`TRAEFIK_DASHBOARD_CERT_RESOLVER` and re-rendering stops **new** requests for it.
+It does not remove the one already stored:
+
+- Traefik loads every certificate in `acme.json` into its certificate store at
+  startup, whether or not a router references it, and keeps renewing it based on
+  expiry alone. The stored dashboard certificate therefore stays live and keeps
+  being served for that hostname.
+- Traefik documents no command, API or procedure for retiring a single stored
+  certificate, so there is no supported way to remove it selectively.
+- Certificate Transparency logs are append-only. A hostname already published
+  stays published, whatever happens to the certificate.
+
+The change is therefore forward-looking. A new installation issues no separate
+dashboard certificate; an existing one stops requesting further ones. Neither the
+stored certificate nor the transparency entry it already produced can be undone by
+configuration — changing the dashboard hostname does not retire either, it only
+means the new name is served by the wildcard.
+
 ### Hybrid
 
 Both modes coexist. A router can request its own cert (uncommented `certresolver` label) even while a wildcard exists for the parent domain.
@@ -265,7 +293,14 @@ Both modes coexist. A router can request its own cert (uncommented `certresolver
 ### Verify after setup
 
 ```bash
-# Did Traefik receive a cert?
+# Which certificate is actually served for a hostname? This is the check that
+# catches a missing resolver: CN=TRAEFIK DEFAULT CERT means nothing matched.
+openssl s_client -connect <hostname>:443 -servername <hostname> 2>/dev/null | \
+  openssl x509 -noout -subject -issuer -dates
+# Wildcard mode, dashboard included: subject=CN=example.com, SAN *.example.com
+# Per-domain mode:                   subject=CN=<hostname>
+
+# Which certificates does Traefik hold? Domain metadata only.
 docker compose exec traefik cat /etc/traefik/acme/acme.json | \
   jq '.[] | .Certificates[]?.domain // "no certs yet"'
 

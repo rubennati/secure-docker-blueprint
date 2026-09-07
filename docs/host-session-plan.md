@@ -274,8 +274,10 @@ Grouped by what it takes to resolve. Detail for each is in
       makes it meaningful — the conditions are only evaluated when logrotate
       runs, daily on Debian. Installed and dry-run on a host (finding 4)
 - [ ] dnsmasq template overwrites hand-added zones on re-render (finding 6)
-- [ ] Dashboard requests its own certificate although the wildcard covers it
-      (finding 7)
+- [x] Dashboard requests its own certificate although the wildcard covers it
+      (finding 7). The dashboard router's resolver is now optional, and
+      `validate.sh` checks whether the configured wildcard actually covers the
+      dashboard hostname
 - [ ] `excludedIPs` warning next to the access policies (finding 8)
 - [ ] Startup ordering against a VPN dependency, as a troubleshooting entry
       (finding 9)
