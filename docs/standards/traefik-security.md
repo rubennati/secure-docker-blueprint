@@ -147,9 +147,12 @@ curl -sI https://app.example.com/ | grep -iE 'x-frame-options|content-security-p
 
 If it does, the chain must not add a second one. Two `X-Frame-Options` values on
 one response is not stricter — it is undefined, and the endpoints the app meant to
-be embeddable stop loading. Apply the level in the compose file and follow it with
-a per-app middleware that clears the header, as `business/matomo` and
-`apps/vaultwarden` do.
+be embeddable stop loading. Apply the level in the compose file and put a per-app
+middleware that clears the header **in front of it**, as `core/keycloak` does. The
+order is not cosmetic: Traefik applies the response changes of the first middleware
+in the list last, so a clearing middleware placed after the chain is overwritten by
+the chain and the header stays — measured on v3.6 with a throwaway backend, see
+[`docs/bugfixes/keycloak-admin-console-iframe-2026-09-07.md`](../bugfixes/keycloak-admin-console-iframe-2026-09-07.md).
 
 **2. Is the app embedded in another site, or does it embed itself?**
 
@@ -245,6 +248,7 @@ the next person cannot safely change.
 | Paperless | `sec-3` + `acc-tailscale` | Hardened, VPN-only |
 | Seafile Pro | `sec-3` | Public-facing |
 | Authentik | `sec-3` | Auth provider, should be hardened |
+| Keycloak | `sec-2-spa` + `acc-tailscale`, `strip-xfo` ahead of the chain | Sets its own frame headers per page and frames its cookie check; the per-app middleware removes the proxy's header |
 | Invoice Ninja | `sec-2` | Standard web app |
 | WordPress / Ghost | `sec-2` | CMS with inline scripts |
 | Cal.diy | `sec-3` | Public-facing scheduling tool, hardened default |

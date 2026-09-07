@@ -160,8 +160,18 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
-      # Middlewares
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      # Middlewares. The proxy sends no X-Frame-Options: Keycloak sets the
+      # frame headers itself and varies them per page — SAMEORIGIN plus a CSP
+      # frame-ancestors on the admin console, none on the two pages that the
+      # console and keycloak-js load in an iframe. A DENY from the chain
+      # reaches those pages and the console stops with "Timeout when waiting
+      # for 3rd party check iframe message". strip-xfo removes the header the
+      # chain sets, and it has to stand BEFORE the chain: Traefik applies the
+      # response changes of the first middleware last, so the chain would set
+      # the header again behind a strip that comes after it (measured on
+      # v3.6). Keycloak's CSP frame-ancestors keeps protecting the console.
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${COMPOSE_PROJECT_NAME}-strip-xfo,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-strip-xfo.headers.customResponseHeaders.X-Frame-Options="
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8080"
 

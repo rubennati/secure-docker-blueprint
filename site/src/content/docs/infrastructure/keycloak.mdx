@@ -155,6 +155,15 @@ and ignores them; the entrypoint wrapper is how the passwords arrive.
 not receiving `X-Forwarded-Proto` and `X-Forwarded-Host`. Through Traefik
 they are always present; through anything else, set the same headers.
 
+**The admin console stops at "Timeout when waiting for 3rd party check
+iframe message".** The browser console adds that the page refused to load in
+a frame because `X-Frame-Options` is `deny`. The console frames its cookie
+check from its own origin, and Keycloak sets the frame headers itself. The
+compose file removes the proxy's header with a `strip-xfo` middleware placed
+before the security chain; if the message appears, that middleware is missing
+from the router or has moved behind the chain, where Traefik lets the chain
+set the header again.
+
 **`/health/ready` is DOWN for a minute after start.** The rebuild at every
 boot takes that long. The healthcheck allows 90 seconds.
 
