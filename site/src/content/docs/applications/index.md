@@ -38,6 +38,7 @@ to point at rather than one of its own.
 | [Invoice Ninja](/applications/invoiceninja/) | invoices and quotes, what has been paid, and a portal where each client can view and settle them | SMTP |
 | [IT-Tools](/applications/it-tools/) | formatters, generators and converters that never leave the browser | nothing beyond the proxy |
 | [Listmonk](/applications/listmonk/) | newsletters, subscriber lists and double opt-in | an SMTP relay entered after setup |
+| [Mailpit](/applications/mailpit/) | reading the mail a stack sends without a relay or a mailbox — accepted, kept, shown, never delivered | nothing beyond the proxy |
 | [n8n](/applications/n8n/) | chaining HTTP calls, webhooks and scheduled jobs into workflows visually | nothing beyond the proxy |
 | [Nextcloud](/applications/nextcloud/) | files, calendars and contacts on your own server, synced to desktops and phones, with sharing on top | SMTP |
 | [NocoDB](/applications/nocodb/) | a spreadsheet interface and an API over a database | nothing beyond the proxy |

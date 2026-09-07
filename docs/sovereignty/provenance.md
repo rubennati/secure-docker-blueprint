@@ -44,7 +44,7 @@ more often than it applies:
 
 | Class | Meaning | In this repository |
 |---|---|---|
-| `osi` | OSI-approved | 51 |
+| `osi` | OSI-approved | 52 |
 | `mixed` | open core, or genuinely dual-licensed | 4 |
 | `source-available` | source published, use restricted | 3 |
 | `proprietary` | neither | 1 |
@@ -64,18 +64,18 @@ self-hoster might assume they may do:
 None of these is a reason to avoid the software. They are a reason not to build
 a business on reselling it without reading the licence first.
 
-## As of 2026-07-30
+## As of 2026-09-07
 
-59 stacks, no gaps in either field:
+60 stacks, no gaps in either field:
 
 | Bloc | Stacks |
 |---|---|
 | EU | 26 |
-| non-EU | 27 |
+| non-EU | 28 |
 | no single jurisdiction | 6 |
 
 Most-represented countries: US (10), Germany (9), France (6), UK (5),
-New Zealand (3), Canada (2), China (2), India (2).
+New Zealand (4), Canada (2), China (2), India (2).
 
 Note that the UK counts as non-EU here. That is a statement about jurisdiction,
 not about quality — Collabora and BookStack are not worse software for it. Where

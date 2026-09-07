@@ -230,6 +230,7 @@ Planned (apps/): Headscale (self-hosted Tailscale control server), PrivateBin, S
 |---|---|---|
 | [Adminer](apps/adminer/) | Single container | Database administration UI (connects to other apps' DBs) |
 | [IT-Tools](apps/it-tools/) | Single container | Collection of IT / developer utilities (JSON, hash, regex, etc.) |
+| [Mailpit](apps/mailpit/) | Single container | SMTP sink for trying out the stacks that send mail — accepts every message, shows it, delivers nothing |
 
 Docker-management tools (Dockhand / Portainer / Hawser) moved to [`core/`](core/) — they're infrastructure, not apps.
 
@@ -323,7 +324,7 @@ secure-docker-blueprint/
 │   ├── vaultwarden/
 │   ├── nocodb/  n8n/  opnform/  monicahq/
 │   ├── caldiy/  easyappointments/
-│   ├── adminer/  it-tools/  unifi/
+│   ├── adminer/  it-tools/  mailpit/  unifi/
 │   └── ...
 │
 ├── business/                    # Company-only apps

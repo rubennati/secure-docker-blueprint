@@ -1,0 +1,113 @@
+# =============================================================================
+# Mailpit — SMTP sink for trying out the stacks that send mail
+# =============================================================================
+# Every message a stack sends here is accepted, kept and shown in a web UI.
+# Nothing is delivered anywhere. Point a stack's SMTP settings at `mailpit:1025`
+# and read what it would have sent — confirmations, password resets, reminders.
+#
+# Image: axllent/mailpit (https://hub.docker.com/r/axllent/mailpit)
+# Source: https://github.com/axllent/mailpit
+# =============================================================================
+
+services:
+
+  # --------------------------------------------------------
+  # MAILPIT (SMTP sink and web UI)
+  # --------------------------------------------------------
+  mailpit:
+    # --- Identity ---
+    image: axllent/mailpit:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+
+    # --- Security ---
+    # One static binary. The image starts as root but needs nothing from it:
+    # both ports are above 1024 and the only write goes to /data. Verified
+    # against axllent/mailpit:v1.31.1 on 2026-09-07.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    user: "${USERMAP_UID}:${USERMAP_GID}"
+
+    # --- Resources ---
+    # Idles at 13 MB with a thousand messages stored; the store is on disk and
+    # capped by MP_MAX_MESSAGES.
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+          pids: 50
+        reservations:
+          memory: 16m
+
+    # --- Configuration ---
+    environment:
+      TZ: ${TZ}
+      MP_DATABASE: /data/mailpit.db
+      MP_MAX_MESSAGES: ${MP_MAX_MESSAGES}
+      MP_LABEL: ${MP_LABEL}
+      # Applications with SMTP configured expect to authenticate, and several
+      # refuse to start without a username and password. Accept whatever they
+      # send, in plaintext — the port answers containers on the proxy network
+      # and nothing else.
+      MP_SMTP_AUTH_ACCEPT_ANY: "1"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "1"
+      # Reverse lookups on Docker-internal addresses only add latency.
+      MP_SMTP_DISABLE_RDNS: "1"
+      # The HTTP side answers only requests that carry this hostname — what
+      # Traefik forwards — or localhost, which the healthcheck uses. A container
+      # calling `http://mailpit:8025/` gets 403. This is a Host-header check,
+      # so a forged header still passes; it stops a casual read of the inbox,
+      # not a determined one. Verified against v1.31.1 on 2026-09-07.
+      MP_ALLOWED_HOSTS: ${APP_TRAEFIK_HOST}
+      # Upstream asks the GitHub API whether a newer release exists. Version
+      # tracking is the operator's job here — see docs/sovereignty/data-egress.md.
+      MP_DISABLE_VERSION_CHECK: "1"
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/data:/data
+
+    # --- Networking ---
+    # proxy-public carries the Traefik route to the UI and the SMTP traffic
+    # from the other stacks. Every container on that network reaches both
+    # ports — the README's security model says what that means.
+    networks:
+      - proxy-public
+
+    # --- Traefik ---
+    labels:
+      # Router
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      # TLS
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Middlewares
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      # Service
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8025"
+
+    # --- Health & Observability ---
+    # The image declares this check itself; it is repeated here so the file
+    # shows what "healthy" means.
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
