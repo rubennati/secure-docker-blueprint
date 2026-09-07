@@ -57,44 +57,44 @@ The scheduled-job axis, and the only service here that alerts on *absence*. Also
 
 ## Block 3 · Uptime Kuma — the uptime axis (~40 min)
 
-- [ ] `docker compose up -d`, container healthy, interface reachable
-- [ ] Add one monitor against a service that is actually running
-- [ ] Configure the ntfy notification on it
-- [ ] **Stop the monitored container.** The down alert arrives on the device
-- [ ] Start it again — the recovery alert arrives too. A channel that only fires one direction leaves you guessing
-- [ ] Status and `Last verified` updated
+- [x] `docker compose up -d`, container healthy, interface reachable — on `2.5.3` (pinned `2.4.0`); the image runs as root with Docker's default capabilities, not as uid 1000 as the README said
+- [x] Add one monitor against a service that is actually running — TCP port monitor on a lab container (`obot-app:8080`), 20-second heartbeat, no retries
+- [x] Configure the ntfy notification on it — `http://ntfy-app`, topic `alerts`, access token
+- [x] **Stop the monitored container.** The down alert arrives on the device — down at 22:45:05 UTC on 2026-09-07, on the iPhone
+- [x] Start it again — the recovery alert arrives too. A channel that only fires one direction leaves you guessing — up at 22:45:22 UTC, on the iPhone
+- [x] Status and `Last verified` updated — `Last verified: 2026-09-08 (2.5.3)`
 
 ## Block 4 · Beszel — the metrics axis (~40 min)
 
-- [ ] Hub `docker compose up -d`, interface reachable through Traefik
-- [ ] Agent added, the host appears with live CPU, memory and disk figures
-- [ ] Per-container statistics visible — this is what distinguishes it from a plain host monitor
-- [ ] Set a **disk usage** threshold deliberately low, so it fires
-- [ ] Configure the ntfy notification — Beszel sends via Shoutrrr URLs and **has no email path**, so this is the channel
-- [ ] The threshold alert arrives on the device, then reset the threshold to a sane value
-- [ ] `monitoring/beszel-agent` verified on a second host if one exists; otherwise note it as untested and leave it 🚧
-- [ ] Status and `Last verified` updated
+- [x] Hub `docker compose up -d`, interface reachable through Traefik — on `0.19.0` (pinned `0.18.7`); the hub image runs as root; the README's service names were `hub` and `agent`, the hub's is `beszel-hub`
+- [x] Agent added, the host appears with live CPU, memory and disk figures — public key derived from the hub's `id_ed25519` with `ssh-keygen -y`, agent on the host network, system registered at the Tailscale address as the README says
+- [x] Per-container statistics visible — this is what distinguishes it from a plain host monitor — 38 containers in the first sample
+- [x] Set a **disk usage** threshold deliberately low, so it fires — 1 % for 1 minute against a disk at 73 %
+- [x] Configure the ntfy notification — Beszel sends via Shoutrrr URLs and **has no email path**, so this is the channel — `ntfy://monitoring:…@ntfy-app/alerts?scheme=http`, test notification on the iPhone
+- [x] The threshold alert arrives on the device, then reset the threshold to a sane value — arrived on the iPhone on 2026-09-08; threshold back to 90 %
+- [ ] `monitoring/beszel-agent` verified on a second host if one exists; otherwise note it as untested and leave it 🚧 — no second host; the agent that ran is the one inside `monitoring/beszel`, the standalone stack stays `scaffolded`
+- [x] Status and `Last verified` updated — hub `Last verified: 2026-09-08 (0.19.0)`; the agent stack keeps its stamp
 
 **Watch for:** both images ship no healthcheck by design (`healthcheck: disable: true`). The hub UI is the liveness signal, and the hub itself is not covered by it — that gap is Block 2's job.
 
 ## Block 5 · changedetection.io — the content axis (~30 min)
 
-- [ ] `docker compose up -d`, container healthy, interface reachable
-- [ ] Add one watch against a page that changes predictably
-- [ ] Configure the ntfy notification via the Apprise URL (`ntfy://…`)
-- [ ] Trigger a change, or wait for one — the alert arrives on the device
-- [ ] Status and `Last verified` updated
+- [x] `docker compose up -d`, container healthy, interface reachable — on `0.60.3` (pinned `0.55.8`); runs as root; two example watches on external sites appear on first start
+- [x] Add one watch against a page that changes predictably — a throwaway nginx page on `proxy-public`, which first failed with `Fetch blocked: … private/reserved IP address`: 0.60 guards against fetching internal addresses, now a switch (`CD_ALLOW_PRIVATE_ADDRESSES`, off by default)
+- [x] Configure the ntfy notification via the Apprise URL (`ntfy://…`) — `ntfy://monitoring:…@ntfy-app/alerts`, test notification on the iPhone
+- [x] Trigger a change, or wait for one — the alert arrives on the device — page changed at 23:16:25 UTC on 2026-09-07, notification sent 25 seconds later, on the iPhone
+- [x] Status and `Last verified` updated — `Last verified: 2026-09-08 (0.60.3)`
 
 ## Block 6 · Close the release
 
-- [ ] Consistency Chain from `docs/maintenance.md`
-- [ ] `python3 scripts/ci/check-baseline.py`, `check-structure.py` and `lifecycle-report.py --check` all clean
-- [ ] `python3 scripts/ci/lifecycle-report.py --write`
-- [ ] Record in `monitoring/README.md` under "Proving a channel works": **which channel was proven, and when**
-- [ ] `CHANGELOG.md`: `[Unreleased]` → `[0.8.0]`, comparison links
-- [ ] `ROADMAP.md`: v0.8.0 into "Shipped", "Last updated" bumped
-- [ ] `README.md`: version badge → `v0.8.0`
-- [ ] `maintenance-log.md` row
+- [x] Consistency Chain from `docs/maintenance.md` — no real hostnames in tracked files, `__REPLACE_ME__` only inside the checkers that look for it, links updated
+- [x] `python3 scripts/ci/check-baseline.py`, `check-structure.py` and `lifecycle-report.py --check` all clean
+- [x] `python3 scripts/ci/lifecycle-report.py --write` — 30 baseline-aligned, the five monitoring stacks among them
+- [x] Record in `monitoring/README.md` under "Proving a channel works": **which channel was proven, and when** — five rows, one per stack, all 2026-09-08
+- [x] `CHANGELOG.md`: `[Unreleased]` → `[0.8.0]`, comparison links — and the duplicated `Changed`/`Fixed` headings in the unreleased section merged
+- [x] `ROADMAP.md`: v0.8.0 into "Shipped", "Last updated" bumped — the roadmap has no shipped section; shipped work belongs to the changelog, so the section is removed and the review date moved, as for v0.7.0
+- [x] `README.md`: version badge → `v0.8.0`
+- [x] `maintenance-log.md` row
 - [ ] `git tag v0.8.0` and `gh release create v0.8.0 --draft`
 
 ---
