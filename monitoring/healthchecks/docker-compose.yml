@@ -50,6 +50,12 @@ services:
       EMAIL_HOST_USER: ${HC_SMTP_USER}
       EMAIL_HOST_PASSWORD: ${HC_SMTP_PASSWORD}
       EMAIL_USE_TLS: ${HC_SMTP_USE_TLS}
+      # Whether an integration may target a private address. Off, Healthchecks
+      # refuses to deliver to anything on the Docker network — including the
+      # ntfy stack next to it, which is the receiver this category is built
+      # around. On, anyone with an account here can point an integration at an
+      # internal address; registration is closed, so that is the operator.
+      INTEGRATIONS_ALLOW_PRIVATE_IPS: ${HC_ALLOW_PRIVATE_IPS}
 
     # --- Storage ---
     volumes:

@@ -5,8 +5,9 @@ this file is the short list.
 
 ## Blocked on a host
 
-Ordered run: [`../docs/host-session-v0.8.0.md`](../docs/host-session-v0.8.0.md);
-what v0.7.0's session left open is in
+v0.8.0 closed on 2026-09-08 — the record is
+[`../docs/host-session-v0.8.0.md`](../docs/host-session-v0.8.0.md); what v0.7.0's
+session left open is in
 [`../docs/host-session-v0.7.0.md`](../docs/host-session-v0.7.0.md)
 
 - [x] Borgmatic: install, initialise repository, first backup, export the key off-host
@@ -17,17 +18,22 @@ what v0.7.0's session left open is in
 - [ ] UrBackup: verify against the gate list in `backup/urbackup/README.md`
 - [ ] Verify the nine pending major versions
 - [ ] Decide the legacy verification stamps, per app — `LIFECYCLE.md` marks them ⚠️
-- [ ] Verify `monitoring/healthchecks` and `monitoring/uptime-kuma` — borgmatic's run
-      monitoring points at them, so backup's proof layer depends on them
-- [ ] Point `monitoring/beszel` and `monitoring/beszel-agent` at a socket proxy while
-      bringing them up. Upstream supports `DOCKER_HOST`, and documents a proxy with
+- [x] Verify `monitoring/healthchecks` and `monitoring/uptime-kuma` — done 2026-09-08,
+      closed circuit and down/up both on a phone
+- [ ] Point borgmatic's run monitoring at a real Healthchecks check — the receiver
+      exists now; this is what turns the backup timer's silence into an alert
+- [ ] Point `monitoring/beszel` and `monitoring/beszel-agent` at a socket proxy — the
+      hub stack was verified as shipped on 2026-09-08, the proxy variant was not. Upstream supports `DOCKER_HOST`, and documents a proxy with
       `CONTAINERS=1` as the safer setup — so the exception's old claim that Beszel
       has no proxy support was wrong. The agent runs in host network mode, so the
       proxy binds `127.0.0.1:2375`. Until then the agent holds the full Docker API,
       which is root on the host; `:ro` on the socket does not change that
-- [ ] Verify `monitoring/ntfy` — `read_only: true`, the `sec-3` rate limit under a
-      publish burst, and one message proven to arrive on a real device. Its Known
-      Issues list is the check list.
+- [x] Verify `monitoring/ntfy` — done 2026-09-08: `read_only` holds, a message
+      arrived on an iPhone through the public read-only router; a publish burst
+      against the rate limit is still unmeasured
+- [ ] Non-root for the monitoring stacks that run as root — Uptime Kuma, the
+      Beszel hub, changedetection.io. Each needs a `user:` line and a data
+      directory owned by that user; the READMEs now say who runs as what
 - [ ] Validate `apps/caldiy` on `v6.2.0-6` — the pin and the documentation moved,
       the verification did not. `UPSTREAM.md` still reads `Last verified: 2026-07-26
       (v6.2.0-3)`, so the stamp is now three fork releases behind the pin. Issue #30

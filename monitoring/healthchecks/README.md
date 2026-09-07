@@ -29,11 +29,13 @@ chown -R 999:999 volumes/data
 
 # 4. Start
 docker compose up -d
-docker compose logs app --follow
+docker compose logs healthchecks-app --follow
 # Watch for: "spawned uWSGI worker"
 
-# 5. Create the first admin user (one-time)
-docker compose exec app /opt/healthchecks/manage.py createsuperuser
+# 5. Create the first admin user (one-time). Since v4.4 the command takes its
+#    arguments explicitly and has no --noinput; a passphrase of a few words is
+#    what gets typed into a browser later.
+docker compose exec healthchecks-app /opt/healthchecks/manage.py createsuperuser --email admin@example.com --password '<passphrase>'
 
 # 6. Open UI and log in
 # https://<APP_TRAEFIK_HOST>
@@ -53,6 +55,11 @@ Create a test check in the UI:
 - Copy the generated ping URL
 - From another terminal: `curl <ping-url>`
 - Back in UI → Check should now show "up" with timestamp
+
+A green check proves the ping path, not the alarm. Attach a notification
+channel, stop pinging, and let the grace time expire — the down notification
+has to arrive where it is supposed to. Done on 2026-09-08 (v4.4): ntfy to a
+phone and email to the mail sink, down and up, within a second each.
 
 ## Security Model
 
@@ -94,7 +101,8 @@ registers — the URL must be unchanged.
 
 ## Known Issues
 
-- **`volumes/data` must be owned by uid 999** — the app runs as `hc` (uid 999). If Docker creates the directory as root, SQLite migration fails with `unable to open database file`. Fix: `chown -R 999:999 volumes/data` before first start.
+- **`volumes/data` must be owned by uid 999** — the app runs as `hc` (uid 999). If Docker creates the directory as root, or the operator creates it under their own user, the SQLite migration fails with `unable to open database file` and the container stays unhealthy. Fix: `chown -R 999:999 volumes/data` before first start. Confirmed on 2026-09-08 (v4.4).
+- **Integrations cannot reach the Docker network unless `HC_ALLOW_PRIVATE_IPS=True`.** Healthchecks refuses to deliver to private addresses by default, and the ntfy stack next to it is one. The compose file names the trade-off.
 - **`APP_TRAEFIK_HOST` typo causes Traefik 404** — double-check the hostname in `.env` after copying from `.env.example`. A typo (e.g. `helathchecks.example.com` instead of `healthchecks.example.com`) results in `HTTP 404` from Traefik with no other error. Verify with `docker inspect <container> | grep rule`.
 - **Monitored-job reachability** — if your cron jobs run on servers that can't reach this instance (e.g. behind NAT without Tailscale), pings will silently fail. The only symptom is "check is down" in the UI for a job that is actually running fine. Check job-side logs first when diagnosing.
 - **Email alerts require working SMTP.** Without SMTP, the only notification channels are webhooks, Slack, Discord, ntfy, and Pushover — all of which need to be configured per-check in the UI.

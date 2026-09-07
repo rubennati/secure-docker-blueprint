@@ -14,6 +14,7 @@ session-level detail is in
 | v0.5.1 | 2026-05-03 | Network isolation fix, tag pinning standard, ✅ Ready Criteria formalised |
 | v0.6.0 | 2026-06-04 | CrowdSec complete — firewall bouncer, runbook, AppSec and geoblocking guidance |
 | v0.7.0 | 2026-07-31 | Backup — one archive created and one restore performed against a live stack, checked by query; first `ops-proven` stack |
+| v0.8.0 | 2026-09-08 | Monitoring — one verified service per axis, every alert delivered to a phone outside the tailnet; the receiver public and read-only, the rest behind the VPN |
 
 **The through line:** every release since v0.2.0 is defined by something *proven on a
 fresh install*, not by something written. That is why status carries verification

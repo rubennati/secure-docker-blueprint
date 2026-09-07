@@ -1,6 +1,6 @@
 # Roadmap
 
-Direction reviewed 2026-07-31.
+Direction reviewed 2026-09-08.
 
 What remains to be built, what blocks it, and what proves it finished. Shipped
 work belongs to [`CHANGELOG.md`](CHANGELOG.md), per-stack status to the tables in
@@ -12,29 +12,6 @@ per-category detail to the `README.md` in each top-level directory.
 ## Direction
 
 Pre-1.0 tags are set when a natural milestone is reached, not on a fixed cadence. The single criterion for v1.0 is: **could someone fork this and run it without needing my mental model?** — subjective but unambiguous when met.
-
-### v0.8.0 — Monitoring
-
-Backup tells you what to do when something breaks. Monitoring tells you that something broke — and ideally before it causes data loss or downtime.
-
-Six services are already in place, spanning the axes described in [`monitoring/README.md`](monitoring/README.md). The milestone is reached when each axis has **one verified service** — not when all six are verified, and not one axis per operator:
-
-| Axis | In place | Verified for the milestone |
-|---|---|---|
-| Host & container metrics | Beszel + agent | Beszel |
-| Uptime & endpoints | Uptime Kuma, Gatus | either one — they are a preference pair, not a hierarchy |
-| Scheduled-job liveness | Healthchecks | Healthchecks — also the receiver for backup run monitoring |
-| Content change | changedetection.io | changedetection.io |
-| Disk health | *(Scrutiny planned)* | out of scope — needs physical-disk passthrough |
-| **Alerting** | notification integrations in the services above, plus `monitoring/ntfy` as a receiver | at least one channel proven to actually arrive |
-
-**Alerting is the cross-cutting layer, not a fifth service.** It is delivered by the services above rather than by a separate tool, and it is the one thing that turns a dashboard nobody watches into monitoring. A notification path that has never fired is worth as little as a backup that has never been restored.
-
-Log aggregation (Loki/Grafana) stays out of scope — heavier infrastructure for a later pass.
-
-**Blocked by** the same host the backup milestone ran on. Backup's proof layer
-waits here too: borgmatic's run monitoring reports to Healthchecks or Uptime
-Kuma, so those have to work before the timer is switched on.
 
 ### v0.9.0 — Measured resource limits
 

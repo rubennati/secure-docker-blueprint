@@ -7,7 +7,7 @@
 - **Docker Hub:** https://hub.docker.com/r/henrygd/beszel-agent
 - **License:** MIT
 - **Origin:** US · Henry Gd (community) · non-EU
-- **Based on version:** `0.18.7`
+- **Based on version:** `0.19.0`
 - **Last checked:** 2026-05-03
 
 ## What we use
