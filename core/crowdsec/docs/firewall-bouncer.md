@@ -194,10 +194,10 @@ the only way to own the scope.
 
 ```text
 table ip crowdsec {
-	set crowdsec-blacklists  { type ipv4_addr; flags timeout }
+    set crowdsec-blacklists  { type ipv4_addr; flags timeout }
 }
 table ip6 crowdsec6 {
-	set crowdsec6-blacklists { type ipv6_addr; flags timeout }
+    set crowdsec6-blacklists { type ipv6_addr; flags timeout }
 }
 ```
 
@@ -295,10 +295,10 @@ destroy table ip  crowdsec
 destroy table ip6 crowdsec6
 
 table ip crowdsec {
-	set crowdsec-blacklists  { type ipv4_addr; flags timeout }
+    set crowdsec-blacklists  { type ipv4_addr; flags timeout }
 }
 table ip6 crowdsec6 {
-	set crowdsec6-blacklists { type ipv6_addr; flags timeout }
+    set crowdsec6-blacklists { type ipv6_addr; flags timeout }
 }
 ```
 
