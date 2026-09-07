@@ -489,6 +489,16 @@
     "verified_anchored": false,
     "verified_version": ""
   },
+  "core/keycloak": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=26.7.3",
+    "restore_docs": "missing",
+    "state": "baseline-aligned",
+    "verified": "2026-09-07",
+    "verified_anchored": true,
+    "verified_version": "v26.7.3"
+  },
   "core/onlyoffice": {
     "backup_docs": "documented",
     "local_stack": "✅",

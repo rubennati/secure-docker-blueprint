@@ -44,7 +44,7 @@ more often than it applies:
 
 | Class | Meaning | In this repository |
 |---|---|---|
-| `osi` | OSI-approved | 53 |
+| `osi` | OSI-approved | 54 |
 | `mixed` | open core, or genuinely dual-licensed | 4 |
 | `source-available` | source published, use restricted | 3 |
 | `proprietary` | neither | 1 |
@@ -66,15 +66,15 @@ a business on reselling it without reading the licence first.
 
 ## As of 2026-09-07
 
-61 stacks, no gaps in either field:
+62 stacks, no gaps in either field:
 
 | Bloc | Stacks |
 |---|---|
 | EU | 27 |
-| non-EU | 28 |
+| non-EU | 29 |
 | no single jurisdiction | 6 |
 
-Most-represented countries: US (10), Germany (9), France (6), UK (5),
+Most-represented countries: US (11), Germany (9), France (6), UK (5),
 New Zealand (4), Canada (2), China (2), India (2).
 
 Note that the UK counts as non-EU here. That is a statement about jurisdiction,

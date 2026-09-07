@@ -391,6 +391,14 @@
     "license_class": "mixed",
     "origin": "US · Infisical Inc · non-EU"
   },
+  "core/keycloak": {
+    "bloc": "non-EU",
+    "country": "US",
+    "entity": "Red Hat, Inc. (CNCF incubating project)",
+    "license": "Apache-2.0",
+    "license_class": "osi",
+    "origin": "US · Red Hat, Inc. (CNCF incubating project) · non-EU"
+  },
   "core/onlyoffice": {
     "bloc": "EU",
     "country": "Latvia",

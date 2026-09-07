@@ -130,6 +130,7 @@ the choice guidance for that category.
 |---------|-------------|
 | [Traefik](core/traefik/) | Reverse proxy with Socket Proxy, 5 security levels, 3 TLS profiles, access policies |
 | [Authentik](core/authentik/) | SSO / Identity Provider for centralized authentication (Forward-Auth, OAuth2 / OIDC / SAML) |
+| [Keycloak](core/keycloak/) | Alternative identity provider — OIDC / SAML, LDAP and AD federation, two containers, no proxy of its own. `core/keycloak/README.md` compares the two |
 | [OnlyOffice](core/onlyoffice/) | Document editing server for Seafile, Nextcloud, etc. |
 | [Euro-Office](core/euro-office/) | EU-governed OnlyOffice fork (Nextcloud/IONOS/XWiki/Proton) — drop-in document server |
 | [Collabora](core/collabora/) | Lightweight LibreOffice-based office server (~1 GB) — leaner alternative to OnlyOffice/Euro-Office |
@@ -142,8 +143,6 @@ the choice guidance for that category.
 | [Hawser](core/hawser/) | Remote Docker agent for Dockhand |
 | [Portainer Agent](core/portainer-agent/) | Remote Docker agent for Portainer (multi-host) |
 | [Infisical](core/infisical/) | Central secret manager (self-hosted) — one place for all servers'/apps' secrets. VPN-only |
-
-Planned in `core/`: Keycloak (alternative / heavier IAM next to Authentik).
 
 ### Applications
 
@@ -292,7 +291,7 @@ New here? Start with the area that best matches your goal: [Core Infrastructure]
 
 | Directory | Scope |
 |---|---|
-| [`core/`](core/) | Infrastructure shared by everything — Traefik, CrowdSec, identity providers (Authentik + Keycloak planned), OnlyOffice, certs |
+| [`core/`](core/) | Infrastructure shared by everything — Traefik, CrowdSec, identity providers (Authentik, Keycloak), OnlyOffice, certs |
 | [`apps/`](apps/) | General-purpose self-hosted apps — equally useful for private homelab or a company |
 | [`business/`](business/) | Apps that only make sense in a company context — invoicing, helpdesk, newsletter, compliance |
 | [`monitoring/`](monitoring/) | Ops observability — uptime, metrics, content-change watching, disk SMART |
@@ -306,6 +305,7 @@ secure-docker-blueprint/
 ├── core/                        # Infrastructure (always needed)
 │   ├── traefik/                 #   Reverse proxy + socket proxy
 │   ├── authentik/               #   SSO / Identity provider
+│   ├── keycloak/                #   SSO / Identity provider — the alternative
 │   ├── crowdsec/                #   Intrusion detection + Traefik bouncer
 │   ├── onlyoffice/              #   Document editing server
 │   ├── euro-office/             #   EU OnlyOffice fork (document server)

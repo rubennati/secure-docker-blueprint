@@ -4,7 +4,7 @@
 
 Generated 2026-09-07 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-61 stacks: 1 ops-proven · 24 baseline-aligned · 36 scaffolded. 52 carry a local test stack.
+62 stacks: 1 ops-proven · 25 baseline-aligned · 36 scaffolded. 53 carry a local test stack.
 
 This is the maintainer's view: what has been established about each stack. It makes no statement about whether a stack suits a given deployment.
 
@@ -28,6 +28,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`core/euro-office`](core/euro-office/) | `scaffolded` | `APP_TAG=v9.3.2` | — | ✅ | documented | missing |
 | [`core/hawser`](core/hawser/) | `scaffolded` | `APP_TAG=0.2.39` | 2026-04-14 ⚠️ | — | documented | missing |
 | [`core/infisical`](core/infisical/) | `scaffolded` | `APP_TAG=v0.162.13` | — | ✅ | documented | missing |
+| [`core/keycloak`](core/keycloak/) | `baseline-aligned` | `APP_TAG=26.7.3` | 2026-09-07 | ✅ | documented | missing |
 | [`core/onlyoffice`](core/onlyoffice/) | `scaffolded` | `APP_TAG=9.4.0` | 2026-06-14 ⚠️ | ✅ | documented | missing |
 | [`core/portainer`](core/portainer/) | `scaffolded` | `APP_TAG=2.39.5` | 2026-04-16 ⚠️ | ✅ | documented | missing |
 | [`core/portainer-agent`](core/portainer-agent/) | `baseline-aligned` | `APP_TAG=2.39.5` | 2026-05-05 | — | documented | missing |
