@@ -195,8 +195,10 @@ Read from each project's own documentation and source on 2026-07-31. Every
 positive was then checked by a second pass whose job was to refute it; one
 claim did not survive. The full record, per stack with citations, is in
 [`docs/research/egress-apps-business-2026-07-31.json`](../research/egress-apps-business-2026-07-31.json).
-`apps/mailpit` came later (2026-09-07) and was read the same way from its
-source — `config/config.go`, `go.mod` — but is not in that record.
+`apps/mailpit` and `apps/tymeslot` came later (2026-09-07) and were read the
+same way from their sources — Mailpit's `config/config.go` and `go.mod`,
+Tymeslot's `config/prod.exs` and `config/runtime.exs` — but are not in that
+record.
 
 None of this was observed on the wire. It establishes that a call exists, not
 that no other one does.
@@ -220,7 +222,7 @@ carries the PHP and MySQL versions, the locale, **the number of sites and the
 number of users**, and whether multisite is enabled. There is no supported
 environment variable in the official image.
 
-**Eight check a version without identifying the installation.** These are
+**Nine check a version without identifying the installation.** These are
 downloads rather than beacons — a plain GET, no payload, no identifier. The
 receiving host learns the source IP and the timing.
 
@@ -234,6 +236,7 @@ receiving host learns the source IP and the timing.
 | business/listmonk | `update.listmonk.app` | `app.check_updates`, default on |
 | apps/adminer | `adminer.org` — but from the **browser**, not the server, via an injected iframe | needs a custom build; the admin's own address is what is seen |
 | apps/mailpit | GitHub releases API, through the `ghru` updater library | `MP_DISABLE_VERSION_CHECK=1`, set in compose |
+| apps/tymeslot | IANA time-zone database version at `data.iana.org`, at boot and then daily | none — `tz_watch_enabled` is compile-time. The dashboard's help links point at the hosted docs, which the browser fetches; `DOCS_ARTICLE_BASE_URL` redirects them |
 
 **Two documented switches do not work.** Both were found by reading the code
 rather than the documentation, and neither project's own docs say so:

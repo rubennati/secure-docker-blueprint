@@ -44,7 +44,7 @@ more often than it applies:
 
 | Class | Meaning | In this repository |
 |---|---|---|
-| `osi` | OSI-approved | 52 |
+| `osi` | OSI-approved | 53 |
 | `mixed` | open core, or genuinely dual-licensed | 4 |
 | `source-available` | source published, use restricted | 3 |
 | `proprietary` | neither | 1 |
@@ -66,11 +66,11 @@ a business on reselling it without reading the licence first.
 
 ## As of 2026-09-07
 
-60 stacks, no gaps in either field:
+61 stacks, no gaps in either field:
 
 | Bloc | Stacks |
 |---|---|
-| EU | 26 |
+| EU | 27 |
 | non-EU | 28 |
 | no single jurisdiction | 6 |
 

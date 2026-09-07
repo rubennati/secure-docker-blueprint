@@ -191,6 +191,14 @@
     "license_class": "proprietary",
     "origin": "China · Seafile Ltd · non-EU"
   },
+  "apps/tymeslot": {
+    "bloc": "EU",
+    "country": "Estonia",
+    "entity": "Diletta Luna OÜ (Tallinn)",
+    "license": "AGPL-3.0",
+    "license_class": "osi",
+    "origin": "Estonia · Diletta Luna OÜ (Tallinn) · EU"
+  },
   "apps/unifi": {
     "bloc": "non-EU",
     "country": "US",
