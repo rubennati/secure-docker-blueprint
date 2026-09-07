@@ -86,10 +86,14 @@ a mail server.
 
 ## Also server-wide, without a guide
 
-**Single sign-on.** [Authentik](/infrastructure/authentik/) is set up once and
-then attached per route as a proxy middleware, so several applications can share
-one login. Five containers, and it needs SMTP, a database and Redis of its own —
-it is a service to operate, not a setting to switch on.
+**Single sign-on.** Two providers, and they are alternatives.
+[Authentik](/infrastructure/authentik/) is set up once and then attached per
+route as a proxy middleware, so several applications can share one login even
+when they have none of their own; five containers, and it needs SMTP, a
+database and Redis. [Keycloak](/infrastructure/keycloak/) is the provider most
+applications that speak OpenID Connect or SAML were tested against, in two
+containers, with no proxy of its own. Either is a service to operate, not a
+setting to switch on; the Keycloak guide has the comparison.
 
 ## Server-wide, and covered elsewhere
 

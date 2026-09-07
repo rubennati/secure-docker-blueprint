@@ -85,6 +85,15 @@ It is not a reason to skip TLS, and not a reason to rely on it: a hostname
 absent from CT is harder to find. It is not protected by that absence — anything
 reachable needs to survive being found.
 
+### Identity providers — one switched off, one with nothing to switch
+
+Authentik ships error reporting to its vendor and `core/authentik` sets
+`AUTHENTIK_ERROR_REPORTING__ENABLED=false`. Keycloak has no such feature to
+switch: `kc.sh start --help-all` lists no telemetry, update or reporting
+option, the log of a fresh install names no external host, and no outbound
+connection was observed. Read from the binary and the log on 2026-09-07,
+v26.7.3 — not from the wire over time.
+
 ### Container registries
 
 Every `docker compose pull` tells the registry which images this host runs, from
