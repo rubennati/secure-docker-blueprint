@@ -6,9 +6,9 @@ Day-to-day operations and incident response for the three-phase CrowdSec stack.
 
 | Component | Where it runs |
 |---|---|
-| Phase 1 — Security Engine | Docker container (`core/crowdsec/`) |
-| Phase 2 — Traefik Bouncer Plugin | Inside the Traefik container (`core/traefik/`) |
-| Phase 3 — Firewall Bouncer | Host service (`crowdsec-firewall-bouncer`) |
+| Core — engine, detection and decisions | Docker container (`core/crowdsec/`) |
+| Reverse-Proxy Remediation — Traefik bouncer plugin | Inside the Traefik container (`core/traefik/`) |
+| Host-Firewall Remediation — nftables bouncer | Host service (`crowdsec-firewall-bouncer`) |
 
 Run all `docker exec` and `docker compose` commands from `core/crowdsec/` unless otherwise noted.
 
@@ -21,28 +21,28 @@ Run all `docker exec` and `docker compose` commands from `core/crowdsec/` unless
 Run this sequence when something seems wrong or after any change to the stack.
 
 ```bash
-# Phase 1 — engine up and talking to LAPI?
+# Core — engine up and talking to LAPI?
 docker exec crowdsec cscli lapi status
 # Expected: "You can successfully interact with Local API (LAPI)"
 
-# Phase 1 — log sources being parsed?
+# Core — log sources being parsed?
 docker exec crowdsec cscli metrics show acquisition
 # Expected: rows for each active log source, lines_read > 0, lines_unparsed = 0
 
-# Phase 2 — Traefik bouncer connected and polling?
+# Reverse-proxy remediation — bouncer connected and polling?
 docker exec crowdsec cscli bouncers list
 # Expected: traefik-bouncer row with a "Last API pull" timestamp within the last 60 s
 
-# Phase 3 — firewall bouncer service running?
+# Host-firewall remediation — bouncer service running?
 sudo systemctl status crowdsec-firewall-bouncer
 # Expected: "active (running)"
 
-# Phase 3 — nftables chain exists?
+# Host-firewall remediation — nftables chain exists?
 sudo nft list chain ip crowdsec crowdsec-chain
 # Expected: chain output (empty if no active bans — that is normal)
 ```
 
-### Phase 1 — Engine
+### Core — Engine
 
 ```bash
 # Container running?
@@ -61,7 +61,7 @@ docker exec crowdsec cscli lapi status
 docker exec crowdsec cscli metrics
 ```
 
-### Phase 2 — Traefik Bouncer
+### Reverse-Proxy Remediation — Traefik bouncer
 
 ```bash
 # Is the bouncer registered and polling?
@@ -78,7 +78,7 @@ docker compose -f ../traefik/docker-compose.yml logs traefik 2>&1 \
 # crowdsec-basic@file must show green "Success"
 ```
 
-### Phase 3 — Firewall Bouncer
+### Host-Firewall Remediation — nftables bouncer
 
 ```bash
 # Service status
@@ -153,7 +153,7 @@ If `lines_parsed` < `lines_read`, the log format is not matching the configured 
 Check that Traefik writes JSON-format access logs and that `type: traefik` is set in
 `config/acquis.yaml`.
 
-### Active nftables bans (Phase 3)
+### Active nftables bans (host-firewall remediation)
 
 ```bash
 # All active drop rules from the firewall bouncer
@@ -206,7 +206,7 @@ docker exec crowdsec cscli decisions list --ip 1.2.3.4
 # Expected: empty output
 ```
 
-Phase 3 enforcement clears within ~10 seconds. Phase 2 enforcement clears within ~60 seconds
+Host-firewall enforcement clears within ~10 seconds. Reverse-proxy enforcement clears within ~60 seconds
 (Traefik bouncer polling interval).
 
 ### Permanent whitelist — single IP or CIDR
@@ -365,7 +365,7 @@ docker compose logs -f crowdsec | grep <affected-ip>
 
 ### Clear all active bans immediately (affects all enforcement layers)
 
-Removes every active decision from the LAPI. Both Phase 2 (Traefik plugin) and Phase 3
+Removes every active decision from the LAPI. Both remediation points
 (firewall bouncer) read from the same decision list — this clears protection at both
 layers simultaneously.
 
@@ -377,11 +377,11 @@ layers simultaneously.
 docker exec crowdsec cscli decisions delete --all
 ```
 
-Phase 2 (Traefik) clears within ~60 s. Phase 3 (nftables) clears within ~10 s.
+Reverse-proxy remediation clears within ~60 s, host-firewall remediation within ~10 s.
 
-### Disable Phase 3 — Firewall Bouncer (nftables only)
+### Disable host-firewall remediation (nftables only)
 
-Stops network-layer enforcement without affecting Phase 1 or Phase 2.
+Stops network-layer enforcement without affecting Core or reverse-proxy remediation.
 
 Stopping the service does **not** flush the nftables chain — existing drop rules remain
 in place until explicitly cleared. This is intentional: it prevents a service restart
@@ -399,7 +399,7 @@ sudo nft list chain ip crowdsec crowdsec-chain
 # Expected: chain exists but contains no drop rules
 ```
 
-Phase 1 (detection) and Phase 2 (Traefik HTTP blocking) continue running.
+Core (detection) and reverse-proxy remediation (HTTP blocking) continue running.
 
 To re-enable:
 
@@ -408,30 +408,30 @@ sudo systemctl start crowdsec-firewall-bouncer
 # The bouncer syncs active decisions from the LAPI within ~10 s and repopulates the chain
 ```
 
-### Disable Phase 2 — Traefik Bouncer
+### Disable reverse-proxy remediation
 
-There is no single command that disables only Phase 2 without affecting Phase 3.
+There is no single command that disables only reverse-proxy remediation without affecting the host-firewall side.
 
 **Option A — Remove specific decisions causing problems (targeted):**
 
 ```bash
 # Remove bans only for the IPs that are being incorrectly blocked
 docker exec crowdsec cscli decisions delete --ip <ip> --all
-# Phase 3 nftables rules are updated accordingly within ~10 s
+# host-firewall nftables rules are updated accordingly within ~10 s
 ```
 
-**Option B — Clear all decisions (also affects Phase 3):**
+**Option B — Clear all decisions (also affects host-firewall remediation):**
 
 ```bash
-# Clears ALL bans across both Phase 2 and Phase 3 — see warning above
+# Clears ALL bans across both remediation points — see warning above
 docker exec crowdsec cscli decisions delete --all
 ```
 
 **Option C — Disable the Traefik bouncer plugin entirely (config change required):**
 
 Remove `crowdsec-basic@file` (or `crowdsec-appsec@file`) from the router middleware
-lists in Traefik config, then reload Traefik. Phase 3 nftables rules remain active. See `core/traefik/README.md`
-for the configuration location. This is the only approach that truly isolates Phase 2.
+lists in Traefik config, then reload Traefik. The host-firewall nftables rules remain active. See `core/traefik/README.md`
+for the configuration location. This is the only approach that truly isolates reverse-proxy remediation.
 
 ### Disable CrowdSec entirely — engine + all enforcement
 
@@ -439,16 +439,16 @@ Use when CrowdSec itself is causing a problem (false positives at scale, broken 
 configuration error).
 
 ```bash
-# 1. Stop Phase 3 and flush nftables rules
+# 1. Stop host-firewall remediation and flush nftables rules
 sudo systemctl stop crowdsec-firewall-bouncer
 sudo nft flush chain ip crowdsec crowdsec-chain 2>/dev/null || true
 
-# 2. Stop the CrowdSec engine (Phase 1)
-#    Phase 2 bouncer will lose its decision source — it will continue
+# 2. Stop the CrowdSec engine (Core)
+#    the reverse-proxy bouncer loses its decision source — it will continue
 #    enforcing its last cached decision list until the cache clears
 docker compose down
 
-# 3. (Optional) Clear Phase 2 cached decisions by restarting Traefik
+# 3. (Optional) Clear the reverse-proxy bouncer's cached decisions by restarting Traefik
 #    Only needed if you want immediate HTTP access restored
 docker compose -f ../traefik/docker-compose.yml restart traefik
 ```
@@ -457,26 +457,26 @@ docker compose -f ../traefik/docker-compose.yml restart traefik
 
 | Phase | After engine stops |
 |---|---|
-| Phase 1 | Down — no new detections or decisions |
-| Phase 2 | Continues enforcing last cached decision list (~60 s cache window), then fails open |
-| Phase 3 | Continues enforcing existing nftables rules until explicitly flushed |
+| Core | Down — no new detections or decisions |
+| Reverse-proxy remediation | Continues enforcing last cached decision list (~60 s cache window), then fails open |
+| Host-firewall remediation | Continues enforcing existing nftables rules until explicitly flushed |
 
 ### Restore after emergency
 
 ```bash
-# 1. Start Phase 1 (engine)
+# 1. Start Core (engine)
 docker compose up -d
 
 # 2. Wait for startup (~5 min for full parser init)
 docker exec crowdsec cscli lapi status
 
-# 3. Start Phase 3
+# 3. Start host-firewall remediation
 sudo systemctl start crowdsec-firewall-bouncer
 
 # 4. Confirm all phases healthy (see §1 Quick triage)
 ```
 
-Phase 2 recovers automatically once the engine is reachable and the Traefik container
+Reverse-proxy remediation recovers automatically once the engine is reachable and the Traefik container
 has restarted or its cache has refreshed.
 
 ---
@@ -607,7 +607,7 @@ docker exec crowdsec cscli scenarios list
 
 ### Decisions not enforced
 
-**Phase 2 (Traefik) not enforcing:**
+**Reverse-proxy remediation not enforcing:**
 
 ```bash
 # Is the bouncer polling?
@@ -623,7 +623,7 @@ docker compose -f ../traefik/docker-compose.yml logs traefik 2>&1 \
 # Check the router's middleware list in the Traefik dashboard or compose file
 ```
 
-**Phase 3 (nftables) not enforcing:**
+**Host-firewall remediation not enforcing:**
 
 ```bash
 # Is the bouncer service running?
@@ -676,7 +676,7 @@ docker compose logs crowdsec | grep -i "database\|db\|sqlite" | tail -20
 
 > **Recovery:** Stopping the engine and deleting `volumes/data/` forces a clean start.
 > **This permanently loses all decision history and alert history.**
-> All registered bouncers (Phase 2 and Phase 3) will lose their API keys — regenerate
+> All registered bouncers will lose their API keys — regenerate
 > with `cscli bouncers add` and update the keys in Traefik config and
 > `/etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml` before restarting those services.
 
@@ -729,13 +729,13 @@ grep "^mode:" /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
 # Verify nftables is active: sudo nft list ruleset
 ```
 
-Full Phase 3 troubleshooting table: [`firewall-bouncer.md`](firewall-bouncer.md).
+Full host-firewall troubleshooting table: [`firewall-bouncer.md`](firewall-bouncer.md).
 
 ---
 
 ### SSH detection not working
 
-Prerequisites: Phase 3 installed, SSH log volume mounted, `crowdsecurity/sshd`
+Prerequisites: host-firewall remediation installed, SSH log volume mounted, `crowdsecurity/sshd`
 collection added, container restarted.
 
 ```bash
@@ -761,4 +761,4 @@ grep CROWDSEC_LOG_GID .env
 ```
 
 Full SSH detection activation steps: [`firewall-bouncer.md`](firewall-bouncer.md)
-→ "SSH detection — making Phase 3 worth it".
+→ "SSH detection — what makes host-firewall remediation worth it".

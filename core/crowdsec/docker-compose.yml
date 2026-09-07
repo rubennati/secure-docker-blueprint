@@ -6,9 +6,9 @@ services:
   # Analyzes Traefik access logs, detects threats,
   # shares threat intel with CrowdSec community.
   #
-  # Phase 1: Detection only (this service)
-  # Phase 2: Traefik Bouncer Plugin (see core/traefik/)
-  # Phase 3: Firewall Bouncer (host-level nftables)
+  # Core — detection and decisions (this service). Blocks nothing on its own.
+  # Reverse-Proxy Remediation: Traefik bouncer plugin (see core/traefik/)
+  # Host-Firewall Remediation: nftables bouncer (host package)
   # --------------------------------------------------------
   crowdsec:
     # --- Identity ---
@@ -71,7 +71,7 @@ services:
     networks:
       - crowdsec-security
     ports:
-      # LAPI on localhost only — for firewall bouncer (Phase 3)
+      # LAPI on localhost only — for the host-firewall remediation bouncer
       - "127.0.0.1:${CROWDSEC_LAPI_PORT}:8080"
 
     # --- Health & Observability ---

@@ -12,7 +12,7 @@ before enabling AppSec.
 **Scenario detection** (Phases 1–3) works asynchronously against log events. The engine
 reads Traefik access logs, evaluates patterns over time (e.g., 10 failed login attempts in
 5 minutes), and creates ban decisions stored in the LAPI. Those decisions are enforced by
-Phase 2 (Traefik bouncer, HTTP 403) and Phase 3 (nftables, packet drop). One ban blocks
+reverse-proxy remediation (HTTP 403) and host-firewall remediation (packet drop). One ban blocks
 all future requests from that IP until the decision expires.
 
 **AppSec** works synchronously, per request, inline. When AppSec is enabled, the Traefik
@@ -188,7 +188,7 @@ a security incident, not a transparent pass-through.
 
 ## Diagnosing AppSec blocks
 
-When a request returns 403, the cause is one of two things: a LAPI IP ban (Phase 2
+When a request returns 403, the cause is one of two things: a LAPI IP ban (reverse-proxy remediation
 enforcement) or an AppSec rule match. They produce the same HTTP response but require
 different remediation.
 
@@ -197,7 +197,7 @@ different remediation.
 ```bash
 # 1. Is there an active ban for the IP in question?
 docker exec crowdsec cscli decisions list --ip <affected-ip>
-# If a decision exists → this is a Phase 2/3 IP ban, not AppSec.
+# If a decision exists → this is an IP ban from remediation, not AppSec.
 # If no decision exists → the block is from AppSec (or something else upstream).
 
 # 2. Check for AppSec block events in the engine log:

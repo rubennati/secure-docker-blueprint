@@ -62,7 +62,7 @@ skipping Cloudflare. This section is the most important one. Do at least one of:
 
 **Option B example (host firewall):** allow inbound 80/443 only from the published Cloudflare
 ranges (the same list already in `traefik.yml.tmpl`), drop the rest. This overlaps with the
-Phase 3 firewall bouncer — see [`core/crowdsec/docs/firewall-bouncer.md`](../../../core/crowdsec/docs/firewall-bouncer.md).
+CrowdSec host-firewall remediation — see [`core/crowdsec/docs/firewall-bouncer.md`](../../../core/crowdsec/docs/firewall-bouncer.md).
 
 **Also — don't leak the origin IP:**
 

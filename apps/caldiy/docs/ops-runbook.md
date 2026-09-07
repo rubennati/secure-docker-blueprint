@@ -3,7 +3,7 @@
 Operational checklists for deploying, hardening, maintaining, and recovering Cal.diy on the
 secure-docker-blueprint.
 
-Steps marked **Phase 2** require CrowdSec Phase 2 (Traefik bouncer) to be configured and
+Steps marked **Phase 2** require CrowdSec reverse-proxy remediation (the Traefik bouncer) to be configured and
 verified on a test app first. Do not attempt them until the prerequisites are met.
 
 ---

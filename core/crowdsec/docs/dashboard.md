@@ -110,7 +110,7 @@ docker compose restart crowdsec
 
 After unenrolling, the Console connection is removed. The engine remains fully
 functional: CAPI participation continues (community blocklist sharing is unaffected),
-and Phase 2 and Phase 3 bouncers continue operating normally.
+and both remediation components continue operating normally.
 
 ### Console tier limits
 

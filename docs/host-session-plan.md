@@ -163,9 +163,11 @@ settled ground.
       only way to answer "the site does not load for me", and it belongs at the
       start of that conversation. Written into the README and the site; it also
       belongs in an operating runbook once one exists
-- [x] **CrowdSec Phase 3 in place.** Firewall bouncer installed with safe_range
-      set before first start; a decision reaches the kernel in ~15s and clears in
-      ~10s, both address families. It inherited ~15,880 community decisions that
+- [x] **CrowdSec Phase 3 in place.** Firewall bouncer installed; a decision
+      reaches the kernel in ~15s and clears in ~10s, both address families. The
+      `safe_range` list written before first start was later found not to be a
+      configuration key at all and protected nothing — see
+      [`bugfixes/crowdsec-firewall-bouncer-2026-08-28.md`](bugfixes/crowdsec-firewall-bouncer-2026-08-28.md). It inherited ~15,880 community decisions that
       had been collected but never enforced, plus one locally detected scanner
       (finding 30)
 - [x] **CrowdSec verified end to end.** Engine, bouncer, a real ban producing

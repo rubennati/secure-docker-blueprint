@@ -725,9 +725,12 @@ to check before touching anything. A one-word "opt-in" was the actual defect.
 
 **Set up and verified.** The Debian package is `crowdsec-firewall-bouncer` — not
 the `-nftables` name upstream guides still use, which does not exist in Debian
-13. `safe_range` was written before the service was ever started, covering RFC
-1918 and Tailscale, because the failure mode here is locking yourself out of the
-machine you are configuring.
+13. A `safe_range` list was written before the service was ever started, covering
+RFC 1918 and Tailscale, because the failure mode here is locking yourself out of
+the machine you are configuring. **It never had any effect.** `safe_range` is not
+a configuration key in this package; the file passed validation and the list was
+never read, and a later lockout followed. See
+[`bugfixes/crowdsec-firewall-bouncer-2026-08-28.md`](bugfixes/crowdsec-firewall-bouncer-2026-08-28.md).
 
 The chain measured end to end:
 
