@@ -2,9 +2,11 @@
 
 > If this file conflicts with git (branch, commits, tags), trust git.
 
-**Last updated:** 2026-08-18
+**Last updated:** 2026-08-27
 
-- **Phase:** pre-1.0. Latest tag `v0.7.0` (2026-07-31). Work happens on `dev`.
+- **Phase:** pre-1.0. Latest tag `v0.7.0` (2026-07-31). Work happens on a
+  short-lived branch and reaches `dev` through a pull request; `dev` reaches
+  `main` the same way. Both branches reject a direct push.
 - **Current milestone:** v0.8.0 — Monitoring.
 - **Definition of done for v0.8.0:** one verified service per axis, and at least
   one alert that arrived on a real device. Not a green dashboard.
@@ -35,8 +37,10 @@
   reports images it could not pull instead of passing over them. Still
   `--exit-code 0`.
 - CI jobs and what each one blocks on: [`quality-gates.md`](quality-gates.md),
-  documented per job in `docs/standards/ci.md`. `Checker coverage`, `Docs QA` and
-  `Workflow supply chain` run without blocking until branch protection is updated.
+  documented per job in `docs/standards/ci.md`. All ten are required on a pull
+  request into `dev` and into `main`, and both rulesets require the branch to be
+  up to date before merging. CodeQL reports on the same pull requests and is not
+  a required check.
 
 ## Immediate next steps
 

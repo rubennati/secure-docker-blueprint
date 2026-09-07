@@ -8,13 +8,13 @@ Cloud file storage with collaboration, search, and antivirus scanning.
 
 | Service | Image | Purpose |
 |---|---|---|
-| app | seafile-pro-mc | Main Seafile server |
+| seafile-pro-app | seafile-pro-mc | Main Seafile server |
 | db | mariadb | Database |
 | redis | redis | Cache/Sessions |
-| seadoc | sdoc-server | Collaborative document editing |
-| notification-server | notification-server | Real-time file change updates |
+| seafile-pro-seadoc | sdoc-server | Collaborative document editing |
+| seafile-pro-notification | notification-server | Real-time file change updates |
 | md-server | seafile-md-server | File metadata management |
-| thumbnail-server | thumbnail-server | Image/video previews |
+| seafile-pro-thumbnail | thumbnail-server | Image/video previews |
 | seasearch | seasearch | Full-text search |
 | clamav | clamav | Antivirus scanning |
 
@@ -44,7 +44,7 @@ docker compose up -d
 docker compose ps
 
 # 6. Inject Blueprint configs (runs once — see Passwords section)
-docker compose restart app
+docker compose restart seafile-pro-app
 
 # 7. Build search index
 docker exec seafile-pro-app /opt/seafile/seafile-server-latest/pro/pro.py search --update
@@ -75,7 +75,7 @@ Passwords are stored in `.env` (gitignored). Docker Secrets are not used because
 
 `config/seahub_custom.py` is appended to `seahub_settings.py` **once** — on the container start after first boot creates the config files. After that initial injection, the marker prevents it from running again.
 
-Settings that use `os.environ.get()` (OnlyOffice URL, SMTP host, etc.) are evaluated at Django startup on every restart, so changing those values in `.env` takes effect after `docker compose restart app` — no re-injection needed.
+Settings that use `os.environ.get()` (OnlyOffice URL, SMTP host, etc.) are evaluated at Django startup on every restart, so changing those values in `.env` takes effect after `docker compose restart seafile-pro-app` — no re-injection needed.
 
 Adding a brand-new setting that was absent from `seahub_custom.py` at injection time requires either editing `seahub_settings.py` directly in the volume, or removing the marker line (`# --- Blueprint custom settings ---`) and everything after it, updating `config/seahub_custom.py`, then restarting.
 

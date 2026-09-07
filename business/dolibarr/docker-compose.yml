@@ -64,7 +64,7 @@ services:
   # --------------------------------------------------------
   # DOLIBARR (ERP/CRM web app)
   # --------------------------------------------------------
-  app:
+  dolibarr-app:
     # --- Identity ---
     image: dolibarr/dolibarr:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}

@@ -6,6 +6,37 @@ this file is the index and covers decisions that have no other home.
 
 ---
 
+## 2026-08 · CrowdSec gets a dedicated core-to-core network
+
+The engine joins `crowdsec-security` and no longer joins `proxy-public`. The network
+is an ordinary IPv4 bridge, declared by `core/traefik` and joined by `core/crowdsec`
+with `external: true`. Traefik and the engine are the intended members; application
+stacks stay on `proxy-public` and never attach.
+
+`proxy-public` is the network every routed application joins, and the CrowdSec LAPI,
+AppSec and Prometheus ports answered all of them. Authentication already bounded what
+that reach was good for — a bouncer key reads decisions and can neither create nor
+delete one, and AppSec returns 401 without a valid remediation key — so this is
+control-plane segmentation rather than the closing of an exploit. It also returns the
+deployment to the upstream expectation that the AppSec component answers the reverse
+proxy and nothing else.
+
+Rejected: leaving the engine on `proxy-public`, which keeps the unauthenticated
+metrics and pprof endpoints on port 6060 reachable from every application container.
+Rejected: `internal: true` plus a separate egress network — it denies a route neither
+member uses, and closed membership already bounds reachability.
+
+Deferred: extending the shared-external-network identity check to this network. It
+carries two members named in this repository, so the ambiguity that rule prevents
+cannot arise. Revisit if an independent participant is ever added. Deferred also: what
+becomes of the Prometheus endpoint on 6060, since the v0.8.0 monitoring milestone
+wants to scrape it and that decision belongs there.
+
+AppSec keeps `listen_addr: 0.0.0.0:7422` and the LAPI keeps its `127.0.0.1` host
+publication for the Phase 3 firewall bouncer. Neither is an oversight: the bind cannot
+be loopback across containers, and the host publication is a mechanism no container
+reaches.
+
 ## 2026-08 · Binary controls and values have separate owners
 
 `security-baseline.md` owns the controls that are on or off: `no-new-privileges`,

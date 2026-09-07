@@ -16,12 +16,6 @@ split across five compose files so the optional parts can be switched off.
 Needs: [Traefik](/infrastructure/traefik/) running, a domain, and SMTP if the
 server should send invitations or reset links.
 
-:::caution
-The blueprint settings block is missing after the first start, every time. The
-container writes it before Seafile creates the file it belongs in, so a second
-start is part of the installation rather than a workaround — see step 6.
-:::
-
 ## What is in the stack
 
 `COMPOSE_FILE` in `.env` decides which parts run. Removing a filename and running
@@ -156,12 +150,9 @@ mariadb_databases:
       password: "{credential file /srv/docker/apps/seafile/.secrets/seafile_db_pwd.txt}"
 ```
 
-:::caution
-Three databases, not one. `seafile_db` holds the file metadata, `ccnet_db` the
-users and groups, `seahub_db` the web layer with shares and links. Backing up
-only the first is the common mistake — any one of the three missing produces a
-restore that starts and is unusable.
-:::
+All three are required: `seafile_db` holds the file metadata, `ccnet_db` the
+users and groups, `seahub_db` the web layer with shares and links. Any one of them
+missing produces a restore that starts and is unusable.
 
 Restore order: the three databases, then the file store, then the application.
 

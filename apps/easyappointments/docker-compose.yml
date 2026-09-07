@@ -53,7 +53,7 @@ services:
   # --------------------------------------------------------
   # EASY!APPOINTMENTS (PHP self-hosted scheduling)
   # --------------------------------------------------------
-  app:
+  easyappointments-app:
     image: alextselegidis/easyappointments:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}
     restart: unless-stopped

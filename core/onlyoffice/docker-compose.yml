@@ -5,7 +5,7 @@ services:
   # Central office document editing service.
   # Used by: Seafile, Nextcloud, or any app with WOPI support.
   # --------------------------------------------------------
-  app:
+  onlyoffice-app:
     # --- Identity ---
     image: onlyoffice/documentserver:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}

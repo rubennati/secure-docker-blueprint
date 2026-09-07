@@ -67,7 +67,7 @@ services:
   # Docker management UI. Connects to Docker API
   # exclusively through the socket proxy above.
   # --------------------------------------------------------
-  app:
+  portainer-app:
     # --- Identity ---
     image: portainer/portainer-ce:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}

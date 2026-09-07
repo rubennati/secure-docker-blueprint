@@ -1,5 +1,11 @@
 # Traefik CrowdSec plugin — first-setup bugs — 2026-04-20
 
+> **Naming note.** This record uses `sec-crowdsec`, the middleware name in use on
+> 2026-04-20, and keeps the log output and configuration exactly as observed. The
+> current blueprint names the equivalent middleware `crowdsec-basic`, with
+> `crowdsec-appsec` as its AppSec variant. Read the names here as historical; for
+> current configuration follow `docs/standards/traefik-security.md`.
+
 Two independent issues observed on a fresh Phase 2 activation. Both produce
 the same visible failure mode (routers with `sec-crowdsec@file` in their
 middleware chain return HTTP 403 or 404), so it is worth listing both and

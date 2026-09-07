@@ -27,6 +27,8 @@
 | LAPI on localhost only | `127.0.0.1:8080` — not exposed to network |
 | `no-new-privileges` | Security hardening |
 | Custom acquis.yaml + appsec.yaml | Mounted read-only for reproducibility |
+| AppSec on `0.0.0.0:7422` | Upstream defaults to `127.0.0.1:7422`, which assumes the web server shares the host. Traefik is a separate container here, so a loopback bind is unreachable. Membership of `crowdsec-security` takes over the boundary the loopback bind provides upstream. |
+| Engine on `crowdsec-security`, not `proxy-public` | Upstream states the AppSec component should be reachable from the web server or reverse proxy and from nowhere else. `proxy-public` carries every routed application, which is wider than that; `crowdsec-security` carries Traefik and this engine alone. The host publication on `127.0.0.1` is a separate mechanism and stays for the Phase 3 firewall bouncer. |
 
 ## Upgrade checklist
 

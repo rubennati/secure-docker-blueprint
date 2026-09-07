@@ -15,12 +15,6 @@ containers — a single binary serving both API and interface, and PostgreSQL.
 Needs: [Traefik](/infrastructure/traefik/) running, a domain, and a build step —
 this stack builds its image locally.
 
-:::note
-The upstream image contains nothing but the binary — no shell, no utilities. This
-stack adds the minimum on top: a shell to read the secret files at start, and a
-tool for the healthcheck. That is why installation includes a build.
-:::
-
 ## Installation
 
 From `business/vikunja/`:

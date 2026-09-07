@@ -58,10 +58,10 @@ TABLE` clean, `needsDbUpgrade: false`. Procedure in
 | Removed nginx-proxy + letsencrypt-companion | Replaced by Traefik |
 | Docker Secrets for all six credentials — database, database root, Redis, admin name, admin password, SMTP key | Blueprint standard; Nextcloud supports `_FILE` natively, and Redis reads its own from the secret at startup |
 | Unattended install via `NEXTCLOUD_ADMIN_USER_FILE` / `_PASSWORD_FILE` | Repeatable, and no unauthenticated setup form is ever reachable |
-| Service names: `app`, `db`, `redis`, `nginx`, `cron` | Blueprint naming convention |
-| Traefik labels on nginx | Blueprint routing |
+| Service names: `app`, `db`, `redis`, `nextcloud-nginx`, `cron` | Blueprint naming convention |
+| Traefik labels on `nextcloud-nginx` | Blueprint routing |
 | CalDAV/CardDAV redirect left to `nginx.conf` | Upstream's own configuration already issues the documented 301; a Traefik rewrite runs first and suppresses it |
-| `security_opt: no-new-privileges` on `db`, `redis`, `nginx` only | The Nextcloud entrypoint needs to chown files as root before dropping to `www-data`; with the flag set, `config.php` ends up root-owned and FPM returns 503 |
+| `security_opt: no-new-privileges` on `db`, `redis`, `nextcloud-nginx` only | The Nextcloud entrypoint needs to chown files as root before dropping to `www-data`; with the flag set, `config.php` ends up root-owned and FPM returns 503 |
 | Second network `app-egress` for `app` and `cron` | `app-internal` is `internal: true`, so the database and cache have no route out at all |
 | MariaDB `healthcheck.sh --connect --innodb_initialized` | Official MariaDB healthcheck script |
 | Named volumes | Upstream pattern |
@@ -71,7 +71,7 @@ TABLE` clean, `needsDbUpgrade: false`. Procedure in
 If fpm-alpine + nginx causes issues:
 
 1. Change `APP_TAG` to the matching `-apache` tag in `.env`
-2. Remove the `nginx` service from `docker-compose.yml`
+2. Remove the `nextcloud-nginx` service from `docker-compose.yml`
 3. Move Traefik labels to the `app` service
 4. Change loadbalancer port to `80`
 5. Remove `nginx/nginx.conf` mount

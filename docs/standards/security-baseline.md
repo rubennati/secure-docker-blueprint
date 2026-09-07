@@ -190,6 +190,17 @@ Exception: Hawser — needs direct socket access as its core function. Socket pr
 - Databases, Redis, internal services: **only** in `app-internal` network
 - Web apps: `proxy-public` + `app-internal`
 - Database ports **never** exposed on host
+- A security control plane belongs on a dedicated core-to-core network, not on
+  `proxy-public`. `core/crowdsec` is on `crowdsec-security` alone, so its LAPI,
+  AppSec and metrics ports answer Traefik and no application container.
+
+That last rule is control-plane segmentation and defense in depth, not the closing
+of a known exploit. The LAPI authenticates every action that changes state — a
+bouncer key reads decisions and can neither create nor delete one — and the AppSec
+endpoint answers 401 without a valid remediation key. What closed membership removes
+is the unauthenticated surface on port 6060 and the reach a compromised application
+container would otherwise have to the control plane policing it. The network model
+itself is owned by [`networking.md`](networking.md).
 
 ## Checklist
 

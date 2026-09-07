@@ -13,7 +13,7 @@ Every Traefik resource reference (middleware, TLS option, router, service) must 
 
 - `acc-*@file`, `sec-*@file` — access and security chains defined in `access.yml` / `security-chains.yml`
 - `tls-*@file` — TLS profiles from `tls-profiles.yml`
-- `sec-crowdsec@file`, `sec-authentik@file` — integrations from `integrations.yml`
+- `crowdsec-basic@file`, `crowdsec-appsec@file`, `sec-authentik@file` — integrations from `integrations.yml`
 - `${COMPOSE_PROJECT_NAME}-headers@docker` — per-app custom middleware defined inline via labels
 
 ### Common failure mode

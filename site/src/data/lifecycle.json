@@ -22,7 +22,7 @@
   "apps/caldiy": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "pinned": "APP_TAG=v6.2.0-5@sha256:c2facc284b28…",
+    "pinned": "APP_TAG=v6.2.0-6@sha256:538cbb4a2273…",
     "restore_docs": "missing",
     "state": "baseline-aligned",
     "verified": "2026-07-26",
@@ -128,6 +128,16 @@
     "verified": "2026-04-17",
     "verified_anchored": false,
     "verified_version": ""
+  },
+  "apps/mailpit": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=v1.31.1",
+    "restore_docs": "missing",
+    "state": "baseline-aligned",
+    "verified": "2026-09-07",
+    "verified_anchored": true,
+    "verified_version": "v1.31.1"
   },
   "apps/monicahq": {
     "backup_docs": "documented",

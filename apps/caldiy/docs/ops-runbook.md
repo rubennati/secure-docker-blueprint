@@ -472,5 +472,5 @@ implemented yet** — this note records the guardrails so it is done safely when
 - **Do not add `crowdsec-basic@file` to Cal.diy's router until the profile is proven on whoami.**
   Once attached it must be the **first** middleware in the chain.
 
-Rollback is removing the `crowdsec-basic@file` token from the router and recreating the app —
+Rollback is clearing `APP_TRAEFIK_THREAT` in `apps/caldiy/.env` and recreating the app —
 Traefik hot-reloads within seconds.

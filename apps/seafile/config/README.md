@@ -86,8 +86,8 @@ The same `entrypoint.sh` is used by **all** Seafile services:
 | Service | Original command passed to `exec "$@"` |
 |---------|---------------------------------------|
 | seafile (main) | `/sbin/my_init -- /scripts/enterpoint.sh` |
-| seadoc | `/sbin/my_init -- /scripts/enterpoint.sh` |
-| notification-server | `/opt/seafile/notification-server -c /opt/seafile -l ...` |
+| seafile-seadoc | `/sbin/my_init -- /scripts/enterpoint.sh` |
+| seafile-notification | `/opt/seafile/notification-server -c /opt/seafile -l ...` |
 | md-server | `bash -c /opt/scripts/entrypoint.sh` |
 
 Each secret export is conditional (`[ -f ... ] &&`), so it only runs if the

@@ -5,7 +5,7 @@ services:
   # Receives alerts from the monitoring services and delivers them to phones
   # and desktops. Deliberately deployable on its own host — see README.
   # --------------------------------------------------------
-  app:
+  ntfy-app:
     # --- Identity ---
     image: binwiederhier/ntfy:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}

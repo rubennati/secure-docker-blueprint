@@ -63,7 +63,7 @@ services:
   # --------------------------------------------------------
   # MONICA (Laravel CRM for personal relationships)
   # --------------------------------------------------------
-  app:
+  monica-app:
     # --- Identity ---
     image: monica:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}

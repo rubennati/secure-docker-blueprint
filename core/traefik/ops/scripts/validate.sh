@@ -72,6 +72,27 @@ if [ -f "${ROOT_DIR}/config/traefik.yml" ]; then
   for f in access.yml security-blocks.yml security-chains.yml integrations.yml tls-profiles.yml routers-system.yml; do
     test -f "${ROOT_DIR}/config/dynamic/${f}" || { echo "Missing config/dynamic/${f} (run render.sh)"; exit 1; }
   done
+
+  # CrowdSec bouncer key. envsubst turns an unset CROWDSEC_BOUNCER_KEY into an
+  # empty string, so a bouncer that cannot authenticate renders without a word of
+  # complaint. The key is required only where a CrowdSec middleware was actually
+  # rendered — the default-off blueprint must validate without one.
+  #
+  # The grep is a pre-filter, not the decision: it keeps a default-off install
+  # free of any Python dependency. When it matches, the rendered YAML is parsed
+  # and that parse decides.
+  if grep -rqE '^[[:space:]]*crowdsec-(basic|appsec):' "${ROOT_DIR}/config/dynamic" 2>/dev/null; then
+    CROWDSEC_CHECK="${ROOT_DIR}/../../scripts/ci/check-crowdsec-config.py"
+    if [ -f "${CROWDSEC_CHECK}" ] && command -v python3 >/dev/null 2>&1; then
+      python3 "${CROWDSEC_CHECK}" --rendered "${ROOT_DIR}/config" || exit 1
+    else
+      echo "ERROR: a CrowdSec middleware is enabled in the rendered config, but the"
+      echo "       bouncer key check could not run. It needs python3 with PyYAML and"
+      echo "       scripts/ci/check-crowdsec-config.py. Install them, or confirm by hand"
+      echo "       that crowdsecLapiKey is not empty before starting Traefik."
+      exit 1
+    fi
+  fi
 fi
 
 echo "OK."

@@ -53,7 +53,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK (or 302 to /install/ on 
 - **`cap_drop: ALL`** on MariaDB with minimal `cap_add`.
 - **`no-new-privileges:true`** on both services.
 - **MariaDB on `app-internal` (`internal: true`)** — not reachable from outside.
-- **Default access `acc-tailscale` + `sec-3`** — ERPs hold all of your business data (invoices, customer details, financials). VPN-only is the right default; switch to `acc-public + sec-3` only with `sec-crowdsec` + 2FA.
+- **Default access `acc-tailscale` + `sec-3`** — ERPs hold all of your business data (invoices, customer details, financials). VPN-only is the right default; switch to `acc-public + sec-3` only with `crowdsec-basic` + 2FA.
 
 ## Backup
 

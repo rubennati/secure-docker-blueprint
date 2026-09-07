@@ -6,7 +6,7 @@ services:
   # calculator, regex tester, base64, etc.). Static SPA,
   # no backend, no database.
   # --------------------------------------------------------
-  app:
+  it-tools-app:
     # --- Identity ---
     image: ghcr.io/corentinth/it-tools:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}

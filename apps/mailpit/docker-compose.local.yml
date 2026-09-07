@@ -1,0 +1,39 @@
+# Mailpit — local
+#
+#   cp .env.local.example .env.local
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   http://localhost:8025 — the inbox; SMTP on 127.0.0.1:1025, any login accepted
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  app:
+    image: axllent/mailpit:${APP_TAG}
+    container_name: mailpit-local-app
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs: [/tmp]
+    user: "${USERMAP_UID}:${USERMAP_GID}"
+    environment:
+      TZ: ${TZ}
+      MP_MAX_MESSAGES: "500"
+      MP_SMTP_AUTH_ACCEPT_ANY: "1"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "1"
+      MP_SMTP_DISABLE_RDNS: "1"
+      MP_DISABLE_VERSION_CHECK: "1"
+    ports:
+      - "127.0.0.1:8025:8025"
+      - "127.0.0.1:1025:1025"
+    networks: [mailpit-local]
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+networks:
+  mailpit-local:
+    name: mailpit-local

@@ -45,7 +45,7 @@ services:
   # --------------------------------------------------------
   # LISTMONK (newsletter + mailing list manager)
   # --------------------------------------------------------
-  app:
+  listmonk-app:
     image: listmonk/listmonk:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}
     restart: unless-stopped

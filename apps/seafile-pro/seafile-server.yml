@@ -96,7 +96,7 @@ services:
   # --------------------------------------------------------
   # SEAFILE SERVER
   # --------------------------------------------------------
-  app:
+  seafile-pro-app:
     # --- Identity ---
     image: seafileltd/seafile-pro-mc:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}
@@ -156,7 +156,7 @@ services:
       # Notification
       - ENABLE_NOTIFICATION_SERVER=${ENABLE_NOTIFICATION_SERVER}
       - NOTIFICATION_SERVER_URL=https://${APP_TRAEFIK_HOST}/notification
-      - INNER_NOTIFICATION_SERVER_URL=http://notification-server:8083
+      - INNER_NOTIFICATION_SERVER_URL=http://seafile-pro-notification:8083
       # AI (optional)
       - ENABLE_SEAFILE_AI=${ENABLE_SEAFILE_AI:-false}
       - ENABLE_FACE_RECOGNITION=${ENABLE_FACE_RECOGNITION:-false}

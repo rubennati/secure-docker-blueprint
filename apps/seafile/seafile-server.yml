@@ -193,7 +193,7 @@ services:
       # --- Notification ---
       ENABLE_NOTIFICATION_SERVER: ${SEAFILE_ENABLE_NOTIFICATION}
       NOTIFICATION_SERVER_URL: https://${APP_TRAEFIK_HOST}/notification
-      INNER_NOTIFICATION_SERVER_URL: http://notification-server:8083
+      INNER_NOTIFICATION_SERVER_URL: http://seafile-notification:8083
       # --- OnlyOffice ---
       ONLYOFFICE_URL: https://${ONLYOFFICE_HOST}
       # --- WebDAV ---

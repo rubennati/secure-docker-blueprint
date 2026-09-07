@@ -57,7 +57,7 @@ OpenSign uses Parse Server (Node.js) as the backend API with MongoDB as the data
 
 ```bash
 # Shell into the API server
-docker compose exec api sh
+docker compose exec opensign-api sh
 
 # Check MongoDB status (with auth)
 docker compose exec db mongosh \
@@ -67,6 +67,6 @@ docker compose exec db mongosh \
   --eval "db.adminCommand('ping')"
 
 # View API logs
-docker compose logs api --follow
+docker compose logs opensign-api --follow
 # Watch for: "parse-server-example running on port 8080"
 ```

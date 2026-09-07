@@ -14,12 +14,6 @@ views, forms. One container with its own SQLite store by default.
 
 Needs: [Traefik](/infrastructure/traefik/) running and a domain.
 
-:::danger
-The first account to sign up becomes super-admin. `NC_INVITE_ONLY_SIGNUP` is
-`true` in the shipped configuration, which closes it afterwards — but claim the
-first account immediately.
-:::
-
 ## Installation
 
 From `apps/nocodb/`:
@@ -56,7 +50,9 @@ From `apps/nocodb/`:
 
    Wait for the dashboard line.
 
-5. Open `https://<APP_TRAEFIK_HOST>` and create the super-admin account.
+5. Open `https://<APP_TRAEFIK_HOST>` and create the super-admin account. The
+   first account to sign up claims it; signup closes behind it, because
+   `NC_INVITE_ONLY_SIGNUP` is `true` in the shipped configuration.
 
 </Steps>
 

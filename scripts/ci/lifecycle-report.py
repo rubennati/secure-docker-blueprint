@@ -434,33 +434,33 @@ def render(rows: list[dict]) -> str:
         MARKER,
         "",
         f"Generated {today} from the sources named in "
-        "[`docs/standards/status-model.md`](docs/standards/status-model.md). "
-        "**Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.",
+        + "[`docs/standards/status-model.md`](docs/standards/status-model.md). "
+        + "**Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.",
         "",
         f"{len(rows)} stacks: {summary}. "
-        f"{sum(1 for r in rows if r['local'] == '✅')} carry a local test stack.",
+        + f"{sum(1 for r in rows if r['local'] == '✅')} carry a local test stack.",
         "",
         "This is the maintainer's view: what has been established about each "
-        "stack. It makes no statement about whether a stack suits a given "
-        "deployment.",
+        + "stack. It makes no statement about whether a stack suits a given "
+        + "deployment.",
         "",
         "## What the columns mean",
         "",
         "- **State** — `scaffolded` · `verified` · `baseline-aligned` · "
-        "`ops-proven`, each measured from an artefact. See "
-        "[`status-model.md`](docs/standards/status-model.md).",
+        + "`ops-proven`, each measured from an artefact. See "
+        + "[`status-model.md`](docs/standards/status-model.md).",
         "- **Last verified** — from the stack's `UPSTREAM.md`. A ⚠️ marks a date "
-        "with no version in parentheses, which names no anchor and leaves the "
-        "stack at `scaffolded`.",
+        + "with no version in parentheses, which names no anchor and leaves the "
+        + "stack at `scaffolded`.",
         "- **Local** — whether the stack carries "
-        "`docker-compose.local.yml`, which runs it on one machine without a "
-        "proxy, DNS or certificate. A `—` marks a stack that shows nothing run "
-        "alone. See [`compose-structure.md`](docs/standards/compose-structure.md#local-test-stack).",
+        + "`docker-compose.local.yml`, which runs it on one machine without a "
+        + "proxy, DNS or certificate. A `—` marks a stack that shows nothing run "
+        + "alone. See [`compose-structure.md`](docs/standards/compose-structure.md#local-test-stack).",
         "- **Backup / Restore docs** — whether the stack README has such a "
-        "section. Says nothing about whether either was performed; that is what "
-        "`ops-proven` records. `n/a` marks a stack where the section would be "
-        "circular — the backup tool cannot describe backing itself up with "
-        "itself.",
+        + "section. Says nothing about whether either was performed; that is what "
+        + "`ops-proven` records. `n/a` marks a stack where the section would be "
+        + "circular — the backup tool cannot describe backing itself up with "
+        + "itself.",
         "",
     ]
 
@@ -488,11 +488,11 @@ def render(rows: list[dict]) -> str:
         "- Stack implementation: the stack's `docker-compose.yml` + `.env.example`.",
         "- Lifecycle procedure: the stack's `README.md` and `UPSTREAM.md`.",
         "- Restore evidence: [`backup/borgmatic/RESTORE.md`]"
-        "(backup/borgmatic/RESTORE.md#rehearsal-log).",
+        + "(backup/borgmatic/RESTORE.md#rehearsal-log).",
         "- Security baseline definition: [`docs/standards/security-baseline.md`]"
-        "(docs/standards/security-baseline.md).",
+        + "(docs/standards/security-baseline.md).",
         "- State definitions and ownership: [`docs/standards/status-model.md`]"
-        "(docs/standards/status-model.md).",
+        + "(docs/standards/status-model.md).",
         "",
     ]
     return "\n".join(out)
@@ -589,7 +589,7 @@ def main() -> int:
         lines = [
             "## Lifecycle\n",
             f"{status} {len(rows)} stacks — {tally.replace('  ·  ', ', ')}, "
-            f"**{fails} failure(s)**, {warns} warning(s)\n",
+            + f"**{fails} failure(s)**, {warns} warning(s)\n",
         ]
         if problems:
             lines += ["| Level | Rule | Stack | Detail |", "|---|---|---|---|"]

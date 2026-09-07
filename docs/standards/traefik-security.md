@@ -275,12 +275,27 @@ External services that plug into Traefik as middleware. Each is independent and 
 
 | Integration | Type | What it does |
 |-------------|------|-------------|
-| `crowdsec-basic` | Traefik plugin | Blocks IPs flagged by CrowdSec (stream mode, fail-open, no WAF) |
+| `crowdsec-basic` | Traefik plugin | CrowdSec decision remediation: blocks IPs the LAPI has a decision for (stream mode, fail-open, no request inspection) |
+| `crowdsec-appsec` | Traefik plugin | The same decision remediation, plus AppSec request inspection against the installed rule sets (fail-open) |
 | `sec-authentik` | Forward auth | SSO authentication via Authentik |
 
-Both are commented out by default. `crowdsec-basic` is the first profile in the `crowdsec-*`
-family — see [`core/crowdsec/docs/profiles.md`](../../core/crowdsec/docs/profiles.md) for the
-full profile model (AppSec, strict, geo) and the whoami-first validation procedure.
+All three are commented out by default and no router attaches one. An application opts
+in deliberately, per stack, by prepending the middleware to its router chain — see
+`APP_TRAEFIK_THREAT` in [`traefik-labels.md`](traefik-labels.md).
+
+`crowdsec-appsec` additionally requires the CrowdSec AppSec listener on port 7422 and a
+remediation plugin version that supports it. AppSec is CrowdSec's request-inspection
+(WAF) component; what it blocks depends on which rule sets are installed, so treat its
+coverage as the rule sets' coverage rather than as general request filtering. See
+[`core/crowdsec/docs/appsec.md`](../../core/crowdsec/docs/appsec.md) before enabling it.
+
+Enabling either one means uncommenting the plugin in Traefik's **static** configuration,
+which takes effect only after a Traefik restart. The middleware definitions themselves
+live in the dynamic configuration and are hot-reloaded.
+
+`crowdsec-basic` is the first profile in the `crowdsec-*` family — see
+[`core/crowdsec/docs/profiles.md`](../../core/crowdsec/docs/profiles.md) for the full
+profile model (AppSec, strict, geo) and the whoami-first validation procedure.
 See the [Traefik README](../../core/traefik/README.md) for step-by-step enable/disable instructions.
 
 ---

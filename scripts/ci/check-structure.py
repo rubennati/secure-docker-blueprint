@@ -37,7 +37,9 @@ Exit code is 1 only when a FAIL rule triggers, so WARN drift can be paid down
 gradually without blocking work.
 """
 
+import functools
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -81,6 +83,40 @@ EXCEPT_DIRS = {
 }
 
 
+@functools.lru_cache(maxsize=1)
+def repository_files() -> frozenset[str] | None:
+    """Paths Git considers part of the repository, or None when Git is absent.
+
+    `--cached` is what is tracked, `--others --exclude-standard` adds files that
+    are new but not ignored. Together they are exactly "the repository as it
+    would be committed", which is what a blueprint gate should judge.
+
+    What this deliberately leaves out is material the working tree carries but
+    the repository does not own: `.gitignore`d runtime directories and anything
+    listed in `.git/info/exclude`. Walking the filesystem instead made local
+    scratch space and generated volume data indistinguishable from blueprint
+    content, and a checker that fails on those is reporting on the machine
+    rather than on the repository.
+
+    Returning None (no Git, e.g. a source tarball) falls back to the filesystem
+    walk, so the checker still runs — it simply cannot make the distinction.
+    """
+    try:
+        out = subprocess.run(
+            ["git", "ls-files", "--cached", "--others", "--exclude-standard"],
+            capture_output=True, text=True, check=True, timeout=30,
+        ).stdout
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return frozenset(line for line in out.splitlines() if line)
+
+
+def in_repository(path: Path) -> bool:
+    """True when Git owns this path, or when Git cannot be consulted."""
+    known = repository_files()
+    return True if known is None else path.as_posix() in known
+
+
 def is_compose(path: Path) -> bool:
     """True when a YAML file declares Compose services."""
     try:
@@ -100,23 +136,183 @@ def compose_files(app: Path) -> list[Path]:
     were invisible to this checker until every part was picked up.
     """
     main = app / "docker-compose.yml"
-    if main.exists():
+    if main.exists() and in_repository(main):
         return [main]
     # For a split stack the glob decides what counts as production, so the
     # local test stack must be excluded from it.
     return sorted(p for p in app.glob("*.yml")
-                  if is_compose(p) and not p.name.endswith(".local.yml"))
+                  if in_repository(p) and is_compose(p) and not p.name.endswith(".local.yml"))
 
 
 def find_apps() -> list[Path]:
-    apps = {p.parent for root in ROOTS for p in Path(root).rglob("docker-compose.yml")}
+    apps = {p.parent for root in ROOTS for p in Path(root).rglob("docker-compose.yml")
+            if in_repository(p)}
     # Split-compose stacks: a directory with compose files but no docker-compose.yml.
     for root in ROOTS:
         for candidate in Path(root).iterdir() if Path(root).is_dir() else []:
             if candidate.is_dir() and candidate not in apps:
-                if any(is_compose(p) for p in candidate.glob("*.yml")):
+                if any(in_repository(p) and is_compose(p) for p in candidate.glob("*.yml")):
                     apps.add(candidate)
     return sorted(apps)
+
+
+def _expand(value: str, env: dict) -> str:
+    """Substitute ${VAR} from a stack's .env.example, leaving unknowns intact."""
+    return re.sub(r"\$\{([A-Z_][A-Z0-9_]*)\}",
+                  lambda m: env.get(m.group(1), m.group(0)), value)
+
+
+def external_networks(app: Path) -> dict:
+    """Compose network key -> effective Docker network name, external only.
+
+    The key is a local label, not an identity: three stacks in this repository
+    declare the same shared network under the key `proxy` or `proxy-public`,
+    and two of them name it through `${TRAEFIK_NETWORK}`. Only the resolved
+    `name:` says which Docker network is actually joined.
+    """
+    env_path = app / ".env.example"
+    env = dict(parse_env(env_path)[0]) if env_path.exists() else {}
+    out: dict = {}
+    for path in compose_files(app):
+        try:
+            data = yaml.safe_load(path.read_text(encoding="utf-8", errors="replace")) or {}
+        except yaml.YAMLError:
+            continue
+        for key, net in (data.get("networks") or {}).items():
+            if isinstance(net, dict) and net.get("external"):
+                out[key] = _expand(str(net.get("name", key)), env)
+    return out
+
+
+@functools.lru_cache(maxsize=1)
+def canonical_shared_network():
+    """The proxy network the repository itself declares as shared.
+
+    core/traefik owns it, so its own .env.example is the source of truth rather
+    than a constant repeated here.
+    """
+    env_path = Path("core/traefik/.env.example")
+    if not env_path.exists():
+        return None
+    for key, value in parse_env(env_path)[0]:
+        if key == "PUBLIC_NETWORK":
+            return value.strip() or None
+    return None
+
+
+def shared_external_networks() -> set:
+    """Effective names of external networks shared between deployable stacks.
+
+    `external: true` alone does not make a network shared — a stack may attach
+    to an external network nothing else uses. A network counts as shared when
+    the repository declares it as the common proxy network, or when two
+    independently deployable stacks demonstrably attach to the same effective
+    name. Both are derived, so a second shared network needs no code change.
+    """
+    users: dict = {}
+    for app in find_apps():
+        if str(app) in EXCEPT_DIRS:
+            continue
+        for effective in set(external_networks(app).values()):
+            users.setdefault(effective, set()).add(str(app))
+    shared = {name for name, stacks in users.items() if len(stacks) >= 2}
+    canonical = canonical_shared_network()
+    if canonical:
+        shared.add(canonical)
+    return shared
+
+
+def stack_identity(app: Path) -> tuple[str, str | None]:
+    """(identity, disagreement) for a stack.
+
+    `COMPOSE_PROJECT_NAME` is the canonical identity because it is the name
+    Compose itself derives container and default network names from. The
+    directory name is the fallback and the sanity check; where the two differ
+    this returns the disagreement instead of silently preferring one.
+    """
+    directory = app.name
+    env = app / ".env.example"
+    project = ""
+    if env.exists():
+        for key, value in parse_env(env)[0]:
+            if key == "COMPOSE_PROJECT_NAME":
+                project = value.strip()
+                break
+    if not project:
+        return directory, None
+    if project != directory:
+        return project, f"COMPOSE_PROJECT_NAME is {project!r} but the directory is {directory!r}"
+    return project, None
+
+
+def identity_conforms(service: str, identity: str) -> bool:
+    """A shared-network service key must be application-specific.
+
+    Either it *is* the stack identity — `seafile` needs no role suffix — or it
+    carries the identity as a prefix, `<stack>-<role>`.
+    """
+    return service == identity or service.startswith(identity + "-")
+
+
+def check_shared_network_identity(by_app: dict) -> None:
+    """Services on a shared external network carry an unambiguous identity.
+
+    Compose publishes the service key as a discoverable name on every network
+    the service joins. Docker states that a network-wide name shared by more
+    than one container resolves to an unspecified one of them, so two
+    independently deployable stacks must not publish the same key into the same
+    shared network.
+
+    Two rules, deliberately independent:
+      shared-net-identity   fires on the first generic key, before a second
+                            stack exists to collide with it.
+      shared-net-duplicate  the backstop, in case identity derivation is wrong.
+    """
+    shared = shared_external_networks()
+    if not shared:
+        return
+    claimed: dict[tuple[str, str], set[str]] = {}
+
+    for app in find_apps():
+        if str(app) in EXCEPT_DIRS:
+            continue
+        identity, disagreement = stack_identity(app)
+        external = external_networks(app)
+        entries = by_app.setdefault(app, [])
+        noted = False
+
+        for path in compose_files(app):
+            try:
+                data = yaml.safe_load(path.read_text(encoding="utf-8", errors="replace")) or {}
+            except yaml.YAMLError:
+                continue
+            for name, svc in (data.get("services") or {}).items():
+                if not isinstance(svc, dict):
+                    continue
+                nets = svc.get("networks") or []
+                netnames = nets if isinstance(nets, list) else list(nets)
+                joined = sorted({external[n] for n in netnames
+                                 if n in external and external[n] in shared})
+                if not joined:
+                    continue
+                if disagreement and not noted:
+                    entries.append({"level": "WARN", "rule": "identity-source", "service": name,
+                                    "detail": disagreement + " — resolve before relying on the derived identity"})
+                    noted = True
+                if not identity_conforms(name, identity):
+                    entries.append({"level": "FAIL", "rule": "shared-net-identity", "service": name,
+                                    "detail": f"joins {', '.join(joined)} with a generic key — "
+                                              f"use '{identity}-<role>' so blueprints stay unambiguous"})
+                for net in joined:
+                    claimed.setdefault((net, name), set()).add(str(app))
+
+    for (net, name), stacks in sorted(claimed.items()):
+        if len(stacks) > 1:
+            for stack in sorted(stacks):
+                by_app.setdefault(Path(stack), []).append(
+                    {"level": "FAIL", "rule": "shared-net-duplicate", "service": name,
+                     "detail": f"'{name}' is published into {net} by {len(stacks)} stacks — "
+                               f"Docker does not define which container the name resolves to"})
 
 
 def parse_env(path: Path) -> tuple[list[tuple[str, str]], list[str]]:
@@ -347,9 +543,9 @@ def main() -> int:
                 print(f)
         return 0
 
-    results: list[tuple[Path, list[dict]]] = []
     fails = warns = 0
     root_gi = root_gitignore()
+    by_app: dict[Path, list[dict]] = {}
 
     for app in find_apps():
         key = str(app)
@@ -360,7 +556,14 @@ def main() -> int:
         check_env(app, findings)
         check_compose(app, findings)
         if findings:
-            results.append((app, findings))
+            by_app.setdefault(app, []).extend(findings)
+
+    # Runs once over every stack: the shared-network rules are cross-stack and
+    # cannot be decided while looking at a single compose file.
+    check_shared_network_identity(by_app)
+
+    results: list[tuple[Path, list[dict]]] = [(a, f) for a, f in sorted(by_app.items()) if f]
+    for _app, findings in results:
         fails += sum(1 for f in findings if f["level"] == "FAIL")
         warns += sum(1 for f in findings if f["level"] == "WARN")
 

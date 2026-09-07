@@ -103,6 +103,7 @@ export default defineConfig({
 						{ label: 'Invoice Ninja', link: '/applications/invoiceninja/' },
 						{ label: 'IT-Tools', link: '/applications/it-tools/' },
 						{ label: 'Listmonk', link: '/applications/listmonk/' },
+						{ label: 'Mailpit', link: '/applications/mailpit/' },
 						{ label: 'n8n', link: '/applications/n8n/' },
 						{ label: 'Nextcloud', link: '/applications/nextcloud/' },
 						{ label: 'NocoDB', link: '/applications/nocodb/' },
