@@ -79,6 +79,23 @@ embedded outpost and the `sec-authentik` Traefik middleware do.
   reachable by whatever it protects. The stack ships `acc-tailscale`; a
   Keycloak in front of public applications is public, with CrowdSec ahead of
   it.
+- **The proxy sends no `X-Frame-Options`; Keycloak sets it itself.** The
+  admin console answers with `SAMEORIGIN` and a CSP `frame-ancestors 'self'`,
+  and loads its third-party-cookie check in an iframe from its own origin.
+  The two pages built to be framed — that check, and
+  `login-status-iframe.html`, which `keycloak-js` embeds from the
+  application's origin — carry no frame header at all. A `DENY` added by the
+  security chain reaches them, and the console stops at "Timeout when waiting
+  for 3rd party check iframe message". The compose file therefore puts a
+  `strip-xfo` middleware between the access policy and the security chain;
+  it removes the header the chain sets. It has to stand *before* the chain:
+  Traefik applies the response changes of the first middleware last, so a
+  strip placed after the chain is overwritten by it (measured on v3.6). The
+  console stays protected by its own CSP `frame-ancestors 'self'`, and the
+  realm's *Security Defenses* tab owns the values. An `e` variant of the
+  chain is not the answer: it sets `SAMEORIGIN` on every response, including
+  `login-status-iframe.html`, which an application on another origin is
+  meant to frame.
 - **Secrets through the entrypoint.** `KC_*_FILE` variables are accepted into
   the configuration without a warning and do nothing — `KC_DB_PASSWORD_FILE`
   leaves the driver reporting that no password was provided. The wrapper in
@@ -148,8 +165,9 @@ at boot and refuses to start on a schema newer than its own version.
   upgrading guide before moving `APP_TAG`; the checklist is in `UPSTREAM.md`.
 - **Cold start is slow.** The rebuild at every boot costs about 30 seconds
   before the server listens; `start_period` in the healthcheck allows for it.
-- **The admin console has not been exercised in a browser here.** Boot,
-  health, routing and the discovery document have.
+- **No application has signed in through it here.** Boot, health, routing,
+  the discovery document and the admin console from a VPN client have been
+  exercised; a client with a real login has not.
 
 ## Details
 
