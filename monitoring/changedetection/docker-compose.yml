@@ -42,6 +42,15 @@ services:
       # version lookup, and the watch count is usage data. Off here; version
       # tracking is UPSTREAM.md's job.
       DISABLE_VERSION_CHECK: "yes"
+      # Whether a watch may target a private or reserved address. Off,
+      # changedetection refuses to fetch anything on the Docker network or the
+      # LAN ("Fetch blocked: … resolves to a private/reserved IP address"),
+      # which is its guard against being used to probe the inside from the
+      # outside. On, anyone who can log in here can watch internal pages —
+      # the status page of another stack, say — and also point the fetcher at
+      # anything the container can reach. Keep it off unless internal pages
+      # are what you watch.
+      ALLOW_IANA_RESTRICTED_ADDRESSES: ${CD_ALLOW_PRIVATE_ADDRESSES}
       # Uncomment to use the playwright browser service for JS-heavy
       # sites. Without it, only plain HTTP fetches are supported
       # (fine for most static pages + APIs).

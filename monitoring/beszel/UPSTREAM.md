@@ -7,8 +7,8 @@
 - **Docker Hub:** https://hub.docker.com/r/henrygd/beszel
 - **License:** MIT
 - **Origin:** US · Henry Gd (community) · non-EU
-- **Based on version:** `0.18.7`
-- **Last checked:** 2026-05-03
+- **Based on version:** `0.19.0`
+- **Last verified:** 2026-09-08 (0.19.0) — v0.8.0 host session: hub and the local agent on one host, owner account from the UI, the system registered at the host's Tailscale address, live host and per-container figures (38 containers), a disk-usage alert crossed on purpose and delivered through ntfy to an iPhone. The standalone `monitoring/beszel-agent` stack was not part of it — no second host.
 
 ## What we use
 

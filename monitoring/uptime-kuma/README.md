@@ -61,8 +61,8 @@ Turn it off after first login under **Settings → About → "Show update if
 available"**. It is stored in the database, so it cannot be pre-set in the
 compose file — it is a post-install step, like the owner account.
 
-Read from upstream's `check-version.js` and `Settings.vue`; this stack has not
-been run on a host yet.
+Read from upstream's `check-version.js` and `Settings.vue`, and the setting is
+where the text says it is — verified on 2.5.3 on 2026-09-08.
 
 ## Backup
 
@@ -84,6 +84,6 @@ extra.
 
 ## Known Issues
 
-- **Data volume ownership** — Kuma runs as UID 1000 inside the container. If you pre-create `volumes/data` as root, `chown -R 1000:1000` it.
+- **The container runs as root.** Measured on 2.5.3: `dumb-init` and the server are uid 0, and the compose file drops no capability, so the data directory needs no particular owner and the server creates root-owned files in it (`docker-tls/`). A `user:` line would be the hardening step; it needs the data directory chowned to that user first and is not done here — the stack was verified as shipped.
 - **No built-in backup** — stop the app, `cp -r volumes/data/` to backup target, start again. Do NOT `pg_dump`-style-dump a running SQLite DB.
 - **Heavy monitor counts (>500)** can cause SQLite contention. Switch to MariaDB if that becomes a problem (env: `UPTIME_KUMA_DB_TYPE=mariadb`).

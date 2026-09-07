@@ -562,17 +562,17 @@
   "monitoring/beszel": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "pinned": "APP_TAG=0.18.7",
+    "pinned": "APP_TAG=0.19.0",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "2026-05-03",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "baseline-aligned",
+    "verified": "2026-09-08",
+    "verified_anchored": true,
+    "verified_version": "0.19.0"
   },
   "monitoring/beszel-agent": {
     "backup_docs": "documented",
     "local_stack": "—",
-    "pinned": "APP_TAG=0.18.7",
+    "pinned": "APP_TAG=0.19.0",
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-05-03",
@@ -582,12 +582,12 @@
   "monitoring/changedetection": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "pinned": "APP_TAG=0.55.8",
+    "pinned": "APP_TAG=0.60.3",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "2026-05-03",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "baseline-aligned",
+    "verified": "2026-09-08",
+    "verified_anchored": true,
+    "verified_version": "0.60.3"
   },
   "monitoring/gatus": {
     "backup_docs": "documented",
@@ -622,11 +622,11 @@
   "monitoring/uptime-kuma": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "pinned": "APP_TAG=2.4.0",
+    "pinned": "APP_TAG=2.5.3",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "2026-08-18",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "baseline-aligned",
+    "verified": "2026-09-08",
+    "verified_anchored": true,
+    "verified_version": "2.5.3"
   }
 }
