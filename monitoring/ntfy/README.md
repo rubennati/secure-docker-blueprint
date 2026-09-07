@@ -22,52 +22,77 @@ at all. The reasoning is in [`../README.md`](../README.md#where-the-receiver-run
 ## Setup
 
 ```bash
-cp .env.example .env               # Edit: domain, access policy
-mkdir -p config
+cp .env.example .env               # Edit: domain, access policies, APP_UID/APP_GID
+mkdir -p config volumes/cache volumes/lib   # owned by APP_UID — the server runs as that user
 cp server.example.yml config/server.yml    # Edit: base-url must match the domain
 docker compose up -d
-docker compose logs -f app         # Watch for: "Listening on :80"
+docker compose logs -f ntfy-app    # Watch for: "Listening on :80"
 ```
 
 Then create the accounts — the server denies everything until they exist:
 
 ```bash
-docker compose exec app ntfy user add --role=admin admin
-docker compose exec app ntfy user add monitoring
-docker compose exec app ntfy access monitoring alerts rw
+docker compose exec ntfy-app ntfy user add --role=admin admin
+docker compose exec ntfy-app ntfy user add monitoring
+docker compose exec ntfy-app ntfy access monitoring alerts rw
+docker compose exec ntfy-app ntfy token add --label publishers monitoring
 ```
+
+`NTFY_PASSWORD` in the environment makes `user add` non-interactive; a passphrase
+of a few words is what a phone keyboard can take. The token is what the
+monitoring services publish with (`Authorization: Bearer tk_…`), so the
+passphrase stays on the phone.
 
 Verify the path end to end before pointing a monitor at it:
 
 ```bash
+# from the operator's network — publishing is not on the public router
 curl -u monitoring -d "test from the blueprint" https://ntfy.example.com/alerts
 ```
 
 The message has to arrive on the subscribed device, not merely return HTTP 200.
+It did, on 2026-09-08 (v2.28.0): an iPhone outside the tailnet, through the
+public router, with `upstream-base-url` set.
 
 ## Security Model
 
 | | |
 |---|---|
-| **Access** | `acc-public` + `sec-3` — see below |
+| **Identity** | runs as `APP_UID:APP_GID`, the owner of `./config` and `./volumes`; every capability dropped |
+| **Access** | two routers — public and read-only on the subscribed topics (`acc-public` + `sec-4`), everything else on the operator's side (`acc-tailscale`) — see below |
 | **Authentication** | `auth-default-access: deny-all`; users and per-topic grants created with the CLI |
 | **Secrets** | None in `.env`. Credentials live in the user database at `./volumes/lib/user.db`. |
 | **Filesystem** | `read_only: true`, config mounted `:ro` |
 
 ### Access policy
 
-`acc-public` is a deliberate deviation from the VPN-only default the rest of this
-category uses. A notification receiver has to be reachable from the devices that
-carry it, including over mobile data — a receiver behind the VPN only delivers
-while the VPN is up, which is the same coupling this stack exists to avoid.
+A notification receiver has to be reachable from the devices that carry it,
+including over mobile data — a receiver behind the VPN only delivers while the
+VPN is up, which is the same coupling this stack exists to avoid. So the stack
+puts two routers on one server:
 
-What makes that defensible is `auth-default-access: deny-all` in `config/server.yml`:
-no topic is readable or writable without an explicit grant. Leaving that at the
-upstream default while exposing the server publicly makes every topic on it
-world-readable and world-writable to anyone who guesses the name.
+| Router | Rule | Policy | Serves |
+|---|---|---|---|
+| `ntfy` | `GET` on the topics in `NTFY_PUBLIC_TOPICS`, and `/v1/account` | `APP_TRAEFIK_ACCESS` (`acc-public`) | subscribing, polling, the WebSocket, the apps' auth check and account lookup |
+| `ntfy-ui` | everything else | `APP_TRAEFIK_UI_ACCESS` (`acc-tailscale`) | the web app, login, account management, publishing |
 
-Where every receiving device is on the tailnet anyway, `acc-tailscale` is the
-tighter choice and costs nothing.
+Traefik takes the longer rule first, so a `POST`, an unlisted topic or any other
+path from the internet lands on the operator router and is refused there.
+
+What makes the public router defensible is `auth-default-access: deny-all` in
+`config/server.yml`: nothing on it answers without credentials — an anonymous
+subscribe is a 403 from ntfy, not a topic listing. Leaving that at the upstream
+default while exposing the server publicly makes every topic on it
+world-readable and world-writable to anyone who guesses the name. Behind that
+stand ntfy's own per-client limit (60 requests, then one every 5 s), the
+chain's rate limit, and the threat slot for CrowdSec.
+
+Measured from the internet on 2026-09-08 (v2.28.0): subscribe with credentials
+200, anonymous 403, `POST`, `/`, `/v1/health` and an unlisted topic 403 on the
+operator router, TLS 1.3.
+
+Where every receiving device is on the tailnet anyway, set `APP_TRAEFIK_ACCESS`
+to `acc-tailscale` as well — then nothing is public, and nothing else changes.
 
 ## Integration patterns
 
@@ -98,20 +123,21 @@ Full architecture: [`backup/README.md`](../../backup/README.md).
 
 ## Known Issues
 
-Nothing here has been verified on a host — this stack is `scaffolded`. The
-following are the parts most likely to need adjustment, listed so they are checked
-deliberately rather than discovered:
+Verified on a host on 2026-09-08 (v2.28.0). What the session found:
 
-- **`read_only: true` is untested.** ntfy writes to the mounted cache and lib
-  paths, which stay writable, but any additional write target would surface as a
-  start-up failure. Drop the flag if it does, and record why.
-- **The rate limit is the first suspect if notifications go missing.** `sec-3`
-  carries `rl-soft`, and a publisher bursting during an incident is exactly when
-  the limit matters. The SPA variants are documented for VPN-gated apps only, so
-  the answer here is a measurement, not a swap.
+- **Root with every capability dropped cannot write into the operator's
+  directories.** The image runs as root; with `cap_drop: ALL` that root has no
+  `DAC_OVERRIDE`, so a cache directory owned by the operator is unwritable and
+  the server dies with `unable to open database file`. The stack therefore runs
+  as `APP_UID:APP_GID` — the user that owns `./config` and `./volumes`. Create
+  the directories before the first start; Docker would create them as root.
+- **`read_only: true` holds.** The cache and the auth database live on the two
+  mounted volumes, `/tmp` is a tmpfs, nothing else is written.
+- **The rate limit is the first suspect if notifications go missing.** `sec-4`
+  carries `rl-hard`; a subscription is one long-lived request and an alert is
+  one request, so the phone side has headroom. A publisher bursting during an
+  incident is exactly when the limit bites — measure before switching.
 - **iOS needs `upstream-base-url`.** Apple restricts background processing, so a
-  self-hosted server cannot push to iOS on its own. The setting is present and
-  commented in `server.example.yml`, including what leaves the host when it is on.
-- **Running as a fixed UID needs a chown first.** The `user:` line is commented
-  for that reason; enabling it without chowning the mounted paths starts a server
-  that cannot write its databases.
+  self-hosted server cannot push to iOS on its own. The setting is commented in
+  `server.example.yml`, including what leaves the host when it is on; with it
+  set, the message arrived on an iPhone outside the tailnet.

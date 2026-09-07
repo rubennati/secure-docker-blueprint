@@ -8,8 +8,8 @@
 - **Docs:** https://healthchecks.io/docs/self_hosted/
 - **License:** BSD 3-Clause
 - **Origin:** Latvia · Pēteris Caune · EU
-- **Based on version:** `v4.2`
-- **Last checked:** 2026-04-17
+- **Based on version:** `v4.4`
+- **Last verified:** 2026-09-08 (v4.4) — v0.8.0 host session: clean start on SQLite, first admin from the CLI, a check with a one-minute period and grace, the ntfy and email integrations attached; the expiry produced a down notification and the next ping an up notification, both delivered to an iPhone and to the mail sink.
 
 ## What we use
 
@@ -67,7 +67,7 @@ None. Self-contained Django app.
 
 ```bash
 # Create an additional superuser (or initial one, via Setup step 4)
-docker compose exec app /opt/healthchecks/manage.py createsuperuser
+docker compose exec healthchecks-app /opt/healthchecks/manage.py createsuperuser --email admin@example.com --password '<passphrase>'
 
 # Run any Django management command
 docker compose exec app /opt/healthchecks/manage.py <command>

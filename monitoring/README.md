@@ -166,6 +166,13 @@ For each channel actually relied on:
 2. Confirm the notification **arrives**, on the device that is supposed to receive it.
 3. Write down which channel was proven, and when.
 
+Proven so far:
+
+| Channel | Device | Date | How |
+|---|---|---|---|
+| ntfy → iOS app, woken through `upstream-base-url` | an iPhone outside the tailnet | 2026-09-08 | published from the operator side; the public read-only router carried the subscription (v0.8.0 host session) |
+| Healthchecks → ntfy and → email | the same iPhone; the email into `apps/mailpit` | 2026-09-08 | closed circuit: a check with a one-minute period and grace was pinged once and then left alone — the down notification arrived when the grace expired, the up notification on the next ping (v0.8.0 host session) |
+
 Whether it also arrives while the sending host itself is down is a property of the
 topology, not of the channel — established where the deployment is, not here.
 

@@ -12,9 +12,9 @@ Six monitoring stacks are configured and none has ever run. This is that work in
 
 ## Before you start
 
-- [ ] Host reachable, Docker running, Traefik up with a working certificate
-- [ ] A device that is supposed to receive alerts, with the ntfy app installed on it
-- [ ] The receiver runs on **this** host. That is what verifies the chain; where it belongs in a real deployment is the adopter's call and is documented in [`monitoring/README.md`](../monitoring/README.md#where-the-receiver-runs), not decided here
+- [x] Host reachable, Docker running, Traefik up with a working certificate
+- [x] A device that is supposed to receive alerts, with the ntfy app installed on it
+- [x] The receiver runs on **this** host. That is what verifies the chain; where it belongs in a real deployment is the adopter's call and is documented in [`monitoring/README.md`](../monitoring/README.md#where-the-receiver-runs), not decided here
 - [x] Decided: **Uptime Kuma** for the uptime axis. `monitoring/gatus` stays in the
       repository as the alternative and is not part of this milestone
 
@@ -24,34 +24,34 @@ Six monitoring stacks are configured and none has ever run. This is that work in
 
 Setup in [`monitoring/ntfy/README.md`](../monitoring/ntfy/README.md). This block produces the alerting evidence the milestone asks for.
 
-- [ ] `cp .env.example .env`, `mkdir -p config`, `cp server.example.yml config/server.yml`
-- [ ] `base-url` in `config/server.yml` matches `APP_TRAEFIK_HOST` in `.env`, and is **https**
-- [ ] `docker compose up -d`, container reports healthy
-- [ ] **Confirm `read_only: true` actually holds.** It is untested. If the container fails to start, read the log for the write target, add a tmpfs or a volume for it, and record why in the README
-- [ ] Web interface reachable through Traefik, TLS valid
-- [ ] `docker compose exec app ntfy user add --role=admin admin`
-- [ ] `docker compose exec app ntfy user add monitoring` and `ntfy access monitoring alerts rw`
-- [ ] **Confirm deny-all is in force:** open a topic URL unauthenticated and get refused. If anything is readable without credentials, `auth-default-access` did not apply — stop and fix it before this server stays reachable
-- [ ] Subscribe the phone to the `alerts` topic
-- [ ] `curl -u monitoring -d "test" https://<host>/alerts` — **the message arrives on the device**
-- [ ] iOS only: notifications arrive but slowly or not in background → set `upstream-base-url`, restart, retest
+- [x] `cp .env.example .env`, `mkdir -p config`, `cp server.example.yml config/server.yml`
+- [x] `base-url` in `config/server.yml` matches `APP_TRAEFIK_HOST` in `.env`, and is **https**
+- [x] `docker compose up -d`, container reports healthy
+- [x] **Confirm `read_only: true` actually holds.** It does (2026-09-07, v2.28.0). What did not hold was the process user: the image runs as root, and root with every capability dropped cannot write into a cache or auth directory the operator owns — `unable to open database file`. The commented `user:` line is now active with `APP_UID`/`APP_GID`, and the directories the operator creates are writable. It was untested before. If the container fails to start, read the log for the write target, add a tmpfs or a volume for it, and record why in the README
+- [x] Web interface reachable through Traefik, TLS valid — TLS 1.3 and the router verified from the internet through the endpoints the app uses; the web app itself sits on the operator router (Tailscale) since the split below
+- [x] `docker compose exec app ntfy user add --role=admin admin`
+- [x] `docker compose exec app ntfy user add monitoring` and `ntfy access monitoring alerts rw`
+- [x] **Confirm deny-all is in force:** open a topic URL unauthenticated and get refused. If anything is readable without credentials, `auth-default-access` did not apply — stop and fix it before this server stays reachable
+- [x] Subscribe the phone to the `alerts` topic — an iPhone outside the tailnet, through a second, read-only public router (`GET` on the topic and `/v1/account` only; everything else stays `acc-tailscale`)
+- [x] `curl -u monitoring -d "test" https://<host>/alerts` — **the message arrives on the device** (2026-09-08 00:05 UTC, published from the operator side; the public router refuses `POST` by design)
+- [x] iOS only: notifications arrive but slowly or not in background → set `upstream-base-url`, restart, retest — set from the start; the message arrived
 
 **Watch for:** the rate limit. `sec-3` carries `rl-soft`, and a publisher bursting is exactly the incident case. If messages go missing under load, measure before switching profiles — the `-spa` variants are documented for VPN-gated apps only.
 
-- [ ] Status → `✅` if every gate passed; `Last verified: YYYY-MM-DD (v0.8.0)` in `UPSTREAM.md`
+- [x] Status → `✅` if every gate passed; `Last verified: YYYY-MM-DD (v0.8.0)` in `UPSTREAM.md` — `Last verified: 2026-09-08 (v2.28.0)`, the version in parentheses being what the lifecycle report reads
 
 ## Block 2 · Healthchecks — the closed-circuit monitor (~40 min)
 
 The scheduled-job axis, and the only service here that alerts on *absence*. Also the receiver for backup run monitoring, so v0.7.0 depends on it.
 
-- [ ] Pending major version: `4.x`. If the v0.7.0 session already did it, skip ahead
-- [ ] `docker compose up -d`, container healthy, interface reachable through Traefik
-- [ ] Create a check with a short period and grace time
-- [ ] Attach the ntfy integration to it, pointing at the topic from Block 1
-- [ ] Ping it once — the check goes green
-- [ ] **Then stop pinging and wait for the grace period to expire.** The alert must arrive on the device. This is the closed-circuit proof; a check that goes green proves nothing about the alarm
-- [ ] Point `backup/borgmatic`'s run monitoring at a real check URL if v0.7.0 is being closed in the same session
-- [ ] Status and `Last verified` updated
+- [x] Pending major version: `4.x`. If the v0.7.0 session already did it, skip ahead — pinned `v4.2` already; moved to the current `v4.4` before verifying, so the verification names a version that is not already behind
+- [x] `docker compose up -d`, container healthy, interface reachable through Traefik — after `chown 999:999 volumes/data` (the README's known issue, confirmed) and with `INTEGRATIONS_ALLOW_PRIVATE_IPS` added, without which the ntfy integration could not target the Docker network
+- [x] Create a check with a short period and grace time — period 1 min, grace 1 min
+- [x] Attach the ntfy integration to it, pointing at the topic from Block 1 — server URL `http://ntfy-app` (the public router refuses `POST` by design), the publisher token, plus the email integration as a second channel into Mailpit
+- [x] Ping it once — the check goes green — pinged from a container by the internal address; from the host, the ping URL sits behind `acc-tailscale`
+- [x] **Then stop pinging and wait for the grace period to expire.** The alert must arrive on the device. This is the closed-circuit proof; a check that goes green proves nothing about the alarm — flipped to down at 22:30:58 UTC on 2026-09-07, ntfy and email delivered within a second, both on the iPhone; pinged again, the recovery arrived the same way at 22:31:33 UTC
+- [ ] Point `backup/borgmatic`'s run monitoring at a real check URL if v0.7.0 is being closed in the same session — not in this session; the receiver it needs now exists
+- [x] Status and `Last verified` updated — `Last verified: 2026-09-08 (v4.4)`
 
 **Watch for:** `INTEGRATIONS_ALLOW_PRIVATE_IPS` defaults to false. If ntfy sits on a private address, webhook delivery is refused until it is enabled.
 

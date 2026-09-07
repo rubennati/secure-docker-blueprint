@@ -8,15 +8,13 @@
 - **Docker Hub:** https://hub.docker.com/r/binwiederhier/ntfy
 - **License:** Apache-2.0 / GPL-2.0 (dual-licensed)
 - **Origin:** Germany · Philipp Heckel · EU
-- **Based on version:** `v2.26.3` (released 2026-07-20)
+- **Based on version:** `v2.28.0` (released 2026-08-27)
 - **Upstream reviewed:** 2026-07-27 — image, tag, configuration surface, channel
   support and licence checked against upstream documentation
-- **Last verified:** `__REPLACE_ME__`
-
-> `Last verified` stays unset on purpose. It is ✅ criterion 8 and what CI reads,
-> and it means one thing only: this stack ran on a clean install. Reviewing
-> upstream documentation is not that, which is why the review carries its own
-> line above.
+- **Last verified:** 2026-09-08 (v2.28.0) — v0.8.0 host session: clean start,
+  `read_only` holding, deny-all proven, users and grants from the CLI, an
+  iPhone outside the tailnet subscribed through the public router, one message
+  delivered to it.
 
 ## What we use
 

@@ -4,7 +4,7 @@
 
 Generated 2026-09-07 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-62 stacks: 1 ops-proven · 25 baseline-aligned · 36 scaffolded. 53 carry a local test stack.
+63 stacks: 1 ops-proven · 27 baseline-aligned · 35 scaffolded. 53 carry a local test stack.
 
 This is the maintainer's view: what has been established about each stack. It makes no statement about whether a stack suits a given deployment.
 
@@ -34,6 +34,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`core/portainer-agent`](core/portainer-agent/) | `baseline-aligned` | `APP_TAG=2.39.5` | 2026-05-05 | — | documented | missing |
 | [`core/traefik`](core/traefik/) | `baseline-aligned` | `TRAEFIK_IMAGE=traefik:v3.6` | 2026-07-29 | — | documented | missing |
 | [`core/whoami`](core/whoami/) | `baseline-aligned` | `APP_TAG=v1.11.0` | 2026-07-29 | ✅ | documented | missing |
+| [`core/workbench`](core/workbench/) | `scaffolded` | `APP_TAG=1.29-alpine` | — | — | missing | missing |
 
 ## `apps/`
 
@@ -91,8 +92,8 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`monitoring/beszel-agent`](monitoring/beszel-agent/) | `scaffolded` | `APP_TAG=0.18.7` | 2026-05-03 ⚠️ | — | documented | missing |
 | [`monitoring/changedetection`](monitoring/changedetection/) | `scaffolded` | `APP_TAG=0.55.8` | 2026-05-03 ⚠️ | ✅ | documented | missing |
 | [`monitoring/gatus`](monitoring/gatus/) | `scaffolded` | `APP_TAG=v5.36.0` | 2026-05-03 ⚠️ | ✅ | documented | missing |
-| [`monitoring/healthchecks`](monitoring/healthchecks/) | `scaffolded` | `APP_TAG=v4.2` | 2026-04-17 ⚠️ | ✅ | documented | missing |
-| [`monitoring/ntfy`](monitoring/ntfy/) | `scaffolded` | `APP_TAG=v2.26.3` | — | ✅ | documented | missing |
+| [`monitoring/healthchecks`](monitoring/healthchecks/) | `baseline-aligned` | `APP_TAG=v4.4` | 2026-09-08 | ✅ | documented | missing |
+| [`monitoring/ntfy`](monitoring/ntfy/) | `baseline-aligned` | `APP_TAG=v2.28.0` | 2026-09-08 | ✅ | documented | missing |
 | [`monitoring/uptime-kuma`](monitoring/uptime-kuma/) | `scaffolded` | `APP_TAG=2.4.0` | 2026-08-18 ⚠️ | ✅ | documented | missing |
 
 ## `backup/`
