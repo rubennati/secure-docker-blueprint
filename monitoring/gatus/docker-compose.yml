@@ -3,7 +3,7 @@ services:
   # --------------------------------------------------------
   # GATUS (YAML-driven health checks + status page + alerts)
   # --------------------------------------------------------
-  app:
+  gatus-app:
     # --- Identity ---
     image: twinproduction/gatus:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}

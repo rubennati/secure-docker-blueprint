@@ -1,0 +1,207 @@
+# =============================================================================
+# Keycloak — identity and access management (OIDC, SAML, LDAP federation)
+# =============================================================================
+# The second identity provider beside core/authentik. Both do single sign-on
+# for the stacks around them; core/keycloak/README.md says which fits which
+# situation, and the two are alternatives, not a pair to run together.
+#
+# Image: quay.io/keycloak/keycloak (https://quay.io/repository/keycloak/keycloak)
+# Source: https://github.com/keycloak/keycloak
+# =============================================================================
+
+services:
+
+  # --------------------------------------------------------
+  # DATABASE (PostgreSQL)
+  # --------------------------------------------------------
+  db:
+    # --- Identity ---
+    image: postgres:${DB_TAG}
+    container_name: ${CONTAINER_NAME_DB}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # Re-added deliberately: the official entrypoint starts as root, fixes
+    # ownership on the data directory, then drops to the service user.
+    # Set established in apps/_reference on 2026-08-16.
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+
+    # --- Resources ---
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          # cpus: derived starting value, not measured — v0.9.0
+          cpus: "0.50"
+          pids: 100
+        reservations:
+          memory: 128m
+
+    # --- Configuration ---
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/DB_PWD
+      TZ: ${TZ}
+    secrets:
+      - DB_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/postgres:/var/lib/postgresql/data
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER} -h 127.0.0.1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  # --------------------------------------------------------
+  # KEYCLOAK
+  # --------------------------------------------------------
+  keycloak-app:
+    # --- Identity ---
+    image: quay.io/keycloak/keycloak:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+
+    # --- Security ---
+    # The image runs as uid 1000 (group root) and needs no capability: both
+    # ports are above 1024. No read-only root filesystem: `start` rebuilds the
+    # Quarkus application at every boot and writes into /opt/keycloak/lib/quarkus,
+    # and a tmpfs there hides the four files it builds from. Upstream's answer
+    # is a custom image built with `kc.sh build` and started with `--optimized`,
+    # which is not the official image. Verified against 26.7.3 on 2026-09-07.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp
+
+    # --- Resources ---
+    # Idles at about 650 MB and 42 threads on the JVM after a cold start.
+    # Retune after a realm with users and clients has been in use.
+    deploy:
+      resources:
+        limits:
+          memory: 1536m
+          # cpus: derived starting value, not measured — v0.9.0
+          cpus: "2.00"
+          pids: 300
+        reservations:
+          memory: 512m
+
+    # --- Configuration ---
+    # No _FILE support for any secret: config/entrypoint.sh exports the
+    # database and bootstrap-admin passwords, then hands over to kc.sh.
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
+    command: ["/opt/keycloak/bin/kc.sh", "start"]
+    environment:
+      TZ: ${TZ}
+      # Database — the password arrives as KC_DB_PASSWORD from the entrypoint.
+      KC_DB: postgres
+      KC_DB_URL_HOST: db
+      KC_DB_URL_DATABASE: ${DB_NAME}
+      KC_DB_USERNAME: ${DB_USER}
+      # Public URL. Every issuer, redirect and discovery document derives from
+      # it, and requests for any other host are refused (hostname v2, strict).
+      KC_HOSTNAME: https://${APP_TRAEFIK_HOST}
+      # Traefik terminates TLS: plain HTTP on 8080, client addresses and the
+      # scheme taken from the X-Forwarded-* headers. Never set proxy-headers
+      # on a listener the internet can reach directly.
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY_HEADERS: xforwarded
+      # /health/* on the management port 9000, which no router exposes.
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "false"
+      # Temporary administrator, used only when the master realm is created.
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${BOOTSTRAP_ADMIN_USERNAME}
+    secrets:
+      - DB_PWD
+      - BOOTSTRAP_ADMIN_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
+      - ./volumes/data:/opt/keycloak/data
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+      - app-internal
+
+    # --- Traefik ---
+    labels:
+      # Router
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      # TLS
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Middlewares. The proxy sends no X-Frame-Options: Keycloak sets the
+      # frame headers itself and varies them per page — SAMEORIGIN plus a CSP
+      # frame-ancestors on the admin console, none on the two pages that the
+      # console and keycloak-js load in an iframe. A DENY from the chain
+      # reaches those pages and the console stops with "Timeout when waiting
+      # for 3rd party check iframe message". strip-xfo removes the header the
+      # chain sets, and it has to stand BEFORE the chain: Traefik applies the
+      # response changes of the first middleware last, so the chain would set
+      # the header again behind a strip that comes after it (measured on
+      # v3.6). Keycloak's CSP frame-ancestors keeps protecting the console.
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${COMPOSE_PROJECT_NAME}-strip-xfo,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-strip-xfo.headers.customResponseHeaders.X-Frame-Options="
+      # Service
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8080"
+
+    # --- Health & Observability ---
+    # The image ships neither curl nor wget; bash's /dev/tcp asks the
+    # management port. /health/ready answers UP once the database is reachable
+    # and the realms are loaded. start_period covers the Quarkus rebuild.
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /health/ready HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && head -n1 <&3 | grep -q ' 200 '"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  DB_PWD:
+    file: ./.secrets/db_pwd.txt
+  BOOTSTRAP_ADMIN_PWD:
+    file: ./.secrets/bootstrap_admin_pwd.txt

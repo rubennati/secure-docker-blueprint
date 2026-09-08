@@ -3,7 +3,7 @@ services:
   # --------------------------------------------------------
   # SEADOC (collaborative document editing – optional)
   # --------------------------------------------------------
-  seadoc:
+  seafile-seadoc:
     # --- Identity ---
     image: ${SEADOC_IMAGE}
     container_name: ${CONTAINER_NAME_SEADOC}

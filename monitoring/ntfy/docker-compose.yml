@@ -5,7 +5,7 @@ services:
   # Receives alerts from the monitoring services and delivers them to phones
   # and desktops. Deliberately deployable on its own host — see README.
   # --------------------------------------------------------
-  app:
+  ntfy-app:
     # --- Identity ---
     image: binwiederhier/ntfy:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}
@@ -21,10 +21,12 @@ services:
     read_only: true
     tmpfs:
       - /tmp
-    # Upstream runs as root. A fixed UID works, but the mounted config, cache and
-    # auth paths must be chown'd to the same UID first — otherwise the server
-    # starts and then cannot write its databases.
-    #user: "${APP_UID}:${APP_GID}"
+    # Upstream runs as root. With every capability dropped, root cannot write
+    # into directories it does not own — the server died with "unable to open
+    # database file" on a cache directory the operator owned. So it runs as the
+    # operator's user, the owner of ./config and ./volumes, which exist before
+    # the first start (Docker would create them as root).
+    user: "${APP_UID}:${APP_GID}"
 
     # --- Resources ---
     # Starting values, not measured ones. Retune from `docker stats` to ~2x peak.
@@ -59,18 +61,29 @@ services:
     # --- Traefik ---
     labels:
       # Router
+      # Two routers on one service. The public one is the receiver's face for the
+      # devices that carry it: GET only, on the topics named in NTFY_PUBLIC_TOPICS
+      # (subscribe, poll, WebSocket, the app's auth check) and the account
+      # lookup the apps make. Everything else — the web app, login, account
+      # management, publishing — is the second router, for the operator's
+      # network. Traefik picks the longer rule first, so a request from the
+      # internet that matches neither the paths nor GET lands on the second
+      # router and is refused by its access policy. auth-default-access:
+      # deny-all in config/server.yml is what makes the public router safe:
+      # nothing on it answers without credentials.
       - "traefik.enable=true"
       - "traefik.docker.network=${TRAEFIK_NETWORK}"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`) && Method(`GET`) && (PathRegexp(`^/(${NTFY_PUBLIC_TOPICS})(/|$)`) || Path(`/v1/account`))"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
-      # TLS
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
-      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
-      # Middlewares
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
-      # Service — container-internal port, and it must match listen-http in
-      # config/server.yml. Traefik reports a 502 when the two disagree.
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      # Router: the operator's side
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-ui.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-ui.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-ui.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-ui.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-ui.middlewares=${APP_TRAEFIK_UI_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
 
     # --- Health & Observability ---

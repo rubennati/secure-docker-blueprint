@@ -13,7 +13,7 @@ Every Traefik resource reference (middleware, TLS option, router, service) must 
 
 - `acc-*@file`, `sec-*@file` — access and security chains defined in `access.yml` / `security-chains.yml`
 - `tls-*@file` — TLS profiles from `tls-profiles.yml`
-- `sec-crowdsec@file`, `sec-authentik@file` — integrations from `integrations.yml`
+- `crowdsec-basic@file`, `crowdsec-appsec@file`, `sec-authentik@file` — integrations from `integrations.yml`
 - `${COMPOSE_PROJECT_NAME}-headers@docker` — per-app custom middleware defined inline via labels
 
 ### Common failure mode
@@ -80,7 +80,7 @@ Which profile suits which app is [`core/crowdsec/docs/profiles.md`](../../core/c
 - Router and service name = `${COMPOSE_PROJECT_NAME}` (unique per app)
 - Network via `${TRAEFIK_NETWORK}` variable (always set explicitly for multi-network setups)
 - Port hardcoded per app (not a variable — it's a fixed property of the image)
-- `certresolver` commented out by default (avoid leaking subdomains to Certificate Transparency Logs / crt.sh)
+- `certresolver` commented out by default — the wildcard path serves every subdomain without it, and a per-host certificate would publish that hostname in Certificate Transparency logs (see [Enabling certresolver](#enabling-certresolver))
 
 ## .env Values
 
@@ -183,10 +183,26 @@ Services without a web UI (dnsmasq, hawser) don't need labels.
 
 ### Enabling certresolver
 
-Uncomment the certresolver line when you need public TLS certificates:
+Whether the line stays commented follows from the certificate strategy chosen in
+`core/traefik/.env`, not from whether the app is public:
+
+| Strategy (`core/traefik/README.md` → Certificate strategy) | This line |
+|---|---|
+| Wildcard — `ACME_WILDCARD_DOMAIN` set | stays commented. Traefik serves the wildcard for every subdomain under it |
+| Per-domain — DNS-01 or HTTP-01, `ACME_WILDCARD_DOMAIN` unset | **required** on every router that needs a certificate |
 
 ```yaml
 - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
 ```
 
-Be aware: This registers the domain in public Certificate Transparency Logs (visible on crt.sh).
+Leaving it commented on the per-domain path does not fail: the router comes up,
+HTTPS answers, and Traefik presents its self-signed default certificate
+(`CN=TRAEFIK DEFAULT CERT`) without writing anything to its log at `INFO`. The
+only symptom is a browser warning. After enabling a router on that path, check
+which certificate is actually served — the command is in
+[`troubleshooting.md`](troubleshooting.md#certificate-problems), the symptom entry
+in [`TROUBLESHOOTING.md`](../../TROUBLESHOOTING.md) §4.5.
+
+A per-host certificate publishes that hostname in public Certificate Transparency
+logs (searchable on crt.sh). A wildcard publishes only `*.example.com`; the base
+domain is public either way.

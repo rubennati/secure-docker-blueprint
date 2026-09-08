@@ -1,0 +1,170 @@
+---
+title: Mailpit
+description: Read the mail your stacks send before any relay exists — accepted, kept and shown in a web UI, never delivered.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackEvidence from '../../../components/StackEvidence.astro';
+
+Mailpit is an SMTP server that delivers nothing. A stack sends its mail to it,
+the message is kept, and you read it in a web UI — the verification link, the
+password reset, the booking confirmation. One container, one static binary.
+
+It earns its place the moment you try a stack that sends mail. With no relay
+configured, an application either drops every message without a word or refuses
+to start until it has SMTP credentials. The sink satisfies both: it accepts any
+login, and what the application would have sent becomes readable.
+
+<StackEvidence stack="apps/mailpit"
+  gap="a restore. There is nothing to restore — the store holds test messages and is rebuilt from nothing." />
+
+Needs: [Traefik](/infrastructure/traefik/) running and a domain.
+
+## Try it locally
+
+On your own machine, with no proxy or domain. From `apps/mailpit/`:
+
+```bash
+cp .env.local.example .env.local
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+```
+
+The UI listens on `127.0.0.1:8025`, SMTP on `127.0.0.1:1025`. Point anything on
+your machine at that port with any username and password, or send one message
+by hand:
+
+```bash
+python3 -c "import smtplib; s=smtplib.SMTP('127.0.0.1',1025); s.login('anything','goes'); s.sendmail('probe@example.com',['you@example.com'],'Subject: probe\r\n\r\nhello')"
+```
+
+Open `http://localhost:8025`. Messages stay in memory here and are gone when
+the container stops.
+
+## Installation
+
+For a deployment on a server. From `apps/mailpit/`:
+
+<Steps>
+
+1. Copy the environment file and set `APP_TRAEFIK_HOST` and `TZ`:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Create the message store. The binary runs as `USERMAP_UID`, which defaults
+   to 1000 — the account that runs this command, on most installations:
+
+   ```bash
+   mkdir -p volumes/data
+   ```
+
+3. Start it:
+
+   ```bash
+   docker compose up -d
+   ```
+
+4. Open `https://<APP_TRAEFIK_HOST>`. There is no setup and no account. The
+   router ships `acc-tailscale`, so the page answers on the VPN and nowhere
+   else.
+
+</Steps>
+
+## Verify
+
+```bash
+docker compose ps   # one service, healthy
+```
+
+Then send one message the way a stack would — from a container on the proxy
+network, with a login that does not exist:
+
+```bash
+docker run --rm --network proxy-public python:3-alpine python -c "import smtplib; s=smtplib.SMTP('mailpit',1025,timeout=10); s.login('anything','goes'); s.sendmail('probe@example.com',['you@example.com'],'Subject: probe\r\n\r\nhello'); print('sent')"
+```
+
+It appears in the UI within a second.
+
+## Pointing a stack at it
+
+Each stack names its SMTP variables differently; the values are the same
+everywhere:
+
+| Setting | Value |
+|---|---|
+| host | `mailpit` |
+| port | `1025` |
+| username | anything non-empty |
+| password | anything non-empty, in the stack's `.secrets/` file as usual |
+| encryption | none |
+
+The port matters more than it looks. Many mail clients force STARTTLS on 587
+and implicit TLS on 465, and this port offers neither — a stack that hard-codes
+587 fails against it. Restart the stack, trigger a password reset, read it in
+the UI.
+
+## Who can read it
+
+Everything in the inbox is readable by whoever reaches the UI, and the UI has
+no login of its own. That is why it ships VPN-only, and why the sink is for
+trying stacks out: a stack whose users are real people sends real reset links,
+and those belong in a mailbox.
+
+Every container on the proxy network reaches the SMTP port, as a sink must be.
+The HTTP side is narrower: the API and the UI answer requests that carry the
+Traefik hostname or come from the healthcheck on localhost, and refuse a
+container calling `http://mailpit:8025/` with 403. That is a Host-header check,
+so it stops a casual read of the inbox rather than a determined one. An
+htpasswd file in `MP_UI_AUTH_FILE` would close it properly, at the price of a
+login prompt in the browser.
+
+Nothing leaves the machine. The version check upstream runs against the GitHub
+API is switched off; the link checker and screenshots in the UI fetch external
+resources only when you click them.
+
+## Backup
+
+Nothing to back up. The store holds messages that were never meant to arrive
+anywhere. Delete `volumes/data` whenever it is in the way.
+
+## Updates
+
+<Steps>
+
+1. Read the [release notes](https://github.com/axllent/mailpit/releases).
+
+2. Raise `APP_TAG` in `.env`, then:
+
+   ```bash
+   docker compose pull && docker compose up -d
+   ```
+
+3. Send one message. There is no state to migrate.
+
+</Steps>
+
+## Troubleshooting
+
+**A stack logs an SMTP authentication failure.** It sent an empty username or
+password. Mailpit accepts any value, but the application's own validation runs
+first — give it something.
+
+**A stack logs a TLS or STARTTLS error.** It was pointed at port 587 or 465, or
+its client forces encryption regardless of port. Use 1025 where the port is a
+setting; where it is not, the stack needs a real relay.
+
+**The API answers 403 from another container.** By design — see above. Read the
+inbox through the UI, or add the calling hostname to `MP_ALLOWED_HOSTS`.
+
+**Messages vanished.** The store keeps the newest `MP_MAX_MESSAGES` and prunes
+the rest. In the local stack, they live in memory and end with the container.
+
+## Repository files
+
+- [`apps/mailpit/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/mailpit/README.md) — setup, pointing a stack at it, security model
+- [`apps/mailpit/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/mailpit/UPSTREAM.md) — source and upgrade checklist
+
+## Official sources
+
+- [Mailpit](https://mailpit.axllent.org/)

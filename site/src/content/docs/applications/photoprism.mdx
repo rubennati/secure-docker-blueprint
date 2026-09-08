@@ -128,11 +128,9 @@ mariadb_databases:
       password: "{credential file /srv/docker/apps/photoprism/.secrets/db_pwd.txt}"
 ```
 
-:::caution
-Excluding all of `volumes/storage` is a mistake even though most of it is cache.
-The sidecar files in that same tree carry edits and metadata that exist nowhere
-else. Exclude the thumbnail cache subdirectory and keep the sidecars.
-:::
+Exclude the thumbnail cache subdirectory rather than all of `volumes/storage`.
+Most of that tree is cache, but the sidecar files in it carry edits and metadata
+that exist nowhere else.
 
 Restore order: database, then originals and sidecars, then the application.
 

@@ -6,7 +6,7 @@ services:
   # Single-container deployment using NocoDB's built-in SQLite store.
   # For larger deployments (shared state, HA, big tables) switch to
   # Postgres — see UPSTREAM.md for the env vars.
-  app:
+  nocodb-app:
     # --- Identity ---
     image: nocodb/nocodb:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}

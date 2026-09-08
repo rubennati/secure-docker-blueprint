@@ -27,8 +27,8 @@ mkdir -p volumes/hub-data
 ### Phase 1 — Hub only
 
 ```bash
-docker compose up -d hub
-docker compose logs hub --follow
+docker compose up -d beszel-hub
+docker compose logs beszel-hub --follow
 # Wait for: "Server started at http://0.0.0.0:8090"
 ```
 
@@ -45,7 +45,7 @@ In the hub UI click **+ Add System** (top right). A dialog opens:
 | **Port** | `45876` (pre-filled) |
 | **Public Key** | Pre-filled by the hub — this is the hub's SSH public key |
 
-Copy the **full public key** from the dialog, including the `ssh-ed25519` type prefix. The base64 portion alone is not valid.
+Copy the **full public key** from the dialog, including the `ssh-ed25519` type prefix. The base64 portion alone is not valid. It can also be derived on the host, which spares the copy: `ssh-keygen -y -f volumes/hub-data/id_ed25519` (root-owned, so with `sudo`). The dialog also shows a **Token** and a Docker/Binary tab since 0.19 — both belong to the universal-token mode, where an agent registers itself over a WebSocket; this stack uses the SSH key and leaves them alone.
 
 Set it in `.env`:
 
@@ -71,7 +71,7 @@ After this first setup, `docker compose up -d` starts both hub and agent togethe
 | **Hub ↔ Agent auth** | Ed25519 SSH key — cryptographically strong. Agents reject any connection without the matching private key. |
 | **Port 45876 on host network** | The agent binds on the host's network stack directly (not behind Traefik). This is required for accurate host network stats and is a deliberate exception — same pattern as `core/portainer-agent/` and `core/hawser/`. Protect with Tailscale ACLs or host firewall (accept 45876 from hub IP only). |
 | **Hub web UI** | `acc-tailscale` + `sec-3` via Traefik — VPN-only access. |
-| **Docker socket** | Agent mounts `/var/run/docker.sock:ro`. The `:ro` stops the socket file being replaced; it does not restrict a single API call, because a UNIX socket is bidirectional. A compromise of this agent is full Docker API access, which is root on the host. Upstream supports `DOCKER_HOST` pointed at a socket proxy with `CONTAINERS=1` — not done here yet, because the stack has never been started. Accepted exception for monitoring agents; no Socket Proxy equivalent covers docker-stats reads. Remove if container metrics are not needed. |
+| **Docker socket** | Agent mounts `/var/run/docker.sock:ro`. The `:ro` stops the socket file being replaced; it does not restrict a single API call, because a UNIX socket is bidirectional. A compromise of this agent is full Docker API access, which is root on the host. Upstream supports `DOCKER_HOST` pointed at a socket proxy with `CONTAINERS=1` — not done here; the stack was verified as shipped on 2026-09-08 and the proxy variant is the next hardening step. Accepted exception for monitoring agents; no Socket Proxy equivalent covers docker-stats reads. Remove if container metrics are not needed. |
 | **Hub data** | SQLite + SSH private key in `volumes/hub-data/`. Back this up — losing it means re-keying all agents. |
 
 ## Alerting
@@ -121,7 +121,8 @@ reconnect without re-registration.
 ## Known Issues
 
 - **Two-phase start on first install** — see [Setup](#setup). Subsequent starts need no manual steps.
-- **`APP_TAG=0.18.7` is pinned** — Beszel is pre-1.0. Check [releases](https://github.com/henrygd/beszel/releases) before upgrading; update both hub and agent together.
+- **The hub runs as root** (measured on 0.19.0: no `USER` in the image, none set here) and owns everything under `volumes/hub-data/`, including the SSH key. Read the directory with `sudo`.
+- **`APP_TAG=0.19.0` is pinned** — Beszel is pre-1.0. Check [releases](https://github.com/henrygd/beszel/releases) before upgrading; update both hub and agent together.
 - **Both images have no healthcheck** — hub is scratch-based (no shell/wget), agent provides no health endpoint. Both use `healthcheck: disable: true`; hub status in the UI is the reliable liveness signal for all agents.
 - **`WARN HUB_URL not set`** in agent logs — harmless. This is for an optional WebSocket fallback mode; SSH mode is what we use.
 - **Host network agent** — if you run multiple agents on the same host (rare), set different `PORT` values per agent.

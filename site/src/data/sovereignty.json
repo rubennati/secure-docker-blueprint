@@ -103,6 +103,14 @@
     "license_class": "osi",
     "origin": "Community · LycheeOrg · EU contributors"
   },
+  "apps/mailpit": {
+    "bloc": "non-EU",
+    "country": "New Zealand",
+    "entity": "Ralph Slooten (axllent)",
+    "license": "MIT",
+    "license_class": "osi",
+    "origin": "New Zealand · Ralph Slooten (axllent) · non-EU"
+  },
   "apps/monicahq": {
     "bloc": "non-EU",
     "country": "Canada",
@@ -182,6 +190,14 @@
     "license": "Commercial",
     "license_class": "proprietary",
     "origin": "China · Seafile Ltd · non-EU"
+  },
+  "apps/tymeslot": {
+    "bloc": "EU",
+    "country": "Estonia",
+    "entity": "Diletta Luna OÜ (Tallinn)",
+    "license": "AGPL-3.0",
+    "license_class": "osi",
+    "origin": "Estonia · Diletta Luna OÜ (Tallinn) · EU"
   },
   "apps/unifi": {
     "bloc": "non-EU",
@@ -374,6 +390,14 @@
     "license": "MIT (core; some features under a separate enterprise licence)",
     "license_class": "mixed",
     "origin": "US · Infisical Inc · non-EU"
+  },
+  "core/keycloak": {
+    "bloc": "non-EU",
+    "country": "US",
+    "entity": "Red Hat, Inc. (CNCF incubating project)",
+    "license": "Apache-2.0",
+    "license_class": "osi",
+    "origin": "US · Red Hat, Inc. (CNCF incubating project) · non-EU"
   },
   "core/onlyoffice": {
     "bloc": "EU",

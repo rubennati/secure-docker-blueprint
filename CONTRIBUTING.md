@@ -49,12 +49,12 @@ See [`docs/standards/commit-rules.md`](docs/standards/commit-rules.md) for the d
 - Update relevant docs (root `README.md`, app-level `README.md` / `UPSTREAM.md`, any app-specific `CONFIG.md` that exists) if behaviour or configuration changed
 - No real data — verify with the pre-commit scan patterns listed in the go-live guide
 - Secrets always via Docker Secrets or `.env` (gitignored), never hardcoded
-- All CI checks must pass before merge (enforced by branch protection)
+- All CI checks must pass before merge — required by the ruleset on `dev` and on `main`
 - New apps and services must pass compose validation, structure checks, and the security baseline
 
 ## CI and testing
 
-The CI pipeline is the automated test suite for this configuration project. It runs on every push and pull request. **All checks must pass before merge.**
+The CI pipeline is the automated test suite for this configuration project. It runs on every pull request targeting `dev` or `main`, on every push to `main`, and nightly. **All checks must pass before merge.**
 
 | Area | What it validates |
 |---|---|

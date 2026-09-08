@@ -147,9 +147,12 @@ curl -sI https://app.example.com/ | grep -iE 'x-frame-options|content-security-p
 
 If it does, the chain must not add a second one. Two `X-Frame-Options` values on
 one response is not stricter — it is undefined, and the endpoints the app meant to
-be embeddable stop loading. Apply the level in the compose file and follow it with
-a per-app middleware that clears the header, as `business/matomo` and
-`apps/vaultwarden` do.
+be embeddable stop loading. Apply the level in the compose file and put a per-app
+middleware that clears the header **in front of it**, as `core/keycloak` does. The
+order is not cosmetic: Traefik applies the response changes of the first middleware
+in the list last, so a clearing middleware placed after the chain is overwritten by
+the chain and the header stays — measured on v3.6 with a throwaway backend, see
+[`docs/bugfixes/keycloak-admin-console-iframe-2026-09-07.md`](../bugfixes/keycloak-admin-console-iframe-2026-09-07.md).
 
 **2. Is the app embedded in another site, or does it embed itself?**
 
@@ -245,6 +248,7 @@ the next person cannot safely change.
 | Paperless | `sec-3` + `acc-tailscale` | Hardened, VPN-only |
 | Seafile Pro | `sec-3` | Public-facing |
 | Authentik | `sec-3` | Auth provider, should be hardened |
+| Keycloak | `sec-2-spa` + `acc-tailscale`, `strip-xfo` ahead of the chain | Sets its own frame headers per page and frames its cookie check; the per-app middleware removes the proxy's header |
 | Invoice Ninja | `sec-2` | Standard web app |
 | WordPress / Ghost | `sec-2` | CMS with inline scripts |
 | Cal.diy | `sec-3` | Public-facing scheduling tool, hardened default |
@@ -275,12 +279,27 @@ External services that plug into Traefik as middleware. Each is independent and 
 
 | Integration | Type | What it does |
 |-------------|------|-------------|
-| `crowdsec-basic` | Traefik plugin | Blocks IPs flagged by CrowdSec (stream mode, fail-open, no WAF) |
+| `crowdsec-basic` | Traefik plugin | CrowdSec decision remediation: blocks IPs the LAPI has a decision for (stream mode, fail-open, no request inspection) |
+| `crowdsec-appsec` | Traefik plugin | The same decision remediation, plus AppSec request inspection against the installed rule sets (fail-open) |
 | `sec-authentik` | Forward auth | SSO authentication via Authentik |
 
-Both are commented out by default. `crowdsec-basic` is the first profile in the `crowdsec-*`
-family — see [`core/crowdsec/docs/profiles.md`](../../core/crowdsec/docs/profiles.md) for the
-full profile model (AppSec, strict, geo) and the whoami-first validation procedure.
+All three are commented out by default and no router attaches one. An application opts
+in deliberately, per stack, by prepending the middleware to its router chain — see
+`APP_TRAEFIK_THREAT` in [`traefik-labels.md`](traefik-labels.md).
+
+`crowdsec-appsec` additionally requires the CrowdSec AppSec listener on port 7422 and a
+remediation plugin version that supports it. AppSec is CrowdSec's request-inspection
+(WAF) component; what it blocks depends on which rule sets are installed, so treat its
+coverage as the rule sets' coverage rather than as general request filtering. See
+[`core/crowdsec/docs/appsec.md`](../../core/crowdsec/docs/appsec.md) before enabling it.
+
+Enabling either one means uncommenting the plugin in Traefik's **static** configuration,
+which takes effect only after a Traefik restart. The middleware definitions themselves
+live in the dynamic configuration and are hot-reloaded.
+
+`crowdsec-basic` is the first profile in the `crowdsec-*` family — see
+[`core/crowdsec/docs/profiles.md`](../../core/crowdsec/docs/profiles.md) for the full
+profile model (AppSec, strict, geo) and the whoami-first validation procedure.
 See the [Traefik README](../../core/traefik/README.md) for step-by-step enable/disable instructions.
 
 ---

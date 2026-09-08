@@ -173,7 +173,7 @@ services:
   # --------------------------------------------------------
   # PAPERLESS-NGX
   # --------------------------------------------------------
-  app:
+  paperless-app:
     # --- Identity ---
     image: ghcr.io/paperless-ngx/paperless-ngx:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}

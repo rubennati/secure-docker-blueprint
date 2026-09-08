@@ -166,6 +166,16 @@ For each channel actually relied on:
 2. Confirm the notification **arrives**, on the device that is supposed to receive it.
 3. Write down which channel was proven, and when.
 
+Proven so far:
+
+| Channel | Device | Date | How |
+|---|---|---|---|
+| ntfy → iOS app, woken through `upstream-base-url` | an iPhone outside the tailnet | 2026-09-08 | published from the operator side; the public read-only router carried the subscription (v0.8.0 host session) |
+| Healthchecks → ntfy and → email | the same iPhone; the email into `apps/mailpit` | 2026-09-08 | closed circuit: a check with a one-minute period and grace was pinged once and then left alone — the down notification arrived when the grace expired, the up notification on the next ping (v0.8.0 host session) |
+| Uptime Kuma → ntfy | the same iPhone | 2026-09-08 | a TCP monitor on a container: `docker stop` brought the down alert within twenty seconds, `docker start` the up alert (v0.8.0 host session) |
+| Beszel → ntfy (Shoutrrr URL) | the same iPhone | 2026-09-08 | a disk-usage threshold set to 1 % against a disk at 73 % fired within two minutes (v0.8.0 host session) |
+| changedetection.io → ntfy (Apprise URL) | the same iPhone | 2026-09-08 | a watch on a page under our control, checked every minute; the page was changed on purpose and the notification followed within half a minute (v0.8.0 host session) |
+
 Whether it also arrives while the sending host itself is down is a property of the
 topology, not of the channel — established where the deployment is, not here.
 

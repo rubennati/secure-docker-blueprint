@@ -2,12 +2,15 @@
 
 > If this file conflicts with git (branch, commits, tags), trust git.
 
-**Last updated:** 2026-08-18
+**Last updated:** 2026-09-08
 
-- **Phase:** pre-1.0. Latest tag `v0.7.0` (2026-07-31). Work happens on `dev`.
-- **Current milestone:** v0.8.0 — Monitoring.
-- **Definition of done for v0.8.0:** one verified service per axis, and at least
-  one alert that arrived on a real device. Not a green dashboard.
+- **Phase:** pre-1.0. Latest tag `v0.8.0` (2026-09-08). Work happens on a
+  short-lived branch and reaches `dev` through a pull request; `dev` reaches
+  `main` the same way. Both branches reject a direct push.
+- **Current milestone:** v0.9.0 — Measured resource limits.
+- **Definition of done for v0.9.0:** every `✅` stack's limits come from a
+  measurement on a real install rather than from the derivation rule
+  (`docs/resource-measurement.md`).
 
 ## Snapshot
 
@@ -16,6 +19,10 @@
   generated from the owners in `docs/standards/status-model.md`, and no count is
   repeated in this file. After a status change or a pin, regenerate with
   `python3 scripts/ci/lifecycle-report.py --write`.
+- Monitoring verified on a host on 2026-09-08 (v0.8.0): ntfy, Healthchecks,
+  Uptime Kuma, Beszel and changedetection.io, each with an alert that reached a
+  phone outside the tailnet. ntfy is public and read-only on its topics, the
+  operator's side stays behind the VPN. Proof table in `monitoring/README.md`.
 - Backup architecture designed (`backup/README.md`): five layers, host-installed
   agent, snapshot/backup/archive kept distinct.
 - `backup/borgmatic/` — configuration, systemd timer, setup and restore playbook.
@@ -35,28 +42,99 @@
   reports images it could not pull instead of passing over them. Still
   `--exit-code 0`.
 - CI jobs and what each one blocks on: [`quality-gates.md`](quality-gates.md),
-  documented per job in `docs/standards/ci.md`. `Checker coverage`, `Docs QA` and
-  `Workflow supply chain` run without blocking until branch protection is updated.
+  documented per job in `docs/standards/ci.md`. All ten are required on a pull
+  request into `dev` and into `main`, and both rulesets require the branch to be
+  up to date before merging. CodeQL reports on the same pull requests and is not
+  a required check.
+
+## Capability architecture — established 2026-09
+
+The blueprint is described as **capabilities** with at most one maintained
+**reference implementation** each. `docs/architecture.md` owns the model; stack
+READMEs stay product documentation. The directory split by access pattern is
+unchanged — the capability model is a layer above it.
+
+| Capability | Reference | State |
+|---|---|---|
+| Foundation (Host thin · Docker · Network · Secrets · Backup · Updates · Lifecycle) | the standards | prerequisite |
+| Reverse Proxy | Traefik | implemented |
+| Identity & Access | Authentik | implemented, per app |
+| Threat Detection & Remediation | CrowdSec | implemented |
+| Web Application Security | CrowdSec AppSec | implemented, opt-in |
+| Network Security / IDS | — | evaluation candidate |
+
+Three states are kept apart: **implemented**, **documented alternative**,
+**evaluation candidate**. Controls follow exposure, not a numbered ladder. An
+application does not intrinsically require Traefik — it requires the reverse-proxy
+capability when served over a network.
+
+### CrowdSec
+
+"Phase 1 / 2 / 3" is retired from current documentation. The model is **Core**, and
+two independent remediation points below it — **Reverse-Proxy Remediation** and
+**Host-Firewall Remediation**. Neither depends on the other. Core detects and serves
+decisions and blocks nothing on its own.
+
+**Verified on a live host:** set-only behaviour and its IPv4/IPv6 asymmetries, the
+prepare/cleanup lifecycle including restart, the four-condition readiness gate,
+fail-open of the scope companion, the shape of the scoped FORWARD rules (one rule
+per family, ingress-interface match, no INPUT chain, no management-interface rule),
+restart ordering with enforcement active, structural management-plane exclusion, and
+the outbound half of `ct original`.
+
+**Blocked, not defective:** enforcement against real traffic. Five tests need one
+prerequisite the test host lacked — a second machine whose traffic the operator
+controls, reachable over both the management network and the public internet:
+peer-initiated management-path adverse test, controlled public IPv4 drop, controlled
+public IPv6 drop, inbound/mid-session `ct original`, guarded reboot acceptance.
+Tracked in [`tasks.md`](tasks.md) → "Blocked on a host"; sequence and evidence in
+`core/crowdsec/docs/firewall-bouncer.md` → "Verification status".
+
+**Known limitation.** `crowdsec-firewall-bouncer 0.0.25-5+b11` enforces individual
+IPv4 and IPv6 source-IP decisions correctly. A CIDR/range decision degrades silently
+to its network address, and interval-capable nftables sets cannot be populated by
+this version at all — so `flags interval` must not be set. Version-specific;
+re-evaluate on upgrade. Owner: `core/crowdsec/UPSTREAM.md`.
+
+### Traefik certificates
+
+The dashboard follows the selected certificate strategy instead of always requesting
+its own certificate. Coverage is validated as the real relationship between
+`TRAEFIK_DASHBOARD_HOST` and `ACME_WILDCARD_DOMAIN`. The shipped `.env.example`
+preselects no strategy and validation stops until one is chosen — three strategies
+are supported and none is prescribed. Migration is forward-looking only: Traefik
+renews every certificate in its ACME storage regardless of router references and
+documents no way to retire one.
+
+### Names kept as they are
+
+`APP_TRAEFIK_*` and `acc-tailscale` keep their names — they honestly describe the
+current reference implementation, and no maintained second implementation justifies
+a migration. A future architectural consideration, not debt.
+
+Suricata and Coraza are evaluation entries in [`../ROADMAP.md`](../ROADMAP.md) →
+"Evaluating"; neither is implemented. SIEM/XDR/SOC platforms are out of scope there.
 
 ## Immediate next steps
 
-The disposable host carried v0.7.0. What runs on it next, in this order:
+The disposable host carried v0.7.0 and v0.8.0. What runs on it next, in this
+order:
 
-1. **v0.8.0** — [`../docs/host-session-v0.8.0.md`](../docs/host-session-v0.8.0.md).
-   Ordered by dependency: the receiver first, then the closed-circuit monitor,
-   then the observing ones.
+0. **Finish CrowdSec host-firewall acceptance** once a controllable second client
+   exists — see the blocker above. Nothing else in CrowdSec is waiting.
+1. **Switch borgmatic's run monitoring on** — it points at
+   `monitoring/healthchecks`, which now exists and has been proven in a closed
+   circuit. This is what turns a silent backup timer into an alert.
 2. **What v0.7.0's session left open** —
    [`../docs/host-session-v0.7.0.md`](../docs/host-session-v0.7.0.md) Blocks 3
    and 4: UrBackup has never been started, and nine major versions are pinned
-   and never run. Neither gated the tag; both still need the host.
+   and never run. Neither gated a tag; both still need the host.
 3. **Feeding v0.9.0** — start the sampler in
-   [`../docs/resource-measurement.md`](../docs/resource-measurement.md) before the
-   first stack comes up. Every container started is a measurement opportunity,
-   and v0.9.0 cannot be prepared any other way.
-
-Backup's proof layer depends on monitoring: borgmatic's run monitoring points at
-`monitoring/healthchecks` and `monitoring/uptime-kuma`. Bring those up before
-switching borgmatic's timer on.
+   [`../docs/resource-measurement.md`](../docs/resource-measurement.md). Every
+   container started is a measurement opportunity, and v0.9.0 cannot be
+   prepared any other way. Five monitoring stacks are already running.
+4. **The security chains** — the open decision below; one Traefik pull request
+   plus one per moved stack.
 
 ## Open decisions
 
@@ -105,6 +183,20 @@ WAF. `core/onlyoffice`, `core/euro-office` and `core/collabora` are document
 servers — nothing breaks without them, so they fail that test.
 → *Recommendation:* apply the existing test rather than write a new rule. This is
 a structural change, so it belongs after the host session, not before.
+
+**The security chains replace what an application sets.** Measured on 2026-09-07 (Traefik v3.6): every value in an `hdr-*` block replaces
+the application's own header — Keycloak's and Nextcloud's `no-referrer` become
+the weaker browser default under level 3, HSTS loses `includeSubDomains` under
+level 2 — and a `customResponseHeaders` removal only takes effect ahead of the
+chain, so `business/matomo` and `apps/vaultwarden` still carry an ineffective
+one. The presets assume a bare application; the ones shipped set their own.
+→ *Recommendation:* a chain family without a header block (`sec-own`,
+`sec-own-spa`) plus single-purpose blocks an application appends (`hsts`,
+`permissions-policy`, a per-app CSP where upstream names one); the numbered
+presets stay for applications that set nothing. Keycloak, Authentik,
+Nextcloud, Vaultwarden and Matomo move after a measurement each, and Keycloak
+also needs an access policy for the stacks that call it and a router for its
+admin paths.
 
 ## Active constraints
 

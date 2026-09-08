@@ -1,0 +1,72 @@
+# Keycloak — local
+#
+#   cp .env.local.example .env.local          # fill in the two passwords
+#   mkdir -p volumes/local/postgres volumes/local/data && sudo chown 1000:0 volumes/local/data
+#   docker compose -p keycloak-local -f docker-compose.local.yml --env-file .env.local up -d
+#   http://localhost:8080/admin — sign in as the bootstrap administrator
+#   docker compose -p keycloak-local -f docker-compose.local.yml --env-file .env.local down
+#
+# The explicit project name keeps this apart from a running production stack
+# in the same directory; both declare a service named `db`.
+
+services:
+
+  db:
+    image: postgres:${DB_TAG}
+    container_name: keycloak-local-db
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      TZ: ${TZ}
+    volumes:
+      - ./volumes/local/postgres:/var/lib/postgresql/data
+    networks: [keycloak-local]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER} -h 127.0.0.1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  app:
+    image: quay.io/keycloak/keycloak:${APP_TAG}
+    container_name: keycloak-local-app
+    restart: unless-stopped
+    depends_on:
+      db: {condition: service_healthy}
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    tmpfs: [/tmp]
+    command: ["start"]
+    environment:
+      TZ: ${TZ}
+      KC_DB: postgres
+      KC_DB_URL_HOST: db
+      KC_DB_URL_DATABASE: ${DB_NAME}
+      KC_DB_USERNAME: ${DB_USER}
+      KC_DB_PASSWORD: ${DB_PASSWORD}
+      KC_HOSTNAME: http://localhost:8080
+      KC_HTTP_ENABLED: "true"
+      KC_HEALTH_ENABLED: "true"
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${BOOTSTRAP_ADMIN_USERNAME}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD}
+    volumes:
+      - ./volumes/local/data:/opt/keycloak/data
+    ports:
+      - "127.0.0.1:8080:8080"
+    networks: [keycloak-local]
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /health/ready HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && head -n1 <&3 | grep -q ' 200 '"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+networks:
+  keycloak-local:
+    name: keycloak-local

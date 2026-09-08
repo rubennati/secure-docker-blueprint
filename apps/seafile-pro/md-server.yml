@@ -21,7 +21,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      app:
+      seafile-pro-app:
         condition: service_healthy
 
     # --- Security ---

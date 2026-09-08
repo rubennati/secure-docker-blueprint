@@ -19,14 +19,14 @@
 - PostgreSQL + Redis + Memcached + Elasticsearch (official Elastic registry) — all required by Zammad
 - Docker Secrets for database password (`DB_PWD`)
 - `POSTGRESQL_PASS` inline env var (Zammad Rails does not support `_FILE` pattern)
-- Traefik labels on the `nginx` service for HTTPS routing
+- Traefik labels on the `zammad-nginx` service for HTTPS routing
 - YAML anchor `x-shared` / `*zammad-shared` to share image, env, restart, and security across all Zammad services
 
 ## What we changed vs. upstream
 
 | Change from upstream | Reason |
 |---|---|
-| **Traefik labels on `nginx` instead of exposing ports** | Blueprint routing standard |
+| **Traefik labels on `zammad-nginx` instead of exposing ports** | Blueprint routing standard |
 | **`app-internal` network without `internal: true`** | railsserver + scheduler need outbound internet for SMTP and webhooks |
 | **`security_opt: no-new-privileges:true` on all services** | Baseline hardening |
 | **`restart: on-failure` on `init`** | Overrides inherited `unless-stopped`; init is one-shot, must not loop |
@@ -43,7 +43,7 @@
 
 | Service | Command | Purpose |
 |---|---|---|
-| `nginx` | `zammad-nginx` | Web gateway, static assets, reverse-proxy to rails + websocket |
+| `zammad-nginx` | `zammad-nginx` | Web gateway, static assets, reverse-proxy to rails + websocket |
 | `railsserver` | `zammad-railsserver` | Rails app (API + core logic) |
 | `websocket` | `zammad-websocket` | Agent live updates (ActionCable) |
 | `scheduler` | `zammad-scheduler` | Background jobs (email import, SLA checks) |

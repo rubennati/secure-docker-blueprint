@@ -20,7 +20,7 @@ cp .env.example .env
 
 mkdir -p volumes/data
 docker compose up -d
-docker compose logs app --follow
+docker compose logs changedetection-app --follow
 # Watch for: "Running on http://0.0.0.0:5000"
 
 # Open UI, set a password under Settings → General
@@ -32,7 +32,8 @@ docker compose logs app --follow
 - **No first-user wizard** — the app is open by default. Set a password in Settings → General immediately, or put Authentik forward-auth in front.
 - **Default access `acc-tailscale` + `sec-3`** — watched URLs + selectors + scraping credentials live in the UI. VPN-only default.
 - **Data volume** (`volumes/data/`) holds every snapshot of every watched page. Can grow large — set retention per-watch in Settings.
-- **`no-new-privileges:true`** on the container.
+- **`no-new-privileges:true`** on the container. The image runs as root (measured on 0.60.3) and owns everything under `volumes/data/`.
+- **Private addresses are refused by default.** Since 0.60 a watch on an address in a private or reserved range fails with `Fetch blocked: … resolves to a private/reserved IP address` — the fetcher's guard against being used to probe the inside from the outside. `CD_ALLOW_PRIVATE_ADDRESSES=true` in `.env` lifts it, for watching pages on the Docker network or the LAN; the compose file says what that opens. Notifications are not affected — the Apprise path to `ntfy-app` works with the guard in place.
 
 ## What it sends outward
 
@@ -49,7 +50,13 @@ watches configured. The GUID makes that a per-install beacon rather than a
 version lookup, and the watch count is usage data. `DISABLE_VERSION_CHECK=yes`
 is set in the compose file, which stops the thread from starting at all.
 
-Read from upstream's `flask_app.py`; this stack has not been run on a host yet.
+**Shipped with the first start:** two example watches — Hacker News and
+upstream's own changelog — appear on an empty install and are fetched at the
+default interval from then on. Delete them; nothing else refers to them.
+
+Read from upstream's `flask_app.py`, and confirmed on a host on 2026-09-08
+(0.60.3): with `DISABLE_VERSION_CHECK=yes` no version request appears, the
+example watches do.
 
 ## Notification integrations
 
@@ -104,7 +111,7 @@ configure.
 
 - **`WARNING: This is a development server`** in logs — changedetection.io uses Flask's built-in dev server as their official deployment method (no uWSGI/Gunicorn in front). Fine in practice: Traefik absorbs all external traffic; Flask never sees direct internet connections. Upstream decision, not actionable.
 - **Socket.IO WebSocket upgrade returns 500 in threading mode** — CORS is fixed via `SOCKETIO_CORS_ORIGINS`. The client connects via long-polling (working), but the WebSocket transport upgrade fails with 500 in `SOCKETIO_MODE=threading`. Real-time updates still work via polling. Cosmetic only: all watches run, diffs are stored, notifications fire.
-- **`APP_TAG=0.55.3` is pinned** — `latest` is not reproducible.
+- **`APP_TAG=0.60.3` is pinned** — `latest` is not reproducible.
 - **No auth on first boot** — set a password immediately or front with Authentik.
 - **Diff storage grows fast** with high-churn pages — set "Max snapshots" per watch.
 - **JS-heavy sites need the optional browser service** — without it, you get the raw HTML which may be a near-empty SPA shell.

@@ -3,7 +3,7 @@ services:
   # --------------------------------------------------------
   # NOTIFICATION SERVER (Real-time File Change Notifications)
   # --------------------------------------------------------
-  notification-server:
+  seafile-pro-notification:
     # --- Identity ---
     image: seafileltd/notification-server:${NOTIFICATION_TAG}
     container_name: ${CONTAINER_NAME_NOTIFICATION}
@@ -21,7 +21,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      app:
+      seafile-pro-app:
         condition: service_healthy
 
     # --- Security ---

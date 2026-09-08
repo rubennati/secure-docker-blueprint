@@ -1,5 +1,11 @@
 # Traefik CrowdSec plugin — first-setup bugs — 2026-04-20
 
+> **Naming note.** This record uses `sec-crowdsec`, the middleware name in use on
+> 2026-04-20, and keeps the log output and configuration exactly as observed. The
+> current blueprint names the equivalent middleware `crowdsec-basic`, with
+> `crowdsec-appsec` as its AppSec variant. Read the names here as historical; for
+> current configuration follow `docs/standards/traefik-security.md`.
+
 Two independent issues observed on a fresh Phase 2 activation. Both produce
 the same visible failure mode (routers with `sec-crowdsec@file` in their
 middleware chain return HTTP 403 or 404), so it is worth listing both and
@@ -210,7 +216,7 @@ Declaring the plugin (`experimental.plugins.bouncer` in
 it does not run it. The bouncer plugin's polling loop (the thing that
 produces `Last API pull`) only starts once the middleware is actually
 **attached to at least one router's middleware list**. This is
-[step 5 in the README's "Wire the plugin" section](../../core/crowdsec/README.md#phase-2-traefik-bouncer-plugin) —
+[step 5 in the README's "Wire the plugin" section](../../core/crowdsec/README.md#reverse-proxy-remediation--traefik-bouncer-plugin) —
 easy to skip because steps 1–4 (key, plugin, middleware, render +
 restart) already make the plugin *look* fully configured, and the
 4-step verify sequence right after it can be run (and fail silently

@@ -92,10 +92,6 @@ OnlyOffice needs a server-to-server network route to each consuming application 
 
 If the consuming application's hostname resolves to a Tailscale address on the OnlyOffice host, OnlyOffice will route via Tailscale automatically.
 
-:::note
-If the consuming application uses `acc-tailscale` but OnlyOffice connections are still rejected, the source IP Traefik sees may not match the expected Tailscale address — see [Traefik troubleshooting](/infrastructure/traefik/#troubleshooting) for the known Docker bridge source-IP caveat.
-:::
-
 ## Going further
 
 ### Multiple consuming applications
@@ -130,24 +126,19 @@ Active editing sessions will break when the secret changes.
 
 ## Troubleshooting
 
-:::caution
-**Editor fails to load or shows a blank area** — open the browser console and look for a CSP or `X-Frame-Options` error. The most likely cause is the consuming application's origin missing from `ONLYOFFICE_ALLOWED_ORIGINS`. Confirm the value matches exactly, including the `https://` prefix, then recreate the OnlyOffice container.
-:::
+**Editor fails to load or shows a blank area:** open the browser console and look for a CSP or `X-Frame-Options` error. The most likely cause is the consuming application's origin missing from `ONLYOFFICE_ALLOWED_ORIGINS`. Confirm the value matches exactly, including the `https://` prefix, then recreate the OnlyOffice container.
 
-:::caution
-**Document does not load or changes do not save** — OnlyOffice cannot reach the consuming application server-to-server. Check:
+**Document does not load or changes do not save:** OnlyOffice cannot reach the consuming application server-to-server. Check:
+
 - DNS resolution for the consuming application's hostname from the OnlyOffice host.
 - Whether the consuming application's Traefik access middleware is blocking the request.
 - That the JWT secret in the consuming application matches the OnlyOffice secret exactly.
-:::
 
-:::caution
-**Allowed-origins change has no effect** — `ONLYOFFICE_ALLOWED_ORIGINS` is baked into a Traefik label at container creation time. `docker compose restart` does not update it. Run `docker compose up -d --force-recreate` on the OnlyOffice server.
-:::
+**Allowed-origins change has no effect:** `ONLYOFFICE_ALLOWED_ORIGINS` is baked into a Traefik label at container creation time, so `docker compose restart` does not update it. Run `docker compose up -d --force-recreate` on the OnlyOffice server.
 
-:::note
-**Private/Tailscale path: document does not load** — verify that DNS for the consuming application's hostname resolves to an address reachable from the OnlyOffice host. If it resolves to a public IP blocked by a firewall, the server-to-server fetch will fail — this is not visible in the browser console as a clear error.
-:::
+**A request is rejected although the consuming application uses `acc-tailscale`:** the source IP Traefik sees may not match the expected Tailscale address — see [Traefik troubleshooting](/infrastructure/traefik/#troubleshooting) for the Docker bridge source-IP caveat.
+
+**Private or Tailscale path: document does not load:** verify that DNS for the consuming application's hostname resolves to an address reachable from the OnlyOffice host. If it resolves to a public IP blocked by a firewall, the server-to-server fetch fails, and the browser console shows no clear error.
 
 ## Repository files
 

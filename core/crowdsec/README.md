@@ -1,59 +1,109 @@
 # CrowdSec
 
-Intrusion Detection and Prevention System (IDS/IPS) for the entire stack.
+Threat detection and remediation for the whole stack — the blueprint's reference
+implementation of that capability. It reads logs, decides which sources are hostile, and
+serves those decisions. Where they are enforced is a separate choice.
 
-CrowdSec analyzes Traefik access logs, detects threats (brute force, CVE probes, aggressive crawling, path traversal), and stores security decisions. On its own it does **not block anything** — a separate "bouncer" enforces the decisions. You pick which enforcement layer you want.
+**The engine alone blocks nothing.** It detects, it decides, and it hands the decisions to
+whatever asks. Without a remediation component attached, CrowdSec is a detector: you get
+visibility, and nothing is refused.
 
 ---
 
 ## Architecture
 
-Three independent components. The Engine parses logs and decides; the two bouncers enforce at different network layers.
+One core, and two independent remediation points. The core decides; each remediation
+component polls the decisions and enforces them in its own place.
 
 ```text
-                      Internet
-                         │
-                         ▼
-           ┌─────────────────────────────┐
-   Phase 3 │  Firewall Bouncer           │  nftables rules on the host
-           └─────────────┬───────────────┘  drop packets before Traefik
-                         ▼
-           ┌─────────────────────────────┐
-   Phase 2 │  Traefik Bouncer Plugin     │  reject HTTP requests (403)
-           └─────────────┬───────────────┘  at the proxy layer
-                         ▼
-                    Your apps
+                             Internet
+                                │
+        ┌───────────────────────┼───────────────────────┐
+        ▼                       │                       │
+┌─────────────────────┐         │        Host-Firewall Remediation
+│  host firewall      │         │        drops packets at the configured
+│  (nftables)         │         │        public ingress, before anything
+└─────────┬───────────┘         │        answers — any port, any protocol
+          ▼                     │
+┌─────────────────────┐         │        Reverse-Proxy Remediation
+│  reverse proxy      │◄────────┘        refuses the HTTP request (403),
+│  (Traefik)          │                  sees the URL, can say why
+└─────────┬───────────┘
+          ▼
+     applications
 
-           ┌─────────────────────────────┐
-   Phase 1 │  Security Engine            │  parses Traefik logs,
-           │                             │  runs scenarios,
-           └─────────────┬───────────────┘  stores ban decisions
-                         │
-             queried by Phase 2 + Phase 3
+┌─────────────────────────────────────────────────────────────────┐
+│  Core — the engine in this directory                            │
+│  reads logs · matches scenarios · raises alerts                 │
+│  → decisions, served over the Local API (LAPI)                  │
+└─────────────────────────────────────────────────────────────────┘
+          ▲                              ▲
+          └── polled by either, both, or neither ──┘
 ```
 
-The Engine is the only component that runs from this directory. Phase 2 lives in `core/traefik/` (Traefik static + dynamic config plus an env var for the bouncer key). Phase 3 is an apt package installed on the host — it never enters a container.
+### Core
 
-### Phase roles
+Runs from this directory, as a container. It performs the whole detection path:
 
-- **Phase 1 — Security Engine.** Detection and decision. Reads logs, matches scenarios (brute force, CVE probes, path traversal, aggressive crawling), produces ban decisions. Stores decisions in a local database. On its own, enforces nothing.
-- **Phase 2 — Traefik Bouncer Plugin.** HTTP-layer enforcement. The plugin polls the Engine every 60 s, caches the current decision list, and rejects matching requests with HTTP 403 before they reach any app. Works only for traffic that goes through Traefik.
-- **Phase 3 — Firewall Bouncer.** Network-layer enforcement. Sets nftables rules on the host, dropping packets from flagged IPs regardless of destination port. Protects services Traefik does not terminate (SSH, exposed database ports, directly mapped containers) and drops attack traffic earlier in the request path.
+| Part | What it does |
+|---|---|
+| **Ingestion** | reads the log sources it is given — the reverse proxy's access log, optionally the host's SSH log |
+| **Parsers** | turn log lines into structured events |
+| **Scenarios** | match patterns over time — brute force, CVE probing, path traversal, aggressive crawling |
+| **Alerts** | what a scenario produced |
+| **Decisions** | what the alert became after the profiles ran: a ban on a source, with a duration |
+| **LAPI** | the Local API that stores decisions and serves them to remediation components |
+| **CAPI** | the Central API — optional; contributes signals and receives the community blocklist as ready-made decisions |
+| **AllowLists** | exemptions that hold for **every** decision, whatever its origin |
 
-Phases 2 and 3 are independent: either can run without the other, or both together for defense in depth.
+An AllowList is not the same as a parser whitelist. A parser whitelist only affects what
+this engine derives from its own logs; community decisions arrive finished and never pass
+a parser. To exempt an address regardless of where the decision came from, use an
+AllowList.
 
-### Typical deployments
+### Remediation — two independent choices
 
-| Deployment | Components | Outcome |
+Neither depends on the other. Pick by what is exposed.
+
+| | Reverse-Proxy Remediation | Host-Firewall Remediation |
 |---|---|---|
-| Detection only | Phase 1 | Visibility into attacks; no blocking. Useful for tuning before enabling enforcement. |
-| HTTP protection | Phase 1 + Phase 2 | Traefik rejects requests from flagged IPs. Blocks web attacks, leaves non-HTTP ports untouched. |
-| Network protection | Phase 1 + Phase 3 | Host firewall drops packets from flagged IPs across all ports. Covers SSH and non-HTTP services; drops traffic earlier. |
-| Defense in depth | Phase 1 + Phase 2 + Phase 3 | Network-layer drop for all protocols; HTTP-layer reject with richer feedback when packets do reach Traefik. |
+| Runs | as a plugin inside the reverse proxy | as a host package (`crowdsec-firewall-bouncer`) |
+| Lives in | `core/traefik/` — static and dynamic config plus a key | on the host; never in a container |
+| Enforces at | the HTTP request, after TLS termination | the kernel, before a connection exists |
+| Covers | anything routed through the proxy | any port arriving on the configured public ingress interface |
+| Sees | URL, headers, the decrypted request — can explain the refusal | the source address only |
+| Protects | public HTTP applications | services that terminate on the host and anything the proxy never handles |
+| Needs | LAPI reachable, a bouncer key | the host package, LAPI reachable from the host, an explicit ingress scope |
+
+Both may run together — different enforcement points, different visibility. That is a
+choice, not a requirement, and it follows from exposure rather than from any order.
+
+**Management access is excluded structurally.** The host-firewall rules match a configured
+public ingress interface, so traffic arriving on a management path cannot match them
+whatever the decision list contains. The AllowList is depth behind that, not the guarantee.
+
+### Choosing
+
+| Exposure | Relevant remediation |
+|---|---|
+| Nothing public yet; you want to see what arrives | none — Core alone, as a detector |
+| Public HTTP applications behind the reverse proxy | Reverse-Proxy Remediation |
+| A service that terminates on the host and is reachable publicly | Host-Firewall Remediation |
+| Both of the above | both, enforcing at their own points |
 
 ---
 
-## Phase 1: Security Engine — setup
+## Web Application Security
+
+CrowdSec also offers **AppSec**, which inspects the request itself rather than judging its
+sender. In the blueprint's capability model that is a separate capability —
+[Web Application Security](../../docs/architecture.md#capabilities-and-reference-implementations)
+— for which CrowdSec AppSec is the current reference implementation. It is opt-in and
+documented in [`docs/appsec.md`](docs/appsec.md).
+
+---
+
+## Core — setup
 
 This directory's `docker-compose.yml` runs the engine. It collects logs, parses them, runs scenarios, stores decisions.
 
@@ -66,16 +116,40 @@ The `.env` vars that matter:
 - Traefik side (`core/traefik/.env`): `TRAEFIK_ACCESSLOG_FORMAT=json` and `TRAEFIK_ACCESSLOG_FILE=/var/log/traefik/access.log`
 - CrowdSec side (`core/crowdsec/.env`): `TRAEFIK_LOG_PATH=../traefik/volumes/logs` (relative path — override with absolute if Traefik lives elsewhere)
 
+**Start `core/traefik` first.** It creates `crowdsec-security`, the network this engine
+joins as an external one, so starting this stack before that network exists fails
+immediately. Traefik joins the same network — that is the path the reverse-proxy remediation
+takes to the LAPI on `crowdsec:8080` and to AppSec on `crowdsec:7422`. The engine does
+not join `proxy-public`: no application has a reason to reach it. Keep
+`CROWDSEC_SECURITY_NETWORK` identical in both `.env` files.
+
+A deployment where the engine already runs on `proxy-public` follows
+[Migrating an existing installation](#migrating-an-existing-installation) instead of
+the setup below.
+
 ### Setup
 
 ```bash
 # 1. Create .env
 cp .env.example .env
-# Review: TZ, TRAEFIK_LOG_PATH, CROWDSEC_LOG_GID
+# Review: TZ, TRAEFIK_LOG_PATH, CROWDSEC_LOG_GID, CROWDSEC_SECURITY_NETWORK
+#   CROWDSEC_SECURITY_NETWORK must hold the same value as in core/traefik/.env
 
-# 2. Start the engine
+# 2. Bring up Traefik first — it creates crowdsec-security
+(cd ../traefik && docker compose up -d)
+
+# 3. Start the engine
 docker compose up -d
+
+# 4. Both containers on the dedicated network?
+docker network inspect "$(grep ^CROWDSEC_SECURITY_NETWORK= .env | cut -d= -f2)" \
+  --format '{{range .Containers}}{{.Name}} {{end}}'
+# Expected: the Traefik container and crowdsec
 ```
+
+A fresh install has no migration state: the engine joins `crowdsec-security` on first
+start and never joins `proxy-public`. Remediation and AppSec stay off until you enable
+them — step 4 finishing means the path exists, not that anything is enforced.
 
 No secrets needed — the engine generates its own internal credentials on first start.
 
@@ -94,7 +168,7 @@ docker exec crowdsec cscli metrics show acquisition
 # with lines_read > 0 and lines_unparsed = 0 (or empty)
 ```
 
-If both green, Phase 1 is done. The `cscli metrics show acquisition` form is preferred over grepping the full `cscli metrics` output — it returns a meaningful "no acquisition source running" message while startup is still in progress, instead of silently empty output.
+If both green, Core is running. The `cscli metrics show acquisition` form is preferred over grepping the full `cscli metrics` output — it returns a meaningful "no acquisition source running" message while startup is still in progress, instead of silently empty output.
 
 **If the acquisition table is empty (no row at all) even after the 5-minute startup window**, this is usually not a broken install — two things commonly delay it:
 
@@ -110,7 +184,7 @@ done
 docker exec crowdsec cscli metrics show acquisition
 ```
 
-Expect `lines_read`/`lines_parsed` to jump to the request count. A `lines_whitelisted` count equal to `lines_read` is normal here too — CrowdSec's built-in whitelists recognize private/loopback-range source IPs (like the `172.x.x.x` Docker-gateway address a self-curl produces — see [`docs/standards/troubleshooting.md`](../../docs/standards/troubleshooting.md) "Common IP problems") as non-threatening test traffic, not a sign anything is misconfigured.
+Expect `lines_read`/`lines_parsed` to jump to the request count. A `lines_whitelisted` count equal to `lines_read` is normal here too — the built-in `crowdsecurity/whitelists` parser covers `127.0.0.0/8`, `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16` and `::1`, which includes the `172.x.x.x` Docker-gateway address a self-curl produces (see [`docs/standards/troubleshooting.md`](../../docs/standards/troubleshooting.md) "Common IP problems"). That list is exactly those ranges and no others: **a VPN management network is not covered**. Tailscale's `100.64.0.0/10` is CGNAT rather than RFC1918, and its IPv6 range is a ULA the parser does not name, so administrative traffic can and does trigger detection scenarios. See [docs/firewall-bouncer.md](docs/firewall-bouncer.md) → "VPN ranges are not RFC1918".
 
 Decisions may take additional minutes to appear — background internet scanners typically show up within the hour.
 
@@ -126,7 +200,7 @@ Decisions may take additional minutes to appear — background internet scanners
 
 ### Watching detection in production
 
-Day-to-day monitoring once Phase 1 is running:
+Day-to-day monitoring once Core is running:
 
 ```bash
 # Live detection stream
@@ -135,7 +209,7 @@ docker compose logs -f crowdsec
 # All detected threats so far
 docker exec crowdsec cscli alerts list
 
-# Active bans (kept even without a bouncer — Phase 2/3 enforces them)
+# Active bans (kept even without a bouncer — remediation enforces them)
 docker exec crowdsec cscli decisions list
 
 # Drill into a specific alert
@@ -174,7 +248,7 @@ docker exec crowdsec cscli collections list
 ```
 
 > **Bouncer setup** — the commands for generating bouncer API keys
-> (`cscli bouncers add/list/delete`) belong to Phase 2 and Phase 3.
+> (`cscli bouncers add/list/delete`) belong to the remediation components.
 > See those sections below when you are ready to turn detection
 > into enforcement.
 
@@ -182,7 +256,7 @@ docker exec crowdsec cscli collections list
 
 - **Alerts appear** when CrowdSec detects suspicious patterns (probing, brute force, CVE attempts)
 - **Decisions (bans)** are created when a scenario threshold is reached
-- **Without a bouncer** (Phase 2/3), decisions are stored but not enforced — detection only
+- **Without a remediation component**, decisions are stored but not enforced — detection only
 - **Community blocklist** downloads automatically after CAPI registration
 - **Parsed lines** increase over time as Traefik processes requests
 
@@ -266,7 +340,143 @@ Note that the firewall bouncer cannot filter by origin — it enforces every
 decision or none. Keeping community decisions at the proxy layer only, where a
 403 at least leaves a log line, is not something the current tooling offers.
 
-## Phase 2: Traefik Bouncer Plugin
+## Migrating an existing installation
+
+Only for a deployment where the engine already runs on `proxy-public`. A fresh install
+has nothing to migrate — use [Setup](#setup).
+
+The engine used to share `proxy-public` with every routed application; it now sits on
+`crowdsec-security`, which `core/traefik` creates. That is topology hardening —
+control-plane segmentation and defense in depth. The migration exists because the
+network's ownership and membership change, not because anything is broken today.
+
+**What can go wrong is losing the Traefik-to-CrowdSec path during the move, not the new
+network.** While that path is down, a middleware built from the repository defaults
+keeps serving traffic: both AppSec failure flags ship as `false`. A middleware where
+either is effectively `true` answers HTTP 403 on every route that uses it. Host-firewall remediation is
+untouched throughout — the firewall bouncer talks to `127.0.0.1` on the host and never
+used `proxy-public`.
+
+The order is additive before subtractive: Traefik gains the new network, the engine
+joins both, the new path is proven, and only then does the old one go.
+
+### Pre-flight
+
+Have a way back in that does not depend on a router carrying a CrowdSec middleware — a
+Tailscale or LAN path, or the provider's console.
+
+Then read the failure flags out of the **rendered** configuration rather than the
+template, because the rendered file is what Traefik loaded:
+
+```bash
+grep -iE "appsec(Failure|Unreachable)Block" \
+  ../traefik/config/dynamic/integrations.yml
+```
+
+Both must read `false`. A missing line is not `false`: the plugin defaults both to
+`true`, so a middleware that omits them is fail-closed. If either is effectively `true`,
+set both to `false` in `../traefik/ops/templates/dynamic/integrations.yml.tmpl`, run
+`../traefik/ops/scripts/render.sh`, and restore your setting after step 3.
+
+### Step 1 — Traefik joins the new network
+
+Nothing is removed here. Traefik and the engine both stay on `proxy-public`.
+
+```bash
+cd ../traefik
+# add CROWDSEC_SECURITY_NETWORK to .env, matching core/crowdsec/.env
+docker compose up -d
+docker network inspect "$(grep ^CROWDSEC_SECURITY_NETWORK= .env | cut -d= -f2)" \
+  --format '{{range .Containers}}{{.Name}} {{end}}'
+# Expected: the Traefik container
+```
+
+### Step 2 — the engine on both networks, for the migration only
+
+Temporarily put `proxy-public` back beside `crowdsec-security` in
+`docker-compose.yml`, so the new path can be proven while the old one still carries
+traffic:
+
+```yaml
+    networks:
+      - crowdsec-security
+      - proxy-public          # temporary — removed again in step 3
+
+networks:
+  crowdsec-security:
+    external: true
+    name: ${CROWDSEC_SECURITY_NETWORK}
+  proxy-public:               # temporary — removed again in step 3
+    external: true
+```
+
+```bash
+cd ../crowdsec
+docker compose up -d --force-recreate crowdsec
+```
+
+Verify before going further:
+
+```bash
+# 1. Both containers on the dedicated network?
+docker network inspect "$(grep ^CROWDSEC_SECURITY_NETWORK= .env | cut -d= -f2)" \
+  --format '{{range .Containers}}{{.Name}} {{end}}'
+
+# 2. Does the bouncer still pull? This is the signal that reverse-proxy remediation survived.
+docker exec crowdsec cscli bouncers list
+# Expected: traefik-bouncer with a "Last API pull" inside the last ~60 s.
+# The recorded IP moves to the new subnet — that is the move landing, not a fault.
+```
+
+With AppSec enabled, also run the reachability check in
+[docs/appsec.md](docs/appsec.md) "Step 1", then send one request through a route that
+carries `crowdsec-appsec@file` and confirm it answers as before.
+
+### Step 3 — remove `proxy-public` from the engine
+
+Only once step 2 is green. Restore `docker-compose.yml` to the shipped form —
+`crowdsec-security` alone — and recreate:
+
+```bash
+docker compose up -d --force-recreate crowdsec
+```
+
+Verify:
+
+```bash
+# 1. The engine is gone from the shared network; Traefik is still on both.
+docker network inspect proxy-public --format '{{range .Containers}}{{.Name}} {{end}}'
+docker network inspect "$(grep ^CROWDSEC_SECURITY_NETWORK= .env | cut -d= -f2)" \
+  --format '{{range .Containers}}{{.Name}} {{end}}'
+
+# 2. The bouncer pull is still fresh.
+docker exec crowdsec cscli bouncers list
+
+# 3. The isolation landed: from one application container on proxy-public,
+#    the engine no longer resolves.
+docker exec <an-app-container> getent hosts crowdsec
+# Expected: no output, non-zero exit.
+```
+
+One application container is enough — every stack on `proxy-public` is in the same
+position. Restore the AppSec failure flags if pre-flight changed them.
+
+### Rollback
+
+Put `proxy-public` back on the engine in the step 2 form and recreate:
+
+```bash
+cd ../crowdsec
+docker compose up -d --force-recreate crowdsec
+docker exec crowdsec cscli bouncers list   # pull fresh again?
+```
+
+Traefik keeps `crowdsec-security`; step 1 costs nothing and stays valid. Find out why
+the dedicated path failed before retrying step 2.
+
+---
+
+## Reverse-Proxy Remediation — Traefik bouncer plugin
 
 HTTP-layer enforcement. Configuration spans two directories: the bouncer API key is generated here, and the plugin itself is declared in `core/traefik/`.
 
@@ -312,7 +522,7 @@ The command prints the key once — save it immediately.
 
 Full reference including the exact plugin block: `core/traefik/README.md`, section "CrowdSec Bouncer Plugin".
 
-### Phase 2 verify
+### Verify reverse-proxy remediation
 
 Four checks, in order. Run after **step 5** (not just step 4) — check #2 depends on at least one router actually using the middleware.
 
@@ -356,18 +566,30 @@ Do not ban the IP you administer the server from (Tailscale, LAN admin subnet) u
 
 ---
 
-## Phase 3: Firewall Bouncer
+## Host-Firewall Remediation — nftables bouncer
 
 Host-level enforcement via nftables. Installed as a system package (`apt`) on the host
 — not inside any container — because it manipulates host kernel firewall rules directly.
 
 The bouncer polls the CrowdSec LAPI on `127.0.0.1:8080` and translates active decisions
 into nftables drop rules. Traffic from banned IPs is dropped before any service sees it
-— Traefik, SSH, or otherwise. Phase 3 is the only enforcement layer that covers ports
+— the reverse proxy, a host-terminating service, or otherwise. This is the only enforcement point that covers ports
 Traefik does not terminate.
 
-**Full setup, SSH detection, verify steps, edge cases, and troubleshooting:**
-→ [`docs/firewall-bouncer.md`](docs/firewall-bouncer.md)
+The bouncer polls the LAPI and enforces decisions for **every** source it is given, so
+where that rule is attached decides whether an automated blocklist can reach the
+administrator's own path. The blueprint's model keeps enforcement on the public ingress
+interface and out of the management plane by construction, and runs the bouncer in
+nftables `set-only` mode so the blueprint owns the rule rather than the package.
+
+Host enforcement covers **individual source-IP decisions**, IPv4 and IPv6. CrowdSec
+`range` decisions are not enforced correctly at this layer in the packaged bouncer
+version — a documented capability limit, not a fault to work around.
+
+**Its lifecycle and readiness gate are runtime-verified; scoped enforcement is not
+yet accepted.** Read [`docs/firewall-bouncer.md`](docs/firewall-bouncer.md) before
+enabling anything: it owns the architecture, the setup, the safe change procedure, the
+bounded rollback, the known limitations and the verification status.
 
 ---
 
@@ -378,12 +600,12 @@ Traefik does not terminate.
 Defines which log files CrowdSec monitors. Default: Traefik access logs in JSON format.
 
 The file ships with a commented-out SSH block. Uncomment it to enable SSH brute-force
-detection alongside Phase 3 — see [`docs/firewall-bouncer.md`](docs/firewall-bouncer.md)
+detection alongside host-firewall remediation — see [`docs/firewall-bouncer.md`](docs/firewall-bouncer.md)
 → "SSH detection" for the full activation steps (volume mount + collection + restart).
 
 ### AppSec (`config/appsec.yaml`)
 
-Application-level security analysis. The AppSec component listens on port 7422 and inspects HTTP requests forwarded by the Traefik bouncer plugin (Phase 2).
+Application-level security analysis. The AppSec component listens on port 7422 and inspects HTTP requests forwarded by the Traefik bouncer plugin.
 
 ### Custom Profiles
 
@@ -427,7 +649,7 @@ Losing the credentials means re-enrolling every bouncer by hand.
 - [UPSTREAM.md](UPSTREAM.md) — Upstream reference, upgrade checklist
 - [docs/profiles.md](docs/profiles.md) — Traefik bouncer profile architecture: the `crowdsec-*` per-app profile family, what is per-app vs global, three-level enforcement model, geo/AppSec feasibility, whoami-first validation
 - [docs/runbook.md](docs/runbook.md) — Day-to-day operations: health checks, whitelisting, false positive handling, emergency procedures, maintenance, troubleshooting
-- [docs/firewall-bouncer.md](docs/firewall-bouncer.md) — Phase 3 setup, SSH detection, verify steps, edge cases
+- [docs/firewall-bouncer.md](docs/firewall-bouncer.md) — host-firewall remediation: setup, SSH detection, verify steps, edge cases
 - [docs/dashboard.md](docs/dashboard.md) — Visual dashboard options: CrowdSec Console (opt-in), CLI alternative, deferred Prometheus/Grafana path
-- [docs/geoblocking.md](docs/geoblocking.md) — Country-level blocking: GeoIP enrichment, manual country decisions, automated scenario, Phase 2/3 interaction, self-lockout prevention, trade-offs
+- [docs/geoblocking.md](docs/geoblocking.md) — Country-level blocking: GeoIP enrichment, manual country decisions, automated scenario, how each remediation point applies it, self-lockout prevention, trade-offs
 - [docs/appsec.md](docs/appsec.md) — AppSec / WAF: how request-level inspection works, enabling safely, failure mode trade-offs, application-specific false positives, exclusions, emergency disable

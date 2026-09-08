@@ -11,7 +11,7 @@ Hardened configurations for 40+ services — standardized security baseline, Doc
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/rubennati/secure-docker-blueprint/badge)](https://scorecard.dev/viewer/?uri=github.com/rubennati/secure-docker-blueprint)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/13091/badge)](https://www.bestpractices.dev/projects/13091)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v0.7.0-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v0.8.0-blue)](CHANGELOG.md)
 [![Status](https://img.shields.io/badge/status-pre--1.0-yellow)](ROADMAP.md)
 
 </div>
@@ -36,7 +36,8 @@ Quick Navigation: [Features](#features) · [Installation](#installation) · [Cor
 
 ## Installation
 
-This reaches a working Traefik with TLS, which every app routes through. The app
+This reaches a working Traefik with TLS, which every app routes through once it is
+served over the network. The app
 itself is installed from its own README — the steps differ per stack, and that
 README is the procedure. Check [Requirements](#requirements) first; `envsubst` is
 needed before the first command.
@@ -129,20 +130,19 @@ the choice guidance for that category.
 |---------|-------------|
 | [Traefik](core/traefik/) | Reverse proxy with Socket Proxy, 5 security levels, 3 TLS profiles, access policies |
 | [Authentik](core/authentik/) | SSO / Identity Provider for centralized authentication (Forward-Auth, OAuth2 / OIDC / SAML) |
+| [Keycloak](core/keycloak/) | Alternative identity provider — OIDC / SAML, LDAP and AD federation, two containers, no proxy of its own. `core/keycloak/README.md` compares the two |
 | [OnlyOffice](core/onlyoffice/) | Document editing server for Seafile, Nextcloud, etc. |
 | [Euro-Office](core/euro-office/) | EU-governed OnlyOffice fork (Nextcloud/IONOS/XWiki/Proton) — drop-in document server |
 | [Collabora](core/collabora/) | Lightweight LibreOffice-based office server (~1 GB) — leaner alternative to OnlyOffice/Euro-Office |
 | [dnsmasq](core/dnsmasq/) | DNS forwarder with wildcard zones for Tailscale / split-DNS setups |
 | [acme-certs](core/acme-certs/) | Certificate tool (acme.sh) for devices without Traefik (NAS, routers) |
-| [CrowdSec](core/crowdsec/) | Intrusion detection engine + Traefik bouncer plugin — log analysis, threat decisions, L7 blocking |
+| [CrowdSec](core/crowdsec/) | Threat detection engine — log analysis, scenarios, threat decisions. Enforcement is a separate choice: reverse-proxy or host-firewall remediation |
 | [Whoami](core/whoami/) | Traefik debug service to verify routing, TLS, and middlewares |
 | [Dockhand](core/dockhand/) | Docker management with Git-based stacks |
 | [Portainer](core/portainer/) | Docker management UI |
 | [Hawser](core/hawser/) | Remote Docker agent for Dockhand |
 | [Portainer Agent](core/portainer-agent/) | Remote Docker agent for Portainer (multi-host) |
 | [Infisical](core/infisical/) | Central secret manager (self-hosted) — one place for all servers'/apps' secrets. VPN-only |
-
-Planned in `core/`: Keycloak (alternative / heavier IAM next to Authentik).
 
 ### Applications
 
@@ -187,6 +187,7 @@ Three 1:1-booking apps as a choice-matrix (pick one), plus a planned group-polli
 |---|---|---|
 | [Cal.diy](apps/caldiy/) | Next.js + Postgres + Redis | MIT community edition of Cal.com (community fork, personal use). |
 | [Easy!Appointments](apps/easyappointments/) | PHP + MariaDB | Lightweight PHP alternative, established 2013, GPL-3.0. |
+| [Tymeslot](apps/tymeslot/) | Elixir/Phoenix + Postgres | Calendar sync with Google, Outlook, Apple and CalDAV, video links, reminder mail; AGPL-3.0, releases several times a week. |
 
 Planned: **Rallly** (group scheduling polls — Doodle alternative, complementary not competing with the 1:1 bookers above).
 
@@ -230,6 +231,7 @@ Planned (apps/): Headscale (self-hosted Tailscale control server), PrivateBin, S
 |---|---|---|
 | [Adminer](apps/adminer/) | Single container | Database administration UI (connects to other apps' DBs) |
 | [IT-Tools](apps/it-tools/) | Single container | Collection of IT / developer utilities (JSON, hash, regex, etc.) |
+| [Mailpit](apps/mailpit/) | Single container | SMTP sink for trying out the stacks that send mail — accepts every message, shows it, delivers nothing |
 
 Docker-management tools (Dockhand / Portainer / Hawser) moved to [`core/`](core/) — they're infrastructure, not apps.
 
@@ -289,7 +291,7 @@ New here? Start with the area that best matches your goal: [Core Infrastructure]
 
 | Directory | Scope |
 |---|---|
-| [`core/`](core/) | Infrastructure shared by everything — Traefik, CrowdSec, identity providers (Authentik + Keycloak planned), OnlyOffice, certs |
+| [`core/`](core/) | Infrastructure shared by everything — Traefik, CrowdSec, identity providers (Authentik, Keycloak), OnlyOffice, certs |
 | [`apps/`](apps/) | General-purpose self-hosted apps — equally useful for private homelab or a company |
 | [`business/`](business/) | Apps that only make sense in a company context — invoicing, helpdesk, newsletter, compliance |
 | [`monitoring/`](monitoring/) | Ops observability — uptime, metrics, content-change watching, disk SMART |
@@ -303,6 +305,7 @@ secure-docker-blueprint/
 ├── core/                        # Infrastructure (always needed)
 │   ├── traefik/                 #   Reverse proxy + socket proxy
 │   ├── authentik/               #   SSO / Identity provider
+│   ├── keycloak/                #   SSO / Identity provider — the alternative
 │   ├── crowdsec/                #   Intrusion detection + Traefik bouncer
 │   ├── onlyoffice/              #   Document editing server
 │   ├── euro-office/             #   EU OnlyOffice fork (document server)
@@ -322,8 +325,8 @@ secure-docker-blueprint/
 │   ├── immich/  paperless-ngx/  nextcloud/  seafile/  seafile-pro/
 │   ├── vaultwarden/
 │   ├── nocodb/  n8n/  opnform/  monicahq/
-│   ├── caldiy/  easyappointments/
-│   ├── adminer/  it-tools/  unifi/
+│   ├── caldiy/  easyappointments/  tymeslot/
+│   ├── adminer/  it-tools/  mailpit/  unifi/
 │   └── ...
 │
 ├── business/                    # Company-only apps

@@ -68,7 +68,7 @@ services:
   # --------------------------------------------------------
   # GHOST
   # --------------------------------------------------------
-  app:
+  ghost-app:
     # --- Identity ---
     image: ghost:${APP_TAG}
     container_name: ${COMPOSE_PROJECT_NAME}-app

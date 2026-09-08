@@ -109,7 +109,7 @@ services:
   # --------------------------------------------------------
   # LYCHEE (Laravel app)
   # --------------------------------------------------------
-  app:
+  lychee-app:
     # --- Identity ---
     image: lycheeorg/lychee:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}

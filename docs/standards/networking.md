@@ -6,12 +6,13 @@
 Internet
    │
    ▼
-┌──────────────┐
-│   Traefik    │  proxy-public (external)
-│  (core/)     │──────────────────────────────┐
-└──────────────┘                              │
-   │                                          │
-   ▼                                          ▼
+┌──────────────┐  crowdsec-security (external)  ┌──────────────┐
+│   Traefik    │◄──────────────────────────────►│   CrowdSec   │
+│  (core/)     │                                │   (core/)    │
+└──────────────┘                                └──────────────┘
+   │
+   │ proxy-public (external)
+   ▼
 ┌──────────┐  app-internal   ┌──────────┐  ┌──────────┐
 │   App    │◄───────────────►│    DB    │  │  Redis   │
 │  (web)   │  (isolated)     │          │  │          │
@@ -58,16 +59,49 @@ networks:
 - For: DB, Redis, Gotenberg, Tika, Socket Proxy
 - Stays IPv4-only regardless of `proxy-public`'s IP family — nothing outside the Docker host ever connects to these directly, so there is no client source IP to preserve
 
+### Core-to-core service network
+
+```yaml
+networks:
+  crowdsec-security:
+    name: ${CROWDSEC_SECURITY_NETWORK}
+    driver: bridge
+```
+
+Carries one conversation between two core services, with closed membership. It is
+not a second `proxy-public`: the members are named in this repository, and an
+application stack never joins one.
+
+`crowdsec-security` is the only instance. `core/traefik` declares it; `core/crowdsec`
+joins it with `external: true`. Traefik and the CrowdSec engine are the intended
+members, and the engine joins no other network — its LAPI (8080), AppSec (7422) and
+Prometheus (6060) ports are reachable from the reverse proxy and from no application
+container.
+
+- Not `internal: true`. The engine uses this bridge for the outbound access that hub
+  updates, the Central API and blocklists need. Making it internal would require a
+  separate egress network and would bound nothing further, because membership is
+  what bounds reachability here.
+- IPv4-only, for the same reason as `app-internal` — nothing outside the Docker host
+  connects, so there is no client source IP to preserve.
+- Host port publication is a separate mechanism and is unaffected: the engine still
+  publishes its LAPI on `127.0.0.1` for the host-installed firewall bouncer.
+
+Add another one when two core services need a private channel and the alternative is
+placing one of them on `proxy-public`.
+
 ## Which Service in Which Network?
 
-| Service Type | proxy-public | app-internal |
-|-------------|:---:|:---:|
-| Web app (Traefik routing) | ✅ | ✅ |
-| Database | ❌ | ✅ |
-| Redis / Memcached | ❌ | ✅ |
-| Socket Proxy | ❌ | ✅ |
-| Worker / Background Jobs | ❌ | ✅ |
-| Gotenberg / Tika | ❌ | ✅ |
+| Service Type | proxy-public | app-internal | crowdsec-security |
+|-------------|:---:|:---:|:---:|
+| Web app (Traefik routing) | ✅ | ✅ | ❌ |
+| Database | ❌ | ✅ | ❌ |
+| Redis / Memcached | ❌ | ✅ | ❌ |
+| Socket Proxy | ❌ | ✅ | ❌ |
+| Worker / Background Jobs | ❌ | ✅ | ❌ |
+| Gotenberg / Tika | ❌ | ✅ | ❌ |
+| Traefik | ✅ | ❌ | ✅ |
+| CrowdSec engine | ❌ | ❌ | ✅ |
 
 ## Special Cases
 

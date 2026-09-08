@@ -172,9 +172,14 @@ the removal, and why that step deserves a look before you run it.
 
 ```bash
 dig +short <your-hostname>
-curl -sI https://<your-hostname>
+openssl s_client -connect <your-hostname>:443 -servername <your-hostname> 2>/dev/null | openssl x509 -noout -subject -dates
 docker exec traefik-core cat /etc/traefik/acme/acme.json | jq '.[] | .Certificates[]?.domain // "none yet"'
 ```
+
+A `subject=CN=TRAEFIK DEFAULT CERT` means no certificate matched the hostname:
+Traefik answers HTTPS with its own self-signed one and logs nothing. On the
+per-domain path that is the `tls.certresolver` label still commented out in the
+application's `docker-compose.yml`.
 
 Most first-time certificate failures are a DNS provider token missing a zone
 permission, or a mismatch between the wildcard domain and a per-application

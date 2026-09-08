@@ -275,11 +275,12 @@ services:
       - ./volumes/zammad-storage:/opt/zammad/storage
 
   # --- Nginx (serves static assets, proxies to rails + websocket) ---
-  # NOTE: nginx runs the same Rails readiness check as all other services:
+  # NOTE: zammad-nginx runs the same Rails readiness check as all other
+  # services:
   # `bundle exec rails r 'Translation.any? || raise'`
   # It therefore needs the full *zammad-env (DB credentials) even though
-  # nginx itself never queries the database at runtime.
-  nginx:
+  # the service itself never queries the database at runtime.
+  zammad-nginx:
     <<: *zammad-shared
     container_name: ${CONTAINER_NAME_APP}
     command: ["zammad-nginx"]

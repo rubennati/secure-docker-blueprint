@@ -35,6 +35,9 @@ auth-file: /var/lib/ntfy/user.db
 # Leaving this at the upstream default (read-write) makes every topic on this
 # server world-readable and world-writable to anyone who guesses its name.
 auth-default-access: deny-all
+# The web app on the operator's router shows nothing without a login; the apps
+# authenticate per request regardless of this setting.
+enable-login: true
 
 # --- iOS instant notifications (optional) ---
 # Apple restricts background processing, so a self-hosted server cannot push to
@@ -42,7 +45,8 @@ auth-default-access: deny-all
 # server, which delivers it via APNS; the device then fetches the actual message
 # from this server. The upstream request carries only the message ID and a
 # SHA256 checksum of the topic URL — not the message content.
-# Only needed for iOS receivers. Android and desktop work without it.
+# Only needed for iOS receivers. Android and desktop work without it. Verified
+# with an iPhone on 2026-09-08 — without it, iOS does not wake the app.
 #upstream-base-url: "https://ntfy.sh"
 
 # --- Logging ---

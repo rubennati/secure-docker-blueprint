@@ -34,14 +34,20 @@ Eight stacks have none, because running them alone shows nothing: `adminer`,
 The rest of this page is for serving an application to someone other than
 yourself.
 
-## Traefik — required
+## A reverse proxy — for anything you serve
 
-**Without it, nothing else in this blueprint is reachable over the network.** The
+**Without one, nothing here is reachable over the network.** That is what this half
+of the page is about; a stack you only run for yourself needs none of it. The
 applications publish no ports of their own. They attach to a Docker network called
 `proxy-public` and expect something in front to terminate TLS and route requests
-by hostname. Traefik is that something, and it also carries the middleware each
-service switches on: security headers, rate limits, and the access rules that
-decide whether a service answers the open internet or only your VPN.
+by hostname. That job — the reverse proxy — is what every served application needs.
+
+**Traefik is what this blueprint provides for it**, and it also carries the
+middleware each service switches on: security headers, rate limits, and the access
+rules that decide whether a service answers the open internet or only your VPN.
+Another reverse proxy could do the routing, but the middleware, the certificate
+handling and the per-application labels here are written for Traefik — swapping it
+means replacing those, and the blueprint does not maintain a second set.
 
 One certificate strategy, one set of access policies, one place to change them.
 
@@ -80,10 +86,14 @@ a mail server.
 
 ## Also server-wide, without a guide
 
-**Single sign-on.** [Authentik](/infrastructure/authentik/) is set up once and
-then attached per route as a proxy middleware, so several applications can share
-one login. Five containers, and it needs SMTP, a database and Redis of its own —
-it is a service to operate, not a setting to switch on.
+**Single sign-on.** Two providers, and they are alternatives.
+[Authentik](/infrastructure/authentik/) is set up once and then attached per
+route as a proxy middleware, so several applications can share one login even
+when they have none of their own; five containers, and it needs SMTP, a
+database and Redis. [Keycloak](/infrastructure/keycloak/) is the provider most
+applications that speak OpenID Connect or SAML were tested against, in two
+containers, with no proxy of its own. Either is a service to operate, not a
+setting to switch on; the Keycloak guide has the comparison.
 
 ## Server-wide, and covered elsewhere
 

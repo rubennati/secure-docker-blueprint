@@ -68,7 +68,7 @@ services:
   # --------------------------------------------------------
   # GHOST ACTIVITYPUB SERVICE
   # --------------------------------------------------------
-  activitypub:
+  ghost-activitypub:
     # --- Identity ---
     image: ghcr.io/tryghost/activitypub:${ACTIVITYPUB_TAG}
     container_name: ${COMPOSE_PROJECT_NAME}-activitypub
@@ -161,15 +161,15 @@ services:
   # --------------------------------------------------------
   # GHOST — extend with ActivityPub connection
   # --------------------------------------------------------
-  app:
-    # Merged into the base app service by Docker Compose.
+  ghost-app:
+    # Merged into the base ghost-app service by Docker Compose.
     environment:
-      ACTIVITYPUB_TARGET: http://activitypub:8080
+      ACTIVITYPUB_TARGET: http://ghost-activitypub:8080
     # host-gateway resolves the public domain back to Traefik via the Docker bridge.
     # Required for Ghost's ActivityPub self-referential startup call.
     extra_hosts:
       - "${APP_TRAEFIK_HOST}:host-gateway"
     depends_on:
-      activitypub:
+      ghost-activitypub:
         condition: service_started
         required: false

@@ -1,6 +1,6 @@
 # Roadmap
 
-Direction reviewed 2026-07-31.
+Direction reviewed 2026-09-08.
 
 What remains to be built, what blocks it, and what proves it finished. Shipped
 work belongs to [`CHANGELOG.md`](CHANGELOG.md), per-stack status to the tables in
@@ -12,29 +12,6 @@ per-category detail to the `README.md` in each top-level directory.
 ## Direction
 
 Pre-1.0 tags are set when a natural milestone is reached, not on a fixed cadence. The single criterion for v1.0 is: **could someone fork this and run it without needing my mental model?** — subjective but unambiguous when met.
-
-### v0.8.0 — Monitoring
-
-Backup tells you what to do when something breaks. Monitoring tells you that something broke — and ideally before it causes data loss or downtime.
-
-Six services are already in place, spanning the axes described in [`monitoring/README.md`](monitoring/README.md). The milestone is reached when each axis has **one verified service** — not when all six are verified, and not one axis per operator:
-
-| Axis | In place | Verified for the milestone |
-|---|---|---|
-| Host & container metrics | Beszel + agent | Beszel |
-| Uptime & endpoints | Uptime Kuma, Gatus | either one — they are a preference pair, not a hierarchy |
-| Scheduled-job liveness | Healthchecks | Healthchecks — also the receiver for backup run monitoring |
-| Content change | changedetection.io | changedetection.io |
-| Disk health | *(Scrutiny planned)* | out of scope — needs physical-disk passthrough |
-| **Alerting** | notification integrations in the services above, plus `monitoring/ntfy` as a receiver | at least one channel proven to actually arrive |
-
-**Alerting is the cross-cutting layer, not a fifth service.** It is delivered by the services above rather than by a separate tool, and it is the one thing that turns a dashboard nobody watches into monitoring. A notification path that has never fired is worth as little as a backup that has never been restored.
-
-Log aggregation (Loki/Grafana) stays out of scope — heavier infrastructure for a later pass.
-
-**Blocked by** the same host the backup milestone ran on. Backup's proof layer
-waits here too: borgmatic's run monitoring reports to Healthchecks or Uptime
-Kuma, so those have to work before the timer is switched on.
 
 ### v0.9.0 — Measured resource limits
 
@@ -229,6 +206,33 @@ Evaluation criteria: self-hosted Docker complexity, SSO/OIDC support, `_FILE` se
 
 ## Evaluating
 
+### Network IDS — Suricata (evaluation, nothing committed)
+
+A passive network IDS sees what log-driven detection cannot: packets, flows,
+protocol anomalies, TLS metadata, DNS and file hashes. Whether that is worth its
+cost here is an open question, not a plan.
+
+An evaluation would have to answer: which of that visibility is actually useful on
+a single Docker host; what container traffic is visible and from where; who reads
+the alerts, because an IDS nobody monitors is a log producer; resource cost under
+deep packet inspection; and the false-positive load of the free rule set.
+
+Passive IDS first. Inline IPS stays out: the queueing methods drop traffic when the engine is not running, which is the failure mode this
+blueprint spends effort avoiding elsewhere.
+
+### Web application firewall — Coraza re-evaluation
+
+CrowdSec AppSec is the current reference implementation of the Web Application
+Security capability. Coraza with the OWASP Core Rule Set is the documented
+alternative: the engine is mature and an OWASP project, and the rule set is broader
+than AppSec's virtual-patching focus.
+
+What blocks adoption is the integration, not the engine — the open-source Traefik
+connector describes itself as experimental and its authors point production users at
+a commercial path. Revisit when a maintained integration is available. Running both
+inline is not the answer: two engines inspecting the same request means two rule
+sets to tune and one hiding the other's blocks.
+
 ### License policy
 
 This blueprint is for personal self-hosted infrastructure. The following applies:
@@ -286,5 +290,6 @@ Expose selected apps via Model Context Protocol for AI-assisted operation. Candi
 
 ## Out of scope here
 
+- SIEM, XDR and SOC platforms (Wazuh and comparable) — a different operating model: agents, central collection and someone to read the output. A secure Docker host does not require one, and carrying it here would widen the blueprint past what it claims to be.
 - `core/acme-certs/` — being extracted to its own repository. The blueprint stub remains `scaffolded` but is no longer actively maintained in this repo.
 - Paperless-mcp — template exists in the Paperless CONFIG.md extension notes but will live in its own repo once built.

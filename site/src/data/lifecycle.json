@@ -22,7 +22,7 @@
   "apps/caldiy": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "pinned": "APP_TAG=v6.2.0-5@sha256:c2facc284b28…",
+    "pinned": "APP_TAG=v6.2.0-6@sha256:538cbb4a2273…",
     "restore_docs": "missing",
     "state": "baseline-aligned",
     "verified": "2026-07-26",
@@ -129,6 +129,16 @@
     "verified_anchored": false,
     "verified_version": ""
   },
+  "apps/mailpit": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=v1.31.1",
+    "restore_docs": "missing",
+    "state": "baseline-aligned",
+    "verified": "2026-09-07",
+    "verified_anchored": true,
+    "verified_version": "v1.31.1"
+  },
   "apps/monicahq": {
     "backup_docs": "documented",
     "local_stack": "✅",
@@ -228,6 +238,16 @@
     "verified": "2026-04-13",
     "verified_anchored": false,
     "verified_version": ""
+  },
+  "apps/tymeslot": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=1.15.1-slim@sha256:4bde62fd9bb1…",
+    "restore_docs": "missing",
+    "state": "baseline-aligned",
+    "verified": "2026-09-07",
+    "verified_anchored": true,
+    "verified_version": "v1.15.1"
   },
   "apps/unifi": {
     "backup_docs": "documented",
@@ -469,6 +489,16 @@
     "verified_anchored": false,
     "verified_version": ""
   },
+  "core/keycloak": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=26.7.3",
+    "restore_docs": "missing",
+    "state": "baseline-aligned",
+    "verified": "2026-09-07",
+    "verified_anchored": true,
+    "verified_version": "v26.7.3"
+  },
   "core/onlyoffice": {
     "backup_docs": "documented",
     "local_stack": "✅",
@@ -522,17 +552,17 @@
   "monitoring/beszel": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "pinned": "APP_TAG=0.18.7",
+    "pinned": "APP_TAG=0.19.0",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "2026-05-03",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "baseline-aligned",
+    "verified": "2026-09-08",
+    "verified_anchored": true,
+    "verified_version": "0.19.0"
   },
   "monitoring/beszel-agent": {
     "backup_docs": "documented",
     "local_stack": "—",
-    "pinned": "APP_TAG=0.18.7",
+    "pinned": "APP_TAG=0.19.0",
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-05-03",
@@ -542,12 +572,12 @@
   "monitoring/changedetection": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "pinned": "APP_TAG=0.55.8",
+    "pinned": "APP_TAG=0.60.3",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "2026-05-03",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "baseline-aligned",
+    "verified": "2026-09-08",
+    "verified_anchored": true,
+    "verified_version": "0.60.3"
   },
   "monitoring/gatus": {
     "backup_docs": "documented",
@@ -562,31 +592,31 @@
   "monitoring/healthchecks": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "pinned": "APP_TAG=v4.2",
+    "pinned": "APP_TAG=v4.4",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "2026-04-17",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "baseline-aligned",
+    "verified": "2026-09-08",
+    "verified_anchored": true,
+    "verified_version": "v4.4"
   },
   "monitoring/ntfy": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "pinned": "APP_TAG=v2.26.3",
+    "pinned": "APP_TAG=v2.28.0",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "—",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "baseline-aligned",
+    "verified": "2026-09-08",
+    "verified_anchored": true,
+    "verified_version": "v2.28.0"
   },
   "monitoring/uptime-kuma": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "pinned": "APP_TAG=2.4.0",
+    "pinned": "APP_TAG=2.5.3",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "2026-08-18",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "baseline-aligned",
+    "verified": "2026-09-08",
+    "verified_anchored": true,
+    "verified_version": "2.5.3"
   }
 }

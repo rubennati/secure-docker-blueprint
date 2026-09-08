@@ -7,7 +7,7 @@ services:
   # database. For larger deployments (multi-executor, queue mode,
   # Postgres), see n8n's docs — the blueprint patterns for adding a
   # `db` service + queue worker can be copied from Paperless-ngx.
-  app:
+  n8n-app:
     # --- Identity ---
     image: docker.n8n.io/n8nio/n8n:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}

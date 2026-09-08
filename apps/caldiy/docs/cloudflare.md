@@ -1,11 +1,13 @@
-# Cal.diY — Cloudflare Configuration (required)
+# Cal.diY — Cloudflare Configuration
 
-> **Status: ✅ Required layer** — v6.2.0-5 · 2026-07-26
+> **Status: ✅ Recommended edge layer for the internet-facing deployment** — v6.2.0-5 · 2026-07-26
 
 Cal.diy is community-maintained and **not confirmed secure**; a live instance was compromised
-once (the SMTP credential was exfiltrated). For this app the blueprint therefore treats
-**Cloudflare as a proxy (orange cloud) as a mandatory layer**, not an optional add-on. This
-document lists exactly what to configure in Cloudflare and what each setting buys you.
+once (the SMTP credential was exfiltrated). For an internet-facing deployment this guide
+therefore recommends running it **behind Cloudflare as a proxy (orange cloud)**. Cal.diy does not depend on
+Cloudflare to run — the local path in [`README.md`](../README.md) has none — so what follows
+applies once you choose this deployment path. This document lists exactly what to configure in
+Cloudflare and what each setting buys you.
 
 Cloudflare is **one** layer. It does not replace origin hardening (CrowdSec, AppSec, disabled
 signup, Docker Secrets, resource limits) — see [hardening-plan.md](hardening-plan.md). The two are
@@ -60,7 +62,7 @@ skipping Cloudflare. This section is the most important one. Do at least one of:
 
 **Option B example (host firewall):** allow inbound 80/443 only from the published Cloudflare
 ranges (the same list already in `traefik.yml.tmpl`), drop the rest. This overlaps with the
-Phase 3 firewall bouncer — see [`core/crowdsec/docs/firewall-bouncer.md`](../../../core/crowdsec/docs/firewall-bouncer.md).
+CrowdSec host-firewall remediation — see [`core/crowdsec/docs/firewall-bouncer.md`](../../../core/crowdsec/docs/firewall-bouncer.md).
 
 **Also — don't leak the origin IP:**
 

@@ -1,0 +1,23 @@
+# CodeQL configuration
+#
+# The scan keeps the security-and-quality suite. The quality half is worth
+# having — it found an unused binding and a credential-shaped test fixture that
+# review had passed over — so the answer to a false positive is to exclude the
+# file that cannot satisfy the rule, not to drop the suite.
+#
+# One such file exists. Seahub's settings fragments are appended to Seafile's
+# own seahub_settings.py by entrypoint.sh, and Django reads them by
+# introspection. Every assignment in them is therefore a module-level name that
+# nothing in this repository reads, which is what "unused global variable"
+# describes. They are configuration for another process, not code this
+# repository executes, and no query in the suite can conclude anything useful
+# about them.
+
+name: "secure-docker-blueprint"
+
+queries:
+  - uses: security-and-quality
+
+paths-ignore:
+  - apps/seafile/config/seahub_custom.py
+  - apps/seafile-pro/config/seahub_custom.py

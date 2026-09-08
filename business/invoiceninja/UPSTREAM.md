@@ -34,7 +34,7 @@
 
 | Change | Reason |
 |--------|--------|
-| Traefik labels on nginx | Blueprint uses Traefik, not exposed ports |
+| Traefik labels on `invoiceninja-nginx` | Blueprint uses Traefik, not exposed ports |
 | certresolver commented out | crt.sh privacy |
 | Network `name:` added | Blueprint naming (`invoiceninja-internal`) |
 | Container names via `CONTAINER_NAME_*` variables | Blueprint standard |
@@ -57,7 +57,7 @@
 ## What We Kept From Upstream
 
 - Named Docker volumes (not bind mounts) — upstream pattern; simplifies first-boot
-- Service names: `app`, `nginx`, `mysql`, `redis`
+- Service names: `app`, `invoiceninja-nginx`, `mysql`, `redis`
 - nginx config files — 1:1 from upstream
 - All app env vars (`FILESYSTEM_DISK`, `CACHE_DRIVER`, `PDF_GENERATOR`, etc.)
 - MySQL 8 — Invoice Ninja upstream officially targets MySQL 8; MariaDB works but is not tested here

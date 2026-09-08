@@ -324,9 +324,16 @@ everyone. See [`TROUBLESHOOTING.md`](../../TROUBLESHOOTING.md) §4.4.
 ### Certificate problems
 
 ```bash
-# Check which certificate Traefik serves
-openssl s_client -connect <domain>:443 -servername <domain> 2>/dev/null | openssl x509 -noout -subject -dates
+# Check which certificate Traefik actually serves for this hostname
+openssl s_client -connect <domain>:443 -servername <domain> 2>/dev/null | openssl x509 -noout -subject -issuer -dates
 ```
+
+| `subject=` | Meaning |
+|---|---|
+| `CN=TRAEFIK DEFAULT CERT` | No stored certificate matches the hostname. Traefik falls back silently — nothing in its log at `INFO`. Per-domain path: the `tls.certresolver` label is commented out. Wildcard path: hostname outside the wildcard, or the wildcard was never issued |
+| `CN=<domain>`, or the apex with SAN `*.<domain>` | Correct. Check `notAfter` for renewal |
+
+Symptom entry with the fix: [`TROUBLESHOOTING.md`](../../TROUBLESHOOTING.md) §4.5.
 
 ### Mixed Content (HTTPS page loads HTTP resources)
 
@@ -474,6 +481,12 @@ Browser shows error
 ├─ Blank iframe / "Refused to display in frame"
 │  └─ X-Frame-Options: DENY from sec-* middleware
 │     └─ Use custom Docker middleware with frame-ancestors CSP
+│
+├─ Browser certificate warning, site otherwise works
+│  └─ openssl s_client … | openssl x509 -noout -subject
+│     └─ CN=TRAEFIK DEFAULT CERT → no matching certificate
+│        → per-domain path: tls.certresolver label commented out
+│        → wildcard path: hostname outside *.wildcard-domain
 │
 ├─ "Download failed" / "Mixed Content"
 │  └─ Backend generates http:// URLs

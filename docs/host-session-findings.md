@@ -150,6 +150,15 @@ undermined by its own default.
 `ACME_WILDCARD_DOMAIN` is set, and `validate.sh` is the natural place to catch
 the combination.
 
+**Resolved.** A later investigation confirmed the behaviour independently and
+implemented the fix with one correction to the rule proposed here: a wildcard
+being configured does not by itself mean it covers the dashboard. The two
+hostnames are independent variables, and a wildcard matches exactly one label, so
+`validate.sh` checks the actual relationship between `TRAEFIK_DASHBOARD_HOST` and
+`ACME_WILDCARD_DOMAIN` instead of testing whether the wildcard variable is set.
+The reasoning is in [`.ai/decisions.md`](../.ai/decisions.md); the rule is in
+[`core/traefik/README.md`](../core/traefik/README.md) → "Certificate strategy".
+
 ---
 
 **Session 2 — 2026-07-28.** Nextcloud deployed from a clean clone.
@@ -725,9 +734,12 @@ to check before touching anything. A one-word "opt-in" was the actual defect.
 
 **Set up and verified.** The Debian package is `crowdsec-firewall-bouncer` — not
 the `-nftables` name upstream guides still use, which does not exist in Debian
-13. `safe_range` was written before the service was ever started, covering RFC
-1918 and Tailscale, because the failure mode here is locking yourself out of the
-machine you are configuring.
+13. A `safe_range` list was written before the service was ever started, covering
+RFC 1918 and Tailscale, because the failure mode here is locking yourself out of
+the machine you are configuring. **It never had any effect.** `safe_range` is not
+a configuration key in this package; the file passed validation and the list was
+never read, and a later lockout followed. See
+[`bugfixes/crowdsec-firewall-bouncer-2026-08-28.md`](bugfixes/crowdsec-firewall-bouncer-2026-08-28.md).
 
 The chain measured end to end:
 

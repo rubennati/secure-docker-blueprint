@@ -99,11 +99,14 @@ people will edit it.
 
 ## Appointments
 
-**Cal.diy** is the community edition of Cal.com. It is the newer of the two and
-asks more of the host.
+**Cal.diy** is the community edition of Cal.com and asks the most of the host.
 
 **Easy!Appointments** has run since 2013 on PHP and MySQL, and installs without a
 build step.
+
+**Tymeslot** is the newest of the three: an Elixir application in two containers
+that syncs with Google, Outlook, Apple and CalDAV calendars, with releases
+several times a week.
 
 ## E-signature
 
@@ -126,6 +129,15 @@ wikis. The Community Edition has no OIDC or SSO.
 
 **Vikunja** is task management: kanban, lists, Gantt and table views, closer to
 Trello than to a planning suite.
+
+## Single sign-on
+
+**Authentik** puts a login in front of applications that have none, through
+its embedded outpost and the `sec-authentik` middleware in Traefik. Five
+containers. **Keycloak** serves applications that speak OpenID Connect or SAML
+themselves, in two containers, with the ecosystem that comes from being the
+provider most of them were tested against — and no proxy of its own. The
+[Keycloak guide](/infrastructure/keycloak/) has the table.
 
 ## Where to go next
 
