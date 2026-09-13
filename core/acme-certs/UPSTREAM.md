@@ -9,7 +9,7 @@
   image wraps. Its version follows whatever the image was built against; read it with
   `docker compose exec acme-certs acme.sh --version`.
 - **License:** GPL-3.0 (acme.sh)
-- **Origin:** original acme.sh author Neil Pang, independent · wrapper maintained in this project
+- **Origin:** Austria · maintained in this project · EU (the bundled acme.sh is independent, original author Neil Pang)
 - **Based on version:** `0.2.1` (cert-ops-tool)
 - **Last checked:** 2026-04-14
 
