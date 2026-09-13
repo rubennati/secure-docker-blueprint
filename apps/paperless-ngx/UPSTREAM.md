@@ -16,7 +16,7 @@
 
 - Official `paperless-ngx` image, pinned tag
 - `postgres:16` as primary backend (upstream also supports MariaDB + SQLite; Postgres is the recommended production path)
-- `redis:7-alpine` for the Celery broker
+- `redis:7.4-alpine` for the Celery broker
 - Official `gotenberg/gotenberg` and `apache/tika` images for document conversion + text extraction
 - Native `_FILE` secret support (`PAPERLESS_DBPASS_FILE`, `PAPERLESS_SECRET_KEY_FILE`)
 
@@ -73,7 +73,7 @@ Paperless's Django migrations are forward-only. Rollback = restore the SQL dump 
 ## Related images to keep in sync
 
 - `postgres:16` — safe to update within 16.x
-- `redis:7-alpine` — safe to update within 7.x
+- `redis:7.4-alpine` — safe to update within 7.x
 - `gotenberg/gotenberg`, `apache/tika` — independent; follow their own release cadence. Bump conservatively; new majors can change HTTP APIs that Paperless calls.
 
 ## Useful commands

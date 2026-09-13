@@ -8,7 +8,7 @@ Single-container deployment (HTTP fetcher only):
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `ghcr.io/dgtlmoon/changedetection.io:0.55.3` | Watcher + diff engine + notification dispatcher |
+| `app` | `ghcr.io/dgtlmoon/changedetection.io:0.60.4` | Watcher + diff engine + notification dispatcher |
 
 For JavaScript-heavy sites (SPAs), uncomment the optional `browser` service in `docker-compose.yml` — it runs a Playwright Chrome instance.
 

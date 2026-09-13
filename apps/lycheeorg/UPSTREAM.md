@@ -15,7 +15,7 @@
 
 - `lycheeorg/lychee` as the Laravel app
 - Official `mariadb:11.4` as backend
-- Official `redis:7-alpine` for cache and sessions
+- Official `redis:7.4-alpine` for cache and sessions
 - Docker Secrets for DB password, DB root password — natively consumed by both services
 - Bind-mounts under `./volumes/` for `/conf`, `/uploads`, `/sym`, `/logs`, `/lychee-tmp`
 

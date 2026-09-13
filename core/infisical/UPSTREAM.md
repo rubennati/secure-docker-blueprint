@@ -13,7 +13,7 @@
 
 ## What we use
 
-- `infisical/infisical:v0.162.13` standalone image (backend + UI + API)
+- `infisical/infisical:v0.165.10` standalone image (backend + UI + API)
 - `postgres:16-alpine` as the secret store
 - `redis:7.4-alpine` for cache + job queue
 - Custom `config/entrypoint.sh` to inject secrets from Docker Secret files (no `_FILE` support)

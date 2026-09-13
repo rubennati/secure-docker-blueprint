@@ -304,3 +304,15 @@ to clients, which is a decision rather than a patch.
 pre-v0.5.1 `Last checked` stamp. Neither was touched here: both record that a
 stack ran, and nothing in this sweep ran. They are in
 [`../../.ai/tasks.md`](../../.ai/tasks.md).
+
+### Later the same day
+
+Seven of the bumped stacks ran on a host and carry `Last verified: 2026-09-13`:
+`core/traefik` (3.7.13, socket-proxy v0.5.0), `core/whoami`,
+`monitoring/uptime-kuma`, `monitoring/changedetection`, `apps/nextcloud`,
+`business/invoiceninja`, and `apps/caldiy`'s database. Released as v0.8.2. The
+render switch for the CrowdSec integration (`CROWDSEC_BOUNCER_ENABLED`) landed
+afterwards, and `.github/dependabot.yml` now targets `dev` with an npm entry for
+`site/` — the "no update mechanism" finding above is narrower than it was: image
+pins are still manual, the site's dependencies and the workflow actions are not.
+

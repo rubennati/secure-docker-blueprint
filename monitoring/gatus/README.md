@@ -6,7 +6,7 @@ YAML-driven health checks, status page, and alerting. Go-based, single-container
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `twinproduction/gatus:v5` | Probe scheduler + web UI + alerter |
+| `app` | `twinproduction/gatus:v5.36.0` | Probe scheduler + web UI + alerter |
 
 Config lives in `./config/config.yaml`. Result history in `./volumes/data/data.db` (SQLite default; Postgres supported).
 

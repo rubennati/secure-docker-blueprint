@@ -6,7 +6,7 @@ Open-source ERP / CRM — invoicing, bookkeeping, project management, HR, invent
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `dolibarr/dolibarr:23.0.2` | PHP/Apache app with Dolibarr pre-installed |
+| `app` | `dolibarr/dolibarr:23.0.4` | PHP/Apache app with Dolibarr pre-installed |
 | `db` | `mariadb:11.4` | Primary store (customers, invoices, products, accounting entries) |
 
 ## Setup

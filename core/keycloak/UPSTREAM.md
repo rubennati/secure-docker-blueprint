@@ -20,7 +20,7 @@ in a browser, a realm, a client, an application signing in.
 
 - The official image, pinned to the patch release, started with `kc.sh start`
   — production mode, not `start-dev`
-- `postgres:17-alpine` as the database, `KC_DB=postgres`
+- `postgres:17.11-alpine` as the database, `KC_DB=postgres`
 - The image's own `kc.sh` behind the secret-injection entrypoint
 
 ## Architecture

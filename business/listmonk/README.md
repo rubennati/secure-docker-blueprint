@@ -6,7 +6,7 @@ Self-hosted newsletter, mailing list manager, and transactional mail. Go single-
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `listmonk/listmonk:v6.1.0` | Admin UI + sender + subscriber endpoints |
+| `app` | `listmonk/listmonk:v6.2.0` | Admin UI + sender + subscriber endpoints |
 | `db` | `postgres:16-alpine` | Subscribers, campaigns, templates, analytics |
 
 ## Setup

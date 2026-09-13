@@ -6,8 +6,8 @@ AI-powered self-hosted photo manager with TensorFlow-based classification, face 
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `photoprism/photoprism:260305` | Web UI + API + TensorFlow + WebDAV |
-| `db` | `mariadb:11` | Primary store (index, albums, users, sidecar metadata) |
+| `app` | `photoprism/photoprism:260728` | Web UI + API + TensorFlow + WebDAV |
+| `db` | `mariadb:11.4` | Primary store (index, albums, users, sidecar metadata) |
 
 ## Setup
 
