@@ -89,8 +89,13 @@ Full architecture and the current verification status:
   file and `appsec.yaml` is the only other source, so this deployment is not in range.
   1.8.0 is a feature release — WAF bot detection with a challenge and fingerprinting page,
   a Kubernetes datasource, HTTP helpers in the expression language — and changing what the
-  WAF serves to clients is a decision rather than a patch. Revisit when bot detection is
-  wanted, or when an advisory lands that does apply.
+  WAF serves to clients is a decision rather than a patch.
+- **One external report of 1.8.1 running.** A separate lab deployment brought up 1.8.1
+  against a configuration of this shape and reported it working. That is evidence worth
+  having and it is not a verification: it was a different deployment, and what needs
+  checking here is what the bot-detection challenge does to the routes this blueprint
+  puts in front of the engine. Revisit when bot detection is wanted, when that check has
+  been run, or when an advisory lands that applies to the configured datasources.
 
 ## Upgrade checklist
 

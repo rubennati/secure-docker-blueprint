@@ -119,6 +119,23 @@ Listed with context in [`state.md`](state.md). Nothing proceeds on these until d
       `core/authentik` 2026.5.7, `apps/vaultwarden` 1.37.3, `business/zammad` 7.1.3-0012),
       then the ones that cross a major (`apps/adminer` 6.0.2, `apps/homepage` 2.x,
       `apps/librephotos` semver)
+- [ ] **Make the CrowdSec bouncer key reproducible.** The key is generated once by
+      hand with `cscli bouncers add` and lives in the engine's volume. Lose the
+      volume and the bouncer is unregistered, while the reverse-proxy middleware
+      keeps answering 403 on every route it covers — the failure flags make that the
+      safe direction, which is also the direction that looks like an outage.
+      `validate.sh` catches an empty key and `runbook.md` documents regenerating one,
+      so nothing here is undocumented; it is manual. An idempotent step is not a
+      one-liner: `cscli bouncers add` fails on an existing name, so it needs a
+      delete-then-add or a parse of `cscli bouncers list -o json`, and it has to work
+      without leaving the key in shell history. Design it before writing it
+- [ ] **Check CrowdSec 1.8.x against this blueprint.** The pin holds at v1.7.8 and
+      the reason is in `core/crowdsec/UPSTREAM.md`: the 1.8.0 advisories cover
+      datasources this deployment does not configure, and 1.8.0's bot detection
+      changes what the WAF serves to clients. One external lab reported 1.8.1
+      running. What needs checking here is the challenge and fingerprinting page
+      against the routes this repository puts in front of the engine, and whether
+      `acquis.yaml` and `appsec.yaml` still parse unchanged
 - [ ] **Verify the 2026-09-13 sweep on a host.** 46 pins moved and nothing was
       deployed, so every bumped stack's `Last verified` line still names the version
       before the bump. Four need more than a restart: `core/dnsmasq` changed publisher

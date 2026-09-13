@@ -357,6 +357,33 @@ offender frees both its memory and its swap. Identify it with
 
 ---
 
+### 4.7 A container starts healthy but cannot reach anything outside the host
+
+**Symptom:** the container runs, its healthcheck passes, and anything it does on
+its own account fails — a blocklist fetch, a certificate challenge, an update
+check. The host itself has working connectivity. `docker logs` shows timeouts
+rather than refusals, and Docker reports nothing wrong.
+
+**Cause:** container traffic is forwarded, not delivered to the host, so a host
+firewall that carries its own forward chain with a drop policy stops it. Nothing
+in Docker surfaces this — from its side the network exists and the container is
+attached to it.
+
+**Check it by result rather than by reading the ruleset:**
+
+```bash
+# A throwaway container on a normal bridge network, reaching a known address.
+# If this fails while the host has connectivity, the forward path is the cause.
+docker run --rm alpine sh -c 'wget -qO- -T5 https://example.com >/dev/null && echo reachable'
+```
+
+**Fix:** allow Docker's forwarded traffic explicitly, and keep host hardening on
+the input path where it does not touch forwarding. The pattern, and the question
+of which filter is managing Docker's rules on a given host, is in
+[`docs/standards/networking.md`](docs/standards/networking.md#a-host-firewall-and-docker-share-the-forward-path).
+
+---
+
 ## 5. Git & Deployment Issues
 
 ### 5.1 Server running old code after local commits
