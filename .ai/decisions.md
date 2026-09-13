@@ -209,6 +209,34 @@ monitoring. Documented per category README.
 repositories mean two retention policies and two restore rehearsals — a real
 operational cost that does not exist for monitoring tools covering different axes.
 
+## 2026-09 · The CrowdSec reverse-proxy integration is switched in `.env`, never by editing a template
+
+**Decision.** `CROWDSEC_BOUNCER_ENABLED` in `core/traefik/.env` is the only way the
+bouncer plugin and the `crowdsec-basic` / `crowdsec-appsec` middlewares reach a
+rendered configuration. `render.sh` emits the plugin block between two markers in
+`traefik.yml.tmpl` and renders `dynamic/crowdsec.yml.tmpl` when the switch is
+`true`; with `false` it strips the block and removes the rendered middleware file.
+The plugin version is `CROWDSEC_BOUNCER_PLUGIN_VERSION`, the key
+`CROWDSEC_BOUNCER_KEY`; `validate.sh` refuses the switch without a key or with a
+version that is not a release tag, and refuses a `config/` that disagrees with
+`.env` in either direction.
+
+**Why.** The previous flow had the operator uncomment blocks in two tracked
+templates. A checkout restored the comments, and the next render silently wrote a
+configuration without the plugin and without the middlewares while the running
+container kept both — a host was found in exactly that state on 2026-09-13,
+templates pristine, rendered files enabled, plugin at a version the template no
+longer named. State that is meant to differ per host belongs in `.env`; a tracked
+file cannot hold it.
+
+**Consequences.** `render.sh` refuses to render over a `config/` that carries the
+integration while `.env` does not declare the switch, so the drifted host is
+stopped rather than silently downgraded; the README carries the migration. The CI
+gate no longer greps templates for commented blocks — it renders `core/traefik`
+with the shipped `.env.example`, then with the switch on and off, and judges each
+result. Switching off while routers still name the middleware disables those
+routers; the README says to detach first.
+
 ## 2026-09 · Swap is bounded per service, and the host reserve is an invariant without a mechanism
 
 A memory limit does not bound what a container takes from the host. With

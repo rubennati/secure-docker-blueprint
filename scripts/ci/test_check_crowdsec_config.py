@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Cover for the CrowdSec default-off gate and the conditional key requirement.
 
-Two behaviours are worth a test each because both used to be decided by reading
-comments, and a comment is not configuration. The parser treats a commented-out
-block and an absent block identically — which is the question actually being
-asked in both cases.
+The gate renders `core/traefik` with the shipped `.env.example`, then with the
+switch on, then off again, and parses each result. A commented-out block and an
+absent block are the same to the parser, and since the switch the templates
+carry the plugin and the middlewares as live YAML — so what is judged is what
+`render.sh` produces, not what a template contains.
 
 The key requirement is conditional on purpose: the shipped blueprint has no
 CrowdSec middleware and must validate without a bouncer key, while an operator
@@ -18,6 +19,7 @@ Run:
 import importlib.util
 import io
 import contextlib
+import shutil
 import tempfile
 import unittest
 from pathlib import Path
@@ -133,66 +135,82 @@ class ConditionalKeyRequirement(unittest.TestCase):
 
 
 class DefaultOffGate(unittest.TestCase):
-    """The property the dropped CrowdSec stash would have violated."""
+    """The gate renders `core/traefik` in both switch states and judges the result.
+
+    Each case starts from a copy of the real `ops/` and `.env.example` and breaks
+    one thing, so the failure the gate reports is the one the case introduced.
+    """
+
+    REPO = HERE.parent.parent
 
     def setUp(self):
         self._tmp = tempfile.TemporaryDirectory()
         self.root = Path(self._tmp.name)
-        (self.root / cc.STATIC_TEMPLATE).parent.mkdir(parents=True)
-        (self.root / cc.DYNAMIC_TEMPLATE).parent.mkdir(parents=True, exist_ok=True)
+        src = self.REPO / cc.TRAEFIK
+        if not (src / "ops").exists():
+            self.skipTest("core/traefik not present")
+        shutil.copytree(src / "ops", self.root / cc.TRAEFIK / "ops")
+        shutil.copy(src / ".env.example", self.root / cc.TRAEFIK / ".env.example")
 
     def tearDown(self):
         self._tmp.cleanup()
 
-    def _templates(self, static: str, dynamic: str):
-        (self.root / cc.STATIC_TEMPLATE).write_text(static)
-        (self.root / cc.DYNAMIC_TEMPLATE).write_text(dynamic)
+    def _env_example(self) -> Path:
+        return self.root / cc.TRAEFIK / ".env.example"
 
-    def test_commented_templates_pass(self):
-        self._templates("providersThrottleDuration: 30s\n"
-                        "# experimental:\n#   plugins:\n#     bouncer:\n", COMMENTED)
+    def _template(self, rel: str) -> Path:
+        return self.root / cc.TRAEFIK / "ops" / "templates" / rel
+
+    def test_shipped_shape_passes(self):
         code, out = run(cc.check_templates, self.root)
-        self.assertEqual(code, 0)
+        self.assertEqual(code, 0, out)
         self.assertIn("default-off", out)
 
-    def test_uncommented_plugin_declaration_fails(self):
-        self._templates(
-            "experimental:\n  plugins:\n    bouncer:\n"
-            '      moduleName: "github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin"\n'
-            '      version: "v1.7.1"\n', COMMENTED)
+    def test_switch_on_in_env_example_fails(self):
+        """Shipping the example with the switch on would enable it for everyone."""
+        text = self._env_example().read_text()
+        text = text.replace("CROWDSEC_BOUNCER_ENABLED=false", "CROWDSEC_BOUNCER_ENABLED=true")
+        text = text.replace("CROWDSEC_BOUNCER_KEY=\n", "CROWDSEC_BOUNCER_KEY=example-key\n")
+        self._env_example().write_text(text)
         code, out = run(cc.check_templates, self.root)
         self.assertEqual(code, 1)
-        self.assertIn("bouncer", out)
+        self.assertIn("ships default-off", out)
 
-    def test_uncommented_middleware_fails(self):
-        self._templates("providersThrottleDuration: 30s\n",
-                        active("crowdsec-basic", "${CROWDSEC_BOUNCER_KEY}"))
+    def test_plugin_region_removed_fails(self):
+        """A template without the marker region cannot render the plugin when asked."""
+        t = self._template("traefik.yml.tmpl")
+        lines = t.read_text().splitlines(keepends=True)
+        start = next(i for i, l in enumerate(lines) if l.startswith("# >>> crowdsec-bouncer"))
+        end = next(i for i, l in enumerate(lines) if l.startswith("# <<< crowdsec-bouncer"))
+        t.write_text("".join(lines[:start] + lines[end + 1:]))
         code, out = run(cc.check_templates, self.root)
         self.assertEqual(code, 1)
-        self.assertIn("crowdsec-basic", out)
+        self.assertIn("expected ['bouncer']", out)
 
-    def test_the_dropped_stash_shape_fails_both_rules(self):
-        """Exactly the enablement that was carried as an uncommitted stash."""
-        self._templates(
-            "experimental:\n  plugins:\n    bouncer:\n"
-            '      moduleName: "github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin"\n'
-            '      version: "v1.4.5"\n',
-            active("crowdsec-basic", "${CROWDSEC_BOUNCER_KEY}")
-            + "    crowdsec-appsec:\n      plugin:\n        bouncer:\n"
-              "          crowdsecAppsecEnabled: true\n")
+    def test_middleware_left_in_integrations_fails(self):
+        """The dropped-stash shape: an active crowdsec-basic in integrations.yml.tmpl."""
+        t = self._template("dynamic/integrations.yml.tmpl")
+        t.write_text(t.read_text() + "\n" + active("crowdsec-basic", "${CROWDSEC_BOUNCER_KEY}"))
         code, out = run(cc.check_templates, self.root)
         self.assertEqual(code, 1)
-        self.assertIn("crowdsec-basic", out)
-        self.assertIn("crowdsec-appsec", out)
+        self.assertIn("nothing may be enabled by default", out)
+
+    def test_crowdsec_template_removed_fails(self):
+        """Without crowdsec.yml.tmpl the switch renders a plugin with nothing to use it."""
+        self._template("dynamic/crowdsec.yml.tmpl").unlink()
+        code, out = run(cc.check_templates, self.root)
+        self.assertEqual(code, 1)
+        self.assertIn("renders middlewares []", out)
 
 
 class RealRepositoryState(unittest.TestCase):
-    def test_committed_templates_are_default_off(self):
+    def test_committed_blueprint_is_default_off_and_switchable(self):
         """Guards the actual shipped files, not a fixture."""
         root = HERE.parent.parent
-        if not (root / cc.STATIC_TEMPLATE).exists():
+        if not (root / cc.TRAEFIK / "ops").exists():
             self.skipTest("templates not present")
-        self.assertEqual(run(cc.check_templates, root)[0], 0)
+        code, out = run(cc.check_templates, root)
+        self.assertEqual(code, 0, out)
 
 
 if __name__ == "__main__":

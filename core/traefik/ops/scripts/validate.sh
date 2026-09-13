@@ -96,6 +96,28 @@ for v in "${REQUIRED[@]}"; do
 done
 [ "$missing" -eq 0 ] || exit 1
 
+# CrowdSec reverse-proxy remediation switch. render.sh applies it; this checks
+# that what .env says is complete and that config/ agrees with it.
+switch_declared="${CROWDSEC_BOUNCER_ENABLED+yes}"
+CROWDSEC_BOUNCER_ENABLED="$(printf '%s' "${CROWDSEC_BOUNCER_ENABLED:-false}" | tr '[:upper:]' '[:lower:]')"
+case "${CROWDSEC_BOUNCER_ENABLED}" in
+  true|false) ;;
+  *) echo "ERROR: CROWDSEC_BOUNCER_ENABLED must be true or false (got '${CROWDSEC_BOUNCER_ENABLED}')."; exit 1 ;;
+esac
+if [ "${CROWDSEC_BOUNCER_ENABLED}" = true ]; then
+  if [ -z "${CROWDSEC_BOUNCER_KEY:-}" ]; then
+    echo "ERROR: CROWDSEC_BOUNCER_ENABLED=true but CROWDSEC_BOUNCER_KEY is empty."
+    echo "       Generate one on the engine: docker exec crowdsec cscli bouncers add traefik-bouncer"
+    exit 1
+  fi
+  version="${CROWDSEC_BOUNCER_PLUGIN_VERSION:-v1.7.1}"
+  if ! printf '%s' "${version}" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+    echo "ERROR: CROWDSEC_BOUNCER_PLUGIN_VERSION must be a release tag like v1.7.1 (got '${version}')."
+    echo "       Releases: https://github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin/releases"
+    exit 1
+  fi
+fi
+
 # Warn about sentinel values (not a hard fail – HTTP-01 users don't need this)
 if [ "${CF_DNS_API_TOKEN:-}" = "__REPLACE_ME__" ]; then
   echo "WARNING: CF_DNS_API_TOKEN is still set to __REPLACE_ME__. DNS-01 (wildcard certs) will fail."
@@ -151,6 +173,30 @@ if [ -f "${ROOT_DIR}/config/traefik.yml" ]; then
   for f in access.yml security-blocks.yml security-chains.yml integrations.yml tls-profiles.yml routers-system.yml; do
     test -f "${ROOT_DIR}/config/dynamic/${f}" || { echo "Missing config/dynamic/${f} (run render.sh)"; exit 1; }
   done
+
+  # The rendered state has to match the switch. Both directions are errors: the
+  # integration present while the switch is off is the drift render.sh refuses
+  # to paper over, and the switch on without the rendered halves means render.sh
+  # has not run since the switch was set.
+  rendered_plugin=false; grep -qsE '^experimental:' "${ROOT_DIR}/config/traefik.yml" && rendered_plugin=true
+  rendered_mw=false; grep -qsE '^[[:space:]]*crowdsec-(basic|appsec):' "${ROOT_DIR}"/config/dynamic/*.yml 2>/dev/null && rendered_mw=true
+  if [ "${CROWDSEC_BOUNCER_ENABLED}" = true ]; then
+    if [ "${rendered_plugin}" != true ] || [ ! -f "${ROOT_DIR}/config/dynamic/crowdsec.yml" ]; then
+      echo "ERROR: CROWDSEC_BOUNCER_ENABLED=true but config/ does not carry the integration — run render.sh."
+      exit 1
+    fi
+  else
+    if [ "${rendered_plugin}" = true ] || [ "${rendered_mw}" = true ]; then
+      if [ -z "${switch_declared}" ]; then
+        echo "ERROR: config/ carries the CrowdSec integration but CROWDSEC_BOUNCER_ENABLED is not set in .env."
+        echo "       Set it to true to keep the integration (plus CROWDSEC_BOUNCER_PLUGIN_VERSION and"
+        echo "       CROWDSEC_BOUNCER_KEY), or to false to remove it, then run render.sh."
+      else
+        echo "ERROR: CROWDSEC_BOUNCER_ENABLED=false but config/ still carries the integration — run render.sh."
+      fi
+      exit 1
+    fi
+  fi
 
   # CrowdSec bouncer key. envsubst turns an unset CROWDSEC_BOUNCER_KEY into an
   # empty string, so a bouncer that cannot authenticate renders without a word of

@@ -384,6 +384,38 @@ of which filter is managing Docker's rules on a given host, is in
 
 ---
 
+### 4.8 `render.sh` refuses: "config/ carries the CrowdSec integration but CROWDSEC_BOUNCER_ENABLED is not set"
+
+**Symptom:** `./ops/scripts/render.sh` in `core/traefik` stops before writing
+anything, and `validate.sh` reports the same disagreement.
+
+**Cause:** the rendered `config/` has the bouncer plugin block or a `crowdsec-*`
+middleware, and `.env` does not say whether that is wanted. This is the state of an
+installation that enabled the integration before the switch existed — by
+uncommenting the templates or editing the rendered files — and then pulled a
+version of this repository that has it. Rendering blind would remove both halves
+while Traefik keeps running with them; the refusal is the fix for what used to
+happen silently.
+
+**Fix:** declare the state in `.env`. To keep the integration:
+
+```bash
+grep -nE 'version:' config/traefik.yml            # plugin version in use
+grep -nE 'crowdsecLapiKey' config/dynamic/*.yml   # key in use
+# then in .env:
+#   CROWDSEC_BOUNCER_ENABLED=true
+#   CROWDSEC_BOUNCER_PLUGIN_VERSION=<that version>
+#   CROWDSEC_BOUNCER_KEY=<that key>
+./ops/scripts/render.sh && ./ops/scripts/validate.sh
+```
+
+To remove it, detach `crowdsec-*@file` from every router first, then
+`CROWDSEC_BOUNCER_ENABLED=false`, render, and recreate Traefik. The full
+procedure is in `core/traefik/README.md`, "Migrating an installation that enabled
+the integration before the switch".
+
+---
+
 ## 5. Git & Deployment Issues
 
 ### 5.1 Server running old code after local commits
