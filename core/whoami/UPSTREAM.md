@@ -6,7 +6,7 @@
 - **GitHub:** https://github.com/traefik/whoami
 - **License:** Apache-2.0
 - **Origin:** France · Traefik Labs · EU
-- **Based on version:** `v1.11.0`
+- **Based on version:** `v1.12.0`
 - **Last verified:** 2026-07-29 (v1.11.0) — used as the validation target for the bouncer; public and restricted paths both exercised
 
 ## What we use

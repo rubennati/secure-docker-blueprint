@@ -8,7 +8,7 @@
 - **Config reference:** https://ghost.org/docs/config/
 - **License:** MIT
 - **Origin:** Ireland · Ghost Foundation · EU
-- **Based on version:** `6.54.0-alpine`
+- **Based on version:** `6.63.0-alpine`
 - **Last verified:** 2026-07-26 (v6.54.0-alpine)
 
 ### ActivityPub service

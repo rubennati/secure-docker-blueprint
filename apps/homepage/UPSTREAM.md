@@ -7,7 +7,7 @@
 - **Docs:** https://gethomepage.dev/
 - **License:** GPL-3.0
 - **Origin:** US · community (gethomepage) · non-EU
-- **Based on version:** `v1.13.2`
+- **Based on version:** `v2.3.0` (2.x — see Version / tag notes)
 - **Last verified:** 2026-05-03 (v0.10.9)
 
 ## What we use
@@ -27,6 +27,14 @@
 | `security_opt: no-new-privileges` | Blueprint baseline |
 | Access `acc-tailscale` + security `sec-3` defaults | Personal dashboard pattern |
 | Config files renamed to `*.example.yaml`, Setup step bootstraps actual files from examples | `.gitignore` excludes non-example YAMLs so user state never ends up in commits |
+
+## Version / tag notes
+
+- **`v1.13.2` → `v2.3.0` crosses a major.** v2.0.0 introduces homepage's own
+  authentication as a breaking change; a 1.x configuration does not carry over unchanged.
+  Read https://github.com/gethomepage/homepage/releases/tag/v2.0.0 before deploying.
+- The bump also closes a medium advisory: the service proxy accepted client-controlled
+  methods and bodies to configured targets, fixed in 2.2.0. Moved on 2026-09-13.
 
 ## Upgrade checklist
 

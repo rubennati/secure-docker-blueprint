@@ -10,6 +10,7 @@
 - **Docs:** https://www.openproject.org/docs/installation-and-operations/installation/docker-compose/
 - **License:** GPL-3.0 (Community Edition; Enterprise features are separately licensed)
 - **Origin:** Germany · OpenProject GmbH · EU
+- **Based on version:** `17.8.0-slim`
 
 ## License
 

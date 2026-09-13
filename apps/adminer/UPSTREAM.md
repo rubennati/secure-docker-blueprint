@@ -7,7 +7,7 @@
 - **GitHub:** https://github.com/vrana/adminer
 - **License:** Apache-2.0
 - **Origin:** Czech Republic · Jakub Vrána · EU
-- **Based on version:** `5.5.0` (standalone variant)
+- **Based on version:** `5.5.1` (standalone variant)
 - **Last verified:** 2026-05-02 (v4.8.1-standalone)
 
 ## What we use
@@ -37,6 +37,19 @@ Adminer moves in minor versions (`4.8.x` → `4.9.x`). Major `5.x` not yet out a
 4. Verify login still works against one known DB
 
 No DB migrations, no data to back up — Adminer is stateless.
+
+## Version / tag notes
+
+- **Pinned to `5.5.1-standalone`, not to 6.x.** Four advisories published 2026-09-07 are
+  fixed only in Adminer 6.0.2 — conditional RCE via a CONNECTION_ID XSS combined with
+  `INTO DUMPFILE`, pre-authentication SSRF in the Elasticsearch plugin, the ClickHouse
+  driver reflecting an arbitrary HTTP response body on the login page, and a
+  privileged-port SSRF. **No 6.0.2 image exists**; Docker Hub's newest 6.x tag is
+  `6.0.1-standalone`, which predates those fixes. One of the four is described as a
+  regression introduced in 5.5.1, so 6.0.x is the affected line rather than the fixed one.
+  `5.5.1` closes the advisory that applies to the 5.5.x line (GHSA-fr74-9mf9-gf44,
+  X-Forwarded-Prefix backslash bypass). Re-check for a 6.0.2 image before moving to 6.x.
+  Decided 2026-09-13.
 
 ## Related images to keep in sync
 

@@ -81,6 +81,17 @@ the DROP rule rather than delegating it.
 Full architecture and the current verification status:
 [`docs/firewall-bouncer.md`](docs/firewall-bouncer.md).
 
+## Version / tag notes
+
+- **Held at `v1.7.8` on 2026-09-13, with 1.8.1 available.** The two advisories fixed in 1.8.0 are
+  unbounded body reads in the HTTP acquisition datasource and in the kubernetes-audit
+  acquisition webhook. Neither is configured here: `acquis.yaml` reads Traefik logs from a
+  file and `appsec.yaml` is the only other source, so this deployment is not in range.
+  1.8.0 is a feature release — WAF bot detection with a challenge and fingerprinting page,
+  a Kubernetes datasource, HTTP helpers in the expression language — and changing what the
+  WAF serves to clients is a decision rather than a patch. Revisit when bot detection is
+  wanted, or when an advisory lands that does apply.
+
 ## Upgrade checklist
 
 1. Check [CrowdSec releases](https://github.com/crowdsecurity/crowdsec/releases)

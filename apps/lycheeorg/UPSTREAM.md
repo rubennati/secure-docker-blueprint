@@ -8,7 +8,7 @@
 - **Docker Hub:** https://hub.docker.com/r/lycheeorg/lychee
 - **License:** MIT
 - **Origin:** Community · LycheeOrg · EU contributors
-- **Based on version:** `v7`
+- **Based on version:** `v7.8.3`
 - **Last checked:** 2026-04-17
 
 ## What we use

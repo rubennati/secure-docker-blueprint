@@ -7,7 +7,7 @@
 - **Docs:** https://docs.portainer.io/
 - **License:** zlib
 - **Origin:** New Zealand · Portainer.io Ltd · non-EU
-- **Based on version:** `2.39.5` (Community Edition)
+- **Based on version:** `2.39.7` (Community Edition)
 - **Last checked:** 2026-04-16
 
 Note: this setup uses Portainer **CE** (Community Edition). Portainer Business Edition (`portainer/portainer-ee`) is a different paid product with additional features and a different license — not used here.
@@ -32,6 +32,18 @@ Note: this setup uses Portainer **CE** (Community Edition). Portainer Business E
 Both are HAProxy-based socket filters. Either would work. The LinuxServer.io variant was chosen for this app because its permission set uses the same env-var names as the `ALLOW_START` / `ALLOW_STOP` / `ALLOW_RESTARTS` extensions which Portainer needs for container lifecycle operations.
 
 If you prefer `tecnativa/docker-socket-proxy`, replace the image and consult its documentation for equivalent variable names.
+
+## Version / tag notes
+
+- **`2.39.5` → `2.39.7`, a patch on the same line.** CVE-2026-72533 (critical) let a
+  non-canonical Docker API version prefix bypass the Docker API proxy authorization, and
+  is fixed in 2.39.7. 2.39.6 upgrades the Go toolchain past CVE-2026-42505 and
+  CVE-2026-39822, updates `go-git` past CVE-2026-71556, and closes a remaining gap in the
+  CVE-2026-44849 fix by broadening bind-mount restrictions for non-admin users to Compose
+  and Swarm stack deployments. 2.45.0 exists and is a feature release. Moved on 2026-09-13.
+- `SOCKET_PROXY_TAG` moved from `3.2.15` to `3.4.4` in the same step —
+  `linuxserver/socket-proxy` had two minor lines of drift and this stack's whole point is
+  the filter in front of the Docker API.
 
 ## Upgrade checklist
 

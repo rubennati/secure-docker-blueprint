@@ -8,7 +8,7 @@
 - **Example path:** `.examples/docker-compose/with-nginx-proxy/mariadb/fpm/`
 - **License:** AGPL-3.0
 - **Origin:** Germany · Nextcloud GmbH · EU
-- **Based on version:** `34.0.2-fpm-alpine`
+- **Based on version:** `34.0.4-fpm-alpine`
 - **Last verified:** 2026-07-29 (34.0.2-fpm-alpine)
 - **Supported until:** 2027-06-08
 

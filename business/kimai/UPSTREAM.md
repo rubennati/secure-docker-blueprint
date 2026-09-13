@@ -7,7 +7,7 @@
 - **Docker Hub:** https://hub.docker.com/r/kimai/kimai2
 - **License:** AGPL-3.0
 - **Origin:** Germany · Kevin Papst · EU
-- **Based on version:** `apache-2.61.0`
+- **Based on version:** `2.66.0` (see Version / tag notes — the `apache-` prefix is gone)
 - **Last checked:** 2026-05-03
 
 ## What we use
@@ -26,9 +26,18 @@
 | **`security_opt: no-new-privileges:true`** | Baseline hardening |
 | **Healthcheck on `/api/ping`** | Proper readiness gate |
 
+## Version / tag notes
+
+- **Upstream dropped the `apache-` tag prefix.** The pin was `apache-2.61.0`, which no
+  longer resolves — Docker Hub answers 404, so `docker compose pull` fails on it. The
+  newest prefixed tag is `apache-2.57.0` (2026-05-21); everything after that is published
+  as a bare semver tag. `2.66.0` and `apache` carry the same digest, so the bare tag is
+  the Apache variant this stack expects. Corrected on 2026-09-13.
+
 ## Upgrade checklist
 
-1. Check [Kimai releases](https://github.com/kimai/kimai/releases) — tag format is `apache-X.Y.Z`
+1. Check [Kimai releases](https://github.com/kimai/kimai/releases) — the image tag is a bare
+   `X.Y.Z` and carries the Apache variant; the older `apache-X.Y.Z` form stopped at `apache-2.57.0`
 2. Back up:
 
    ```bash

@@ -8,7 +8,7 @@
 - **License:** EULA (Ubiquiti) / GPL-3 (LSIO scripts)
 - **Origin:** US · Ubiquiti Inc · non-EU
 - **Note:** Proprietary software — not open source. LSIO wrapper scripts are GPL-3. Ubiquiti is a US company; CLOUD Act applies to cloud-managed deployments. Self-hosted (local controller) has no cloud dependency.
-- **Based on version:** `latest` (LSIO rolling build)
+- **Based on version:** `10.6.101` (LSIO build of UniFi Network Application)
 - **Last checked:** 2026-04-17
 
 ## What we use

@@ -7,7 +7,7 @@
 - **Docker Hub:** https://hub.docker.com/u/reallibrephotos
 - **License:** MIT
 - **Origin:** Community · no single company · no single jurisdiction
-- **Based on version:** `latest` weekly build (2026-06-21)
+- **Based on version:** `1.1.0` (upstream moved from weekly builds to semver)
 - **Last checked:** 2026-04-17
 
 ## What we use
@@ -33,6 +33,16 @@
 | **`DEBUG=0` explicit** | Inbox had it inline; kept for clarity |
 | **`data=` path renamed to individual bind mounts** (`./volumes/protected_media`, `./volumes/logs`, `./volumes/cache`, `./volumes/db`) | Inbox used a single `${data}` root variable that mixed DB and media; separating them makes backups and permissions cleaner |
 | **Access `acc-public` + security `sec-2` defaults** | Wiki-style access; consider `acc-tailscale` for family-only galleries |
+
+## Version / tag notes
+
+- **Upstream moved from weekly build tags to semver.** The pin was `2026w25`, a dated
+  weekly build. Releases now carry semver tags (`1.0.0`, `1.1.0`), so the comparison a
+  sweep makes changes shape with this bump. Moved to `1.1.0` on 2026-09-13.
+- `1.1.0` carries a security fix, and three advisories published 2026-08-31 name no
+  patched version at all: any authenticated user could trash, restore, unpublish or hide
+  another user's public photos. Check whether a later release closes them before treating
+  this stack as safe for more than one trusted user.
 
 ## Upgrade checklist
 

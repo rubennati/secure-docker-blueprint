@@ -7,7 +7,7 @@
 - **Docker image:** https://hub.docker.com/r/tuxgasy/dolibarr (community-maintained, widely used)
 - **License:** GPL-3.0
 - **Origin:** France · Dolibarr Association · EU
-- **Based on version:** `latest` (tracks Dolibarr's stable line)
+- **Based on version:** `23.0.4` (23.x line; 24.x is the next major)
 - **Last checked:** 2026-04-17
 
 ## What we use
@@ -33,6 +33,14 @@
 | **Healthcheck added on MariaDB + `depends_on.condition: service_healthy`** | Prevents Dolibarr from trying to install before DB is ready |
 | **`TZ` env var on both services** | Replaces a hardcoded non-UTC `PHP_INI_DATE_TIMEZONE` |
 | **Access `acc-tailscale` + security `sec-3` defaults** | ERP = business data; VPN-only is safer than public |
+
+## Version / tag notes
+
+- **Stayed on the 23.x line: `23.0.3` → `23.0.4`.** Dolibarr 24 is out and `24.0.0` is
+  published, but a Dolibarr major is a database migration rather than a tag change.
+  `23.0.4` is the newest 23.x image (2026-08-29). CVE-2026-23500 (critical, OS command
+  injection via `MAIN_ODT_AS_PDF`) is fixed on this line. Moved on 2026-09-13; schedule 24.x as
+  its own piece of work.
 
 ## Upgrade checklist
 

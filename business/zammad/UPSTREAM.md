@@ -9,7 +9,7 @@
 - **Image:** `ghcr.io/zammad/zammad`
 - **License:** AGPL-3.0
 - **Origin:** Germany · Zammad GmbH · EU
-- **Based on version:** `7.1.2-0013` (Zammad publishes no clean semver — only `X.Y.Z-NNNN`; pin the
+- **Based on version:** `7.1.3-0012` (Zammad publishes no clean semver — only `X.Y.Z-NNNN`; pin the
   highest build of the target release, not the first)
 - **Last checked:** 2026-08-16
 
