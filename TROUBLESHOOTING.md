@@ -320,6 +320,43 @@ with the same label. Which line goes where: `docs/standards/traefik-labels.md`
 
 ---
 
+### 4.6 Host becomes sluggish, swap fills, nothing is OOM-killed
+
+**Symptom:** the host slows progressively — SSH lags, `docker` commands take
+seconds — while `free -m` shows swap filling and no container reports `OOMKilled`.
+`journalctl -k | grep -i "killed process"` is empty.
+
+**Cause:** a memory limit does not bound swap. With `memswap_limit` unset, Docker
+grants a container as much swap again as its memory limit, so a 4G service may hold
+4G of RAM plus 4G of swap. The container-level OOM-killer fires only when memory
+**and** the swap allowance are exhausted, so a container inside its cap can page the
+host into unusability without ever being killed.
+
+```bash
+# Which containers may swap, and how much
+for c in $(docker ps --format '{{.Names}}'); do
+  docker inspect "$c" --format '{{printf "%-28s" .Name}} mem={{.HostConfig.Memory}} swap={{.HostConfig.MemorySwap}}'
+done
+# swap == mem  → no swap allowed
+# swap == 2*mem → implicit allowance, this is the case that bites
+
+free -m; cat /proc/pressure/memory     # avg10 under "full" rising = the host is stalling
+```
+
+**Fix:** set `memswap_limit` on the offending service and **recreate** it —
+`docker compose up -d` — because a restart keeps the old `HostConfig`. The value
+belongs to the workload; `docs/standards/compose-structure.md` → "Swap has to be
+bounded on purpose" states how to choose it.
+
+**While the host is still responsive:** `docker stop <container>` on the worst
+offender frees both its memory and its swap. Identify it with
+`docker stats --no-stream` sorted by memory, or from the swap column above.
+
+**Related:** a container killed at its cap is the *intended* outcome — see
+`docs/resource-measurement.md` → "Confirming a limit rather than assuming it".
+
+---
+
 ## 5. Git & Deployment Issues
 
 ### 5.1 Server running old code after local commits

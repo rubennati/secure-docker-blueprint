@@ -112,6 +112,33 @@ same value, so regenerating it means updating the embedding application too.
 Editing stays broken until they match, and the error surfaces there rather than
 here.
 
+## Plugin loading at startup
+
+The document server fetches its default plugins from an upstream marketplace when it
+starts. Upstream carries a report of the plugin manager spinning a core while it
+downloads ([DocumentServer#3153](https://github.com/ONLYOFFICE/DocumentServer/issues/3153)),
+closed as `wontfix`, and reports of high idle process counts in the container
+([Docker-DocumentServer#352](https://github.com/ONLYOFFICE/Docker-DocumentServer/issues/352)).
+Every container start repeats the fetch, so a restart loop repeats it too.
+
+Upstream documents an environment variable that turns the default plugins off:
+
+```yaml
+environment:
+  PLUGINS_ENABLED: "false"
+```
+
+**Not set here, and not recommended without testing.** Two reasons: it removes
+editor functionality that a connected app may rely on, and whether it prevents the
+plugin manager from running at all is **unverified** — the upstream option is
+documented as controlling whether default plugins are enabled, not as a switch for
+the startup fetch. Treat it as an option to evaluate on a test instance, not as a
+fix.
+
+The containment that does apply is the stack's own: `memory: 4G` with a stated swap
+policy caps what this container can take from the host regardless of what the plugin
+manager does. See `docs/standards/compose-structure.md` → Resources.
+
 ## Known Issues
 
 - **Image size is large (~1.5 GB)** — this is upstream; the document server bundles LibreOffice, Node.js, Nginx, PostgreSQL, RabbitMQ, and Redis. No slim variant is available.

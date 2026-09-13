@@ -56,7 +56,8 @@ it now, while nothing is running.
      "log-opts": { "max-size": "10m", "max-file": "3" },
      "ipv6": true,
      "ip6tables": true,
-     "userland-proxy": false
+     "userland-proxy": false,
+     "live-restore": true
    }
    EOF
    ```
@@ -71,6 +72,16 @@ it now, while nothing is running.
 </Steps>
 
 The `log-opts` bound container logs — without them they grow until the disk is full.
+
+`live-restore` keeps containers running when the Docker daemon itself stops or
+restarts, which is what updating the Docker packages does. Without it, every such
+update restarts every container on the machine at once, and that simultaneous
+start-up is its own kind of load.
+
+What it does not do: it does not survive a reboot, it does not help across a major
+daemon version change — upstream supports it for patch releases only — and it is no
+substitute for the resource limits each service carries. What it removes is one
+avoidable restart.
 
 ## Point DNS at the server
 

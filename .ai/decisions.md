@@ -209,6 +209,40 @@ monitoring. Documented per category README.
 repositories mean two retention policies and two restore rehearsals — a real
 operational cost that does not exist for monitoring tools covering different axes.
 
+## 2026-09 · Swap is bounded per service, and the host reserve is an invariant without a mechanism
+
+A memory limit does not bound what a container takes from the host. With
+`memswap_limit` unset Docker grants as much swap again as the memory limit —
+confirmed against the running daemon, where an unset value renders `MemorySwap` at
+twice `Memory`. A container inside its cap can therefore page a host into
+unusability and never be killed, because the container OOM-killer fires only when
+memory and the swap allowance are both exhausted.
+
+So every service with a memory limit states a swap policy. The mechanism is fixed
+and the value is not: equal to `memory` means no swap and is the default choice;
+above it is a deliberate, justified amount. Unset is no longer acceptable, because
+the amount is then accidental. `memswap_limit` does not conflict with a `deploy:`
+block, unlike `pids_limit`. `compose-structure.md` owns the values as it owns every
+number; `security-baseline.md` owns the binary requirement.
+
+`no-resources` becomes a FAIL in `check-structure.py`. Every service in the tree
+already carries both limits, so the rule now guards the property rather than
+reporting drift toward it. The swap rule lands as a WARN counted per compose file —
+making it a FAIL today would fail seventy stacks to prove a policy exists, and one
+line per file keeps the report readable while v0.9.0 calibrates the values.
+
+**The host reserve is approved as an invariant and not as a mechanism.** Workload
+pressure must not consume what management and recovery need, and Foundation/Host owns
+that. The candidate — a separate cgroup hierarchy for container workloads plus memory
+protection on the slice holding management services — is documented, not installed:
+it has never been rehearsed under real pressure, and an untested protection is an
+assumption. `docs/architecture.md` carries what a rehearsal has to establish.
+
+`live-restore` joins the reference daemon configuration. It removes one avoidable
+restart storm — the one a Docker package update causes — and it is documented for
+what it is: no help across a reboot, none across a major daemon version, and no
+substitute for per-service limits.
+
 ## 2026-09 · Capabilities, with one reference implementation each
 
 The blueprint is a set of capabilities — Foundation, Reverse Proxy, Identity & Access,
