@@ -8,6 +8,16 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
+### Changed
+
+- **v0.8.1 verified on a host, seven stacks** — Traefik 3.6.10 → 3.7.13 with socket-proxy v0.5.0 (13 routed hosts identical before and after, HTTP/3 serving, bouncer polling; the rendered configuration was not changed for the move and the bouncer plugin loaded across the minor), whoami, Uptime Kuma, changedetection.io, Nextcloud 34.0.4 in place, Invoice Ninja 5.13.40 with migrations, Cal.diy's database to 17.11. Each stack's `UPSTREAM.md` carries the date and version. `core/traefik/UPSTREAM.md` gains a preflight step: a throwaway container on the new image against a stripped copy of `config/` answers whether the plugin and the configuration load before the live container is touched.
+- **`docker compose up -d` after a service rename** (`TROUBLESHOOTING.md` §5.3): the old service's container is an orphan that a plain `up -d` leaves in place, and its fixed `container_name` collides with the renamed service — compose recreates the application container, then aborts on the conflict before starting it. `--remove-orphans` with the usual `-f` set clears it. Two stacks hit this on the same host on 2026-09-13.
+- **Dependabot targets `dev`** (`.github/dependabot.yml`): an npm entry for `site/` with weekly grouping, and `target-branch: dev` for both ecosystems. Its pull requests were opening against `main`, being re-targeted by hand, and then falling behind `dev` the moment anything else merged there.
+
+### Fixed
+
+- **The CrowdSec enable flow in `core/traefik/README.md` edits tracked templates**, which a later `git pull` reverts — after which `render.sh` writes a configuration without the plugin and the middleware while the container keeps running with both. The README now says so at the render step and gives the check; an env-gated render is recorded as the fix.
+
 ## [0.8.1] — 2026-09-13
 
 ### Security

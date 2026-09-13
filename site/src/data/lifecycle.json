@@ -165,9 +165,9 @@
     "pinned": "APP_TAG=34.0.4-fpm-alpine",
     "restore_docs": "documented",
     "state": "ops-proven",
-    "verified": "2026-07-29",
+    "verified": "2026-09-13",
     "verified_anchored": true,
-    "verified_version": "34.0.2-fpm-alpine"
+    "verified_version": "34.0.4-fpm-alpine"
   },
   "apps/nocodb": {
     "backup_docs": "documented",
@@ -325,9 +325,9 @@
     "pinned": "APP_TAG=5.13.40",
     "restore_docs": "missing",
     "state": "baseline-aligned",
-    "verified": "2026-07-29",
+    "verified": "2026-09-13",
     "verified_anchored": true,
-    "verified_version": "5.13.26"
+    "verified_version": "5.13.40"
   },
   "business/kimai": {
     "backup_docs": "documented",
@@ -535,9 +535,9 @@
     "pinned": "TRAEFIK_IMAGE=traefik:v3.7",
     "restore_docs": "missing",
     "state": "baseline-aligned",
-    "verified": "2026-07-29",
+    "verified": "2026-09-13",
     "verified_anchored": true,
-    "verified_version": "v3.6"
+    "verified_version": "v3.7.13, socket-proxy v0.5.0"
   },
   "core/whoami": {
     "backup_docs": "documented",
@@ -545,9 +545,9 @@
     "pinned": "APP_TAG=v1.12.0",
     "restore_docs": "missing",
     "state": "baseline-aligned",
-    "verified": "2026-07-29",
+    "verified": "2026-09-13",
     "verified_anchored": true,
-    "verified_version": "v1.11.0"
+    "verified_version": "v1.12.0"
   },
   "monitoring/beszel": {
     "backup_docs": "documented",
@@ -575,9 +575,9 @@
     "pinned": "APP_TAG=0.60.4",
     "restore_docs": "missing",
     "state": "baseline-aligned",
-    "verified": "2026-09-08",
+    "verified": "2026-09-13",
     "verified_anchored": true,
-    "verified_version": "0.60.3"
+    "verified_version": "0.60.4"
   },
   "monitoring/gatus": {
     "backup_docs": "documented",
@@ -615,8 +615,8 @@
     "pinned": "APP_TAG=2.5.4",
     "restore_docs": "missing",
     "state": "baseline-aligned",
-    "verified": "2026-09-08",
+    "verified": "2026-09-13",
     "verified_anchored": true,
-    "verified_version": "2.5.3"
+    "verified_version": "2.5.4"
   }
 }
