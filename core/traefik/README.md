@@ -378,6 +378,13 @@ nano ops/templates/dynamic/integrations.yml.tmpl
 ./ops/scripts/validate.sh
 docker compose restart traefik
 # Restart needed because the plugin is in static config.
+#
+# Steps 4 and 5 edit files git tracks. A later `git pull` or checkout
+# restores the commented-out versions, and the next render.sh then
+# writes config/ WITHOUT the plugin and the middleware while the running
+# container still has both. After any render on a host where this is
+# enabled, diff config/ before restarting:
+#   grep -nE '^\s*(experimental|crowdsec-basic):' config/traefik.yml config/dynamic/integrations.yml
 # After this, middleware changes are hot-reloaded.
 #
 # Once a crowdsec-* middleware is present in the rendered config,

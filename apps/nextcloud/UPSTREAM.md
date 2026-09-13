@@ -9,7 +9,7 @@
 - **License:** AGPL-3.0
 - **Origin:** Germany · Nextcloud GmbH · EU
 - **Based on version:** `34.0.4-fpm-alpine`
-- **Last verified:** 2026-07-29 (34.0.2-fpm-alpine)
+- **Last verified:** 2026-09-13 (34.0.4-fpm-alpine) — in-place upgrade from 34.0.2 on a live host: the entrypoint ran the upgrade, `occ status` reports 34.0.4 with `needsDbUpgrade: false`, the login redirect answers as before. The first `up -d` failed on a container-name conflict left by the earlier service rename — see `TROUBLESHOOTING.md` §5.3. Earlier: 2026-07-29 (34.0.2-fpm-alpine)
 - **Supported until:** 2027-06-08
 
 Nextcloud publishes a major version every four months and maintains each for one

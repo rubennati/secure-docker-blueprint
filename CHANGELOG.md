@@ -8,6 +8,21 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
+## [0.8.2] — 2026-09-13
+
+v0.8.1 run on a host, and what the run surfaced. No new stack.
+
+### Changed
+
+- **v0.8.1 verified on a host, seven stacks** — Traefik 3.6.10 → 3.7.13 with socket-proxy v0.5.0 (13 routed hosts identical before and after, HTTP/3 serving, bouncer polling; the rendered configuration was not changed for the move and the bouncer plugin loaded across the minor), whoami, Uptime Kuma, changedetection.io, Nextcloud 34.0.4 in place, Invoice Ninja 5.13.40 with migrations, Cal.diy's database to 17.11. Each stack's `UPSTREAM.md` carries the date and version. `core/traefik/UPSTREAM.md` gains a preflight step: a throwaway container on the new image against a stripped copy of `config/` answers whether the plugin and the configuration load before the live container is touched.
+- **`docker compose up -d` after a service rename** (`TROUBLESHOOTING.md` §5.3): the old service's container is an orphan that a plain `up -d` leaves in place, and its fixed `container_name` collides with the renamed service — compose recreates the application container, then aborts on the conflict before starting it. `--remove-orphans` with the usual `-f` set clears it. Two stacks hit this on the same host on 2026-09-13.
+- **Operator site dependencies** (`site/`): astro 7.1.3 → 7.3.2 (sharp 0.35.4 with it), smol-toml 1.7.0 → 1.8.0, svgo 4.0.2 → 4.1.0, js-yaml 4.3.1 → 4.3.2 — Dependabot's pull requests, the last ones to open against `main`. The site build passed on each.
+- **Dependabot targets `dev`** (`.github/dependabot.yml`): an npm entry for `site/` with weekly grouping, and `target-branch: dev` for both ecosystems. Its pull requests were opening against `main`, being re-targeted by hand, and then falling behind `dev` the moment anything else merged there.
+
+### Fixed
+
+- **The CrowdSec enable flow in `core/traefik/README.md` edits tracked templates**, which a later `git pull` reverts — after which `render.sh` writes a configuration without the plugin and the middleware while the container keeps running with both. The README now says so at the render step and gives the check; an env-gated render is recorded as the fix.
+
 ## [0.8.1] — 2026-09-13
 
 ### Security
@@ -537,7 +552,8 @@ Initial public release.
 - No CI workflows yet (compose validate, markdown lint, secret scan) — planned for 0.2.0
 - No automatic backup orchestration — planned in Evaluating section of ROADMAP
 
-[Unreleased]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.8.1...HEAD
+[Unreleased]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.8.2...HEAD
+[0.8.2]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.8.1...v0.8.2
 [0.8.1]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.6.0...v0.7.0

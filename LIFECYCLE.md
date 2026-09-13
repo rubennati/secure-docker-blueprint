@@ -32,8 +32,8 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`core/onlyoffice`](core/onlyoffice/) | `scaffolded` | `APP_TAG=9.4.0` | 2026-06-14 ⚠️ | ✅ | documented | missing |
 | [`core/portainer`](core/portainer/) | `scaffolded` | `APP_TAG=2.39.7` | 2026-04-16 ⚠️ | ✅ | documented | missing |
 | [`core/portainer-agent`](core/portainer-agent/) | `baseline-aligned` | `APP_TAG=2.39.7` | 2026-05-05 | — | documented | missing |
-| [`core/traefik`](core/traefik/) | `baseline-aligned` | `TRAEFIK_IMAGE=traefik:v3.7` | 2026-07-29 | — | documented | missing |
-| [`core/whoami`](core/whoami/) | `baseline-aligned` | `APP_TAG=v1.12.0` | 2026-07-29 | ✅ | documented | missing |
+| [`core/traefik`](core/traefik/) | `baseline-aligned` | `TRAEFIK_IMAGE=traefik:v3.7` | 2026-09-13 | — | documented | missing |
+| [`core/whoami`](core/whoami/) | `baseline-aligned` | `APP_TAG=v1.12.0` | 2026-09-13 | ✅ | documented | missing |
 
 ## `apps/`
 
@@ -55,7 +55,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/mailpit`](apps/mailpit/) | `baseline-aligned` | `APP_TAG=v1.31.1` | 2026-09-07 | ✅ | documented | missing |
 | [`apps/monicahq`](apps/monicahq/) | `scaffolded` | `APP_TAG=4.1.2-apache` | 2026-04-17 ⚠️ | ✅ | documented | missing |
 | [`apps/n8n`](apps/n8n/) | `baseline-aligned` | `APP_TAG=2.38.7` | 2026-05-02 | ✅ | documented | missing |
-| [`apps/nextcloud`](apps/nextcloud/) | `ops-proven` | `APP_TAG=34.0.4-fpm-alpine` | 2026-07-29 | ✅ | documented | documented |
+| [`apps/nextcloud`](apps/nextcloud/) | `ops-proven` | `APP_TAG=34.0.4-fpm-alpine` | 2026-09-13 | ✅ | documented | documented |
 | [`apps/nocodb`](apps/nocodb/) | `baseline-aligned` | `APP_TAG=2026.09.0` | 2026-05-02 | ✅ | documented | missing |
 | [`apps/opnform`](apps/opnform/) | `scaffolded` | `APP_TAG=2.5.0` | 2026-04-17 ⚠️ | ✅ | documented | missing |
 | [`apps/paperless-ngx`](apps/paperless-ngx/) | `baseline-aligned` | `APP_TAG=3.1.3` | 2026-05-03 | ✅ | documented | missing |
@@ -74,7 +74,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 |---|---|---|---|---|---|---|
 | [`business/documenso`](business/documenso/) | `scaffolded` | `APP_TAG=v2.18.0` | — | ✅ | documented | missing |
 | [`business/dolibarr`](business/dolibarr/) | `scaffolded` | `APP_TAG=23.0.4` | 2026-04-17 ⚠️ | ✅ | documented | missing |
-| [`business/invoiceninja`](business/invoiceninja/) | `baseline-aligned` | `APP_TAG=5.13.40` | 2026-07-29 | ✅ | documented | missing |
+| [`business/invoiceninja`](business/invoiceninja/) | `baseline-aligned` | `APP_TAG=5.13.40` | 2026-09-13 | ✅ | documented | missing |
 | [`business/kimai`](business/kimai/) | `scaffolded` | `APP_TAG=2.66.0` | 2026-05-03 ⚠️ | ✅ | documented | missing |
 | [`business/listmonk`](business/listmonk/) | `scaffolded` | `APP_TAG=v6.2.0` | 2026-05-03 ⚠️ | ✅ | documented | missing |
 | [`business/matomo`](business/matomo/) | `scaffolded` | `APP_TAG=5.13.0-apache` | 2026-04-17 ⚠️ | ✅ | documented | missing |
@@ -89,11 +89,11 @@ This is the maintainer's view: what has been established about each stack. It ma
 |---|---|---|---|---|---|---|
 | [`monitoring/beszel`](monitoring/beszel/) | `baseline-aligned` | `APP_TAG=0.19.0` | 2026-09-08 | ✅ | documented | missing |
 | [`monitoring/beszel-agent`](monitoring/beszel-agent/) | `scaffolded` | `APP_TAG=0.19.0` | 2026-05-03 ⚠️ | — | documented | missing |
-| [`monitoring/changedetection`](monitoring/changedetection/) | `baseline-aligned` | `APP_TAG=0.60.4` | 2026-09-08 | ✅ | documented | missing |
+| [`monitoring/changedetection`](monitoring/changedetection/) | `baseline-aligned` | `APP_TAG=0.60.4` | 2026-09-13 | ✅ | documented | missing |
 | [`monitoring/gatus`](monitoring/gatus/) | `scaffolded` | `APP_TAG=v5.36.0` | 2026-05-03 ⚠️ | ✅ | documented | missing |
 | [`monitoring/healthchecks`](monitoring/healthchecks/) | `baseline-aligned` | `APP_TAG=v4.4` | 2026-09-08 | ✅ | documented | missing |
 | [`monitoring/ntfy`](monitoring/ntfy/) | `baseline-aligned` | `APP_TAG=v2.28.0` | 2026-09-08 | ✅ | documented | missing |
-| [`monitoring/uptime-kuma`](monitoring/uptime-kuma/) | `baseline-aligned` | `APP_TAG=2.5.4` | 2026-09-08 | ✅ | documented | missing |
+| [`monitoring/uptime-kuma`](monitoring/uptime-kuma/) | `baseline-aligned` | `APP_TAG=2.5.4` | 2026-09-13 | ✅ | documented | missing |
 
 ## `backup/`
 

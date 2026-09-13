@@ -136,6 +136,24 @@ Listed with context in [`state.md`](state.md). Nothing proceeds on these until d
       running. What needs checking here is the challenge and fingerprinting page
       against the routes this repository puts in front of the engine, and whether
       `acquis.yaml` and `appsec.yaml` still parse unchanged
+- [ ] **Gate the CrowdSec integration on a variable in `render.sh`.** The README
+      enables it by uncommenting blocks in two tracked templates; a `git pull` puts the
+      comments back and the next render silently drops the plugin and the middleware
+      from `config/` while the container keeps running with both. Seen on a host on
+      2026-09-13: templates pristine, rendered files enabled, plugin at a version the
+      template no longer names. A `CROWDSEC_BOUNCER_ENABLED` switch that `render.sh`
+      honours — emitting the plugin block and the middleware when set — makes the
+      rendered state a function of `.env` again. `validate.sh` already refuses an empty
+      key once a `crowdsec-*` middleware is present
+- [x] **Verify the 2026-09-13 sweep on a host — the stacks that host runs.** Done
+      2026-09-13: `core/traefik` 3.6.10 → 3.7.13 with socket-proxy v0.5.0 (preflighted,
+      13 routes identical, HTTP/3 answers, bouncer polling), `core/whoami`,
+      `monitoring/uptime-kuma`, `monitoring/changedetection`, `apps/nextcloud` 34.0.4
+      (in-place upgrade), `business/invoiceninja` 5.13.40 (migrations), `apps/caldiy`
+      database to 17.11. Two stacks failed their first `up -d` on an orphan from the
+      earlier service rename — `TROUBLESHOOTING.md` §5.3. Not on that host, still
+      unverified: `core/dnsmasq` (new publisher), `apps/homepage` (major with its own
+      auth), `apps/librephotos` (tag scheme), and the other 36 pins
 - [ ] **Verify the 2026-09-13 sweep on a host.** 46 pins moved and nothing was
       deployed, so every bumped stack's `Last verified` line still names the version
       before the bump. Four need more than a restart: `core/dnsmasq` changed publisher
