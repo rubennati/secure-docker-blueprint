@@ -10,11 +10,11 @@ Five services:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `nextcloud:34.0.2-fpm-alpine` | PHP-FPM — the Nextcloud application |
+| `app` | `nextcloud:34.0.4-fpm-alpine` | PHP-FPM — the Nextcloud application |
 | `nextcloud-nginx` | `nginx:1.29-alpine-slim` | Web server, speaks HTTP to Traefik and FastCGI to `app` |
 | `db` | `mariadb:11.8` | Primary data store |
 | `redis` | `redis:7.4-alpine` | File locking + session cache |
-| `cron` | `nextcloud:34.0.2-fpm-alpine` | Runs Nextcloud's scheduled jobs (`cron.php` every 5 minutes) |
+| `cron` | `nextcloud:34.0.4-fpm-alpine` | Runs Nextcloud's scheduled jobs (`cron.php` every 5 minutes) |
 
 Traefik routes to `nextcloud-nginx`, which proxies PHP requests to `app` via FastCGI on port 9000. `cron` uses the same image as `app` but with `entrypoint: /cron.sh` and no HTTP listener.
 

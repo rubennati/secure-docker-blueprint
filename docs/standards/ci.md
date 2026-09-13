@@ -98,6 +98,14 @@ validates every compose file against the rules in
 | **WARN** | `network_mode: host` | Container shares the host network namespace |
 | **WARN** | `pid: host` | Container shares the host PID namespace |
 
+The same job runs `scripts/ci/check-crowdsec-config.py --templates`. It renders
+`core/traefik` into a scratch copy three times — with the shipped `.env.example`,
+then with `CROWDSEC_BOUNCER_ENABLED=true` and a placeholder key, then with the
+switch off again over that render — and parses each result: the shipped default
+yields no plugin and no `crowdsec-*` middleware, the switch yields the plugin plus
+both middlewares keyed, and switching off removes both. It needs `envsubst`, which
+the runner image provides.
+
 `FAIL` blocks the pipeline. `WARN` is reported in the Job Summary but does not block.
 
 #### GitHub Actions Job Summary
@@ -174,8 +182,9 @@ reached the repository is a configuration nobody filled in.
 Runs `scripts/ci/check-structure.py`. Severity is per rule rather than per
 category: `:latest` or major-only tags, a plaintext secret in `.env.example`, a
 `.gitignore` that does not cover `.secrets/`, and a datastore on `proxy-public`
-all fail. Missing resource limits, missing healthchecks and `env_file:` are
-reported as warnings — they need values measured on a real host, which is v0.9.0.
+all fail, and so does a service without resource limits. A memory limit without a
+swap policy (`memswap_limit`), a missing healthcheck and `env_file:` are reported as
+warnings — the values need measuring on a real host, which is v0.9.0.
 
 **Blocks merge:** yes, on FAIL rules only
 

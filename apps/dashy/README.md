@@ -8,7 +8,7 @@ Single service:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `lissy93/dashy:4.0.4` | Vue-based SPA + embedded build server |
+| `app` | `lissy93/dashy:4.6.0` | Vue-based SPA + embedded build server |
 
 No database. Config lives in `config/conf.yml`.
 

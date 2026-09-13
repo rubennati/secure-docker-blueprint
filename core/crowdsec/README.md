@@ -530,10 +530,18 @@ The command prints the key once — save it immediately.
 
 ### Wire the plugin in core/traefik/
 
-1. Add the key to `core/traefik/.env` as `CROWDSEC_BOUNCER_KEY=<key>`.
-2. Declare the plugin in `ops/templates/traefik.yml.tmpl` under `experimental.plugins`.
-3. Uncomment the `crowdsec-basic` middleware block in `ops/templates/dynamic/integrations.yml.tmpl`.
-4. Render the templates and restart Traefik:
+1. In `core/traefik/.env`, set the switch and the key:
+
+   ```env
+   CROWDSEC_BOUNCER_ENABLED=true
+   CROWDSEC_BOUNCER_PLUGIN_VERSION=v1.7.1
+   CROWDSEC_BOUNCER_KEY=<key>
+   ```
+
+   Nothing in the templates is edited. `render.sh` reads the switch and emits the
+   plugin block into `config/traefik.yml` and the `crowdsec-basic` and
+   `crowdsec-appsec` middlewares into `config/dynamic/crowdsec.yml`.
+2. Render, validate, and recreate Traefik — the plugin block is static configuration:
 
    ```bash
    cd ../traefik
@@ -541,7 +549,7 @@ The command prints the key once — save it immediately.
    docker compose up -d --force-recreate traefik
    ```
 
-5. **Required, not optional — do this before verifying.** Add `crowdsec-basic@file` as the **first** middleware on the router. The plugin loading successfully (steps 1–4) does not make the bouncer do anything by itself: its polling loop only starts once the middleware is actually attached to a router's request path. Skip this step and `cscli bouncers list` will never show a `Last API pull` — no error anywhere, it just silently never starts. See [`docs/bugfixes/traefik-crowdsec-plugin-2026-04-20.md`](../../docs/bugfixes/traefik-crowdsec-plugin-2026-04-20.md) "Bug #3" if this happens. Start with `core/whoami` — see [docs/profiles.md](docs/profiles.md) "whoami-first validation". Example label:
+3. **Required, not optional — do this before verifying.** Add `crowdsec-basic@file` as the **first** middleware on the router. The plugin loading successfully (steps 1–4) does not make the bouncer do anything by itself: its polling loop only starts once the middleware is actually attached to a router's request path. Skip this step and `cscli bouncers list` will never show a `Last API pull` — no error anywhere, it just silently never starts. See [`docs/bugfixes/traefik-crowdsec-plugin-2026-04-20.md`](../../docs/bugfixes/traefik-crowdsec-plugin-2026-04-20.md) "Bug #3" if this happens. Start with `core/whoami` — see [docs/profiles.md](docs/profiles.md) "whoami-first validation". Example label:
 
    ```yaml
    - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=crowdsec-basic@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"

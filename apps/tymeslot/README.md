@@ -11,7 +11,7 @@ published by Diletta Luna OÜ (Tallinn, Estonia).
 | Service | Image | Purpose |
 |---------|-------|---------|
 | `tymeslot-app` | `luka1thb/tymeslot:<version>-slim` | Web UI and job queue in one BEAM, port 4000 |
-| `db` | `postgres:17` | Database, on `app-internal` only |
+| `db` | `postgres:17.11-alpine` | Database, on `app-internal` only |
 
 The `-slim` tag carries no PostgreSQL server. The plain tag bundles one inside
 the application container, which would put the database on `proxy-public`;

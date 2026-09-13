@@ -8,7 +8,7 @@ Single service:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `healthchecks/healthchecks:v3.13` | Django app with built-in scheduler, serves UI + ping endpoints |
+| `app` | `healthchecks/healthchecks:v4.4` | Django app with built-in scheduler, serves UI + ping endpoints |
 
 Data stored in SQLite (`./volumes/data/hc.sqlite`). Suitable for personal use and small teams. Can be switched to PostgreSQL for higher loads — not needed for most self-hosted cases.
 

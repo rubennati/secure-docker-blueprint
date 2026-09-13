@@ -6,7 +6,7 @@ Self-hosted web analytics platform — privacy-respecting, GDPR-compatible alter
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `matomo:5-apache` (5.10.0) | Tracking endpoint + reporting UI |
+| `app` | `matomo:5.13.0-apache` | Tracking endpoint + reporting UI |
 | `db` | `mariadb:11.4` | Raw visits, aggregated reports, users, settings |
 
 ## Setup

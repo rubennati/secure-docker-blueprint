@@ -271,7 +271,7 @@ Based on **OWASP Docker Security Cheat Sheet**.
 | Set resource limits | ✅ | 145/145 services | `memory` and `pids` on every service |
 | Use security profiles (AppArmor/SELinux) | ❌ No | None configured | Significant gap |
 | Enable Docker Content Trust | ❌ No | Not configured | |
-| Scan for vulnerabilities | ⚠ Partial | `trivy.yml` scans ~11 high-risk images for CVEs; IaC config scan covers all compose files | Not exhaustive — see Missing Verification section |
+| Scan for vulnerabilities | ⚠ Partial | `trivy.yml` scans every image reference the checkers discover — 99 of 100 on 2026-09-13, one anonymous pull rate-limited; IaC config scan covers all compose files | Non-blocking (`--exit-code 0`) — see Missing Verification section |
 | Use Docker Bench for Security | ❌ No | Not in CI | |
 | Log all container activities | ⚠ Partial | Traefik access log captures HTTP. No container-level audit logging. | |
 | Monitor containers at runtime | ⚠ Optional | Beszel available for metrics. No behavioral anomaly detection. | |
@@ -333,7 +333,7 @@ Based on **OWASP Docker Security Cheat Sheet**.
 - Scans each image with Trivy for CRITICAL CVEs (`--ignore-unfixed`)
 - Fails the job if any CRITICAL CVE is found
 - Reports HIGH CVEs in logs as informational (non-blocking)
-- Coverage: 96 of the tree's 97 image references. `list-images.sh` reads the same discovery as the checkers, so a new stack is scanned the day it lands. Excluded: `vikunja-local`, built locally
+- Coverage: every image reference the checkers discover — 100 on 2026-09-13, of which 99 scanned and one anonymous pull was rate-limited and named as unscanned. `list-images.sh` reads the same discovery as the checkers, so a new stack is scanned the day it lands. Excluded: `vikunja-local`, built locally
 
 ---
 
@@ -357,7 +357,7 @@ The following controls are absent from CI. Ordered by security value.
 
 | Gap | Status | Remaining limitation |
 |-----|--------|----------------------|
-| **CVE / vulnerability scanning** | ⚠ Partial — `trivy.yml` scans 96 images, resolved from every compose file the checkers discover | Coverage is no longer the gap; blocking is. The job runs `--exit-code 0`, so findings are reported to the Security tab and nothing fails. Widening coverage and switching to blocking in one step would have produced an unreviewed backlog |
+| **CVE / vulnerability scanning** | ⚠ Partial — `trivy.yml` scans every image resolved from the compose files the checkers discover (100 references on 2026-09-13) | Coverage is no longer the gap; blocking is. The job runs `--exit-code 0`, so findings are reported to the Security tab and nothing fails. Widening coverage and switching to blocking in one step would have produced an unreviewed backlog |
 | **IaC static analysis** | ⚠ Partial — `trivy.yml` config scan runs but is non-blocking | Overlaps with `check-baseline.py`; Trivy config scan exit-code is 0 |
 | **Resource limits coverage** | ✅ Addressed — 145 of 145 services carry a `memory` and a `pids` limit, and `check-structure.py`'s `no-resources` rule names which of the two is missing | Reported as a warning, not a failure. The values are derived rather than measured — v0.9.0 |
 | **`__REPLACE_ME__` sentinel check** | ✅ Addressed — `ci.yml` sentinel job | Only covers committed `.env` files; runtime `.env` files are gitignored and unchecked |

@@ -18,8 +18,8 @@ Pre-1.0 tags are set when a natural milestone is reached, not on a fixed cadence
 **Every service now carries a ceiling**, and the healthcheck question is decided
 for every service — either one is defined or the compose file states why the image
 cannot have one. `python3 scripts/ci/check-structure.py` is the progress bar for
-both: it reports `no-resources` and `no-healthcheck` per service, and currently
-reports neither.
+both: `no-resources` is a failure and `no-healthcheck` a warning, per service, and
+neither fires anywhere today.
 
 **Swap values are part of this now.** Every service states a swap policy, and the
 default — `memswap_limit` equal to `memory` — needs no measurement. A value above it
@@ -71,10 +71,12 @@ Apps still to re-verify on a clean install, because the standards have moved sin
 they were last checked: Vaultwarden, WordPress, Nextcloud, Seafile / Seafile Pro,
 Invoice Ninja.
 
-Pinned to a new major during the dependency sweep and not yet run anywhere:
-Paperless-ngx 3.x, WordPress 7.x, Immich 3.x, Healthchecks 4.x, NocoDB (CalVer
-switch), Adminer 5.x, Homepage 1.13.x, OpnForm 2.2.x, Uptime Kuma 2.x. Each is
-`scaffolded` until it starts on a host — [`LIFECYCLE.md`](LIFECYCLE.md) carries the current
+Pinned to a new major in a dependency sweep and not yet run anywhere:
+Paperless-ngx 3.x, WordPress 7.x, Immich 3.x, NocoDB (CalVer switch), Adminer 5.x,
+Homepage 2.x (adds its own authentication), OpnForm 2.x, LibrePhotos (weekly builds
+to semver) and `core/dnsmasq` on a new publisher. Healthchecks 4.x and Uptime Kuma
+2.x ran in the v0.8.0 host session. Each of the rest is `scaffolded` until it starts
+on a host — [`LIFECYCLE.md`](LIFECYCLE.md) carries the current
 pin and status per stack.
 
 **Cal.diY hardening** ([`apps/caldiy/docs/hardening-plan.md`](apps/caldiy/docs/hardening-plan.md))

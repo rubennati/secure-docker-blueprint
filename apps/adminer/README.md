@@ -10,7 +10,7 @@ Single service:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `adminer:4-standalone` | Adminer web UI on port 8080 |
+| `app` | `adminer:5.5.1-standalone` | Adminer web UI on port 8080 |
 
 **No database of its own.** Adminer is a client that connects to databases running in other containers or on other hosts. It stays on `proxy-public` only; it joins individual app networks on demand (see below).
 

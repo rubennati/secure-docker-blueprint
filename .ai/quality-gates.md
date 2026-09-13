@@ -41,7 +41,7 @@ docker compose config --quiet          # in the stack directory
 | Compose validation | a compose file that does not parse or resolve |
 | Required files | a stack without `README.md` or `.env.example` |
 | Sentinel value check | `__REPLACE_ME__` in a committed `.env` |
-| Security baseline | missing `no-new-privileges`, `privileged: true`, socket-proxy violations; a CrowdSec plugin declaration or `crowdsec-*` middleware active in the shipped Traefik templates |
+| Security baseline | missing `no-new-privileges`, `privileged: true`, socket-proxy violations; `core/traefik` rendered with the shipped `.env.example` yielding a CrowdSec plugin or a `crowdsec-*` middleware, or rendered with `CROWDSEC_BOUNCER_ENABLED=true` yielding anything less than the plugin plus both middlewares keyed |
 | Canonical structure | `:latest` or major-only tags, plaintext secrets, unprotected `.secrets/`, a datastore on the public network |
 | Status model | owner and mirror disagreeing on a status, ✅ without a verification date, stale `LIFECYCLE.md`; warns when `UPSTREAM.md` duplicates the README's backup procedure |
 | Checker coverage | a content directory no checker enumerates, a top-level directory declared nowhere |

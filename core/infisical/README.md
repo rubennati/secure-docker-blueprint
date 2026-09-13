@@ -12,7 +12,7 @@ network (CLI / machine identity). An optional, central alternative to per-server
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `infisical/infisical:v0.162.13` | Backend + web UI + API (port 8080) |
+| `app` | `infisical/infisical:v0.165.10` | Backend + web UI + API (port 8080) |
 | `db` | `postgres:16-alpine` | Encrypted secret store, users, projects |
 | `redis` | `redis:7.4-alpine` | Cache + job queue |
 

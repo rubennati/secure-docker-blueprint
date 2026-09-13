@@ -8,8 +8,8 @@ The **hub SSHes INTO each agent** — not the other way around.
 
 | Service | Image | Role |
 |---------|-------|------|
-| `hub` | `henrygd/beszel:0.18.7` | Web UI + SQLite metric store + SSH client |
-| `agent` | `henrygd/beszel-agent:0.18.7` | SSH server that serves host metrics |
+| `hub` | `henrygd/beszel:0.19.0` | Web UI + SQLite metric store + SSH client |
+| `agent` | `henrygd/beszel-agent:0.19.0` | SSH server that serves host metrics |
 
 On first start the hub generates an Ed25519 keypair. The **public key** goes into each agent's `KEY` env var — this is how the agent decides which hub is allowed to connect. The hub then SSHes to each registered agent on port 45876 to pull CPU / RAM / disk / network / container stats.
 

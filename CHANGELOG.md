@@ -8,6 +8,10 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
+### Changed
+
+- **The CrowdSec reverse-proxy integration is switched in `.env`** (`core/traefik/`): `CROWDSEC_BOUNCER_ENABLED=true` makes `render.sh` emit the bouncer plugin block into `config/traefik.yml` and the `crowdsec-basic` / `crowdsec-appsec` middlewares into `config/dynamic/crowdsec.yml`; `false` strips the block and removes the file. `CROWDSEC_BOUNCER_PLUGIN_VERSION` carries the plugin release, `CROWDSEC_BOUNCER_KEY` the key. The templates are no longer edited to enable anything — the previous flow had the operator uncomment two tracked files, a checkout restored the comments, and the next render silently dropped both halves while the container kept running with them. `render.sh` now refuses to render over a `config/` that carries the integration while `.env` does not declare the switch; `validate.sh` refuses the switch without a key or with a version that is not a release tag, and a `config/` that disagrees with `.env` in either direction. The README carries enable, disable and the migration for installations that enabled it the old way; `TROUBLESHOOTING.md` §4.8 has the refusal. **The CI gate changes shape:** `check-crowdsec-config.py --templates` renders `core/traefik` with the shipped `.env.example`, then with the switch on and off, and judges each result instead of grepping templates for commented blocks. Eight new tests cover the switch, five cover the gate.
+
 ## [0.8.2] — 2026-09-13
 
 v0.8.1 run on a host, and what the run surfaced. No new stack.

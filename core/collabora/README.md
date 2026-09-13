@@ -11,7 +11,7 @@ Pick per need: **OnlyOffice / [Euro-Office](../euro-office/)** for MS-Office-nat
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `collabora/code:26.04.2.4.1` | Document editing server (port 9980, stateless) |
+| `app` | `collabora/code:26.04.3.2.1` | Document editing server (port 9980, stateless) |
 
 No database, no persistent volume. Embedded in iframes → an iframe-friendly middleware chain
 (CSP `frame-ancestors`) replaces the standard `sec-*` chains. TLS is terminated at Traefik

@@ -293,9 +293,10 @@ remediation plugin version that supports it. AppSec is CrowdSec's request-inspec
 coverage as the rule sets' coverage rather than as general request filtering. See
 [`core/crowdsec/docs/appsec.md`](../../core/crowdsec/docs/appsec.md) before enabling it.
 
-Enabling either one means uncommenting the plugin in Traefik's **static** configuration,
-which takes effect only after a Traefik restart. The middleware definitions themselves
-live in the dynamic configuration and are hot-reloaded.
+Both are rendered by one switch, `CROWDSEC_BOUNCER_ENABLED=true` in `core/traefik/.env`:
+the plugin into Traefik's **static** configuration, which takes effect only after a
+Traefik restart, and the two middleware definitions into `config/dynamic/crowdsec.yml`,
+which is hot-reloaded. No template is edited to enable them.
 
 `crowdsec-basic` is the first profile in the `crowdsec-*` family — see
 [`core/crowdsec/docs/profiles.md`](../../core/crowdsec/docs/profiles.md) for the full

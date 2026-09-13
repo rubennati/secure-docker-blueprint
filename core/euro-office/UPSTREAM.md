@@ -13,7 +13,7 @@
 
 ## What we use
 
-- `ghcr.io/euro-office/documentserver:v9.3.2` — single container (bundles its own DB + queue)
+- `ghcr.io/euro-office/documentserver:v9.3.4-hotfix.1` — single container (bundles its own DB + queue)
 - Custom `config/entrypoint.sh` to inject `JWT_SECRET` from a Docker Secret (no `_FILE` support)
 
 ## What we changed vs. upstream `docker run`

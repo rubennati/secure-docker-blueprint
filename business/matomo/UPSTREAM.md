@@ -12,7 +12,7 @@
 
 ## What we use
 
-- Official `matomo:5-apache` (Apache + PHP)
+- Official `matomo:5.13.0-apache` (Apache + PHP; the floating `5-apache` tag was replaced by the exact pin in 2026-07)
 - Official `mariadb:11.4`
 - Docker Secrets for DB password + DB root password
 - Bind-mount `./volumes/config`, `./volumes/logs`, `./volumes/matomo`, `./volumes/mysql`

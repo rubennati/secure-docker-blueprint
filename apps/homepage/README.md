@@ -10,7 +10,7 @@ Single service:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `ghcr.io/gethomepage/homepage:v0.10.9` | Next.js dashboard reading YAML configs |
+| `app` | `ghcr.io/gethomepage/homepage:v2.3.0` | Next.js dashboard reading YAML configs |
 
 Config lives in `./config/`. No database.
 

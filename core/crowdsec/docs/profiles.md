@@ -162,12 +162,14 @@ until a router uses it, and the plugin's polling loop does not even start until 
 **All steps are operator-local. Rendered `config/` and `.env` are gitignored —
 nothing here is committed.**
 
-1. **Enable the plugin + the `crowdsec-basic` middleware locally** (steps 3–6 of
-   "How to enable" in [`core/traefik/README.md`](../../traefik/README.md)): set
-   `CROWDSEC_BOUNCER_KEY` in `core/traefik/.env`, uncomment `experimental.plugins`
-   in `traefik.yml.tmpl`, uncomment the profile block in
-   [`integrations.yml.tmpl`](../../traefik/ops/templates/dynamic/integrations.yml.tmpl),
-   then `./ops/scripts/render.sh && docker compose restart traefik`.
+1. **Switch the integration on** (steps 3–4 of "How to enable" in
+   [`core/traefik/README.md`](../../traefik/README.md)): in `core/traefik/.env` set
+   `CROWDSEC_BOUNCER_ENABLED=true`, `CROWDSEC_BOUNCER_PLUGIN_VERSION` and
+   `CROWDSEC_BOUNCER_KEY`, then `./ops/scripts/render.sh && ./ops/scripts/validate.sh
+   && docker compose up -d --force-recreate traefik`. The plugin block and the
+   `crowdsec-basic` / `crowdsec-appsec` middlewares are rendered from
+   [`crowdsec.yml.tmpl`](../../traefik/ops/templates/dynamic/crowdsec.yml.tmpl); no
+   template is edited.
 
    > `render.sh` runs `envsubst`. An unset `CROWDSEC_BOUNCER_KEY` renders an **empty**
    > key and the bouncer cannot authenticate. Set the key before rendering.
@@ -232,9 +234,9 @@ Recorded so the eventual attachment is unambiguous — **not implemented; do not
 
 | Item | State |
 |------|-------|
-| Traefik plugin block | Commented in `traefik.yml.tmpl` (operator enables locally) |
-| `crowdsec-*` profile middlewares | `crowdsec-basic` and `crowdsec-appsec` are defined in `integrations.yml.tmpl`, commented out — the operator uncomments one locally |
-| `crowdsec-basic` | Designed here; lowest-risk primitive; implement + whoami-validate next |
+| Traefik plugin block | Rendered into `config/traefik.yml` by `render.sh` when `CROWDSEC_BOUNCER_ENABLED=true` in `core/traefik/.env`; absent otherwise |
+| `crowdsec-*` profile middlewares | `crowdsec-basic` and `crowdsec-appsec` are defined in `crowdsec.yml.tmpl` and rendered by the same switch into `config/dynamic/crowdsec.yml`; the file is removed when the switch is off |
+| `crowdsec-basic` | Validated on whoami (2026-07-29, public and restricted paths) and carried by ntfy's public router in the v0.8.0 host session; the `APP_TRAEFIK_THREAT` slot is how an application opts in |
 | `crowdsec-appsec`, `crowdsec-strict` | Designed here; deferred behind AppSec testing / recovery-path gates |
 | `geo-*` family | Deferred; mechanism undecided (edge vs Traefik geo plugin) |
 | Any app attachment (incl. Cal.diy) | None — whoami-first, then per-app opt-in |
