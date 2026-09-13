@@ -315,4 +315,3 @@ render switch for the CrowdSec integration (`CROWDSEC_BOUNCER_ENABLED`) landed
 afterwards, and `.github/dependabot.yml` now targets `dev` with an npm entry for
 `site/` — the "no update mechanism" finding above is narrower than it was: image
 pins are still manual, the site's dependencies and the workflow actions are not.
-
