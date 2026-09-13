@@ -51,6 +51,18 @@ session left open is in
       inbound/mid-session `ct original` case, and the guarded reboot acceptance.
       Sequence and evidence: `core/crowdsec/docs/firewall-bouncer.md` → "Verification
       status"
+- [ ] Rehearse the host reserve on a disposable host before it becomes a default.
+      The invariant is approved and documented (`docs/architecture.md` → "Workload
+      pressure must not consume what recovery needs"); the mechanism is not. The
+      rehearsal has to show container workloads in the intended hierarchy with
+      management services outside it, controlled container memory pressure reaching
+      the container boundary, and the trusted management path, the container runtime,
+      logs and the ability to stop the workload all surviving it — plus what happens
+      when the reserve is absent. Needs a host that may be lost.
+- [ ] Monitoring follow-up for the resilience model: alert on `OOMKilled`, on a
+      climbing restart count, on host swap usage and on memory PSI. None of the four
+      is covered by the thresholds v0.8.0 verified, and recovery should not depend on
+      someone watching a terminal.
 - [ ] Boot `apps/_reference/` once to confirm the template actually runs
 - [ ] Count the first-load requests for the four photo galleries — `apps/photoprism`,
       `apps/librephotos`, `apps/lycheeorg`, `apps/photoview`. All four sit at `sec-2`,
@@ -86,6 +98,41 @@ Listed with context in [`state.md`](state.md). Nothing proceeds on these until d
       column in `LIFECYCLE.md`
 - [ ] `backup/urbackup` has no restore section — restoring a *client* backup is a
       real procedure and the one gap left in that column
+- [x] **`core/traefik` off the 3.6 line.** Done 2026-09-13 — pin is `traefik:v3.7`.
+      **The bump has not run on a host.** Original finding: Security support for 3.6 ended 2026-08-16
+      and six advisories from 2026-09-07/10 are patched only in 3.7.12 / 3.7.13
+      (CVE-2026-88007 critical, 88004 / 88008 / 88009 high). Move `TRAEFIK_IMAGE` to
+      `traefik:v3.7`, work through the migration table now in
+      [`../core/traefik/UPSTREAM.md`](../core/traefik/UPSTREAM.md), and re-pull — the
+      test host ran 3.6.10 against a tag resolving to 3.6.25. Touches the live reverse
+      proxy, so it needs a host window
+- [x] **`core/dnsmasq` — the image is not receiving fixes.** Done 2026-09-13 — now
+      `dockurr/dnsmasq:2.93`. **Not started on a host.** Original finding: `4km3/dnsmasq:2.90-r3` was
+      built 2025-11-18 and upstream's last commit is from the same date. Six dnsmasq
+      CVEs published in 2026 (CVE-2026-2291 cache poisoning, CVE-2026-4892 DHCPv6 heap
+      write to root, CVE-2026-4890, -4893, -5172) were fixed in Alpine's 2.91-r1 on
+      2026-05-14. Decide between an image built on current Alpine and replacing the stack
+- [x] **Apply the 2026-09-13 sweep.** Done 2026-09-13 — 46 pins. Original scope: 16 stacks sit inside a published advisory range —
+      the list and the affected ranges are in
+      [`../docs/audits/dependency-sweep-2026-09-13.md`](../docs/audits/dependency-sweep-2026-09-13.md).
+      Same-line patches first (`core/portainer` 2.39.7 for CVE-2026-72533 critical,
+      `core/authentik` 2026.5.7, `apps/vaultwarden` 1.37.3, `business/zammad` 7.1.3-0012),
+      then the ones that cross a major (`apps/adminer` 6.0.2, `apps/homepage` 2.x,
+      `apps/librephotos` semver)
+- [ ] **Verify the 2026-09-13 sweep on a host.** 46 pins moved and nothing was
+      deployed, so every bumped stack's `Last verified` line still names the version
+      before the bump. Four need more than a restart: `core/dnsmasq` changed publisher
+      (`dockurr/dnsmasq` — confirm it answers a wildcard lookup and caches),
+      `core/traefik` moved to 3.7 (the migration table in its `UPSTREAM.md` lists what
+      changed; `apps/seafile` and `apps/seafile-pro` strip a prefix and 3.7.3 rejects a
+      non-normalized result), `apps/homepage` crosses a major that adds its own auth,
+      `apps/librephotos` changes tag scheme. Order: Traefik first — everything else is
+      behind it
+- [ ] **`Last verified` missing from 27 `UPSTREAM.md` files**, and three `Based on
+      version` fields name a tag their stack does not pin (`core/acme-certs` 3.1.2 vs
+      0.2.1, `apps/it-tools` a tag absent from the registry, `apps/monicahq` `5-apache`
+      vs `4.1.2-apache`). The sweep reads these fields first, so a wrong one costs a
+      stack its check. Candidate for `check-coverage.py`
 - [ ] **`apps/vaultwarden` → Docker Secrets.** The blocker recorded in `UPSTREAM.md`
       was wrong: Vaultwarden does support `_FILE`. The real obstacle is that the
       password sits inside `DATABASE_URL`, so the secret must carry the whole URL
