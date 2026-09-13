@@ -1,8 +1,17 @@
 version: 2
 
+# Every pull request Dependabot opens targets `dev`. The branch model in
+# docs/standards/commit-rules.md routes all change through `dev`; a pull request
+# against `main` has to be re-targeted by hand and then falls behind `dev` the
+# moment anything else merges there, because the `dev` ruleset requires an
+# up-to-date branch. Security updates follow the target-branch of the matching
+# version-updates entry, so the npm entry below is what keeps the site's
+# dependency pull requests off `main` as well.
+
 updates:
   - package-ecosystem: github-actions
     directory: /
+    target-branch: dev
     schedule:
       interval: weekly
       day: monday
@@ -13,5 +22,25 @@ updates:
       - dependencies
     groups:
       actions:
+        patterns:
+          - "*"
+
+  - package-ecosystem: npm
+    directory: /site
+    target-branch: dev
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: UTC
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - javascript
+    # One pull request per week for the site instead of one per package: the
+    # site build is the only check that exercises them, and five separate
+    # branches each fall behind `dev` as soon as the first one merges.
+    groups:
+      site:
         patterns:
           - "*"

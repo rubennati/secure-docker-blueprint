@@ -11,7 +11,7 @@
 - **License:** MIT
 - **Origin:** France · Traefik Labs · EU
 - **Based on versions:** Traefik `v3.7`, docker-socket-proxy `v0.4.2`
-- **Last verified:** 2026-07-29 (v3.6) — dual-stack, middleware chains, TLS profiles and the CrowdSec bouncer plugin all exercised on a live host. **The v3.7 pin has not been exercised on a host.**
+- **Last verified:** 2026-09-13 (v3.7.13, socket-proxy v0.5.0) — moved from 3.6.10 on a live host with the dual-stack overlay: 13 routed hosts plus one external consumer answered with the same status codes before and after, HTTP/3 answered a `--http3-only` request, the CrowdSec bouncer plugin loaded and polled the LAPI within one second of start, and the socket proxy served the Docker API on the unchanged template. Nothing in the rendered configuration changed for the move.
 - **Support window:** upstream policy since 3.6 is six months of support from a minor's GA date, with the last minor of a major supported for two years after the next major — https://doc.traefik.io/traefik/deprecation/releases/. 3.7 went GA 2026-05-05 and is the current line. **3.6 left security support on 2026-08-16** and 2.11 on 2026-09-07; neither is a pin target. Check this date before the next bump, not the version number alone.
 
 ## What we use
@@ -53,9 +53,23 @@
   path-scoped routing and middleware), CVE-2026-88011 and CVE-2026-88012. All are
   patched in 3.7.12 or 3.7.13. The full finding is in
   [`../../docs/audits/dependency-sweep-2026-09-13.md`](../../docs/audits/dependency-sweep-2026-09-13.md).
-- **The 3.7 pin is a desk change.** It has not run on a host. The migration table in
-  the upgrade checklist below lists what changes between 3.6 and 3.7.13; two entries
-  touch configuration this repository ships.
+- **Moved on a host on 2026-09-13**, from 3.6.10 straight to 3.7.13 with the rendered
+  configuration untouched. The bouncer plugin at `v1.4.5` — the version that host had
+  rendered, older than the `v1.7.1` this template names — loaded under 3.7.13 without
+  change, so the plugin/interpreter boundary held across the minor. A throwaway
+  `traefik:v3.7` container run against a copy of the live configuration with the ACME
+  resolvers and the Docker provider removed answered that question before the live
+  container was touched; it is a cheap preflight and it is what the checklist below
+  now asks for.
+- **The enable flow for the CrowdSec integration edits tracked files.** The README
+  has the operator uncomment blocks in `traefik.yml.tmpl` and
+  `integrations.yml.tmpl`, then render. Both templates are in git, so the next
+  `git pull` or checkout puts the comments back — and the next `render.sh` then
+  writes a configuration without the plugin and without the middleware, while the
+  running container still has both. That host was in exactly that state: templates
+  pristine, rendered files enabled. Until the render is gated on a variable, **do not
+  re-run `render.sh` on a host with the integration enabled without diffing
+  `config/` afterwards.** Recorded in `.ai/tasks.md`.
 - Traefik v2 → v3 was a breaking upgrade; **do not** jump majors without reading the migration guide: https://doc.traefik.io/traefik/migration/v2-to-v3/
 - `tecnativa/docker-socket-proxy:v0.5.0` is pinned, moved from `v0.4.2` on 2026-09-13. Minor releases change the set of default-enabled endpoints — re-confirm `CONTAINERS`/`NETWORKS`/`ALLOW_*` flags after each bump. v0.5.0 updates the HAProxy base and adds `ALLOW_PAUSE` / `ALLOW_UNPAUSE`, both in upstream's revoked-by-default group, so the permitted surface is unchanged.
 - CrowdSec bouncer plugin is pinned to `v1.7.1` in `traefik.yml.tmpl`, inside the block that ships commented out. Releases: https://github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin/releases
@@ -74,7 +88,7 @@ section per patch release. Between 3.6 and 3.7.13 these apply to this blueprint:
 |---|---|---|
 | 3.7.13 | `Upgrade: h2c` and `HTTP2-Settings` are no longer forwarded; use the `h2c://` scheme | any backend negotiating cleartext HTTP/2 |
 | 3.7.13 | rootless request targets rejected with 400 (RFC 9112) | clients sending non-conforming targets |
-| 3.7.12 | `underscoreHeadersStrategy` deprecated in favour of `aliasHeadersStrategy` (`keep` default, `delete`, `reject`) | neither is set in `traefik.yml.tmpl` |
+| 3.7.12 | `underscoreHeadersStrategy` deprecated in favour of `aliasHeadersStrategy` (`keep` default, `delete`, `reject`) | neither is set in `traefik.yml.tmpl`. **3.7.12+ logs a warning per entrypoint at every start while the option is unset** — `aliasHeadersStrategy is not configured: the request headers whose name aliases another header name … are forwarded`. Expected at the default; the option and its values are documented in the template |
 | 3.7.9 | HTTP/1 `CONNECT` rejected with 501 | no router here uses CONNECT |
 | 3.7.7 | bare `` Host(`*`) `` becomes a catch-all | no rule here uses a bare `*` |
 | 3.7.3 | `StripPrefix` / `StripPrefixRegex` reject with 400 when stripping yields a non-normalized path; `BasicAuth` with no users returns 404 | `apps/seafile` and `apps/seafile-pro` strip `/sdoc-server` |
@@ -82,6 +96,20 @@ section per patch release. Between 3.6 and 3.7.13 these apply to this blueprint:
 
 1. Read the Traefik release notes: https://github.com/traefik/traefik/releases
 2. Bump `TRAEFIK_IMAGE` in `.env`
+2a. Preflight the plugin and the configuration against the new image before touching
+    the running container. Copy `config/` somewhere outside the tree, strip
+    `certificatesResolvers` and `providers.docker` from the copy of `traefik.yml` and
+    every `certResolver:` line from the dynamic files, then:
+
+    ```bash
+    docker run -d --name tf-preflight -v /path/to/copy:/etc/traefik:ro \
+      traefik:v3.x --configFile=/etc/traefik/traefik.yml
+    sleep 30 && docker logs tf-preflight 2>&1 | grep -iE 'plugin|error'
+    docker rm -f tf-preflight
+    ```
+
+    No ports are published and no resolver is present, so it can neither take traffic
+    nor talk to an ACME endpoint. "Plugins loaded." with no error line is the answer.
 3. Re-render (no changes expected, but catches any env drift):
 
    ```bash

@@ -423,6 +423,57 @@ docker compose exec svc printenv VAR_NAME   # what did the container get?
 
 ---
 
+### 5.3 `up -d` fails with "container name is already in use" after a service was renamed — and leaves the app created but not started
+
+**Symptom:** after pulling a version of a compose file in which a service was renamed
+(for example `nginx` → `nextcloud-nginx`), `docker compose up -d` recreates the
+other services and then stops:
+
+```text
+Container nextcloud-nginx  Error response from daemon: Conflict. The container name
+"/nextcloud-nginx" is already in use by container "<id>"
+```
+
+The application container has already been recreated at that point and is **not
+started** — `docker compose ps` shows it `created`, the route answers 404 or 502, and
+the stack stays that way until someone intervenes. A second plain `up -d` fails the
+same way.
+
+**Cause:** the old service's container still exists. Compose identifies containers by
+project and service label, so a container whose service name is no longer in the file
+is an *orphan* — and `up -d` leaves orphans alone unless told otherwise. This
+repository sets `container_name` explicitly, and the renamed service claims the same
+name the orphan already holds. Compose creates the new containers in file order, hits
+the conflict when it reaches the renamed one, and aborts before the start phase.
+
+**Fix:** run the same command once with `--remove-orphans`, keeping every `-f` you
+normally pass:
+
+```bash
+docker compose up -d --remove-orphans
+```
+
+Keep the `-f` set identical to the usual one. A stack started with an overlay
+(`core/traefik` with `network-dual-stack.yml`, `apps/paperless-ngx` with `sso.yml`)
+defines services in the overlay, and `--remove-orphans` without that `-f` treats them
+as orphans and removes them.
+
+**Afterwards:** compose may have left a container under a temporary name of the form
+`<12-hex>_<container_name>` — it renames the old container out of the way before
+creating the new one, and an aborted run keeps the interim name. The container is the
+right one (it carries the current labels and image); give it its name back rather
+than recreating it:
+
+```bash
+docker ps -a --filter name=_nextcloud-cron
+docker rename <12-hex>_nextcloud-cron nextcloud-cron
+```
+
+Both `apps/nextcloud` and `business/invoiceninja` hit this on 2026-09-13 on the same
+host, from the same rename.
+
+---
+
 ## 6. Healthcheck Issues
 
 ### 6.0 Before writing any healthcheck — check the image type first
