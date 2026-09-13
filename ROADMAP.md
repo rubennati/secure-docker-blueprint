@@ -21,6 +21,13 @@ cannot have one. `python3 scripts/ci/check-structure.py` is the progress bar for
 both: it reports `no-resources` and `no-healthcheck` per service, and currently
 reports neither.
 
+**Swap values are part of this now.** Every service states a swap policy, and the
+default — `memswap_limit` equal to `memory` — needs no measurement. A value above it
+does, for the same reason a memory ceiling does: it has to clear the workload's real
+peak. `check-structure.py` counts the stacks still leaving swap implicit, one line per
+compose file, and that count is the progress bar. The rule becomes a failure once the
+tree is migrated.
+
 **What remains is the values.** The ceilings in place were derived — from what a
 component budgets for itself, from a peak where one was available, and generously
 on purpose, because a limit the normal workload reaches kills an import and looks

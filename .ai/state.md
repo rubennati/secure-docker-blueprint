@@ -115,6 +115,38 @@ a migration. A future architectural consideration, not debt.
 Suricata and Coraza are evaluation entries in [`../ROADMAP.md`](../ROADMAP.md) →
 "Evaluating"; neither is implemented. SIEM/XDR/SOC platforms are out of scope there.
 
+## Host resilience — policy in place 2026-09, mechanism deferred
+
+An OnlyOffice process on a derived deployment took a host down; the stack's own 4G
+ceiling would have contained the resident-memory half of it, so that part reads as
+deployment drift rather than a gap. The investigation found three real ones, and
+this phase closes the policy side of them.
+
+**In place.** Swap is bounded per service: `memswap_limit` equal to `memory` means no
+swap and is the default, a higher value is a justified exception, and unset is no
+longer acceptable — Docker otherwise grants as much swap again as the memory limit,
+which is how a container inside its cap still pages a host into uselessness.
+`security-baseline.md` owns the requirement, `compose-structure.md` the values.
+`no-resources` is now a FAIL in `check-structure.py`; the swap rule is a WARN counted
+per compose file until v0.9.0 migrates the tree. `live-restore` is in the reference
+daemon configuration. `resource-measurement.md` carries a drift procedure — compose
+config against `docker inspect` against cgroup state — and the corrected meaning of
+`reservations.memory`, which is a reclaim preference and never a guarantee.
+`TROUBLESHOOTING.md` §4.6 covers the swap-pressure symptom.
+
+**Deferred.** The host reserve is approved as an invariant — workload pressure must
+not consume what management and recovery need — and its mechanism is not installed.
+The candidate is a separate cgroup hierarchy for workloads with memory protection on
+the management slice; it needs a rehearsal on a disposable host first, and what that
+rehearsal must establish is in `docs/architecture.md`. Tracked in
+[`tasks.md`](tasks.md).
+
+**v0.9.0 work.** Per-workload memory and swap calibration, from measurement.
+
+**Monitoring follow-up.** Alerts on `OOMKilled`, restart-count growth, swap usage and
+memory PSI — none covered by the thresholds v0.8.0 verified. Tracked in
+[`tasks.md`](tasks.md), not started here.
+
 ## Immediate next steps
 
 The disposable host carried v0.7.0 and v0.8.0. What runs on it next, in this

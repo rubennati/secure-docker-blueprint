@@ -9,7 +9,7 @@
 - **License:** Elastic License 2.0
 - **Origin:** US · Invoice Ninja LLC · non-EU
 - **Note:** Elastic License 2.0 is not OSI-approved — source-available, not open source. Self-hosting permitted; providing it as a managed service to others is restricted.
-- **Based on version:** `5.13.26`
+- **Based on version:** `5.13.40`
 - **Last verified:** 2026-07-29 (5.13.26) — on a live host: install, secrets through the wrapper entrypoint, routing under `acc-tailscale`, and an invoice created, sent by mail and opened in the client portal
 
 ## Pinned Versions

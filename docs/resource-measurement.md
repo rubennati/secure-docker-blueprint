@@ -91,13 +91,17 @@ it is unmeasured rather than deriving a limit from it.
    `apps/_reference/docker-compose.yml` states. Not because the container needs
    twice as much, but because the cap exists to stop runaway growth, not to
    right-size the application.
-3. Round to the nearest profile in the
-   [security baseline table](standards/security-baseline.md), rather than writing
-   `733M`. The profiles exist so a reviewer can see at a glance which class a
-   service belongs to.
-4. Where the measurement lands **above** its profile, the profile is not wrong —
-   that service is in a different class than assumed. Note which, so the table can
-   be corrected at its owner.
+3. Round to the nearest value in the role table in
+   [`standards/compose-structure.md`](standards/compose-structure.md#block-rules)
+   rather than writing `733M`. The roles exist so a reviewer can see at a glance
+   which class a service belongs to.
+4. Where the measurement lands **above** its role, the role is not wrong — that
+   service is in a different class than assumed. Note which, so the table can be
+   corrected at its owner.
+5. Decide the swap policy in the same pass. `memswap_limit` equal to `memory` is
+   the default; a higher value needs the peak that justifies it. Leaving it unset
+   grants the container as much swap again as its memory limit, which is the one
+   allowance nobody chose.
 
 One-shot and migration containers get no limit at all. Capping something that has
 to finish once is how a restore stops halfway.
@@ -119,8 +123,16 @@ deploy:
       memory: 128m
 ```
 
-`reservations` is the soft floor the scheduler tries to keep available; keep it
-well under the limit.
+`reservations.memory` is **not** a guarantee. Docker maps it to a soft limit that
+matters only when the host is under memory pressure: the kernel reclaims from
+containers above their reservation before it touches ones below it. Nothing holds
+the memory open in advance, and a container may sit below its reservation and still
+be reclaimed if nothing else is reclaimable. Keep it well under the limit and read
+it as a reclaim preference, not a floor.
+
+`memswap_limit` is the memory-plus-swap ceiling, not a separate swap budget:
+`memory: 512m` with `memswap_limit: 512m` means no swap, and `768m` means 256 MB of
+swap on top.
 
 ## Confirming a limit rather than assuming it
 
@@ -135,6 +147,50 @@ journalctl -k | grep -i "killed process"
 
 `OOMKilled: true` means the limit is too low, full stop — not that the application
 leaks. Raise it, record the new peak, and note what workload produced it.
+
+## Does this deployment still enforce what the repository defines
+
+A limit in a compose file is not a limit in the kernel. A container keeps the
+`HostConfig` it was created with, so an edited file changes nothing until the
+container is **recreated** — neither `docker compose restart` nor a Docker daemon
+restart applies a new value.
+
+Three sources, in order, and the answer is the disagreement between them:
+
+```bash
+# 1. What the repository defines, with variables resolved
+docker compose config | grep -A6 -E 'memswap_limit|resources:'
+
+# 2. What the running container actually enforces
+docker inspect <container> --format \
+  'mem={{.HostConfig.Memory}} swap={{.HostConfig.MemorySwap}} pids={{.HostConfig.PidsLimit}} restart={{.HostConfig.RestartPolicy.Name}} oomkilled={{.State.OOMKilled}} restarts={{.RestartCount}}'
+
+# 3. What the kernel enforces, when the two disagree
+cat /sys/fs/cgroup/system.slice/docker-$(docker inspect -f '{{.Id}}' <container>).scope/memory.max
+```
+
+Across every running container at once:
+
+```bash
+for c in $(docker ps --format '{{.Names}}'); do
+  docker inspect "$c" --format \
+    '{{printf "%-28s" .Name}} mem={{.HostConfig.Memory}} swap={{.HostConfig.MemorySwap}} pids={{.HostConfig.PidsLimit}} oomkilled={{.State.OOMKilled}} restarts={{.RestartCount}}'
+done
+```
+
+Read it against three expectations:
+
+| Observation | Meaning |
+|---|---|
+| `mem=0` | no limit in force — the container predates the limit, or was never recreated |
+| `swap` at twice `mem` | swap left implicit; the container may page as much again as its cap |
+| `swap` equal to `mem` | the stated policy is in force |
+| `pids=<nil>` or `0` | no PID bound — a fork bomb reaches the host |
+| `oomkilled=true` | the cap was reached; either the workload grew or the limit is too low |
+| a climbing `restarts` with `oomkilled=true` | a restart loop against the cap, not a healthy service |
+
+A container the repository knows nothing about — no compose project label — is drift
+of a different kind, and worth resolving before reading anything else.
 
 ## Recording it
 

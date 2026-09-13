@@ -8,6 +8,49 @@ if [ ! -f "${ROOT_DIR}/.env" ]; then
   exit 1
 fi
 
+# Check the syntax before sourcing. `set -a; source .env` runs the file as bash,
+# so an unquoted value containing a space is parsed as a command and the operator
+# gets a bash error naming the second word, not the variable. Refuse the file
+# first and say which line is wrong.
+env_syntax_errors=0
+while IFS= read -r line_no_and_text; do
+  line_no="${line_no_and_text%%:*}"
+  line="${line_no_and_text#*:}"
+  case "${line}" in
+    ''|'#'*) continue ;;
+  esac
+  # Must be NAME=... — anything else is not an assignment bash will accept here.
+  if ! printf '%s' "${line}" | grep -qE '^[A-Za-z_][A-Za-z0-9_]*='; then
+    echo "ERROR: .env line ${line_no} is not a NAME=value assignment: ${line}"
+    env_syntax_errors=$((env_syntax_errors + 1))
+    continue
+  fi
+  value="${line#*=}"
+  # A value wrapped in a matching pair of quotes is fine whatever is inside it.
+  # Compare the first and last character rather than globbing for a quote, which
+  # needs escaping that is easy to get wrong and silently matches nothing.
+  first_char="${value%"${value#?}"}"
+  last_char="${value#"${value%?}"}"
+  if [ "${#value}" -ge 2 ] && [ "${first_char}" = "${last_char}" ] \
+     && { [ "${first_char}" = '"' ] || [ "${first_char}" = "'" ]; }; then
+    continue
+  fi
+  # An unquoted value with whitespace is parsed as a command by `source`.
+  case "${value}" in
+    *[[:space:]]*)
+      echo "ERROR: .env line ${line_no} has an unquoted value containing a space — quote it: ${line}"
+      env_syntax_errors=$((env_syntax_errors + 1))
+      ;;
+  esac
+done < <(grep -n '' "${ROOT_DIR}/.env")
+
+if [ "${env_syntax_errors}" -gt 0 ]; then
+  echo ""
+  echo "Refusing to continue: ${env_syntax_errors} syntax problem(s) in .env."
+  echo "render.sh sources the same file, so it would fail the same way with a less useful message."
+  exit 1
+fi
+
 set -a
 source "${ROOT_DIR}/.env"
 set +a

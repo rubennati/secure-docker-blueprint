@@ -56,6 +56,10 @@ services:
     # A compromised or looping container must not take the host down. Start with
     # generous caps, then retune from real usage (`docker stats`) to ~2x peak.
     # pids belongs here — a top-level `pids_limit` conflicts with deploy.resources.
+    # memswap_limit == memory: no swap. A bounded value above it is allowed where a
+    # workload has a transient peak worth paging rather than killing — with the
+    # justification beside it, as compose-structure.md requires.
+    memswap_limit: 512m
     deploy:
       resources:
         limits:
@@ -126,6 +130,10 @@ services:
       - /var/cache/nginx
 
     # --- Resources ---
+    # memswap_limit == memory: no swap. A bounded value above it is allowed where a
+    # workload has a transient peak worth paging rather than killing — with the
+    # justification beside it, as compose-structure.md requires.
+    memswap_limit: 512m
     deploy:
       resources:
         limits:
