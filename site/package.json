@@ -12,7 +12,7 @@
     "check:self": "node scripts/check-content.mjs --self-test"
   },
   "dependencies": {
-    "@astrojs/starlight": "^0.41.4",
+    "@astrojs/starlight": "^0.42.0",
     "astro": "^7.3.2",
     "sharp": "^0.35.3"
   },
