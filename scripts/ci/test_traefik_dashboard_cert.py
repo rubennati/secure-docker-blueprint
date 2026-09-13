@@ -21,7 +21,7 @@ TRAEFIK = REPO / "core" / "traefik"
 
 BASE_ENV = {
     "TZ": "UTC",
-    "TRAEFIK_IMAGE": "traefik:v3.6",
+    "TRAEFIK_IMAGE": "traefik:v3.7",
     "SOCKET_PROXY_IMAGE": "tecnativa/docker-socket-proxy:0.3.0",
     "PUBLIC_NETWORK": "proxy-public",
     "SOCKET_PROXY_NETWORK": "socket-proxy",

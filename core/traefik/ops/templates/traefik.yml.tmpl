@@ -74,6 +74,17 @@ entryPoints:
     # Same Cloudflare allowlist as the "web" entrypoint above.
     forwardedHeaders:
       trustedIPs: *cloudflareTrustedIPs
+    # http.aliasHeadersStrategy (Traefik v3.7.12+, replaces
+    # underscoreHeadersStrategy) decides what happens to a header whose name
+    # aliases another one — X_Forwarded_For against X-Forwarded-For, and every
+    # other aliasing character, not only the underscore. Upstream default is
+    # "keep", which forwards both and lets the backend pick. "delete" drops the
+    # aliased form; "reject" answers 400. A backend that reads the aliased form
+    # while a middleware reads the canonical one is the CVE-2026-88011 shape.
+    # Left at the upstream default — set it per deployment once the backends
+    # behind this proxy are known:
+    #   http:
+    #     aliasHeadersStrategy: delete
     http3:
       advertisedPort: 443
     http:
