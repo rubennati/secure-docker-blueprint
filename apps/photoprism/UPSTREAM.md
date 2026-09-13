@@ -8,7 +8,7 @@
 - **Compose docs:** https://docs.photoprism.app/getting-started/docker-compose/
 - **License:** AGPL-3.0
 - **Origin:** Germany · PhotoPrism AG · EU
-- **Based on version:** `latest`
+- **Based on version:** `260728` (upstream tags `YYMMDD`)
 - **Last checked:** 2026-04-17
 
 ## What we use

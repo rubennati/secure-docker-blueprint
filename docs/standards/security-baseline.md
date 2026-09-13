@@ -79,10 +79,16 @@ instead.
 
 ### Resource Limits
 
-Every service carries a `memory` and a `pids` limit. An unbounded leak runs until
-the kernel OOM-killer fires, and the process it selects is not necessarily the one
-that allocated. A fork bomb exhausts the global pid space, after which the host
+Every service carries a `memory`, a `pids` and a `memswap_limit`. An unbounded leak
+runs until the kernel OOM-killer fires, and the process it selects is not necessarily
+the one that allocated. A fork bomb exhausts the global pid space, after which the host
 starts no further process, including a login shell.
+
+A memory limit alone leaves swap unbounded. Docker grants a container as much swap
+again as its memory limit when `memswap_limit` is unset, so a service inside its cap
+can still page the host into unusability without ever being killed. The control is
+that the allowance is **stated** rather than inherited; whether it is zero or a
+deliberate amount is a per-workload value.
 
 A CPU limit bounds neither. Under contention the scheduler distributes cycles, so a
 container spinning on the CPU makes the others slow rather than unavailable. `cpus`
@@ -91,7 +97,8 @@ set.
 
 The values, their derivation and the role table are in
 [`compose-structure.md`](compose-structure.md#block-rules), which owns every rule in
-this repository that carries a number.
+this repository that carries a number — including which swap value belongs to which
+workload.
 
 ## Secrets
 

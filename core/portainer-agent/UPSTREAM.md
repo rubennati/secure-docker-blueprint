@@ -7,6 +7,7 @@
 - **Docker Hub:** https://hub.docker.com/r/portainer/agent
 - **License:** zlib (https://github.com/portainer/agent/blob/develop/LICENSE)
 - **Origin:** New Zealand · Portainer.io Ltd · non-EU (official agent for the Portainer platform)
+- **Based on version:** `2.39.7`
 - **Last verified:** 2026-05-05 (v2.39.1)
 
 ## What we changed and why

@@ -3,11 +3,11 @@
 ## Source
 
 - **Image:** https://hub.docker.com/r/fnsys/dockhand
-- **GitHub:** https://github.com/finsys/dockhand
+- **GitHub:** https://github.com/Finsys/dockhand
 - **Docs:** Project-internal (see image description on Docker Hub)
 - **License:** BSL 1.1 — source-available, **not** open source; converts to Apache-2.0 on 2029-01-01. Free for personal, internal business, non-profit and educational use; offering it as a hosted service is not permitted
 - **Origin:** Finsys · **no country or legal entity stated** — no imprint on fnsys.pro or dockhand.pro
-- **Based on version:** `v1.0.39`
+- **Based on version:** `v1.0.47`
 - **Last checked:** 2026-04-16
 
 ## What we use
@@ -25,6 +25,10 @@
 | `POSTGRES_INITDB_ARGS: --data-checksums` | Extra integrity checks on the PostgreSQL data files |
 | `read_only: true` + `tmpfs` on socket proxy | Defense in depth — the proxy container has no writable root filesystem |
 | TLS profile `tls-modern` + `acc-tailscale` + `sec-4` | Admin tool, VPN-only, strict rate limiting |
+
+## Version / tag notes
+
+- `v1.0.39` → `v1.0.47` on 2026-09-13, eight patches. No published advisory against either.
 
 ## Upgrade checklist
 

@@ -8,7 +8,7 @@
 - **LSIO GitHub:** https://github.com/linuxserver/docker-bookstack
 - **License:** MIT (BookStack) / GPL-3 (LSIO scripts)
 - **Origin:** UK · Dan Brown (BookStack) · non-EU
-- **Based on version:** `version-v26.05.2` (= BookStack 26.05.2)
+- **Based on version:** `version-v26.05.4` (= BookStack 26.05.4)
 - **Last verified:** 2026-05-03 (v25.02)
 
 ## What we use

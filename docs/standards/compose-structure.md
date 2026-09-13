@@ -29,6 +29,7 @@ services:
     user:                     # Non-root user (if image supports it)
 
     # --- Resources ---
+    memswap_limit:            # memory + swap ceiling — bounds swap explicitly
     deploy:                   # resources.limits (memory, cpus, pids) + reservations
 
     # --- Configuration ---
@@ -110,6 +111,55 @@ Then leave roughly half again on top.
 default** — they make a stack slow under load rather than safe,
 and a busy container is not the failure mode this is guarding against.
 
+### Swap has to be bounded on purpose
+
+A memory limit alone does not bound what a container can take from the host.
+`memory` caps resident memory; swap is a separate allowance, and Docker grants one
+implicitly. With `memory` set and `memswap_limit` unset, the container may use **the
+memory limit again in swap** — a 4G service becomes 4G RAM plus 4G swap. Verified
+against the running daemon: unset renders `MemorySwap` at twice `Memory`.
+
+That is the failure a memory limit does not catch. A container inside its cap, paging
+steadily against a small host swap area, degrades the whole machine without ever being
+killed — the container OOM-killer fires only once memory *and* the swap allowance are
+exhausted. Several such containers need no bug to make a host unusable.
+
+**Every service with a memory limit states its swap policy.** The mechanism is fixed;
+the value is not:
+
+| `memswap_limit` | Effect | Use when |
+|---|---|---|
+| equal to `memory` | no swap; the container reaches its cap and is OOM-killed cleanly | the default choice — failure stays inside the container |
+| greater than `memory` | a bounded, deliberate amount of swap on top | a workload with a known transient peak that is cheaper to page than to kill |
+| unset | implicit: as much swap again as `memory` | not acceptable — the amount is accidental rather than chosen |
+
+`memswap_limit` sits beside `deploy:` in the Resources block. Unlike `pids_limit` it
+does not conflict with a `deploy:` block.
+
+```yaml
+memswap_limit: 512m          # == memory: no swap
+deploy:
+  resources:
+    limits:
+      memory: 512m
+```
+
+A value above `memory` carries its justification the way a `cpus` value does — upstream
+requirement, measured peak, or repository evidence. Where none exists yet, say so:
+
+```yaml
+# memswap_limit: estimated / requires validation — v0.9.0
+memswap_limit: 6g
+deploy:
+  resources:
+    limits:
+      memory: 4g
+```
+
+**A swap policy is not a memory budget.** Lowering `memory` to reserve host memory is
+the wrong move: the ceiling is a blast radius, and a workload that reaches it during
+ordinary work was capped too low.
+
 A `cpus` value stands in two cases: where a component demonstrably pins a core, and
 where a derived starting value is carried until v0.9.0 measures it. The second case
 is declared beside the value in the compose file, so a reader can tell a measurement
@@ -133,9 +183,21 @@ Put `pids` inside `deploy.resources.limits` — a top-level `pids_limit` alongsi
 `deploy.resources` is rejected by Compose. Use `deploy:` rather than the top-level
 `mem_limit`, which is deprecated and does not apply in Swarm mode.
 
-`memory` and `pids` are required on every service. `cpus` is the exception, set
-only where a component demonstrably pins a core; [`security-baseline.md`](security-baseline.md#resource-limits)
-states which host failure each of the three bounds.
+`memory`, `pids` and `memswap_limit` are required on every service. `cpus` is the
+exception, set only where a component demonstrably pins a core;
+[`security-baseline.md`](security-baseline.md#resource-limits) states which host
+failure each of them bounds.
+
+### What is written here is not what is running
+
+These values describe the repository. They say nothing about a running host until a
+container is **recreated** — `docker compose up -d` after the file changed. Restarting
+a container reuses its existing `HostConfig`, so a restart applies no new limit, and
+neither does a Docker daemon restart. A limit in git and a limit in the kernel are two
+different facts, and only the second one contains anything.
+
+Confirming the second is a separate procedure, in
+[`../resource-measurement.md`](../resource-measurement.md).
 
 **Configuration** (required)
 

@@ -7,7 +7,7 @@
 - **Docker images:** `jhumanj/opnform-api` + `jhumanj/opnform-client` on ghcr.io and Docker Hub
 - **License:** AGPL-3.0
 - **Origin:** France · Julien Nahum · EU
-- **Based on version:** `latest`
+- **Based on version:** `2.5.0`
 - **Last checked:** 2026-04-17
 
 ## What we use

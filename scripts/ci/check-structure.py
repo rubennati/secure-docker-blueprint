@@ -20,7 +20,8 @@ WARN (reported — structural drift):
   section-order     .env.example sections out of canonical order
   container-name    CONTAINER_NAME_* not derived from ${COMPOSE_PROJECT_NAME}
   env-file          `env_file:` used instead of an explicit `environment:` map
-  no-resources      service without a memory or pids limit
+  no-resources      service without a memory or pids limit (FAIL)
+  no-swap-policy    service with a memory limit and no explicit memswap_limit
   no-healthcheck    service without a healthcheck
   tls-options       Traefik tls.options without the @file suffix
   real-domain       a hostname that is not *.example.com
@@ -416,6 +417,8 @@ def check_one_compose(app: Path, path: Path, findings: list[dict]) -> None:
                          "detail": f"{path.name} is not valid YAML: {exc}"})
         return
 
+    swapless: list[str] = []
+
     for name, svc in (data.get("services") or {}).items():
         if not isinstance(svc, dict):
             continue
@@ -436,18 +439,31 @@ def check_one_compose(app: Path, path: Path, findings: list[dict]) -> None:
             findings.append({"level": "WARN", "rule": "env-file", "service": name,
                              "detail": "uses env_file: — prefer an explicit environment: map"})
 
-        # -- resources (WARN) -------------------------------------------------
+        # -- resources (FAIL) -------------------------------------------------
         # `memory` and `pids` are the two limits that bound the host: an unbounded
         # leak reaches the OOM-killer, which does not necessarily select the process
         # that allocated, and a fork bomb exhausts the global pid space. `cpus` is
         # not checked — it bounds neither, and compose-structure.md states the two
         # cases in which one is set.
+        #
+        # FAIL rather than WARN: every service in the tree carries both, so this
+        # guards the property rather than reporting drift towards it.
         limits = ((svc.get("deploy") or {}).get("resources") or {}).get("limits") or {}
         absent = [k for k in ("memory", "pids") if k not in limits]
         if absent:
-            findings.append({"level": "WARN", "rule": "no-resources", "service": name,
+            findings.append({"level": "FAIL", "rule": "no-resources", "service": name,
                              "detail": f"deploy.resources.limits without {' and '.join(absent)}"
                                        " — unbounded container"})
+
+        # -- swap policy (WARN, becomes FAIL with v0.9.0) ----------------------
+        # A memory limit leaves swap unbounded: with `memswap_limit` unset Docker
+        # grants as much swap again as the memory limit, so a container inside its
+        # cap can still page the host into unusability without being killed.
+        # Counted per stack rather than per service — the migration is a v0.9.0
+        # calibration pass, and 100+ individual lines would bury the actionable
+        # findings. compose-structure.md owns which value belongs to which workload.
+        if "memory" in limits and "memswap_limit" not in svc:
+            swapless.append(name)
 
         # -- healthcheck (WARN) -----------------------------------------------
         # A service can legitimately have none: some images ship their own, which
@@ -479,6 +495,13 @@ def check_one_compose(app: Path, path: Path, findings: list[dict]) -> None:
             if "tls.options=" in str(label) and "@file" not in str(label):
                 findings.append({"level": "WARN", "rule": "tls-options", "service": name,
                                  "detail": "tls.options without @file will not resolve"})
+
+    # -- swap policy, one line per compose file (WARN) ------------------------
+    if swapless:
+        findings.append({"level": "WARN", "rule": "no-swap-policy",
+                         "detail": f"{path.name}: {len(swapless)} service(s) with a memory "
+                                   f"limit and no memswap_limit — swap left implicit "
+                                   f"({', '.join(sorted(swapless))})"})
 
 
 def root_gitignore() -> str:

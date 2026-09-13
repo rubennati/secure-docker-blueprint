@@ -111,10 +111,17 @@
     #   Other machine in LAN: http://192.168.1.50:9000/...
     #   Central auth server:  https://auth.example.com/...
     # ------------------------------------------------------
+#
+    # trustForwardHeader is NOT set here. Traefik deprecated it in v3.6.14 in
+    # favour of forwardedHeaders.trustedIPs at entrypoint level, which
+    # traefik.yml.tmpl already sets for both entrypoints. Setting it to true
+    # makes ForwardAuth trust X-Forwarded-* from any source, which is the
+    # CVE-2026-35051 and CVE-2026-54764 class: a client spoofs
+    # X-Forwarded-Prefix or X-Forwarded-Port and the auth decision follows it.
+    # ------------------------------------------------------
 #     sec-authentik:
 #       forwardAuth:
 #         address: "http://authentik-server:9000/outpost.goauthentik.io/auth/traefik"
-#         trustForwardHeader: true
 #         authResponseHeaders:
 #           - X-authentik-username
 #           - X-authentik-groups

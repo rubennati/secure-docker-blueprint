@@ -9,7 +9,7 @@
 - **Reference compose:** https://docs.goauthentik.io/docs/installation/docker-compose
 - **License:** MIT
 - **Origin:** Netherlands · Authentik Security · EU
-- **Based on version:** `2026.5.6`
+- **Based on version:** `2026.5.7`
 - **Last verified:** 2026-07-26 (v2026.5.6)
 
 ## What we use

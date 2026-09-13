@@ -6,7 +6,7 @@
 - **Docs:** https://github.com/Finsys/hawser/blob/main/README.md
 - **License:** MIT
 - **Origin:** Finsys · **no country or legal entity stated** — no imprint on fnsys.pro
-- **Based on version:** 0.2.39
+- **Based on version:** `0.2.47`
 - **Last checked:** 2026-04-14
 
 ## What we changed and why
@@ -52,6 +52,14 @@ docker exec hawser-app wget -qO- http://127.0.0.1:2376/_hawser/health
 
 # Check in Dockhand UI: host should appear as "connected"
 ```
+
+## Version / tag notes
+
+- **`0.2.46` changed the authentication default.** Authentication is now required;
+  `ALLOW_INSECURE_NO_AUTH=true` restores the previous behaviour. This stack passes
+  `HAWSER_TOKEN`, so the bump from `0.2.39` to `0.2.47` does not lock it out — a
+  deployment that relied on the old default would be locked out.
+- `0.2.47` restricts `/etc/hawser/config` to mode 0600. Moved on 2026-09-13.
 
 ## Upgrade checklist
 

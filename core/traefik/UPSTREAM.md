@@ -10,8 +10,9 @@
 - **CrowdSec bouncer plugin:** https://github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
 - **License:** MIT
 - **Origin:** France · Traefik Labs · EU
-- **Based on versions:** Traefik `v3.6`, docker-socket-proxy `v0.4.2`
-- **Last verified:** 2026-07-29 (v3.6) — dual-stack, middleware chains, TLS profiles and the CrowdSec bouncer plugin all exercised on a live host
+- **Based on versions:** Traefik `v3.7`, docker-socket-proxy `v0.4.2`
+- **Last verified:** 2026-07-29 (v3.6) — dual-stack, middleware chains, TLS profiles and the CrowdSec bouncer plugin all exercised on a live host. **The v3.7 pin has not been exercised on a host.**
+- **Support window:** upstream policy since 3.6 is six months of support from a minor's GA date, with the last minor of a major supported for two years after the next major — https://doc.traefik.io/traefik/deprecation/releases/. 3.7 went GA 2026-05-05 and is the current line. **3.6 left security support on 2026-08-16** and 2.11 on 2026-09-07; neither is a pin target. Check this date before the next bump, not the version number alone.
 
 ## What we use
 
@@ -42,8 +43,21 @@
 
 ## Version / tag notes
 
-- `traefik:v3.6` is pinned to the 3.6 minor line. Traefik v2 → v3 was a breaking upgrade; **do not** jump majors without reading the migration guide: https://doc.traefik.io/traefik/migration/v2-to-v3/
-- `tecnativa/docker-socket-proxy:v0.4.2` is pinned. Minor releases change the set of default-enabled endpoints — re-confirm `CONTAINERS`/`NETWORKS`/`ALLOW_*` flags after each bump.
+- `traefik:v3.7` is pinned to the 3.7 minor line, which resolves to `3.7.13`. It was
+  moved off `v3.6` on 2026-09-13 because 3.6 had left security support on 2026-08-16
+  and six advisories published 2026-09-07 and 2026-09-10 have no fix on any 3.6
+  release: CVE-2026-88007 (critical, HTTP/3 backend NTLM connection reuse),
+  CVE-2026-88008 (high, request smuggling), CVE-2026-88004 (high, entrypoint
+  header-name sanitization bypassed via request trailers), CVE-2026-88009 (high,
+  rootless HTTP/1 request target routes as `/` but is forwarded verbatim, bypassing
+  path-scoped routing and middleware), CVE-2026-88011 and CVE-2026-88012. All are
+  patched in 3.7.12 or 3.7.13. The full finding is in
+  [`../../docs/audits/dependency-sweep-2026-09-13.md`](../../docs/audits/dependency-sweep-2026-09-13.md).
+- **The 3.7 pin is a desk change.** It has not run on a host. The migration table in
+  the upgrade checklist below lists what changes between 3.6 and 3.7.13; two entries
+  touch configuration this repository ships.
+- Traefik v2 → v3 was a breaking upgrade; **do not** jump majors without reading the migration guide: https://doc.traefik.io/traefik/migration/v2-to-v3/
+- `tecnativa/docker-socket-proxy:v0.5.0` is pinned, moved from `v0.4.2` on 2026-09-13. Minor releases change the set of default-enabled endpoints — re-confirm `CONTAINERS`/`NETWORKS`/`ALLOW_*` flags after each bump. v0.5.0 updates the HAProxy base and adds `ALLOW_PAUSE` / `ALLOW_UNPAUSE`, both in upstream's revoked-by-default group, so the permitted surface is unchanged.
 - CrowdSec bouncer plugin is pinned to `v1.7.1` in `traefik.yml.tmpl`, inside the block that ships commented out. Releases: https://github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin/releases
   - The options this blueprint uses — `crowdsecMode`, `crowdsecLapiScheme`, `crowdsecLapiHost`, `crowdsecLapiKey`, `updateIntervalSeconds`, `crowdsecAppsecEnabled`, `crowdsecAppsecHost`, `crowdsecAppsecFailureBlock`, `crowdsecAppsecUnreachableBlock` — are unchanged from `v1.4.5` through `v1.7.1`. The only deprecations in that range are `BanHTMLFilePath` → `BanFilePath` and `CaptchaHTMLFilePath` → `CaptchaFilePath` (v1.7.0), neither of which this blueprint sets.
   - Verified against the upstream release notes only. The default configuration does not load the plugin, so no release in this range has been exercised at runtime by this repository — the first operator to enable reverse-proxy remediation is also the first to run it. Pin to a newer tag only after verifying it compiles against the running Traefik version. Traefik fetches and interprets the plugin at startup, so a bump takes effect on restart, not on reload.
@@ -51,6 +65,20 @@
 ## Upgrade checklist
 
 ### Minor bump (`v3.6` → `v3.x`)
+
+A minor bump inside v3 still changes request handling. Read the per-version migration
+notes, not only the release notes — https://doc.traefik.io/traefik/migrate/v3/ carries a
+section per patch release. Between 3.6 and 3.7.13 these apply to this blueprint:
+
+| Version | Change | What it touches here |
+|---|---|---|
+| 3.7.13 | `Upgrade: h2c` and `HTTP2-Settings` are no longer forwarded; use the `h2c://` scheme | any backend negotiating cleartext HTTP/2 |
+| 3.7.13 | rootless request targets rejected with 400 (RFC 9112) | clients sending non-conforming targets |
+| 3.7.12 | `underscoreHeadersStrategy` deprecated in favour of `aliasHeadersStrategy` (`keep` default, `delete`, `reject`) | neither is set in `traefik.yml.tmpl` |
+| 3.7.9 | HTTP/1 `CONNECT` rejected with 501 | no router here uses CONNECT |
+| 3.7.7 | bare `` Host(`*`) `` becomes a catch-all | no rule here uses a bare `*` |
+| 3.7.3 | `StripPrefix` / `StripPrefixRegex` reject with 400 when stripping yields a non-normalized path; `BasicAuth` with no users returns 404 | `apps/seafile` and `apps/seafile-pro` strip `/sdoc-server` |
+| 3.6.14 | `trustForwardHeader` on ForwardAuth deprecated in favour of entrypoint-level `forwardedHeaders.trustedIPs` | the commented Authentik block in `integrations.yml.tmpl` sets it; the entrypoint list is already present, so drop the option when uncommenting |
 
 1. Read the Traefik release notes: https://github.com/traefik/traefik/releases
 2. Bump `TRAEFIK_IMAGE` in `.env`
@@ -61,7 +89,10 @@
    ./ops/scripts/validate.sh
    ```
 
-4. `docker compose pull && docker compose up -d`
+4. `docker compose pull && docker compose up -d` — `pull` is what moves a running
+   container onto a new patch of the same minor tag. Without it, `v3.6` keeps the digest
+   it started with: the test host ran 3.6.10 (built 2026-03-06) while the tag resolved to
+   3.6.25. Confirm with `docker exec <container> traefik version`, not with the tag.
 5. Verify:
 
    ```bash

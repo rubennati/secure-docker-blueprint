@@ -6,7 +6,7 @@ Self-hosted time-tracking for freelancers and small teams. Project/customer hier
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `kimai/kimai2:apache-2.56.0` | PHP/Symfony + Apache + cron |
+| `app` | `kimai/kimai2:2.66.0` | PHP/Symfony + Apache + cron |
 | `db` | `mariadb:11.4` | Timesheets, users, customers, projects |
 
 ## Setup
@@ -73,7 +73,7 @@ database. `volumes/data` matters for invoice output, not for the tracked time.
 ## Known Issues
 
 - **Healthcheck uses `Host` header override** — the image's built-in healthcheck hits `127.0.0.1:8001` with `Host: 127.0.0.1`, which Symfony rejects as untrusted. The compose healthcheck is overridden to pass `Host: APP_TRAEFIK_HOST` instead.
-- **`APP_TAG` uses `apache-X.Y.Z` format** — Kimai images are tagged `apache-2.56.0`, `fpm-2.56.0`, etc. Update `APP_TAG` in `.env.example` on upgrades.
+- **`APP_TAG` is a bare `X.Y.Z`** — it carries the Apache variant, which is what this stack runs; `fpm` is published under its own tag. The older `apache-X.Y.Z` form stopped at `apache-2.57.0` and no longer resolves. Update `APP_TAG` in `.env.example` on upgrades.
 - **Plugins** land in `volumes/plugins/` as extracted archives. Back up together with the DB dump.
 - **Invoice plugin** ships separately — requires installation via UI after first boot.
 

@@ -121,7 +121,7 @@ make sense, and it does not know which of them are installed.
 
 | Part | Owns | Canonical source |
 |---|---|---|
-| **Host** | the prerequisites a Docker host must meet — a supported and patched system, management access that is not the public attack surface, a host firewall policy, working time and name resolution | thin, see below |
+| **Host** | the prerequisites a Docker host must meet — a supported and patched system, management access that is not the public attack surface, a host firewall policy, working time and name resolution, and enough capacity held back for management and recovery | thin, see below |
 | **Docker** | privileges, capabilities, socket access, image pinning | [`standards/security-baseline.md`](standards/security-baseline.md) |
 | **Network** | hub-and-spoke layout, isolation, which service belongs on which network | [`standards/networking.md`](standards/networking.md) |
 | **Secrets** | how a credential reaches a container without entering the image or the environment | [`standards/security-baseline.md`](standards/security-baseline.md) |
@@ -136,6 +136,44 @@ owns it. It is not configuration management, and not a hardening distribution.
 A service may *implement* a Host invariant through an integration. CrowdSec's host-firewall
 remediation is one: it enforces decisions in the host firewall, within a scope the Host
 policy defines. It does not become the host firewall policy.
+
+### Workload pressure must not consume what recovery needs
+
+**A host under load from its own workloads has to stay administratively reachable.**
+Losing an application is an incident; losing the ability to log in, read logs and stop
+the offending container turns it into an outage that ends with a power cycle.
+
+Container-level limits bound each workload, and that is where most of the protection
+lives — a service reaching its own ceiling fails alone. What they do not do is reserve
+anything: nothing in a per-container limit keeps memory available for the trusted
+management path, the container runtime, logging, or the tools used to stop a workload.
+On a default host, management services and container workloads compete in the same
+place.
+
+The invariant is Foundation's:
+
+> Enough host capacity remains available for management and recovery that an operator
+> can always reach the machine, see what is happening, and stop the workload causing it.
+
+The mechanism is **not decided**. The candidate is a separate cgroup hierarchy for
+container workloads with memory protection on the slice holding management services —
+the kernel supports it, and the interfaces are stable. It is not a default here, and
+it is not installed anywhere, because it has not been rehearsed: a protection that has
+never been tested under real pressure is an assumption.
+
+What a rehearsal has to establish, on a disposable host:
+
+1. container workloads land in the intended hierarchy, and management services do not;
+2. controlled memory pressure inside a container reaches that container's boundary;
+3. the trusted management path stays usable throughout;
+4. the container runtime stays administratively usable;
+5. logs remain readable;
+6. the offending workload can be stopped;
+7. what happens when the reserve mechanism itself is absent or misconfigured.
+
+Until that has run, the invariant is documented and the enforcement is per-container.
+Products are examples: a VPN, an SSH daemon and a container runtime are roles, and a
+deployment may fill them differently.
 
 ---
 

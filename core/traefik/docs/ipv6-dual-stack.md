@@ -84,7 +84,7 @@ stay IPv4-only — see [Why internal networks don't need IPv6](#why-internal-net
 ## The failure mode this prevents
 
 This is the production issue that motivated this document, debugged on a
-Linux host running Traefik v3.6 in Docker.
+Linux host running Traefik v3.6 in Docker. The behaviour is unchanged in v3.7.
 
 **Symptom:** Tailscale clients connecting over IPv6 got `HTTP 403` from
 Traefik's `acc-tailscale` middleware, while the same clients worked fine

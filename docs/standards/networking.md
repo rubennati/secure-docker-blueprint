@@ -123,6 +123,51 @@ container-level network isolation control in this blueprint. See "Why
 not `network_mode: host`" in
 [`core/traefik/docs/ipv6-dual-stack.md`](../../core/traefik/docs/ipv6-dual-stack.md).
 
+### A host firewall and Docker share the forward path
+
+Docker does not route container traffic through the host's input path. Traffic
+leaving a container is forwarded, and traffic reaching a published port is
+address-translated and then forwarded. A host firewall that adds its own forward
+chain with a drop policy therefore cuts container egress, whether or not that was
+the intent, and it does so without an error anywhere in Docker.
+
+What breaks first is rarely the application. It is whatever needs to reach the
+internet on its own account — a detection engine fetching a community blocklist, a
+certificate client answering a challenge, an update check. The container starts,
+reports healthy, and fails at the point it needs the network.
+
+The pattern to hold to:
+
+```text
+host hardening on the input path
+        +
+an explicit allowance on the forward path for Docker's own traffic
+        =
+the host is closed, containers still reach what they are configured to reach
+```
+
+Two things decide whether a given ruleset does that. Check both on the host:
+
+- **Which filter is actually in play.** Docker installs its rules through the
+  iptables interface. On a system where that interface is backed by nftables,
+  Docker's rules and a hand-written nftables ruleset end up in the same engine but
+  not in the same place, and a `flush` on one side can remove the other. Establish
+  which of the two is managing Docker's rules before adding anything.
+- **Where a drop policy sits.** A drop policy on the forward path applies to
+  container traffic. A hardening ruleset that is meant to protect the host's own
+  services belongs on the input path, where it does not touch forwarding.
+
+Verify by result, not by reading the ruleset: start a throwaway container on a
+normal bridge network and have it reach a known external address. If that fails
+while the host itself has connectivity, the forward path is the cause.
+
+The one place this repository writes a forward rule is CrowdSec's host
+remediation, and it is deliberately narrow — a single drop matched to one ingress
+interface and one address set, described in
+[`../../core/crowdsec/docs/firewall-bouncer.md`](../../core/crowdsec/docs/firewall-bouncer.md).
+Nothing else here adds a forward rule, and nothing here manages a host firewall on
+the operator's behalf.
+
 ### Exposing Ports
 
 ```yaml

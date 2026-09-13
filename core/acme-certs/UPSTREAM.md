@@ -2,11 +2,15 @@
 
 ## Source
 
-- **Repo:** https://github.com/acmesh-official/acme.sh
-- **Docker:** https://hub.docker.com/r/neilpang/acme.sh
-- **License:** GPL-3.0
-- **Origin:** Austria · ZeroSSL GmbH · EU (original author Neil Pang, independent)
-- **Based on version:** 3.1.2
+- **Image:** https://github.com/rubennati/cert-ops-tool — `ghcr.io/rubennati/cert-ops-tool`,
+  a thin wrapper that runs `acme.sh` under `crond` and exports PEM files. Operator-owned:
+  this repository publishes it, so no upstream release feed applies.
+- **Bundled tool:** https://github.com/acmesh-official/acme.sh — the certificate client the
+  image wraps. Its version follows whatever the image was built against; read it with
+  `docker compose exec acme-certs acme.sh --version`.
+- **License:** GPL-3.0 (acme.sh)
+- **Origin:** Austria · maintained in this project · EU (the bundled acme.sh is independent, original author Neil Pang)
+- **Based on version:** `0.2.1` (cert-ops-tool)
 - **Last checked:** 2026-04-14
 
 ## What we changed and why

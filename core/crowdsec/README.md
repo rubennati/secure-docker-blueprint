@@ -82,6 +82,38 @@ choice, not a requirement, and it follows from exposure rather than from any ord
 public ingress interface, so traffic arriving on a management path cannot match them
 whatever the decision list contains. The AllowList is depth behind that, not the guarantee.
 
+### One bouncer option turns remediation off
+
+The reverse-proxy bouncer plugin takes two options whose names look like a pair
+and are not. Upstream describes them as:
+
+| Option | Upstream's description |
+|---|---|
+| `forwardedHeadersTrustedIPs` | "List of IPs of trusted Proxies that are in front of traefik" |
+| `clientTrustedIPs` | "List of client IPs to trust, they will bypass any check from the bouncer or cache" |
+
+The first is about whose `X-Forwarded-For` may be believed. The second exempts
+those addresses from remediation entirely — a decision for a listed address is
+never applied, and the bouncer does not consult its cache or the LAPI for it.
+
+```text
+clientTrustedIPs
+≠ "trust these proxies for X-Forwarded-For"
+
+=  these clients are exempt from remediation
+```
+
+An entry there is a hole in the remediation, sized to whatever the entry covers.
+A whole LAN or container subnet listed for convenience removes the reverse-proxy
+remediation for everything inside it, and the deployment keeps reporting healthy
+while doing so. Upstream's own note suggests it for a LAN or VPN range, which is
+the shape most likely to be pasted in without the consequence being obvious.
+
+This blueprint sets neither option in the middleware it ships. If a source has to
+be exempt, prefer a CrowdSec AllowList, which is evaluated by the engine and is
+visible in `cscli` output, over an exemption that exists only in proxy
+configuration.
+
 ### Choosing
 
 | Exposure | Relevant remediation |

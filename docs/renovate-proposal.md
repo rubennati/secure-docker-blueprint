@@ -20,7 +20,7 @@ There are **118 pins** across the repository, in two shapes:
 | Shape | Count | Example |
 |---|---|---|
 | `*_TAG=` — tag only, image name lives in the compose file | ~110 | `APP_TAG=6.7-php8.3-fpm-alpine` |
-| `*_IMAGE=` — full reference | ~8 | `TRAEFIK_IMAGE=traefik:v3.6` |
+| `*_IMAGE=` — full reference | ~8 | `TRAEFIK_IMAGE=traefik:v3.7` |
 
 Four carry a digest (`tag@sha256:…`).
 

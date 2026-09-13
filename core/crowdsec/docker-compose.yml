@@ -69,7 +69,16 @@ services:
 
     # --- Networking ---
     networks:
-      - crowdsec-security
+      crowdsec-security:
+        # The service name already becomes a network alias, and the reverse proxy
+        # reaches the engine at crowdsec:8080 and crowdsec:7422 on that basis.
+        # Stated explicitly so the contract other compose projects rely on does not
+        # depend on the service key keeping this name, and so a second container
+        # claiming the same alias on this network is a visible conflict rather than
+        # a silent one — the same failure this repository fixed on proxy-public,
+        # where 38 services all answered to `app`.
+        aliases:
+          - crowdsec
     ports:
       # LAPI on localhost only — for the host-firewall remediation bouncer
       - "127.0.0.1:${CROWDSEC_LAPI_PORT}:8080"

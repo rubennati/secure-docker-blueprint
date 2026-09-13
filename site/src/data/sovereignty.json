@@ -322,10 +322,10 @@
   "core/acme-certs": {
     "bloc": "EU",
     "country": "Austria",
-    "entity": "ZeroSSL GmbH",
-    "license": "GPL-3.0",
+    "entity": "maintained in this project",
+    "license": "GPL-3.0 (acme.sh)",
     "license_class": "osi",
-    "origin": "Austria · ZeroSSL GmbH · EU (original author Neil Pang, independent)"
+    "origin": "Austria · maintained in this project · EU (the bundled acme.sh is independent, original author Neil Pang)"
   },
   "core/authentik": {
     "bloc": "EU",

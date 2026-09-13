@@ -8,7 +8,7 @@
 - **Vendor:** Collabora Productivity (Cambridge, UK) — LibreOffice-based
 - **License:** MPL-2.0
 - **Origin:** UK · Collabora Productivity Ltd · non-EU
-- **Based on version:** `26.04.2.4.1`
+- **Based on version:** `26.04.3.2.1`
 - **Last verified:** — (config authored 2026-07-26; not yet run on a live server)
 
 ## What we use

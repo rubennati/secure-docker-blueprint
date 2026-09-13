@@ -9,6 +9,7 @@
 - **Docs:** https://vikunja.io/docs/
 - **License:** AGPL-3.0
 - **Origin:** Germany · Konrad Langenberg Software · EU
+- **Based on version:** `2.6.0`
 
 ## License
 
