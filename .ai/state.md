@@ -47,6 +47,20 @@
   up to date before merging. CodeQL reports on the same pull requests and is not
   a required check.
 
+## v0.8.1 on a host — 2026-09-13
+
+Released from `dev` to `main` and then run on the test host, in that order. Traefik moved
+3.6.10 → 3.7.13 with socket-proxy v0.5.0; whoami, Uptime Kuma, changedetection.io,
+Nextcloud (34.0.4 in place), Invoice Ninja (5.13.40, migrations) and Cal.diy's database
+(17.11) followed. All seven carry a `Last verified` of 2026-09-13. What the run surfaced
+and where it went: an orphaned container after a service rename blocks `up -d` and leaves
+the app created-not-started (`TROUBLESHOOTING.md` §5.3); the host's rendered Traefik
+config carried the CrowdSec integration while the tracked templates did not, so
+`render.sh` did not run for the move — it would have dropped both — and an env-gated render is in `tasks.md`; 3.7.12+
+warns per entrypoint that `aliasHeadersStrategy` is unset (recorded in `UPSTREAM.md`).
+Still unverified from the sweep: `core/dnsmasq`, `apps/homepage`, `apps/librephotos` and
+the pins of stacks that host does not run.
+
 ## Capability architecture — established 2026-09
 
 The blueprint is described as **capabilities** with at most one maintained
