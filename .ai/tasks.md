@@ -138,8 +138,8 @@ Listed with context in [`state.md`](state.md). Nothing proceeds on these until d
       `acquis.yaml` and `appsec.yaml` still parse unchanged
 - [x] **Gate the CrowdSec integration on a variable in `render.sh`.** Done 2026-09-13:
       `CROWDSEC_BOUNCER_ENABLED`, with the migration in `core/traefik/README.md`.
-      The test host is still in the pre-switch state until its `.env` declares the
-      switch — `render.sh` refuses to render there until it does. Original finding: The README
+      The test host was migrated on 2026-09-14 (dry run, semantic diff, live render, no
+      restart). Original finding: The README
       enables it by uncommenting blocks in two tracked templates; a `git pull` puts the
       comments back and the next render silently drops the plugin and the middleware
       from `config/` while the container keeps running with both. Seen on a host on

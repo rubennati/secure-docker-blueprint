@@ -69,7 +69,10 @@
   `render.sh` until `.env` declares the switch, because rendering over that state
   would drop the plugin and the middlewares while the container keeps running with
   both. The migration is in the README under "Migrating an installation that
-  enabled the integration before the switch".
+  enabled the integration before the switch" and ran on a host on 2026-09-14: dry run
+  into a copy, semantically identical to the live `config/`, then the live render —
+  no restart, the routers carrying `crowdsec-basic` unchanged, the bouncer still
+  polling.
 - Traefik v2 → v3 was a breaking upgrade; **do not** jump majors without reading the migration guide: https://doc.traefik.io/traefik/migration/v2-to-v3/
 - `tecnativa/docker-socket-proxy:v0.5.0` is pinned, moved from `v0.4.2` on 2026-09-13. Minor releases change the set of default-enabled endpoints — re-confirm `CONTAINERS`/`NETWORKS`/`ALLOW_*` flags after each bump. v0.5.0 updates the HAProxy base and adds `ALLOW_PAUSE` / `ALLOW_UNPAUSE`, both in upstream's revoked-by-default group, so the permitted surface is unchanged.
 - CrowdSec bouncer plugin version comes from `CROWDSEC_BOUNCER_PLUGIN_VERSION` in `.env`; `.env.example` ships `v1.7.1`, and `render.sh` falls back to that when the variable is absent. Releases: https://github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin/releases
