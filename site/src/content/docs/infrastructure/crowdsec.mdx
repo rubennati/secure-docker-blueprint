@@ -157,12 +157,19 @@ The engine above is detection only. Two enforcement layers add blocking. They ar
        docker exec crowdsec cscli bouncers add traefik-bouncer
        ```
 
-    2. In `core/traefik/.env`, add `CROWDSEC_BOUNCER_KEY=<key>`.
+    2. In `core/traefik/.env`, switch the integration on and add the key:
 
-    3. Uncomment the plugin block in `ops/templates/traefik.yml.tmpl` and the `crowdsec-basic` middleware in `ops/templates/dynamic/integrations.yml.tmpl`, then render and **restart** Traefik. The plugin lives in the static configuration, which is read only at startup — a hot reload will not pick it up:
+       ```env
+       CROWDSEC_BOUNCER_ENABLED=true
+       CROWDSEC_BOUNCER_PLUGIN_VERSION=v1.7.1
+       CROWDSEC_BOUNCER_KEY=<key>
+       ```
+
+    3. Render, validate and **recreate** Traefik. `render.sh` emits the plugin block into `config/traefik.yml` and the `crowdsec-basic` / `crowdsec-appsec` middlewares into `config/dynamic/crowdsec.yml` — no template is edited. The plugin is static configuration and needs the restart; the middlewares are hot-reloaded.
 
        ```bash
        bash ops/scripts/render.sh
+       bash ops/scripts/validate.sh
        docker compose up -d --force-recreate traefik
        ```
 

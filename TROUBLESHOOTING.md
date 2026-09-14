@@ -384,6 +384,38 @@ of which filter is managing Docker's rules on a given host, is in
 
 ---
 
+### 4.8 `render.sh` refuses: "config/ carries the CrowdSec integration but CROWDSEC_BOUNCER_ENABLED is not set"
+
+**Symptom:** `./ops/scripts/render.sh` in `core/traefik` stops before writing
+anything, and `validate.sh` reports the same disagreement.
+
+**Cause:** the rendered `config/` has the bouncer plugin block or a `crowdsec-*`
+middleware, and `.env` does not say whether that is wanted. This is the state of an
+installation that enabled the integration before the switch existed — by
+uncommenting the templates or editing the rendered files — and then pulled a
+version of this repository that has it. Rendering blind would remove both halves
+while Traefik keeps running with them; the refusal is the fix for what used to
+happen silently.
+
+**Fix:** declare the state in `.env`. To keep the integration:
+
+```bash
+grep -nE 'version:' config/traefik.yml            # plugin version in use
+grep -nE 'crowdsecLapiKey' config/dynamic/*.yml   # key in use
+# then in .env:
+#   CROWDSEC_BOUNCER_ENABLED=true
+#   CROWDSEC_BOUNCER_PLUGIN_VERSION=<that version>
+#   CROWDSEC_BOUNCER_KEY=<that key>
+./ops/scripts/render.sh && ./ops/scripts/validate.sh
+```
+
+To remove it, detach `crowdsec-*@file` from every router first, then
+`CROWDSEC_BOUNCER_ENABLED=false`, render, and recreate Traefik. The full
+procedure is in `core/traefik/README.md`, "Migrating an installation that enabled
+the integration before the switch".
+
+---
+
 ## 5. Git & Deployment Issues
 
 ### 5.1 Server running old code after local commits
@@ -592,6 +624,47 @@ docker compose exec <service> wget -qO- http://127.0.0.1:<port>/api/health
 
 - Rails (Zammad): `RAILS_TRUSTED_PROXIES: "0.0.0.0/0"`
 - Django: `USE_X_FORWARDED_HOST = True` + `SECURE_PROXY_SSL_HEADER`
+
+---
+
+### 8.3 `traefik.log` is empty after the first log rotation, `traefik.log.1` keeps growing
+
+**Symptom:** `core/traefik/volumes/logs/traefik.log` is a zero-byte file with a
+recent creation time; `traefik.log.1` carries today's entries and its mtime keeps
+moving. `docker compose logs traefik` shows nothing either, because the container
+logs to the file. The access log is fine.
+
+**Cause:** Traefik 3 reopens only the access log on `USR1`. It logs "Closing and
+re-opening log files for rotation" and does exactly that for `access.log`; the main
+log descriptor stays on the file logrotate renamed. A logrotate stanza that
+rotates both files by rename and sends `USR1` — the shape this repository shipped
+until 2026-09-14 — therefore works for one file and not the other. On the next
+rotation `traefik.log.1` is compressed and deleted while Traefik still writes to
+it, and the log is gone until a restart.
+
+**Check:**
+
+```bash
+pid=$(docker inspect traefik-core --format '{{.State.Pid}}')
+sudo ls -l /proc/$pid/fd | grep '\.log'
+# fd -> /var/log/traefik/traefik.log.1  <- the main log descriptor on the rotated file
+```
+
+**Repair without a restart:** the descriptor follows the inode, so give the file
+its name back, then install the current logrotate configuration, which truncates
+the main log in place instead of renaming it:
+
+```bash
+cd /path/to/secure-docker-blueprint/core/traefik
+sudo mv volumes/logs/traefik.log.1 volumes/logs/traefik.log     # replaces the empty file
+sudo sed 's|/path/to/secure-docker-blueprint|'"$(cd ../.. && pwd)"'|g' \
+  config/logrotate/traefik | sudo tee /etc/logrotate.d/traefik >/dev/null
+sudo logrotate -d /etc/logrotate.d/traefik                       # dry run: two stanzas, no errors
+```
+
+`copytruncate` is safe here because Traefik opens the main log `O_APPEND`
+(`grep flags /proc/$pid/fdinfo/<fd>` shows the `02000` bit): after the truncate
+it continues at the new end of the file.
 
 ---
 

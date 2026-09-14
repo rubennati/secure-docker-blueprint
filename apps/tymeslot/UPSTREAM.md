@@ -19,7 +19,7 @@ booking from a guest's side has not been exercised.
 
 - The official `-slim` image: application only, no bundled PostgreSQL. The
   plain tag runs a PostgreSQL server inside the app container.
-- `postgres:17-alpine` as the database, the shape of upstream's
+- `postgres:17.11-alpine` as the database, the shape of upstream's
   `docker-compose.with-postgres.yml`
 - The image's own `start-docker.sh` as the command: it validates
   `SECRET_KEY_BASE`, waits for the database, runs the Ecto migrations and

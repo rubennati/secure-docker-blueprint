@@ -6,9 +6,9 @@ Self-hosted photo gallery focused on fast browsing and clean presentation. Three
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `lycheeorg/lychee:v7` | PHP/Laravel app + Apache |
+| `app` | `lycheeorg/lychee:v7.8.3` | PHP/Laravel app + Apache |
 | `db` | `mariadb:11.4` | Primary store (albums, photo metadata, users) |
-| `redis` | `redis:7-alpine` | Cache + session driver |
+| `redis` | `redis:7.4-alpine` | Cache + session driver |
 
 ## Setup
 

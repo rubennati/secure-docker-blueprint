@@ -154,9 +154,11 @@ jobs:
 
   # ─────────────────────────────────────────────
   # 6. CANONICAL STRUCTURE (docs/standards/*-structure.md)
-  # Fails only on the dangerous rules — :latest tags, plaintext secrets,
-  # unprotected .secrets/, a datastore on proxy-public. Structural drift
-  # (missing resource limits, healthchecks) is reported, not blocking.
+  # Fails on the dangerous rules — :latest tags, plaintext secrets,
+  # unprotected .secrets/, a datastore on proxy-public — and, since the host
+  # resilience work, on a service without resource limits. A service with a
+  # memory limit and no swap policy, and a missing healthcheck, are reported,
+  # not blocking.
   # ─────────────────────────────────────────────
   structure-canonical:
     name: Canonical structure

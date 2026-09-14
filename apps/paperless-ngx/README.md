@@ -11,8 +11,8 @@ Five services:
 | Service | Image | Purpose |
 |---------|-------|---------|
 | `app` | `ghcr.io/paperless-ngx/paperless-ngx` | Django web app + Celery workers + consumer |
-| `db` | `postgres:16` | Primary data store (documents, tags, correspondents, users) |
-| `redis` | `redis:7-alpine` | Celery broker + worker heartbeat |
+| `db` | `postgres:16.14` | Primary data store (documents, tags, correspondents, users) |
+| `redis` | `redis:7.4-alpine` | Celery broker + worker heartbeat |
 | `gotenberg` | `gotenberg/gotenberg` | Converts HTML/Office documents to PDF |
 | `tika` | `apache/tika` | Text extraction from scanned PDFs, Office files, emails |
 

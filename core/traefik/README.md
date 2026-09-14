@@ -331,7 +331,9 @@ CrowdSec detects threats (brute force, CVE probes, crawling), the bouncer enforc
 
 ### How to enable
 
-Step-by-step — all changes are in templates, rendered via `render.sh`.
+One switch in `.env`. The templates are not edited — `render.sh` reads
+`CROWDSEC_BOUNCER_ENABLED` and emits the plugin block into `config/traefik.yml`
+and the middleware file `config/dynamic/crowdsec.yml`, or neither.
 
 ```bash
 # -----------------------------------------------
@@ -347,60 +349,32 @@ docker exec crowdsec cscli bouncers add traefik-bouncer
 # Save the output key — it cannot be retrieved later!
 
 # -----------------------------------------------
-# Step 3: Add the key to Traefik .env
+# Step 3: Set the switch in Traefik's .env
 # -----------------------------------------------
 cd /path/to/secure-docker-blueprint/core/traefik
 nano .env
-# Add or uncomment:
+#   CROWDSEC_BOUNCER_ENABLED=true
+#   CROWDSEC_BOUNCER_PLUGIN_VERSION=v1.7.1      # a release the running Traefik loads
 #   CROWDSEC_BOUNCER_KEY=<key-from-step-2>
 
 # -----------------------------------------------
-# Step 4: Enable the plugin in static config
-# -----------------------------------------------
-nano ops/templates/traefik.yml.tmpl
-# Uncomment the experimental.plugins section:
-#   experimental:
-#     plugins:
-#       bouncer:
-#         moduleName: "github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin"
-#         version: "v1.7.1"
-
-# -----------------------------------------------
-# Step 5: Enable the middleware in dynamic config
-# -----------------------------------------------
-nano ops/templates/dynamic/integrations.yml.tmpl
-# Uncomment the crowdsec-basic block (the full plugin section)
-
-# -----------------------------------------------
-# Step 6: Render and restart
+# Step 4: Render, validate, restart
 # -----------------------------------------------
 ./ops/scripts/render.sh
 ./ops/scripts/validate.sh
-docker compose restart traefik
-# Restart needed because the plugin is in static config.
-#
-# Steps 4 and 5 edit files git tracks. A later `git pull` or checkout
-# restores the commented-out versions, and the next render.sh then
-# writes config/ WITHOUT the plugin and the middleware while the running
-# container still has both. After any render on a host where this is
-# enabled, diff config/ before restarting:
-#   grep -nE '^\s*(experimental|crowdsec-basic):' config/traefik.yml config/dynamic/integrations.yml
-# After this, middleware changes are hot-reloaded.
-#
-# Once a crowdsec-* middleware is present in the rendered config,
-# validate.sh parses it and refuses an empty CROWDSEC_BOUNCER_KEY —
-# envsubst would otherwise render one silently. That check needs
-# python3 with PyYAML on this host; without them validate.sh fails
-# rather than skipping the check. A default-off install never
-# reaches it and needs neither.
+docker compose up -d --force-recreate traefik
+# The plugin block is static configuration, read at startup — a restart is
+# required. validate.sh refuses the switch without a key, a plugin version
+# that is not a release tag, and a config/ that does not match the switch.
 
 # -----------------------------------------------
-# Step 7: Add to routers (start with whoami only)
+# Step 5: Attach it to routers (start with whoami only)
 # -----------------------------------------------
-# Before attaching to any real app, read core/crowdsec/docs/profiles.md
-# and run the whoami-first validation. Then add crowdsec-basic@file as
-# the FIRST middleware on a router. Example label:
-#   traefik.http.routers.myapp.middlewares=crowdsec-basic@file,acc-public@file,sec-3@file
+# A rendered middleware protects nothing on its own. Read
+# core/crowdsec/docs/profiles.md and run the whoami-first validation, then
+# put crowdsec-basic@file FIRST on a router — in the application's .env:
+#   APP_TRAEFIK_THREAT=crowdsec-basic@file,
+# (the trailing comma is part of the value — docs/standards/traefik-labels.md)
 #
 # Or in config/dynamic/routers-system.yml for the dashboard:
 #   middlewares:
@@ -409,23 +383,70 @@ docker compose restart traefik
 #     - sec-4@file
 ```
 
+What the rendered result looks like, and what each half does:
+
+| Half | File | Rendered when | Takes effect |
+|---|---|---|---|
+| Plugin declaration (`experimental.plugins.bouncer`) | `config/traefik.yml` | switch on | Traefik restart — static configuration |
+| `crowdsec-basic`, `crowdsec-appsec` middlewares | `config/dynamic/crowdsec.yml` | switch on; the file is removed when off | hot reload |
+| Router attachment | the application's labels | never by the switch — per app via `APP_TRAEFIK_THREAT` | recreate that app |
+
 ### How to disable
 
 ```bash
-# Option A: Remove from specific routers only
-# Remove "crowdsec-basic@file" from the router's middleware list.
-# Hot-reloaded — no restart needed.
+# Option A: Detach from specific routers only
+# Remove crowdsec-basic@file from that router's middleware list
+# (APP_TRAEFIK_THREAT= in the app's .env, recreate the app). Hot-reloaded.
+# The plugin stays loaded and the middleware stays defined but unused.
 
-# Option B: Disable completely
-# Comment out crowdsec-basic in integrations.yml.tmpl
-# Re-render: ./ops/scripts/render.sh
-# Hot-reloaded — no restart needed (plugin stays loaded but unused).
-
-# Option C: Remove plugin entirely
-# Comment out experimental.plugins in traefik.yml.tmpl
-# Comment out crowdsec-basic in integrations.yml.tmpl
-# Re-render + restart: ./ops/scripts/render.sh && docker compose restart traefik
+# Option B: Switch the integration off
+# First detach it from EVERY router — a router that names a middleware which
+# no longer exists is disabled by Traefik, not left unprotected.
+# Then, in .env:  CROWDSEC_BOUNCER_ENABLED=false
+./ops/scripts/render.sh          # announces the removal and drops config/dynamic/crowdsec.yml
+./ops/scripts/validate.sh
+docker compose up -d --force-recreate traefik   # the plugin block is static config
 ```
+
+### Migrating an installation that enabled the integration before the switch
+
+Before the switch, the README had the operator uncomment blocks in two tracked
+templates and render. Both templates are in git, so the next `git pull` or
+checkout put the comments back — and the next `render.sh` then wrote a
+`config/` without the plugin and without the middlewares while the running
+container still had both. `render.sh` now refuses exactly that state:
+
+```text
+ERROR: config/ carries the CrowdSec integration ... but CROWDSEC_BOUNCER_ENABLED is not set in .env.
+```
+
+To carry the installation over:
+
+```bash
+# 1. Read what config/ currently has — this is what Traefik is running with
+grep -nE 'version:' config/traefik.yml                     # the plugin version
+grep -nE 'crowdsecLapiKey' config/dynamic/*.yml            # the key in use
+
+# 2. Put both into .env, alongside the switch
+#   CROWDSEC_BOUNCER_ENABLED=true
+#   CROWDSEC_BOUNCER_PLUGIN_VERSION=<the version from step 1>
+#   CROWDSEC_BOUNCER_KEY=<the key from step 1>
+
+# 3. Render into a copy first and diff — the middlewares move from
+#    integrations.yml into crowdsec.yml; the plugin block stays where it was
+cp -r config /tmp/traefik-config-before
+./ops/scripts/render.sh
+diff -r /tmp/traefik-config-before config
+
+# 4. If traefik.yml changed only in comments, no restart is needed: the file
+#    provider hot-reloads the dynamic directory. If the plugin version changed,
+#    restart. validate.sh confirms config/ and .env agree.
+./ops/scripts/validate.sh
+```
+
+If the templates themselves were edited on that host, `git status` shows them
+modified; `git checkout -- ops/templates` restores them. The state now lives in
+`.env`, which is not tracked.
 
 ### Minimum vs recommended config
 
@@ -488,7 +509,7 @@ docker exec crowdsec cscli decisions delete --ip 1.2.3.4
 
 | Problem | Check |
 |---------|-------|
-| Plugin not loading | `docker compose logs traefik` — look for plugin errors. Did you uncomment `experimental.plugins`? |
+| Plugin not loading | `docker compose logs traefik` — look for plugin errors. Is `CROWDSEC_BOUNCER_ENABLED=true` in `.env`, was `render.sh` run since, and was Traefik recreated afterwards? `grep -n experimental config/traefik.yml` shows whether the block was rendered |
 | 403 for legitimate IPs | `docker exec crowdsec cscli decisions list` — check if the IP is banned. Remove with `cscli decisions delete --ip X.X.X.X` |
 | WAF blocking valid requests | Set `crowdsecAppsecEnabled: false` temporarily. Check CrowdSec logs for false positives |
 | Bouncer not connecting | `docker exec crowdsec cscli bouncers list` — check last heartbeat. Verify both containers are on the `crowdsec-security` network |
@@ -568,7 +589,19 @@ cat /etc/logrotate.d/traefik
 sudo logrotate -d /etc/logrotate.d/traefik
 ```
 
-The config rotates daily, keeps 7 days, compresses with gzip. The `postrotate` hook sends `USR1` to the Traefik container — Traefik reopens the log file after rotation (same mechanism as nginx). Without this signal, Traefik keeps writing to the already-rotated file.
+The config rotates daily, keeps 7 days, compresses with gzip — in two stanzas,
+because Traefik treats its two logs differently:
+
+| Log | Rotation | Why |
+|---|---|---|
+| `access.log` | rename, then `USR1` to the container | Traefik reopens the access log on `USR1`, the same mechanism as nginx |
+| `traefik.log` | `copytruncate` — copied out and truncated in place, no signal | Traefik 3 announces "Closing and re-opening log files for rotation" on `USR1` and reopens the access log only; the main log descriptor stays on the renamed file. Measured on v3.7.13 on 2026-09-14. The file is opened `O_APPEND`, so truncating in place is safe |
+
+With a single rename-and-signal stanza for both — the shape this file had until
+2026-09-14 — `traefik.log` reads as empty after the first rotation while Traefik
+writes into `traefik.log.1`, and the next rotation compresses the file it is
+writing to. If an installation is in that state, `TROUBLESHOOTING.md` §8.3 has
+the repair.
 
 > **Note:** logrotate runs on the host, not inside the container. This is the correct approach for bind-mounted Docker log files — it is standard practice for any containerized app that writes logs to a host volume.
 

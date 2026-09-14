@@ -137,9 +137,10 @@ on. Full steps: [`core/crowdsec/docs/profiles.md`](../../../core/crowdsec/docs/p
 
 ### 2.1 `crowdsec-basic` (IP/decision bouncer, fail-open)
 
-1. Load the plugin: uncomment `experimental.plugins.bouncer` in
-   `core/traefik/ops/templates/traefik.yml.tmpl`, set `CROWDSEC_BOUNCER_KEY` in
-   `core/traefik/.env`, `./ops/scripts/render.sh && docker compose restart traefik`.
+1. Switch the integration on: in `core/traefik/.env` set `CROWDSEC_BOUNCER_ENABLED=true`,
+   `CROWDSEC_BOUNCER_PLUGIN_VERSION` and `CROWDSEC_BOUNCER_KEY`, then
+   `./ops/scripts/render.sh && ./ops/scripts/validate.sh && docker compose up -d --force-recreate traefik`
+   — no template is edited.
 2. Define the `crowdsec-basic` middleware in
    `core/traefik/ops/templates/dynamic/integrations.yml.tmpl` (block already scaffolded).
 3. **Validate on `core/whoami` first** — ban a test IP (never your admin IP), confirm 403, roll

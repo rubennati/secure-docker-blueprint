@@ -14,7 +14,7 @@ below says which fits which situation.
 | Service | Image | Purpose |
 |---------|-------|---------|
 | `keycloak-app` | `quay.io/keycloak/keycloak` | Admin console, realms, OIDC and SAML endpoints on 8080; health on 9000 |
-| `db` | `postgres:17` | Realms, clients, users, sessions — on `app-internal` only |
+| `db` | `postgres:17.11-alpine` | Realms, clients, users, sessions — on `app-internal` only |
 
 ## Setup
 

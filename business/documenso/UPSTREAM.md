@@ -13,7 +13,7 @@
 
 ## What we use
 
-- `documenso/documenso:v2.15.0` (Remix app; CMD `sh start.sh` runs Prisma migrations on boot)
+- `documenso/documenso:v2.18.0` (Remix app; CMD `sh start.sh` runs Prisma migrations on boot)
 - `postgres:16-alpine`
 - Custom `config/entrypoint.sh` to inject secrets from Docker Secret files (no `_FILE` support)
 

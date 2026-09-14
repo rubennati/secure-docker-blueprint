@@ -1,0 +1,92 @@
+# ==========================================================
+# CROWDSEC — reverse-proxy remediation middlewares
+# ==========================================================
+# Rendered to config/dynamic/crowdsec.yml only when CROWDSEC_BOUNCER_ENABLED=true
+# in .env; with the switch off, render.sh removes the rendered file. The plugin
+# these middlewares use is declared in traefik.yml by the same switch — that
+# half is static configuration and needs a Traefik restart, this half is
+# hot-reloaded.
+#
+# Defining a middleware attaches it to nothing. A router carries it through
+# APP_TRAEFIK_THREAT (see docs/standards/traefik-labels.md), and the plugin's
+# polling loop starts only once a router does. Detach from every router before
+# switching this off: a router that names a middleware that no longer exists is
+# disabled by Traefik, not left unprotected.
+# ==========================================================
+
+http:
+  middlewares:
+
+    # ------------------------------------------------------
+    # CrowdSec Bouncer Plugin
+    # ------------------------------------------------------
+    # Prerequisites:
+    #   1. core/crowdsec running + on crowdsec-security (created by core/traefik)
+    #   2. CROWDSEC_BOUNCER_ENABLED=true in .env — renders the plugin block in
+    #      traefik.yml as well as this file
+    #   3. Bouncer key: docker exec crowdsec cscli bouncers add traefik-bouncer
+    #   4. CROWDSEC_BOUNCER_KEY=<key> in .env
+    #
+    # Mode: stream (polls LAPI every 60s, caches decisions).
+    #
+    # AppSec/WAF is disabled here by default. The AppSec process does
+    # not auto-start with CrowdSec — it needs its own config in
+    # core/crowdsec/config/appsec.yaml and the port 7422 to be reachable
+    # from Traefik. With crowdsecAppsecEnabled=true + unreachable AppSec,
+    # crowdsecAppsecUnreachableBlock=true makes the bouncer fail-closed
+    # on EVERY request (HTTP 403), which is almost always not what you
+    # want for first setup. Enable AppSec only after its server side is
+    # verified reachable (`curl crowdsec:7422` from the Traefik container).
+    #
+    # Geo-blocking works through CrowdSec LAPI decisions (global to all
+    # bouncers — not per-app middleware). See core/crowdsec/docs/profiles.md
+    # "The profile family" for the geo-* deferred mechanism and its trade-offs.
+    # ------------------------------------------------------
+    crowdsec-basic:
+      plugin:
+        bouncer:
+          enabled: true
+          crowdsecMode: stream
+          updateIntervalSeconds: 60
+          crowdsecLapiScheme: http
+          crowdsecLapiHost: crowdsec:8080
+          crowdsecLapiKey: "${CROWDSEC_BOUNCER_KEY}"
+          crowdsecAppsecEnabled: false
+          crowdsecAppsecHost: crowdsec:7422
+          crowdsecAppsecFailureBlock: false
+          crowdsecAppsecUnreachableBlock: false
+
+    # ------------------------------------------------------
+    # CrowdSec Bouncer + AppSec (WAF)
+    # ------------------------------------------------------
+    # Same decisions as crowdsec-basic, plus synchronous inspection of each
+    # request against the WAF rule sets. Blocks the individual request; it does
+    # not create an IP ban, so a false positive affects one call rather than
+    # locking someone out.
+    #
+    # Prerequisite: the AppSec engine must answer on 7422. Confirm before
+    # attaching this anywhere — from the Traefik container:
+    #   wget -S -O /dev/null http://crowdsec:7422
+    # A 401 is the correct answer (no bouncer key). "Connection refused" means
+    # the engine is not listening and this profile will do nothing, or worse if
+    # you also set the *Block options below to true.
+    #
+    # Both failure modes stay fail-open here on purpose: an AppSec outage must
+    # not take the application down with it. Setting either to true is the
+    # crowdsec-strict profile, and it belongs only on an app whose traffic has
+    # been tested against the rules — see core/crowdsec/docs/appsec.md for the
+    # per-application false positives already known.
+    # ------------------------------------------------------
+    crowdsec-appsec:
+      plugin:
+        bouncer:
+          enabled: true
+          crowdsecMode: stream
+          updateIntervalSeconds: 60
+          crowdsecLapiScheme: http
+          crowdsecLapiHost: crowdsec:8080
+          crowdsecLapiKey: "${CROWDSEC_BOUNCER_KEY}"
+          crowdsecAppsecEnabled: true
+          crowdsecAppsecHost: crowdsec:7422
+          crowdsecAppsecFailureBlock: false
+          crowdsecAppsecUnreachableBlock: false

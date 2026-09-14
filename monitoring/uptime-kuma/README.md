@@ -8,7 +8,7 @@ Modern successor to Statping — more active (weekly releases), better UI, wider
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `louislam/uptime-kuma:2.4.0` | Web UI + probe scheduler + SQLite store |
+| `app` | `louislam/uptime-kuma:2.5.4` | Web UI + probe scheduler + SQLite store |
 
 Data lives in `./volumes/data/` (SQLite DB, monitor state, uploaded icons).
 

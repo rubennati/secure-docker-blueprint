@@ -36,9 +36,12 @@
 | Security posture split into blocks + preset chains (`sec-0` … `sec-5` + embed variants) | Quick presets for the 90% path, composable blocks for the rest. Documented in `README.md`. |
 | No Traefik labels on the Traefik container itself | The dashboard router lives in `config/dynamic/routers-system.yml` (file provider) so the Traefik container stays configuration-free beyond static flags. |
 | CrowdSec bouncer plugin in static config, middleware in dynamic config | Static plugin registration requires a restart; the routing middleware is hot-reloaded. Splitting them keeps day-to-day changes zero-downtime. |
+| `CROWDSEC_BOUNCER_ENABLED` in `.env` renders both halves of the integration — the plugin block between the `crowdsec-bouncer` markers in `traefik.yml.tmpl` and the middleware file `dynamic/crowdsec.yml.tmpl` | The previous flow had the operator uncomment blocks in two tracked templates. A checkout restored the comments, and the next render silently dropped the plugin and the middlewares while the container kept running with both — a host was found in exactly that state on 2026-09-13. With the switch, the rendered state is a function of `.env`, `render.sh` refuses to render over an enabled `config/` that `.env` does not declare, and the CI gate renders both switch states instead of grepping templates. |
 | `TLS_DEFAULT_OPTION` + three named profiles (`tls-basic`, `tls-aplus`, `tls-modern`) | Lets each router escalate or relax its TLS profile without rewriting the server's cipher list. |
 | Host-exposed ports explicit (`TRAEFIK_HTTP_PORT`, `TRAEFIK_HTTPS_PORT`) | Allows binding Traefik to non-privileged ports when running behind another LB or on a port-forwarded VPS. |
 | Dual-stack `proxy-public` as an opt-in Compose overlay (`network-dual-stack.yml`) rather than baked into `docker-compose.yml` | Docker cannot mix "IPv6 subnet present" with "IPv6 disabled" in one static network block, and an unconditional IPv6 default would risk existing deployments whose `proxy-public` was auto-assigned an IPv4 subnet. The overlay pattern (same mechanism as `apps/paperless-ngx/sso.yml`) keeps IPv4-only the default with dual-stack fully opt-in. See `docs/ipv6-dual-stack.md`. |
+| `render.sh` places every output by rename (temporary file + `mv`) | Traefik re-reads `config/dynamic/` on any change; a truncate-then-fill write can be read as an empty file, which drops every middleware that file defines and disables every router naming one for a reload cycle. Seen on a host on 2026-09-14 (18 routers, one cycle). A rename is atomic, so the watcher only sees complete files. |
+| Logrotate: one stanza per log, `copytruncate` for `traefik.log` | Traefik 3 reopens only the access log on `USR1`; the main log descriptor stays on the renamed file, the visible `traefik.log` stays empty, and the next rotation compresses what Traefik is writing to. Measured on v3.7.13, 2026-09-14. The main log is opened `O_APPEND`, so truncating in place is safe. |
 | `forwardedHeaders.trustedIPs` (Cloudflare ranges) added to `traefik.yml.tmpl` | Without this, Traefik has no way to distinguish a real client IP forwarded by Cloudflare from one a client could spoof in its own request headers — `docs/security-verification.md` (control #12) flagged this as an open gap. Hardcoded directly in the template (not `.env`) for the same reason `acc-local`'s RFC1918 ranges are hardcoded: `envsubst` can't render a multi-entry YAML list from one variable. |
 
 ## Version / tag notes
@@ -61,20 +64,22 @@
   resolvers and the Docker provider removed answered that question before the live
   container was touched; it is a cheap preflight and it is what the checklist below
   now asks for.
-- **The enable flow for the CrowdSec integration edits tracked files.** The README
-  has the operator uncomment blocks in `traefik.yml.tmpl` and
-  `integrations.yml.tmpl`, then render. Both templates are in git, so the next
-  `git pull` or checkout puts the comments back — and the next `render.sh` then
-  writes a configuration without the plugin and without the middleware, while the
-  running container still has both. That host was in exactly that state: templates
-  pristine, rendered files enabled. Until the render is gated on a variable, **do not
-  re-run `render.sh` on a host with the integration enabled without diffing
-  `config/` afterwards.** Recorded in `.ai/tasks.md`.
+- **The CrowdSec integration is switched in `.env`, not in the templates.**
+  `CROWDSEC_BOUNCER_ENABLED=true` makes `render.sh` emit the plugin block and
+  `config/dynamic/crowdsec.yml`; `false` removes both. A host that enabled the
+  integration the old way — by uncommenting tracked templates — is refused by
+  `render.sh` until `.env` declares the switch, because rendering over that state
+  would drop the plugin and the middlewares while the container keeps running with
+  both. The migration is in the README under "Migrating an installation that
+  enabled the integration before the switch" and ran on a host on 2026-09-14: dry run
+  into a copy, semantically identical to the live `config/`, then the live render —
+  no restart, the routers carrying `crowdsec-basic` unchanged, the bouncer still
+  polling.
 - Traefik v2 → v3 was a breaking upgrade; **do not** jump majors without reading the migration guide: https://doc.traefik.io/traefik/migration/v2-to-v3/
 - `tecnativa/docker-socket-proxy:v0.5.0` is pinned, moved from `v0.4.2` on 2026-09-13. Minor releases change the set of default-enabled endpoints — re-confirm `CONTAINERS`/`NETWORKS`/`ALLOW_*` flags after each bump. v0.5.0 updates the HAProxy base and adds `ALLOW_PAUSE` / `ALLOW_UNPAUSE`, both in upstream's revoked-by-default group, so the permitted surface is unchanged.
-- CrowdSec bouncer plugin is pinned to `v1.7.1` in `traefik.yml.tmpl`, inside the block that ships commented out. Releases: https://github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin/releases
+- CrowdSec bouncer plugin version comes from `CROWDSEC_BOUNCER_PLUGIN_VERSION` in `.env`; `.env.example` ships `v1.7.1`, and `render.sh` falls back to that when the variable is absent. Releases: https://github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin/releases
   - The options this blueprint uses — `crowdsecMode`, `crowdsecLapiScheme`, `crowdsecLapiHost`, `crowdsecLapiKey`, `updateIntervalSeconds`, `crowdsecAppsecEnabled`, `crowdsecAppsecHost`, `crowdsecAppsecFailureBlock`, `crowdsecAppsecUnreachableBlock` — are unchanged from `v1.4.5` through `v1.7.1`. The only deprecations in that range are `BanHTMLFilePath` → `BanFilePath` and `CaptchaHTMLFilePath` → `CaptchaFilePath` (v1.7.0), neither of which this blueprint sets.
-  - Verified against the upstream release notes only. The default configuration does not load the plugin, so no release in this range has been exercised at runtime by this repository — the first operator to enable reverse-proxy remediation is also the first to run it. Pin to a newer tag only after verifying it compiles against the running Traefik version. Traefik fetches and interprets the plugin at startup, so a bump takes effect on restart, not on reload.
+  - Verified against the upstream release notes only for `v1.7.1`. `v1.4.5` is the release that has run: a host carried it through Traefik 3.6.10 and then 3.7.13 (2026-09-13), and it loaded under both. Pin a newer tag only after verifying it compiles against the running Traefik version — the preflight in the upgrade checklist answers that without touching the live container. Traefik fetches and interprets the plugin at startup, so a bump takes effect on restart, not on reload.
 
 ## Upgrade checklist
 

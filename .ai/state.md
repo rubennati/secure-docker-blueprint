@@ -2,9 +2,9 @@
 
 > If this file conflicts with git (branch, commits, tags), trust git.
 
-**Last updated:** 2026-09-08
+**Last updated:** 2026-09-14
 
-- **Phase:** pre-1.0. Latest tag `v0.8.0` (2026-09-08). Work happens on a
+- **Phase:** pre-1.0. Latest tag `v0.8.3` (2026-09-14). Work happens on a
   short-lived branch and reaches `dev` through a pull request; `dev` reaches
   `main` the same way. Both branches reject a direct push.
 - **Current milestone:** v0.9.0 — Measured resource limits.

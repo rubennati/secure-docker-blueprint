@@ -15,7 +15,7 @@ other, not both, per consuming app.
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `ghcr.io/euro-office/documentserver:v9.3.2` | Document editing server (port 80, bundles its own DB/queue) |
+| `app` | `ghcr.io/euro-office/documentserver:v9.3.4-hotfix.1` | Document editing server (port 80, bundles its own DB/queue) |
 
 No `_FILE` support (OnlyOffice lineage) → `config/entrypoint.sh` injects `JWT_SECRET` from a Docker
 Secret, then execs the DS start script. Embedded in iframes → an iframe-friendly middleware chain
