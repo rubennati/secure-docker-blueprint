@@ -8,9 +8,14 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
+## [0.8.3] — 2026-09-14
+
+The CrowdSec render switch and a repository-wide currency pass. No new stack.
+
 ### Changed
 
-- **The CrowdSec reverse-proxy integration is switched in `.env`** (`core/traefik/`): `CROWDSEC_BOUNCER_ENABLED=true` makes `render.sh` emit the bouncer plugin block into `config/traefik.yml` and the `crowdsec-basic` / `crowdsec-appsec` middlewares into `config/dynamic/crowdsec.yml`; `false` strips the block and removes the file. `CROWDSEC_BOUNCER_PLUGIN_VERSION` carries the plugin release, `CROWDSEC_BOUNCER_KEY` the key. The templates are no longer edited to enable anything — the previous flow had the operator uncomment two tracked files, a checkout restored the comments, and the next render silently dropped both halves while the container kept running with them. `render.sh` now refuses to render over a `config/` that carries the integration while `.env` does not declare the switch; `validate.sh` refuses the switch without a key or with a version that is not a release tag, and a `config/` that disagrees with `.env` in either direction. The README carries enable, disable and the migration for installations that enabled it the old way; `TROUBLESHOOTING.md` §4.8 has the refusal. **The CI gate changes shape:** `check-crowdsec-config.py --templates` renders `core/traefik` with the shipped `.env.example`, then with the switch on and off, and judges each result instead of grepping templates for commented blocks. Eight new tests cover the switch, five cover the gate.
+- **The CrowdSec reverse-proxy integration is switched in `.env`** (`core/traefik/`): `CROWDSEC_BOUNCER_ENABLED=true` makes `render.sh` emit the bouncer plugin block into `config/traefik.yml` and the `crowdsec-basic` / `crowdsec-appsec` middlewares into `config/dynamic/crowdsec.yml`; `false` strips the block and removes the file. `CROWDSEC_BOUNCER_PLUGIN_VERSION` carries the plugin release, `CROWDSEC_BOUNCER_KEY` the key. The templates are no longer edited to enable anything — the previous flow had the operator uncomment two tracked files, a checkout restored the comments, and the next render silently dropped both halves while the container kept running with them. `render.sh` now refuses to render over a `config/` that carries the integration while `.env` does not declare the switch; `validate.sh` refuses the switch without a key or with a version that is not a release tag, and a `config/` that disagrees with `.env` in either direction. The README carries enable, disable and the migration for installations that enabled it the old way; `TROUBLESHOOTING.md` §4.8 has the refusal. **The CI gate changes shape:** `check-crowdsec-config.py --templates` renders `core/traefik` with the shipped `.env.example`, then with the switch on and off, and judges each result instead of grepping templates for commented blocks. Eight new tests cover the switch, five cover the gate. **The migration ran on the test host on 2026-09-14**: the switch declared in `.env` with the plugin version and key `config/` already carried, a dry run into a copy semantically identical to the live configuration, then the live render — no Traefik restart, the four routers carrying `crowdsec-basic` answered identically before and after, the bouncer kept polling.
+- **Operator site and workflow dependencies**: `@astrojs/starlight` bumped in `site/`, and the actions group (three actions) in the workflows — the first Dependabot pull requests opened against `dev` by the new configuration, grouped as intended.
 
 ## [0.8.2] — 2026-09-13
 
@@ -556,7 +561,8 @@ Initial public release.
 - No CI workflows yet (compose validate, markdown lint, secret scan) — planned for 0.2.0
 - No automatic backup orchestration — planned in Evaluating section of ROADMAP
 
-[Unreleased]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.8.2...HEAD
+[Unreleased]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.8.3...HEAD
+[0.8.3]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.8.2...v0.8.3
 [0.8.2]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.8.1...v0.8.2
 [0.8.1]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.7.0...v0.8.0
