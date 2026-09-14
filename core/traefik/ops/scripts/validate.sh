@@ -96,6 +96,10 @@ for v in "${REQUIRED[@]}"; do
 done
 [ "$missing" -eq 0 ] || exit 1
 
+# Same defaults render.sh applies, so an .env written before a resolver
+# existed validates against what will actually be rendered.
+ACME_RESOLVER_TLS="${ACME_RESOLVER_TLS:-tlsResolver}"
+
 # CrowdSec reverse-proxy remediation switch. render.sh applies it; this checks
 # that what .env says is complete and that config/ agrees with it.
 switch_declared="${CROWDSEC_BOUNCER_ENABLED+yes}"
@@ -150,8 +154,11 @@ elif [ -z "${TRAEFIK_DASHBOARD_CERT_RESOLVER:-}" ]; then
   echo
   echo "  Wildcard    set ACME_WILDCARD_DOMAIN to the parent domain of that host,"
   echo "              and leave TRAEFIK_DASHBOARD_CERT_RESOLVER empty."
-  echo "  Per-domain  set TRAEFIK_DASHBOARD_CERT_RESOLVER to a resolver name"
-  echo "              (${ACME_RESOLVER_DNS} for DNS-01, ${ACME_RESOLVER_HTTP} for HTTP-01)."
+  echo "  Per-domain  set TRAEFIK_DASHBOARD_CERT_RESOLVER to a resolver name:"
+  echo "              ${ACME_RESOLVER_DNS}  DNS-01, no public port needed"
+  echo "              ${ACME_RESOLVER_HTTP}  HTTP-01, needs public TCP 80"
+  echo "              ${ACME_RESOLVER_TLS}  TLS-ALPN-01, needs public TCP 443 and no TLS"
+  echo "              terminator in front (a CDN proxy in front breaks it)."
   echo
   echo "  Both are supported. The shipped .env.example picks neither on purpose, so"
   echo "  the choice is made rather than inherited. Until one is set, Traefik would"

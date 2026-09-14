@@ -34,6 +34,7 @@ BASE_ENV = {
     "ACME_STORAGE": "/etc/traefik/acme/acme.json",
     "ACME_RESOLVER_DNS": "cloudflare-dns",
     "ACME_RESOLVER_HTTP": "httpResolver",
+    "ACME_RESOLVER_TLS": "tlsResolver",
     "ACME_DNS_RESOLVER_1": "1.1.1.1:53",
     "ACME_DNS_RESOLVER_2": "1.0.0.1:53",
     "CF_DNS_API_TOKEN": "token",
@@ -60,6 +61,9 @@ class DashboardCertificateStrategy(unittest.TestCase):
     def _run(self, overrides):
         env = dict(BASE_ENV)
         env.update(overrides)
+        return self._run_with(env)
+
+    def _run_with(self, env):
         tmp = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
         shutil.copytree(TRAEFIK / "ops", tmp / "ops")
@@ -81,6 +85,8 @@ class DashboardCertificateStrategy(unittest.TestCase):
             "validate_out": validate.stdout + validate.stderr,
             "dashboard": dashboard.read_text(encoding="utf-8") if dashboard.exists() else "",
             "wildcard_rendered": (tmp / "config" / "dynamic" / "acme-wildcard.yml").exists(),
+            "static": (tmp / "config" / "traefik.yml").read_text(encoding="utf-8")
+                      if (tmp / "config" / "traefik.yml").exists() else "",
         }
 
     def test_a_wildcard_covers_dashboard(self):
@@ -144,6 +150,33 @@ class DashboardCertificateStrategy(unittest.TestCase):
         self.assertIn("WARNING", r["validate_out"])
         self.assertIn("Certificate Transparency", r["validate_out"])
         self.assertIn("certResolver: cloudflare-dns", r["dashboard"])
+
+    def test_g_tls_alpn_resolver_is_accepted_for_the_dashboard(self):
+        """TLS-ALPN-01 is a per-domain resolver like any other for the gate."""
+        r = self._run({"ACME_WILDCARD_DOMAIN": "", "TRAEFIK_DASHBOARD_CERT_RESOLVER": "tlsResolver"})
+        self.assertEqual(r["validate_rc"], 0, r["validate_out"])
+        self.assertIn("certResolver: tlsResolver", r["dashboard"])
+
+    def test_h_all_three_resolvers_are_defined_and_parse(self):
+        """The static configuration defines all three; a resolver name left unset
+        would render an empty YAML key, so render.sh defaults each one."""
+        import yaml
+        r = self._run({"ACME_WILDCARD_DOMAIN": "example.com"})
+        self.assertEqual(r["render_rc"], 0)
+        doc = yaml.safe_load(r["static"])
+        self.assertEqual(sorted(doc["certificatesResolvers"]),
+                         ["cloudflare-dns", "httpResolver", "tlsResolver"])
+        self.assertEqual(doc["certificatesResolvers"]["tlsResolver"]["acme"]["tlsChallenge"], {})
+
+    def test_i_unset_resolver_name_still_renders_valid_configuration(self):
+        """An .env written before tlsResolver existed must keep rendering."""
+        import yaml
+        env = dict(BASE_ENV); env.pop("ACME_RESOLVER_TLS")
+        env["ACME_WILDCARD_DOMAIN"] = "example.com"
+        r = self._run_with(env)
+        self.assertEqual(r["render_rc"], 0, r["validate_out"])
+        doc = yaml.safe_load(r["static"])
+        self.assertIn("tlsResolver", doc["certificatesResolvers"])
 
     def test_f_apex_dashboard_is_covered(self):
         """The wildcard certificate's main domain carries the apex itself."""

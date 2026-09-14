@@ -87,7 +87,7 @@ Which profile suits which app is [`core/crowdsec/docs/profiles.md`](../../core/c
 | Variable | Possible Values |
 |----------|----------------|
 | `APP_TRAEFIK_HOST` | `app.example.com` |
-| `APP_TRAEFIK_CERT_RESOLVER` | `cloudflare-dns`, `httpResolver` |
+| `APP_TRAEFIK_CERT_RESOLVER` | `cloudflare-dns`, `httpResolver`, `tlsResolver` |
 | `APP_TRAEFIK_TLS_OPTION` | `tls-basic`, `tls-aplus`, `tls-modern` |
 | `APP_TRAEFIK_ACCESS` | `acc-public`, `acc-tailscale` |
 | `APP_TRAEFIK_SECURITY` | `sec-0` through `sec-5`, `e` suffix for embed (e.g. `sec-3e`) |
