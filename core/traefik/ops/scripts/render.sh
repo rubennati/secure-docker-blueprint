@@ -72,17 +72,34 @@ fi
 
 mkdir -p "${CFG_DIR}/dynamic"
 
+# Every output is written to a temporary file next to its destination and moved
+# into place with mv — a rename on the same filesystem, which is atomic. Traefik
+# watches config/dynamic/ and re-reads the whole directory on any change; a plain
+# `> file` truncates first and fills afterwards, and a read that lands in between
+# sees an empty file: every middleware it defined "does not exist" for that
+# reload, and every router naming one is disabled until the next reload, up to
+# providersThrottleDuration later. That happened on a host on 2026-09-14 during
+# a render — `middleware "acc-public@file" does not exist` on 18 routers for one
+# reload cycle. With rename, the watcher only ever sees complete files.
+place() {  # place <destination>: stdin -> destination, atomically
+  local dest="$1" tmp
+  tmp="$(mktemp "${dest}.XXXXXX")"
+  cat > "${tmp}"
+  chmod 0644 "${tmp}"
+  mv -f "${tmp}" "${dest}"
+}
+
 echo "Rendering static config..."
 if [ "${CROWDSEC_BOUNCER_ENABLED}" = true ]; then
-  envsubst < "${TPL_DIR}/traefik.yml.tmpl" > "${CFG_DIR}/traefik.yml"
+  envsubst < "${TPL_DIR}/traefik.yml.tmpl" | place "${CFG_DIR}/traefik.yml"
   echo " -> traefik.yml (CrowdSec bouncer plugin ${CROWDSEC_BOUNCER_PLUGIN_VERSION} declared)"
 else
   # Drop the marker-delimited plugin block; the markers are comments and go with it.
   envsubst < "${TPL_DIR}/traefik.yml.tmpl" \
-    | sed '/^# >>> crowdsec-bouncer/,/^# <<< crowdsec-bouncer/d' > "${CFG_DIR}/traefik.yml"
+    | sed '/^# >>> crowdsec-bouncer/,/^# <<< crowdsec-bouncer/d' | place "${CFG_DIR}/traefik.yml"
   echo " -> traefik.yml (no plugin — CROWDSEC_BOUNCER_ENABLED=false)"
 fi
-envsubst < "${TPL_DIR}/haproxy.cfg.template.tmpl" > "${CFG_DIR}/haproxy.cfg.template"
+envsubst < "${TPL_DIR}/haproxy.cfg.template.tmpl" | place "${CFG_DIR}/haproxy.cfg.template"
 
 echo "Rendering dynamic configs..."
 for f in "${TPL_DIR}/dynamic/"*.yml.tmpl; do
@@ -114,14 +131,14 @@ for f in "${TPL_DIR}/dynamic/"*.yml.tmpl; do
       # wildcard through SNI — the same way application routers work. Drop the
       # line rather than render "certResolver:" with no value.
       if [ -z "${TRAEFIK_DASHBOARD_CERT_RESOLVER:-}" ]; then
-        envsubst < "$f" | sed '/^[[:space:]]*certResolver:[[:space:]]*$/d' > "$out"
+        envsubst < "$f" | sed '/^[[:space:]]*certResolver:[[:space:]]*$/d' | place "$out"
         echo " -> ${base} (dashboard uses the wildcard – no certResolver)"
         continue
       fi
       ;;
   esac
 
-  envsubst < "$f" > "$out"
+  envsubst < "$f" | place "$out"
   echo " -> ${base}"
 done
 

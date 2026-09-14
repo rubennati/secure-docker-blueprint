@@ -627,6 +627,47 @@ docker compose exec <service> wget -qO- http://127.0.0.1:<port>/api/health
 
 ---
 
+### 8.3 `traefik.log` is empty after the first log rotation, `traefik.log.1` keeps growing
+
+**Symptom:** `core/traefik/volumes/logs/traefik.log` is a zero-byte file with a
+recent creation time; `traefik.log.1` carries today's entries and its mtime keeps
+moving. `docker compose logs traefik` shows nothing either, because the container
+logs to the file. The access log is fine.
+
+**Cause:** Traefik 3 reopens only the access log on `USR1`. It logs "Closing and
+re-opening log files for rotation" and does exactly that for `access.log`; the main
+log descriptor stays on the file logrotate renamed. A logrotate stanza that
+rotates both files by rename and sends `USR1` — the shape this repository shipped
+until 2026-09-14 — therefore works for one file and not the other. On the next
+rotation `traefik.log.1` is compressed and deleted while Traefik still writes to
+it, and the log is gone until a restart.
+
+**Check:**
+
+```bash
+pid=$(docker inspect traefik-core --format '{{.State.Pid}}')
+sudo ls -l /proc/$pid/fd | grep '\.log'
+# fd -> /var/log/traefik/traefik.log.1  <- the main log descriptor on the rotated file
+```
+
+**Repair without a restart:** the descriptor follows the inode, so give the file
+its name back, then install the current logrotate configuration, which truncates
+the main log in place instead of renaming it:
+
+```bash
+cd /path/to/secure-docker-blueprint/core/traefik
+sudo mv volumes/logs/traefik.log.1 volumes/logs/traefik.log     # replaces the empty file
+sudo sed 's|/path/to/secure-docker-blueprint|'"$(cd ../.. && pwd)"'|g' \
+  config/logrotate/traefik | sudo tee /etc/logrotate.d/traefik >/dev/null
+sudo logrotate -d /etc/logrotate.d/traefik                       # dry run: two stanzas, no errors
+```
+
+`copytruncate` is safe here because Traefik opens the main log `O_APPEND`
+(`grep flags /proc/$pid/fdinfo/<fd>` shows the `02000` bit): after the truncate
+it continues at the new end of the file.
+
+---
+
 ## Quick Diagnostic Checklist
 
 When something doesn't work after deployment, run through this in order:

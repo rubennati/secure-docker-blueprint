@@ -589,7 +589,19 @@ cat /etc/logrotate.d/traefik
 sudo logrotate -d /etc/logrotate.d/traefik
 ```
 
-The config rotates daily, keeps 7 days, compresses with gzip. The `postrotate` hook sends `USR1` to the Traefik container — Traefik reopens the log file after rotation (same mechanism as nginx). Without this signal, Traefik keeps writing to the already-rotated file.
+The config rotates daily, keeps 7 days, compresses with gzip — in two stanzas,
+because Traefik treats its two logs differently:
+
+| Log | Rotation | Why |
+|---|---|---|
+| `access.log` | rename, then `USR1` to the container | Traefik reopens the access log on `USR1`, the same mechanism as nginx |
+| `traefik.log` | `copytruncate` — copied out and truncated in place, no signal | Traefik 3 announces "Closing and re-opening log files for rotation" on `USR1` and reopens the access log only; the main log descriptor stays on the renamed file. Measured on v3.7.13 on 2026-09-14. The file is opened `O_APPEND`, so truncating in place is safe |
+
+With a single rename-and-signal stanza for both — the shape this file had until
+2026-09-14 — `traefik.log` reads as empty after the first rotation while Traefik
+writes into `traefik.log.1`, and the next rotation compresses the file it is
+writing to. If an installation is in that state, `TROUBLESHOOTING.md` §8.3 has
+the repair.
 
 > **Note:** logrotate runs on the host, not inside the container. This is the correct approach for bind-mounted Docker log files — it is standard practice for any containerized app that writes logs to a host volume.
 
