@@ -10,7 +10,12 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [0.8.3] — 2026-09-14
 
-The CrowdSec render switch and a repository-wide currency pass. No new stack.
+The CrowdSec render switch, two Traefik operations fixes the host migration surfaced, and a repository-wide currency pass. No new stack.
+
+### Fixed
+
+- **`render.sh` writes every file atomically** (`core/traefik/ops/scripts/render.sh`): outputs go to a temporary file next to the destination and are moved into place with `mv`, a rename on the same filesystem. Before, `> file` truncated first and filled afterwards, and Traefik — which watches `config/dynamic/` and re-reads the whole directory on any change — could read a file in between as empty. It did, on a host on 2026-09-14, during the switch migration: `middleware "acc-public@file" does not exist` on 18 routers for one reload cycle, every router naming an `acc-*` middleware disabled until the next reload up to `providersThrottleDuration` later. The access log shows no request in that window; the window was real. With rename, the watcher only ever sees complete files.
+- **`traefik.log` no longer disappears after the first log rotation** (`core/traefik/config/logrotate/traefik`): Traefik 3 announces "Closing and re-opening log files for rotation" on `USR1` and reopens the access log — the main log descriptor stays on the renamed file. Measured on 2026-09-14 (v3.7.13): after rotation `access.log` was reopened, `traefik.log` was not, the visible `traefik.log` sat at zero bytes and the next rotation would have compressed the file Traefik was writing to. The logrotate configuration now has one stanza per log: `access.log` keeps rename-and-signal, `traefik.log` uses `copytruncate` — safe because the file is opened `O_APPEND`, which was checked on the descriptor. An installation on the old configuration repairs itself by moving `traefik.log.1` back over `traefik.log` (the descriptor follows the inode) and installing the new stanza; `TROUBLESHOOTING.md` §8.3.
 
 ### Changed
 
