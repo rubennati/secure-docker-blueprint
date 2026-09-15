@@ -10,8 +10,8 @@ Each item links to the relevant standard or lesson learned.
 Before writing any YAML, answer these questions:
 
 - [ ] **What is the exact image tag?** Check Docker Hub / GHCR for the correct
-  version format. Some projects use non-standard tags (e.g. `apache/tika:3.1.0.0`
-  not `3.1`). Always verify the tag exists with `docker pull`.
+  version format. Some projects use non-standard tags (e.g. `apache/tika:3.3.1.0`
+  not `3.3`). Always verify the tag exists with `docker pull`.
 
 - [ ] **Does the image support `_FILE` env vars?** Check the image docs or
   entrypoint script. If not, you need a custom entrypoint wrapper.
