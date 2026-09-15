@@ -306,6 +306,17 @@ Internet ──TCP 443──▶ firewall ──TCP 443──▶ this host ──
 - **No wildcards.** Let's Encrypt issues those over DNS-01 alone. A deployment
   that wants `*.example.com` needs `cloudflare-dns` no matter which ports are open.
 
+**On a host already running wildcard mode, this resolver will not visibly do
+anything for a hostname the wildcard already covers.** Traefik matches an
+incoming SNI against every certificate already in its store, independent of
+which resolver is named on the router; if the wildcard already covers the
+hostname, that match wins and no request ever reaches `tlsResolver`'s ACME
+provider. Verified on a live host on 2026-09-15: the resolver loaded without
+error and the router carried it correctly, and `acme.json` still held nothing
+under `tlsResolver` after the restart, because `*.dob.qode.at` already covered
+the test hostname. To actually see this resolver issue something, point it at
+a hostname the wildcard does not cover.
+
 **Port 80 becomes optional on this path.** Publishing it is still the default,
 because the `web` entrypoint redirects HTTP to HTTPS and a visitor who types a
 bare hostname lands on `http://`. Dropping the forward at the firewall keeps that
