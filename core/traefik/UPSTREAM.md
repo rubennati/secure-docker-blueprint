@@ -76,6 +76,23 @@
   no restart, the routers carrying `crowdsec-basic` unchanged, the bouncer still
   polling.
 - Traefik v2 → v3 was a breaking upgrade; **do not** jump majors without reading the migration guide: https://doc.traefik.io/traefik/migration/v2-to-v3/
+- **`tlsResolver` (TLS-ALPN-01) was exercised on a live host on 2026-09-15**, restart and
+  all: `core/whoami`'s router set to it, `docker compose up -d` on `whoami`, then Traefik
+  force-recreated to load the resolver into the running process. The mechanism is sound —
+  Traefik started with no error against the resolver itself, `whoami@docker`'s router
+  carried `certificateResolver: tlsResolver` with no complaint, every other route answered
+  identically before and after, and the bouncer kept polling. **No certificate was actually
+  requested.** This host runs wildcard mode (`ACME_WILDCARD_DOMAIN=dob.qode.at`), and
+  `whoami.dob.qode.at` is already covered by the stored wildcard certificate — Traefik
+  matches an incoming SNI against every certificate in its store regardless of which
+  resolver owns it, finds the wildcard already satisfies `whoami.dob.qode.at`, and never
+  proceeds to ask `tlsResolver`'s ACME provider for a new one. `acme.json` confirms it:
+  two minutes after the restart, `tlsResolver`'s bucket was still empty. **A resolver
+  cannot be proven to actually issue on a wildcard-mode host** for any hostname the
+  wildcard already covers — only for one it does not, which on this host meant no
+  hostname could be tested without either using a domain outside `*.dob.qode.at` or
+  disabling wildcard coverage, neither of which this verification did. The change was
+  reverted afterward: `whoami` back to `cloudflare-dns`, template unaffected.
 - `tecnativa/docker-socket-proxy:v0.5.0` is pinned, moved from `v0.4.2` on 2026-09-13. Minor releases change the set of default-enabled endpoints — re-confirm `CONTAINERS`/`NETWORKS`/`ALLOW_*` flags after each bump. v0.5.0 updates the HAProxy base and adds `ALLOW_PAUSE` / `ALLOW_UNPAUSE`, both in upstream's revoked-by-default group, so the permitted surface is unchanged.
 - CrowdSec bouncer plugin version comes from `CROWDSEC_BOUNCER_PLUGIN_VERSION` in `.env`; `.env.example` ships `v1.7.1`, and `render.sh` falls back to that when the variable is absent. Releases: https://github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin/releases
   - The options this blueprint uses — `crowdsecMode`, `crowdsecLapiScheme`, `crowdsecLapiHost`, `crowdsecLapiKey`, `updateIntervalSeconds`, `crowdsecAppsecEnabled`, `crowdsecAppsecHost`, `crowdsecAppsecFailureBlock`, `crowdsecAppsecUnreachableBlock` — are unchanged from `v1.4.5` through `v1.7.1`. The only deprecations in that range are `BanHTMLFilePath` → `BanFilePath` and `CaptchaHTMLFilePath` → `CaptchaFilePath` (v1.7.0), neither of which this blueprint sets.
