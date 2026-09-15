@@ -8,6 +8,10 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
+### Changed
+
+- **`tlsResolver` verified live** (`core/traefik/`): tested end-to-end on a host on 2026-09-15 — `whoami`'s router set to it, Traefik force-recreated to load it. The resolver itself is sound: no startup error, the router carried it correctly, every other route unaffected, the bouncer unaffected. It did not actually request a certificate, because the test host runs wildcard mode and the wildcard already covers `whoami`'s hostname — Traefik matches an incoming SNI against any stored certificate regardless of which resolver owns it, so the wildcard match wins and `tlsResolver`'s ACME provider is never asked. Documented in `UPSTREAM.md` and the README: on a wildcard-mode host, this resolver only visibly does something for a hostname the wildcard does not cover.
+
 ## [0.8.4] — 2026-09-15
 
 ### Added
