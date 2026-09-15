@@ -325,6 +325,6 @@ Recommendation: `tls-aplus` for most services. Use `tls-modern` for password man
 | Lock to VPN only | Change `acc-public` to `acc-tailscale@file` |
 | Escalate rate limiting | Change `sec-2@file` to `sec-4@file` |
 | Block an IP via CrowdSec | `docker exec crowdsec cscli decisions add --ip X.X.X.X --duration 24h --reason "incident"` |
-| Switch certificate resolver | Change `certResolver` between `cloudflare-dns` and `httpResolver` |
+| Switch certificate resolver | Change `certResolver` between `cloudflare-dns` (DNS-01), `httpResolver` (HTTP-01) and `tlsResolver` (TLS-ALPN-01) |
 
 All changes in `config/dynamic/*.yml` are hot-reloaded by Traefik — no restart needed.

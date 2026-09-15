@@ -142,7 +142,7 @@ That is the case this blueprint has hit, not the only one IPv6 matters for — a
 
 ### Certificate strategy
 
-The path above is one of three. Two more work too — the only hard constraint is that wildcard certificates require DNS-01, since Let's Encrypt doesn't issue wildcards over HTTP-01 at all, regardless of this Blueprint.
+The path above is one of four. The others work too — the only hard constraint is that wildcard certificates require DNS-01, since Let's Encrypt issues wildcards over no other challenge, whatever the server can reach.
 
 <Tabs>
   <TabItem label="Wildcard">
@@ -154,13 +154,18 @@ The path above is one of three. Two more work too — the only hard constraint i
   <TabItem label="Per-domain (HTTP-01)">
     Each application requests its own certificate via the standard HTTP-01 challenge — no Cloudflare account or token at all. Requires port 80 to be publicly reachable on this server. Leave `ACME_WILDCARD_DOMAIN` unset; in each app's `.env` set `APP_TRAEFIK_CERT_RESOLVER=httpResolver`, and uncomment the `tls.certresolver` label. On both per-domain paths the dashboard needs `TRAEFIK_DASHBOARD_CERT_RESOLVER` set as well.
   </TabItem>
+  <TabItem label="Per-domain (TLS-ALPN-01)">
+    Each application requests its own certificate over **port 443 itself** — Let's Encrypt opens a TLS connection, asks for the ALPN protocol `acme-tls/1`, and Traefik answers on the port it already listens on. No port 80 forward, no Cloudflare account, no DNS credentials: a firewall that forwards a single TCP port is enough. Leave `ACME_WILDCARD_DOMAIN` unset; in each app's `.env` set `APP_TRAEFIK_CERT_RESOLVER=tlsResolver`, and uncomment the `tls.certresolver` label.
+
+    Two things rule it out: a wildcard (DNS-01 only), and anything that terminates TLS in front of this server. A CDN or load balancer answers the handshake itself and never forwards the ALPN protocol, so issuance fails with `cannot negotiate ALPN protocol "acme-tls/1"` — **including Cloudflare's proxy on orange cloud.** Set the record to DNS-only, or use a DNS-01 resolver there.
+  </TabItem>
 </Tabs>
 
 These combine, too: keep a wildcard for your main domain and let individual apps opt into their own certificate (either resolver) via the same per-app label.
 
 The setup check refuses the one combination that fails silently — no wildcard covering a hostname and no resolver for it — because Traefik answers such a request with its own self-signed certificate and writes nothing to the log. When upgrading a wildcard installation that already issued a separate dashboard certificate, emptying the variable stops further requests for it; the certificate already stored keeps renewing, and a hostname already in the transparency logs stays there.
 
-Cloudflare's proxy status (orange-cloud vs. DNS-only) is a separate, per-record choice — independent of certificate strategy and resolver, and irrelevant to the HTTP-01 path above.
+Cloudflare's proxy status (orange-cloud vs. DNS-only) is a separate, per-record choice, and it is irrelevant to every path above except one: TLS-ALPN-01 needs the TLS handshake to reach this server, so an orange-cloud record breaks it and a DNS-only record does not.
 
 ## Troubleshooting
 

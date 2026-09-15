@@ -8,6 +8,12 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
+## [0.8.4] — 2026-09-15
+
+### Added
+
+- **A third ACME resolver: `tlsResolver`, TLS-ALPN-01** (`core/traefik/`). Let's Encrypt opens a TLS connection to port 443, asks for the ALPN protocol `acme-tls/1`, and Traefik answers the challenge on the port it already listens on. No port 80 forward, no DNS credentials, no Cloudflare account — a firewall that forwards a single TCP port is enough, which is the shape a customer edge usually has. All three resolvers are defined in the rendered configuration; one that no router names issues nothing, and the choice stays per router through `APP_TRAEFIK_CERT_RESOLVER`. **Three conditions decide whether it works, all outside this repository:** TCP 443 reachable from the internet (UDP 443 is HTTP/3 and plays no part); nothing terminating TLS in front, because a CDN or load balancer answers the handshake itself and never forwards the ALPN protocol — issuance then fails with `cannot negotiate ALPN protocol "acme-tls/1"`, which rules the path out **behind Cloudflare's proxy on orange cloud**, the edge `apps/caldiy/docs/cloudflare.md` recommends for that stack; and no wildcards, which Let's Encrypt issues over DNS-01 alone. HTTP-01 is indifferent to proxy status, so the site page no longer says that of every path. `render.sh` and `validate.sh` default each resolver name, so an `.env` written before this release keeps rendering — an unset name would otherwise produce an empty YAML key and an unparseable static configuration, which a test now covers. README gains Path C and a resolver table with what each one needs reachable.
+
 ## [0.8.3] — 2026-09-14
 
 The CrowdSec render switch, two Traefik operations fixes the host migration surfaced, and a repository-wide currency pass. No new stack.
@@ -566,7 +572,8 @@ Initial public release.
 - No CI workflows yet (compose validate, markdown lint, secret scan) — planned for 0.2.0
 - No automatic backup orchestration — planned in Evaluating section of ROADMAP
 
-[Unreleased]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.8.3...HEAD
+[Unreleased]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.8.4...HEAD
+[0.8.4]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.8.3...v0.8.4
 [0.8.3]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.8.2...v0.8.3
 [0.8.2]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.8.1...v0.8.2
 [0.8.1]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.8.0...v0.8.1

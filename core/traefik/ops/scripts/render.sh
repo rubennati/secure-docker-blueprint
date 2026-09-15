@@ -43,6 +43,13 @@ case "${CROWDSEC_BOUNCER_ENABLED}" in
 esac
 export CROWDSEC_BOUNCER_PLUGIN_VERSION="${CROWDSEC_BOUNCER_PLUGIN_VERSION:-v1.7.1}"
 
+# Resolver names are keys in the rendered YAML. An .env written before a
+# resolver existed would render an empty key and an unparseable document, so
+# each one carries the default from .env.example.
+export ACME_RESOLVER_DNS="${ACME_RESOLVER_DNS:-cloudflare-dns}"
+export ACME_RESOLVER_HTTP="${ACME_RESOLVER_HTTP:-httpResolver}"
+export ACME_RESOLVER_TLS="${ACME_RESOLVER_TLS:-tlsResolver}"
+
 rendered_has_bouncer() {
   grep -qsE '^experimental:' "${CFG_DIR}/traefik.yml" && return 0
   grep -qsE '^[[:space:]]*crowdsec-(basic|appsec):' "${CFG_DIR}"/dynamic/*.yml 2>/dev/null
