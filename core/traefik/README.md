@@ -215,10 +215,15 @@ Set the default in `.env` via `TLS_DEFAULT_OPTION`. Override per-router in `tls.
 
 ## ACME Resolvers
 
-| Resolver | Challenge | Use case |
-|----------|-----------|----------|
-| `cloudflare-dns` | DNS-01 | Wildcard certs, private servers (no port 80 needed) |
-| `httpResolver` | HTTP-01 | Standard certs, no Cloudflare dependency |
+| Resolver | Challenge | Needs reachable | Wildcards | Use case |
+|----------|-----------|-----------------|-----------|----------|
+| `cloudflare-dns` | DNS-01 | nothing inbound | yes | Wildcard certs, and any host with no public port at all |
+| `httpResolver` | HTTP-01 | TCP 80 | no | Standard certs, no Cloudflare account needed |
+| `tlsResolver` | TLS-ALPN-01 | TCP 443 | no | One public port for everything — no port 80 forward, no DNS credentials |
+
+All three are defined in the rendered configuration. A resolver that no router
+names issues nothing, so defining one costs nothing; the choice is made per
+router, through `APP_TRAEFIK_CERT_RESOLVER` (or `TRAEFIK_DASHBOARD_CERT_RESOLVER`).
 
 ## Certificate strategy — wildcard vs. per-domain
 
@@ -263,6 +268,50 @@ Each app requests its own cert. Works with any resolver, no wildcard setup.
    ```
 
 4. Set `TRAEFIK_DASHBOARD_CERT_RESOLVER` — without a wildcard the dashboard needs its own certificate.
+
+### Path C — Per-domain over port 443 only (TLS-ALPN-01)
+
+The same per-domain shape as Path B, with the challenge answered on 443 instead
+of 80. Let's Encrypt opens a TLS connection, asks for the ALPN protocol
+`acme-tls/1`, and Traefik serves the challenge certificate on the connection it
+is already listening on. Nothing else is forwarded, and no DNS credentials exist
+anywhere in the deployment.
+
+This is the path for a firewall that forwards one port:
+
+```text
+Internet ──TCP 443──▶ firewall ──TCP 443──▶ this host ──▶ Traefik
+                                                            ├── TLS-ALPN-01 → certificate
+                                                            └── router → application
+```
+
+**Setup:**
+
+1. In `core/traefik/.env` leave `ACME_WILDCARD_DOMAIN` **unset**
+2. Per app: `APP_TRAEFIK_CERT_RESOLVER=tlsResolver` in that app's `.env`, and
+   uncomment the `tls.certresolver` label in its `docker-compose.yml`
+3. `TRAEFIK_DASHBOARD_CERT_RESOLVER=tlsResolver` if the dashboard is published
+
+**Three conditions, and all three are outside this repository:**
+
+- **TCP 443 reachable from the internet.** UDP 443 is HTTP/3 and plays no part in
+  the challenge — a firewall that forwards only TCP is enough.
+- **Nothing may terminate TLS in front of Traefik.** A CDN or load balancer in
+  front answers the handshake itself and does not forward the ALPN protocol;
+  issuance then fails with `cannot negotiate ALPN protocol "acme-tls/1"`. This
+  rules the path out behind **Cloudflare's proxy (orange cloud)** — which
+  `apps/caldiy/docs/cloudflare.md` recommends for that stack. Use DNS-01 there,
+  or set the record to DNS-only. HTTP-01 is unaffected by proxy status; this is
+  the one resolver that is not.
+- **No wildcards.** Let's Encrypt issues those over DNS-01 alone. A deployment
+  that wants `*.example.com` needs `cloudflare-dns` no matter which ports are open.
+
+**Port 80 becomes optional on this path.** Publishing it is still the default,
+because the `web` entrypoint redirects HTTP to HTTPS and a visitor who types a
+bare hostname lands on `http://`. Dropping the forward at the firewall keeps that
+redirect working for anyone already inside; removing `"${TRAEFIK_HTTP_PORT}:80/tcp"`
+from `docker-compose.yml` removes it entirely, and those visitors get a connection
+refused instead of a redirect.
 
 ### Migrating an existing wildcard deployment
 
