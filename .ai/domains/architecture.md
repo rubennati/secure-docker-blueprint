@@ -24,6 +24,16 @@ The test question per category is in
 [`docs/architecture.md`](../../docs/architecture.md#directory-structure) — apply them
 in order rather than guessing from the name.
 
+## Conceptual domains are not directories
+
+[`docs/architecture.md`](../../docs/architecture.md#physical-layout-conceptual-domains-and-navigation-are-three-different-layers)
+is binding here. Development / Custom Applications, AI & Local AI and Document
+Processing are documentation and navigation vocabulary today, not categories —
+do not create a directory, a template or a stack for one because it has a name.
+A domain earns a directory by failing the categorisation test above, the same
+as anything else. `docker-compose.local.yml` is a deployment mode of an
+existing app, not Development — the two are not the same problem.
+
 ## Networking
 
 Hub-and-spoke per app: `proxy-public` shared and external for web-facing services,
