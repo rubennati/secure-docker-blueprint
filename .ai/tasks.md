@@ -22,12 +22,14 @@ session left open is in
       closed circuit and down/up both on a phone
 - [ ] Point borgmatic's run monitoring at a real Healthchecks check — the receiver
       exists now; this is what turns the backup timer's silence into an alert
-- [ ] Point `monitoring/beszel` and `monitoring/beszel-agent` at a socket proxy — the
-      hub stack was verified as shipped on 2026-09-08, the proxy variant was not. Upstream supports `DOCKER_HOST`, and documents a proxy with
-      `CONTAINERS=1` as the safer setup — so the exception's old claim that Beszel
-      has no proxy support was wrong. The agent runs in host network mode, so the
-      proxy binds `127.0.0.1:2375`. Until then the agent holds the full Docker API,
-      which is root on the host; `:ro` on the socket does not change that
+- [x] Point `monitoring/beszel` and `monitoring/beszel-agent` at a socket proxy —
+      done 2026-09-16: `tecnativa/docker-socket-proxy` with `CONTAINERS=1` only
+      (`POST=0`, everything else 0), matching what the agent's Docker client
+      actually calls (`agent/docker.go` upstream: list, inspect, stats, logs).
+      The agent's `network_mode: host` has no Docker network to resolve a
+      service name on, so the proxy publishes `127.0.0.1:2375` and the agent's
+      `DOCKER_HOST` points there. `docker compose config` validated on both
+      stacks; not yet run against a real daemon — no host in this environment.
 - [x] Verify `monitoring/ntfy` — done 2026-09-08: `read_only` holds, a message
       arrived on an iPhone through the public read-only router; a publish burst
       against the rate limit is still unmeasured

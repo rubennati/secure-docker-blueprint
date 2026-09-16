@@ -27,7 +27,7 @@ See `monitoring/beszel/UPSTREAM.md` for the full architecture overview.
 | Change from upstream | Reason |
 |---|---|
 | **`security_opt: no-new-privileges:true`** | Baseline hardening |
-| **Docker socket mounted read-only** | The agent only needs container stats, but `:ro` does not enforce that — it guards the socket file, not the API. `DOCKER_HOST` against a socket proxy with `CONTAINERS=1` is what would enforce it; pending the first host run |
+| **Socket proxy instead of a direct socket mount** | The agent's Docker client only calls `/containers/json`, `/containers/{id}/json`, `/containers/{id}/stats` and `/containers/{id}/logs` (`agent/docker.go` upstream) — `tecnativa/docker-socket-proxy` with `CONTAINERS=1` covers exactly that, `POST=0` blocks everything else. The agent reaches it over `127.0.0.1:2375` because `network_mode: host` has no Docker network to resolve a service name on. |
 | **SSH public key in env, not baked in** | Blueprint: no credentials in image |
 
 ## Upgrade checklist
