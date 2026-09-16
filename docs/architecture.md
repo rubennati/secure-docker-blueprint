@@ -48,6 +48,66 @@ The rule was sharpened after an earlier attempt placed `business/` by analogy to
 
 ---
 
+## Physical layout, conceptual domains and navigation are three different layers
+
+Three separate questions get asked about this repository, and conflating them is
+what stranded `business/` once already (above). Each has its own owner and its
+own reason to change.
+
+| Layer | Question it answers | Owner | Changes when |
+|---|---|---|---|
+| **Physical layout** | how does a stack access the system? | this document, the five directories | a stack's access pattern differs from every existing category |
+| **Conceptual domain** | how does a reader group this in their head? | documentation, `.ai/decisions.md` | a subject-matter grouping helps a reader, independent of any directory |
+| **Website navigation** | how does a reader find this? | `site/` | reader research shows a different grouping helps — already independent today, see the site's Infrastructure/Applications/Operations split |
+
+The physical layout is `core/apps/business/monitoring/backup`, unchanged, and is
+the only one of the three enforced in CI (`check-structure.py`,
+`new-app-checklist.md`). A conceptual domain can exist purely as documentation
+and navigation vocabulary, with no stack in it, for as long as that stays
+useful to a reader — it earns a directory the same way any category does: by
+failing every test in the [Directory Structure](#directory-structure) table.
+
+**Conceptual domains today**, alongside the five that already map to a
+directory (Infrastructure → `core/`, Applications → `apps/`, Business →
+`business/`, Monitoring → `monitoring/`, Operations & Recovery → `backup/`):
+
+- **Development / Custom Applications** — see below.
+- **AI & Local AI** — no stack exists here. If one is added, it goes through the
+  same categorisation test as everything else; nothing about "AI" changes which
+  directory it lands in.
+- **Document Processing** — split today between `apps/` (Paperless-ngx: ingest,
+  OCR, search) and `core/` (the document editors, pending the reclassification
+  tracked as an open decision in `../.ai/state.md`). The domain is a reader-facing
+  grouping across that split, not a reason to merge the two.
+
+None of the three justifies a new top-level directory now.
+
+### Development is a mission scope, not the local test-stack mode
+
+The mission covers two kinds of software: existing self-hosted open-source
+projects, and applications someone builds themselves. Both go through the same
+**deploy → secure → operate → recover** model, but the first phase differs — an
+existing project starts from a published, versioned image; software someone
+builds starts from source and a build step this repository does not template
+yet.
+
+**This is not what `docker-compose.local.yml` is for.** The local test stack
+([`standards/compose-structure.md`](standards/compose-structure.md)) is a
+deployment mode of an already-packaged application — the same `image:` tag,
+published without Traefik, DNS or a certificate so it can be tried on one
+machine. It answers "how do I try this app," not "how do I harden an app I
+wrote."
+
+No reference exists yet for a custom application, and none is planned.
+`apps/_reference` templates the hardening pattern around a pre-built, versioned
+image — its `UPSTREAM.md`, its `_FILE`-secret assumptions and the Trivy scan
+target all presume one. The gap stays unaddressed until a real application
+needs it: inventing a shape for it now would be exactly the placeholder this
+repository avoids elsewhere (`decisions.md`: "a reasoned absence is the outcome,
+not a gap").
+
+---
+
 ## Networking Model
 
 Every multi-service app uses a **hub-and-spoke** network layout. Two Docker networks per app, with a strict separation of concerns:

@@ -6,6 +6,20 @@ this file is the index and covers decisions that have no other home.
 
 ---
 
+## 2026-09 · The mission covers custom applications; physical layout, conceptual domain and navigation stay three separate questions
+
+The mission now covers two kinds of software: existing self-hosted open-source
+projects, and applications someone builds themselves, both through the same
+deploy → secure → operate → recover model. Full rationale, the layer
+distinction and what stays out of scope: `docs/architecture.md` →
+"Physical layout, conceptual domains and navigation are three different
+layers."
+
+**Why now.** Two review passes in a row conflated "how does a reader group
+this" with "which directory does this belong in" — the same mistake the
+2026-04 access-pattern decision (below) already corrected once for
+`business/`.
+
 ## 2026-08 · Host CrowdSec enforcement is scoped to the public interface
 
 The firewall bouncer runs in nftables `set-only` mode and maintains only the IPv4 and

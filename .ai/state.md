@@ -129,6 +129,14 @@ a migration. A future architectural consideration, not debt.
 Suricata and Coraza are evaluation entries in [`../ROADMAP.md`](../ROADMAP.md) →
 "Evaluating"; neither is implemented. SIEM/XDR/SOC platforms are out of scope there.
 
+## Mission scope — established 2026-09
+
+The mission now covers custom applications alongside existing self-hosted
+open-source software. Three-layer distinction (physical layout, conceptual
+domain, website navigation) and what stays out of scope: `docs/architecture.md`
+→ "Physical layout, conceptual domains and navigation"; reasoning in
+`decisions.md`.
+
 ## Host resilience — policy in place 2026-09, mechanism deferred
 
 An OnlyOffice process on a derived deployment took a host down; the stack's own 4G
