@@ -24,6 +24,7 @@ services:
       - MKNOD
 
     # --- Resources ---
+    memswap_limit: 1536m          # == memory: no swap
     deploy:
       resources:
         limits:

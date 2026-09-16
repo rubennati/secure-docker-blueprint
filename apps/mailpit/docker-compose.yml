@@ -36,6 +36,7 @@ services:
     # --- Resources ---
     # Idles at 13 MB with a thousand messages stored; the store is on disk and
     # capped by MP_MAX_MESSAGES.
+    memswap_limit: 128m          # == memory: no swap
     deploy:
       resources:
         limits:

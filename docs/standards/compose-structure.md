@@ -413,7 +413,15 @@ running it on one machine without a proxy, DNS or certificate.
 | Container names | `<stack>-local-<service>` |
 | Volumes | `./volumes/local/<name>` |
 | Hardening, healthchecks | as in the production file |
+| Resource limits | out of scope — `apps/_reference/docker-compose.local.yml` carries none |
 | Absent | Traefik labels, `proxy-public`, `secrets:`, `/run/secrets`, secret `*_FILE` variables |
+
+**The production resource baseline — `memory`, `pids`, `memswap_limit` — does not
+extend to the local file.** A local stack binds to `127.0.0.1`, runs alone rather
+than beside unrelated stacks on a shared host, and exists to be tried, not
+operated; the blast-radius problem those three controls solve does not arise the
+same way. This is a scope boundary, not a gap to close — it does not need its own
+resource policy, only the explicit statement that the production one stops here.
 
 Its companion `.env.local.example` carries only the variables the local file
 uses, with `__REPLACE_ME__` for anything secret and the generating command above

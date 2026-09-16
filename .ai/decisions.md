@@ -6,6 +6,34 @@ this file is the index and covers decisions that have no other home.
 
 ---
 
+## 2026-09 · Swap-policy coverage completed; `no-swap-policy` is a FAIL
+
+Every production service (150/150, 61 stacks) now states `memswap_limit`,
+mechanically set equal to its own `memory` value — the documented default from
+`compose-structure.md`, which needs no measurement. `scripts/ci/check-structure.py`
+promotes `no-swap-policy` from `WARN` to `FAIL`, matching `no-resources`: it now
+guards the property rather than reporting a migration.
+
+**What this is not.** The compose files changed; no running container did. Per
+`compose-structure.md` → "What is written here is not what is running," a limit
+takes effect only when a container is recreated, not on restart and not on a
+daemon restart. Live-host rollout is deliberately out of scope here — it happens
+per stack, on a running host, chosen by the operator, the same way the v0.9.0
+measurement pass already does. Nothing here claims otherwise.
+
+**What stays open.** The *value* is still derived, not measured, for the same
+services `cpus` already flags — v0.9.0 turns a peak into a limit; this decision
+only closes the question of whether a swap policy is stated at all. The one
+service using a variable instead of a literal (`backup/urbackup`) ties
+`memswap_limit` to the same `${APP_MEM_LIMIT}` its `memory` already uses, rather
+than a new variable — the two move together by construction, not by convention.
+
+`docs/resource-measurement.md`'s "one-shot containers get no limit" line was
+wrong on inspection — `core/authentik`'s `init-perms` (a chown, exits in under a
+second) already carried one before this change, and setting one costs nothing.
+Corrected: one-shot containers get sized limits like everything else, not an
+exemption.
+
 ## 2026-09 · The document editors move from `core/` to `apps/`
 
 `core/onlyoffice`, `core/euro-office` and `core/collabora` are now

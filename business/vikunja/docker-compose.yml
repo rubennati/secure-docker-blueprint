@@ -164,6 +164,7 @@ services:
       start_period: 30s
 
     # --- Resources ---
+    memswap_limit: 512M          # == memory: no swap
     deploy:
       resources:
         limits:
@@ -213,6 +214,7 @@ services:
       start_period: 30s
 
     # --- Resources ---
+    memswap_limit: 1G          # == memory: no swap
     deploy:
       resources:
         limits:

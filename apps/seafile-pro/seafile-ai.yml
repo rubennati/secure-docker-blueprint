@@ -10,6 +10,7 @@ services:
 
     # --- Resources ---
     # Model inference.
+    memswap_limit: 2G          # == memory: no swap
     deploy:
       resources:
         limits:

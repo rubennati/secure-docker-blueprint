@@ -10,6 +10,7 @@ services:
     restart: unless-stopped
     # --- Resources ---
     # Markdown rendering service.
+    memswap_limit: 1G          # == memory: no swap
     deploy:
       resources:
         limits:

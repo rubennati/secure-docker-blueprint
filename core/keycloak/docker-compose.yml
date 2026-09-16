@@ -36,6 +36,7 @@ services:
       - SETUID
 
     # --- Resources ---
+    memswap_limit: 512m          # == memory: no swap
     deploy:
       resources:
         limits:
@@ -100,6 +101,7 @@ services:
     # --- Resources ---
     # Idles at about 650 MB and 42 threads on the JVM after a cold start.
     # Retune after a realm with users and clients has been in use.
+    memswap_limit: 1536m          # == memory: no swap
     deploy:
       resources:
         limits:

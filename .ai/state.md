@@ -149,8 +149,9 @@ swap and is the default, a higher value is a justified exception, and unset is n
 longer acceptable — Docker otherwise grants as much swap again as the memory limit,
 which is how a container inside its cap still pages a host into uselessness.
 `security-baseline.md` owns the requirement, `compose-structure.md` the values.
-`no-resources` is now a FAIL in `check-structure.py`; the swap rule is a WARN counted
-per compose file until v0.9.0 migrates the tree. `live-restore` is in the reference
+`no-resources` and `no-swap-policy` are both FAIL in `check-structure.py` —
+150/150 production services state `memswap_limit`, all at the default (equal to
+`memory`); no evidenced case for a higher value has come up yet. `live-restore` is in the reference
 daemon configuration. `resource-measurement.md` carries a drift procedure — compose
 config against `docker inspect` against cgroup state — and the corrected meaning of
 `reservations.memory`, which is a reclaim preference and never a guarantee.

@@ -19,6 +19,7 @@ services:
 
     # --- Resources ---
     # Measured in single-digit MB; this is a ceiling, not an appetite.
+    memswap_limit: 128M          # == memory: no swap
     deploy:
       resources:
         limits:
@@ -76,6 +77,7 @@ services:
 
     # --- Resources ---
     # Ceiling above the buffer pool, connections and temporary tables.
+    memswap_limit: 1G          # == memory: no swap
     deploy:
       resources:
         limits:
@@ -123,6 +125,7 @@ services:
     # --- Resources ---
     # Generous ceiling: a limit the normal workload reaches is a limit that
     # kills imports and background jobs. Retune from docker stats, not down to it.
+    memswap_limit: 2G          # == memory: no swap
     deploy:
       resources:
         limits:

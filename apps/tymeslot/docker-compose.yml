@@ -41,6 +41,7 @@ services:
 
     # --- Resources ---
     # A small scheduling database; retune after measuring with `docker stats`.
+    memswap_limit: 512m          # == memory: no swap
     deploy:
       resources:
         limits:
@@ -120,6 +121,7 @@ services:
     # --- Resources ---
     # Starting values for one BEAM node serving the web UI and the job queue.
     # Retune after measuring a booking flow with `docker stats`.
+    memswap_limit: 1g          # == memory: no swap
     deploy:
       resources:
         limits:

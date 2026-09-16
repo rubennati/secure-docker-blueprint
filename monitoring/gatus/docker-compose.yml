@@ -18,6 +18,7 @@ services:
 
     # --- Resources ---
     # Small single-purpose service.
+    memswap_limit: 256M          # == memory: no swap
     deploy:
       resources:
         limits:
