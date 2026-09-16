@@ -8,7 +8,7 @@ import StackEvidence from '../../../components/StackEvidence.astro';
 
 OnlyOffice Document Server is a shared editing backend — it provides browser-based Office document editing for any application that integrates with it, such as [Seafile Pro](/applications/seafile-pro/) or Nextcloud. It runs as a single container and serves an editor that embeds as an iframe inside the consuming application.
 
-<StackEvidence stack="core/onlyoffice"
+<StackEvidence stack="apps/onlyoffice"
   gap="opening a document from a consuming application. The health endpoints answer; the editor path through the iframe has not been run here." />
 
 One OnlyOffice instance can serve multiple consuming applications simultaneously. Each application must hold the same JWT secret and have its origin listed in the allowed-origins setting.
@@ -17,7 +17,7 @@ Needs: [Traefik](/infrastructure/traefik/) running, a hostname, a JWT secret, an
 
 ## Installation
 
-From `core/onlyoffice/`:
+From `apps/onlyoffice/`:
 
 <Steps>
 
@@ -142,6 +142,6 @@ Active editing sessions will break when the secret changes.
 
 ## Repository files
 
-- [`core/onlyoffice/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/onlyoffice/README.md) — setup, JWT secret handling, iframe and CSP architecture
-- [`core/onlyoffice/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/onlyoffice/UPSTREAM.md) — upgrade checklist, version notes, operational notes
-- [`core/onlyoffice/.env.example`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/onlyoffice/.env.example) — all configurable variables with inline comments
+- [`apps/onlyoffice/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/onlyoffice/README.md) — setup, JWT secret handling, iframe and CSP architecture
+- [`apps/onlyoffice/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/onlyoffice/UPSTREAM.md) — upgrade checklist, version notes, operational notes
+- [`apps/onlyoffice/.env.example`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/onlyoffice/.env.example) — all configurable variables with inline comments

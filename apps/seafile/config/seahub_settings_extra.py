@@ -10,12 +10,12 @@
 # =============================================
 
 # --- OnlyOffice Integration ---
-# Requires core/onlyoffice to be running.
+# Requires apps/onlyoffice to be running.
 # Replace the host and JWT secret with your values.
 #
 # ENABLE_ONLYOFFICE = True
 # ONLYOFFICE_APIJS_URL = 'https://office.example.com/web-apps/apps/api/documents/api.js'
-# ONLYOFFICE_JWT_SECRET = '<content of core/onlyoffice/secrets/jwt_secret.txt>'
+# ONLYOFFICE_JWT_SECRET = '<content of apps/onlyoffice/secrets/jwt_secret.txt>'
 # ONLYOFFICE_FILE_EXTENSION = ('doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'odt', 'fodt', 'odp', 'fodp', 'ods', 'fods', 'ppsx', 'pps', 'csv')
 # ONLYOFFICE_EDIT_FILE_EXTENSION = ('docx', 'pptx', 'xlsx', 'csv')
 

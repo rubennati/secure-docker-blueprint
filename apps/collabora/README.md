@@ -61,4 +61,4 @@ value changes, the integration stops working until both sides agree again.
 ## Details
 
 - [UPSTREAM.md](UPSTREAM.md) — source, upgrade checklist, deviations
-- Alternatives: [`core/onlyoffice/`](../onlyoffice/), [`core/euro-office/`](../euro-office/)
+- Alternatives: [`apps/onlyoffice/`](../onlyoffice/), [`apps/euro-office/`](../euro-office/)

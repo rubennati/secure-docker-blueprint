@@ -6,6 +6,21 @@ this file is the index and covers decisions that have no other home.
 
 ---
 
+## 2026-09 · The document editors move from `core/` to `apps/`
+
+`core/onlyoffice`, `core/euro-office` and `core/collabora` are now
+`apps/onlyoffice`, `apps/euro-office` and `apps/collabora`. This resolves the
+open decision recorded at `state.md` → "What belongs in `core/`": the
+`core/` test in `docs/architecture.md` (breaks the deployment, controls
+Docker, or is shared identity, certificates, DNS or WAF) was never met —
+nothing else breaks without a document editor, and a homelab user benefits
+from one exactly as a company does, which is the `apps/` test.
+
+Compose, security configuration and every consuming stack's integration
+(JWT secret, allowed origins, network path) are unchanged — only the
+directory and the paths that name it moved. The website already treated
+these as applications before this move; the repository now matches.
+
 ## 2026-09 · The mission covers custom applications; physical layout, conceptual domain and navigation stay three separate questions
 
 The mission now covers two kinds of software: existing self-hosted open-source

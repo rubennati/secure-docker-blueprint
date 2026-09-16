@@ -187,7 +187,7 @@ Once verified on real data, pick the default and deprioritise the rest:
 - **Scheduling** — Cal.diy (MIT community), Easy!Appointments (`apps/`). Cal.com was retired — upstream moved the production codebase to a proprietary licence.
 - **Business wikis** — BookStack is live; Wiki.js and Outline are planned (`apps/`)
 - **Forms** — OpnForm is in place; Formbricks and HeyForm are planned (`apps/`)
-- **Office / document servers** — OnlyOffice is live; Euro-Office (EU-governed fork) and Collabora (lighter, LibreOffice-based) are drafted (`core/`)
+- **Office / document servers** — OnlyOffice is live; Euro-Office (EU-governed fork) and Collabora (lighter, LibreOffice-based) are drafted (`apps/`)
 - **E-signatures** — OpenSign and Documenso, both drafted (`business/`)
 
 ### Categories with roadmaps in their own READMEs

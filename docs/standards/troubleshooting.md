@@ -374,7 +374,7 @@ Refused to display 'https://...' in a frame because it set 'X-Frame-Options' to 
 
 **Fix:** Don't use `sec-*` for iframe-embedded services. Create a custom
 Docker-level middleware with `frame-ancestors` CSP instead of `frameDeny`.
-See OnlyOffice in `core/onlyoffice/docker-compose.yml` for the pattern.
+See OnlyOffice in `apps/onlyoffice/docker-compose.yml` for the pattern.
 
 ---
 

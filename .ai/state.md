@@ -230,14 +230,6 @@ Three sub-questions: explicit `# renovate:` markers vs. normalising 28 outlying
 comments · Renovate App vs. self-hosted Action · whether `site/`'s unwatched
 `package-lock.json` rides along. Nothing runs until these are answered.
 
-**6. What belongs in `core/`**
-The test in `docs/architecture.md:34` asks whether the stack breaks the
-deployment, controls Docker, or provides shared identity, certificates, DNS or
-WAF. `core/onlyoffice`, `core/euro-office` and `core/collabora` are document
-servers — nothing breaks without them, so they fail that test.
-→ *Recommendation:* apply the existing test rather than write a new rule. This is
-a structural change, so it belongs after the host session, not before.
-
 **The security chains replace what an application sets.** Measured on 2026-09-07 (Traefik v3.6): every value in an `hdr-*` block replaces
 the application's own header — Keycloak's and Nextcloud's `no-referrer` become
 the weaker browser default under level 3, HSTS loses `includeSubDomains` under

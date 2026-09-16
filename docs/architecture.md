@@ -75,10 +75,10 @@ directory (Infrastructure → `core/`, Applications → `apps/`, Business →
 - **AI & Local AI** — no stack exists here. If one is added, it goes through the
   same categorisation test as everything else; nothing about "AI" changes which
   directory it lands in.
-- **Document Processing** — split today between `apps/` (Paperless-ngx: ingest,
-  OCR, search) and `core/` (the document editors, pending the reclassification
-  tracked as an open decision in `../.ai/state.md`). The domain is a reader-facing
-  grouping across that split, not a reason to merge the two.
+- **Document Processing** — `apps/` covers both halves: Paperless-ngx (ingest,
+  OCR, search) and the document editors OnlyOffice, Euro-Office and Collabora,
+  reclassified here from `core/` (`decisions.md`). The domain groups them for a
+  reader; it was never a reason to merge the two into one stack.
 
 None of the three justifies a new top-level directory now.
 
@@ -348,7 +348,6 @@ containers, the network or TLS. Which capability each service implements is the 
 | Socket Proxy | Foundation/Docker — mediated socket access | Keeps the Docker socket off the services that need container metadata |
 | CrowdSec | Threat Detection & Remediation, and currently Web Application Security | Reads logs across stacks; its decisions are enforced elsewhere |
 | Authentik | Identity & Access | An identity provider several applications can share |
-| OnlyOffice | a shared application backend, not a capability | Embedded by Nextcloud and Seafile over WOPI |
 
 ---
 

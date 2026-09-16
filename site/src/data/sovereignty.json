@@ -23,6 +23,14 @@
     "license_class": "osi",
     "origin": "Fork · rubennati · upstream: US · Cal.com Inc · non-EU"
   },
+  "apps/collabora": {
+    "bloc": "non-EU",
+    "country": "UK",
+    "entity": "Collabora Productivity Ltd",
+    "license": "MPL-2.0",
+    "license_class": "osi",
+    "origin": "UK · Collabora Productivity Ltd · non-EU"
+  },
   "apps/dashy": {
     "bloc": "non-EU",
     "country": "UK",
@@ -38,6 +46,14 @@
     "license": "GPL-3.0",
     "license_class": "osi",
     "origin": "Greece · Alex Tselegidis · EU"
+  },
+  "apps/euro-office": {
+    "bloc": "EU",
+    "country": "EU",
+    "entity": "euro-office consortium (Nextcloud, IONOS, XWiki, Proton)",
+    "license": "AGPL-3.0 (as OnlyOffice Document Server)",
+    "license_class": "osi",
+    "origin": "EU · euro-office consortium (Nextcloud, IONOS, XWiki, Proton) · EU"
   },
   "apps/ghost": {
     "bloc": "EU",
@@ -142,6 +158,14 @@
     "license": "AGPL-3.0",
     "license_class": "osi",
     "origin": "US · NocoDB Inc · non-EU"
+  },
+  "apps/onlyoffice": {
+    "bloc": "EU",
+    "country": "Latvia",
+    "entity": "Ascensio System SIA",
+    "license": "AGPL-3.0",
+    "license_class": "osi",
+    "origin": "Latvia · Ascensio System SIA · EU"
   },
   "apps/opnform": {
     "bloc": "EU",
@@ -335,14 +359,6 @@
     "license_class": "osi",
     "origin": "Netherlands · Authentik Security · EU"
   },
-  "core/collabora": {
-    "bloc": "non-EU",
-    "country": "UK",
-    "entity": "Collabora Productivity Ltd",
-    "license": "MPL-2.0",
-    "license_class": "osi",
-    "origin": "UK · Collabora Productivity Ltd · non-EU"
-  },
   "core/crowdsec": {
     "bloc": "EU",
     "country": "France",
@@ -367,14 +383,6 @@
     "license_class": "source-available",
     "origin": "Finsys · **no country or legal entity stated** — no imprint on fnsys.pro or dockhand.pro"
   },
-  "core/euro-office": {
-    "bloc": "EU",
-    "country": "EU",
-    "entity": "euro-office consortium (Nextcloud, IONOS, XWiki, Proton)",
-    "license": "AGPL-3.0 (as OnlyOffice Document Server)",
-    "license_class": "osi",
-    "origin": "EU · euro-office consortium (Nextcloud, IONOS, XWiki, Proton) · EU"
-  },
   "core/hawser": {
     "bloc": "none",
     "country": "Finsys",
@@ -398,14 +406,6 @@
     "license": "Apache-2.0",
     "license_class": "osi",
     "origin": "US · Red Hat, Inc. (CNCF incubating project) · non-EU"
-  },
-  "core/onlyoffice": {
-    "bloc": "EU",
-    "country": "Latvia",
-    "entity": "Ascensio System SIA",
-    "license": "AGPL-3.0",
-    "license_class": "osi",
-    "origin": "Latvia · Ascensio System SIA · EU"
   },
   "core/portainer": {
     "bloc": "non-EU",

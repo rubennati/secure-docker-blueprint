@@ -29,6 +29,16 @@
     "verified_anchored": true,
     "verified_version": "v6.2.0-3"
   },
+  "apps/collabora": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=26.04.3.2.1",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "apps/dashy": {
     "backup_docs": "documented",
     "local_stack": "✅",
@@ -48,6 +58,16 @@
     "verified": "2026-05-03",
     "verified_anchored": true,
     "verified_version": "1.5.x"
+  },
+  "apps/euro-office": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=v9.3.4-hotfix.1",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "apps/ghost": {
     "backup_docs": "documented",
@@ -178,6 +198,16 @@
     "verified": "2026-05-02",
     "verified_anchored": true,
     "verified_version": "v0.301.5"
+  },
+  "apps/onlyoffice": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=9.4.0",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "2026-06-14",
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "apps/opnform": {
     "backup_docs": "documented",
@@ -419,16 +449,6 @@
     "verified_anchored": true,
     "verified_version": "v2026.5.6"
   },
-  "core/collabora": {
-    "backup_docs": "documented",
-    "local_stack": "✅",
-    "pinned": "APP_TAG=26.04.3.2.1",
-    "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "—",
-    "verified_anchored": false,
-    "verified_version": ""
-  },
   "core/crowdsec": {
     "backup_docs": "documented",
     "local_stack": "—",
@@ -456,16 +476,6 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-04-16",
-    "verified_anchored": false,
-    "verified_version": ""
-  },
-  "core/euro-office": {
-    "backup_docs": "documented",
-    "local_stack": "✅",
-    "pinned": "APP_TAG=v9.3.4-hotfix.1",
-    "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "—",
     "verified_anchored": false,
     "verified_version": ""
   },
@@ -498,16 +508,6 @@
     "verified": "2026-09-07",
     "verified_anchored": true,
     "verified_version": "v26.7.3"
-  },
-  "core/onlyoffice": {
-    "backup_docs": "documented",
-    "local_stack": "✅",
-    "pinned": "APP_TAG=9.4.0",
-    "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "2026-06-14",
-    "verified_anchored": false,
-    "verified_version": ""
   },
   "core/portainer": {
     "backup_docs": "documented",

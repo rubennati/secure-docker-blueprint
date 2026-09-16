@@ -103,7 +103,7 @@ in the container environment, and `seahub_custom.py` appends `/web-apps/apps/api
 to produce the final `ONLYOFFICE_APIJS_URL` written to `seahub_settings.py`.
 
 `ONLYOFFICE_JWT_SECRET` must match the secret on the OnlyOffice server exactly. In this
-Blueprint, OnlyOffice's secret lives in `core/onlyoffice/.secrets/jwt_secret.txt`.
+Blueprint, OnlyOffice's secret lives in `apps/onlyoffice/.secrets/jwt_secret.txt`.
 
 **Network requirements:**
 
@@ -137,7 +137,7 @@ defensible while an upstream firewall independently blocks public inbound 80/443
 **On the OnlyOffice server**, the Seafile domain must be added to `ONLYOFFICE_ALLOWED_ORIGINS`
 so browsers are permitted to embed the editor in an iframe. This is a CSP `frame-ancestors`
 directive — any origin not listed is rejected by the browser even if the JWT is valid.
-See `core/onlyoffice/.env.example` for the format:
+See `apps/onlyoffice/.env.example` for the format:
 
 ```env
 ONLYOFFICE_ALLOWED_ORIGINS=https://files.example.com
