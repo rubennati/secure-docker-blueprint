@@ -181,10 +181,11 @@ reached the repository is a configuration nobody filled in.
 
 Runs `scripts/ci/check-structure.py`. Severity is per rule rather than per
 category: `:latest` or major-only tags, a plaintext secret in `.env.example`, a
-`.gitignore` that does not cover `.secrets/`, and a datastore on `proxy-public`
-all fail, and so does a service without resource limits. A memory limit without a
-swap policy (`memswap_limit`), a missing healthcheck and `env_file:` are reported as
-warnings — the values need measuring on a real host, which is v0.9.0.
+`.gitignore` that does not cover `.secrets/`, a datastore on `proxy-public`, a
+service without resource limits, and a memory limit without a stated swap policy
+(`memswap_limit`) all fail. A missing healthcheck and `env_file:` are reported as
+warnings — the numeric values behind the limits still need measuring on a real
+host, which is v0.9.0; whether a policy is stated at all is settled.
 
 **Blocks merge:** yes, on FAIL rules only
 

@@ -18,6 +18,7 @@ services:
     # --- Configuration ---
     # --- Resources ---
     # Search index.
+    memswap_limit: 2G          # == memory: no swap
     deploy:
       resources:
         limits:

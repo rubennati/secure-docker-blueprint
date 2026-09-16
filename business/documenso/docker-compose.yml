@@ -37,6 +37,7 @@ services:
       - SETUID
 
     # --- Resources ---
+    memswap_limit: 512m          # == memory: no swap
     deploy:
       resources:
         limits:
@@ -91,6 +92,7 @@ services:
       - ALL
 
     # --- Resources ---
+    memswap_limit: 1g          # == memory: no swap
     deploy:
       resources:
         limits:

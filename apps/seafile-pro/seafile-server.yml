@@ -16,6 +16,7 @@ services:
     # --- Configuration ---
     # --- Resources ---
     # Ceiling above the buffer pool, connections and temporary tables.
+    memswap_limit: 1G          # == memory: no swap
     deploy:
       resources:
         limits:
@@ -62,6 +63,7 @@ services:
     # --- Configuration ---
     # --- Resources ---
     # Small cache role in this stack.
+    memswap_limit: 256M          # == memory: no swap
     deploy:
       resources:
         limits:
@@ -103,6 +105,7 @@ services:
     restart: unless-stopped
     # --- Resources ---
     # The main server process — indexing and file handling. Generous on purpose.
+    memswap_limit: 4G          # == memory: no swap
     deploy:
       resources:
         limits:

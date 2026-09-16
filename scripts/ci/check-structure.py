@@ -13,6 +13,10 @@ FAIL (blocks CI — dangerous or leak-prone):
   plaintext-secret  a password/secret/token carries a real value in .env.example
   gitignore-gap     .gitignore missing or not covering .env / .secrets/ / volumes/
   db-exposed        a datastore joins proxy-public or publishes a host port
+  no-resources      service without a memory or pids limit
+  no-swap-policy    service with a memory limit and no explicit memswap_limit —
+                    coverage completed 2026-09-16 (150/150 production services);
+                    this guards the property, it does not report a migration
 
 WARN (reported — structural drift):
   missing-file      .env.example / README.md / UPSTREAM.md absent
@@ -20,8 +24,6 @@ WARN (reported — structural drift):
   section-order     .env.example sections out of canonical order
   container-name    CONTAINER_NAME_* not derived from ${COMPOSE_PROJECT_NAME}
   env-file          `env_file:` used instead of an explicit `environment:` map
-  no-resources      service without a memory or pids limit (FAIL)
-  no-swap-policy    service with a memory limit and no explicit memswap_limit
   no-healthcheck    service without a healthcheck
   tls-options       Traefik tls.options without the @file suffix
   real-domain       a hostname that is not *.example.com
@@ -455,13 +457,16 @@ def check_one_compose(app: Path, path: Path, findings: list[dict]) -> None:
                              "detail": f"deploy.resources.limits without {' and '.join(absent)}"
                                        " — unbounded container"})
 
-        # -- swap policy (WARN, becomes FAIL with v0.9.0) ----------------------
+        # -- swap policy (FAIL) -------------------------------------------------
         # A memory limit leaves swap unbounded: with `memswap_limit` unset Docker
         # grants as much swap again as the memory limit, so a container inside its
         # cap can still page the host into unusability without being killed.
-        # Counted per stack rather than per service — the migration is a v0.9.0
-        # calibration pass, and 100+ individual lines would bury the actionable
-        # findings. compose-structure.md owns which value belongs to which workload.
+        # Coverage completed 2026-09-16 — every production service states a
+        # policy, so this now guards the property rather than reporting a
+        # migration. Counted per stack rather than per service, matching the
+        # reporting shape from when it was a WARN: a regression here is
+        # expected to be rare, and the per-file grouping still reads cleanly.
+        # compose-structure.md owns which value belongs to which workload.
         if "memory" in limits and "memswap_limit" not in svc:
             swapless.append(name)
 
@@ -496,9 +501,9 @@ def check_one_compose(app: Path, path: Path, findings: list[dict]) -> None:
                 findings.append({"level": "WARN", "rule": "tls-options", "service": name,
                                  "detail": "tls.options without @file will not resolve"})
 
-    # -- swap policy, one line per compose file (WARN) ------------------------
+    # -- swap policy, one line per compose file (FAIL) -------------------------
     if swapless:
-        findings.append({"level": "WARN", "rule": "no-swap-policy",
+        findings.append({"level": "FAIL", "rule": "no-swap-policy",
                          "detail": f"{path.name}: {len(swapless)} service(s) with a memory "
                                    f"limit and no memswap_limit — swap left implicit "
                                    f"({', '.join(sorted(swapless))})"})

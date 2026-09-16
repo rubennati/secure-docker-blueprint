@@ -316,5 +316,97 @@ class EffectiveNetworkResolution(unittest.TestCase):
                 self.assertIn("shared-net-duplicate", found[stack], stack)
 
 
+class ResourceLimits(unittest.TestCase):
+    """`no-resources` and `no-swap-policy` — both FAIL since 2026-09-16, once
+    every production service states memory, pids and a swap policy."""
+
+    def _findings_for(self, root: Path, compose_yaml: str) -> list[dict]:
+        app = root / "apps" / "widget"
+        app.mkdir(parents=True, exist_ok=True)
+        (app / "docker-compose.yml").write_text(compose_yaml)
+        cwd = os.getcwd()
+        try:
+            os.chdir(root)
+            _reset_caches()
+            findings: list[dict] = []
+            cs.check_compose(app, findings)
+            return findings
+        finally:
+            os.chdir(cwd)
+
+    def test_memory_without_memswap_limit_fails(self):
+        compose = """\
+services:
+  app:
+    image: example/image:1.0
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          pids: 100
+"""
+        with tempfile.TemporaryDirectory() as tmp:
+            found = self._findings_for(Path(tmp), compose)
+        rules = {f["rule"] for f in found}
+        self.assertIn("no-swap-policy", rules)
+        swap = next(f for f in found if f["rule"] == "no-swap-policy")
+        self.assertEqual(swap["level"], "FAIL")
+
+    def test_matching_memswap_limit_passes(self):
+        compose = """\
+services:
+  app:
+    image: example/image:1.0
+    memswap_limit: 512m
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          pids: 100
+"""
+        with tempfile.TemporaryDirectory() as tmp:
+            found = self._findings_for(Path(tmp), compose)
+        rules = {f["rule"] for f in found}
+        self.assertNotIn("no-swap-policy", rules)
+        self.assertNotIn("no-resources", rules)
+
+    def test_env_var_memswap_limit_passes(self):
+        """The one non-literal case in the tree: backup/urbackup ties both
+        values to the same variable rather than a literal."""
+        compose = """\
+services:
+  app:
+    image: example/image:1.0
+    memswap_limit: ${APP_MEM_LIMIT}
+    deploy:
+      resources:
+        limits:
+          memory: ${APP_MEM_LIMIT}
+          pids: 500
+"""
+        with tempfile.TemporaryDirectory() as tmp:
+            found = self._findings_for(Path(tmp), compose)
+        rules = {f["rule"] for f in found}
+        self.assertNotIn("no-swap-policy", rules)
+
+    def test_missing_pids_still_fails_no_resources(self):
+        """Regression guard: no-swap-policy replacing the WARN must not have
+        loosened the older, unrelated no-resources FAIL."""
+        compose = """\
+services:
+  app:
+    image: example/image:1.0
+    memswap_limit: 512m
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+"""
+        with tempfile.TemporaryDirectory() as tmp:
+            found = self._findings_for(Path(tmp), compose)
+        rules = {f["rule"] for f in found}
+        self.assertIn("no-resources", rules)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

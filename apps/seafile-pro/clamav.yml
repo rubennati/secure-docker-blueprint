@@ -21,6 +21,7 @@ services:
     # --- Networking ---
     # --- Resources ---
     # The signature database is held in memory.
+    memswap_limit: 2G          # == memory: no swap
     deploy:
       resources:
         limits:

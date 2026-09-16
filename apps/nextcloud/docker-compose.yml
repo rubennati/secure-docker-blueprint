@@ -16,6 +16,7 @@ services:
     # --- Resources ---
     # The buffer pool alone is configured at 1G below; connections, sort buffers
     # and temporary tables come on top. 2G is the ceiling, not the appetite.
+    memswap_limit: 2G          # == memory: no swap
     deploy:
       resources:
         limits:
@@ -74,6 +75,7 @@ services:
 
     # --- Resources ---
     # maxmemory is 512mb; the rest covers allocator fragmentation and overhead.
+    memswap_limit: 768M          # == memory: no swap
     deploy:
       resources:
         limits:
@@ -132,6 +134,7 @@ services:
     # pm.max_children is 25 and a worker measured 65–107 MB, so the working set
     # is around 2G. The ceiling sits above it deliberately: a limit the normal
     # workload reaches is a limit that kills previews and imports.
+    memswap_limit: 3G          # == memory: no swap
     deploy:
       resources:
         limits:
@@ -219,6 +222,7 @@ services:
       - no-new-privileges:true
 
     # --- Resources ---
+    memswap_limit: 128M          # == memory: no swap
     deploy:
       resources:
         limits:
@@ -285,6 +289,7 @@ services:
 
     # --- Resources ---
     # Same pool file as `app`, but cron occupies one or two workers at a time.
+    memswap_limit: 1G          # == memory: no swap
     deploy:
       resources:
         limits:

@@ -21,12 +21,11 @@ cannot have one. `python3 scripts/ci/check-structure.py` is the progress bar for
 both: `no-resources` is a failure and `no-healthcheck` a warning, per service, and
 neither fires anywhere today.
 
-**Swap values are part of this now.** Every service states a swap policy, and the
-default — `memswap_limit` equal to `memory` — needs no measurement. A value above it
-does, for the same reason a memory ceiling does: it has to clear the workload's real
-peak. `check-structure.py` counts the stacks still leaving swap implicit, one line per
-compose file, and that count is the progress bar. The rule becomes a failure once the
-tree is migrated.
+**Every production service now states a swap policy** — 150/150, at the default,
+`memswap_limit` equal to `memory`, which needs no measurement. `no-swap-policy` in
+`check-structure.py` is a failure now, guarding the property rather than reporting a
+migration. A value above the default still needs one, for the same reason a memory
+ceiling does: it has to clear the workload's real peak — none is claimed yet.
 
 **What remains is the values.** The ceilings in place were derived — from what a
 component budgets for itself, from a peak where one was available, and generously

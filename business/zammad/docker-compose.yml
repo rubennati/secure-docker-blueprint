@@ -47,6 +47,7 @@ services:
     security_opt: [no-new-privileges:true]
     # --- Resources ---
     # Ceiling above the buffer pool, connections and temporary tables.
+    memswap_limit: 1G          # == memory: no swap
     deploy:
       resources:
         limits:
@@ -85,6 +86,7 @@ services:
     # Setting maxmemory changes eviction behaviour, so it belongs with the
     # v0.9.0 measurement rather than here. apps/nextcloud and
     # business/invoiceninja show the shape once it is set.
+    memswap_limit: 256M          # == memory: no swap
     deploy:
       resources:
         limits:
@@ -111,6 +113,7 @@ services:
 
     # --- Resources ---
     # `-m 256M` is configured below; the rest is process overhead.
+    memswap_limit: 512M          # == memory: no swap
     deploy:
       resources:
         limits:
@@ -137,6 +140,7 @@ services:
     security_opt: [no-new-privileges:true]
     # --- Resources ---
     # Search, rendering or ML — generous on purpose. Retune from docker stats.
+    memswap_limit: 4G          # == memory: no swap
     deploy:
       resources:
         limits:
@@ -168,6 +172,7 @@ services:
     command: ["zammad-init"]
     # --- Resources ---
     # Search, rendering or ML — generous on purpose. Retune from docker stats.
+    memswap_limit: 4G          # == memory: no swap
     deploy:
       resources:
         limits:
@@ -199,6 +204,7 @@ services:
     command: ["zammad-railsserver"]
     # --- Resources ---
     # Search, rendering or ML — generous on purpose. Retune from docker stats.
+    memswap_limit: 4G          # == memory: no swap
     deploy:
       resources:
         limits:
@@ -234,6 +240,7 @@ services:
 
     # --- Resources ---
     # Search, rendering or ML — generous on purpose. Retune from docker stats.
+    memswap_limit: 4G          # == memory: no swap
     deploy:
       resources:
         limits:
@@ -253,6 +260,7 @@ services:
     command: ["zammad-scheduler"]
     # --- Resources ---
     # Search, rendering or ML — generous on purpose. Retune from docker stats.
+    memswap_limit: 4G          # == memory: no swap
     deploy:
       resources:
         limits:
@@ -286,6 +294,7 @@ services:
     command: ["zammad-nginx"]
     # --- Resources ---
     # Search, rendering or ML — generous on purpose. Retune from docker stats.
+    memswap_limit: 4G          # == memory: no swap
     deploy:
       resources:
         limits:

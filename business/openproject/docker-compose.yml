@@ -67,6 +67,7 @@ services:
 
     # --- Resources ---
     # Runs once at start and exits.
+    memswap_limit: 512M          # == memory: no swap
     deploy:
       resources:
         limits:
@@ -116,6 +117,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 120s
+    memswap_limit: 1G          # == memory: no swap
     deploy:
       resources:
         limits:
@@ -145,6 +147,7 @@ services:
     # and detecting that needs a liveness signal from the application
     # itself rather than anything visible from outside.
 
+    memswap_limit: 512M          # == memory: no swap
     deploy:
       resources:
         limits:
@@ -174,6 +177,7 @@ services:
     # and detecting that needs a liveness signal from the application
     # itself rather than anything visible from outside.
 
+    memswap_limit: 256M          # == memory: no swap
     deploy:
       resources:
         limits:
@@ -202,6 +206,7 @@ services:
 
     networks:
       - internal
+    memswap_limit: 128M          # == memory: no swap
     deploy:
       resources:
         limits:
@@ -236,6 +241,7 @@ services:
       timeout: 5s
       retries: 10
       start_period: 30s
+    memswap_limit: 1G          # == memory: no swap
     deploy:
       resources:
         limits:

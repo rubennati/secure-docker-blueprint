@@ -103,8 +103,12 @@ it is unmeasured rather than deriving a limit from it.
    grants the container as much swap again as its memory limit, which is the one
    allowance nobody chose.
 
-One-shot and migration containers get no limit at all. Capping something that has
-to finish once is how a restore stops halfway.
+One-shot and migration containers still carry the same three limits — `core/authentik`'s
+`init-perms` runs a chown in under a second and states `memory`, `pids` and
+`memswap_limit` like everything else, because stating them costs nothing. What
+differs is sizing them for the one thing the container does, not exempting it
+from the requirement — a limit sized for a steady-state guess is how a
+migration or restore stops halfway.
 
 ## Where the number goes
 
