@@ -64,7 +64,7 @@ touch .secrets/smtp_pwd.txt
 # printf '%s' '<smtp-password-or-api-key>' > .secrets/smtp_pwd.txt
 
 # 4. (Optional) If you use OnlyOffice, reuse its JWT secret
-cp ../../core/onlyoffice/.secrets/jwt_secret.txt .secrets/onlyoffice_jwt_secret.txt
+cp ../onlyoffice/.secrets/jwt_secret.txt .secrets/onlyoffice_jwt_secret.txt
 
 # 5. Start
 docker compose up -d

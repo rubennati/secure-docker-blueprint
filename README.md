@@ -131,9 +131,6 @@ the choice guidance for that category.
 | [Traefik](core/traefik/) | Reverse proxy with Socket Proxy, 5 security levels, 3 TLS profiles, access policies |
 | [Authentik](core/authentik/) | SSO / Identity Provider for centralized authentication (Forward-Auth, OAuth2 / OIDC / SAML) |
 | [Keycloak](core/keycloak/) | Alternative identity provider — OIDC / SAML, LDAP and AD federation, two containers, no proxy of its own. `core/keycloak/README.md` compares the two |
-| [OnlyOffice](core/onlyoffice/) | Document editing server for Seafile, Nextcloud, etc. |
-| [Euro-Office](core/euro-office/) | EU-governed OnlyOffice fork (Nextcloud/IONOS/XWiki/Proton) — drop-in document server |
-| [Collabora](core/collabora/) | Lightweight LibreOffice-based office server (~1 GB) — leaner alternative to OnlyOffice/Euro-Office |
 | [dnsmasq](core/dnsmasq/) | DNS forwarder with wildcard zones for Tailscale / split-DNS setups |
 | [acme-certs](core/acme-certs/) | Certificate tool (acme.sh) for devices without Traefik (NAS, routers) |
 | [CrowdSec](core/crowdsec/) | Threat detection engine — log analysis, scenarios, threat decisions. Enforcement is a separate choice: reverse-proxy or host-firewall remediation |
@@ -210,6 +207,9 @@ Planned: **Rallly** (group scheduling polls — Doodle alternative, complementar
 | [Paperless-ngx](apps/paperless-ngx/) | App + Postgres + Redis + Gotenberg + Tika | Document management with OCR, optional Authentik SSO |
 | [Seafile](apps/seafile/) | App + MariaDB + Memcached + optional components | File sync & share (community edition) |
 | [Seafile Pro](apps/seafile-pro/) | App + MariaDB + Memcached + SeaDoc + ClamAV + SeaSearch | File sync & share (pro edition) |
+| [OnlyOffice](apps/onlyoffice/) | Single container | Document editing server for Seafile, Nextcloud, etc. |
+| [Euro-Office](apps/euro-office/) | Single container | EU-governed OnlyOffice fork (Nextcloud/IONOS/XWiki/Proton) — drop-in document server |
+| [Collabora](apps/collabora/) | Single container | Lightweight LibreOffice-based office server (~1 GB) |
 
 #### Identity & security
 
@@ -291,7 +291,7 @@ New here? Start with the area that best matches your goal: [Core Infrastructure]
 
 | Directory | Scope |
 |---|---|
-| [`core/`](core/) | Infrastructure shared by everything — Traefik, CrowdSec, identity providers (Authentik, Keycloak), OnlyOffice, certs |
+| [`core/`](core/) | Infrastructure shared by everything — Traefik, CrowdSec, identity providers (Authentik, Keycloak), certs |
 | [`apps/`](apps/) | General-purpose self-hosted apps — equally useful for private homelab or a company |
 | [`business/`](business/) | Apps that only make sense in a company context — invoicing, helpdesk, newsletter, compliance |
 | [`monitoring/`](monitoring/) | Ops observability — uptime, metrics, content-change watching, disk SMART |
@@ -307,9 +307,6 @@ secure-docker-blueprint/
 │   ├── authentik/               #   SSO / Identity provider
 │   ├── keycloak/                #   SSO / Identity provider — the alternative
 │   ├── crowdsec/                #   Intrusion detection + Traefik bouncer
-│   ├── onlyoffice/              #   Document editing server
-│   ├── euro-office/             #   EU OnlyOffice fork (document server)
-│   ├── collabora/               #   Lightweight office server (LibreOffice)
 │   ├── dnsmasq/                 #   DNS forwarder / split-DNS
 │   ├── acme-certs/              #   Certificate tool (acme.sh)
 │   ├── whoami/                  #   Traefik debug service
@@ -323,6 +320,7 @@ secure-docker-blueprint/
 │   ├── dashy/  heimdall/  homarr/  homepage/
 │   ├── ghost/  wordpress/  bookstack/
 │   ├── immich/  paperless-ngx/  nextcloud/  seafile/  seafile-pro/
+│   ├── onlyoffice/  euro-office/  collabora/
 │   ├── vaultwarden/
 │   ├── nocodb/  n8n/  opnform/  monicahq/
 │   ├── caldiy/  easyappointments/  tymeslot/

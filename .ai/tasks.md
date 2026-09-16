@@ -198,5 +198,5 @@ Listed with context in [`state.md`](state.md). Nothing proceeds on these until d
       timeout fails the check. The comment blamed redirects; `curl --fail` triggers
       at 400 and above and never on a 3xx, so that reason was wrong and the
       comments are corrected. What each endpoint answers during startup decides
-      whether `-f` can go in. `core/euro-office`, `core/dockhand` and
+      whether `-f` can go in. `apps/euro-office`, `core/dockhand` and
       `apps/paperless-ngx` already use `curl -fsS`

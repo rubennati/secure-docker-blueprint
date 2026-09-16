@@ -20,7 +20,7 @@
 
 | Change | Reason |
 |--------|--------|
-| Modeled 1:1 on `core/onlyoffice/` | Euro-Office is an OnlyOffice DS fork — drop-in, same integration |
+| Modeled 1:1 on `apps/onlyoffice/` | Euro-Office is an OnlyOffice DS fork — drop-in, same integration |
 | Custom entrypoint for JWT secret | No `_FILE` support; wrapper exports `JWT_SECRET`, execs `/app/ds/run-document-server.sh` |
 | `no-new-privileges:true` | Security baseline |
 | Iframe-friendly Traefik middleware (CSP `frame-ancestors`) | Standard `sec-*` chains set `X-Frame-Options: DENY`, blocking Seafile/Nextcloud embedding |
