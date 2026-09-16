@@ -39,8 +39,14 @@
   run alone, so an application can be tried before any server exists. Shape in
   `docs/standards/compose-structure.md`, coverage in the generated Local column.
 - Trivy scans every image the checkers discover rather than a hand-kept list, and
-  reports images it could not pull instead of passing over them. Still
-  `--exit-code 0`.
+  reports images it could not pull instead of passing over them — currently
+  `docker.n8n.io/n8nio/n8n`, hitting Docker Hub's anonymous pull rate limit.
+  Each image's full findings go to a per-run artifact; the job summary carries
+  the count-level index (`scripts/ci/trivy-summarize.py`) instead of a raw
+  per-image table in the log. The vulnerability database is cached across runs,
+  one entry per UTC day; Trivy's own staleness check still governs refreshes.
+  CLI pinned to `v0.74.0`. Still `--exit-code 0` — the assessment pass
+  `docs/security-verification.md` names as the prerequisite has not run yet.
 - CI jobs and what each one blocks on: [`quality-gates.md`](quality-gates.md),
   documented per job in `docs/standards/ci.md`. All ten are required on a pull
   request into `dev` and into `main`, and both rulesets require the branch to be
