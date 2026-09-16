@@ -57,7 +57,7 @@ These controls block merges if violated. Evidence is the CI output from `.github
 | **Location** | Socket proxies defined in `core/traefik`, `core/portainer`, `core/dockhand`, `core/hawser`, `core/portainer-agent`, `monitoring/beszel`, `monitoring/beszel-agent` |
 | **Pattern** | `tecnativa/docker-socket-proxy` with per-service API surface allowlists |
 | **Exceptions** | 7 services have documented exceptions, all in `SOCKET_EXCEPTIONS` dict with mandatory `reason` / `alternatives` / `risk` fields |
-| **Gaps** | Hawser is a known exception pending upstream support for TCP socket proxy (tracked: `https://github.com/Finsys/hawser/pull/52`). Beszel agent mounts socket read-only (`:ro`) which limits but does not eliminate risk. |
+| **Gaps** | Hawser is a known exception pending upstream support for TCP socket proxy (tracked: `https://github.com/Finsys/hawser/pull/52`). |
 
 #### 4. Image tag pinning — no `:latest`
 

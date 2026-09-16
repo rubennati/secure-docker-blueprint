@@ -11,6 +11,7 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 ### Security
 
 - **Paperless Tika parser** (`apps/paperless-ngx/`): upgraded the Apache Tika image from `3.1.0.0` to `3.3.1.0`, the newest published official 3.x Docker image tag. This moves the parser past the XFA/XXE vulnerability range, which ends at Tika `3.2.1`.
+- **`monitoring/beszel` and `monitoring/beszel-agent` no longer mount the Docker socket** (`agent`): a `tecnativa/docker-socket-proxy` sidecar now sits in front, permissioned to `CONTAINERS=1` only — the exact set the agent's Docker client calls (`agent/docker.go` upstream: container list, inspect, stats, logs), `POST=0` blocking everything else. Previously a `:ro` bind on the socket, which restricts no API call because a UNIX socket is bidirectional — a compromise of the agent was full Docker API access, root on the host. The agent's `network_mode: host` has no Docker network to resolve a service name on, so the proxy publishes `127.0.0.1:2375` and the agent's `DOCKER_HOST` points there. `docker compose config` validated on both stacks; not yet run against a real daemon.
 
 ### Changed
 

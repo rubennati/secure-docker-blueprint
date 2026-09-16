@@ -62,6 +62,84 @@ services:
       disable: true
 
   # --------------------------------------------------------
+  # DOCKER SOCKET PROXY (Beszel agent → Docker API)
+  # Read-only container metrics only — the agent never touches the
+  # raw socket. See UPSTREAM.md for why CONTAINERS is the only
+  # permission granted.
+  # --------------------------------------------------------
+  socket-proxy:
+    # --- Identity ---
+    image: tecnativa/docker-socket-proxy:${SOCKET_PROXY_TAG}
+    container_name: ${CONTAINER_NAME_SOCKET_PROXY}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /run
+      - /tmp
+
+    # --- Resources ---
+    # Measured in single-digit MB; this is a ceiling, not an appetite.
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          pids: 50
+        reservations:
+          memory: 32M
+
+    # --- Configuration ---
+    environment:
+      # The only permission the agent's Docker client calls: /containers/json,
+      # /containers/{id}/json, /containers/{id}/stats, /containers/{id}/logs
+      # (verified against agent/docker.go upstream). PING is for this proxy's
+      # own healthcheck below, not used by the agent itself.
+      CONTAINERS: 1
+      PING: 1
+
+      NETWORKS: 0
+      INFO: 0
+      EVENTS: 0
+      VERSION: 0
+      SERVICES: 0
+      SWARM: 0
+      TASKS: 0
+      NODES: 0
+      IMAGES: 0
+      VOLUMES: 0
+      SYSTEM: 0
+      POST: 0
+
+      # Container lifecycle control. Beszel is monitoring-only — never enabled.
+      ALLOW_START: 0
+      ALLOW_STOP: 0
+      ALLOW_RESTARTS: 0
+
+    # --- Storage ---
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+    # --- Networking ---
+    networks:
+      - app-internal
+    # The agent runs with network_mode: host (below), which cannot join a
+    # Docker network — it reaches this proxy over the host's loopback
+    # interface instead. Bound to 127.0.0.1 only: never the LAN, never a
+    # public interface.
+    ports:
+      - "127.0.0.1:2375:2375"
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:2375/_ping >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # --------------------------------------------------------
   # BESZEL AGENT — local (this host)
   # --------------------------------------------------------
   # Collects CPU / RAM / disk / network / per-container Docker stats
@@ -72,6 +150,10 @@ services:
     image: henrygd/beszel-agent:${APP_TAG}
     container_name: ${CONTAINER_NAME_AGENT}
     restart: unless-stopped
+
+    depends_on:
+      socket-proxy:
+        condition: service_healthy
 
     # --- Security ---
     security_opt:
@@ -97,16 +179,10 @@ services:
       KEY: ${AGENT_KEY}
       # Optional: comma-separated mount points beyond root FS.
       EXTRA_FILESYSTEMS: ${EXTRA_FILESYSTEMS}
-
-    # --- Storage ---
-    # Docker socket. The :ro stops the socket file being replaced; it does not
-    # restrict a single API call, because a UNIX socket is bidirectional — this
-    # container can start, stop and delete containers, which is root on the host.
-    # Beszel supports DOCKER_HOST against a socket proxy with CONTAINERS=1, which
-    # is the fix and is pending the first host run (.ai/tasks.md). Remove the
-    # volume entirely if container-level metrics are not needed.
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Container metrics via the socket proxy above, not the raw socket.
+      # 127.0.0.1 because network_mode: host below has no Docker network to
+      # resolve "socket-proxy" on.
+      DOCKER_HOST: tcp://127.0.0.1:2375
 
     # --- Networking ---
     # network_mode: host — required for accurate host network interface
@@ -131,3 +207,10 @@ services:
 networks:
   proxy-public:
     external: true
+
+  # Private to the socket proxy. internal: true — no route to the internet,
+  # no route from other stacks. The agent reaches the proxy over the
+  # loopback-only published port instead (network_mode: host, above).
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
