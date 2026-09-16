@@ -34,22 +34,29 @@ The company behind Seafile is Chinese and behind Nextcloud is German. Whether
 that matters depends on what you store and who might ask about it — see
 [data sovereignty](/sovereignty/).
 
-**Paperless-ngx** sits next to these rather than against them: it takes scanned
-paper, runs OCR, and gives back a searchable archive. Pair it with either.
+**Paperless-ngx** solves a different problem: it takes scanned paper, runs OCR,
+and gives back a searchable archive, rather than syncing files that already
+exist. [Guide →](/applications/paperless-ngx/) It does not open or edit what it
+archives — see document editing, next.
 
 ## Document editing in the browser
 
-All three plug into Nextcloud or Seafile as a shared backend.
+All three plug into Nextcloud or Seafile as a shared backend, and none has been
+exercised on a running host here — pick on capability and governance, not on
+which one is proven.
 
 **Collabora** is the light one — around 1 GB idle, LibreOffice underneath. Take
-it when the host is small.
+it when the host is small. No guide here yet.
 
 **Euro-Office** is an EU-governed fork of OnlyOffice, maintained by a group that
 includes Nextcloud, IONOS, XWiki and Proton. Same editor, different governance.
-Take it when the supplier's jurisdiction is part of the decision.
+Take it when the supplier's jurisdiction is part of the decision. No guide here
+yet.
 
 **OnlyOffice** stays closest to Microsoft formats. Take it when documents move
 back and forth with people using Word and Excel. [Guide →](/applications/onlyoffice/)
+— its evidence line names what opening a document through it has not confirmed
+yet.
 
 ## Dashboards
 
@@ -132,12 +139,26 @@ Trello than to a planning suite.
 
 ## Single sign-on
 
-**Authentik** puts a login in front of applications that have none, through
-its embedded outpost and the `sec-authentik` middleware in Traefik. Five
-containers. **Keycloak** serves applications that speak OpenID Connect or SAML
-themselves, in two containers, with the ecosystem that comes from being the
-provider most of them were tested against — and no proxy of its own. The
-[Keycloak guide](/infrastructure/keycloak/) has the table.
+| | Authentik | Keycloak |
+|---|---|---|
+| Containers | five | two |
+| Memory limits as shipped | 5.25 GB across the stack | 2 GB |
+| Runtime | Python | Java |
+| Licence · origin | MIT · Netherlands, EU | Apache-2.0 · US, CNCF |
+| A login in front of an application without OIDC | yes — the embedded outpost, wired into Traefik as `sec-authentik` | no |
+| Federation | LDAP and RADIUS through outposts | LDAP and Active Directory built in |
+| Configuration as code | YAML blueprints | JSON realm export and import |
+| Ecosystem | one company, since 2019 | most frameworks ship an adapter; Red Hat's supported edition; since 2014 |
+
+**Authentik** when the point is a login in front of applications that have
+none — that path is wired and verified in this blueprint.
+[Guide →](/infrastructure/authentik/)
+
+**Keycloak** when your applications speak OpenID Connect or SAML themselves,
+when you federate an existing directory, or when Keycloak is already the
+standard where you work. [Guide →](/infrastructure/keycloak/)
+
+Neither is small, and running both means two places where users exist.
 
 ## Where to go next
 

@@ -1,6 +1,6 @@
 ---
 title: Keycloak
-description: The second identity provider beside Authentik — OpenID Connect and SAML for applications that speak them, with the comparison that says which of the two to run.
+description: A self-hosted identity provider for applications that speak OpenID Connect or SAML themselves, with LDAP and Active Directory federation built in.
 ---
 
 import { Steps } from '@astrojs/starlight/components';
@@ -11,10 +11,6 @@ authenticates the user, and hands back a token the application trusts. It
 speaks OpenID Connect and SAML, federates users from LDAP and Active
 Directory, and manages realms, clients, roles and users in an admin console.
 Two containers: the server and PostgreSQL.
-
-It is the second identity provider in this blueprint. [Authentik](/infrastructure/authentik/)
-fills the same role, and the two are alternatives — [which to run](#keycloak-or-authentik)
-is below.
 
 <StackEvidence stack="core/keycloak"
   gap="a login. Boot, health, routing and the discovery document were checked on a running host; no application has signed in through it, and no restore has been performed." />
@@ -95,27 +91,10 @@ the secret — and reads everything else from the discovery document.
 
 That is the whole integration, and also its limit: Keycloak has no proxy of
 its own. An application that speaks neither OpenID Connect nor SAML cannot be
-put behind it with what this stack ships.
-
-## Keycloak or Authentik
-
-| | Authentik | Keycloak |
-|---|---|---|
-| Containers | five | two |
-| Memory limits as shipped | 5.25 GB across the stack | 2 GB |
-| Runtime | Python | Java |
-| Licence · origin | MIT · Netherlands, EU | Apache-2.0 · US, CNCF |
-| A login in front of an application without OIDC | yes — the embedded outpost, wired into Traefik as `sec-authentik` | no |
-| Federation | LDAP and RADIUS through outposts | LDAP and Active Directory built in |
-| Configuration as code | YAML blueprints | JSON realm export and import |
-| Ecosystem | one company, since 2019 | most frameworks ship an adapter; Red Hat's supported edition; since 2014 |
-
-Take **Authentik** when the point is a login in front of applications that
-have none — that path is wired and verified in this blueprint. Take
-**Keycloak** when your applications speak OpenID Connect or SAML themselves,
-when you federate an existing directory, or when Keycloak is already the
-standard where you work. Neither is small, and running both means two places
-where users exist.
+put behind it with what this stack ships. This blueprint also ships
+[Authentik](/infrastructure/authentik/) for the same role — for a side-by-side
+on containers, memory, federation and ecosystem, see [Choosing between
+services → Single sign-on](/applications/choosing/#single-sign-on).
 
 ## Backup
 
