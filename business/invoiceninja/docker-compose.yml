@@ -105,6 +105,7 @@ services:
       retries: 5
       start_period: 120s
 
+    memswap_limit: 1G          # == memory: no swap
     deploy:
       resources:
         limits:
@@ -183,6 +184,7 @@ services:
       retries: 3
       start_period: 20s
 
+    memswap_limit: 128M          # == memory: no swap
     deploy:
       resources:
         limits:
@@ -240,6 +242,7 @@ services:
       retries: 12
       start_period: 60s
 
+    memswap_limit: 1G          # == memory: no swap
     deploy:
       resources:
         limits:
@@ -290,6 +293,7 @@ services:
       retries: 10
       start_period: 10s
 
+    memswap_limit: 256M          # == memory: no swap
     deploy:
       resources:
         limits:

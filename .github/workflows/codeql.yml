@@ -1,10 +1,10 @@
 name: CodeQL
 
-# Static analysis for the code this repository actually ships as code: the eight
-# checkers under scripts/ci/ and the operator site. Neither had any until now —
-# Trivy scans images and configuration, not source.
+# Static analysis for the code this repository actually ships as code: the
+# Python checkers under scripts/ci/ and the operator site's JS/TS/Astro source.
+# Neither had any until now — Trivy scans images and configuration, not source.
 #
-# CodeQL has no Bash support, so the 30 shell scripts stay outside it. They are
+# CodeQL has no Bash support, so the shell scripts stay outside it. They are
 # covered by review and by shellcheck-style reading, not by this workflow.
 on:
   push:
@@ -17,29 +17,125 @@ on:
 
 permissions: read-all
 
+# A superseded run on the same open PR is cancelled. A push to main/dev or a
+# scheduled/manual run never shares this group with a PR (different ref), so
+# cancellation here can never touch a scheduled scan or landed evidence.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
-  analyze:
-    name: CodeQL (${{ matrix.language }})
+  # Each language's actual source lives in one place — verified from the live
+  # tree, not assumed: `scripts/ci/**/*.py` for Python (20 files; the two
+  # generated apps/seafile*/config/seahub_custom.py fragments are already
+  # excluded from analysis by .github/codeql/codeql-config.yml, so a change to
+  # only those doesn't need a re-scan either), and `site/**` JS/TS/Astro (10
+  # .js/.ts files plus 8 .astro components — nothing outside site/ is
+  # JS/TS/Astro). A change to only one language's source does not need the
+  # other language re-analysed. Schedule and manual dispatch always run both:
+  # CodeQL's own query packs change independent of this repository's commits.
+  detect-changes:
+    name: Detect changed language inputs
+    runs-on: ubuntu-latest
+    outputs:
+      python: ${{ steps.diff.outputs.python }}
+      jsts: ${{ steps.diff.outputs.jsts }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - id: diff
+        run: |
+          if [[ "${{ github.event_name }}" == "schedule" || "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "${{ github.event_name }} run — analysing both languages regardless of changes." >> "$GITHUB_STEP_SUMMARY"
+            echo "python=true" >> "$GITHUB_OUTPUT"
+            echo "jsts=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          base="${{ github.event.pull_request.base.sha || github.event.before }}"
+          head="${{ github.event.pull_request.head.sha || github.sha }}"
+
+          if [[ -z "$base" || "$base" =~ ^0+$ ]]; then
+            echo "No comparable base commit (new branch) — analysing both languages." >> "$GITHUB_STEP_SUMMARY"
+            echo "python=true" >> "$GITHUB_OUTPUT"
+            echo "jsts=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # A diff that cannot be trusted must not be read as "no changes" —
+          # fail safe by analysing both languages, not by skipping.
+          if ! changed="$(git diff --name-only "$base" "$head" 2>&1)"; then
+            echo "git diff $base..$head failed — analysing both languages (failing safe): $changed" >> "$GITHUB_STEP_SUMMARY"
+            echo "python=true" >> "$GITHUB_OUTPUT"
+            echo "jsts=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "Changed files ($base..$head):"
+          echo "$changed"
+
+          python=false; jsts=false
+          echo "$changed" | grep -qE '^scripts/ci/.*\.py$|^\.github/workflows/codeql\.yml$|^\.github/codeql/codeql-config\.yml$' && python=true
+          echo "$changed" | grep -qE '^site/.*\.(js|jsx|ts|tsx|mjs|cjs|astro)$|^\.github/workflows/codeql\.yml$|^\.github/codeql/codeql-config\.yml$' && jsts=true
+
+          {
+            echo "| Language | Relevant input changed |"
+            echo "|---|---|"
+            echo "| python | $python |"
+            echo "| javascript-typescript | $jsts |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          echo "python=$python" >> "$GITHUB_OUTPUT"
+          echo "jsts=$jsts" >> "$GITHUB_OUTPUT"
+
+  # A matrix job's `if:` cannot see the `matrix` context at all (only github,
+  # inputs, needs and vars are available at job level — confirmed against the
+  # real schema with actionlint, and against a real run: GitHub refuses the
+  # whole workflow before creating any job when a job-level `if:` references
+  # `matrix.*`). Two independent jobs are the correct fix, not a workaround:
+  # each is gated purely on its own `needs` output, so a skip shows up in the
+  # UI as that job being skipped, not as a job that ran with empty steps.
+  analyze-python:
+    name: CodeQL (python)
+    needs: detect-changes
+    if: needs.detect-changes.outputs.python == 'true'
     runs-on: ubuntu-latest
     permissions:
       security-events: write   # upload results to the Security tab
       contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - language: python
-          - language: javascript-typescript
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Initialise CodeQL
         uses: github/codeql-action/init@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
         with:
-          languages: ${{ matrix.language }}
+          languages: python
           config-file: ./.github/codeql/codeql-config.yml
 
       - name: Analyse
         uses: github/codeql-action/analyze@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
         with:
-          category: "/language:${{ matrix.language }}"
+          category: "/language:python"
+
+  analyze-jsts:
+    name: CodeQL (javascript-typescript)
+    needs: detect-changes
+    if: needs.detect-changes.outputs.jsts == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write   # upload results to the Security tab
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Initialise CodeQL
+        uses: github/codeql-action/init@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
+        with:
+          languages: javascript-typescript
+          config-file: ./.github/codeql/codeql-config.yml
+
+      - name: Analyse
+        uses: github/codeql-action/analyze@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
+        with:
+          category: "/language:javascript-typescript"

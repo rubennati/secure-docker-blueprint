@@ -30,6 +30,7 @@ services:
 
     # --- Resources ---
     # Starting values, not measured ones. Retune from `docker stats` to ~2x peak.
+    memswap_limit: 256m          # == memory: no swap
     deploy:
       resources:
         limits:

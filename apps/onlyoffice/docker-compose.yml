@@ -17,6 +17,7 @@ services:
 
     # --- Resources ---
     # Search, rendering or ML — generous on purpose. Retune from docker stats.
+    memswap_limit: 4G          # == memory: no swap
     deploy:
       resources:
         limits:

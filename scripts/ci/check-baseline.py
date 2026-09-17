@@ -111,21 +111,29 @@ SOCKET_EXCEPTIONS: dict[str, dict[str, Exception]] = {
         },
     },
     "monitoring/beszel": {
-        "agent": {
-            "reason":       "Beszel agent needs Docker socket to enumerate containers and collect "
-                            "per-container CPU/memory/network metrics.",
-            "alternatives": "Beszel supports DOCKER_HOST, and upstream documents pointing it at a "
-                            "socket proxy with CONTAINERS=1 as the more secure setup. That is not done here yet — the stack has never been started, so the change cannot be verified. It belongs to the v0.8.0 host session.",
-            "risk":         "Accepted, and not low. A read-only bind of a UNIX socket prevents replacing or unlinking the socket file. It restricts no API call: the socket is a bidirectional channel, and a client holding a connection can issue any request the daemon accepts, POST included. A compromise of this agent is full Docker API access, which is root on the host. It is accepted because the agent is on an operator-controlled network and the alternative above is not yet verified — not because :ro contains it.",
+        "socket-proxy": {
+            "reason":       "This service IS the socket proxy for the Beszel hub's local agent — it "
+                            "exposes a filtered, read-only Docker API so the agent never touches "
+                            "the raw socket.",
+            "alternatives": "There is no upstream proxy to route through; this is the proxy layer. "
+                            "The socket is bound :ro against the file being replaced; the API "
+                            "surface is limited by CONTAINERS=1 / POST=0, not by the mount.",
+            "risk":         "Accepted and by design. The agent is constrained to container list, "
+                            "inspect, stats and logs — the only calls its Docker client makes "
+                            "(agent/docker.go upstream).",
         },
     },
     "monitoring/beszel-agent": {
-        "agent": {
-            "reason":       "Beszel standalone agent needs Docker socket to enumerate containers and "
-                            "collect per-container CPU/memory/network metrics.",
-            "alternatives": "Beszel supports DOCKER_HOST, and upstream documents pointing it at a "
-                            "socket proxy with CONTAINERS=1 as the more secure setup. That is not done here yet — the stack has never been started, so the change cannot be verified. It belongs to the v0.8.0 host session.",
-            "risk":         "Accepted, and not low. A read-only bind of a UNIX socket prevents replacing or unlinking the socket file. It restricts no API call: the socket is a bidirectional channel, and a client holding a connection can issue any request the daemon accepts, POST included. A compromise of this agent is full Docker API access, which is root on the host. It is accepted because the agent is on an operator-controlled network and the alternative above is not yet verified — not because :ro contains it.",
+        "socket-proxy": {
+            "reason":       "This service IS the socket proxy for the standalone Beszel agent — it "
+                            "exposes a filtered, read-only Docker API so the agent never touches "
+                            "the raw socket.",
+            "alternatives": "There is no upstream proxy to route through; this is the proxy layer. "
+                            "The socket is bound :ro against the file being replaced; the API "
+                            "surface is limited by CONTAINERS=1 / POST=0, not by the mount.",
+            "risk":         "Accepted and by design. The agent is constrained to container list, "
+                            "inspect, stats and logs — the only calls its Docker client makes "
+                            "(agent/docker.go upstream).",
         },
     },
 }

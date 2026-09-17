@@ -10,6 +10,7 @@ services:
 
     # --- Resources ---
     # JVM heap plus off-heap. Retune together with ES_JAVA_OPTS.
+    memswap_limit: 4G          # == memory: no swap
     deploy:
       resources:
         limits:

@@ -82,6 +82,9 @@ sqlite_databases:
 channels still work afterwards — re-testing them is part of the restore, not an
 extra.
 
+For the general SQLite restore procedure and verification checklist, see
+[Restore](../../docs/standards/restore.md).
+
 ## Known Issues
 
 - **The container runs as root.** Measured on 2.5.3: `dumb-init` and the server are uid 0, and the compose file drops no capability, so the data directory needs no particular owner and the server creates root-owned files in it (`docker-tls/`). A `user:` line would be the hardening step; it needs the data directory chowned to that user first and is not done here — the stack was verified as shipped.

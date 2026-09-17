@@ -159,6 +159,9 @@ postgresql_databases:
 **Restore order:** database, then the container. Keycloak migrates the schema
 at boot and refuses to start on a schema newer than its own version.
 
+For the general PostgreSQL restore procedure and verification checklist, see
+[Restore](../../docs/standards/restore.md).
+
 ## Known issues
 
 - **A minor release may migrate the schema and rename options.** Read the

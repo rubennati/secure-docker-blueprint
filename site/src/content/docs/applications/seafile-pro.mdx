@@ -48,7 +48,7 @@ From `apps/seafile-pro/`:
    ```
 
    ```bash
-   # sed -i "s|^ONLYOFFICE_JWT_SECRET=.*|ONLYOFFICE_JWT_SECRET=<value-from-core/onlyoffice>|" .env
+   # sed -i "s|^ONLYOFFICE_JWT_SECRET=.*|ONLYOFFICE_JWT_SECRET=<value-from-apps/onlyoffice>|" .env
    ```
 
 5. Pull images:
@@ -127,7 +127,7 @@ OnlyOffice embeds a browser-based Office editor into Seafile. It runs as a separ
 
 **Server-to-server path:** OnlyOffice needs a direct network route to Seafile's configured hostname to fetch files and save edits back. That path can be a public internet connection or a private route such as Tailscale. If DNS for the Seafile hostname resolves to a Tailscale address on the OnlyOffice host, it will use that path automatically — no additional configuration is needed on the OnlyOffice side for the network path itself.
 
-**Allowed origins:** On the OnlyOffice server, add the Seafile origin to `ONLYOFFICE_ALLOWED_ORIGINS` in its `.env` so browsers are permitted to embed the editor in an iframe. In the Blueprint's `core/onlyoffice` stack this value is embedded in a Traefik label — changing it takes effect only after recreating the container, not after a plain restart:
+**Allowed origins:** On the OnlyOffice server, add the Seafile origin to `ONLYOFFICE_ALLOWED_ORIGINS` in its `.env` so browsers are permitted to embed the editor in an iframe. In the Blueprint's `apps/onlyoffice` stack this value is embedded in a Traefik label — changing it takes effect only after recreating the container, not after a plain restart:
 
 ```bash
 # On the OnlyOffice server:

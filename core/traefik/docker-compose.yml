@@ -17,6 +17,7 @@ services:
 
     # --- Resources ---
     # Measured in single-digit MB; this is a ceiling, not an appetite.
+    memswap_limit: 128M          # == memory: no swap
     deploy:
       resources:
         limits:
@@ -75,6 +76,7 @@ services:
     restart: unless-stopped
     # --- Resources ---
     # Measured in single-digit MB; this is a ceiling, not an appetite.
+    memswap_limit: 128M          # == memory: no swap
     deploy:
       resources:
         limits:

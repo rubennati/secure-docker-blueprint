@@ -47,6 +47,7 @@ services:
     # A backup server is I/O-heavy and its memory use scales with the number of
     # clients and file count. These are a starting point, not a measurement —
     # watch `docker stats` during a full backup and retune to ~2x peak.
+    memswap_limit: ${APP_MEM_LIMIT}          # == memory: no swap
     deploy:
       resources:
         limits:

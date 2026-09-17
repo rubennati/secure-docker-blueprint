@@ -11,7 +11,7 @@ Link or reference the issue / discussion that motivated this. If none exists, ex
 - [ ] Bug fix
 - [ ] New app
 - [ ] Existing app improvement / hardening
-- [ ] Core service change (Traefik, CrowdSec, Authentik, OnlyOffice)
+- [ ] Core service change (Traefik, CrowdSec, Authentik)
 - [ ] Standards / documentation
 - [ ] Refactor / cleanup
 - [ ] Other:

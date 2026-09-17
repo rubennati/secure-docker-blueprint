@@ -1,12 +1,12 @@
 # Measuring resource limits
 
-How to turn a running host into the numbers v0.9.0 needs. This is the procedure;
+How to turn a running host into the numbers v0.10.0 needs. This is the procedure;
 the values themselves and the rule that derives them are owned by
 [`standards/compose-structure.md`](standards/compose-structure.md#block-rules).
 
 Every service carries a `memory` and a `pids` ceiling, so nothing is unbounded —
 `python3 scripts/ci/check-structure.py` reports any service that loses one. What
-v0.9.0 closes is their basis: the ceilings in place come from the derivation rule,
+v0.10.0 closes is their basis: the ceilings in place come from the derivation rule,
 and the `cpus` values that remain are marked in the compose files as derived rather
 than measured.
 
@@ -17,7 +17,7 @@ OOM kill that looks like an application crash, usually under exactly the load th
 made it matter. A CPU cap set too low produces latency nobody attributes to a
 config file written months earlier.
 
-That is the whole reason v0.9.0 sits late in the roadmap: the numbers have to come
+That is the whole reason v0.10.0 sits late in the roadmap: the numbers have to come
 from a running install, and a guessed limit is worse than no limit because it
 introduces a failure mode that did not exist before.
 
@@ -103,8 +103,12 @@ it is unmeasured rather than deriving a limit from it.
    grants the container as much swap again as its memory limit, which is the one
    allowance nobody chose.
 
-One-shot and migration containers get no limit at all. Capping something that has
-to finish once is how a restore stops halfway.
+One-shot and migration containers still carry the same three limits — `core/authentik`'s
+`init-perms` runs a chown in under a second and states `memory`, `pids` and
+`memswap_limit` like everything else, because stating them costs nothing. What
+differs is sizing them for the one thing the container does, not exempting it
+from the requirement — a limit sized for a steady-state guess is how a
+migration or restore stops halfway.
 
 ## Where the number goes
 

@@ -2,16 +2,16 @@
 
 # Secure Docker Blueprint
 
-**Modular, security-hardened Docker Compose setups for self-hosted infrastructure.**
+**Security-hardened Docker Compose patterns for self-hosted software — deploy, secure, operate, recover — for existing open-source projects and applications you build yourself.**
 
-Hardened configurations for 40+ services — standardized security baseline, Docker Secrets, Traefik routing, CrowdSec integration, and network isolation out of the box.
+Hardened configurations for 40+ services — standardized security baseline, Docker Secrets, Traefik routing, CrowdSec integration, and network isolation out of the box. A reference pattern for software you build yourself does not exist yet — see [docs/architecture.md](docs/architecture.md#physical-layout-conceptual-domains-and-navigation-are-three-different-layers).
 
 [![CI](https://github.com/rubennati/secure-docker-blueprint/actions/workflows/ci.yml/badge.svg)](https://github.com/rubennati/secure-docker-blueprint/actions/workflows/ci.yml)
 [![Trivy](https://github.com/rubennati/secure-docker-blueprint/actions/workflows/trivy.yml/badge.svg)](https://github.com/rubennati/secure-docker-blueprint/actions/workflows/trivy.yml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/rubennati/secure-docker-blueprint/badge)](https://scorecard.dev/viewer/?uri=github.com/rubennati/secure-docker-blueprint)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/13091/badge)](https://www.bestpractices.dev/projects/13091)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v0.8.4-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v0.9.0-blue)](CHANGELOG.md)
 [![Status](https://img.shields.io/badge/status-pre--1.0-yellow)](ROADMAP.md)
 
 </div>
@@ -131,9 +131,6 @@ the choice guidance for that category.
 | [Traefik](core/traefik/) | Reverse proxy with Socket Proxy, 5 security levels, 3 TLS profiles, access policies |
 | [Authentik](core/authentik/) | SSO / Identity Provider for centralized authentication (Forward-Auth, OAuth2 / OIDC / SAML) |
 | [Keycloak](core/keycloak/) | Alternative identity provider — OIDC / SAML, LDAP and AD federation, two containers, no proxy of its own. `core/keycloak/README.md` compares the two |
-| [OnlyOffice](core/onlyoffice/) | Document editing server for Seafile, Nextcloud, etc. |
-| [Euro-Office](core/euro-office/) | EU-governed OnlyOffice fork (Nextcloud/IONOS/XWiki/Proton) — drop-in document server |
-| [Collabora](core/collabora/) | Lightweight LibreOffice-based office server (~1 GB) — leaner alternative to OnlyOffice/Euro-Office |
 | [dnsmasq](core/dnsmasq/) | DNS forwarder with wildcard zones for Tailscale / split-DNS setups |
 | [acme-certs](core/acme-certs/) | Certificate tool (acme.sh) for devices without Traefik (NAS, routers) |
 | [CrowdSec](core/crowdsec/) | Threat detection engine — log analysis, scenarios, threat decisions. Enforcement is a separate choice: reverse-proxy or host-firewall remediation |
@@ -210,6 +207,9 @@ Planned: **Rallly** (group scheduling polls — Doodle alternative, complementar
 | [Paperless-ngx](apps/paperless-ngx/) | App + Postgres + Redis + Gotenberg + Tika | Document management with OCR, optional Authentik SSO |
 | [Seafile](apps/seafile/) | App + MariaDB + Memcached + optional components | File sync & share (community edition) |
 | [Seafile Pro](apps/seafile-pro/) | App + MariaDB + Memcached + SeaDoc + ClamAV + SeaSearch | File sync & share (pro edition) |
+| [OnlyOffice](apps/onlyoffice/) | Single container | Document editing server for Seafile, Nextcloud, etc. |
+| [Euro-Office](apps/euro-office/) | Single container | EU-governed OnlyOffice fork (Nextcloud/IONOS/XWiki/Proton) — drop-in document server |
+| [Collabora](apps/collabora/) | Single container | Lightweight LibreOffice-based office server (~1 GB) |
 
 #### Identity & security
 
@@ -291,7 +291,7 @@ New here? Start with the area that best matches your goal: [Core Infrastructure]
 
 | Directory | Scope |
 |---|---|
-| [`core/`](core/) | Infrastructure shared by everything — Traefik, CrowdSec, identity providers (Authentik, Keycloak), OnlyOffice, certs |
+| [`core/`](core/) | Infrastructure shared by everything — Traefik, CrowdSec, identity providers (Authentik, Keycloak), certs |
 | [`apps/`](apps/) | General-purpose self-hosted apps — equally useful for private homelab or a company |
 | [`business/`](business/) | Apps that only make sense in a company context — invoicing, helpdesk, newsletter, compliance |
 | [`monitoring/`](monitoring/) | Ops observability — uptime, metrics, content-change watching, disk SMART |
@@ -307,9 +307,6 @@ secure-docker-blueprint/
 │   ├── authentik/               #   SSO / Identity provider
 │   ├── keycloak/                #   SSO / Identity provider — the alternative
 │   ├── crowdsec/                #   Intrusion detection + Traefik bouncer
-│   ├── onlyoffice/              #   Document editing server
-│   ├── euro-office/             #   EU OnlyOffice fork (document server)
-│   ├── collabora/               #   Lightweight office server (LibreOffice)
 │   ├── dnsmasq/                 #   DNS forwarder / split-DNS
 │   ├── acme-certs/              #   Certificate tool (acme.sh)
 │   ├── whoami/                  #   Traefik debug service
@@ -323,6 +320,7 @@ secure-docker-blueprint/
 │   ├── dashy/  heimdall/  homarr/  homepage/
 │   ├── ghost/  wordpress/  bookstack/
 │   ├── immich/  paperless-ngx/  nextcloud/  seafile/  seafile-pro/
+│   ├── onlyoffice/  euro-office/  collabora/
 │   ├── vaultwarden/
 │   ├── nocodb/  n8n/  opnform/  monicahq/
 │   ├── caldiy/  easyappointments/  tymeslot/

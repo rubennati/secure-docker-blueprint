@@ -1,6 +1,6 @@
 # Euro-Office
 
-> Modeled on [`core/onlyoffice/`](../onlyoffice/).
+> Modeled on [`apps/onlyoffice/`](../onlyoffice/).
 
 EU-governed, open-source **fork of OnlyOffice Document Server** — in-browser editing of
 docx / xlsx / pptx / pdf / odt for Seafile, Nextcloud, or any WOPI-compatible app. Backed by
@@ -8,7 +8,7 @@ docx / xlsx / pptx / pdf / odt for Seafile, Nextcloud, or any WOPI-compatible ap
 about Russian influence on upstream OnlyOffice.
 
 Because it forks the same Document Server, it is a **drop-in replacement** for
-[`core/onlyoffice/`](../onlyoffice/) — same JWT + iframe integration, same API path. Run one or the
+[`apps/onlyoffice/`](../onlyoffice/) — same JWT + iframe integration, same API path. Run one or the
 other, not both, per consuming app.
 
 ## Architecture
@@ -73,4 +73,4 @@ here.
 ## Details
 
 - [UPSTREAM.md](UPSTREAM.md) — source, upgrade checklist, deviations
-- Alternative: [`core/onlyoffice/`](../onlyoffice/) — the upstream OnlyOffice Document Server
+- Alternative: [`apps/onlyoffice/`](../onlyoffice/) — the upstream OnlyOffice Document Server

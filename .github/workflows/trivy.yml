@@ -4,17 +4,25 @@ name: Trivy
 #   1. IaC misconfigurations — all config files in the repository (fast, no image pulls)
 #      Results are uploaded to the GitHub Security tab as SARIF.
 #   2. CVEs in container images — every image the checkers discover (scripts/ci/list-images.sh)
-#      Results appear in CI logs. Non-blocking while CVE baseline is being established.
+#      Full per-image findings go to a workflow artifact (trivy-image-scan-results);
+#      the job's own summary page carries the concise index. Non-blocking on every
+#      severity, on every image — see docs/security-verification.md for the current
+#      control description.
 #
-# Triggers: push/PR to main, weekly Monday 04:00 UTC, manual dispatch.
+# Triggers: push/PR to main, weekly Monday 04:00 UTC, manual dispatch. On
+# push/PR, job 2 (image-scan) only runs when an input that can change the
+# discovered image set changed (see the detect-changes job below); job 1
+# (config-scan) stays unconditional. Schedule and manual dispatch always run
+# both jobs in full.
 #
 # Limitations (documented in docs/security-verification.md):
 #   - Image scanning covers every compose file check-structure.py --list reports.
 #   - Images are pulled at scan time; new CVEs only detected on next scheduled run.
 #   - Tags are pinned to versions but not to digest.
-#   - --ignore-unfixed: CVEs with no available fix are skipped to reduce noise.
+#   - --ignore-unfixed: a CVE with no published fix is excluded from every count
+#     this job produces. That is not a claim it is safe to ignore — only that no
+#     fix exists yet for a pin change to apply.
 #   - Image scan is non-blocking (exit-code 0) until a CVE baseline is reviewed.
-#     Change exit-code to 1 once known CRITICALs are assessed.
 
 on:
   push:
@@ -27,7 +35,79 @@ on:
 
 permissions: read-all
 
+# A superseded run on the same open PR is cancelled. A push to main or a
+# scheduled/manual run never shares this group with a PR (different ref), so
+# cancellation here can never touch the weekly scan or landed evidence.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # 0. DETECT IMAGE-RELEVANT CHANGES
+  # ─────────────────────────────────────────────────────────────────────────
+  # Gates job 2 (image-scan) only. Job 1 (config-scan) is fast and stays
+  # unconditional on its existing triggers.
+  #
+  # list-images.sh's actual inputs, verified from source rather than assumed:
+  # production compose files under core/, apps/, business/, monitoring/,
+  # backup/ (check-structure.py's ROOTS — *.local.yml overlays are excluded
+  # from image resolution, so they don't gate this either), each stack's
+  # .env.example (sourced to resolve ${VAR} image tags), and the discovery/
+  # scan/summarize scripts themselves. A change to none of these cannot change
+  # which images get pulled or scanned. Schedule and manual dispatch always
+  # scan everything: new CVEs appear in already-published images independent
+  # of any commit here.
+  detect-changes:
+    name: Detect image-relevant changes
+    runs-on: ubuntu-latest
+    outputs:
+      images_changed: ${{ steps.diff.outputs.images_changed }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - id: diff
+        run: |
+          if [[ "${{ github.event_name }}" == "schedule" || "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "${{ github.event_name }} run — scanning all images regardless of changes." >> "$GITHUB_STEP_SUMMARY"
+            echo "images_changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          base="${{ github.event.pull_request.base.sha || github.event.before }}"
+          head="${{ github.event.pull_request.head.sha || github.sha }}"
+
+          if [[ -z "$base" || "$base" =~ ^0+$ ]]; then
+            echo "No comparable base commit (new branch) — scanning all images." >> "$GITHUB_STEP_SUMMARY"
+            echo "images_changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # A diff that cannot be trusted must not be read as "no changes" —
+          # fail safe by scanning all images, not by skipping.
+          if ! changed="$(git diff --name-only "$base" "$head" 2>&1)"; then
+            echo "git diff $base..$head failed — scanning all images (failing safe): $changed" >> "$GITHUB_STEP_SUMMARY"
+            echo "images_changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "Changed files ($base..$head):"
+          echo "$changed"
+
+          pattern='^(core|apps|business|monitoring|backup)/.*\.ya?ml$'
+          pattern+='|^(core|apps|business|monitoring|backup)/.*/\.env\.example$'
+          pattern+='|^scripts/ci/(check-structure\.py|list-images\.sh|trivy-summarize\.py)$'
+          pattern+='|^\.github/workflows/trivy\.yml$'
+
+          if echo "$changed" | grep -E "$pattern" | grep -qv '\.local\.yml$'; then
+            echo "images_changed=true" >> "$GITHUB_OUTPUT"
+            echo "Image-relevant input changed — image scan will run." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "images_changed=false" >> "$GITHUB_OUTPUT"
+            echo "No compose file, \`.env.example\`, or scan-script input changed — image scan skipped for this run. The weekly schedule still covers this image set in full." >> "$GITHUB_STEP_SUMMARY"
+          fi
 
   # ─────────────────────────────────────────────────────────────────────────
   # 1. IaC MISCONFIGURATION SCAN
@@ -67,11 +147,19 @@ jobs:
   # ─────────────────────────────────────────────────────────────────────────
   # 2. IMAGE CVE SCAN
   # ─────────────────────────────────────────────────────────────────────────
-  # Scans every image list-images.sh resolves.
-  # Results appear in CI logs. Non-blocking (exit-code 0) while baseline is reviewed.
+  # Scans every image list-images.sh resolves. Non-blocking (exit-code 0) on
+  # every severity, on every image, while a CVE baseline is being established.
+  #
+  # Each image is scanned individually to its own JSON report rather than one
+  # combined run, so one image's scan failure (see the loop below) never loses
+  # the results already collected for the others.
   image-scan:
     name: Image CVE scan
+    needs: detect-changes
+    if: needs.detect-changes.outputs.images_changed == 'true'
     runs-on: ubuntu-latest
+    env:
+      TRIVY_CACHE_DIR: ${{ github.workspace }}/.cache/trivy
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -86,8 +174,8 @@ jobs:
           # Download pre-built binary and verify SHA256 before execution.
           # Both TRIVY_VERSION and TRIVY_CHECKSUM must be updated together on bumps.
           # Checksums: https://github.com/aquasecurity/trivy/releases/download/v<ver>/trivy_<ver>_checksums.txt
-          TRIVY_VERSION="0.71.0"
-          TRIVY_CHECKSUM="30a3d22b23f88c233f1658f562fb477cae3b3e8b4761109d515b7698daf85814"
+          TRIVY_VERSION="0.74.0"
+          TRIVY_CHECKSUM="2ae6fe3ee734b7fdf11335663e18c75ea12dccc76062f09f164a3b0f8be4371a"
           curl -sfLo /tmp/trivy.tar.gz \
             "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
           echo "${TRIVY_CHECKSUM}  /tmp/trivy.tar.gz" | sha256sum --check
@@ -95,40 +183,76 @@ jobs:
           rm /tmp/trivy.tar.gz
           trivy --version
 
+      - name: Cache Trivy vulnerability database
+        # One entry per UTC day: every push/PR/manual run that day restores it
+        # instead of downloading the ~300 MB database again. Trivy's own
+        # staleness check (embedded in the cached metadata) still decides
+        # whether to refresh it — this cache does not skip or widen that
+        # check, it only avoids re-fetching a copy that check would keep
+        # anyway. restore-keys falls back to the most recent day available if
+        # today's entry does not exist yet, so the very first run of a new
+        # day still starts from a warm cache rather than nothing.
+        id: date
+        run: echo "date=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ github.workspace }}/.cache/trivy/db
+          key: trivy-db-${{ steps.date.outputs.date }}
+          restore-keys: |
+            trivy-db-
+
       - name: Extract image list from compose files
         run: |
           bash scripts/ci/list-images.sh | tee /tmp/images.txt
           echo "$(wc -l < /tmp/images.txt) images to scan"
 
       - name: Scan for CVEs (CRITICAL + HIGH, non-blocking)
-        # Non-blocking: exit-code 0 while the CVE baseline is being established.
-        # Findings are visible in the job log. To make this blocking once the
-        # baseline is reviewed, change --exit-code to 1.
+        # Every image gets its own JSON report — the full per-package findings
+        # Trivy produces, not the table this job used to print into the log.
+        # An image that fails to scan writes no report; its name and Trivy's
+        # own reason go to failures.tsv instead, so "not scanned" is never
+        # silently read as "scanned clean" — trivy-summarize.py below reports
+        # it under its own heading, by name, with that reason.
         run: |
-          # An image that cannot be pulled does not end the run, but it is
-          # counted and named, so an unscanned image is not read as a clean one.
-          # Causes: Docker Hub rate limits on anonymous pulls, and the
-          # apps/seafile-pro images, which need a licence.
-          failed=0
-          total=0
+          mkdir -p /tmp/trivy-results
+          : > /tmp/trivy-failures.tsv
           while IFS= read -r image; do
-            total=$((total + 1))
-            echo "── $image"
-            if ! trivy image \
+            safe=$(echo "$image" | tr -c 'A-Za-z0-9._-' '_')
+            outfile="/tmp/trivy-results/${safe}.json"
+            errfile=$(mktemp)
+            if trivy image \
               --quiet \
-              --no-progress \
+              --format json \
               --ignore-unfixed \
               --severity CRITICAL,HIGH \
               --exit-code 0 \
-              "$image"; then
-              failed=$((failed + 1))
-              echo "   NOT SCANNED: $image" >> /tmp/unscanned.txt
+              --output "$outfile" \
+              "$image" 2>"$errfile"; then
+              :
+            else
+              reason=$(grep -v '^[[:space:]]*$' "$errfile" | tail -1 | sed -E 's/^[[:space:]]*\*[[:space:]]*//')
+              printf '%s\t%s\n' "$image" "${reason:-scan failed, no reason captured}" >> /tmp/trivy-failures.tsv
+              rm -f "$outfile"
             fi
+            rm -f "$errfile"
           done < /tmp/images.txt
 
-          echo
-          echo "Scanned $((total - failed)) of $total images."
-          if [ "$failed" -gt 0 ]; then
-            echo "$failed could not be scanned — unreachable, rate-limited or licensed:"
-            cat /tmp/unscanned.txt
-          fi
+      - name: Summarize results
+        if: always()
+        run: |
+          python3 scripts/ci/trivy-summarize.py \
+            --results-dir /tmp/trivy-results \
+            --failures-file /tmp/trivy-failures.tsv \
+            --images-total "$(wc -l < /tmp/images.txt)" \
+            --out "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload detailed scan results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: trivy-image-scan-results
+          path: |
+            /tmp/trivy-results/
+            /tmp/trivy-failures.tsv
+          if-no-files-found: warn

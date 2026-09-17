@@ -111,6 +111,6 @@ Whether an alert also arrives while the sending host itself is down is a propert
 
 Do Blocks 1 and 2. Together they are the closed-circuit chain: something that notices absence, and somewhere the notice arrives. The observing monitors in Blocks 3–5 are the easier half and only work while they are running anyway.
 
-## Feeding v0.9.0
+## Feeding v0.10.0
 
-Every container started in this session is a measurement opportunity, and v0.9.0 needs measured values rather than guessed ones. The procedure is in [`resource-measurement.md`](resource-measurement.md) — start the sampler before Block 1 and let it run through the session.
+Every container started in this session is a measurement opportunity, and v0.10.0 needs measured values rather than guessed ones. The procedure is in [`resource-measurement.md`](resource-measurement.md) — start the sampler before Block 1 and let it run through the session.

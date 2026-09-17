@@ -57,7 +57,7 @@ These controls block merges if violated. Evidence is the CI output from `.github
 | **Location** | Socket proxies defined in `core/traefik`, `core/portainer`, `core/dockhand`, `core/hawser`, `core/portainer-agent`, `monitoring/beszel`, `monitoring/beszel-agent` |
 | **Pattern** | `tecnativa/docker-socket-proxy` with per-service API surface allowlists |
 | **Exceptions** | 7 services have documented exceptions, all in `SOCKET_EXCEPTIONS` dict with mandatory `reason` / `alternatives` / `risk` fields |
-| **Gaps** | Hawser is a known exception pending upstream support for TCP socket proxy (tracked: `https://github.com/Finsys/hawser/pull/52`). Beszel agent mounts socket read-only (`:ro`) which limits but does not eliminate risk. |
+| **Gaps** | Hawser is a known exception pending upstream support for TCP socket proxy (tracked: `https://github.com/Finsys/hawser/pull/52`). |
 
 #### 4. Image tag pinning — no `:latest`
 
@@ -75,7 +75,7 @@ These controls block merges if violated. Evidence is the CI output from `.github
 |-------|-------|
 | **Implemented?** | Yes |
 | **Enforcement** | CI FAIL — `gitleaks/gitleaks-action@v2` |
-| **Scope** | Full git history (`fetch-depth: 0`) on every push and nightly |
+| **Scope** | Full git history (`fetch-depth: 0`) on every push to `main` and every pull request to `dev`/`main` |
 | **Configuration** | `.gitleaks.toml` — one allowlisted historical commit (`cdb795e`, documented example key in Traefik README, not a real credential) |
 | **Gaps** | No custom rules for project-specific secret patterns (e.g. Cloudflare tokens, Tailscale auth keys) beyond gitleaks defaults |
 
@@ -231,7 +231,7 @@ Based on **CIS Docker Benchmark v1.6.0**.
 | **4.1** Create user for container | ⚠ Partial | `user:` on 1/145 services; `no-new-privileges` on 143/145 | Most containers run as image-defined users. No systematic non-root enforcement. |
 | **4.2** Use trusted base images | ⚠ Partial | Well-known registries (ghcr.io, docker.io). No image signing or digest pinning. | Tags pinned but not digests. No provenance verification. |
 | **4.3** Do not install unnecessary packages | ℹ N/A | Not applicable to compose blueprint — image content is upstream responsibility | |
-| **4.4** Scan images for vulnerabilities | ⚠ Partial | `trivy.yml` scans 96 images — every compose file `check-structure.py --list` reports; IaC config scan covers all compose files | Coverage is complete, enforcement is not: the scan runs `--exit-code 0`, so a CRITICAL finding reports and does not fail the job. The one image left out is `vikunja-local`, built from a Dockerfile with no registry copy to scan |
+| **4.4** Scan images for vulnerabilities | ⚠ Partial | `trivy.yml` § Job 2 (Automated Verification, below) has the current coverage, severity filter and exit behavior | Coverage is complete, enforcement is not — every finding is reported, none fails the job |
 | **4.5** Enable Content Trust | ❌ Not implemented | No `DOCKER_CONTENT_TRUST=1`, no cosign verification | |
 | **4.6** Add HEALTHCHECK | ✅ Partial | Most compose files include healthchecks. Some scratch images correctly use `disable: true` | |
 | **4.7** Do not use update in Dockerfile | ℹ N/A | No Dockerfiles in this repository | |
@@ -245,7 +245,7 @@ Based on **CIS Docker Benchmark v1.6.0**.
 | **5.7** Privileged ports | ✅ Not needed | Traefik handles port binding; app containers use internal ports | |
 | **5.8** Open ports | ✅ Minimal | Only Traefik 80/443 exposed. No DB port exposure on host. | |
 | **5.9** Shared host network | ⚠ Documented | `network_mode: host` in 2 services (dnsmasq, Beszel agent) — documented exceptions | |
-| **5.10** Memory limits | ✅ | `memory` and `pids` on 145/145 services | Values are derived rather than measured — v0.9.0 |
+| **5.10** Memory limits | ✅ | `memory` and `pids` on 145/145 services | Values are derived rather than measured — v0.10.0 |
 | **5.11** CPU limits | ❌ Partial | Same as memory limits | |
 | **5.12** Read-only root FS | ⚠ Partial | Applied on 18/145 services | Not CI-enforced; many images write to their root filesystem |
 | **5.14** Bind only to required interfaces | ✅ Yes | `ping` entryPoint bound to `127.0.0.1:8082` | |
@@ -271,7 +271,7 @@ Based on **OWASP Docker Security Cheat Sheet**.
 | Set resource limits | ✅ | 145/145 services | `memory` and `pids` on every service |
 | Use security profiles (AppArmor/SELinux) | ❌ No | None configured | Significant gap |
 | Enable Docker Content Trust | ❌ No | Not configured | |
-| Scan for vulnerabilities | ⚠ Partial | `trivy.yml` scans every image reference the checkers discover — 99 of 100 on 2026-09-13, one anonymous pull rate-limited; IaC config scan covers all compose files | Non-blocking (`--exit-code 0`) — see Missing Verification section |
+| Scan for vulnerabilities | ⚠ Partial | `trivy.yml` § Job 2 (Automated Verification, below) has the current coverage, severity filter and exit behavior | Non-blocking (`--exit-code 0`) — see Missing Verification section |
 | Use Docker Bench for Security | ❌ No | Not in CI | |
 | Log all container activities | ⚠ Partial | Traefik access log captures HTTP. No container-level audit logging. | |
 | Monitor containers at runtime | ⚠ Optional | Beszel available for metrics. No behavioral anomaly detection. | |
@@ -282,7 +282,7 @@ Based on **OWASP Docker Security Cheat Sheet**.
 
 ### What is currently verified in CI
 
-#### `ci.yml` — runs on push to `dev`/`main`, PRs to `main`, nightly 03:00 UTC
+#### `ci.yml` — runs on push to `main`, PRs to `dev`/`main`, manual dispatch *(updated)*
 
 **Job 1: Secret scan (`gitleaks`)**
 
@@ -317,23 +317,58 @@ Based on **OWASP Docker Security Cheat Sheet**.
 
 ---
 
-#### `trivy.yml` — runs on push/PR to `main`, weekly Monday 04:00 UTC *(added)*
+#### `trivy.yml` — runs on push/PR to `main`, weekly Monday 04:00 UTC, manual dispatch *(updated)*
+
+This is the canonical description of both jobs. Nothing elsewhere in this
+document restates their coverage, severity or exit behavior — it points here.
 
 **Job 1: IaC misconfiguration scan**
 
 - Scans all repository files with `trivy config`
 - Detects Compose and infrastructure misconfigurations
-- Results uploaded to GitHub Security tab as SARIF
+- Results uploaded to GitHub Security tab as SARIF — currently 0 open findings
 - Non-blocking (exit-code 0) — informational relative to `check-baseline.py`
+- Runs unconditionally on every trigger — no image pulls, completes in seconds
 
-**Job 2: Image CVE scan**
+**Job 2: Image CVE scan** *(now scoped on push/PR)*
 
-- Extracts image references from a curated list of ~11 high-risk compose files
-  via `scripts/ci/list-images.sh` (uses `.env.example` + envsubst)
-- Scans each image with Trivy for CRITICAL CVEs (`--ignore-unfixed`)
-- Fails the job if any CRITICAL CVE is found
-- Reports HIGH CVEs in logs as informational (non-blocking)
-- Coverage: every image reference the checkers discover — 100 on 2026-09-13, of which 99 scanned and one anonymous pull was rate-limited and named as unscanned. `list-images.sh` reads the same discovery as the checkers, so a new stack is scanned the day it lands. Excluded: `vikunja-local`, built locally
+- On push/PR, only runs when a `detect-changes` job finds that a production
+  compose file, a stack's `.env.example`, or the discovery/scan/summarize
+  scripts changed — verified against what `list-images.sh` actually reads. An
+  unrelated change (docs, site content, an unrelated script) skips this job;
+  the skip and its reason are printed to that job's own step summary. The
+  weekly schedule and manual dispatch always run the full scan regardless.
+- Image references come from `scripts/ci/list-images.sh`, which reads the same
+  discovery `check-structure.py --list` uses — every compose file in the
+  repository, not a curated subset. A new stack is scanned the day it lands.
+  Excluded: locally built images (e.g. `vikunja-local`), which have no
+  registry copy to pull.
+- Severity: CRITICAL, HIGH. `--ignore-unfixed` is set, so a CVE with no
+  published fix is excluded from every count this job produces — that is not
+  a claim the CVE is safe to ignore, only that no fix exists yet for a pin
+  change to apply.
+- Non-blocking (`--exit-code 0`) on every image, at every severity. No CVE
+  currently fails this job.
+- Each image is scanned to its own JSON report (Trivy's own report format —
+  package name, installed and fixed version, CVE detail). The full set is
+  uploaded as the `trivy-image-scan-results` workflow artifact; nothing is
+  printed to the job log per finding.
+- The job's own summary page (`scripts/ci/trivy-summarize.py`) carries a
+  concise index instead: images discovered, scanned and not scanned; total
+  HIGH and CRITICAL counts; the images with the most CRITICAL findings; and
+  CVEs repeated across the most images, which is usually one shared
+  base-image or distro package rather than many independent problems.
+- An image that fails to scan is named explicitly under "not scanned," with
+  the reason Trivy itself reported — never silently dropped or counted as
+  clean. `docker.n8n.io/n8nio/n8n` currently fails here: its registry answers
+  `429 TOOMANYREQUESTS` on an anonymous pull (reproduced directly, outside
+  CI, against the same registry). No Docker Hub credentials are configured
+  anywhere in this repository's CI — every pull in this job is anonymous.
+- The Trivy vulnerability database is cached across workflow runs
+  (`actions/cache`, one entry per UTC day) so same-day runs do not each
+  re-download it. Trivy's own staleness check still decides whether a
+  restored copy needs refreshing — the cache does not extend how old the
+  database is allowed to get, only how often it is fetched from scratch.
 
 ---
 
@@ -357,9 +392,9 @@ The following controls are absent from CI. Ordered by security value.
 
 | Gap | Status | Remaining limitation |
 |-----|--------|----------------------|
-| **CVE / vulnerability scanning** | ⚠ Partial — `trivy.yml` scans every image resolved from the compose files the checkers discover (100 references on 2026-09-13) | Coverage is no longer the gap; blocking is. The job runs `--exit-code 0`, so findings are reported to the Security tab and nothing fails. Widening coverage and switching to blocking in one step would have produced an unreviewed backlog |
+| **CVE / vulnerability scanning** | ⚠ Partial — see `trivy.yml` § Job 2 above for current coverage | Coverage is no longer the gap; blocking is. Nothing fails the job at any severity yet — see the same section for the summary, artifact and cache behavior that now makes the findings reviewable |
 | **IaC static analysis** | ⚠ Partial — `trivy.yml` config scan runs but is non-blocking | Overlaps with `check-baseline.py`; Trivy config scan exit-code is 0 |
-| **Resource limits coverage** | ✅ Addressed — 145 of 145 services carry a `memory` and a `pids` limit, and `check-structure.py`'s `no-resources` rule names which of the two is missing | Reported as a warning, not a failure. The values are derived rather than measured — v0.9.0 |
+| **Resource limits coverage** | ✅ Addressed — 145 of 145 services carry a `memory` and a `pids` limit, and `check-structure.py`'s `no-resources` rule names which of the two is missing | Reported as a warning, not a failure. The values are derived rather than measured — v0.10.0 |
 | **`__REPLACE_ME__` sentinel check** | ✅ Addressed — `ci.yml` sentinel job | Only covers committed `.env` files; runtime `.env` files are gitignored and unchecked |
 | **OpenSSF Scorecard** — ✅ done, `scorecard.yml` | ✅ Addressed — `scorecard.yml` | Score is a posture signal, not a blocking control |
 
@@ -376,7 +411,7 @@ The following controls are absent from CI. Ordered by security value.
 | **Dependency review** | No automated check for newly introduced vulnerable dependencies on PRs. | `dependency-review-action` |
 | **Docker Bench for Security** | Runtime checks against host Docker daemon config. Not coverable in CI without host access. | Docker Bench for Security |
 | **TLS profile enforcement** | No CI check that each app uses an appropriate TLS profile. | Extension to structure check |
-| **Blocking on CVE findings** | Trivy covers 96 of 97 image references since `list-images.sh` moved to the shared discovery (the exception is the locally built `vikunja-local`). The job still runs `--exit-code 0` | Read the backlog the widened scan produces, then decide which severity blocks. Turning both on at once was deliberately avoided |
+| **Blocking on CVE findings** | Coverage is complete (`trivy.yml` § Job 2, above); the job still runs `--exit-code 0` at every severity | Triage the findings the summary and artifact now make reviewable, then decide which severity and which images block. Turning on coverage and blocking in the same step was deliberately avoided |
 
 ---
 
@@ -396,11 +431,11 @@ CI enforces 4 categories of controls that block merges on violation. The excepti
 
 ### Verification: 3 / 5 *(updated)*
 
-CVE scanning is now in place for a curated set of high-risk images via `trivy.yml`. OpenSSF Scorecard provides a supply chain posture signal. The sentinel value check closes a specific gap. The score moves from 2 to 3 because basic vulnerability visibility now exists. It is not 4 because image scanning is not exhaustive (28 of 97 images), IaC scanning is non-blocking, and runtime security is still absent.
+CVE scanning now covers every image `list-images.sh` discovers via `trivy.yml`, with a per-run summary and a full per-image findings artifact making results reviewable rather than only visible. OpenSSF Scorecard provides a supply chain posture signal. The sentinel value check closes a specific gap. The score moves from 2 to 3 because coverage and reviewability now exist. It is not 4 because nothing found blocks a merge yet, IaC scanning is non-blocking, and runtime security is still absent.
 
 ### Supply Chain Security: 2 / 5 *(updated)*
 
-Tags are pinned. OpenSSF Scorecard now publishes a public score. Basic CVE scanning exists for high-risk images. The score moves from 1 to 2. It remains low because: no digest pinning, no image signing, no provenance verification, no SBOM, no dependency review, and GitHub Actions are still referenced by floating version tags (`@v2`, `@v6`) not commit SHAs.
+Tags are pinned. OpenSSF Scorecard now publishes a public score. CVE scanning exists for every discovered image, non-blocking. The score moves from 1 to 2. It remains low because: no digest pinning, no image signing, no provenance verification, no SBOM, no dependency review, and GitHub Actions are still referenced by floating version tags (`@v2`, `@v6`) not commit SHAs.
 
 ---
 
@@ -412,7 +447,7 @@ These close the largest gaps with the least complexity. Implement before anythin
 
 | Item | What | Complexity | Maintenance | Security Value |
 |------|------|-----------|-------------|----------------|
-| **Trivy in CI** — ⚠ partly done: `trivy.yml` runs weekly over every discovered compose file, and stays non-blocking | Decide the severity that fails the job, once the widened scan's backlog has been read. | Low — one flag | Medium — a blocking scan stops merges | High — CVE visibility |
+| **Trivy in CI** — ⚠ partly done: `trivy.yml` covers every discovered image and stays non-blocking | Decide the severity that fails the job, using the summary and per-image artifact this job now produces. | Low — one flag | Medium — a blocking scan stops merges | High — CVE visibility |
 | **`__REPLACE_ME__` CI check** — ✅ done, `ci.yml` sentinel job | Add step that fails if any `.env` file (not `.env.example`) contains `__REPLACE_ME__`. Catches deployment of unsubstituted configs. | Trivial — 3-line grep | None | Medium — prevents silent misconfigurations |
 | **`read_only: true` CI enforcement** | Extend `check-baseline.py` to WARN (not FAIL initially) for services missing `read_only: true`. Add to exception system. | Low | Low | Medium |
 | **GitHub Actions SHA pinning** — ✅ done, enforced by `check-workflows.py` | Pin `actions/checkout`, `gitleaks-action` etc. to commit SHAs instead of floating tags. | Trivial | Low (Renovate automates updates) | Medium — supply chain |

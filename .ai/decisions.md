@@ -6,6 +6,63 @@ this file is the index and covers decisions that have no other home.
 
 ---
 
+## 2026-09 · Swap-policy coverage completed; `no-swap-policy` is a FAIL
+
+Every production service (150/150, 61 stacks) now states `memswap_limit`,
+mechanically set equal to its own `memory` value — the documented default from
+`compose-structure.md`, which needs no measurement. `scripts/ci/check-structure.py`
+promotes `no-swap-policy` from `WARN` to `FAIL`, matching `no-resources`: it now
+guards the property rather than reporting a migration.
+
+**What this is not.** The compose files changed; no running container did. Per
+`compose-structure.md` → "What is written here is not what is running," a limit
+takes effect only when a container is recreated, not on restart and not on a
+daemon restart. Live-host rollout is deliberately out of scope here — it happens
+per stack, on a running host, chosen by the operator, the same way the v0.10.0
+measurement pass already does. Nothing here claims otherwise.
+
+**What stays open.** The *value* is still derived, not measured, for the same
+services `cpus` already flags — v0.10.0 turns a peak into a limit; this decision
+only closes the question of whether a swap policy is stated at all. The one
+service using a variable instead of a literal (`backup/urbackup`) ties
+`memswap_limit` to the same `${APP_MEM_LIMIT}` its `memory` already uses, rather
+than a new variable — the two move together by construction, not by convention.
+
+`docs/resource-measurement.md`'s "one-shot containers get no limit" line was
+wrong on inspection — `core/authentik`'s `init-perms` (a chown, exits in under a
+second) already carried one before this change, and setting one costs nothing.
+Corrected: one-shot containers get sized limits like everything else, not an
+exemption.
+
+## 2026-09 · The document editors move from `core/` to `apps/`
+
+`core/onlyoffice`, `core/euro-office` and `core/collabora` are now
+`apps/onlyoffice`, `apps/euro-office` and `apps/collabora`. This resolves the
+open decision recorded at `state.md` → "What belongs in `core/`": the
+`core/` test in `docs/architecture.md` (breaks the deployment, controls
+Docker, or is shared identity, certificates, DNS or WAF) was never met —
+nothing else breaks without a document editor, and a homelab user benefits
+from one exactly as a company does, which is the `apps/` test.
+
+Compose, security configuration and every consuming stack's integration
+(JWT secret, allowed origins, network path) are unchanged — only the
+directory and the paths that name it moved. The website already treated
+these as applications before this move; the repository now matches.
+
+## 2026-09 · The mission covers custom applications; physical layout, conceptual domain and navigation stay three separate questions
+
+The mission now covers two kinds of software: existing self-hosted open-source
+projects, and applications someone builds themselves, both through the same
+deploy → secure → operate → recover model. Full rationale, the layer
+distinction and what stays out of scope: `docs/architecture.md` →
+"Physical layout, conceptual domains and navigation are three different
+layers."
+
+**Why now.** Two review passes in a row conflated "how does a reader group
+this" with "which directory does this belong in" — the same mistake the
+2026-04 access-pattern decision (below) already corrected once for
+`business/`.
+
 ## 2026-08 · Host CrowdSec enforcement is scoped to the public interface
 
 The firewall bouncer runs in nftables `set-only` mode and maintains only the IPv4 and
@@ -99,7 +156,7 @@ unavailable. `cpus` is therefore not part of the baseline.
 Two dozen services carry one anyway, with the values of the profile table that was
 removed — a derivation, not a measurement. `compose-structure.md` admits that state
 explicitly and requires the compose file to declare it beside the value, so a reader
-can tell a derived ceiling from a measured one. v0.9.0 resolves it per service.
+can tell a derived ceiling from a measured one. v0.10.0 resolves it per service.
 
 `security-baseline.md` stated that `deploy.resources` "caps memory and CPU so a
 single container cannot exhaust the host under load or during a memory leak". That
@@ -257,7 +314,7 @@ number; `security-baseline.md` owns the binary requirement.
 already carries both limits, so the rule now guards the property rather than
 reporting drift toward it. The swap rule lands as a WARN counted per compose file —
 making it a FAIL today would fail seventy stacks to prove a policy exists, and one
-line per file keeps the report readable while v0.9.0 calibrates the values.
+line per file keeps the report readable while v0.10.0 calibrates the values.
 
 **The host reserve is approved as an invariant and not as a mechanism.** Workload
 pressure must not consume what management and recovery need, and Foundation/Host owns

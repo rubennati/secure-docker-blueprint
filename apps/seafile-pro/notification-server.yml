@@ -10,6 +10,7 @@ services:
     restart: unless-stopped
     # --- Resources ---
     # Small push service.
+    memswap_limit: 512M          # == memory: no swap
     deploy:
       resources:
         limits:

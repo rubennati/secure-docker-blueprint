@@ -7,8 +7,8 @@
 - **Phase:** pre-1.0. Latest tag `v0.8.3` (2026-09-14). Work happens on a
   short-lived branch and reaches `dev` through a pull request; `dev` reaches
   `main` the same way. Both branches reject a direct push.
-- **Current milestone:** v0.9.0 — Measured resource limits.
-- **Definition of done for v0.9.0:** every `✅` stack's limits come from a
+- **Current milestone:** v0.10.0 — Measured resource limits.
+- **Definition of done for v0.10.0:** every `✅` stack's limits come from a
   measurement on a real install rather than from the derivation rule
   (`docs/resource-measurement.md`).
 
@@ -39,8 +39,14 @@
   run alone, so an application can be tried before any server exists. Shape in
   `docs/standards/compose-structure.md`, coverage in the generated Local column.
 - Trivy scans every image the checkers discover rather than a hand-kept list, and
-  reports images it could not pull instead of passing over them. Still
-  `--exit-code 0`.
+  reports images it could not pull instead of passing over them — currently
+  `docker.n8n.io/n8nio/n8n`, hitting Docker Hub's anonymous pull rate limit.
+  Each image's full findings go to a per-run artifact; the job summary carries
+  the count-level index (`scripts/ci/trivy-summarize.py`) instead of a raw
+  per-image table in the log. The vulnerability database is cached across runs,
+  one entry per UTC day; Trivy's own staleness check still governs refreshes.
+  CLI pinned to `v0.74.0`. Still `--exit-code 0` — the assessment pass
+  `docs/security-verification.md` names as the prerequisite has not run yet.
 - CI jobs and what each one blocks on: [`quality-gates.md`](quality-gates.md),
   documented per job in `docs/standards/ci.md`. All ten are required on a pull
   request into `dev` and into `main`, and both rulesets require the branch to be
@@ -129,6 +135,14 @@ a migration. A future architectural consideration, not debt.
 Suricata and Coraza are evaluation entries in [`../ROADMAP.md`](../ROADMAP.md) →
 "Evaluating"; neither is implemented. SIEM/XDR/SOC platforms are out of scope there.
 
+## Mission scope — established 2026-09
+
+The mission now covers custom applications alongside existing self-hosted
+open-source software. Three-layer distinction (physical layout, conceptual
+domain, website navigation) and what stays out of scope: `docs/architecture.md`
+→ "Physical layout, conceptual domains and navigation"; reasoning in
+`decisions.md`.
+
 ## Host resilience — policy in place 2026-09, mechanism deferred
 
 An OnlyOffice process on a derived deployment took a host down; the stack's own 4G
@@ -141,8 +155,9 @@ swap and is the default, a higher value is a justified exception, and unset is n
 longer acceptable — Docker otherwise grants as much swap again as the memory limit,
 which is how a container inside its cap still pages a host into uselessness.
 `security-baseline.md` owns the requirement, `compose-structure.md` the values.
-`no-resources` is now a FAIL in `check-structure.py`; the swap rule is a WARN counted
-per compose file until v0.9.0 migrates the tree. `live-restore` is in the reference
+`no-resources` and `no-swap-policy` are both FAIL in `check-structure.py` —
+150/150 production services state `memswap_limit`, all at the default (equal to
+`memory`); no evidenced case for a higher value has come up yet. `live-restore` is in the reference
 daemon configuration. `resource-measurement.md` carries a drift procedure — compose
 config against `docker inspect` against cgroup state — and the corrected meaning of
 `reservations.memory`, which is a reclaim preference and never a guarantee.
@@ -155,7 +170,7 @@ the management slice; it needs a rehearsal on a disposable host first, and what 
 rehearsal must establish is in `docs/architecture.md`. Tracked in
 [`tasks.md`](tasks.md).
 
-**v0.9.0 work.** Per-workload memory and swap calibration, from measurement.
+**v0.10.0 work.** Per-workload memory and swap calibration, from measurement.
 
 **Monitoring follow-up.** Alerts on `OOMKilled`, restart-count growth, swap usage and
 memory PSI — none covered by the thresholds v0.8.0 verified. Tracked in
@@ -175,9 +190,9 @@ order:
    [`../docs/host-session-v0.7.0.md`](../docs/host-session-v0.7.0.md) Blocks 3
    and 4: UrBackup has never been started, and nine major versions are pinned
    and never run. Neither gated a tag; both still need the host.
-3. **Feeding v0.9.0** — start the sampler in
+3. **Feeding v0.10.0** — start the sampler in
    [`../docs/resource-measurement.md`](../docs/resource-measurement.md). Every
-   container started is a measurement opportunity, and v0.9.0 cannot be
+   container started is a measurement opportunity, and v0.10.0 cannot be
    prepared any other way. Five monitoring stacks are already running.
 4. **The security chains** — the open decision below; one Traefik pull request
    plus one per moved stack.
@@ -222,14 +237,6 @@ Three sub-questions: explicit `# renovate:` markers vs. normalising 28 outlying
 comments · Renovate App vs. self-hosted Action · whether `site/`'s unwatched
 `package-lock.json` rides along. Nothing runs until these are answered.
 
-**6. What belongs in `core/`**
-The test in `docs/architecture.md:34` asks whether the stack breaks the
-deployment, controls Docker, or provides shared identity, certificates, DNS or
-WAF. `core/onlyoffice`, `core/euro-office` and `core/collabora` are document
-servers — nothing breaks without them, so they fail that test.
-→ *Recommendation:* apply the existing test rather than write a new rule. This is
-a structural change, so it belongs after the host session, not before.
-
 **The security chains replace what an application sets.** Measured on 2026-09-07 (Traefik v3.6): every value in an `hdr-*` block replaces
 the application's own header — Keycloak's and Nextcloud's `no-referrer` become
 the weaker browser default under level 3, HSTS loses `includeSubDomains` under
@@ -249,7 +256,7 @@ admin paths.
 - **A host to experiment on, not a host at all.** The blueprint's stacks run in
   production; what the open milestones need is a machine that may be broken,
   filled with throwaway data and restored into. That is the single precondition
-  behind v0.8.0 and v0.9.0, and it is what v0.7.0 needed before it could close.
+  behind v0.8.0 and v0.10.0, and it is what v0.7.0 needed before it could close.
 - **Real values never enter the repository.** On the host, `.env` carries the real
   domain and real secrets and is gitignored. Committed files use `example.com`
   and documentation IP ranges only. This matters more during a host session than

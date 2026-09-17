@@ -10,6 +10,7 @@ services:
     restart: unless-stopped
     # --- Resources ---
     # Collaborative document editing.
+    memswap_limit: 1G          # == memory: no swap
     deploy:
       resources:
         limits:

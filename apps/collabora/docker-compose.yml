@@ -1,57 +1,62 @@
 services:
 
   # --------------------------------------------------------
-  # EURO-OFFICE DOCUMENT SERVER
-  # EU-governed fork of OnlyOffice Document Server (Nextcloud, IONOS,
-  # XWiki, Proton). Drop-in replacement for onlyoffice/documentserver —
-  # same API, same JWT + iframe integration. Used by Seafile / Nextcloud.
+  # COLLABORA ONLINE (CODE)
+  # LibreOffice-based online office — lightweight document editing
+  # server (~1 GB idle vs ~4 GB for OnlyOffice/Euro-Office). Stateless,
+  # single container. Embedded via WOPI by Seafile / Nextcloud.
   # --------------------------------------------------------
-  euro-office-app:
+  collabora-app:
     # --- Identity ---
-    image: ghcr.io/euro-office/documentserver:${APP_TAG}
+    image: collabora/code:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}
     restart: unless-stopped
 
     # --- Security ---
+    # cap_add MKNOD: Collabora builds a per-document LibreOffice jail (chroot)
+    # and needs mknod for it. no-new-privileges is kept per baseline — if the
+    # sandbox fails to start on your host, that is the first thing to relax.
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - MKNOD
 
     # --- Resources ---
-    # Search, rendering or ML — generous on purpose. Retune from docker stats.
+    memswap_limit: 1536m          # == memory: no swap
     deploy:
       resources:
         limits:
-          memory: 4G
+          memory: 1536m
+          # cpus: derived starting value, not measured — v0.9.0
+          cpus: "1.50"
           pids: 300
         reservations:
-          memory: 512M
+          memory: 256m
 
     # --- Configuration ---
-    # No _FILE support (OnlyOffice fork) — entrypoint wrapper reads the
-    # Docker Secret and exports JWT_SECRET, then execs the DS start script.
-    # EXAMPLE_ENABLED is left OFF — the demo server is an unauthenticated endpoint.
-    entrypoint: ["/bin/bash", "/config/entrypoint.sh", "/app/ds/run-document-server.sh"]
     environment:
-      JWT_ENABLED: "true"
-      WOPI_ENABLED: "true"
+      # aliasgroup1 = regex of the host(s) allowed to embed Collabora via WOPI.
+      # Escape the dots. Example: https://cloud\.example\.com:443
+      aliasgroup1: ${COLLABORA_ALIASGROUP}
+      server_name: ${APP_TRAEFIK_HOST}
+      # TLS is terminated at Traefik — Collabora serves plain HTTP internally.
+      DONT_GEN_SSL_CERT: "true"
+      extra_params: "--o:ssl.enable=false --o:ssl.termination=true"
       TZ: ${TZ}
-    secrets:
-      - EURO_OFFICE_JWT_SECRET
-
-    # --- Storage ---
-    volumes:
-      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
-      - ./volumes/data:/var/www/onlyoffice/Data
-      - ./volumes/logs:/var/log/onlyoffice
+      # Admin console is OFF by default (an attack surface). To enable, set
+      # username + a password here and restrict /browser/.../admin at the proxy.
+      #username: admin
+      #password: __set_in_env__
 
     # --- Networking ---
     networks:
       - proxy-public
 
     # --- Traefik ---
-    # Embedded in iframes by Seafile/Nextcloud. Standard sec-* chains set
-    # frameDeny:true which blocks this. A dedicated -headers middleware gives
-    # equivalent protection but allows embedding via CSP frame-ancestors.
+    # Embedded in iframes by Seafile/Nextcloud → iframe-friendly middleware
+    # (CSP frame-ancestors) instead of the standard sec-* chains (frameDeny).
     labels:
       # Router
       - "traefik.enable=true"
@@ -64,8 +69,7 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
       # Middlewares (access + custom proto + custom headers)
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${COMPOSE_PROJECT_NAME}-proto@docker,${COMPOSE_PROJECT_NAME}-headers@docker"
-      # Proxy headers: sits behind Traefik's TLS termination. Without
-      # X-Forwarded-Proto it generates http:// URLs → Mixed Content errors.
+      # Proxy headers: Collabora runs with ssl.termination=true and needs X-Forwarded-Proto.
       - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-proto.headers.customrequestheaders.X-Forwarded-Proto=https"
       - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-proto.headers.customrequestheaders.X-Forwarded-Host=${APP_TRAEFIK_HOST}"
       # Security headers: equivalent to hdr-basic but iframe-friendly.
@@ -73,17 +77,18 @@ services:
       - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.contentTypeNosniff=true"
       - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.forceSTSHeader=true"
       - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.stsSeconds=63072000"
-      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.contentSecurityPolicy=frame-ancestors 'self' ${EURO_OFFICE_ALLOWED_ORIGINS}"
+      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.contentSecurityPolicy=frame-ancestors 'self' ${COLLABORA_ALLOWED_ORIGINS}"
       # Service
-      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=9980"
 
     # --- Health & Observability ---
+    # Collabora image has bash — TCP liveness on 9980 (no curl guaranteed).
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1/healthcheck >/dev/null || exit 1"]
+      test: ["CMD-SHELL", "bash -c 'cat < /dev/null > /dev/tcp/127.0.0.1/9980' || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 90s
+      start_period: 60s
 
 # --------------------------------------------------------
 # NETWORKS
@@ -91,10 +96,3 @@ services:
 networks:
   proxy-public:
     external: true
-
-# --------------------------------------------------------
-# SECRETS
-# --------------------------------------------------------
-secrets:
-  EURO_OFFICE_JWT_SECRET:
-    file: ./.secrets/jwt_secret.txt

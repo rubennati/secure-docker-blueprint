@@ -11,13 +11,17 @@ promise to an operator — that belongs on the site, as evidence and named gaps.
 
 States, and what establishes each:
   scaffolded        a compose file exists, or the stack is host-installed
-  verified          `Last verified: DATE (vX.Y.Z)` in <stack>/UPSTREAM.md
+  verified          `Last verified: DATE (vX.Y.Z)` in <stack>/UPSTREAM.md,
+                    naming the version currently pinned — see pin-drifted below
   baseline-aligned  verified, and both baseline checkers pass
   ops-proven        baseline-aligned, and the stack appears in the rehearsal log
                     of backup/borgmatic/RESTORE.md
 
 A date without a version stays at `scaffolded`. Which version was checked is
 what makes the claim usable later; a bare date says only that someone looked.
+A version that no longer matches the current pin is the same problem in a
+different shape: the stamp still reads as evidence, but the release it names
+is not what would actually deploy. See pin-drifted.
 
 Baseline alignment is taken from the exit codes of check-baseline.py and
 check-structure.py, run once per invocation. A failure in either withholds
@@ -44,6 +48,13 @@ WARN — evidence probably exists, the record is in the old shape:
                        well. Two owners for one fact — and because this report
                        only reads the README, the stack shows up as "missing"
                        and invites a third copy. A pointer there is fine.
+  pin-drifted          the currently pinned tag no longer matches the version
+                       named in `Last verified` (see pin_matches_verified()).
+                       A verification names a version, not a moving target —
+                       the stack drops back to `scaffolded` until it is
+                       re-verified at the current pin or the stamp is
+                       corrected. Never automatic, for the same reason a
+                       legacy stamp is never auto-converted.
 
 Usage:
   python3 scripts/ci/lifecycle-report.py            # report to stdout
@@ -72,7 +83,7 @@ STATES = ["scaffolded", "verified", "baseline-aligned", "ops-proven"]
 EXCEPT = {"apps/_reference": "the canonical reference itself"}
 
 # Rules that report drift without blocking CI.
-WARN_RULES = {"legacy-stamp", "backup-docs-split"}
+WARN_RULES = {"legacy-stamp", "backup-docs-split", "pin-drifted"}
 
 # `Last verified: 2026-07-29 (34.0.2-fpm-alpine)` — the version in parentheses
 # is what separates this from the legacy field.
@@ -208,6 +219,73 @@ def shorten(value: str) -> str:
     return re.sub(r"(sha256:[0-9a-f]{12})[0-9a-f]+", r"\1…", value)
 
 
+def bare_pin_value(pinned: str) -> str | None:
+    """The tag/digest value out of `pinned_version()`'s `` `KEY=value` `` form.
+
+    None for the two sentinels that name no image at all: a host-installed
+    component, and a stack whose `.env.example` carries no recognisable pin.
+    Comparing either against a verified version would be a category error,
+    not a finding.
+    """
+    if pinned in ("*host-installed*", "—"):
+        return None
+    value = pinned.strip("`")
+    if "=" in value:
+        value = value.split("=", 1)[1]
+    return value
+
+
+def normalize_version(value: str) -> str:
+    """Strip the variations this repository's own pins and stamps use: a
+    digest suffix (`tag@sha256:…`), an image-name prefix on an `_IMAGE` pin
+    (`traefik:v3.7`), and a leading `v`.
+    """
+    value = value.split("@", 1)[0]
+    if ":" in value:
+        value = value.rsplit(":", 1)[1]
+    value = value.strip()
+    if len(value) > 1 and value[0].lower() == "v" and value[1].isdigit():
+        value = value[1:]
+    return value
+
+
+# Image variants this repository documents as the same underlying release,
+# where the verification stamp names the version without the variant. Add an
+# entry here only when a stack's own UPSTREAM.md states the equivalence —
+# `-slim` is evidenced by apps/tymeslot/UPSTREAM.md: "Based on version:
+# `1.15.1` (`-slim` tag, digest-pinned)". This is not a place to guess at
+# Docker Hub conventions in general.
+KNOWN_VARIANT_SUFFIXES = ("-slim",)
+
+
+def pin_matches_verified(pin_value: str, verified_version: str) -> bool:
+    """True when the current pin and the verified version name the same
+    release, exactly — not "close enough".
+
+    A multi-component verification (`v3.7.13, socket-proxy v0.5.0`) names the
+    primary application first — `pinned_version()` only ever returns the
+    primary pin, so only that first component is comparable to it.
+
+    Normalization stops at formatting this repository's own data shows is
+    formatting, not a different release: a leading `v`, an `_IMAGE` pin's
+    image-name prefix, a digest suffix, and the one documented packaging
+    variant in KNOWN_VARIANT_SUFFIXES. A pin that floats a version component
+    on purpose — `traefik:v3.7`, verified against the exact `v3.7.13` that was
+    tested — is deliberately NOT tolerated: the pin can resolve to a newer
+    patch upstream with no change in this repository at all, which is exactly
+    the silent-drift risk this check exists to catch. A floating pin is
+    reported as `pin-drifted` the same as any other mismatch; there is no
+    separate exemption for it.
+    """
+    pin_norm = normalize_version(pin_value)
+    for suffix in KNOWN_VARIANT_SUFFIXES:
+        if pin_norm.endswith(suffix):
+            pin_norm = pin_norm[: -len(suffix)]
+            break
+    verified_norm = normalize_version(verified_version.split(",", 1)[0].strip())
+    return pin_norm == verified_norm
+
+
 def last_verified(stack: Path) -> tuple[str, bool, str]:
     """(date-or-dash, is_current_format, version-or-empty).
 
@@ -336,14 +414,27 @@ def collect() -> tuple[list[dict], list[dict]]:
                 })
 
             verified, current_format, verified_version = last_verified(stack)
+            pinned = pinned_version(stack)
 
             state = "scaffolded"
             if current_format:
-                state = "verified"
-                if baseline:
-                    state = "baseline-aligned"
-                    if key in restored:
-                        state = "ops-proven"
+                pin_value = bare_pin_value(pinned)
+                drifted = pin_value is not None and not pin_matches_verified(
+                    pin_value, verified_version
+                )
+                if drifted:
+                    problems.append({
+                        "rule": "pin-drifted", "stack": key,
+                        "detail": f"pinned to {pinned}, but last verified against "
+                                  f"`{verified_version}` — stays at `scaffolded` "
+                                  f"until re-verified at the current pin",
+                    })
+                else:
+                    state = "verified"
+                    if baseline:
+                        state = "baseline-aligned"
+                        if key in restored:
+                            state = "ops-proven"
 
             if verified != "—" and not current_format:
                 problems.append({
@@ -365,7 +456,7 @@ def collect() -> tuple[list[dict], list[dict]]:
             backup_docs, restore_docs = doc_sections(stack)
             rows.append({
                 "stack": key, "category": category, "state": state,
-                "pinned": pinned_version(stack), "verified": verified,
+                "pinned": pinned, "verified": verified,
                 "verified_version": verified_version,
                 "backup": backup_docs, "restore": restore_docs,
                 "local": "✅" if (stack / "docker-compose.local.yml").exists() else "—",

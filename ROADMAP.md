@@ -1,6 +1,6 @@
 # Roadmap
 
-Direction reviewed 2026-09-08.
+Direction reviewed 2026-09-17.
 
 What remains to be built, what blocks it, and what proves it finished. Shipped
 work belongs to [`CHANGELOG.md`](CHANGELOG.md), per-stack status to the tables in
@@ -13,7 +13,17 @@ per-category detail to the `README.md` in each top-level directory.
 
 Pre-1.0 tags are set when a natural milestone is reached, not on a fixed cadence. The single criterion for v1.0 is: **could someone fork this and run it without needing my mental model?** — subjective but unambiguous when met.
 
-### v0.9.0 — Measured resource limits
+**v0.9.0 — Secure Operations Baseline — shipped 2026-09-17.** The repository
+now credibly covers deploy → secure → operate → recover as a reusable
+pattern: a lifecycle/status-freshness integrity fix, a canonical secrets
+generation/rotation standard, a canonical restore/recovery model, and
+repository-side update-awareness configuration all landed. See
+[CHANGELOG.md](CHANGELOG.md#090--2026-09-17--secure-operations-baseline) for
+the full delta. This is not a claim that every stack has been individually
+verified in production — see [LIFECYCLE.md](LIFECYCLE.md) for what has and
+has not been established per stack, and the sections below for what is next.
+
+### v0.10.0 — Measured resource limits
 
 **Every service now carries a ceiling**, and the healthcheck question is decided
 for every service — either one is defined or the compose file states why the image
@@ -21,12 +31,11 @@ cannot have one. `python3 scripts/ci/check-structure.py` is the progress bar for
 both: `no-resources` is a failure and `no-healthcheck` a warning, per service, and
 neither fires anywhere today.
 
-**Swap values are part of this now.** Every service states a swap policy, and the
-default — `memswap_limit` equal to `memory` — needs no measurement. A value above it
-does, for the same reason a memory ceiling does: it has to clear the workload's real
-peak. `check-structure.py` counts the stacks still leaving swap implicit, one line per
-compose file, and that count is the progress bar. The rule becomes a failure once the
-tree is migrated.
+**Every production service now states a swap policy** — 150/150, at the default,
+`memswap_limit` equal to `memory`, which needs no measurement. `no-swap-policy` in
+`check-structure.py` is a failure now, guarding the property rather than reporting a
+migration. A value above the default still needs one, for the same reason a memory
+ceiling does: it has to clear the workload's real peak — none is claimed yet.
 
 **What remains is the values.** The ceilings in place were derived — from what a
 component budgets for itself, from a peak where one was available, and generously
@@ -187,7 +196,7 @@ Once verified on real data, pick the default and deprioritise the rest:
 - **Scheduling** — Cal.diy (MIT community), Easy!Appointments (`apps/`). Cal.com was retired — upstream moved the production codebase to a proprietary licence.
 - **Business wikis** — BookStack is live; Wiki.js and Outline are planned (`apps/`)
 - **Forms** — OpnForm is in place; Formbricks and HeyForm are planned (`apps/`)
-- **Office / document servers** — OnlyOffice is live; Euro-Office (EU-governed fork) and Collabora (lighter, LibreOffice-based) are drafted (`core/`)
+- **Office / document servers** — OnlyOffice is live; Euro-Office (EU-governed fork) and Collabora (lighter, LibreOffice-based) are drafted (`apps/`)
 - **E-signatures** — OpenSign and Documenso, both drafted (`business/`)
 
 ### Categories with roadmaps in their own READMEs
