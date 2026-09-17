@@ -245,7 +245,7 @@ Based on **CIS Docker Benchmark v1.6.0**.
 | **5.7** Privileged ports | ✅ Not needed | Traefik handles port binding; app containers use internal ports | |
 | **5.8** Open ports | ✅ Minimal | Only Traefik 80/443 exposed. No DB port exposure on host. | |
 | **5.9** Shared host network | ⚠ Documented | `network_mode: host` in 2 services (dnsmasq, Beszel agent) — documented exceptions | |
-| **5.10** Memory limits | ✅ | `memory` and `pids` on 145/145 services | Values are derived rather than measured — v0.9.0 |
+| **5.10** Memory limits | ✅ | `memory` and `pids` on 145/145 services | Values are derived rather than measured — v0.10.0 |
 | **5.11** CPU limits | ❌ Partial | Same as memory limits | |
 | **5.12** Read-only root FS | ⚠ Partial | Applied on 18/145 services | Not CI-enforced; many images write to their root filesystem |
 | **5.14** Bind only to required interfaces | ✅ Yes | `ping` entryPoint bound to `127.0.0.1:8082` | |
@@ -394,7 +394,7 @@ The following controls are absent from CI. Ordered by security value.
 |-----|--------|----------------------|
 | **CVE / vulnerability scanning** | ⚠ Partial — see `trivy.yml` § Job 2 above for current coverage | Coverage is no longer the gap; blocking is. Nothing fails the job at any severity yet — see the same section for the summary, artifact and cache behavior that now makes the findings reviewable |
 | **IaC static analysis** | ⚠ Partial — `trivy.yml` config scan runs but is non-blocking | Overlaps with `check-baseline.py`; Trivy config scan exit-code is 0 |
-| **Resource limits coverage** | ✅ Addressed — 145 of 145 services carry a `memory` and a `pids` limit, and `check-structure.py`'s `no-resources` rule names which of the two is missing | Reported as a warning, not a failure. The values are derived rather than measured — v0.9.0 |
+| **Resource limits coverage** | ✅ Addressed — 145 of 145 services carry a `memory` and a `pids` limit, and `check-structure.py`'s `no-resources` rule names which of the two is missing | Reported as a warning, not a failure. The values are derived rather than measured — v0.10.0 |
 | **`__REPLACE_ME__` sentinel check** | ✅ Addressed — `ci.yml` sentinel job | Only covers committed `.env` files; runtime `.env` files are gitignored and unchecked |
 | **OpenSSF Scorecard** — ✅ done, `scorecard.yml` | ✅ Addressed — `scorecard.yml` | Score is a posture signal, not a blocking control |
 

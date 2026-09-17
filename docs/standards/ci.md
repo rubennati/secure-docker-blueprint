@@ -198,7 +198,7 @@ category: `:latest` or major-only tags, a plaintext secret in `.env.example`, a
 service without resource limits, and a memory limit without a stated swap policy
 (`memswap_limit`) all fail. A missing healthcheck and `env_file:` are reported as
 warnings — the numeric values behind the limits still need measuring on a real
-host, which is v0.9.0; whether a policy is stated at all is settled.
+host, which is v0.10.0; whether a policy is stated at all is settled.
 
 **Blocks merge:** yes, on FAIL rules only
 

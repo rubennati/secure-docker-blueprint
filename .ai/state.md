@@ -7,8 +7,8 @@
 - **Phase:** pre-1.0. Latest tag `v0.8.3` (2026-09-14). Work happens on a
   short-lived branch and reaches `dev` through a pull request; `dev` reaches
   `main` the same way. Both branches reject a direct push.
-- **Current milestone:** v0.9.0 — Measured resource limits.
-- **Definition of done for v0.9.0:** every `✅` stack's limits come from a
+- **Current milestone:** v0.10.0 — Measured resource limits.
+- **Definition of done for v0.10.0:** every `✅` stack's limits come from a
   measurement on a real install rather than from the derivation rule
   (`docs/resource-measurement.md`).
 
@@ -170,7 +170,7 @@ the management slice; it needs a rehearsal on a disposable host first, and what 
 rehearsal must establish is in `docs/architecture.md`. Tracked in
 [`tasks.md`](tasks.md).
 
-**v0.9.0 work.** Per-workload memory and swap calibration, from measurement.
+**v0.10.0 work.** Per-workload memory and swap calibration, from measurement.
 
 **Monitoring follow-up.** Alerts on `OOMKilled`, restart-count growth, swap usage and
 memory PSI — none covered by the thresholds v0.8.0 verified. Tracked in
@@ -190,9 +190,9 @@ order:
    [`../docs/host-session-v0.7.0.md`](../docs/host-session-v0.7.0.md) Blocks 3
    and 4: UrBackup has never been started, and nine major versions are pinned
    and never run. Neither gated a tag; both still need the host.
-3. **Feeding v0.9.0** — start the sampler in
+3. **Feeding v0.10.0** — start the sampler in
    [`../docs/resource-measurement.md`](../docs/resource-measurement.md). Every
-   container started is a measurement opportunity, and v0.9.0 cannot be
+   container started is a measurement opportunity, and v0.10.0 cannot be
    prepared any other way. Five monitoring stacks are already running.
 4. **The security chains** — the open decision below; one Traefik pull request
    plus one per moved stack.
@@ -256,7 +256,7 @@ admin paths.
 - **A host to experiment on, not a host at all.** The blueprint's stacks run in
   production; what the open milestones need is a machine that may be broken,
   filled with throwaway data and restored into. That is the single precondition
-  behind v0.8.0 and v0.9.0, and it is what v0.7.0 needed before it could close.
+  behind v0.8.0 and v0.10.0, and it is what v0.7.0 needed before it could close.
 - **Real values never enter the repository.** On the host, `.env` carries the real
   domain and real secrets and is gitignored. Committed files use `example.com`
   and documentation IP ranges only. This matters more during a host session than

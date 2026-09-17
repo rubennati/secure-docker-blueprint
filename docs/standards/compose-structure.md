@@ -148,7 +148,7 @@ A value above `memory` carries its justification the way a `cpus` value does —
 requirement, measured peak, or repository evidence. Where none exists yet, say so:
 
 ```yaml
-# memswap_limit: estimated / requires validation — v0.9.0
+# memswap_limit: estimated / requires validation — v0.10.0
 memswap_limit: 6g
 deploy:
   resources:
@@ -161,12 +161,12 @@ the wrong move: the ceiling is a blast radius, and a workload that reaches it du
 ordinary work was capped too low.
 
 A `cpus` value stands in two cases: where a component demonstrably pins a core, and
-where a derived starting value is carried until v0.9.0 measures it. The second case
+where a derived starting value is carried until v0.10.0 measures it. The second case
 is declared beside the value in the compose file, so a reader can tell a measurement
 from a derivation:
 
 ```yaml
-# cpus: derived starting value, not measured — v0.9.0
+# cpus: derived starting value, not measured — v0.10.0
 cpus: "1.00"
 ```
 
