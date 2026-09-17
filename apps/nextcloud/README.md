@@ -296,6 +296,11 @@ Working configuration and the run it produced:
 
 ## Restore
 
+This is this repository's `ops-proven` reference restore — see the rehearsal
+log in [`backup/borgmatic/RESTORE.md`](../../backup/borgmatic/RESTORE.md#rehearsal-log).
+For the general MariaDB restore procedure and verification checklist this
+follows, see [Restore](../../docs/standards/restore.md).
+
 **Order:** database first, then the file tree, then the application — and leave
 maintenance mode on until both halves are in place. The two must come from the
 same archive; a database restored against an older file tree produces exactly the

@@ -119,7 +119,9 @@ Losing `user.db` costs the accounts and grants, not the delivery path — publis
 have to be re-created and re-granted. Losing `config/server.yml` costs the server
 identity, including `base-url`, which subscribed devices are pinned to.
 
-Full architecture: [`backup/README.md`](../../backup/README.md).
+Full architecture: [`backup/README.md`](../../backup/README.md). For the
+general file-based restore procedure, see
+[Restore](../../docs/standards/restore.md).
 
 ## Known Issues
 
