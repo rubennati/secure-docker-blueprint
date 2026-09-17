@@ -3,6 +3,8 @@
 Rules and rationale for `.env.example` files.
 
 For naming patterns (variable prefixes, scopes), see [Naming Conventions](naming-conventions.md).
+For how to generate, store and rotate the secrets a `.env.example` only
+points at, see [Secrets](secrets.md).
 
 ---
 
@@ -171,6 +173,7 @@ TZ=UTC
 ```
 
 This section has no actual variables — only comments that document which secrets to create.
+For which generation command to use per secret type, how to store the result, and how to rotate it later, see [Secrets](secrets.md) — this file only defines where the comment block goes.
 
 ## Rules
 
