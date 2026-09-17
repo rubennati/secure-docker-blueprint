@@ -149,9 +149,11 @@ new both work.
 2. **Introduce**: change the credential at the database (or the application's
    own admin interface, for an app-level secret), then write the new value
    over the mounted secret file:
+
    ```bash
    printf '%s' "$NEW_VALUE" > .secrets/db_pwd.txt
    ```
+
    Write in place with `printf`, not an editor. Most editors save by writing
    a temporary file and renaming it over the target — that replaces the file
    the bind mount is attached to, and the running container keeps serving the
