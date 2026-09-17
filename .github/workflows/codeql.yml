@@ -89,32 +89,53 @@ jobs:
           echo "python=$python" >> "$GITHUB_OUTPUT"
           echo "jsts=$jsts" >> "$GITHUB_OUTPUT"
 
-  analyze:
-    name: CodeQL (${{ matrix.language }})
+  # A matrix job's `if:` cannot see the `matrix` context at all (only github,
+  # inputs, needs and vars are available at job level — confirmed against the
+  # real schema with actionlint, and against a real run: GitHub refuses the
+  # whole workflow before creating any job when a job-level `if:` references
+  # `matrix.*`). Two independent jobs are the correct fix, not a workaround:
+  # each is gated purely on its own `needs` output, so a skip shows up in the
+  # UI as that job being skipped, not as a job that ran with empty steps.
+  analyze-python:
+    name: CodeQL (python)
     needs: detect-changes
-    if: |
-      (matrix.language == 'python' && needs.detect-changes.outputs.python == 'true') ||
-      (matrix.language == 'javascript-typescript' && needs.detect-changes.outputs.jsts == 'true')
+    if: needs.detect-changes.outputs.python == 'true'
     runs-on: ubuntu-latest
     permissions:
       security-events: write   # upload results to the Security tab
       contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - language: python
-          - language: javascript-typescript
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Initialise CodeQL
         uses: github/codeql-action/init@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
         with:
-          languages: ${{ matrix.language }}
+          languages: python
           config-file: ./.github/codeql/codeql-config.yml
 
       - name: Analyse
         uses: github/codeql-action/analyze@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
         with:
-          category: "/language:${{ matrix.language }}"
+          category: "/language:python"
+
+  analyze-jsts:
+    name: CodeQL (javascript-typescript)
+    needs: detect-changes
+    if: needs.detect-changes.outputs.jsts == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write   # upload results to the Security tab
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Initialise CodeQL
+        uses: github/codeql-action/init@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
+        with:
+          languages: javascript-typescript
+          config-file: ./.github/codeql/codeql-config.yml
+
+      - name: Analyse
+        uses: github/codeql-action/analyze@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
+        with:
+          category: "/language:javascript-typescript"
