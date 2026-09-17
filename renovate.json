@@ -1,0 +1,62 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+
+  "timezone": "Europe/Vienna",
+  "schedule": ["* 0-6 * * 1"],
+
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 2,
+
+  "dependencyDashboard": true,
+
+  "baseBranchPatterns": ["dev"],
+
+  "npm": {
+    "enabled": false
+  },
+  "github-actions": {
+    "enabled": false
+  },
+
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/\\.env\\.example$/"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s+(?:#[^\\n]*\\n)?[A-Z_]+_TAG=(?<currentValue>[^@\\s]+)(?:@(?<currentDigest>sha256:\\S+))?"
+      ],
+      "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/\\.env\\.example$/"],
+      "matchStrings": [
+        "[A-Z_]+_IMAGE=(?<depName>[^:\\s]+):(?<currentValue>[^@\\s]+)(?:@(?<currentDigest>sha256:\\S+))?"
+      ],
+      "datasourceTemplate": "docker"
+    }
+  ],
+
+  "packageRules": [
+    {
+      "description": "Infrastructure images move together — they are upgraded as a set or not at all.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": [
+        "postgres", "mariadb", "mysql", "mongo", "redis", "valkey", "memcached", "nginx"
+      ],
+      "groupName": "infrastructure images"
+    },
+    {
+      "description": "A major bump needs a host and a working core function. Never automatic.",
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true,
+      "addLabels": ["major", "needs-host-session"]
+    },
+    {
+      "description": "Digest-only movement on a rolling tag is what digest pinning exists to catch.",
+      "matchUpdateTypes": ["digest"],
+      "groupName": "digest re-pins"
+    }
+  ]
+}

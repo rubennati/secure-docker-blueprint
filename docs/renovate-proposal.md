@@ -1,9 +1,26 @@
 # Proposal — automated dependency updates
 
-**Status: proposal.** Nothing in this document is active. The configuration below
-is written out so it can be read before it runs, not committed as
-`renovate.json`. A `renovate.json` at the repository root takes effect the moment
-the Renovate App is installed on the repository.
+**Status: `renovate.json` is committed at the repository root; the Renovate
+GitHub App is not yet installed.** Until it is, nothing here runs — see
+[Activation](#activation) for the one action left. The configuration below
+now describes what is actually committed, with two corrections found while
+implementing it (`baseBranches` → `baseBranchPatterns`, a rename Renovate's
+own `renovate-config-validator` flagged as required — `managerFilePatterns`
+needed no such change) and two additions this document's own later section
+had already implied but never fed back into the config: `npm` and
+`github-actions` are explicitly disabled, because both ecosystems this
+repository has are already Dependabot's ("GitHub Actions are already
+covered," below, and `site/`'s `package-lock.json` since 2026-09-13) — a
+second bot managing the same files is exactly the "uncontrolled PR flood"
+risk this proposal exists to avoid, not a second problem to solve.
+
+No image pins carry a `# renovate:` marker comment yet. Per Sequencing below,
+that is deliberately a separate, later, independently-reviewable change —
+until it lands, the custom managers below are correctly configured but will
+detect nothing. This was validated directly: the regex was run against real
+`.env.example` lines from this repository, including one with no marker
+(`business/opensign`'s deliberately-locked `DB_TAG=8.0`), which correctly
+produced no match.
 
 ## Why this matters here specifically
 
@@ -92,67 +109,17 @@ does not resolve. That indirection is deliberate and documented in
 puts these pins beyond Dependabot's reach and into Renovate's custom-manager
 territory.
 
-## Proposed Renovate configuration
+## Committed configuration
 
-Syntax verified against the current upstream documentation on 2026-07-28.
-`managerFilePatterns` is the current option name; `fileMatch` is the former name
-and is auto-migrated, so most examples found online are one rename behind.
-
-```json
-{
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"],
-
-  "timezone": "Europe/Vienna",
-  "schedule": ["* 0-6 * * 1"],
-
-  "prConcurrentLimit": 5,
-  "prHourlyLimit": 2,
-
-  "dependencyDashboard": true,
-
-  "customManagers": [
-    {
-      "customType": "regex",
-      "managerFilePatterns": ["/\\.env\\.example$/"],
-      "matchStrings": [
-        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s+(?:#[^\\n]*\\n)?[A-Z_]+_TAG=(?<currentValue>[^@\\s]+)(?:@(?<currentDigest>sha256:\\S+))?"
-      ],
-      "datasourceTemplate": "docker"
-    },
-    {
-      "customType": "regex",
-      "managerFilePatterns": ["/\\.env\\.example$/"],
-      "matchStrings": [
-        "[A-Z_]+_IMAGE=(?<depName>[^:\\s]+):(?<currentValue>[^@\\s]+)(?:@(?<currentDigest>sha256:\\S+))?"
-      ],
-      "datasourceTemplate": "docker"
-    }
-  ],
-
-  "packageRules": [
-    {
-      "description": "Infrastructure images move together — they are upgraded as a set or not at all.",
-      "matchDatasources": ["docker"],
-      "matchPackageNames": [
-        "postgres", "mariadb", "mysql", "redis", "valkey", "memcached", "nginx"
-      ],
-      "groupName": "infrastructure images"
-    },
-    {
-      "description": "A major bump needs a host and a working core function. Never automatic.",
-      "matchUpdateTypes": ["major"],
-      "dependencyDashboardApproval": true,
-      "addLabels": ["major", "needs-host-session"]
-    },
-    {
-      "description": "Digest-only movement on a rolling tag is what digest pinning exists to catch.",
-      "matchUpdateTypes": ["digest"],
-      "groupName": "digest re-pins"
-    }
-  ]
-}
-```
+[`renovate.json`](../renovate.json) at the repository root — read it there
+rather than here, so this document cannot quietly drift from what actually
+runs the way the numbers in "Why this matters" already have. Validated with
+`renovate-config-validator` (clean; the one required rename was
+`baseBranches` → `baseBranchPatterns`, applied directly rather than left to
+auto-migrate). The customManager regexes were also run against real
+`.env.example` lines from this repository, including a digest-pinned one
+(`apps/tymeslot`, `apps/caldiy`) and an `_IMAGE=` one (`core/traefik`) — see
+[Validation evidence](#validation-evidence).
 
 ### What each choice is doing
 
@@ -167,37 +134,101 @@ someone picks them up deliberately, not in an open pull request implying it is
 ready.
 
 **Grouping infrastructure images** — Postgres, MariaDB and Redis appear in a dozen
-stacks each. Ungrouped, one Redis patch is twelve pull requests.
+stacks each. Ungrouped, one Redis patch is twelve pull requests. `mongo` was
+added to the list committed in `renovate.json` — `apps/unifi` and
+`business/opensign` both run it, and the original list predates checking
+that.
 
 **`config:recommended`** rather than a hand-built base — the preset is maintained
 upstream and its defaults are sane. Deviations above are the interesting part.
+Its own extend chain is read directly out of the installed package
+(`config/presets/internal/config.js`, `.../group.js`):
+it pulls in dependency-dashboard, semantic commit prefixes, monorepo/package
+grouping, merge-confidence badges, changelog helpers and replacement
+suggestions, and nothing that enables automerge anywhere in that chain.
+
+**`npm`/`github-actions` disabled** — not a deviation the original proposal
+considered, because both became true only after parts of it were written.
+`config:recommended` would otherwise auto-detect `site/package-lock.json`
+and `.github/workflows/*.yml` as dependency manifests on its own and start
+proposing updates for files Dependabot already manages — two bots managing
+the same file is the "uncontrolled PR flood" and duplicate-update risk this
+proposal names as a design goal to avoid, applied to a case its author
+didn't have in front of them yet.
 
 ## Open decisions
 
-1. **Marker comments, or normalise the 28 outliers?** Recommendation: markers.
-   They are explicit and do not break when someone writes a useful comment.
-2. **Renovate App, or self-hosted Action?** The App is the standard path and free
-   for public repositories, but installing it is an account-level action that
-   only the maintainer can take. The Action keeps everything in the repository at
-   the cost of a token to manage. Recommendation: the App, because a self-hosted
-   runner that silently stops running is the failure mode this whole change is
-   meant to remove.
-3. **Scope — images only, or also the site's npm dependencies?** `site/` carries
-   a `package-lock.json` that nothing currently watches. Renovate would pick it
-   up automatically under `config:recommended`. Recommendation: include it, but
-   grouped and non-urgent — it is a static site generator, not a runtime.
+1. **Marker comments, or normalise the 28 (now more, the repository has grown)
+   outliers?** Still open, deferred — see Sequencing. Recommendation
+   unchanged: markers. They are explicit and do not break when someone writes
+   a useful comment.
+2. **Renovate App, or self-hosted Action?** Decided: the App. A self-hosted
+   Action would itself be a new CI/CD workflow — the exact kind of change the
+   scope that implemented `renovate.json` was explicitly told not to make —
+   and installing it is an account-level action only the maintainer can take
+   regardless, so the repository side of this decision was never a choice
+   between two committable options. See [Activation](#activation).
+3. **Scope — images only, or also the site's npm dependencies?** Decided:
+   images only. This section was stale by the time `renovate.json` was
+   written — "GitHub Actions are already covered," above, already states that
+   Dependabot has watched `site/`'s `package-lock.json` since 2026-09-13, so
+   "nothing currently watches" it, this item's own premise, is no longer
+   true. `renovate.json` disables the `npm` manager explicitly rather than
+   letting `config:recommended` pick the file up a second time.
+
+## Activation
+
+`renovate.json` takes effect on the Renovate App's next scheduled run after
+it is installed — nothing else in this repository can turn it on:
+
+1. Install the [Renovate GitHub App](https://github.com/apps/renovate) on
+   `rubennati/secure-docker-blueprint`. Free for a public repository; an
+   account-level action only the repository owner can take.
+2. Nothing else. `renovate.json` is already committed and validated
+   (`renovate-config-validator`, clean). The first run follows `schedule`
+   (Mondays, 00:00–06:00 UTC) unless triggered manually from the app's
+   dashboard.
+
+Until then, the custom managers have nothing to detect regardless — see the
+status note at the top of this document.
+
+## Validation evidence
+
+Run directly, not assumed, when `renovate.json` was written:
+
+- `npx --package renovate -- renovate-config-validator renovate.json` —
+  passed after the `baseBranchPatterns` rename above; zero warnings on the
+  second run.
+- The two customManager regexes, run against real repository content in
+  Node (Renovate's own regex engine) with a marker line prepended: a normal
+  tag (`apps/wordpress`, `APP_TAG=7.0.4-php8.3-apache`) parsed correctly; two
+  digest-pinned tags (`apps/tymeslot`, `apps/caldiy`) parsed with
+  `currentDigest` correctly captured; the `_IMAGE=` pattern parsed
+  `core/traefik`'s `TRAEFIK_IMAGE=traefik:v3.7` correctly with no marker
+  needed; an unrelated variable (`TZ=UTC`) produced no match; and, the
+  case that matters most, a real pin with **no** marker
+  (`business/opensign`'s deliberately-locked `DB_TAG=8.0`) also produced no
+  match — confirming the design decision in "The anchor problem" actually
+  holds against this repository's real, messier comments, not just the
+  clean examples above.
+- `config:recommended`'s resolved extend chain, read out of the installed
+  package, contains no `"automerge": true` at any level.
 
 ## Sequencing
 
-Nothing here should land in one commit. Suggested order, each verifiable on its
-own:
+Nothing here should land in one commit. `renovate.json` landed ahead of
+marker comments (reversing the order below) as its own reviewable,
+independently-scoped change — it validates cleanly and is provably inert
+without a step before it that was not part of that change. Suggested order
+for what is left:
 
-1. Marker comments across `.env.example`, with no `renovate.json` present. Inert
-   by itself, reviewable as a pure documentation diff, and it can be done a
-   category at a time.
+1. Marker comments across `.env.example`, with `renovate.json` already
+   present but producing nothing until they land. Reviewable as a pure
+   documentation diff, and it can be done a category at a time.
 2. A checker rule that fails when a pin has no marker — the same pattern as
    `check-workflows.py`, so the anchors cannot rot back out once added.
-3. `renovate.json` plus installing the App — the only step that starts producing
-   pull requests, and by then the anchors are in place and reviewed.
+3. Install the Renovate App — see [Activation](#activation). The only step
+   that starts producing pull requests, and by then the anchors are in place
+   and reviewed.
 
 GitHub Actions need no step: Dependabot already covers them.
