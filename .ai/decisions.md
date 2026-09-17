@@ -18,11 +18,11 @@ guards the property rather than reporting a migration.
 `compose-structure.md` → "What is written here is not what is running," a limit
 takes effect only when a container is recreated, not on restart and not on a
 daemon restart. Live-host rollout is deliberately out of scope here — it happens
-per stack, on a running host, chosen by the operator, the same way the v0.9.0
+per stack, on a running host, chosen by the operator, the same way the v0.10.0
 measurement pass already does. Nothing here claims otherwise.
 
 **What stays open.** The *value* is still derived, not measured, for the same
-services `cpus` already flags — v0.9.0 turns a peak into a limit; this decision
+services `cpus` already flags — v0.10.0 turns a peak into a limit; this decision
 only closes the question of whether a swap policy is stated at all. The one
 service using a variable instead of a literal (`backup/urbackup`) ties
 `memswap_limit` to the same `${APP_MEM_LIMIT}` its `memory` already uses, rather
@@ -156,7 +156,7 @@ unavailable. `cpus` is therefore not part of the baseline.
 Two dozen services carry one anyway, with the values of the profile table that was
 removed — a derivation, not a measurement. `compose-structure.md` admits that state
 explicitly and requires the compose file to declare it beside the value, so a reader
-can tell a derived ceiling from a measured one. v0.9.0 resolves it per service.
+can tell a derived ceiling from a measured one. v0.10.0 resolves it per service.
 
 `security-baseline.md` stated that `deploy.resources` "caps memory and CPU so a
 single container cannot exhaust the host under load or during a memory leak". That
@@ -314,7 +314,7 @@ number; `security-baseline.md` owns the binary requirement.
 already carries both limits, so the rule now guards the property rather than
 reporting drift toward it. The swap rule lands as a WARN counted per compose file —
 making it a FAIL today would fail seventy stacks to prove a policy exists, and one
-line per file keeps the report readable while v0.9.0 calibrates the values.
+line per file keeps the report readable while v0.10.0 calibrates the values.
 
 **The host reserve is approved as an invariant and not as a mechanism.** Workload
 pressure must not consume what management and recovery need, and Foundation/Host owns

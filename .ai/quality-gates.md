@@ -112,7 +112,7 @@ What neither mode covers:
 - **Trivy** runs weekly with `exit-code: 0` — informational until the existing
   CRITICAL findings have been assessed once.
 - **Structure warnings** (missing resource limits, missing healthchecks) are
-  reported, not enforced. They need values measured on a real host — v0.9.0.
+  reported, not enforced. They need values measured on a real host — v0.10.0.
 - **`legacy-stamp`** — a stack carrying the pre-v0.5.1 `Last checked:` field.
   Converting it asserts the evidence is real, which is a judgement per app.
 

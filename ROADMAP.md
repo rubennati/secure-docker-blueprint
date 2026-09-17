@@ -1,6 +1,6 @@
 # Roadmap
 
-Direction reviewed 2026-09-08.
+Direction reviewed 2026-09-17.
 
 What remains to be built, what blocks it, and what proves it finished. Shipped
 work belongs to [`CHANGELOG.md`](CHANGELOG.md), per-stack status to the tables in
@@ -13,7 +13,17 @@ per-category detail to the `README.md` in each top-level directory.
 
 Pre-1.0 tags are set when a natural milestone is reached, not on a fixed cadence. The single criterion for v1.0 is: **could someone fork this and run it without needing my mental model?** — subjective but unambiguous when met.
 
-### v0.9.0 — Measured resource limits
+**v0.9.0 — Secure Operations Baseline — shipped 2026-09-17.** The repository
+now credibly covers deploy → secure → operate → recover as a reusable
+pattern: a lifecycle/status-freshness integrity fix, a canonical secrets
+generation/rotation standard, a canonical restore/recovery model, and
+repository-side update-awareness configuration all landed. See
+[CHANGELOG.md](CHANGELOG.md#090--2026-09-17--secure-operations-baseline) for
+the full delta. This is not a claim that every stack has been individually
+verified in production — see [LIFECYCLE.md](LIFECYCLE.md) for what has and
+has not been established per stack, and the sections below for what is next.
+
+### v0.10.0 — Measured resource limits
 
 **Every service now carries a ceiling**, and the healthcheck question is decided
 for every service — either one is defined or the compose file states why the image
