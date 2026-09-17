@@ -25,6 +25,22 @@ A date without a version does not reach `verified`. Which version was checked is
 what makes the claim usable a year later; a bare date says only that someone
 looked.
 
+Nor does a version that no longer matches the current pin — including a pin
+that is itself a moving target. `verified` names a release, not a version
+that might change with no commit here at all. `scripts/ci/lifecycle-report.py`
+compares the two (`pin_matches_verified()`) and requires them to match
+exactly, once normalized: a leading `v`, an `_IMAGE` pin's image-name prefix,
+a digest suffix, and the one documented packaging variant a stack's own
+`UPSTREAM.md` establishes (`1.15.1-slim` pinned against `1.15.1` verified,
+per `apps/tymeslot/UPSTREAM.md`) are formatting, not a different release. A
+pin that deliberately floats a version component — `traefik:v3.7`, verified
+against the exact `v3.7.13` that was tested at the time — is **not**
+tolerated: that pin can resolve to a newer patch upstream with no repository
+change to re-verify against, which is exactly the silent-drift risk this
+check exists to catch. Anything that does not match exactly after
+normalization is reported as `pin-drifted`, non-blocking on introduction the
+same way `legacy-stamp` is.
+
 **`verified` and `baseline-aligned` currently hold the same set.** Both checkers
 report zero failures across the repository, so every stack that clears the date
 also clears the baseline. The two separate the moment a checker fails for one
