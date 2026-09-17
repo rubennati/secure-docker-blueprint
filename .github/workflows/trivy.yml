@@ -9,7 +9,11 @@ name: Trivy
 #      severity, on every image — see docs/security-verification.md for the current
 #      control description.
 #
-# Triggers: push/PR to main, weekly Monday 04:00 UTC, manual dispatch.
+# Triggers: push/PR to main, weekly Monday 04:00 UTC, manual dispatch. On
+# push/PR, job 2 (image-scan) only runs when an input that can change the
+# discovered image set changed (see the detect-changes job below); job 1
+# (config-scan) stays unconditional. Schedule and manual dispatch always run
+# both jobs in full.
 #
 # Limitations (documented in docs/security-verification.md):
 #   - Image scanning covers every compose file check-structure.py --list reports.
@@ -31,7 +35,79 @@ on:
 
 permissions: read-all
 
+# A superseded run on the same open PR is cancelled. A push to main or a
+# scheduled/manual run never shares this group with a PR (different ref), so
+# cancellation here can never touch the weekly scan or landed evidence.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # 0. DETECT IMAGE-RELEVANT CHANGES
+  # ─────────────────────────────────────────────────────────────────────────
+  # Gates job 2 (image-scan) only. Job 1 (config-scan) is fast and stays
+  # unconditional on its existing triggers.
+  #
+  # list-images.sh's actual inputs, verified from source rather than assumed:
+  # production compose files under core/, apps/, business/, monitoring/,
+  # backup/ (check-structure.py's ROOTS — *.local.yml overlays are excluded
+  # from image resolution, so they don't gate this either), each stack's
+  # .env.example (sourced to resolve ${VAR} image tags), and the discovery/
+  # scan/summarize scripts themselves. A change to none of these cannot change
+  # which images get pulled or scanned. Schedule and manual dispatch always
+  # scan everything: new CVEs appear in already-published images independent
+  # of any commit here.
+  detect-changes:
+    name: Detect image-relevant changes
+    runs-on: ubuntu-latest
+    outputs:
+      images_changed: ${{ steps.diff.outputs.images_changed }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - id: diff
+        run: |
+          if [[ "${{ github.event_name }}" == "schedule" || "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "${{ github.event_name }} run — scanning all images regardless of changes." >> "$GITHUB_STEP_SUMMARY"
+            echo "images_changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          base="${{ github.event.pull_request.base.sha || github.event.before }}"
+          head="${{ github.event.pull_request.head.sha || github.sha }}"
+
+          if [[ -z "$base" || "$base" =~ ^0+$ ]]; then
+            echo "No comparable base commit (new branch) — scanning all images." >> "$GITHUB_STEP_SUMMARY"
+            echo "images_changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # A diff that cannot be trusted must not be read as "no changes" —
+          # fail safe by scanning all images, not by skipping.
+          if ! changed="$(git diff --name-only "$base" "$head" 2>&1)"; then
+            echo "git diff $base..$head failed — scanning all images (failing safe): $changed" >> "$GITHUB_STEP_SUMMARY"
+            echo "images_changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "Changed files ($base..$head):"
+          echo "$changed"
+
+          pattern='^(core|apps|business|monitoring|backup)/.*\.ya?ml$'
+          pattern+='|^(core|apps|business|monitoring|backup)/.*/\.env\.example$'
+          pattern+='|^scripts/ci/(check-structure\.py|list-images\.sh|trivy-summarize\.py)$'
+          pattern+='|^\.github/workflows/trivy\.yml$'
+
+          if echo "$changed" | grep -E "$pattern" | grep -qv '\.local\.yml$'; then
+            echo "images_changed=true" >> "$GITHUB_OUTPUT"
+            echo "Image-relevant input changed — image scan will run." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "images_changed=false" >> "$GITHUB_OUTPUT"
+            echo "No compose file, \`.env.example\`, or scan-script input changed — image scan skipped for this run. The weekly schedule still covers this image set in full." >> "$GITHUB_STEP_SUMMARY"
+          fi
 
   # ─────────────────────────────────────────────────────────────────────────
   # 1. IaC MISCONFIGURATION SCAN
@@ -79,6 +155,8 @@ jobs:
   # the results already collected for the others.
   image-scan:
     name: Image CVE scan
+    needs: detect-changes
+    if: needs.detect-changes.outputs.images_changed == 'true'
     runs-on: ubuntu-latest
     env:
       TRIVY_CACHE_DIR: ${{ github.workspace }}/.cache/trivy

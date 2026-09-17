@@ -1,16 +1,31 @@
 name: CI
 
+# All ten jobs are deterministic checks of the current git tree: no network
+# calls, no time-based staleness math (verified against every script this
+# workflow runs). Given that, and that both `dev` and `main` carry an active,
+# non-bypassable ruleset requiring these exact checks before merge, a run
+# against a tree that already passed them cannot produce new evidence — so
+# there is no nightly schedule here. `push: main` stays: it checks the actual
+# commit that lands (gitleaks scans that commit's own message; a squash/merge
+# commit is new content a pull_request run's merge-preview ref never was),
+# where the pull_request run on `dev` already covers the merge preview and a
+# second run would repeat it. See docs/standards/ci.md for the full model.
 on:
   push:
     branches: [main]
   pull_request:
     branches: [dev, main]
-  schedule:
-    # Nightly at 03:00 UTC — catches stale configs even without commits
-    - cron: '0 3 * * *'
   workflow_dispatch:
 
 permissions: read-all
+
+# A superseded run on the same open PR is cancelled — the newer commit is what
+# should be checked. A push to `main` or a manual dispatch never shares this
+# group with a PR (different ref), so cancellation here can never touch
+# already-landed evidence.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
 

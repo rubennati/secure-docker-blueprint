@@ -1,12 +1,11 @@
 # CI Pipeline
 
-All checks run automatically on pull requests targeting `dev` or `main`, on every
-push to `main`, and nightly at 03:00 UTC.
+All checks run automatically on pull requests targeting `dev` or `main`, and on
+every push to `main`.
 
 ```text
 pull_request (dev, main) ──┐
-push         (main)      ──┤
-schedule     03:00 UTC   ──┼──▶  CI
+push         (main)      ──┼──▶  CI
 workflow_dispatch        ──┘
 ```
 
@@ -17,15 +16,29 @@ run is what decides whether a change can land on either branch.
 
 That is why `dev` has no post-merge run: the branch had to be current, so the
 pull-request run already tested the integration that lands, and a second run
-would repeat it. `main` keeps its push run anyway. The extra cost is accepted on
-the branch that is published, tagged and released from, where a check against the
-resulting commit itself — rather than against a merge preview — is worth having.
-That push also drives the Pages deployment and the scheduled scanners.
+would repeat it. `main` keeps its push run anyway: it checks the actual commit
+that lands rather than a pull-request merge preview, which matters for job 1 —
+gitleaks scans that commit's own message, and a squash or rebase merge creates
+one that was never itself scanned. The extra cost is accepted on the branch
+that is published, tagged and released from.
+
+There is no nightly (or any other) schedule on this workflow. All ten jobs are
+deterministic checks of the current git tree — none makes a network call or
+depends on elapsed time — so a run against a tree that already passed them
+produces no new evidence, and the ruleset above means no tree reaches either
+branch without having passed them first. `workflow_dispatch` stays available
+for an ad hoc re-run. Contrast this with `trivy.yml`, `codeql.yml` and
+`scorecard.yml`, which keep a weekly schedule on top of their change-triggered
+runs: they verify state that can change independent of a commit here (newly
+published CVEs, updated CodeQL query packs, external Scorecard inputs), which
+is exactly the case a schedule is for.
+
+A superseded run on the same open pull request is cancelled — the newer commit
+is the one that should be checked, and the concurrency group is scoped so this
+can never cancel the push run on `main` or a manual dispatch.
 
 CodeQL runs on pull requests to both branches and reports its findings. It is
 deliberately **not** a required check and does not block a merge.
-
-The nightly run uses the default branch, `main`.
 
 ---
 

@@ -75,7 +75,7 @@ These controls block merges if violated. Evidence is the CI output from `.github
 |-------|-------|
 | **Implemented?** | Yes |
 | **Enforcement** | CI FAIL — `gitleaks/gitleaks-action@v2` |
-| **Scope** | Full git history (`fetch-depth: 0`) on every push and nightly |
+| **Scope** | Full git history (`fetch-depth: 0`) on every push to `main` and every pull request to `dev`/`main` |
 | **Configuration** | `.gitleaks.toml` — one allowlisted historical commit (`cdb795e`, documented example key in Traefik README, not a real credential) |
 | **Gaps** | No custom rules for project-specific secret patterns (e.g. Cloudflare tokens, Tailscale auth keys) beyond gitleaks defaults |
 
@@ -282,7 +282,7 @@ Based on **OWASP Docker Security Cheat Sheet**.
 
 ### What is currently verified in CI
 
-#### `ci.yml` — runs on push to `dev`/`main`, PRs to `main`, nightly 03:00 UTC
+#### `ci.yml` — runs on push to `main`, PRs to `dev`/`main`, manual dispatch *(updated)*
 
 **Job 1: Secret scan (`gitleaks`)**
 
@@ -317,7 +317,7 @@ Based on **OWASP Docker Security Cheat Sheet**.
 
 ---
 
-#### `trivy.yml` — runs on push/PR to `main`, weekly Monday 04:00 UTC, manual dispatch *(added)*
+#### `trivy.yml` — runs on push/PR to `main`, weekly Monday 04:00 UTC, manual dispatch *(updated)*
 
 This is the canonical description of both jobs. Nothing elsewhere in this
 document restates their coverage, severity or exit behavior — it points here.
@@ -328,9 +328,16 @@ document restates their coverage, severity or exit behavior — it points here.
 - Detects Compose and infrastructure misconfigurations
 - Results uploaded to GitHub Security tab as SARIF — currently 0 open findings
 - Non-blocking (exit-code 0) — informational relative to `check-baseline.py`
+- Runs unconditionally on every trigger — no image pulls, completes in seconds
 
-**Job 2: Image CVE scan**
+**Job 2: Image CVE scan** *(now scoped on push/PR)*
 
+- On push/PR, only runs when a `detect-changes` job finds that a production
+  compose file, a stack's `.env.example`, or the discovery/scan/summarize
+  scripts changed — verified against what `list-images.sh` actually reads. An
+  unrelated change (docs, site content, an unrelated script) skips this job;
+  the skip and its reason are printed to that job's own step summary. The
+  weekly schedule and manual dispatch always run the full scan regardless.
 - Image references come from `scripts/ci/list-images.sh`, which reads the same
   discovery `check-structure.py --list` uses — every compose file in the
   repository, not a curated subset. A new stack is scanned the day it lands.
