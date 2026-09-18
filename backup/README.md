@@ -5,7 +5,9 @@ Backup has two directions, and a self-hoster needs both:
 - **This infrastructure** — the Docker host and everything it runs. Recovered with [Borgmatic](borgmatic/).
 - **The machines around it** — your laptop, desktop, other servers, backed up *to* infrastructure you own instead of somebody's cloud. That is [UrBackup](urbackup/).
 
-They solve different problems and neither replaces the other. Separate top-level category because backup is ops-cross-cutting (it touches every data-producing service) and needs hardware-close access — block devices, mount points, credentials for remote targets.
+They solve different problems and neither replaces the other. See
+[`docs/architecture.md`](../docs/architecture.md#directory-structure) for how this
+category is defined relative to the other four.
 
 What has been established about each stack — verified against which version and when, whether a restore was performed — is in [`LIFECYCLE.md`](../LIFECYCLE.md), generated from the repository.
 
@@ -13,10 +15,13 @@ What has been established about each stack — verified against which version an
 |---|---|---|
 | [Borgmatic](borgmatic/) | This host → off-site | **The documented default for server backup.** Host-installed; a backup and a restore have both been performed and are logged in [`borgmatic/RESTORE.md`](borgmatic/RESTORE.md#rehearsal-log). Append-only enforcement is the one documented mechanism not yet exercised. |
 | [UrBackup](urbackup/) | Your devices → this host | Client backup for Windows, macOS and Linux; whole-disk image restore on Windows. Configuration complete, not yet verified. |
-| Kopia | either | Deduplicating, with a web UI and native object storage. Its repository-server mode is interesting for client backup too — clients never hold the storage credentials. No database hooks, so server-side dumps would need scripting. Candidate for v0.8.0. |
-| Bareos | This host → tape / regulated retention | Enterprise: Director, Storage and File daemons. Kept on the list for operators under retention or audit obligations, but **not built out** — the complexity is not justified for the single-operator setups this blueprint targets. |
 
-For *server* backup pick one deduplicating tool — Borgmatic or Kopia, not both. Two repositories means two retention policies and two things to verify, for no gain. UrBackup is not in that comparison; it does a different job.
+## Planned
+
+Not deployable here yet. See [`ROADMAP.md`](../ROADMAP.md) for status.
+
+- **Kopia** — deduplicating backup, either direction
+- **Bareos** — tape / regulated-retention backup
 
 ---
 
@@ -203,12 +208,3 @@ Useful for structuring a backup concept, and required if you fall under one of t
 | **NIS2** | Backup management and disaster recovery named explicitly under business continuity — binding for essential and important entities. A private self-hoster is normally out of scope but the practices transfer. |
 
 All four converge on the same four verbs: **plan, document, protect, test.** For a single operator that means a short written concept, automated encrypted backups, and a restore you have actually performed.
-
----
-
-## Why backup is a top-level category
-
-1. **Ops-cross-cutting** — it reads from every other service's data. Structurally unlike a user-facing app.
-2. **Privileged access** — block devices, broad read access, remote credentials. Higher sensitivity than general apps.
-3. **Remote targets** — an external network dimension that apps do not have.
-4. **Consistent with `monitoring/`** — both are ops concerns with cross-stack visibility.

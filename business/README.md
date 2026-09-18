@@ -1,12 +1,15 @@
 # Business Apps
 
-Self-hosted apps **that only make sense in a business / company context**. The criterion: *do you need to run a business to meaningfully use this?* If yes → here. If the app is equally useful to a private homelab user (wiki, password manager, URL shortener, …) it belongs in [`apps/`](../apps/).
-
-This keeps `business/` a meaningful category instead of a grab-bag. See [`docs/architecture.md`](../docs/architecture.md#directory-structure) for the categorisation rule across all five top-level directories.
+Self-hosted business applications — invoicing, project management, helpdesk,
+analytics, e-signature. See
+[`docs/architecture.md`](../docs/architecture.md#directory-structure) for how this
+category is defined relative to the other four.
 
 ## What's here
 
-What has been established about each stack — verified against which version and when, whether a restore was performed — is in [`LIFECYCLE.md`](../LIFECYCLE.md), generated from the repository.
+10 stacks, deployable now. What has been established about each — verified against
+which version and when, whether a restore was performed — is in
+[`LIFECYCLE.md`](../LIFECYCLE.md), generated from the repository.
 
 ### Project management & planning
 
@@ -14,9 +17,6 @@ What has been established about each stack — verified against which version an
 |---|---|---|
 | [OpenProject CE](openproject/) | Full PM — Gantt, kanban, work packages, time tracking, wikis | 6-service stack; Trello + Jira alternative. CE = local accounts only, no SSO. |
 | [Vikunja](vikunja/) | Task management — kanban, lists, Gantt, table view | 2-service stack; Authentik OIDC, SSO-ready |
-| Plane | Project management — issues, cycles, modules, analytics | Jira alternative; AGPL-3.0; multi-service stack |
-| Leantime | PM for non-project-managers — goals, tasks, time tracking | AGPL-3.0; all-in-one single container option available |
-| AppFlowy | Notion alternative — docs, databases, kanban, AI | AGPL-3.0; ⚠️ only backend runs in Docker — clients connect via desktop/mobile app, not browser. Needs evaluation fit-check before including. |
 
 ### Billing & operations
 
@@ -32,15 +32,12 @@ What has been established about each stack — verified against which version an
 |---|---|---|
 | [Listmonk](listmonk/) | Newsletter, mailing lists, transactional mail | Two-router pattern documented: admin VPN-only + subscriber paths public |
 | [Matomo](matomo/) | GDPR-compliant web analytics for company / customer sites | Migrated from `apps/matomo/` — primary use-case is the business website |
-| Ackee | Privacy-focused analytics — no cookies, GDPR by design | Minimal alternative to Matomo; no files yet |
-| Plausible CE | Privacy-first analytics — clean UI, no cookie banner | Middle ground between Matomo (heavy) and Ackee (minimal); AGPL-3.0 |
 
 ### Customer support
 
 | App | Use case | Notes |
 |---|---|---|
 | [Zammad](zammad/) | Full helpdesk / ticketing / SLA | 7-service stack, ≥ 4 GB RAM |
-| Live Helper Chat | Real-time visitor chat on company website | PHP, lighter than Zammad, for pre-sales chat |
 
 ### Legal & compliance
 
@@ -48,44 +45,18 @@ What has been established about each stack — verified against which version an
 |---|---|---|
 | [OpenSign](opensign/) | E-signatures — DocuSign alternative | Mail via Mailgun or SMTP; eIDAS with qualified cert |
 | [Documenso](documenso/) | E-signatures — DocuSign alternative | Remix + Postgres; local signing cert (.p12) |
-| Eramba GRC | Governance / Risk / Compliance mapping (NIS2, DSGVO, ISO-27001) | Heavy. For regulated businesses. |
 
-## Why these and not others
+## Planned
 
-Applying the criterion consistently, the following were **deliberately kept in `apps/`** because private homelab users have the same use-case:
+Not deployable here yet. See [`ROADMAP.md`](../ROADMAP.md) for status.
 
-- **NocoDB, n8n, Vaultwarden, Cal.com, Monica, BookStack** — general productivity, equally useful private
-- **Wiki.js, Outline, Formbricks, HeyForm, Shlink, PrivateBin, SnapPass, Headscale** — general utilities / knowledge / identity; not business-exclusive
-
-And the following moved to other top-level categories:
-
-- **Healthchecks** → [`monitoring/`](../monitoring/) (ops observability, not business)
-- **Keycloak** → [`core/`](../core/) (alongside Authentik — both are IAM infrastructure)
-- **Kopia, Bareos, UrBackup** → [`backup/`](../backup/) (ops, not business)
-
-## Rollout sequence
-
-For someone building out a fresh company stack:
-
-### Phase 1 — Foundation (core/ + apps/)
-
-Traefik, Vaultwarden, Nextcloud/Seafile, Paperless-ngx already in place.
-
-### Phase 2 — Billing + customer-facing (this category)
-
-1. **Invoice Ninja** — day-one of first billable project
-2. **Kimai** — track hours from the start (→ Invoice Ninja via n8n)
-3. **Zammad** — when customer-support requests start coming in
-4. **Listmonk** — when you have a list
-5. **OpenSign** — when the first contract needs digital signing
-
-All 5 are available here.
-
-### Phase 3 — Analytics + extras
-
-- **Matomo** — replace Google Analytics on the company website
-- **Live Helper Chat** — if website live-chat becomes a thing
-- **Eramba GRC** — if NIS2 / ISO-27001 looms
+- **Plane** — project management
+- **Leantime** — project management
+- **AppFlowy** — Notion-style workspace
+- **Ackee** — analytics
+- **Plausible CE** — analytics
+- **Live Helper Chat** — customer chat
+- **Eramba GRC** — governance/risk/compliance
 
 ## The n8n hub
 
