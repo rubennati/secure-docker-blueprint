@@ -1,0 +1,349 @@
+# =============================================================================
+# Windmill — production stack (Traefik + Docker Secrets)
+# =============================================================================
+# Code-first workflow automation: scripts, flows, APIs and jobs as Postgres-
+# backed state with a server (API + UI) and one or more workers executing
+# jobs. Upstream's own docker-compose.yml also ships a windmill_worker_native
+# for lightweight in-process jobs, a Caddy reverse proxy (replaced here by
+# Traefik), an LSP/debugger bundle and a full-text indexer — see UPSTREAM.md
+# for which of those this stack carries and why.
+#
+# BLOCK ORDER matches every other stack in this repository — see
+# apps/_reference/docker-compose.yml.
+#
+# Spec: docs/standards/compose-structure.md · security-baseline.md
+# =============================================================================
+
+services:
+
+  # --------------------------------------------------------
+  # DATABASE (PostgreSQL 18 — Windmill's own version requirement)
+  # --------------------------------------------------------
+  db:
+    # --- Identity ---
+    image: postgres:${DB_TAG}
+    container_name: ${CONTAINER_NAME_DB}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+
+    # --- Resources ---
+    # Windmill keeps the job queue in this database — starting value, not
+    # measured.
+    memswap_limit: 1g
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 256m
+
+    # --- Configuration ---
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/DB_PWD
+      TZ: ${TZ}
+    secrets:
+      - DB_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/postgres:/var/lib/postgresql
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME} -h 127.0.0.1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # --------------------------------------------------------
+  # WINDMILL SERVER (API + web UI)
+  # On proxy-public, so it carries the stack identity + role suffix
+  # (naming-conventions.md).
+  # --------------------------------------------------------
+  windmill-server:
+    # --- Identity ---
+    image: ghcr.io/windmill-labs/windmill:${APP_TAG}
+    container_name: ${CONTAINER_NAME_SERVER}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+
+    # --- Security ---
+    # No init system (plain binary, direct exec) — user: is safe. Upstream's
+    # own compose documents this exact non-root shape: a UID/GID plus
+    # HOME=/tmp. Verified 2026-09-18 against 1.814.0.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    user: "${WM_UID}:${WM_GID}"
+
+    # --- Resources ---
+    memswap_limit: 512m
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 128m
+
+    # --- Configuration ---
+    # No native _FILE support for DATABASE_URL — entrypoint.sh builds it from
+    # the same DB_PWD secret the database itself reads.
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
+    command: ["windmill"]
+    environment:
+      TZ: ${TZ}
+      HOME: /tmp
+      MODE: server
+      DB_USER: ${DB_USER}
+      DB_NAME: ${DB_NAME}
+      BASE_URL: https://${APP_TRAEFIK_HOST}
+    secrets:
+      - DB_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+      - app-internal
+
+    # --- Traefik ---
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8000"
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:8000/api/health/status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # --------------------------------------------------------
+  # WINDMILL WORKER (general jobs — Python, TypeScript, Go, Bash, …)
+  # Private service — app-internal only, default role name is enough
+  # (naming-conventions.md).
+  # --------------------------------------------------------
+  worker:
+    # --- Identity ---
+    image: ghcr.io/windmill-labs/windmill:${APP_TAG}
+    container_name: ${CONTAINER_NAME_WORKER}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+
+    # --- Security ---
+    # Upstream's own default worker runs `privileged: true` for PID-namespace
+    # job isolation (--mount-proc). This repository does not grant privileged
+    # containers under any circumstance. Upstream's documented unprivileged
+    # alternative, NSJAIL, was tried and rejected — see UPSTREAM.md: even with
+    # cap_add SYS_ADMIN, seccomp=unconfined and apparmor=unconfined, nsjail's
+    # mount-namespace setup still failed with EPERM in this sandbox. Job code
+    # therefore runs with no isolation beyond this container's own boundary
+    # (non-root, all capabilities dropped, no-new-privileges, network-
+    # isolated) — a named, evidenced trade-off, not a silent gap.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    user: "${WM_UID}:${WM_GID}"
+    # mode is decimal, not octal digits: 1023 == 0o1777 (sticky, world rwx).
+    # Compose passes this integer straight through as the raw bit pattern
+    # rather than parsing it as octal — verified 2026-09-18: `mode: 1777`
+    # produced octal 3361 (d-wxrwS--t), not the intended 1777. Needed here,
+    # not on windmill-server/worker-native, because only this service also
+    # bind-mounts a path under /tmp/windmill (the cache below) — that mount
+    # forces Docker to pre-create /tmp/windmill itself, root-owned, before
+    # the container's own uid can create sibling directories under it.
+
+    # --- Resources ---
+    # Runs user job code — starting value, not measured. Matches upstream's
+    # own 2048M default for a general worker.
+    memswap_limit: 2g
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          cpus: "2.00"
+          pids: 400
+        reservations:
+          memory: 256m
+
+    # --- Configuration ---
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
+    command: ["windmill"]
+    environment:
+      TZ: ${TZ}
+      HOME: /tmp
+      MODE: worker
+      WORKER_GROUP: default
+      DB_USER: ${DB_USER}
+      DB_NAME: ${DB_NAME}
+    secrets:
+      - DB_PWD
+
+    # --- Storage ---
+    # A real volume for the dependency cache — language deps a job installs
+    # (pip, npm, …) persist across restarts instead of re-downloading every
+    # job. Logs stay on the tmpfs below; they are not state worth keeping.
+    # The two tmpfs entries are long-syntax so `mode` can be set — see the
+    # comment above.
+    volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
+      - ./volumes/worker_cache:/tmp/windmill/cache
+      - type: tmpfs
+        target: /tmp
+        tmpfs: {mode: 1023}
+      - type: tmpfs
+        target: /tmp/windmill
+        tmpfs: {mode: 1023}
+
+    # --- Networking ---
+    # app-egress carries outbound only: workers download language runtimes and
+    # dependencies and call external APIs from job code. See README, "Network
+    # exception".
+    networks:
+      - app-internal
+      - app-egress
+
+    # --- Health & Observability ---
+    # No HTTP port on a worker — liveness is the process itself.
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "windmill"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # --------------------------------------------------------
+  # WINDMILL WORKER, NATIVE JOBS
+  # Runs in-process — no filesystem sandboxing needed, so it stays lighter
+  # than the general worker above. Upstream ships this as part of its
+  # standard compose file, not commented out.
+  # --------------------------------------------------------
+  worker-native:
+    # --- Identity ---
+    image: ghcr.io/windmill-labs/windmill:${APP_TAG}
+    container_name: ${CONTAINER_NAME_WORKER_NATIVE}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    user: "${WM_UID}:${WM_GID}"
+
+    # --- Resources ---
+    memswap_limit: 512m
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "0.50"
+          pids: 200
+        reservations:
+          memory: 128m
+
+    # --- Configuration ---
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
+    command: ["windmill"]
+    environment:
+      TZ: ${TZ}
+      HOME: /tmp
+      MODE: worker
+      WORKER_GROUP: native
+      NATIVE_MODE: "true"
+      DB_USER: ${DB_USER}
+      DB_NAME: ${DB_NAME}
+    secrets:
+      - DB_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
+
+    # --- Networking ---
+    # app-egress carries outbound only: workers download language runtimes and
+    # dependencies and call external APIs from job code. See README, "Network
+    # exception".
+    networks:
+      - app-internal
+      - app-egress
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "windmill"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+
+  # Outbound for the two workers only. The database has no route out and the
+  # server reaches the internet through proxy-public. See README, "Network
+  # exception".
+  app-egress:
+    name: ${COMPOSE_PROJECT_NAME}-egress
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  DB_PWD:
+    file: ./.secrets/db_pwd.txt

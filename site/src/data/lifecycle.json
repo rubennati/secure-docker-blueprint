@@ -89,6 +89,16 @@
     "verified_anchored": true,
     "verified_version": "v6.54.0-alpine"
   },
+  "apps/greenmail": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=2.1.13",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "apps/heimdall": {
     "backup_docs": "documented",
     "local_stack": "✅",
@@ -318,6 +328,16 @@
     "verified": "2026-09-13",
     "verified_anchored": true,
     "verified_version": "v1.12.0"
+  },
+  "apps/windmill": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=1.814.0",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "apps/wordpress": {
     "backup_docs": "documented",

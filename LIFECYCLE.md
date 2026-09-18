@@ -4,7 +4,7 @@
 
 Generated 2026-09-18 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-63 stacks: 1 ops-proven · 13 baseline-aligned · 49 scaffolded. 54 carry a local test stack.
+65 stacks: 1 ops-proven · 13 baseline-aligned · 51 scaffolded. 56 carry a local test stack.
 
 This is the maintainer's view: what has been established about each stack. It makes no statement about whether a stack suits a given deployment.
 
@@ -44,6 +44,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/easyappointments`](apps/easyappointments/) | `scaffolded` | `APP_TAG=1.6.0` | 2026-05-03 | ✅ | documented | missing |
 | [`apps/euro-office`](apps/euro-office/) | `scaffolded` | `APP_TAG=v9.3.4-hotfix.1` | — | ✅ | documented | missing |
 | [`apps/ghost`](apps/ghost/) | `scaffolded` | `APP_TAG=6.63.0-alpine` | 2026-07-26 | ✅ | documented | missing |
+| [`apps/greenmail`](apps/greenmail/) | `scaffolded` | `APP_TAG=2.1.13` | — | ✅ | documented | missing |
 | [`apps/heimdall`](apps/heimdall/) | `scaffolded` | `APP_TAG=2.8.3` | 2026-05-02 | ✅ | documented | missing |
 | [`apps/homarr`](apps/homarr/) | `scaffolded` | `APP_TAG=v1.77.1` | 2026-05-02 | ✅ | documented | missing |
 | [`apps/homepage`](apps/homepage/) | `scaffolded` | `APP_TAG=v2.3.0` | 2026-05-03 | ✅ | documented | missing |
@@ -67,6 +68,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/unifi`](apps/unifi/) | `scaffolded` | `APP_TAG=10.6.101` | 2026-04-17 ⚠️ | ✅ | documented | missing |
 | [`apps/vaultwarden`](apps/vaultwarden/) | `scaffolded` | `APP_TAG=1.37.3` | 2026-06-14 ⚠️ | ✅ | documented | missing |
 | [`apps/whoami`](apps/whoami/) | `baseline-aligned` | `APP_TAG=v1.12.0` | 2026-09-13 | ✅ | documented | missing |
+| [`apps/windmill`](apps/windmill/) | `scaffolded` | `APP_TAG=1.814.0` | — | ✅ | documented | missing |
 | [`apps/wordpress`](apps/wordpress/) | `scaffolded` | `APP_TAG=7.0.4-php8.3-apache` | 2026-04-15 ⚠️ | ✅ | documented | missing |
 
 ## `business/`

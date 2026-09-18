@@ -22,12 +22,12 @@ versions, memory and PID limits, and Traefik in front handling TLS and access co
 
 ## Stacks
 
-62 stacks in five categories. Each category below links to its full list.
+65 stacks in five categories. Each category below links to its full list.
 
 | Browse | Stacks | Examples |
 |---|---|---|
 | [**`core/`** — proxy, identity, threat detection, secrets, Docker management](core/) | 11 | Traefik · Authentik · Keycloak · CrowdSec · Infisical · dnsmasq · Portainer |
-| [**`apps/`** — general self-hosted applications](apps/) | 32 | Nextcloud · Immich · Paperless-ngx · Vaultwarden · Seafile · Ghost · n8n · Mailpit |
+| [**`apps/`** — general self-hosted applications](apps/) | 35 | Nextcloud · Immich · Paperless-ngx · Vaultwarden · Seafile · Ghost · n8n · Mailpit |
 | [**`business/`** — invoicing, project management, helpdesk, analytics, e-signature](business/) | 10 | Invoice Ninja · OpenProject · Vikunja · Zammad · Matomo · Documenso |
 | [**`monitoring/`** — uptime, metrics, notifications](monitoring/) | 7 | Uptime Kuma · Gatus · Beszel · Healthchecks · ntfy |
 | [**`backup/`** — this host outward, your devices inward](backup/) | 2 | Borgmatic · UrBackup |

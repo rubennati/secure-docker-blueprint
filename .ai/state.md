@@ -69,7 +69,11 @@ each its own pull request. Batch order:
    Tika, Gotenberg and ClamAV stay out of scope for this batch (per correction
    2026-09-18, superseding the earlier plan that included Tika/Gotenberg here).
    `docs/architecture.md` and `ROADMAP.md` updated in the same commit.
-3. `apps/greenmail`, `apps/windmill` — not started.
+3. `apps/greenmail`, `apps/windmill` — **done**, this batch. Findings that
+   changed the stack shape are in each `UPSTREAM.md`: Windmill needs an egress
+   network for its workers, ships a published default administrator that
+   `ops/bootstrap-admin.sh` replaces, and could not run NSJAIL job sandboxing
+   under this repository's capability rules.
 4. AI foundation: `apps/qdrant`, `apps/ollama`, `apps/vllm` — not started.
 5. AI gateway/UI: `apps/litellm`, `apps/open-webui`, `apps/agentgateway` — not
    started.

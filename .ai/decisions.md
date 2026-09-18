@@ -6,6 +6,26 @@ this file is the index and covers decisions that have no other home.
 
 ---
 
+## 2026-09-18 · Windmill runs without job sandboxing rather than with privileged workers
+
+Upstream's default Windmill worker is `privileged: true`, for PID-namespace
+isolation of job code. The repository baseline has no exception path for
+privileged containers, so the stack does not use it. NSJAIL, upstream's
+unprivileged alternative, was tried with `cap_add: SYS_ADMIN`,
+`seccomp=unconfined` and `apparmor=unconfined` and still failed on a `mount()`
+call; whether that is specific to the nested-virtualisation test host is not
+established. The stack therefore ships with no per-job isolation beyond the
+worker container's own boundary (non-root, all capabilities dropped,
+read-only root filesystem, `no-new-privileges`), and says so in the stack's
+README and `UPSTREAM.md` instead of implying a sandbox.
+
+Two smaller consequences. Workers join a per-stack `app-egress` network — the
+pattern `apps/nextcloud` and `business/invoiceninja` already use — because
+runtime and dependency downloads fail on `app-internal` alone. And a fresh
+Windmill carries a published superadmin password, so the router defaults to
+`acc-deny` until `ops/bootstrap-admin.sh` has replaced it. The first
+reproducible retest is on a bare-metal host, where NSJAIL may work.
+
 ## 2026-09-18 · A blueprint entry needs an independently operated service, not just a container
 
 Clarified while evaluating OCRmyPDF for `apps/`. Functional overlap with an

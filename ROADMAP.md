@@ -219,7 +219,7 @@ which are named only:
 - [`monitoring/README.md`](monitoring/README.md) — the five monitoring axes plus the notification receiver; planned additions include Grafana + Prometheus and Scrutiny
 - [`business/README.md`](business/README.md) — planned additions include Plane, Leantime, AppFlowy, Ackee, Plausible CE, Live Helper Chat and Eramba GRC
 - [`backup/README.md`](backup/README.md) — Borgmatic has been backed up from and restored from; UrBackup has never been started. Kopia and Bareos are named, not built
-- [`development/README.md`](development/README.md) — the `static-site` and `web-api` deployment patterns are in place; planned additions include GreenMail and Windmill, both third-party tools that land in `apps/` under the normal categorisation test
+- [`development/README.md`](development/README.md) — the `static-site` and `web-api` deployment patterns are in place, and the third-party developer tools (GreenMail, Windmill, Mailpit, Adminer, IT-Tools, Whoami) are linked from it; they stay in `apps/` under the normal categorisation test
 
 ### Project management — to evaluate
 
