@@ -155,7 +155,7 @@ is for apps you have WAF-tested; level 3 is rare and deliberate.
 
 ## whoami-first validation
 
-Always prove the path on `core/whoami` — a throwaway fixture — before attaching any
+Always prove the path on `apps/whoami` — a throwaway fixture — before attaching any
 profile to a real app. Defining a profile makes it *available*; it protects nothing
 until a router uses it, and the plugin's polling loop does not even start until then.
 
@@ -252,7 +252,7 @@ roadmap only.
 1. **Per-app selection mechanism.** Settled: the router label carries a third `.env`
    slot, `APP_TRAEFIK_THREAT`, which the operator sets to `crowdsec-basic@file,`
    including the trailing comma. It defaults to empty, so a stack that does not set it
-   renders the same middleware list as before. `apps/_reference` and `core/whoami`
+   renders the same middleware list as before. `apps/_reference` and `apps/whoami`
    carry the slot; the dangling-comma problem is handled by keeping the comma inside
    the value rather than in the label.
 2. **Geo mechanism.** Cloudflare edge rules vs a Traefik GeoIP plugin vs global

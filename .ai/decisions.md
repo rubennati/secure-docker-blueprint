@@ -6,6 +6,164 @@ this file is the index and covers decisions that have no other home.
 
 ---
 
+## 2026-09 · v1.0.0 requires both the repository and the operator site
+
+`v1.0.0` is not tagged until this repository *and* the SecDockBlue site meet
+their criteria. The site being live is not sufficient — it has been live since
+2026-07-31 and is not finished. The repository is the technical source of truth
+and the site is how most people will meet it, so a stable technical release in
+front of an unfinished public surface would promise something the project cannot
+deliver.
+
+This reverses a position the repository held. `ROADMAP.md` said Operator Site
+work was "tied to no version", and `site/README.md` recorded that a v1.0.0
+coupling had been decided and then abandoned. Both statements were about
+**when the site would first publish**, which is settled and unchanged:
+publishing is continuous, every push to `main` that touches `site/` deploys, and
+no release schedules it. The new gate runs the other way and constrains the
+**tag**, not the content. Both files now say so rather than leaving the
+implication that the two are unrelated.
+
+`ROADMAP.md`'s v1.0 section is the canonical home — it already owned the v1.0
+criteria, and the File Map makes `ROADMAP.md` the owner of anything
+forward-looking. Its ten repository bullets gained five site ones, and the
+Release Chain in `docs/maintenance.md` gained a step so the release procedure
+enforces the gate instead of leaving it as prose. Repository and site stay
+separate products with separate structures; v1.0 is the one checkpoint they
+share.
+
+## 2026-09 · AI & Local AI stays latent; Document Processing has capabilities but no pipeline
+
+Both were conceptual domains carried in `docs/architecture.md` with one bullet
+each, and neither absence had a reason attached. AI & Local AI said only that no
+stack exists; Document Processing said `apps/` "covers both halves", which read
+as *already done* rather than as bounded. Read from this file alone, neither
+would have looked like a decision. They are now reasoned at their owner, and
+both appear in `ROADMAP.md`'s "Out of scope here".
+
+**AI & Local AI.** The line is between running a service and doing the
+engineering. Deploying and hardening a reusable AI service is in scope the
+moment a real need exists, and it takes the ordinary categorisation test —
+nothing about "AI" changes which directory it lands in. Model evaluation,
+retrieval architecture and prompt design sit above that line and belong to a
+different project. So the absence is not waiting on a decision; it is waiting on
+a deployment somebody needs. A candidate catalogue assembled in advance would be
+a list, not a capability. Machine learning already runs inside Immich and
+PhotoPrism as a property of those applications, which is not a domain.
+
+**Document Processing.** Described in three parts rather than two, because
+e-signature was missing from the previous account: archive and ingest
+(`apps/paperless-ngx`), browser editing (the three editors in `apps/`), and
+e-signature (`business/documenso`, `business/opensign`). Tika and Gotenberg are
+Paperless-ngx's own converters, not shared services, which is why they have no
+stack. What does not exist is a general pipeline from an arbitrary document
+through extraction and layout recognition to a structured result — and a pipeline
+is defined by the document it handles and the output someone needs, so building
+one before a real case exists would produce a chain of tools with no test for
+whether it works.
+
+Neither gets a directory, a stack, or a placeholder.
+
+## 2026-09 · The custom-application path is named from the two builds that already exist
+
+`README.md` promised patterns for "applications you build yourself" while the
+same paragraph said no reference pattern existed, and
+`docs/architecture.md` said none was planned. Both were written without
+noticing that two stacks here already build their own image, in two different
+shapes: `business/vikunja` adds a layer to a published image because upstream
+ships `FROM scratch`, and `apps/caldiy` consumes a reviewed release from a
+governed fork. The pattern existed; it had never been named.
+
+[`docs/standards/custom-application.md`](../docs/standards/custom-application.md)
+is derived from those two. It owns one phase — source, build, image identity,
+and what verifies the image — and its central claim is that every phase after
+the image is unchanged and already owned elsewhere. Restating the downstream
+standards would have created a second owner for facts that already have one.
+
+**Only four rules are binding**, because only four are supported by evidence:
+no secret material in any build stage or layer (already binding everywhere
+else); the deployed image identity is explicit, reviewable and traceable, with
+no floating references; provenance is recorded in the stack's `UPSTREAM.md`;
+and everything after the image follows the existing standards unchanged.
+
+Practices that appear in **one** of the two shapes are recorded as what that
+stack does and explicitly **not** as requirements: `<app>-local:` image naming,
+a `build:` block in the local Compose file, an explicit `USER` in the final
+stage, digest-pinning every `FROM`, the `build --pull` upgrade shape, and
+universal digest pinning of the deployed image. Two instances are not a
+pattern, and this closure task was not the place to promote good engineering
+practice to repository-wide policy. Note in particular that the two shapes do
+**not** agree on digest pinning — vikunja pins a tag and digest pair, caldiy
+accepts a reviewed tag — so "immutable" is not the shared rule; explicit,
+reviewable and traceable is.
+
+Gaps are documented rather than closed: locally built images are not CVE
+scanned (Trivy cannot pull them), no checker reads a Dockerfile, Renovate
+cannot see a base pin behind a build arg, and `business/vikunja`'s tag and
+digest have **already drifted apart** unnoticed — which is the concrete reason
+the pin rule exists. The drift itself is left as found; correcting it needs a
+registry lookup and is a pin decision, not an architecture one.
+
+No ROADMAP item was created, consistent with the mission-scope decision below:
+the absence of one is deliberate, not an oversight. No directory, no framework
+sample, and no stand-in `Dockerfile` in `apps/_reference` — the template states
+its boundary and points at the standard instead.
+
+What remains absent is a **first-party** application: source with no upstream at
+all. Both real cases wrap third-party software, so that shape is unproven, and
+the mission's residual now sits in a reasoned absence rather than a false claim.
+
+## 2026-09 · `core/` is defined by scope, not dependency; `whoami` moves to `apps/`
+
+`core/` held five different definitions across two canonical files, three of
+which were false of real membership: "Infrastructure every other service
+depends on" and "Infrastructure shared by everything" and "(always needed)"
+are all untrue of Authentik, Keycloak, CrowdSec, Infisical and the four
+Docker-management tools, every one of which is optional. The test question
+was the only accurate one, and its enumeration had no slot for secrets, so
+`core/infisical` fitted none of the five.
+
+All five now state one definition: `core/` holds capabilities whose scope is
+the installation rather than one stack — control of Docker, the host or other
+containers, and shared network, TLS, identity, DNS, security or secrets.
+**Scope decides, not dependency.** Optionality does not disqualify a
+capability, and two members may be alternatives to each other. The
+"Core Services and Their Roles" table read as exhaustive while explaining 4
+of 12 members, and one of its rows was not a directory at all; it is now
+grouped by role and accounts for every member.
+
+This came out of classifying the whole operator/helper/fixture cohort
+together — whoami, mailpit, adminer, it-tools, acme-certs and the four Docker
+management components — rather than judging any one of them alone. **No new
+top-level category is justified.** The five categories model access patterns
+coherently once `core/` is corrected. What that cohort shares is lifecycle and
+audience, not access pattern, and the repository already expresses that
+without a directory: `apps/README.md`'s "Developer & admin tools" grouping and
+the status model.
+
+`core/whoami` is therefore now `apps/whoami`. It failed the `core/` test
+before any edit — nothing depends on it, it manages nothing, it is not
+identity, certificates, DNS, WAF or secrets — and its access pattern is the
+`apps/` one: `proxy-public`, Traefik-routed, `read_only`, `cap_drop: ALL`, no
+socket, no database, no secrets, no state. It joins adminer, it-tools and
+mailpit, which are already there. The argument for keeping it — that core's
+own acceptance procedures gate on it — is an argument from purpose, which is
+the axis the 2026-04 `business/` decision rejected. Compose and security
+configuration are unchanged; only the directory and the paths naming it moved.
+
+`acme-certs` was examined in the same pass and **stays in `core/`** on the
+merits: certificates are an installation-scoped capability, and it is the
+second implementation of that capability for the devices that never pass
+through Traefik. It also cannot pass the `apps/` test — no router, no Traefik
+label, no UI, no users; it runs `crond` and writes certificate files at host
+level. Its planned extraction to a separate repository is a maintenance
+decision and does not bear on where it belongs while it is here.
+
+Known and deliberate imprecision: no directory test asks about lifecycle, so
+"deploy temporarily, then disable" is not what places whoami — `apps/` is.
+The `apps/` test was not widened to describe throwaway fixtures; a lifecycle
+claim belongs to `docs/standards/status-model.md` if it ever earns one.
+
 ## 2026-09 · Swap-policy coverage completed; `no-swap-policy` is a FAIL
 
 Every production service (150/150, 61 stacks) now states `memswap_limit`,

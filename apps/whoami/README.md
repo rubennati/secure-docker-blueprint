@@ -112,4 +112,4 @@ Keeping a public `whoami` endpoint running long-term leaks information useful to
 ## Details
 
 - [UPSTREAM.md](UPSTREAM.md) — source, upgrade checklist
-- [core/traefik/docs/ipv6-dual-stack.md](../traefik/docs/ipv6-dual-stack.md) — using whoami to verify dual-stack IPv4/IPv6 + real client IP preservation
+- [core/traefik/docs/ipv6-dual-stack.md](../../core/traefik/docs/ipv6-dual-stack.md) — using whoami to verify dual-stack IPv4/IPv6 + real client IP preservation

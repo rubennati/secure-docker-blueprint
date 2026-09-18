@@ -231,11 +231,11 @@ Based on **CIS Docker Benchmark v1.6.0**.
 | **4.1** Create user for container | ⚠ Partial | `user:` on 1/145 services; `no-new-privileges` on 143/145 | Most containers run as image-defined users. No systematic non-root enforcement. |
 | **4.2** Use trusted base images | ⚠ Partial | Well-known registries (ghcr.io, docker.io). No image signing or digest pinning. | Tags pinned but not digests. No provenance verification. |
 | **4.3** Do not install unnecessary packages | ℹ N/A | Not applicable to compose blueprint — image content is upstream responsibility | |
-| **4.4** Scan images for vulnerabilities | ⚠ Partial | `trivy.yml` § Job 2 (Automated Verification, below) has the current coverage, severity filter and exit behavior | Coverage is complete, enforcement is not — every finding is reported, none fails the job |
+| **4.4** Scan images for vulnerabilities | ⚠ Partial | `trivy.yml` § Job 2 (Automated Verification, below) has the current coverage, severity filter and exit behavior | Enforcement is absent — every finding is reported, none fails the job. Coverage is complete for registry images only: locally built images are skipped because Trivy cannot pull them, so `business/vikunja`'s `vikunja-local` is unscanned — see `docs/standards/custom-application.md` |
 | **4.5** Enable Content Trust | ❌ Not implemented | No `DOCKER_CONTENT_TRUST=1`, no cosign verification | |
 | **4.6** Add HEALTHCHECK | ✅ Partial | Most compose files include healthchecks. Some scratch images correctly use `disable: true` | |
-| **4.7** Do not use update in Dockerfile | ℹ N/A | No Dockerfiles in this repository | |
-| **4.9** Use COPY not ADD | ℹ N/A | No Dockerfiles | |
+| **4.7** Do not use update in Dockerfile | ✅ | One Dockerfile exists (`business/vikunja`); it runs no package manager — the build copies binaries from a pinned busybox stage | Not CI-enforced; no checker reads a Dockerfile |
+| **4.9** Use COPY not ADD | ✅ | `business/vikunja/Dockerfile` uses `COPY` only, no `ADD` | Not CI-enforced; no checker reads a Dockerfile |
 | **5.1** AppArmor profile | ❌ Not implemented | No `--security-opt apparmor:` in any compose file | |
 | **5.2** SELinux options | ❌ Not implemented | No `--security-opt label:` in any compose file | |
 | **5.3** Capabilities (cap_drop) | ⚠ Partial | Applied on 32/145 services | `cap_drop: ALL` documented as recommended, not enforced |

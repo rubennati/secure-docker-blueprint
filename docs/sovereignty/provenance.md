@@ -98,7 +98,7 @@ the string was unfamiliar.
 Fill both fields from the **official source** — the project's own `LICENSE` file
 and its imprint or legal page. Not a directory site, not a summary, and not from
 memory: this repository has already been wrong about a licence it was confident
-about (`core/whoami` is Apache-2.0, not MIT).
+about (`apps/whoami` is Apache-2.0, not MIT).
 
 If the project states no jurisdiction, write that. An honest blank is worth more
 than a plausible guess.

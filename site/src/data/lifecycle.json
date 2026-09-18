@@ -299,6 +299,16 @@
     "verified_anchored": false,
     "verified_version": ""
   },
+  "apps/whoami": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=v1.12.0",
+    "restore_docs": "missing",
+    "state": "baseline-aligned",
+    "verified": "2026-09-13",
+    "verified_anchored": true,
+    "verified_version": "v1.12.0"
+  },
   "apps/wordpress": {
     "backup_docs": "documented",
     "local_stack": "✅",
@@ -538,16 +548,6 @@
     "verified": "2026-09-13",
     "verified_anchored": true,
     "verified_version": "v3.7.13, socket-proxy v0.5.0"
-  },
-  "core/whoami": {
-    "backup_docs": "documented",
-    "local_stack": "✅",
-    "pinned": "APP_TAG=v1.12.0",
-    "restore_docs": "missing",
-    "state": "baseline-aligned",
-    "verified": "2026-09-13",
-    "verified_anchored": true,
-    "verified_version": "v1.12.0"
   },
   "monitoring/beszel": {
     "backup_docs": "documented",

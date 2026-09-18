@@ -151,7 +151,7 @@ Access-log `ClientHost` interpretation:
 | `172.19.0.1` (or any Docker gateway address) | Source IP lost — the bug this document describes |
 | Cloudflare edge IP in `ClientAddr`, real client IP in `ClientHost` | Cloudflare path working correctly via `forwardedHeaders.trustedIPs` |
 
-`whoami` (see [`core/whoami`](../../core/whoami/)) is the recommended
+`whoami` (see [`apps/whoami`](../../apps/whoami/)) is the recommended
 target for this kind of check — it echoes `X-Forwarded-For` and
 `X-Real-Ip` directly in the response body, no need to parse access logs
 for a quick check:

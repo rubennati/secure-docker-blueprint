@@ -77,7 +77,7 @@
   polling.
 - Traefik v2 → v3 was a breaking upgrade; **do not** jump majors without reading the migration guide: https://doc.traefik.io/traefik/migration/v2-to-v3/
 - **`tlsResolver` (TLS-ALPN-01) was exercised on a live host on 2026-09-15**, restart and
-  all: `core/whoami`'s router set to it, `docker compose up -d` on `whoami`, then Traefik
+  all: `apps/whoami`'s router set to it, `docker compose up -d` on `whoami`, then Traefik
   force-recreated to load the resolver into the running process. The mechanism is sound —
   Traefik started with no error against the resolver itself, `whoami@docker`'s router
   carried `certificateResolver: tlsResolver` with no complaint, every other route answered

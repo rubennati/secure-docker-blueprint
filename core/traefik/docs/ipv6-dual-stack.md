@@ -145,7 +145,7 @@ After the fix:
 curl -6 https://auth.example.com/   # → fd7a:115c:a1e0::9e32:b510 → HTTP/2 302 (ok)
 ```
 
-And `whoami` (see [core/whoami](../../whoami/)) shows the real address in
+And `whoami` (see [apps/whoami](../../../apps/whoami/)) shows the real address in
 both the proxy headers and its own view of the connection:
 
 ```text
@@ -456,14 +456,14 @@ docker network inspect proxy-public-v6 --format '{{json .IPAM.Config}}'
 
 ### 4. Attach a test service (whoami) and verify
 
-`core/whoami/docker-compose.yml` references the network by the literal
+`apps/whoami/docker-compose.yml` references the network by the literal
 name `proxy-public` (`networks: proxy-public: external: true`) — it has
 no `PUBLIC_NETWORK`-style variable to redirect, so do not try to retarget
 it via `.env`. Connect the already-running container to the new network
 directly instead:
 
 ```bash
-cd core/whoami
+cd apps/whoami
 docker compose up -d   # if not already running, on the original proxy-public
 docker network connect proxy-public-v6 "$(grep ^CONTAINER_NAME_APP= .env | cut -d= -f2)"
 docker inspect "$(grep ^CONTAINER_NAME_APP= .env | cut -d= -f2)" \

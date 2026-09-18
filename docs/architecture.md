@@ -26,7 +26,7 @@ Five top-level categories, split by **how** each tool accesses the system — no
 
 | Directory | Responsibility | Access pattern |
 |---|---|---|
-| `core/` | Infrastructure every other service depends on | Privileged — manages other containers, network, TLS |
+| `core/` | Shared platform and control plane — capabilities scoped to the installation, not to one stack | Privileged or cross-stack — controls Docker, the host or other containers, or serves a capability other stacks route through, authenticate against, resolve names with, or store secrets in |
 | `apps/` | User-facing applications | Standard — Traefik-routed, DB + volume access |
 | `business/` | Business operations tools | Standard — same pattern as `apps/`, distinct operational scope |
 | `monitoring/` | Observability and alerting | Cross-stack — reads metrics and logs from other containers |
@@ -38,11 +38,11 @@ Five top-level categories, split by **how** each tool accesses the system — no
 
 | Directory | Test |
 |---|---|
-| `core/` | Does the stack — or a large part of it — break without this, or does it control Docker itself, or is it shared identity, certificates, DNS or WAF? |
+| `core/` | Does it control Docker, the host or other containers, or does it provide a shared network, TLS, identity, DNS, security or secrets capability for the installation rather than for its own users? Scope decides, not dependency: a member may be optional, and two members may be alternatives to each other. |
 | `monitoring/` | Does it observe one or more other services? |
 | `backup/` | Does it protect data belonging to other services? |
 | `business/` | Is a company needed for this to be useful at all? (issuing invoices, customer helpdesk, compliance) |
-| `apps/` | Everything else — would a homelab user *and* a company both use it? |
+| `apps/` | Everything else — would a homelab user *and* a company both use it? A stack that serves its own users belongs here, including a diagnostic fixture deployed to prove another stack works: that is a lifecycle property, and no category test asks about lifecycle. |
 
 The rule was sharpened after an earlier attempt placed `business/` by analogy to `monitoring/` and left ten existing apps stranded. Categorising by **access pattern** rather than by audience is what makes it hold.
 
@@ -61,8 +61,11 @@ own reason to change.
 | **Website navigation** | how does a reader find this? | `site/` | reader research shows a different grouping helps — already independent today, see the site's Infrastructure/Applications/Operations split |
 
 The physical layout is `core/apps/business/monitoring/backup`, unchanged, and is
-the only one of the three enforced in CI (`check-structure.py`,
-`new-app-checklist.md`). A conceptual domain can exist purely as documentation
+the only one of the three that CI knows about at all: `check-structure.py` and
+`check-coverage.py` enforce that every stack sits under one of the five roots and
+that no root goes unchecked. Which of the five a given stack belongs in is a
+judgement against the table above, not something CI can decide. A conceptual
+domain can exist purely as documentation
 and navigation vocabulary, with no stack in it, for as long as that stays
 useful to a reader — it earns a directory the same way any category does: by
 failing every test in the [Directory Structure](#directory-structure) table.
@@ -72,15 +75,54 @@ directory (Infrastructure → `core/`, Applications → `apps/`, Business →
 `business/`, Monitoring → `monitoring/`, Operations & Recovery → `backup/`):
 
 - **Development / Custom Applications** — see below.
-- **AI & Local AI** — no stack exists here. If one is added, it goes through the
-  same categorisation test as everything else; nothing about "AI" changes which
-  directory it lands in.
-- **Document Processing** — `apps/` covers both halves: Paperless-ngx (ingest,
-  OCR, search) and the document editors OnlyOffice, Euro-Office and Collabora,
-  reclassified here from `core/` (`decisions.md`). The domain groups them for a
-  reader; it was never a reason to merge the two into one stack.
+- **AI & Local AI** — no stack, deliberately. See below.
+- **Document Processing** — real capabilities, no reusable pipeline. See below.
 
 None of the three justifies a new top-level directory now.
+
+### AI & Local AI is latent on purpose
+
+No stack exists here, and that is a decision rather than an omission.
+
+The line runs between running a service and doing the engineering. If a real
+need appears for a reusable AI service — a model runtime, a gateway, a vector
+store — then deploying and hardening it is this repository's problem, and it
+goes through the same categorisation test as anything else: nothing about "AI"
+changes which directory it lands in, and an observability component for it would
+most likely be `monitoring/`. The engineering above that line — model
+evaluation, retrieval architecture, prompt design, the experiments that decide
+whether any of it is worth running — belongs to a different project and is not
+served by putting a Compose file here.
+
+So the absence is not waiting on a decision. It is waiting on a deployment that
+somebody actually needs, and a catalogue of candidate products assembled in
+advance would be a list, not a capability. Machine learning already runs inside
+existing stacks — Immich's ML worker, PhotoPrism's classification models — and
+those are properties of those applications, not a domain.
+
+### Document Processing has the capabilities, not a pipeline
+
+The domain is real and mostly already covered, in three parts rather than the two
+it was previously described as:
+
+| Part | Where it lives |
+|---|---|
+| Archive and ingest — OCR, indexing, search | `apps/paperless-ngx` |
+| Browser-based editing | `apps/onlyoffice`, `apps/euro-office`, `apps/collabora` |
+| Electronic signature | `business/documenso`, `business/opensign` |
+
+Apache Tika and Gotenberg belong to Paperless-ngx as its own converters, not as
+shared services other stacks call — which is why they have no stack of their own
+and no entry in the tables.
+
+What does **not** exist is a general document-processing pipeline: a reusable
+path from an arbitrary input document through extraction, layout or table
+recognition, and into a structured result. That absence is deliberate. A pipeline
+is defined by the document it has to handle and the output someone needs, and
+building one before a real case exists would produce a chain of tools with no
+test for whether it works. Until a document use case demands something
+reproducible, the domain stays a way of grouping what is already here, and the
+three parts stay separate stacks rather than being merged into one.
 
 ### Development is a mission scope, not the local test-stack mode
 
@@ -88,8 +130,8 @@ The mission covers two kinds of software: existing self-hosted open-source
 projects, and applications someone builds themselves. Both go through the same
 **deploy → secure → operate → recover** model, but the first phase differs — an
 existing project starts from a published, versioned image; software someone
-builds starts from source and a build step this repository does not template
-yet.
+builds starts from source and a build step, which
+[`standards/custom-application.md`](standards/custom-application.md) owns.
 
 **This is not what `docker-compose.local.yml` is for.** The local test stack
 ([`standards/compose-structure.md`](standards/compose-structure.md)) is a
@@ -98,13 +140,24 @@ published without Traefik, DNS or a certificate so it can be tried on one
 machine. It answers "how do I try this app," not "how do I harden an app I
 wrote."
 
-No reference exists yet for a custom application, and none is planned.
-`apps/_reference` templates the hardening pattern around a pre-built, versioned
-image — its `UPSTREAM.md`, its `_FILE`-secret assumptions and the Trivy scan
-target all presume one. The gap stays unaddressed until a real application
-needs it: inventing a shape for it now would be exactly the placeholder this
+Two stacks here already build their own image, in two different shapes:
+`business/vikunja` adds a layer to a published image because upstream ships
+`FROM scratch`, and `apps/caldiy` consumes a governed fork's reviewed release.
+[`standards/custom-application.md`](standards/custom-application.md) is derived
+from those two — it covers source, build, image identity and what verifies the
+image, and states that every phase after the image is unchanged.
+
+`apps/_reference` still templates the hardening pattern around a pre-built,
+versioned image — its `UPSTREAM.md`, its `_FILE`-secret assumptions and the
+Trivy scan target all presume one. That boundary is where the standard starts,
+and it is why a stack that builds adds a `Dockerfile` and a `build:` block to
+the same structure rather than following a different one.
+
+What remains genuinely absent is a *first-party* application — source with no
+upstream at all. Both real cases wrap third-party software, so the shape for
+that one is unproven, and inventing it now would be exactly the placeholder this
 repository avoids elsewhere (`decisions.md`: "a reasoned absence is the outcome,
-not a gap").
+not a gap"). It stays absent until a real application needs it.
 
 ---
 
@@ -186,6 +239,7 @@ make sense, and it does not know which of them are installed.
 | **Network** | hub-and-spoke layout, isolation, which service belongs on which network | [`standards/networking.md`](standards/networking.md) |
 | **Secrets** | how a credential reaches a container without entering the image or the environment | [`standards/security-baseline.md`](standards/security-baseline.md) |
 | **Backup** | what is protected, from what, and how a restore is proven | [`../backup/README.md`](../backup/README.md) |
+| **Image provenance** | where a deployable image comes from, and what pins it, when this repository builds it rather than pulling one | [`standards/custom-application.md`](standards/custom-application.md) |
 | **Updates** | version pinning and the upgrade path per stack | each stack's `UPSTREAM.md` |
 | **Lifecycle** | what has been established about each stack | [`standards/status-model.md`](standards/status-model.md) |
 
@@ -338,16 +392,27 @@ file that uses no proxy at all.
 
 ## Core Services and Their Roles
 
-`core/` is a privilege category, not the capability model — it holds what manages other
-containers, the network or TLS. Which capability each service implements is the table
+`core/` holds capabilities whose scope is the installation rather than one stack:
+control of Docker, the host or other containers, and shared network, TLS, identity,
+DNS, security or secrets. A member may be optional, and two members may be
+alternatives to each other — optionality does not disqualify a capability, because
+scope is what the category is about. It is a scope and privilege category, not the
+capability model; which capability each service implements is the table
 [above](#capabilities-and-reference-implementations).
 
-| Service | Implements | Why it is in `core/` |
+Grouped by role, every member accounted for:
+
+| Role | Members | Why it is in `core/` |
 |---|---|---|
-| Traefik | Reverse Proxy — TLS termination, routing, access and security middleware | Terminates TLS and reaches every routed container |
-| Socket Proxy | Foundation/Docker — mediated socket access | Keeps the Docker socket off the services that need container metadata |
-| CrowdSec | Threat Detection & Remediation, and currently Web Application Security | Reads logs across stacks; its decisions are enforced elsewhere |
-| Authentik | Identity & Access | An identity provider several applications can share |
+| Request path | Traefik (with its socket proxy), CrowdSec | Terminates TLS and reaches every routed container; the socket proxy keeps the Docker socket off services that only need container metadata; CrowdSec reads logs across stacks and its decisions are enforced elsewhere |
+| Shared identity | Authentik (reference implementation), Keycloak (maintained alternative) | An identity provider several applications authenticate against |
+| Shared names and certificates | dnsmasq, acme-certs | Resolves names for the installation; issues certificates for the devices that never pass through Traefik |
+| Shared secrets | Infisical | Optional central alternative to per-stack Docker Secrets — it holds other stacks' credentials |
+| Docker control plane | Dockhand + Hawser, Portainer + Portainer Agent | Control the Docker daemon, locally or on remote hosts; each pair is a UI plus its agent |
+
+The socket proxy is a service inside `core/traefik`, not a directory of its own.
+`acme-certs` is being extracted to its own repository ([`ROADMAP.md`](../ROADMAP.md)) —
+a maintenance decision, not a classification one.
 
 ---
 

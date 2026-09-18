@@ -143,6 +143,13 @@ domain, website navigation) and what stays out of scope: `docs/architecture.md`
 → "Physical layout, conceptual domains and navigation"; reasoning in
 `decisions.md`.
 
+That path now has a standard — `docs/standards/custom-application.md`, derived
+from `business/vikunja` and `apps/caldiy`, the two stacks that already build
+their own image. It owns source, build, image identity and verification only;
+everything after the image is unchanged. Four binding rules, and practices seen
+in only one of the two shapes are recorded as non-binding. Still absent: a
+first-party application, source with no upstream.
+
 ## Host resilience — policy in place 2026-09, mechanism deferred
 
 An OnlyOffice process on a derived deployment took a host down; the stack's own 4G

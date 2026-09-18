@@ -93,7 +93,8 @@ when they have none of their own; five containers, and it needs SMTP, a
 database and Redis. [Keycloak](/infrastructure/keycloak/) is the provider most
 applications that speak OpenID Connect or SAML were tested against, in two
 containers, with no proxy of its own. Either is a service to operate, not a
-setting to switch on; the Keycloak guide has the comparison.
+setting to switch on; [Choosing between services](/applications/choosing/#single-sign-on)
+sets them side by side.
 
 ## Server-wide, and covered elsewhere
 

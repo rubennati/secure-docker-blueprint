@@ -73,6 +73,7 @@ services:
 **Identity** (required)
 
 - `image:` — Image name hardcoded in compose, only the tag via `${APP_TAG}`. Image name + Docker Hub link as comment in `.env.example`.
+- `build:` — only where the stack builds its own image, and then directly above `image:`, which names the resulting artifact. `business/vikunja` is the one instance. Most stacks pull a published image and have no `build:` block; having one is not a requirement, and what it implies is [`custom-application.md`](custom-application.md).
 - `container_name:` — Derived from `${COMPOSE_PROJECT_NAME}` via `${CONTAINER_NAME_APP}`, `${CONTAINER_NAME_DB}`, etc.
 - `restart: unless-stopped` — standard for all services.
 - `depends_on:` with `condition: service_healthy` when the dependency has a healthcheck.
