@@ -529,6 +529,16 @@
     "verified_anchored": false,
     "verified_version": ""
   },
+  "core/host-watchdog": {
+    "backup_docs": "missing",
+    "local_stack": "—",
+    "pinned": "host-installed",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "core/infisical": {
     "backup_docs": "documented",
     "local_stack": "✅",

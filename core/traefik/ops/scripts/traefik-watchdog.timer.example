@@ -1,0 +1,25 @@
+# =============================================
+# traefik-watchdog – systemd timer
+# =============================================
+# Install alongside traefik-watchdog.service.example — a timer without the
+# matching service does nothing.
+#
+# Install to /etc/systemd/system/traefik-watchdog.timer, then:
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now traefik-watchdog.timer
+#   systemctl list-timers traefik-watchdog.timer   # confirm the next run
+# =============================================
+
+[Unit]
+Description=Run the Traefik watchdog on a schedule
+
+[Timer]
+# Every 2 minutes. Kept short because CONFIRM_AFTER (default 3) multiplies
+# this into the actual sustained-failure window before any action is taken —
+# see traefik-watchdog.env.example, and Traefik's own healthcheck interval in
+# docker-compose.yml (10s, 3 retries) which already runs underneath this.
+OnBootSec=2min
+OnUnitActiveSec=2min
+
+[Install]
+WantedBy=timers.target
