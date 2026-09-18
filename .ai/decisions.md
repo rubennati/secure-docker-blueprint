@@ -6,6 +6,32 @@ this file is the index and covers decisions that have no other home.
 
 ---
 
+## 2026-09-18 · A blueprint entry needs an independently operated service, not just a container
+
+Clarified while evaluating OCRmyPDF for `apps/`. Functional overlap with an
+existing stack is not a reason to exclude a tool — this repository already
+carries multiple alternatives per category deliberately (dashboards, photo
+galleries, scheduling) and continues to. The separate, narrower test is
+whether a tool is something to deploy, harden and operate as its own service
+at all: a pure CLI utility or job that upstream itself runs as one container
+per invocation does not become more of a service by wrapping it in Compose.
+
+`apps/docling-serve` passes this test — an API with its own healthcheck,
+authentication and multiple plausible independent callers. OCRmyPDF does not:
+upstream's own documentation describes its Docker image as ephemeral, "one
+OCR job and terminates, just like a command line program... as opposed to the
+more conventional case, where a Docker container runs as a server." No
+`apps/ocrmypdf` entry was created, and none is planned as a substitute — the
+need this would have filled was never established as real, so there is
+nothing to replace it with. Recorded in `ROADMAP.md` → "Out of scope here" so
+the absence is not silently re-proposed later.
+
+Tika, Gotenberg and ClamAV were explicitly held out of this batch by the same
+correction that sharpened the criterion above — an earlier plan had scoped
+standalone Tika and Gotenberg stacks into this batch alongside `docling-serve`,
+before that plan was implemented. They remain embedded in Paperless-ngx /
+optional in Seafile-Pro, unchanged, pending a later evaluation.
+
 ## 2026-09-18 · `development/` becomes a Supporting-tier domain
 
 The Development / Custom Applications conceptual domain had no physical home:

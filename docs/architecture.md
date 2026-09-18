@@ -77,7 +77,7 @@ directory (Infrastructure → `core/`, Applications → `apps/`, Business →
 - **Development / Custom Applications** — has a physical home, `development/`,
   for the patterns it owns. See below.
 - **AI & Local AI** — no stack, deliberately. See below.
-- **Document Processing** — real capabilities, no reusable pipeline. See below.
+- **Document Processing** — real capabilities plus one standalone service; still no orchestrated pipeline. See below.
 
 AI & Local AI and Document Processing do not justify a new top-level directory.
 Development has one, for a different reason than the access-pattern test the
@@ -103,29 +103,37 @@ advance would be a list, not a capability. Machine learning already runs inside
 existing stacks — Immich's ML worker, PhotoPrism's classification models — and
 those are properties of those applications, not a domain.
 
-### Document Processing has the capabilities, not a pipeline
+### Document Processing has the capabilities, and one standalone service
 
-The domain is real and mostly already covered, in three parts rather than the two
-it was previously described as:
+The domain is real and covered in four parts:
 
 | Part | Where it lives |
 |---|---|
 | Archive and ingest — OCR, indexing, search | `apps/paperless-ngx` |
 | Browser-based editing | `apps/onlyoffice`, `apps/euro-office`, `apps/collabora` |
 | Electronic signature | `business/documenso`, `business/opensign` |
+| Document understanding for AI/RAG pipelines — layout, structure, tables | `apps/docling-serve` |
 
-Apache Tika and Gotenberg belong to Paperless-ngx as its own converters, not as
-shared services other stacks call — which is why they have no stack of their own
-and no entry in the tables.
+Apache Tika and Gotenberg still belong to Paperless-ngx as its own converters,
+not as shared services other stacks call — `docling-serve` landing did not
+give either a second consumer, so this is unchanged. `docling-serve` earns a
+standalone stack for a different reason: layout-aware document understanding
+for AI pipelines had no home in this repository at all, and multiple plausible
+callers (a workflow tool, a future RAG stack) exist for it, where Tika and
+Gotenberg still have exactly one.
 
-What does **not** exist is a general document-processing pipeline: a reusable
-path from an arbitrary input document through extraction, layout or table
-recognition, and into a structured result. That absence is deliberate. A pipeline
-is defined by the document it has to handle and the output someone needs, and
-building one before a real case exists would produce a chain of tools with no
-test for whether it works. Until a document use case demands something
-reproducible, the domain stays a way of grouping what is already here, and the
-three parts stay separate stacks rather than being merged into one.
+A general document-processing pipeline — one orchestrated path from any input
+document through every possible extraction step — still does not exist.
+`docling-serve` is one capability, consumed directly by whatever calls its
+API; it is not that pipeline. Building an orchestrated multi-step chain before
+a real case needs one remains the deliberate absence this section described
+before docling-serve existed.
+
+OCRmyPDF was evaluated for a standalone stack and excluded. Upstream describes
+its own Docker image as ephemeral — one container per OCR job, exiting like a
+command-line program, not a server — and this repository does not give a
+CLI/job tool with no independently operated service a blueprint entry. See
+[`ROADMAP.md`](../ROADMAP.md#out-of-scope-here).
 
 ### Development is a Supporting-tier domain, not a sixth category
 

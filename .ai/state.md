@@ -60,11 +60,15 @@ Development, AI/Local AI and Document/Data Processing capabilities in batches,
 each its own pull request. Batch order:
 [`decisions.md`](decisions.md) 2026-09-18 entry has the reasoning for the first.
 
-1. `development/` domain + `static-site`/`web-api` patterns — **done**, this
-   batch. `docs/architecture.md` and `docs/standards/custom-application.md`
-   updated in the same commit.
-2. Document/Data Processing: `apps/tika`, `apps/gotenberg`, `apps/docling-serve`,
-   OCRmyPDF — not started.
+1. `development/` domain + `static-site`/`web-api` patterns — **done**, PR #106.
+   `docs/architecture.md` and `docs/standards/custom-application.md` updated in
+   the same commit.
+2. Document/Data Processing — **done**, this batch. `apps/docling-serve`
+   added. OCRmyPDF evaluated and excluded: upstream ships it as an ephemeral
+   per-job container, not a service — see `ROADMAP.md` → "Out of scope here".
+   Tika, Gotenberg and ClamAV stay out of scope for this batch (per correction
+   2026-09-18, superseding the earlier plan that included Tika/Gotenberg here).
+   `docs/architecture.md` and `ROADMAP.md` updated in the same commit.
 3. `apps/greenmail`, `apps/windmill` — not started.
 4. AI foundation: `apps/qdrant`, `apps/ollama`, `apps/vllm` — not started.
 5. AI gateway/UI: `apps/litellm`, `apps/open-webui`, `apps/agentgateway` — not

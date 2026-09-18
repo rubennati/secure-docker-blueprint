@@ -49,6 +49,16 @@
     "verified_anchored": true,
     "verified_version": "v4.0.4"
   },
+  "apps/docling-serve": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=v1.34.0",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "apps/easyappointments": {
     "backup_docs": "documented",
     "local_stack": "✅",

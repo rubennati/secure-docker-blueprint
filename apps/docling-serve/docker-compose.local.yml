@@ -1,0 +1,36 @@
+# docling-serve — local
+#
+#   cp .env.local.example .env.local
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   curl http://localhost:8099/health
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+#
+# No API key by default locally — DOCLING_SERVE_API_KEY empty disables auth
+# entirely (upstream's own default). Production sets one via Docker Secrets.
+
+services:
+
+  docling-serve:
+    image: ghcr.io/docling-project/docling-serve-cpu:${APP_TAG}
+    container_name: docling-serve-local-app
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs: [/tmp]
+    environment:
+      TZ: ${TZ}
+      DOCLING_SERVE_ENABLE_UI: "1"
+    ports:
+      - "127.0.0.1:8099:5001"
+    networks: [docling-serve-local]
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:5001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+networks:
+  docling-serve-local:
+    name: docling-serve-local
