@@ -31,6 +31,9 @@ Four models describe documentation in this repository, each answering one questi
 | Direction / planned work | `ROADMAP.md` | Category READMEs reference, do not duplicate |
 | Compose standards, and every rule that carries a value — resource limits and their derivation | `docs/standards/compose-structure.md` | Every `docker-compose.yml`; `security-baseline.md` references it |
 | Env standards | `docs/standards/env-structure.md` | Every `.env.example` |
+| Image provenance — where a deployable image comes from, and what pins it | `docs/standards/custom-application.md` | `business/vikunja` (in-repo build), `apps/caldiy/UPSTREAM.md` (external pipeline) |
+| Secret generation, handling and rotation | `docs/standards/secrets.md` | `env-structure.md` references it; every stack's setup steps |
+| Application recovery once data is restored | `docs/standards/restore.md` | `backup/borgmatic/RESTORE.md` and the stack READMEs that cross-link it |
 | Local test stack — shape, header, which stacks get one | `docs/standards/compose-structure.md` | Every `docker-compose.local.yml` and `.env.local.example`; `apps/_reference/` is the worked example |
 | Security rules that are on or off — privileges, capabilities, secrets, socket access, network isolation | `docs/standards/security-baseline.md` | Every service in every compose |
 | Naming conventions | `docs/standards/naming-conventions.md` | Every compose, env, container name |

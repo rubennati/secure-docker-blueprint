@@ -6,6 +6,55 @@ this file is the index and covers decisions that have no other home.
 
 ---
 
+## 2026-09 · The custom-application path is named from the two builds that already exist
+
+`README.md` promised patterns for "applications you build yourself" while the
+same paragraph said no reference pattern existed, and
+`docs/architecture.md` said none was planned. Both were written without
+noticing that two stacks here already build their own image, in two different
+shapes: `business/vikunja` adds a layer to a published image because upstream
+ships `FROM scratch`, and `apps/caldiy` consumes a reviewed release from a
+governed fork. The pattern existed; it had never been named.
+
+[`docs/standards/custom-application.md`](../docs/standards/custom-application.md)
+is derived from those two. It owns one phase — source, build, image identity,
+and what verifies the image — and its central claim is that every phase after
+the image is unchanged and already owned elsewhere. Restating the downstream
+standards would have created a second owner for facts that already have one.
+
+**Only four rules are binding**, because only four are supported by evidence:
+no secret material in any build stage or layer (already binding everywhere
+else); the deployed image identity is explicit, reviewable and traceable, with
+no floating references; provenance is recorded in the stack's `UPSTREAM.md`;
+and everything after the image follows the existing standards unchanged.
+
+Practices that appear in **one** of the two shapes are recorded as what that
+stack does and explicitly **not** as requirements: `<app>-local:` image naming,
+a `build:` block in the local Compose file, an explicit `USER` in the final
+stage, digest-pinning every `FROM`, the `build --pull` upgrade shape, and
+universal digest pinning of the deployed image. Two instances are not a
+pattern, and this closure task was not the place to promote good engineering
+practice to repository-wide policy. Note in particular that the two shapes do
+**not** agree on digest pinning — vikunja pins a tag and digest pair, caldiy
+accepts a reviewed tag — so "immutable" is not the shared rule; explicit,
+reviewable and traceable is.
+
+Gaps are documented rather than closed: locally built images are not CVE
+scanned (Trivy cannot pull them), no checker reads a Dockerfile, Renovate
+cannot see a base pin behind a build arg, and `business/vikunja`'s tag and
+digest have **already drifted apart** unnoticed — which is the concrete reason
+the pin rule exists. The drift itself is left as found; correcting it needs a
+registry lookup and is a pin decision, not an architecture one.
+
+No ROADMAP item was created, consistent with the mission-scope decision below:
+the absence of one is deliberate, not an oversight. No directory, no framework
+sample, and no stand-in `Dockerfile` in `apps/_reference` — the template states
+its boundary and points at the standard instead.
+
+What remains absent is a **first-party** application: source with no upstream at
+all. Both real cases wrap third-party software, so that shape is unproven, and
+the mission's residual now sits in a reasoned absence rather than a false claim.
+
 ## 2026-09 · `core/` is defined by scope, not dependency; `whoami` moves to `apps/`
 
 `core/` held five different definitions across two canonical files, three of

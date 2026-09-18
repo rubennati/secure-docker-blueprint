@@ -28,11 +28,22 @@ in order rather than guessing from the name.
 
 [`docs/architecture.md`](../../docs/architecture.md#physical-layout-conceptual-domains-and-navigation-are-three-different-layers)
 is binding here. Development / Custom Applications, AI & Local AI and Document
-Processing are documentation and navigation vocabulary today, not categories —
-do not create a directory, a template or a stack for one because it has a name.
-A domain earns a directory by failing the categorisation test above, the same
-as anything else. `docker-compose.local.yml` is a deployment mode of an
-existing app, not Development — the two are not the same problem.
+Processing are conceptual domains, not categories — none of them gets a
+directory, and do not create a stack for one because it has a name. A domain
+earns a directory by failing the categorisation test above, the same as anything
+else. `docker-compose.local.yml` is a deployment mode of an existing app, not
+Development — the two are not the same problem.
+
+The three are not in the same state, so do not treat them alike:
+
+- **Custom Applications** has a standard,
+  [`custom-application.md`](../../docs/standards/custom-application.md), derived
+  from two stacks that really build their own image. A standard is not a
+  directory. What is still absent is a first-party application — source with no
+  upstream.
+- **AI & Local AI** has no stack. **Document Processing** has real capabilities
+  across existing stacks but no reusable pipeline. Both absences are reasoned
+  where they are recorded; neither is a gap to fill on sight.
 
 ## Networking
 

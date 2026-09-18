@@ -91,8 +91,8 @@ The mission covers two kinds of software: existing self-hosted open-source
 projects, and applications someone builds themselves. Both go through the same
 **deploy → secure → operate → recover** model, but the first phase differs — an
 existing project starts from a published, versioned image; software someone
-builds starts from source and a build step this repository does not template
-yet.
+builds starts from source and a build step, which
+[`standards/custom-application.md`](standards/custom-application.md) owns.
 
 **This is not what `docker-compose.local.yml` is for.** The local test stack
 ([`standards/compose-structure.md`](standards/compose-structure.md)) is a
@@ -101,13 +101,24 @@ published without Traefik, DNS or a certificate so it can be tried on one
 machine. It answers "how do I try this app," not "how do I harden an app I
 wrote."
 
-No reference exists yet for a custom application, and none is planned.
-`apps/_reference` templates the hardening pattern around a pre-built, versioned
-image — its `UPSTREAM.md`, its `_FILE`-secret assumptions and the Trivy scan
-target all presume one. The gap stays unaddressed until a real application
-needs it: inventing a shape for it now would be exactly the placeholder this
+Two stacks here already build their own image, in two different shapes:
+`business/vikunja` adds a layer to a published image because upstream ships
+`FROM scratch`, and `apps/caldiy` consumes a governed fork's reviewed release.
+[`standards/custom-application.md`](standards/custom-application.md) is derived
+from those two — it covers source, build, image identity and what verifies the
+image, and states that every phase after the image is unchanged.
+
+`apps/_reference` still templates the hardening pattern around a pre-built,
+versioned image — its `UPSTREAM.md`, its `_FILE`-secret assumptions and the
+Trivy scan target all presume one. That boundary is where the standard starts,
+and it is why a stack that builds adds a `Dockerfile` and a `build:` block to
+the same structure rather than following a different one.
+
+What remains genuinely absent is a *first-party* application — source with no
+upstream at all. Both real cases wrap third-party software, so the shape for
+that one is unproven, and inventing it now would be exactly the placeholder this
 repository avoids elsewhere (`decisions.md`: "a reasoned absence is the outcome,
-not a gap").
+not a gap"). It stays absent until a real application needs it.
 
 ---
 
@@ -189,6 +200,7 @@ make sense, and it does not know which of them are installed.
 | **Network** | hub-and-spoke layout, isolation, which service belongs on which network | [`standards/networking.md`](standards/networking.md) |
 | **Secrets** | how a credential reaches a container without entering the image or the environment | [`standards/security-baseline.md`](standards/security-baseline.md) |
 | **Backup** | what is protected, from what, and how a restore is proven | [`../backup/README.md`](../backup/README.md) |
+| **Image provenance** | where a deployable image comes from, and what pins it, when this repository builds it rather than pulling one | [`standards/custom-application.md`](standards/custom-application.md) |
 | **Updates** | version pinning and the upgrade path per stack | each stack's `UPSTREAM.md` |
 | **Lifecycle** | what has been established about each stack | [`standards/status-model.md`](standards/status-model.md) |
 

@@ -23,6 +23,12 @@ The prose specs stay in [`docs/standards/`](../../docs/standards/) — this
 directory is their working embodiment. Where they disagree, the standard wins
 and this app gets fixed.
 
+This structure presumes a published, versioned image: the `UPSTREAM.md` template,
+the `_FILE` secret assumptions and the Trivy scan target all expect one. A stack
+that builds its own image adds a `Dockerfile` and a `build:` block above `image:`
+and changes nothing else here — see
+[`custom-application.md`](../../docs/standards/custom-application.md).
+
 ## Four lenses
 
 Every file here is meant to hold up under all four. The same lenses drive
