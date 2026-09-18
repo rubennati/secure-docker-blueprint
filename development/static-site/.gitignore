@@ -1,0 +1,5 @@
+.env
+.env.local
+volumes/
+recipes/*/node_modules/
+recipes/*/dist/

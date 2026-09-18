@@ -34,7 +34,9 @@ accesses the system:
 | `backup/` | Data protection across the stack — privileged |
 
 Supporting: `docs/` (architecture, standards, maintenance, bugfixes, audits),
-`scripts/ci/` (the checkers), `site/` (operator site), `.github/` (CI and templates).
+`scripts/ci/` (the checkers), `site/` (operator site), `.github/` (CI and
+templates), `development/` (reusable deployment patterns for software built in
+this repository — checked like a stack, never deployed as one).
 
 ## Canonical locations
 

@@ -75,6 +75,7 @@ apps/         general self-hosted applications
 business/     business applications
 monitoring/   monitoring and observability
 backup/       backup and recovery
+development/  reusable patterns for software you build yourself
 docs/         architecture and standards
 scripts/      CI checks and the overview script
 site/         SecDockBlue source
@@ -112,7 +113,7 @@ run, against which version, and what remains unverified.
 | Verification status per stack | [LIFECYCLE.md](LIFECYCLE.md) |
 | Networking model, categories, capabilities | [docs/architecture.md](docs/architecture.md) |
 | Compose, env, secrets, networking, restore rules | [docs/standards/](docs/standards/) |
-| Applications you build yourself | [docs/standards/custom-application.md](docs/standards/custom-application.md) |
+| Applications you build yourself | [development/](development/) (patterns) · [docs/standards/custom-application.md](docs/standards/custom-application.md) (rules) |
 | Symptom-to-cause troubleshooting | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) |
 | Adding a stack, contributing | [CONTRIBUTING.md](CONTRIBUTING.md) · [new-app checklist](docs/standards/new-app-checklist.md) |
 | Reporting a vulnerability | [SECURITY.md](SECURITY.md) |

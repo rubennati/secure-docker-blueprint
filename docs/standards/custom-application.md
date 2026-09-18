@@ -30,10 +30,10 @@ kind of stack — it is the same stack with four extra phases in front of it.
 
 ---
 
-## The two shapes
+## The shapes
 
-Both exist here. They are not two instances of one procedure; they are two answers
-to the same question — where does the deployable image come from?
+Three exist here. They are not instances of one procedure; each answers the same
+question — where does the deployable image come from — differently.
 
 **In-repo build layer** — [`business/vikunja`](../../business/vikunja/). The source
 is a `Dockerfile` in the stack directory, the stack's own Compose file builds it,
@@ -49,9 +49,27 @@ is now reviewed before it can reach a deployable image. Its branch contract and
 governance documents are recorded in
 [`apps/caldiy/UPSTREAM.md`](../../apps/caldiy/UPSTREAM.md).
 
-The shapes differ in where the build lives, which follows from what is being built:
-a thin delta over a published image, versus a codebase with its own release
-surface. Both stacks are shaped the way their own history made necessary.
+**Reusable pattern, no concrete application yet** —
+[`development/static-site/`](../../development/static-site/) and
+[`development/web-api/`](../../development/web-api/). Both build a project's
+own source into a hardened production image; neither has a real application
+behind it. Adoption is by copying the pattern into `apps/` or `business/` under
+the real project's name, not by reference — at that point the copy is one of
+the two shapes above, most often the in-repo build layer, and this document's
+rules apply to it the same way. Each pattern is proven by a minimal fixture —
+a working build that produces a healthy container — which establishes that the
+pattern's Dockerfile and Compose shape are correct. It does not establish that
+any real, adopted project has gone through it yet; that evidence starts
+accumulating the first time a project is actually copied out.
+
+The shapes differ in where the build lives, which follows from what is being
+built: a thin delta over a published image, a codebase with its own release
+surface, or a starting point with no codebase yet. `business/vikunja` and
+`apps/caldiy` are shaped the way their own history made necessary; the
+`development/` patterns are shaped the way a reusable starting point has to be
+— generic enough to copy, complete enough to prove the contract without
+becoming a product of their own (see
+[`development/README.md`](../../development/README.md)).
 
 ---
 
@@ -148,9 +166,11 @@ upstream licence and a verified version. Both real cases satisfy that because bo
 have an upstream. A genuinely first-party application would have neither, and the
 criteria still require both — this repository has no such stack to widen them for.
 
-**No fully first-party application has been built or verified here.** Both shapes
-wrap third-party software: one adds a layer to a published image, the other
-governs a fork. Source with no upstream at all is the residual this document does
-not cover, and inventing a shape for it would be the placeholder this repository
-avoids elsewhere — a reasoned absence is the outcome, not a gap. It stays that way
-until a real application needs it.
+**No fully first-party application has been built or verified here.** The two
+real stacks still wrap third-party software: one adds a layer to a published
+image, the other governs a fork. `development/`'s patterns give source with no
+upstream at all a shape to start from, established because the need for a
+reusable starting point was real and current — but a pattern proven by its own
+fixture is not the same evidence as a real project that went through it. No
+project has been copied out of `development/` and operated yet, so this row
+stays a gap until one has.
