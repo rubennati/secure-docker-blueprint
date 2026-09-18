@@ -6,6 +6,43 @@ this file is the index and covers decisions that have no other home.
 
 ---
 
+## 2026-09 · Optional watchdogs for the Docker daemon and Traefik, bounded and opt-in
+
+A read-only host-resilience evaluation found that `restart: unless-stopped` and
+container healthchecks already cover a crashed process, but nothing acts on a
+service that is running and unhealthy — Traefik included — or on the Docker
+daemon's API hanging while the process stays alive. `docker inspect --format
+'{{.State.OOMKilled}} {{.RestartCount}}'` in `docs/resource-measurement.md` was
+already a manual command, never automated.
+
+`willfarrell/autoheal`, the common general-purpose answer, was already rejected
+once in this repository — `business/openproject/docker-compose.yml` omits it
+because it needs a direct `docker.sock` mount, which containers here do not get.
+A host-installed script run by systemd as root is a different trust boundary and
+does not need that exception; it has the access an administrator already has.
+
+Two independent scripts, `core/host-watchdog/docker-daemon-watchdog.sh` and
+`core/traefik/ops/scripts/traefik-watchdog.sh`, each follow the same bounded
+model: N consecutive confirmed failures → one recovery attempt → re-verify →
+report and stop retrying if it did not hold. Neither installs by default,
+neither is required by anything else, and either can be enabled alone. Both
+report to a Healthchecks check on every run — the same dead-man's-switch
+pattern `backup/borgmatic` already uses — so the watchdog itself going silent
+is caught independently of whatever it watches.
+
+Restarting Traefik on sustained unhealthy status is accepted specifically
+because it holds no state — a wrong restart costs seconds of routing, not
+data. This is not a general auto-heal policy: a stateful service reported
+unhealthy should still alert a person, not restart itself, and the README
+says so explicitly.
+
+Neither script has run on a live host. The systemd hardening blocks mirror
+`backup/borgmatic.service.example`'s pattern as a documented starting point,
+not a verified one — matching this repository's own standard for anything
+new: configured, not yet exercised.
+
+---
+
 ## 2026-09-18 · Windmill runs without job sandboxing rather than with privileged workers
 
 Upstream's default Windmill worker is `privileged: true`, for PID-namespace

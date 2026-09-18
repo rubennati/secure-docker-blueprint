@@ -673,6 +673,15 @@ Delete all rendered config files (templates stay untouched):
 bash ops/scripts/reset-templates.sh
 ```
 
+## Watchdog (optional)
+
+Not installed by default. `ops/scripts/traefik-watchdog.sh` restarts this
+container after it has been reported unhealthy for several consecutive
+checks in a row, and only once per confirmed episode — see
+[`core/host-watchdog/README.md`](../host-watchdog/README.md) for the shared
+model, the reasoning, and why this is judged acceptable for Traefik
+specifically (it holds no state) and not a general pattern.
+
 ## Backup
 
 | | |

@@ -63,6 +63,13 @@ hosts. Pick one pair, or neither.
 
 Planned: none.
 
+### Optional host tooling
+
+[`host-watchdog/`](host-watchdog/) — two independent, host-installed,
+opt-in scripts that give the Docker daemon and the Traefik container one
+bounded, automatic recovery attempt after a confirmed sustained failure.
+Not a stack, not installed by default, and not required by anything above.
+
 ## Related
 
 - [`apps/`](../apps/) — user-facing applications, including the operator and

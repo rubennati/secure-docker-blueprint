@@ -423,6 +423,14 @@
     "license_class": "osi",
     "origin": "Finsys · **no country or legal entity stated** — no imprint on fnsys.pro"
   },
+  "core/host-watchdog": {
+    "bloc": "none",
+    "country": "First-party",
+    "entity": "this repository",
+    "license": "Apache-2.0",
+    "license_class": "osi",
+    "origin": "First-party · this repository · no single jurisdiction"
+  },
   "core/infisical": {
     "bloc": "non-EU",
     "country": "US",

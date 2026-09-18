@@ -1,0 +1,25 @@
+# =============================================
+# docker-daemon-watchdog – systemd timer
+# =============================================
+# Install alongside docker-daemon-watchdog.service.example — a timer without
+# the matching service does nothing.
+#
+# Install to /etc/systemd/system/docker-daemon-watchdog.timer, then:
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now docker-daemon-watchdog.timer
+#   systemctl list-timers docker-daemon-watchdog.timer   # confirm the next run
+# =============================================
+
+[Unit]
+Description=Run the Docker daemon watchdog on a schedule
+
+[Timer]
+# Every 2 minutes. Kept short because CONFIRM_AFTER (default 3) multiplies
+# this into the actual sustained-failure window before any action is taken —
+# see docker-daemon-watchdog.env.example. A longer interval here means a
+# longer wait before the watchdog acts at all.
+OnBootSec=2min
+OnUnitActiveSec=2min
+
+[Install]
+WantedBy=timers.target

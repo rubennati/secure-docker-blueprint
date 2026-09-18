@@ -1,0 +1,54 @@
+# =============================================
+# docker-daemon-watchdog – systemd service
+# =============================================
+# The unit docker-daemon-watchdog.timer activates. A timer alone does nothing
+# without this file.
+#
+# Install to /etc/systemd/system/docker-daemon-watchdog.service, then:
+#   sudo systemctl daemon-reload
+#   sudo systemd-analyze verify /etc/systemd/system/docker-daemon-watchdog.service
+#   sudo systemctl start docker-daemon-watchdog.service    # prove it once
+#   journalctl -u docker-daemon-watchdog.service -n 20
+#
+# Hardening follows the same pattern as backup/borgmatic.service.example.
+# RestrictAddressFamilies keeps AF_UNIX (the Docker socket) and AF_INET/
+# AF_INET6 (the Healthchecks ping over HTTPS). This has not been run on a
+# live host — treat the hardening block as a starting point, not a proof;
+# relax a directive if it turns out to block a step the script needs.
+# =============================================
+
+[Unit]
+Description=Docker daemon watchdog — one bounded restart attempt on confirmed API failure
+Wants=network-online.target
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+RuntimeDirectory=docker-daemon-watchdog
+StateDirectory=docker-daemon-watchdog
+
+# --- Hardening ---
+LockPersonality=true
+MemoryDenyWriteExecute=yes
+NoNewPrivileges=yes
+PrivateDevices=yes
+PrivateTmp=yes
+ProtectClock=yes
+ProtectControlGroups=yes
+ProtectHostname=yes
+ProtectKernelLogs=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+ProtectSystem=full
+
+Restart=no
+LogRateLimitIntervalSec=0
+
+ExecStart=/usr/local/bin/docker-daemon-watchdog.sh

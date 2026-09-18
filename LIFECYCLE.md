@@ -4,7 +4,7 @@
 
 Generated 2026-09-18 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-65 stacks: 1 ops-proven · 13 baseline-aligned · 51 scaffolded. 56 carry a local test stack.
+66 stacks: 1 ops-proven · 13 baseline-aligned · 52 scaffolded. 56 carry a local test stack.
 
 This is the maintainer's view: what has been established about each stack. It makes no statement about whether a stack suits a given deployment.
 
@@ -25,6 +25,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`core/dnsmasq`](core/dnsmasq/) | `scaffolded` | `APP_TAG=2.93` | 2026-04-14 ⚠️ | — | documented | missing |
 | [`core/dockhand`](core/dockhand/) | `scaffolded` | `APP_TAG=v1.0.47` | 2026-04-16 ⚠️ | ✅ | documented | missing |
 | [`core/hawser`](core/hawser/) | `scaffolded` | `APP_TAG=0.2.47` | 2026-04-14 ⚠️ | — | documented | missing |
+| [`core/host-watchdog`](core/host-watchdog/) | `scaffolded` | *host-installed* | — | — | missing | missing |
 | [`core/infisical`](core/infisical/) | `scaffolded` | `APP_TAG=v0.165.10` | — | ✅ | documented | missing |
 | [`core/keycloak`](core/keycloak/) | `baseline-aligned` | `APP_TAG=26.7.3` | 2026-09-07 | ✅ | documented | missing |
 | [`core/portainer`](core/portainer/) | `scaffolded` | `APP_TAG=2.39.7` | 2026-04-16 ⚠️ | ✅ | documented | missing |
