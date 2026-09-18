@@ -101,8 +101,10 @@ Planned (apps/): Headscale (self-hosted Tailscale control server), PrivateBin, S
 |---|---|---|
 | [Adminer](adminer/) | Single container | Database administration UI (connects to other apps' DBs) |
 | [IT-Tools](it-tools/) | Single container | Collection of IT / developer utilities (JSON, hash, regex, etc.) |
+| [GreenMail](greenmail/) | Single container | SMTP, IMAP and POP3 test server with a real mailbox per recipient — for automated tests that log in and assert on what arrived |
 | [Mailpit](mailpit/) | Single container | SMTP sink for trying out the stacks that send mail — accepts every message, shows it, delivers nothing |
 | [Whoami](whoami/) | Single container | Traefik debug service to verify routing, TLS and middlewares — deploy temporarily, then disable |
+| [Windmill](windmill/) | Server + 2 workers + PostgreSQL 18 | Code-first scripts, flows, APIs and scheduled jobs on a Postgres-backed queue. Replace the built-in administrator before exposing it |
 
 Docker-management tools (Dockhand / Portainer / Hawser) are in [`core/`](../core/): they control Docker itself, which is an installation-scoped capability. Whoami sits here instead — it is a routed diagnostic that serves no other stack.
 

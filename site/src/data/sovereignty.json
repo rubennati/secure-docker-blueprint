@@ -71,6 +71,14 @@
     "license_class": "osi",
     "origin": "Ireland · Ghost Foundation · EU"
   },
+  "apps/greenmail": {
+    "bloc": "EU",
+    "country": "Community",
+    "entity": "Marcel May",
+    "license": "Apache-2.0",
+    "license_class": "osi",
+    "origin": "Community · Marcel May · Germany · EU"
+  },
   "apps/heimdall": {
     "bloc": "non-EU",
     "country": "UK",
@@ -254,6 +262,14 @@
     "license": "Apache-2.0",
     "license_class": "osi",
     "origin": "France · Traefik Labs · EU"
+  },
+  "apps/windmill": {
+    "bloc": "none",
+    "country": "Windmill Labs",
+    "entity": "no country stated in its published terms",
+    "license": "AGPL-3.0 (Community Edition core, with Apache-2.0 components); Enterprise features are under a separate commercial licence",
+    "license_class": "mixed",
+    "origin": "Windmill Labs · no country stated in its published terms · no country"
   },
   "apps/wordpress": {
     "bloc": "non-EU",

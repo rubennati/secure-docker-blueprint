@@ -1,0 +1,51 @@
+# GreenMail — local
+#
+#   cp .env.local.example .env.local
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   python3 -c "import smtplib; ..."     # send to 127.0.0.1:3025
+#   curl http://localhost:8080/          # Swagger UI
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+#
+# Verified 2026-09-18: a real SMTP send (raw protocol) followed by IMAP
+# LOGIN/SELECT/FETCH against this exact hardened configuration retrieved the
+# message intact. -Dgreenmail.auth.disabled means any IMAP/POP3 credentials
+# are accepted — the intended mode for a test double.
+
+services:
+
+  greenmail:
+    image: greenmail/standalone:${APP_TAG}
+    container_name: greenmail-local-app
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs: [/tmp]
+    environment:
+      JAVA_OPTS: "-Djava.net.preferIPv4Stack=true"
+      GREENMAIL_OPTS: >-
+        -Dgreenmail.setup.test.all
+        -Dgreenmail.hostname=0.0.0.0
+        -Dgreenmail.tls.keystore.file=/home/greenmail/greenmail.p12
+        -Dgreenmail.tls.keystore.password=changeit
+        -Dgreenmail.auth.disabled
+        -Dgreenmail.startup.timeout=10000
+    ports:
+      - "127.0.0.1:3025:3025"   # SMTP
+      - "127.0.0.1:3110:3110"   # POP3
+      - "127.0.0.1:3143:3143"   # IMAP
+      - "127.0.0.1:3465:3465"   # SMTPS
+      - "127.0.0.1:3993:3993"   # IMAPS
+      - "127.0.0.1:3995:3995"   # POP3S
+      - "127.0.0.1:8080:8080"   # REST API / Swagger UI
+    networks: [greenmail-local]
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/3025' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+networks:
+  greenmail-local:
+    name: greenmail-local
