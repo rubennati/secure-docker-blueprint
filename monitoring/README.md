@@ -12,9 +12,6 @@ What has been established about each stack — verified against which version an
 |---|---|---|
 | [Uptime Kuma](uptime-kuma/) | UI-driven, SQLite | Community default. Click-config, 90+ notification integrations, public status pages. |
 | [Gatus](gatus/) | YAML-as-code, SQLite/Postgres | Config-as-code counterpart. Prometheus export built-in. |
-| [Statping](#) | UI-driven | Older alternative to Kuma. Less active, but richer plugin ecosystem. |
-| [ciao](#) | Minimal HTTP checks | Ruby, YAML-driven. Tiny — "Gatus without the UI." |
-| [Checkmate](#) | Modern YAML uptime | Newer alternative to Gatus, richer UI. |
 
 ### Cron & scheduled-job monitoring
 
@@ -28,8 +25,6 @@ What has been established about each stack — verified against which version an
 |---|---|---|
 | [Beszel](beszel/) | Hub + local agent | Lightweight (~20 MB per agent), modern, per-container Docker stats. |
 | [Beszel Agent](beszel-agent/) | Standalone agent for remote hosts | Deploy on each additional host; same hub key, no hub needed on the remote. |
-| [Zabbix](#) | Full NMS (Server + Frontend + Agent + DB) | Enterprise-grade. Heavy — use only if you need SNMP, auto-discovery, or complex triggers. |
-| [Grafana + Prometheus](#) | Scrape-and-visualize classic | Industry standard. Prometheus stores + Grafana dashboards. Needs scrape targets (Beszel can export; cAdvisor / node-exporter are typical). |
 
 ### Content & web change detection
 
@@ -37,23 +32,25 @@ What has been established about each stack — verified against which version an
 |---|---|---|
 | [changedetection.io](changedetection/) | Page diff + notification | Restock / price / ToS / defacement watcher. |
 
-### Disk health
-
-| App | Approach | Notes |
-|---|---|---|
-| [Scrutiny](#) | S.M.A.R.T. dashboard | Hub + collector on each host with disks. Needs `/dev/sd*` passthrough. |
-
 ### Notification receivers
 
 Not a monitoring axis — the receiving end of one. Every service above can reach
-these, which is what makes them usable as a single channel across all of them.
-They belong on a different host than the services that publish to them; see
+this, which is what makes it usable as a single channel across all of them. It
+belongs on a different host than the services that publish to it; see
 [Where the receiver runs](#where-the-receiver-runs).
 
 | App | Approach | Notes |
 |---|---|---|
 | [ntfy](ntfy/) | Topic-based push over HTTP | Self-hosted, no account. A free public instance exists, so an off-host path costs no second machine. iOS push needs `upstream-base-url`. |
-| [Gotify](#) | Token-based push, own Android app | Self-hosting only — no public instance, so it always needs a home. Healthchecks reaches it through Apprise rather than natively. |
+
+## Planned
+
+Not deployable here yet. See [`ROADMAP.md`](../ROADMAP.md) for status.
+
+- **Statping**, **ciao**, **Checkmate** — uptime monitoring
+- **Zabbix**, **Grafana + Prometheus** — metrics and dashboards
+- **Scrutiny** — disk S.M.A.R.T. health
+- **Gotify** — push notifications
 
 ## Recommended starter combo
 
@@ -64,8 +61,6 @@ Pick one per axis you care about:
 | "Is my website / service up?" | **Uptime Kuma** (UI) OR **Gatus** (YAML) |
 | "What is my server doing right now?" | **Beszel** |
 | "Did this external page change?" | **changedetection.io** |
-| "Is my disk about to fail?" | Scrutiny *(planned)* |
-| "Long-term metric graphs / capacity planning?" | Grafana + Prometheus *(planned)* |
 | "How do the alerts reach me?" | **ntfy** — on a different host than the rest |
 
 A realistic homelab stack: Kuma OR Gatus + Beszel + changedetection.io. Covers the 90% case. Add `beszel-agent/` on each additional host you want in the metrics view, and ntfy wherever it is not next to them.
@@ -178,19 +173,6 @@ Proven so far:
 
 Whether it also arrives while the sending host itself is down is a property of the
 topology, not of the channel — established where the deployment is, not here.
-
-## Why these seven are in place and seven are planned
-
-The services in place cover **four distinct monitoring axes** with minimal overlap — uptime (Kuma or Gatus), host and container metrics (Beszel + agent), scheduled-job liveness (Healthchecks), and content change (changedetection.io) — plus ntfy as the receiving end for all of them. The seven planned apps are overlapping alternatives or specialized heavier tools — add them on demand when the ones in place don't fit.
-
-Rationale per planned:
-
-- **Statping / ciao** — overlap with Uptime Kuma. Pick up only if Kuma turns out unsuitable.
-- **Checkmate** — overlap with Gatus. Pick up if you want to compare YAML-config uptime tools.
-- **Zabbix** — heavy enterprise NMS. Draft when you actually need SNMP / auto-discovery / multi-tenant.
-- **Grafana + Prometheus** — bigger project. Needs Beszel / node-exporter / cAdvisor as exporters first. Draft when you've outgrown Beszel's built-in graphs.
-- **Scrutiny** — requires physical-disk passthrough (`/dev/sda` etc.) — host-specific. Draft when deploying on hardware with spinning rust or NVMe where SMART data matters.
-- **Gotify** — overlaps with ntfy. Pick up if the Android app or the token model fits better; note that Healthchecks reaches it only through Apprise.
 
 ## Layout
 

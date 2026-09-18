@@ -1,16 +1,12 @@
 # Apps
 
 General-purpose self-hosted applications — equally useful to a private homelab and
-to a company. This is the "everything else" category: a stack lands here when it
-serves its own users rather than the installation.
-
-That includes operator and diagnostic tooling. A service is not infrastructure
-because an operator rather than an end user opens it, and it is not infrastructure
-because it is short-lived — see [Developer & admin tools](#developer--admin-tools).
+to a company, including operator and diagnostic tooling. See
+[`docs/architecture.md`](../docs/architecture.md#directory-structure) for how this
+category is defined relative to the other four.
 
 Where several tools compete — dashboards, photo galleries, wikis, form builders —
-the blueprint ships more than one. What separates them is on the operator site:
-[Choosing between services](https://secdockblue.rubennati.at/applications/choosing/).
+the blueprint ships more than one.
 
 ## What's here
 
@@ -115,6 +111,6 @@ Planned (apps/): Wiki.js, Outline, Formbricks, HeyForm, Shlink.
 ## Related
 
 - [`core/`](../core/) — shared platform and control plane
-- [`business/`](../business/) — applications that need a company to be useful
+- [`business/`](../business/) — invoicing, project management, helpdesk, analytics, e-signature
 - [`docs/architecture.md`](../docs/architecture.md) — why the categories are what
   they are, and the networking model every stack here follows

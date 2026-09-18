@@ -11,7 +11,7 @@
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-v0.9.0-blue)](CHANGELOG.md)
 
-**[Stacks](#stacks) · [Getting started](#getting-started) · [Repository layout](#repository-layout) · [Architecture](docs/architecture.md) · [Standards](docs/standards/) · [Verified status](LIFECYCLE.md)**
+**[Stacks](#stacks) · [Getting started](#getting-started) · [Repository layout](#repository-layout) · [Architecture](docs/architecture.md) · [Standards](docs/standards/) · [Verified status](LIFECYCLE.md) · [SecDockBlue](https://secdockblue.rubennati.at)**
 
 </div>
 
