@@ -26,7 +26,7 @@ Five top-level categories, split by **how** each tool accesses the system — no
 
 | Directory | Responsibility | Access pattern |
 |---|---|---|
-| `core/` | Infrastructure every other service depends on | Privileged — manages other containers, network, TLS |
+| `core/` | Shared platform and control plane — capabilities scoped to the installation, not to one stack | Privileged or cross-stack — controls Docker, the host or other containers, or serves a capability other stacks route through, authenticate against, resolve names with, or store secrets in |
 | `apps/` | User-facing applications | Standard — Traefik-routed, DB + volume access |
 | `business/` | Business operations tools | Standard — same pattern as `apps/`, distinct operational scope |
 | `monitoring/` | Observability and alerting | Cross-stack — reads metrics and logs from other containers |
@@ -38,11 +38,11 @@ Five top-level categories, split by **how** each tool accesses the system — no
 
 | Directory | Test |
 |---|---|
-| `core/` | Does the stack — or a large part of it — break without this, or does it control Docker itself, or is it shared identity, certificates, DNS or WAF? |
+| `core/` | Does it control Docker, the host or other containers, or does it provide a shared network, TLS, identity, DNS, security or secrets capability for the installation rather than for its own users? Scope decides, not dependency: a member may be optional, and two members may be alternatives to each other. |
 | `monitoring/` | Does it observe one or more other services? |
 | `backup/` | Does it protect data belonging to other services? |
 | `business/` | Is a company needed for this to be useful at all? (issuing invoices, customer helpdesk, compliance) |
-| `apps/` | Everything else — would a homelab user *and* a company both use it? |
+| `apps/` | Everything else — would a homelab user *and* a company both use it? A stack that serves its own users belongs here, including a diagnostic fixture deployed to prove another stack works: that is a lifecycle property, and no category test asks about lifecycle. |
 
 The rule was sharpened after an earlier attempt placed `business/` by analogy to `monitoring/` and left ten existing apps stranded. Categorising by **access pattern** rather than by audience is what makes it hold.
 
@@ -61,8 +61,11 @@ own reason to change.
 | **Website navigation** | how does a reader find this? | `site/` | reader research shows a different grouping helps — already independent today, see the site's Infrastructure/Applications/Operations split |
 
 The physical layout is `core/apps/business/monitoring/backup`, unchanged, and is
-the only one of the three enforced in CI (`check-structure.py`,
-`new-app-checklist.md`). A conceptual domain can exist purely as documentation
+the only one of the three that CI knows about at all: `check-structure.py` and
+`check-coverage.py` enforce that every stack sits under one of the five roots and
+that no root goes unchecked. Which of the five a given stack belongs in is a
+judgement against the table above, not something CI can decide. A conceptual
+domain can exist purely as documentation
 and navigation vocabulary, with no stack in it, for as long as that stays
 useful to a reader — it earns a directory the same way any category does: by
 failing every test in the [Directory Structure](#directory-structure) table.
@@ -338,16 +341,27 @@ file that uses no proxy at all.
 
 ## Core Services and Their Roles
 
-`core/` is a privilege category, not the capability model — it holds what manages other
-containers, the network or TLS. Which capability each service implements is the table
+`core/` holds capabilities whose scope is the installation rather than one stack:
+control of Docker, the host or other containers, and shared network, TLS, identity,
+DNS, security or secrets. A member may be optional, and two members may be
+alternatives to each other — optionality does not disqualify a capability, because
+scope is what the category is about. It is a scope and privilege category, not the
+capability model; which capability each service implements is the table
 [above](#capabilities-and-reference-implementations).
 
-| Service | Implements | Why it is in `core/` |
+Grouped by role, every member accounted for:
+
+| Role | Members | Why it is in `core/` |
 |---|---|---|
-| Traefik | Reverse Proxy — TLS termination, routing, access and security middleware | Terminates TLS and reaches every routed container |
-| Socket Proxy | Foundation/Docker — mediated socket access | Keeps the Docker socket off the services that need container metadata |
-| CrowdSec | Threat Detection & Remediation, and currently Web Application Security | Reads logs across stacks; its decisions are enforced elsewhere |
-| Authentik | Identity & Access | An identity provider several applications can share |
+| Request path | Traefik (with its socket proxy), CrowdSec | Terminates TLS and reaches every routed container; the socket proxy keeps the Docker socket off services that only need container metadata; CrowdSec reads logs across stacks and its decisions are enforced elsewhere |
+| Shared identity | Authentik (reference implementation), Keycloak (maintained alternative) | An identity provider several applications authenticate against |
+| Shared names and certificates | dnsmasq, acme-certs | Resolves names for the installation; issues certificates for the devices that never pass through Traefik |
+| Shared secrets | Infisical | Optional central alternative to per-stack Docker Secrets — it holds other stacks' credentials |
+| Docker control plane | Dockhand + Hawser, Portainer + Portainer Agent | Control the Docker daemon, locally or on remote hosts; each pair is a UI plus its agent |
+
+The socket proxy is a service inside `core/traefik`, not a directory of its own.
+`acme-certs` is being extracted to its own repository ([`ROADMAP.md`](../ROADMAP.md)) —
+a maintenance decision, not a classification one.
 
 ---
 

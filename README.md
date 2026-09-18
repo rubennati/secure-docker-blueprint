@@ -134,7 +134,6 @@ the choice guidance for that category.
 | [dnsmasq](core/dnsmasq/) | DNS forwarder with wildcard zones for Tailscale / split-DNS setups |
 | [acme-certs](core/acme-certs/) | Certificate tool (acme.sh) for devices without Traefik (NAS, routers) |
 | [CrowdSec](core/crowdsec/) | Threat detection engine — log analysis, scenarios, threat decisions. Enforcement is a separate choice: reverse-proxy or host-firewall remediation |
-| [Whoami](core/whoami/) | Traefik debug service to verify routing, TLS, and middlewares |
 | [Dockhand](core/dockhand/) | Docker management with Git-based stacks |
 | [Portainer](core/portainer/) | Docker management UI |
 | [Hawser](core/hawser/) | Remote Docker agent for Dockhand |
@@ -232,8 +231,9 @@ Planned (apps/): Headscale (self-hosted Tailscale control server), PrivateBin, S
 | [Adminer](apps/adminer/) | Single container | Database administration UI (connects to other apps' DBs) |
 | [IT-Tools](apps/it-tools/) | Single container | Collection of IT / developer utilities (JSON, hash, regex, etc.) |
 | [Mailpit](apps/mailpit/) | Single container | SMTP sink for trying out the stacks that send mail — accepts every message, shows it, delivers nothing |
+| [Whoami](apps/whoami/) | Single container | Traefik debug service to verify routing, TLS and middlewares — deploy temporarily, then disable |
 
-Docker-management tools (Dockhand / Portainer / Hawser) moved to [`core/`](core/) — they're infrastructure, not apps.
+Docker-management tools (Dockhand / Portainer / Hawser) are in [`core/`](core/): they control Docker itself, which is an installation-scoped capability. Whoami sits here instead — it is a routed diagnostic that serves no other stack.
 
 Planned (apps/): Wiki.js, Outline, Formbricks, HeyForm, Shlink.
 
@@ -291,7 +291,7 @@ New here? Start with the area that best matches your goal: [Core Infrastructure]
 
 | Directory | Scope |
 |---|---|
-| [`core/`](core/) | Infrastructure shared by everything — Traefik, CrowdSec, identity providers (Authentik, Keycloak), certs |
+| [`core/`](core/) | Shared platform and control plane — capabilities scoped to the installation rather than to one stack: Docker/host control, network, TLS, identity, DNS, security, secrets. Members may be optional, and some are alternatives to each other |
 | [`apps/`](apps/) | General-purpose self-hosted apps — equally useful for private homelab or a company |
 | [`business/`](business/) | Apps that only make sense in a company context — invoicing, helpdesk, newsletter, compliance |
 | [`monitoring/`](monitoring/) | Ops observability — uptime, metrics, content-change watching, disk SMART |
@@ -302,14 +302,13 @@ New here? Start with the area that best matches your goal: [Core Infrastructure]
 ```text
 secure-docker-blueprint/
 │
-├── core/                        # Infrastructure (always needed)
+├── core/                        # Shared platform / control plane
 │   ├── traefik/                 #   Reverse proxy + socket proxy
 │   ├── authentik/               #   SSO / Identity provider
 │   ├── keycloak/                #   SSO / Identity provider — the alternative
 │   ├── crowdsec/                #   Intrusion detection + Traefik bouncer
 │   ├── dnsmasq/                 #   DNS forwarder / split-DNS
 │   ├── acme-certs/              #   Certificate tool (acme.sh)
-│   ├── whoami/                  #   Traefik debug service
 │   ├── dockhand/                #   Docker management (Git-based stacks)
 │   ├── hawser/                  #   Remote Docker agent for Dockhand
 │   ├── portainer/               #   Docker management UI
@@ -324,7 +323,7 @@ secure-docker-blueprint/
 │   ├── vaultwarden/
 │   ├── nocodb/  n8n/  opnform/  monicahq/
 │   ├── caldiy/  easyappointments/  tymeslot/
-│   ├── adminer/  it-tools/  mailpit/  unifi/
+│   ├── adminer/  it-tools/  mailpit/  whoami/  unifi/
 │   └── ...
 │
 ├── business/                    # Company-only apps

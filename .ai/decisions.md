@@ -6,6 +6,57 @@ this file is the index and covers decisions that have no other home.
 
 ---
 
+## 2026-09 · `core/` is defined by scope, not dependency; `whoami` moves to `apps/`
+
+`core/` held five different definitions across two canonical files, three of
+which were false of real membership: "Infrastructure every other service
+depends on" and "Infrastructure shared by everything" and "(always needed)"
+are all untrue of Authentik, Keycloak, CrowdSec, Infisical and the four
+Docker-management tools, every one of which is optional. The test question
+was the only accurate one, and its enumeration had no slot for secrets, so
+`core/infisical` fitted none of the five.
+
+All five now state one definition: `core/` holds capabilities whose scope is
+the installation rather than one stack — control of Docker, the host or other
+containers, and shared network, TLS, identity, DNS, security or secrets.
+**Scope decides, not dependency.** Optionality does not disqualify a
+capability, and two members may be alternatives to each other. The
+"Core Services and Their Roles" table read as exhaustive while explaining 4
+of 12 members, and one of its rows was not a directory at all; it is now
+grouped by role and accounts for every member.
+
+This came out of classifying the whole operator/helper/fixture cohort
+together — whoami, mailpit, adminer, it-tools, acme-certs and the four Docker
+management components — rather than judging any one of them alone. **No new
+top-level category is justified.** The five categories model access patterns
+coherently once `core/` is corrected. What that cohort shares is lifecycle and
+audience, not access pattern, and the repository already expresses that
+without a directory: the root README's "Developer & admin tools" grouping and
+the status model.
+
+`core/whoami` is therefore now `apps/whoami`. It failed the `core/` test
+before any edit — nothing depends on it, it manages nothing, it is not
+identity, certificates, DNS, WAF or secrets — and its access pattern is the
+`apps/` one: `proxy-public`, Traefik-routed, `read_only`, `cap_drop: ALL`, no
+socket, no database, no secrets, no state. It joins adminer, it-tools and
+mailpit, which are already there. The argument for keeping it — that core's
+own acceptance procedures gate on it — is an argument from purpose, which is
+the axis the 2026-04 `business/` decision rejected. Compose and security
+configuration are unchanged; only the directory and the paths naming it moved.
+
+`acme-certs` was examined in the same pass and **stays in `core/`** on the
+merits: certificates are an installation-scoped capability, and it is the
+second implementation of that capability for the devices that never pass
+through Traefik. It also cannot pass the `apps/` test — no router, no Traefik
+label, no UI, no users; it runs `crond` and writes certificate files at host
+level. Its planned extraction to a separate repository is a maintenance
+decision and does not bear on where it belongs while it is here.
+
+Known and deliberate imprecision: no directory test asks about lifecycle, so
+"deploy temporarily, then disable" is not what places whoami — `apps/` is.
+The `apps/` test was not widened to describe throwaway fixtures; a lifecycle
+claim belongs to `docs/standards/status-model.md` if it ever earns one.
+
 ## 2026-09 · Swap-policy coverage completed; `no-swap-policy` is a FAIL
 
 Every production service (150/150, 61 stacks) now states `memswap_limit`,

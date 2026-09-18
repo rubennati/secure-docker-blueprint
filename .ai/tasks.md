@@ -152,7 +152,7 @@ Listed with context in [`state.md`](state.md). Nothing proceeds on these until d
       key once a `crowdsec-*` middleware is present
 - [x] **Verify the 2026-09-13 sweep on a host — the stacks that host runs.** Done
       2026-09-13: `core/traefik` 3.6.10 → 3.7.13 with socket-proxy v0.5.0 (preflighted,
-      13 routes identical, HTTP/3 answers, bouncer polling), `core/whoami`,
+      13 routes identical, HTTP/3 answers, bouncer polling), `apps/whoami`,
       `monitoring/uptime-kuma`, `monitoring/changedetection`, `apps/nextcloud` 34.0.4
       (in-place upgrade), `business/invoiceninja` 5.13.40 (migrations), `apps/caldiy`
       database to 17.11. Two stacks failed their first `up -d` on an orphan from the

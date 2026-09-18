@@ -271,7 +271,7 @@ is still open — but the combination is proven.
 docker network inspect proxy-public --format '{{range .IPAM.Config}}{{.Subnet}} {{end}}'
 ```
 
-Two subnets means dual-stack is active. Then deploy `core/whoami` temporarily and
+Two subnets means dual-stack is active. Then deploy `apps/whoami` temporarily and
 read `X-Real-Ip` — if it shows your tailnet address, the path is correct and any
 remaining 403 has another cause.
 

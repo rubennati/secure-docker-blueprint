@@ -239,6 +239,14 @@
     "license_class": "osi",
     "origin": "Community · unofficial Bitwarden reimplementation · no single jurisdiction"
   },
+  "apps/whoami": {
+    "bloc": "EU",
+    "country": "France",
+    "entity": "Traefik Labs",
+    "license": "Apache-2.0",
+    "license_class": "osi",
+    "origin": "France · Traefik Labs · EU"
+  },
   "apps/wordpress": {
     "bloc": "non-EU",
     "country": "US",
@@ -428,14 +436,6 @@
     "country": "France",
     "entity": "Traefik Labs",
     "license": "MIT",
-    "license_class": "osi",
-    "origin": "France · Traefik Labs · EU"
-  },
-  "core/whoami": {
-    "bloc": "EU",
-    "country": "France",
-    "entity": "Traefik Labs",
-    "license": "Apache-2.0",
     "license_class": "osi",
     "origin": "France · Traefik Labs · EU"
   },
