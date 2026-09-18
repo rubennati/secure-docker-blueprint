@@ -2,7 +2,7 @@
 
 # Secure Docker Blueprint
 
-**Security-hardened Docker Compose patterns for self-hosted software — deploy, secure, operate, recover — for existing open-source projects and applications you build yourself.**
+**Hardened Docker Compose stacks for 60+ self-hosted services — one security baseline, enforced in CI.**
 
 [![CI](https://github.com/rubennati/secure-docker-blueprint/actions/workflows/ci.yml/badge.svg)](https://github.com/rubennati/secure-docker-blueprint/actions/workflows/ci.yml)
 [![Trivy](https://github.com/rubennati/secure-docker-blueprint/actions/workflows/trivy.yml/badge.svg)](https://github.com/rubennati/secure-docker-blueprint/actions/workflows/trivy.yml)
@@ -10,82 +10,38 @@
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/13091/badge)](https://www.bestpractices.dev/projects/13091)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-v0.9.0-blue)](CHANGELOG.md)
-[![Status](https://img.shields.io/badge/status-pre--1.0-yellow)](ROADMAP.md)
+
+**[Stacks](#stacks) · [Getting started](#getting-started) · [Repository layout](#repository-layout) · [Architecture](docs/architecture.md) · [Standards](docs/standards/) · [Verified status](LIFECYCLE.md)**
 
 </div>
 
-> **Reading rather than deploying?** [SecDockBlue](https://secdockblue.rubennati.at) is the operator-facing site: guided documentation, and a security section that stands on its own. This repository stays the technical source of truth — the Compose files, the secrets handling, the defaults.
+Run self-hosted software without getting the security details wrong each time. Every
+stack shares one hardened baseline: credentials as Docker Secrets instead of environment
+variables, datastores isolated on internal networks with no published port, pinned image
+versions, memory and PID limits, and Traefik in front handling TLS and access control.
 
-## What this is
+## Stacks
 
-Hardened Docker Compose stacks for 60+ self-hosted services, all following one
-standard: Docker Secrets instead of environment variables, databases on internal
-networks that publish no port, an explicit resource and swap policy per service,
-pinned image versions, and Traefik in front with access policies and TLS profiles.
+62 stacks in five categories. Each category below links to its full list.
 
-The problem it solves is that the hardening is the part nobody writes down. Getting
-a service running is a `docker compose up`; getting it running without a database
-reachable from the internet, a credential in a process listing, a container that can
-take the host down, or a backup nobody has restored takes decisions that are the
-same every time. They are made once here and enforced in CI.
+| Browse | Stacks | Examples |
+|---|---|---|
+| [**`core/`** — proxy, identity, threat detection, secrets, Docker management](core/) | 11 | Traefik · Authentik · Keycloak · CrowdSec · Infisical · dnsmasq · Portainer |
+| [**`apps/`** — general self-hosted applications](apps/) | 32 | Nextcloud · Immich · Paperless-ngx · Vaultwarden · Seafile · Ghost · n8n · Mailpit |
+| [**`business/`** — invoicing, project management, helpdesk, analytics, e-signature](business/) | 10 | Invoice Ninja · OpenProject · Vikunja · Zammad · Matomo · Documenso |
+| [**`monitoring/`** — uptime, metrics, notifications](monitoring/) | 7 | Uptime Kuma · Gatus · Beszel · Healthchecks · ntfy |
+| [**`backup/`** — this host outward, your devices inward](backup/) | 2 | Borgmatic · UrBackup |
 
-Two kinds of software go through the same model: existing open-source projects with
-a published image, and applications built here —
-[`docs/standards/custom-application.md`](docs/standards/custom-application.md) covers
-where a self-built image comes from and what pins it.
+Where several tools solve the same problem, more than one is included.
 
-## Deploy → secure → operate → recover
+## Getting started
 
-The four phases are what a stack is judged against. All four exist for the
-repository as a pattern; what has been established for any individual stack is in
-[`LIFECYCLE.md`](LIFECYCLE.md).
+Traefik goes up first — every stack reachable over the network routes through it.
+Each stack is then installed from its own README.
 
-| Phase | What it means here |
-|---|---|
-| **Deploy** | One Compose shape for every stack — [`apps/_reference/`](apps/_reference/) is the canonical structure, and `.env.example` names every value that has to be set before first start |
-| **Secure** | A baseline enforced by CI, not documented and hoped for: no privilege escalation, no direct Docker socket, secrets as files, internal networks for datastores, capabilities dropped where the image allows it |
-| **Operate** | Healthchecks, resource and swap limits, monitoring stacks, and per-stack `Last verified` evidence that a pin was actually run rather than only written |
-| **Recover** | Borgmatic with database-aware dumps, restore playbooks per persistence pattern, and the position that a backup nobody restored is a hypothesis |
-
-## Status
-
-**Pre-1.0.** The structure is stable and the core services are ready to use, but
-paths, environment variables and defaults can still change. v1.0 requires both this
-repository and the operator site to be ready — see
-[ROADMAP.md](ROADMAP.md#v10--complete-and-hand-off-ready).
-
-Per-stack status is not summarised here, because a summary would be a third copy of
-a fact each stack already owns. [`LIFECYCLE.md`](LIFECYCLE.md) is generated from the
-stacks themselves and states, per stack, which version was verified and when, and
-what has not been exercised.
-
-## Architecture at a glance
-
-One reverse proxy at the front, two networks per application, credentials as files,
-access decided in one place. Five top-level categories, split by **how** a stack
-accesses the system rather than by who uses it:
-
-| Directory | Scope |
-|---|---|
-| [`core/`](core/) | Shared platform and control plane — capabilities scoped to the installation rather than one stack: Docker and host control, network, TLS, identity, DNS, security, secrets. Most are optional, and several are alternatives to each other |
-| [`apps/`](apps/) | General-purpose applications, equally useful to a homelab and a company — including operator and diagnostic tooling |
-| [`business/`](business/) | Applications that need a company to be useful — invoicing, helpdesk, newsletter, compliance |
-| [`monitoring/`](monitoring/) | Observability — uptime, metrics, content changes, disk health |
-| [`backup/`](backup/) | Backup in both directions: this host outward, your own devices inward. Separate because it needs privileged access and remote targets |
-
-Only Traefik is close to unconditional. Everything else is opt-in, and the stacks
-do not depend on each other unless a README says so.
-[`docs/architecture.md`](docs/architecture.md) has the networking model, the
-capability table, and why the categories are what they are.
-
-## Start here
-
-This reaches a working Traefik with TLS, which every networked stack routes through.
-The application itself is installed from its own README — the steps differ per stack.
-
-Requirements: Docker 24.0+ with Compose v2, a Linux host (tested on Debian 12/13),
-`envsubst` (`gettext-base`), and a domain with a
-[Traefik-supported DNS provider](https://doc.traefik.io/traefik/https/acme/#providers).
+**Requirements:** Docker 24.0+ with Compose v2, a Linux host (tested on Debian 12/13),
+`envsubst` (`gettext-base`), and a domain on a
+[DNS provider Traefik supports](https://doc.traefik.io/traefik/https/acme/#providers).
 
 ```bash
 git clone https://github.com/rubennati/secure-docker-blueprint.git
@@ -93,10 +49,10 @@ cd secure-docker-blueprint/core/traefik
 cp .env.example .env
 ```
 
-Set `ACME_EMAIL`, `TRAEFIK_DASHBOARD_HOST` and the DNS provider token for your
-certificate resolver — `CF_DNS_API_TOKEN` ships as `__REPLACE_ME__` and DNS-01
-fails until it holds a real token.
-[`core/traefik/README.md`](core/traefik/README.md#setup) lists every variable.
+Set `ACME_EMAIL`, `TRAEFIK_DASHBOARD_HOST`, and the DNS token for your certificate
+resolver — `CF_DNS_API_TOKEN` ships as `__REPLACE_ME__`, and DNS-01 fails until it holds
+a real token. [`core/traefik/README.md`](core/traefik/README.md#setup) documents every
+variable.
 
 ```bash
 bash ops/scripts/validate.sh    # required variables present
@@ -106,26 +62,64 @@ docker compose up -d
 ```
 
 The dashboard answers at `https://<TRAEFIK_DASHBOARD_HOST>`, over the VPN only by
-default. Then pick a stack and follow its README —
-[Vaultwarden](apps/vaultwarden/README.md) and
-[Nextcloud](apps/nextcloud/README.md) are good first ones. If something returns 403
-or 404, [TROUBLESHOOTING.md](TROUBLESHOOTING.md) lists the symptom, the cause and the
-fix. `./scripts/overview.sh` prints what is configured and running.
+default. Then pick a stack — [Vaultwarden](apps/vaultwarden/README.md) and
+[Nextcloud](apps/nextcloud/README.md) are straightforward first ones. On a 403 or 404,
+[TROUBLESHOOTING.md](TROUBLESHOOTING.md) maps the symptom to its cause.
+`./scripts/overview.sh` lists what is configured and running.
 
-## Where to go next
+## Repository layout
 
-| For | Read |
+```text
+core/         shared infrastructure and control plane
+apps/         general self-hosted applications
+business/     business applications
+monitoring/   monitoring and observability
+backup/       backup and recovery
+docs/         architecture and standards
+scripts/      CI checks and the overview script
+site/         SecDockBlue source
+```
+
+Each stack directory holds `docker-compose.yml`, `.env.example`, a `README.md` with the
+setup procedure, and an `UPSTREAM.md` recording the pinned version and upgrade path.
+[`apps/_reference/`](apps/_reference/) is the structure they all follow.
+
+## Deploy → secure → operate → recover
+
+Four phases, and the repository covers all of them:
+
+- **Deploy** — one Compose shape across every stack, with every value that has to be set named in `.env.example`
+- **Secure** — `no-new-privileges`, no direct Docker socket access, secrets as files, datastores unreachable from the host network, capabilities dropped where the image allows it — checked on every pull request
+- **Operate** — healthchecks, resource and swap limits, monitoring stacks, and a recorded version each stack was last verified against
+- **Recover** — Borgmatic with database-aware dumps, and restore playbooks per persistence pattern
+
+[`docs/architecture.md`](docs/architecture.md) covers the networking model and how the
+five categories are divided. [`docs/standards/`](docs/standards/) holds the rules each
+stack is checked against.
+
+## Status
+
+**Pre-1.0** — paths, variable names and defaults can still change.
+
+Verification depth varies by stack. [`LIFECYCLE.md`](LIFECYCLE.md) records what has been
+run, against which version, and what remains unverified.
+
+## Documentation
+
+| | |
 |---|---|
-| Every stack, by category | [`core/`](core/) · [`apps/`](apps/) · [`business/`](business/) · [`monitoring/`](monitoring/) · [`backup/`](backup/) |
-| What has actually been verified, per stack | [`LIFECYCLE.md`](LIFECYCLE.md) — generated |
-| Why the system is shaped this way | [`docs/architecture.md`](docs/architecture.md) |
-| The rules every stack follows | [`docs/standards/`](docs/standards/) — [security baseline](docs/standards/security-baseline.md), [compose](docs/standards/compose-structure.md), [env](docs/standards/env-structure.md), [secrets](docs/standards/secrets.md), [networking](docs/standards/networking.md), [Traefik labels](docs/standards/traefik-labels.md), [restore](docs/standards/restore.md) |
+| Every stack, by category | [core/](core/) · [apps/](apps/) · [business/](business/) · [monitoring/](monitoring/) · [backup/](backup/) |
+| Verification status per stack | [LIFECYCLE.md](LIFECYCLE.md) |
+| Networking model, categories, capabilities | [docs/architecture.md](docs/architecture.md) |
+| Compose, env, secrets, networking, restore rules | [docs/standards/](docs/standards/) |
+| Applications you build yourself | [docs/standards/custom-application.md](docs/standards/custom-application.md) |
+| Symptom-to-cause troubleshooting | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) |
+| Adding a stack, contributing | [CONTRIBUTING.md](CONTRIBUTING.md) · [new-app checklist](docs/standards/new-app-checklist.md) |
 | Reporting a vulnerability | [SECURITY.md](SECURITY.md) |
-| Adding a stack, or contributing | [CONTRIBUTING.md](CONTRIBUTING.md) and [`docs/standards/new-app-checklist.md`](docs/standards/new-app-checklist.md) |
-| Keeping the repository consistent | [`docs/maintenance.md`](docs/maintenance.md) |
-| What is planned, and what is out of scope | [ROADMAP.md](ROADMAP.md) |
-| What has shipped | [CHANGELOG.md](CHANGELOG.md) |
-| Operator-facing guides | [SecDockBlue](https://secdockblue.rubennati.at) |
+| Repository maintenance process | [docs/maintenance.md](docs/maintenance.md) |
+| Planned work and what is out of scope | [ROADMAP.md](ROADMAP.md) |
+| Release history | [CHANGELOG.md](CHANGELOG.md) |
+| Guided operator documentation | [SecDockBlue](https://secdockblue.rubennati.at) |
 
 ## License
 
