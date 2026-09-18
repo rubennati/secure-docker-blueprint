@@ -76,32 +76,48 @@ directory (Infrastructure → `core/`, Applications → `apps/`, Business →
 
 - **Development / Custom Applications** — has a physical home, `development/`,
   for the patterns it owns. See below.
-- **AI & Local AI** — no stack, deliberately. See below.
+- **AI & Local AI** — deployable services, in `apps/`; the engineering above them is not this repository's. See below.
 - **Document Processing** — real capabilities plus one standalone service; still no orchestrated pipeline. See below.
 
 AI & Local AI and Document Processing do not justify a new top-level directory.
 Development has one, for a different reason than the access-pattern test the
 five categories use — see below.
 
-### AI & Local AI is latent on purpose
+### AI & Local AI is deployment, not engineering
 
-No stack exists here, and that is a decision rather than an omission.
+The line runs between running a service and doing the engineering. Deploying
+and hardening a reusable AI service — a model runtime, a gateway, a vector
+store — is this repository's problem, and it goes through the same
+categorisation test as anything else: nothing about "AI" changes which
+directory it lands in, and an observability component for it would most likely
+be `monitoring/`. The engineering above that line — model evaluation,
+retrieval architecture, prompt design, the experiments that decide whether any
+of it is worth running — belongs to a different project and is not served by
+putting a Compose file here.
 
-The line runs between running a service and doing the engineering. If a real
-need appears for a reusable AI service — a model runtime, a gateway, a vector
-store — then deploying and hardening it is this repository's problem, and it
-goes through the same categorisation test as anything else: nothing about "AI"
-changes which directory it lands in, and an observability component for it would
-most likely be `monitoring/`. The engineering above that line — model
-evaluation, retrieval architecture, prompt design, the experiments that decide
-whether any of it is worth running — belongs to a different project and is not
-served by putting a Compose file here.
+The first services are in `apps/`:
 
-So the absence is not waiting on a decision. It is waiting on a deployment that
-somebody actually needs, and a catalogue of candidate products assembled in
-advance would be a list, not a capability. Machine learning already runs inside
-existing stacks — Immich's ML worker, PhotoPrism's classification models — and
-those are properties of those applications, not a domain.
+| Part | Where it lives |
+|---|---|
+| Model runtime, simple, runs on CPU | `apps/ollama` |
+| Model serving, high throughput, NVIDIA GPU | `apps/vllm` |
+| Vector database | `apps/qdrant` |
+
+Ollama and vLLM both serve models and are both kept: they cover different
+deployments — one runs on any machine and pulls models by name, the other needs
+a GPU host and is built for concurrent load. Neither depends on the other or on
+Qdrant, and each is usable on its own.
+
+Two properties of these services shape the stacks. Ollama has no authentication, and vLLM's `--api-key` protects only
+its `/v1` paths, so the reverse proxy is the real access control — vLLM's route
+forwards `/v1/` only. And the model servers need outbound access to fetch weights, so they sit on
+`proxy-public` rather than an isolated network; Qdrant sits there too because
+other stacks consume its API. Each
+stack's own README states what was verified; vLLM's CUDA image has not been run
+on a GPU here.
+
+Machine learning also runs inside Immich and PhotoPrism as a property of those
+applications, which is not a separate domain.
 
 ### Document Processing has the capabilities, and one standalone service
 

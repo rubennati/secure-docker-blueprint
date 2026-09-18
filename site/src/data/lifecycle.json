@@ -209,6 +209,16 @@
     "verified_anchored": true,
     "verified_version": "v0.301.5"
   },
+  "apps/ollama": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=0.34.2",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "apps/onlyoffice": {
     "backup_docs": "documented",
     "local_stack": "✅",
@@ -259,6 +269,16 @@
     "verified_anchored": false,
     "verified_version": ""
   },
+  "apps/qdrant": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=v1.19.1-unprivileged",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "apps/seafile": {
     "backup_docs": "documented",
     "local_stack": "✅",
@@ -306,6 +326,16 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-06-14",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
+  "apps/vllm": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=v0.29.0",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
     "verified_anchored": false,
     "verified_version": ""
   },

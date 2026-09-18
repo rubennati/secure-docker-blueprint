@@ -70,7 +70,10 @@ each its own pull request. Batch order:
    2026-09-18, superseding the earlier plan that included Tika/Gotenberg here).
    `docs/architecture.md` and `ROADMAP.md` updated in the same commit.
 3. `apps/greenmail`, `apps/windmill` — not started.
-4. AI foundation: `apps/qdrant`, `apps/ollama`, `apps/vllm` — not started.
+4. AI foundation — **done**, this batch: `apps/ollama`, `apps/vllm`,
+   `apps/qdrant`. vLLM's CUDA image was not run (no GPU, 8.7 GB); it was
+   validated on the CPU build and says so. `docs/architecture.md` and
+   `ROADMAP.md` updated in the same commit.
 5. AI gateway/UI: `apps/litellm`, `apps/open-webui`, `apps/agentgateway` — not
    started.
 6. `apps/dify`, `monitoring/langfuse` — not started.

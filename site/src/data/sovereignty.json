@@ -167,6 +167,14 @@
     "license_class": "osi",
     "origin": "US · NocoDB Inc · non-EU"
   },
+  "apps/ollama": {
+    "bloc": "non-EU",
+    "country": "United States",
+    "entity": "Ollama Inc. (California)",
+    "license": "MIT",
+    "license_class": "osi",
+    "origin": "United States · Ollama Inc. (California) · non-EU"
+  },
   "apps/onlyoffice": {
     "bloc": "EU",
     "country": "Latvia",
@@ -207,6 +215,14 @@
     "license_class": "osi",
     "origin": "Denmark · community · EU"
   },
+  "apps/qdrant": {
+    "bloc": "EU",
+    "country": "Germany",
+    "entity": "Qdrant Solutions GmbH (Berlin)",
+    "license": "Apache-2.0",
+    "license_class": "osi",
+    "origin": "Germany · Qdrant Solutions GmbH (Berlin) · EU"
+  },
   "apps/seafile": {
     "bloc": "non-EU",
     "country": "China",
@@ -246,6 +262,14 @@
     "license": "GPL-3.0",
     "license_class": "osi",
     "origin": "Community · unofficial Bitwarden reimplementation · no single jurisdiction"
+  },
+  "apps/vllm": {
+    "bloc": "non-EU",
+    "country": "United States",
+    "entity": "vLLM project (originated at the UC Berkeley Sky Computing Lab)",
+    "license": "Apache-2.0",
+    "license_class": "osi",
+    "origin": "United States · vLLM project (originated at the UC Berkeley Sky Computing Lab) · non-EU"
   },
   "apps/whoami": {
     "bloc": "EU",

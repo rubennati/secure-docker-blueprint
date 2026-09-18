@@ -1,0 +1,63 @@
+# vLLM — local, CPU
+#
+# Runs the CPU build of the same release (vllm/vllm-openai-cpu) so the server
+# can be tried on a machine with no GPU. It is slow — a 0.5B model needs several
+# minutes to start and answers a short prompt in seconds — and it is a
+# different image from the production file's CUDA build.
+#
+#   cp .env.local.example .env.local      # set VLLM_API_KEY: openssl rand -hex 24
+#   mkdir -p volumes/local/cache
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   curl http://localhost:8000/v1/models -H "Authorization: Bearer $VLLM_API_KEY"
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  vllm:
+    image: vllm/vllm-openai-cpu:${APP_TAG}
+    container_name: vllm-local-app
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs: [/tmp]
+    user: "${VLLM_UID}:${VLLM_GID}"
+    shm_size: 2g
+    entrypoint: ["vllm", "serve"]
+    command:
+      - ${VLLM_MODEL}
+      - --host
+      - 0.0.0.0
+      - --max-model-len
+      - "2048"
+      - --dtype
+      - float32
+    environment:
+      TZ: ${TZ}
+      # TMPDIR: /tmp is a noexec tmpfs and TorchInductor loads generated .so files
+      # from the temporary directory.
+      HOME: /cache
+      TMPDIR: /cache
+      HF_HOME: /cache/huggingface
+      VLLM_CACHE_ROOT: /cache/vllm
+      TORCHINDUCTOR_CACHE_DIR: /cache/torchinductor
+      TRITON_CACHE_DIR: /cache/triton
+      VLLM_NO_USAGE_STATS: "1"
+      DO_NOT_TRACK: "1"
+      VLLM_CPU_KVCACHE_SPACE: "2"
+      VLLM_API_KEY: ${VLLM_API_KEY}
+    volumes:
+      - ./volumes/local/cache:/cache
+    ports:
+      - "127.0.0.1:8000:8000"
+    networks: [vllm-local]
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import sys, urllib.request; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5).status == 200 else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 900s
+
+networks:
+  vllm-local:
+    name: vllm-local
