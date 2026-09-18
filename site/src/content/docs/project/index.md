@@ -23,6 +23,26 @@ It is aimed at homelabs, self-hosted infrastructure and small-team production sy
 
 [GitHub repository →](https://github.com/rubennati/secure-docker-blueprint)
 
+## What it covers
+
+Four phases. They are not a sequence to follow once — securing and operating
+continue for as long as the service runs — but they are what any stack here is
+judged against, and a stack can satisfy three of them and still lose your data:
+
+- **Deploy** — getting it running at all, with the reverse proxy, the hostname
+  and the credentials in place. [Preparing a server](/getting-started/server-setup/)
+  and the guide for the [application](/applications/) you want.
+- **Secure** — what stands between the internet and the service, and what does
+  not. The [security section](/security/) covers the whole chain, including the
+  layers this project leaves to you.
+- **Operate** — the work that outlives the installation: updates, certificates,
+  diagnosing a break. [What running this involves](/operations/).
+- **Recover** — getting the service back, which is more than getting the bytes
+  back. [Backup and restore](/operations/backup/).
+
+Where a guide exists it says what was actually exercised and what was not, so
+the gaps are visible per service rather than averaged away.
+
 ## The defaults
 
 Set on every service, and checked on every change before it is merged:

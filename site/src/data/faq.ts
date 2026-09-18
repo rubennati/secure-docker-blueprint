@@ -86,13 +86,13 @@ export const faqCategories: FaqCategory[] = [
       {
         question: 'What can I actually deploy right now?',
         answer:
-          'Traefik and CrowdSec for the server itself, Borgmatic for backups, and the applications that have a guide: Vaultwarden, Nextcloud, Invoice Ninja, Seafile Pro and OnlyOffice. The repository ships considerably more services, each with its own README, but a guide here is written only after the installation has been walked through.',
+          'Traefik and CrowdSec for the server itself, Borgmatic for backups, and any application with a guide here — there are around thirty, listed under Applications. The repository ships more services than that, each with its own README, but a guide here is written only after the installation has been walked through.',
         link: { text: 'Applications', href: '/applications/' },
       },
       {
         question: 'Can I try a service without setting up a server?',
         answer:
-          'Not by following these guides. Every one of them assumes a host with a domain and a reverse proxy in front, because that is the configuration they were written and checked against. A few stacks in the repository carry a second Compose file intended for localhost, but no guide here covers that path and none of the applications documented on this site has one.',
+          'Partly. The guides assume a host with a domain and a reverse proxy in front, because that is the configuration they were written and checked against. Some stacks also carry a second Compose file for localhost — Cal.diY and Tymeslot are two, and their guides say so — which runs the application on one machine without TLS or a proxy. It is for trying the application out, not for running it.',
       },
       {
         question: 'Can I deploy only some services to a new server?',
