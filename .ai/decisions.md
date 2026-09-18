@@ -112,7 +112,7 @@ management components — rather than judging any one of them alone. **No new
 top-level category is justified.** The five categories model access patterns
 coherently once `core/` is corrected. What that cohort shares is lifecycle and
 audience, not access pattern, and the repository already expresses that
-without a directory: the root README's "Developer & admin tools" grouping and
+without a directory: `apps/README.md`'s "Developer & admin tools" grouping and
 the status model.
 
 `core/whoami` is therefore now `apps/whoami`. It failed the `core/` test

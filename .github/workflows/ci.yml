@@ -189,7 +189,7 @@ jobs:
 
   # ─────────────────────────────────────────────
   # 7. STATUS MODEL (docs/standards/status-model.md)
-  # Catches a status claim that is not backed — the owner and the root README
+  # Catches a status claim that is not backed — the owner and a category README
   # disagreeing, ✅ without a verification date, or LIFECYCLE.md left stale.
   # ─────────────────────────────────────────────
   lifecycle:
