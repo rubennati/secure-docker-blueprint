@@ -6,6 +6,38 @@ this file is the index and covers decisions that have no other home.
 
 ---
 
+## 2026-09 · AI & Local AI stays latent; Document Processing has capabilities but no pipeline
+
+Both were conceptual domains carried in `docs/architecture.md` with one bullet
+each, and neither absence had a reason attached. AI & Local AI said only that no
+stack exists; Document Processing said `apps/` "covers both halves", which read
+as *already done* rather than as bounded. Read from this file alone, neither
+would have looked like a decision. They are now reasoned at their owner, and
+both appear in `ROADMAP.md`'s "Out of scope here".
+
+**AI & Local AI.** The line is between running a service and doing the
+engineering. Deploying and hardening a reusable AI service is in scope the
+moment a real need exists, and it takes the ordinary categorisation test —
+nothing about "AI" changes which directory it lands in. Model evaluation,
+retrieval architecture and prompt design sit above that line and belong to a
+different project. So the absence is not waiting on a decision; it is waiting on
+a deployment somebody needs. A candidate catalogue assembled in advance would be
+a list, not a capability. Machine learning already runs inside Immich and
+PhotoPrism as a property of those applications, which is not a domain.
+
+**Document Processing.** Described in three parts rather than two, because
+e-signature was missing from the previous account: archive and ingest
+(`apps/paperless-ngx`), browser editing (the three editors in `apps/`), and
+e-signature (`business/documenso`, `business/opensign`). Tika and Gotenberg are
+Paperless-ngx's own converters, not shared services, which is why they have no
+stack. What does not exist is a general pipeline from an arbitrary document
+through extraction and layout recognition to a structured result — and a pipeline
+is defined by the document it handles and the output someone needs, so building
+one before a real case exists would produce a chain of tools with no test for
+whether it works.
+
+Neither gets a directory, a stack, or a placeholder.
+
 ## 2026-09 · The custom-application path is named from the two builds that already exist
 
 `README.md` promised patterns for "applications you build yourself" while the

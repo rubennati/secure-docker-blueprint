@@ -75,15 +75,54 @@ directory (Infrastructure → `core/`, Applications → `apps/`, Business →
 `business/`, Monitoring → `monitoring/`, Operations & Recovery → `backup/`):
 
 - **Development / Custom Applications** — see below.
-- **AI & Local AI** — no stack exists here. If one is added, it goes through the
-  same categorisation test as everything else; nothing about "AI" changes which
-  directory it lands in.
-- **Document Processing** — `apps/` covers both halves: Paperless-ngx (ingest,
-  OCR, search) and the document editors OnlyOffice, Euro-Office and Collabora,
-  reclassified here from `core/` (`decisions.md`). The domain groups them for a
-  reader; it was never a reason to merge the two into one stack.
+- **AI & Local AI** — no stack, deliberately. See below.
+- **Document Processing** — real capabilities, no reusable pipeline. See below.
 
 None of the three justifies a new top-level directory now.
+
+### AI & Local AI is latent on purpose
+
+No stack exists here, and that is a decision rather than an omission.
+
+The line runs between running a service and doing the engineering. If a real
+need appears for a reusable AI service — a model runtime, a gateway, a vector
+store — then deploying and hardening it is this repository's problem, and it
+goes through the same categorisation test as anything else: nothing about "AI"
+changes which directory it lands in, and an observability component for it would
+most likely be `monitoring/`. The engineering above that line — model
+evaluation, retrieval architecture, prompt design, the experiments that decide
+whether any of it is worth running — belongs to a different project and is not
+served by putting a Compose file here.
+
+So the absence is not waiting on a decision. It is waiting on a deployment that
+somebody actually needs, and a catalogue of candidate products assembled in
+advance would be a list, not a capability. Machine learning already runs inside
+existing stacks — Immich's ML worker, PhotoPrism's classification models — and
+those are properties of those applications, not a domain.
+
+### Document Processing has the capabilities, not a pipeline
+
+The domain is real and mostly already covered, in three parts rather than the two
+it was previously described as:
+
+| Part | Where it lives |
+|---|---|
+| Archive and ingest — OCR, indexing, search | `apps/paperless-ngx` |
+| Browser-based editing | `apps/onlyoffice`, `apps/euro-office`, `apps/collabora` |
+| Electronic signature | `business/documenso`, `business/opensign` |
+
+Apache Tika and Gotenberg belong to Paperless-ngx as its own converters, not as
+shared services other stacks call — which is why they have no stack of their own
+and no entry in the tables.
+
+What does **not** exist is a general document-processing pipeline: a reusable
+path from an arbitrary input document through extraction, layout or table
+recognition, and into a structured result. That absence is deliberate. A pipeline
+is defined by the document it has to handle and the output someone needs, and
+building one before a real case exists would produce a chain of tools with no
+test for whether it works. Until a document use case demands something
+reproducible, the domain stays a way of grouping what is already here, and the
+three parts stay separate stacks rather than being merged into one.
 
 ### Development is a mission scope, not the local test-stack mode
 
