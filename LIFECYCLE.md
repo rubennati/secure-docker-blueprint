@@ -4,7 +4,7 @@
 
 Generated 2026-09-18 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-62 stacks: 1 ops-proven · 13 baseline-aligned · 48 scaffolded. 53 carry a local test stack.
+63 stacks: 1 ops-proven · 13 baseline-aligned · 49 scaffolded. 54 carry a local test stack.
 
 This is the maintainer's view: what has been established about each stack. It makes no statement about whether a stack suits a given deployment.
 
@@ -40,6 +40,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/caldiy`](apps/caldiy/) | `scaffolded` | `APP_TAG=v6.2.0-6@sha256:538cbb4a2273…` | 2026-07-26 | ✅ | documented | missing |
 | [`apps/collabora`](apps/collabora/) | `scaffolded` | `APP_TAG=26.04.3.2.1` | — | ✅ | documented | missing |
 | [`apps/dashy`](apps/dashy/) | `scaffolded` | `APP_TAG=4.6.0` | 2026-05-02 | ✅ | documented | missing |
+| [`apps/docling-serve`](apps/docling-serve/) | `scaffolded` | `APP_TAG=v1.34.0` | — | ✅ | documented | missing |
 | [`apps/easyappointments`](apps/easyappointments/) | `scaffolded` | `APP_TAG=1.6.0` | 2026-05-03 | ✅ | documented | missing |
 | [`apps/euro-office`](apps/euro-office/) | `scaffolded` | `APP_TAG=v9.3.4-hotfix.1` | — | ✅ | documented | missing |
 | [`apps/ghost`](apps/ghost/) | `scaffolded` | `APP_TAG=6.63.0-alpine` | 2026-07-26 | ✅ | documented | missing |
