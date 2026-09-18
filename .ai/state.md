@@ -53,6 +53,24 @@
   up to date before merging. CodeQL reports on the same pull requests and is not
   a required check.
 
+## Priority 1 functional expansion — started 2026-09-18
+
+Separate from the v0.10.0 milestone above, running in parallel. Adds Custom
+Development, AI/Local AI and Document/Data Processing capabilities in batches,
+each its own pull request. Batch order:
+[`decisions.md`](decisions.md) 2026-09-18 entry has the reasoning for the first.
+
+1. `development/` domain + `static-site`/`web-api` patterns — **done**, this
+   batch. `docs/architecture.md` and `docs/standards/custom-application.md`
+   updated in the same commit.
+2. Document/Data Processing: `apps/tika`, `apps/gotenberg`, `apps/docling-serve`,
+   OCRmyPDF — not started.
+3. `apps/greenmail`, `apps/windmill` — not started.
+4. AI foundation: `apps/qdrant`, `apps/ollama`, `apps/vllm` — not started.
+5. AI gateway/UI: `apps/litellm`, `apps/open-webui`, `apps/agentgateway` — not
+   started.
+6. `apps/dify`, `monitoring/langfuse` — not started.
+
 ## v0.8.1 on a host — 2026-09-13
 
 Released from `dev` to `main` and then run on the test host, in that order. Traefik moved

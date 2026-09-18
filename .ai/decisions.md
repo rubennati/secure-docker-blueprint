@@ -6,6 +6,47 @@ this file is the index and covers decisions that have no other home.
 
 ---
 
+## 2026-09-18 · `development/` becomes a Supporting-tier domain
+
+The Development / Custom Applications conceptual domain had no physical home:
+its two real members, `business/vikunja` and `apps/caldiy`, sit under the
+normal five categories, and `docs/standards/custom-application.md` stated that
+a genuinely first-party application — source with no upstream — "stays absent
+until a real application needs it." That precondition is now met: the need for
+a reusable starting point across future first-party projects, not for one
+specific named application, was declared real and current.
+
+`development/` is not a sixth entry in the five-category access-pattern table.
+The Directory Structure test asks how a running service reaches the system; a
+deployment pattern that is never run from this repository has no access
+pattern to test. It is a Supporting-tier directory instead, alongside `docs/`,
+`scripts/ci/` and `site/` — checked by `scripts/ci/check-structure.py` anyway,
+because unlike those three it holds real, buildable compose files. `ROOTS` in
+that checker gained `development`, and `development/static-site` and
+`development/web-api` were added to `EXCEPT_DIRS` for the same reason
+`apps/_reference` is there: a template, not a versioned app, no `UPSTREAM.md`.
+
+Two patterns exist: `development/static-site/` (a build step producing static
+files, Astro and Vite/React recipes differing only in the build stage) and
+`development/web-api/` (a generic backend, deliberately without a database —
+one is added the way `apps/_reference` shows, only when a real application
+needs one). Each is proven by a minimal fixture: a real `docker compose build
+&& up`, hardened (`read_only`, `cap_drop: ALL`, non-root), reporting healthy.
+The fixture proves the pattern's contract, not that a real project has been
+through it — no project has yet been copied out of `development/` and
+operated, and `custom-application.md` records that as a standing gap rather
+than closing it.
+
+`docs/architecture.md`'s "Development is a mission scope, not the local
+test-stack mode" section is now "Development is a Supporting-tier domain, not
+a sixth category", and `custom-application.md` gained this as a third shape
+alongside the in-repo build layer and the external governed pipeline.
+
+Third-party developer tooling (Mailpit, GreenMail, Adminer, IT-Tools, Whoami,
+Windmill) is unaffected — it stays in `apps/` under the ordinary
+categorisation test and is linked from `development/README.md`, which does not
+become a stack listing.
+
 ## 2026-09 · v1.0.0 requires both the repository and the operator site
 
 `v1.0.0` is not tagged until this repository *and* the SecDockBlue site meet

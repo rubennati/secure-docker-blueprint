@@ -1,0 +1,37 @@
+# static-site pattern — local
+#
+#   cp .env.local.example .env.local
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d --build
+#   curl http://localhost:8081/
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+#
+# Swap `build.context` below to try the other recipe:
+#   ./recipes/astro        ./recipes/vite-react
+
+services:
+
+  app:
+    build:
+      context: ./recipes/astro
+      dockerfile: Dockerfile
+    container_name: static-site-local-app
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs: [/tmp, /var/cache/nginx]
+    environment:
+      TZ: ${TZ}
+    ports:
+      - "127.0.0.1:8081:8080"
+    networks: [static-site-local]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO/dev/null http://127.0.0.1:8080/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
+
+networks:
+  static-site-local:
+    name: static-site-local

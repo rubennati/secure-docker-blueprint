@@ -74,11 +74,14 @@ failing every test in the [Directory Structure](#directory-structure) table.
 directory (Infrastructure → `core/`, Applications → `apps/`, Business →
 `business/`, Monitoring → `monitoring/`, Operations & Recovery → `backup/`):
 
-- **Development / Custom Applications** — see below.
+- **Development / Custom Applications** — has a physical home, `development/`,
+  for the patterns it owns. See below.
 - **AI & Local AI** — no stack, deliberately. See below.
 - **Document Processing** — real capabilities, no reusable pipeline. See below.
 
-None of the three justifies a new top-level directory now.
+AI & Local AI and Document Processing do not justify a new top-level directory.
+Development has one, for a different reason than the access-pattern test the
+five categories use — see below.
 
 ### AI & Local AI is latent on purpose
 
@@ -124,7 +127,7 @@ test for whether it works. Until a document use case demands something
 reproducible, the domain stays a way of grouping what is already here, and the
 three parts stay separate stacks rather than being merged into one.
 
-### Development is a mission scope, not the local test-stack mode
+### Development is a Supporting-tier domain, not a sixth category
 
 The mission covers two kinds of software: existing self-hosted open-source
 projects, and applications someone builds themselves. Both go through the same
@@ -140,24 +143,45 @@ published without Traefik, DNS or a certificate so it can be tried on one
 machine. It answers "how do I try this app," not "how do I harden an app I
 wrote."
 
+[`development/`](../development/) is where the build phase lives as a reusable
+artifact. `development/static-site/` and `development/web-api/` are complete,
+working deployment shapes — a real build, a real hardened runtime, a
+local-validation compose file, each proven by a minimal fixture — that a real
+project copies into `apps/` or `business/` under its own name once it exists.
+They are never deployed from inside this repository, and they are not stacks
+in the access-pattern sense the five categories use: the [Directory
+Structure](#directory-structure) test asks how a running service reaches the
+system, and a pattern that is never run here has no access pattern to test.
+That is also why `development/` does not become a sixth category — it sits
+alongside `docs/`, `scripts/ci/` and `site/` as a Supporting-tier directory,
+checked by [`scripts/ci/check-structure.py`](../scripts/ci/check-structure.py)
+anyway, because unlike those three it holds real, buildable compose files
+worth the same structural and security check any stack gets.
+
 Two stacks here already build their own image, in two different shapes:
 `business/vikunja` adds a layer to a published image because upstream ships
 `FROM scratch`, and `apps/caldiy` consumes a governed fork's reviewed release.
 [`standards/custom-application.md`](standards/custom-application.md) is derived
 from those two — it covers source, build, image identity and what verifies the
-image, and states that every phase after the image is unchanged.
+image, and states that every phase after the image is unchanged. `development/`'s
+patterns are a third shape built on the same standard: a reusable starting
+point with no concrete application behind it yet, adopted by copying rather
+than by reference.
 
 `apps/_reference` still templates the hardening pattern around a pre-built,
 versioned image — its `UPSTREAM.md`, its `_FILE`-secret assumptions and the
-Trivy scan target all presume one. That boundary is where the standard starts,
-and it is why a stack that builds adds a `Dockerfile` and a `build:` block to
-the same structure rather than following a different one.
+Trivy scan target all presume one. `development/`'s patterns hand off to it:
+once a project copied out of `development/` has its own identity, everything
+after the image — configuration, networking, backup documentation — follows
+`apps/_reference`'s structure exactly like any other stack.
 
-What remains genuinely absent is a *first-party* application — source with no
-upstream at all. Both real cases wrap third-party software, so the shape for
-that one is unproven, and inventing it now would be exactly the placeholder this
-repository avoids elsewhere (`decisions.md`: "a reasoned absence is the outcome,
-not a gap"). It stays absent until a real application needs it.
+A genuinely first-party application — source with no upstream at all — no
+longer starts with no shape at all. `business/vikunja` and `apps/caldiy` both
+still wrap third-party software; `development/`'s patterns are what a
+first-party application starts from now, established because the need for a
+reusable starting point — not for one specific named application — was real
+and current. This replaces the earlier position that the shape "stays absent
+until a real application needs it" (`decisions.md`).
 
 ---
 
