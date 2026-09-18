@@ -57,7 +57,9 @@ rather than from the derivation rule.
 
 The criterion: someone else could fork this and deploy it without needing this conversation.
 
-Before v1.0 is tagged:
+**v1.0.0 is not tagged until both surfaces are ready — this repository and the [SecDockBlue](https://secdockblue.rubennati.at) operator site.** The site being live is not sufficient: it has been live since 2026-07-31 and is not finished. The repository is the technical source of truth and the site is how most people will actually meet it, so a stable technical release ahead of an unfinished public surface would promise something the project cannot deliver on. They stay separate products with separate structures; v1.0 is the one checkpoint they share.
+
+Before v1.0 is tagged, in this repository:
 
 - Every app verified at least once on a clean install (continuous — not a last-minute sprint)
 - No stack left at `scaffolded` without a documented reason
@@ -69,6 +71,16 @@ Before v1.0 is tagged:
 - License review — every live app checked against the license policy below
 - **Status freshness system active** — `Last verified` stamps in place, a major upstream update retires the verification anchor; tactical work moves to GitHub Issues
 - Status model applied end to end — [`docs/standards/status-model.md`](docs/standards/status-model.md) defines what each symbol promises, [LIFECYCLE.md](LIFECYCLE.md) is generated from the owning files, and CI fails on a status claim that is not backed
+
+And on the operator site:
+
+- The reader path holds end to end — someone arriving at any page can reach what they need next, and the navigation names subjects that match what is actually there
+- Every capability where the blueprint ships more than one option has a choosing page, and no product page defines itself through another product
+- The security and operations material is complete for what the repository actually does, with the layers it leaves to the operator stated rather than implied
+- Every public claim agrees with the repository, and a gap named there is a gap named here
+- Sections that exist are finished; a capability with no guide is named as having none rather than carried as a placeholder
+
+Site work does not otherwise wait for a version — see [Continuous](#continuous--not-tied-to-a-version). This gate is about what v1.0.0 asserts, not about when content may publish.
 
 ---
 
@@ -92,7 +104,7 @@ pin and status per stack.
 runs on its own track, tied to no version. Phase 0 and Phase 1 configuration has
 landed; the Phase 0 acceptance checks are open and Phases 2 and 3 have not started.
 
-**Operator Site work is continuous and tied to no version** — content, structure and review loops are ongoing, and each push to `main` that touches `site/` publishes. What is written there is public the moment it lands, which is the reason for the content gate in front of it.
+**Operator Site work is continuous** — content, structure and review loops are ongoing, and each push to `main` that touches `site/` publishes. What is written there is public the moment it lands, which is the reason for the content gate in front of it. No release schedules it and none blocks it, with one exception in the other direction: [v1.0](#v10--complete-and-hand-off-ready) cannot be tagged while the site is unfinished. Publishing stays unversioned; what the 1.0 label asserts does not.
 
 ---
 

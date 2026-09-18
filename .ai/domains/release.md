@@ -11,6 +11,12 @@ been written. Every release since v0.2.0 follows that rule.
 
 Under 1.0, forks should expect snapshots rather than stability guarantees.
 
+**v1.0.0 has a second gate: the operator site.** It is not tagged while
+[SecDockBlue](https://secdockblue.rubennati.at) is unfinished, and being live is not
+the same as being finished. Criteria for both surfaces:
+[`ROADMAP.md`](../../ROADMAP.md#v10--complete-and-hand-off-ready). Site publishing
+itself stays unversioned — this gate constrains the tag, not the content.
+
 ## Sequence
 
 1. Run the Consistency Chain from `docs/maintenance.md`

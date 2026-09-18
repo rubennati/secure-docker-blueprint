@@ -14,7 +14,7 @@ This folder contains the source for the Operator Site: an Astro/Starlight static
 
 **The repository is the technical source of truth.** Compose files, secrets handling, configuration, and implementation details live in the repository root. This site provides guided documentation for operators working with the Blueprint.
 
-**Live at [secdockblue.rubennati.at](https://secdockblue.rubennati.at) since 2026-07-31.** `.github/workflows/site.yml` builds, checks and publishes: a push to `main` that touches `site/` deploys, a pull request builds and is checked but produces nothing publishable. The launch was brought forward — the milestone plan had it at v0.9.0 and a later decision at v1.0.0, and neither is what happened.
+**Live at [secdockblue.rubennati.at](https://secdockblue.rubennati.at) since 2026-07-31.** `.github/workflows/site.yml` builds, checks and publishes: a push to `main` that touches `site/` deploys, a pull request builds and is checked but produces nothing publishable. The launch was brought forward — the milestone plan had it at v0.9.0 and a later decision at v1.0.0, and neither is what happened. That was about when the site would first publish, which is now settled: publishing is continuous and tied to no version. The coupling that does exist runs the other way — `v1.0.0` of the repository cannot be tagged while this site is unfinished ([ROADMAP.md](../ROADMAP.md#v10--complete-and-hand-off-ready)).
 
 ## Local development
 

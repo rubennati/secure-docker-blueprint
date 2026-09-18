@@ -6,6 +6,32 @@ this file is the index and covers decisions that have no other home.
 
 ---
 
+## 2026-09 · v1.0.0 requires both the repository and the operator site
+
+`v1.0.0` is not tagged until this repository *and* the SecDockBlue site meet
+their criteria. The site being live is not sufficient — it has been live since
+2026-07-31 and is not finished. The repository is the technical source of truth
+and the site is how most people will meet it, so a stable technical release in
+front of an unfinished public surface would promise something the project cannot
+deliver.
+
+This reverses a position the repository held. `ROADMAP.md` said Operator Site
+work was "tied to no version", and `site/README.md` recorded that a v1.0.0
+coupling had been decided and then abandoned. Both statements were about
+**when the site would first publish**, which is settled and unchanged:
+publishing is continuous, every push to `main` that touches `site/` deploys, and
+no release schedules it. The new gate runs the other way and constrains the
+**tag**, not the content. Both files now say so rather than leaving the
+implication that the two are unrelated.
+
+`ROADMAP.md`'s v1.0 section is the canonical home — it already owned the v1.0
+criteria, and the File Map makes `ROADMAP.md` the owner of anything
+forward-looking. Its ten repository bullets gained five site ones, and the
+Release Chain in `docs/maintenance.md` gained a step so the release procedure
+enforces the gate instead of leaving it as prose. Repository and site stay
+separate products with separate structures; v1.0 is the one checkpoint they
+share.
+
 ## 2026-09 · AI & Local AI stays latent; Document Processing has capabilities but no pipeline
 
 Both were conceptual domains carried in `docs/architecture.md` with one bullet

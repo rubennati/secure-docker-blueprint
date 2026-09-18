@@ -203,6 +203,7 @@ Run the full Consistency Chain first, then:
 | 4 | All `🚧` entries | Is the preview status still honest? |
 | 5 | All `✅` entries | Were any broken by dependency updates since last test? |
 | 6 | GitHub | Minor versions only (`v0.X.0`): `gh release create vX.Y.0 --draft` — review, then publish. Patch tags (`vX.Y.Z`) are Git tags only — no GitHub Release needed. |
+| 7 | `v1.0.0` only | **Both surfaces ready?** The repository *and* the operator site have to meet the criteria in [`ROADMAP.md`](../ROADMAP.md#v10--complete-and-hand-off-ready). The site being live does not count. If the site is unfinished, the tag waits — there is no partial 1.0. |
 
 ---
 
