@@ -1,0 +1,319 @@
+# Langfuse — local
+#
+#   cp .env.local.example .env.local
+#   ops/init.sh                        # secrets in .secrets/
+#   mkdir -p volumes/{postgres,clickhouse,redis,minio}
+#   sudo chown 101:101 volumes/clickhouse; sudo chown 999:999 volumes/redis; sudo chown 1000:1000 volumes/minio
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   open http://localhost:3000        # log in as INIT_USER_EMAIL with .secrets/admin_password.txt
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+#
+# The first start takes a few minutes: migrations for PostgreSQL and ClickHouse.
+
+x-langfuse-env: &langfuse-env
+  # --- Data stores ---
+  DATABASE_HOST: postgres
+  DATABASE_USERNAME: ${DB_USER}
+  DATABASE_NAME: ${DB_NAME}
+  DATABASE_PASSWORD__FILE: /run/secrets/PG_PASSWORD
+  CLICKHOUSE_MIGRATION_URL: clickhouse://clickhouse:9000
+  CLICKHOUSE_URL: http://clickhouse:8123
+  CLICKHOUSE_USER: ${CH_USER}
+  CLICKHOUSE_PASSWORD__FILE: /run/secrets/CH_PASSWORD
+  CLICKHOUSE_CLUSTER_ENABLED: "false"
+  REDIS_HOST: redis
+  REDIS_AUTH__FILE: /run/secrets/REDIS_AUTH
+  # --- Object storage (MinIO, internal only) ---
+  LANGFUSE_S3_EVENT_UPLOAD_BUCKET: langfuse
+  LANGFUSE_S3_EVENT_UPLOAD_REGION: auto
+  LANGFUSE_S3_EVENT_UPLOAD_ENDPOINT: http://minio:9000
+  LANGFUSE_S3_EVENT_UPLOAD_FORCE_PATH_STYLE: "true"
+  LANGFUSE_S3_EVENT_UPLOAD_PREFIX: events/
+  LANGFUSE_S3_EVENT_UPLOAD_ACCESS_KEY_ID: ${MINIO_USER}
+  LANGFUSE_S3_EVENT_UPLOAD_SECRET_ACCESS_KEY__FILE: /run/secrets/MINIO_PASSWORD
+  LANGFUSE_S3_MEDIA_UPLOAD_BUCKET: langfuse
+  LANGFUSE_S3_MEDIA_UPLOAD_REGION: auto
+  LANGFUSE_S3_MEDIA_UPLOAD_ENDPOINT: http://minio:9000
+  LANGFUSE_S3_MEDIA_UPLOAD_FORCE_PATH_STYLE: "true"
+  LANGFUSE_S3_MEDIA_UPLOAD_PREFIX: media/
+  LANGFUSE_S3_MEDIA_UPLOAD_ACCESS_KEY_ID: ${MINIO_USER}
+  LANGFUSE_S3_MEDIA_UPLOAD_SECRET_ACCESS_KEY__FILE: /run/secrets/MINIO_PASSWORD
+  # --- Application ---
+  NEXTAUTH_URL: http://localhost:3000
+  SALT__FILE: /run/secrets/SALT
+  ENCRYPTION_KEY__FILE: /run/secrets/ENCRYPTION_KEY
+  TELEMETRY_ENABLED: "false"
+  TZ: ${TZ}
+
+services:
+
+  langfuse-web:
+    image: docker.langfuse.com/langfuse/langfuse:${APP_TAG}
+    container_name: langfuse-local-web
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    memswap_limit: 2g
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          cpus: "2.00"
+          pids: 200
+        reservations:
+          memory: 512m
+    entrypoint: ["/bin/sh", "/entrypoint.sh", "dumb-init", "--", "./web/entrypoint.sh"]
+    command: ["node", "./web/server.js", "--keepAliveTimeout", "110000"]
+    environment:
+      <<: *langfuse-env
+      NEXTAUTH_SECRET__FILE: /run/secrets/NEXTAUTH_SECRET
+      NODE_OPTIONS: --max-old-space-size=1536
+      AUTH_DISABLE_SIGNUP: "true"
+      LANGFUSE_INIT_ORG_ID: ${INIT_ORG_ID}
+      LANGFUSE_INIT_ORG_NAME: ${INIT_ORG_NAME}
+      LANGFUSE_INIT_PROJECT_ID: ${INIT_PROJECT_ID}
+      LANGFUSE_INIT_PROJECT_NAME: ${INIT_PROJECT_NAME}
+      LANGFUSE_INIT_PROJECT_PUBLIC_KEY__FILE: /run/secrets/PROJECT_PUBLIC_KEY
+      LANGFUSE_INIT_PROJECT_SECRET_KEY__FILE: /run/secrets/PROJECT_SECRET_KEY
+      LANGFUSE_INIT_USER_EMAIL: ${INIT_USER_EMAIL}
+      LANGFUSE_INIT_USER_NAME: Administrator
+      LANGFUSE_INIT_USER_PASSWORD__FILE: /run/secrets/ADMIN_PASSWORD
+    depends_on:
+      postgres:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    volumes:
+      - ./.secrets/pg_password.txt:/run/secrets/PG_PASSWORD:ro
+      - ./.secrets/ch_password.txt:/run/secrets/CH_PASSWORD:ro
+      - ./.secrets/redis_auth.txt:/run/secrets/REDIS_AUTH:ro
+      - ./.secrets/minio_password.txt:/run/secrets/MINIO_PASSWORD:ro
+      - ./.secrets/salt.txt:/run/secrets/SALT:ro
+      - ./.secrets/encryption_key.txt:/run/secrets/ENCRYPTION_KEY:ro
+      - ./.secrets/nextauth_secret.txt:/run/secrets/NEXTAUTH_SECRET:ro
+      - ./.secrets/project_public_key.txt:/run/secrets/PROJECT_PUBLIC_KEY:ro
+      - ./.secrets/project_secret_key.txt:/run/secrets/PROJECT_SECRET_KEY:ro
+      - ./.secrets/admin_password.txt:/run/secrets/ADMIN_PASSWORD:ro
+      - ./config/entrypoint.sh:/entrypoint.sh:ro
+    tmpfs:
+      - /tmp
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks: [langfuse-local]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://$$(hostname):3000/api/public/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 300s
+
+  langfuse-worker:
+    image: docker.langfuse.com/langfuse/langfuse-worker:${APP_TAG}
+    container_name: langfuse-local-worker
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    memswap_limit: 1g
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 256m
+    entrypoint: ["/bin/sh", "/entrypoint.sh", "dumb-init", "--", "./worker/entrypoint.sh"]
+    command: ["node", "worker/dist/index.js"]
+    environment: *langfuse-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    volumes:
+      - ./.secrets/pg_password.txt:/run/secrets/PG_PASSWORD:ro
+      - ./.secrets/ch_password.txt:/run/secrets/CH_PASSWORD:ro
+      - ./.secrets/redis_auth.txt:/run/secrets/REDIS_AUTH:ro
+      - ./.secrets/minio_password.txt:/run/secrets/MINIO_PASSWORD:ro
+      - ./.secrets/salt.txt:/run/secrets/SALT:ro
+      - ./.secrets/encryption_key.txt:/run/secrets/ENCRYPTION_KEY:ro
+      - ./config/entrypoint.sh:/entrypoint.sh:ro
+    tmpfs:
+      - /tmp
+    networks: [langfuse-local]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://$$(hostname):3030/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  postgres:
+    image: postgres:${PG_TAG}
+    container_name: langfuse-local-db
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+    memswap_limit: 512m
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 128m
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/PG_PASSWORD
+      TZ: ${TZ}
+    volumes:
+      - ./.secrets/pg_password.txt:/run/secrets/PG_PASSWORD:ro
+      - ./volumes/postgres:/var/lib/postgresql
+    networks: [langfuse-local]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME} -h 127.0.0.1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:${CH_TAG}
+    container_name: langfuse-local-clickhouse
+    restart: unless-stopped
+    user: "101:101"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    memswap_limit: 2g
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          cpus: "2.00"
+          pids: 2000
+        reservations:
+          memory: 512m
+    entrypoint: ["/bin/sh", "/entrypoint-secrets.sh", "/entrypoint.sh"]
+    environment:
+      CLICKHOUSE_DB: default
+      CLICKHOUSE_USER: ${CH_USER}
+      CLICKHOUSE_PASSWORD__FILE: /run/secrets/CH_PASSWORD
+      TZ: ${TZ}
+    volumes:
+      - ./.secrets/ch_password.txt:/run/secrets/CH_PASSWORD:ro
+      - ./config/entrypoint.sh:/entrypoint-secrets.sh:ro
+      - ./volumes/clickhouse:/var/lib/clickhouse
+    tmpfs:
+      - /tmp
+      - /var/log/clickhouse-server
+      - /etc/clickhouse-server/users.d
+    networks: [langfuse-local]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8123/ping || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  redis:
+    image: redis:${REDIS_TAG}
+    container_name: langfuse-local-redis
+    restart: unless-stopped
+    user: "999:999"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    memswap_limit: 256m
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.50"
+          pids: 100
+        reservations:
+          memory: 64m
+    entrypoint: ["/bin/sh", "/redis-entrypoint.sh"]
+    volumes:
+      - ./.secrets/redis_auth.txt:/run/secrets/REDIS_AUTH:ro
+      - ./config/redis-entrypoint.sh:/redis-entrypoint.sh:ro
+      - ./volumes/redis:/data
+    tmpfs:
+      - /tmp
+    networks: [langfuse-local]
+    healthcheck:
+      test: ["CMD-SHELL", "REDISCLI_AUTH=\"$$(cat /run/secrets/REDIS_AUTH)\" redis-cli ping | grep -q PONG || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+  minio:
+    image: quay.io/minio/minio:${MINIO_TAG}
+    container_name: langfuse-local-minio
+    restart: unless-stopped
+    user: "1000:1000"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    memswap_limit: 512m
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 128m
+    entrypoint: ["/bin/sh", "-c", "mkdir -p /data/langfuse && exec minio server --address :9000 --console-address :9001 /data"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_USER}
+      MINIO_ROOT_PASSWORD_FILE: /run/secrets/MINIO_PASSWORD
+      HOME: /tmp
+      TZ: ${TZ}
+    volumes:
+      - ./.secrets/minio_password.txt:/run/secrets/MINIO_PASSWORD:ro
+      - ./volumes/minio:/data
+    tmpfs:
+      - /tmp
+    networks: [langfuse-local]
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+networks:
+  langfuse-local:
+    name: langfuse-local

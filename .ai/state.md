@@ -72,10 +72,8 @@ request. What each stack found that changed its shape is in that stack's
 | PAM/bastion alternatives | 2026-09-19 | #112 |
 | secret sharing, Threat Dragon | 2026-09-19 | #113 |
 | zot, step-ca, OpenCanary, Dependency-Track, DFIR-IRIS, Velociraptor | 2026-09-19 | #114 |
-
-AI gateway and UI apps (LiteLLM, Open WebUI, agentgateway) — PR #116, pending
-review. **Dify and Langfuse are on hold** until the open v1.0 items in
-[`../ROADMAP.md`](../ROADMAP.md) are closed.
+| LiteLLM, Open WebUI, agentgateway | 2026-09-19 | #116 |
+| Dify, Langfuse | 2026-09-19 | pending review |
 
 ## v0.8.1 on a host — 2026-09-13
 

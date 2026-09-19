@@ -79,6 +79,16 @@
     "verified_anchored": false,
     "verified_version": ""
   },
+  "apps/dify": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=1.17.1",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "apps/docling-serve": {
     "backup_docs": "documented",
     "local_stack": "✅",
@@ -848,6 +858,16 @@
     "verified": "2026-09-08",
     "verified_anchored": true,
     "verified_version": "v4.4"
+  },
+  "monitoring/langfuse": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=4.38.0",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "monitoring/ntfy": {
     "backup_docs": "documented",

@@ -63,6 +63,14 @@
     "license_class": "osi",
     "origin": "France · Airbus CyberSecurity (SAS), confirmed via copyright headers in upstream's own source files (`docker/webApp/iris-entrypoint.sh`, the nginx entrypoint) · EU"
   },
+  "apps/dify": {
+    "bloc": "none",
+    "country": "LangGenius",
+    "entity": "no country stated in its published terms",
+    "license": "Dify Open Source License (Apache-2.0 with additional conditions: no multi-tenant service without written authorisation, frontend logo and copyright preserved; not OSI-approved)",
+    "license_class": "source-available",
+    "origin": "LangGenius · no country stated in its published terms · no country"
+  },
   "apps/docling-serve": {
     "bloc": "non-EU",
     "country": "LF AI & Data Foundation (US non-profit)",
@@ -678,6 +686,14 @@
     "license": "BSD 3-Clause",
     "license_class": "osi",
     "origin": "Latvia · Pēteris Caune · EU"
+  },
+  "monitoring/langfuse": {
+    "bloc": "non-EU",
+    "country": "United States",
+    "entity": "ClickHouse, Inc. (Langfuse has been part of it since 2026-01)",
+    "license": "MIT (core; the `ee/` directories are under a separate enterprise licence)",
+    "license_class": "mixed",
+    "origin": "United States · ClickHouse, Inc. (Langfuse has been part of it since 2026-01) · non-EU"
   },
   "monitoring/ntfy": {
     "bloc": "EU",

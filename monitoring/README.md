@@ -1,6 +1,6 @@
 # Monitoring
 
-Self-hosted monitoring stack — covers five axes: **uptime**, **cron / scheduled-job monitoring**, **host & container metrics**, **content changes**, **disk health**. Each app in its own subdirectory, drafted and tested independently. Mix-and-match based on what you actually need — you do not need all of them.
+Self-hosted monitoring stack — covers six axes: **uptime**, **cron / scheduled-job monitoring**, **host & container metrics**, **content changes**, **disk health**, **LLM application traces**. Each app in its own subdirectory, drafted and tested independently. Mix-and-match based on what you actually need — you do not need all of them.
 
 ## What's here
 
@@ -31,6 +31,12 @@ What has been established about each stack — verified against which version an
 | App | Approach | Notes |
 |---|---|---|
 | [changedetection.io](changedetection/) | Page diff + notification | Restock / price / ToS / defacement watcher. |
+
+### LLM observability
+
+| App | Approach | Notes |
+|---|---|---|
+| [Langfuse](langfuse/) | Traces, scores and prompts for LLM applications | Six services (web, worker, PostgreSQL, ClickHouse, Redis, MinIO). Fed by an SDK or OpenTelemetry; independent of any model server, gateway or chat application. |
 
 ### Notification receivers
 

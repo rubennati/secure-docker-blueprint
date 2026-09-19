@@ -132,6 +132,28 @@ new: configured, not yet exercised.
 
 ---
 
+## 2026-09-19 · Dify and Langfuse keep their real component count
+
+Dify is ten services and Langfuse six, and none was collapsed: the worker, plugin
+daemon, sandbox and SSRF proxy are what makes Dify's chat, knowledge-base and code
+paths work, and Langfuse v4's ClickHouse, Redis and MinIO are all in its read and
+write path. Where a component is optional upstream it was left out and named in
+`UPSTREAM.md`: nginx and certbot (Traefik replaces them), workflow collaboration
+and the 1.17 Agent runtime (backend, local sandbox, second proxy).
+
+Dify's vector store is pgvector, not Weaviate and not the repository's own Qdrant:
+Dify supports several, and no stack here embeds another. Langfuse sits in
+`monitoring/` because it receives traces, and nothing else in the repository sends
+to it or depends on it.
+
+Exceptions were measured, not assumed. The plugin daemon ships as root but runs as
+uid 1001, read-only, with installs verified. The sandbox needs five capabilities
+(each removal broke a code run; a sixth was not needed). Squid stays root with five
+capabilities. Langfuse's web service needs a 2 GB limit and a raised Node heap or it
+loops at start, and both Node services bind to the container's hostname address, not
+loopback, so their healthchecks call `$(hostname)`. Dify's licence and Open WebUI's
+are classed source-available in the sovereignty report.
+
 ## 2026-09-19 · The AI gateways and chat UI are independent stacks
 
 `apps/litellm`, `apps/open-webui` and `apps/agentgateway` were added without a
