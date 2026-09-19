@@ -1,329 +1,188 @@
 # Roadmap
 
-Direction reviewed 2026-09-17.
+Direction reviewed 2026-09-19.
 
 What remains to be built, what blocks it, and what proves it finished. Shipped
-work belongs to [`CHANGELOG.md`](CHANGELOG.md), per-stack status to the tables in
-[`README.md`](README.md) and the generated [`LIFECYCLE.md`](LIFECYCLE.md), and
-per-category detail to the `README.md` in each top-level directory.
+work belongs to [`CHANGELOG.md`](CHANGELOG.md), per-stack status to the generated
+[`LIFECYCLE.md`](LIFECYCLE.md), and per-category detail to the `README.md` in each
+top-level directory. The gap between where the project is and v1.0.0 is measured
+in [`docs/v1-readiness-audit.md`](docs/v1-readiness-audit.md).
 
 ---
 
 ## Direction
 
-Pre-1.0 tags are set when a natural milestone is reached, not on a fixed cadence. The single criterion for v1.0 is: **could someone fork this and run it without needing my mental model?** — subjective but unambiguous when met.
+Pre-1.0 tags are set when a natural milestone is reached, not on a fixed cadence.
+The single criterion for v1.0 is: **could someone fork this and run it without
+needing my mental model?**
 
-**v0.9.0 — Secure Operations Baseline — shipped 2026-09-17.** The repository
-now credibly covers deploy → secure → operate → recover as a reusable
-pattern: a lifecycle/status-freshness integrity fix, a canonical secrets
-generation/rotation standard, a canonical restore/recovery model, and
-repository-side update-awareness configuration all landed. See
-[CHANGELOG.md](CHANGELOG.md#090--2026-09-17--secure-operations-baseline) for
-the full delta. This is not a claim that every stack has been individually
-verified in production — see [LIFECYCLE.md](LIFECYCLE.md) for what has and
-has not been established per stack, and the sections below for what is next.
+**Latest tag: v0.9.0 — Secure Operations Baseline (2026-09-17).** `dev` carries
+the work since, unreleased: the `development/` patterns, the document-processing,
+developer-tool, AI-foundation, PAM/bastion, secret-sharing and security-tooling
+stacks, and the optional host watchdogs. What has and has not been established
+per stack is in [`LIFECYCLE.md`](LIFECYCLE.md).
 
 ### v0.10.0 — Measured resource limits
 
-**Every service now carries a ceiling**, and the healthcheck question is decided
-for every service — either one is defined or the compose file states why the image
-cannot have one. `python3 scripts/ci/check-structure.py` is the progress bar for
-both: `no-resources` is a failure and `no-healthcheck` a warning, per service, and
-neither fires anywhere today.
-
-**Every production service now states a swap policy** — 150/150, at the default,
-`memswap_limit` equal to `memory`, which needs no measurement. `no-swap-policy` in
-`check-structure.py` is a failure now, guarding the property rather than reporting a
-migration. A value above the default still needs one, for the same reason a memory
-ceiling does: it has to clear the workload's real peak — none is claimed yet.
-
-**What remains is the values.** The ceilings in place were derived — from what a
-component budgets for itself, from a peak where one was available, and generously
-on purpose, because a limit the normal workload reaches kills an import and looks
-like an application fault. Several stacks say so in the compose file: *starting
-values, not measured ones*. Turning them into measured values needs a running
-install per stack, which is why this milestone is late rather than early. The
-procedure is in [`docs/resource-measurement.md`](docs/resource-measurement.md) —
-what to sample, under which load states, and how a peak becomes a limit;
-[`docs/standards/compose-structure.md`](docs/standards/compose-structure.md)
-owns the target values and the rule that derives them.
+Every production service carries a memory, PID and swap ceiling, and states a
+healthcheck or why it has none; `python3 scripts/ci/check-structure.py` fails on
+any that does not. What remains is the values: the ceilings in place are derived
+by rule, generously, and several compose files say so. Turning them into measured
+values needs a running install per stack — the procedure is
+[`docs/resource-measurement.md`](docs/resource-measurement.md), the target values
+and the derivation rule are in
+[`docs/standards/compose-structure.md`](docs/standards/compose-structure.md).
 
 **Done when** every `✅` stack's limits come from a measurement on a real install
 rather than from the derivation rule.
 
-**The Operator Site is live** at [secdockblue.rubennati.at](https://secdockblue.rubennati.at) since 2026-07-31, ahead of the milestone that used to hold it. It is the operator-facing entry point; the repository remains the technical source of truth and nothing moved out of it. Deliberately small and curated rather than a mirror of the repository, so it grows by review rather than by export.
-
 ### v1.0 — Complete and hand-off ready
 
-The criterion: someone else could fork this and deploy it without needing this conversation.
+The criterion: someone else could fork this and deploy it without needing this
+conversation.
 
-**v1.0.0 is not tagged until both surfaces are ready — this repository and the [SecDockBlue](https://secdockblue.rubennati.at) operator site.** The site being live is not sufficient: it has been live since 2026-07-31 and is not finished. The repository is the technical source of truth and the site is how most people will actually meet it, so a stable technical release ahead of an unfinished public surface would promise something the project cannot deliver on. They stay separate products with separate structures; v1.0 is the one checkpoint they share.
+**v1.0.0 is not tagged until both surfaces are ready — this repository and the
+[SecDockBlue](https://secdockblue.rubennati.at) operator site.** The site has been
+live since 2026-07-31; being live is not being finished. They stay separate
+products with separate structures, and v1.0 is the one checkpoint they share.
 
-Before v1.0 is tagged, in this repository:
+Open in this repository:
 
-- Every app verified at least once on a clean install (continuous — not a last-minute sprint)
-- No stack left at `scaffolded` without a documented reason
-- No `__REPLACE_ME__` in any verified file
-- Honest review of every `scaffolded` stack — a state rises only on evidence
-- CI baseline complete: the jobs exist — compose validation, secret scan, security baseline, canonical structure, status model, checker coverage, docs QA (markdown lint, links, prose register) and workflow supply chain. Two gaps remain: **Trivy runs with `exit-code: 0`** and blocks nothing until the existing CRITICAL findings have been assessed once, and **`Checker coverage`, `Docs QA` and `Workflow supply chain` are not in the required set** — a branch-protection setting, not a file in this repository
-- Secret & Password Generation Standard consolidated into `docs/standards/`
-- Secrets rotation guidance in `docs/standards/`
-- License review — every live app checked against the license policy below
-- **Status freshness system active** — `Last verified` stamps in place, a major upstream update retires the verification anchor; tactical work moves to GitHub Issues
-- Status model applied end to end — [`docs/standards/status-model.md`](docs/standards/status-model.md) defines what each symbol promises, [LIFECYCLE.md](LIFECYCLE.md) is generated from the owning files, and CI fails on a status claim that is not backed
+- **Verification depth.** Every app verified at least once on a clean install, and
+  no stack left at `scaffolded` without a documented reason. Most stacks are
+  `scaffolded` today — [`LIFECYCLE.md`](LIFECYCLE.md) has the count. A state rises
+  only on evidence, so this is measured in host sessions, not in editing.
+- **Trivy blocks.** The image scan runs with `exit-code: 0` and blocks nothing
+  until the existing CRITICAL findings have been assessed once
+  ([`docs/security-verification.md`](docs/security-verification.md)).
 
-And on the operator site:
+Decision pending, with a possible impact on v1.0 — the site's personal data:
+see [A public repository should not carry personal data](#a-public-repository-should-not-carry-personal-data).
 
-- The reader path holds end to end — someone arriving at any page can reach what they need next, and the navigation names subjects that match what is actually there
-- Every capability where the blueprint ships more than one option has a choosing page, and no product page defines itself through another product
-- The security and operations material is complete for what the repository actually does, with the layers it leaves to the operator stated rather than implied
-- Every public claim agrees with the repository, and a gap named there is a gap named here
-- Sections that exist are finished; a capability with no guide is named as having none rather than carried as a placeholder
+Open on the operator site:
 
-Site work does not otherwise wait for a version — see [Continuous](#continuous--not-tied-to-a-version). This gate is about what v1.0.0 asserts, not about when content may publish.
+- **Every shipped stack is discoverable.** A reader can find any application by
+  name and by the problem it solves, and the catalogue is checked against the
+  repository so it cannot silently fall behind again.
+- **The reader path holds end to end** — someone arriving at any page can reach
+  what they need next, and the navigation names subjects that match what is there.
+- **Where alternatives need comparing, the site compares them** — by what each
+  does differently, without ranking, and no product page defines itself through
+  another product.
+- **The security and operations material is complete for what the repository actually does**, with the layers it leaves to the operator stated rather than implied.
+- **Every public claim agrees with the repository**, and a gap named there is a
+  gap named here. Sections that exist are finished; a capability with no guide is
+  named as having none rather than carried as a placeholder.
+
+Site work does not otherwise wait for a version — see
+[Continuous](#continuous--not-tied-to-a-version).
 
 ---
 
 ## Continuous — not tied to a version
 
-**App testing runs in parallel to everything above.** Any time there is bandwidth: pick a `scaffolded` app, run the App Chain, record the verified version. This does not block or trigger a release. The bar for the bar rises with the repository — an app verified today must meet the current baseline-aligned criteria in [`docs/maintenance.md`](docs/maintenance.md), not the bar from v0.1.
+**App testing runs in parallel to everything above.** When there is bandwidth,
+pick a `scaffolded` app, run the App Chain, record the verified version. This
+blocks and triggers no release. The bar rises with the repository: an app
+verified today must meet the current baseline-aligned criteria in
+[`docs/maintenance.md`](docs/maintenance.md).
 
-Apps still to re-verify on a clean install, because the standards have moved since
-they were last checked: Vaultwarden, WordPress, Nextcloud, Seafile / Seafile Pro,
-Invoice Ninja.
-
-Pinned to a new major in a dependency sweep and not yet run anywhere:
-Paperless-ngx 3.x, WordPress 7.x, Immich 3.x, NocoDB (CalVer switch), Adminer 5.x,
-Homepage 2.x (adds its own authentication), OpnForm 2.x, LibrePhotos (weekly builds
-to semver) and `core/dnsmasq` on a new publisher. Healthchecks 4.x and Uptime Kuma
-2.x ran in the v0.8.0 host session. Each of the rest is `scaffolded` until it starts
-on a host — [`LIFECYCLE.md`](LIFECYCLE.md) carries the current
-pin and status per stack.
+- Verified before the standards moved and worth a second run: Vaultwarden,
+  WordPress, Nextcloud, Seafile / Seafile Pro, Invoice Ninja.
+- Pinned to a new major in a dependency sweep and not yet run anywhere —
+  [`LIFECYCLE.md`](LIFECYCLE.md) marks each `pin-drifted` and carries the pin.
+- Never started on a host: UrBackup, and the security, AI, PAM/bastion and
+  secret-sharing stacks added since v0.9.0.
 
 **Cal.diY hardening** ([`apps/caldiy/docs/hardening-plan.md`](apps/caldiy/docs/hardening-plan.md))
-runs on its own track, tied to no version. Phase 0 and Phase 1 configuration has
-landed; the Phase 0 acceptance checks are open and Phases 2 and 3 have not started.
+runs on its own track. Phase 0 and Phase 1 configuration has landed; the Phase 0
+acceptance checks are open and Phases 2 and 3 have not started.
 
-**Operator Site work is continuous** — content, structure and review loops are ongoing, and each push to `main` that touches `site/` publishes. What is written there is public the moment it lands, which is the reason for the content gate in front of it. No release schedules it and none blocks it, with one exception in the other direction: [v1.0](#v10--complete-and-hand-off-ready) cannot be tagged while the site is unfinished. Publishing stays unversioned; what the 1.0 label asserts does not.
+**Operator site work** — content, structure and review — is continuous, and each
+push to `main` that touches `site/` publishes. What is written there is public the
+moment it lands, which is why the content gate sits in front of it.
 
 ---
 
 ## A public repository should not carry personal data
 
-The legal notice and the privacy statement hold a name, a postal address and an
-e-mail. The repository is public and meant to be forked, so those values travel
-with every copy.
+The site's legal notice and privacy statement hold a name, a postal address and an
+e-mail; `security.txt`, `astro.config.mjs` and the footer carry the domain and
+repository URLs. The repository is public and meant to be forked, so those values
+travel with every copy — and a fork that builds and goes live unnoticed publishes
+this author's imprint on a stranger's site.
 
-The case to prevent is not someone taking them deliberately. It is the fork
-that builds and goes live without anyone looking — and then a stranger's site
-carries this author's imprint, and the people who read it write to **him** about
-a site he has nothing to do with. Nobody had to act in bad faith for that to
-happen.
-
-Beyond the nuisance, a template that anyone can fork and build ought to be free
-of its author's identity by construction. Keeping personal data out of a
-public, copyable artefact is both the cleaner engineering answer and the correct
-one under data-protection law.
-
-**Direction, not yet a decision.** Encrypt the pages that carry personal data,
-commit the ciphertext, and ship a placeholder in their place. What is secret is
-the key, not the file: the repository holds a blob anyone can copy and nobody
-can read, and a fork inherits a template that visibly asks for its own details.
-It still builds on the first try, because the placeholder is a valid page.
-
-`age` looks like the right size: one binary, no keyring, no web of trust, no
-expiry, and a key pair that is two lines of text. SOPS earns its place when
-single fields inside a YAML stay readable, which is not the case here — whole
-files are encrypted, so it would be one layer over the same age. A repository
-secret alone will not do either: a secret holds a value, so the imprint would
-become an unversioned blob in a form field instead of a file with a history and
-a diff.
-
-Two key holders, both able to decrypt:
-
-| Where | Holds |
-|---|---|
-| GitHub Actions secret | the key the deploy uses, decrypting into the runner's own workspace |
-| a password manager | the same key for local editing, alongside the SSH keys already kept there |
-
-An offline backup recipient belongs in the recipients file as well, so a lost
-laptop does not take the imprint with it.
-
-**Scope: everything personal, not only the two legal pages.** A fork inherits
-the name and address in the legal notice, the contact address in
-`security.txt`, the domain in `astro.config.mjs`, and the repository URLs in
-the footer and the reference lists. Encrypting the imprint alone would still
-leave a stranger's site pointing at this one.
-
-**A fork builds, with the fields empty.** The placeholder is a valid page that
-visibly asks for its own details, so nobody has to fix anything before the
-first build succeeds.
-
-That works for prose. It does not work for every value: the site URL feeds the
-canonical tags and the sitemap, and an empty one produces a broken build rather
-than an obvious gap. Values the build needs get a neutral placeholder —
-`example.com` and the repository's own URL — while name, address and e-mail go
-empty. The distinction is between a field a reader should notice is blank and a
-value the build cannot do without.
-
-**One data module rather than encrypted pages.** The values live in a single
-module the pages and the config import. `site.ts` is committed and holds the
-placeholders; `site.local.ts` is decrypted, gitignored, and wins when present.
-That is a better shape than encrypting the markdown: one file to encrypt, one
-import to resolve, and nothing in the working tree that a fork could mistake
-for its own.
-
-It also dissolves most of the trap. Decrypting over a committed placeholder
-invites a thoughtless `git add` that puts real values back into a history that
-keeps them; a gitignored file cannot be added by accident. A pre-commit hook
-guarding against a forced add is then a belt on top of braces rather than the
-only thing standing between the repository and a permanent mistake.
-
-Locally the key never reaches the filesystem, because process substitution
-hands `age` a descriptor instead of a path:
-
-```bash
-age -d -i <(op read "op://Private/age-signing-key/notesPlain") \
-    -o site/src/data/site.local.ts secrets/site.age
-```
-
-The runner needs the same care for the opposite reason: writing the key to a
-file and deleting it afterwards leaves a window, however short, so the key
-should reach `age` on a descriptor there too.
-
-This concerns the site. The rule that no secret-management tooling belongs in
-the blueprint itself stands: no stack gains a dependency, and none of this is
-offered to an operator as a way to hold their own credentials.
-
-## In the backlog — individual app paths
-
-App-level work that does not drive version tags.
-
-### Choice-matrix categories — pick-one-per-install decisions
-
-Once verified on real data, pick the default and deprioritise the rest:
-
-- **Dashboards** — Dashy, Heimdall, Homarr, Homepage (`apps/`)
-- **Photo galleries** — Immich, LibrePhotos, Lychee, PhotoPrism, Photoview (`apps/`)
-- **Scheduling** — Cal.diy (MIT community), Easy!Appointments (`apps/`). Cal.com was retired — upstream moved the production codebase to a proprietary licence.
-- **Business wikis** — BookStack is live; Wiki.js and Outline are planned (`apps/`)
-- **Forms** — OpnForm is in place; Formbricks and HeyForm are planned (`apps/`)
-- **Office / document servers** — OnlyOffice is live; Euro-Office (EU-governed fork) and Collabora (lighter, LibreOffice-based) are drafted (`apps/`)
-- **E-signatures** — OpenSign and Documenso, both drafted (`business/`)
-
-### Categories with roadmaps in their own READMEs
-
-Each of these owns its own planned list, including which services are on disk and
-which are named only:
-
-- [`monitoring/README.md`](monitoring/README.md) — the five monitoring axes plus the notification receiver; planned additions include Grafana + Prometheus and Scrutiny
-- [`business/README.md`](business/README.md) — planned additions include Plane, Leantime, AppFlowy, Ackee, Plausible CE, Live Helper Chat and Eramba GRC
-- [`backup/README.md`](backup/README.md) — Borgmatic has been backed up from and restored from; UrBackup has never been started. Kopia and Bareos are named, not built
-- [`development/README.md`](development/README.md) — the `static-site` and `web-api` deployment patterns are in place, and the third-party developer tools (GreenMail, Windmill, Mailpit, Adminer, IT-Tools, Whoami) are linked from it; they stay in `apps/` under the normal categorisation test
-
-### Project management — to evaluate
-
-Three candidates to assess before committing to a default recommendation:
-
-| App | Angle | License | Notes |
-|---|---|---|---|
-| **Plane** | Jira alternative — issues, cycles, modules, analytics | AGPL-3.0 | Multi-service stack (web, worker, beat, minio); richer than Vikunja, lighter than OpenProject |
-| **Leantime** | PM designed for non-project-managers — goals, tasks, time tracking | AGPL-3.0 | Single-container option available; different UX philosophy than the others |
-| **AppFlowy** | Notion alternative — docs, databases, kanban, AI | AGPL-3.0 | ⚠️ Non-standard deployment: only the backend (AppFlowy Cloud) runs in Docker — users connect via desktop or mobile app, not a browser. Evaluate whether this fits the blueprint model before including. |
-
-Evaluation criteria: self-hosted Docker complexity, SSO/OIDC support, `_FILE` secret support, active maintenance, CE feature set vs paid gating.
+**Direction, not yet a decision:** the personal values live in one gitignored
+module (`site.local.ts`, decrypted from a committed `age`-encrypted file) that
+overrides a committed placeholder module (`site.ts`), so a fork builds on the
+first try with the fields empty and nothing personal in the tree. Values the build
+cannot do without get a neutral placeholder (`example.com`, the repository's own
+URL); name, address and e-mail go empty. The reasoning, the key-holder layout and
+the local and CI decrypt commands are recorded in
+[`.ai/decisions.md`](.ai/decisions.md) under *2026-09 · Personal data on the
+public site*. The rule that no secret-management tooling belongs in the blueprint
+itself stands: this concerns the site only.
 
 ---
 
-## Evaluating
+## On hold — after v1.0 or not yet needed
 
-### Network IDS — Suricata (evaluation, nothing committed)
+No application is added while the v1.0 items above are open. Candidates, each
+independently useful and none excluded because a similar product already ships:
 
-A passive network IDS sees what log-driven detection cannot: packets, flows,
-protocol anomalies, TLS metadata, DNS and file hashes. Whether that is worth its
-cost here is an open question, not a plan.
+- **AI gateway and UI** — LiteLLM, Open WebUI, agentgateway; **Dify**;
+  **Langfuse** (`monitoring/`). Held after the AI foundation (`apps/ollama`,
+  `apps/vllm`, `apps/qdrant`).
+- **Per category** — each README owns its own planned list:
+  [`apps/`](apps/README.md), [`business/`](business/README.md),
+  [`monitoring/`](monitoring/README.md), [`backup/`](backup/README.md).
+- **Project management** — Plane, Leantime and AppFlowy are candidates alongside
+  the shipped OpenProject and Vikunja. Judged on Docker complexity, OIDC support,
+  `_FILE` secret support, maintenance activity and what the community edition
+  withholds. AppFlowy runs only its backend in Docker; whether that fits the
+  blueprint model is part of the evaluation.
+- **Network IDS — Suricata.** A passive IDS sees packets, flows and protocol
+  anomalies that log-driven detection cannot. Open questions: which of that is
+  useful on one Docker host, who reads the alerts, the cost under deep packet
+  inspection, and the false-positive load. Passive only — inline IPS drops traffic
+  when the engine is down, the failure mode this blueprint avoids elsewhere.
+- **Web application firewall — Coraza.** CrowdSec AppSec is the reference
+  implementation; Coraza with the OWASP Core Rule Set is the documented
+  alternative. The engine is mature; the open-source Traefik connector describes
+  itself as experimental. Revisit when a maintained integration exists. Running
+  both inline is not the answer.
 
-An evaluation would have to answer: which of that visibility is actually useful on
-a single Docker host; what container traffic is visible and from where; who reads
-the alerts, because an IDS nobody monitors is a log producer; resource cost under
-deep packet inspection; and the false-positive load of the free rule set.
+Concepts with no timeline, picked up app by app as they are re-verified:
 
-Passive IDS first. Inline IPS stays out: the queueing methods drop traffic when the engine is not running, which is the failure mode this
-blueprint spends effort avoiding elsewhere.
-
-### Web application firewall — Coraza re-evaluation
-
-CrowdSec AppSec is the current reference implementation of the Web Application
-Security capability. Coraza with the OWASP Core Rule Set is the documented
-alternative: the engine is mature and an OWASP project, and the rule set is broader
-than AppSec's virtual-patching focus.
-
-What blocks adoption is the integration, not the engine — the open-source Traefik
-connector describes itself as experimental and its authors point production users at
-a commercial path. Revisit when a maintained integration is available. Running both
-inline is not the answer: two engines inspecting the same request means two rule
-sets to tune and one hiding the other's blocks.
-
-### License policy
-
-This blueprint is for personal self-hosted infrastructure. The following applies:
-
-**Accepted for self-hosted personal use:**
-
-- MIT, Apache 2.0, BSD — permissive, no conditions on use
-- GPL-2.0 / GPL-3.0 — copyleft applies to distribution, not to running the software
-- AGPL-3.0 — the most common license in this space (Nextcloud, Authentik, Vaultwarden, Zammad). Self-hosting for personal use is explicitly allowed. If you expose the service to others (even within a company), the AGPL requires that you make your modifications available — running unmodified upstream images means no obligation.
-- BSL / Commercial Source — time-limited source-available licenses (e.g. MariaDB BSL). Generally fine for self-hosting; verify the "Change Date" and "Additional Use Grant" per project.
-
-**Requires case-by-case review:**
-
-- Commercial dual-license (e.g. Cal.com AGPL + commercial) — self-hosting is free under the AGPL tier; check if the feature set you need requires the commercial tier
-- Source-available without redistribution rights — usable, but you cannot fork or modify
-
-**Not included in this blueprint:**
-
-- Proprietary closed-source images with no self-hosting rights
-
-Every app documents its license in `UPSTREAM.md`. The baseline-aligned criteria require this field before a stack is recorded as as ready.
-
----
-
-### App configuration tiering (concept — no fixed timeline)
-
-Most apps currently have one level of configuration: "it runs." A tiered approach would give each app a clearly defined Minimum (smallest working set, no hidden required settings), an Advanced layer (performance, storage, integration options — commented out by default), and optionally an Expert layer (deep tuning, references upstream docs). Paperless-ngx Phase 4 is the first concrete example of what this looks like.
-
-This is a concept to develop continuously — not a version milestone. Picked up app by app as they are re-verified.
-
-### App Evaluation Criteria (concept — no fixed timeline)
-
-Structured per-app metadata to help make informed decisions before deploying. Not a rating scale — factual criteria that each person weighs themselves. License and Origin are already covered in `UPSTREAM.md`. Remaining candidates:
-
-- **Stack size**: number of containers, minimum RAM
-- **Security features**: Docker Secrets / `_FILE` support, 2FA, SSO / OIDC integration, audit log
-- **Active development**: release cadence, last commit, community size
-- **Privacy posture**: what gets logged, telemetry / phone-home behaviour, GDPR posture
-
-Still open: where this lives and how to keep it from becoming a maintenance burden.
-
-### Deploy script
-
-`./deploy.sh <server> core/traefik apps/nextcloud` — rsync selected app directories to a server, no git / docs / inbox on target. Portable app deployments without the full blueprint on each host.
-
-### Alternative container runtimes
-
-Long-term consideration beyond standard Docker — Podman, Docker Swarm, K3s. Not blocking v1.0.
-
-### MCP connectors
-
-Expose selected apps via Model Context Protocol for AI-assisted operation. Candidates: Paperless-ngx document search, Vaultwarden secret retrieval. Blueprint defines the pattern; individual MCP servers live in their own repos.
+- **Configuration tiers** — Minimum, Advanced and Expert layers per app.
+- **App evaluation criteria** — stack size, security features, release cadence and
+  privacy posture as factual per-app metadata. Open: where it lives without
+  becoming a maintenance burden.
+- **Deploy script** — `./deploy.sh <server> core/traefik apps/nextcloud`, rsync of
+  the selected directories to a server.
+- **Alternative container runtimes** — Podman, Docker Swarm, K3s.
+- **MCP connectors** — the blueprint defines the pattern; individual servers live
+  in their own repositories.
 
 ---
 
 ## Out of scope here
 
-- SIEM, XDR and SOC platforms (Wazuh and comparable) — a different operating model: agents, central collection and someone to read the output. A secure Docker host does not require one, and carrying it here would widen the blueprint past what it claims to be.
-- `core/acme-certs/` — being extracted to its own repository. The blueprint stub remains `scaffolded` but is no longer actively maintained in this repo.
-- Paperless-mcp — template exists in the Paperless CONFIG.md extension notes but will live in its own repo once built.
-- The engineering above an AI deployment — model evaluation, retrieval architecture, prompt design. `apps/ollama`, `apps/vllm`, `apps/qdrant`, `apps/litellm`, `apps/open-webui` and `apps/agentgateway` deploy and harden the services; choosing models, designing retrieval and judging whether it works is a different project. See [`docs/architecture.md`](docs/architecture.md#ai--local-ai-is-deployment-not-engineering).
-- A general, orchestrated document-processing pipeline — one automated path from any input document through every possible extraction step. `apps/docling-serve` (landed 2026-09) provides one capability, document understanding for AI/RAG pipelines, consumed directly by whatever calls its API; it is not that pipeline. Building the orchestration before a real case needs one would still produce an untestable chain of tools. See [`docs/architecture.md`](docs/architecture.md#document-processing-has-the-capabilities-and-one-standalone-service).
-- OCRmyPDF as a standalone stack. Evaluated 2026-09: upstream ships its Docker image as ephemeral — one container per OCR job, exiting like a command-line program, not a server (upstream's own documentation: "as opposed to the more conventional case, where a Docker container runs as a server"). A CLI/job tool with no independently operated service gets no blueprint entry. Not replaced by another tool — the gap this would have filled was never established as real.
+- SIEM, XDR and SOC platforms (Wazuh and comparable) — a different operating model:
+  agents, central collection and someone to read the output. A secure Docker host
+  does not require one.
+- `core/acme-certs/` — being extracted to its own repository. The blueprint stub
+  remains `scaffolded` and is no longer actively maintained here.
+- Paperless-mcp — will live in its own repository once built.
+- The engineering above an AI deployment — model evaluation, retrieval
+  architecture, prompt design. `apps/ollama`, `apps/vllm`, `apps/qdrant`, `apps/litellm`,
+  `apps/open-webui` and `apps/agentgateway` deploy and harden the services; choosing models and judging retrieval is a different
+  project. See [`docs/architecture.md`](docs/architecture.md#ai--local-ai-is-deployment-not-engineering).
+- A general, orchestrated document-processing pipeline. `apps/docling-serve`
+  provides document understanding for AI/RAG pipelines, consumed directly by
+  whatever calls its API; building the orchestration before a real case needs it
+  would produce an untestable chain. See
+  [`docs/architecture.md`](docs/architecture.md#document-processing-has-the-capabilities-and-one-standalone-service).
+- OCRmyPDF as a standalone stack. Upstream ships its image as ephemeral — one
+  container per job, exiting like a command-line program. A CLI/job tool with no
+  independently operated service gets no blueprint entry.

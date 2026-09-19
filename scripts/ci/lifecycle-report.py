@@ -31,7 +31,7 @@ cannot be read back reliably. Both block CI, so a committed state never carries
 a partial answer.
 
 Other owners (see status-model.md):
-  pinned version  <stack>/.env.example  (APP_TAG, else APP_IMAGE, else first pin)
+  pinned version  <stack>/.env.example  (APP_TAG, else APP_IMAGE, else first *_TAG/_IMAGE/_VERSION pin)
   backup/restore  <stack>/README.md     (presence of the corresponding section)
 
 Consistency rules (--check):
@@ -203,7 +203,7 @@ def pinned_version(stack: Path) -> str:
             continue
         key, _, value = line.partition("=")
         key, value = key.strip(), value.strip()
-        if key.endswith(("_TAG", "_IMAGE")) and value:
+        if key.endswith(("_TAG", "_IMAGE", "_VERSION")) and value:
             pins.setdefault(key, value)
     for preferred in ("APP_TAG", "APP_IMAGE"):
         if preferred in pins:

@@ -742,7 +742,7 @@
   "core/shellhub": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "pinned": "VALKEY_TAG=9.1-alpine",
+    "pinned": "SHELLHUB_VERSION=v0.27.0-rc.11",
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "—",

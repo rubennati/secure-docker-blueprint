@@ -15,7 +15,7 @@ FAIL (blocks CI — dangerous or leak-prone):
   db-exposed        a datastore joins proxy-public or publishes a host port
   no-resources      service without a memory or pids limit
   no-swap-policy    service with a memory limit and no explicit memswap_limit —
-                    coverage completed 2026-09-16 (150/150 production services);
+                    coverage completed 2026-09-16 (every production service);
                     this guards the property, it does not report a migration
 
 WARN (reported — structural drift):

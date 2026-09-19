@@ -2,7 +2,7 @@
 
 # Secure Docker Blueprint
 
-**Hardened Docker Compose stacks for 60+ self-hosted services — one security baseline, enforced in CI.**
+**Hardened Docker Compose stacks for self-hosted services — one security baseline, checked in CI.**
 
 [![CI](https://github.com/rubennati/secure-docker-blueprint/actions/workflows/ci.yml/badge.svg)](https://github.com/rubennati/secure-docker-blueprint/actions/workflows/ci.yml)
 [![Trivy](https://github.com/rubennati/secure-docker-blueprint/actions/workflows/trivy.yml/badge.svg)](https://github.com/rubennati/secure-docker-blueprint/actions/workflows/trivy.yml)
@@ -27,7 +27,7 @@ versions, memory and PID limits, and Traefik in front handling TLS and access co
 | Browse | Stacks | Examples |
 |---|---|---|
 | [**`core/`** — proxy, identity, threat detection, secrets, Docker management](core/) | 19 | Traefik · Authentik · Keycloak · CrowdSec · Infisical · dnsmasq · Portainer |
-| [**`apps/`** — general self-hosted applications](apps/) | 49 | Nextcloud · Immich · Paperless-ngx · Vaultwarden · Seafile · Ghost · n8n · Mailpit |
+| [**`apps/`** — general self-hosted applications](apps/) | 49 | Nextcloud · Immich · Paperless-ngx · Vaultwarden · Ollama · Windmill · Ghost · n8n · Mailpit |
 | [**`business/`** — invoicing, project management, helpdesk, analytics, e-signature](business/) | 10 | Invoice Ninja · OpenProject · Vikunja · Zammad · Matomo · Documenso |
 | [**`monitoring/`** — uptime, metrics, notifications](monitoring/) | 7 | Uptime Kuma · Gatus · Beszel · Healthchecks · ntfy |
 | [**`backup/`** — this host outward, your devices inward](backup/) | 2 | Borgmatic · UrBackup |
@@ -90,7 +90,7 @@ setup procedure, and an `UPSTREAM.md` recording the pinned version and upgrade p
 Four phases, and the repository covers all of them:
 
 - **Deploy** — one Compose shape across every stack, with every value that has to be set named in `.env.example`
-- **Secure** — `no-new-privileges`, no direct Docker socket access, secrets as files, datastores unreachable from the host network, capabilities dropped where the image allows it — checked on every pull request
+- **Secure** — `no-new-privileges`, no direct Docker socket access, secrets as files, datastores unreachable from the host network, memory, PID and swap limits — checked on every pull request; capabilities dropped and a read-only root filesystem wherever the image allows it
 - **Operate** — healthchecks, resource and swap limits, monitoring stacks, and a recorded version each stack was last verified against
 - **Recover** — Borgmatic with database-aware dumps, and restore playbooks per persistence pattern
 

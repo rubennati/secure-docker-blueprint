@@ -97,7 +97,7 @@ measured.
 
 **Documented**
 8. `UPSTREAM.md` present — source, `Last verified: YYYY-MM-DD (vX.Y.Z)`, upgrade checklist
-9. `UPSTREAM.md` includes license — name (e.g. MIT, Apache 2.0, AGPL-3.0) and a note if it deviates from standard self-hosting use (see license policy in `ROADMAP.md`)
+9. `UPSTREAM.md` includes license — name (e.g. MIT, Apache 2.0, AGPL-3.0) and a note if it deviates from standard self-hosting use (see [licence policy](sovereignty/provenance.md#what-this-blueprint-accepts))
 10. `.env.example` complete — all required fields present, no real domains or credentials as defaults
 
 > **Note on rising bar:** Apps verified in earlier versions of the blueprint may not

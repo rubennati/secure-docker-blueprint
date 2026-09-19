@@ -6,6 +6,95 @@ this file is the index and covers decisions that have no other home.
 
 ---
 
+## 2026-09 · Personal data on the public site
+
+**Status: direction, not yet a decision.** Summary in [`../ROADMAP.md`](../ROADMAP.md#a-public-repository-should-not-carry-personal-data); the full reasoning is here.
+
+The legal notice and the privacy statement hold a name, a postal address and an
+e-mail. The repository is public and meant to be forked, so those values travel
+with every copy.
+
+The case to prevent is not someone taking them deliberately. It is the fork
+that builds and goes live without anyone looking — and then a stranger's site
+carries this author's imprint, and the people who read it write to **him** about
+a site he has nothing to do with. Nobody had to act in bad faith for that to
+happen.
+
+Beyond the nuisance, a template that anyone can fork and build ought to be free
+of its author's identity by construction. Keeping personal data out of a
+public, copyable artefact is both the cleaner engineering answer and the correct
+one under data-protection law.
+
+**Direction, not yet a decision.** Encrypt the pages that carry personal data,
+commit the ciphertext, and ship a placeholder in their place. What is secret is
+the key, not the file: the repository holds a blob anyone can copy and nobody
+can read, and a fork inherits a template that visibly asks for its own details.
+It still builds on the first try, because the placeholder is a valid page.
+
+`age` looks like the right size: one binary, no keyring, no web of trust, no
+expiry, and a key pair that is two lines of text. SOPS earns its place when
+single fields inside a YAML stay readable, which is not the case here — whole
+files are encrypted, so it would be one layer over the same age. A repository
+secret alone will not do either: a secret holds a value, so the imprint would
+become an unversioned blob in a form field instead of a file with a history and
+a diff.
+
+Two key holders, both able to decrypt:
+
+| Where | Holds |
+|---|---|
+| GitHub Actions secret | the key the deploy uses, decrypting into the runner's own workspace |
+| a password manager | the same key for local editing, alongside the SSH keys already kept there |
+
+An offline backup recipient belongs in the recipients file as well, so a lost
+laptop does not take the imprint with it.
+
+**Scope: everything personal, not only the two legal pages.** A fork inherits
+the name and address in the legal notice, the contact address in
+`security.txt`, the domain in `astro.config.mjs`, and the repository URLs in
+the footer and the reference lists. Encrypting the imprint alone would still
+leave a stranger's site pointing at this one.
+
+**A fork builds, with the fields empty.** The placeholder is a valid page that
+visibly asks for its own details, so nobody has to fix anything before the
+first build succeeds.
+
+That works for prose. It does not work for every value: the site URL feeds the
+canonical tags and the sitemap, and an empty one produces a broken build rather
+than an obvious gap. Values the build needs get a neutral placeholder —
+`example.com` and the repository's own URL — while name, address and e-mail go
+empty. The distinction is between a field a reader should notice is blank and a
+value the build cannot do without.
+
+**One data module rather than encrypted pages.** The values live in a single
+module the pages and the config import. `site.ts` is committed and holds the
+placeholders; `site.local.ts` is decrypted, gitignored, and wins when present.
+That is a better shape than encrypting the markdown: one file to encrypt, one
+import to resolve, and nothing in the working tree that a fork could mistake
+for its own.
+
+It also dissolves most of the trap. Decrypting over a committed placeholder
+invites a thoughtless `git add` that puts real values back into a history that
+keeps them; a gitignored file cannot be added by accident. A pre-commit hook
+guarding against a forced add is then a belt on top of braces rather than the
+only thing standing between the repository and a permanent mistake.
+
+Locally the key never reaches the filesystem, because process substitution
+hands `age` a descriptor instead of a path:
+
+    age -d -i <(op read "op://Private/age-signing-key/notesPlain") \
+        -o site/src/data/site.local.ts secrets/site.age
+
+The runner needs the same care for the opposite reason: writing the key to a
+file and deleting it afterwards leaves a window, however short, so the key
+should reach `age` on a descriptor there too.
+
+This concerns the site. The rule that no secret-management tooling belongs in
+the blueprint itself stands: no stack gains a dependency, and none of this is
+offered to an operator as a way to hold their own credentials.
+
+---
+
 ## 2026-09 · Optional watchdogs for the Docker daemon and Traefik, bounded and opt-in
 
 A read-only host-resilience evaluation found that `restart: unless-stopped` and
