@@ -6,6 +6,39 @@ this file is the index and covers decisions that have no other home.
 
 ---
 
+## 2026-09-20 · Image findings are recorded as facts, and the shipped access default follows them
+
+The Trivy image scan blocks nothing (`--exit-code 0`), and the last full scan found
+1003 CRITICAL findings across 59 of 99 images, all with a published fix. Almost all sit
+in the operating-system layer or in bundled components of the image as upstream
+publishes it — Perl, libc headers, GnuTLS, ImageMagick, Chromium. The blueprint does not
+build those images, so the question is not how to fix them but how to record and handle
+them.
+
+**Facts, not a grade.** Each image gets recorded facts: CRITICAL and HIGH counts, how
+many have a fix, the age of the release, the scan date, and licence limits where they
+exist (a commercial edition with a user cap is a licence fact, not a security one). The
+existing dimensions — owner, origin, licence — already work this way and the
+sovereignty report is explicit that it is not a score; this is a third set beside them.
+Wording on the site names findings in the image as published and passes no judgement on
+the project.
+
+**The facts drive one thing: the shipped default.** A stack with findings that make it
+unsuitable for open exposure ships a restricted access class (`acc-private`,
+`acc-tailscale`, or `acc-deny`), and a checker refuses `acc-public` for it. This is the
+existing rule that every stack starts restricted, made machine-checked. Counts alone
+mislead — a Perl fix in a Postgres image is not an ImageMagick fix in an upload
+server — so the judgement of reach is an authored `Exposure` field with a reason, and the
+generated facts only suggest the value.
+
+**Handling, in order.** (1) Upstream has a fix: raise the pin, as any upgrade. (2) No fix
+yet, but the stack is contained: record the facts and the reason; the Trivy gate then
+blocks only findings that are not already recorded. (3) No fix, upstream not reacting,
+and the service is exposed: fork or remove. Cal.diY is the precedent for the third step —
+it was forked from a project that had been compromised and is hardened in phases
+(`apps/caldiy/docs/hardening-plan.md`). The list of steps to build this is in
+[`tasks.md`](tasks.md#1-image-findings-as-facts--closes-audit-finding-c1).
+
 ## 2026-09 · Personal data on the public site
 
 **Status: direction, not yet a decision.** Summary in [`../ROADMAP.md`](../ROADMAP.md#a-public-repository-should-not-carry-personal-data); the full reasoning is here.

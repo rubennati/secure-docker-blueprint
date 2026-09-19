@@ -129,7 +129,7 @@ Status is the state after the PR named.
 
 | ID | Finding | Evidence | Class | Status |
 |---|---|---|---|---|
-| C1 | Trivy image scan runs `--exit-code 0` on every severity, so the security baseline has no gate on known-vulnerable images | `trivy.yml` | **V1 BLOCKER** — confirmed | Open — needs the one-off CRITICAL assessment |
+| C1 | Trivy image scan runs `--exit-code 0` on every severity, so the security baseline has no gate on known-vulnerable images | `trivy.yml` | **V1 BLOCKER** — confirmed | Open — approach decided in `.ai/decisions.md` (image findings as facts); the first scan data is the input |
 | C2 | Nothing compared the site with the repository | W5 | FIX BEFORE V1 | Resolved — `site-catalogue.py --check` in the `Status model` job |
 | C3 | The site workflow triggers only on `site/**`, so a repository change cannot break the site build unseen | `site.yml` | CLEANUP | Resolved — parity runs in main CI |
 | C4 | Trivy image scanning runs on pull requests to `main` and weekly, not on pull requests to `dev` | `trivy.yml` | — | By design, stated in its header |
