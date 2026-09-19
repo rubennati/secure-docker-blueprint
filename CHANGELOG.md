@@ -8,15 +8,23 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
+## [0.9.1] — 2026-09-19 — Priority 1 stacks
+
+Twenty-six new stacks and two deployment patterns, all `scaffolded`: each was run against its own dependencies, none behind Traefik with TLS on a host, none restored from a backup. The v0.9.0 promise is unchanged; nothing new counts as verified.
+
 ### Added
 
-- **Twenty-one stacks and two deployment patterns, the stacks all `scaffolded`** — configured and checked by CI, none yet started on a host:
+- **Twenty-six stacks and two deployment patterns, the stacks all `scaffolded`** — configured and checked by CI, none yet verified on a host:
   - `development/static-site`, `development/web-api` — deployment patterns for software built in this repository, checked like a stack and never deployed as one.
   - `apps/docling-serve` (document understanding API), `apps/greenmail` (SMTP/IMAP/POP3 test server), `apps/windmill` (scripts, flows and scheduled jobs — needs an egress network for its workers).
   - `apps/ollama`, `apps/vllm`, `apps/qdrant` — the local AI foundation: model runtimes and a vector database.
   - `core/warpgate`, `core/jumpserver`, `core/shellhub`, `core/teleport`, `core/orion-belt` — five PAM/bastion alternatives.
   - `apps/yopass`, `apps/hemmelig`, `apps/privatebin` — ephemeral secret sharing; `apps/threat-dragon` — threat modelling.
   - `core/zot` (OCI registry), `core/step-ca` (private CA), `apps/opencanary`, `apps/dependency-track`, `apps/dfir-iris`, `apps/velociraptor` — security tooling.
+  - `apps/litellm` (OpenAI-compatible gateway with virtual keys), `apps/open-webui` (chat interface), `apps/agentgateway` (LLM and MCP gateway) — standalone; each takes its backend from configuration.
+  - `apps/dify` (LLM application platform, ten services, pgvector) and `monitoring/langfuse` (LLM observability, six services) — standalone and independent of each other and of the other AI stacks.
+- **A generated stack catalogue on the site** — every stack carries a `Domain` and a `Role` in its `UPSTREAM.md`; `scripts/ci/site-catalogue.py` builds `site/src/data/catalogue.json` and its `--check` runs in CI. The site's `/catalogue/` lists all 89 stacks by purpose with what has been checked on a host. Stale claims on the applications page and in `llms.txt` corrected.
+- **`docs/host-session-priority-1.md`** — one ordered host run to take the new stacks from `scaffolded` to verified.
 - **`docs/v1-readiness-audit.md`** — the gap between the repository as it stands and v1.0.0, with each finding's resolution.
 - **Optional host watchdogs for the Docker daemon and Traefik** (`core/host-watchdog/`, `core/traefik/ops/scripts/traefik-watchdog.sh`): two independent, host-installed systemd timer/service pairs, neither installed by default. Each watches one signal — the daemon's own `/_ping`, or Traefik's existing container healthcheck status — and takes exactly one recovery attempt (`systemctl restart docker`, or `docker restart` on the Traefik container) after a confirmed run of consecutive failures, never on the first failure and never more than once per episode; a repeated failure after that attempt is reported and not retried automatically. Both report every run to a Healthchecks check using the same dead-man's-switch pattern `backup/borgmatic` already uses, so the watchdog dying silently is itself caught. Restarting Traefik on sustained unhealthy status is judged acceptable specifically because it holds no state; this is not a template for stateful services. Neither script has been run on a live host — the hardening in the systemd unit examples is a documented starting point, not a proof.
 
@@ -636,7 +644,8 @@ Initial public release.
 - No CI workflows yet (compose validate, markdown lint, secret scan) — planned for 0.2.0
 - No automatic backup orchestration — planned in Evaluating section of ROADMAP
 
-[Unreleased]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.9.1...HEAD
+[0.9.1]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.8.4...v0.9.0
 [0.8.4]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.8.3...v0.8.4
 [0.8.3]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.8.2...v0.8.3
