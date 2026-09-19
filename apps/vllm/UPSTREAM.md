@@ -8,6 +8,8 @@
 - **Docs:** https://docs.vllm.ai/
 - **License:** Apache-2.0
 - **Origin:** United States · vLLM project (originated at the UC Berkeley Sky Computing Lab) · non-EU
+- **Domain:** AI and local AI
+- **Role:** High-throughput OpenAI-compatible model serving on an NVIDIA GPU
 - **Based on version:** `v0.29.0`
 
 No `Last verified` line yet — see [Verification performed](#verification-performed-2026-09-18)

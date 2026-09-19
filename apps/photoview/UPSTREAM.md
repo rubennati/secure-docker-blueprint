@@ -7,6 +7,8 @@
 - **Docker Hub:** https://hub.docker.com/r/photoview/photoview
 - **License:** GPL-3.0
 - **Origin:** Denmark · community · EU
+- **Domain:** Photos
+- **Role:** Photo gallery that reads your existing folders, with RAW support and face recognition
 - **Based on version:** `2` (tracks 2.x line)
 - **Last checked:** 2026-04-17
 

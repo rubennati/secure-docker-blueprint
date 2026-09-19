@@ -6,6 +6,8 @@
 - **GitHub:** https://github.com/traefik/whoami
 - **License:** Apache-2.0
 - **Origin:** France · Traefik Labs · EU
+- **Domain:** Developer tools
+- **Role:** Tiny service that shows what the proxy forwards, to check routing and TLS
 - **Based on version:** `v1.12.0`
 - **Last verified:** 2026-09-13 (v1.12.0) — recreated on a live host behind Traefik 3.7.13; answers over HTTP/3 and reports the forwarded client. Earlier: 2026-07-29 (v1.11.0), used as the validation target for the bouncer; public and restricted paths both exercised
 

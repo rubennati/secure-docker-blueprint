@@ -8,6 +8,8 @@
 - **Config reference:** https://github.com/ONLYOFFICE/DocumentServer/blob/master/Docker/README.md
 - **License:** AGPL-3.0
 - **Origin:** Latvia · Ascensio System SIA · EU
+- **Domain:** Documents and e-signature
+- **Role:** Document editing server for Nextcloud, Seafile and similar
 - **Based on version:** `9.4.0` (Document Server Community)
 - **Last checked:** 2026-06-14
 

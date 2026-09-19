@@ -7,6 +7,8 @@
 - **Docker Hub:** https://hub.docker.com/_/monica (official image)
 - **License:** AGPL-3.0
 - **Origin:** Canada · Monica HQ · non-EU
+- **Domain:** Business operations
+- **Role:** Personal CRM for the people in your life
 - **Based on version:** `4.1.2-apache`
 - **Last checked:** 2026-04-17
 

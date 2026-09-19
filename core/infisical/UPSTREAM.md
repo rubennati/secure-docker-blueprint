@@ -8,6 +8,8 @@
 - **Self-host compose reference:** `docker-compose.prod.yml` in the upstream repo
 - **License:** MIT (core; some features under a separate enterprise licence)
 - **Origin:** US · Infisical Inc · non-EU
+- **Domain:** Identity, access and secrets
+- **Role:** Central secret manager, an alternative to per-stack Docker Secrets
 - **Based on version:** `v0.165.10`
 - **Last verified:** — (config authored 2026-07-26; not yet run on a live server)
 

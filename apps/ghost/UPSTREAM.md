@@ -8,6 +8,8 @@
 - **Config reference:** https://ghost.org/docs/config/
 - **License:** MIT
 - **Origin:** Ireland · Ghost Foundation · EU
+- **Domain:** Publishing, forms and scheduling
+- **Role:** Publishing platform for blogs and newsletters, with optional Fediverse publishing
 - **Based on version:** `6.63.0-alpine`
 - **Last verified:** 2026-07-26 (v6.54.0-alpine)
 

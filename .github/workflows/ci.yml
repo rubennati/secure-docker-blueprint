@@ -207,6 +207,12 @@ jobs:
       - name: Check licence and origin are complete and current
         run: python3 scripts/ci/sovereignty-report.py --check
 
+      # The site's catalogue is generated from the stacks. A stack without a
+      # domain or role, or a stale catalogue.json, fails here instead of
+      # leaving the site quietly behind the repository.
+      - name: Check the site catalogue is complete and current
+        run: python3 scripts/ci/site-catalogue.py --check
+
   # ─────────────────────────────────────────────
   # 8. CHECKER COVERAGE
   # Inverts the question the other jobs ask: not "does this stack comply?" but

@@ -31,6 +31,7 @@ const SECTIONS: { heading: string; prefix: string }[] = [
   { heading: 'Start', prefix: 'getting-started' },
   { heading: 'Infrastructure', prefix: 'infrastructure' },
   { heading: 'Applications', prefix: 'applications' },
+  { heading: 'Catalogue', prefix: 'catalogue' },
   { heading: 'Operations and recovery', prefix: 'operations' },
   { heading: 'Security', prefix: 'security' },
   { heading: 'Security', prefix: 'architecture' },
@@ -48,7 +49,7 @@ const SECTIONS: { heading: string; prefix: string }[] = [
 const NOTES = [
   'Code examples in guide pages are written against the repository structure as of each guide\'s last edit — prefer the linked repository file over re-deriving paths or variable names.',
   'Where a guide has been verified, it says so at the top: the version it was verified against, the date, and a line naming what was not exercised. A guide without that line has no verification behind it — do not infer one.',
-  'Every guide assumes a Linux host with a domain and Traefik in front. There is no localhost or single-machine path documented on this site — do not synthesise one from the compose files.',
+  'Guides assume a Linux host with a domain and Traefik in front. Most stacks also ship a docker-compose.local.yml that runs on one machine with no proxy, DNS or certificate; the Infrastructure overview describes it. Do not invent a single-machine path for a stack that does not ship that file.',
 ];
 
 /** Starlight ids are path-like and drop `index`: `core/traefik`, `faq`, `''`. */

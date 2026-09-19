@@ -7,6 +7,8 @@
 - **Docs:** https://docs.litellm.ai/
 - **License:** MIT (core; the `enterprise/` directory is under a separate commercial licence)
 - **Origin:** United States · BerriAI, Inc. · non-EU
+- **Domain:** AI and local AI
+- **Role:** OpenAI-compatible gateway in front of any model backend, with virtual keys, budgets and a spend log
 - **Based on version:** `v1.101.0`
 
 No `Last verified` line yet — see [Verification performed](#verification-performed-2026-09-19)

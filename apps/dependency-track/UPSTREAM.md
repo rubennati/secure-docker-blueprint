@@ -7,6 +7,8 @@
 - **Docs:** https://docs.dependencytrack.org
 - **License:** Apache-2.0
 - **Origin:** OWASP Foundation project · United States (OWASP Foundation) · non-EU
+- **Domain:** Security operations
+- **Role:** Software composition analysis: SBOMs, components and known vulnerabilities across a portfolio
 - **Based on version:** `5.1.0`
 - **Verification snapshot:** 2026-09-19 — local Compose stack booted, all
   three services healthy, real Docker Secrets and migrations exercised

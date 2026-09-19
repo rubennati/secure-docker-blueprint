@@ -8,6 +8,8 @@
 - **Docs:** https://healthchecks.io/docs/self_hosted/
 - **License:** BSD 3-Clause
 - **Origin:** Latvia · Pēteris Caune · EU
+- **Domain:** Monitoring
+- **Role:** Dead-man's switch that alerts when a cron job or backup stops reporting
 - **Based on version:** `v4.4`
 - **Last verified:** 2026-09-08 (v4.4) — v0.8.0 host session: clean start on SQLite, first admin from the CLI, a check with a one-minute period and grace, the ntfy and email integrations attached; the expiry produced a down notification and the next ping an up notification, both delivered to an iPhone and to the mail sink.
 

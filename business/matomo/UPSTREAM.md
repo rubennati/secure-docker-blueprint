@@ -7,6 +7,8 @@
 - **Docker Hub:** https://hub.docker.com/_/matomo (official image)
 - **License:** GPL-3.0
 - **Origin:** New Zealand · InnoCraft Ltd · non-EU
+- **Domain:** Business operations
+- **Role:** Web analytics under your control
 - **Based on version:** `5.13.0-apache`
 - **Last checked:** 2026-04-17
 

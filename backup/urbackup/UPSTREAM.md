@@ -7,6 +7,8 @@
 - **Image:** https://hub.docker.com/r/uroni/urbackup-server
 - **License:** AGPL-3.0-or-later — self-hosting for personal or commercial use is explicitly permitted
 - **Origin:** Germany · Martin Raiber (uroni) · EU
+- **Domain:** Backup
+- **Role:** Client backup for Windows, macOS and Linux, with whole-disk image restore on Windows
 - **Based on version:** `2.5.x` series, digest `sha256:e2fdc0d5…` (published 2026-04-23)
 - **Last verified:** `__REPLACE_ME__`
 

@@ -7,6 +7,8 @@
 - **Docs:** https://greenmail-mail-test.github.io/greenmail/
 - **License:** Apache-2.0
 - **Origin:** Community · Marcel May · Germany · EU
+- **Domain:** Developer tools
+- **Role:** SMTP, IMAP and POP3 test server with a mailbox per recipient, for automated tests
 - **Based on version:** `2.1.13`
 
 No `Last verified` line yet — see [Verification performed](#verification-performed-2026-09-18)

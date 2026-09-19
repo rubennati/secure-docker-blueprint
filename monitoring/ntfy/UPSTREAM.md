@@ -8,6 +8,8 @@
 - **Docker Hub:** https://hub.docker.com/r/binwiederhier/ntfy
 - **License:** Apache-2.0 / GPL-2.0 (dual-licensed)
 - **Origin:** Germany · Philipp Heckel · EU
+- **Domain:** Monitoring
+- **Role:** Push notifications over HTTP, the receiving end for every other alert
 - **Based on version:** `v2.28.0` (released 2026-08-27)
 - **Upstream reviewed:** 2026-07-27 — image, tag, configuration surface, channel
   support and licence checked against upstream documentation

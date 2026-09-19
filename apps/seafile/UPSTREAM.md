@@ -8,6 +8,8 @@
 - **GitHub:** https://github.com/haiwen/seafile
 - **License:** AGPL-3.0
 - **Origin:** China · Seafile Ltd · non-EU
+- **Domain:** Files, wiki and collaboration
+- **Role:** File sync and share, community edition
 - **Note:** Chinese company: data stored on self-hosted instances is under your jurisdiction, but the vendor is subject to Chinese law.
 - **Based on version:** Seafile CE `13.0.20` (multi-container distribution)
 - **Last checked:** 2026-04-16

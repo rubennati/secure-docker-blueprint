@@ -8,6 +8,8 @@
 - **Hub (Collections):** https://hub.crowdsec.net/
 - **License:** MIT
 - **Origin:** France · CrowdSec SAS · EU
+- **Domain:** Security operations
+- **Role:** Threat detection from logs, with a choice of where decisions are enforced
 - **Based on version:** v1.7.8
 - **Last verified:** 2026-07-29 (v1.7.8) — engine, bouncer, an enforced ban and the AppSec layer all verified on a live host
 

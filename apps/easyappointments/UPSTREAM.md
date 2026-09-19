@@ -7,6 +7,8 @@
 - **Docker Hub:** https://hub.docker.com/r/alextselegidis/easyappointments
 - **License:** GPL-3.0
 - **Origin:** Greece · Alex Tselegidis · EU
+- **Domain:** Publishing, forms and scheduling
+- **Role:** Appointment booking in PHP, established since 2013
 - **Based on version:** `1.6.0`
 - **Last verified:** 2026-05-03 (1.5.x)
 

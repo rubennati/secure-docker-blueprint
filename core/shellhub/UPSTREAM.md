@@ -11,6 +11,8 @@
   the upstream repo gates a separate Enterprise/Cloud tier — SAML SSO
   confirmed Enterprise-only, see README.md)
 - **Origin:** Brazil · O.S. Systems · non-EU
+- **Domain:** Identity, access and secrets
+- **Role:** SSH access through agents on each target that connect out, so targets open no inbound port
 - **Based on version:** `v0.27.0-rc.11` (server, ui, gateway)
 - **Verification snapshot:** 2026-09-19 — full stack started clean, healthchecks
   passing; no agent registered, no SSH session exercised

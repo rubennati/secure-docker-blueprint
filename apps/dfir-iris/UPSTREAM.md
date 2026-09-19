@@ -7,6 +7,8 @@
 - **Docs:** https://docs.dfir-iris.org
 - **License:** LGPL-3.0
 - **Origin:** France · Airbus CyberSecurity (SAS), confirmed via copyright headers in upstream's own source files (`docker/webApp/iris-entrypoint.sh`, the nginx entrypoint) · EU
+- **Domain:** Security operations
+- **Role:** Collaborative incident-response case management: cases, indicators, evidence and timelines
 - **Based on version:** `v2.4.29`
 - **Verification snapshot:** 2026-09-19 — full 4-service local Compose
   stack booted end to end (rabbitmq, db, app, worker all healthy or

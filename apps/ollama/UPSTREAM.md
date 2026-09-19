@@ -7,6 +7,8 @@
 - **Docs:** https://docs.ollama.com/
 - **License:** MIT
 - **Origin:** United States · Ollama Inc. (California) · non-EU
+- **Domain:** AI and local AI
+- **Role:** Local model runtime that pulls models by name and serves them on CPU or an NVIDIA GPU
 - **Based on version:** `0.34.2`
 
 No `Last verified` line yet — see [Verification performed](#verification-performed-2026-09-18)

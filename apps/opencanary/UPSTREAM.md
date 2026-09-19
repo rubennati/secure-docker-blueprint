@@ -7,6 +7,8 @@
 - **Docs:** https://github.com/thinkst/opencanary/wiki
 - **License:** BSD 3-Clause
 - **Origin:** South Africa · Thinkst Applied Research · non-EU. OpenCanary is
+- **Domain:** Security operations
+- **Role:** Honeypot: fake network services that log every connection attempt
   the open-source counterpart to Thinkst's commercial Canary product —
   confirmed via upstream's own README; this stack uses only the
   open-source project

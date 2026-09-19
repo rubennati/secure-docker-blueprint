@@ -8,6 +8,8 @@
 - **Forked from:** OnlyOffice Document Server (Ascensio System) — EU-governed, sovereignty-focused fork
 - **License:** AGPL-3.0 (as OnlyOffice Document Server)
 - **Origin:** EU · euro-office consortium (Nextcloud, IONOS, XWiki, Proton) · EU
+- **Domain:** Documents and e-signature
+- **Role:** EU-governed fork of OnlyOffice, a drop-in document editing server
 - **Based on version:** `v9.3.4-hotfix.1`
 - **Last verified:** — (config authored 2026-07-26; not yet run on a live server)
 

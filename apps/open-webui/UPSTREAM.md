@@ -7,6 +7,8 @@
 - **Docs:** https://docs.openwebui.com/
 - **License:** Open WebUI License (BSD-3-Clause with an added branding-preservation clause; not OSI-approved)
 - **Origin:** Open WebUI · no country stated in its published terms · no country
+- **Domain:** AI and local AI
+- **Role:** Chat interface for any OpenAI-compatible endpoint, with accounts, history and document upload
 - **Based on version:** `v0.11.3`
 
 No `Last verified` line yet — see [Verification performed](#verification-performed-2026-09-19)
