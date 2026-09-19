@@ -549,6 +549,16 @@
     "verified_anchored": false,
     "verified_version": ""
   },
+  "core/jumpserver": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=v4.10.19",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "core/keycloak": {
     "backup_docs": "documented",
     "local_stack": "✅",
@@ -558,6 +568,16 @@
     "verified": "2026-09-07",
     "verified_anchored": true,
     "verified_version": "v26.7.3"
+  },
+  "core/orion-belt": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=1.2.0",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "core/portainer": {
     "backup_docs": "documented",
@@ -579,6 +599,26 @@
     "verified_anchored": true,
     "verified_version": "v2.39.1"
   },
+  "core/shellhub": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "VALKEY_TAG=9.1-alpine",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
+  "core/teleport": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=18.11.0",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "core/traefik": {
     "backup_docs": "documented",
     "local_stack": "—",
@@ -588,6 +628,16 @@
     "verified": "2026-09-13",
     "verified_anchored": true,
     "verified_version": "v3.7.13, socket-proxy v0.5.0"
+  },
+  "core/warpgate": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=0.29.0",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "monitoring/beszel": {
     "backup_docs": "documented",

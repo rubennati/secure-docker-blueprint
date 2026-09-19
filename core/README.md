@@ -63,6 +63,43 @@ hosts. Pick one pair, or neither.
 
 Planned: none.
 
+### Privileged access / bastion alternatives
+
+Five different architectures for the same underlying problem — controlled
+access to privileged infrastructure. Each solves it a different way and is
+kept that way; pick the one whose approach fits, not a feature checklist.
+Every one is documented, hardened and pinned the same way the rest of this
+repository is; how far each has actually been exercised is in
+[`LIFECYCLE.md`](../LIFECYCLE.md), and each stack's own README states
+exactly what was and was not verified.
+
+| Service | Description |
+|---|---|
+| [Warpgate](warpgate/) | Lightweight, multi-protocol proxy (SSH, HTTPS, MySQL, PostgreSQL, Kubernetes, RDP, VNC). No database, no CE/EE split |
+| [JumpServer](jumpserver/) | Full-featured, traditional PAM — stored target credentials, session recording, approval workflows. The vendor's own all-in-one image; cannot run under this repository's usual container hardening (documented, not silently accepted) |
+| [ShellHub](shellhub/) | Agent-based, reverse-connection SSH access — install an agent on each target, no inbound port needed there. The server component here currently has no stable upstream release tag |
+| [Teleport](teleport/) | Identity- and certificate-based access — short-lived certificates instead of standing credentials. Does not sit behind Traefik: its proxy port carries client-certificate TLS Traefik would break. Community Edition's license has real usage limits — read its README first |
+| [Orion Belt](orion-belt/) *(experimental)* | Lightweight reverse-agent PAM with JIT approval and ReBAC. Single-maintainer project, a few months old — read its README's maturity assessment before trusting it with real access |
+
+#### Choosing between them
+
+| | Warpgate | JumpServer | ShellHub | Teleport | Orion Belt |
+|---|---|---|---|---|---|
+| Approach | Session proxy | Stored-credential vault | Reverse-connection agent | Short-lived certificates | Reverse-agent, JIT |
+| Protocols | SSH, HTTPS, MySQL, PostgreSQL, Kubernetes, RDP, VNC | SSH, RDP, Kubernetes, databases, web apps | SSH, SCP/SFTP | SSH, Kubernetes, databases, internal web apps | SSH, SCP |
+| Session recording | Yes | Yes (terminal + video) | Server-side, scope not exercised here | Not enabled in this config | Yes (encryption optional) |
+| MFA | TOTP | TOTP / Passkey / WebAuthn | Not confirmed | TOTP / WebAuthn, required for local users | WebAuthn, optional |
+| OIDC / SSO | Yes (native) | Yes — OIDC, SAML 2.0, CAS, LDAP (Community Edition) | SAML confirmed Enterprise-only; OIDC unconfirmed | **Enterprise-only** — no SSO in Community Edition | Not found in documented config |
+| JIT / approval | No | Ticket-based workflows | No | No (certificate TTL only) | Yes — the stack's core model |
+| Agent required on targets | No | No (agent optional for some protocols) | **Yes** | Only for SSH nodes / Kubernetes / DB access, not core proxy | **Yes** |
+| Licence | Apache-2.0 | GPL-3.0 (EE separate, closed) | Apache-2.0 (Enterprise features gated) | AGPL-3.0 source / **commercial CE binaries** | Apache-2.0 + Commons Clause |
+| Resource footprint | Smallest — one binary, embedded SQLite | Largest — vendor minimum 4 CPU / 8 GB RAM | Medium — 5 containers, Postgres + Valkey | Small — one binary, embedded backend | Small — one binary + Postgres |
+| Typical fit | A small install wanting one lightweight proxy for several protocols | An organisation that wants stored credentials, recording and approval workflows out of the box | Reaching devices without opening inbound ports to them | Certificate-based access without standing SSH keys, where CE's licence terms fit | Trying JIT/ReBAC access patterns, accepting a young project's risk |
+
+No overall recommendation is made here on purpose — the right choice
+depends on which architecture and which limitation you can live with, not
+a feature count.
+
 ### Optional host tooling
 
 [`host-watchdog/`](host-watchdog/) — two independent, host-installed,

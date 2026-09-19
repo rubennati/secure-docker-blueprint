@@ -1,0 +1,59 @@
+# Orion Belt (EXPERIMENTAL) — local
+#
+#   cp .env.local.example .env.local
+#   mkdir -p volumes/local/postgres volumes/local/recordings volumes/local/hostkey
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   http://localhost:8080 — create the first account in the console
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+  db-local:
+    image: postgres:${DB_TAG}
+    container_name: orion-belt-local-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: orionbelt
+      POSTGRES_PASSWORD: local-test-password-not-for-real-use
+      POSTGRES_DB: orionbelt
+    volumes:
+      - ./volumes/local/postgres:/var/lib/postgresql/data
+    networks:
+      - orion-belt-local
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orionbelt"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  server-local:
+    image: ghcr.io/orion-belt-dev/orion-belt-server:${APP_TAG}
+    container_name: orion-belt-local-server
+    restart: unless-stopped
+    depends_on:
+      db-local:
+        condition: service_healthy
+    environment:
+      POSTGRES_HOST: db-local
+      POSTGRES_USER: orionbelt
+      POSTGRES_PASSWORD: local-test-password-not-for-real-use
+      POSTGRES_DB: orionbelt
+      ORION_JWT_SECRET: local-test-jwt-secret-not-for-real-use-00000
+      ORION_PUBLIC_URL: http://localhost:8080
+      ORION_PUBLIC_HOST: localhost
+    volumes:
+      - ./volumes/local/recordings:/var/lib/orion-belt/recordings
+      - ./volumes/local/hostkey:/etc/orion-belt
+    networks:
+      - orion-belt-local
+    ports:
+      - "127.0.0.1:2222:2222"
+      - "127.0.0.1:8080:8080"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+networks:
+  orion-belt-local:
