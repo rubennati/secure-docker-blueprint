@@ -105,6 +105,8 @@ The first services are in `apps/`:
 | Gateway with virtual keys and budgets | `apps/litellm` |
 | Chat interface | `apps/open-webui` |
 | LLM and MCP gateway | `apps/agentgateway` |
+| LLM application platform | `apps/dify` |
+| LLM observability | `monitoring/langfuse` |
 
 Ollama and vLLM both serve models and are both kept: they cover different
 deployments — one runs on any machine and pulls models by name, the other needs
@@ -118,6 +120,12 @@ them requires another: each takes an OpenAI-compatible endpoint from its
 configuration, and any of the model servers above, or a hosted provider, can sit
 behind it. Pointing one at another is an operator's choice, not something the
 stacks assume.
+
+Dify is an application platform whose model providers are plugins, so it too takes
+its backend from its own console rather than from the stack. Langfuse is an
+observability service and sits in `monitoring/`: it receives traces from whatever
+instruments its code with an SDK or OpenTelemetry, and none of the other stacks
+sends to it or requires it.
 
 Two properties of these services shape the stacks. Ollama has no authentication, and vLLM's `--api-key` protects only
 its `/v1` paths, so the reverse proxy is the real access control — vLLM's route

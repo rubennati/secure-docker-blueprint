@@ -4,7 +4,7 @@
 
 Generated 2026-09-19 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-87 stacks: 1 ops-proven · 13 baseline-aligned · 73 scaffolded. 77 carry a local test stack.
+89 stacks: 1 ops-proven · 13 baseline-aligned · 75 scaffolded. 79 carry a local test stack.
 
 This is the maintainer's view: what has been established about each stack. It makes no statement about whether a stack suits a given deployment.
 
@@ -51,6 +51,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/dashy`](apps/dashy/) | `scaffolded` | `APP_TAG=4.6.0` | 2026-05-02 | ✅ | documented | missing |
 | [`apps/dependency-track`](apps/dependency-track/) | `scaffolded` | `APP_TAG=5.1.0` | — | ✅ | documented | missing |
 | [`apps/dfir-iris`](apps/dfir-iris/) | `scaffolded` | `APP_TAG=v2.4.29` | — | ✅ | documented | missing |
+| [`apps/dify`](apps/dify/) | `scaffolded` | `APP_TAG=1.17.1` | — | ✅ | documented | missing |
 | [`apps/docling-serve`](apps/docling-serve/) | `scaffolded` | `APP_TAG=v1.34.0` | — | ✅ | documented | missing |
 | [`apps/easyappointments`](apps/easyappointments/) | `scaffolded` | `APP_TAG=1.6.0` | 2026-05-03 | ✅ | documented | missing |
 | [`apps/euro-office`](apps/euro-office/) | `scaffolded` | `APP_TAG=v9.3.4-hotfix.1` | — | ✅ | documented | missing |
@@ -117,6 +118,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`monitoring/changedetection`](monitoring/changedetection/) | `baseline-aligned` | `APP_TAG=0.60.4` | 2026-09-13 | ✅ | documented | missing |
 | [`monitoring/gatus`](monitoring/gatus/) | `scaffolded` | `APP_TAG=v5.36.0` | 2026-05-03 ⚠️ | ✅ | documented | missing |
 | [`monitoring/healthchecks`](monitoring/healthchecks/) | `baseline-aligned` | `APP_TAG=v4.4` | 2026-09-08 | ✅ | documented | missing |
+| [`monitoring/langfuse`](monitoring/langfuse/) | `scaffolded` | `APP_TAG=4.38.0` | — | ✅ | documented | missing |
 | [`monitoring/ntfy`](monitoring/ntfy/) | `baseline-aligned` | `APP_TAG=v2.28.0` | 2026-09-08 | ✅ | documented | missing |
 | [`monitoring/uptime-kuma`](monitoring/uptime-kuma/) | `baseline-aligned` | `APP_TAG=2.5.4` | 2026-09-13 | ✅ | documented | missing |
 

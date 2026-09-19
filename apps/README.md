@@ -183,6 +183,7 @@ here" for why that category stays out of this blueprint entirely.
 | [LiteLLM](litellm/) | Proxy + PostgreSQL | OpenAI-compatible gateway in front of any model backend — virtual keys with model allowlists and budgets, spend log. Master key for the operator, virtual keys for clients |
 | [Open WebUI](open-webui/) | Single container | Chat interface with user accounts, history and document upload for any OpenAI-compatible endpoint. Administrator created at first start, self-signup off |
 | [agentgateway](agentgateway/) | Single container | LLM and MCP gateway — API-key-protected `/v1` and `/mcp` on one port, web UI behind basic auth. Distroless, no healthcheck |
+| [Dify](dify/) | 10 services | LLM application platform — chat and workflow apps, knowledge bases on pgvector, plugin-based model providers, sandboxed code nodes. Setup password guards the first account; agent runtime and `/e/` webhooks not carried |
 | [vLLM](vllm/) | Single container | High-throughput OpenAI-compatible model serving on an NVIDIA GPU. `--api-key` covers `/v1` only, so the route forwards `/v1/` and nothing else. CUDA image not yet run on a GPU |
 
 ### Developer & admin tools

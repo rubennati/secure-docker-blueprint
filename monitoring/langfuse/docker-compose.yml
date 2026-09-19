@@ -1,0 +1,489 @@
+# =============================================================================
+# Langfuse — production stack (Traefik + Docker Secrets)
+# =============================================================================
+# LLM observability: traces, generations, scores and prompts from any
+# application that uses a Langfuse SDK or OpenTelemetry. Standalone; it does not
+# depend on, or assume, any model server, gateway or chat application.
+#
+# Six services, all required by upstream's supported self-hosted setup:
+# langfuse-web (UI + API), langfuse-worker (async ingestion), PostgreSQL
+# (transactional data), ClickHouse (traces and analytics), Redis (queue, cache)
+# and MinIO (event and media blobs).
+#
+# Spec: docs/standards/compose-structure.md · security-baseline.md
+# =============================================================================
+
+x-langfuse-env: &langfuse-env
+  # --- Data stores ---
+  DATABASE_HOST: postgres
+  DATABASE_USERNAME: ${DB_USER}
+  DATABASE_NAME: ${DB_NAME}
+  DATABASE_PASSWORD__FILE: /run/secrets/PG_PASSWORD
+  CLICKHOUSE_MIGRATION_URL: clickhouse://clickhouse:9000
+  CLICKHOUSE_URL: http://clickhouse:8123
+  CLICKHOUSE_USER: ${CH_USER}
+  CLICKHOUSE_PASSWORD__FILE: /run/secrets/CH_PASSWORD
+  CLICKHOUSE_CLUSTER_ENABLED: "false"
+  REDIS_HOST: redis
+  REDIS_AUTH__FILE: /run/secrets/REDIS_AUTH
+  # --- Object storage (MinIO, internal only) ---
+  LANGFUSE_S3_EVENT_UPLOAD_BUCKET: langfuse
+  LANGFUSE_S3_EVENT_UPLOAD_REGION: auto
+  LANGFUSE_S3_EVENT_UPLOAD_ENDPOINT: http://minio:9000
+  LANGFUSE_S3_EVENT_UPLOAD_FORCE_PATH_STYLE: "true"
+  LANGFUSE_S3_EVENT_UPLOAD_PREFIX: events/
+  LANGFUSE_S3_EVENT_UPLOAD_ACCESS_KEY_ID: ${MINIO_USER}
+  LANGFUSE_S3_EVENT_UPLOAD_SECRET_ACCESS_KEY__FILE: /run/secrets/MINIO_PASSWORD
+  LANGFUSE_S3_MEDIA_UPLOAD_BUCKET: langfuse
+  LANGFUSE_S3_MEDIA_UPLOAD_REGION: auto
+  LANGFUSE_S3_MEDIA_UPLOAD_ENDPOINT: http://minio:9000
+  LANGFUSE_S3_MEDIA_UPLOAD_FORCE_PATH_STYLE: "true"
+  LANGFUSE_S3_MEDIA_UPLOAD_PREFIX: media/
+  LANGFUSE_S3_MEDIA_UPLOAD_ACCESS_KEY_ID: ${MINIO_USER}
+  LANGFUSE_S3_MEDIA_UPLOAD_SECRET_ACCESS_KEY__FILE: /run/secrets/MINIO_PASSWORD
+  # --- Application ---
+  NEXTAUTH_URL: https://${APP_TRAEFIK_HOST}
+  SALT__FILE: /run/secrets/SALT
+  ENCRYPTION_KEY__FILE: /run/secrets/ENCRYPTION_KEY
+  TELEMETRY_ENABLED: "false"
+  TZ: ${TZ}
+
+services:
+
+  # --------------------------------------------------------
+  # LANGFUSE WEB (UI + public API) — the only service on proxy-public
+  # --------------------------------------------------------
+  langfuse-web:
+    # --- Identity ---
+    image: docker.langfuse.com/langfuse/langfuse:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+
+    # --- Resources ---
+    # Node's default heap (about 512 MB) is exhausted during startup of this
+    # release: it ran out of memory at a 1 GB container limit until the heap was
+    # raised. Upstream also asks for 2 GiB for the web service.
+    memswap_limit: 2g
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          cpus: "2.00"
+          pids: 200
+        reservations:
+          memory: 512m
+
+    # --- Configuration ---
+    # entrypoint.sh reads every NAME__FILE variable into NAME, then runs the
+    # image's own entrypoint (migrations, then the server).
+    entrypoint: ["/bin/sh", "/entrypoint.sh", "dumb-init", "--", "./web/entrypoint.sh"]
+    # Overriding the entrypoint clears the image's command, so it is restated.
+    command: ["node", "./web/server.js", "--keepAliveTimeout", "110000"]
+    environment:
+      <<: *langfuse-env
+      NEXTAUTH_SECRET__FILE: /run/secrets/NEXTAUTH_SECRET
+      # Only the administrator below is provisioned; nobody else can register.
+      NODE_OPTIONS: --max-old-space-size=1536
+      AUTH_DISABLE_SIGNUP: "true"
+      LANGFUSE_INIT_ORG_ID: ${INIT_ORG_ID}
+      LANGFUSE_INIT_ORG_NAME: ${INIT_ORG_NAME}
+      LANGFUSE_INIT_PROJECT_ID: ${INIT_PROJECT_ID}
+      LANGFUSE_INIT_PROJECT_NAME: ${INIT_PROJECT_NAME}
+      LANGFUSE_INIT_PROJECT_PUBLIC_KEY__FILE: /run/secrets/PROJECT_PUBLIC_KEY
+      LANGFUSE_INIT_PROJECT_SECRET_KEY__FILE: /run/secrets/PROJECT_SECRET_KEY
+      LANGFUSE_INIT_USER_EMAIL: ${INIT_USER_EMAIL}
+      LANGFUSE_INIT_USER_NAME: Administrator
+      LANGFUSE_INIT_USER_PASSWORD__FILE: /run/secrets/ADMIN_PASSWORD
+    secrets:
+      - PG_PASSWORD
+      - CH_PASSWORD
+      - REDIS_AUTH
+      - MINIO_PASSWORD
+      - SALT
+      - ENCRYPTION_KEY
+      - NEXTAUTH_SECRET
+      - PROJECT_PUBLIC_KEY
+      - PROJECT_SECRET_KEY
+      - ADMIN_PASSWORD
+    depends_on:
+      postgres:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+    # --- Storage ---
+    volumes:
+      - ./config/entrypoint.sh:/entrypoint.sh:ro
+    tmpfs:
+      - /tmp
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+      - app-internal
+
+    # --- Traefik ---
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.service=${COMPOSE_PROJECT_NAME}"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=3000"
+
+    # --- Health & Observability ---
+    # Both Node services bind to the container's hostname address, not loopback.
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://$$(hostname):3000/api/public/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 300s
+
+  # --------------------------------------------------------
+  # LANGFUSE WORKER (async ingestion, evaluations, exports)
+  # --------------------------------------------------------
+  langfuse-worker:
+    # --- Identity ---
+    image: docker.langfuse.com/langfuse/langfuse-worker:${APP_TAG}
+    container_name: ${CONTAINER_NAME_WORKER}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+
+    # --- Resources ---
+    # Starting values, not measured.
+    memswap_limit: 1g
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 256m
+
+    # --- Configuration ---
+    entrypoint: ["/bin/sh", "/entrypoint.sh", "dumb-init", "--", "./worker/entrypoint.sh"]
+    command: ["node", "worker/dist/index.js"]
+    environment: *langfuse-env
+    secrets:
+      - PG_PASSWORD
+      - CH_PASSWORD
+      - REDIS_AUTH
+      - MINIO_PASSWORD
+      - SALT
+      - ENCRYPTION_KEY
+    depends_on:
+      postgres:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+    # --- Storage ---
+    volumes:
+      - ./config/entrypoint.sh:/entrypoint.sh:ro
+    tmpfs:
+      - /tmp
+
+    # --- Networking ---
+    # app-internal only: the worker needs no route out.
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://$$(hostname):3030/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # --------------------------------------------------------
+  # DATABASE (PostgreSQL — users, projects, prompts, configuration)
+  # --------------------------------------------------------
+  postgres:
+    # --- Identity ---
+    image: postgres:${PG_TAG}
+    container_name: ${CONTAINER_NAME_DB}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+
+    # --- Resources ---
+    # Starting values, not measured.
+    memswap_limit: 512m
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 128m
+
+    # --- Configuration ---
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/PG_PASSWORD
+      TZ: ${TZ}
+    secrets:
+      - PG_PASSWORD
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/postgres:/var/lib/postgresql
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME} -h 127.0.0.1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # --------------------------------------------------------
+  # CLICKHOUSE (traces, observations, scores — the analytics store)
+  # --------------------------------------------------------
+  clickhouse:
+    # --- Identity ---
+    image: clickhouse/clickhouse-server:${CH_TAG}
+    container_name: ${CONTAINER_NAME_CLICKHOUSE}
+    restart: unless-stopped
+    user: "101:101"
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+
+    # --- Resources ---
+    # Starting values, not measured.
+    memswap_limit: 2g
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          cpus: "2.00"
+          pids: 2000
+        reservations:
+          memory: 512m
+
+    # --- Configuration ---
+    # The image's entrypoint writes the user definition under
+    # /etc/clickhouse-server/users.d at start; that path is tmpfs.
+    entrypoint: ["/bin/sh", "/entrypoint-secrets.sh", "/entrypoint.sh"]
+    environment:
+      CLICKHOUSE_DB: default
+      CLICKHOUSE_USER: ${CH_USER}
+      CLICKHOUSE_PASSWORD__FILE: /run/secrets/CH_PASSWORD
+      TZ: ${TZ}
+    secrets:
+      - CH_PASSWORD
+
+    # --- Storage ---
+    volumes:
+      - ./config/entrypoint.sh:/entrypoint-secrets.sh:ro
+      - ./volumes/clickhouse:/var/lib/clickhouse
+    tmpfs:
+      - /tmp
+      - /var/log/clickhouse-server
+      - /etc/clickhouse-server/users.d
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8123/ping || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # --------------------------------------------------------
+  # REDIS (ingestion queue and cache)
+  # --------------------------------------------------------
+  redis:
+    # --- Identity ---
+    image: redis:${REDIS_TAG}
+    container_name: ${CONTAINER_NAME_REDIS}
+    restart: unless-stopped
+    user: "999:999"
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+
+    # --- Resources ---
+    # Starting values, not measured.
+    memswap_limit: 256m
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.50"
+          pids: 100
+        reservations:
+          memory: 64m
+
+    # --- Configuration ---
+    entrypoint: ["/bin/sh", "/redis-entrypoint.sh"]
+    secrets:
+      - REDIS_AUTH
+
+    # --- Storage ---
+    volumes:
+      - ./config/redis-entrypoint.sh:/redis-entrypoint.sh:ro
+      - ./volumes/redis:/data
+    tmpfs:
+      - /tmp
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "REDISCLI_AUTH=\"$$(cat /run/secrets/REDIS_AUTH)\" redis-cli ping | grep -q PONG || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+  # --------------------------------------------------------
+  # MINIO (S3-compatible blob store for event and media payloads)
+  # --------------------------------------------------------
+  minio:
+    # --- Identity ---
+    image: quay.io/minio/minio:${MINIO_TAG}
+    container_name: ${CONTAINER_NAME_MINIO}
+    restart: unless-stopped
+    user: "1000:1000"
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+
+    # --- Resources ---
+    # Starting values, not measured.
+    memswap_limit: 512m
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 128m
+
+    # --- Configuration ---
+    # The bucket is created before the server starts, as upstream does.
+    entrypoint: ["/bin/sh", "-c", "mkdir -p /data/langfuse && exec minio server --address :9000 --console-address :9001 /data"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_USER}
+      MINIO_ROOT_PASSWORD_FILE: /run/secrets/MINIO_PASSWORD
+      HOME: /tmp
+      TZ: ${TZ}
+    secrets:
+      - MINIO_PASSWORD
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/minio:/data
+    tmpfs:
+      - /tmp
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  PG_PASSWORD:
+    file: ./.secrets/pg_password.txt
+  CH_PASSWORD:
+    file: ./.secrets/ch_password.txt
+  REDIS_AUTH:
+    file: ./.secrets/redis_auth.txt
+  MINIO_PASSWORD:
+    file: ./.secrets/minio_password.txt
+  SALT:
+    file: ./.secrets/salt.txt
+  ENCRYPTION_KEY:
+    file: ./.secrets/encryption_key.txt
+  NEXTAUTH_SECRET:
+    file: ./.secrets/nextauth_secret.txt
+  PROJECT_PUBLIC_KEY:
+    file: ./.secrets/project_public_key.txt
+  PROJECT_SECRET_KEY:
+    file: ./.secrets/project_secret_key.txt
+  ADMIN_PASSWORD:
+    file: ./.secrets/admin_password.txt
