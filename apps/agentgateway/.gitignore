@@ -1,0 +1,5 @@
+.secrets/
+volumes/
+config/config.yaml
+.env
+.env.local

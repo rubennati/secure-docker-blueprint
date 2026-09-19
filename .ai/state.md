@@ -73,9 +73,9 @@ request. What each stack found that changed its shape is in that stack's
 | secret sharing, Threat Dragon | 2026-09-19 | #113 |
 | zot, step-ca, OpenCanary, Dependency-Track, DFIR-IRIS, Velociraptor | 2026-09-19 | #114 |
 
-**Priority 2 is on hold** — the AI gateway/UI apps (LiteLLM, Open WebUI,
-agentgateway), Dify and Langfuse. No application is added until the open v1.0
-items in [`../ROADMAP.md`](../ROADMAP.md) are closed.
+AI gateway and UI apps (LiteLLM, Open WebUI, agentgateway) — PR #116, pending
+review. **Dify and Langfuse are on hold** until the open v1.0 items in
+[`../ROADMAP.md`](../ROADMAP.md) are closed.
 
 ## v0.8.1 on a host — 2026-09-13
 

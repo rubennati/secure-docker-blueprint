@@ -40,7 +40,7 @@ OSI = {
 
 # Licences that ship source but restrict use. Matched as a substring, because
 # these are the ones that carry a qualifying clause after the name.
-SOURCE_AVAILABLE = ("BSL", "Business Source", "Elastic License", "Sustainable Use", "Commons Clause", "O'Saasy")
+SOURCE_AVAILABLE = ("BSL", "Business Source", "Elastic License", "Sustainable Use", "Commons Clause", "O'Saasy", "Open WebUI License")
 
 PROPRIETARY = ("Commercial", "EULA")
 

@@ -1,0 +1,122 @@
+# =============================================================================
+# Open WebUI — production stack (Traefik + Docker Secrets)
+# =============================================================================
+# A chat interface for OpenAI-compatible model endpoints, with users, chat
+# history and document upload. Standalone: it needs no other stack, and the
+# endpoint it talks to (BACKEND_URL) can be any OpenAI-compatible server.
+#
+# Spec: docs/standards/compose-structure.md · security-baseline.md
+# =============================================================================
+
+services:
+
+  # --------------------------------------------------------
+  # OPEN WEBUI
+  # Already application-specific — no role suffix needed (naming-conventions.md).
+  # --------------------------------------------------------
+  open-webui:
+    # --- Identity ---
+    image: ghcr.io/open-webui/open-webui:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+    # The image runs as root by default; it works as an unprivileged uid when the
+    # data directory belongs to it (see README, Setup).
+    user: "${WEBUI_UID}:${WEBUI_GID}"
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+
+    # --- Resources ---
+    # Starting values, not measured. The embedding model and vector store load
+    # into this process.
+    memswap_limit: 3g
+    deploy:
+      resources:
+        limits:
+          memory: 3g
+          cpus: "2.00"
+          pids: 300
+        reservations:
+          memory: 768m
+
+    # --- Configuration ---
+    # entrypoint.sh reads the Docker Secrets into the environment the image
+    # expects, then runs the image's own start script.
+    entrypoint: ["/bin/sh", "/entrypoint.sh"]
+    command: ["bash", "start.sh"]
+    environment:
+      HOME: /tmp
+      TZ: ${TZ}
+      # The administrator is created on the first start of an empty database.
+      WEBUI_ADMIN_EMAIL: ${ADMIN_EMAIL}
+      WEBUI_ADMIN_NAME: Administrator
+      ENABLE_SIGNUP: "false"
+      # One OpenAI-compatible backend, no bundled Ollama connection.
+      ENABLE_OLLAMA_API: "false"
+      OPENAI_API_BASE_URL: ${BACKEND_URL}
+      # Only the embedding-model download at first start (Hugging Face) is
+      # left outbound; see README.
+      HF_HUB_OFFLINE: ${HF_HUB_OFFLINE}
+      ENABLE_VERSION_UPDATE_CHECK: "false"
+      SCARF_NO_ANALYTICS: "true"
+      DO_NOT_TRACK: "true"
+      ANONYMIZED_TELEMETRY: "false"
+    secrets:
+      - WEBUI_SECRET_KEY
+      - WEBUI_ADMIN_PASSWORD
+      - OPENAI_API_KEY
+
+    # --- Storage ---
+    volumes:
+      - ./config/entrypoint.sh:/entrypoint.sh:ro
+      - ./volumes/data:/app/backend/data
+    tmpfs:
+      - /tmp
+
+    # --- Networking ---
+    # proxy-public: Traefik reaches it, and it reaches its backend and, on the
+    # first start, Hugging Face.
+    networks:
+      - proxy-public
+
+    # --- Traefik ---
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.service=${COMPOSE_PROJECT_NAME}"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8080"
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:8080/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  WEBUI_SECRET_KEY:
+    file: ./.secrets/webui_secret_key.txt
+  WEBUI_ADMIN_PASSWORD:
+    file: ./.secrets/webui_admin_password.txt
+  OPENAI_API_KEY:
+    file: ./.secrets/openai_api_key.txt

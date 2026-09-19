@@ -1,0 +1,49 @@
+# Open WebUI — local
+#
+#   cp .env.local.example .env.local
+#   ops/init.sh
+#   mkdir -p volumes/data
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   open http://localhost:8080   # log in as ADMIN_EMAIL with .secrets/webui_admin_password.txt
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+#
+# BACKEND_URL must be an OpenAI-compatible endpoint this container can reach.
+
+services:
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:${APP_TAG}
+    container_name: open-webui-local-app
+    restart: unless-stopped
+    user: "${WEBUI_UID}:${WEBUI_GID}"
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    entrypoint: ["/bin/sh", "/entrypoint.sh"]
+    command: ["bash", "start.sh"]
+    environment:
+      HOME: /tmp
+      WEBUI_ADMIN_EMAIL: ${ADMIN_EMAIL}
+      WEBUI_ADMIN_NAME: Administrator
+      ENABLE_SIGNUP: "false"
+      ENABLE_OLLAMA_API: "false"
+      OPENAI_API_BASE_URL: ${BACKEND_URL}
+      ENABLE_VERSION_UPDATE_CHECK: "false"
+      SCARF_NO_ANALYTICS: "true"
+      DO_NOT_TRACK: "true"
+      ANONYMIZED_TELEMETRY: "false"
+    volumes:
+      - ./config/entrypoint.sh:/entrypoint.sh:ro
+      - ./.secrets/webui_secret_key.txt:/run/secrets/WEBUI_SECRET_KEY:ro
+      - ./.secrets/webui_admin_password.txt:/run/secrets/WEBUI_ADMIN_PASSWORD:ro
+      - ./.secrets/openai_api_key.txt:/run/secrets/OPENAI_API_KEY:ro
+      - ./volumes/data:/app/backend/data
+    tmpfs:
+      - /tmp
+    ports:
+      - "127.0.0.1:8080:8080"
+    networks: [open-webui-local]
+
+networks:
+  open-webui-local:
+    name: open-webui-local

@@ -4,7 +4,7 @@
 
 Generated 2026-09-19 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-84 stacks: 1 ops-proven · 13 baseline-aligned · 70 scaffolded. 74 carry a local test stack.
+87 stacks: 1 ops-proven · 13 baseline-aligned · 73 scaffolded. 77 carry a local test stack.
 
 This is the maintainer's view: what has been established about each stack. It makes no statement about whether a stack suits a given deployment.
 
@@ -44,6 +44,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | Stack | State | Pinned | Last verified | Local | Backup docs | Restore docs |
 |---|---|---|---|---|---|---|
 | [`apps/adminer`](apps/adminer/) | `scaffolded` | `APP_TAG=5.5.1-standalone` | 2026-05-02 | — | documented | missing |
+| [`apps/agentgateway`](apps/agentgateway/) | `scaffolded` | `APP_TAG=v1.5.0` | — | ✅ | documented | missing |
 | [`apps/bookstack`](apps/bookstack/) | `scaffolded` | `APP_TAG=version-v26.05.4` | 2026-05-03 | ✅ | documented | missing |
 | [`apps/caldiy`](apps/caldiy/) | `scaffolded` | `APP_TAG=v6.2.0-6@sha256:538cbb4a2273…` | 2026-07-26 | ✅ | documented | missing |
 | [`apps/collabora`](apps/collabora/) | `scaffolded` | `APP_TAG=26.04.3.2.1` | — | ✅ | documented | missing |
@@ -62,6 +63,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/immich`](apps/immich/) | `scaffolded` | `APP_TAG=v3.2.0` | 2026-04-17 ⚠️ | ✅ | documented | documented |
 | [`apps/it-tools`](apps/it-tools/) | `baseline-aligned` | `APP_TAG=2024.10.22-7ca5933` | 2026-05-02 | ✅ | documented | missing |
 | [`apps/librephotos`](apps/librephotos/) | `scaffolded` | `APP_TAG=1.1.0` | 2026-04-17 ⚠️ | ✅ | documented | missing |
+| [`apps/litellm`](apps/litellm/) | `scaffolded` | `APP_TAG=v1.101.0` | — | ✅ | documented | missing |
 | [`apps/lycheeorg`](apps/lycheeorg/) | `scaffolded` | `APP_TAG=v7.8.3` | 2026-04-17 ⚠️ | ✅ | documented | missing |
 | [`apps/mailpit`](apps/mailpit/) | `baseline-aligned` | `APP_TAG=v1.31.1` | 2026-09-07 | ✅ | documented | missing |
 | [`apps/monicahq`](apps/monicahq/) | `scaffolded` | `APP_TAG=4.1.2-apache` | 2026-04-17 ⚠️ | ✅ | documented | missing |
@@ -70,6 +72,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/nocodb`](apps/nocodb/) | `scaffolded` | `APP_TAG=2026.09.0` | 2026-05-02 | ✅ | documented | missing |
 | [`apps/ollama`](apps/ollama/) | `scaffolded` | `APP_TAG=0.34.2` | — | ✅ | documented | missing |
 | [`apps/onlyoffice`](apps/onlyoffice/) | `scaffolded` | `APP_TAG=9.4.0` | 2026-06-14 ⚠️ | ✅ | documented | missing |
+| [`apps/open-webui`](apps/open-webui/) | `scaffolded` | `APP_TAG=v0.11.3` | — | ✅ | documented | missing |
 | [`apps/opencanary`](apps/opencanary/) | `scaffolded` | `APP_TAG=0.9.9` | — | ✅ | documented | missing |
 | [`apps/opnform`](apps/opnform/) | `scaffolded` | `APP_TAG=2.5.0` | 2026-04-17 ⚠️ | ✅ | documented | missing |
 | [`apps/paperless-ngx`](apps/paperless-ngx/) | `scaffolded` | `APP_TAG=3.1.3` | 2026-05-03 | ✅ | documented | missing |

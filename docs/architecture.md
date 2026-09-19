@@ -102,11 +102,22 @@ The first services are in `apps/`:
 | Model runtime, simple, runs on CPU | `apps/ollama` |
 | Model serving, high throughput, NVIDIA GPU | `apps/vllm` |
 | Vector database | `apps/qdrant` |
+| Gateway with virtual keys and budgets | `apps/litellm` |
+| Chat interface | `apps/open-webui` |
+| LLM and MCP gateway | `apps/agentgateway` |
 
 Ollama and vLLM both serve models and are both kept: they cover different
 deployments — one runs on any machine and pulls models by name, the other needs
 a GPU host and is built for concurrent load. Neither depends on the other or on
 Qdrant, and each is usable on its own.
+
+LiteLLM and agentgateway are both gateways and are both kept: LiteLLM adds
+virtual keys, budgets and a spend log in PostgreSQL, agentgateway is a single
+distroless binary that also routes MCP. Open WebUI is a chat interface. None of
+them requires another: each takes an OpenAI-compatible endpoint from its
+configuration, and any of the model servers above, or a hosted provider, can sit
+behind it. Pointing one at another is an operator's choice, not something the
+stacks assume.
 
 Two properties of these services shape the stacks. Ollama has no authentication, and vLLM's `--api-key` protects only
 its `/v1` paths, so the reverse proxy is the real access control — vLLM's route

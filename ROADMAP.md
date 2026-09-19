@@ -175,8 +175,8 @@ Concepts with no timeline, picked up app by app as they are re-verified:
   remains `scaffolded` and is no longer actively maintained here.
 - Paperless-mcp — will live in its own repository once built.
 - The engineering above an AI deployment — model evaluation, retrieval
-  architecture, prompt design. `apps/ollama`, `apps/vllm` and `apps/qdrant` deploy
-  and harden the services; choosing models and judging retrieval is a different
+  architecture, prompt design. `apps/ollama`, `apps/vllm`, `apps/qdrant`, `apps/litellm`,
+  `apps/open-webui` and `apps/agentgateway` deploy and harden the services; choosing models and judging retrieval is a different
   project. See [`docs/architecture.md`](docs/architecture.md#ai--local-ai-is-deployment-not-engineering).
 - A general, orchestrated document-processing pipeline. `apps/docling-serve`
   provides document understanding for AI/RAG pipelines, consumed directly by
