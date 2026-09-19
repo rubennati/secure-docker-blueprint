@@ -4,7 +4,7 @@
 
 Generated 2026-09-19 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-71 stacks: 1 ops-proven · 13 baseline-aligned · 57 scaffolded. 61 carry a local test stack.
+75 stacks: 1 ops-proven · 13 baseline-aligned · 61 scaffolded. 65 carry a local test stack.
 
 This is the maintainer's view: what has been established about each stack. It makes no statement about whether a stack suits a given deployment.
 
@@ -52,6 +52,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/ghost`](apps/ghost/) | `scaffolded` | `APP_TAG=6.63.0-alpine` | 2026-07-26 | ✅ | documented | missing |
 | [`apps/greenmail`](apps/greenmail/) | `scaffolded` | `APP_TAG=2.1.13` | — | ✅ | documented | missing |
 | [`apps/heimdall`](apps/heimdall/) | `scaffolded` | `APP_TAG=2.8.3` | 2026-05-02 | ✅ | documented | missing |
+| [`apps/hemmelig`](apps/hemmelig/) | `scaffolded` | `APP_TAG=v7.4.8` | — | ✅ | documented | missing |
 | [`apps/homarr`](apps/homarr/) | `scaffolded` | `APP_TAG=v1.77.1` | 2026-05-02 | ✅ | documented | missing |
 | [`apps/homepage`](apps/homepage/) | `scaffolded` | `APP_TAG=v2.3.0` | 2026-05-03 | ✅ | documented | missing |
 | [`apps/immich`](apps/immich/) | `scaffolded` | `APP_TAG=v3.2.0` | 2026-04-17 ⚠️ | ✅ | documented | documented |
@@ -68,14 +69,17 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/paperless-ngx`](apps/paperless-ngx/) | `scaffolded` | `APP_TAG=3.1.3` | 2026-05-03 | ✅ | documented | missing |
 | [`apps/photoprism`](apps/photoprism/) | `scaffolded` | `APP_TAG=260728` | 2026-04-17 ⚠️ | ✅ | documented | missing |
 | [`apps/photoview`](apps/photoview/) | `scaffolded` | `APP_TAG=2.4.0` | 2026-04-17 ⚠️ | ✅ | documented | missing |
+| [`apps/privatebin`](apps/privatebin/) | `scaffolded` | `APP_TAG=2.0.6` | — | ✅ | documented | missing |
 | [`apps/seafile`](apps/seafile/) | `scaffolded` | `APP_IMAGE=seafileltd/seafile-mc:13.0.20` | 2026-04-16 ⚠️ | ✅ | documented | missing |
 | [`apps/seafile-pro`](apps/seafile-pro/) | `scaffolded` | `APP_TAG=13.0.21` | 2026-04-13 ⚠️ | ✅ | documented | missing |
+| [`apps/threat-dragon`](apps/threat-dragon/) | `scaffolded` | `APP_TAG=v2.6.2` | — | ✅ | documented | missing |
 | [`apps/tymeslot`](apps/tymeslot/) | `baseline-aligned` | `APP_TAG=1.15.1-slim@sha256:4bde62fd9bb1…` | 2026-09-07 | ✅ | documented | missing |
 | [`apps/unifi`](apps/unifi/) | `scaffolded` | `APP_TAG=10.6.101` | 2026-04-17 ⚠️ | ✅ | documented | missing |
 | [`apps/vaultwarden`](apps/vaultwarden/) | `scaffolded` | `APP_TAG=1.37.3` | 2026-06-14 ⚠️ | ✅ | documented | missing |
 | [`apps/whoami`](apps/whoami/) | `baseline-aligned` | `APP_TAG=v1.12.0` | 2026-09-13 | ✅ | documented | missing |
 | [`apps/windmill`](apps/windmill/) | `scaffolded` | `APP_TAG=1.814.0` | — | ✅ | documented | missing |
 | [`apps/wordpress`](apps/wordpress/) | `scaffolded` | `APP_TAG=7.0.4-php8.3-apache` | 2026-04-15 ⚠️ | ✅ | documented | missing |
+| [`apps/yopass`](apps/yopass/) | `scaffolded` | `APP_TAG=14.10.0` | — | ✅ | documented | missing |
 
 ## `business/`
 

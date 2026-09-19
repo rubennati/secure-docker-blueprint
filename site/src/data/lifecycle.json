@@ -109,6 +109,16 @@
     "verified_anchored": true,
     "verified_version": "v2.6.3"
   },
+  "apps/hemmelig": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=v7.4.8",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "apps/homarr": {
     "backup_docs": "documented",
     "local_stack": "✅",
@@ -269,6 +279,16 @@
     "verified_anchored": false,
     "verified_version": ""
   },
+  "apps/privatebin": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=2.0.6",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "apps/seafile": {
     "backup_docs": "documented",
     "local_stack": "✅",
@@ -286,6 +306,16 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-04-13",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
+  "apps/threat-dragon": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=v2.6.2",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
     "verified_anchored": false,
     "verified_version": ""
   },
@@ -346,6 +376,16 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-04-15",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
+  "apps/yopass": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=14.10.0",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
     "verified_anchored": false,
     "verified_version": ""
   },

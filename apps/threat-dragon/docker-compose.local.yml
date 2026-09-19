@@ -1,0 +1,39 @@
+# OWASP Threat Dragon — local
+#
+#   cp .env.local.example .env.local
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   http://localhost:8080
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  app:
+    image: owasp/threat-dragon:${APP_TAG}
+    container_name: threat-dragon-local-app
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs: [/tmp]
+    environment:
+      NODE_ENV: production
+      SERVER_API_PROTOCOL: http
+      LOCALES_ALLOWED: "[]"
+      LOCALE_DEFAULT: en
+      TZ: ${TZ}
+      ENCRYPTION_KEYS: ${ENCRYPTION_KEYS}
+      ENCRYPTION_JWT_SIGNING_KEY: ${ENCRYPTION_JWT_SIGNING_KEY}
+      ENCRYPTION_JWT_REFRESH_SIGNING_KEY: ${ENCRYPTION_JWT_REFRESH_SIGNING_KEY}
+    ports:
+      - "127.0.0.1:8080:3000"
+    networks: [threat-dragon-local]
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:3000/',r=>process.exit([200,302].includes(r.statusCode)?0:1)).on('error',()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+networks:
+  threat-dragon-local:
+    name: threat-dragon-local
