@@ -439,6 +439,14 @@
     "license_class": "mixed",
     "origin": "US · Infisical Inc · non-EU"
   },
+  "core/jumpserver": {
+    "bloc": "non-EU",
+    "country": "China",
+    "entity": "FIT2CLOUD",
+    "license": "GPL-3.0 (Community Edition; Enterprise Edition is a separate",
+    "license_class": "mixed",
+    "origin": "China · FIT2CLOUD · non-EU"
+  },
   "core/keycloak": {
     "bloc": "non-EU",
     "country": "US",
@@ -446,6 +454,14 @@
     "license": "Apache-2.0",
     "license_class": "osi",
     "origin": "US · Red Hat, Inc. (CNCF incubating project) · non-EU"
+  },
+  "core/orion-belt": {
+    "bloc": "none",
+    "country": "Individual maintainer",
+    "entity": "Mohamed Zrouga",
+    "license": "Apache-2.0 (with Commons Clause)",
+    "license_class": "source-available",
+    "origin": "Individual maintainer · Mohamed Zrouga · no single jurisdiction"
   },
   "core/portainer": {
     "bloc": "non-EU",
@@ -463,6 +479,22 @@
     "license_class": "osi",
     "origin": "New Zealand · Portainer.io Ltd · non-EU (official agent for the Portainer platform)"
   },
+  "core/shellhub": {
+    "bloc": "non-EU",
+    "country": "Brazil",
+    "entity": "O.S. Systems",
+    "license": "Apache-2.0 (Community Edition; a `.env.enterprise` file in",
+    "license_class": "mixed",
+    "origin": "Brazil · O.S. Systems · non-EU"
+  },
+  "core/teleport": {
+    "bloc": "non-EU",
+    "country": "USA",
+    "entity": "Gravitational, Inc.",
+    "license": "AGPL-3.0 (source) / Commercial (Community Edition compiled",
+    "license_class": "mixed",
+    "origin": "USA · Gravitational, Inc. · non-EU"
+  },
   "core/traefik": {
     "bloc": "EU",
     "country": "France",
@@ -470,6 +502,14 @@
     "license": "MIT",
     "license_class": "osi",
     "origin": "France · Traefik Labs · EU"
+  },
+  "core/warpgate": {
+    "bloc": "EU",
+    "country": "Germany",
+    "entity": "Eugen Pankov Softwareentwicklung",
+    "license": "Apache-2.0",
+    "license_class": "osi",
+    "origin": "Germany · Eugen Pankov Softwareentwicklung · EU"
   },
   "monitoring/beszel": {
     "bloc": "non-EU",

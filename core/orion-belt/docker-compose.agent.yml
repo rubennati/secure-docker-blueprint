@@ -1,0 +1,41 @@
+# Orion Belt agent — deploy on each host you want to protect, NOT here
+# =============================================================================
+# This file is not part of `docker compose up` for the server stack above.
+# Copy it (and .env.agent.example) to the machine you want to reach through
+# Orion Belt — the same relationship monitoring/beszel-agent has to
+# monitoring/beszel. The agent dials OUT to the server; the protected host
+# needs no inbound port.
+#
+#   1. Register the agent in the Orion Belt console (Add agent), save the
+#      issued key as ./agent-key next to this file
+#   2. cp .env.agent.example .env.agent
+#   3. docker compose -f docker-compose.agent.yml --env-file .env.agent up -d
+#
+# Verified against upstream's own docker-compose.prod.agent.yml — this is
+# not a decomposition invented here.
+# =============================================================================
+
+services:
+  agent:
+    image: ghcr.io/orion-belt-dev/orion-belt-agent:${ORION_AGENT_TAG}
+    container_name: orion-belt-agent
+    restart: unless-stopped
+
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+
+    environment:
+      ORION_SERVER_HOST: ${ORION_SERVER_HOST}
+      ORION_SERVER_PORT: ${ORION_SERVER_PORT}
+      ORION_AGENT_NAME: ${ORION_AGENT_NAME}
+      ORION_AGENT_ENV: ${ORION_AGENT_ENV}
+      ORION_STRICT_HOST_KEY_CHECKING: ${ORION_STRICT_HOST_KEY_CHECKING}
+
+    volumes:
+      - ./volumes/agent-state:/etc/orion-belt
+      - ./agent-key:/etc/orion-belt/agent_key:ro
