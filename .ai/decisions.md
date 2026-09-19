@@ -43,6 +43,30 @@ new: configured, not yet exercised.
 
 ---
 
+## 2026-09-18 · The AI foundation exists; vLLM is documented as unverified on GPU
+
+The 2026-09 position that AI & Local AI stays latent was conditional: it waited
+on a deployment somebody needs. That need was declared, and `apps/ollama`,
+`apps/vllm` and `apps/qdrant` landed together. `docs/architecture.md` now says
+deploying and hardening AI services is this repository's job and the
+engineering above them is not; `ROADMAP.md`'s out-of-scope entry narrowed to
+match. The earlier decision below stays as the record of why the absence was
+reasoned.
+
+Ollama and vLLM are both kept although both serve models — the repository
+carries alternatives deliberately — because they serve different deployments.
+
+Two decisions about evidence. vLLM's CUDA image is 8.7 GB and needs a GPU, and
+the test host had neither the disk nor the hardware. The stack was therefore
+validated on the CPU build of the same release — real inference, the
+authentication behaviour, the Traefik path allowlist, the hardening flags — and
+says in its README and `UPSTREAM.md` that the CUDA image has not run and that
+its non-root and read-only settings are a first-run hypothesis for it, not a
+result. And the authentication limits are properties to design around, not to
+hide: Ollama has none, vLLM's key covers `/v1` only (`/invocations` runs
+inference without it), so vLLM's router forwards `/v1/` only and both READMEs
+state that peers on `proxy-public` reach everything.
+
 ## 2026-09-18 · Windmill runs without job sandboxing rather than with privileged workers
 
 Upstream's default Windmill worker is `privileged: true`, for PID-namespace

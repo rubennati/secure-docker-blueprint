@@ -4,7 +4,7 @@
 
 Generated 2026-09-19 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-81 stacks: 1 ops-proven · 13 baseline-aligned · 67 scaffolded. 71 carry a local test stack.
+84 stacks: 1 ops-proven · 13 baseline-aligned · 70 scaffolded. 74 carry a local test stack.
 
 This is the maintainer's view: what has been established about each stack. It makes no statement about whether a stack suits a given deployment.
 
@@ -68,6 +68,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/n8n`](apps/n8n/) | `scaffolded` | `APP_TAG=2.38.7` | 2026-05-02 | ✅ | documented | missing |
 | [`apps/nextcloud`](apps/nextcloud/) | `ops-proven` | `APP_TAG=34.0.4-fpm-alpine` | 2026-09-13 | ✅ | documented | documented |
 | [`apps/nocodb`](apps/nocodb/) | `scaffolded` | `APP_TAG=2026.09.0` | 2026-05-02 | ✅ | documented | missing |
+| [`apps/ollama`](apps/ollama/) | `scaffolded` | `APP_TAG=0.34.2` | — | ✅ | documented | missing |
 | [`apps/onlyoffice`](apps/onlyoffice/) | `scaffolded` | `APP_TAG=9.4.0` | 2026-06-14 ⚠️ | ✅ | documented | missing |
 | [`apps/opencanary`](apps/opencanary/) | `scaffolded` | `APP_TAG=0.9.9` | — | ✅ | documented | missing |
 | [`apps/opnform`](apps/opnform/) | `scaffolded` | `APP_TAG=2.5.0` | 2026-04-17 ⚠️ | ✅ | documented | missing |
@@ -75,6 +76,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/photoprism`](apps/photoprism/) | `scaffolded` | `APP_TAG=260728` | 2026-04-17 ⚠️ | ✅ | documented | missing |
 | [`apps/photoview`](apps/photoview/) | `scaffolded` | `APP_TAG=2.4.0` | 2026-04-17 ⚠️ | ✅ | documented | missing |
 | [`apps/privatebin`](apps/privatebin/) | `scaffolded` | `APP_TAG=2.0.6` | — | ✅ | documented | missing |
+| [`apps/qdrant`](apps/qdrant/) | `scaffolded` | `APP_TAG=v1.19.1-unprivileged` | — | ✅ | documented | missing |
 | [`apps/seafile`](apps/seafile/) | `scaffolded` | `APP_IMAGE=seafileltd/seafile-mc:13.0.20` | 2026-04-16 ⚠️ | ✅ | documented | missing |
 | [`apps/seafile-pro`](apps/seafile-pro/) | `scaffolded` | `APP_TAG=13.0.21` | 2026-04-13 ⚠️ | ✅ | documented | missing |
 | [`apps/threat-dragon`](apps/threat-dragon/) | `scaffolded` | `APP_TAG=v2.6.2` | — | ✅ | documented | missing |
@@ -82,6 +84,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/unifi`](apps/unifi/) | `scaffolded` | `APP_TAG=10.6.101` | 2026-04-17 ⚠️ | ✅ | documented | missing |
 | [`apps/vaultwarden`](apps/vaultwarden/) | `scaffolded` | `APP_TAG=1.37.3` | 2026-06-14 ⚠️ | ✅ | documented | missing |
 | [`apps/velociraptor`](apps/velociraptor/) | `scaffolded` | `APP_TAG=0.77.2` | — | ✅ | documented | missing |
+| [`apps/vllm`](apps/vllm/) | `scaffolded` | `APP_TAG=v0.29.0` | — | ✅ | documented | missing |
 | [`apps/whoami`](apps/whoami/) | `baseline-aligned` | `APP_TAG=v1.12.0` | 2026-09-13 | ✅ | documented | missing |
 | [`apps/windmill`](apps/windmill/) | `scaffolded` | `APP_TAG=1.814.0` | — | ✅ | documented | missing |
 | [`apps/wordpress`](apps/wordpress/) | `scaffolded` | `APP_TAG=7.0.4-php8.3-apache` | 2026-04-15 ⚠️ | ✅ | documented | missing |

@@ -1,0 +1,40 @@
+# Qdrant — local
+#
+#   cp .env.local.example .env.local      # set QDRANT_API_KEY: openssl rand -hex 24
+#   mkdir -p volumes/local/storage volumes/local/snapshots
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   curl -H "api-key: $QDRANT_API_KEY" http://localhost:6333/collections
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  qdrant:
+    image: qdrant/qdrant:${APP_TAG}
+    container_name: qdrant-local-app
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs: [/tmp]
+    environment:
+      TZ: ${TZ}
+      QDRANT__SERVICE__API_KEY: ${QDRANT_API_KEY}
+      QDRANT__TELEMETRY_DISABLED: "true"
+      QDRANT_INIT_FILE_PATH: /qdrant/storage/.qdrant-initialized
+    volumes:
+      - ./volumes/local/storage:/qdrant/storage
+      - ./volumes/local/snapshots:/qdrant/snapshots
+    ports:
+      - "127.0.0.1:6333:6333"
+      - "127.0.0.1:6334:6334"
+    networks: [qdrant-local]
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/6333 && printf 'GET /readyz HTTP/1.0\\r\\n\\r\\n' >&3 && head -n1 <&3 | grep -q ' 200 '"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+networks:
+  qdrant-local:
+    name: qdrant-local

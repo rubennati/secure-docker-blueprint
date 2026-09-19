@@ -74,7 +74,10 @@ each its own pull request. Batch order:
    network for its workers, ships a published default administrator that
    `ops/bootstrap-admin.sh` replaces, and could not run NSJAIL job sandboxing
    under this repository's capability rules.
-4. AI foundation: `apps/qdrant`, `apps/ollama`, `apps/vllm` — not started.
+4. AI foundation — **done**, PR #109: `apps/ollama`, `apps/vllm`,
+   `apps/qdrant`. vLLM's CUDA image was not run (no GPU, 8.7 GB); it was
+   validated on the CPU build and says so. `docs/architecture.md` and
+   `ROADMAP.md` updated in the same commit.
 5. AI gateway/UI: `apps/litellm`, `apps/open-webui`, `apps/agentgateway` — not
    started.
 6. `apps/dify`, `monitoring/langfuse` — not started.

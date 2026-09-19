@@ -199,6 +199,14 @@
     "license_class": "osi",
     "origin": "US · NocoDB Inc · non-EU"
   },
+  "apps/ollama": {
+    "bloc": "non-EU",
+    "country": "United States",
+    "entity": "Ollama Inc. (California)",
+    "license": "MIT",
+    "license_class": "osi",
+    "origin": "United States · Ollama Inc. (California) · non-EU"
+  },
   "apps/onlyoffice": {
     "bloc": "EU",
     "country": "Latvia",
@@ -255,6 +263,14 @@
     "license_class": "osi",
     "origin": "Community project, no single company, maintained collectively on GitHub · no single jurisdiction"
   },
+  "apps/qdrant": {
+    "bloc": "EU",
+    "country": "Germany",
+    "entity": "Qdrant Solutions GmbH (Berlin)",
+    "license": "Apache-2.0",
+    "license_class": "osi",
+    "origin": "Germany · Qdrant Solutions GmbH (Berlin) · EU"
+  },
   "apps/seafile": {
     "bloc": "non-EU",
     "country": "China",
@@ -310,6 +326,14 @@
     "license": "AGPL-3.0 (GitHub's own license detector reports `NOASSERTION` for this repository; the actual `LICENSE` file at the repository root is the unmodified GNU AGPLv3 text, confirmed by reading it directly)",
     "license_class": "osi",
     "origin": "Originally Velocidex (Australia), acquired by Rapid7 (United States) in 2021, which maintains it today · non-EU"
+  },
+  "apps/vllm": {
+    "bloc": "non-EU",
+    "country": "United States",
+    "entity": "vLLM project (originated at the UC Berkeley Sky Computing Lab)",
+    "license": "Apache-2.0",
+    "license_class": "osi",
+    "origin": "United States · vLLM project (originated at the UC Berkeley Sky Computing Lab) · non-EU"
   },
   "apps/whoami": {
     "bloc": "EU",

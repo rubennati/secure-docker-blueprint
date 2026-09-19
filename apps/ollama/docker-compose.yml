@@ -1,0 +1,105 @@
+# =============================================================================
+# Ollama — production stack (Traefik, no secrets)
+# =============================================================================
+# A local model runtime: pulls models from the Ollama registry and serves them
+# over an HTTP API, including an OpenAI-compatible /v1. Runs on CPU by default;
+# GPU access is an opt-in overlay (docker-compose.gpu.yml).
+#
+# Ollama has NO authentication. Traefik's access policy is the only gate on the
+# route, and any container on proxy-public can call the API directly — see
+# README, "Access model".
+#
+# Spec: docs/standards/compose-structure.md · security-baseline.md
+# =============================================================================
+
+services:
+
+  # --------------------------------------------------------
+  # OLLAMA
+  # Already application-specific — no role suffix needed (naming-conventions.md).
+  # --------------------------------------------------------
+  ollama:
+    # --- Identity ---
+    image: ollama/ollama:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+
+    # --- Security ---
+    # The image runs as root by default and needs nothing from it: with an
+    # explicit uid, HOME and OLLAMA_MODELS on the data volume, the server,
+    # model pulls and CPU inference all ran under read_only, cap_drop ALL and
+    # no-new-privileges. Verified 2026-09-18 against 0.34.2. The default
+    # tmpfs is noexec, which inference does not need.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    user: "${OLLAMA_UID}:${OLLAMA_GID}"
+
+    # --- Resources ---
+    # A loaded model lives in this memory limit — size it to the largest model
+    # you will run plus its context. Starting values, not measured.
+    memswap_limit: ${OLLAMA_MEMORY}
+    deploy:
+      resources:
+        limits:
+          memory: ${OLLAMA_MEMORY}
+          cpus: "${OLLAMA_CPUS}"
+          pids: 512
+        reservations:
+          memory: 1g
+
+    # --- Configuration ---
+    # OLLAMA_NO_CLOUD turns off Ollama's cloud features (remote inference and
+    # web search); nothing here needs them and they are outbound calls.
+    environment:
+      TZ: ${TZ}
+      HOME: /data
+      OLLAMA_MODELS: /data/models
+      OLLAMA_HOST: 0.0.0.0:11434
+      OLLAMA_NO_CLOUD: "1"
+      OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE}
+
+    # --- Storage ---
+    # Models and the server's identity key. Models are large and re-downloadable;
+    # the key is regenerated if it is lost.
+    volumes:
+      - ./volumes/data:/data
+
+    # --- Networking ---
+    # proxy-public: Traefik routes to it, and it reaches the internet to pull
+    # models from the registry. There is no database to isolate.
+    networks:
+      - proxy-public
+
+    # --- Traefik ---
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=11434"
+
+    # --- Health & Observability ---
+    # No curl or wget in the image; `ollama list` talks to the running server
+    # and fails when it is down.
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true

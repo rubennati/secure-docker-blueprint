@@ -168,6 +168,14 @@ here" for why that category stays out of this blueprint entirely.
 |---|---|---|
 | [UniFi Network App](unifi/) | Controller (LSIO) + MongoDB 4.4 | Ubiquiti UniFi device controller |
 
+### AI & local models
+
+| App | Stack | Description |
+|---|---|---|
+| [Ollama](ollama/) | Single container | Local model runtime — pulls models by name, runs on CPU or an NVIDIA GPU, native and OpenAI-compatible API. **No authentication** — the route's access policy is the only gate |
+| [Qdrant](qdrant/) | Single container | Vector database — collections, similarity search with payload filters, snapshots; API key required, REST and gRPC |
+| [vLLM](vllm/) | Single container | High-throughput OpenAI-compatible model serving on an NVIDIA GPU. `--api-key` covers `/v1` only, so the route forwards `/v1/` and nothing else. CUDA image not yet run on a GPU |
+
 ### Developer & admin tools
 
 | App | Stack | Description |

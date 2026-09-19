@@ -1,0 +1,19 @@
+# Ollama — NVIDIA GPU overlay
+#
+#   COMPOSE_FILE=docker-compose.yml:docker-compose.gpu.yml
+#   docker compose up -d
+#
+# Needs an NVIDIA driver and the NVIDIA Container Toolkit on the host. The
+# reservation makes Docker fail loudly when no GPU is available instead of
+# silently falling back to CPU. NOT exercised on GPU hardware in this
+# repository — see README, "CPU and GPU".
+
+services:
+  ollama:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

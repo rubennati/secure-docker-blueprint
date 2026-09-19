@@ -1,0 +1,41 @@
+# Ollama — local
+#
+#   cp .env.local.example .env.local
+#   mkdir -p volumes/local/data
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   docker compose -f docker-compose.local.yml --env-file .env.local exec ollama ollama pull smollm2:135m
+#   curl http://localhost:11434/api/generate -d '{"model":"smollm2:135m","prompt":"The capital of France is","stream":false}'
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  ollama:
+    image: ollama/ollama:${APP_TAG}
+    container_name: ollama-local-app
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs: [/tmp]
+    user: "${OLLAMA_UID}:${OLLAMA_GID}"
+    environment:
+      TZ: ${TZ}
+      HOME: /data
+      OLLAMA_MODELS: /data/models
+      OLLAMA_HOST: 0.0.0.0:11434
+      OLLAMA_NO_CLOUD: "1"
+    volumes:
+      - ./volumes/local/data:/data
+    ports:
+      - "127.0.0.1:11434:11434"
+    networks: [ollama-local]
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+networks:
+  ollama-local:
+    name: ollama-local
