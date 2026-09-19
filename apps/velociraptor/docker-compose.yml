@@ -1,0 +1,115 @@
+# =============================================================================
+# Velociraptor — production stack (no Traefik, direct ports, single container)
+# =============================================================================
+# Endpoint DFIR / threat hunting server. An operative platform, not an
+# always-on convenience app — read README.md's Security model, especially
+# the backup section, before deploying this.
+#
+# Only the SERVER is Docker-based here. Endpoint agents (Windows, Linux,
+# macOS clients) are not part of this stack and do not need to be
+# Docker-based — see README.md's architecture diagram.
+#
+# Image: ghcr.io/velocidex/velociraptor-server (https://github.com/Velocidex/velociraptor)
+# =============================================================================
+
+services:
+
+  # --------------------------------------------------------
+  # VELOCIRAPTOR SERVER
+  # --------------------------------------------------------
+  velociraptor-app:
+    # --- Identity ---
+    image: ghcr.io/velocidex/velociraptor-server:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+
+    # --- Security ---
+    # No non-root user exists in this image at all (verified: root only in
+    # /etc/passwd beyond system/service accounts, confirmed against a live
+    # container) — documented deviation, the same class already carried
+    # for DFIR-IRIS's app/worker in this repository. cap_drop: ALL is still
+    # applied and needs nothing re-added — verified against a live
+    # container, including under read_only.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+
+    # --- Resources ---
+    # This is an active hunting/collection platform, not a lightweight
+    # always-on service — generous ceiling for concurrent client sessions
+    # and VQL query execution.
+    memswap_limit: 2g          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          pids: 400
+        reservations:
+          memory: 512m
+
+    # --- Configuration ---
+    # No _FILE support (verified) — config/entrypoint.sh injects the
+    # initial-admin-password secret, relevant only on the very first start.
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
+    environment:
+      VELOCIRAPTOR_HOSTNAME: ${VELOCIRAPTOR_HOSTNAME}
+      VELOCIRAPTOR_FRONTEND_PORT: "8000"
+      VELOCIRAPTOR_GUI_PORT: "8889"
+      VELOCIRAPTOR_DATASTORE_PATH: /datastore
+      VELOCIRAPTOR_CONFIG_PATH: /etc/velociraptor/server.config.yaml
+    secrets:
+      - admin_password
+
+    # --- Storage ---
+    # /etc/velociraptor/server.config.yaml holds the CA and every
+    # cryptographic key this server's identity and client trust rest on —
+    # see README.md#backup. /datastore holds every collected artifact,
+    # hunt result and client record.
+    volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
+      - ./volumes/etc:/etc/velociraptor
+      - ./volumes/datastore:/datastore
+
+    # --- Networking ---
+    # No Traefik, deliberately, for both ports:
+    #   - Frontend (8000): agents authenticate the server by pinned
+    #     certificate, the same reason step-ca and Teleport in this
+    #     repository also bypass Traefik — a TLS-terminating proxy would
+    #     substitute its own certificate for the one clients actually trust.
+    #   - GUI (8889): Velociraptor terminates its own TLS here too, and
+    #     mixing that with a second, differently-trusted TLS layer in front
+    #     adds complexity this stack does not need. Restrict reachability
+    #     at the host firewall or by binding to a VPN-only interface — see
+    #     .env.example.
+    # Not internal: true — the server needs outbound internet access on
+    # first start (and after an upgrade) to fetch the endpoint-agent
+    # binaries and default hunting artifacts it serves to clients.
+    # Verified against a live container.
+    ports:
+      - "${VELOCIRAPTOR_FRONTEND_BIND}:8000:8000"
+      - "${VELOCIRAPTOR_GUI_BIND}:8889:8889"
+
+    # --- Health & Observability ---
+    # A plain TCP connect, not an HTTP check: the GUI serves HTTPS with its
+    # own self-signed certificate by default, and the image's only HTTP
+    # client (busybox wget) has no flag to skip certificate verification —
+    # confirmed against a live container. This confirms the port accepts a
+    # connection, the same limited signal this repository already accepts
+    # for Memcached elsewhere.
+    healthcheck:
+      test: ["CMD", "nc", "-z", "127.0.0.1", "8889"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  admin_password:
+    file: ./.secrets/admin_password.txt

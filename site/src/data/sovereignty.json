@@ -39,6 +39,22 @@
     "license_class": "osi",
     "origin": "UK · Alicia Sykes (Lissy93) · non-EU"
   },
+  "apps/dependency-track": {
+    "bloc": "non-EU",
+    "country": "OWASP Foundation project",
+    "entity": "United States (OWASP Foundation)",
+    "license": "Apache-2.0",
+    "license_class": "osi",
+    "origin": "OWASP Foundation project · United States (OWASP Foundation) · non-EU"
+  },
+  "apps/dfir-iris": {
+    "bloc": "EU",
+    "country": "France",
+    "entity": "Airbus CyberSecurity (SAS), confirmed via copyright headers in upstream's own source files (`docker/webApp/iris-entrypoint.sh`, the nginx entrypoint)",
+    "license": "LGPL-3.0",
+    "license_class": "osi",
+    "origin": "France · Airbus CyberSecurity (SAS), confirmed via copyright headers in upstream's own source files (`docker/webApp/iris-entrypoint.sh`, the nginx entrypoint) · EU"
+  },
   "apps/docling-serve": {
     "bloc": "non-EU",
     "country": "LF AI & Data Foundation (US non-profit)",
@@ -191,6 +207,14 @@
     "license_class": "osi",
     "origin": "Latvia · Ascensio System SIA · EU"
   },
+  "apps/opencanary": {
+    "bloc": "non-EU",
+    "country": "South Africa",
+    "entity": "Thinkst Applied Research",
+    "license": "BSD 3-Clause",
+    "license_class": "osi",
+    "origin": "South Africa · Thinkst Applied Research · non-EU. OpenCanary is"
+  },
   "apps/opnform": {
     "bloc": "EU",
     "country": "France",
@@ -278,6 +302,14 @@
     "license": "GPL-3.0",
     "license_class": "osi",
     "origin": "Community · unofficial Bitwarden reimplementation · no single jurisdiction"
+  },
+  "apps/velociraptor": {
+    "bloc": "non-EU",
+    "country": "Originally Velocidex (Australia), acquired by Rapid7 (United States) in 2021, which maintains it today",
+    "entity": "non-EU",
+    "license": "AGPL-3.0 (GitHub's own license detector reports `NOASSERTION` for this repository; the actual `LICENSE` file at the repository root is the unmodified GNU AGPLv3 text, confirmed by reading it directly)",
+    "license_class": "osi",
+    "origin": "Originally Velocidex (Australia), acquired by Rapid7 (United States) in 2021, which maintains it today · non-EU"
   },
   "apps/whoami": {
     "bloc": "EU",
@@ -519,6 +551,14 @@
     "license_class": "mixed",
     "origin": "Brazil · O.S. Systems · non-EU"
   },
+  "core/step-ca": {
+    "bloc": "non-EU",
+    "country": "United States",
+    "entity": "Smallstep Labs, Inc.",
+    "license": "Apache-2.0",
+    "license_class": "osi",
+    "origin": "United States · Smallstep Labs, Inc. · non-EU"
+  },
   "core/teleport": {
     "bloc": "non-EU",
     "country": "USA",
@@ -542,6 +582,14 @@
     "license": "Apache-2.0",
     "license_class": "osi",
     "origin": "Germany · Eugen Pankov Softwareentwicklung · EU"
+  },
+  "core/zot": {
+    "bloc": "none",
+    "country": "Community project under the CNCF sandbox umbrella, no single company",
+    "entity": "no single jurisdiction",
+    "license": "Apache-2.0",
+    "license_class": "osi",
+    "origin": "Community project under the CNCF sandbox umbrella, no single company · no single jurisdiction"
   },
   "monitoring/beszel": {
     "bloc": "non-EU",

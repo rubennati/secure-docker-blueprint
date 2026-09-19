@@ -49,6 +49,26 @@
     "verified_anchored": true,
     "verified_version": "v4.0.4"
   },
+  "apps/dependency-track": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=5.1.0",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
+  "apps/dfir-iris": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=v2.4.29",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "apps/docling-serve": {
     "backup_docs": "documented",
     "local_stack": "✅",
@@ -239,6 +259,16 @@
     "verified_anchored": false,
     "verified_version": ""
   },
+  "apps/opencanary": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=0.9.9",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "apps/opnform": {
     "backup_docs": "documented",
     "local_stack": "✅",
@@ -346,6 +376,16 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-06-14",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
+  "apps/velociraptor": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=0.77.2",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
     "verified_anchored": false,
     "verified_version": ""
   },
@@ -649,6 +689,16 @@
     "verified_anchored": false,
     "verified_version": ""
   },
+  "core/step-ca": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=0.30.2",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "core/teleport": {
     "backup_docs": "documented",
     "local_stack": "✅",
@@ -673,6 +723,16 @@
     "backup_docs": "documented",
     "local_stack": "✅",
     "pinned": "APP_TAG=0.29.0",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
+  "core/zot": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=v2.1.21",
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "—",

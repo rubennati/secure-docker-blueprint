@@ -4,7 +4,7 @@
 
 Generated 2026-09-19 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-75 stacks: 1 ops-proven · 13 baseline-aligned · 61 scaffolded. 65 carry a local test stack.
+81 stacks: 1 ops-proven · 13 baseline-aligned · 67 scaffolded. 71 carry a local test stack.
 
 This is the maintainer's view: what has been established about each stack. It makes no statement about whether a stack suits a given deployment.
 
@@ -33,9 +33,11 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`core/portainer`](core/portainer/) | `scaffolded` | `APP_TAG=2.39.7` | 2026-04-16 ⚠️ | ✅ | documented | missing |
 | [`core/portainer-agent`](core/portainer-agent/) | `scaffolded` | `APP_TAG=2.39.7` | 2026-05-05 | — | documented | missing |
 | [`core/shellhub`](core/shellhub/) | `scaffolded` | `VALKEY_TAG=9.1-alpine` | — | ✅ | documented | missing |
+| [`core/step-ca`](core/step-ca/) | `scaffolded` | `APP_TAG=0.30.2` | — | ✅ | documented | missing |
 | [`core/teleport`](core/teleport/) | `scaffolded` | `APP_TAG=18.11.0` | — | ✅ | documented | missing |
 | [`core/traefik`](core/traefik/) | `scaffolded` | `TRAEFIK_IMAGE=traefik:v3.7` | 2026-09-13 | — | documented | missing |
 | [`core/warpgate`](core/warpgate/) | `scaffolded` | `APP_TAG=0.29.0` | — | ✅ | documented | missing |
+| [`core/zot`](core/zot/) | `scaffolded` | `APP_TAG=v2.1.21` | — | ✅ | documented | missing |
 
 ## `apps/`
 
@@ -46,6 +48,8 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/caldiy`](apps/caldiy/) | `scaffolded` | `APP_TAG=v6.2.0-6@sha256:538cbb4a2273…` | 2026-07-26 | ✅ | documented | missing |
 | [`apps/collabora`](apps/collabora/) | `scaffolded` | `APP_TAG=26.04.3.2.1` | — | ✅ | documented | missing |
 | [`apps/dashy`](apps/dashy/) | `scaffolded` | `APP_TAG=4.6.0` | 2026-05-02 | ✅ | documented | missing |
+| [`apps/dependency-track`](apps/dependency-track/) | `scaffolded` | `APP_TAG=5.1.0` | — | ✅ | documented | missing |
+| [`apps/dfir-iris`](apps/dfir-iris/) | `scaffolded` | `APP_TAG=v2.4.29` | — | ✅ | documented | missing |
 | [`apps/docling-serve`](apps/docling-serve/) | `scaffolded` | `APP_TAG=v1.34.0` | — | ✅ | documented | missing |
 | [`apps/easyappointments`](apps/easyappointments/) | `scaffolded` | `APP_TAG=1.6.0` | 2026-05-03 | ✅ | documented | missing |
 | [`apps/euro-office`](apps/euro-office/) | `scaffolded` | `APP_TAG=v9.3.4-hotfix.1` | — | ✅ | documented | missing |
@@ -65,6 +69,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/nextcloud`](apps/nextcloud/) | `ops-proven` | `APP_TAG=34.0.4-fpm-alpine` | 2026-09-13 | ✅ | documented | documented |
 | [`apps/nocodb`](apps/nocodb/) | `scaffolded` | `APP_TAG=2026.09.0` | 2026-05-02 | ✅ | documented | missing |
 | [`apps/onlyoffice`](apps/onlyoffice/) | `scaffolded` | `APP_TAG=9.4.0` | 2026-06-14 ⚠️ | ✅ | documented | missing |
+| [`apps/opencanary`](apps/opencanary/) | `scaffolded` | `APP_TAG=0.9.9` | — | ✅ | documented | missing |
 | [`apps/opnform`](apps/opnform/) | `scaffolded` | `APP_TAG=2.5.0` | 2026-04-17 ⚠️ | ✅ | documented | missing |
 | [`apps/paperless-ngx`](apps/paperless-ngx/) | `scaffolded` | `APP_TAG=3.1.3` | 2026-05-03 | ✅ | documented | missing |
 | [`apps/photoprism`](apps/photoprism/) | `scaffolded` | `APP_TAG=260728` | 2026-04-17 ⚠️ | ✅ | documented | missing |
@@ -76,6 +81,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/tymeslot`](apps/tymeslot/) | `baseline-aligned` | `APP_TAG=1.15.1-slim@sha256:4bde62fd9bb1…` | 2026-09-07 | ✅ | documented | missing |
 | [`apps/unifi`](apps/unifi/) | `scaffolded` | `APP_TAG=10.6.101` | 2026-04-17 ⚠️ | ✅ | documented | missing |
 | [`apps/vaultwarden`](apps/vaultwarden/) | `scaffolded` | `APP_TAG=1.37.3` | 2026-06-14 ⚠️ | ✅ | documented | missing |
+| [`apps/velociraptor`](apps/velociraptor/) | `scaffolded` | `APP_TAG=0.77.2` | — | ✅ | documented | missing |
 | [`apps/whoami`](apps/whoami/) | `baseline-aligned` | `APP_TAG=v1.12.0` | 2026-09-13 | ✅ | documented | missing |
 | [`apps/windmill`](apps/windmill/) | `scaffolded` | `APP_TAG=1.814.0` | — | ✅ | documented | missing |
 | [`apps/wordpress`](apps/wordpress/) | `scaffolded` | `APP_TAG=7.0.4-php8.3-apache` | 2026-04-15 ⚠️ | ✅ | documented | missing |

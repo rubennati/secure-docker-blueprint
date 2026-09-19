@@ -1,0 +1,35 @@
+# OpenCanary — local
+#
+#   cp .env.local.example .env.local
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   curl -I http://localhost:8080/          # fake login page
+#   nc localhost 2121                       # fake FTP banner
+#   docker compose -f docker-compose.local.yml --env-file .env.local logs -f
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  app:
+    image: thinkst/opencanary:${APP_TAG}
+    container_name: opencanary-local-app
+    restart: unless-stopped
+    entrypoint: ["opencanaryd"]
+    command: ["--dev", "--uid=nobody", "--gid=nogroup"]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE, SETUID, SETGID]
+    read_only: true
+    tmpfs: [/tmp, /run]
+    volumes:
+      - ./config/opencanary.conf:/root/.opencanary.conf:ro
+    ports:
+      - "127.0.0.1:2121:21"
+      - "127.0.0.1:2323:23"
+      - "127.0.0.1:8080:80"
+      - "127.0.0.1:3306:3306"
+      - "127.0.0.1:3389:3389"
+    networks: [opencanary-local]
+
+networks:
+  opencanary-local:
+    name: opencanary-local
