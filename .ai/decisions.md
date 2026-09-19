@@ -6,6 +6,43 @@ this file is the index and covers decisions that have no other home.
 
 ---
 
+## 2026-09 · Optional watchdogs for the Docker daemon and Traefik, bounded and opt-in
+
+A read-only host-resilience evaluation found that `restart: unless-stopped` and
+container healthchecks already cover a crashed process, but nothing acts on a
+service that is running and unhealthy — Traefik included — or on the Docker
+daemon's API hanging while the process stays alive. `docker inspect --format
+'{{.State.OOMKilled}} {{.RestartCount}}'` in `docs/resource-measurement.md` was
+already a manual command, never automated.
+
+`willfarrell/autoheal`, the common general-purpose answer, was already rejected
+once in this repository — `business/openproject/docker-compose.yml` omits it
+because it needs a direct `docker.sock` mount, which containers here do not get.
+A host-installed script run by systemd as root is a different trust boundary and
+does not need that exception; it has the access an administrator already has.
+
+Two independent scripts, `core/host-watchdog/docker-daemon-watchdog.sh` and
+`core/traefik/ops/scripts/traefik-watchdog.sh`, each follow the same bounded
+model: N consecutive confirmed failures → one recovery attempt → re-verify →
+report and stop retrying if it did not hold. Neither installs by default,
+neither is required by anything else, and either can be enabled alone. Both
+report to a Healthchecks check on every run — the same dead-man's-switch
+pattern `backup/borgmatic` already uses — so the watchdog itself going silent
+is caught independently of whatever it watches.
+
+Restarting Traefik on sustained unhealthy status is accepted specifically
+because it holds no state — a wrong restart costs seconds of routing, not
+data. This is not a general auto-heal policy: a stateful service reported
+unhealthy should still alert a person, not restart itself, and the README
+says so explicitly.
+
+Neither script has run on a live host. The systemd hardening blocks mirror
+`backup/borgmatic.service.example`'s pattern as a documented starting point,
+not a verified one — matching this repository's own standard for anything
+new: configured, not yet exercised.
+
+---
+
 ## 2026-09-18 · The AI foundation exists; vLLM is documented as unverified on GPU
 
 The 2026-09 position that AI & Local AI stays latent was conditional: it waited
@@ -29,6 +66,26 @@ result. And the authentication limits are properties to design around, not to
 hide: Ollama has none, vLLM's key covers `/v1` only (`/invocations` runs
 inference without it), so vLLM's router forwards `/v1/` only and both READMEs
 state that peers on `proxy-public` reach everything.
+
+## 2026-09-18 · Windmill runs without job sandboxing rather than with privileged workers
+
+Upstream's default Windmill worker is `privileged: true`, for PID-namespace
+isolation of job code. The repository baseline has no exception path for
+privileged containers, so the stack does not use it. NSJAIL, upstream's
+unprivileged alternative, was tried with `cap_add: SYS_ADMIN`,
+`seccomp=unconfined` and `apparmor=unconfined` and still failed on a `mount()`
+call; whether that is specific to the nested-virtualisation test host is not
+established. The stack therefore ships with no per-job isolation beyond the
+worker container's own boundary (non-root, all capabilities dropped,
+read-only root filesystem, `no-new-privileges`), and says so in the stack's
+README and `UPSTREAM.md` instead of implying a sandbox.
+
+Two smaller consequences. Workers join a per-stack `app-egress` network — the
+pattern `apps/nextcloud` and `business/invoiceninja` already use — because
+runtime and dependency downloads fail on `app-internal` alone. And a fresh
+Windmill carries a published superadmin password, so the router defaults to
+`acc-deny` until `ops/bootstrap-admin.sh` has replaced it. The first
+reproducible retest is on a bare-metal host, where NSJAIL may work.
 
 ## 2026-09-18 · A blueprint entry needs an independently operated service, not just a container
 

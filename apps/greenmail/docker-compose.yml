@@ -1,0 +1,110 @@
+# =============================================================================
+# GreenMail — production stack (Traefik, no secrets)
+# =============================================================================
+# A mail server for integration tests — SMTP, IMAP and POP3, accepting any
+# credentials by design. Different role from apps/mailpit: Mailpit is a
+# convenient SMTP sink with a UI for a human to read outgoing mail; GreenMail
+# is a protocol-level mock server other applications' test suites connect to.
+#
+# Spec: docs/standards/compose-structure.md · security-baseline.md
+# =============================================================================
+
+services:
+
+  # --------------------------------------------------------
+  # GREENMAIL
+  # Already application-specific — no role suffix needed (naming-conventions.md).
+  # --------------------------------------------------------
+  greenmail:
+    # --- Identity ---
+    image: greenmail/standalone:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+
+    # --- Security ---
+    # The image already runs as a non-root `greenmail` user by upstream
+    # default (verified via `docker inspect`) — no `user:` override needed.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+
+    # --- Resources ---
+    # A JVM holding test mail in memory. Starting values, not measured.
+    memswap_limit: 512m
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 128m
+
+    # --- Configuration ---
+    # GREENMAIL_OPTS repeats the image's own default (Dockerfile) so it is
+    # visible and editable here rather than hidden inside the image.
+    # -Dgreenmail.auth.disabled accepts any username/password — the intended
+    # mode for a test double, not a weakening this stack introduces.
+    # -Dgreenmail.startup.timeout=10000 raises the per-protocol-server bind
+    # timeout from the image's 2000ms default: verified 2026-09-18, the
+    # SMTPS listener missed the 2000ms window under load and crashed the
+    # whole runner out of main() before the REST API had started, while
+    # already-bound listeners (SMTP) kept answering — a degraded, confusing
+    # partial failure. 10s clears it with margin.
+    environment:
+      TZ: ${TZ}
+      JAVA_OPTS: "-Djava.net.preferIPv4Stack=true"
+      GREENMAIL_OPTS: >-
+        -Dgreenmail.setup.test.all
+        -Dgreenmail.hostname=0.0.0.0
+        -Dgreenmail.tls.keystore.file=/home/greenmail/greenmail.p12
+        -Dgreenmail.tls.keystore.password=changeit
+        -Dgreenmail.auth.disabled
+        -Dgreenmail.startup.timeout=10000
+
+    # --- Storage ---
+    # None. GreenMail holds test mail in memory only — nothing survives a
+    # restart, which is the correct behaviour for an integration-test double.
+
+    # --- Networking ---
+    # proxy-public only, same reasoning as apps/mailpit: every container on
+    # that network reaches the mail protocol ports by service name
+    # (`greenmail:3025`), and Traefik routes only the HTTP API.
+    networks:
+      - proxy-public
+
+    # --- Traefik ---
+    # Routes the REST API / Swagger UI (8080) only — the mail protocol ports
+    # are not HTTP and are reached directly by other containers on
+    # proxy-public, not through Traefik.
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8080"
+
+    # --- Health & Observability ---
+    # No curl/wget in this image (Debian trixie, headless JRE) — bash's
+    # /dev/tcp confirms the SMTP listener accepts connections.
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/3025' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true

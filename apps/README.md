@@ -83,11 +83,84 @@ Planned: **Rallly** (group scheduling polls — Doodle alternative, complementar
 
 ### Identity & security
 
+Five different jobs, not five competing password managers — each holds a
+different kind of secret, for a different length of time, for a different
+audience. [`core/infisical`](../core/infisical/) is the fifth: it lives in
+`core/` because it is installation-scoped infrastructure other stacks pull
+machine credentials from, not a user-facing app, but it belongs in the same
+mental map as the four below.
+
+| App | Stack | Role |
+|---|---|---|
+| [Vaultwarden](vaultwarden/) | App + MariaDB | **Password management** — durable storage of human logins: website, username, password, TOTP, collections |
+| [Yopass](yopass/) | App + Memcached | **Secret intake & ephemeral sharing** — a link that self-destructs, for handing someone a credential once |
+| [Hemmelig](hemmelig/) | Single container | **Secret intake & ephemeral sharing** — the same job as Yopass, plus a built-in (if manual) secret-request flow |
+| [PrivateBin](privatebin/) | Single container | **Secret intake & ephemeral sharing** — general zero-knowledge paste; passwords are one of many things it carries |
+| [Infisical](../core/infisical/) | App + Postgres + Redis | **Infrastructure secrets** — API keys, DB credentials, CI/CD tokens, machine identities; lives in `core/` |
+
+None of the three ephemeral-sharing apps replace Vaultwarden's job (nothing
+here stores a login permanently) or Infisical's (nothing here is a machine
+identity or a CI credential store), and Vaultwarden and Infisical do not do
+theirs — see [Choosing between the secret-sharing apps](#choosing-between-the-secret-sharing-apps)
+for what actually separates the three from each other.
+
+Planned (apps/): Headscale (self-hosted Tailscale control server), SnapPass.
+
+#### Choosing between the secret-sharing apps
+
+Yopass, Hemmelig and PrivateBin solve overlapping but not identical problems.
+Password Pusher is a known alternative in this space not shipped here — one
+push mechanism does not need three implementations, and none of the three
+above compete with each other closely enough yet to force that choice.
+
+| | Yopass | Hemmelig | PrivateBin |
+|---|---|---|---|
+| Primary purpose | Ephemeral secret sharing | Ephemeral secret sharing + secret requests | Generic encrypted paste |
+| Self-hosted | Yes | Yes | Yes |
+| Free/open-source license | Yes — Apache-2.0 | **No** — O'Saasy License Agreement (MIT-derived; self-hosting unrestricted, reselling as a competing SaaS is not; not OSI-approved) | Yes — Zlib |
+| Client-side encryption | Yes | Yes | Yes |
+| Zero-knowledge | Yes | Yes | Yes |
+| Send a secret (sender creates the link) | Yes | Yes | Yes |
+| Request a secret (recipient-generated link) | **No** — paid Yopass Business feature only | Yes — built in, but the decryption key must be sent back to the requester manually (see its README) | No |
+| External submitter needs an account | No | No (only the requester does, for the request flow) | No |
+| Durable vault function | No | No | No |
+| Machine-secret features | No | No | No |
+| Notable restriction | Secret Requests requires a commercial license | License is not OSI-approved (self-hosting itself is unaffected); no new image published in ~6 months despite active source commits | None found |
+
+No overall recommendation is made here on purpose — Yopass for a plain
+disposable link with the simplest security story, Hemmelig if the
+request-a-secret workflow matters enough to accept its license and manual
+key hand-off, PrivateBin for anything that is not specifically a credential
+(a config fragment, a recovery code, a note) or when license simplicity
+matters most.
+
+### Threat modeling
+
 | App | Stack | Description |
 |---|---|---|
-| [Vaultwarden](vaultwarden/) | App + MariaDB | Bitwarden-compatible password manager |
+| [OWASP Threat Dragon](threat-dragon/) | Single container | Data-flow diagrams, trust boundaries, threats and mitigations — stateless, models live in the browser or an optional connected Git repository |
 
-Planned (apps/): Headscale (self-hosted Tailscale control server), PrivateBin, SnapPass.
+Functionally unrelated to the secret-sharing apps above — it stores no
+secrets and shares nothing between people.
+
+### Security operations
+
+Specialized security-operations tools — deception, supply-chain risk
+tracking, incident response, endpoint hunting. Each is a standard,
+Traefik-or-direct-port app: no other stack in this repository depends on
+them, which is why they sit here rather than in `core/`, alongside
+[step-ca](../core/step-ca/) (PKI) and [zot](../core/zot/) (registry), the
+two security-adjacent capabilities that *are* installation-scoped
+infrastructure other stacks could route through. None of the entries below
+are a SIEM, an XDR platform, or a SOC — see `ROADMAP.md`'s "Out of scope
+here" for why that category stays out of this blueprint entirely.
+
+| App | Stack | Description |
+|---|---|---|
+| [OpenCanary](opencanary/) | Single container | Deception/honeypot — fake FTP, Telnet, HTTP, MySQL, RDP services that log every connection attempt. Not an IDS, EDR or SIEM — see its README |
+| [Dependency-Track](dependency-track/) | API + frontend + Postgres | Software Composition Analysis — SBOM ingestion, component and vulnerability tracking across a portfolio over time. Not a container/image scanner — see its README for the Trivy distinction |
+| [DFIR-IRIS](dfir-iris/) | App + worker + Postgres + RabbitMQ | Collaborative incident-response case management — cases, IOCs, evidence, timelines. Holds real incident data; read its Security model before deploying |
+| [Velociraptor](velociraptor/) | Single container (server only) | Endpoint DFIR / threat hunting — VQL queries and collection across a fleet. An operative platform, not an always-on convenience app; losing its config breaks existing client trust — see its README |
 
 ### Networking
 
@@ -109,8 +182,10 @@ Planned (apps/): Headscale (self-hosted Tailscale control server), PrivateBin, S
 |---|---|---|
 | [Adminer](adminer/) | Single container | Database administration UI (connects to other apps' DBs) |
 | [IT-Tools](it-tools/) | Single container | Collection of IT / developer utilities (JSON, hash, regex, etc.) |
+| [GreenMail](greenmail/) | Single container | SMTP, IMAP and POP3 test server with a real mailbox per recipient — for automated tests that log in and assert on what arrived |
 | [Mailpit](mailpit/) | Single container | SMTP sink for trying out the stacks that send mail — accepts every message, shows it, delivers nothing |
 | [Whoami](whoami/) | Single container | Traefik debug service to verify routing, TLS and middlewares — deploy temporarily, then disable |
+| [Windmill](windmill/) | Server + 2 workers + PostgreSQL 18 | Code-first scripts, flows, APIs and scheduled jobs on a Postgres-backed queue. Replace the built-in administrator before exposing it |
 
 Docker-management tools (Dockhand / Portainer / Hawser) are in [`core/`](../core/): they control Docker itself, which is an installation-scoped capability. Whoami sits here instead — it is a routed diagnostic that serves no other stack.
 

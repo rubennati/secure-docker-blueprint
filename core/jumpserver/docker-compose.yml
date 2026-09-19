@@ -1,0 +1,121 @@
+# =============================================================================
+# JumpServer — production stack (Traefik for the web console, direct port
+# for the bundled SSH gateway)
+# =============================================================================
+# Full-featured, traditional PAM platform. This is the vendor's own supported
+# all-in-one image: core + koko (SSH gateway) + web UI + bundled PostgreSQL +
+# Redis + nginx, all supervised inside one container. No first-party
+# multi-service compose reference exists to decompose this the way every
+# other stack in this repository is decomposed — see UPSTREAM.md and the
+# hardening exceptions below, each with its reason.
+#
+# Spec: docs/standards/compose-structure.md · security-baseline.md
+# =============================================================================
+
+services:
+
+  # --------------------------------------------------------
+  # JUMPSERVER (core + koko + web UI + bundled Postgres/Redis/nginx)
+  # --------------------------------------------------------
+  jumpserver:
+    # --- Identity ---
+    image: jumpserver/jms_all:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+
+    # --- Security ---
+    # Verified directly, not assumed — running this image under this
+    # repository's normal baseline breaks it:
+    #   no-new-privileges:true  → the internal entrypoint calls `sudo` to
+    #     drop from root into per-component users. `sudo` is setuid-root by
+    #     nature; no-new-privileges blocks exactly that, and the container
+    #     fails before any service starts.
+    #   cap_drop: ALL            → the bundled Postgres and Redis each need
+    #     to chown/bind their own data paths on first start, the same
+    #     capabilities apps/_reference documents for a plain Postgres
+    #     service — but this image also needs sudo's own setuid path, which
+    #     no capability list alone restores.
+    #   read_only: true          → the image writes logs, sockets and PID
+    #     files across a dozen internal paths (Postgres, Redis, nginx, and
+    #     five-plus supervised Python/Java/Go components) that were never
+    #     designed to run without a writable root filesystem.
+    # None of the three is set. This is the cost of the only vendor-supported
+    # single-image deployment path — see UPSTREAM.md for what a future
+    # per-component deployment (jumpserver/core, jumpserver/koko, the v5-ce
+    # image line) could recover, once an official compose reference exists
+    # to build it from.
+
+    # --- Resources ---
+    # Vendor-documented minimum for the whole bundle (core + koko + web UI +
+    # its own Postgres + Redis + nginx): 4 CPU cores, 8 GB RAM. This is a
+    # floor stated by upstream, not a derived starting point like most
+    # limits in this repository.
+    memswap_limit: 8g
+    deploy:
+      resources:
+        limits:
+          memory: 8g
+          pids: 2000
+        reservations:
+          memory: 4g
+
+    # --- Configuration ---
+    # No _FILE support — see .env.example's Secrets section for why these
+    # two stay as plain environment variables rather than Docker Secrets.
+    environment:
+      SECRET_KEY: ${SECRET_KEY}
+      BOOTSTRAP_TOKEN: ${BOOTSTRAP_TOKEN}
+      TZ: ${TZ}
+
+    # --- Storage ---
+    # /opt/data and /opt/download are the image's own declared volumes
+    # (verified via `docker inspect`); the bundled Postgres and Redis state
+    # live under /opt/data as well — there is no way to split them out
+    # without contradicting the single-container model above.
+    volumes:
+      - ./volumes/data:/opt/data
+      - ./volumes/download:/opt/download
+
+    # --- Networking ---
+    # proxy-public for the web console's Traefik router only. The koko SSH
+    # gateway is published directly — see "ports" and
+    # README.md#network-exposure. No app-internal network: the bundled
+    # Postgres/Redis are not separate services this compose file can isolate
+    # from the app that needs them; they share this one container's network
+    # namespace by construction.
+    networks:
+      - proxy-public
+
+    ports:
+      # koko, the bundled SSH gateway — every SSH target, reached by anyone
+      # with a JumpServer account. A raw TCP listener: Traefik's HTTP router
+      # cannot carry this protocol.
+      - "${JUMPSERVER_SSH_PORT}:2222"
+
+    # --- Traefik ---
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
+
+    # --- Health & Observability ---
+    # The image ships curl and wget (verified) but no HEALTHCHECK of its
+    # own. Hits the bundled nginx's own proxy to the core API.
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1/api/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true

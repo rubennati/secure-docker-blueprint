@@ -43,14 +43,9 @@ exist under their normal category, not here:
 
 | Tool | Category | For |
 |---|---|---|
-| [Mailpit](../apps/mailpit/) | `apps/` | Catches outgoing mail from a development stack instead of sending it |
+| [Mailpit](../apps/mailpit/) | `apps/` | Catches outgoing mail from a development stack instead of sending it, with a UI to read it |
+| [GreenMail](../apps/greenmail/) | `apps/` | SMTP, IMAP and POP3 test server an automated test suite connects to and asserts against |
 | [Adminer](../apps/adminer/) | `apps/` | Browses a database without a client install |
 | [IT-Tools](../apps/it-tools/) | `apps/` | Generators, converters and formatters used while developing |
 | [Whoami](../apps/whoami/) | `apps/` | Confirms Traefik routing and TLS reach a container before the real app does |
-
-## Planned
-
-Not deployable here yet. See [`ROADMAP.md`](../ROADMAP.md) for status.
-
-- **GreenMail** — SMTP/IMAP/POP3 test server for automated integration tests
-- **Windmill** — script-first workflow automation for developers
+| [Windmill](../apps/windmill/) | `apps/` | Code-first scripts, flows, APIs and scheduled jobs on a Postgres-backed queue |

@@ -49,6 +49,26 @@
     "verified_anchored": true,
     "verified_version": "v4.0.4"
   },
+  "apps/dependency-track": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=5.1.0",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
+  "apps/dfir-iris": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=v2.4.29",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "apps/docling-serve": {
     "backup_docs": "documented",
     "local_stack": "✅",
@@ -89,6 +109,16 @@
     "verified_anchored": true,
     "verified_version": "v6.54.0-alpine"
   },
+  "apps/greenmail": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=2.1.13",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "apps/heimdall": {
     "backup_docs": "documented",
     "local_stack": "✅",
@@ -98,6 +128,16 @@
     "verified": "2026-05-02",
     "verified_anchored": true,
     "verified_version": "v2.6.3"
+  },
+  "apps/hemmelig": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=v7.4.8",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "apps/homarr": {
     "backup_docs": "documented",
@@ -229,6 +269,16 @@
     "verified_anchored": false,
     "verified_version": ""
   },
+  "apps/opencanary": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=0.9.9",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "apps/opnform": {
     "backup_docs": "documented",
     "local_stack": "✅",
@@ -269,6 +319,16 @@
     "verified_anchored": false,
     "verified_version": ""
   },
+  "apps/privatebin": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=2.0.6",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "apps/qdrant": {
     "backup_docs": "documented",
     "local_stack": "✅",
@@ -296,6 +356,16 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-04-13",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
+  "apps/threat-dragon": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=v2.6.2",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
     "verified_anchored": false,
     "verified_version": ""
   },
@@ -329,6 +399,16 @@
     "verified_anchored": false,
     "verified_version": ""
   },
+  "apps/velociraptor": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=0.77.2",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "apps/vllm": {
     "backup_docs": "documented",
     "local_stack": "✅",
@@ -349,6 +429,16 @@
     "verified_anchored": true,
     "verified_version": "v1.12.0"
   },
+  "apps/windmill": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=1.814.0",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "apps/wordpress": {
     "backup_docs": "documented",
     "local_stack": "✅",
@@ -356,6 +446,16 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-04-15",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
+  "apps/yopass": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=14.10.0",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
     "verified_anchored": false,
     "verified_version": ""
   },
@@ -539,10 +639,30 @@
     "verified_anchored": false,
     "verified_version": ""
   },
+  "core/host-watchdog": {
+    "backup_docs": "missing",
+    "local_stack": "—",
+    "pinned": "host-installed",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "core/infisical": {
     "backup_docs": "documented",
     "local_stack": "✅",
     "pinned": "APP_TAG=v0.165.10",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
+  "core/jumpserver": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=v4.10.19",
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "—",
@@ -558,6 +678,16 @@
     "verified": "2026-09-07",
     "verified_anchored": true,
     "verified_version": "v26.7.3"
+  },
+  "core/orion-belt": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=1.2.0",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "core/portainer": {
     "backup_docs": "documented",
@@ -579,6 +709,36 @@
     "verified_anchored": true,
     "verified_version": "v2.39.1"
   },
+  "core/shellhub": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "VALKEY_TAG=9.1-alpine",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
+  "core/step-ca": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=0.30.2",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
+  "core/teleport": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=18.11.0",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "core/traefik": {
     "backup_docs": "documented",
     "local_stack": "—",
@@ -588,6 +748,26 @@
     "verified": "2026-09-13",
     "verified_anchored": true,
     "verified_version": "v3.7.13, socket-proxy v0.5.0"
+  },
+  "core/warpgate": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=0.29.0",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
+  "core/zot": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=v2.1.21",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "monitoring/beszel": {
     "backup_docs": "documented",

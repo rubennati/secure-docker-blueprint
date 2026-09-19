@@ -1,0 +1,137 @@
+# =============================================================================
+# Yopass — production stack (Traefik + Memcached)
+# =============================================================================
+# Ephemeral, zero-knowledge secret sharing. The server only ever holds
+# ciphertext — the decryption key lives in the link's URL fragment, which
+# browsers never send to a server. See README.md for what this does and does
+# not cover, and for the difference between this and a request-a-secret flow.
+#
+# Image: jhaals/yopass (https://hub.docker.com/r/jhaals/yopass)
+# Source: https://github.com/jhaals/yopass
+# =============================================================================
+
+services:
+
+  # --------------------------------------------------------
+  # MEMCACHED (ephemeral secret store — TTL-based, no persistence by design)
+  # --------------------------------------------------------
+  memcached:
+    # --- Identity ---
+    image: memcached:${MEMCACHED_TAG}
+    container_name: ${CONTAINER_NAME_CACHE}
+    restart: unless-stopped
+
+    # --- Security ---
+    # The official image already runs as its own "memcache" user directly —
+    # no root-start/drop-privileges entrypoint, so no cap_add is needed at all.
+    # Verified against a live container.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+
+    # --- Resources ---
+    memswap_limit: 128m          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+          pids: 50
+        reservations:
+          memory: 32m
+
+    # --- Networking ---
+    # No host port, no proxy-public: only yopass-app talks to this.
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 11211"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # --------------------------------------------------------
+  # YOPASS
+  # --------------------------------------------------------
+  yopass-app:
+    # --- Identity ---
+    image: jhaals/yopass:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+    depends_on:
+      memcached:
+        condition: service_healthy
+
+    # --- Security ---
+    # Distroless image, already runs as UID 1000 (USER baked into the image) —
+    # no cap_add needed. Verified against a live container.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+
+    # --- Resources ---
+    memswap_limit: 128m          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+          pids: 50
+        reservations:
+          memory: 32m
+
+    # --- Configuration ---
+    # No secrets at all: Yopass holds no admin account and no long-lived key —
+    # every secret it stores is user-supplied ciphertext with its own TTL.
+    environment:
+      MEMCACHED: memcached:11211
+      PORT: "1337"
+      TZ: ${TZ}
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+      - app-internal
+
+    # --- Traefik ---
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=1337"
+
+    # --- Health & Observability ---
+    # The binary's own built-in health-check subcommand — reads the same
+    # MEMCACHED env var and reports the backend's actual reachability, not
+    # just that the process is running. Verified against a live container.
+    healthcheck:
+      test: ["CMD", "/yopass-server", "--health-check"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true

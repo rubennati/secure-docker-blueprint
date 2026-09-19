@@ -39,6 +39,22 @@
     "license_class": "osi",
     "origin": "UK · Alicia Sykes (Lissy93) · non-EU"
   },
+  "apps/dependency-track": {
+    "bloc": "non-EU",
+    "country": "OWASP Foundation project",
+    "entity": "United States (OWASP Foundation)",
+    "license": "Apache-2.0",
+    "license_class": "osi",
+    "origin": "OWASP Foundation project · United States (OWASP Foundation) · non-EU"
+  },
+  "apps/dfir-iris": {
+    "bloc": "EU",
+    "country": "France",
+    "entity": "Airbus CyberSecurity (SAS), confirmed via copyright headers in upstream's own source files (`docker/webApp/iris-entrypoint.sh`, the nginx entrypoint)",
+    "license": "LGPL-3.0",
+    "license_class": "osi",
+    "origin": "France · Airbus CyberSecurity (SAS), confirmed via copyright headers in upstream's own source files (`docker/webApp/iris-entrypoint.sh`, the nginx entrypoint) · EU"
+  },
   "apps/docling-serve": {
     "bloc": "non-EU",
     "country": "LF AI & Data Foundation (US non-profit)",
@@ -71,6 +87,14 @@
     "license_class": "osi",
     "origin": "Ireland · Ghost Foundation · EU"
   },
+  "apps/greenmail": {
+    "bloc": "EU",
+    "country": "Community",
+    "entity": "Marcel May",
+    "license": "Apache-2.0",
+    "license_class": "osi",
+    "origin": "Community · Marcel May · Germany · EU"
+  },
   "apps/heimdall": {
     "bloc": "non-EU",
     "country": "UK",
@@ -78,6 +102,14 @@
     "license": "MIT",
     "license_class": "osi",
     "origin": "UK · linuxserver.io community · non-EU"
+  },
+  "apps/hemmelig": {
+    "bloc": "non-EU",
+    "country": "Norway",
+    "entity": "Bjarne Øverli (individual maintainer)",
+    "license": "O'Saasy License Agreement — a 2025 MIT-derived license with",
+    "license_class": "source-available",
+    "origin": "Norway · Bjarne Øverli (individual maintainer) · non-EU (EEA, not EU)"
   },
   "apps/homarr": {
     "bloc": "EU",
@@ -183,6 +215,14 @@
     "license_class": "osi",
     "origin": "Latvia · Ascensio System SIA · EU"
   },
+  "apps/opencanary": {
+    "bloc": "non-EU",
+    "country": "South Africa",
+    "entity": "Thinkst Applied Research",
+    "license": "BSD 3-Clause",
+    "license_class": "osi",
+    "origin": "South Africa · Thinkst Applied Research · non-EU. OpenCanary is"
+  },
   "apps/opnform": {
     "bloc": "EU",
     "country": "France",
@@ -215,6 +255,14 @@
     "license_class": "osi",
     "origin": "Denmark · community · EU"
   },
+  "apps/privatebin": {
+    "bloc": "none",
+    "country": "Community project, no single company, maintained collectively on GitHub",
+    "entity": "no single jurisdiction",
+    "license": "zlib (core application, by Sébastien Sauvage / PrivateBin",
+    "license_class": "osi",
+    "origin": "Community project, no single company, maintained collectively on GitHub · no single jurisdiction"
+  },
   "apps/qdrant": {
     "bloc": "EU",
     "country": "Germany",
@@ -238,6 +286,14 @@
     "license": "Commercial",
     "license_class": "proprietary",
     "origin": "China · Seafile Ltd · non-EU"
+  },
+  "apps/threat-dragon": {
+    "bloc": "non-EU",
+    "country": "United States",
+    "entity": "OWASP Foundation (nonprofit)",
+    "license": "Apache-2.0",
+    "license_class": "osi",
+    "origin": "United States · OWASP Foundation (nonprofit) · non-EU"
   },
   "apps/tymeslot": {
     "bloc": "EU",
@@ -263,6 +319,14 @@
     "license_class": "osi",
     "origin": "Community · unofficial Bitwarden reimplementation · no single jurisdiction"
   },
+  "apps/velociraptor": {
+    "bloc": "non-EU",
+    "country": "Originally Velocidex (Australia), acquired by Rapid7 (United States) in 2021, which maintains it today",
+    "entity": "non-EU",
+    "license": "AGPL-3.0 (GitHub's own license detector reports `NOASSERTION` for this repository; the actual `LICENSE` file at the repository root is the unmodified GNU AGPLv3 text, confirmed by reading it directly)",
+    "license_class": "osi",
+    "origin": "Originally Velocidex (Australia), acquired by Rapid7 (United States) in 2021, which maintains it today · non-EU"
+  },
   "apps/vllm": {
     "bloc": "non-EU",
     "country": "United States",
@@ -279,6 +343,14 @@
     "license_class": "osi",
     "origin": "France · Traefik Labs · EU"
   },
+  "apps/windmill": {
+    "bloc": "none",
+    "country": "Windmill Labs",
+    "entity": "no country stated in its published terms",
+    "license": "AGPL-3.0 (Community Edition core, with Apache-2.0 components); Enterprise features are under a separate commercial licence",
+    "license_class": "mixed",
+    "origin": "Windmill Labs · no country stated in its published terms · no country"
+  },
   "apps/wordpress": {
     "bloc": "non-EU",
     "country": "US",
@@ -286,6 +358,14 @@
     "license": "GPL-2.0",
     "license_class": "osi",
     "origin": "US · Automattic / WordPress Foundation · non-EU"
+  },
+  "apps/yopass": {
+    "bloc": "EU",
+    "country": "Sweden",
+    "entity": "Jonas Haals (individual maintainer, corporate-adjacent — Spotify, Doddle and Gumtree Australia are named as users, not owners)",
+    "license": "Apache-2.0",
+    "license_class": "osi",
+    "origin": "Sweden · Jonas Haals (individual maintainer, corporate-adjacent — Spotify, Doddle and Gumtree Australia are named as users, not owners) · EU"
   },
   "backup/borgmatic": {
     "bloc": "none",
@@ -431,6 +511,14 @@
     "license_class": "osi",
     "origin": "Finsys · **no country or legal entity stated** — no imprint on fnsys.pro"
   },
+  "core/host-watchdog": {
+    "bloc": "none",
+    "country": "First-party",
+    "entity": "this repository",
+    "license": "Apache-2.0",
+    "license_class": "osi",
+    "origin": "First-party · this repository · no single jurisdiction"
+  },
   "core/infisical": {
     "bloc": "non-EU",
     "country": "US",
@@ -439,6 +527,14 @@
     "license_class": "mixed",
     "origin": "US · Infisical Inc · non-EU"
   },
+  "core/jumpserver": {
+    "bloc": "non-EU",
+    "country": "China",
+    "entity": "FIT2CLOUD",
+    "license": "GPL-3.0 (Community Edition; Enterprise Edition is a separate",
+    "license_class": "mixed",
+    "origin": "China · FIT2CLOUD · non-EU"
+  },
   "core/keycloak": {
     "bloc": "non-EU",
     "country": "US",
@@ -446,6 +542,14 @@
     "license": "Apache-2.0",
     "license_class": "osi",
     "origin": "US · Red Hat, Inc. (CNCF incubating project) · non-EU"
+  },
+  "core/orion-belt": {
+    "bloc": "none",
+    "country": "Individual maintainer",
+    "entity": "Mohamed Zrouga",
+    "license": "Apache-2.0 (with Commons Clause)",
+    "license_class": "source-available",
+    "origin": "Individual maintainer · Mohamed Zrouga · no single jurisdiction"
   },
   "core/portainer": {
     "bloc": "non-EU",
@@ -463,6 +567,30 @@
     "license_class": "osi",
     "origin": "New Zealand · Portainer.io Ltd · non-EU (official agent for the Portainer platform)"
   },
+  "core/shellhub": {
+    "bloc": "non-EU",
+    "country": "Brazil",
+    "entity": "O.S. Systems",
+    "license": "Apache-2.0 (Community Edition; a `.env.enterprise` file in",
+    "license_class": "mixed",
+    "origin": "Brazil · O.S. Systems · non-EU"
+  },
+  "core/step-ca": {
+    "bloc": "non-EU",
+    "country": "United States",
+    "entity": "Smallstep Labs, Inc.",
+    "license": "Apache-2.0",
+    "license_class": "osi",
+    "origin": "United States · Smallstep Labs, Inc. · non-EU"
+  },
+  "core/teleport": {
+    "bloc": "non-EU",
+    "country": "USA",
+    "entity": "Gravitational, Inc.",
+    "license": "AGPL-3.0 (source) / Commercial (Community Edition compiled",
+    "license_class": "mixed",
+    "origin": "USA · Gravitational, Inc. · non-EU"
+  },
   "core/traefik": {
     "bloc": "EU",
     "country": "France",
@@ -470,6 +598,22 @@
     "license": "MIT",
     "license_class": "osi",
     "origin": "France · Traefik Labs · EU"
+  },
+  "core/warpgate": {
+    "bloc": "EU",
+    "country": "Germany",
+    "entity": "Eugen Pankov Softwareentwicklung",
+    "license": "Apache-2.0",
+    "license_class": "osi",
+    "origin": "Germany · Eugen Pankov Softwareentwicklung · EU"
+  },
+  "core/zot": {
+    "bloc": "none",
+    "country": "Community project under the CNCF sandbox umbrella, no single company",
+    "entity": "no single jurisdiction",
+    "license": "Apache-2.0",
+    "license_class": "osi",
+    "origin": "Community project under the CNCF sandbox umbrella, no single company · no single jurisdiction"
   },
   "monitoring/beszel": {
     "bloc": "non-EU",

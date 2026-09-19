@@ -1,0 +1,43 @@
+# step-ca — local
+#
+#   cp .env.local.example .env.local
+#   mkdir -p volumes/local/data
+#   openssl rand -base64 32 | tr -d '\n' > ca_password.local.txt
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   docker compose -f docker-compose.local.yml --env-file .env.local logs   # capture the admin password, shown once
+#   curl -sk https://localhost:9000/health
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  app:
+    image: smallstep/step-ca:${APP_TAG}
+    container_name: step-ca-local-app
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    read_only: true
+    tmpfs: [/tmp]
+    environment:
+      DOCKER_STEPCA_INIT_NAME: Local Test CA
+      DOCKER_STEPCA_INIT_DNS_NAMES: localhost
+      DOCKER_STEPCA_INIT_ADDRESS: ":9000"
+      DOCKER_STEPCA_INIT_PASSWORD_FILE: /run/secrets/ca_password
+      DOCKER_STEPCA_INIT_ACME: "true"
+    volumes:
+      - ./volumes/local/data:/home/step
+      - ./ca_password.local.txt:/run/secrets/ca_password:ro
+    ports:
+      - "127.0.0.1:9000:9000"
+    networks: [step-ca-local]
+    healthcheck:
+      test: ["CMD-SHELL", "step ca health 2>/dev/null | grep '^ok' >/dev/null"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
+
+networks:
+  step-ca-local:
+    name: step-ca-local

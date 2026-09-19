@@ -1,0 +1,129 @@
+# =============================================================================
+# step-ca — internal PKI (Traefik does NOT front this)
+# =============================================================================
+# Internal trust, machine identity, X.509 and SSH certificates for this
+# installation's own infrastructure — not a public web-TLS service. See
+# README.md for the split between this and Traefik/ACME public certificates,
+# and why this stack publishes a direct port instead of routing through
+# Traefik.
+#
+# Image: smallstep/step-ca (https://hub.docker.com/r/smallstep/step-ca)
+# Source: https://github.com/smallstep/certificates
+# =============================================================================
+
+services:
+
+  # --------------------------------------------------------
+  # STEP-CA
+  # --------------------------------------------------------
+  step-ca-app:
+    # --- Identity ---
+    image: smallstep/step-ca:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+
+    # --- Security ---
+    # Already non-root (USER step baked into the image).
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # The binary carries an embedded file capability (`setcap
+    # CAP_NET_BIND_SERVICE`, verified from upstream's own Dockerfile) so it
+    # can bind a low port if configured to. With cap_drop: ALL and nothing
+    # re-added, exec of that binary fails with "Operation not permitted" —
+    # verified against a live container, even though the configured port
+    # here (9000) is not itself privileged. This is a property of the
+    # binary's file capabilities interacting with the container's capability
+    # bounding set, not of the port number.
+    cap_add:
+      - NET_BIND_SERVICE
+    # Verified against a live container: every write the CA does (config,
+    # keys, the badger revocation/provisioner database) lands under
+    # /home/step, which is its own volume mount — nothing outside it is
+    # written to, so the root filesystem can be read-only.
+    read_only: true
+    tmpfs:
+      - /tmp
+
+    # --- Resources ---
+    memswap_limit: 256m          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          pids: 100
+        reservations:
+          memory: 64m
+
+    # --- Configuration ---
+    # First start only: these env vars drive `step ca init` inside the
+    # image's own entrypoint. Once /home/step/config/ca.json exists (after
+    # the first successful start), the entrypoint skips init entirely on
+    # every later restart — verified by reading the entrypoint script.
+    #
+    # DOCKER_STEPCA_INIT_PASSWORD_FILE seeds BOTH the CA key password (read
+    # on every restart via the --password-file CLI flag below) and the
+    # initial admin provisioner password (used once, then shredded by the
+    # entrypoint) — that is upstream's own design, not a shortcut taken here.
+    #
+    # To bring your own offline-generated root instead of letting this
+    # container generate one (see README.md#root-ca-vs-intermediate-ca),
+    # additionally set DOCKER_STEPCA_INIT_ROOT_FILE,
+    # DOCKER_STEPCA_INIT_KEY_FILE and DOCKER_STEPCA_INIT_KEY_PASSWORD_FILE —
+    # left commented below since they are only needed for that one init call.
+    environment:
+      DOCKER_STEPCA_INIT_NAME: ${STEPCA_NAME}
+      DOCKER_STEPCA_INIT_DNS_NAMES: ${STEPCA_DNS_NAMES}
+      DOCKER_STEPCA_INIT_ADDRESS: ":9000"
+      DOCKER_STEPCA_INIT_PASSWORD_FILE: /run/secrets/ca_password
+      DOCKER_STEPCA_INIT_ACME: ${STEPCA_ENABLE_ACME}
+      DOCKER_STEPCA_INIT_SSH: ${STEPCA_ENABLE_SSH}
+      TZ: ${TZ}
+    secrets:
+      - ca_password
+      # Uncomment for the offline-root init path — see README.md:
+      # - ca_root_cert
+      # - ca_root_key
+      # - ca_root_key_password
+
+    # --- Storage ---
+    # Everything the CA is lives here: config, the private key(s), the
+    # revocation/provisioner database. There is no separate database
+    # service — step-ca's own embedded store lives inside this volume.
+    volumes:
+      - ./volumes/data:/home/step
+
+    # --- Networking ---
+    # Deliberately NOT on proxy-public and no Traefik labels. ACME clients
+    # and `step ca bootstrap` both need to reach step-ca's own certificate
+    # directly — a TLS-terminating reverse proxy would substitute Traefik's
+    # certificate for step-ca's, which breaks the fingerprint-pinned trust
+    # model this CA exists to provide. See README.md#traefik-networking.
+    ports:
+      - "${STEPCA_PORT}:9000"
+
+    # --- Health & Observability ---
+    # The image's own real health-check subcommand.
+    healthcheck:
+      test: ["CMD-SHELL", "step ca health 2>/dev/null | grep '^ok' >/dev/null"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  ca_password:
+    file: ./.secrets/ca_password.txt
+  # Offline-root init path only — see README.md. Files do not need to exist
+  # unless you use this path; docker compose only reads a secrets: entry
+  # when the service actually references it above.
+  ca_root_cert:
+    file: ./.secrets/root_ca.crt
+  ca_root_key:
+    file: ./.secrets/root_ca_key
+  ca_root_key_password:
+    file: ./.secrets/root_ca_key_password.txt

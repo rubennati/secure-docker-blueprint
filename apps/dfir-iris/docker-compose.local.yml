@@ -1,0 +1,118 @@
+# DFIR-IRIS — local
+#
+#   cp .env.local.example .env.local
+#   mkdir -p volumes/local/{postgres,rabbitmq,downloads,templates,server_data}
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   http://localhost:8080
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  rabbitmq:
+    image: rabbitmq:${RABBITMQ_TAG}
+    container_name: dfir-iris-local-rabbitmq
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+    volumes:
+      - ./volumes/local/rabbitmq:/var/lib/rabbitmq
+    networks: [dfir-iris-local]
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  db:
+    image: ghcr.io/dfir-iris/iriswebapp_db:${APP_TAG}
+    container_name: dfir-iris-local-db
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_ADMIN_USER: ${DB_ADMIN_USER}
+      POSTGRES_ADMIN_PASSWORD: ${DB_ADMIN_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - ./volumes/local/postgres:/var/lib/postgresql/data
+    networks: [dfir-iris-local]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  app:
+    image: ghcr.io/dfir-iris/iriswebapp_app:${APP_TAG}
+    container_name: dfir-iris-local-app
+    restart: unless-stopped
+    depends_on:
+      db: {condition: service_healthy}
+      rabbitmq: {condition: service_healthy}
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    command: ["./iris-entrypoint.sh", "iriswebapp"]
+    environment:
+      DOCKERIZED: "1"
+      POSTGRES_SERVER: db
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_ADMIN_USER: ${DB_ADMIN_USER}
+      POSTGRES_ADMIN_PASSWORD: ${DB_ADMIN_PASSWORD}
+      CELERY_BROKER: amqp://rabbitmq
+      IRIS_SECRET_KEY: ${IRIS_SECRET_KEY}
+      IRIS_SECURITY_PASSWORD_SALT: ${IRIS_SECURITY_PASSWORD_SALT}
+      IRIS_AUTHENTICATION_TYPE: local
+    volumes:
+      - ./volumes/local/downloads:/home/iris/downloads
+      - ./volumes/local/templates:/home/iris/user_templates
+      - ./volumes/local/server_data:/home/iris/server_data
+    ports:
+      - "127.0.0.1:8080:8000"
+    networks: [dfir-iris-local]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsSkL http://127.0.0.1:8000/ | grep -qi iris || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  worker:
+    image: ghcr.io/dfir-iris/iriswebapp_app:${APP_TAG}
+    container_name: dfir-iris-local-worker
+    restart: unless-stopped
+    depends_on:
+      app: {condition: service_healthy}
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    command: ["./wait-for-iriswebapp.sh", "app:8000", "./iris-entrypoint.sh", "iris-worker"]
+    environment:
+      DOCKERIZED: "1"
+      POSTGRES_SERVER: db
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_ADMIN_USER: ${DB_ADMIN_USER}
+      POSTGRES_ADMIN_PASSWORD: ${DB_ADMIN_PASSWORD}
+      CELERY_BROKER: amqp://rabbitmq
+      IRIS_SECRET_KEY: ${IRIS_SECRET_KEY}
+      IRIS_SECURITY_PASSWORD_SALT: ${IRIS_SECURITY_PASSWORD_SALT}
+      IRIS_WORKER: "1"
+    volumes:
+      - ./volumes/local/downloads:/home/iris/downloads
+      - ./volumes/local/templates:/home/iris/user_templates
+      - ./volumes/local/server_data:/home/iris/server_data
+    networks: [dfir-iris-local]
+
+networks:
+  dfir-iris-local:
+    name: dfir-iris-local

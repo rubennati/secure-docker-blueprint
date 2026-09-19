@@ -1,0 +1,49 @@
+# Warpgate — local
+#
+#   cp .env.local.example .env.local
+#   mkdir -p volumes/local/data
+#   sudo chown -R 1000:1000 volumes/local/data
+#   docker compose -f docker-compose.local.yml --env-file .env.local run --rm \
+#     -e WARPGATE_ADMIN_PASSWORD=changeme \
+#     warpgate-local unattended-setup --data-path /data --http-port 8888 \
+#     --ssh-port 2222 --external-host localhost --host-key-verification auto-accept
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   https://localhost:8888 — admin / changeme
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+  warpgate-local:
+    image: ghcr.io/warp-tech/warpgate:${APP_TAG}
+    container_name: warpgate-local-app
+    restart: unless-stopped
+
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+
+    environment:
+      TZ: ${TZ}
+
+    volumes:
+      - ./volumes/local/data:/data
+
+    networks:
+      - warpgate-local
+
+    ports:
+      - "127.0.0.1:8888:8888"
+      - "127.0.0.1:2222:2222"
+
+    healthcheck:
+      test: ["CMD", "warpgate", "healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+networks:
+  warpgate-local:

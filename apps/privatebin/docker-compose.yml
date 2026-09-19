@@ -1,0 +1,96 @@
+# =============================================================================
+# PrivateBin — production stack (Traefik, single container)
+# =============================================================================
+# General-purpose zero-knowledge encrypted paste: text, passwords, tokens,
+# recovery codes, config fragments. Sender creates it, gets a URL, sends the
+# URL to whoever needs it — the reverse of a request-a-secret flow. See
+# README.md for how this differs from Yopass/Hemmelig and from a credential
+# inbox like heylogin.
+#
+# Image: privatebin/nginx-fpm-alpine (https://hub.docker.com/r/privatebin/nginx-fpm-alpine)
+# Source: https://github.com/PrivateBin/PrivateBin
+# =============================================================================
+
+services:
+
+  # --------------------------------------------------------
+  # PRIVATEBIN (nginx + php-fpm, single container, filesystem backend)
+  # --------------------------------------------------------
+  privatebin-app:
+    # --- Identity ---
+    image: privatebin/nginx-fpm-alpine:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+
+    # --- Security ---
+    # The image already runs as a fixed non-root UID/GID (65534:82, "nobody")
+    # with no root-start entrypoint — no cap_add needed at all. Verified
+    # against a live container.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    # `exec` is required, not the Docker default: the image is s6-overlay
+    # based, and its entrypoint copies executable service-supervision scripts
+    # into /run at every start (`cp -r /etc/s6/services /run`). A tmpfs
+    # mounted without exec permission lets the copy succeed but blocks
+    # running the copied scripts — s6-supervise then fails with "unable to
+    # spawn ./run: Permission denied" and nginx/php-fpm never start. Verified
+    # against a live container, 2026-09-19 — not obvious from the image docs.
+    tmpfs:
+      - /tmp:exec
+      - /run:exec,mode=1777
+
+    # --- Resources ---
+    memswap_limit: 128m          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+          pids: 50
+        reservations:
+          memory: 32m
+
+    # --- Configuration ---
+    # No secrets: PrivateBin has no admin account and no server-side
+    # encryption key of its own — every paste is encrypted client-side, and
+    # the filesystem backend needs no credential.
+    environment:
+      TZ: ${TZ}
+
+    # --- Storage ---
+    # Must be owned by UID 65534 / GID 82 on the host — see README.md#setup.
+    volumes:
+      - ./volumes/data:/srv/data
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+
+    # --- Traefik ---
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8080"
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "--spider", "http://127.0.0.1:8080/"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true

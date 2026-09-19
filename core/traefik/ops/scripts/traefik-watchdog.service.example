@@ -1,0 +1,55 @@
+# =============================================
+# traefik-watchdog – systemd service
+# =============================================
+# The unit traefik-watchdog.timer activates. A timer alone does nothing
+# without this file.
+#
+# Install to /etc/systemd/system/traefik-watchdog.service, then:
+#   sudo systemctl daemon-reload
+#   sudo systemd-analyze verify /etc/systemd/system/traefik-watchdog.service
+#   sudo systemctl start traefik-watchdog.service    # prove it once
+#   journalctl -u traefik-watchdog.service -n 20
+#
+# Hardening follows the same pattern as backup/borgmatic.service.example.
+# RestrictAddressFamilies keeps AF_UNIX (the Docker socket, reached via the
+# docker CLI) and AF_INET/AF_INET6 (the Healthchecks ping over HTTPS). This
+# has not been run on a live host — treat the hardening block as a starting
+# point, not a proof; relax a directive if it turns out to block a step the
+# script needs.
+# =============================================
+
+[Unit]
+Description=Traefik watchdog — one bounded restart attempt on confirmed unhealthy status
+Wants=network-online.target
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+RuntimeDirectory=traefik-watchdog
+StateDirectory=traefik-watchdog
+
+# --- Hardening ---
+LockPersonality=true
+MemoryDenyWriteExecute=yes
+NoNewPrivileges=yes
+PrivateDevices=yes
+PrivateTmp=yes
+ProtectClock=yes
+ProtectControlGroups=yes
+ProtectHostname=yes
+ProtectKernelLogs=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+ProtectSystem=full
+
+Restart=no
+LogRateLimitIntervalSec=0
+
+ExecStart=/usr/local/bin/traefik-watchdog.sh

@@ -69,8 +69,12 @@ each its own pull request. Batch order:
    Tika, Gotenberg and ClamAV stay out of scope for this batch (per correction
    2026-09-18, superseding the earlier plan that included Tika/Gotenberg here).
    `docs/architecture.md` and `ROADMAP.md` updated in the same commit.
-3. `apps/greenmail`, `apps/windmill` — not started.
-4. AI foundation — **done**, this batch: `apps/ollama`, `apps/vllm`,
+3. `apps/greenmail`, `apps/windmill` — **done**, this batch. Findings that
+   changed the stack shape are in each `UPSTREAM.md`: Windmill needs an egress
+   network for its workers, ships a published default administrator that
+   `ops/bootstrap-admin.sh` replaces, and could not run NSJAIL job sandboxing
+   under this repository's capability rules.
+4. AI foundation — **done**, PR #109: `apps/ollama`, `apps/vllm`,
    `apps/qdrant`. vLLM's CUDA image was not run (no GPU, 8.7 GB); it was
    validated on the CPU build and says so. `docs/architecture.md` and
    `ROADMAP.md` updated in the same commit.

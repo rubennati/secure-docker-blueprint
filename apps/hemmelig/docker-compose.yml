@@ -1,0 +1,127 @@
+# =============================================================================
+# Hemmelig — production stack (Traefik, single container + SQLite)
+# =============================================================================
+# Client-side encrypted secret sharing with a built-in secret-request
+# workflow. Encryption happens in the sender's browser; the decryption key
+# lives in the URL fragment, never sent to the server. See README.md for the
+# secret-request flow's actual mechanics — it needs a manual step this
+# repository's other secret-sharing stacks don't.
+#
+# Image: hemmeligapp/hemmelig (https://hub.docker.com/r/hemmeligapp/hemmelig)
+# Source: https://github.com/HemmeligOrg/Hemmelig.app
+#
+# ⚠ License: the "O'Saasy License Agreement" (see UPSTREAM.md) — not an
+# OSI-approved open-source license. Self-hosting for your own use is
+# unrestricted; re-offering this as a hosted service to third parties is not.
+# =============================================================================
+
+services:
+
+  # --------------------------------------------------------
+  # HEMMELIG (app + SQLite, single container)
+  # --------------------------------------------------------
+  hemmelig-app:
+    # --- Identity ---
+    image: hemmeligapp/hemmelig:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # Re-added deliberately: the image's own entrypoint starts as root, fixes
+    # ownership on /app/database and /app/uploads, then drops to the "app"
+    # user via gosu before running Prisma migrations. Without these, gosu
+    # fails with "operation not permitted" and the container never starts.
+    # Verified against a live container, 2026-09-19 — same failure mode this
+    # repository already documents for Postgres/Redis-style images.
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+    # No read_only: Prisma downloads a platform-specific schema-engine binary
+    # into node_modules on every container start (it is not baked into the
+    # image) and copies it there from its own cache directory. A read-only
+    # root filesystem breaks this — verified against a live container,
+    # 2026-09-19: the migration step fails with "Could not find schema-engine
+    # binary" even with /tmp and a cache directory as tmpfs, because the copy
+    # target itself (inside node_modules) is read-only. This is the same
+    # documented "skip when the app writes to the root filesystem" case
+    # security-baseline.md already carries for Ghost and Paperless-ngx — not
+    # a new exception, no check-baseline.py entry needed.
+
+    # --- Resources ---
+    memswap_limit: 512m          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          pids: 200
+        reservations:
+          memory: 128m
+
+    # --- Configuration ---
+    # No _FILE support (verified against a live container and the upstream
+    # docker-compose.yml) — config/entrypoint.sh injects the two secrets from
+    # Docker Secrets before handing off to the image's own entrypoint.
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
+    environment:
+      DATABASE_URL: file:/app/database/hemmelig.db
+      BETTER_AUTH_URL: https://${APP_TRAEFIK_HOST}
+      HEMMELIG_BASE_URL: https://${APP_TRAEFIK_HOST}
+      NODE_ENV: production
+      TZ: ${TZ}
+    secrets:
+      - better_auth_secret
+      - analytics_hmac_secret
+
+    # --- Storage ---
+    volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
+      - ./volumes/database:/app/database
+      - ./volumes/uploads:/app/uploads
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+
+    # --- Traefik ---
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=3000"
+
+    # --- Health & Observability ---
+    # The image's own documented endpoint — verified against a live container.
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/api/health/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  better_auth_secret:
+    file: ./.secrets/better_auth_secret.txt
+  analytics_hmac_secret:
+    file: ./.secrets/analytics_hmac_secret.txt

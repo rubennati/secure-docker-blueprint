@@ -1,0 +1,38 @@
+# PrivateBin — local
+#
+#   cp .env.local.example .env.local
+#   mkdir -p volumes/local/data
+#   sudo chown 65534:82 volumes/local/data
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   http://localhost:8080
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  app:
+    image: privatebin/nginx-fpm-alpine:${APP_TAG}
+    container_name: privatebin-local-app
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs:
+      - /tmp:exec
+      - /run:exec,mode=1777
+    environment:
+      TZ: ${TZ}
+    volumes:
+      - ./volumes/local/data:/srv/data
+    ports:
+      - "127.0.0.1:8080:8080"
+    networks: [privatebin-local]
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "--spider", "http://127.0.0.1:8080/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+networks:
+  privatebin-local:
+    name: privatebin-local
