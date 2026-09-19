@@ -2,10 +2,10 @@
 
 > If this file conflicts with git (branch, commits, tags), trust git.
 
-**Last updated:** 2026-09-19
+**Last updated:** 2026-09-20
 
-- **Phase:** pre-1.0. Latest tag `v0.9.0` (2026-09-17); `dev` carries the Priority 1
-  capability work below, unreleased. Work happens on a
+- **Phase:** pre-1.0. Latest tag `v0.9.1` (2026-09-19); `dev` and `main` are level. Priority 1 is
+  released. Open work is listed in [`tasks.md`](tasks.md#open-after-v091). Work happens on a
   short-lived branch and reaches `dev` through a pull request; `dev` reaches
   `main` the same way. Both branches reject a direct push.
 - **Current milestone:** v0.10.0 — Measured resource limits. The path to v1.0.0 and

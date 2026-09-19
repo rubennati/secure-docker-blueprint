@@ -3,6 +3,88 @@
 Current work items. Larger direction lives in [`../ROADMAP.md`](../ROADMAP.md);
 this file is the short list.
 
+## Open after v0.9.1
+
+State at the v0.9.1 tag (2026-09-19): `dev` and `main` level, no open pull requests,
+no open Dependabot alerts, CI green. Everything below is what is not done.
+
+### 1. Image findings as facts — closes audit finding C1
+
+Decision and reasoning: [`decisions.md`](decisions.md#2026-09-20--image-findings-are-recorded-as-facts-and-the-shipped-access-default-follows-them).
+Input data: the last full Trivy scan on `main` (2026-09-17, `trivy-image-scan-results`
+artifact; a new run started after the v0.9.1 merge and includes the 26 new images).
+Snapshot of the 2026-09-17 scan: 99 images, 59 with at least one CRITICAL finding, 1003
+CRITICAL in total, every one with a published fix, plus 11 466 HIGH; n8n could not be
+scanned (registry rate limit). Largest: `opensign/opensign` 196, `opensign/opensignserver`
+206, `louislam/uptime-kuma` 127, `cal.diy` 45, `lycheeorg/lychee` 25, `sdoc-server` 24,
+Paperless-ngx 23, OpenProject 22, Seafile 20.
+
+- [ ] Generate a per-image facts file from the scan: CRITICAL and HIGH counts, how many
+      have a fix, image age, scan date. Checked in CI for staleness like the other
+      generated files.
+- [ ] Add an `Exposure` field to `UPSTREAM.md` with a reason, first for the five images
+      above; the rest get the rule-derived value.
+- [ ] Checker: a stack whose findings mark it private-only or lab-only cannot ship
+      `APP_TRAEFIK_ACCESS=acc-public`.
+- [ ] Trivy gate: block only on CRITICAL findings absent from the recorded facts.
+- [ ] Catalogue page: show the facts (counts, fix available, age, licence limits) in
+      neutral wording; no judgement of the project.
+- [ ] For OpenSign and Uptime Kuma: check whether upstream has published a newer image;
+      if so bump the pin (normal upgrade), if not record the facts.
+
+### 2. Host verification of the scaffolded stacks (audit S1)
+
+[`../docs/host-session-priority-1.md`](../docs/host-session-priority-1.md) is the ordered
+run: Traefik with TLS, a refused client, restart, restore, and each stack's own open
+items. Needs a host; nothing in the 26 new stacks has one. Until then they stay
+`scaffolded`.
+
+### 3. Personal data on the public site (audit W7 / D3)
+
+A decision, with a possible v1.0 impact — see [`decisions.md`](decisions.md) and
+`../ROADMAP.md`. Not decided.
+
+### 4. Operator site
+
+- [ ] The catalogue is live and lists all 89 stacks; only stacks with a guide appear in
+      the Applications sidebar. Guides for the newer stacks (AI, PAM, secret sharing,
+      security tooling) do not exist; the audit does not require them.
+- [ ] The start page has no link to the catalogue; it is reachable from the sidebar of
+      the other pages and from the search.
+- [ ] The FAQ names "around thirty" application guides (correct) without pointing to
+      the catalogue.
+- [ ] The catalogue's "Files" links point at `tree/main`; correct now that v0.9.1 is on
+      `main`, but each new stack needs a repository check once.
+- [ ] The catalogue page was verified through its built HTML and a public fetch, not in
+      a browser.
+
+### 5. Cal.diY hardening
+
+Phased plan in [`../apps/caldiy/docs/hardening-plan.md`](../apps/caldiy/docs/hardening-plan.md).
+The stack builds from a reviewed fork; the hardening phases are not finished.
+
+### 6. Held: Priority 2 and other candidates
+
+No application is added while the v1.0 items are open — S1 (verification), C1
+(above) and D3. Candidates are in `../ROADMAP.md` under "On hold": the per-category
+planned lists, Plane / Leantime / AppFlowy, Suricata, Coraza. The AI candidates that were
+held are shipped.
+
+### 7. Milestone v0.10.0 — measured resource limits
+
+Every `✅` stack's limits from a measurement on a real install
+([`../docs/resource-measurement.md`](../docs/resource-measurement.md)). Needs a host.
+
+### 8. Small items
+
+- Vikunja's `.env.example` carries `smtp-relay.brevo.com` as the mailer host with the
+  mailer disabled — a vendor value where the convention is `example.com` or empty.
+- The five AI stacks and Dify/Langfuse have no restore procedure performed; the READMEs
+  document one.
+- The Trivy scan does not cover images built locally (Cal.diY, the vikunja layer).
+
+---
+
 ## Blocked on a host
 
 v0.8.0 closed on 2026-09-08 — the record is
