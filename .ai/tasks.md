@@ -10,6 +10,10 @@ v0.8.0 closed on 2026-09-08 — the record is
 session left open is in
 [`../docs/host-session-v0.7.0.md`](../docs/host-session-v0.7.0.md)
 
+- [ ] Verify the Priority 1 stacks behind Traefik with TLS and restore each —
+      [`../docs/host-session-priority-1.md`](../docs/host-session-priority-1.md).
+      Until then they stay `scaffolded`.
+
 - [x] Borgmatic: install, initialise repository, first backup, export the key off-host
 - [x] **Restore rehearsal — closed v0.7.0** and produced the first `ops-proven` stack
 - [ ] Exercise append-only over a remote repository — the one Borgmatic mechanism

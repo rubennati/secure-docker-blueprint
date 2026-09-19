@@ -2,7 +2,9 @@
 
 # Secure Docker Blueprint
 
-**Hardened Docker Compose stacks for self-hosted services — one security baseline, checked in CI.**
+**Security-hardened Docker Compose patterns for self-hosted software — deploy, secure, operate, recover — for existing open-source projects and applications you build yourself.**
+
+Hardened configurations for 80+ services — standardized security baseline, Docker Secrets, Traefik routing, CrowdSec integration, and network isolation out of the box. A reference pattern for software you build yourself does not exist yet — see [docs/architecture.md](docs/architecture.md#physical-layout-conceptual-domains-and-navigation-are-three-different-layers).
 
 [![CI](https://github.com/rubennati/secure-docker-blueprint/actions/workflows/ci.yml/badge.svg)](https://github.com/rubennati/secure-docker-blueprint/actions/workflows/ci.yml)
 [![Trivy](https://github.com/rubennati/secure-docker-blueprint/actions/workflows/trivy.yml/badge.svg)](https://github.com/rubennati/secure-docker-blueprint/actions/workflows/trivy.yml)
@@ -11,7 +13,7 @@
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-v0.9.0-blue)](CHANGELOG.md)
 
-**[Stacks](#stacks) · [Getting started](#getting-started) · [Repository layout](#repository-layout) · [Architecture](docs/architecture.md) · [Standards](docs/standards/) · [Verified status](LIFECYCLE.md) · [SecDockBlue](https://secdockblue.rubennati.at)**
+**[Architecture](docs/architecture.md) · [Standards](docs/standards/) · [Verified status](LIFECYCLE.md) · [SecDockBlue](https://secdockblue.rubennati.at)**
 
 </div>
 
@@ -19,6 +21,8 @@ Run self-hosted software without getting the security details wrong each time. E
 stack shares one hardened baseline: credentials as Docker Secrets instead of environment
 variables, datastores isolated on internal networks with no published port, pinned image
 versions, memory and PID limits, and Traefik in front handling TLS and access control.
+
+Quick Navigation: [Getting started](#getting-started) · [Repository layout](#repository-layout)
 
 ## Stacks
 
