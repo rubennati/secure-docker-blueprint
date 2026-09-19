@@ -1,0 +1,98 @@
+# =============================================================================
+# zot — production stack (Traefik, single container, no database)
+# =============================================================================
+# OCI-native container registry for this installation's own build output —
+# where a self-built image (business/vikunja, apps/caldiy-style) or a
+# scanned/signed artifact goes before it reaches a Docker host. Not a
+# replacement for Docker Hub/GHCR as an upstream source; see README.md.
+#
+# Image: ghcr.io/project-zot/zot (https://github.com/project-zot/zot)
+# =============================================================================
+
+services:
+
+  # --------------------------------------------------------
+  # ZOT (registry API + UI, single binary, no database)
+  # --------------------------------------------------------
+  zot-app:
+    # --- Identity ---
+    image: ghcr.io/project-zot/zot:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+
+    # --- Security ---
+    # The image runs as root by default and has no privilege-drop entrypoint
+    # of its own (distroless, single static binary) — set a fixed non-root
+    # UID explicitly rather than relying on an image default that doesn't
+    # exist. Verified against a live container: starts cleanly, no cap_add
+    # needed at all.
+    user: "${USERMAP_UID}:${USERMAP_GID}"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+
+    # --- Resources ---
+    memswap_limit: 512m          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          pids: 100
+        reservations:
+          memory: 128m
+
+    # --- Configuration ---
+    # No _FILE-style secrets: zot reads its htpasswd file at the path given
+    # in config.json, so the Docker Secret mount path *is* the secret
+    # reference — no entrypoint wrapper needed. config.json itself carries
+    # no credentials.
+    secrets:
+      - zot_htpasswd
+
+    # --- Storage ---
+    volumes:
+      - ./config/config.json:/etc/zot/config.json:ro
+      - ./volumes/registry:/var/lib/registry
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+
+    # --- Traefik ---
+    # Registry traffic is plain HTTP/2 (the OCI Distribution API) — it
+    # carries through Traefik's normal HTTP router exactly like a web app;
+    # `docker push`/`docker pull` speak HTTPS to Traefik, not a raw TCP
+    # protocol, so nothing special is needed here.
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=5000"
+
+    # --- Health & Observability ---
+    # healthcheck: none — the image is distroless (single static binary,
+    # no shell, no curl/wget/nc) and ships no health-check subcommand.
+    # Verified against a live container.
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  zot_htpasswd:
+    file: ./.secrets/htpasswd

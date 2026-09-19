@@ -1,0 +1,87 @@
+# Dependency-Track — local
+#
+#   cp .env.local.example .env.local
+#   mkdir -p volumes/local/postgres volumes/local/data
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   http://localhost:8080 — frontend; API at http://localhost:8081
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  db:
+    image: postgres:${DB_TAG}
+    container_name: dependency-track-local-db
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      TZ: ${TZ}
+    volumes:
+      - ./volumes/local/postgres:/var/lib/postgresql/data
+    networks: [dependency-track-local]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  apiserver:
+    image: dependencytrack/apiserver:${APP_TAG}
+    container_name: dependency-track-local-api
+    restart: unless-stopped
+    depends_on:
+      db: {condition: service_healthy}
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs: [/tmp:exec]
+    environment:
+      DT_DATASOURCE_URL: jdbc:postgresql://db:5432/${DB_NAME}
+      DT_DATASOURCE_USERNAME: ${DB_USER}
+      DT_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      DT_SECRET_MANAGEMENT_DATABASE_KEK: ${DT_KEK}
+      DT_CORS_ENABLED: "true"
+      DT_CORS_ALLOWED_ORIGINS: http://localhost:8080
+      TZ: ${TZ}
+    volumes:
+      - ./volumes/local/data:/data
+    ports:
+      - "127.0.0.1:8081:8080"
+    networks: [dependency-track-local]
+    healthcheck:
+      test: ["CMD", "/bin/sh", "-c", "curl -f -s --max-time 3 --noproxy '*' -o /dev/null http://127.0.0.1:9000/health"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  frontend:
+    image: dependencytrack/frontend:${APP_TAG}
+    container_name: dependency-track-local-frontend
+    restart: unless-stopped
+    depends_on:
+      apiserver: {condition: service_healthy}
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    tmpfs: [/tmp, /var/cache/nginx, /var/run]
+    environment:
+      API_BASE_URL: http://localhost:8081
+      TZ: ${TZ}
+    ports:
+      - "127.0.0.1:8080:8080"
+    networks: [dependency-track-local]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO/dev/null http://127.0.0.1:8080/ || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
+
+networks:
+  dependency-track-local:
+    name: dependency-track-local

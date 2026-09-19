@@ -42,6 +42,7 @@ Pick one. Both are maintained; they solve the same problem differently, and
 |---|---|
 | [dnsmasq](dnsmasq/) | DNS forwarder with wildcard zones for Tailscale / split-DNS setups |
 | [acme-certs](acme-certs/) | Certificate tool (acme.sh) for the devices that never pass through Traefik — NAS, routers, mail servers, firewalls |
+| [step-ca](step-ca/) | Internal PKI — X.509, ACME and optional SSH certificates for machines and services inside this installation. Not for public web TLS; see its README for the split from Traefik/ACME |
 
 ### Shared secrets
 
@@ -62,6 +63,12 @@ hosts. Pick one pair, or neither.
 | [Portainer Agent](portainer-agent/) | Remote Docker agent for Portainer. Needs an inbound port on the managed host — [Dockhand + Hawser](hawser/) avoids that |
 
 Planned: none.
+
+### Shared container registry
+
+| Service | Description |
+|---|---|
+| [zot](zot/) | OCI-native registry for this installation's own build output — self-built images, not a mirror of Docker Hub/GHCR. No database, one binary |
 
 ### Privileged access / bastion alternatives
 
