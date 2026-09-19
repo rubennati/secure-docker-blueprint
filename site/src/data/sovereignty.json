@@ -87,6 +87,14 @@
     "license_class": "osi",
     "origin": "UK · linuxserver.io community · non-EU"
   },
+  "apps/hemmelig": {
+    "bloc": "non-EU",
+    "country": "Norway",
+    "entity": "Bjarne Øverli (individual maintainer)",
+    "license": "O'Saasy License Agreement — a 2025 MIT-derived license with",
+    "license_class": "source-available",
+    "origin": "Norway · Bjarne Øverli (individual maintainer) · non-EU (EEA, not EU)"
+  },
   "apps/homarr": {
     "bloc": "EU",
     "country": "Community",
@@ -215,6 +223,14 @@
     "license_class": "osi",
     "origin": "Denmark · community · EU"
   },
+  "apps/privatebin": {
+    "bloc": "none",
+    "country": "Community project, no single company, maintained collectively on GitHub",
+    "entity": "no single jurisdiction",
+    "license": "zlib (core application, by Sébastien Sauvage / PrivateBin",
+    "license_class": "osi",
+    "origin": "Community project, no single company, maintained collectively on GitHub · no single jurisdiction"
+  },
   "apps/seafile": {
     "bloc": "non-EU",
     "country": "China",
@@ -230,6 +246,14 @@
     "license": "Commercial",
     "license_class": "proprietary",
     "origin": "China · Seafile Ltd · non-EU"
+  },
+  "apps/threat-dragon": {
+    "bloc": "non-EU",
+    "country": "United States",
+    "entity": "OWASP Foundation (nonprofit)",
+    "license": "Apache-2.0",
+    "license_class": "osi",
+    "origin": "United States · OWASP Foundation (nonprofit) · non-EU"
   },
   "apps/tymeslot": {
     "bloc": "EU",
@@ -278,6 +302,14 @@
     "license": "GPL-2.0",
     "license_class": "osi",
     "origin": "US · Automattic / WordPress Foundation · non-EU"
+  },
+  "apps/yopass": {
+    "bloc": "EU",
+    "country": "Sweden",
+    "entity": "Jonas Haals (individual maintainer, corporate-adjacent — Spotify, Doddle and Gumtree Australia are named as users, not owners)",
+    "license": "Apache-2.0",
+    "license_class": "osi",
+    "origin": "Sweden · Jonas Haals (individual maintainer, corporate-adjacent — Spotify, Doddle and Gumtree Australia are named as users, not owners) · EU"
   },
   "backup/borgmatic": {
     "bloc": "none",

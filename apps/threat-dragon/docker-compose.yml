@@ -1,0 +1,117 @@
+# =============================================================================
+# OWASP Threat Dragon — production stack (Traefik, single stateless container)
+# =============================================================================
+# Threat-modeling web app: draw data-flow diagrams and trust boundaries,
+# record threats and mitigations. Threat models are stored either in the
+# browser (no server-side persistence at all) or in a connected GitHub/
+# GitLab/Bitbucket repository via OAuth — never in this container. See
+# README.md for which mode this stack ships with by default.
+#
+# Image: owasp/threat-dragon (https://hub.docker.com/r/owasp/threat-dragon)
+# Source: https://github.com/OWASP/threat-dragon
+# =============================================================================
+
+services:
+
+  # --------------------------------------------------------
+  # THREAT DRAGON (stateless — no database, no volume)
+  # --------------------------------------------------------
+  threat-dragon-app:
+    # --- Identity ---
+    image: owasp/threat-dragon:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+
+    # --- Security ---
+    # The image already runs as a fixed non-root user (Node's own "node"
+    # user) with no root-start entrypoint, and the app itself is stateless —
+    # no cap_add needed at all. Verified against a live container.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+
+    # --- Resources ---
+    memswap_limit: 256m          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          pids: 100
+        reservations:
+          memory: 64m
+
+    # --- Configuration ---
+    # Real, generic _FILE support (verified against upstream's env-loading
+    # code, not assumed) — every variable this app reads accepts a
+    # <NAME>_FILE counterpart pointing at a Docker Secret.
+    #
+    # Git-provider OAuth (GitHub/GitLab/Bitbucket/Google) is deliberately
+    # left unset: without it, Threat Dragon still runs and stores models in
+    # the browser's own local storage — no server-side account or
+    # credential is required for that mode. Uncomment and add the matching
+    # secrets in .env.example if you want repository-backed model storage.
+    environment:
+      NODE_ENV: production
+      SERVER_API_PROTOCOL: https
+      LOCALES_ALLOWED: "[]"
+      LOCALE_DEFAULT: en
+      TZ: ${TZ}
+      ENCRYPTION_KEYS_FILE: /run/secrets/td_encryption_keys
+      ENCRYPTION_JWT_SIGNING_KEY_FILE: /run/secrets/td_jwt_signing_key
+      ENCRYPTION_JWT_REFRESH_SIGNING_KEY_FILE: /run/secrets/td_jwt_refresh_signing_key
+    secrets:
+      - td_encryption_keys
+      - td_jwt_signing_key
+      - td_jwt_refresh_signing_key
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+
+    # --- Traefik ---
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=3000"
+
+    # --- Health & Observability ---
+    # NOT the image's own baked-in HEALTHCHECK — that one is broken in
+    # v2.6.2 (wrong node binary path, and the health-check script itself has
+    # a module-resolution bug). Verified against a live container; see
+    # UPSTREAM.md. This is a plain HTTP probe against the app's own port,
+    # using the same node-based pattern this repository already uses for
+    # core/infisical.
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:3000/',r=>process.exit([200,302].includes(r.statusCode)?0:1)).on('error',()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  td_encryption_keys:
+    file: ./.secrets/encryption_keys.txt
+  td_jwt_signing_key:
+    file: ./.secrets/jwt_signing_key.txt
+  td_jwt_refresh_signing_key:
+    file: ./.secrets/jwt_refresh_signing_key.txt

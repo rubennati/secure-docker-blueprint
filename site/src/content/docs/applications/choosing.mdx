@@ -137,6 +137,28 @@ wikis. The Community Edition has no OIDC or SSO.
 **Vikunja** is task management: kanban, lists, Gantt and table views, closer to
 Trello than to a planning suite.
 
+## Secret sharing
+
+Three different jobs, not three competing password managers. None of them
+store a login long-term — that is [Vaultwarden](/applications/vaultwarden/).
+
+| | Yopass | Hemmelig | PrivateBin |
+|---|---|---|---|
+| Purpose | Ephemeral secret sharing | Ephemeral sharing + secret requests | Generic encrypted paste |
+| Licence | Apache-2.0 | O'Saasy License (self-hosting unrestricted, not OSI-approved) | zlib |
+| Recipient can request a secret | No — a paid Yopass Business feature | Yes, but the sender must send the decryption key back manually | No |
+
+**Yopass** for a plain link that self-destructs — the simplest of the three,
+and the one with the fewest moving parts.
+
+**Hemmelig** if the request-a-secret workflow is worth its license and the
+manual key hand-off. Self-hosting it is unaffected by the license; reselling
+it as a hosted service is what the license rules out.
+
+**PrivateBin** for anything that is not specifically a credential — a
+config fragment, a recovery code, a note — or when a plain permissive
+licence matters more than the request workflow.
+
 ## Single sign-on
 
 | | Authentik | Keycloak |
