@@ -1,0 +1,117 @@
+# ShellHub — local
+#
+#   cp .env.local.example .env.local
+#   mkdir -p volumes/local/postgres
+#   ssh-keygen -t rsa -b 4096 -m PEM -f volumes/local/ssh_private_key -N ""
+#   openssl genrsa -out volumes/local/api_private_key 4096
+#   openssl rsa -in volumes/local/api_private_key -pubout -out volumes/local/api_public_key
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   http://localhost:8080 — create the first account in the UI
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+  db-local:
+    image: postgres:${DB_TAG}
+    container_name: shellhub-local-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: shellhub
+      POSTGRES_USER: shellhub
+      POSTGRES_PASSWORD: local-test-password-not-for-real-use
+    volumes:
+      - ./volumes/local/postgres:/var/lib/postgresql
+    networks:
+      - shellhub-local
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shellhub -d shellhub"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  valkey-local:
+    image: valkey/valkey:${VALKEY_TAG}
+    container_name: shellhub-local-valkey
+    restart: unless-stopped
+    command: ["valkey-server", "--appendonly", "no", "--save", ""]
+    cap_add:
+      - SETUID
+      - SETGID
+    networks:
+      shellhub-local:
+        aliases:
+          - redis
+    healthcheck:
+      test: ["CMD-SHELL", "valkey-cli ping | grep PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  server-local:
+    image: shellhubio/server:${SHELLHUB_VERSION}
+    container_name: shellhub-local-server
+    restart: unless-stopped
+    depends_on:
+      db-local:
+        condition: service_healthy
+      valkey-local:
+        condition: service_healthy
+    environment:
+      DATABASE: postgres
+      PRIVATE_KEY: /run/secrets/local_api_private_key
+      PUBLIC_KEY: /run/secrets/local_api_public_key
+      SSH_HOST_KEY_FILE: /run/secrets/local_ssh_private_key
+      SHELLHUB_EDITION: community
+      SHELLHUB_AUTO_SSL: "false"
+      POSTGRES_HOST: db-local
+      POSTGRES_PORT: 5432
+      POSTGRES_USERNAME: shellhub
+      POSTGRES_PASSWORD: local-test-password-not-for-real-use
+      POSTGRES_DATABASE: shellhub
+      SHELLHUB_SSH_PORT: 2222
+      SHELLHUB_DOMAIN: localhost
+    secrets:
+      - local_api_private_key
+      - local_api_public_key
+      - local_ssh_private_key
+    networks:
+      - shellhub-local
+    ports:
+      - "127.0.0.1:2222:2222"
+
+  ui-local:
+    image: shellhubio/ui:${SHELLHUB_VERSION}
+    container_name: shellhub-local-ui
+    restart: unless-stopped
+    environment:
+      SHELLHUB_EDITION: community
+    networks:
+      - shellhub-local
+
+  gateway-local:
+    image: shellhubio/gateway:${SHELLHUB_VERSION}
+    container_name: shellhub-local-gateway
+    restart: unless-stopped
+    depends_on:
+      - server-local
+      - ui-local
+    environment:
+      SHELLHUB_DOMAIN: localhost
+      SHELLHUB_PROXY: "false"
+      SHELLHUB_EDITION: community
+      SHELLHUB_AUTO_SSL: "false"
+      SHELLHUB_DATABASE: postgres
+    networks:
+      - shellhub-local
+    ports:
+      - "127.0.0.1:8080:80"
+
+networks:
+  shellhub-local:
+
+secrets:
+  local_api_private_key:
+    file: ./volumes/local/api_private_key
+  local_api_public_key:
+    file: ./volumes/local/api_public_key
+  local_ssh_private_key:
+    file: ./volumes/local/ssh_private_key

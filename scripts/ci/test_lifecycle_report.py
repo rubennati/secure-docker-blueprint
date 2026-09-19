@@ -129,6 +129,26 @@ class PinMatchesVerified(unittest.TestCase):
         )
 
 
+class PinnedVersionKey(unittest.TestCase):
+    """Which variable names the stack's own version."""
+
+    def _pinned(self, env: str) -> str:
+        with tempfile.TemporaryDirectory() as tmp:
+            stack = Path(tmp) / "core" / "widget"
+            stack.mkdir(parents=True)
+            (stack / "docker-compose.yml").write_text("services: {}\n")
+            (stack / ".env.example").write_text(env)
+            return lr.pinned_version(stack)
+
+    def test_a_vendor_version_variable_outranks_a_later_datastore_tag(self):
+        pinned = self._pinned("WIDGET_VERSION=v1.2.3\nCACHE_TAG=9.1-alpine\n")
+        self.assertEqual(pinned, "`WIDGET_VERSION=v1.2.3`")
+
+    def test_app_tag_still_wins_over_everything(self):
+        pinned = self._pinned("WIDGET_VERSION=v1.2.3\nAPP_TAG=4.5.6\n")
+        self.assertEqual(pinned, "`APP_TAG=4.5.6`")
+
+
 class DriftEndToEnd(unittest.TestCase):
     """last_verified() + pinned_version() + the comparison, against a real
     stack directory — no subprocess/baseline dependency, since both those

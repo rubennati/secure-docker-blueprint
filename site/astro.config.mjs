@@ -55,6 +55,13 @@ export default defineConfig({
 					],
 				},
 				{
+					// One page, generated from the repository: every stack by purpose.
+					// The guides below cover the ones that have one; this is where the
+					// rest are found.
+					label: 'Catalogue',
+					items: [{ label: 'Every stack, by purpose', link: '/catalogue/' }],
+				},
+				{
 					// Traefik and CrowdSec share a server-wide scope and nothing else:
 					// one is a prerequisite for every application, the other is an
 					// optional layer. The overview page draws that line — a section

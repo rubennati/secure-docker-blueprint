@@ -10,6 +10,8 @@
 - **CrowdSec bouncer plugin:** https://github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
 - **License:** MIT
 - **Origin:** France · Traefik Labs · EU
+- **Domain:** Infrastructure
+- **Role:** Reverse proxy: TLS, access policies and security headers in front of every other service
 - **Based on versions:** Traefik `v3.7`, docker-socket-proxy `v0.4.2`
 - **Last verified:** 2026-09-13 (v3.7.13, socket-proxy v0.5.0) — moved from 3.6.10 on a live host with the dual-stack overlay: 13 routed hosts plus one external consumer answered with the same status codes before and after, HTTP/3 answered a `--http3-only` request, the CrowdSec bouncer plugin loaded and polled the LAPI within one second of start, and the socket proxy served the Docker API on the unchanged template. Nothing in the rendered configuration changed for the move.
 - **Support window:** upstream policy since 3.6 is six months of support from a minor's GA date, with the last minor of a major supported for two years after the next major — https://doc.traefik.io/traefik/deprecation/releases/. 3.7 went GA 2026-05-05 and is the current line. **3.6 left security support on 2026-08-16** and 2.11 on 2026-09-07; neither is a pin target. Check this date before the next bump, not the version number alone.
@@ -77,7 +79,7 @@
   polling.
 - Traefik v2 → v3 was a breaking upgrade; **do not** jump majors without reading the migration guide: https://doc.traefik.io/traefik/migration/v2-to-v3/
 - **`tlsResolver` (TLS-ALPN-01) was exercised on a live host on 2026-09-15**, restart and
-  all: `core/whoami`'s router set to it, `docker compose up -d` on `whoami`, then Traefik
+  all: `apps/whoami`'s router set to it, `docker compose up -d` on `whoami`, then Traefik
   force-recreated to load the resolver into the running process. The mechanism is sound —
   Traefik started with no error against the resolver itself, `whoami@docker`'s router
   carried `certificateResolver: tlsResolver` with no complaint, every other route answered

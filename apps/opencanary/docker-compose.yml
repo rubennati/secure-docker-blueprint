@@ -1,0 +1,98 @@
+# =============================================================================
+# OpenCanary — production stack (no Traefik, direct ports, no database)
+# =============================================================================
+# Lightweight deception: fake FTP/HTTP/MySQL/RDP/Telnet services that log
+# every connection attempt. A legitimate user or service should never have a
+# reason to touch any of these ports — a hit here is a strong signal, not
+# noise. See README.md for what this does and does not replace.
+#
+# Image: thinkst/opencanary (https://hub.docker.com/r/thinkst/opencanary)
+# Source: https://github.com/thinkst/opencanary
+# =============================================================================
+
+services:
+
+  # --------------------------------------------------------
+  # OPENCANARY
+  # --------------------------------------------------------
+  opencanary-app:
+    # --- Identity ---
+    image: thinkst/opencanary:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+    entrypoint: ["opencanaryd"]
+    command: ["--dev", "--uid=nobody", "--gid=nogroup"]
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # The process starts as root (no USER in the upstream image), binds the
+    # fake services' ports — several below 1024 — and then drops to
+    # nobody/nogroup itself via --uid/--gid above. Verified against a live
+    # container: NET_BIND_SERVICE alone is not enough; without SETUID/SETGID
+    # the drop itself has nothing to do it with, though the process does not
+    # fail outright the way Postgres/Redis do — it would simply keep running
+    # as root, which defeats the point of dropping privileges at all.
+    cap_add:
+      - NET_BIND_SERVICE
+      - SETUID
+      - SETGID
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /run
+
+    # --- Resources ---
+    memswap_limit: 128m          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+          pids: 100
+        reservations:
+          memory: 32m
+
+    # --- Configuration ---
+    # No secrets: OpenCanary holds no credentials of its own — it only fakes
+    # asking for other services' credentials, and logs the attempt.
+    volumes:
+      - ./config/opencanary.conf:/root/.opencanary.conf:ro
+
+    # --- Networking ---
+    # Deliberately NOT network_mode: host (this repository's one exception
+    # is core/dnsmasq) and NOT behind Traefik. These are raw, native
+    # protocols a legitimate scanner or attacker finds directly, the same
+    # way they would find a real exposed service — wrapping them in an HTTP
+    # router would change what they look like from the outside and defeat
+    # the point. Each fake service gets its own direct published port
+    # instead, matching upstream's own (non-host-networking) intent.
+    networks:
+      - app-internal
+    ports:
+      - "${OPENCANARY_FTP_PORT}:21"
+      - "${OPENCANARY_TELNET_PORT}:23"
+      - "${OPENCANARY_HTTP_PORT}:80"
+      - "${OPENCANARY_MYSQL_PORT}:3306"
+      - "${OPENCANARY_RDP_PORT}:3389"
+
+    # --- Health & Observability ---
+    # healthcheck: none — the image ships no separate health-check command
+    # and no HTTP endpoint of its own to probe; "Canary running!!!" in the
+    # log is the closest signal, and this repository does not invent a
+    # healthcheck against a fake-service port that logging an attempt
+    # against it is itself the point of.
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  # internal: true — nothing here needs outbound internet access by
+  # default. If you enable webhook/Slack/Teams/hpfeeds alerting (see
+  # README.md#alerting), remove internal: true so the container can reach
+  # that endpoint; inbound published ports work either way, since Docker's
+  # port publishing is independent of a network's internal flag.
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true

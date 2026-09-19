@@ -1,0 +1,278 @@
+# =============================================================================
+# Dependency-Track — production stack (Traefik, Postgres, real production DB)
+# =============================================================================
+# Software Composition Analysis / SBOM management — tracks components,
+# vulnerabilities and supply-chain risk across projects over time. Not a
+# container/image scanner (that is Trivy's job) — see README.md for the
+# distinction.
+#
+# v5 architecture: apiserver and frontend are separate images (upstream
+# dropped the v4 "bundled" image); both are separate services here.
+#
+# Images: dependencytrack/apiserver, dependencytrack/frontend
+# Source: https://github.com/DependencyTrack/dependency-track
+# =============================================================================
+
+services:
+
+  # --------------------------------------------------------
+  # POSTGRESQL (the only supported database in v5 — H2/MySQL/SQL Server
+  # were dropped upstream)
+  # --------------------------------------------------------
+  db:
+    # --- Identity ---
+    image: postgres:${DB_TAG}
+    container_name: ${CONTAINER_NAME_DB}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+
+    # --- Resources ---
+    # Upstream's own production guidance names 8 GB / 4 CPU as a starting
+    # point for a dedicated database host — this repository runs Postgres
+    # alongside everything else on one host, so this is a generous ceiling
+    # for a small-to-medium portfolio, not upstream's stated floor. Retune
+    # from real usage.
+    memswap_limit: 2g          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          pids: 200
+        reservations:
+          memory: 512m
+
+    # --- Configuration ---
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/DB_PWD
+      TZ: ${TZ}
+    secrets:
+      - DB_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/postgres:/var/lib/postgresql/data
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME} -h 127.0.0.1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # --------------------------------------------------------
+  # API SERVER (REST API, analysis engine, notification/workflow workers)
+  # --------------------------------------------------------
+  dependency-track-apiserver:
+    # --- Identity ---
+    image: dependencytrack/apiserver:${APP_TAG}
+    container_name: ${CONTAINER_NAME_API}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+
+    # --- Security ---
+    # Already non-root (UID 1000 baked into the image), no privilege-drop
+    # entrypoint — cap_drop: ALL needs nothing re-added. Verified against a
+    # live container.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    # `exec` is required, not the Docker default: the JVM extracts a native
+    # library (zstd-jni) into /tmp at startup and dlopen()s it from there.
+    # A tmpfs without exec permission lets the extraction succeed but fails
+    # to load it — verified against a live container
+    # ("UnsatisfiedLinkError: ... Operation not permitted").
+    tmpfs:
+      - /tmp:exec
+
+    # --- Resources ---
+    # Upstream's own production guidance: "2 GB memory / 4 CPU cores" per
+    # instance as a starting point, "below 1 GB unlikely to sustain any
+    # load". This is a JVM — the heap cap scales with container memory
+    # (default 80%), so raising this later raises the effective heap too.
+    memswap_limit: 2g          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          pids: 400
+        reservations:
+          memory: 1g
+
+    # --- Configuration ---
+    # DT_DATASOURCE_PASSWORD and DT_SECRET_MANAGEMENT_DATABASE_KEK use
+    # Dependency-Track's own native file-secret syntax — ${file::path} —
+    # confirmed by reading upstream's configuration reference directly.
+    # This is the real equivalent of the _FILE pattern for this image;
+    # there is no _FILE-suffixed env var here, the value itself carries the
+    # file reference.
+    environment:
+      DT_DATASOURCE_URL: jdbc:postgresql://db:5432/${DB_NAME}
+      DT_DATASOURCE_USERNAME: ${DB_USER}
+      # $$ escapes Compose's own ${...} interpolation — the container must
+      # receive the literal string "${file::/run/secrets/...}" verbatim,
+      # which Dependency-Track's own config loader then resolves.
+      DT_DATASOURCE_PASSWORD: "$${file::/run/secrets/DB_PWD}"
+      DT_SECRET_MANAGEMENT_DATABASE_KEK: "$${file::/run/secrets/DT_KEK}"
+      # Restrict CORS to the frontend's own origin rather than upstream's
+      # default of "*" — the API server and frontend are separate origins
+      # in this stack (see README.md#traefik--networking).
+      DT_CORS_ENABLED: "true"
+      DT_CORS_ALLOWED_ORIGINS: https://${APP_TRAEFIK_HOST}
+      TZ: ${TZ}
+    secrets:
+      - DB_PWD
+      - DT_KEK
+
+    # --- Storage ---
+    # Local SBOM/artifact file storage — every instance in a multi-instance
+    # deployment would need this shared (NFS or the s3 provider); this
+    # stack runs a single instance, so a plain volume is enough.
+    volumes:
+      - ./volumes/data:/data
+
+    # --- Networking ---
+    # Two ports: 8080 is the public REST API (this is what Traefik fronts
+    # and what the frontend's browser-side JS calls directly — Dependency-
+    # Track's frontend is a static SPA with no server-side API proxy).
+    # 9000 is upstream's own health/metrics port and stays internal only —
+    # it is not meant for end users and carries no access control of its
+    # own.
+    networks:
+      - proxy-public
+      - app-internal
+
+    # --- Traefik ---
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.rule=Host(`${APP_TRAEFIK_HOST_API}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}-api.loadbalancer.server.port=8080"
+
+    # --- Health & Observability ---
+    # The image's own baked-in healthcheck, confirmed against a live
+    # container — real readiness/liveness reporting (database migrations,
+    # the workflow engine, the task scheduler), not a shallow port check.
+    healthcheck:
+      test: ["CMD", "/bin/sh", "-c", "curl -f -s --max-time 3 --noproxy '*' -o /dev/null http://127.0.0.1:9000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+  # --------------------------------------------------------
+  # FRONTEND (static SPA — calls the API server directly from the browser)
+  # --------------------------------------------------------
+  dependency-track-frontend:
+    # --- Identity ---
+    image: dependencytrack/frontend:${APP_TAG}
+    container_name: ${CONTAINER_NAME_FRONTEND}
+    restart: unless-stopped
+    depends_on:
+      dependency-track-apiserver:
+        condition: service_healthy
+
+    # --- Security ---
+    # Already non-root (UID 101, nginx-unprivileged style).
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # No read_only (documented deviation, not silently dropped): the
+    # image's own startup script bakes API_BASE_URL and OIDC settings into
+    # static/config.json — the same served directory as the built SPA
+    # assets — every time the container starts. Verified against a live
+    # container: with read_only, the write fails and the running app falls
+    # back to no configuration at all (silently, no crash) rather than
+    # actually serving with the wrong settings. Same class of exception
+    # this repository already documents for ShellHub's `ui` service.
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx
+      - /var/run
+
+    # --- Resources ---
+    memswap_limit: 128m          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+          pids: 50
+        reservations:
+          memory: 32m
+
+    # --- Configuration ---
+    # No secrets: a static SPA with no server-side credential of its own.
+    environment:
+      API_BASE_URL: https://${APP_TRAEFIK_HOST_API}
+      TZ: ${TZ}
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+
+    # --- Traefik ---
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8080"
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO/dev/null http://127.0.0.1:8080/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  DB_PWD:
+    file: ./.secrets/db_pwd.txt
+  DT_KEK:
+    file: ./.secrets/dt_kek.txt

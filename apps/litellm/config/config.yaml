@@ -1,0 +1,21 @@
+# LiteLLM proxy configuration. No credentials here: the master key, salt key and
+# database URL come from Docker Secrets (see entrypoint.sh).
+#
+# Replace the model entry with your own backend. For a hosted provider, keep its
+# API key out of this file — add the model through the admin API, which stores
+# the credential encrypted in the database with the salt key.
+
+model_list:
+  - model_name: local-chat
+    litellm_params:
+      model: openai/smollm2:135m
+      api_base: http://ollama:11434/v1
+      api_key: none
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  database_url: os.environ/DATABASE_URL
+
+litellm_settings:
+  # Upstream's anonymous usage telemetry.
+  telemetry: false

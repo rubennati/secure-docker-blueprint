@@ -7,6 +7,8 @@
 - **Docs:** https://gethomepage.dev/
 - **License:** GPL-3.0
 - **Origin:** US · community (gethomepage) · non-EU
+- **Domain:** Dashboards
+- **Role:** Dashboard configured with YAML files
 - **Based on version:** `v2.3.0` (2.x — see Version / tag notes)
 - **Last verified:** 2026-05-03 (v0.10.9)
 

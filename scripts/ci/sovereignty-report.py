@@ -35,12 +35,12 @@ OUT = Path("site/src/data/sovereignty.json")
 OSI = {
     "AGPL-3.0", "AGPL-3.0-or-later", "Apache-2.0", "BSD 3-Clause",
     "GPL-2.0", "GPL-3.0", "GPL-3.0-or-later", "GNU GPL v3.0",
-    "MIT", "MPL-2.0", "zlib",
+    "LGPL-3.0", "MIT", "MPL-2.0", "zlib",
 }
 
 # Licences that ship source but restrict use. Matched as a substring, because
 # these are the ones that carry a qualifying clause after the name.
-SOURCE_AVAILABLE = ("BSL", "Business Source", "Elastic License", "Sustainable Use")
+SOURCE_AVAILABLE = ("BSL", "Business Source", "Elastic License", "Sustainable Use", "Commons Clause", "O'Saasy", "Open WebUI License", "Dify Open Source License")
 
 PROPRIETARY = ("Commercial", "EULA")
 

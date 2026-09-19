@@ -1,0 +1,42 @@
+# Velociraptor — local
+#
+#   cp .env.local.example .env.local
+#   mkdir -p volumes/local/etc volumes/local/datastore
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   https://localhost:8889 — admin / (the password you set)
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  app:
+    image: ghcr.io/velocidex/velociraptor-server:${APP_TAG}
+    container_name: velociraptor-local-app
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs: [/tmp]
+    environment:
+      VELOCIRAPTOR_HOSTNAME: localhost
+      VELOCIRAPTOR_FRONTEND_PORT: "8000"
+      VELOCIRAPTOR_GUI_PORT: "8889"
+      VELOCIRAPTOR_DATASTORE_PATH: /datastore
+      VELOCIRAPTOR_CONFIG_PATH: /etc/velociraptor/server.config.yaml
+      VELOCIRAPTOR_INITIAL_ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+    volumes:
+      - ./volumes/local/etc:/etc/velociraptor
+      - ./volumes/local/datastore:/datastore
+    ports:
+      - "127.0.0.1:8000:8000"
+      - "127.0.0.1:8889:8889"
+    networks: [velociraptor-local]
+    healthcheck:
+      test: ["CMD", "nc", "-z", "127.0.0.1", "8889"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+networks:
+  velociraptor-local:
+    name: velociraptor-local

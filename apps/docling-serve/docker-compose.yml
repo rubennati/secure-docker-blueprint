@@ -1,0 +1,103 @@
+# =============================================================================
+# docling-serve — production stack (Traefik + Docker Secrets)
+# =============================================================================
+# Document understanding as an API: layout, structure, tables, and Markdown/JSON
+# export for RAG-oriented pipelines. Standalone — no other stack in this
+# repository calls it; Paperless-ngx keeps its own embedded Tika and Gotenberg.
+#
+# Spec: docs/standards/compose-structure.md · security-baseline.md
+# =============================================================================
+
+services:
+
+  # --------------------------------------------------------
+  # DOCLING-SERVE
+  # Already application-specific — no role suffix needed (naming-conventions.md).
+  # --------------------------------------------------------
+  docling-serve:
+    # --- Identity ---
+    image: ghcr.io/docling-project/docling-serve-cpu:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+
+    # --- Security ---
+    # The image already runs as uid 1001 by default (verified 2026-09-18) — no
+    # `user:` override needed. ML models ship baked into the image (~870 MB),
+    # so read_only holds; only /tmp is written at runtime, for per-request
+    # scratch files during conversion.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+
+    # --- Resources ---
+    # Starting values, not measured — three ML models load into memory at
+    # boot (layout, OCR, figure classification). Retune from `docker stats`
+    # once verified on a host.
+    memswap_limit: 3g
+    deploy:
+      resources:
+        limits:
+          memory: 3g
+          cpus: "2.00"
+          pids: 200
+        reservations:
+          memory: 1g
+
+    # --- Configuration ---
+    # No native _FILE support for the API key — entrypoint.sh injects it.
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh", "/usr/bin/container-entrypoint"]
+    command: ["docling-serve", "run"]
+    environment:
+      TZ: ${TZ}
+      DOCLING_SERVE_ENABLE_UI: ${DOCLING_ENABLE_UI}
+    secrets:
+      - DOCLING_API_KEY
+
+    # --- Storage ---
+    volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+
+    # --- Traefik ---
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=5001"
+
+    # --- Health & Observability ---
+    # Model loading at boot takes ~40s warm-cache, longer on a cold pull —
+    # start_period covers it. curl is present in this image (RHEL-based),
+    # unlike the alpine images elsewhere in this repository.
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:5001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  DOCLING_API_KEY:
+    file: ./.secrets/docling_api_key.txt

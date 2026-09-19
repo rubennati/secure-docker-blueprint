@@ -1,0 +1,32 @@
+# zot — local
+#
+#   cp .env.local.example .env.local
+#   mkdir -p volumes/local/registry
+#   sudo chown 1000:1000 volumes/local/registry
+#   docker run --rm httpd:2.4-alpine htpasswd -Bbn admin localtest123 > htpasswd.local
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   curl -u admin:localtest123 http://localhost:8080/v2/
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  app:
+    image: ghcr.io/project-zot/zot:${APP_TAG}
+    container_name: zot-local-app
+    restart: unless-stopped
+    user: "1000:1000"
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs: [/tmp]
+    volumes:
+      - ./config/config.json:/etc/zot/config.json:ro
+      - ./htpasswd.local:/run/secrets/zot_htpasswd:ro
+      - ./volumes/local/registry:/var/lib/registry
+    ports:
+      - "127.0.0.1:8080:5000"
+    networks: [zot-local]
+
+networks:
+  zot-local:
+    name: zot-local

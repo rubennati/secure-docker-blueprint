@@ -15,7 +15,7 @@ FAIL (blocks CI — dangerous or leak-prone):
   db-exposed        a datastore joins proxy-public or publishes a host port
   no-resources      service without a memory or pids limit
   no-swap-policy    service with a memory limit and no explicit memswap_limit —
-                    coverage completed 2026-09-16 (150/150 production services);
+                    coverage completed 2026-09-16 (every production service);
                     this guards the property, it does not report a migration
 
 WARN (reported — structural drift):
@@ -48,7 +48,11 @@ from pathlib import Path
 
 import yaml
 
-ROOTS = ["core", "apps", "business", "monitoring", "backup"]
+# "development" is not a sixth access-pattern category (docs/architecture.md
+# still defines five) — it is a Supporting-tier directory that happens to hold
+# real, buildable compose files, so it gets the same structural check as any
+# stack root. See docs/architecture.md#development-is-a-supporting-tier-domain-not-a-sixth-category.
+ROOTS = ["core", "apps", "business", "monitoring", "backup", "development"]
 
 # Canonical .env.example section order (docs/standards/env-structure.md).
 # A file may omit any section; the ones present must appear in this order.
@@ -83,6 +87,8 @@ BAD_TAG = re.compile(r"^(latest|v?\d{1,3})$")
 # Directories that are structural exceptions, with the reason.
 EXCEPT_DIRS = {
     "apps/_reference": "the canonical reference itself — stand-in images, no UPSTREAM",
+    "development/static-site": "reusable deployment pattern, not a versioned app — no single upstream, no UPSTREAM",
+    "development/web-api": "reusable deployment pattern, not a versioned app — no single upstream, no UPSTREAM",
 }
 
 

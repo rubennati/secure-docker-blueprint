@@ -34,7 +34,7 @@
 
     // Planned entries are written as `[Statping](#)` in the category READMEs:
     // the tool is named and deliberately not linked yet. Documented in
-    // docs/maintenance.md under the Root README structure rule.
+    // docs/maintenance.md under the Category README structure rule.
     "MD042": false,
 
     // Keep a Changelog repeats `### Added` / `### Fixed` / `### Documentation`

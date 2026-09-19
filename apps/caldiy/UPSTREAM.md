@@ -10,6 +10,8 @@
 - **License:** MIT
 - **Relationship:** Community-edition spin-out of Cal.com (2026, after Cal.com moved its production code behind a closed-source licence). This blueprint consumes the **hardened fork**, not upstream directly.
 - **Origin:** Fork · rubennati · upstream: US · Cal.com Inc · non-EU
+- **Domain:** Publishing, forms and scheduling
+- **Role:** Appointment booking pages, the community edition of Cal.com
 - **Based on version:** `v6.2.0` (fork release `v6.2.0-6`)
 - **Last verified:** 2026-07-26 (v6.2.0-3). The database image moved from `postgres:17.4` to `17.11` on a live host on 2026-09-13 — same major, data directory reused, application healthy afterwards; the application pin itself was not re-verified.
 

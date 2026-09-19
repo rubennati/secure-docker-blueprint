@@ -7,6 +7,8 @@
 - **Docker Hub:** https://hub.docker.com/r/nocodb/nocodb
 - **License:** AGPL-3.0
 - **Origin:** US · NocoDB Inc · non-EU
+- **Domain:** Automation and data
+- **Role:** Spreadsheet-style interface on top of a database
 - **Based on version:** `2026.09.0`
 - **Last verified:** 2026-05-02 (v0.301.5)
 

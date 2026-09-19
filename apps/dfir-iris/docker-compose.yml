@@ -1,0 +1,339 @@
+# =============================================================================
+# DFIR-IRIS — production stack (Traefik replaces upstream's nginx)
+# =============================================================================
+# Collaborative incident-response case management: cases, IOCs, evidence,
+# notes, timelines. Holds real incident data — see README.md's Security
+# model before deploying this anywhere with real cases in mind.
+#
+# Upstream ships app + worker + db + rabbitmq + nginx. This stack keeps
+# every component except nginx — verified by reading nginx's actual
+# templated config directly: its job here is TLS termination and a plain
+# reverse proxy to `app:8000`, nothing IRIS-specific that Traefik cannot
+# already do. See UPSTREAM.md for exactly what was checked and what still
+# needs verification (large-file-upload timeouts).
+#
+# Images: ghcr.io/dfir-iris/iriswebapp_{app,db}
+# Source: https://github.com/dfir-iris/iris-web
+# =============================================================================
+
+services:
+
+  # --------------------------------------------------------
+  # RABBITMQ (Celery broker)
+  # --------------------------------------------------------
+  rabbitmq:
+    # --- Identity ---
+    image: rabbitmq:${RABBITMQ_TAG}
+    container_name: ${CONTAINER_NAME_RABBITMQ}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # Re-added deliberately: the official image starts as root and drops to
+    # its own service user — same class of case documented for Postgres/
+    # Redis elsewhere in this repository. Verified against a live container.
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+
+    # --- Resources ---
+    memswap_limit: 512m          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          pids: 200
+        reservations:
+          memory: 128m
+
+    # --- Configuration ---
+    # No credentials needed: this broker is not reachable from anywhere
+    # except app-internal, and IRIS's own Celery client uses RabbitMQ's
+    # default guest account, scoped to loopback-equivalent access on this
+    # isolated network. Verified: upstream's own compose does the same.
+    environment:
+      TZ: ${TZ}
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/rabbitmq:/var/lib/rabbitmq
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # --------------------------------------------------------
+  # POSTGRESQL (IRIS's own db image — schema pre-baked, not vanilla postgres)
+  # --------------------------------------------------------
+  db:
+    # --- Identity ---
+    image: ghcr.io/dfir-iris/iriswebapp_db:${APP_TAG}
+    container_name: ${CONTAINER_NAME_DB}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+
+    # --- Resources ---
+    memswap_limit: 1g          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          pids: 200
+        reservations:
+          memory: 256m
+
+    # --- Configuration ---
+    # The base postgres image supports POSTGRES_PASSWORD_FILE natively, but
+    # IRIS's own layered init script reads POSTGRES_ADMIN_PASSWORD as a
+    # plain env var with no _FILE equivalent — verified by reading that
+    # script directly. config/entrypoint-db.sh injects both from Docker
+    # Secrets identically, then execs the image's own entrypoint.
+    # Overriding entrypoint means Compose no longer forwards the image's
+    # own default CMD ("postgres") automatically — verified against a live
+    # container with `bash -x`: without this, the wrapper's final `exec
+    # docker-entrypoint.sh` ran with no arguments at all and exited 0
+    # immediately, producing a silent restart loop with no log output.
+    entrypoint: ["/bin/bash", "/config/entrypoint-db.sh"]
+    command: ["postgres"]
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_ADMIN_USER: ${DB_ADMIN_USER}
+      POSTGRES_DB: ${DB_NAME}
+      TZ: ${TZ}
+    secrets:
+      - postgres_password
+      - postgres_admin_password
+
+    # --- Storage ---
+    volumes:
+      - ./config/entrypoint-db.sh:/config/entrypoint-db.sh:ro
+      - ./volumes/postgres:/var/lib/postgresql/data
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME} -h 127.0.0.1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # --------------------------------------------------------
+  # APP (web UI + REST API — what Traefik fronts directly)
+  # --------------------------------------------------------
+  dfir-iris-app:
+    # --- Identity ---
+    image: ghcr.io/dfir-iris/iriswebapp_app:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+    # --- Security ---
+    # No non-root user exists in this image at all (verified: no service
+    # account beyond root in /etc/passwd, and the entrypoint never drops
+    # privilege) — documented deviation, the same class this repository
+    # already carries for JumpServer's vendor image. cap_drop: ALL is still
+    # applied; it restricts what root itself can do.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # No read_only: the app writes case attachments, generated reports and
+    # templates under its own install tree in addition to the three named
+    # volumes below — not verified narrow enough to isolate safely without
+    # risking a silent write failure on a code path this stack has not
+    # exercised. See UPSTREAM.md.
+
+    # --- Resources ---
+    memswap_limit: 1g          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          pids: 400
+        reservations:
+          memory: 256m
+
+    # --- Configuration ---
+    # No _FILE support (verified) — config/entrypoint.sh injects the four
+    # secrets below from Docker Secrets, then execs the image's own
+    # iris-entrypoint.sh.
+    entrypoint: ["/bin/bash", "/config/entrypoint.sh"]
+    command: ["./iris-entrypoint.sh", "iriswebapp"]
+    environment:
+      DOCKERIZED: "1"
+      POSTGRES_SERVER: db
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_ADMIN_USER: ${DB_ADMIN_USER}
+      CELERY_BROKER: amqp://rabbitmq
+      LOG_LEVEL: ${LOG_LEVEL}
+      IRIS_AUTHENTICATION_TYPE: ${IRIS_AUTHENTICATION_TYPE}
+      TZ: ${TZ}
+    secrets:
+      - postgres_password
+      - postgres_admin_password
+      - iris_secret_key
+      - iris_security_password_salt
+
+    # --- Storage ---
+    volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
+      - ./volumes/downloads:/home/iris/downloads
+      - ./volumes/templates:/home/iris/user_templates
+      - ./volumes/server_data:/home/iris/server_data
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+      - app-internal
+
+    # --- Traefik ---
+    # Replaces nginx's role — see the file header and UPSTREAM.md.
+    # Websocket support for /socket.io (live case updates) needs no special
+    # label: Traefik has passed WS upgrades through natively since v1.29.
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8000"
+
+    # --- Health & Observability ---
+    # -L is required: the root path is a 302 redirect to /login (curl -f
+    # alone treats a redirect as success, but only /login actually contains
+    # the string this check verifies against — confirmed against a live
+    # container).
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsSkL http://127.0.0.1:8000/ | grep -qi iris || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # --------------------------------------------------------
+  # WORKER (Celery — case processing, notifications, scheduled tasks)
+  # --------------------------------------------------------
+  dfir-iris-worker:
+    # --- Identity ---
+    image: ghcr.io/dfir-iris/iriswebapp_app:${APP_TAG}
+    container_name: ${CONTAINER_NAME_WORKER}
+    restart: unless-stopped
+    depends_on:
+      dfir-iris-app:
+        condition: service_healthy
+
+    # --- Security ---
+    # Same deviation as dfir-iris-app: no non-root user in this image.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+    # --- Resources ---
+    memswap_limit: 1g          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          pids: 400
+        reservations:
+          memory: 256m
+
+    # --- Configuration ---
+    entrypoint: ["/bin/bash", "/config/entrypoint.sh"]
+    command: ["./wait-for-iriswebapp.sh", "dfir-iris-app:8000", "./iris-entrypoint.sh", "iris-worker"]
+    environment:
+      DOCKERIZED: "1"
+      POSTGRES_SERVER: db
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_ADMIN_USER: ${DB_ADMIN_USER}
+      CELERY_BROKER: amqp://rabbitmq
+      LOG_LEVEL: ${LOG_LEVEL}
+      IRIS_WORKER: "1"
+      TZ: ${TZ}
+    secrets:
+      - postgres_password
+      - postgres_admin_password
+      - iris_secret_key
+      - iris_security_password_salt
+
+    # --- Storage ---
+    volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
+      - ./volumes/downloads:/home/iris/downloads
+      - ./volumes/templates:/home/iris/user_templates
+      - ./volumes/server_data:/home/iris/server_data
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    # healthcheck: none — a Celery worker has no port or HTTP endpoint of
+    # its own to probe; `depends_on: condition: service_healthy` on the app
+    # already gates its start, and the wait-for script gates it a second
+    # time at the process level.
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  postgres_password:
+    file: ./.secrets/db_pwd.txt
+  postgres_admin_password:
+    file: ./.secrets/db_admin_pwd.txt
+  iris_secret_key:
+    file: ./.secrets/iris_secret_key.txt
+  iris_security_password_salt:
+    file: ./.secrets/iris_security_password_salt.txt

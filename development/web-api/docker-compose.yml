@@ -1,0 +1,103 @@
+# =============================================================================
+# web-api pattern — production stack (Traefik, no datastore)
+# =============================================================================
+# Reusable deployment shape for a generic backend service: source → build →
+# image → health → Traefik. Copy this directory into apps/ or business/ under
+# the real project's name, replace fixture/ with the real source, and follow
+# docs/standards/custom-application.md for image identity.
+#
+# Deliberately has no database, Redis, queue or worker — those are optional
+# extensions, added the same way apps/_reference shows, only when the real
+# application needs one.
+#
+# BLOCK ORDER matches every other stack in this repository — see
+# apps/_reference/docker-compose.yml.
+#
+# Spec: docs/standards/compose-structure.md · security-baseline.md
+# =============================================================================
+
+services:
+
+  app:
+    # --- Identity ---
+    # No registry image — this stack builds its own. `context` points at
+    # fixture/ until the real project's source replaces it.
+    build:
+      context: ./fixture
+      dockerfile: Dockerfile
+    image: ${COMPOSE_PROJECT_NAME}-local:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+
+    # --- Security ---
+    # node:*-alpine has no init system, so `user:` is safe here — see the
+    # Dockerfile. read_only is possible because the fixture writes nothing at
+    # runtime; drop it if the real application writes to its own filesystem.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+
+    # --- Resources ---
+    # Starting values, not measured — retune from `docker stats` once a real
+    # project is deployed.
+    memswap_limit: 256m
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.50"
+          pids: 100
+        reservations:
+          memory: 64m
+
+    # --- Configuration ---
+    # No secrets by default — nothing here needs one. A real project that adds
+    # a database or an API key follows the same Docker Secrets pattern as
+    # apps/_reference: a `secrets:` block here, `_FILE` env var or an
+    # entrypoint wrapper, never a plain value in `environment:`.
+    environment:
+      TZ: ${TZ}
+      PORT: ${APP_PORT}
+      APP_LOG_LEVEL: ${APP_LOG_LEVEL}
+
+    # --- Storage ---
+    # None. Add a volume only when the application itself needs persistent
+    # state — see apps/_reference for the pattern.
+
+    # --- Networking ---
+    # proxy-public only. No app-internal network exists here because there is
+    # no datastore to isolate — add one, named `${COMPOSE_PROJECT_NAME}-internal`
+    # and `internal: true`, the moment a database or cache is added.
+    networks:
+      - proxy-public
+
+    # --- Traefik ---
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=${APP_PORT}"
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO/dev/null http://127.0.0.1:${APP_PORT}/healthz || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true

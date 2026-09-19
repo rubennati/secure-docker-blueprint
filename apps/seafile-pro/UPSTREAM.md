@@ -6,6 +6,8 @@
 - **Config source:** Official Seafile Pro Docker Compose files (inbox/seafile-pro_original)
 - **License:** Commercial
 - **Origin:** China · Seafile Ltd · non-EU
+- **Domain:** Files, wiki and collaboration
+- **Role:** File sync and share, professional edition
 - **Note:** Commercial license — self-hosting permitted under the paid plan. Chinese company: data stored on self-hosted instances is under your jurisdiction, but the vendor itself is subject to Chinese law.
 - **Based on version:** Seafile Pro 13.0
 - **Last checked:** 2026-04-13

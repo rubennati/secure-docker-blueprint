@@ -22,30 +22,31 @@ Four models describe documentation in this repository, each answering one questi
 
 | Information | Canonical owner | Mirrors / references it |
 |---|---|---|
-| Status definitions (what ✅ / 🚧 / 📋 promise) | `docs/standards/status-model.md` | Root README legend, `LIFECYCLE.md` |
-| App status — `business/`, `monitoring/`, `backup/` | Category README | Root README tables, `LIFECYCLE.md` |
-| App status — `core/`, `apps/` | Root README tables | `LIFECYCLE.md` |
-| Per-stack lifecycle detail | the sources listed in [`standards/status-model.md`](standards/status-model.md#who-owns-which-fact) — status, pin, `Last verified`, baseline | `LIFECYCLE.md`, *generated* by `scripts/ci/lifecycle-report.py`, never hand-edited |
+| Status definitions (what ✅ / 🚧 / 📋 promise) | `docs/standards/status-model.md` | Category README legends, `LIFECYCLE.md` |
+| App status, and per-stack lifecycle detail | the per-stack sources in [`standards/status-model.md`](standards/status-model.md#who-owns-which-fact) — status, pin, `Last verified`, baseline, backup docs | `LIFECYCLE.md`, *generated* by `scripts/ci/lifecycle-report.py` and never hand-edited; category READMEs carry the status symbol, the root README links to the generated file |
 | App location (category) | Directory structure | README tables |
 | Shipped work | `CHANGELOG.md` | — |
 | Direction / planned work | `ROADMAP.md` | Category READMEs reference, do not duplicate |
 | Compose standards, and every rule that carries a value — resource limits and their derivation | `docs/standards/compose-structure.md` | Every `docker-compose.yml`; `security-baseline.md` references it |
 | Env standards | `docs/standards/env-structure.md` | Every `.env.example` |
+| Image provenance — where a deployable image comes from, and what pins it | `docs/standards/custom-application.md` | `business/vikunja` (in-repo build), `apps/caldiy/UPSTREAM.md` (external pipeline) |
+| Secret generation, handling and rotation | `docs/standards/secrets.md` | `env-structure.md` references it; every stack's setup steps |
+| Application recovery once data is restored | `docs/standards/restore.md` | `backup/borgmatic/RESTORE.md` and the stack READMEs that cross-link it |
 | Local test stack — shape, header, which stacks get one | `docs/standards/compose-structure.md` | Every `docker-compose.local.yml` and `.env.local.example`; `apps/_reference/` is the worked example |
 | Security rules that are on or off — privileges, capabilities, secrets, socket access, network isolation | `docs/standards/security-baseline.md` | Every service in every compose |
 | Naming conventions | `docs/standards/naming-conventions.md` | Every compose, env, container name |
 | A symptom and its fix — a failure seen in this blueprint | `TROUBLESHOOTING.md` | Stack READMEs and `UPSTREAM.md` reference a numbered entry |
 | The layer-by-layer debugging method and command reference | `docs/standards/troubleshooting.md` | — |
 | Architecture decisions | `docs/architecture.md` | Category READMEs may summarise |
-| Per-app setup | `<app>/README.md` | Root README one-liner only |
+| Per-app setup | `<app>/README.md` | Category README one-liner only |
 | Per-app config options | `<app>/CONFIG.md` (where it exists) | No duplication |
 | Per-app upstream info | `<app>/UPSTREAM.md` | — |
 | AI entry point and rule precedence | `AGENTS.md` | `CLAUDE.md`, `.github/copilot-instructions.md`, `.cursor/rules/00-project.mdc` — pointers only, never a rule of their own |
 | Working context for AI sessions | `.ai/` | Mirrors the owners above in condensed form; `.ai/domains/*.md` restate `docs/standards/` and lose to them on any disagreement |
 
-**Root README structure rule**: tables show `🛡️` / `✅` / `🚧` only. `📋` planned items appear as inline `Planned: X, Y, Z` lines — never as table rows. `🛡️` is listed in every status legend but appears in no table yet; the first stack earns it with the v0.7.0 restore.
+**Category README structure rule**: tables show `🛡️` / `✅` / `🚧` only. `📋` planned items appear as inline `Planned: X, Y, Z` lines — never as table rows. `🛡️` is listed in every status legend but appears in no table yet; the first stack earns it with the v0.7.0 restore.
 
-`core/` and `apps/` deliberately have no category README — they are documented per service in the root README tables, which is why the root owns their status. Everything derived from these owners is regenerated, not retyped:
+**The root README is an entry point, not an inventory.** All five categories carry their own README with the stacks in that category; the root links to them and to `LIFECYCLE.md`, and does not reproduce either. A status claim in the root README would be a third copy of a fact the stack already owns and the generator already presents. Everything derived from these owners is regenerated, not retyped:
 
 ```bash
 python3 scripts/ci/lifecycle-report.py --write
@@ -96,7 +97,7 @@ measured.
 
 **Documented**
 8. `UPSTREAM.md` present — source, `Last verified: YYYY-MM-DD (vX.Y.Z)`, upgrade checklist
-9. `UPSTREAM.md` includes license — name (e.g. MIT, Apache 2.0, AGPL-3.0) and a note if it deviates from standard self-hosting use (see license policy in `ROADMAP.md`)
+9. `UPSTREAM.md` includes license — name (e.g. MIT, Apache 2.0, AGPL-3.0) and a note if it deviates from standard self-hosting use (see [licence policy](sovereignty/provenance.md#what-this-blueprint-accepts))
 10. `.env.example` complete — all required fields present, no real domains or credentials as defaults
 
 > **Note on rising bar:** Apps verified in earlier versions of the blueprint may not
@@ -202,6 +203,7 @@ Run the full Consistency Chain first, then:
 | 4 | All `🚧` entries | Is the preview status still honest? |
 | 5 | All `✅` entries | Were any broken by dependency updates since last test? |
 | 6 | GitHub | Minor versions only (`v0.X.0`): `gh release create vX.Y.0 --draft` — review, then publish. Patch tags (`vX.Y.Z`) are Git tags only — no GitHub Release needed. |
+| 7 | `v1.0.0` only | **Both surfaces ready?** The repository *and* the operator site have to meet the criteria in [`ROADMAP.md`](../ROADMAP.md#v10--complete-and-hand-off-ready). The site being live does not count. If the site is unfinished, the tag waits — there is no partial 1.0. |
 
 ---
 

@@ -1,0 +1,68 @@
+# yaml-language-server: $schema=https://agentgateway.dev/schema/config
+#
+# Template for config/config.yaml — ops/init.sh renders it and fills in the API
+# key hash. Edit the rendered config/config.yaml, then `docker compose up -d`
+# (the file is mounted read-only, so the UI cannot change it).
+
+config:
+  # Metrics stay on loopback: the default binds them to every interface, where
+  # any container on proxy-public could read them without authentication.
+  statsAddr: "127.0.0.1:15020"
+  # Feeds the UI's Analytics and Logs pages. Lives on the ./volumes/data mount.
+  database:
+    url: sqlite:///data/data.db
+
+gateways:
+  # Traffic: LLM routes under /v1, and MCP under /mcp if you enable it below.
+  default:
+    port: 4000
+  # The web UI gets its own gateway so it can carry its own authentication and
+  # its own Traefik route.
+  ui-gateway:
+    port: 4001
+
+llm:
+  gateways: [default]
+  policies:
+    # mode: strict is what makes the key mandatory. The default, optional,
+    # accepts requests that carry no key at all.
+    apiKey:
+      mode: strict
+      keys:
+        # SHA-256 of the client key, so no usable key lives in this file.
+        - keyHash: sha256:__API_KEY_HASH__
+  models:
+    # Any OpenAI-compatible upstream. Replace baseUrl; provider keys for hosted
+    # providers go under params.apiKey — see README, "Upstream providers".
+    - name: "*"
+      provider: openAI
+      params:
+        baseUrl: http://ollama:11434/v1
+
+# MCP: uncomment to put MCP servers behind the same gateway and key. The path is
+# /mcp on the gateway port. stdio targets are not usable — the image has no
+# shell or runtimes — so a target is a remote MCP server over HTTP.
+#mcp:
+#  gateways: [default]
+#  policies:
+#    apiKey:
+#      mode: strict
+#      keys:
+#        - keyHash: sha256:__API_KEY_HASH__
+#  targets:
+#    - name: example
+#      mcp:
+#        host: mcp-server
+#        port: 9000
+#        path: /mcp
+
+ui:
+  gateways: [ui-gateway]
+  policies:
+    # Basic authentication against an htpasswd file that arrives as a Docker
+    # Secret. Again mode: strict — the default, optional, lets unauthenticated
+    # requests through.
+    basicAuth:
+      mode: strict
+      htpasswd:
+        file: /run/secrets/AGW_UI_HTPASSWD

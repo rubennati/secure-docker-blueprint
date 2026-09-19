@@ -231,7 +231,7 @@ full upgrade and rollback procedure.
 > - `core/crowdsec/` engine healthy: `docker exec crowdsec cscli lapi status`
 > - Traefik access log filter expanded to `200-599` in `core/traefik/ops/templates/traefik.yml.tmpl`
 >   (re-render required: `./ops/scripts/render.sh && docker compose restart traefik`)
-> - `crowdsec-basic` bouncer profile verified on `core/whoami` per `core/crowdsec/docs/profiles.md`
+> - `crowdsec-basic` bouncer profile verified on `apps/whoami` per `core/crowdsec/docs/profiles.md`
 > - `crowdsec-basic@file` added as the first middleware on the Cal.diy Traefik router
 
 **Phase 2 verification checklist:**
@@ -458,7 +458,7 @@ per-app vs global capability analysis, and Cal.diy's placement are defined in
 [`core/crowdsec/docs/profiles.md`](../../../core/crowdsec/docs/profiles.md). **It is not
 implemented yet** — this note records the guardrails so it is done safely when the time comes.
 
-- **Prove `crowdsec-basic` on `core/whoami` first.** Enable the Traefik bouncer plugin, attach
+- **Prove `crowdsec-basic` on `apps/whoami` first.** Enable the Traefik bouncer plugin, attach
   `crowdsec-basic@file` to the throwaway `whoami` router, and run the end-to-end ban test
   (§6 / `core/crowdsec/docs/profiles.md` → "whoami-first validation") before touching the
   Cal.diy router.

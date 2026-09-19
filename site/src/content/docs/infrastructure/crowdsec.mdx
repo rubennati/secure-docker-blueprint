@@ -203,7 +203,7 @@ The engine above is detection only. Two enforcement layers add blocking. They ar
     The rule is general: **never attach automated source-IP enforcement globally when the same host carries a private management plane.** Scope it to the public interface, so a decision cannot reach the management path whatever the blocklist contains.
     :::
 
-    **Status: lifecycle and readiness verified; scoped enforcement not yet accepted.** The engine-level part is in place, and the way the firewall state is built up, rebuilt on restart and torn down again has been verified on a running host. The blocking rules themselves have not, so this tab describes the model rather than offering a switch to flip. The current verification status is in the repository reference.
+    **The blocking rules here have not been run.** The way the firewall state is built up, rebuilt on restart and torn down again has been verified on a running host; the rules that do the blocking have not. So this tab describes the model rather than offering a switch to flip.
 
     **What it will cover: individual banned addresses, IPv4 and IPv6.** CrowdSec can also decide against a whole address range, and those are *not* enforced correctly at the host firewall by the packaged bouncer — a range ends up protecting only its first address. It blocks less than you might expect, never more, and it cannot affect your management access. Treat host enforcement as covering single addresses, and leave range decisions to the proxy layer.
 

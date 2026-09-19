@@ -7,6 +7,8 @@
 - **Registry:** `ghcr.io/dgtlmoon/changedetection.io`
 - **License:** Apache-2.0
 - **Origin:** Australia · dgtlmoon · non-EU
+- **Domain:** Monitoring
+- **Role:** Watches web pages for changes: restocks, prices, terms
 - **Based on version:** `0.60.4`
 - **Last verified:** 2026-09-13 (0.60.4) — patch recreated on a live host, route unchanged. 2026-09-08 (0.60.3) — v0.8.0 host session: clean start, password set in the UI, a watch on a page on the Docker network (after lifting the private-address guard), the ntfy notification through Apprise; a deliberate change on that page produced the notification on an iPhone within half a minute.
 

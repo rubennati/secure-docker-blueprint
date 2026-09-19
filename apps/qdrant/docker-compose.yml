@@ -1,0 +1,118 @@
+# =============================================================================
+# Qdrant — production stack (Traefik + Docker Secrets)
+# =============================================================================
+# A standalone vector database: collections of vectors with payloads, similarity
+# search with filters, snapshots. REST and dashboard on 6333, gRPC on 6334.
+#
+# Every request needs the API key — Qdrant without one is fully open. Health
+# endpoints (/healthz, /livez, /readyz) are the only paths that answer without
+# it.
+#
+# Spec: docs/standards/compose-structure.md · security-baseline.md
+# =============================================================================
+
+services:
+
+  # --------------------------------------------------------
+  # QDRANT
+  # Already application-specific — no role suffix needed (naming-conventions.md).
+  # --------------------------------------------------------
+  qdrant:
+    # --- Identity ---
+    # The -unprivileged variant runs as uid 1000 (qdrant). The plain tag runs
+    # as root.
+    image: qdrant/qdrant:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+
+    # --- Security ---
+    # read_only holds, with two writable volumes and /tmp. Verified 2026-09-18
+    # against v1.19.1: search, snapshots and restart all work.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+
+    # --- Resources ---
+    # Vectors are memory-mapped and indexes are held in memory: size this to the
+    # data. Starting values, not measured.
+    memswap_limit: ${QDRANT_MEMORY}
+    deploy:
+      resources:
+        limits:
+          memory: ${QDRANT_MEMORY}
+          cpus: "${QDRANT_CPUS}"
+          pids: 256
+        reservations:
+          memory: 256m
+
+    # --- Configuration ---
+    # No _FILE support for the API key — entrypoint.sh injects it.
+    #
+    # QDRANT_INIT_FILE_PATH is required under read_only: by default Qdrant
+    # writes .qdrant-initialized into its working directory, and on a read-only
+    # filesystem it panics at startup instead of carrying on. Pointing it into
+    # the storage volume fixes that.
+    #
+    # QDRANT__TELEMETRY_DISABLED stops the anonymous usage reporting Qdrant
+    # sends by default.
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
+    command: ["./entrypoint.sh"]
+    environment:
+      TZ: ${TZ}
+      QDRANT__TELEMETRY_DISABLED: "true"
+      QDRANT_INIT_FILE_PATH: /qdrant/storage/.qdrant-initialized
+    secrets:
+      - QDRANT_API_KEY
+
+    # --- Storage ---
+    volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
+      - ./volumes/storage:/qdrant/storage
+      - ./volumes/snapshots:/qdrant/snapshots
+
+    # --- Networking ---
+    # proxy-public: Traefik routes the REST API and dashboard. Other stacks
+    # reach 6333 and 6334 by service name on the same network, with the key.
+    # gRPC (6334) is on by default and is not routed through Traefik.
+    networks:
+      - proxy-public
+
+    # --- Traefik ---
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=6333"
+
+    # --- Health & Observability ---
+    # No curl or wget in the image; bash's /dev/tcp sends the request. /readyz
+    # answers without the API key.
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/6333 && printf 'GET /readyz HTTP/1.0\\r\\n\\r\\n' >&3 && head -n1 <&3 | grep -q ' 200 '"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  QDRANT_API_KEY:
+    file: ./.secrets/qdrant_api_key.txt

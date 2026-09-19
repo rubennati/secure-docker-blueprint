@@ -162,6 +162,26 @@ NO_NEW_PRIVILEGES_EXCEPTIONS: dict[str, dict[str, Exception]] = {
             "risk":         "Same as app — accepted, mitigated by network isolation.",
         },
     },
+    "core/jumpserver": {
+        "jumpserver": {
+            "reason":       "Verified directly against a live container: the vendor's all-in-one "
+                            "image calls `sudo` internally to drop from root into per-component "
+                            "users for its bundled Postgres, Redis, nginx and half a dozen "
+                            "supervised services. sudo is setuid-root by nature; "
+                            "no-new-privileges:true blocks exactly that, and the container fails "
+                            "before any internal service starts (confirmed: "
+                            "'sudo: setresuid(...): Operation not permitted', then cascading "
+                            "permission errors and the bundled Postgres never starting).",
+            "alternatives": "A per-component deployment (jumpserver/core, jumpserver/koko, etc.) "
+                            "could avoid this, but no official multi-service compose reference "
+                            "exists for it yet — see core/jumpserver/UPSTREAM.md.",
+            "risk":         "Accepted — this is the vendor's only supported all-in-one image, and "
+                            "the same monolithic design that requires sudo also means the process "
+                            "runs as root by vendor default regardless of this setting. Mitigated "
+                            "by network isolation (VPN-only access to the web console) and by not "
+                            "running any other workload in this container.",
+        },
+    },
 }
 
 # Services allowed to use network_mode: host or pid: host.

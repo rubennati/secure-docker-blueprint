@@ -1,0 +1,118 @@
+# =============================================================================
+# Warpgate — production stack (Traefik for the admin UI, direct ports for
+# every protocol Warpgate proxies)
+# =============================================================================
+# Lightweight, multi-protocol PAM/bastion. One binary, one process, an
+# embedded SQLite database — no external database, no separate secrets input
+# at compose time. See README.md for setup and the full security model.
+#
+# Spec: docs/standards/compose-structure.md · security-baseline.md
+# =============================================================================
+
+services:
+
+  # --------------------------------------------------------
+  # WARPGATE (SSH / HTTPS / MySQL / Postgres / RDP / VNC proxy + admin UI)
+  # --------------------------------------------------------
+  warpgate:
+    # --- Identity ---
+    image: ghcr.io/warp-tech/warpgate:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+
+    # --- Security ---
+    # The image runs as a fixed non-root UID 1000 ("warpgate") — verified via
+    # `docker inspect`; do not add `user:`, it is not an init-system image.
+    # cap_drop: ALL, read_only and no-new-privileges were verified together
+    # against a live container: `unattended-setup` and `run` both complete
+    # with no capability re-added, once ./volumes/data is owned by 1000:1000
+    # (README.md#setup — the one manual step this stack needs, in place of a
+    # dedicated init-perms sidecar for its single bind mount).
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+
+    # --- Resources ---
+    # No official minimum is published. Starting point for a single Rust
+    # binary handling interactive sessions, not measured against real load —
+    # v0.10.0 territory once a host runs this. Raise before session-recording
+    # a busy target.
+    memswap_limit: 512m
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          pids: 100
+        reservations:
+          memory: 64m
+
+    # --- Configuration ---
+    # No environment-driven configuration: everything lives in
+    # ./volumes/data/warpgate.yaml, created by the one-time `setup` command
+    # below (README.md#setup). There is nothing to inject at compose time.
+    environment:
+      TZ: ${TZ}
+
+    # --- Storage ---
+    # Config, the SQLite database (users, sessions, audit log) and the TLS
+    # certificate/key all live here. This directory IS the secret — see
+    # .env.example's Secrets section.
+    volumes:
+      - ./volumes/data:/data
+
+    # --- Networking ---
+    # proxy-public only for the admin UI's Traefik router. The SSH/MySQL
+    # ports below are published directly on the host — see "ports" and
+    # README.md#network-exposure for why they cannot go through Traefik.
+    networks:
+      - proxy-public
+
+    ports:
+      # SSH protocol proxy — every SSH target, reached by anyone with a
+      # Warpgate account. A raw TCP listener: Traefik's HTTP router cannot
+      # carry this protocol.
+      - "${WARPGATE_SSH_PORT}:2222"
+      # MySQL protocol proxy. Only meaningful once a MySQL target exists in
+      # the admin UI — comment this line out otherwise, it costs nothing to
+      # leave open but there is no reason to publish a port for a protocol
+      # not in use.
+      - "${WARPGATE_MYSQL_PORT}:33306"
+
+    # --- Traefik ---
+    # Admin web UI only. Warpgate's own docs (Running behind a reverse proxy)
+    # require http.trust_x_forwarded_headers: true in warpgate.yaml once this
+    # is in place — see README.md#setup step 4.
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8888"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.scheme=https"
+
+    # --- Health & Observability ---
+    # The image ships its own healthcheck (verified: `docker inspect` shows
+    # Config.Healthcheck = ["CMD-SHELL", "warpgate healthcheck"]). Restated
+    # explicitly for visibility, matching this repository's convention of
+    # always showing the Health block rather than relying on an invisible
+    # image default.
+    healthcheck:
+      test: ["CMD", "warpgate", "healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true

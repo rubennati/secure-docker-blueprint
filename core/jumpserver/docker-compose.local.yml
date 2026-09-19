@@ -1,0 +1,39 @@
+# JumpServer — local
+#
+#   cp .env.local.example .env.local
+#   mkdir -p volumes/local/data volumes/local/download
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   http://localhost:8080 — admin / ChangeMe (change immediately)
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+  jumpserver-local:
+    image: jumpserver/jms_all:${APP_TAG}
+    container_name: jumpserver-local-app
+    restart: unless-stopped
+
+    environment:
+      SECRET_KEY: local-test-secret-key-not-for-real-use-000000
+      BOOTSTRAP_TOKEN: local-test-bootstrap-token-0000
+      TZ: ${TZ}
+
+    volumes:
+      - ./volumes/local/data:/opt/data
+      - ./volumes/local/download:/opt/download
+
+    networks:
+      - jumpserver-local
+
+    ports:
+      - "127.0.0.1:8080:80"
+      - "127.0.0.1:2222:2222"
+
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1/api/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+
+networks:
+  jumpserver-local:

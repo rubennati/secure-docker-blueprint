@@ -6,6 +6,8 @@
 - **Wiki:** https://github.com/dani-garcia/vaultwarden/wiki
 - **License:** GPL-3.0
 - **Origin:** Community · unofficial Bitwarden reimplementation · no single jurisdiction
+- **Domain:** Identity, access and secrets
+- **Role:** Password manager: logins, TOTP and shared collections
 - **Based on version:** `1.37.3`
 - **Last checked:** 2026-06-14
 
@@ -67,8 +69,9 @@ docker compose up -d
 # Visit https://vault.example.com and register
 
 # 6. Disable signups
-# Set VW_SIGNUPS_ALLOWED=false in .env
-docker compose restart app
+# Set VW_SIGNUPS_ALLOWED=false in .env, then recreate — restart alone does not
+# pick up an .env change
+docker compose up -d --force-recreate vaultwarden-app
 ```
 
 ## Verify
@@ -82,11 +85,16 @@ docker exec vaultwarden-app curl -s http://127.0.0.1:80/alive  # Internal check
 
 ## Push Notifications
 
-Free registration at https://bitwarden.com/host/:
+Push does not send the vault to Bitwarden — it only notifies a client that
+something changed, so the client then syncs against this instance. Free
+registration at https://bitwarden.com/host/:
 
-1. Enter any email
+1. Choose **Global** or **EU** host, and use a real, monitored email address —
+   Bitwarden uses it to notify about out-of-date server versions
 2. Get `INSTALLATION_ID` and `INSTALLATION_KEY`
 3. Set in .env:
+
+   **Global host** (default — leave relay URIs empty):
 
    ```env
    VW_PUSH_ENABLED=true
@@ -94,9 +102,22 @@ Free registration at https://bitwarden.com/host/:
    VW_PUSH_INSTALLATION_KEY=your-key
    ```
 
-4. `docker compose restart app`
+   **EU host** (must set relay URIs — EU credentials without EU URIs cause
+   token errors):
+
+   ```env
+   VW_PUSH_ENABLED=true
+   VW_PUSH_INSTALLATION_ID=your-eu-id
+   VW_PUSH_INSTALLATION_KEY=your-eu-key
+   VW_PUSH_RELAY_URI=https://api.bitwarden.eu
+   VW_PUSH_IDENTITY_URI=https://identity.bitwarden.eu
+   ```
+
+4. `docker compose up -d --force-recreate vaultwarden-app`
 
 Only works with official Bitwarden apps (App Store / Google Play, not F-Droid).
+Upstream reference:
+[Enabling Mobile Client Push Notification](https://github.com/dani-garcia/vaultwarden/wiki/Enabling-Mobile-Client-push-notification).
 
 ## Upgrade checklist
 

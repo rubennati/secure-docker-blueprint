@@ -1,0 +1,43 @@
+# Teleport — local
+#
+#   cp .env.local.example .env.local
+#   mkdir -p volumes/local/config volumes/local/data
+#   docker run --rm --entrypoint=/usr/local/bin/teleport \
+#     -v "$(pwd)/volumes/local/config:/etc/teleport" \
+#     public.ecr.aws/gravitational/teleport-distroless:18.11.0 \
+#     configure --roles=proxy,auth > volumes/local/config/teleport.yaml
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   https://localhost:3080/web — accept the self-signed certificate warning
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+  teleport-local:
+    image: public.ecr.aws/gravitational/teleport-distroless:${APP_TAG}
+    container_name: teleport-local-app
+    restart: unless-stopped
+
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+
+    environment:
+      TZ: ${TZ}
+
+    volumes:
+      - ./volumes/local/config:/etc/teleport
+      - ./volumes/local/data:/var/lib/teleport
+
+    ports:
+      - "127.0.0.1:3025:3025"
+      - "127.0.0.1:3080:3080"
+
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/teleport", "debug", "readyz", "-c", "/etc/teleport/teleport.yaml"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s

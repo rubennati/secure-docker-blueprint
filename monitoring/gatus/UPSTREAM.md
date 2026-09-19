@@ -7,6 +7,8 @@
 - **Docker Hub:** https://hub.docker.com/r/twinproduction/gatus
 - **License:** Apache-2.0
 - **Origin:** Canada · TwinProduction · non-EU
+- **Domain:** Monitoring
+- **Role:** Uptime and status page defined as YAML
 - **Based on version:** `v5.36.0`
 - **Last checked:** 2026-05-03
 

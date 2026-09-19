@@ -1,0 +1,62 @@
+# LiteLLM — local
+#
+#   cp .env.local.example .env.local
+#   ops/init.sh
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   curl -H "Authorization: Bearer $(cat .secrets/litellm_master_key.txt)" http://localhost:4000/v1/models
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+#
+# config/config.yaml lists an Ollama backend at http://ollama:11434/v1; change
+# api_base to a backend this container can reach.
+
+services:
+
+  db:
+    image: postgres:${DB_TAG}
+    container_name: litellm-local-db
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/DB_PWD
+    volumes:
+      - ./.secrets/db_pwd.txt:/run/secrets/DB_PWD:ro
+      - ./volumes/postgres:/var/lib/postgresql
+    networks: [litellm-local]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME} -h 127.0.0.1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  litellm:
+    image: ghcr.io/berriai/litellm-non_root:${APP_TAG}
+    container_name: litellm-local-app
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    entrypoint: ["/bin/sh", "/entrypoint.sh", "/app/docker/prod_entrypoint.sh"]
+    command: ["--port", "4000", "--config", "/app/config.yaml"]
+    environment:
+      DB_USER: ${DB_USER}
+      DB_NAME: ${DB_NAME}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./config/entrypoint.sh:/entrypoint.sh:ro
+      - ./config/config.yaml:/app/config.yaml:ro
+      - ./.secrets/db_pwd.txt:/run/secrets/DB_PWD:ro
+      - ./.secrets/litellm_master_key.txt:/run/secrets/LITELLM_MASTER_KEY:ro
+      - ./.secrets/litellm_salt_key.txt:/run/secrets/LITELLM_SALT_KEY:ro
+    tmpfs:
+      - /tmp
+    ports:
+      - "127.0.0.1:4000:4000"
+    networks: [litellm-local]
+
+networks:
+  litellm-local:
+    name: litellm-local

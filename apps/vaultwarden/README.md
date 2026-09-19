@@ -6,7 +6,7 @@ Self-hosted Bitwarden-compatible password manager.
 
 | Service | Image | Purpose |
 |---|---|---|
-| app | vaultwarden/server | Password manager |
+| vaultwarden-app | vaultwarden/server | Password manager |
 | db | mariadb | Database |
 
 ## Security Features
@@ -93,8 +93,9 @@ docker compose logs -f   # Wait for "Starting Vaultwarden" + no errors
 After creating your account(s), disable signups:
 
 ```bash
-# In .env set VW_SIGNUPS_ALLOWED=false, then:
-docker compose restart app
+# In .env set VW_SIGNUPS_ALLOWED=false, then recreate — restart alone does not
+# pick up an .env change:
+docker compose up -d --force-recreate vaultwarden-app
 ```
 
 ### Step 8: Configure Admin Panel
@@ -114,9 +115,12 @@ Visit `https://vault.yourdomain.com/admin` and enter your admin password.
 
 ### Step 9: Push Notifications (Optional)
 
-Push improves real-time sync on mobile and browser extensions. It is **not required** for login, SMTP, invites, 2FA, or manual sync.
+Push does not send the vault to Bitwarden — it only notifies a client that
+something changed, so the client then syncs against this instance. It improves
+real-time sync on mobile and browser extensions and is **not required** for
+login, SMTP, invites, 2FA, or manual sync.
 
-1. Register free at https://bitwarden.com/host/ — choose **Global** or **EU** host
+1. Register free at https://bitwarden.com/host/ — choose **Global** or **EU** host, and use a real, monitored email address: Bitwarden uses it to notify about out-of-date server versions
 2. Get `INSTALLATION_ID` and `INSTALLATION_KEY`
 3. Set in `.env`:
 
@@ -138,9 +142,11 @@ Push improves real-time sync on mobile and browser extensions. It is **not requi
    VW_PUSH_IDENTITY_URI=https://identity.bitwarden.eu
    ```
 
-4. `docker compose up -d --force-recreate app`
+4. `docker compose up -d --force-recreate vaultwarden-app`
 
 Only works with official Bitwarden apps (App Store / Google Play, not F-Droid).
+Upstream reference:
+[Enabling Mobile Client Push Notification](https://github.com/dani-garcia/vaultwarden/wiki/Enabling-Mobile-Client-push-notification).
 
 ### Step 10: Enable 2FA
 
@@ -179,19 +185,19 @@ Visit `/admin` → **Diagnostics** to see installed vs. latest server and web-va
 After changing SMTP env vars, recreate the app container:
 
 ```bash
-docker compose up -d --force-recreate app
+docker compose up -d --force-recreate vaultwarden-app
 ```
 
 Verify env vars were picked up:
 
 ```bash
-docker compose exec app sh -c 'env | grep -E "^SMTP_HOST=|^SMTP_FROM=|^SMTP_FROM_NAME=|^SMTP_PORT=|^SMTP_SECURITY=|^SMTP_USERNAME="'
+docker compose exec vaultwarden-app sh -c 'env | grep -E "^SMTP_HOST=|^SMTP_FROM=|^SMTP_FROM_NAME=|^SMTP_PORT=|^SMTP_SECURITY=|^SMTP_USERNAME="'
 ```
 
 Check logs after sending an invite:
 
 ```bash
-docker compose logs app --tail=200 | grep -iE "smtp|mail|invite|address|error|lettre"
+docker compose logs vaultwarden-app --tail=200 | grep -iE "smtp|mail|invite|address|error|lettre"
 ```
 
 End-to-end test: invite a user from **Admin → Users → Invite User**. Verify the email arrives. If it lands in Junk, check SPF/DKIM/DMARC records and sender domain reputation.
@@ -201,14 +207,14 @@ End-to-end test: invite a user from **Admin → Users → Invite User**. Verify 
 Check active push variables (key value hidden):
 
 ```bash
-docker compose exec app sh -c 'env | grep -E "^PUSH_ENABLED=|^PUSH_RELAY_URI=|^PUSH_IDENTITY_URI=|^PUSH_INSTALLATION_ID="'
-docker compose exec app sh -c 'env | grep -q "^PUSH_INSTALLATION_KEY=." && echo "KEY is set" || echo "KEY is empty"'
+docker compose exec vaultwarden-app sh -c 'env | grep -E "^PUSH_ENABLED=|^PUSH_RELAY_URI=|^PUSH_IDENTITY_URI=|^PUSH_INSTALLATION_ID="'
+docker compose exec vaultwarden-app sh -c 'env | grep -q "^PUSH_INSTALLATION_KEY=." && echo "KEY is set" || echo "KEY is empty"'
 ```
 
 Follow push-related log lines:
 
 ```bash
-docker compose logs app --follow | grep -iE "push|relay|identity|token"
+docker compose logs vaultwarden-app --follow | grep -iE "push|relay|identity|token"
 ```
 
 If you see `Unexpected push token received from bitwarden server: error decoding response body`: you are using EU credentials (`bitwarden.eu` registration) without setting the EU relay URIs. Add both `VW_PUSH_RELAY_URI` and `VW_PUSH_IDENTITY_URI` to `.env` and recreate the container.

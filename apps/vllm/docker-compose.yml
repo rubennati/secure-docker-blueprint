@@ -1,0 +1,158 @@
+# =============================================================================
+# vLLM — production stack (Traefik + Docker Secrets, NVIDIA GPU)
+# =============================================================================
+# High-throughput, OpenAI-compatible model serving on an NVIDIA GPU. Downloads
+# the model from Hugging Face on first start and keeps it in ./volumes/cache.
+#
+# Needs an NVIDIA GPU, a driver of 535 or newer and the NVIDIA Container
+# Toolkit on the host. This file has NOT been run on GPU hardware in this
+# repository — see README, "What has and has not been verified".
+#
+# vLLM's --api-key protects only the /v1 API. Other paths answer without it,
+# including /invocations, which runs inference. The Traefik router therefore
+# forwards /v1/ and nothing else — see README, "Access model".
+#
+# Spec: docs/standards/compose-structure.md · security-baseline.md
+# =============================================================================
+
+services:
+
+  # --------------------------------------------------------
+  # VLLM
+  # Already application-specific — no role suffix needed (naming-conventions.md).
+  # --------------------------------------------------------
+  vllm:
+    # --- Identity ---
+    image: vllm/vllm-openai:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+
+    # --- Security ---
+    # The image runs as root by default. uid 1000, read_only and dropped
+    # capabilities were validated against the CPU build of the same release
+    # (vllm/vllm-openai-cpu:v0.29.0, real inference) with every cache redirected
+    # to /cache. They were NOT run on the CUDA image — see README. /tmp is
+    # noexec tmpfs, which is why no compiler cache points there.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    user: "${VLLM_UID}:${VLLM_GID}"
+
+    # --- Resources ---
+    # Host memory, not VRAM — VRAM is bounded by --gpu-memory-utilization below.
+    # Weights are read through host memory during loading. Starting values, not
+    # measured.
+    memswap_limit: ${VLLM_MEMORY}
+    shm_size: ${VLLM_SHM_SIZE}
+    deploy:
+      resources:
+        limits:
+          memory: ${VLLM_MEMORY}
+          cpus: "${VLLM_CPUS}"
+          pids: 2048
+        reservations:
+          memory: 4g
+          devices:
+            - driver: nvidia
+              count: ${VLLM_GPU_COUNT}
+              capabilities: [gpu]
+
+    # --- Configuration ---
+    # shm_size is mandatory, not tuning: with Docker's default 64 MiB /dev/shm
+    # the engine refuses to start ("Insufficient space in /dev/shm: 160 MiB
+    # required, 64 MiB free") — reproduced on the CPU build.
+    #
+    # Every cache and temporary file lives under /cache (HOME, TMPDIR, Hugging
+    # Face, vLLM, TorchInductor, Triton): the root filesystem is read-only and
+    # /tmp is a noexec tmpfs, and compiled kernels have to be loadable.
+    # TorchInductor writes generated code to a temporary .so; on the noexec
+    # /tmp the engine dies with "failed to map segment from shared object" —
+    # reproduced on the CPU build, fixed by TMPDIR. vLLM loads cache contents
+    # without integrity checks, so that volume must be private to this container.
+    #
+    # VLLM_NO_USAGE_STATS and DO_NOT_TRACK stop vLLM's usage reporting.
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh", "vllm", "serve"]
+    command:
+      - ${VLLM_MODEL}
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --served-model-name
+      - ${VLLM_SERVED_MODEL_NAME}
+      - --max-model-len
+      - "${VLLM_MAX_MODEL_LEN}"
+      - --gpu-memory-utilization
+      - "${VLLM_GPU_MEMORY_UTILIZATION}"
+      - --tensor-parallel-size
+      - "${VLLM_GPU_COUNT}"
+    environment:
+      TZ: ${TZ}
+      HOME: /cache
+      TMPDIR: /cache
+      HF_HOME: /cache/huggingface
+      VLLM_CACHE_ROOT: /cache/vllm
+      TORCHINDUCTOR_CACHE_DIR: /cache/torchinductor
+      TRITON_CACHE_DIR: /cache/triton
+      VLLM_NO_USAGE_STATS: "1"
+      DO_NOT_TRACK: "1"
+    secrets:
+      - VLLM_API_KEY
+      - HF_TOKEN
+
+    # --- Storage ---
+    volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
+      - ./volumes/cache:/cache
+
+    # --- Networking ---
+    # proxy-public: Traefik routes /v1/, and the weights come from Hugging Face.
+    # Every container on this network reaches ALL of vLLM's paths directly, past
+    # Traefik — including the ones --api-key does not cover.
+    networks:
+      - proxy-public
+
+    # --- Traefik ---
+    # The rule forwards /v1/ only. /health, /metrics, /invocations, /tokenize and
+    # the rest are not reachable through Traefik.
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/v1/`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8000"
+
+    # --- Health & Observability ---
+    # /health answers without the key and only once the model is loaded. Python
+    # is used because it is in the image whichever build it is. A first start
+    # downloads the model and compiles kernels — start_period covers that.
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import sys, urllib.request; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5).status == 200 else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 900s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  VLLM_API_KEY:
+    file: ./.secrets/vllm_api_key.txt
+  HF_TOKEN:
+    file: ./.secrets/hf_token.txt

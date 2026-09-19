@@ -71,12 +71,11 @@ different appetites for host resources.
 
 ## What is deliberately absent
 
-The repository ships around sixty stacks. The table above lists the ones a guide
-has been written for; being on it says nothing about how much of a stack has been
-exercised — that is what each guide's evidence line is for. The rest are in the
-repository with their own READMEs, and
-[the full list](https://github.com/rubennati/secure-docker-blueprint#whats-included)
-is there rather than here.
+The repository ships more stacks than have a guide. The table above lists the ones a
+guide has been written for; being on it says nothing about how much of a stack has
+been exercised — that is what each guide's evidence line is for. Every stack, guided
+or not, is in [the catalogue](/catalogue/), grouped by purpose, with what has been
+checked on a host.
 
 ## Where to go from here
 

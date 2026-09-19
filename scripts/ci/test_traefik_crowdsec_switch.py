@@ -21,7 +21,6 @@ deployment is never touched. The cases pin down the contract:
 Run:
     python3 -m unittest scripts/ci/test_traefik_crowdsec_switch.py
 """
-import re
 import shutil
 import subprocess
 import tempfile

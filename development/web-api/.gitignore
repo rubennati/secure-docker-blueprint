@@ -1,0 +1,5 @@
+.env
+.env.local
+volumes/
+fixture/node_modules/
+fixture/dist/

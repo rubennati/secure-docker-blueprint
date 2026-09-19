@@ -7,6 +7,8 @@
 - **Docs:** https://homarr.dev/
 - **License:** MIT (fork heritage: originally forked from `ajnart/homarr`; current maintainer `homarr-labs`)
 - **Origin:** Community · homarr-labs · EU contributors
+- **Domain:** Dashboards
+- **Role:** Dashboard with integrations into the services you run
 - **Based on version:** `v1.77.1`
 - **Last verified:** 2026-05-02 (v1.60.0)
 

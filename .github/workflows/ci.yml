@@ -189,7 +189,7 @@ jobs:
 
   # ─────────────────────────────────────────────
   # 7. STATUS MODEL (docs/standards/status-model.md)
-  # Catches a status claim that is not backed — the owner and the root README
+  # Catches a status claim that is not backed — the owner and a category README
   # disagreeing, ✅ without a verification date, or LIFECYCLE.md left stale.
   # ─────────────────────────────────────────────
   lifecycle:
@@ -206,6 +206,12 @@ jobs:
       # before anyone looked. This is what stops it happening again.
       - name: Check licence and origin are complete and current
         run: python3 scripts/ci/sovereignty-report.py --check
+
+      # The site's catalogue is generated from the stacks. A stack without a
+      # domain or role, or a stale catalogue.json, fails here instead of
+      # leaving the site quietly behind the repository.
+      - name: Check the site catalogue is complete and current
+        run: python3 scripts/ci/site-catalogue.py --check
 
   # ─────────────────────────────────────────────
   # 8. CHECKER COVERAGE

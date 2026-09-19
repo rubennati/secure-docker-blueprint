@@ -10,8 +10,10 @@
 - **Image:** https://hub.docker.com/r/VENDOR/IMAGE
 - **GitHub:** https://github.com/VENDOR/REPO
 - **Docs:** https://docs.example.com
-- **License:** `__REPLACE_ME__` (e.g. MIT, Apache 2.0, AGPL-3.0 — see the license policy in `ROADMAP.md`)
+- **License:** `__REPLACE_ME__` (e.g. MIT, Apache 2.0, AGPL-3.0 — see the licence policy in `docs/sovereignty/provenance.md`)
 - **Origin:** `__REPLACE_ME__` (e.g. Germany · Nextcloud GmbH · EU — or: US · Acme Inc · non-EU)
+- **Domain:** `__REPLACE_ME__` (one of the groups in `scripts/ci/site-catalogue.py`, e.g. Files, wiki and collaboration)
+- **Role:** `__REPLACE_ME__` (one line, what it is for — shown on the site's catalogue)
 - **Based on version:** `__REPLACE_ME__`
 - **Last verified:** `__REPLACE_ME__` (v`__REPLACE_ME__`)
 

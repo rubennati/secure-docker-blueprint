@@ -1,0 +1,98 @@
+# =============================================================================
+# static-site pattern — production stack (Traefik, no backend)
+# =============================================================================
+# Reusable deployment shape for a build step that produces static files. Copy
+# this directory into apps/ or business/ under the real project's name, replace
+# the build context below with the real source, and follow
+# docs/standards/custom-application.md for image identity.
+#
+# BLOCK ORDER matches every other stack in this repository — see
+# apps/_reference/docker-compose.yml.
+#
+# Spec: docs/standards/compose-structure.md · security-baseline.md
+# =============================================================================
+
+services:
+
+  app:
+    # --- Identity ---
+    # No registry image — this stack builds its own. `context` points at
+    # whichever recipe the real project's source replaces; swap it for the
+    # project's own root once adopted. The tag is a local identity only, never
+    # pushed to a registry.
+    build:
+      context: ./recipes/astro
+      dockerfile: Dockerfile
+    image: ${COMPOSE_PROJECT_NAME}-local:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+
+    # --- Security ---
+    # nginx-unprivileged already runs as a non-root user; read_only is possible
+    # here specifically because the pattern has nothing to write at runtime —
+    # the site is baked into the image at build time.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx
+
+    # --- Resources ---
+    # Static file serving has no database or worker load. Starting values, not
+    # measured — retune from `docker stats` once a real project is deployed.
+    memswap_limit: 256m
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.50"
+          pids: 100
+        reservations:
+          memory: 64m
+
+    # --- Configuration ---
+    # No secrets and no application config — the entire artifact is the built
+    # image. TZ only affects log timestamps.
+    environment:
+      TZ: ${TZ}
+
+    # --- Storage ---
+    # None. The image is read-only and the site is part of it — nothing here
+    # persists or needs a volume.
+
+    # --- Networking ---
+    # proxy-public only. There is no backend to isolate, so this pattern has no
+    # app-internal network — that is the concrete difference from a stack with
+    # a database.
+    networks:
+      - proxy-public
+
+    # --- Traefik ---
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8080"
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO/dev/null http://127.0.0.1:8080/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true

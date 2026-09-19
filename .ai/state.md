@@ -2,12 +2,14 @@
 
 > If this file conflicts with git (branch, commits, tags), trust git.
 
-**Last updated:** 2026-09-14
+**Last updated:** 2026-09-19
 
-- **Phase:** pre-1.0. Latest tag `v0.8.3` (2026-09-14). Work happens on a
+- **Phase:** pre-1.0. Latest tag `v0.9.0` (2026-09-17); `dev` carries the Priority 1
+  capability work below, unreleased. Work happens on a
   short-lived branch and reaches `dev` through a pull request; `dev` reaches
   `main` the same way. Both branches reject a direct push.
-- **Current milestone:** v0.10.0 — Measured resource limits.
+- **Current milestone:** v0.10.0 — Measured resource limits. The path to v1.0.0 and
+  what still blocks it: [`../docs/v1-readiness-audit.md`](../docs/v1-readiness-audit.md).
 - **Definition of done for v0.10.0:** every `✅` stack's limits come from a
   measurement on a real install rather than from the derivation rule
   (`docs/resource-measurement.md`).
@@ -52,6 +54,26 @@
   request into `dev` and into `main`, and both rulesets require the branch to be
   up to date before merging. CodeQL reports on the same pull requests and is not
   a required check.
+
+## Priority 1 functional expansion — complete 2026-09-19
+
+Custom Development, AI/Local AI, Document/Data Processing, PAM/bastion,
+secret-sharing and security-tooling capabilities, each landed as its own pull
+request. What each stack found that changed its shape is in that stack's
+`UPSTREAM.md`; what belongs to the architecture is in `docs/architecture.md`.
+
+| Batch | Landed | PR |
+|---|---|---|
+| `development/` domain, `static-site`, `web-api` | 2026-09-18 | #106 |
+| `apps/docling-serve` | 2026-09-18 | #107 |
+| `apps/greenmail`, `apps/windmill` | 2026-09-18 | #108 |
+| `apps/qdrant`, `apps/ollama`, `apps/vllm` | 2026-09-18 | #109 |
+| optional host watchdogs | 2026-09-18 | #111 |
+| PAM/bastion alternatives | 2026-09-19 | #112 |
+| secret sharing, Threat Dragon | 2026-09-19 | #113 |
+| zot, step-ca, OpenCanary, Dependency-Track, DFIR-IRIS, Velociraptor | 2026-09-19 | #114 |
+| LiteLLM, Open WebUI, agentgateway | 2026-09-19 | #116 |
+| Dify, Langfuse | 2026-09-19 | pending review |
 
 ## v0.8.1 on a host — 2026-09-13
 
@@ -143,6 +165,13 @@ domain, website navigation) and what stays out of scope: `docs/architecture.md`
 → "Physical layout, conceptual domains and navigation"; reasoning in
 `decisions.md`.
 
+That path now has a standard — `docs/standards/custom-application.md`, derived
+from `business/vikunja` and `apps/caldiy`, the two stacks that already build
+their own image. It owns source, build, image identity and verification only;
+everything after the image is unchanged. Four binding rules, and practices seen
+in only one of the two shapes are recorded as non-binding. Still absent: a
+first-party application, source with no upstream.
+
 ## Host resilience — policy in place 2026-09, mechanism deferred
 
 An OnlyOffice process on a derived deployment took a host down; the stack's own 4G
@@ -156,7 +185,7 @@ longer acceptable — Docker otherwise grants as much swap again as the memory l
 which is how a container inside its cap still pages a host into uselessness.
 `security-baseline.md` owns the requirement, `compose-structure.md` the values.
 `no-resources` and `no-swap-policy` are both FAIL in `check-structure.py` —
-150/150 production services state `memswap_limit`, all at the default (equal to
+Every production service states `memswap_limit`, all at the default (equal to
 `memory`); no evidenced case for a higher value has come up yet. `live-restore` is in the reference
 daemon configuration. `resource-measurement.md` carries a drift procedure — compose
 config against `docker inspect` against cgroup state — and the corrected meaning of

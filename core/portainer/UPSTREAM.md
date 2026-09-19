@@ -7,6 +7,8 @@
 - **Docs:** https://docs.portainer.io/
 - **License:** zlib
 - **Origin:** New Zealand · Portainer.io Ltd · non-EU
+- **Domain:** Infrastructure
+- **Role:** Docker management web interface, reaching Docker through a filtered socket proxy
 - **Based on version:** `2.39.7` (Community Edition)
 - **Last checked:** 2026-04-16
 

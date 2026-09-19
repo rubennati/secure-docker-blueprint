@@ -1,0 +1,93 @@
+# =============================================================================
+# Teleport — production stack (no Traefik — see below)
+# =============================================================================
+# Identity- and certificate-based infrastructure access. Every other stack in
+# this repository puts Traefik in front of its HTTP(S) interface; this one
+# deliberately does not. Teleport's proxy port multiplexes the web UI, tsh
+# CLI traffic, SSH, Kubernetes and database protocols behind its own
+# certificate-based mutual TLS on one port (verified: a fresh config sets
+# `proxy_listener_mode: multiplex` by default) — a TLS-terminating reverse
+# proxy in front would decrypt exactly the handshake Teleport's own client
+# certificate auth needs to see, breaking every non-browser client. Teleport
+# manages its own certificate instead; see README.md#network-exposure.
+#
+# Spec: docs/standards/compose-structure.md · security-baseline.md
+# =============================================================================
+
+services:
+
+  # --------------------------------------------------------
+  # TELEPORT (auth + proxy, single-node, embedded BoltDB backend)
+  # --------------------------------------------------------
+  teleport:
+    # --- Identity ---
+    image: public.ecr.aws/gravitational/teleport-distroless:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+
+    # --- Security ---
+    # Runs as root (UID 0) by default — verified via `docker inspect`; no
+    # documented non-root option was found, so this is the vendor default,
+    # not a choice made here. cap_drop: ALL, read_only and
+    # no-new-privileges were all verified together against a live
+    # container: it started, both listeners bound, and `debug readyz`
+    # reported ready with zero capabilities re-added.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+
+    # --- Resources ---
+    # No official minimum is published for a single-node auth+proxy. A
+    # starting point, not measured against real session load.
+    memswap_limit: 512m
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          pids: 200
+        reservations:
+          memory: 128m
+
+    # --- Configuration ---
+    # No environment-driven configuration: everything is in
+    # ./config/teleport.yaml, generated once (README.md#setup). The image
+    # has no _FILE-style secret input to speak of — there is nothing to
+    # inject here at all.
+    environment:
+      TZ: ${TZ}
+
+    # --- Storage ---
+    # teleport.yaml here; the BoltDB backend (cluster CA, host and user
+    # certificates, audit log) here. Both are the whole secret — see
+    # .env.example's Secrets section.
+    volumes:
+      - ./config:/etc/teleport
+      - ./volumes/data:/var/lib/teleport
+
+    # --- Networking ---
+    # No proxy-public, no Traefik network at all — see the file header.
+    ports:
+      # Node/agent join and inter-service traffic.
+      - "${TELEPORT_AUTH_PORT}:3025"
+      # Multiplexed: web UI, tsh, SSH, Kubernetes, database protocols — all
+      # behind Teleport's own certificate-based TLS. A raw TCP/TLS listener
+      # Traefik cannot safely sit in front of; see the file header.
+      - "${TELEPORT_PROXY_PORT}:3080"
+
+    # --- Health & Observability ---
+    # The image is distroless — genuinely no shell (verified: `/bin/sh`
+    # does not exist) — so no curl/wget-based check is possible.
+    # `teleport debug readyz` is a real subcommand ("Checks if the instance
+    # is ready to serve requests"), verified against a live container
+    # (`ready (PID:N)`, exit 0) — a true readiness check, not a bare
+    # process-alive probe.
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/teleport", "debug", "readyz", "-c", "/etc/teleport/teleport.yaml"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
