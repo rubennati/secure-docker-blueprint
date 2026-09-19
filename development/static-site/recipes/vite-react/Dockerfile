@@ -17,4 +17,6 @@ RUN npm run build
 # files.
 FROM nginxinc/nginx-unprivileged:1.29-alpine
 COPY --from=builder /src/dist /usr/share/nginx/html
+USER 101
 EXPOSE 8080
+HEALTHCHECK --interval=30s --timeout=10s --retries=5 CMD wget -qO /dev/null http://127.0.0.1:8080/ || exit 1
