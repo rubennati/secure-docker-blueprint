@@ -16,10 +16,10 @@ Pre-1.0 tags are set when a natural milestone is reached, not on a fixed cadence
 The single criterion for v1.0 is: **could someone fork this and run it without
 needing my mental model?**
 
-**Latest tag: v0.9.0 — Secure Operations Baseline (2026-09-17).** `dev` carries
-the work since, unreleased: the `development/` patterns, the document-processing,
-developer-tool, AI-foundation, PAM/bastion, secret-sharing and security-tooling
-stacks, and the optional host watchdogs. What has and has not been established
+**Latest tag: v0.9.1 — Priority 1 stacks (2026-09-19).** It carries the
+`development/` patterns and 26 new stacks — document processing, developer tools,
+AI, PAM/bastion, secret sharing and security tooling — plus the optional host
+watchdogs and the site catalogue. What has and has not been established
 per stack is in [`LIFECYCLE.md`](LIFECYCLE.md).
 
 ### v0.10.0 — Measured resource limits
@@ -92,7 +92,7 @@ verified today must meet the current baseline-aligned criteria in
 - Pinned to a new major in a dependency sweep and not yet run anywhere —
   [`LIFECYCLE.md`](LIFECYCLE.md) marks each `pin-drifted` and carries the pin.
 - Never started on a host: UrBackup, and the security, AI, PAM/bastion and
-  secret-sharing stacks added since v0.9.0.
+  secret-sharing stacks added in v0.9.1.
 
 **Cal.diY hardening** ([`apps/caldiy/docs/hardening-plan.md`](apps/caldiy/docs/hardening-plan.md))
 runs on its own track. Phase 0 and Phase 1 configuration has landed; the Phase 0
