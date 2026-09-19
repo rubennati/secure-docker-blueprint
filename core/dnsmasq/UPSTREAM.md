@@ -7,6 +7,8 @@
 - **dnsmasq docs:** https://thekelleys.org.uk/dnsmasq/doc.html
 - **License:** GPL-2.0 or GPL-3.0, at your discretion
 - **Origin:** UK · Simon Kelley · non-EU
+- **Domain:** Infrastructure
+- **Role:** DNS forwarder with wildcard zones for split-DNS setups
 - **Based on version:** `2.93` (image changed — see Version / tag notes)
 - **Last checked:** 2026-04-14
 

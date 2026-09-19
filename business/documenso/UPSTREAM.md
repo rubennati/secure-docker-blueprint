@@ -8,6 +8,8 @@
 - **Self-host compose reference:** `docker/production/compose.yml` in the upstream repo
 - **License:** AGPL-3.0
 - **Origin:** US · Documenso Inc · non-EU (development largely from Hamburg, Germany)
+- **Domain:** Documents and e-signature
+- **Role:** Document signing with your own certificate
 - **Based on version:** `v2.18.0`
 - **Last verified:** — (config authored 2026-07-26; not yet run on a live server)
 

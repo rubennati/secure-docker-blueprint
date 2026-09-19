@@ -4,6 +4,8 @@
 
 - **License:** Apache-2.0
 - **Origin:** First-party · this repository · no single jurisdiction
+- **Domain:** Infrastructure
+- **Role:** Optional host scripts that restart the Docker daemon or the proxy after a confirmed, sustained failure
 
 No upstream project — both scripts are authored here and released as part of
 Secure Docker Blueprint, under the repository's own license.

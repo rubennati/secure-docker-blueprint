@@ -7,6 +7,8 @@
 - **Docker Hub:** https://hub.docker.com/r/louislam/uptime-kuma
 - **License:** MIT
 - **Origin:** Hong Kong · Louis Lam · non-EU
+- **Domain:** Monitoring
+- **Role:** Uptime monitoring with a status page and many notification channels
 - **Based on version:** `2.5.4`
 - **Last verified:** 2026-09-13 (2.5.4) — patch recreated on a live host, healthy, route unchanged. 2026-09-08 (2.5.3) — v0.8.0 host session: clean start on SQLite, owner account from the setup page, ntfy notification with an access token, a TCP monitor on a container on `proxy-public`; stopping that container produced the down alert on an iPhone within twenty seconds, starting it the up alert.
 

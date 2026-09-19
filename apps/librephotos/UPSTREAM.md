@@ -7,6 +7,8 @@
 - **Docker Hub:** https://hub.docker.com/u/reallibrephotos
 - **License:** MIT
 - **Origin:** Community · no single company · no single jurisdiction
+- **Domain:** Photos
+- **Role:** Photo library with face recognition and search
 - **Based on version:** `1.1.0` (upstream moved from weekly builds to semver)
 - **Last checked:** 2026-04-17
 

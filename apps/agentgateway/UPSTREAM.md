@@ -7,6 +7,8 @@
 - **Docs:** https://agentgateway.dev/docs/
 - **License:** Apache-2.0
 - **Origin:** United States · Linux Foundation project (contributed by Solo.io) · non-EU
+- **Domain:** AI and local AI
+- **Role:** LLM and MCP gateway: one authenticated endpoint in front of model providers and MCP servers
 - **Based on version:** `v1.5.0`
 
 No `Last verified` line yet — see [Verification performed](#verification-performed-2026-09-19)

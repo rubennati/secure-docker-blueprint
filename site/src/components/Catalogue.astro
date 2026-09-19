@@ -1,0 +1,186 @@
+---
+/**
+ * Every stack the repository ships, grouped by what a reader wants done.
+ *
+ * Generated from each stack's own UPSTREAM.md by `scripts/ci/site-catalogue.py`
+ * and checked in CI, so a stack cannot be missing from here or listed here
+ * without existing. Nothing below is retyped.
+ *
+ * What was checked is shown as evidence, not as a grade: a date and the version
+ * it was checked against, or the plain statement that no host run has happened.
+ * The filter is plain DOM — it narrows the list; it does not rank it.
+ */
+import catalogue from '../data/catalogue.json';
+
+type Entry = {
+	name: string;
+	domain: string;
+	role: string;
+	upstream: string | null;
+	version: string;
+	state: string;
+	verified: string | null;
+	verified_version: string | null;
+	path: string;
+};
+
+const DOMAIN_ORDER = [
+	'Infrastructure',
+	'Identity, access and secrets',
+	'Security operations',
+	'AI and local AI',
+	'Documents and e-signature',
+	'Files, wiki and collaboration',
+	'Photos',
+	'Dashboards',
+	'Publishing, forms and scheduling',
+	'Automation and data',
+	'Developer tools',
+	'Business operations',
+	'Monitoring',
+	'Backup',
+];
+
+const entries = Object.values(catalogue as Record<string, Entry>);
+const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+const groups = DOMAIN_ORDER.map((domain) => ({
+	domain,
+	id: slug(domain),
+	items: entries.filter((e) => e.domain === domain).sort((a, b) => a.name.localeCompare(b.name)),
+})).filter((g) => g.items.length > 0);
+
+const REPO = 'https://github.com/rubennati/secure-docker-blueprint/tree/main/';
+
+const checked = (e: Entry) =>
+	e.verified
+		? `Checked on a host ${new Date(e.verified).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}${e.verified_version ? ` (${e.verified_version})` : ''}`
+		: 'Not yet run on a host';
+---
+
+<div class="cat">
+	<p class="cat__summary">
+		<strong>{entries.length}</strong> stacks in <strong>{groups.length}</strong> groups.
+	</p>
+
+	<label class="cat__filter">
+		Filter
+		<input type="search" placeholder="name or what it does" autocomplete="off" />
+	</label>
+
+	<nav class="cat__jump" aria-label="Groups">
+		{groups.map((g) => <a href={`#${g.id}`}>{g.domain} <span>{g.items.length}</span></a>)}
+	</nav>
+
+	{
+		groups.map((g) => (
+			<section class="cat__group" data-group>
+				<h2 id={g.id}>{g.domain}</h2>
+				<ul>
+					{g.items.map((e) => (
+						<li data-text={`${e.name} ${e.role}`.toLowerCase()}>
+							<div class="cat__head">
+								<strong>{e.name}</strong>
+								{e.version && <code>{e.version}</code>}
+							</div>
+							<p>{e.role}</p>
+							<p class="cat__meta">
+								<span>{checked(e)}</span>
+								<a href={`${REPO}${e.path}`}>Files</a>
+								{e.upstream && <a href={e.upstream}>Upstream</a>}
+							</p>
+						</li>
+					))}
+				</ul>
+			</section>
+		))
+	}
+	<p class="cat__empty" hidden>Nothing matches.</p>
+</div>
+
+<script>
+	const root = document.querySelector('.cat');
+	const input = root?.querySelector<HTMLInputElement>('.cat__filter input');
+	if (root && input) {
+		const items = [...root.querySelectorAll<HTMLElement>('li[data-text]')];
+		const groups = [...root.querySelectorAll<HTMLElement>('[data-group]')];
+		const empty = root.querySelector<HTMLElement>('.cat__empty');
+		input.addEventListener('input', () => {
+			const q = input.value.trim().toLowerCase();
+			for (const li of items) li.hidden = q !== '' && !li.dataset.text!.includes(q);
+			for (const g of groups) g.hidden = ![...g.querySelectorAll('li')].some((li) => !li.hidden);
+			if (empty) empty.hidden = groups.some((g) => !g.hidden);
+		});
+	}
+</script>
+
+<style>
+	.cat__summary {
+		margin-bottom: 0.75rem;
+	}
+	.cat__filter {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		font-size: 0.85rem;
+		color: var(--sl-color-gray-2);
+	}
+	.cat__filter input {
+		font: inherit;
+		flex: 1;
+		max-width: 22rem;
+		padding: 0.25rem 0.5rem;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.25rem;
+		background: var(--sl-color-bg);
+		color: var(--sl-color-white);
+	}
+	.cat__jump {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem 0.9rem;
+		margin-block: 1rem;
+		font-size: 0.85rem;
+	}
+	.cat__jump span {
+		color: var(--sl-color-gray-3);
+	}
+	.cat ul {
+		list-style: none;
+		padding: 0;
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+		gap: 0.75rem;
+	}
+	.cat li {
+		padding: 0.7rem 0.85rem;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.4rem;
+	}
+	.cat li[hidden],
+	.cat section[hidden] {
+		display: none;
+	}
+	.cat__head {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 0.5rem;
+	}
+	.cat__head code {
+		font-size: 0.72rem;
+		color: var(--sl-color-gray-3);
+		overflow-wrap: anywhere;
+	}
+	.cat li p {
+		margin: 0.3rem 0 0;
+		font-size: 0.88rem;
+	}
+	.cat__meta {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.2rem 0.8rem;
+		font-size: 0.75rem !important;
+		color: var(--sl-color-gray-3);
+	}
+</style>

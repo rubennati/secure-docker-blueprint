@@ -7,6 +7,8 @@
 - **Docs:** https://docling-project.github.io/docling-serve/
 - **License:** MIT
 - **Origin:** LF AI & Data Foundation (US non-profit) · originated at IBM Research Zurich, Switzerland · non-EU
+- **Domain:** AI and local AI
+- **Role:** Document understanding as an API: layout, tables and Markdown or JSON export for AI pipelines
 - **Based on version:** `v1.34.0`
 
 No `Last verified` line yet — see [Verification performed](#verification-performed-2026-09-18)

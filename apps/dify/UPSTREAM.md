@@ -7,6 +7,8 @@
 - **Docs:** https://docs.dify.ai/
 - **License:** Dify Open Source License (Apache-2.0 with additional conditions: no multi-tenant service without written authorisation, frontend logo and copyright preserved; not OSI-approved)
 - **Origin:** LangGenius · no country stated in its published terms · no country
+- **Domain:** AI and local AI
+- **Role:** LLM application platform: chat and workflow apps, knowledge bases, plugin-based model providers
 - **Based on version:** `1.17.1`
 
 No `Last verified` line yet — see [Verification performed](#verification-performed-2026-09-19)

@@ -7,6 +7,8 @@
 - **Docs:** https://yopass.se/docs
 - **License:** Apache-2.0
 - **Origin:** Sweden · Jonas Haals (individual maintainer, corporate-adjacent — Spotify, Doddle and Gumtree Australia are named as users, not owners) · EU
+- **Domain:** Identity, access and secrets
+- **Role:** Self-destructing links for handing someone a credential once
 - **Based on version:** `14.10.0`
 - **Verification snapshot:** 2026-09-19 — local Compose stack booted and exercised (see README.md's Preview → Ready gate); not yet run behind a real Traefik host
 

@@ -117,11 +117,11 @@ Status is the state after the PR named.
 
 | ID | Finding | Evidence | Class | Status |
 |---|---|---|---|---|
-| W1 | 48 of 84 stacks have no dedicated page, among them all seven monitoring stacks, both backup stacks and every Priority 1 stack; 33 of them appear only as a row in the licence table | [D](#d-website-parity) | FIX BEFORE V1 | Open — PR 2 |
-| W2 | Applications index says "around sixty stacks" and points to GitHub for the rest | `applications/index.md` | FIX BEFORE V1 | Open — PR 2 |
-| W3 | `llms.txt` states no local single-machine path is documented; the Infrastructure page documents it | `pages/llms.txt.ts`, `infrastructure/index.md` | FIX BEFORE V1 | Open — PR 2 |
-| W4 | Navigation mirrors the directories (Infrastructure = `core/`, Applications = `apps/`); no route by problem | `astro.config.mjs` | FIX BEFORE V1 | Open — PR 2 (Catalogue section) |
-| W5 | Parity between repository and site is a manual list and fell 48 stacks behind | W1 | FIX BEFORE V1 | Open — PR 2 (generated catalogue, checked in CI) |
+| W1 | 48 of 84 stacks have no dedicated page, among them all seven monitoring stacks, both backup stacks and every Priority 1 stack; 33 of them appear only as a row in the licence table | [D](#d-website-parity) | FIX BEFORE V1 | Resolved — catalogue and corrected text |
+| W2 | Applications index says "around sixty stacks" and points to GitHub for the rest | `applications/index.md` | FIX BEFORE V1 | Resolved — catalogue and corrected text |
+| W3 | `llms.txt` states no local single-machine path is documented; the Infrastructure page documents it | `pages/llms.txt.ts`, `infrastructure/index.md` | FIX BEFORE V1 | Resolved — catalogue and corrected text |
+| W4 | Navigation mirrors the directories (Infrastructure = `core/`, Applications = `apps/`); no route by problem | `astro.config.mjs` | FIX BEFORE V1 | Resolved — Catalogue section |
+| W5 | Parity between repository and site is a manual list and fell 48 stacks behind | W1 | FIX BEFORE V1 | Resolved — generated catalogue, checked in CI |
 | W6 | The old gate demanded a choosing page for every capability with more than one option. That does not follow from the current model — overlap is allowed and nothing is ranked — and a page per capability invites a winner. The model needs complete discovery (W1) and, where alternatives differ in a way the catalogue cannot show, a short comparison. One choosing page exists (`applications/choosing`) | site tree | Superseded by W1 plus proportionate comparison; not a blocker | Open — PR 2 gives every domain a role column; further comparison is editorial |
 | W7 | Legal notice, privacy statement, domain and `security.txt` carry personal data in a public, forkable repository. Possible v1.0 impact: v1.0 asserts a forkable template and a fork inherits the imprint; whether that blocks depends on D3 | design in `.ai/decisions.md` | DECISION REQUIRED | Open — D3 |
 
@@ -130,8 +130,8 @@ Status is the state after the PR named.
 | ID | Finding | Evidence | Class | Status |
 |---|---|---|---|---|
 | C1 | Trivy image scan runs `--exit-code 0` on every severity, so the security baseline has no gate on known-vulnerable images | `trivy.yml` | **V1 BLOCKER** — confirmed | Open — needs the one-off CRITICAL assessment |
-| C2 | Nothing compared the site with the repository | W5 | FIX BEFORE V1 | Open — PR 2 (`site-catalogue.py --check` in the `Status model` job) |
-| C3 | The site workflow triggers only on `site/**`, so a repository change cannot break the site build unseen | `site.yml` | CLEANUP | Open — PR 2 (parity runs in main CI) |
+| C2 | Nothing compared the site with the repository | W5 | FIX BEFORE V1 | Resolved — `site-catalogue.py --check` in the `Status model` job |
+| C3 | The site workflow triggers only on `site/**`, so a repository change cannot break the site build unseen | `site.yml` | CLEANUP | Resolved — parity runs in main CI |
 | C4 | Trivy image scanning runs on pull requests to `main` and weekly, not on pull requests to `dev` | `trivy.yml` | — | By design, stated in its header |
 | C5 | Workflows: 33 action references pinned, all with `permissions:`; ten required jobs match the ruleset names exactly | `check-workflows.py`, `gh api` | — | No finding |
 
@@ -206,7 +206,7 @@ listed.
 | PR | Scope | Status |
 |---|---|---|
 | 1 | Repository truth — this report, ROADMAP, state, counts, provenance, CHANGELOG, lifecycle pin fix, `UPSTREAM` drift | Prepared |
-| 2 | Operator site — generated catalogue for all 84 stacks by name and domain, sidebar, stale-claim fixes, `site-catalogue.py --check` in CI | Not started |
+| 2 | Operator site — generated catalogue for all 84 stacks by name and domain, sidebar, stale-claim fixes, `site-catalogue.py --check` in CI | Done |
 | 3 | Reconciliation — re-run inventory and comparisons, mark findings resolved | Not started |
 
 ## G. Remaining v1.0 blockers
@@ -223,7 +223,7 @@ public site. If the site is part of the v1.0 promise of a forkable template,
 D3 must be decided and implemented first.
 
 **Fix before v1.0, objective:** W1 — every stack discoverable on the site
-(PR 2). Comparison text beyond the catalogue's role column is editorial and not
+(closed by the catalogue). Comparison text beyond the catalogue's role column is editorial and not
 a blocker.
 
 **Post-v1.0 / on hold:** S3 coverage reporting; Priority 2 applications.

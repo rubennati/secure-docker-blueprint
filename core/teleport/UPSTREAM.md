@@ -10,6 +10,8 @@
   binaries and container images, since Teleport 16) — see "Community
   Edition license" below, this is not a simple open-source license
 - **Origin:** USA · Gravitational, Inc. · non-EU
+- **Domain:** Identity, access and secrets
+- **Role:** Access through short-lived certificates instead of standing credentials
 - **Based on version:** `18.11.0`
 - **Verification snapshot:** 2026-09-19 — clean start and hardening under full
   container isolation; no real client connection, no join token exercised

@@ -8,6 +8,8 @@
 - **Live demo:** https://demo.dashy.to/
 - **License:** MIT
 - **Origin:** UK · Alicia Sykes (Lissy93) · non-EU
+- **Domain:** Dashboards
+- **Role:** One page linking everything you run, configured in a single YAML file
 - **Based on version:** `4.6.0`
 - **Last verified:** 2026-05-02 (v4.0.4)
 

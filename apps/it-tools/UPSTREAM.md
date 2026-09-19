@@ -7,6 +7,8 @@
 - **Live demo:** https://it-tools.tech/
 - **License:** GNU GPL v3.0
 - **Origin:** France · CorentinTh · EU
+- **Domain:** Developer tools
+- **Role:** Collection of small utilities: converters, generators and formatters
 - **Based on version:** `2024.10.22-7ca5933` (upstream uses date + commit hash, not semver)
 - **Last verified:** 2026-05-02 (v2024.10.22-7ca5933)
 

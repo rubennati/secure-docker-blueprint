@@ -6,6 +6,8 @@
 - **Wiki:** https://github.com/dani-garcia/vaultwarden/wiki
 - **License:** GPL-3.0
 - **Origin:** Community · unofficial Bitwarden reimplementation · no single jurisdiction
+- **Domain:** Identity, access and secrets
+- **Role:** Password manager: logins, TOTP and shared collections
 - **Based on version:** `1.37.3`
 - **Last checked:** 2026-06-14
 

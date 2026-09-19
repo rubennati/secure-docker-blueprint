@@ -8,6 +8,8 @@
 - **Docker Hub (backend):** https://hub.docker.com/r/opensign/opensignserver
 - **License:** AGPL-3.0
 - **Origin:** India · OpenSign Inc · non-EU
+- **Domain:** Documents and e-signature
+- **Role:** Document signing with qualified-certificate support
 - **Based on version:** `main`, digest-pinned (no semver tags published — see Known Issues in README)
 - **Last checked:** 2026-05-11
 

@@ -11,6 +11,8 @@
   (MIT, BSD-3-Clause, Apache-2.0, GPL-2.0 for one vendored library, CC-BY-4.0
   for icons) — all permissive, none affecting self-hosted use.
 - **Origin:** Community project, no single company, maintained collectively on GitHub · no single jurisdiction
+- **Domain:** Identity, access and secrets
+- **Role:** Zero-knowledge paste service for text and secrets
 - **Based on version:** `2.0.6`
 - **Verification snapshot:** 2026-09-19 — local Compose stack booted and
   exercised (see README.md's Preview → Ready gate); not yet run behind a

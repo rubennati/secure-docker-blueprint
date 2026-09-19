@@ -9,6 +9,8 @@
 - **Config reference:** https://docs.paperless-ngx.com/configuration/
 - **License:** MIT
 - **Origin:** Community · no single company · no single jurisdiction
+- **Domain:** Documents and e-signature
+- **Role:** Document management with OCR, tagging and full-text search
 - **Based on version:** `3.1.3`
 - **Last verified:** 2026-05-03 (v2.20.13)
 

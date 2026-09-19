@@ -7,6 +7,8 @@
 - **Docs:** https://qdrant.tech/documentation/
 - **License:** Apache-2.0
 - **Origin:** Germany · Qdrant Solutions GmbH (Berlin) · EU
+- **Domain:** AI and local AI
+- **Role:** Vector database: collections, similarity search with filters, snapshots
 - **Based on version:** `v1.19.1`
 
 No `Last verified` line yet — see [Verification performed](#verification-performed-2026-09-18)

@@ -7,6 +7,8 @@
 - **Docs:** https://zotregistry.dev
 - **License:** Apache-2.0
 - **Origin:** Community project under the CNCF sandbox umbrella, no single company · no single jurisdiction
+- **Domain:** Developer tools
+- **Role:** OCI registry for your own build output
 - **Based on version:** `v2.1.21`
 - **Verification snapshot:** 2026-09-19 — local Compose stack booted,
   authentication and access-control policy exercised against a live

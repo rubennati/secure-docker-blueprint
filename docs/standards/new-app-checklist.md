@@ -193,6 +193,17 @@ Two fields are read by a second checker and cannot be left blank:
       imprint or legal page. If it states no country, write that — an honest
       blank beats a plausible guess.
 
+Two more feed the site's catalogue:
+
+- [ ] **`- **Domain:**`** — one of the groups defined in
+      `scripts/ci/site-catalogue.py` (`DOMAINS`), by what the reader wants done, not
+      by the directory the stack sits in.
+- [ ] **`- **Role:**`** — one line, at most 140 characters: what it is for. Plain
+      words; no verification claims, no comparison with other products.
+
+`scripts/ci/site-catalogue.py --check` fails on a missing or unknown value and on a
+stale `site/src/data/catalogue.json`.
+
 `scripts/ci/sovereignty-report.py --check` fails on a missing field or an
 unrecognised licence spelling, so a new licence forces a decision about which
 class it belongs to. See [Provenance](../sovereignty/provenance.md).

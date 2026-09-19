@@ -7,6 +7,8 @@
 - **Docker Hub:** https://hub.docker.com/r/listmonk/listmonk
 - **License:** AGPL-3.0
 - **Origin:** India · Zerodha (Kailash Nadh) · non-EU
+- **Domain:** Publishing, forms and scheduling
+- **Role:** Newsletter and mailing-list manager
 - **Based on version:** `v6.2.0`
 - **Last checked:** 2026-05-03
 

@@ -7,6 +7,8 @@
 - **Docs:** https://www.windmill.dev/docs/
 - **License:** AGPL-3.0 (Community Edition core, with Apache-2.0 components); Enterprise features are under a separate commercial licence
 - **Origin:** Windmill Labs · no country stated in its published terms · no country
+- **Domain:** Automation and data
+- **Role:** Code-first scripts, flows, APIs and scheduled jobs on a queue
 - **Based on version:** `1.814.0`
 
 No `Last verified` line yet — see [Verification performed](#verification-performed-2026-09-18)

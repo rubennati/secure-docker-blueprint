@@ -7,6 +7,8 @@
 - **Docs:** https://langfuse.com/self-hosting
 - **License:** MIT (core; the `ee/` directories are under a separate enterprise licence)
 - **Origin:** United States · ClickHouse, Inc. (Langfuse has been part of it since 2026-01) · non-EU
+- **Domain:** AI and local AI
+- **Role:** LLM observability: traces, scores and prompts from any instrumented application
 - **Based on version:** `4.38.0`
 
 No `Last verified` line yet — see [Verification performed](#verification-performed-2026-09-19)

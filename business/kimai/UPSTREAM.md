@@ -7,6 +7,8 @@
 - **Docker Hub:** https://hub.docker.com/r/kimai/kimai2
 - **License:** AGPL-3.0
 - **Origin:** Germany · Kevin Papst · EU
+- **Domain:** Business operations
+- **Role:** Time tracking with reports and invoicing hooks
 - **Based on version:** `2.66.0` (see Version / tag notes — the `apache-` prefix is gone)
 - **Last checked:** 2026-05-03
 
