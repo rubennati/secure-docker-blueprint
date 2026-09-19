@@ -1,0 +1,111 @@
+# =============================================================================
+# agentgateway — production stack (Traefik + Docker Secrets)
+# =============================================================================
+# An LLM, MCP and agent gateway: one endpoint in front of model providers and
+# MCP servers, with authentication, routing and a web UI. Standalone; it needs
+# no other stack, and any OpenAI-compatible or MCP backend can sit behind it.
+#
+# Two Traefik routes: the traffic gateway (LLM under /v1, MCP under /mcp) and the
+# UI, which runs on its own gateway with its own authentication.
+#
+# Spec: docs/standards/compose-structure.md · security-baseline.md
+# =============================================================================
+
+services:
+
+  # --------------------------------------------------------
+  # AGENTGATEWAY
+  # Already application-specific — no role suffix needed (naming-conventions.md).
+  # --------------------------------------------------------
+  agentgateway:
+    # --- Identity ---
+    # cr.agentgateway.dev is the registry upstream documents; the GitHub Container
+    # Registry serves the same digest.
+    image: cr.agentgateway.dev/agentgateway:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+
+    # --- Security ---
+    # The image is a static binary running as uid 65532 with no shell. Verified with
+    # 2026-09-18 against v1.5.0: read_only, cap_drop ALL and no-new-privileges
+    # hold; the only writable path is the /data volume.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+
+    # --- Resources ---
+    # A proxy: it forwards, it does not buffer models. Starting values, not measured.
+    memswap_limit: 256m
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "1.00"
+          pids: 100
+        reservations:
+          memory: 64m
+
+    # --- Configuration ---
+    # The config is a read-only file rendered by ops/init.sh. Secrets are files:
+    # the UI's htpasswd is a Docker Secret, and the API key appears in the config
+    # only as a SHA-256 hash.
+    command: ["-f", "/config/config.yaml"]
+    environment:
+      TZ: ${TZ}
+    secrets:
+      - AGW_UI_HTPASSWD
+
+    # --- Storage ---
+    volumes:
+      - ./config/config.yaml:/config/config.yaml:ro
+      - ./volumes/data:/data
+
+    # --- Networking ---
+    # proxy-public: Traefik routes to it, and it reaches the upstream providers.
+    # Every container on this network also reaches the readiness port (15021).
+    # Metrics are bound to loopback in the config.
+    networks:
+      - proxy-public
+
+    # --- Traefik ---
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      # Traffic gateway: LLM /v1 and MCP /mcp
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.service=${COMPOSE_PROJECT_NAME}"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=4000"
+      # UI gateway
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-ui.rule=Host(`${AGW_UI_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-ui.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-ui.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-ui.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-ui.middlewares=${APP_TRAEFIK_THREAT}${AGW_UI_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-ui.service=${COMPOSE_PROJECT_NAME}-ui"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}-ui.loadbalancer.server.port=4001"
+
+    # --- Health & Observability ---
+    # healthcheck: none — the image is a static binary with no shell and no HTTP
+    # client, so there is nothing to run inside it. Upstream serves readiness at
+    # :15021/healthz/ready (verified: returns `ready`); probe it from outside, or
+    # rely on Traefik dropping an unreachable backend.
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  AGW_UI_HTPASSWD:
+    file: ./.secrets/agw_ui_htpasswd.txt

@@ -9,6 +9,16 @@
     "verified_anchored": true,
     "verified_version": "v4.8.1-standalone"
   },
+  "apps/agentgateway": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=v1.5.0",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "apps/bookstack": {
     "backup_docs": "documented",
     "local_stack": "✅",
@@ -189,6 +199,16 @@
     "verified_anchored": false,
     "verified_version": ""
   },
+  "apps/litellm": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=v1.101.0",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "apps/lycheeorg": {
     "backup_docs": "documented",
     "local_stack": "✅",
@@ -266,6 +286,16 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-06-14",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
+  "apps/open-webui": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=v0.11.3",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
     "verified_anchored": false,
     "verified_version": ""
   },

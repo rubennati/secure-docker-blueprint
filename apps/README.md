@@ -174,6 +174,9 @@ here" for why that category stays out of this blueprint entirely.
 |---|---|---|
 | [Ollama](ollama/) | Single container | Local model runtime — pulls models by name, runs on CPU or an NVIDIA GPU, native and OpenAI-compatible API. **No authentication** — the route's access policy is the only gate |
 | [Qdrant](qdrant/) | Single container | Vector database — collections, similarity search with payload filters, snapshots; API key required, REST and gRPC |
+| [LiteLLM](litellm/) | Proxy + PostgreSQL | OpenAI-compatible gateway in front of any model backend — virtual keys with model allowlists and budgets, spend log. Master key for the operator, virtual keys for clients |
+| [Open WebUI](open-webui/) | Single container | Chat interface with user accounts, history and document upload for any OpenAI-compatible endpoint. Administrator created at first start, self-signup off |
+| [agentgateway](agentgateway/) | Single container | LLM and MCP gateway — API-key-protected `/v1` and `/mcp` on one port, web UI behind basic auth. Distroless, no healthcheck |
 | [vLLM](vllm/) | Single container | High-throughput OpenAI-compatible model serving on an NVIDIA GPU. `--api-key` covers `/v1` only, so the route forwards `/v1/` and nothing else. CUDA image not yet run on a GPU |
 
 ### Developer & admin tools

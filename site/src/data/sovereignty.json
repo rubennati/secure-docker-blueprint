@@ -7,6 +7,14 @@
     "license_class": "osi",
     "origin": "Czech Republic · Jakub Vrána · EU"
   },
+  "apps/agentgateway": {
+    "bloc": "non-EU",
+    "country": "United States",
+    "entity": "Linux Foundation project (contributed by Solo.io)",
+    "license": "Apache-2.0",
+    "license_class": "osi",
+    "origin": "United States · Linux Foundation project (contributed by Solo.io) · non-EU"
+  },
   "apps/bookstack": {
     "bloc": "non-EU",
     "country": "UK",
@@ -151,6 +159,14 @@
     "license_class": "osi",
     "origin": "Community · no single company · no single jurisdiction"
   },
+  "apps/litellm": {
+    "bloc": "non-EU",
+    "country": "United States",
+    "entity": "BerriAI, Inc.",
+    "license": "MIT (core; the `enterprise/` directory is under a separate commercial licence)",
+    "license_class": "mixed",
+    "origin": "United States · BerriAI, Inc. · non-EU"
+  },
   "apps/lycheeorg": {
     "bloc": "EU",
     "country": "Community",
@@ -214,6 +230,14 @@
     "license": "AGPL-3.0",
     "license_class": "osi",
     "origin": "Latvia · Ascensio System SIA · EU"
+  },
+  "apps/open-webui": {
+    "bloc": "none",
+    "country": "Open WebUI",
+    "entity": "no country stated in its published terms",
+    "license": "Open WebUI License (BSD-3-Clause with an added branding-preservation clause; not OSI-approved)",
+    "license_class": "source-available",
+    "origin": "Open WebUI · no country stated in its published terms · no country"
   },
   "apps/opencanary": {
     "bloc": "non-EU",

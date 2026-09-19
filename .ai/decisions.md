@@ -43,6 +43,26 @@ new: configured, not yet exercised.
 
 ---
 
+## 2026-09-19 · The AI gateways and chat UI are independent stacks
+
+`apps/litellm`, `apps/open-webui` and `apps/agentgateway` were added without a
+dependency between them or on the foundation stacks. Each takes its backend as
+configuration (an OpenAI-compatible URL) and ships pointing at an Ollama address
+that only resolves if the operator has one; the READMEs say so instead of wiring
+a shared network.
+
+Three secrets findings shaped the stacks. LiteLLM and Open WebUI have no `_FILE`
+variants, so each carries an `entrypoint.sh` that exports Docker Secrets;
+agentgateway's image is distroless and has no shell, so its client key is stored
+in the config only as a SHA-256 hash and its UI login is an htpasswd file mounted
+as a secret. Open WebUI runs as an unprivileged uid though its image defaults to
+root, and creates its administrator from the environment because upstream
+otherwise makes the first registrant the administrator. agentgateway's default
+binds metrics to all interfaces; the template pins them to loopback.
+
+Open WebUI's licence is BSD-3-Clause with a branding-preservation clause, so the
+sovereignty report classes it as source-available rather than OSI.
+
 ## 2026-09-18 · The AI foundation exists; vLLM is documented as unverified on GPU
 
 The 2026-09 position that AI & Local AI stays latent was conditional: it waited

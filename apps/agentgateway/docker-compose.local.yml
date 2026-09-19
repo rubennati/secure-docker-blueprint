@@ -1,0 +1,34 @@
+# agentgateway — local
+#
+#   ops/init.sh                                   # credentials and config
+#   mkdir -p volumes/data
+#   docker compose -f docker-compose.local.yml up -d
+#   curl -H "Authorization: Bearer $(cat .secrets/agw_api_key.txt)" http://localhost:4000/v1/models
+#   docker compose -f docker-compose.local.yml down
+#
+# Point llm.models[].params.baseUrl in config/config.yaml at a backend this
+# container can reach; the default (http://ollama:11434/v1) exists only on a
+# network that also carries an Ollama container.
+
+services:
+
+  agentgateway:
+    image: cr.agentgateway.dev/agentgateway:${APP_TAG:-v1.5.0}
+    container_name: agentgateway-local-app
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    command: ["-f", "/config/config.yaml"]
+    volumes:
+      - ./config/config.yaml:/config/config.yaml:ro
+      - ./.secrets/agw_ui_htpasswd.txt:/run/secrets/AGW_UI_HTPASSWD:ro
+      - ./volumes/data:/data
+    ports:
+      - "127.0.0.1:4000:4000"
+      - "127.0.0.1:4001:4001"
+    networks: [agentgateway-local]
+
+networks:
+  agentgateway-local:
+    name: agentgateway-local

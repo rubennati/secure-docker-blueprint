@@ -78,8 +78,9 @@ each its own pull request. Batch order:
    `apps/qdrant`. vLLM's CUDA image was not run (no GPU, 8.7 GB); it was
    validated on the CPU build and says so. `docs/architecture.md` and
    `ROADMAP.md` updated in the same commit.
-5. AI gateway/UI: `apps/litellm`, `apps/open-webui`, `apps/agentgateway` — not
-   started.
+5. AI gateway/UI — implemented, PR pending review: `apps/litellm`,
+   `apps/open-webui`, `apps/agentgateway`. Each is standalone; findings that
+   shaped the stacks are in each `UPSTREAM.md`.
 6. `apps/dify`, `monitoring/langfuse` — not started.
 
 ## v0.8.1 on a host — 2026-09-13
