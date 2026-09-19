@@ -32,10 +32,10 @@ These controls block merges if violated. Evidence is the CI output from `.github
 |-------|-------|
 | **Implemented?** | Yes |
 | **Enforcement** | CI FAIL — `scripts/ci/check-baseline.py` |
-| **Coverage** | 143 / 145 services. Two documented exceptions: `apps/nextcloud` `app` and `cron` |
+| **Coverage** | 163 / 166 services. Three documented exceptions: `apps/nextcloud` `app` and `cron`, `core/jumpserver` `jumpserver` |
 | **Location** | Every `docker-compose.yml` under `core/`, `apps/`, `business/`, `monitoring/` |
 | **Verification** | `python3 scripts/ci/check-baseline.py` — exits 1 if any service is missing the flag |
-| **Exceptions** | 2 services documented with `reason` / `alternatives` / `risk acceptance` fields: `apps/nextcloud` app + cron (s6-overlay requires root at startup) |
+| **Exceptions** | 3 services documented with `reason` / `alternatives` / `risk acceptance` fields: `apps/nextcloud` app + cron (s6-overlay requires root at startup), `core/jumpserver` (its entrypoint calls `sudo`) |
 | **Gaps** | None — exceptions are structurally enforced in the Python script |
 
 #### 2. `privileged: true` forbidden
@@ -208,12 +208,12 @@ These are in `docs/standards/security-baseline.md` and applied inconsistently ac
 
 | Control | Coverage | Standard Location | CI-Enforced? |
 |---------|----------|------------------|-------------|
-| `read_only: true` | 18 / 145 services | `docs/standards/security-baseline.md` | No |
-| `cap_drop: ALL` | 32 / 145 services | `docs/standards/security-baseline.md` | No |
-| Non-root `user:` | 1 / 145 services | `docs/standards/security-baseline.md` | No |
-| Resource limits (`deploy.resources`) | 145 / 145 services — `memory` and `pids` on every one | `docs/standards/security-baseline.md` | No |
+| `read_only: true` | 44 / 166 services | `docs/standards/security-baseline.md` | No |
+| `cap_drop: ALL` | 69 / 166 services | `docs/standards/security-baseline.md` | No |
+| Non-root `user:` | 9 / 166 services | `docs/standards/security-baseline.md` | No |
+| Resource limits (`deploy.resources`) | 166 / 166 services — `memory` and `pids` on every one | `docs/standards/security-baseline.md` | No |
 | Config mounts with `:ro` | Inconsistent | `docs/standards/security-baseline.md` | No |
-| Docker Secrets (no raw passwords in `environment:`) | 67 / 145 services use a `secrets:` block | `docs/standards/security-baseline.md` | No |
+| Docker Secrets (no raw passwords in `environment:`) | 82 / 166 services use a `secrets:` block | `docs/standards/security-baseline.md` | No |
 
 The soft controls are well-documented but application is inconsistent. `read_only` and `cap_drop` appear to be applied only when the developer remembered to do so, not systematically.
 
@@ -228,7 +228,7 @@ Based on **CIS Docker Benchmark v1.6.0**.
 
 | CIS Control | Status | Evidence | Notes |
 |-------------|--------|----------|-------|
-| **4.1** Create user for container | ⚠ Partial | `user:` on 1/145 services; `no-new-privileges` on 143/145 | Most containers run as image-defined users. No systematic non-root enforcement. |
+| **4.1** Create user for container | ⚠ Partial | `user:` on 9/166 services; `no-new-privileges` on 163/166 | Most containers run as image-defined users. No systematic non-root enforcement. |
 | **4.2** Use trusted base images | ⚠ Partial | Well-known registries (ghcr.io, docker.io). No image signing or digest pinning. | Tags pinned but not digests. No provenance verification. |
 | **4.3** Do not install unnecessary packages | ℹ N/A | Not applicable to compose blueprint — image content is upstream responsibility | |
 | **4.4** Scan images for vulnerabilities | ⚠ Partial | `trivy.yml` § Job 2 (Automated Verification, below) has the current coverage, severity filter and exit behavior | Enforcement is absent — every finding is reported, none fails the job. Coverage is complete for registry images only: locally built images are skipped because Trivy cannot pull them, so `business/vikunja`'s `vikunja-local` is unscanned — see `docs/standards/custom-application.md` |
@@ -238,16 +238,16 @@ Based on **CIS Docker Benchmark v1.6.0**.
 | **4.9** Use COPY not ADD | ✅ | `business/vikunja/Dockerfile` uses `COPY` only, no `ADD` | Not CI-enforced; no checker reads a Dockerfile |
 | **5.1** AppArmor profile | ❌ Not implemented | No `--security-opt apparmor:` in any compose file | |
 | **5.2** SELinux options | ❌ Not implemented | No `--security-opt label:` in any compose file | |
-| **5.3** Capabilities (cap_drop) | ⚠ Partial | Applied on 32/145 services | `cap_drop: ALL` documented as recommended, not enforced |
+| **5.3** Capabilities (cap_drop) | ⚠ Partial | Applied on 69/166 services | `cap_drop: ALL` documented as recommended, not enforced |
 | **5.4** Privileged containers | ✅ Enforced | CI FAIL — `scripts/ci/check-baseline.py` | Zero violations |
 | **5.5** Sensitive host paths | ✅ Enforced | Docker socket via proxy only — CI FAIL for direct mounts | Documented exceptions |
 | **5.6** SSH in containers | ✅ Not present | No SSH daemon in any service | |
 | **5.7** Privileged ports | ✅ Not needed | Traefik handles port binding; app containers use internal ports | |
 | **5.8** Open ports | ✅ Minimal | Only Traefik 80/443 exposed. No DB port exposure on host. | |
 | **5.9** Shared host network | ⚠ Documented | `network_mode: host` in 2 services (dnsmasq, Beszel agent) — documented exceptions | |
-| **5.10** Memory limits | ✅ | `memory` and `pids` on 145/145 services | Values are derived rather than measured — v0.10.0 |
+| **5.10** Memory limits | ✅ | `memory` and `pids` on 166/166 services | Values are derived rather than measured — v0.10.0 |
 | **5.11** CPU limits | ❌ Partial | Same as memory limits | |
-| **5.12** Read-only root FS | ⚠ Partial | Applied on 18/145 services | Not CI-enforced; many images write to their root filesystem |
+| **5.12** Read-only root FS | ⚠ Partial | Applied on 44/166 services | Not CI-enforced; many images write to their root filesystem |
 | **5.14** Bind only to required interfaces | ✅ Yes | `ping` entryPoint bound to `127.0.0.1:8082` | |
 | **5.15** `docker.sock` mount | ✅ Enforced | CI FAIL — socket proxy pattern enforced | Documented exceptions with risk acceptance |
 | **5.25** Restart policy | ✅ Yes | All services use `restart: unless-stopped` | |
@@ -265,10 +265,10 @@ Based on **OWASP Docker Security Cheat Sheet**.
 | Use specific image tags | ✅ Enforced | CI FAIL for `:latest` tags | Not pinned to digest |
 | Do not store secrets in images | ✅ Yes | Docker Secrets pattern; `.gitignore` covers `.env` | Redis password exception documented |
 | Use non-root users | ⚠ Partial | `no-new-privileges` enforced; explicit `user:` in 1 file only | |
-| Use read-only filesystems | ⚠ Partial | 18/145 services | Not systematically enforced |
-| Drop capabilities | ⚠ Partial | 32/145 services | |
+| Use read-only filesystems | ⚠ Partial | 44/166 services | Not systematically enforced |
+| Drop capabilities | ⚠ Partial | 69/166 services | |
 | Disable inter-container communication | ✅ Yes | `internal: true` networks isolate DB tier | |
-| Set resource limits | ✅ | 145/145 services | `memory` and `pids` on every service |
+| Set resource limits | ✅ | 166/166 services | `memory` and `pids` on every service |
 | Use security profiles (AppArmor/SELinux) | ❌ No | None configured | Significant gap |
 | Enable Docker Content Trust | ❌ No | Not configured | |
 | Scan for vulnerabilities | ⚠ Partial | `trivy.yml` § Job 2 (Automated Verification, below) has the current coverage, severity filter and exit behavior | Non-blocking (`--exit-code 0`) — see Missing Verification section |
@@ -394,7 +394,7 @@ The following controls are absent from CI. Ordered by security value.
 |-----|--------|----------------------|
 | **CVE / vulnerability scanning** | ⚠ Partial — see `trivy.yml` § Job 2 above for current coverage | Coverage is no longer the gap; blocking is. Nothing fails the job at any severity yet — see the same section for the summary, artifact and cache behavior that now makes the findings reviewable |
 | **IaC static analysis** | ⚠ Partial — `trivy.yml` config scan runs but is non-blocking | Overlaps with `check-baseline.py`; Trivy config scan exit-code is 0 |
-| **Resource limits coverage** | ✅ Addressed — 145 of 145 services carry a `memory` and a `pids` limit, and `check-structure.py`'s `no-resources` rule names which of the two is missing | Reported as a warning, not a failure. The values are derived rather than measured — v0.10.0 |
+| **Resource limits coverage** | ✅ Addressed — every service carries a `memory` and a `pids` limit, and `check-structure.py`'s `no-resources` rule names which of the two is missing | A failure in CI. The values are derived rather than measured — v0.10.0 |
 | **`__REPLACE_ME__` sentinel check** | ✅ Addressed — `ci.yml` sentinel job | Only covers committed `.env` files; runtime `.env` files are gitignored and unchecked |
 | **OpenSSF Scorecard** — ✅ done, `scorecard.yml` | ✅ Addressed — `scorecard.yml` | Score is a posture signal, not a blocking control |
 
@@ -406,8 +406,8 @@ The following controls are absent from CI. Ordered by security value.
 | **Image signing / provenance** | No verification that images come from the claimed publisher. | cosign, SLSA provenance, Sigstore |
 | **SBOM generation** | No Software Bill of Materials. Unknown what packages are in running containers. | Syft, Trivy SBOM mode |
 | **GitHub Actions pinning** | ✅ Addressed — all workflow actions pinned to commit SHA in Batch 1/2 (ci.yml, trivy.yml, scorecard.yml) | Dependabot (`github-actions` ecosystem) keeps pins current |
-| **`read_only: true` coverage** | 18 of 145 services (12%), in 17 of 71 compose files. No CI enforcement. Many images write to their root filesystem and cannot take it. | Extension to `check-baseline.py` |
-| **`cap_drop` coverage** | 32 of 145 services (22%), in 25 of 71 compose files. No CI enforcement. | Extension to `check-baseline.py` |
+| **`read_only: true` coverage** | 44 of 166 services (27%), in 39 of 82 compose files. No CI enforcement. Many images write to their root filesystem and cannot take it. | Extension to `check-baseline.py` |
+| **`cap_drop` coverage** | 69 of 166 services (42%), in 48 of 82 compose files. No CI enforcement. | Extension to `check-baseline.py` |
 | **Dependency review** | No automated check for newly introduced vulnerable dependencies on PRs. | `dependency-review-action` |
 | **Docker Bench for Security** | Runtime checks against host Docker daemon config. Not coverable in CI without host access. | Docker Bench for Security |
 | **TLS profile enforcement** | No CI check that each app uses an appropriate TLS profile. | Extension to structure check |

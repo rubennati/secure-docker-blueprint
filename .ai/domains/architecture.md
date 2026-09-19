@@ -41,9 +41,11 @@ The three are not in the same state, so do not treat them alike:
   from two stacks that really build their own image. A standard is not a
   directory. What is still absent is a first-party application — source with no
   upstream.
-- **AI & Local AI** has no stack. **Document Processing** has real capabilities
-  across existing stacks but no reusable pipeline. Both absences are reasoned
-  where they are recorded; neither is a gap to fill on sight.
+- **AI & Local AI** ships as deployable services in `apps/` (`ollama`, `vllm`,
+  `qdrant`); the engineering above them is not this repository's.
+  **Document Processing** has real capabilities across existing stacks and one
+  standalone service (`docling-serve`) but no orchestrated pipeline. Both
+  boundaries are reasoned in `docs/architecture.md`.
 
 ## Networking
 
