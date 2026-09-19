@@ -7,7 +7,7 @@
 - **Docker Hub:** https://hub.docker.com/r/alextselegidis/easyappointments
 - **License:** GPL-3.0
 - **Origin:** Greece · Alex Tselegidis · EU
-- **Based on version:** `latest` (1.6.x)
+- **Based on version:** `1.6.0`
 - **Last verified:** 2026-05-03 (1.5.x)
 
 ## What we use

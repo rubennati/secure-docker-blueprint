@@ -5,8 +5,8 @@ to a company, including operator and diagnostic tooling. See
 [`docs/architecture.md`](../docs/architecture.md#directory-structure) for how this
 category is defined relative to the other four.
 
-Where several tools compete — dashboards, photo galleries, wikis, form builders —
-the blueprint ships more than one.
+Where several tools solve the same problem — dashboards, photo galleries, office
+servers — the blueprint ships more than one.
 
 ## What's here
 
@@ -36,7 +36,7 @@ structure every stack in this repository follows.
 
 ### Photo galleries
 
-Five options — test and pick what fits your workflow.
+Five options.
 
 | App | Stack | Description |
 |---|---|---|
@@ -48,7 +48,7 @@ Five options — test and pick what fits your workflow.
 
 ### Scheduling & booking
 
-Three 1:1-booking apps as a choice-matrix (pick one), plus a planned group-polling tool for a different axis.
+Three 1:1-booking apps.
 
 | App | Stack | When to use |
 |---|---|---|
@@ -161,6 +161,12 @@ here" for why that category stays out of this blueprint entirely.
 | [Dependency-Track](dependency-track/) | API + frontend + Postgres | Software Composition Analysis — SBOM ingestion, component and vulnerability tracking across a portfolio over time. Not a container/image scanner — see its README for the Trivy distinction |
 | [DFIR-IRIS](dfir-iris/) | App + worker + Postgres + RabbitMQ | Collaborative incident-response case management — cases, IOCs, evidence, timelines. Holds real incident data; read its Security model before deploying |
 | [Velociraptor](velociraptor/) | Single container (server only) | Endpoint DFIR / threat hunting — VQL queries and collection across a fleet. An operative platform, not an always-on convenience app; losing its config breaks existing client trust — see its README |
+
+### Document processing
+
+| App | Stack | Description |
+|---|---|---|
+| [Docling Serve](docling-serve/) | Single container | Document understanding as an API — layout, structure, tables and Markdown/JSON export, aimed at RAG and other AI pipelines. Standalone; no other stack calls it |
 
 ### Networking
 

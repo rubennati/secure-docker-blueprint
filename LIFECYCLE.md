@@ -32,7 +32,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`core/orion-belt`](core/orion-belt/) | `scaffolded` | `APP_TAG=1.2.0` | — | ✅ | documented | missing |
 | [`core/portainer`](core/portainer/) | `scaffolded` | `APP_TAG=2.39.7` | 2026-04-16 ⚠️ | ✅ | documented | missing |
 | [`core/portainer-agent`](core/portainer-agent/) | `scaffolded` | `APP_TAG=2.39.7` | 2026-05-05 | — | documented | missing |
-| [`core/shellhub`](core/shellhub/) | `scaffolded` | `VALKEY_TAG=9.1-alpine` | — | ✅ | documented | missing |
+| [`core/shellhub`](core/shellhub/) | `scaffolded` | `SHELLHUB_VERSION=v0.27.0-rc.11` | — | ✅ | documented | missing |
 | [`core/step-ca`](core/step-ca/) | `scaffolded` | `APP_TAG=0.30.2` | — | ✅ | documented | missing |
 | [`core/teleport`](core/teleport/) | `scaffolded` | `APP_TAG=18.11.0` | — | ✅ | documented | missing |
 | [`core/traefik`](core/traefik/) | `scaffolded` | `TRAEFIK_IMAGE=traefik:v3.7` | 2026-09-13 | — | documented | missing |

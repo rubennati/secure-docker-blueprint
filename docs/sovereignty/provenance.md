@@ -9,7 +9,7 @@ Every stack states two facts in its `UPSTREAM.md`:
 
 Both were already there for most stacks before this area existed. What was
 missing was a view — nothing could answer "which of these are EU-governed, and
-which are not actually open source" without opening fifty-nine files.
+which are not actually open source" without opening every `UPSTREAM.md`.
 
 ## The fields
 
@@ -44,12 +44,12 @@ more often than it applies:
 
 | Class | Meaning | In this repository |
 |---|---|---|
-| `osi` | OSI-approved | 54 |
-| `mixed` | open core, or genuinely dual-licensed | 4 |
-| `source-available` | source published, use restricted | 3 |
+| `osi` | OSI-approved | 70 |
+| `mixed` | open core, or genuinely dual-licensed | 8 |
+| `source-available` | source published, use restricted | 5 |
 | `proprietary` | neither | 1 |
 
-The three source-available ones are named here, since each restricts something a
+The five source-available ones are named here, since each restricts something a
 self-hoster might assume they may do:
 
 - **`core/dockhand`** — BSL 1.1. Free for personal, internal business,
@@ -60,22 +60,28 @@ self-hoster might assume they may do:
   functionality.
 - **`apps/n8n`** — Sustainable Use License. Internal and commercial use is fine;
   reselling it as a service is not.
+- **`apps/hemmelig`** — O'Saasy License Agreement, an MIT-derived licence that
+  is not OSI-approved. Self-hosting is unrestricted; reselling it as a
+  competing SaaS is not.
+- **`core/orion-belt`** — Apache-2.0 with the Commons Clause, which bars selling
+  the software itself.
 
 None of these is a reason to avoid the software. They are a reason not to build
 a business on reselling it without reading the licence first.
 
-## As of 2026-09-07
+## As of 2026-09-19
 
-62 stacks, no gaps in either field:
+84 stacks, no gaps in either field:
 
 | Bloc | Stacks |
 |---|---|
-| EU | 27 |
-| non-EU | 29 |
-| no single jurisdiction | 6 |
+| EU | 32 |
+| non-EU | 41 |
+| no single jurisdiction | 11 |
 
-Most-represented countries: US (11), Germany (9), France (6), UK (5),
-New Zealand (4), Canada (2), China (2), India (2).
+Most-represented countries: US (15, counting `US` and `United States`),
+Germany (11), France (7), UK (5), New Zealand (4), China (3), Canada (2).
+Seven stacks are community-governed.
 
 Note that the UK counts as non-EU here. That is a statement about jurisdiction,
 not about quality — Collabora and BookStack are not worse software for it. Where
@@ -102,3 +108,31 @@ about (`apps/whoami` is Apache-2.0, not MIT).
 
 If the project states no jurisdiction, write that. An honest blank is worth more
 than a plausible guess.
+
+## What this blueprint accepts
+
+This blueprint is for self-hosted infrastructure. Every stack states its licence
+in `UPSTREAM.md`, and the baseline-aligned criteria require the field before a
+stack is recorded as ready.
+
+**Accepted:**
+
+- MIT, Apache 2.0, BSD — permissive, no conditions on use.
+- GPL-2.0 / GPL-3.0 — copyleft applies to distribution, not to running the
+  software.
+- AGPL-3.0 — the most common licence in this space. Running an unmodified
+  upstream image carries no obligation; exposing a *modified* service to others,
+  inside a company included, requires making the modifications available.
+- BSL and other time-limited source-available licences — generally fine for
+  self-hosting; verify the change date and the additional use grant per project.
+
+**Case-by-case review:**
+
+- A commercial dual licence — self-hosting is free under the open tier; check
+  whether the features you need sit in the commercial one.
+- Source-available without redistribution rights — usable, but not forkable or
+  modifiable.
+
+**Not included:** proprietary closed-source images with no self-hosting rights.
+`apps/seafile-pro` is the one commercial-licence stack: the paid plan permits
+self-hosting, and obtaining that licence is the operator's to do.
