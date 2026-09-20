@@ -77,6 +77,36 @@ copied to `.env` so variable substitution does not cause false failures.
 invalid volume/network references.  
 **Blocks merge:** yes
 
+#### Opt-in overlay variants
+
+A second step runs `scripts/ci/check-overlays.py --require-docker`. The discovery
+above deliberately excludes overlays — a file applied *on top of* a stack, such as
+`activitypub.yml` or `network-host.yml` — because they are not part of the stack
+and several are alternatives to one another.
+
+Each overlay is instead validated as its own deployment variant: `docker compose
+config` merges the stack with that one overlay, and the result is judged. Merging
+through Compose rather than in YAML is the point — the merge rules differ per key,
+and `!reset` / `!override` change them again, so an approximation would disagree
+with what an operator runs.
+
+Every overlay is merge-validated, including one that only redefines networks. The
+mandatory baseline is then applied to the services the overlay **adds or
+changes**; services it leaves alone are already covered by the canonical run, and
+an overlay that changes none is proved to resolve without inventing service checks
+it could never fail. That split is what catches a patch-only overlay — a block
+with no image, which adds no service and reads as harmless — handing an existing
+service the Docker socket, setting `privileged: true`, or clearing its memory
+ceiling.
+
+Local runs without Docker report that they could not run and exit 0;
+`--require-docker` in CI turns that into a failure.
+
+**What it catches:** a merge Compose refuses (including an overlay patching a
+service the stack does not define), an added service outside the baseline, and an
+existing service the overlay weakens.  
+**Blocks merge:** yes
+
 ---
 
 ### 3 — Structure check
@@ -206,9 +236,20 @@ host, which is v0.10.0; whether a policy is stated at all is settled.
 
 ### 7 — Status model
 
-Runs `scripts/ci/lifecycle-report.py --check`. Fails on a status claim that is not
+Three generated views, each checked against the files that own it.
+
+`scripts/ci/lifecycle-report.py --check` fails on a status claim that is not
 backed: an owner and its mirror disagreeing, a ✅ without `Last verified`, or a
 `LIFECYCLE.md` left stale against its sources.
+
+`scripts/ci/sovereignty-report.py --check` fails when a stack states no licence
+or origin, or when `sovereignty.json` is stale.
+
+`scripts/ci/site-catalogue.py --check` fails when a stack has no `Domain` or
+`Role` in its `UPSTREAM.md`, when a catalogue entry names a stack that no longer
+exists, or when `catalogue.json` is stale. This is what keeps the operator site
+from falling behind the repository: a stack cannot land in `dev` while being
+absent from the site's catalogue.
 
 **Blocks merge:** yes
 
