@@ -4,10 +4,15 @@
 #   mkdir -p volumes/local/hub-data
 #   docker compose -f docker-compose.local.yml --env-file .env.local up -d hub
 #   http://localhost:8090 — create the owner account
-#   "+ Add System": name = local, host = agent, port = 45876, copy the key
-#   put it in .env.local as AGENT_KEY=ssh-ed25519 AAAA...
-#   docker compose -f docker-compose.local.yml --env-file .env.local up -d agent
+#   Settings → Tokens & Fingerprints → enable, copy the token → AGENT_TOKEN
+#   "+ Add System" → copy the ssh-ed25519 key → AGENT_KEY
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
 #   docker compose -f docker-compose.local.yml --env-file .env.local down
+#
+# Simpler than the production stack — no Traefik, the UI on loopback. The
+# security model is the same one: the agent holds no Docker socket, opens no
+# port, and connects out to the hub by service name. The socket proxy stays on
+# its own internal network with no route out, exactly as in production.
 
 services:
 
@@ -22,26 +27,85 @@ services:
       - ./volumes/local/hub-data:/beszel_data
     ports:
       - "127.0.0.1:8090:8090"
+    # The hub never talks to the Docker API, so it stays off the socket network.
     networks: [beszel-local]
     healthcheck:
       disable: true
+
+  # The only container that holds the Docker socket — same permission set as
+  # the production stack. Not published: the agent reaches it by service name.
+  socket-proxy:
+    image: tecnativa/docker-socket-proxy:${SOCKET_PROXY_TAG}
+    container_name: beszel-local-socket-proxy
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    read_only: true
+    tmpfs: [/run, /tmp]
+    environment:
+      CONTAINERS: 1
+      PING: 1
+
+      NETWORKS: 0
+      INFO: 0
+      EVENTS: 0
+      VERSION: 0
+      SERVICES: 0
+      SWARM: 0
+      TASKS: 0
+      NODES: 0
+      IMAGES: 0
+      VOLUMES: 0
+      SYSTEM: 0
+      POST: 0
+
+      ALLOW_START: 0
+      ALLOW_STOP: 0
+      ALLOW_RESTARTS: 0
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    # Socket network only: internal: true, so the container holding the Docker
+    # socket has no route out. It never joins the application network.
+    networks: [beszel-socket]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:2375/_ping >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
 
   agent:
     image: henrygd/beszel-agent:${APP_TAG}
     container_name: beszel-local-agent
     restart: unless-stopped
+    depends_on:
+      socket-proxy:
+        condition: service_healthy
     security_opt: [no-new-privileges:true]
     environment:
       TZ: ${TZ}
-      PORT: "45876"
-      KEY: ${AGENT_KEY}
+      # The agent dials the hub by service name — no listener, no host port.
+      HUB_URL: http://hub:8090
+      TOKEN: ${AGENT_TOKEN:-}
+      KEY: ${AGENT_KEY:-}
+      SYSTEM_NAME: ${AGENT_SYSTEM_NAME:-beszel-local}
+      # Container metrics through the proxy, never the raw socket.
+      DOCKER_HOST: tcp://socket-proxy:2375
+      # A container cannot see the host's network namespace; without this the
+      # agent would show its own interface counters as host bandwidth.
+      NICS: ${AGENT_NICS:--*}
       EXTRA_FILESYSTEMS: ${EXTRA_FILESYSTEMS}
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    networks: [beszel-local]
+    # Both, because the agent is the only consumer of both services: the hub on
+    # the application network, the socket proxy on the internal one.
+    networks: [beszel-local, beszel-socket]
     healthcheck:
       disable: true
 
 networks:
+  # Hub and agent.
   beszel-local:
     name: beszel-local
+
+  # Agent and socket proxy only. internal: true — the container holding the
+  # Docker socket gets no route out.
+  beszel-socket:
+    name: beszel-local-socket
+    internal: true
