@@ -81,7 +81,7 @@ No backup entry is needed for this stack in its default configuration. If
 you enable Git-backed storage, the models are backed up wherever that
 repository already is (GitHub/GitLab/Bitbucket) — not by this stack.
 
-## Local testing (no Traefik)
+## Try it locally
 
 ```bash
 cp .env.local.example .env.local   # fill the three encryption/signing values

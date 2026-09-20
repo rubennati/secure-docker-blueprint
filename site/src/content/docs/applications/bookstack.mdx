@@ -12,7 +12,20 @@ containers — the application and MariaDB.
 <StackEvidence stack="apps/bookstack"
   gap="a restore. The database and the upload directory have to come back from the same point in time, and that has not been performed here." />
 
-Needs: [Traefik](/infrastructure/traefik/) running and a domain.
+**To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
+
+**To deploy it behind the proxy:** [Traefik](/infrastructure/traefik/) running and a domain.
+
+## Try it locally
+
+On your own machine, with no proxy, domain or certificate. From `apps/bookstack/`:
+
+```bash
+cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+```
+
+Then open `http://localhost:8080`. Stop it again with the same command and `down`.
 
 ## Installation
 

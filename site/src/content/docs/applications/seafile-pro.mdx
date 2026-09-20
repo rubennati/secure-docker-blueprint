@@ -11,7 +11,20 @@ Seafile Pro is private cloud storage with browser-based Office editing (OnlyOffi
 <StackEvidence stack="apps/seafile-pro"
   gap="backup and restore. Three databases, the block store and the search index have to be recovered in order, and none of it has been rehearsed." />
 
-Needs: [Traefik](/infrastructure/traefik/) running, a hostname, a Seafile Pro commercial license, and an external [OnlyOffice](/applications/onlyoffice/) instance for `.docx`/`.xlsx`/`.pptx` editing (optional — all other features work without it).
+**To try it:** Docker, and a Seafile Pro commercial licence, which the image requires either way. See [Try it locally](#try-it-locally).
+
+**To deploy it behind the proxy:** [Traefik](/infrastructure/traefik/) running, a hostname, a Seafile Pro commercial license, and an external [OnlyOffice](/applications/onlyoffice/) instance for `.docx`/`.xlsx`/`.pptx` editing (optional — all other features work without it).
+
+## Try it locally
+
+On your own machine, with no proxy, domain or certificate. From `apps/seafile-pro/`:
+
+```bash
+cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+```
+
+Then open `http://localhost:8001`. Stop it again with the same command and `down`.
 
 ## Installation
 

@@ -11,7 +11,20 @@ Vaultwarden is a self-hosted password manager compatible with Bitwarden clients 
 <StackEvidence stack="apps/vaultwarden"
   gap="a restore. The database, the RSA signing keys and the attachments have to come back from the same point in time, and that has not been performed here." />
 
-Needs: [Traefik](/infrastructure/traefik/) running, a domain, and SMTP credentials (email verification is on by default).
+**To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
+
+**To deploy it behind the proxy:** [Traefik](/infrastructure/traefik/) running, a domain, and SMTP credentials (email verification is on by default).
+
+## Try it locally
+
+On your own machine, with no proxy, domain or certificate. From `apps/vaultwarden/`:
+
+```bash
+cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+```
+
+Then open `http://localhost:8080`. Stop it again with the same command and `down`.
 
 ## Installation
 

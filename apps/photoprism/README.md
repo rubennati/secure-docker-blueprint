@@ -9,6 +9,19 @@ AI-powered self-hosted photo manager with TensorFlow-based classification, face 
 | `app` | `photoprism/photoprism:260728` | Web UI + API + TensorFlow + WebDAV |
 | `db` | `mariadb:11.4` | Primary store (index, albums, users, sidecar metadata) |
 
+## Try it locally
+
+Runs on `http://localhost:2342` without Traefik, DNS or a certificate.
+
+```bash
+cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+# http://localhost:2342
+docker compose -f docker-compose.local.yml --env-file .env.local down
+```
+
+`.env.local` holds plain values, not Docker Secrets — local only.
+
 ## Setup
 
 ```bash

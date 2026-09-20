@@ -10,6 +10,17 @@ This is the other half of [`backup/`](../README.md). [Borgmatic](../borgmatic/) 
 | Runs | on the host | in Docker, here |
 | Restore | files and databases | files, plus whole-disk on Windows |
 
+## Try it locally
+
+Runs on `http://localhost:55414` without Traefik, DNS or a certificate.
+
+```bash
+cp .env.local.example .env.local
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+# http://localhost:55414
+docker compose -f docker-compose.local.yml --env-file .env.local down
+```
+
 ## Setup
 
 ```bash

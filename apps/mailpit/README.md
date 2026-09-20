@@ -18,6 +18,17 @@ Single service:
 One static binary. Messages live in a SQLite file under `./volumes/data`,
 pruned beyond `MP_MAX_MESSAGES`.
 
+## Try it locally
+
+Runs on `http://localhost:8025` without Traefik, DNS or a certificate; port 1025 is published too.
+
+```bash
+cp .env.local.example .env.local
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+# http://localhost:8025
+docker compose -f docker-compose.local.yml --env-file .env.local down
+```
+
 ## Setup
 
 ```bash

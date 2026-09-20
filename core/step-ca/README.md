@@ -143,7 +143,7 @@ client already trusts. If the root key was deliberately removed from this
 host after the hardened init path, it is **not** part of this backup and
 must be restored separately from wherever it is actually kept offline.
 
-## Local testing (no Traefik)
+## Try it locally
 
 ```bash
 cp .env.local.example .env.local

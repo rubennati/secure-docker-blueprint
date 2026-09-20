@@ -12,8 +12,21 @@ containers — a single binary serving both API and interface, and PostgreSQL.
 <StackEvidence stack="business/vikunja"
   gap="a restore. The database, the attachment volume and the session key have to come back together, and that has not been performed here." />
 
-Needs: [Traefik](/infrastructure/traefik/) running, a domain, and a build step —
-this stack builds its image locally.
+**To try it:** Docker, and the same build step, which the local stack runs too. See [Try it locally](#try-it-locally).
+
+**To deploy it behind the proxy:** [Traefik](/infrastructure/traefik/) running and a domain, and a build step — the image is built locally from source.
+
+## Try it locally
+
+On your own machine, with no proxy, domain or certificate. From `business/vikunja/`:
+
+```bash
+cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+docker compose -f docker-compose.local.yml --env-file .env.local up -d --build
+```
+
+Then open `http://localhost:3456`. Stop it again with the same command and `down`.
+
 
 ## Installation
 

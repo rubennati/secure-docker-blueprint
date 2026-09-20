@@ -13,8 +13,20 @@ MariaDB.
 <StackEvidence stack="apps/photoprism"
   gap="everything below. The stack has never been brought up here: the first index run, the model download and the memory behaviour under large RAW or video files are read from the stack's files rather than observed." />
 
-Needs: [Traefik](/infrastructure/traefik/) running, a domain, and disk space —
-the first start downloads roughly 1 GB of classification models.
+**To try it:** Docker, and the first start still downloads roughly 1 GB of classification models. See [Try it locally](#try-it-locally).
+
+**To deploy it behind the proxy:** [Traefik](/infrastructure/traefik/) running, a domain, and disk space for the library and the models.
+
+## Try it locally
+
+On your own machine, with no proxy, domain or certificate. From `apps/photoprism/`:
+
+```bash
+cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+```
+
+Then open `http://localhost:2342`. Stop it again with the same command and `down`.
 
 ## Installation
 

@@ -13,7 +13,20 @@ configuration directory.
 <StackEvidence stack="apps/heimdall"
   gap="a restore. The configuration directory holds the whole dashboard and has not been restored from a backup here." />
 
-Needs: [Traefik](/infrastructure/traefik/) running and a domain.
+**To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
+
+**To deploy it behind the proxy:** [Traefik](/infrastructure/traefik/) running and a domain.
+
+## Try it locally
+
+On your own machine, with no proxy, domain or certificate. From `apps/heimdall/`:
+
+```bash
+cp .env.local.example .env.local
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+```
+
+Then open `http://localhost:8080`. Stop it again with the same command and `down`.
 
 ## Installation
 

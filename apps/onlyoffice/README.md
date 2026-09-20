@@ -40,6 +40,19 @@ The `docker-compose.yml` therefore defines two dedicated middlewares:
 
 The allowed origins come from `ONLYOFFICE_ALLOWED_ORIGINS` in `.env`.
 
+## Try it locally
+
+Runs on `http://localhost:8080` without Traefik, DNS or a certificate.
+
+```bash
+cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+# http://localhost:8080
+docker compose -f docker-compose.local.yml --env-file .env.local down
+```
+
+`.env.local` holds plain values, not Docker Secrets — local only.
+
 ## Setup
 
 ```bash

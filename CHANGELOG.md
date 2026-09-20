@@ -10,6 +10,16 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ### Changed
 
+- **The local path is discoverable, and called one thing.** 79 of 89 stacks ship a `docker-compose.local.yml`; 53 of their READMEs never mentioned it, and the 26 that did used three different headings. Every one now carries a `## Try it locally` section with the command, the `http://localhost:<port>` it answers on and any credential step — the name `apps/_reference` already prescribed. The two `development/` patterns keep `Local deployment validation`, because validating a built image is not evaluating a product.
+- **The operator site stops presenting production requirements as application requirements** (#43, #44). 26 product pages stated Traefik and a domain as an unconditional prerequisite while their stack runs locally without either. Each now separates *To try it* from *To deploy it behind the proxy*, keeps feature-specific requirements attached to their feature, and leads with `## Try it locally` — including Documenso, whose local path sat under *Going further*. All 31 pages whose stack has a local path now reach it at the same point.
+- **Adding a stack has one contract** (`docs/standards/new-app-checklist.md`): what is mandatory, what is conditional, what is generated and never edited, and what only a host can establish. The catalogue, lifecycle and sovereignty views are generated from `UPSTREAM.md`, so a new stack reaches the site by existing rather than by being added to a list.
+
+### Fixed
+
+- **A stack could be absent from its category README and nothing noticed** — the one inventory still written by hand, and how `apps/docling-serve` shipped without a row. `check-coverage.py` now fails on `unlisted-stack`.
+
+### Changed
+
 - **GitHub Issues own the work they describe** (`.ai/tasks.md`). Four items were a second, drifting copy: the Seafile chain decision (#39), the Portainer first-load measurement (#37), the Beszel host verification (#36) and a branch-protection item that was already done — both rulesets require all ten checks, with no bypass actor, so the checks apply to the owner too. Each now points at its issue or is gone; the file keeps only what no issue owns.
 - **The single-maintainer review policy is recorded as a decision** (`.ai/decisions.md`, `docs/security-verification.md`): no approving-review requirement while one person maintains the repository, the ten required checks stay enforced on both branches, no bypass actor, no rule the sole author cannot satisfy, revisited when a second maintainer exists. The previous entry recorded seven required checks against a live ten and named neither the ruleset mechanism nor the Scorecard trade-off — Branch-Protection sits at 3 of 10 because tier 2 needs an approval nobody can give and tier 4 needs two reviewers.
 

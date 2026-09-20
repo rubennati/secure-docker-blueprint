@@ -80,7 +80,7 @@ host, port and path.
 
 `scaffolded` — see [UPSTREAM.md](UPSTREAM.md#verification-performed-2026-09-19).
 
-## Local deployment validation
+## Try it locally
 
 ```bash
 ops/init.sh

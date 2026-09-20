@@ -119,7 +119,7 @@ versa) produces a running instance whose stored integration secrets cannot
 be decrypted — not a crash, a silent, permanent loss of those specific
 values only, discovered the next time an integration tries to use one.
 
-## Local testing (no Traefik)
+## Try it locally
 
 ```bash
 cp .env.local.example .env.local   # fill DB_PASSWORD, DT_KEK

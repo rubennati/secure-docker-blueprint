@@ -15,6 +15,17 @@ Two services:
 
 Portainer reaches Docker through `tcp://socket-proxy:2375` (configured via `--host` in the compose `command`). The socket proxy enforces which Docker API endpoints are allowed — Portainer never sees `/var/run/docker.sock`.
 
+## Try it locally
+
+Runs on `http://localhost:9000` without Traefik, DNS or a certificate.
+
+```bash
+cp .env.local.example .env.local
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+# http://localhost:9000
+docker compose -f docker-compose.local.yml --env-file .env.local down
+```
+
 ## Setup
 
 ```bash

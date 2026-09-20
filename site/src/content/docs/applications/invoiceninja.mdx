@@ -13,7 +13,20 @@ scheduler and queue workers, a web server, a database, and a cache.
 <StackEvidence stack="business/invoiceninja"
   gap="a restore — the backup is configured but has not been rehearsed." />
 
-Needs: [Traefik](/infrastructure/traefik/) running, a domain, and SMTP credentials.
+**To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
+
+**To deploy it behind the proxy:** [Traefik](/infrastructure/traefik/) running, a domain, and SMTP credentials.
+
+## Try it locally
+
+On your own machine, with no proxy, domain or certificate. From `business/invoiceninja/`:
+
+```bash
+cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+```
+
+Then open `http://localhost:8080`. Stop it again with the same command and `down`.
 
 Invoices, quotes, reminders and payment receipts all leave the system by mail.
 Configure it during setup, not when the first invoice is due.

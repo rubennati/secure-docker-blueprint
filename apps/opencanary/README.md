@@ -133,7 +133,7 @@ config is functionally identical to the one that existed before, because
 it holds no state of its own. If you route hits to a log aggregator,
 retention of that history is that system's concern, not this stack's.
 
-## Local testing (no Traefik)
+## Try it locally
 
 ```bash
 cp .env.local.example .env.local
