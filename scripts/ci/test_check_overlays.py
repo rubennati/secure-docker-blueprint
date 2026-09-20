@@ -181,7 +181,7 @@ class EffectiveMerge(unittest.TestCase):
 
     def test_an_introduced_service_is_judged_in_full(self):
         rules = self.findings("services:\n  extra:\n    image: example/x:latest\n")
-        self.assertTrue({"latest-tag", "no-resources"} <= rules)
+        self.assertLessEqual({"latest-tag", "no-resources"}, rules)
 
     def test_a_network_only_overlay_is_merge_validated_without_service_checks(self):
         """It changes no service, so it must still resolve — and claim nothing more."""

@@ -125,6 +125,7 @@ Status is the state after the PR named.
 | W5 | Parity between repository and site is a manual list and fell 48 stacks behind | W1 | FIX BEFORE V1 | Resolved — generated catalogue, checked in CI |
 | W6 | The old gate demanded a choosing page for every capability with more than one option. That does not follow from the current model — overlap is allowed and nothing is ranked — and a page per capability invites a winner. The model needs complete discovery (W1) and, where alternatives differ in a way the catalogue cannot show, a short comparison. One choosing page exists (`applications/choosing`) | site tree | Superseded by W1 plus proportionate comparison; not a blocker | Open — PR 2 gives every domain a role column; further comparison is editorial |
 | W7 | Legal notice, privacy statement, domain and `security.txt` carry personal data in a public, forkable repository. Possible v1.0 impact: v1.0 asserts a forkable template and a fork inherits the imprint; whether that blocks depends on D3 | design in `.ai/decisions.md` | DECISION REQUIRED | Open — D3 |
+| W8 | The catalogue states a licence and an origin, which is not enough to choose software. Four facts are collapsed or absent: the **licence**, the **use rights** it grants, the **edition** a security-relevant feature sits in, and the **commercial model**. So the site cannot answer whether OIDC, audit logs or HA are paywalled, or whether deploying a stack into a customer's infrastructure is permitted — separate questions with separate answers, and decision support the catalogue implies it gives | `sovereignty.json` carries `license`, `license_class`, `origin` and nothing else; `catalogue.json` carries neither | PRE-V1 CANDIDATE | Open — scope in [Licensing, use rights, editions](#licensing-use-rights-editions-and-feature-gates); belongs with the site information-architecture work, not before it |
 
 ### CI and automation
 
@@ -173,6 +174,50 @@ Site pages with no matching stack: none. Stale claims for PR 2: the "around
 sixty stacks" sentence on the applications page and the `llms.txt` note that no
 local path is documented. LibreChat is not in the repository and so is not
 listed.
+
+## Licensing, use rights, editions and feature gates
+
+Scope for W8. The 89 stacks are not researched or filled here.
+
+**Four layers, kept apart.** Collapsing them is the current defect.
+
+1. **Licence** — what governs the software: MIT, Apache-2.0, GPL, AGPL, BSL, Elastic,
+   Sustainable Use, proprietary, or open-core mixtures. Already recorded.
+2. **Use rights** — never one "commercial use" field. Per right, from the upstream
+   terms and not from marketing copy: personal self-hosting · internal organisational
+   use · installing it into a customer's own infrastructure · operating it as a managed
+   service for a customer · offering it as SaaS · resale or white-label · modification ·
+   redistribution · source-availability obligations for modifications. Values:
+   `allowed` · `restricted` · `requires commercial terms` · `unclear from published
+   terms` · `not applicable`.
+3. **Edition** — not the licence. Open-source software may still reserve features for a
+   paid edition. Record only what upstream actually gates, and only where it is
+   security- or operations-relevant: native OIDC · SAML · LDAP/AD · SCIM ·
+   edition-dependent MFA · RBAC and granular permissions · audit logs · enterprise
+   policy controls · HA, clustering or multi-node. A feature is not "Enterprise"
+   because the name sounds like it. **Native application SSO and putting Authentik
+   forward-auth in front of an application are different capabilities** and must not be
+   recorded as one.
+4. **Commercial model** — durable fields rather than volatile prices: `free
+   self-hosted` · `paid add-on` · `per-user subscription` · `paid self-hosted edition` ·
+   `commercial licence` · `quote only` · `no paid edition`, each with the official
+   licensing or pricing link. A price that ever reaches the site data carries currency,
+   billing unit, billing period, date checked and source — an undated price is not a
+   repository fact.
+
+**Source of truth.** Evaluate extending the per-stack `UPSTREAM.md` first, with
+`sovereignty-report.py` / `sovereignty.json` and `site-catalogue.py` generating the
+views, before considering any new file. One canonical per-stack owner, generated
+secondary views — no second hand-kept table.
+
+**On the site.** Each product exposes the four facts compactly, plus the official
+links. One reusable page explains the concepts — MIT, GPL, AGPL, source-available,
+open-core — so no product page repeats them, and states plainly that *licence is not
+edition is not pricing*, and why **installing software for a customer** and
+**running it as a hosted service for them** can have different licence consequences.
+Factual decision support, not legal advice.
+
+No ratings, no traffic lights, no recommended winner. The operator decides.
 
 ## E. Roadmap reconciliation
 
