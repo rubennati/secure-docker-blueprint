@@ -84,6 +84,14 @@ jobs:
           done < <(python3 scripts/ci/check-structure.py --list | xargs -n1 dirname | sort -u)
           exit $failed
 
+      # Opt-in overlays are excluded from the discovery above on purpose: they are
+      # applied on top of a stack, not instead of it, and several are alternatives
+      # to each other. Each is validated as its own merged deployment variant —
+      # the only way to see that a patch-only overlay hands an existing service
+      # the Docker socket or clears its memory ceiling.
+      - name: Validate opt-in overlay variants
+        run: python3 scripts/ci/check-overlays.py --require-docker "$GITHUB_STEP_SUMMARY"
+
   # ─────────────────────────────────────────────
   # 3. STRUCTURE CHECK
   # ─────────────────────────────────────────────

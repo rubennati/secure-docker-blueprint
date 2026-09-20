@@ -36,6 +36,17 @@ services:
       ORION_AGENT_ENV: ${ORION_AGENT_ENV}
       ORION_STRICT_HOST_KEY_CHECKING: ${ORION_STRICT_HOST_KEY_CHECKING}
 
+    # Starting values, not measured ones — the agent multiplexes sessions and
+    # has not been sampled on a host. Matches the server stack's own ceilings.
+    memswap_limit: 512m        # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          pids: 100
+        reservations:
+          memory: 64m
+
     volumes:
       - ./volumes/agent-state:/etc/orion-belt
       - ./agent-key:/etc/orion-belt/agent_key:ro

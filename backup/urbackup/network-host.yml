@@ -28,7 +28,7 @@
 
 # Requires Compose >= 2.24 for the `!reset` tag. Check with `docker compose version`.
 services:
-  app:
+  urbackup-app:
     network_mode: host
     # `network_mode` and `networks` cannot be combined — the list the base file
     # sets has to be cleared, not merged. That is what `!reset` is for.

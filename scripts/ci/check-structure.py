@@ -126,13 +126,77 @@ def in_repository(path: Path) -> bool:
     return True if known is None else path.as_posix() in known
 
 
+class ComposeLoader(yaml.SafeLoader):
+    """SafeLoader that tolerates Compose's own YAML tags.
+
+    Compose 2.24+ uses `!reset` and `!override` in an overlay to clear or replace
+    a value the base file set. `yaml.safe_load` raises on an unknown tag, and
+    `is_compose()` read that as "not a compose file" — which is how
+    `backup/urbackup/network-host.yml` became invisible to every checker instead
+    of being reported.
+    """
+
+
+def _compose_tag(loader, suffix, node):
+    """Resolve `!reset` / `!override` to the value underneath the tag.
+
+    The tag decides how Compose *merges* the value, which no rule here asks
+    about; the rules read what the value is. `!reset null` therefore becomes
+    None, and an `!override` list stays that list.
+    """
+    if isinstance(node, yaml.SequenceNode):
+        return loader.construct_sequence(node, deep=True)
+    if isinstance(node, yaml.MappingNode):
+        return loader.construct_mapping(node, deep=True)
+    scalar = loader.construct_scalar(node)
+    return None if scalar in ("", "null", "~") else scalar
+
+
+ComposeLoader.add_multi_constructor("!", _compose_tag)
+
+
+def compose_load(path: Path):
+    """Parse a compose file, tolerating Compose's tags. Raises on real YAML errors."""
+    return yaml.load(path.read_text(encoding="utf-8", errors="replace"), ComposeLoader) or {}
+
+
 def is_compose(path: Path) -> bool:
     """True when a YAML file declares Compose services."""
     try:
-        data = yaml.safe_load(path.read_text(encoding="utf-8", errors="replace")) or {}
+        data = compose_load(path)
     except yaml.YAMLError:
         return False
     return isinstance(data, dict) and bool(data.get("services"))
+
+
+# Top-level keys Compose itself defines. A fragment may carry any subset — an
+# overlay that only redefines networks is still a compose file.
+COMPOSE_TOP_LEVEL = {"services", "networks", "volumes", "configs", "secrets",
+                     "name", "include", "version"}
+COMPOSE_CONTENT = {"services", "networks", "volumes", "configs", "secrets"}
+
+
+def is_compose_fragment(path: Path) -> bool:
+    """True for a compose file or a fragment of one, services or not.
+
+    `is_compose()` requires `services:`, which is right for finding a stack —
+    a directory holding only a networks file is not one. It is wrong for finding
+    overlays: `core/traefik/network-dual-stack.yml` redefines the public network
+    and nothing else, and reading it as "not a compose file" left the one overlay
+    that changes the address plan of every routed service unvalidated.
+
+    A stack's own config examples are excluded by the same test: gatus's
+    `config.example.yaml` is `endpoints`/`storage`/`ui`, none of which Compose
+    defines.
+    """
+    try:
+        data = compose_load(path)
+    except yaml.YAMLError:
+        return False
+    if not isinstance(data, dict) or not data:
+        return False
+    keys = {str(k) for k in data if not str(k).startswith("x-")}
+    return bool(keys & COMPOSE_CONTENT) and keys <= COMPOSE_TOP_LEVEL
 
 
 def compose_files(app: Path) -> list[Path]:
@@ -151,6 +215,48 @@ def compose_files(app: Path) -> list[Path]:
     # local test stack must be excluded from it.
     return sorted(p for p in app.glob("*.yml")
                   if in_repository(p) and is_compose(p) and not p.name.endswith(".local.yml"))
+
+
+def overlay_files(app: Path) -> list[Path]:
+    """Opt-in compose files that are not part of the canonical production stack.
+
+    An overlay is applied on top of the stack with a second `-f`, and several of
+    them are mutually exclusive — `network-host.yml` replaces the bridge network
+    the base file sets, `docker-compose.gpu.yml` replaces the CPU runtime. They
+    are therefore never part of the stack's service inventory and never counted
+    as one: `compose_files()` stays the canonical production set.
+
+    They do run, though, so whatever an overlay *introduces* is a real service on
+    a real host and the runtime rules apply to it. Before this existed, six files
+    were checked by nothing.
+    """
+    canonical = {p.name for p in compose_files(app)}
+    return sorted(p for p in app.glob("*.yml")
+                  if in_repository(p) and is_compose_fragment(p)
+                  and p.name not in canonical and not p.name.endswith(".local.yml"))
+
+
+def base_service_names(app: Path) -> set[str]:
+    """Service names the canonical production compose defines."""
+    names: set[str] = set()
+    for path in compose_files(app):
+        try:
+            data = compose_load(path)
+        except yaml.YAMLError:
+            continue
+        names.update((data.get("services") or {}))
+    return names
+
+
+def introduces_service(svc: dict) -> bool:
+    """True when a service block stands on its own rather than patching a base one.
+
+    A block with `image:` or `build:` adds a service. A block without either only
+    modifies a service the base file already defines, inherits everything else
+    from it, and cannot be judged on its own — checking one would report a
+    missing image on `db: {environment: …}`.
+    """
+    return bool(svc.get("image") or svc.get("build"))
 
 
 def find_apps() -> list[Path]:
@@ -574,6 +680,14 @@ def main() -> int:
     if "--list" in sys.argv[1:]:
         for app in find_apps():
             for f in compose_files(app):
+                print(f)
+        return 0
+
+    # `--list-overlays` prints the opt-in files instead. They are deliberately a
+    # separate list: they are validated, never counted as part of a stack.
+    if "--list-overlays" in sys.argv[1:]:
+        for app in find_apps():
+            for f in overlay_files(app):
                 print(f)
         return 0
 

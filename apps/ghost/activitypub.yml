@@ -37,6 +37,7 @@ services:
     # --- Resources ---
     # Runs the schema migration once and exits. Same shape as
     # core/authentik's init-perms, which is the one-shot pattern here.
+    memswap_limit: 512M        # == memory: no swap
     deploy:
       resources:
         limits:
@@ -86,6 +87,7 @@ services:
     # --- Resources ---
     # Node service alongside Ghost. Starting values, not measured ones — the
     # federation backend's working set has not been sampled here (v0.9.0).
+    memswap_limit: 512M        # == memory: no swap
     deploy:
       resources:
         limits:

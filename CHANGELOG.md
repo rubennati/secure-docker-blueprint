@@ -8,6 +8,18 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
+### Fixed
+
+- **Opt-in compose overlays were checked by nothing** (`scripts/ci/check-overlays.py`, new). Stack discovery skips them on purpose and `check-baseline.py` imports that discovery, so five files that run on real hosts sat outside every gate. Each overlay is now validated as its own deployment variant — the stack merged with that one overlay through `docker compose config`, judged against the mandatory baseline. Merging through Compose rather than in YAML is deliberate: the merge rules differ per key and `!reset` / `!override` change them again. Services an overlay does not touch are not re-reported, and the canonical stack and service inventory is unchanged — overlays replace one another and are never counted as deployed together. What the gap had hidden:
+  - `apps/paperless-ngx/sso.yml` and `backup/urbackup/network-host.yml` patched a service named `app`, which neither stack defines (`paperless-app`, `urbackup-app`). Compose rejected the whole project with *"service \"app\" has neither an image nor a build context"*, so neither documented feature could start.
+  - `core/orion-belt/docker-compose.agent.yml` carried no memory or PID ceiling and no swap policy; both Ghost ActivityPub services carried no swap policy. The claim that every production service states a swap policy was false wherever an overlay was applied.
+  - `backup/urbackup/network-host.yml` moves an existing service to the host network namespace, which is a documented trade-off and now carries a documented exception with its reason, alternative and accepted risk — the same shape the Beszel agents use.
+  - `backup/urbackup/network-host.yml` uses Compose's `!reset` tag, which `yaml.safe_load` rejects — and `is_compose()` read that as "not a compose file", hiding the file rather than reporting it. Compose tags now parse.
+  - `core/traefik/network-dual-stack.yml` changes only networks, so `is_compose()` — which requires `services:` — read it as not a compose file at all. The one overlay that changes the address plan of every routed service was invisible to discovery. Overlay discovery now recognises any compose fragment, while stack discovery stays narrower; a stack's own config examples are still excluded because their keys are not Compose's.
+  - `core/orion-belt/docker-compose.agent.yml` resolves its pin from `.env.agent.example`, which no checker stages, so its image read as `…/orion-belt-agent:` with an empty tag. The overlay's own env example is now staged for the merge, and a tag that resolves to nothing is a failure rather than a silent skip.
+
+- **`site-catalogue.py --check` ran in CI but appeared in no documentation** (`.ai/quality-gates.md`, `docs/standards/ci.md`), alongside `sovereignty-report.py --check`. Both are now documented where the gates are described.
+
 ## [0.9.1] — 2026-09-19 — Priority 1 stacks
 
 Twenty-six new stacks and two deployment patterns, all `scaffolded`: each was run against its own dependencies, none behind Traefik with TLS on a host, none restored from a backup. The v0.9.0 promise is unchanged; nothing new counts as verified.

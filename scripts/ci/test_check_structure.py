@@ -17,6 +17,7 @@ Run:
     python3 -m unittest discover -s scripts/ci -p 'test_*.py'
 """
 
+import contextlib
 import importlib.util
 import os
 import tempfile
@@ -406,6 +407,108 @@ services:
             found = self._findings_for(Path(tmp), compose)
         rules = {f["rule"] for f in found}
         self.assertIn("no-resources", rules)
+
+
+class ComposeTags(unittest.TestCase):
+    """`!reset` / `!override` must parse, not silently disqualify a file.
+
+    `yaml.safe_load` raises on them and `is_compose()` reported that as "not a
+    compose file", which hid backup/urbackup/network-host.yml from every checker.
+    """
+
+    def test_reset_tag_parses_and_file_counts_as_compose(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            f = Path(tmp) / "network-host.yml"
+            f.write_text("services:\n  app:\n    network_mode: host\n    networks: !reset null\n")
+            data = cs.compose_load(f)
+            self.assertEqual(data["services"]["app"]["networks"], None)
+            self.assertTrue(cs.is_compose(f))
+
+    def test_genuinely_broken_yaml_still_raises(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            f = Path(tmp) / "broken.yml"
+            f.write_text("services:\n  app:\n   - [unclosed\n")
+            self.assertFalse(cs.is_compose(f))
+
+
+class OverlayDiscovery(unittest.TestCase):
+    """Which files are canonical production, and which are opt-in overlays."""
+
+    @contextlib.contextmanager
+    def _in(self, root: Path):
+        """Run inside the temporary tree.
+
+        `in_repository()` asks Git about the *current* directory, so a test that
+        stays in the real checkout has its temporary files rejected as untracked.
+        """
+        cwd = os.getcwd()
+        os.chdir(root)
+        _reset_caches()
+        try:
+            yield
+        finally:
+            os.chdir(cwd)
+            _reset_caches()
+
+    def _tree(self, root: Path):
+        app = _stack(root, "apps/widget", [("widget-app", ["proxy-public"])])
+        (app / "docker-compose.local.yml").write_text("services:\n  widget-app:\n    image: x:1\n")
+        (app / "feature.yml").write_text("services:\n  extra:\n    image: x:1\n")
+        (app / "network-alt.yml").write_text("networks:\n  app-internal:\n    internal: true\n")
+        (app / "config.example.yaml").write_text("endpoints:\n  - name: a\n")
+        return Path("apps/widget")
+
+    def test_canonical_set_is_unchanged_by_an_overlay(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            app = self._tree(Path(tmp))
+            with self._in(Path(tmp)):
+                self.assertEqual([p.name for p in cs.compose_files(app)], ["docker-compose.yml"])
+
+    def test_overlay_includes_a_network_only_file_and_excludes_non_compose(self):
+        """A network-only overlay is a compose file; a stack's config example is not.
+
+        `is_compose()` requires `services:`, which is right for finding a stack and
+        wrong for finding overlays — it hid the one overlay that changes the address
+        plan of every routed service.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            app = self._tree(Path(tmp))
+            with self._in(Path(tmp)):
+                self.assertEqual([p.name for p in cs.overlay_files(app)],
+                                 ["feature.yml", "network-alt.yml"])
+
+    def test_a_network_only_file_is_not_mistaken_for_a_stack(self):
+        """Stack discovery must stay narrower than overlay discovery."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            lone = root / "apps" / "networks-only"
+            lone.mkdir(parents=True)
+            (lone / "network-alt.yml").write_text("networks:\n  a:\n    internal: true\n")
+            with self._in(root):
+                self.assertFalse(cs.is_compose(lone / "network-alt.yml"))
+                self.assertTrue(cs.is_compose_fragment(lone / "network-alt.yml"))
+                self.assertNotIn(lone, cs.find_apps())
+
+    def test_a_split_stack_has_no_overlays(self):
+        """Every file defines the stack, so none of them is opt-in."""
+        with tempfile.TemporaryDirectory() as tmp:
+            app = Path(tmp) / "apps" / "split"
+            app.mkdir(parents=True)
+            (app / "a-server.yml").write_text("services:\n  a:\n    image: x:1\n")
+            (app / "b-server.yml").write_text("services:\n  b:\n    image: x:1\n")
+            with self._in(Path(tmp)):
+                rel = Path("apps/split")
+                self.assertEqual(len(cs.compose_files(rel)), 2)
+                self.assertEqual(cs.overlay_files(rel), [])
+
+
+class IntroducesService(unittest.TestCase):
+    def test_image_or_build_introduces(self):
+        self.assertTrue(cs.introduces_service({"image": "x:1"}))
+        self.assertTrue(cs.introduces_service({"build": "."}))
+
+    def test_a_bare_patch_does_not(self):
+        self.assertFalse(cs.introduces_service({"environment": {"A": "b"}}))
 
 
 if __name__ == "__main__":
