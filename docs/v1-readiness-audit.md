@@ -125,7 +125,7 @@ Status is the state after the PR named.
 | W5 | Parity between repository and site is a manual list and fell 48 stacks behind | W1 | FIX BEFORE V1 | Resolved — generated catalogue, checked in CI |
 | W6 | The old gate demanded a choosing page for every capability with more than one option. That does not follow from the current model — overlap is allowed and nothing is ranked — and a page per capability invites a winner. The model needs complete discovery (W1) and, where alternatives differ in a way the catalogue cannot show, a short comparison. One choosing page exists (`applications/choosing`) | site tree | Superseded by W1 plus proportionate comparison; not a blocker | Open — PR 2 gives every domain a role column; further comparison is editorial |
 | W7 | Legal notice, privacy statement, domain and `security.txt` carry personal data in a public, forkable repository. Possible v1.0 impact: v1.0 asserts a forkable template and a fork inherits the imprint; whether that blocks depends on D3 | design in `.ai/decisions.md` | DECISION REQUIRED | Open — D3 |
-| W8 | The catalogue states a licence and an origin, which is not enough to choose software. Four facts are collapsed or absent: the **licence**, the **use rights** it grants, the **edition** a security-relevant feature sits in, and the **commercial model**. So the site cannot answer whether OIDC, audit logs or HA are paywalled, or whether deploying a stack into a customer's infrastructure is permitted — separate questions with separate answers, and decision support the catalogue implies it gives | `sovereignty.json` carries `license`, `license_class`, `origin` and nothing else; `catalogue.json` carries neither | PRE-V1 CANDIDATE | Open — scope in [Licensing, use rights, editions](#licensing-use-rights-editions-and-feature-gates); belongs with the site information-architecture work, not before it |
+| W8 | The catalogue states a licence and an origin, which is not enough to choose software. Five facts are collapsed or absent: the **licence**, the **use rights** it grants, the **edition** a security-relevant feature sits in, the **commercial model**, and the **operational footprint** a stack brings with it. So the site cannot answer whether OIDC, audit logs or HA are paywalled, whether deploying a stack into a customer's infrastructure is permitted, or whether one of two comparable products is a single container and the other brings a database, a cache and workers — separate questions with separate answers, and decision support the catalogue implies it gives | `sovereignty.json` carries `license`, `license_class`, `origin` and nothing else; `catalogue.json` carries neither | PRE-V1 CANDIDATE | Open — scope in [Catalogue decision facts](#catalogue-decision-facts); belongs with the site information-architecture work, not before it |
 
 ### CI and automation
 
@@ -175,11 +175,11 @@ sixty stacks" sentence on the applications page and the `llms.txt` note that no
 local path is documented. LibreChat is not in the repository and so is not
 listed.
 
-## Licensing, use rights, editions and feature gates
+## Catalogue decision facts
 
-Scope for W8. The 89 stacks are not researched or filled here.
+Scope for W8 — five factual layers, one model. No stack is researched or filled here.
 
-**Four layers, kept apart.** Collapsing them is the current defect.
+**Five layers, kept apart.** Collapsing them is the current defect.
 
 1. **Licence** — what governs the software: MIT, Apache-2.0, GPL, AGPL, BSL, Elastic,
    Sustainable Use, proprietary, or open-core mixtures. Already recorded.
@@ -205,19 +205,52 @@ Scope for W8. The 89 stacks are not researched or filled here.
    billing unit, billing period, date checked and source — an undated price is not a
    repository fact.
 
-**Source of truth.** Evaluate extending the per-stack `UPSTREAM.md` first, with
-`sovereignty-report.py` / `sovereignty.json` and `site-catalogue.py` generating the
-views, before considering any new file. One canonical per-stack owner, generated
-secondary views — no second hand-kept table.
+5. **Operational footprint** — how much machinery a stack brings, as facts rather
+   than a verdict. Two products solving one problem at very different weights is a
+   reason for both to exist here, not a reason to rank them.
 
-**On the site.** Each product exposes the four facts compactly, plus the official
+   The shape is one line: `2 services · MariaDB · CPU only` beside
+   `3 services · PostgreSQL + Redis · CPU only`. That separates
+   `apps/easyappointments` from `apps/caldiy` without any editorial judgement.
+
+   **Already derivable — generate it, do not type it.** Measured against the tree
+   while scoping this:
+
+   | Fact | Source | State |
+   |---|---|---|
+   | Runtime service count | the stack's own compose files | derivable; one-shot containers are distinguishable by `restart: "no"`, of which the tree has one |
+   | Required infrastructure — PostgreSQL, MariaDB/MySQL, Redis/Valkey, Memcached, object storage, Elasticsearch, ClickHouse, RabbitMQ | service images | derivable; 47 of 87 stacks need no database at all |
+   | GPU required | `deploy.resources.reservations.devices` in production compose | derivable — `apps/vllm` today |
+   | GPU optional | the same, declared only in an overlay | derivable now that overlays are discovered — `apps/ollama` today |
+
+   **Not derivable, and must not be faked.** Upstream's published minimum or
+   recommended memory, and any storage requirement that materially affects a
+   deployment, need explicit per-stack metadata with a source. Real idle, typical and
+   peak figures need a host, which is the same evidence
+   [`resource-measurement.md`](resource-measurement.md) governs — record them only
+   where this repository has actually measured them.
+
+   **A memory ceiling is not a consumption figure.** `resource-measurement.md` already
+   states the ceilings in the tree are derived by rule and deliberately generous.
+   Publishing one as "RAM required" would turn a safety boundary into a false fact.
+
+**Source of truth.** One model for all five layers, not a second metadata system
+per dimension. Evaluate extending the per-stack `UPSTREAM.md` first, with
+`sovereignty-report.py` / `sovereignty.json` and `site-catalogue.py` generating the
+views, before considering any new file. Where the repository already knows a fact —
+every footprint fact in the table above — generate it from the compose files rather
+than recording it by hand; explicit metadata is for what only upstream can answer.
+
+**On the site.** Each product exposes the five facts compactly, plus the official
 links. One reusable page explains the concepts — MIT, GPL, AGPL, source-available,
 open-core — so no product page repeats them, and states plainly that *licence is not
 edition is not pricing*, and why **installing software for a customer** and
 **running it as a hosted service for them** can have different licence consequences.
 Factual decision support, not legal advice.
 
-No ratings, no traffic lights, no recommended winner. The operator decides.
+No ratings, no traffic lights, no recommended winner, and no "lightweight" or "heavy"
+label. A shorter form may be shown only if it is derived mechanically from these facts
+and the facts stay visible beside it. The operator decides.
 
 ## E. Roadmap reconciliation
 
