@@ -1,12 +1,14 @@
 # Roadmap
 
-Direction reviewed 2026-09-19.
+Direction reviewed 2026-09-20.
 
 What remains to be built, what blocks it, and what proves it finished. Shipped
 work belongs to [`CHANGELOG.md`](CHANGELOG.md), per-stack status to the generated
 [`LIFECYCLE.md`](LIFECYCLE.md), and per-category detail to the `README.md` in each
-top-level directory. The gap between where the project is and v1.0.0 is measured
-in [`docs/v1-readiness-audit.md`](docs/v1-readiness-audit.md).
+top-level directory. What the stabilization programme established, and what is
+still open with the evidence behind it, is in
+[`docs/v1-readiness-audit.md`](docs/v1-readiness-audit.md); actionable work is in
+GitHub Issues. This file holds direction only.
 
 ---
 
