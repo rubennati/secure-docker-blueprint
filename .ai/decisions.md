@@ -645,15 +645,34 @@ removed from every compose file, from the four healthchecks that read it, and fr
 every `.env.example`. Changing the value moves the label away from the port the image
 listens on, so it breaks routing instead of relocating it.
 
-## 2026-08 · No review gate on `main`
+## 2026-09-20 · No approving-review gate while there is one maintainer
 
-Branch protection on `main` requires seven status checks and no approving review.
-With a single maintainer, a required review is satisfied by the author approving
-their own pull request, which records an approval that nobody performed. The status
-checks are the part of the gate that reports a result.
+**Decided.** While this repository has a single maintainer:
 
-`CHANGELOG.md` recorded five checks and one approving review. That was not the live
-configuration.
+- `required_approving_review_count` stays **0** on both protected branches;
+- the required CI checks stay enforced — ten on `dev` and ten on `main`;
+- the rulesets keep **no bypass actor**, so a red check blocks the owner too;
+- no approval rule is introduced that the sole author cannot satisfy;
+- the requirement is revisited when a second maintainer exists.
+
+Both branches are governed by rulesets rather than classic branch protection, and
+both also require the branch to be up to date before merging.
+
+With a single maintainer a required review has only two shapes, and neither is worth
+having. GitHub does not let an author approve their own pull request, so a required
+review plus no bypass means nothing can ever merge; a required review with a bypass
+means the rule is bypassed on every single merge. The second is what would raise the
+OpenSSF Scorecard Branch-Protection check from 3 to 6 — a score describing a rule
+nobody honours.
+
+The ceiling is not reachable anyway: Scorecard's tier 4 requires **two** reviewers,
+so 10/10 is out of reach for a single-maintainer repository regardless of
+configuration. Recorded so the question is not reopened expecting a different answer.
+Revisit when a second maintainer exists — that is the condition that changes it, not
+the score.
+
+`CHANGELOG.md` once recorded five checks and one approving review, and an earlier
+version of this entry recorded seven checks. Neither was the live configuration.
 
 ## 2026-07 · Two troubleshooting documents, one entry point
 

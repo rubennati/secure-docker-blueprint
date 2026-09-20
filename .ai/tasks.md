@@ -115,7 +115,8 @@ session left open is in
       The agent's `network_mode: host` has no Docker network to resolve a
       service name on, so the proxy publishes `127.0.0.1:2375` and the agent's
       `DOCKER_HOST` points there. `docker compose config` validated on both
-      stacks; not yet run against a real daemon — no host in this environment.
+      stacks. Per-container metrics through the proxy are unverified on a real
+      daemon — issue #36 holds that acceptance test open.
 - [x] Verify `monitoring/ntfy` — done 2026-09-08: `read_only` holds, a message
       arrived on an iPhone through the public read-only router; a publish burst
       against the rate limit is still unmeasured
@@ -152,23 +153,16 @@ session left open is in
       is covered by the thresholds v0.8.0 verified, and recovery should not depend on
       someone watching a terminal.
 - [ ] Boot `apps/_reference/` once to confirm the template actually runs
-- [ ] Count the first-load requests for the four photo galleries — `apps/photoprism`,
-      `apps/librephotos`, `apps/lycheeorg`, `apps/photoview`. All four sit at `sec-2`,
-      whose `rl-soft` allows a burst of 50 per client address, and a thumbnail grid
-      is the shape that exceeds it. `apps/immich` already needed `sec-2-spa` for the
-      same reason. The method is in `docs/standards/traefik-security.md` under
-      Choosing the level for an app; above 50 the answer is the `-spa` variant, which
-      leaves the sustained rate untouched. `apps/it-tools` is the same question — a
-      Vue single-page app at `sec-3`, never counted. `core/portainer` first: it runs
-      `sec-4`, whose burst is 40, and its interface is a single-page app. Load it
-      once with an empty cache and read the request count
-- [ ] Decide `APP_TRAEFIK_SECURITY` for Seafile's four path-scoped routers.
-      They carry the access policy; the chain is deliberately absent until an
-      instance shows what it survives. `/sdoc-server` is the open one — `sec-2`
-      sets `frameDeny` and upstream documents neither the header nor whether
-      SeaDoc is framed, so it is `sec-2` or `sec-2e` and only a running editor
-      answers it. `/socket.io` and `/notification` are WebSockets and
-      `/thumbnail` issues many parallel requests, all against `rl-soft`
+- [ ] Count the first-load requests for the four photo galleries —
+      `apps/photoprism`, `apps/librephotos`, `apps/lycheeorg`, `apps/photoview` —
+      and for `apps/it-tools`, a Vue single-page app at `sec-3`. All five sit
+      behind `rl-soft`, whose burst is 50 per client address, and a thumbnail
+      grid is the shape that exceeds it; `apps/immich` already needed
+      `sec-2-spa` for the same reason. Method in
+      `docs/standards/traefik-security.md` under Choosing the level for an app.
+      `core/portainer` is the same measurement and is tracked as issue #37
+- [ ] Decide `APP_TRAEFIK_SECURITY` for Seafile's four path-scoped routers —
+      issue #39 carries the per-endpoint acceptance test
 - [ ] `business/openproject` after `internal: true` — whether mail leaves `worker`
       and whether first-run seeding completes without an outbound path. If either
       fails, `worker` and `cron` get a second network, not a removed flag.
@@ -278,8 +272,6 @@ Listed with context in [`state.md`](state.md). Nothing proceeds on these until d
       `site/src/content/docs/infrastructure/index.md`, ahead of Traefik
 - [x] Decide the `TROUBLESHOOTING.md` / `docs/standards/troubleshooting.md` overlap
       — index and method, declared in both files and in the File Map
-- [ ] Add `Checker coverage`, `Docs QA` and `Workflow supply chain` to the required
-      checks in branch protection — all three run, but nothing blocks on them yet
 - [ ] Decide `-f` per HTTP healthcheck. 19 checks across 17 files run
       `curl -sS -o /dev/null --max-time 5`, which succeeds on any answer including
       a 5xx — a broken application reports healthy and only a connection error or

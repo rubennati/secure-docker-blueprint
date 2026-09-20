@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # =============================================
-# Docker Ops Blueprint – Service Overview
+# Secure Docker Blueprint – Service Overview
 # =============================================
 # Scans all components and prints a summary
 # table from .env (or .env.example as fallback).
@@ -85,7 +85,7 @@ done
 
 # Print table
 printf "\n"
-printf "${BOLD} Docker Ops Blueprint – Service Overview${RESET}\n"
+printf "${BOLD} Secure Docker Blueprint – Service Overview${RESET}\n"
 printf "${DIM} Scanned: $(date '+%Y-%m-%d %H:%M')${RESET}\n"
 printf "\n"
 

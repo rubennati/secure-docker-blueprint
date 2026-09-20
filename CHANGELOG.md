@@ -8,7 +8,16 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
+### Changed
+
+- **GitHub Issues own the work they describe** (`.ai/tasks.md`). Four items were a second, drifting copy: the Seafile chain decision (#39), the Portainer first-load measurement (#37), the Beszel host verification (#36) and a branch-protection item that was already done — both rulesets require all ten checks, with no bypass actor, so the checks apply to the owner too. Each now points at its issue or is gone; the file keeps only what no issue owns.
+- **The single-maintainer review policy is recorded as a decision** (`.ai/decisions.md`, `docs/security-verification.md`): no approving-review requirement while one person maintains the repository, the ten required checks stay enforced on both branches, no bypass actor, no rule the sole author cannot satisfy, revisited when a second maintainer exists. The previous entry recorded seven required checks against a live ten and named neither the ruleset mechanism nor the Scorecard trade-off — Branch-Protection sits at 3 of 10 because tier 2 needs an approval nobody can give and tier 4 needs two reviewers.
+
 ### Fixed
+
+- **The old project name survived the rename** in `.gitignore`, `scripts/overview.sh` (twice, one of them printed on every run) and the `LICENSE` copyright line.
+- **`docs/security-verification.md` called `no-resources` a warning.** It is a failure.
+- **Every hardening coverage figure in `docs/security-verification.md` was stale and unscoped.** It counted 166 services against a real 205, because four stacks landed after the last correction, and gave no denominator definition — the checkers report 209, which is the same set plus `apps/_reference` and the two `development/` patterns. The document now opens with the two scopes and states every figure against deployable stacks: `no-new-privileges` 202/205, `cap_drop: ALL` 89/205, `read_only` 58/205, non-root `user:` 15/205, memory and PID ceilings 205/205, Docker Secrets 107/205.
 
 - **Opt-in compose overlays were checked by nothing** (`scripts/ci/check-overlays.py`, new). Stack discovery skips them on purpose and `check-baseline.py` imports that discovery, so five files that run on real hosts sat outside every gate. Each overlay is now validated as its own deployment variant — the stack merged with that one overlay through `docker compose config`, judged against the mandatory baseline. Merging through Compose rather than in YAML is deliberate: the merge rules differ per key and `!reset` / `!override` change them again. Services an overlay does not touch are not re-reported, and the canonical stack and service inventory is unchanged — overlays replace one another and are never counted as deployed together. What the gap had hidden:
   - `apps/paperless-ngx/sso.yml` and `backup/urbackup/network-host.yml` patched a service named `app`, which neither stack defines (`paperless-app`, `urbackup-app`). Compose rejected the whole project with *"service \"app\" has neither an image nor a build context"*, so neither documented feature could start.
