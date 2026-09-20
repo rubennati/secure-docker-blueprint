@@ -132,7 +132,7 @@ an old datastore at a freshly-generated config — either combination looks
 like it works and silently produces a server none of your existing
 endpoints actually trust.
 
-## Local testing (no Traefik)
+## Try it locally
 
 ```bash
 cp .env.local.example .env.local   # fill ADMIN_PASSWORD

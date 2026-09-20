@@ -12,6 +12,17 @@ Modern successor to Statping — more active (weekly releases), better UI, wider
 
 Data lives in `./volumes/data/` (SQLite DB, monitor state, uploaded icons).
 
+## Try it locally
+
+Runs on `http://localhost:3001` without Traefik, DNS or a certificate.
+
+```bash
+cp .env.local.example .env.local
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+# http://localhost:3001
+docker compose -f docker-compose.local.yml --env-file .env.local down
+```
+
 ## Setup
 
 ```bash

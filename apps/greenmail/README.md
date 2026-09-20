@@ -50,7 +50,7 @@ over IMAP and POP3, and a second container used the server by service name.
 Traefik routing has not been run against a real host. Full log in
 [`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-18).
 
-## Local deployment validation
+## Try it locally
 
 ```bash
 cp .env.local.example .env.local

@@ -11,6 +11,19 @@ Self-hosted photo and video backup with machine-learning–based search, facial 
 | `db` | `ghcr.io/immich-app/postgres:14-vectorchord…` | Postgres with vector extensions for similarity search |
 | `redis` | `valkey/valkey:8.1.6` | Background job queue (Bull/BullMQ) |
 
+## Try it locally
+
+Runs on `http://localhost:2283` without Traefik, DNS or a certificate.
+
+```bash
+cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+# http://localhost:2283
+docker compose -f docker-compose.local.yml --env-file .env.local down
+```
+
+`.env.local` holds plain values, not Docker Secrets — local only.
+
 ## Setup
 
 ```bash

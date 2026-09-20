@@ -16,6 +16,17 @@ No separate database, no separate secrets service — everything lives in one
 container and one bind mount. This is the simplest of the five PAM/bastion
 stacks in this repository, by design: it is the "lightweight" role.
 
+## Try it locally
+
+Runs on `http://localhost:8888` without Traefik, DNS or a certificate; port 2222 is published too.
+
+```bash
+cp .env.local.example .env.local
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+# http://localhost:8888
+docker compose -f docker-compose.local.yml --env-file .env.local down
+```
+
 ## Setup
 
 ```bash

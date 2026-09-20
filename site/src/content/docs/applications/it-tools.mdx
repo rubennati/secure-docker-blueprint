@@ -13,7 +13,20 @@ conversion. One container serving a static page.
 <StackEvidence stack="apps/it-tools"
   gap="a restore. There is nothing here to restore — the stack holds no state at all." />
 
-Needs: [Traefik](/infrastructure/traefik/) running and a domain.
+**To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
+
+**To deploy it behind the proxy:** [Traefik](/infrastructure/traefik/) running and a domain.
+
+## Try it locally
+
+On your own machine, with no proxy, domain or certificate. From `apps/it-tools/`:
+
+```bash
+cp .env.local.example .env.local
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+```
+
+Then open `http://localhost:8080`. Stop it again with the same command and `down`.
 
 ## Installation
 

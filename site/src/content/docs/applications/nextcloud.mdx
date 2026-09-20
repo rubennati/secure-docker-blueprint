@@ -14,7 +14,20 @@ background worker.
 <StackEvidence stack="apps/nextcloud"
   gap="desktop and mobile client sync." />
 
-Needs: [Traefik](/infrastructure/traefik/) running, a domain, and SMTP credentials.
+**To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
+
+**To deploy it behind the proxy:** [Traefik](/infrastructure/traefik/) running, a domain, and SMTP credentials.
+
+## Try it locally
+
+On your own machine, with no proxy, domain or certificate. From `apps/nextcloud/`:
+
+```bash
+cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+```
+
+Then open `http://localhost:8080`. Stop it again with the same command and `down`.
 
 Configure mail during setup rather than afterwards: Nextcloud cannot reset a
 password without it.

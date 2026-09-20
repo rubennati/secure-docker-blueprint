@@ -13,8 +13,20 @@ Nuxt frontend, nginx in front of both, PostgreSQL and Redis.
 <StackEvidence stack="apps/opnform"
   gap="everything below. The stack has never been brought up here: the seven-service startup order, the storage permissions the entrypoint sets, and a form submission with an attachment are read from the stack's files rather than observed." />
 
-Needs: [Traefik](/infrastructure/traefik/) running, a domain, and SMTP if forms
-should notify anyone.
+**To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
+
+**To deploy it behind the proxy:** [Traefik](/infrastructure/traefik/) running, a domain, and SMTP if forms should notify anyone.
+
+## Try it locally
+
+On your own machine, with no proxy, domain or certificate. From `apps/opnform/`:
+
+```bash
+cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+```
+
+Then open `http://localhost:8080`. Stop it again with the same command and `down`.
 
 Traefik routes to nginx alone. Everything else is reached through it — `/api/*`
 goes to the Laravel backend, the rest to the frontend.

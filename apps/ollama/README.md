@@ -105,7 +105,7 @@ survived a restart. Traefik routing and TLS have not been run against a real
 host, and nothing has run on a GPU. Full log in
 [`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-18).
 
-## Local deployment validation
+## Try it locally
 
 ```bash
 cp .env.local.example .env.local

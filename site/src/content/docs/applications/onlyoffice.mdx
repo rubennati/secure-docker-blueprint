@@ -13,7 +13,20 @@ OnlyOffice Document Server is a shared editing backend — it provides browser-b
 
 One OnlyOffice instance can serve multiple consuming applications simultaneously. Each application must hold the same JWT secret and have its origin listed in the allowed-origins setting.
 
-Needs: [Traefik](/infrastructure/traefik/) running, a hostname, a JWT secret, and the origin(s) of each application that will embed the editor.
+**To try it:** Docker, and a JWT secret, which the editor requires either way. See [Try it locally](#try-it-locally).
+
+**To deploy it behind the proxy:** [Traefik](/infrastructure/traefik/) running, a hostname, a JWT secret, and the origin(s) of each application that will embed the editor.
+
+## Try it locally
+
+On your own machine, with no proxy, domain or certificate. From `apps/onlyoffice/`:
+
+```bash
+cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+```
+
+Then open `http://localhost:8080`. Stop it again with the same command and `down`.
 
 ## Installation
 

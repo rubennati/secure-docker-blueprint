@@ -124,7 +124,7 @@ in `UPSTREAM.md`.
 have not been run against a real host. Full log in
 [`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-18).
 
-## Local deployment validation
+## Try it locally
 
 `docker-compose.local.yml` runs the CPU build so the server can be tried with no
 GPU. It is slow: on six AVX2 cores a 0.5B model took about five minutes to

@@ -20,6 +20,19 @@ Compared to Cal.com / Cal.diy:
 | You value a 13-year track record over newness | You want active feature velocity |
 | You run only a few services per host (low RAM budget) | You have headroom for a Node.js app |
 
+## Try it locally
+
+Runs on `http://localhost:8080` without Traefik, DNS or a certificate.
+
+```bash
+cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+# http://localhost:8080
+docker compose -f docker-compose.local.yml --env-file .env.local down
+```
+
+`.env.local` holds plain values, not Docker Secrets — local only.
+
 ## Setup
 
 ```bash

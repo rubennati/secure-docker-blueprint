@@ -91,7 +91,7 @@ application, the six services together used roughly 1.9 GB after start.
 
 `scaffolded` — see [UPSTREAM.md](UPSTREAM.md#verification-performed-2026-09-19).
 
-## Local deployment validation
+## Try it locally
 
 ```bash
 cp .env.local.example .env.local

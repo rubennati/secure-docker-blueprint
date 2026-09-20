@@ -35,7 +35,7 @@ docker compose up -d
 #   https://<APP_TRAEFIK_HOST>/web-apps/apps/api/documents/api.js
 ```
 
-## Local testing
+## Try it locally
 
 ```bash
 cp .env.local.example .env.local

@@ -9,6 +9,19 @@ Self-hosted photo gallery focused on RAW processing, EXIF-driven organization, a
 | `app` | `photoview/photoview:2.4.0` | Web UI + GraphQL API + media indexer |
 | `db` | `mariadb:11.4` | Index, albums, users, face data |
 
+## Try it locally
+
+Runs on `http://localhost:8080` without Traefik, DNS or a certificate.
+
+```bash
+cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+# http://localhost:8080
+docker compose -f docker-compose.local.yml --env-file .env.local down
+```
+
+`.env.local` holds plain values, not Docker Secrets — local only.
+
 ## Setup
 
 ```bash

@@ -28,7 +28,7 @@ docker compose up -d
 # In Nextcloud: Office app → "Use your own server" → https://<APP_TRAEFIK_HOST>
 ```
 
-## Local testing
+## Try it locally
 
 ```bash
 cp .env.local.example .env.local

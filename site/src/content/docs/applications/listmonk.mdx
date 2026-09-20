@@ -12,8 +12,20 @@ opens and clicks. Two containers — a single Go binary and PostgreSQL.
 <StackEvidence stack="business/listmonk"
   gap="everything below. The stack has never been brought up here: the install path, the admin wizard, sending through a real relay and bounce handling are all read from the stack's files rather than observed." />
 
-Needs: [Traefik](/infrastructure/traefik/) running, a domain, and an SMTP relay
-you enter after installation.
+**To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
+
+**To deploy it behind the proxy:** [Traefik](/infrastructure/traefik/) running, a domain, and an SMTP relay you enter after installation.
+
+## Try it locally
+
+On your own machine, with no proxy, domain or certificate. From `business/listmonk/`:
+
+```bash
+cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+```
+
+Then open `http://localhost:9000`. Stop it again with the same command and `down`.
 
 ## Installation
 

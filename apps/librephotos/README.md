@@ -11,6 +11,19 @@ Self-hosted photo management with face recognition, object detection, location d
 | `frontend` | `reallibrephotos/librephotos-frontend:latest` | Static React build |
 | `db` | `pgautoupgrade/pgautoupgrade:16-bookworm` | Postgres with automatic major-version upgrade on startup |
 
+## Try it locally
+
+Runs on `http://localhost:8080` without Traefik, DNS or a certificate.
+
+```bash
+cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+# http://localhost:8080
+docker compose -f docker-compose.local.yml --env-file .env.local down
+```
+
+`.env.local` holds plain values, not Docker Secrets — local only.
+
 ## Setup
 
 ```bash

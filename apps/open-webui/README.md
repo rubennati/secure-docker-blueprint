@@ -68,7 +68,7 @@ host.
 
 `scaffolded` — see [UPSTREAM.md](UPSTREAM.md#verification-performed-2026-09-19).
 
-## Local deployment validation
+## Try it locally
 
 ```bash
 cp .env.local.example .env.local

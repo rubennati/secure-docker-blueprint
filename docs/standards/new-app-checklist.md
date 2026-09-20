@@ -5,6 +5,34 @@ Each item links to the relevant standard or lesson learned.
 
 ---
 
+## What a stack owes, before the steps
+
+The nine steps below are the order of work. This table is the contract they add up
+to — what is mandatory, what depends on the stack, what nobody types, and what only
+a host can establish.
+
+| | What | Enforced by |
+|---|---|---|
+| **Mandatory** | `docker-compose.yml`, `.env.example`, `README.md`, `UPSTREAM.md`, `.gitignore` | `check-structure.py`, `Required files` |
+| | Pinned image tag — never `latest` or a bare major | `check-structure.py` |
+| | `no-new-privileges`, no direct socket mount, datastores off `proxy-public` | `check-baseline.py` |
+| | `memory`, `pids` and `memswap_limit` on every service | `check-structure.py` |
+| | `License`, `Origin`, `Domain`, `Role` in `UPSTREAM.md` | `sovereignty-report.py --check`, `site-catalogue.py --check` |
+| | A row in the category `README.md` linking the directory | `check-coverage.py` (`unlisted-stack`) |
+| | A `## Backup` section, or `n/a` with the reason | `lifecycle-report.py --check` |
+| **Conditional** | Ships `docker-compose.local.yml` → the README needs a `## Try it locally` section with the command, the URL and any credential step | review |
+| | Ships an opt-in overlay → it must merge and stay inside the baseline | `check-overlays.py` |
+| | Reachable over the network → Traefik labels, an access policy and a security chain | `traefik-security.md` |
+| | Holds persistent state → the backup section names every volume and database a restore needs | review |
+| **Generated — never edited** | `LIFECYCLE.md`, `site/src/data/lifecycle.json`, `sovereignty.json`, `catalogue.json` | the three `--check` runs fail when stale |
+| **Runtime evidence only** | `Last verified: DATE (vX.Y.Z)`, and any lifecycle state above `scaffolded` | a host, not a checker |
+
+A stack reaches the operator site by existing: the catalogue is generated from
+`UPSTREAM.md`, so `Domain` and `Role` are what put it there. Nothing else has to be
+added to the site by hand.
+
+---
+
 ## 1. Research the Image
 
 Before writing any YAML, answer these questions:
@@ -228,6 +256,18 @@ incident. Keep the heading exactly `## Backup` — `lifecycle-report.py` reads i
 
 ## 9. Document
 
+- [ ] Add a row to the category `README.md` linking the new directory — the one
+      inventory that is not generated, and the one CI now guards
+- [ ] If the stack ships `docker-compose.local.yml`, give the README a
+      `## Try it locally` section: the command, the `http://localhost:<port>` it
+      answers on, and any credential or bootstrap step. That heading is the
+      user-facing name for this path everywhere except the `development/`
+      patterns, which validate a build rather than evaluate a product
+- [ ] Add a `## [Unreleased]` entry to `CHANGELOG.md`
+- [ ] Regenerate the derived views and commit them:
+      `python3 scripts/ci/lifecycle-report.py --write`,
+      `python3 scripts/ci/sovereignty-report.py`,
+      `python3 scripts/ci/site-catalogue.py`
 - [ ] Add any bugs found to `docs/bugfixes/` with root cause and fix
 - [ ] Update this checklist if you discovered a new pitfall
 

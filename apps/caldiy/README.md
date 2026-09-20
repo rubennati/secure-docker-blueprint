@@ -2,7 +2,7 @@
 
 > **Note:** Cal.diy is the MIT-licensed community edition of Cal.com, spun out in 2026 when Cal.com moved its production codebase behind a closed-source licence. Upstream explicitly labels Cal.diy as "strictly for personal, non-production use" with no security guarantees. **Do not use for business-critical scheduling** without understanding that trade-off.
 
-> **Cloudflare (proxied) is the recommended edge layer for the internet-facing deployment.** Cal.diy is community-maintained and not confirmed secure, and a live instance of it was compromised once (SMTP credential exfiltrated), so for an internet-facing deployment this guide recommends running Cal.diy **behind Cloudflare as a proxy (orange cloud), not DNS-only**: WAF, geo allowlist on the human-facing surface, rate limiting, and origin hiding. The application itself does not depend on Cloudflare and runs without it locally — see [Local testing](#local-testing-no-traefik). Exact settings: **[docs/cloudflare.md](docs/cloudflare.md)**. The full post-incident hardening roadmap: **[docs/hardening-plan.md](docs/hardening-plan.md)**.
+> **Cloudflare (proxied) is the recommended edge layer for the internet-facing deployment.** Cal.diy is community-maintained and not confirmed secure, and a live instance of it was compromised once (SMTP credential exfiltrated), so for an internet-facing deployment this guide recommends running Cal.diy **behind Cloudflare as a proxy (orange cloud), not DNS-only**: WAF, geo allowlist on the human-facing surface, rate limiting, and origin hiding. The application itself does not depend on Cloudflare and runs without it locally — see [Try it locally](#try-it-locally). Exact settings: **[docs/cloudflare.md](docs/cloudflare.md)**. The full post-incident hardening roadmap: **[docs/hardening-plan.md](docs/hardening-plan.md)**.
 
 For an alternative with an established track record and no build dependency, see [`apps/easyappointments/`](../easyappointments/) (PHP + MariaDB, GPL-3.0).
 
@@ -53,7 +53,7 @@ docker compose logs app --follow
 > [docs/cloudflare.md](docs/cloudflare.md) — WAF, geo allowlist, and origin hiding are the edge
 > half of the security model for a public deployment.
 
-## Local testing (no Traefik)
+## Try it locally
 
 Run the app standalone on `http://localhost:3000` — no Traefik, Cloudflare, or Docker Secrets:
 

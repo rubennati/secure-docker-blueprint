@@ -14,8 +14,20 @@ directly.
 <StackEvidence stack="core/authentik"
   gap="a restore. The database, the secret key and the signing certificates have to come back together, and that has not been performed here." />
 
-Needs: [Traefik](/infrastructure/traefik/) running, a domain, and SMTP
-credentials.
+**To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
+
+**To deploy it behind the proxy:** [Traefik](/infrastructure/traefik/) running, a domain, and SMTP credentials.
+
+## Try it locally
+
+On your own machine, with no proxy, domain or certificate. From `core/authentik/`:
+
+```bash
+cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+```
+
+Then open `http://localhost:9000`. Stop it again with the same command and `down`.
 
 Five containers: the web server, a background worker, PostgreSQL, Redis, and a
 one-shot init container that runs for half a second at every start.

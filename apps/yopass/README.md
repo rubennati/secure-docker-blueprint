@@ -87,7 +87,7 @@ No backup entry is needed for this stack. A secret in flight during a
 restart is lost, which matches its own stated lifetime guarantees (Yopass
 never promised delivery across a server restart).
 
-## Local testing (no Traefik)
+## Try it locally
 
 ```bash
 cp .env.local.example .env.local

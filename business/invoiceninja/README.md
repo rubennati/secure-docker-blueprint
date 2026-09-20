@@ -33,6 +33,19 @@ PHP extensions (BCMath, Ctype, Fileinfo, JSON, Mbstring, OpenSSL, PDO,
 Tokenizer, XML, GD) come with the official image; the list matters only if you
 depart from it.
 
+## Try it locally
+
+Runs on `http://localhost:8080` without Traefik, DNS or a certificate.
+
+```bash
+cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+# http://localhost:8080
+docker compose -f docker-compose.local.yml --env-file .env.local down
+```
+
+`.env.local` holds plain values, not Docker Secrets — local only.
+
 ## First-Time Setup
 
 ### Step 1: Configure

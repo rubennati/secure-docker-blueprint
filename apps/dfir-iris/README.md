@@ -158,7 +158,7 @@ that for you.
 together, then start the stack. RabbitMQ's volume can be restored last or
 skipped entirely — it holds no data worth keeping past a restart.
 
-## Local testing (no Traefik)
+## Try it locally
 
 ```bash
 cp .env.local.example .env.local   # fill DB_PASSWORD, DB_ADMIN_PASSWORD, IRIS_SECRET_KEY, IRIS_SECURITY_PASSWORD_SALT

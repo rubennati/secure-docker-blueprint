@@ -22,6 +22,19 @@ Traefik routes to `nextcloud-nginx`, which proxies PHP requests to `app` via Fas
 
 The Alpine FPM image is lighter and gives nginx full control over static asset serving, caching headers, and the CalDAV/CardDAV redirects. The `-apache` variant is a supported alternative upstream; switching to it means dropping the `nextcloud-nginx` service, mounting the configuration into `app` instead, and moving the Traefik labels there with port 80.
 
+## Try it locally
+
+Runs on `http://localhost:8080` without Traefik, DNS or a certificate.
+
+```bash
+cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+# http://localhost:8080
+docker compose -f docker-compose.local.yml --env-file .env.local down
+```
+
+`.env.local` holds plain values, not Docker Secrets — local only.
+
 ## Setup
 
 There is no setup wizard. `NEXTCLOUD_ADMIN_USER_FILE` and

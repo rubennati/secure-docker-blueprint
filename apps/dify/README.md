@@ -100,7 +100,7 @@ and pgvector 1 GB each, the rest 256–512 MB.
 
 `scaffolded` — see [UPSTREAM.md](UPSTREAM.md#verification-performed-2026-09-19).
 
-## Local deployment validation
+## Try it locally
 
 ```bash
 ops/init.sh

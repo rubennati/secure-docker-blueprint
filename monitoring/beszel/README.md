@@ -15,6 +15,17 @@ On first start the hub generates an Ed25519 keypair. The **public key** goes int
 
 This compose runs the hub + one local agent on the **same host**. For additional hosts deploy [`monitoring/beszel-agent/`](../beszel-agent/) there.
 
+## Try it locally
+
+Runs on `http://localhost:8090` without Traefik, DNS or a certificate.
+
+```bash
+cp .env.local.example .env.local
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+# http://localhost:8090
+docker compose -f docker-compose.local.yml --env-file .env.local down
+```
+
 ## Setup
 
 ```bash

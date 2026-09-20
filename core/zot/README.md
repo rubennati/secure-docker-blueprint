@@ -119,7 +119,7 @@ together with `volumes/registry`, then start the container. Restoring the
 registry storage without the matching htpasswd file leaves images intact
 but nobody able to authenticate against them.
 
-## Local testing (no Traefik)
+## Try it locally
 
 ```bash
 cp .env.local.example .env.local
