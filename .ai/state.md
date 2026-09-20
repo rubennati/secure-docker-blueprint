@@ -4,15 +4,24 @@
 
 **Last updated:** 2026-09-20
 
-- **Phase:** pre-1.0. Latest tag `v0.9.1` (2026-09-19); `dev` and `main` are level. Priority 1 is
-  released. Open work is listed in [`tasks.md`](tasks.md#open-after-v091). Work happens on a
+- **Phase:** pre-1.0. Latest tag `v0.9.1` (2026-09-19), which is where `main`
+  stands; `dev` carries ten commits beyond it, unreleased. Work happens on a
   short-lived branch and reaches `dev` through a pull request; `dev` reaches
   `main` the same way. Both branches reject a direct push.
-- **Current milestone:** v0.10.0 — Measured resource limits. The path to v1.0.0 and
-  what still blocks it: [`../docs/v1-readiness-audit.md`](../docs/v1-readiness-audit.md).
+- **Last completed:** the stabilization programme — PRs #115, #119, #124, #125,
+  #126. What each changed, what remains and why:
+  [`../docs/v1-readiness-audit.md`](../docs/v1-readiness-audit.md) → *What the
+  stabilization programme did* and *Remaining work*. Actionable items are GitHub
+  Issues; [`tasks.md`](tasks.md) holds only what no issue owns.
+- **Current milestone:** v0.10.0 — Measured resource limits. Whether it stays a
+  release is open (D4 in the audit): the measurement needs the same host session
+  as the verification backlog.
 - **Definition of done for v0.10.0:** every `✅` stack's limits come from a
   measurement on a real install rather than from the derivation rule
   (`docs/resource-measurement.md`).
+- **The one thing a new session should know:** nothing structural is broken. The
+  checkers, the generated views and the site catalogue agree with the tree. What
+  is left needs a host, or a decision that is written down and waiting.
 
 ## Snapshot
 

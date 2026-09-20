@@ -1,10 +1,17 @@
-# v1.0.0 readiness audit
+# Stabilization audit
 
-Audit of 2026-09-19 against `dev` at `f9b47fd`. The filesystem and the checkers
-are the evidence; every README count, roadmap entry and status claim was compared
-with them. Each finding carries its resolution, and the sections below are
-rewritten as findings close so this file never describes a fixed problem as a
-current one.
+State of `dev` at `24dd7a2`, 2026-09-20. The filesystem and the checkers are the
+evidence; every count, roadmap entry and status claim here was compared with them.
+
+This file is the findings register for the stabilization programme. A finding
+carries its resolution and the pull request that closed it, and the descriptive
+sections are rewritten as findings close, so nothing here describes a fixed
+problem as a current one. A resolved finding keeps the figures it was found with —
+those are the record of what was wrong. Open findings carry current figures.
+
+Actionable work lives in GitHub Issues, strategy in `ROADMAP.md`, present state in
+`.ai/state.md`. This file holds what none of those owns: the evidence behind a
+finding and why it is still open.
 
 ## A. Executive state
 
@@ -18,14 +25,18 @@ The mechanical contract holds: every structural, baseline, status, link, prose a
 workflow check passes on `dev`, both rulesets require all ten CI jobs with
 up-to-date branches and no bypass, and no work is stranded on another branch.
 
-What stands between the project and v1.0.0 is not structure. Two things are
-confirmed blockers and cannot be closed by editing: **verification** (70 of 84
-stacks are `scaffolded`) and **Trivy blocking nothing**. On the operator site,
-discovery is incomplete — 36 of the 84 stacks have a dedicated page, and the
-rest are reachable only as rows of the licence table ([D](#d-website-parity)) —
-which PR 2 addresses; and whether the public pages may keep carrying personal
-data is a pending decision (D3) with a possible v1.0 impact. See
-[G](#g-remaining-v10-blockers).
+Three pull requests closed the mechanical half of it. **#124** made opt-in compose
+overlays deployment variants that are merge-validated rather than files nothing
+looked at. **#125** gave GitHub Issues ownership of the work they describe and
+separated the deployable scope from the wider checker scope. **#126** made the
+local evaluation path discoverable on all 79 stacks that have one and corrected
+the site's prerequisite semantics.
+
+What remains is not structural. **Verification is the largest item**: 75 of 89
+stacks are `scaffolded`, and a state resting on no evidence needs a host, not an
+edit. **Trivy still blocks nothing.** Everything else open is either a decision
+only the maintainer can take or work deliberately deferred — see
+[G](#g-remaining-work).
 
 ## B. Canonical inventory
 
@@ -35,26 +46,37 @@ README.
 | Root | Directories | Stacks | Notes |
 |---|---|---|---|
 | `core/` | 19 | 19 | 18 with Compose; `host-watchdog` is host-installed |
-| `apps/` | 47 | 46 | `_reference` is the structure template, not a stack |
+| `apps/` | 51 | 50 | `_reference` is the structure template, not a stack |
 | `business/` | 10 | 10 | |
-| `monitoring/` | 7 | 7 | `beszel-agent` is the agent of `beszel` |
+| `monitoring/` | 8 | 8 | `beszel-agent` is the agent of `beszel` |
 | `backup/` | 2 | 2 | `borgmatic` is host-installed; `urbackup` has Compose |
-| **Lifecycle-tracked total** | | **84** | 82 with a production Compose file, 2 host-installed |
+| **Lifecycle-tracked total** | | **89** | 87 with a production Compose file, 2 host-installed |
 | `development/` | 2 | 0 | `static-site`, `web-api` — patterns, checked like a stack, never deployed as one |
 
-- **Services:** 166 across the 82 production Compose files. Every one states
-  `memory`, `pids_limit` and `memswap_limit`; 163 carry `no-new-privileges` (three
-  documented exceptions: Nextcloud `app` and `cron`, JumpServer); 69 drop all
-  capabilities, 44 have a read-only root filesystem, 9 set `user:`.
+- **Services — two scopes, never mixed (#125).** **205 in deployable stacks**,
+  across 99 Compose files: every one states `memory`, `pids_limit` and
+  `memswap_limit`; 202 carry `no-new-privileges` (three documented exceptions:
+  Nextcloud `app` and `cron`, JumpServer); 89 drop all capabilities, 58 have a
+  read-only root filesystem, 15 set `user:`, 107 use a `secrets:` block. The
+  checkers report **209 across 102 files**, which is the same set plus
+  `apps/_reference` and the two `development/` patterns — they are validated,
+  never deployed. `docs/security-verification.md` opens with the same table.
+- **Opt-in overlays:** 6, each merge-validated as its own deployment variant
+  through `docker compose config` (#124). Five affect services and get the full
+  baseline; one redefines only networks. None is counted as a stack or a service —
+  several are alternatives to each other.
 - **Helpers belonging to another stack:** `monitoring/beszel-agent`,
   `core/portainer-agent`, `core/hawser` (agent of `core/dockhand`).
-- **Local test stack** (`docker-compose.local.yml`): 74 of 84.
+- **Local test stack** (`docker-compose.local.yml`): 79 of 89, every published port bound to loopback. All 79 carry a `## Try it locally` section (#126).
 - **Lifecycle state:** 1 `ops-proven` (`backup/borgmatic`), 13 `baseline-aligned`,
-  70 `scaffolded`. 26 carry the pre-v0.5.1 `Last checked` stamp, 27 have no
-  verification date at all, 17 are pin-drifted. 80 of 84 READMEs have no restore
+  75 `scaffolded`. 26 carry the pre-v0.5.1 `Last checked` stamp, 32 have no
+  verification date at all, 17 are pin-drifted. 85 of 89 READMEs have no restore
   section (the model is [`docs/standards/restore.md`](standards/restore.md)).
-- **Licence classes:** 70 OSI, 8 mixed, 5 source-available, 1 proprietary; 32 EU,
-  41 non-EU, 11 with no single jurisdiction.
+- **Licence classes:** 71 OSI, 32 EU. Generated and CI-checked; the full split is
+  in `docs/sovereignty/provenance.md`.
+- **Site:** all 89 in the generated catalogue across 14 domains, each searchable by
+  product name and linked to its repository directory; 36 additionally have a
+  written guide.
 
 ### Domains for discovery
 
@@ -81,7 +103,7 @@ Status is the state after the PR named.
 | ID | Finding | Evidence | Class | Status |
 |---|---|---|---|---|
 | G1 | Local `dev` was 5 commits behind `origin/dev` | `974b7bc` vs `f9b47fd` | CLEANUP | Resolved — fast-forwarded |
-| G2 | Five remote branches and eight local branches carry no work `dev` lacks (verified: 0 commits ahead of `origin/dev`); a worktree `sdb-ai` sits on a merged branch | `git rev-list --count origin/dev..<branch>` | CLEANUP | Open — deleted only after the audit and fix sequence is complete and all work is confirmed in `dev`; not part of any PR |
+| G2 | Three local `chore/*` branches remain after their pull requests merged, each with 0 unique commits | `git rev-list --count <branch> --not origin/dev origin/main` | CLEANUP | Resolved — deleted in the closing pass; the local-only `docs` branch (11 unique commits, independent history) is kept |
 | G3 | Local `docs` branch is 11 commits ahead of nothing on the remote | not on `origin` | — | Left alone; it is the private drafts branch |
 | G4 | `origin/main` is 33 commits behind `dev` | `d3d25c1` | — | Intended — the unreleased Priority 1 work |
 
@@ -89,16 +111,16 @@ Status is the state after the PR named.
 
 | ID | Finding | Evidence | Impact | Class | Status |
 |---|---|---|---|---|---|
-| R1 | ROADMAP contradicted the rulesets and the product model: it named three required checks as not required; kept a "pick one, deprioritise the rest" section; listed v0.9.0 as current work; carried a 70-line design record and a licence policy that duplicated `provenance.md` | old `ROADMAP.md` vs `gh api …/rulesets` | Reader plans against facts that are false | FIX BEFORE V1 | Resolved — PR 1 |
-| R2 | `.ai/state.md` named `v0.8.3` as latest tag and Priority 1 batches 4–6 as not started | `git tag`, merged PRs #106–#114 | Session context misleads | FIX BEFORE V1 | Resolved — PR 1 |
-| R3 | `docs/security-verification.md` counted 145 services, 143 exceptions-free, 32 `cap_drop`; reality 166, 163, 69. It also called `no-resources` a warning; it fails CI | `check-structure.py` | A security claim with wrong numbers | FIX BEFORE V1 | Resolved — PR 1 |
-| R4 | `docs/sovereignty/provenance.md` described 62 stacks and three source-available licences; the generated data has 84 and five | `sovereignty.json` | Licence caveats for Hemmelig and Orion Belt missing | FIX BEFORE V1 | Resolved — PR 1 |
-| R5 | Root README said capabilities are "checked on every pull request"; no checker inspects `cap_drop`. **A documentation defect only, not a missing invariant:** `compose-structure.md` and `security-baseline.md` make `cap_drop`, `read_only` and `user:` conditional ("where the image supports it", "where possible"); only `no-new-privileges` is mandatory. A universal checker would fail on legitimate exceptions or need an exception record per service | standards vs `scripts/ci` | Claim broader than enforcement | FIX BEFORE V1 | Resolved — PR 1 (claim corrected; no checker added) |
-| R6 | `apps/README.md` omitted `docling-serve`; used "pick one" wording | grep | Stack not discoverable from its category | CLEANUP | Resolved — PR 1 |
-| R7 | `CHANGELOG.md` `[Unreleased]` named none of the 21 stacks or 2 patterns | grep | Release history incomplete | CLEANUP | Resolved — PR 1 |
-| R8 | LIFECYCLE showed ShellHub's Valkey tag as its pin; `UPSTREAM.md` of IT-Tools, Monica and Easy!Appointments named a version other than the pinned one | `.env.example` vs `UPSTREAM.md` | Generated status column wrong | FIX BEFORE V1 | Resolved — PR 1 (checker fixed, regression test added) |
-| R9 | `docs/status-model-proposal.md` — decided and applied, referenced nowhere | `git grep` | Second, stale statement of the status model | CLEANUP | Resolved — PR 1 (removed) |
-| R10 | `.ai/domains/architecture.md` said AI & Local AI has no stack | file | Stale session context | CLEANUP | Resolved — PR 1 |
+| R1 | ROADMAP contradicted the rulesets and the product model: it named three required checks as not required; kept a "pick one, deprioritise the rest" section; listed v0.9.0 as current work; carried a 70-line design record and a licence policy that duplicated `provenance.md` | old `ROADMAP.md` vs `gh api …/rulesets` | Reader plans against facts that are false | FIX BEFORE V1 | Resolved — #115 |
+| R2 | `.ai/state.md` named `v0.8.3` as latest tag and Priority 1 batches 4–6 as not started | `git tag`, merged PRs #106–#114 | Session context misleads | FIX BEFORE V1 | Resolved — #115 |
+| R3 | `docs/security-verification.md` counted 145 services, 143 exceptions-free, 32 `cap_drop`; reality 166, 163, 69. It also called `no-resources` a warning; it fails CI | `check-structure.py` | A security claim with wrong numbers | FIX BEFORE V1 | Resolved — #115 |
+| R4 | `docs/sovereignty/provenance.md` described 62 stacks and three source-available licences; the generated data has 84 and five | `sovereignty.json` | Licence caveats for Hemmelig and Orion Belt missing | FIX BEFORE V1 | Resolved — #115 |
+| R5 | Root README said capabilities are "checked on every pull request"; no checker inspects `cap_drop`. **A documentation defect only, not a missing invariant:** `compose-structure.md` and `security-baseline.md` make `cap_drop`, `read_only` and `user:` conditional ("where the image supports it", "where possible"); only `no-new-privileges` is mandatory. A universal checker would fail on legitimate exceptions or need an exception record per service | standards vs `scripts/ci` | Claim broader than enforcement | FIX BEFORE V1 | Resolved — #115 (claim corrected; no checker added) |
+| R6 | `apps/README.md` omitted `docling-serve`; used "pick one" wording | grep | Stack not discoverable from its category | CLEANUP | Resolved — #115 |
+| R7 | `CHANGELOG.md` `[Unreleased]` named none of the 21 stacks or 2 patterns | grep | Release history incomplete | CLEANUP | Resolved — #115 |
+| R8 | LIFECYCLE showed ShellHub's Valkey tag as its pin; `UPSTREAM.md` of IT-Tools, Monica and Easy!Appointments named a version other than the pinned one | `.env.example` vs `UPSTREAM.md` | Generated status column wrong | FIX BEFORE V1 | Resolved — #115 (checker fixed, regression test added) |
+| R9 | `docs/status-model-proposal.md` — decided and applied, referenced nowhere | `git grep` | Second, stale statement of the status model | CLEANUP | Resolved — #115 (removed) |
+| R10 | `.ai/domains/architecture.md` said AI & Local AI has no stack | file | Stale session context | CLEANUP | Resolved — #115 |
 | R11 | `renovate.json` is committed, the Renovate app is not installed, no pin carries a `# renovate:` marker, and `docs/renovate-proposal.md` describes it as pending | 30 Dependabot PRs, 0 Renovate | Dormant configuration and a proposal nobody has closed | DECISION REQUIRED | Open |
 | R12 | Three stacks have `COMPOSE_PROJECT_NAME` differing from the directory (`lycheeorg`, `monicahq`, `paperless-ngx`) | `check-structure.py` `identity-source` | Renaming either side breaks existing deployments' volume and network names | DECISION REQUIRED | Open |
 | R13 | `docs/host-session-*.md`, `docs/site-review-2026-08-03.md` and four files under `docs/audits/` are dated working records | file headers | Accumulated history in `docs/` | CLEANUP | Open — kept as evidence; a decision on archiving is not needed for v1.0 |
@@ -109,8 +131,8 @@ Status is the state after the PR named.
 
 | ID | Finding | Evidence | Class | Status |
 |---|---|---|---|---|
-| S1 | 70 of 84 stacks are `scaffolded`; 26 legacy stamps, 27 undated, 17 pin-drifted; none states why it stays there. The promise is that a fork deploys without the author's mental model, and a state resting on no evidence breaks it | `LIFECYCLE.md` | **V1 BLOCKER** — confirmed | Open — needs host sessions; D1 decides how a reason is recorded, not whether one is needed |
-| S2 | 80 of 84 READMEs have no restore section; `docs/standards/restore.md` carries the model | generated Restore column | DECISION REQUIRED | Open — D2 |
+| S1 | 75 of 89 stacks are `scaffolded`; 26 carry a legacy stamp, 32 have no verification date, 17 are pin-drifted, and none states why it stays there. The promise is that a fork deploys without the author's mental model, and a state resting on no evidence breaks it | `LIFECYCLE.md` | **NEEDS HOST EVIDENCE** — the largest remaining item | Open — D1 decides how a reason is recorded, not whether one is needed |
+| S2 | 85 of 89 READMEs have no restore section; `docs/standards/restore.md` carries the model | generated Restore column | DECISION REQUIRED | Open — D2 |
 | S3 | `cap_drop`, `read_only` and non-root `user` are conditional controls, applied to 69, 44 and 9 of 166 services and not CI-enforced. A later option, not a gap: a non-failing coverage report or per-service exception records | `security-verification.md` §4–5 | POST-V1 / ON HOLD | Open |
 | S4 | ShellHub pins a release candidate | `core/shellhub/UPSTREAM.md` | CLEANUP — documented limitation, revisit at the first stable tag | Open |
 | S5 | Structure checks otherwise clean: no `:latest`, no plaintext secrets, no datastore on `proxy-public`, 13 published-port services all by design, 7 socket mounts all documented exceptions | `check-structure.py`, `check-baseline.py` | — | No finding |
@@ -119,12 +141,12 @@ Status is the state after the PR named.
 
 | ID | Finding | Evidence | Class | Status |
 |---|---|---|---|---|
-| W1 | 48 of 84 stacks have no dedicated page, among them all seven monitoring stacks, both backup stacks and every Priority 1 stack; 33 of them appear only as a row in the licence table | [D](#d-website-parity) | FIX BEFORE V1 | Resolved — catalogue and corrected text |
-| W2 | Applications index says "around sixty stacks" and points to GitHub for the rest | `applications/index.md` | FIX BEFORE V1 | Resolved — catalogue and corrected text |
-| W3 | `llms.txt` states no local single-machine path is documented; the Infrastructure page documents it | `pages/llms.txt.ts`, `infrastructure/index.md` | FIX BEFORE V1 | Resolved — catalogue and corrected text |
-| W4 | Navigation mirrors the directories (Infrastructure = `core/`, Applications = `apps/`); no route by problem | `astro.config.mjs` | FIX BEFORE V1 | Resolved — Catalogue section |
-| W5 | Parity between repository and site is a manual list and fell 48 stacks behind | W1 | FIX BEFORE V1 | Resolved — generated catalogue, checked in CI |
-| W6 | The old gate demanded a choosing page for every capability with more than one option. That does not follow from the current model — overlap is allowed and nothing is ranked — and a page per capability invites a winner. The model needs complete discovery (W1) and, where alternatives differ in a way the catalogue cannot show, a short comparison. One choosing page exists (`applications/choosing`) | site tree | Superseded by W1 plus proportionate comparison; not a blocker | Open — PR 2 gives every domain a role column; further comparison is editorial |
+| W1 | 48 of 84 stacks have no dedicated page, among them all seven monitoring stacks, both backup stacks and every Priority 1 stack; 33 of them appear only as a row in the licence table | [D](#d-website-parity) | FIX BEFORE V1 | Resolved — #119 |
+| W2 | Applications index says "around sixty stacks" and points to GitHub for the rest | `applications/index.md` | FIX BEFORE V1 | Resolved — #119 |
+| W3 | `llms.txt` states no local single-machine path is documented; the Infrastructure page documents it | `pages/llms.txt.ts`, `infrastructure/index.md` | FIX BEFORE V1 | Resolved — #119 |
+| W4 | Navigation mirrors the directories (Infrastructure = `core/`, Applications = `apps/`); no route by problem | `astro.config.mjs` | FIX BEFORE V1 | Resolved — #119 |
+| W5 | Parity between repository and site is a manual list and fell 48 stacks behind | W1 | FIX BEFORE V1 | Resolved — #119, `site-catalogue.py --check` in CI |
+| W6 | Comparison pages beyond the catalogue's role column | site tree | POST-V1 / ON HOLD | Superseded by W1 — the catalogue gives every domain a role column, and the model neither ranks nor names a winner. Further comparison is editorial, not a defect |
 | W7 | Legal notice, privacy statement, domain and `security.txt` carry personal data in a public, forkable repository. Possible v1.0 impact: v1.0 asserts a forkable template and a fork inherits the imprint; whether that blocks depends on D3 | design in `.ai/decisions.md` | DECISION REQUIRED | Open — D3 |
 | W8 | The catalogue states a licence and an origin, which is not enough to choose software. Five facts are collapsed or absent: the **licence**, the **use rights** it grants, the **edition** a security-relevant feature sits in, the **commercial model**, and the **operational footprint** a stack brings with it. So the site cannot answer whether OIDC, audit logs or HA are paywalled, whether deploying a stack into a customer's infrastructure is permitted, or whether one of two comparable products is a single container and the other brings a database, a cache and workers — separate questions with separate answers, and decision support the catalogue implies it gives | `sovereignty.json` carries `license`, `license_class`, `origin` and nothing else; `catalogue.json` carries neither | PRE-V1 CANDIDATE | Open — scope in [Catalogue decision facts](#catalogue-decision-facts); belongs with the site information-architecture work, not before it |
 
@@ -132,7 +154,7 @@ Status is the state after the PR named.
 
 | ID | Finding | Evidence | Class | Status |
 |---|---|---|---|---|
-| C1 | Trivy image scan runs `--exit-code 0` on every severity, so the security baseline has no gate on known-vulnerable images | `trivy.yml` | **V1 BLOCKER** — confirmed | Open — approach decided in `.ai/decisions.md` (image findings as facts); the first scan data is the input |
+| C1 | Trivy's image scan runs `--exit-code 0` on every severity, so the security baseline has no gate on known-vulnerable images | `trivy.yml` | **FIX BEFORE V1** — confirmed | Open — needs the one-off CRITICAL assessment; the approach is recorded in `.ai/decisions.md` |
 | C2 | Nothing compared the site with the repository | W5 | FIX BEFORE V1 | Resolved — `site-catalogue.py --check` in the `Status model` job |
 | C3 | The site workflow triggers only on `site/**`, so a repository change cannot break the site build unseen | `site.yml` | CLEANUP | Resolved — parity runs in main CI |
 | C4 | Trivy image scanning runs on pull requests to `main` and weekly, not on pull requests to `dev` | `trivy.yml` | — | By design, stated in its header |
@@ -140,41 +162,29 @@ Status is the state after the PR named.
 
 ## D. Website parity
 
-Counted on the production build of `dev`, over the 84 lifecycle-tracked stacks:
+Resolved. Measured on the production build of `dev` @ `24dd7a2`:
 
-| Measure | Definition | Stacks |
-|---|---|---|
-| Dedicated page | a page named for the stack — 7 infrastructure and 29 application guides | 36 |
-| Named in prose | its directory name occurs in a rendered page other than the licence table | 51 |
-| Row in the licence table only | listed with licence and origin, no description, no link | 33 |
-| Linked to the repository | a link to `github.com/…/<category>/<stack>` from any page | 39 |
-| Searchable by name | its directory name occurs in the search index; the licence table is not indexed | 54 |
-| Completely absent | none of the above | 0 |
+| Measure | Stacks |
+|---|---|
+| In the generated catalogue, searchable by product name, linked to its repository directory | **89 / 89** |
+| Additionally carries a written guide | 36 |
+| Site pages with no matching stack | 0 |
 
-Every stack is at least named in the licence table, which is why none is
-absent; that table is a sovereignty view, not a way to find or understand a
-product, so it does not count towards discovery.
+**The parity definition CI enforces:** a stack is represented when the generated
+catalogue carries an entry for it — name, domain, one-line role, description,
+upstream link, pinned version, lifecycle state and a repository link — and that
+entry is in the search index. A written guide is not required.
+`site-catalogue.py --check` fails when a lifecycle-tracked stack has no entry,
+when an entry names no stack, or when `catalogue.json` is stale, so the site
+cannot silently fall behind the repository again.
 
-**Canonical parity definition for PR 2:** a stack is represented when the
-generated catalogue carries an entry for it — name, domain, one-line role,
-description, upstream link, pinned version, lifecycle state and a link to its
-repository directory — and that entry is in the search index. A dedicated page
-is not required. `site-catalogue.py --check` fails when a lifecycle-tracked
-stack lacks an entry, when an entry has no stack, or when the generated data is
-stale.
+Discovery runs on two axes: by product name through search, and by problem
+through the 14 domains, which are independent of the directory a stack sits in.
+The sidebar keeps Infrastructure and Applications as a secondary technical view —
+those are the existing guides, whose URLs are deliberately stable.
 
-Stacks with no dedicated page (48): `core/` hawser, host-watchdog, infisical,
-jumpserver, orion-belt, portainer, portainer-agent, shellhub, step-ca, teleport,
-warpgate, zot; `apps/` collabora, dependency-track, dfir-iris, docling-serve,
-euro-office, greenmail, hemmelig, librephotos, lycheeorg, monicahq, ollama,
-opencanary, photoview, privatebin, qdrant, threat-dragon, unifi, velociraptor,
-vllm, whoami, windmill, yopass; `business/` dolibarr, kimai, matomo, opensign,
-zammad; `monitoring/` all seven; `backup/` borgmatic, urbackup.
-
-Site pages with no matching stack: none. Stale claims for PR 2: the "around
-sixty stacks" sentence on the applications page and the `llms.txt` note that no
-local path is documented. LibreChat is not in the repository and so is not
-listed.
+Every page whose stack has a local path leads with `## Try it locally`, and none
+states Traefik or a domain as an application prerequisite (#126).
 
 ## Catalogue decision facts
 
@@ -264,7 +274,7 @@ and the facts stay visible beside it. The operator decides.
 | — no `__REPLACE_ME__` in a verified file | Remove | Enforced by the sentinel job and the baseline-aligned criteria |
 | — CI baseline complete | Update | Only the Trivy gap remains; the three "not required" checks are required |
 | — secrets generation / rotation standard | Remove | Shipped in v0.9.0 (`docs/standards/secrets.md`) |
-| — licence review | Remove | Satisfied: all 84 carry `License` and `Origin` (CI-checked) and every non-OSI stack's restriction is named in its field; the policy moved to `provenance.md` |
+| — licence review | Remove | Satisfied: every stack carries `License` and `Origin`, CI-checked, and each non-OSI stack's restriction is named in its field; the policy moved to `provenance.md` |
 | — status freshness system | Remove | Shipped and CI-enforced |
 | — status model end to end | Remove | Shipped and CI-enforced |
 | v1.0 site list | Keep, two changed | "Choosing page per multi-option capability" is replaced by complete discovery of every stack by name and domain, checked against the repository, plus comparison where alternatives need it; "every claim agrees" stays |
@@ -281,40 +291,78 @@ and the facts stay visible beside it. The operator decides.
 | Out of scope | Keep | All still valid; acme-certs, OCRmyPDF, orchestration, SIEM |
 | Priority 2 (LiteLLM, Open WebUI, agentgateway, Dify, Langfuse) | Add | On hold, previously only in `.ai/state.md` |
 
-## F. Implementation plan
+## F. What the stabilization programme did
 
-| PR | Scope | Status |
-|---|---|---|
-| 1 | Repository truth — this report, ROADMAP, state, counts, provenance, CHANGELOG, lifecycle pin fix, `UPSTREAM` drift | Prepared |
-| 2 | Operator site — generated catalogue for all 84 stacks by name and domain, sidebar, stale-claim fixes, `site-catalogue.py --check` in CI | Done |
-| 3 | Reconciliation — re-run inventory and comparisons, mark findings resolved | Not started |
+| PR | What it changed |
+|---|---|
+| [#115](https://github.com/rubennati/secure-docker-blueprint/pull/115) | Repository truth: roadmap restructured around what blocks v1.0, stale counts corrected at their owners, licence policy moved to `provenance.md`, lifecycle pin reader fixed, this report added |
+| [#119](https://github.com/rubennati/secure-docker-blueprint/pull/119) | Generated site catalogue — all 89 stacks across 14 domains, from `Domain` and `Role` in each `UPSTREAM.md`, with `site-catalogue.py --check` in CI |
+| [#124](https://github.com/rubennati/secure-docker-blueprint/pull/124) | Opt-in overlays became deployment variants: merged with their stack through `docker compose config` and judged on the effective result. Six were previously checked by nothing, and the gap had hidden two overlays Compose refused outright, three services without ceilings, a Compose tag that made a file invisible, and a pin that resolved to an empty tag |
+| [#125](https://github.com/rubennati/secure-docker-blueprint/pull/125) | GitHub Issues took ownership of the work they describe; the single-maintainer review policy became an explicit decision; the deployable scope (205 services) was separated from the checker universe (209) and every hardening figure restated against it |
+| [#126](https://github.com/rubennati/secure-docker-blueprint/pull/126) | The local evaluation path became discoverable on all 79 stacks that have one, under one name — `Try it locally`. 26 site pages stopped presenting Traefik and a domain as application prerequisites. `unlisted-stack` now fails when a stack is missing from its category README |
 
-## G. Remaining v1.0 blockers
+Issues closed on that evidence: #34, #35 (#125), #43, #44 (#126).
 
-**Confirmed V1 blockers** — cannot be closed by editing:
+## G. Remaining work
 
-1. **S1 — verification depth.** Host sessions, per stack, until each is verified
-   once or carries a stated reason it is not.
-2. **C1 — Trivy blocking.** Assess the existing CRITICAL findings once, then set
-   `exit-code: 1` for them.
+Nothing below is a structural defect. Each is host evidence, a decision, or work
+deliberately deferred.
 
-**Decision required, possible v1.0 impact:** W7 / D3 — personal data on the
-public site. If the site is part of the v1.0 promise of a forkable template,
-D3 must be decided and implemented first.
+**Needs a host — no edit can close these**
 
-**Fix before v1.0, objective:** W1 — every stack discoverable on the site
-(closed by the catalogue). Comparison text beyond the catalogue's role column is editorial and not
-a blocker.
+| | Owner |
+|---|---|
+| 75 of 89 stacks `scaffolded` (S1) — the largest item | this file, D1 |
+| Beszel per-container metrics through the socket proxy | [#36](https://github.com/rubennati/secure-docker-blueprint/issues/36) |
+| Portainer first load against `rl-hard`'s burst of 40 | [#37](https://github.com/rubennati/secure-docker-blueprint/issues/37) |
+| Seafile's four path-scoped routers | [#39](https://github.com/rubennati/secure-docker-blueprint/issues/39) |
+| What images tolerate `cap_drop`, `read_only`, non-root (S3) | [#40](https://github.com/rubennati/secure-docker-blueprint/issues/40) |
+| Trivy's one-off CRITICAL assessment before it can block (C1) | this file |
 
-**Post-v1.0 / on hold:** S3 coverage reporting; Priority 2 applications.
+**Needs a decision from the maintainer**
+
+| | Where |
+|---|---|
+| Seafile Pro: back up the search index or document it as rebuilt | [#45](https://github.com/rubennati/secure-docker-blueprint/issues/45) |
+| Renovate: install it or remove the dormant configuration (R11) | D5 |
+| Three project-name mismatches, where a rename moves live volumes (R12) | D6 |
+| Personal data on the public site (W7) | D3 |
+| Whether a local pin should track production by default (R14) | D7 |
+| Restore sections: 85 of 89 READMEs have none (S2) | D2 |
+
+**Deferred by design, scoped but not built**
+
+- **R14** — tag validation reads only `.env.example`; 81 other committed
+  `*.env*.example` files are unchecked. Measured: none violates the rule today.
+  42 local pins differ from production — 38 stale, 3 different image or version
+  schemes, 1 digest-only. All 79 local stacks resolve. No pin was changed.
+- **R15** — the hardening figures in `docs/security-verification.md` are
+  hand-maintained and went stale twice in three days. They are derivable from the
+  compose files the checkers already parse and should be generated, as
+  `LIFECYCLE.md`, `sovereignty.json` and `catalogue.json` are.
+- **W8** — catalogue decision facts, five layers, scoped in
+  [Catalogue decision facts](#catalogue-decision-facts). Licence and commercial
+  model partly exist; operational footprint is derivable from the compose files;
+  use rights and edition gates need reading upstream terms.
+- **R13** — dated working records under `docs/`. Kept as evidence.
+- **S4** — ShellHub pins a release candidate, which upstream publishes as its only
+  tag. Revisit at the first stable release.
+- **A one-command local workflow and a production deployment lifecycle** — both
+  design questions, neither started. #126 normalised the local surface enough that
+  the first can now be designed against a real contract: one invocation shape,
+  loopback-only ports, and a known set of exceptions. The second still has open
+  architecture questions — how a server records which blueprint release it runs,
+  deployment order, blueprint updates versus upstream image updates, and rollback.
+- **Priority 2 applications** — on hold.
 
 ## Decisions required
 
 | ID | Question | Recommendation |
 |---|---|---|
-| D1 | Is "every stack verified or carrying a reason" the v1.0 gate for all 84, or for a defined subset? | Keep the gate; make the reason mandatory and short, per stack, in `UPSTREAM.md`, so a `scaffolded` stack at v1.0 is a stated fact rather than an omission |
+| D1 | Is "every stack verified or carrying a reason" the v1.0 gate for all 89, or for a defined subset? | Keep the gate; make the reason mandatory and short, per stack, in `UPSTREAM.md`, so a `scaffolded` stack at v1.0 is a stated fact rather than an omission |
 | D2 | Must each stack README link the restore standard, or is the standard plus the Backup section enough? | Link it — one line per README, mechanical |
 | D3 | Adopt the encrypted-personal-data design for the site, and does an unresolved D3 block v1.0? | Adopt it; if it is not implemented, v1.0 should say so rather than ship a template that publishes its author's imprint |
 | D4 | Does v0.10.0 remain a release, or does measurement become continuous, applied when a stack is verified? | Continuous — the measurement needs the same host session as S1 |
-| D5 | Install Renovate or delete `renovate.json` and its proposal? | Delete — Dependabot already covers Actions and npm, and no pin carries a marker |
+| D5 | Install Renovate or delete `renovate.json` and its proposal? | Delete — Dependabot already covers Actions and npm, no pin carries a `# renovate:` marker, and no Renovate pull request has ever been opened |
 | D6 | Resolve the three project-name mismatches by editing `.env.example` or the directory? | Neither before v1.0 — a rename breaks live deployments; record it as an exception |
+| D7 | Should a local pin track its production pin by default? | Yes, with recorded exceptions — that turns 38 stale pins into a mechanical sync and leaves the 3 scheme differences and 1 digest case as stated facts. Nothing moves until this is decided |
