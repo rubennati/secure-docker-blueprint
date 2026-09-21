@@ -439,6 +439,14 @@
     "license_class": "source-available",
     "origin": "Turkey · Akaunting Inc · non-EU"
   },
+  "business/chatwoot": {
+    "bloc": "non-EU",
+    "country": "United States",
+    "entity": "Chatwoot Inc",
+    "license": "MIT (core; the `enterprise/` directory is under a separate enterprise licence)",
+    "license_class": "mixed",
+    "origin": "United States · Chatwoot Inc · non-EU"
+  },
   "business/documenso": {
     "bloc": "non-EU",
     "country": "US",
@@ -510,6 +518,14 @@
     "license": "MIT",
     "license_class": "osi",
     "origin": "SolidInvoice · no country stated in its published terms · no country"
+  },
+  "business/twenty": {
+    "bloc": "non-EU",
+    "country": "United States",
+    "entity": "Twenty.com PBC",
+    "license": "AGPL-3.0 (core; files marked `@license Enterprise` are under a separate enterprise licence, and the SDK and UI packages are MIT)",
+    "license_class": "mixed",
+    "origin": "United States · Twenty.com PBC · non-EU"
   },
   "business/vikunja": {
     "bloc": "EU",

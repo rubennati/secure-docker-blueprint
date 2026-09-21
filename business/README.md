@@ -35,10 +35,17 @@ which version and when, whether a restore was performed — is in
 | [Listmonk](listmonk/) | Newsletter, mailing lists, transactional mail | Two-router pattern documented: admin VPN-only + subscriber paths public |
 | [Matomo](matomo/) | GDPR-compliant web analytics for company / customer sites | Migrated from `apps/matomo/` — primary use-case is the business website |
 
+### Customer relationships
+
+| App | Use case | Notes |
+|---|---|---|
+| [Twenty](twenty/) | CRM — companies, people, opportunities, tasks, with an extensible data model and API | Server + worker + PostgreSQL + Redis. The first account creates the workspace; further sign-ups need an invitation |
+
 ### Customer support
 
 | App | Use case | Notes |
 |---|---|---|
+| [Chatwoot](chatwoot/) | Shared inbox for website chat, email and messaging channels | Rails + Sidekiq + PostgreSQL (pgvector) + Redis. The first visit creates the administrator; public sign-up off |
 | [Zammad](zammad/) | Full helpdesk / ticketing / SLA | 7-service stack, ≥ 4 GB RAM |
 
 ### Legal & compliance

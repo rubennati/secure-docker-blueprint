@@ -1,0 +1,320 @@
+# =============================================================================
+# Chatwoot — production stack (Traefik + Docker Secrets)
+# =============================================================================
+# Customer support across channels: website live chat, email, and messaging
+# inboxes in one shared queue, with agents, teams and canned responses. Rails and
+# Sidekiq from one image, with PostgreSQL (pgvector) and Redis — the services
+# upstream's production compose runs.
+#
+# Image: chatwoot/chatwoot (https://hub.docker.com/r/chatwoot/chatwoot)
+# Source: https://github.com/chatwoot/chatwoot (docker-compose.production.yaml)
+#
+# Spec: docs/standards/compose-structure.md · security-baseline.md
+# =============================================================================
+
+x-chatwoot-env: &chatwoot-env
+  RAILS_ENV: production
+  NODE_ENV: production
+  INSTALLATION_ENV: docker
+  FRONTEND_URL: https://${APP_TRAEFIK_HOST}
+  # TLS terminates at Traefik; Rails would otherwise redirect to https itself.
+  FORCE_SSL: "false"
+  # Only the administrator creates accounts. Upstream's default, stated here.
+  ENABLE_ACCOUNT_SIGNUP: "false"
+  POSTGRES_HOST: db
+  POSTGRES_PORT: "5432"
+  POSTGRES_DATABASE: ${DB_NAME}
+  POSTGRES_USERNAME: ${DB_USER}
+  REDIS_URL: redis://redis:6379
+  ACTIVE_STORAGE_SERVICE: local
+  RAILS_LOG_TO_STDOUT: "true"
+  RAILS_MAX_THREADS: "5"
+  TZ: ${TZ}
+
+x-chatwoot-secrets: &chatwoot-secrets
+  - DB_PWD
+  - REDIS_PWD
+  - SECRET_KEY_BASE
+
+services:
+
+  # --------------------------------------------------------
+  # CHATWOOT WEB (Rails: dashboard, API, widget, websockets)
+  # On proxy-public, so it carries the stack identity + role suffix
+  # --------------------------------------------------------
+  chatwoot-rails:
+    # --- Identity ---
+    image: chatwoot/chatwoot:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+    # The image runs as root; it works unprivileged — see UPSTREAM.md.
+    user: "${APP_UID}:${APP_GID}"
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+
+    # --- Resources ---
+    # Ruby on Rails with Puma; derived starting values, not measured.
+    memswap_limit: 2G          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "2.00"
+          pids: 300
+        reservations:
+          memory: 512M
+
+    # --- Configuration ---
+    # db:chatwoot_prepare creates the database on the first start and migrates it
+    # on later ones; it is idempotent.
+    entrypoint: ["/bin/sh", "/secrets-entrypoint.sh"]
+    command: ["sh", "-c", "bundle exec rails db:chatwoot_prepare && exec bundle exec rails s -p 3000 -b 0.0.0.0"]
+    environment: *chatwoot-env
+    secrets: *chatwoot-secrets
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    # --- Storage ---
+    # Uploaded attachments and avatars; the directory belongs to APP_UID.
+    volumes:
+      - ./config/entrypoint.sh:/secrets-entrypoint.sh:ro
+      - ./volumes/storage:/app/storage
+      # Rails writes pids and its cache under tmp/ and may write log/. The image
+      # ships both owned by root, and a plain tmpfs mounts as 755 root, so the
+      # unprivileged user could not write them. Long syntax to set the mode:
+      # Compose takes the bit pattern as a decimal number; 1023 is octal 1777.
+      - {type: tmpfs, target: /tmp, tmpfs: {mode: 1023}}
+      - {type: tmpfs, target: /app/tmp, tmpfs: {mode: 1023}}
+      - {type: tmpfs, target: /app/log, tmpfs: {mode: 1023}}
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+      - app-internal
+
+    # --- Traefik ---
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.service=${COMPOSE_PROJECT_NAME}"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=3000"
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO /dev/null http://127.0.0.1:3000/api || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+
+  # --------------------------------------------------------
+  # CHATWOOT WORKER (Sidekiq: email, notifications, webhooks, automations)
+  # --------------------------------------------------------
+  chatwoot-sidekiq:
+    # --- Identity ---
+    image: chatwoot/chatwoot:${APP_TAG}
+    container_name: ${CONTAINER_NAME_WORKER}
+    restart: unless-stopped
+    user: "${APP_UID}:${APP_GID}"
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+
+    # --- Resources ---
+    memswap_limit: 1G          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 256M
+
+    # --- Configuration ---
+    entrypoint: ["/bin/sh", "/secrets-entrypoint.sh"]
+    command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
+    environment: *chatwoot-env
+    secrets: *chatwoot-secrets
+    depends_on:
+      chatwoot-rails:
+        condition: service_healthy
+
+    # --- Storage ---
+    volumes:
+      - ./config/entrypoint.sh:/secrets-entrypoint.sh:ro
+      - ./volumes/storage:/app/storage
+      # Rails writes pids and its cache under tmp/ and may write log/. The image
+      # ships both owned by root, and a plain tmpfs mounts as 755 root, so the
+      # unprivileged user could not write them. Long syntax to set the mode:
+      # Compose takes the bit pattern as a decimal number; 1023 is octal 1777.
+      - {type: tmpfs, target: /tmp, tmpfs: {mode: 1023}}
+      - {type: tmpfs, target: /app/tmp, tmpfs: {mode: 1023}}
+      - {type: tmpfs, target: /app/log, tmpfs: {mode: 1023}}
+
+    # --- Networking ---
+    # Outbound for email delivery and webhooks — see README.
+    networks:
+      - app-internal
+      - app-egress
+
+    # --- Health & Observability ---
+    # The image runs sidekiq-alive, which answers on 7433 while the worker is
+    # registered in Redis — a real liveness signal, not just a process check.
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO /dev/null http://127.0.0.1:7433/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # --------------------------------------------------------
+  # DATABASE (PostgreSQL with pgvector)
+  # --------------------------------------------------------
+  db:
+    # --- Identity ---
+    image: pgvector/pgvector:${DB_TAG}
+    container_name: ${CONTAINER_NAME_DB}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+
+    # --- Resources ---
+    memswap_limit: 1G          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 256M
+
+    # --- Configuration ---
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/DB_PWD
+      TZ: ${TZ}
+    secrets:
+      - DB_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/postgres:/var/lib/postgresql/data
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME} -h 127.0.0.1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # --------------------------------------------------------
+  # REDIS (Sidekiq queues, cache, websocket pub/sub)
+  # --------------------------------------------------------
+  redis:
+    # --- Identity ---
+    image: redis:${REDIS_TAG}
+    container_name: ${CONTAINER_NAME_REDIS}
+    restart: unless-stopped
+    user: "999:999"
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+
+    # --- Resources ---
+    memswap_limit: 256m        # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.50"
+          pids: 100
+        reservations:
+          memory: 64m
+
+    # --- Configuration ---
+    # Password in a tmpfs config file rather than on the command line.
+    entrypoint: ["/bin/sh", "/redis-entrypoint.sh"]
+    secrets:
+      - REDIS_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./config/redis-entrypoint.sh:/redis-entrypoint.sh:ro
+      - ./volumes/redis:/data
+    tmpfs:
+      - /tmp
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "REDISCLI_AUTH=\"$$(cat /run/secrets/REDIS_PWD)\" redis-cli ping | grep -q PONG || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+  # Outbound for the worker only: it delivers email and calls webhooks.
+  app-egress:
+    name: ${COMPOSE_PROJECT_NAME}-egress
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  DB_PWD:
+    file: ./.secrets/db_pwd.txt
+  REDIS_PWD:
+    file: ./.secrets/redis_pwd.txt
+  SECRET_KEY_BASE:
+    file: ./.secrets/secret_key_base.txt
