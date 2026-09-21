@@ -7,7 +7,7 @@ category is defined relative to the other four.
 
 ## What's here
 
-10 stacks, deployable now. What has been established about each — verified against
+15 stacks, deployable now. What has been established about each — verified against
 which version and when, whether a restore was performed — is in
 [`LIFECYCLE.md`](../LIFECYCLE.md), generated from the repository.
 
@@ -25,6 +25,7 @@ which version and when, whether a restore was performed — is in
 | [Akaunting](akaunting/) | Accounting — invoices, bills, bank accounts, reports | Business Source License: production use free up to two users, one company or one thousand invoices. Image lags the source by one minor release |
 | [Invoice Ninja](invoiceninja/) | Invoicing, billing, quotes, client portal | Credentials moved into Docker Secrets; not yet exercised on a host |
 | [Dolibarr](dolibarr/) | ERP / CRM — accounting, HR, inventory, projects | Migrated from `apps/dolibarr/` |
+| [FacturaScripts](facturascripts/) | Invoicing, accounting, inventory — extended through plugins | Updates run in the application: the image seeds the webroot, the in-app updater owns it afterwards. Cron service included |
 | [Kimai](kimai/) | Time tracking per project / customer | Integrates with Invoice Ninja via webhooks |
 | [SolidInvoice](solidinvoice/) | Invoicing — clients, quotes, recurring invoices, payments | One container with SQLite. **Setup not verified**: the web installer was not completed, and the command-line installer does not finish in 3.0.1 |
 
@@ -66,11 +67,6 @@ Not deployable here yet. See [`ROADMAP.md`](../ROADMAP.md) for status.
 - **Plausible CE** — analytics
 - **Live Helper Chat** — customer chat
 - **Eramba GRC** — governance/risk/compliance
-- **FacturaScripts** — invoicing and accounting. Evaluated 2026-09-21 and held: its
-  supported deployment mounts the whole webroot as a volume and copies the code in
-  on the first start only, so a pinned image tag describes the first install and
-  nothing after it; updates run through the application's own updater. See
-  [`../docs/audits/candidate-evaluation-2026-09-21.md`](../docs/audits/candidate-evaluation-2026-09-21.md).
 
 ## The n8n hub
 

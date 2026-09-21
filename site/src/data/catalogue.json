@@ -1417,6 +1417,35 @@
     "verified_version": null,
     "version": "23.0.4"
   },
+  "business/facturascripts": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "paid add-on",
+        "source": "https://facturascripts.com/plugins",
+        "statement": "paid add-on; the core is free, and some plugins are sold on facturascripts.com"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
+    "domain": "Business operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MariaDB"
+      ],
+      "init_services": 0,
+      "services": 3,
+      "summary": "3 services · MariaDB"
+    },
+    "name": "FacturaScripts",
+    "path": "business/facturascripts",
+    "role": "Invoicing, accounting and inventory for small businesses, extended through plugins",
+    "state": "scaffolded",
+    "upstream": "https://hub.docker.com/r/facturascripts/facturascripts",
+    "verified": null,
+    "verified_version": null,
+    "version": "2026.5"
+  },
   "business/invoiceninja": {
     "decision_facts": {
       "use_restrictions": {

@@ -29,7 +29,7 @@ product against another.
 | [calrs](https://github.com/olivierlambert/calrs) | 257 | 2026-09-20 | AGPL-3.0 | `ghcr.io/olivierlambert/calrs:1.17.1` | 1 |
 | [Calnode](https://github.com/Calnode/calnode) | 90 | 2026-09-20 | Apache-2.0 | `ghcr.io/calnode/calnode:0.9.0` | 1 |
 | [SolidInvoice](https://github.com/SolidInvoice/SolidInvoice) | 972 | 2026-09-20 | MIT | `solidinvoice/solidinvoice:3.0.1` | 1 |
-| [FacturaScripts](https://github.com/NeoRazorX/facturascripts) | 493 | 2026-09-19 | LGPL-3.0 | `facturascripts/facturascripts:2026.65` | 1 |
+| [FacturaScripts](https://github.com/NeoRazorX/facturascripts) | 493 | 2026-09-19 | LGPL-3.0 | `facturascripts/facturascripts:2026.5` | 1 |
 | [Akaunting](https://github.com/akaunting/akaunting) | 10 130 | 2026-09-20 | Other (see below) | `akaunting/akaunting:3.1.21` | 1 |
 | [ERPNext](https://github.com/frappe/erpnext) | 39 408 | 2026-09-21 | GPL-3.0 | `frappe/erpnext:v16.35.0` | 1 |
 | [Twenty](https://github.com/twentyhq/twenty) | 57 178 | 2026-09-21 | Other (see below) | `twentycrm/twenty:v2.41.0` | 1 |
@@ -203,7 +203,7 @@ mistaken for the end state.
 **Batch A — calrs, Calnode.** Both shipped (#140). Nothing changed the tiering.
 
 **Batch B — invoicing.** One of the three shipped as planned, one shipped with a
-caveat, one moved back to evaluation.
+caveat, one was held and then shipped on its upstream's update model.
 
 - **Akaunting** shipped. Its licence is the Business Source License, with an
   additional use grant that allows production use only up to two users, one company
@@ -214,12 +214,16 @@ caveat, one moved back to evaluation.
   create the schema in 3.0.1 on any database tried, with or without hardening; the web
   installer is the working path and was not completed here. It also needs 3 GiB of
   memory, measured.
-- **FacturaScripts** moved to evaluation. Its supported compose mounts the entire
-  webroot and the image copies the code into it only on the first start, so a newer
-  image does not update a running install and the pinned tag describes only the first
-  one. It also makes the webroot world-writable and sets up through a web wizard.
+- **FacturaScripts** was held first, then shipped on upstream's own model. Its
+  supported compose mounts the entire webroot and the image copies the code into it
+  only on the first start, so a newer image does not update a running install.
   Upstream's Docker page states this as intended: updates run through the in-app
-  updater, and a newer image leaves a running install unchanged.
+  updater. The stack keeps the webroot as a volume, so the pinned tag sets PHP,
+  Apache and the operating system, and the version the first install starts from.
+  It replaces the start script that makes the webroot world-writable, installs
+  through upstream's unattended installer instead of the web wizard, and refuses
+  `/cron`, which runs the scheduled jobs for any caller. The tag first listed here,
+  2026.65, is the image's beta channel; the stack pins the stable 2026.5.
 
 **Batch C — Twenty, Chatwoot.** Both shipped, fully exercised. Twenty sits in
 `business/` rather than `apps/`: it is a company CRM, beside Invoice Ninja and
