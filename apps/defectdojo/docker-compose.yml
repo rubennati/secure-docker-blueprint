@@ -1,0 +1,482 @@
+# =============================================================================
+# DefectDojo — production stack (Traefik + Docker Secrets)
+# =============================================================================
+# Vulnerability management: import findings from scanners and pentests into
+# products and engagements, deduplicate them, track them to closure, report on
+# them. Django under uWSGI behind nginx, Celery worker and scheduler, a one-shot
+# initializer, PostgreSQL and Valkey — the seven services of upstream's compose.
+#
+# Image: defectdojo/defectdojo-django, defectdojo/defectdojo-nginx
+# Source: https://github.com/DefectDojo/django-DefectDojo (docker-compose.yml)
+#
+# Every secret uses DefectDojo's own DD_*_FILE support (/secret-file-loader.sh),
+# including the connection URLs that carry passwords. No wrapper is needed.
+#
+# Spec: docs/standards/compose-structure.md · security-baseline.md
+# =============================================================================
+
+x-dd-env: &dd-env
+  DD_DATABASE_URL_FILE: /run/secrets/DD_DATABASE_URL
+  DD_CELERY_BROKER_URL_FILE: /run/secrets/DD_CELERY_BROKER_URL
+  DD_CACHE_URL_FILE: /run/secrets/DD_CACHE_URL
+  # Upstream's compose ships public default values for both keys. They are
+  # replaced here by secrets; see UPSTREAM.md.
+  DD_SECRET_KEY_FILE: /run/secrets/DD_SECRET_KEY
+  DD_CREDENTIAL_AES_256_KEY_FILE: /run/secrets/DD_CREDENTIAL_AES_256_KEY
+  DD_DATABASE_READINESS_TIMEOUT: "60"
+  TZ: ${TZ}
+
+x-dd-secrets: &dd-secrets
+  - DD_DATABASE_URL
+  - DD_CELERY_BROKER_URL
+  - DD_CACHE_URL
+  - DD_SECRET_KEY
+  - DD_CREDENTIAL_AES_256_KEY
+
+services:
+
+  # --------------------------------------------------------
+  # NGINX (static files, media, proxy to uWSGI)
+  # On proxy-public, so it carries the stack identity + role suffix
+  # --------------------------------------------------------
+  defectdojo-nginx:
+    # --- Identity ---
+    image: defectdojo/defectdojo-nginx:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+    # The image runs as uid 1001.
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+
+    # --- Resources ---
+    memswap_limit: 256m        # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.50"
+          pids: 100
+        reservations:
+          memory: 64m
+
+    # --- Configuration ---
+    environment:
+      DD_UWSGI_HOST: defectdojo-uwsgi
+      DD_UWSGI_PORT: "3031"
+      NGINX_METRICS_ENABLED: "false"
+      TZ: ${TZ}
+    depends_on:
+      defectdojo-uwsgi:
+        condition: service_healthy
+
+    # --- Storage ---
+    # Uploaded files, served directly by nginx. Belongs to uid 1001.
+    volumes:
+      - ./volumes/media:/usr/share/nginx/html/media
+      # nginx writes its upstream definition to /run/defectdojo at start and
+      # caches request bodies. A plain tmpfs mounts as 755 root; mode 1023 is
+      # octal 1777 (Compose takes the bit pattern as a decimal).
+      - {type: tmpfs, target: /tmp, tmpfs: {mode: 1023}}
+      - {type: tmpfs, target: /run/defectdojo, tmpfs: {mode: 1023}}
+      - {type: tmpfs, target: /var/cache/nginx, tmpfs: {mode: 1023}}
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+      - app-internal
+
+    # --- Traefik ---
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.service=${COMPOSE_PROJECT_NAME}"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8080"
+
+    # --- Health & Observability ---
+    # Two constraints: in this container `localhost` resolves to ::1 while nginx
+    # listens on IPv4 only, and Django behind it answers 400 to a Host outside
+    # DD_ALLOWED_HOSTS. So: the IPv4 address, with an allowed Host header.
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO /dev/null --header 'Host: localhost' http://127.0.0.1:8080/login || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # --------------------------------------------------------
+  # UWSGI (the Django application)
+  # --------------------------------------------------------
+  defectdojo-uwsgi:
+    # --- Identity ---
+    image: defectdojo/defectdojo-django:${APP_TAG}
+    container_name: ${CONTAINER_NAME_UWSGI}
+    restart: unless-stopped
+    # The image runs as uid 1001.
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+
+    # --- Resources ---
+    memswap_limit: 2G          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "2.00"
+          pids: 300
+        reservations:
+          memory: 512M
+
+    # --- Configuration ---
+    entrypoint: ["/wait-for-it.sh", "db:5432", "-t", "60", "--", "/entrypoint-uwsgi.sh"]
+    environment:
+      <<: *dd-env
+      DD_DEBUG: "False"
+      DD_ALLOWED_HOSTS: ${APP_TRAEFIK_HOST},defectdojo-nginx,localhost
+      DD_SITE_URL: https://${APP_TRAEFIK_HOST}
+    secrets: *dd-secrets
+    depends_on:
+      defectdojo-initializer:
+        condition: service_completed_successfully
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/media:/app/media
+      - {type: tmpfs, target: /tmp, tmpfs: {mode: 1023}}
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    # uWSGI also answers plain HTTP on 8081. Django answers 400 to a Host
+    # outside DD_ALLOWED_HOSTS, so the check uses `localhost`, not 127.0.0.1.
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS -o /dev/null http://localhost:8081/login || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+  # --------------------------------------------------------
+  # CELERY WORKER (imports, deduplication, notifications)
+  # --------------------------------------------------------
+  defectdojo-celeryworker:
+    # --- Identity ---
+    image: defectdojo/defectdojo-django:${APP_TAG}
+    container_name: ${CONTAINER_NAME_WORKER}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+
+    # --- Resources ---
+    memswap_limit: 2G          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "2.00"
+          pids: 300
+        reservations:
+          memory: 256M
+
+    # --- Configuration ---
+    entrypoint: ["/wait-for-it.sh", "db:5432", "-t", "60", "--", "/entrypoint-celery-worker.sh"]
+    environment: *dd-env
+    secrets: *dd-secrets
+    depends_on:
+      defectdojo-initializer:
+        condition: service_completed_successfully
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/media:/app/media
+      - {type: tmpfs, target: /tmp, tmpfs: {mode: 1023}}
+
+    # --- Networking ---
+    # Outbound for notifications (email, chat webhooks) and ticketing
+    # integrations — see README.
+    networks:
+      - app-internal
+      - app-egress
+
+    # --- Health & Observability ---
+    # healthcheck: none — Celery serves no port; its tasks run through Valkey,
+    # where the worker's registration is visible.
+
+  # --------------------------------------------------------
+  # CELERY BEAT (scheduler)
+  # --------------------------------------------------------
+  defectdojo-celerybeat:
+    # --- Identity ---
+    image: defectdojo/defectdojo-django:${APP_TAG}
+    container_name: ${CONTAINER_NAME_BEAT}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+
+    # --- Resources ---
+    memswap_limit: 512m        # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "0.50"
+          pids: 100
+        reservations:
+          memory: 128m
+
+    # --- Configuration ---
+    entrypoint: ["/wait-for-it.sh", "db:5432", "-t", "60", "--", "/entrypoint-celery-beat.sh"]
+    environment: *dd-env
+    secrets: *dd-secrets
+    depends_on:
+      defectdojo-initializer:
+        condition: service_completed_successfully
+
+    # --- Storage ---
+    volumes:
+      # Beat keeps its pid file and last-run schedule in /run/defectdojo; on a
+      # tmpfs the schedule is rebuilt after a restart.
+      - {type: tmpfs, target: /tmp, tmpfs: {mode: 1023}}
+      - {type: tmpfs, target: /run/defectdojo, tmpfs: {mode: 1023}}
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    # healthcheck: none — the scheduler serves no port.
+
+  # --------------------------------------------------------
+  # INITIALIZER (one-shot: migrations, fixtures, first administrator)
+  # --------------------------------------------------------
+  defectdojo-initializer:
+    # --- Identity ---
+    image: defectdojo/defectdojo-django:${APP_TAG}
+    container_name: ${CONTAINER_NAME_INIT}
+    # Runs to completion on every `up` and exits; the application waits for it.
+    restart: "no"
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+
+    # --- Resources ---
+    memswap_limit: 1G          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 256M
+
+    # --- Configuration ---
+    entrypoint: ["/wait-for-it.sh", "db:5432", "-t", "60", "--", "/entrypoint-initializer.sh"]
+    environment:
+      <<: *dd-env
+      DD_INITIALIZE: "true"
+      DD_ADMIN_USER: ${ADMIN_USER}
+      DD_ADMIN_MAIL: ${ADMIN_EMAIL}
+      DD_ADMIN_FIRST_NAME: Admin
+      DD_ADMIN_LAST_NAME: User
+      # Without it, the initializer generates a password and prints it to the log.
+      DD_ADMIN_PASSWORD_FILE: /run/secrets/DD_ADMIN_PASSWORD
+    secrets:
+      - DD_DATABASE_URL
+      - DD_CELERY_BROKER_URL
+      - DD_CACHE_URL
+      - DD_SECRET_KEY
+      - DD_CREDENTIAL_AES_256_KEY
+      - DD_ADMIN_PASSWORD
+    depends_on:
+      db:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+
+    # --- Storage ---
+    volumes:
+      - {type: tmpfs, target: /tmp, tmpfs: {mode: 1023}}
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    # healthcheck: none — a one-shot job; its exit code is what the application
+    # waits for (service_completed_successfully).
+
+  # --------------------------------------------------------
+  # DATABASE (PostgreSQL)
+  # --------------------------------------------------------
+  db:
+    # --- Identity ---
+    image: postgres:${DB_TAG}
+    container_name: ${CONTAINER_NAME_DB}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+
+    # --- Resources ---
+    memswap_limit: 1G          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 256M
+
+    # --- Configuration ---
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/DB_PWD
+      PGDATA: /var/lib/postgresql/data
+      TZ: ${TZ}
+    secrets:
+      - DB_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/postgres:/var/lib/postgresql/data
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME} -h 127.0.0.1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # --------------------------------------------------------
+  # VALKEY (Celery broker, cache)
+  # --------------------------------------------------------
+  valkey:
+    # --- Identity ---
+    image: valkey/valkey:${VALKEY_TAG}
+    container_name: ${CONTAINER_NAME_VALKEY}
+    restart: unless-stopped
+    user: "999:1000"
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+
+    # --- Resources ---
+    memswap_limit: 512m        # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "0.50"
+          pids: 100
+        reservations:
+          memory: 64m
+
+    # --- Configuration ---
+    # Password in a tmpfs config file rather than on the command line.
+    entrypoint: ["/bin/sh", "/valkey-entrypoint.sh"]
+    secrets:
+      - VALKEY_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./config/valkey-entrypoint.sh:/valkey-entrypoint.sh:ro
+      - ./volumes/valkey:/data
+    tmpfs:
+      - /tmp
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "REDISCLI_AUTH=\"$$(cat /run/secrets/VALKEY_PWD)\" valkey-cli ping | grep -q PONG || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+  # Outbound for the Celery worker only.
+  app-egress:
+    name: ${COMPOSE_PROJECT_NAME}-egress
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  DB_PWD:
+    file: ./.secrets/db_pwd.txt
+  VALKEY_PWD:
+    file: ./.secrets/valkey_pwd.txt
+  DD_DATABASE_URL:
+    file: ./.secrets/dd_database_url.txt
+  DD_CELERY_BROKER_URL:
+    file: ./.secrets/dd_celery_broker_url.txt
+  DD_CACHE_URL:
+    file: ./.secrets/dd_cache_url.txt
+  DD_SECRET_KEY:
+    file: ./.secrets/dd_secret_key.txt
+  DD_CREDENTIAL_AES_256_KEY:
+    file: ./.secrets/dd_credential_aes_256_key.txt
+  DD_ADMIN_PASSWORD:
+    file: ./.secrets/dd_admin_password.txt

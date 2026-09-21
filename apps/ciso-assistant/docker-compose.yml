@@ -1,0 +1,317 @@
+# =============================================================================
+# CISO Assistant — production stack (Traefik + Docker Secrets)
+# =============================================================================
+# Governance, risk and compliance: frameworks such as ISO 27001, NIS2 and NIST
+# CSF mapped to controls, risk registers, assessments and evidence. Backend,
+# task worker and frontend, with PostgreSQL — upstream's PostgreSQL + Traefik
+# template, config/templates/docker-compose-postgresql-traefik.yml.j2.
+#
+# Image: ghcr.io/intuitem/ciso-assistant-community/{backend,frontend}
+# Source: https://github.com/intuitem/ciso-assistant-community
+#
+# Spec: docs/standards/compose-structure.md · security-baseline.md
+# =============================================================================
+
+x-ciso-env: &ciso-env
+  CISO_ASSISTANT_URL: https://${APP_TRAEFIK_HOST}
+  ALLOWED_HOSTS: ciso-assistant-backend,localhost,${APP_TRAEFIK_HOST}
+  DJANGO_DEBUG: "False"
+  AUTH_TOKEN_TTL: "7200"
+  POSTGRES_NAME: ${DB_NAME}
+  POSTGRES_USER: ${DB_USER}
+  DB_HOST: db
+  # The image expects writable caches under $HOME; both point at the tmpfs.
+  HOME: /tmp
+  XDG_CACHE_HOME: /tmp/.cache
+  XDG_CONFIG_HOME: /tmp/.config
+  XDG_DATA_HOME: /tmp/.local/share
+  TZ: ${TZ}
+
+services:
+
+  # --------------------------------------------------------
+  # BACKEND (Django API; migrates the database at start)
+  # On proxy-public, so it carries the stack identity + role suffix
+  # --------------------------------------------------------
+  ciso-assistant-backend:
+    # --- Identity ---
+    image: ghcr.io/intuitem/ciso-assistant-community/backend:${APP_TAG}
+    container_name: ${CONTAINER_NAME_BACKEND}
+    restart: unless-stopped
+    # Upstream's own compose runs the backend as 1001; the image default is root.
+    user: "1001:1001"
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+
+    # --- Resources ---
+    # Django under Gunicorn with three workers; derived starting values.
+    memswap_limit: 2G          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "2.00"
+          pids: 300
+        reservations:
+          memory: 512M
+
+    # --- Configuration ---
+    # entrypoint.sh exports the secrets, then runs the image's own start command:
+    # migrations, the framework libraries, the first administrator, Gunicorn.
+    entrypoint: ["/bin/sh", "/secrets-entrypoint.sh", "uv", "run", "bash", "startup.sh"]
+    environment:
+      <<: *ciso-env
+      # Created once, on the first start of an empty database.
+      DJANGO_SUPERUSER_EMAIL: ${ADMIN_EMAIL}
+    secrets:
+      - DB_PWD
+      - DJANGO_SECRET_KEY
+      - ADMIN_PWD
+    depends_on:
+      db:
+        condition: service_healthy
+
+    # --- Storage ---
+    # Evidence attachments and uploaded files; the directory belongs to uid 1001.
+    volumes:
+      - ./config/entrypoint.sh:/secrets-entrypoint.sh:ro
+      - ./volumes/data:/code/db
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+      - app-internal
+
+    # --- Traefik ---
+    # /api goes to the backend, everything else to the frontend — upstream's
+    # own split.
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.priority=100"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.service=${COMPOSE_PROJECT_NAME}-api"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}-api.loadbalancer.server.port=8000"
+
+    # --- Health & Observability ---
+    # Django answers 400 to a Host header outside ALLOWED_HOSTS, so the check
+    # uses `localhost`, not 127.0.0.1. The first start runs every migration and
+    # loads the framework library: about ten minutes, measured; later starts
+    # take seconds. A long start period only delays an "unhealthy" verdict.
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS -o /dev/null http://localhost:8000/api/health/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 900s
+
+  # --------------------------------------------------------
+  # HUEY (task queue: scheduled jobs, notifications)
+  # --------------------------------------------------------
+  ciso-assistant-huey:
+    # --- Identity ---
+    image: ghcr.io/intuitem/ciso-assistant-community/backend:${APP_TAG}
+    container_name: ${CONTAINER_NAME_WORKER}
+    restart: unless-stopped
+    user: "1001:1001"
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+
+    # --- Resources ---
+    memswap_limit: 1G          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 256M
+
+    # --- Configuration ---
+    entrypoint: ["/bin/sh", "/secrets-entrypoint.sh", "python", "manage.py", "run_huey", "-w", "2", "--scheduler-interval", "60"]
+    environment: *ciso-env
+    secrets:
+      - DB_PWD
+      - DJANGO_SECRET_KEY
+    depends_on:
+      ciso-assistant-backend:
+        condition: service_healthy
+
+    # --- Storage ---
+    volumes:
+      - ./config/entrypoint.sh:/secrets-entrypoint.sh:ro
+      - ./volumes/data:/code/db
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    # healthcheck: none — Huey serves no port; its tasks are stored in the
+    # database it shares with the backend.
+
+  # --------------------------------------------------------
+  # FRONTEND (SvelteKit)
+  # --------------------------------------------------------
+  ciso-assistant-frontend:
+    # --- Identity ---
+    image: ghcr.io/intuitem/ciso-assistant-community/frontend:${APP_TAG}
+    container_name: ${CONTAINER_NAME_FRONTEND}
+    restart: unless-stopped
+    # The image already runs as 1000:1000 and ships no shell.
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+
+    # --- Resources ---
+    memswap_limit: 512m        # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "1.00"
+          pids: 100
+        reservations:
+          memory: 128m
+
+    # --- Configuration ---
+    environment:
+      # Server-side calls from the frontend to the backend stay inside the stack.
+      PUBLIC_BACKEND_API_URL: http://ciso-assistant-backend:8000/api
+      PUBLIC_BACKEND_API_EXPOSED_URL: https://${APP_TRAEFIK_HOST}/api
+      PROTOCOL_HEADER: x-forwarded-proto
+      HOST_HEADER: x-forwarded-host
+      TZ: ${TZ}
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev
+    depends_on:
+      ciso-assistant-backend:
+        condition: service_healthy
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+      - app-internal
+
+    # --- Traefik ---
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.priority=1"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.service=${COMPOSE_PROJECT_NAME}"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=3000"
+
+    # --- Health & Observability ---
+    # No shell in the image, so the check runs in Node itself.
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # --------------------------------------------------------
+  # DATABASE (PostgreSQL)
+  # --------------------------------------------------------
+  db:
+    # --- Identity ---
+    image: postgres:${DB_TAG}
+    container_name: ${CONTAINER_NAME_DB}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+
+    # --- Resources ---
+    memswap_limit: 1G          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 256M
+
+    # --- Configuration ---
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/DB_PWD
+      TZ: ${TZ}
+    secrets:
+      - DB_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/postgres:/var/lib/postgresql/data
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME} -h 127.0.0.1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  DB_PWD:
+    file: ./.secrets/db_pwd.txt
+  DJANGO_SECRET_KEY:
+    file: ./.secrets/django_secret_key.txt
+  ADMIN_PWD:
+    file: ./.secrets/admin_pwd.txt

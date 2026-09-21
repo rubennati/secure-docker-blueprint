@@ -225,6 +225,15 @@ Zammad. Both upstreams leave the first account open to whoever arrives first and
 close the door after it — Twenty refuses an uninvited second sign-up, Chatwoot's
 onboarding form disappears once used — so both ship VPN-only.
 
+**Batch D — CISO Assistant, DefectDojo.** Both shipped, fully exercised, in `apps/`
+beside the other security-operations tools. Neither leaves an open setup window:
+both create their administrator from the environment on the first start.
+DefectDojo's upstream compose carries public default values for its Django secret
+key and for the key that encrypts stored integration credentials, and prints a
+generated administrator password to the log when none is set; the stack replaces
+both keys and sets the password. CISO Assistant's community images are AGPLv3 in
+full — its commercially licensed code ships only in separate enterprise images.
+
 ## Proposed order
 
 Eleven Tier 1 products, in batches that share a category and a review:

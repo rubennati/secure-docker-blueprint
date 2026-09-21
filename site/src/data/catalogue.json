@@ -118,6 +118,33 @@
     "verified_version": null,
     "version": "1.17.1"
   },
+  "apps/ciso-assistant": {
+    "decision_facts": {
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/intuitem/ciso-assistant-community/blob/main/LICENSE.md",
+        "statement": "files in the repository's `enterprise/` directory are under the intuitem Commercial Software License and ship only in separate enterprise binaries; the community images this stack pins are released under AGPLv3"
+      }
+    },
+    "domain": "Security operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL"
+      ],
+      "init_services": 0,
+      "services": 4,
+      "summary": "4 services · PostgreSQL"
+    },
+    "name": "CISO Assistant",
+    "path": "apps/ciso-assistant",
+    "role": "Governance, risk and compliance: frameworks such as ISO 27001 and NIS2 mapped to controls, risks and evidence",
+    "state": "scaffolded",
+    "upstream": "https://github.com/intuitem/ciso-assistant-community/pkgs/container/ciso-assistant-community%2Fbackend",
+    "verified": null,
+    "verified_version": null,
+    "version": "4.0.5"
+  },
   "apps/collabora": {
     "decision_facts": {},
     "domain": "Documents and e-signature",
@@ -155,6 +182,28 @@
     "verified": "2026-05-02",
     "verified_version": "v4.0.4",
     "version": "4.6.0"
+  },
+  "apps/defectdojo": {
+    "decision_facts": {},
+    "domain": "Security operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL",
+        "Valkey"
+      ],
+      "init_services": 1,
+      "services": 6,
+      "summary": "6 services · 1 one-shot · PostgreSQL + Valkey"
+    },
+    "name": "DefectDojo",
+    "path": "apps/defectdojo",
+    "role": "Vulnerability management: import scanner and pentest findings, deduplicate them and track them to closure",
+    "state": "scaffolded",
+    "upstream": "https://hub.docker.com/r/defectdojo/defectdojo-django",
+    "verified": null,
+    "verified_version": null,
+    "version": "3.3.100"
   },
   "apps/dependency-track": {
     "decision_facts": {},
