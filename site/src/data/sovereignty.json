@@ -479,6 +479,14 @@
     "license_class": "osi",
     "origin": "France · Dolibarr Association · EU"
   },
+  "business/facturascripts": {
+    "bloc": "EU",
+    "country": "Spain",
+    "entity": "Carlos García Gómez (FacturaScripts)",
+    "license": "LGPL-3.0",
+    "license_class": "osi",
+    "origin": "Spain · Carlos García Gómez (FacturaScripts) · EU"
+  },
   "business/invoiceninja": {
     "bloc": "non-EU",
     "country": "US",

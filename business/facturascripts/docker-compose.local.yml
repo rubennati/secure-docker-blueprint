@@ -1,0 +1,102 @@
+# FacturaScripts — local
+#
+#   cp .env.local.example .env.local
+#   ops/init.sh
+#   sudo chown -R 33:33 volumes/facturascripts
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   open http://localhost:8080        # the web installer: database host db,
+#                                     # name and user from .env.local, password
+#                                     # from .secrets/db_pwd.txt
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+#
+# Same image, same read-only settings and the same mounts as the production file,
+# without Traefik and without the Docker Secrets mechanism. It mounts the same
+# volumes/, so run one at a time.
+
+services:
+
+  db:
+    image: mariadb:${DB_TAG}
+    container_name: facturascripts-local-db
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [CHOWN, SETUID, SETGID, DAC_OVERRIDE]
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD_FILE: /run/secrets/DB_PWD
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/DB_ROOT_PWD
+      TZ: ${TZ}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - ./.secrets/db_pwd.txt:/run/secrets/DB_PWD:ro
+      - ./.secrets/db_root_pwd.txt:/run/secrets/DB_ROOT_PWD:ro
+      - ./volumes/mysql:/var/lib/mysql
+    networks: [facturascripts-local]
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  facturascripts-app:
+    image: facturascripts/facturascripts:${APP_TAG}
+    container_name: facturascripts-local-app
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [SETUID, SETGID]
+    read_only: true
+    entrypoint: ["/bin/sh", "/entrypoint.sh"]
+    command: ["docker-php-entrypoint", "apache2-foreground"]
+    environment:
+      TZ: ${TZ}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./config/entrypoint.sh:/entrypoint.sh:ro
+      - ./config/apache/cron.conf:/etc/apache2/conf-enabled/zz-cron.conf:ro
+      - ./.secrets/db_pwd.txt:/run/secrets/DB_PWD:ro
+      - ./.secrets/admin_pwd.txt:/run/secrets/ADMIN_PWD:ro
+      - ./volumes/facturascripts:/var/www/html
+    tmpfs:
+      - /tmp
+      - /var/run/apache2
+    ports:
+      - "127.0.0.1:8080:80"
+    networks: [facturascripts-local]
+
+  facturascripts-cron:
+    image: facturascripts/facturascripts:${APP_TAG}
+    container_name: facturascripts-local-cron
+    restart: unless-stopped
+    user: "33:33"
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        while :; do
+        [ -f /var/www/html/config.php ] && php /var/www/html/index.php -cron > /dev/null 2>&1;
+        sleep 300;
+        done
+    environment:
+      TZ: ${TZ}
+    depends_on:
+      facturascripts-app:
+        condition: service_started
+    volumes:
+      - ./.secrets/db_pwd.txt:/run/secrets/DB_PWD:ro
+      - ./volumes/facturascripts:/var/www/html
+    tmpfs:
+      - /tmp
+    networks: [facturascripts-local]
+
+networks:
+  facturascripts-local:
+    name: facturascripts-local

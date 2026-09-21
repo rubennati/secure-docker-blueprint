@@ -599,6 +599,16 @@
     "verified_anchored": false,
     "verified_version": ""
   },
+  "business/facturascripts": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=2026.5",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "business/invoiceninja": {
     "backup_docs": "documented",
     "local_stack": "✅",
