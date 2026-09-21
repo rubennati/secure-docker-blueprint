@@ -76,7 +76,7 @@ class Render(unittest.TestCase):
         "hard": {"no-new-privileges": 8, "privileged": 0},
         "waived": {"no-new-privileges": 1, "socket": 2, "host-mode": 0},
         "structure": {"internal-network": 2, "sentinels": 7},
-        "soft": {"read_only": 3, "cap_drop_all": 5, "user": 1, "limits": 9, "secrets": 4},
+        "soft": {"read_only": 3, "cap_drop_all": 5, "user": 1, "limits": 9, "from_files": 4},
     }
 
     def test_carries_the_generated_marker(self):
