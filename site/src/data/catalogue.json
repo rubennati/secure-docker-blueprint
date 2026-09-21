@@ -1174,6 +1174,34 @@
     "verified_version": null,
     "version": "3.1.21"
   },
+  "business/chatwoot": {
+    "decision_facts": {
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/chatwoot/chatwoot/blob/develop/LICENSE",
+        "statement": "everything under the repository's `enterprise/` directory is licensed under `enterprise/LICENSE` rather than MIT"
+      }
+    },
+    "domain": "Business operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL",
+        "Redis"
+      ],
+      "init_services": 0,
+      "services": 4,
+      "summary": "4 services · PostgreSQL + Redis"
+    },
+    "name": "Chatwoot",
+    "path": "business/chatwoot",
+    "role": "Customer support across website chat, email and messaging channels in one shared inbox",
+    "state": "scaffolded",
+    "upstream": "https://hub.docker.com/r/chatwoot/chatwoot",
+    "verified": null,
+    "verified_version": null,
+    "version": "4.18.0"
+  },
   "business/documenso": {
     "decision_facts": {},
     "domain": "Documents and e-signature",
@@ -1392,6 +1420,34 @@
     "verified": null,
     "verified_version": null,
     "version": "3.0.1"
+  },
+  "business/twenty": {
+    "decision_facts": {
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/twentyhq/twenty/blob/main/LICENSE",
+        "statement": "files marked `@license Enterprise` at the top are covered by a commercial licence rather than the AGPL-3.0"
+      }
+    },
+    "domain": "Business operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL",
+        "Redis"
+      ],
+      "init_services": 0,
+      "services": 4,
+      "summary": "4 services · PostgreSQL + Redis"
+    },
+    "name": "Twenty",
+    "path": "business/twenty",
+    "role": "CRM: companies, people, opportunities and tasks, with an extensible data model and an API",
+    "state": "scaffolded",
+    "upstream": "https://hub.docker.com/r/twentycrm/twenty",
+    "verified": null,
+    "verified_version": null,
+    "version": "2.41.0"
   },
   "business/vikunja": {
     "decision_facts": {},

@@ -219,6 +219,12 @@ caveat, one moved back to evaluation.
   image does not update a running install and the pinned tag describes only the first
   one. It also makes the webroot world-writable and sets up through a web wizard.
 
+**Batch C — Twenty, Chatwoot.** Both shipped, fully exercised. Twenty sits in
+`business/` rather than `apps/`: it is a company CRM, beside Invoice Ninja and
+Zammad. Both upstreams leave the first account open to whoever arrives first and
+close the door after it — Twenty refuses an uninvited second sign-up, Chatwoot's
+onboarding form disappears once used — so both ship VPN-only.
+
 ## Proposed order
 
 Eleven Tier 1 products, in batches that share a category and a review:
