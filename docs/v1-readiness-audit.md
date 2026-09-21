@@ -129,8 +129,8 @@ Status is the state after the PR named.
 
 | ID | Finding | Evidence | Class | Status |
 |---|---|---|---|---|
-| S1 | 75 of 89 stacks are `scaffolded`; 26 carry a legacy stamp, 32 have no verification date, 17 are pin-drifted, and none states why it stays there. The promise is that a fork deploys without the author's mental model, and a state resting on no evidence breaks it | `LIFECYCLE.md` | **NEEDS HOST EVIDENCE** — the largest remaining item | Open — D1 decides how a reason is recorded, not whether one is needed |
-| S2 | 85 of 89 READMEs have no restore section; `docs/standards/restore.md` carries the model | generated Restore column | DECISION REQUIRED | Open — D2 |
+| S1 | Most stacks are `scaffolded`, and a state resting on no evidence breaks the promise that a fork deploys without the author's mental model. The live figures — how many are scaffolded, how many carry a legacy stamp, how many have no verification date and how many are pin-drifted — are generated into [`LIFECYCLE.md`](../LIFECYCLE.md) and are not restated here, because they move with every stack that lands | `LIFECYCLE.md` | **NEEDS HOST EVIDENCE** — the largest remaining item | Open — needs a host session, not repository work. D1 decides how a reason is recorded, not whether one is needed |
+| S2 | Nearly every stack README has no restore section; `docs/standards/restore.md` carries the model. The count is the generated Restore column in `LIFECYCLE.md` rather than a figure kept here | generated Restore column | DECISION REQUIRED | Open — D2 |
 | S3 | `cap_drop`, `read_only` and non-root `user` are conditional controls and not CI-enforced — the current coverage of each is in [`security-coverage.md`](security-coverage.md). A later option, not a gap: per-service exception records. The non-failing coverage report R15 also called for now exists | `security-verification.md` §4–5 | POST-V1 / ON HOLD | Open — narrowed to the exception records |
 | S4 | ShellHub pins a release candidate | `core/shellhub/UPSTREAM.md` | CLEANUP — documented limitation, revisit at the first stable tag | Open |
 | S5 | Structure checks otherwise clean: no `:latest`, no plaintext secrets, no datastore on `proxy-public`, 13 published-port services all by design, 7 socket mounts all documented exceptions | `check-structure.py`, `check-baseline.py` | — | No finding |
@@ -382,7 +382,7 @@ deliberately deferred.
 | Renovate: install it or remove the dormant configuration (R11) | D5 |
 | Three project-name mismatches, where a rename moves live volumes (R12) | D6 |
 | Personal data on the public site (W7) | D3 |
-| Restore sections: 85 of 89 READMEs have none (S2) | D2 |
+| Restore sections: nearly every README has none (S2) | D2 |
 
 **Deferred by design, scoped but not built**
 
