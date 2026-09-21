@@ -234,7 +234,7 @@ maintained facts is its own question, answered per stack.
    a process record and carries no source; a `none` *fact* asserts something about
    upstream and does.
 
-   Researched so far: **24 of 95** — 22 with facts, 2 checked and clear.
+   Researched so far: **28 of 95** — 26 with facts, 2 checked and clear.
 
    Two sweeps cover every stack and are recorded in `.ai/tasks.md` as progress rather
    than as a verdict: each recorded licence has been checked against the upstream file,

@@ -307,7 +307,16 @@ Listed with context in [`state.md`](state.md). Nothing proceeds on these until d
       `docs/standards/compose-structure.md`. Either give it the companion file or
       state the exception there — `local-pin-drift` covers it under both
 - [ ] Continue W8 until every stack states a research date rather than `not yet`.
-      **24 of 95 are researched — 22 with facts, 2 checked and clear — and 71 remain.**
+      **28 of 95 are researched — 26 with facts, 2 checked and clear — and 67 remain.**
+
+      Vendor pages read and found not to answer the question, so the stack stays `not yet`
+      rather than being half-stated: `apps/onlyoffice` (the Enterprise page prices per user
+      but never compares Community), `apps/qdrant` (the pricing page describes Cloud tiers,
+      not self-hosted OSS), `business/zammad` (the pricing page covers the hosted service
+      and says only that self-hosting runs "on **your** servers"), `monitoring/healthchecks`
+      (the self-hosting docs give the licence but no feature comparison), `apps/bookstack`
+      (the about page mentions support plans and donations and states nothing about
+      editions). Each needs a different page, not a retry of the same one.
 
       **Two sweeps are done for every stack and must not be repeated.** They are research
       progress, not a per-stack verdict:

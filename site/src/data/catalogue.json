@@ -428,8 +428,20 @@
     "version": "2.3.0"
   },
   "apps/immich": {
-    "decision_facts": {},
-    "decision_facts_checked": null,
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "free self-hosted",
+        "source": "https://docs.immich.app/overview/support-the-project/",
+        "statement": "free self-hosted"
+      },
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://docs.immich.app/overview/support-the-project/",
+        "statement": "none — upstream states that \"all features will be free, forever\" and that nothing will be put behind a paywall; buying a product supports the developers and unlocks nothing"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Photos",
     "footprint": {
       "gpu": null,
@@ -811,8 +823,20 @@
     "version": "3.1.3"
   },
   "apps/photoprism": {
-    "decision_facts": {},
-    "decision_facts_checked": null,
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "paid self-hosted edition",
+        "source": "https://www.photoprism.app/editions",
+        "statement": "paid self-hosted edition"
+      },
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://www.photoprism.app/editions",
+        "statement": "the admin web UI for user management and any role beyond Super Admin, Admin and Guest, together with session monitoring and hardened security, require a paid Essentials or Plus membership; two-factor login and OpenID Connect are in the Community edition"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Photos",
     "footprint": {
       "gpu": null,
@@ -1550,8 +1574,20 @@
     "version": "2.41.0"
   },
   "business/vikunja": {
-    "decision_facts": {},
-    "decision_facts_checked": null,
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "paid self-hosted edition",
+        "source": "https://vikunja.io/pricing/",
+        "statement": "paid self-hosted edition; the Cloud offering is the same features without the operations work"
+      },
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://vikunja.io/pricing/",
+        "statement": "the self-hosted core is complete and free for personal or company use; a Pro tier for instances you host yourself adds an admin panel, audit logs and time tracking"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Business operations",
     "footprint": {
       "gpu": null,
@@ -1985,8 +2021,20 @@
     "version": "18.11.0"
   },
   "core/traefik": {
-    "decision_facts": {},
-    "decision_facts_checked": null,
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "free self-hosted",
+        "source": "https://traefik.io/pricing/",
+        "statement": "free self-hosted; Traefik Hub is sold as a separate product built on it"
+      },
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://traefik.io/pricing/",
+        "statement": "Traefik Proxy is complete as ingress controller, reverse proxy and load balancer. A native web application firewall, the LDAP, JWT, OAuth and OIDC authentication middleware, HashiCorp Vault integration, distributed rate limiting, HTTP caching and multi-cluster management belong to Traefik Hub, a separate commercial product"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Infrastructure",
     "footprint": {
       "gpu": null,

@@ -9,7 +9,9 @@
 - **Socket proxy GitHub:** https://github.com/Tecnativa/docker-socket-proxy
 - **CrowdSec bouncer plugin:** https://github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
 - **License:** MIT
-- **Decision facts checked:** not yet
+- **Edition gating:** Traefik Proxy is complete as ingress controller, reverse proxy and load balancer. A native web application firewall, the LDAP, JWT, OAuth and OIDC authentication middleware, HashiCorp Vault integration, distributed rate limiting, HTTP caching and multi-cluster management belong to Traefik Hub, a separate commercial product — https://traefik.io/pricing/ · checked 2026-09-21
+- **Commercial model:** free self-hosted; Traefik Hub is sold as a separate product built on it — https://traefik.io/pricing/ · checked 2026-09-21
+- **Decision facts checked:** 2026-09-21
 - **Origin:** France · Traefik Labs · EU
 - **Domain:** Infrastructure
 - **Role:** Reverse proxy: TLS, access policies and security headers in front of every other service
