@@ -39,6 +39,26 @@
     "verified_anchored": true,
     "verified_version": "v6.2.0-3"
   },
+  "apps/calnode": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=0.9.0",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
+  "apps/calrs": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=1.17.1",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "apps/collabora": {
     "backup_docs": "documented",
     "local_stack": "✅",

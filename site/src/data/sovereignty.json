@@ -31,6 +31,22 @@
     "license_class": "osi",
     "origin": "Fork · rubennati · upstream: US · Cal.com Inc · non-EU"
   },
+  "apps/calnode": {
+    "bloc": "none",
+    "country": "Calnode",
+    "entity": "no country stated in its published terms",
+    "license": "Apache-2.0",
+    "license_class": "osi",
+    "origin": "Calnode · no country stated in its published terms · no country"
+  },
+  "apps/calrs": {
+    "bloc": "EU",
+    "country": "France",
+    "entity": "Olivier Lambert",
+    "license": "AGPL-3.0",
+    "license_class": "osi",
+    "origin": "France · Olivier Lambert · EU"
+  },
   "apps/collabora": {
     "bloc": "non-EU",
     "country": "UK",
