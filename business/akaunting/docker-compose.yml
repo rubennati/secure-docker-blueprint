@@ -153,8 +153,6 @@ services:
     tmpfs:
       - /tmp
       - /var/run/apache2
-      - /var/lock/apache2
-      - /var/log/apache2
 
     # --- Networking ---
     networks:
