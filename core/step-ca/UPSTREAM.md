@@ -6,7 +6,9 @@
 - **GitHub:** https://github.com/smallstep/certificates
 - **Docs:** https://smallstep.com/docs/step-ca/
 - **License:** Apache-2.0
-- **Decision facts checked:** not yet
+- **Edition gating:** step-ca is complete and production-ready for self-hosting. Smallstep sells Step CA Pro as "a drop in replacement for step-ca" adding advanced features and compliance options, cloud-based integrations, a management interface and ACME device attestation — https://smallstep.com/certificate-manager/ · checked 2026-09-21
+- **Commercial model:** free self-hosted; Step CA Pro is sold as a separate drop-in replacement — https://smallstep.com/certificate-manager/ · checked 2026-09-21
+- **Decision facts checked:** 2026-09-21
 - **Origin:** United States · Smallstep Labs, Inc. · non-EU
 - **Domain:** Identity, access and secrets
 - **Role:** Internal certificate authority for machines and services: X.509, ACME and optional SSH certificates
