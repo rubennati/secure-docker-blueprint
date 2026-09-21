@@ -2,7 +2,7 @@
 
 > If this file conflicts with git (branch, commits, tags), trust git.
 
-**Last updated:** 2026-09-21
+**Last updated:** 2026-09-22
 
 - **Phase:** pre-1.0. Latest tag `v0.9.1` (2026-09-19), which is where `main`
   stands; `dev` carries a substantial unreleased run beyond it — `git rev-list
@@ -17,6 +17,13 @@
   [`../docs/v1-readiness-audit.md`](../docs/v1-readiness-audit.md) → *What the
   stabilization programme did* and *Remaining work*. Actionable items are GitHub
   Issues; [`tasks.md`](tasks.md) holds only what no issue owns.
+- **Also completed (2026-09-21/22):** the candidate batches A–G (#140, #145, #146,
+  #150, #153, #156, #159, #160, #161, #162) —
+  twelve stacks added as a recorded exception to the application hold
+  ([`decisions.md`](decisions.md), 2026-09-21), six held as evaluation entries,
+  and one fix they surfaced in `business/akaunting`. Evidence per product:
+  [`../docs/audits/candidate-evaluation-2026-09-21.md`](../docs/audits/candidate-evaluation-2026-09-21.md).
+  What is left of it is upstream requests and host verification — `tasks.md` §6.
 - **Current milestone:** v0.10.0 — Measured resource limits. Whether it stays a
   release is open (D4 in the audit): the measurement needs the same host session
   as the verification backlog.

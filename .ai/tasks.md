@@ -89,11 +89,15 @@ was verified by running it. Three of the fifteen already ship.
 - [ ] Four publish no image (DayOtter, Dapta Calendars, MAILFLOW-AI, Crater) and
       stay evaluation entries. Proposed: ask DayOtter's maintainer to publish a tag;
       record the other three with the reason. No fork is proposed.
-- [ ] Upstream requests, filed by the maintainer: obot (start without a runtime
-      backend when no MCP servers are hosted), DayOtter and Dapta Calendars (publish
-      an image). None for FacturaScripts (the in-app updater is its documented update
-      path; issues are closed on both repositories), Crater (images requested since
-      2021 in #659, no maintainer reply) or MAILFLOW-AI (#20 and #21 still open).
+- [ ] Upstream requests, filed by the maintainer; drafts are in the local
+      `inbox/upstream-requests/` working area. obot (start without a runtime backend
+      when no MCP servers are hosted), DayOtter and Dapta Calendars (publish an
+      image), rclone (`rclone gui` logs a supplied RC password), and a fix PR to
+      FacturaScripts (its unattended installer fails when `mysql_socket` is not
+      sent). None for Crater (images requested since 2021 in #659, no maintainer
+      reply), MAILFLOW-AI (#20 and #21 still open) or httpbin (the failing image is
+      psf/httpbin#69, fix proposed in #70). Once posted, the link goes into the
+      stack's `UPSTREAM.md` or the candidate evaluation.
 - [x] Adding these while `../ROADMAP.md` holds applications is a deliberate
       exception — recorded in `../ROADMAP.md` and `decisions.md` (2026-09-21).
 
