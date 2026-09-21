@@ -22,7 +22,9 @@ name: Trivy
 #   - --ignore-unfixed: a CVE with no published fix is excluded from every count
 #     this job produces. That is not a claim it is safe to ignore — only that no
 #     fix exists yet for a pin change to apply.
-#   - Image scan is non-blocking (exit-code 0) until a CVE baseline is reviewed.
+#   - Trivy's own exit code stays 0 on every image. The gate is a separate step:
+#     trivy-gate.py fails the job on a CRITICAL absent from .trivy-baseline.json,
+#     so findings recorded as known pass and new ones do not.
 
 on:
   push:
@@ -147,8 +149,9 @@ jobs:
   # ─────────────────────────────────────────────────────────────────────────
   # 2. IMAGE CVE SCAN
   # ─────────────────────────────────────────────────────────────────────────
-  # Scans every image list-images.sh resolves. Non-blocking (exit-code 0) on
-  # every severity, on every image, while a CVE baseline is being established.
+  # Scans every image list-images.sh resolves. Trivy's exit code stays 0 so the
+  # scan reports rather than judges; the gate that follows it blocks a CRITICAL
+  # that is not recorded in .trivy-baseline.json.
   #
   # Each image is scanned individually to its own JSON report rather than one
   # combined run, so one image's scan failure (see the loop below) never loses
@@ -242,6 +245,26 @@ jobs:
         if: always()
         run: |
           python3 scripts/ci/trivy-summarize.py \
+            --results-dir /tmp/trivy-results \
+            --failures-file /tmp/trivy-failures.tsv \
+            --images-total "$(wc -l < /tmp/images.txt)" \
+            --out "$GITHUB_STEP_SUMMARY"
+
+      - name: Gate on unrecorded CRITICAL findings
+        # The scan itself stays non-blocking. What blocks is a CRITICAL that the
+        # repository has not accounted for: `.trivy-baseline.json` records the
+        # ones that exist today, and anything outside it fails here. Making the
+        # scan itself blocking would fail every pull request on the first day,
+        # because the blueprint does not build these images and the findings sit
+        # in layers upstream ships — see .ai/decisions.md, 2026-09-20.
+        #
+        # Coverage can only shrink deliberately. An image that stops scanning
+        # contributes no findings, so it can never fail the CVE half; it fails
+        # here unless it is acknowledged in the baseline with a reason. The same
+        # goes for an image discovery resolved that left neither a report nor a
+        # recorded failure — hence --images-total.
+        run: |
+          python3 scripts/ci/trivy-gate.py \
             --results-dir /tmp/trivy-results \
             --failures-file /tmp/trivy-failures.tsv \
             --images-total "$(wc -l < /tmp/images.txt)" \

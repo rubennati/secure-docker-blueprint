@@ -25,9 +25,11 @@
   (`docs/resource-measurement.md`).
 - **The one thing a new session should know:** nothing structural is broken. The
   checkers, the generated views and the site catalogue agree with the tree. What
-  is left needs a host, or a decision that is written down and waiting. The single
-  finding still marked **FIX BEFORE V1** is C1, the missing Trivy gate; everything
-  else open is evidence, a recorded decision, or standing research coverage.
+  is left needs a host, or a decision that is written down and waiting. C1, the missing
+  Trivy gate, is closed: `.trivy-baseline.json` records the CRITICAL findings that
+  exist and `scripts/ci/trivy-gate.py` fails the scan on any that is not recorded.
+  **No finding is marked FIX BEFORE V1 any more** — everything else open is
+  evidence, a recorded decision, or standing research coverage.
 
 ## Snapshot
 

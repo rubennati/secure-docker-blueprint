@@ -26,7 +26,12 @@ Paperless-ngx 23, OpenProject 22, Seafile 20.
       above; the rest get the rule-derived value.
 - [ ] Checker: a stack whose findings mark it private-only or lab-only cannot ship
       `APP_TRAEFIK_ACCESS=acc-public`.
-- [ ] Trivy gate: block only on CRITICAL findings absent from the recorded facts.
+- [x] Trivy gate: block only on CRITICAL findings absent from the recorded facts.
+      Done — `scripts/ci/trivy-gate.py` against `.trivy-baseline.json`, which records
+      513 findings across 76 image repositories as of the 2026-09-21 scan of `dev`.
+      Closes audit C1. The bullets around it — the per-image facts file, the
+      `Exposure` field and the access checker — are the *decision-data* half and
+      remain open; the gate does not depend on them.
 - [ ] Catalogue page: show the facts (counts, fix available, age, licence limits) in
       neutral wording; no judgement of the project.
 - [ ] For OpenSign and Uptime Kuma: check whether upstream has published a newer image;
