@@ -48,11 +48,13 @@ Five options.
 
 ### Scheduling & booking
 
-Three 1:1-booking apps.
+Five 1:1-booking apps.
 
 | App | Stack | When to use |
 |---|---|---|
 | [Cal.diy](caldiy/) | Next.js + Postgres + Redis | MIT community edition of Cal.com (community fork, personal use). |
+| [calnode](calnode/) | Single Go binary + SQLite | Booking pages, admin interface and a REST API in one container. The first-run setup route is public until it has run once; pre-1.0. |
+| [calrs](calrs/) | Single Rust binary + SQLite | Availability read from a CalDAV server you already run. Registration is open until the first administrator exists. |
 | [Easy!Appointments](easyappointments/) | PHP + MariaDB | Lightweight PHP alternative, established 2013, GPL-3.0. |
 | [Tymeslot](tymeslot/) | Elixir/Phoenix + Postgres | Calendar sync with Google, Outlook, Apple and CalDAV, video links, reminder mail; AGPL-3.0, releases several times a week. |
 

@@ -1,0 +1,40 @@
+# calrs — local
+#
+#   cp .env.local.example .env.local
+#   ops/init.sh
+#   mkdir -p volumes/data
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   open http://localhost:3000        # register — the first account is the administrator
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+#
+# No Traefik and no TLS, so registration stays open here: on a loopback port
+# that is the point. The production file ships the closed-router default instead.
+
+services:
+
+  calrs-app:
+    image: ghcr.io/olivierlambert/calrs:${APP_TAG}
+    container_name: calrs-local-app
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    entrypoint: ["/bin/sh", "/entrypoint.sh", "calrs"]
+    command: ["serve", "--host", "0.0.0.0", "--port", "3000"]
+    environment:
+      CALRS_BASE_URL: http://localhost:3000
+      CALRS_DATA_DIR: /var/lib/calrs
+      TZ: ${TZ}
+    volumes:
+      - ./config/entrypoint.sh:/entrypoint.sh:ro
+      - ./.secrets/calrs_secret_key.txt:/run/secrets/CALRS_SECRET_KEY:ro
+      - ./volumes/data:/var/lib/calrs
+    tmpfs:
+      - /tmp
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks: [calrs-local]
+
+networks:
+  calrs-local:
+    name: calrs-local

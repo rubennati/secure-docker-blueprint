@@ -76,6 +76,28 @@
     "verified_version": "v6.2.0-3",
     "version": "538cbb4a2273…"
   },
+  "apps/calnode": {
+    "domain": "Publishing, forms and scheduling",
+    "name": "Calnode",
+    "path": "apps/calnode",
+    "role": "Scheduling with booking pages, an admin interface and a REST API, as one binary with SQLite",
+    "state": "scaffolded",
+    "upstream": "https://github.com/Calnode/calnode/pkgs/container/calnode",
+    "verified": null,
+    "verified_version": null,
+    "version": "0.9.0"
+  },
+  "apps/calrs": {
+    "domain": "Publishing, forms and scheduling",
+    "name": "calrs",
+    "path": "apps/calrs",
+    "role": "Scheduling with booking pages and availability read from a CalDAV calendar you already run",
+    "state": "scaffolded",
+    "upstream": "https://github.com/olivierlambert/calrs/pkgs/container/calrs",
+    "verified": null,
+    "verified_version": null,
+    "version": "1.17.1"
+  },
   "apps/collabora": {
     "domain": "Documents and e-signature",
     "footprint": {

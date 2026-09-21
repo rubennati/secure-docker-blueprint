@@ -1,0 +1,115 @@
+# =============================================================================
+# Calnode — production stack (Traefik + Docker Secrets)
+# =============================================================================
+# Scheduling: booking pages, an admin interface and a REST API, shipped as one
+# Go binary with SQLite in the data volume. Upstream needs no database service,
+# no Redis and no separate API server.
+#
+# Image: ghcr.io/calnode/calnode
+# Source: https://github.com/Calnode/calnode
+#
+# Booking pages and the admin interface share one host name. The shipped access
+# policy is VPN-only because the first-run setup route is public — see README.
+#
+# Spec: docs/standards/compose-structure.md · security-baseline.md
+# =============================================================================
+
+services:
+
+  # --------------------------------------------------------
+  # CALNODE
+  # On proxy-public, so it carries the stack identity + role suffix
+  # --------------------------------------------------------
+  calnode-app:
+    # --- Identity ---
+    image: ghcr.io/calnode/calnode:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+    # The image runs as root by default; it works unprivileged when the data
+    # directory belongs to this uid. Verified — see UPSTREAM.md.
+    user: "${APP_UID}:${APP_GID}"
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+
+    # --- Resources ---
+    # A static Go binary in front of SQLite; derived starting values, not measured.
+    memswap_limit: 512m          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "1.00"
+          pids: 100
+        reservations:
+          memory: 128m
+
+    # --- Configuration ---
+    # entrypoint.sh reads the Docker Secrets into the environment the image
+    # expects, then runs the image's own entrypoint, which optionally starts
+    # Litestream and then the binary.
+    entrypoint: ["/bin/sh", "/secrets-entrypoint.sh", "/entrypoint.sh"]
+    environment:
+      # An https:// prefix is what switches the application into production
+      # mode: secure cookies, and it refuses to start without the encryption key.
+      BASE_URL: https://${APP_TRAEFIK_HOST}
+      DATABASE_URL: sqlite:///data/calnode.db
+      PORT: "3000"
+      TZ: ${TZ}
+    secrets:
+      - CALNODE_ENCRYPTION_KEY
+      - CALNODE_RECOVERY_SECRET
+
+    # --- Storage ---
+    # SQLite and its write-ahead log. The directory belongs to APP_UID on the host.
+    volumes:
+      - ./config/entrypoint.sh:/secrets-entrypoint.sh:ro
+      - ./volumes/data:/data
+    tmpfs:
+      - /tmp
+
+    # --- Networking ---
+    # proxy-public only: it reaches calendar providers and its SMTP relay from
+    # here, and there is no second service to isolate.
+    networks:
+      - proxy-public
+
+    # --- Traefik ---
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.service=${COMPOSE_PROJECT_NAME}"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=3000"
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO /dev/null http://127.0.0.1:3000/healthz || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  CALNODE_ENCRYPTION_KEY:
+    file: ./.secrets/calnode_encryption_key.txt
+  CALNODE_RECOVERY_SECRET:
+    file: ./.secrets/calnode_recovery_secret.txt
