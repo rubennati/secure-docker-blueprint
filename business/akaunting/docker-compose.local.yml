@@ -76,8 +76,6 @@ services:
     tmpfs:
       - /tmp
       - /var/run/apache2
-      - /var/lock/apache2
-      - /var/log/apache2
     ports:
       - "127.0.0.1:8080:80"
     networks: [akaunting-local]

@@ -39,6 +39,7 @@ The origin comes from the governing-law clause of Akaunting's terms of service
 | `config/entrypoint.sh` replaces the image's entrypoint | The original runs `a2enmod rewrite` and `chown -R` over the webroot at every start, both writes a read-only root refuses |
 | `config/rewrite.load` mounted into `mods-enabled/` | The image does not enable `mod_rewrite`; its entrypoint did at runtime |
 | `bootstrap/cache` as a tmpfs with `mode: 1023` | The image ships it owned by root, and a plain tmpfs mounts as `755 root` — verified; `www-data` could not write it. Compose takes the tmpfs mode as the decimal of the bit pattern, so 1023 is octal 1777 |
+| Apache's tmpfs: `/var/run/apache2` only | It holds the PID file. `/var/log/apache2` keeps the image's links to stdout and stderr: a tmpfs there turned them into files in memory, and no request reached `docker logs` — measured. `/var/lock/apache2` is not needed |
 | `cap_add: SETUID, SETGID` | Apache's master starts as root and drops its workers to `www-data`. Measured: with both, the master is uid 0 and six workers uid 33; with `SETUID` alone **all seven stay root while the site still answers 200**. `NET_BIND_SERVICE` is not needed — Docker lets a container bind port 80 |
 | Database connection as environment variables, password from a Docker Secret | Laravel reads real environment variables before `.env`. The installer still writes the password into `.env`; `ops/install.sh` deletes that line, and the application keeps working |
 | `ops/install.sh` instead of the web wizard | Upstream's own `php artisan install`, run as `www-data`, with both passwords read from the secrets inside the container |
@@ -69,6 +70,8 @@ application code left in the image:
   route out
 - The capability set was measured by removing each capability in turn and checking
   both that the site answers and which uid the workers run as
+- With `/tmp` and `/var/run/apache2` as the only tmpfs mounts, the read-only
+  container started and its access log reached `docker logs`
 
 **Not yet exercised:** Traefik routing and TLS; the browser interface beyond the
 login and wizard endpoints; invoices, payments and reports; email; the in-app module
