@@ -1,0 +1,238 @@
+services:
+
+  # --------------------------------------------------------
+  # DATABASE (MariaDB)
+  # --------------------------------------------------------
+  db:
+    # --- Identity ---
+    image: mariadb:${DB_TAG}
+    container_name: ${CONTAINER_NAME_DB}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
+      - DAC_OVERRIDE
+
+    # --- Resources ---
+    # Ceiling above the buffer pool, connections and temporary tables.
+    memswap_limit: 1G          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          pids: 200
+        reservations:
+          memory: 256M
+
+    # --- Configuration ---
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD_FILE: /run/secrets/DB_PWD
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/DB_ROOT_PWD
+      MARIADB_AUTO_UPGRADE: "1"
+      TZ: ${TZ}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    secrets:
+      - DB_PWD
+      - DB_ROOT_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/mysql:/var/lib/mysql
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 20s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # --------------------------------------------------------
+  # FACTURASCRIPTS
+  # --------------------------------------------------------
+  facturascripts-app:
+    # --- Identity ---
+    image: facturascripts/facturascripts:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+
+    # --- Security ---
+    # Apache starts as root and hands its workers to www-data (uid 33); both
+    # capabilities are needed for that hand-off. entrypoint.sh uses the same two
+    # to copy the code as www-data on the first start.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - SETUID
+      - SETGID
+    read_only: true
+
+    # --- Resources ---
+    # Apache with mod_php and a handful of workers; derived starting values.
+    memswap_limit: 1G          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 256M
+
+    # --- Configuration ---
+    # entrypoint.sh replaces the image's start script, which makes the whole
+    # webroot world-writable after copying the code into it.
+    entrypoint: ["/bin/sh", "/entrypoint.sh"]
+    command: ["docker-php-entrypoint", "apache2-foreground"]
+    environment:
+      TZ: ${TZ}
+    secrets:
+      - DB_PWD
+      - ADMIN_PWD
+    depends_on:
+      db:
+        condition: service_healthy
+
+    # --- Storage ---
+    # The whole webroot: the code the in-app updater replaces, config.php,
+    # MyFiles/ (uploads) and Plugins/. Owned by uid 33 on the host.
+    volumes:
+      - ./config/entrypoint.sh:/entrypoint.sh:ro
+      - ./config/apache/cron.conf:/etc/apache2/conf-enabled/zz-cron.conf:ro
+      - ./volumes/facturascripts:/var/www/html
+    tmpfs:
+      - /tmp
+      - /var/run/apache2
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+      - app-internal
+
+    # --- Traefik ---
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.service=${COMPOSE_PROJECT_NAME}"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
+
+    # --- Health & Observability ---
+    # The root path answers before the install (the web installer) and after it.
+    # Other paths need the rewrite rules the installer writes into .htaccess.
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS -o /dev/null http://127.0.0.1/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # --------------------------------------------------------
+  # CRON (scheduled jobs of the core and of plugins)
+  # --------------------------------------------------------
+  facturascripts-cron:
+    # --- Identity ---
+    image: facturascripts/facturascripts:${APP_TAG}
+    container_name: ${CONTAINER_NAME_CRON}
+    restart: unless-stopped
+    user: "33:33"
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+
+    # --- Resources ---
+    memswap_limit: 512M          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          pids: 50
+        reservations:
+          memory: 64M
+
+    # --- Configuration ---
+    # Runs upstream's own cron entry point every five minutes, once the install
+    # has written config.php.
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        while :; do
+        [ -f /var/www/html/config.php ] && php /var/www/html/index.php -cron > /dev/null 2>&1;
+        sleep 300;
+        done
+    environment:
+      TZ: ${TZ}
+    secrets:
+      - DB_PWD
+    depends_on:
+      facturascripts-app:
+        condition: service_started
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/facturascripts:/var/www/html
+    tmpfs:
+      - /tmp
+
+    # --- Networking ---
+    # Outbound for plugin jobs that call external services.
+    networks:
+      - app-internal
+      - app-egress
+
+    # --- Health & Observability ---
+    # Liveness of the loop only: a failed run exits 0 as well.
+    healthcheck:
+      test: ["CMD-SHELL", "grep -q 'index.php -cron' /proc/1/cmdline"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+  app-egress:
+    name: ${COMPOSE_PROJECT_NAME}-egress
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  DB_PWD:
+    file: ./.secrets/db_pwd.txt
+  DB_ROOT_PWD:
+    file: ./.secrets/db_root_pwd.txt
+  ADMIN_PWD:
+    file: ./.secrets/admin_pwd.txt
