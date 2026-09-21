@@ -288,7 +288,7 @@ Based on **OWASP Docker Security Cheat Sheet**.
 | Set resource limits | ✅ | [`security-coverage.md`](security-coverage.md) | `memory` and `pids` on every service |
 | Use security profiles (AppArmor/SELinux) | ❌ No | None configured | Significant gap |
 | Enable Docker Content Trust | ❌ No | Not configured | |
-| Scan for vulnerabilities | ⚠ Partial | `trivy.yml` § Job 2 (Automated Verification, below) has the current coverage, severity filter and exit behavior | Non-blocking (`--exit-code 0`) — see Missing Verification section |
+| Scan for vulnerabilities | ✅ | `trivy.yml` § Job 2 (Automated Verification, below) has the current coverage, severity filter and gate behaviour | A CRITICAL absent from `.trivy-baseline.json` fails the job (`scripts/ci/trivy-gate.py`) |
 | Use Docker Bench for Security | ❌ No | Not in CI | |
 | Log all container activities | ⚠ Partial | Traefik access log captures HTTP. No container-level audit logging. | |
 | Monitor containers at runtime | ⚠ Optional | Beszel available for metrics. No behavioral anomaly detection. | |
@@ -364,8 +364,24 @@ document restates their coverage, severity or exit behavior — it points here.
   published fix is excluded from every count this job produces — that is not
   a claim the CVE is safe to ignore, only that no fix exists yet for a pin
   change to apply.
-- Non-blocking (`--exit-code 0`) on every image, at every severity. No CVE
-  currently fails this job.
+- Trivy's own exit code stays 0 on every image, at every severity: the scan
+  reports rather than judges. **What blocks is a separate gate.**
+  `scripts/ci/trivy-gate.py` fails the job on a CRITICAL finding that is not
+  recorded in `.trivy-baseline.json`, so a finding the repository has accounted
+  for passes and a new one does not. Making the scan itself blocking was
+  rejected in `.ai/decisions.md` (2026-09-20): the blueprint does not build
+  these images, the findings that exist sit in layers upstream ships, and a gate
+  that fails every pull request on its first day is one people learn to ignore.
+- The baseline is keyed by image repository rather than by tag, so bumping a pin
+  surfaces what is new instead of re-presenting everything. An entry whose
+  finding has gone is reported as prunable and does not fail the gate.
+- **Coverage can only shrink deliberately.** An unscanned image contributes no
+  findings, so it can never fail the CVE half of the gate; it fails on its own
+  unless `.trivy-baseline.json` acknowledges it with a reason. Three registries
+  serve no anonymous pull and are acknowledged there today. The same applies to
+  an image discovery resolved that produced neither a report nor a recorded
+  failure, and to a report that cannot be parsed — "could not be read" and "was
+  never reached" must never arrive at the gate as "found nothing".
 - Each image is scanned to its own JSON report (Trivy's own report format —
   package name, installed and fixed version, CVE detail). The full set is
   uploaded as the `trivy-image-scan-results` workflow artifact; nothing is
@@ -437,7 +453,6 @@ The following controls are absent from CI. Ordered by security value.
 | **Dependency review** | No automated check for newly introduced vulnerable dependencies on PRs. | `dependency-review-action` |
 | **Docker Bench for Security** | Runtime checks against host Docker daemon config. Not coverable in CI without host access. | Docker Bench for Security |
 | **TLS profile enforcement** | No CI check that each app uses an appropriate TLS profile. | Extension to structure check |
-| **Blocking on CVE findings** | Coverage is complete (`trivy.yml` § Job 2, above); the job still runs `--exit-code 0` at every severity | Triage the findings the summary and artifact now make reviewable, then decide which severity and which images block. Turning on coverage and blocking in the same step was deliberately avoided |
 
 ---
 

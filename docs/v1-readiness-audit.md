@@ -152,7 +152,7 @@ Status is the state after the PR named.
 
 | ID | Finding | Evidence | Class | Status |
 |---|---|---|---|---|
-| C1 | Trivy's image scan runs `--exit-code 0` on every severity, so the security baseline has no gate on known-vulnerable images | `trivy.yml` | **FIX BEFORE V1** — confirmed | Open — needs the one-off CRITICAL assessment; the approach is recorded in `.ai/decisions.md` |
+| C1 | Trivy's image scan runs `--exit-code 0` on every severity, so the security baseline has no gate on known-vulnerable images | `trivy.yml` | **FIX BEFORE V1** — confirmed | **Closed** — the scan still reports rather than judges, and `scripts/ci/trivy-gate.py` fails the job on a CRITICAL absent from `.trivy-baseline.json`. The baseline records what the 2026-09-21 scan of `dev` found, so existing findings are accounted for and a new one cannot enter quietly. The per-image facts file, the `Exposure` field and the access checker from the same decision are separate work and are not needed for the gate |
 | C2 | Nothing compared the site with the repository | W5 | FIX BEFORE V1 | Resolved — `site-catalogue.py --check` in the `Status model` job |
 | C3 | The site workflow triggers only on `site/**`, so a repository change cannot break the site build unseen | `site.yml` | CLEANUP | Resolved — parity runs in main CI |
 | C4 | Trivy image scanning runs on pull requests to `main` and weekly, not on pull requests to `dev` | `trivy.yml` | — | By design, stated in its header |
