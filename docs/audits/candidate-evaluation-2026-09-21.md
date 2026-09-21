@@ -261,6 +261,26 @@ is off unless `OBOT_SERVER_ENABLE_AUTHENTICATION=true` is set, as the README's q
 start does, and credentials are stored unencrypted by default — the start log reads
 `Encryption: No encryption config file provided, using unencrypted storage`.
 
+**Batch F — ERPNext.** Shipped, fully exercised, in `business/` beside Dolibarr. It
+follows frappe_docker's compose with its MariaDB and Redis overrides: ten services
+from one image. Four things differ from upstream, each measured:
+
+- The site is created against the database and user the MariaDB entrypoint
+  creates, so Frappe never receives the root password; upstream passes it on the
+  command line.
+- `bench` writes every command line to `logs/bench.log`. With upstream's commands
+  the Redis, database and Administrator passwords all landed there, so the stack
+  calls Frappe's command runner directly for those.
+- Every role runs read-only, which takes tmpfs mounts for bench's lock directory
+  and for the configuration nginx generates at start.
+- Both Redis instances carry a password.
+
+Two upstream behaviours are recorded rather than changed. A new site starts in
+Asia/Kolkata, so once the setup wizard picks another time zone the scheduled jobs
+wait for the difference — 3 hours 30 minutes for Central European Summer Time.
+Upstream's backup override runs Ofelia with the Docker socket; the stack leaves it
+out.
+
 ## Proposed order
 
 Eleven Tier 1 products, in batches that share a category and a review:

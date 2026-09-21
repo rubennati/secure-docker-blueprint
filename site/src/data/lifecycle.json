@@ -599,6 +599,16 @@
     "verified_anchored": false,
     "verified_version": ""
   },
+  "business/erpnext": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=v16.35.0",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "business/facturascripts": {
     "backup_docs": "documented",
     "local_stack": "✅",

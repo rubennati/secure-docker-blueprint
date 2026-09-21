@@ -1,0 +1,222 @@
+# ERPNext — local
+#
+#   cp .env.local.example .env.local
+#   ops/init.sh
+#   sudo chown -R 1000:1000 volumes/sites volumes/logs
+#   sudo chown -R 999:999 volumes/redis-queue
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   COMPOSE_FILE=docker-compose.local.yml ENV_FILE=.env.local ops/create-site.sh
+#   open http://localhost:8080        # Administrator, .secrets/admin_pwd.txt
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+#
+# Same image, same read-only settings and the same mounts as the production file,
+# without Traefik and without the Docker Secrets mechanism. It mounts the same
+# volumes/, so run one at a time. The database is the exception: see db below.
+
+x-frappe: &frappe
+  image: frappe/erpnext:${APP_TAG}
+  restart: unless-stopped
+  security_opt: [no-new-privileges:true]
+  cap_drop: [ALL]
+  read_only: true
+  environment:
+    TZ: ${TZ}
+  depends_on:
+    erpnext-configurator:
+      condition: service_completed_successfully
+  volumes:
+    - ./volumes/sites:/home/frappe/frappe-bench/sites
+    - ./volumes/logs:/home/frappe/frappe-bench/logs
+    - type: tmpfs
+      target: /home/frappe/frappe-bench/config
+      tmpfs:
+        mode: 1023
+    - type: tmpfs
+      target: /home/frappe/frappe-bench/config/pids
+      tmpfs:
+        mode: 1023
+  tmpfs:
+    - /tmp
+  networks: [erpnext-local]
+
+x-redis: &redis
+  image: redis:${REDIS_TAG}
+  restart: unless-stopped
+  user: "999:999"
+  security_opt: [no-new-privileges:true]
+  cap_drop: [ALL]
+  read_only: true
+  tmpfs:
+    - /tmp
+  networks: [erpnext-local]
+  healthcheck:
+    test: ["CMD-SHELL", "REDISCLI_AUTH=\"$$(cat /run/secrets/REDIS_PWD)\" redis-cli ping | grep -q PONG || exit 1"]
+    interval: 10s
+    timeout: 5s
+    retries: 10
+
+services:
+
+  erpnext-frontend:
+    <<: *frappe
+    container_name: erpnext-local-frontend
+    command: ["nginx-entrypoint.sh"]
+    environment:
+      BACKEND: erpnext-backend:8000
+      SOCKETIO: erpnext-websocket:9000
+      FRAPPE_SITE_NAME_HEADER: ${SITE_NAME}
+      TZ: ${TZ}
+    depends_on:
+      erpnext-backend:
+        condition: service_started
+      erpnext-websocket:
+        condition: service_started
+    volumes:
+      - ./volumes/sites:/home/frappe/frappe-bench/sites
+      - ./volumes/logs:/home/frappe/frappe-bench/logs
+      - type: tmpfs
+        target: /etc/nginx/conf.d
+        tmpfs:
+          mode: 1023
+      - type: tmpfs
+        target: /var/lib/nginx
+        tmpfs:
+          mode: 1023
+      - type: tmpfs
+        target: /run
+        tmpfs:
+          mode: 1023
+    ports:
+      - "127.0.0.1:8080:8080"
+
+  erpnext-backend:
+    <<: *frappe
+    container_name: erpnext-local-backend
+    volumes:
+      - ./volumes/sites:/home/frappe/frappe-bench/sites
+      - ./volumes/logs:/home/frappe/frappe-bench/logs
+      - ./.secrets/db_pwd.txt:/run/secrets/DB_PWD:ro
+      - ./.secrets/admin_pwd.txt:/run/secrets/ADMIN_PWD:ro
+      - type: tmpfs
+        target: /home/frappe/frappe-bench/config
+        tmpfs:
+          mode: 1023
+      - type: tmpfs
+        target: /home/frappe/frappe-bench/config/pids
+        tmpfs:
+          mode: 1023
+
+  erpnext-websocket:
+    <<: *frappe
+    container_name: erpnext-local-websocket
+    command: ["node", "/home/frappe/frappe-bench/apps/frappe/socketio.js"]
+
+  erpnext-queue-short:
+    <<: *frappe
+    container_name: erpnext-local-queue-short
+    command: ["bench", "worker", "--queue", "short,default"]
+
+  erpnext-queue-long:
+    <<: *frappe
+    container_name: erpnext-local-queue-long
+    command: ["bench", "worker", "--queue", "long,default,short"]
+
+  erpnext-scheduler:
+    <<: *frappe
+    container_name: erpnext-local-scheduler
+    command: ["bench", "schedule"]
+
+  erpnext-configurator:
+    <<: *frappe
+    container_name: erpnext-local-configurator
+    restart: on-failure
+    entrypoint: ["bash", "-c"]
+    command:
+      - >
+        set -e;
+        ls -1 apps > sites/apps.txt;
+        [ -f sites/common_site_config.json ] || echo "{}" > sites/common_site_config.json;
+        cd sites;
+        fc() { ../env/bin/python -m frappe.utils.bench_helper frappe "$$@"; };
+        pw="$$(cat /run/secrets/REDIS_PWD)";
+        fc set-config -g db_host db;
+        fc set-config -gp db_port 3306;
+        fc set-config -g redis_cache "redis://:$${pw}@redis-cache:6379";
+        fc set-config -g redis_queue "redis://:$${pw}@redis-queue:6379";
+        fc set-config -g redis_socketio "redis://:$${pw}@redis-queue:6379";
+        fc set-config -gp socketio_port 9000;
+        fc set-config -g chromium_path /usr/bin/chromium-headless-shell;
+    depends_on:
+      db:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+      redis-queue:
+        condition: service_healthy
+    volumes:
+      - ./volumes/sites:/home/frappe/frappe-bench/sites
+      - ./volumes/logs:/home/frappe/frappe-bench/logs
+      - ./.secrets/redis_pwd.txt:/run/secrets/REDIS_PWD:ro
+      - type: tmpfs
+        target: /home/frappe/frappe-bench/config
+        tmpfs:
+          mode: 1023
+      - type: tmpfs
+        target: /home/frappe/frappe-bench/config/pids
+        tmpfs:
+          mode: 1023
+
+  db:
+    image: mariadb:${DB_TAG}
+    container_name: erpnext-local-db
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [CHOWN, SETUID, SETGID, DAC_OVERRIDE]
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD_FILE: /run/secrets/DB_PWD
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/DB_ROOT_PWD
+      TZ: ${TZ}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+    # A named volume rather than volumes/mysql: Frappe needs case-sensitive table
+    # names, and on a bind mount from a case-insensitive filesystem MariaDB folds
+    # them (lower_case_table_names=2) and the site install fails.
+    volumes:
+      - ./.secrets/db_pwd.txt:/run/secrets/DB_PWD:ro
+      - ./.secrets/db_root_pwd.txt:/run/secrets/DB_ROOT_PWD:ro
+      - erpnext-local-db:/var/lib/mysql
+    networks: [erpnext-local]
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis-cache:
+    <<: *redis
+    container_name: erpnext-local-redis-cache
+    entrypoint: ["/bin/sh", "/redis-entrypoint.sh", "cache"]
+    volumes:
+      - ./config/redis-entrypoint.sh:/redis-entrypoint.sh:ro
+      - ./.secrets/redis_pwd.txt:/run/secrets/REDIS_PWD:ro
+
+  redis-queue:
+    <<: *redis
+    container_name: erpnext-local-redis-queue
+    entrypoint: ["/bin/sh", "/redis-entrypoint.sh", "queue"]
+    volumes:
+      - ./config/redis-entrypoint.sh:/redis-entrypoint.sh:ro
+      - ./.secrets/redis_pwd.txt:/run/secrets/REDIS_PWD:ro
+      - ./volumes/redis-queue:/data
+
+networks:
+  erpnext-local:
+    name: erpnext-local
+
+volumes:
+  erpnext-local-db:
