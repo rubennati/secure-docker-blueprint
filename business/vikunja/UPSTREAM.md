@@ -8,7 +8,9 @@
 - **Docker Hub:** https://hub.docker.com/r/vikunja/vikunja
 - **Docs:** https://vikunja.io/docs/
 - **License:** AGPL-3.0
-- **Decision facts checked:** not yet
+- **Edition gating:** the self-hosted core is complete and free for personal or company use; a Pro tier for instances you host yourself adds an admin panel, audit logs and time tracking — https://vikunja.io/pricing/ · checked 2026-09-21
+- **Commercial model:** paid self-hosted edition; the Cloud offering is the same features without the operations work — https://vikunja.io/pricing/ · checked 2026-09-21
+- **Decision facts checked:** 2026-09-21
 - **Origin:** Germany · Konrad Langenberg Software · EU
 - **Domain:** Business operations
 - **Role:** Task and project management with lists, boards and calendars

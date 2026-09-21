@@ -7,7 +7,9 @@
 - **Docker Hub:** https://hub.docker.com/r/photoprism/photoprism
 - **Compose docs:** https://docs.photoprism.app/getting-started/docker-compose/
 - **License:** AGPL-3.0
-- **Decision facts checked:** not yet
+- **Edition gating:** the admin web UI for user management and any role beyond Super Admin, Admin and Guest, together with session monitoring and hardened security, require a paid Essentials or Plus membership; two-factor login and OpenID Connect are in the Community edition — https://www.photoprism.app/editions · checked 2026-09-21
+- **Commercial model:** paid self-hosted edition — https://www.photoprism.app/editions · checked 2026-09-21
+- **Decision facts checked:** 2026-09-21
 - **Origin:** Germany · PhotoPrism AG · EU
 - **Domain:** Photos
 - **Role:** Photo library with machine-learning classification and WebDAV
