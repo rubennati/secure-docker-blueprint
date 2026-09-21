@@ -75,14 +75,14 @@ Full evidence per product in
 what each publishes, where its compose actually lives, the licence splits, and what
 was verified by running it. Three of the fifteen already ship.
 
-- [ ] Eleven products have a version-tagged image and can be written as stacks, in
+- [x] Eleven products have a version-tagged image and can be written as stacks, in
       six batches (A calrs+Calnode · B SolidInvoice+FacturaScripts+Akaunting ·
       C Twenty+Chatwoot · D CISO Assistant+DefectDojo · E obot · F ERPNext).
       Batch A shipped (#140). Batch B: Akaunting and SolidInvoice shipped,
       FacturaScripts held (#145), then shipped on upstream's update model — the
       in-app updater owns the webroot. Batch C: Twenty and Chatwoot shipped (#146).
       Batch D: CISO Assistant and DefectDojo shipped (#150). Batch E: obot held —
-      it does not start without the Docker API. Batch F (ERPNext) open. See the
+      it does not start without the Docker API. Batch F: ERPNext shipped. See the
       evaluation's *Findings from implementation*.
 - [ ] Four publish no image (DayOtter, Dapta Calendars, MAILFLOW-AI, Crater) and
       stay evaluation entries. Proposed: ask DayOtter's maintainer to publish a tag;
@@ -323,7 +323,7 @@ Listed with context in [`state.md`](state.md). Nothing proceeds on these until d
       is complete: schema, provenance rules, generation, the per-stack marker and the check
       that refuses a stack stating neither a date nor `not yet`. Nothing in the baseline
       waits on this. What continues is reading upstream terms, one stack at a time.
-      **33 of 98 researched — 31 with facts, 2 checked and clear — 65 remain.**
+      **34 of 99 researched — 32 with facts, 2 checked and clear — 65 remain.**
 
       **Pages already read that do not answer the question — do not retry these:**
       `apps/onlyoffice` (the Enterprise pricing page prices per user and never compares

@@ -1417,6 +1417,41 @@
     "verified_version": null,
     "version": "23.0.4"
   },
+  "business/erpnext": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "no paid edition",
+        "source": "https://frappe.io/erpnext/pricing",
+        "statement": "no paid edition"
+      },
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://frappe.io/erpnext/pricing",
+        "statement": "none — upstream states that ERPNext is 100% open source with no features behind paywalls"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
+    "domain": "Business operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MariaDB",
+        "Redis"
+      ],
+      "init_services": 0,
+      "services": 10,
+      "summary": "10 services · MariaDB + Redis"
+    },
+    "name": "ERPNext",
+    "path": "business/erpnext",
+    "role": "ERP on the Frappe framework: accounting, invoicing, stock, buying, selling, manufacturing, projects and HR",
+    "state": "scaffolded",
+    "upstream": "https://hub.docker.com/r/frappe/erpnext",
+    "verified": null,
+    "verified_version": null,
+    "version": "16.35.0"
+  },
   "business/facturascripts": {
     "decision_facts": {
       "commercial_model": {

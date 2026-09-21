@@ -4,7 +4,7 @@
 
 Generated 2026-09-21 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-98 stacks: 1 ops-proven · 13 baseline-aligned · 84 scaffolded. 88 carry a local test stack.
+99 stacks: 1 ops-proven · 13 baseline-aligned · 85 scaffolded. 89 carry a local test stack.
 
 This is the maintainer's view: what has been established about each stack. It makes no statement about whether a stack suits a given deployment.
 
@@ -106,6 +106,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`business/chatwoot`](business/chatwoot/) | `scaffolded` | `APP_TAG=v4.18.0` | — | ✅ | documented | missing |
 | [`business/documenso`](business/documenso/) | `scaffolded` | `APP_TAG=v2.18.0` | — | ✅ | documented | missing |
 | [`business/dolibarr`](business/dolibarr/) | `scaffolded` | `APP_TAG=23.0.4` | 2026-04-17 ⚠️ | ✅ | documented | missing |
+| [`business/erpnext`](business/erpnext/) | `scaffolded` | `APP_TAG=v16.35.0` | — | ✅ | documented | missing |
 | [`business/facturascripts`](business/facturascripts/) | `scaffolded` | `APP_TAG=2026.5` | — | ✅ | documented | missing |
 | [`business/invoiceninja`](business/invoiceninja/) | `baseline-aligned` | `APP_TAG=5.13.40` | 2026-09-13 | ✅ | documented | missing |
 | [`business/kimai`](business/kimai/) | `scaffolded` | `APP_TAG=2.66.0` | 2026-05-03 ⚠️ | ✅ | documented | missing |
