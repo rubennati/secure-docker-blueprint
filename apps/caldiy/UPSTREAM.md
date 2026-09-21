@@ -8,6 +8,7 @@
 - **Image registry:** `ghcr.io/rubennati/cal.diy`
 - **Docs:** https://cal.diy/docs
 - **License:** MIT
+- **Decision facts checked:** not yet
 - **Relationship:** Community-edition spin-out of Cal.com (2026, after Cal.com moved its production code behind a closed-source licence). This blueprint consumes the **hardened fork**, not upstream directly.
 - **Origin:** Fork · rubennati · upstream: US · Cal.com Inc · non-EU
 - **Domain:** Publishing, forms and scheduling

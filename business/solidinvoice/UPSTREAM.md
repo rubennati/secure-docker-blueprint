@@ -6,6 +6,7 @@
 - **GitHub:** https://github.com/SolidInvoice/SolidInvoice
 - **Docs:** https://docs.solidinvoice.co
 - **License:** MIT
+- **Decision facts checked:** not yet
 - **Origin:** SolidInvoice · no country stated in its published terms · no country
 - **Domain:** Business operations
 - **Role:** Invoicing: clients, quotes, invoices, recurring invoices and payments

@@ -6,6 +6,7 @@
 - **GitHub:** https://github.com/dgtlmoon/changedetection.io
 - **Registry:** `ghcr.io/dgtlmoon/changedetection.io`
 - **License:** Apache-2.0
+- **Decision facts checked:** not yet
 - **Origin:** Australia · dgtlmoon · non-EU
 - **Domain:** Monitoring
 - **Role:** Watches web pages for changes: restocks, prices, terms

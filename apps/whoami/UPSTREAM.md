@@ -5,6 +5,7 @@
 - **Image:** https://hub.docker.com/r/traefik/whoami
 - **GitHub:** https://github.com/traefik/whoami
 - **License:** Apache-2.0
+- **Decision facts checked:** not yet
 - **Origin:** France · Traefik Labs · EU
 - **Domain:** Developer tools
 - **Role:** Tiny service that shows what the proxy forwards, to check routing and TLS

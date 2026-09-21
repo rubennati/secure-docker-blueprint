@@ -1,6 +1,7 @@
 {
   "apps/adminer": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Developer tools",
     "footprint": {
       "gpu": null,
@@ -20,6 +21,7 @@
   },
   "apps/agentgateway": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "AI and local AI",
     "footprint": {
       "gpu": null,
@@ -39,6 +41,7 @@
   },
   "apps/bookstack": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Files, wiki and collaboration",
     "footprint": {
       "gpu": null,
@@ -60,6 +63,7 @@
   },
   "apps/caldiy": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Publishing, forms and scheduling",
     "footprint": {
       "gpu": null,
@@ -82,6 +86,7 @@
   },
   "apps/calnode": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Publishing, forms and scheduling",
     "footprint": {
       "gpu": null,
@@ -101,6 +106,7 @@
   },
   "apps/calrs": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Publishing, forms and scheduling",
     "footprint": {
       "gpu": null,
@@ -147,6 +153,7 @@
   },
   "apps/collabora": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Documents and e-signature",
     "footprint": {
       "gpu": null,
@@ -166,6 +173,7 @@
   },
   "apps/dashy": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Dashboards",
     "footprint": {
       "gpu": null,
@@ -207,6 +215,7 @@
   },
   "apps/dependency-track": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Security operations",
     "footprint": {
       "gpu": null,
@@ -228,6 +237,7 @@
   },
   "apps/dfir-iris": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Security operations",
     "footprint": {
       "gpu": null,
@@ -261,6 +271,7 @@
         "statement": "operating a multi-tenant environment requires written commercial permission, and the LOGO and copyright information in the console and applications may not be removed or modified; the branding condition applies to the frontend, meaning the `web/` directory and the web image"
       }
     },
+    "decision_facts_checked": "2026-09-21",
     "domain": "AI and local AI",
     "footprint": {
       "gpu": null,
@@ -283,6 +294,7 @@
   },
   "apps/docling-serve": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "AI and local AI",
     "footprint": {
       "gpu": null,
@@ -302,6 +314,7 @@
   },
   "apps/easyappointments": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Publishing, forms and scheduling",
     "footprint": {
       "gpu": null,
@@ -323,6 +336,7 @@
   },
   "apps/euro-office": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Documents and e-signature",
     "footprint": {
       "gpu": null,
@@ -342,6 +356,7 @@
   },
   "apps/ghost": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Publishing, forms and scheduling",
     "footprint": {
       "gpu": null,
@@ -363,6 +378,7 @@
   },
   "apps/greenmail": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Developer tools",
     "footprint": {
       "gpu": null,
@@ -382,6 +398,7 @@
   },
   "apps/heimdall": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Dashboards",
     "footprint": {
       "gpu": null,
@@ -401,6 +418,7 @@
   },
   "apps/hemmelig": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Identity, access and secrets",
     "footprint": {
       "gpu": null,
@@ -420,6 +438,7 @@
   },
   "apps/homarr": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Dashboards",
     "footprint": {
       "gpu": null,
@@ -439,6 +458,7 @@
   },
   "apps/homepage": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Dashboards",
     "footprint": {
       "gpu": null,
@@ -458,6 +478,7 @@
   },
   "apps/immich": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Photos",
     "footprint": {
       "gpu": null,
@@ -481,6 +502,7 @@
   },
   "apps/it-tools": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Developer tools",
     "footprint": {
       "gpu": null,
@@ -500,6 +522,7 @@
   },
   "apps/librephotos": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Photos",
     "footprint": {
       "gpu": null,
@@ -527,6 +550,7 @@
         "statement": "none for the MIT-licensed portion; content under the `enterprise/` directory is under the separate licence in `enterprise/LICENSE`"
       }
     },
+    "decision_facts_checked": "2026-09-21",
     "domain": "AI and local AI",
     "footprint": {
       "gpu": null,
@@ -548,6 +572,7 @@
   },
   "apps/lycheeorg": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Photos",
     "footprint": {
       "gpu": null,
@@ -570,6 +595,7 @@
   },
   "apps/mailpit": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Developer tools",
     "footprint": {
       "gpu": null,
@@ -589,6 +615,7 @@
   },
   "apps/monicahq": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Business operations",
     "footprint": {
       "gpu": null,
@@ -627,6 +654,7 @@
         "statement": "free for internal business purposes and for non-commercial use; it may be given to others only free of charge and for non-commercial purposes, and its licensing and copyright notices may not be altered, removed or obscured"
       }
     },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Automation and data",
     "footprint": {
       "gpu": null,
@@ -646,6 +674,7 @@
   },
   "apps/nextcloud": {
     "decision_facts": {},
+    "decision_facts_checked": "2026-09-21",
     "domain": "Files, wiki and collaboration",
     "footprint": {
       "gpu": null,
@@ -674,6 +703,7 @@
         "statement": "it may be used or modified only for your own internal business purposes or for non-commercial or personal use, and given to others only free of charge for non-commercial purposes; licensing and copyright notices may not be removed. Only the `master` and `develop` branches are licensed at all"
       }
     },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Automation and data",
     "footprint": {
       "gpu": null,
@@ -693,6 +723,7 @@
   },
   "apps/ollama": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "AI and local AI",
     "footprint": {
       "gpu": "optional",
@@ -712,6 +743,7 @@
   },
   "apps/onlyoffice": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Documents and e-signature",
     "footprint": {
       "gpu": null,
@@ -743,6 +775,7 @@
         "statement": "the Open WebUI name and branding may not be removed or altered, except for deployments whose end users do not exceed fifty individuals in any rolling thirty-day period, or with prior written permission or an executed enterprise licence"
       }
     },
+    "decision_facts_checked": "2026-09-21",
     "domain": "AI and local AI",
     "footprint": {
       "gpu": null,
@@ -762,6 +795,7 @@
   },
   "apps/opencanary": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Security operations",
     "footprint": {
       "gpu": null,
@@ -781,6 +815,7 @@
   },
   "apps/opnform": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Publishing, forms and scheduling",
     "footprint": {
       "gpu": null,
@@ -803,6 +838,7 @@
   },
   "apps/paperless-ngx": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Documents and e-signature",
     "footprint": {
       "gpu": null,
@@ -825,6 +861,7 @@
   },
   "apps/photoprism": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Photos",
     "footprint": {
       "gpu": null,
@@ -846,6 +883,7 @@
   },
   "apps/photoview": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Photos",
     "footprint": {
       "gpu": null,
@@ -867,6 +905,7 @@
   },
   "apps/privatebin": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Identity, access and secrets",
     "footprint": {
       "gpu": null,
@@ -886,6 +925,7 @@
   },
   "apps/qdrant": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "AI and local AI",
     "footprint": {
       "gpu": null,
@@ -907,6 +947,7 @@
   },
   "apps/seafile": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Files, wiki and collaboration",
     "footprint": {
       "gpu": null,
@@ -928,7 +969,20 @@
     "version": "13.0.20"
   },
   "apps/seafile-pro": {
-    "decision_facts": {},
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "per-user subscription",
+        "source": "https://www.seafile.com/en/pricing/",
+        "statement": "per-user subscription; no licence file is needed to run the Pro edition for three users"
+      },
+      "use_restrictions": {
+        "checked": "2026-09-21",
+        "source": "https://manual.seafile.com/latest/introduction/seafile_professional_edition_software_license_agreement/",
+        "statement": "end-user customers may not redistribute it further, the software and its source may not be disclosed or made available to any third party, and derivative works may not be created or distributed"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Files, wiki and collaboration",
     "footprint": {
       "gpu": null,
@@ -952,6 +1006,7 @@
   },
   "apps/threat-dragon": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Security operations",
     "footprint": {
       "gpu": null,
@@ -971,6 +1026,7 @@
   },
   "apps/tymeslot": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Publishing, forms and scheduling",
     "footprint": {
       "gpu": null,
@@ -992,6 +1048,7 @@
   },
   "apps/unifi": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Infrastructure",
     "footprint": {
       "gpu": null,
@@ -1013,6 +1070,7 @@
   },
   "apps/vaultwarden": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Identity, access and secrets",
     "footprint": {
       "gpu": null,
@@ -1034,6 +1092,7 @@
   },
   "apps/velociraptor": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Security operations",
     "footprint": {
       "gpu": null,
@@ -1053,6 +1112,7 @@
   },
   "apps/vllm": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "AI and local AI",
     "footprint": {
       "gpu": "required",
@@ -1072,6 +1132,7 @@
   },
   "apps/whoami": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Developer tools",
     "footprint": {
       "gpu": null,
@@ -1097,6 +1158,7 @@
         "statement": "code behind the `enterprise` compile flag in `backend/`, and frontend code that requires a positive licence check to activate, is under a proprietary and commercial licence rather than the AGPLv3; forks must not include it"
       }
     },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Automation and data",
     "footprint": {
       "gpu": null,
@@ -1118,6 +1180,7 @@
   },
   "apps/wordpress": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Publishing, forms and scheduling",
     "footprint": {
       "gpu": null,
@@ -1139,6 +1202,7 @@
   },
   "apps/yopass": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Identity, access and secrets",
     "footprint": {
       "gpu": null,
@@ -1160,6 +1224,7 @@
   },
   "backup/borgmatic": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Backup",
     "footprint": null,
     "name": "Borgmatic",
@@ -1173,6 +1238,7 @@
   },
   "backup/urbackup": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Backup",
     "footprint": {
       "gpu": null,
@@ -1204,6 +1270,7 @@
         "statement": "production use is permitted only while it stays within two users, one company and one thousand invoices; beyond any of these a commercial licence is required, and the name, logo and branding may not be removed to create a rebranded or white-labelled version for distribution; each release converts to GPLv3 four years after it is published"
       }
     },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Business operations",
     "footprint": {
       "gpu": null,
@@ -1229,8 +1296,14 @@
         "checked": "2026-09-21",
         "source": "https://github.com/chatwoot/chatwoot/blob/develop/LICENSE",
         "statement": "everything under the repository's `enterprise/` directory is licensed under `enterprise/LICENSE` rather than MIT"
+      },
+      "use_restrictions": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/chatwoot/chatwoot/blob/develop/LICENSE",
+        "statement": "none for the MIT-licensed portion; content under the `enterprise/` directory is under the separate licence defined there"
       }
     },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Business operations",
     "footprint": {
       "gpu": null,
@@ -1252,7 +1325,20 @@
     "version": "4.18.0"
   },
   "business/documenso": {
-    "decision_facts": {},
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "paid self-hosted edition",
+        "source": "https://docs.documenso.com/developers/self-hosting",
+        "statement": "paid self-hosted edition"
+      },
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://docs.documenso.com/developers/self-hosting",
+        "statement": "single sign-on, the embed editor white label and 21 CFR Part 11 compliance are enterprise features activated with a licence key; the AGPL-3.0 self-hosted edition carries the core functionality without them"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Documents and e-signature",
     "footprint": {
       "gpu": null,
@@ -1274,6 +1360,7 @@
   },
   "business/dolibarr": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Business operations",
     "footprint": {
       "gpu": null,
@@ -1301,6 +1388,7 @@
         "statement": "Elastic License 2.0 — it may not be provided to third parties as a hosted or managed service giving them access to a substantial set of its features, the licence-key functionality may not be moved, changed, disabled or circumvented, and licensing or copyright notices may not be removed"
       }
     },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Business operations",
     "footprint": {
       "gpu": null,
@@ -1323,6 +1411,7 @@
   },
   "business/kimai": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Business operations",
     "footprint": {
       "gpu": null,
@@ -1344,6 +1433,7 @@
   },
   "business/listmonk": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Publishing, forms and scheduling",
     "footprint": {
       "gpu": null,
@@ -1377,6 +1467,7 @@
         "statement": "SAML single sign-on is the separate LoginSaml plugin, sold under the InnoCraft EULA rather than shipped under the GPL core"
       }
     },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Business operations",
     "footprint": {
       "gpu": null,
@@ -1410,6 +1501,7 @@
         "statement": "single sign-on through SAML, OpenID Connect, CAS or Kerberos is an Enterprise feature from the Professional plan upwards, and LDAP group synchronisation from the Corporate plan; two-factor authentication, plain LDAP authentication, user groups and permissions, and custom workflows are in the Community edition"
       }
     },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Business operations",
     "footprint": {
       "gpu": null,
@@ -1432,6 +1524,7 @@
   },
   "business/opensign": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Documents and e-signature",
     "footprint": {
       "gpu": null,
@@ -1453,6 +1546,7 @@
   },
   "business/solidinvoice": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Business operations",
     "footprint": {
       "gpu": null,
@@ -1476,8 +1570,14 @@
         "checked": "2026-09-21",
         "source": "https://github.com/twentyhq/twenty/blob/main/LICENSE",
         "statement": "files marked `@license Enterprise` at the top are covered by a commercial licence rather than the AGPL-3.0"
+      },
+      "use_restrictions": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/twentyhq/twenty/blob/main/LICENSE",
+        "statement": "none for the AGPL-3.0 portion; individual files carrying a `/* @license Enterprise */` comment at the top are under a separate commercial licence"
       }
     },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Business operations",
     "footprint": {
       "gpu": null,
@@ -1500,6 +1600,7 @@
   },
   "business/vikunja": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Business operations",
     "footprint": {
       "gpu": null,
@@ -1521,6 +1622,7 @@
   },
   "business/zammad": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Business operations",
     "footprint": {
       "gpu": null,
@@ -1545,6 +1647,7 @@
   },
   "core/acme-certs": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Infrastructure",
     "footprint": {
       "gpu": null,
@@ -1576,6 +1679,7 @@
         "statement": "enhanced audit logging, client certificate authentication, RADIUS EAP-TLS, password history compliance, privileged access management, account lockdown, and Google Workspace and Microsoft Entra ID provisioning are listed as Enterprise; the list does not include the OIDC or SAML provider"
       }
     },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Identity, access and secrets",
     "footprint": {
       "gpu": null,
@@ -1598,6 +1702,7 @@
   },
   "core/crowdsec": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Security operations",
     "footprint": {
       "gpu": null,
@@ -1617,6 +1722,7 @@
   },
   "core/dnsmasq": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Infrastructure",
     "footprint": {
       "gpu": null,
@@ -1653,6 +1759,7 @@
         "statement": "production use is granted free only for personal non-commercial use, recognised non-profit and charitable organisations, and schools or non-commercial research institutions. **Production use by or on behalf of a company, sole trader, public body or any other organisation requires a Commercial Licence**, and offering it to third parties as a hosted, managed or SaaS container-management service requires a separate written agreement"
       }
     },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Infrastructure",
     "footprint": {
       "gpu": null,
@@ -1674,6 +1781,7 @@
   },
   "core/hawser": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Infrastructure",
     "footprint": {
       "gpu": null,
@@ -1693,6 +1801,7 @@
   },
   "core/host-watchdog": {
     "decision_facts": {},
+    "decision_facts_checked": "2026-09-21",
     "domain": "Infrastructure",
     "footprint": null,
     "name": "Host Watchdog",
@@ -1712,6 +1821,7 @@
         "statement": "none for the MIT-licensed portion; content under any `ee/` directory is under the separate licence in `ee/LICENSE`"
       }
     },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Identity, access and secrets",
     "footprint": {
       "gpu": null,
@@ -1734,6 +1844,7 @@
   },
   "core/jumpserver": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Identity, access and secrets",
     "footprint": {
       "gpu": null,
@@ -1753,6 +1864,7 @@
   },
   "core/keycloak": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Identity, access and secrets",
     "footprint": {
       "gpu": null,
@@ -1780,6 +1892,7 @@
         "statement": "Apache-2.0 with the Commons Clause, which withholds the right to Sell — defined as providing to third parties, for a fee or other consideration, a product or service whose value derives entirely or substantially from its functionality, including fees for hosting or for consulting and support related to it"
       }
     },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Identity, access and secrets",
     "footprint": {
       "gpu": null,
@@ -1813,6 +1926,7 @@
         "statement": "Portainer lists role-based access control, Active Directory with automatic user sync, pre-configured SSO provider templates, and authentication and activity logs as Business Edition features"
       }
     },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Infrastructure",
     "footprint": {
       "gpu": null,
@@ -1832,6 +1946,7 @@
   },
   "core/portainer-agent": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Infrastructure",
     "footprint": {
       "gpu": null,
@@ -1851,6 +1966,7 @@
   },
   "core/shellhub": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Identity, access and secrets",
     "footprint": {
       "gpu": null,
@@ -1873,6 +1989,7 @@
   },
   "core/step-ca": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Identity, access and secrets",
     "footprint": {
       "gpu": null,
@@ -1898,6 +2015,7 @@
         "statement": "the compiled binaries, container images and AMIs — which is what this stack deploys — have carried the Teleport Community Edition commercial licence rather than Apache-2.0 since Teleport 16. Under it a company may use Community Edition only with fewer than 100 employees **and** less than $10M annual revenue, and may not resell or embed it; individuals are unrestricted for personal use. Compiling the AGPLv3 source yourself is the alternative"
       }
     },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Identity, access and secrets",
     "footprint": {
       "gpu": null,
@@ -1917,6 +2035,7 @@
   },
   "core/traefik": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Infrastructure",
     "footprint": {
       "gpu": null,
@@ -1936,6 +2055,7 @@
   },
   "core/warpgate": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Identity, access and secrets",
     "footprint": {
       "gpu": null,
@@ -1955,6 +2075,7 @@
   },
   "core/zot": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Developer tools",
     "footprint": {
       "gpu": null,
@@ -1974,6 +2095,7 @@
   },
   "monitoring/beszel": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Monitoring",
     "footprint": {
       "gpu": null,
@@ -1993,6 +2115,7 @@
   },
   "monitoring/beszel-agent": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Monitoring",
     "footprint": {
       "gpu": null,
@@ -2012,6 +2135,7 @@
   },
   "monitoring/changedetection": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Monitoring",
     "footprint": {
       "gpu": null,
@@ -2031,6 +2155,7 @@
   },
   "monitoring/gatus": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Monitoring",
     "footprint": {
       "gpu": null,
@@ -2050,6 +2175,7 @@
   },
   "monitoring/healthchecks": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Monitoring",
     "footprint": {
       "gpu": null,
@@ -2086,6 +2212,7 @@
         "statement": "none for the MIT-licensed portion; content under `ee/`, `web/src/ee/` and `worker/src/ee/` is under the separate licence in `ee/LICENSE`"
       }
     },
+    "decision_facts_checked": "2026-09-21",
     "domain": "AI and local AI",
     "footprint": {
       "gpu": null,
@@ -2116,6 +2243,7 @@
         "statement": "none — the repository carries both `LICENSE` (Apache-2.0) and `LICENSE.GPLv2`, and neither restricts commercial or hosted use"
       }
     },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Monitoring",
     "footprint": {
       "gpu": null,
@@ -2135,6 +2263,7 @@
   },
   "monitoring/uptime-kuma": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Monitoring",
     "footprint": {
       "gpu": null,

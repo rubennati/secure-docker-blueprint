@@ -9,6 +9,7 @@
 - **Socket proxy GitHub:** https://github.com/Tecnativa/docker-socket-proxy
 - **CrowdSec bouncer plugin:** https://github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin
 - **License:** MIT
+- **Decision facts checked:** not yet
 - **Origin:** France · Traefik Labs · EU
 - **Domain:** Infrastructure
 - **Role:** Reverse proxy: TLS, access policies and security headers in front of every other service

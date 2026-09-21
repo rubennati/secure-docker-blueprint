@@ -6,6 +6,7 @@
 - **GitHub:** https://github.com/Calnode/calnode
 - **Docs:** https://github.com/Calnode/calnode/blob/main/DEPLOY.md
 - **License:** Apache-2.0
+- **Decision facts checked:** not yet
 - **Origin:** Calnode · no country stated in its published terms · no country
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Scheduling with booking pages, an admin interface and a REST API, as one binary with SQLite

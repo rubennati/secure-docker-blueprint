@@ -6,6 +6,7 @@
 - **Repo:** https://github.com/portainer/agent
 - **Docker Hub:** https://hub.docker.com/r/portainer/agent
 - **License:** zlib (https://github.com/portainer/agent/blob/develop/LICENSE)
+- **Decision facts checked:** not yet
 - **Origin:** New Zealand · Portainer.io Ltd · non-EU (official agent for the Portainer platform)
 - **Domain:** Infrastructure
 - **Role:** Remote Docker agent for Portainer

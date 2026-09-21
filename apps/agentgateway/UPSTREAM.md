@@ -6,6 +6,7 @@
 - **GitHub:** https://github.com/agentgateway/agentgateway
 - **Docs:** https://agentgateway.dev/docs/
 - **License:** Apache-2.0
+- **Decision facts checked:** not yet
 - **Origin:** United States · Linux Foundation project (contributed by Solo.io) · non-EU
 - **Domain:** AI and local AI
 - **Role:** LLM and MCP gateway: one authenticated endpoint in front of model providers and MCP servers

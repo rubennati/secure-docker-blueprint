@@ -6,6 +6,7 @@
 - **Repo:** https://projects.torsion.org/borgmatic-collective/borgmatic
 - **Docs:** https://torsion.org/borgmatic/#documentation
 - **License:** GPL-3.0-or-later
+- **Decision facts checked:** not yet
 - **Origin:** Community · borgmatic-collective (Dan Helfman) · no single jurisdiction
 - **Domain:** Backup
 - **Role:** Deduplicated, encrypted server backup, installed on the host

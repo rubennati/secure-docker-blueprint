@@ -5,7 +5,8 @@
 - **Project:** https://www.urbackup.org/
 - **GitHub:** https://github.com/uroni/urbackup_backend
 - **Image:** https://hub.docker.com/r/uroni/urbackup-server
-- **License:** AGPL-3.0-or-later — self-hosting for personal or commercial use is explicitly permitted
+- **License:** AGPL-3.0 — the server's `COPYING` is the GNU Affero General Public License v3, not the plain GPL this file recorded; §13 obliges you to offer the source to users who interact with it over a network
+- **Decision facts checked:** not yet
 - **Origin:** Germany · Martin Raiber (uroni) · EU
 - **Domain:** Backup
 - **Role:** Client backup for Windows, macOS and Linux, with whole-disk image restore on Windows

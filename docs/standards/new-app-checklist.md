@@ -39,10 +39,28 @@ so that a two-service stack with a MariaDB and a ten-service one with a database
 cache and workers are distinguishable without either being called the better
 choice.
 
-### Licence and edition facts — optional, and only where they are true
+### Licence and edition facts
 
-Three further fields may appear in the `## Source` block. They are **not** part of
-adding a stack, and a stack without them is normal:
+**Every stack states its research state. This one is required:**
+
+```text
+- **Decision facts checked:** YYYY-MM-DD   # the questions below were asked that day
+- **Decision facts checked:** not yet      # nobody has looked
+```
+
+`site-catalogue.py --check` fails without it, which is what stops a new stack
+entering with its state unsaid. The marker is a **process record, not a claim
+about upstream**, so it carries no source — that is the whole difference between
+it and a `none` fact, which asserts something about someone else's terms and does
+carry one.
+
+It buys the distinction that matters: a dated marker with no fields means the
+questions were asked and nothing an operator decides on came back. Without it the
+only way to say that would be three `none` fields in every file, which is
+bookkeeping wearing the clothes of knowledge.
+
+Three further fields may then appear in the `## Source` block. A stack with a date
+and none of them is normal and complete:
 
 ```text
 - **Use restrictions:** <statement> — <source url> · checked YYYY-MM-DD
@@ -62,6 +80,10 @@ adding a stack, and a stack without them is normal:
   `commercial licence` · `quote only` · `none`, optionally followed by `;` and a
   qualifier. A **price is not a value here.** It moves, and an undated number in
   a repository is worse than none — the source link is where the amount is read.
+- **Only facts an operator decides on.** A paid edition that gates SSO, a licence
+  that forbids hosting it for customers, a user ceiling — those change a decision.
+  Sponsorship tiers, consulting, support contracts and the vendor's own hosted
+  offering do not: `UPSTREAM.md` is not a catalogue of how a project earns money.
 - **State what upstream states.** "Feature X is listed as Enterprise" is a fact;
   "feature X is missing from the free edition" usually is not, unless upstream
   says so. The licence does not decide whether a stack needs these fields: an

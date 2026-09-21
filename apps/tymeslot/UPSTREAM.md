@@ -6,6 +6,7 @@
 - **GitHub:** https://github.com/tymeslot/tymeslot
 - **Docs:** https://tymeslot.app/docs · `README-Docker.md` and `docs/ADMIN.md` in the repository
 - **License:** AGPL-3.0
+- **Decision facts checked:** not yet
 - **Origin:** Estonia · Diletta Luna OÜ (Tallinn) · EU
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Meeting scheduling with booking pages, calendar sync and video links

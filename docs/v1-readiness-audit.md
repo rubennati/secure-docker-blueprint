@@ -226,16 +226,36 @@ maintained facts is its own question, answered per stack.
    `site-catalogue.py --check` rejects one without provenance or with a commercial model
    outside the vocabulary. No price is recorded: the source link is where an amount is
    read. An absent field means the stack was not researched, never that it has nothing to
-   declare — a stack checked and found to gate nothing records `none`. Filled so far: **seventeen of 91**, listed in `.ai/tasks.md`. Unresolved and left
+   declare — a stack checked and found to gate nothing records `none`. **Completeness model.** Every stack carries `- **Decision facts checked:**`, a date
+   or `not yet`, and `site-catalogue.py --check` fails without it — a stack can no
+   longer enter the repository with its research state unsaid. It separates three
+   states without padding any file: nobody has looked · looked and nothing an
+   operator decides on came back · looked and the facts are recorded. The marker is
+   a process record and carries no source; a `none` *fact* asserts something about
+   upstream and does.
+
+   Researched so far: **24 of 95** — 22 with facts, 2 checked and clear.
+
+   Two sweeps cover every stack and are recorded in `.ai/tasks.md` as progress rather
+   than as a verdict: each recorded licence has been checked against the upstream file,
+   and no remaining repository carries an edition carve-out in its root. **Neither
+   licenses a checked date.** `business/matomo` is plain GPL-3.0 with no enterprise
+   directory and still sells SAML sign-on as a separate EULA plugin, so a stack is
+   checked only once a source speaking to edition gating and the commercial model has
+   been read.
+   Listed in `.ai/tasks.md`. Unresolved and left
    unrecorded rather than inferred: `apps/hemmelig`, whose README and `LICENSE` file
    disagree, and `apps/collabora`, whose limits no reachable upstream page states.
 
    The research has corrected the repository as often as it has extended it:
    `apps/nocodb` was recorded as AGPL-3.0 after upstream relicensed to the Sustainable
    Use License, `core/dockhand` told operators internal business use was free where the
-   licence requires a Commercial Licence for it, and `core/teleport`'s container images
-   have not been Apache-2.0 since version 16. None of the three carried a signal that a
-   filter would have caught.
+   licence requires a Commercial Licence for it, `core/teleport`'s container images
+   have not been Apache-2.0 since version 16, and four stacks — `backup/urbackup`,
+   `apps/photoview`, `apps/vaultwarden` and `apps/homarr` — carried the wrong licence
+   outright, three of them recording a plain GPL where the file is the Affero GPL,
+   whose §13 obliges an operator to offer source to network users. None of the seven
+   carried a signal that a filter would have caught.
 
 5. **Operational footprint** — how much machinery a stack brings, as facts rather
    than a verdict. Two products solving one problem at very different weights is a

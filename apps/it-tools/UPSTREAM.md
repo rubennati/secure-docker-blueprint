@@ -6,6 +6,7 @@
 - **GitHub:** https://github.com/CorentinTh/it-tools
 - **Live demo:** https://it-tools.tech/
 - **License:** GNU GPL v3.0
+- **Decision facts checked:** not yet
 - **Origin:** France · CorentinTh · EU
 - **Domain:** Developer tools
 - **Role:** Collection of small utilities: converters, generators and formatters

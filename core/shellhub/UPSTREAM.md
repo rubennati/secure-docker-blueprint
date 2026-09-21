@@ -10,6 +10,7 @@
 - **License:** Apache-2.0 (Community Edition; a `.env.enterprise` file in
   the upstream repo gates a separate Enterprise/Cloud tier — SAML SSO
   confirmed Enterprise-only, see README.md)
+- **Decision facts checked:** not yet
 - **Origin:** Brazil · O.S. Systems · non-EU
 - **Domain:** Identity, access and secrets
 - **Role:** SSH access through agents on each target that connect out, so targets open no inbound port

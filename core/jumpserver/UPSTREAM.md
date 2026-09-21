@@ -10,6 +10,7 @@
   compose file exists (see below)
 - **License:** GPL-3.0 (Community Edition; Enterprise Edition is a separate
   closed-source product from the same vendor)
+- **Decision facts checked:** not yet
 - **Origin:** China · FIT2CLOUD · non-EU
 - **Domain:** Identity, access and secrets
 - **Role:** Privileged access management: stored target credentials, session recording, approval workflows

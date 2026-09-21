@@ -7,6 +7,7 @@
 - **GitHub:** https://github.com/vllm-project/vllm
 - **Docs:** https://docs.vllm.ai/
 - **License:** Apache-2.0
+- **Decision facts checked:** not yet
 - **Origin:** United States · vLLM project (originated at the UC Berkeley Sky Computing Lab) · non-EU
 - **Domain:** AI and local AI
 - **Role:** High-throughput OpenAI-compatible model serving on an NVIDIA GPU

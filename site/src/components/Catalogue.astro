@@ -19,8 +19,12 @@
  * are read from upstream's own terms and recorded in the stack's UPSTREAM.md with
  * the source and the date they were checked. They are shown collapsed and in full,
  * never summarised into a badge — a shortened statement about someone else's
- * licence is the failure this is meant to avoid. A stack with nothing here has not
- * been researched, which is not the same as having nothing to declare.
+ * licence is the failure this is meant to avoid.
+ *
+ * Three states, and the difference between them is the point: a stack nobody has
+ * looked at says nothing, a stack that was looked at and gates nothing says so with
+ * its date, and a stack with facts shows them. "Not researched" must never read as
+ * "nothing to declare".
  */
 import catalogue from '../data/catalogue.json';
 
@@ -41,6 +45,7 @@ type Entry = {
 		summary: string;
 	} | null;
 	decision_facts: Record<string, { statement: string; source: string; checked: string; model?: string }>;
+	decision_facts_checked: string | null;
 	path: string;
 };
 
@@ -111,6 +116,11 @@ const checked = (e: Entry) =>
 							</div>
 							<p>{e.role}</p>
 							{e.footprint && <p class="cat__footprint">{e.footprint.summary}</p>}
+							{e.decision_facts_checked && Object.keys(e.decision_facts ?? {}).length === 0 && (
+								<p class="cat__footprint">
+									No licence or edition fact an operator decides on — checked {e.decision_facts_checked}
+								</p>
+							)}
 							{Object.keys(e.decision_facts ?? {}).length > 0 && (
 								<details class="cat__facts">
 									<summary>Licence and edition facts</summary>

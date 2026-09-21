@@ -7,6 +7,7 @@
 - **Docs:** https://ghost.org/docs/
 - **Config reference:** https://ghost.org/docs/config/
 - **License:** MIT
+- **Decision facts checked:** not yet
 - **Origin:** Ireland · Ghost Foundation · EU
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Publishing platform for blogs and newsletters, with optional Fediverse publishing

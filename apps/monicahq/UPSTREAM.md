@@ -6,6 +6,7 @@
 - **GitHub:** https://github.com/monicahq/monica
 - **Docker Hub:** https://hub.docker.com/_/monica (official image)
 - **License:** AGPL-3.0
+- **Decision facts checked:** not yet
 - **Origin:** Canada · Monica HQ · non-EU
 - **Domain:** Business operations
 - **Role:** Personal CRM for the people in your life
