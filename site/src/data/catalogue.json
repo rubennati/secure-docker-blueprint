@@ -1447,8 +1447,20 @@
     "version": "5.13.40"
   },
   "business/kimai": {
-    "decision_facts": {},
-    "decision_facts_checked": null,
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "paid add-on",
+        "source": "https://www.kimai.org/store/audit-trail-bundle.html",
+        "statement": "paid add-on"
+      },
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://www.kimai.org/store/audit-trail-bundle.html",
+        "statement": "audit trail logs, which record changes to timesheets, customers, projects and activities, are a paid store plugin rather than part of the AGPL core; paid plugins are annual subscriptions with a perpetual fallback licence, so the last downloaded version keeps working while updates need an active subscription"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Business operations",
     "footprint": {
       "gpu": null,
@@ -1892,8 +1904,20 @@
     "version": "0.165.10"
   },
   "core/jumpserver": {
-    "decision_facts": {},
-    "decision_facts_checked": null,
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "paid self-hosted edition",
+        "source": "https://www.jumpserver.com/docs/compare-versions",
+        "statement": "paid self-hosted edition"
+      },
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://www.jumpserver.com/docs/compare-versions",
+        "statement": "the Community edition carries LDAP, CAS, OIDC, SAML2, OAuth2 and RADIUS authentication, role and organisation management, asset session monitoring, session command auditing, file-transfer tracking, login audit logs and command filtering. Enterprise adds LDAP high availability, chat-platform integrations, passkey support, cloud asset synchronisation and RemoteApp or VirtualApp delivery"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Identity, access and secrets",
     "footprint": {
       "gpu": null,
@@ -2037,8 +2061,20 @@
     "version": "0.27.0-rc.11"
   },
   "core/step-ca": {
-    "decision_facts": {},
-    "decision_facts_checked": null,
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "free self-hosted",
+        "source": "https://smallstep.com/certificate-manager/",
+        "statement": "free self-hosted; Step CA Pro is sold as a separate drop-in replacement"
+      },
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://smallstep.com/certificate-manager/",
+        "statement": "step-ca is complete and production-ready for self-hosting. Smallstep sells Step CA Pro as \"a drop in replacement for step-ca\" adding advanced features and compliance options, cloud-based integrations, a management interface and ACME device attestation"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Identity, access and secrets",
     "footprint": {
       "gpu": null,
