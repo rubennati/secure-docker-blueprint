@@ -146,7 +146,7 @@ Status is the state after the PR named.
 | W5 | Parity between repository and site is a manual list and fell 48 stacks behind | W1 | FIX BEFORE V1 | Resolved — #119, `site-catalogue.py --check` in CI |
 | W6 | Comparison pages beyond the catalogue's role column | site tree | POST-V1 / ON HOLD | Superseded by W1 — the catalogue gives every domain a role column, and the model neither ranks nor names a winner. Further comparison is editorial, not a defect |
 | W7 | Legal notice, privacy statement, domain and `security.txt` carry personal data in a public, forkable repository. Possible v1.0 impact: v1.0 asserts a forkable template and a fork inherits the imprint; whether that blocks depends on D3 | design in `.ai/decisions.md` | DECISION REQUIRED | Open — D3 |
-| W8 | The catalogue states a licence and an origin, which is not enough to choose software. Five facts are collapsed or absent: the **licence**, the **use rights** it grants, the **edition** a security-relevant feature sits in, the **commercial model**, and the **operational footprint** a stack brings with it. So the site cannot answer whether OIDC, audit logs or HA are paywalled, whether deploying a stack into a customer's infrastructure is permitted, or whether one of two comparable products is a single container and the other brings a database, a cache and workers — separate questions with separate answers, and decision support the catalogue implies it gives | `sovereignty.json` carries `license`, `license_class`, `origin` and nothing else; `catalogue.json` carries neither | PRE-V1 CANDIDATE | **Partly closed** — layer 5, the operational footprint, is derived from the compose files into `catalogue.json` and shown on the catalogue page; no field to fill and none to keep current. Layers 2–4 have a schema and a checker — `Use restrictions`, `Edition gating` and `Commercial model` in `UPSTREAM.md`, each rejected without a source and a checked date — and four stacks are filled from upstream's own terms. The rest need the same reading, one stack at a time. Scope in [Catalogue decision facts](#catalogue-decision-facts) |
+| W8 | The catalogue states a licence and an origin, which is not enough to choose software. Five facts are collapsed or absent: the **licence**, the **use rights** it grants, the **edition** a security-relevant feature sits in, the **commercial model**, and the **operational footprint** a stack brings with it. So the site cannot answer whether OIDC, audit logs or HA are paywalled, whether deploying a stack into a customer's infrastructure is permitted, or whether one of two comparable products is a single container and the other brings a database, a cache and workers — separate questions with separate answers, and decision support the catalogue implies it gives | `sovereignty.json` carries `license`, `license_class`, `origin` and nothing else; `catalogue.json` carries neither | PRE-V1 CANDIDATE | **System closed; research ongoing.** Two things W8 asked for, and they finish at different times. The *system* is done: the footprint is derived from the compose files, the three maintained fields have a schema, provenance rules and a checker, every stack states its research state, and a new stack cannot enter without one. Nothing further is needed from the stabilization programme. The *research* is a standing activity — 32 of 97 stacks at the time of writing — and its level is coverage, not a defect. An unresearched stack says so and the site stays silent about it, which is the behaviour the model was built to guarantee. Scope in [Catalogue decision facts](#catalogue-decision-facts) |
 
 ### CI and automation
 
@@ -234,7 +234,17 @@ maintained facts is its own question, answered per stack.
    a process record and carries no source; a `none` *fact* asserts something about
    upstream and does.
 
-   Researched so far: **32 of 97** — 30 with facts, 2 checked and clear.
+   **The system is complete; the research is a standing activity.** Everything W8 asked
+   the repository to *build* exists: the derived footprint, the three maintained fields
+   with their provenance rules and vocabulary, the per-stack research marker, and the
+   check that refuses a stack which states neither a date nor `not yet`. No further
+   stabilization work depends on it.
+
+   What continues is reading upstream terms, one stack at a time. **Coverage: 32 of 97**
+   — 30 with facts, 2 checked and clear. That figure is coverage, not a defect and not a
+   release blocker: a stack nobody has researched says `not yet`, and the site stays
+   silent about it rather than implying an answer. Sources already read and found
+   insufficient are listed in `.ai/tasks.md` so they are not retried.
 
    Two sweeps cover every stack and are recorded in `.ai/tasks.md` as progress rather
    than as a verdict: each recorded licence has been checked against the upstream file,
@@ -376,21 +386,22 @@ deliberately deferred.
 
 **Deferred by design, scoped but not built**
 
-- **W8** — catalogue decision facts, five layers, scoped in
-  [Catalogue decision facts](#catalogue-decision-facts). Layer 5, the operational
-  footprint, is generated. Layer 1, the licence, already existed and the site shows
-  its class. What is left is layers 2–4 — use rights per right, edition gating, and
-  the commercial model — none of which is derivable: each needs the upstream terms
-  read for one stack at a time, with the source recorded beside the answer.
 - **R13** — dated working records under `docs/`. Kept as evidence.
 - **S4** — ShellHub pins a release candidate, which upstream publishes as its only
   tag. Revisit at the first stable release.
-- **A one-command local workflow and a production deployment lifecycle** — both
-  design questions, neither started. #126 normalised the local surface enough that
-  the first can now be designed against a real contract: one invocation shape,
-  loopback-only ports, and a known set of exceptions. The second still has open
-  architecture questions — how a server records which blueprint release it runs,
-  deployment order, blueprint updates versus upstream image updates, and rollback.
+- **A one-command local workflow** — a design question, not started. #126 normalised
+  the local surface enough that it can now be designed against a real contract: one
+  invocation shape, loopback-only ports, and a known set of exceptions.
+- **A production deployment lifecycle** — **the model is written**, in
+  [`standards/deployment-lifecycle.md`](standards/deployment-lifecycle.md). The four
+  questions it was blocked on are answered: a host states its release through
+  `./scripts/overview.sh` and plain `git describe`; deployment order is Traefik first
+  plus three derivable exceptions, which are the only cross-stack runtime dependencies
+  in the repository; blueprint updates and image updates are separated and each has its
+  own procedure; rollback is reliable for the blueprint and explicitly not symmetrical
+  for an image, because a migrated database does not return with a pin change. What is
+  left is deliberately outside it: host hardening beyond Docker, whether a deployment
+  must stay a Git checkout, and multi-host deployment.
 - **Priority 2 applications** — on hold.
 
 ## Decisions required

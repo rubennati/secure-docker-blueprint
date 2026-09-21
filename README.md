@@ -49,9 +49,17 @@ Each stack is then installed from its own README.
 
 ```bash
 git clone https://github.com/rubennati/secure-docker-blueprint.git
-cd secure-docker-blueprint/core/traefik
+cd secure-docker-blueprint
+git checkout "$(git tag --sort=-v:refname | head -n1)"   # the newest release
+cd core/traefik
 cp .env.example .env
 ```
+
+Deploy from a tag rather than the default branch: `main` is where work lands between
+releases, and the combination of stacks on it at any moment is not one anybody has
+operated. [`docs/standards/deployment-lifecycle.md`](docs/standards/deployment-lifecycle.md)
+covers the rest of the cycle — deployment order, updating the blueprint as against
+updating an upstream image, rollback, and how a host states which release it runs.
 
 Set `ACME_EMAIL`, `TRAEFIK_DASHBOARD_HOST`, and the DNS token for your certificate
 resolver — `CF_DNS_API_TOKEN` ships as `__REPLACE_ME__`, and DNS-01 fails until it holds
