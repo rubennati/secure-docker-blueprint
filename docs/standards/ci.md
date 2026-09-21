@@ -236,7 +236,7 @@ host, which is v0.10.0; whether a policy is stated at all is settled.
 
 ### 7 — Status model
 
-Three generated views, each checked against the files that own it.
+Four generated views, each checked against the files that own it.
 
 `scripts/ci/lifecycle-report.py --check` fails on a status claim that is not
 backed: an owner and its mirror disagreeing, a ✅ without `Last verified`, or a
@@ -244,6 +244,11 @@ backed: an owner and its mirror disagreeing, a ✅ without `Last verified`, or a
 
 `scripts/ci/sovereignty-report.py --check` fails when a stack states no licence
 or origin, or when `sovereignty.json` is stale.
+
+`scripts/ci/security-coverage.py --check` fails when `docs/security-coverage.md`
+no longer matches the compose files it is counted from. The hardening figures
+were maintained by hand until then and went stale twice in three days, because a
+stack landing between two edits moves a denominator nobody remembers.
 
 `scripts/ci/site-catalogue.py --check` fails when a stack has no `Domain` or
 `Role` in its `UPSTREAM.md`, when a catalogue entry names a stack that no longer
@@ -345,6 +350,7 @@ pip install pyyaml
 python3 scripts/ci/check-baseline.py
 python3 scripts/ci/check-structure.py
 python3 scripts/ci/lifecycle-report.py --check
+python3 scripts/ci/security-coverage.py --check
 python3 scripts/ci/check-coverage.py
 
 # What the Docs QA prose gate will see — uncommitted work included
