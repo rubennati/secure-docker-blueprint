@@ -5,7 +5,10 @@
 - **Image:** https://hub.docker.com/r/fnsys/dockhand
 - **GitHub:** https://github.com/Finsys/dockhand
 - **Docs:** Project-internal (see image description on Docker Hub)
-- **License:** BSL 1.1 — source-available, **not** open source; converts to Apache-2.0 on 2029-01-01. Free for personal, internal business, non-profit and educational use; offering it as a hosted service is not permitted
+- **License:** BSL 1.1 — source-available, **not** open source. Each version converts to Apache-2.0 four years after Licensor first distributes it publicly, so the date differs per version rather than being one fixed day
+- **Use restrictions:** production use is granted free only for personal non-commercial use, recognised non-profit and charitable organisations, and schools or non-commercial research institutions. **Production use by or on behalf of a company, sole trader, public body or any other organisation requires a Commercial Licence**, and offering it to third parties as a hosted, managed or SaaS container-management service requires a separate written agreement — https://github.com/Finsys/dockhand/blob/main/LICENSE.md · checked 2026-09-21
+- **Edition gating:** Enterprise Features are gated by a License Key, which the licence forbids sharing, publishing or circumventing — https://github.com/Finsys/dockhand/blob/main/LICENSE.md · checked 2026-09-21
+- **Commercial model:** commercial licence — https://github.com/Finsys/dockhand/blob/main/LICENSE.md · checked 2026-09-21
 - **Origin:** Finsys · **no country or legal entity stated** — no imprint on fnsys.pro or dockhand.pro
 - **Domain:** Infrastructure
 - **Role:** Docker management with Git-based stacks: deploy and update by pushing to Git

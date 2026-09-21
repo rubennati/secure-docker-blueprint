@@ -146,7 +146,7 @@ Status is the state after the PR named.
 | W5 | Parity between repository and site is a manual list and fell 48 stacks behind | W1 | FIX BEFORE V1 | Resolved — #119, `site-catalogue.py --check` in CI |
 | W6 | Comparison pages beyond the catalogue's role column | site tree | POST-V1 / ON HOLD | Superseded by W1 — the catalogue gives every domain a role column, and the model neither ranks nor names a winner. Further comparison is editorial, not a defect |
 | W7 | Legal notice, privacy statement, domain and `security.txt` carry personal data in a public, forkable repository. Possible v1.0 impact: v1.0 asserts a forkable template and a fork inherits the imprint; whether that blocks depends on D3 | design in `.ai/decisions.md` | DECISION REQUIRED | Open — D3 |
-| W8 | The catalogue states a licence and an origin, which is not enough to choose software. Five facts are collapsed or absent: the **licence**, the **use rights** it grants, the **edition** a security-relevant feature sits in, the **commercial model**, and the **operational footprint** a stack brings with it. So the site cannot answer whether OIDC, audit logs or HA are paywalled, whether deploying a stack into a customer's infrastructure is permitted, or whether one of two comparable products is a single container and the other brings a database, a cache and workers — separate questions with separate answers, and decision support the catalogue implies it gives | `sovereignty.json` carries `license`, `license_class`, `origin` and nothing else; `catalogue.json` carries neither | PRE-V1 CANDIDATE | Open — scope in [Catalogue decision facts](#catalogue-decision-facts); belongs with the site information-architecture work, not before it |
+| W8 | The catalogue states a licence and an origin, which is not enough to choose software. Five facts are collapsed or absent: the **licence**, the **use rights** it grants, the **edition** a security-relevant feature sits in, the **commercial model**, and the **operational footprint** a stack brings with it. So the site cannot answer whether OIDC, audit logs or HA are paywalled, whether deploying a stack into a customer's infrastructure is permitted, or whether one of two comparable products is a single container and the other brings a database, a cache and workers — separate questions with separate answers, and decision support the catalogue implies it gives | `sovereignty.json` carries `license`, `license_class`, `origin` and nothing else; `catalogue.json` carries neither | PRE-V1 CANDIDATE | **Partly closed** — layer 5, the operational footprint, is derived from the compose files into `catalogue.json` and shown on the catalogue page; no field to fill and none to keep current. Layers 2–4 have a schema and a checker — `Use restrictions`, `Edition gating` and `Commercial model` in `UPSTREAM.md`, each rejected without a source and a checked date — and four stacks are filled from upstream's own terms. The rest need the same reading, one stack at a time. Scope in [Catalogue decision facts](#catalogue-decision-facts) |
 
 ### CI and automation
 
@@ -190,6 +190,13 @@ Scope for W8 — five factual layers, one model. No stack is researched or fille
 
 **Five layers, kept apart.** Collapsing them is the current defect.
 
+**The licence does not decide which stacks need layers 2–4.** A source-available or
+mixed licence is the obvious prompt, but an OSI-licensed project can still reserve
+OIDC, SAML, audit logs or HA for a paid edition, and can still sell support or a
+hosted tier. Scoping the work by `license_class` would miss exactly those
+and leave the catalogue implying a completeness it does not have. Which stacks need
+maintained facts is its own question, answered per stack.
+
 1. **Licence** — what governs the software: MIT, Apache-2.0, GPL, AGPL, BSL, Elastic,
    Sustainable Use, proprietary, or open-core mixtures. Already recorded.
 2. **Use rights** — never one "commercial use" field. Per right, from the upstream
@@ -214,6 +221,18 @@ Scope for W8 — five factual layers, one model. No stack is researched or fille
    billing unit, billing period, date checked and source — an undated price is not a
    repository fact.
 
+   **Implemented for layers 2 to 4.** The three fields live in `UPSTREAM.md` beside the
+   licence, each as `<statement> — <source url> · checked YYYY-MM-DD`, and
+   `site-catalogue.py --check` rejects one without provenance or with a commercial model
+   outside the vocabulary. No price is recorded: the source link is where an amount is
+   read. An absent field means the stack was not researched, never that it has nothing to
+   declare — a stack checked and found to gate nothing records `none`. Filled so far: eleven of 91 —
+   `apps/dify`, `apps/n8n`, `apps/open-webui`, `business/invoiceninja`,
+   `business/matomo`, `core/authentik`, `core/dockhand`, `core/infisical`,
+   `core/orion-belt`, `core/portainer`, `monitoring/langfuse`. Unresolved and left
+   unrecorded rather than inferred: `apps/hemmelig`, whose README and `LICENSE` file
+   disagree, and `apps/collabora`, whose limits no reachable upstream page states.
+
 5. **Operational footprint** — how much machinery a stack brings, as facts rather
    than a verdict. Two products solving one problem at very different weights is a
    reason for both to exist here, not a reason to rank them.
@@ -222,8 +241,12 @@ Scope for W8 — five factual layers, one model. No stack is researched or fille
    `3 services · PostgreSQL + Redis · CPU only`. That separates
    `apps/easyappointments` from `apps/caldiy` without any editorial judgement.
 
-   **Already derivable — generate it, do not type it.** Measured against the tree
-   while scoping this:
+   **Done.** `scripts/ci/site-catalogue.py` derives it into `catalogue.json` and the
+   catalogue page renders one line per stack — `2 services · MariaDB` beside
+   `3 services · PostgreSQL + Redis`, `1 service · GPU required` for `apps/vllm`,
+   `GPU optional` for `apps/ollama` from its overlay. Nothing is typed and nothing
+   needs keeping current. Measured against the tree while scoping this, and
+   unchanged by the implementation:
 
    | Fact | Source | State |
    |---|---|---|
@@ -330,9 +353,11 @@ deliberately deferred.
 **Deferred by design, scoped but not built**
 
 - **W8** — catalogue decision facts, five layers, scoped in
-  [Catalogue decision facts](#catalogue-decision-facts). Licence and commercial
-  model partly exist; operational footprint is derivable from the compose files;
-  use rights and edition gates need reading upstream terms.
+  [Catalogue decision facts](#catalogue-decision-facts). Layer 5, the operational
+  footprint, is generated. Layer 1, the licence, already existed and the site shows
+  its class. What is left is layers 2–4 — use rights per right, edition gating, and
+  the commercial model — none of which is derivable: each needs the upstream terms
+  read for one stack at a time, with the source recorded beside the answer.
 - **R13** — dated working records under `docs/`. Kept as evidence.
 - **S4** — ShellHub pins a release candidate, which upstream publishes as its only
   tag. Revisit at the first stable release.

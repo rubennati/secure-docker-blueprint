@@ -9,6 +9,18 @@
  * What was checked is shown as evidence, not as a grade: a date and the version
  * it was checked against, or the plain statement that no host run has happened.
  * The filter is plain DOM — it narrows the list; it does not rank it.
+ *
+ * The footprint line is the same kind of statement. It says how much machinery a
+ * stack brings — services, the infrastructure it needs beside the application, a
+ * GPU where one is reserved — and deliberately carries no memory figure: the
+ * repository configures a limit, which is not what the application requires.
+ *
+ * Licence and edition facts are the opposite kind: they cannot be derived, so they
+ * are read from upstream's own terms and recorded in the stack's UPSTREAM.md with
+ * the source and the date they were checked. They are shown collapsed and in full,
+ * never summarised into a badge — a shortened statement about someone else's
+ * licence is the failure this is meant to avoid. A stack with nothing here has not
+ * been researched, which is not the same as having nothing to declare.
  */
 import catalogue from '../data/catalogue.json';
 
@@ -21,7 +33,21 @@ type Entry = {
 	state: string;
 	verified: string | null;
 	verified_version: string | null;
+	footprint: {
+		services: number;
+		init_services: number;
+		infrastructure: string[];
+		gpu: string | null;
+		summary: string;
+	} | null;
+	decision_facts: Record<string, { statement: string; source: string; checked: string; model?: string }>;
 	path: string;
+};
+
+const FACT_LABEL: Record<string, string> = {
+	use_restrictions: 'Use restrictions',
+	edition_gating: 'Edition gating',
+	commercial_model: 'Commercial model',
 };
 
 const DOMAIN_ORDER = [
@@ -78,12 +104,29 @@ const checked = (e: Entry) =>
 				<h2 id={g.id}>{g.domain}</h2>
 				<ul>
 					{g.items.map((e) => (
-						<li data-text={`${e.name} ${e.role}`.toLowerCase()}>
+						<li data-text={`${e.name} ${e.role} ${e.footprint?.summary ?? ''}`.toLowerCase()}>
 							<div class="cat__head">
 								<strong>{e.name}</strong>
 								{e.version && <code>{e.version}</code>}
 							</div>
 							<p>{e.role}</p>
+							{e.footprint && <p class="cat__footprint">{e.footprint.summary}</p>}
+							{Object.keys(e.decision_facts ?? {}).length > 0 && (
+								<details class="cat__facts">
+									<summary>Licence and edition facts</summary>
+									<dl>
+										{Object.entries(e.decision_facts).map(([k, f]) => (
+											<>
+												<dt>{FACT_LABEL[k] ?? k}</dt>
+												<dd>
+													{f.statement}{' '}
+													<a href={f.source}>source</a>, checked {f.checked}
+												</dd>
+											</>
+										))}
+									</dl>
+								</details>
+							)}
 							<p class="cat__meta">
 								<span>{checked(e)}</span>
 								<a href={`${REPO}${e.path}`}>Files</a>
@@ -176,6 +219,36 @@ const checked = (e: Entry) =>
 		margin: 0.3rem 0 0;
 		font-size: 0.88rem;
 	}
+	.cat__footprint {
+		font-size: 0.75rem !important;
+		color: var(--sl-color-gray-3);
+		margin-block: 0.15rem !important;
+	}
+
+	.cat__facts {
+		font-size: 0.75rem;
+		margin-block: 0.3rem;
+	}
+
+	.cat__facts summary {
+		cursor: pointer;
+		color: var(--sl-color-gray-3);
+	}
+
+	.cat__facts dl {
+		margin: 0.4rem 0 0;
+	}
+
+	.cat__facts dt {
+		font-weight: 600;
+		margin-top: 0.4rem;
+	}
+
+	.cat__facts dd {
+		margin: 0.1rem 0 0;
+		color: var(--sl-color-gray-2);
+	}
+
 	.cat__meta {
 		display: flex;
 		flex-wrap: wrap;
