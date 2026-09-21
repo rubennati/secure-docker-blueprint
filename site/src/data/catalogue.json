@@ -1124,7 +1124,29 @@
     "version": "fd218c45192f…"
   },
   "business/akaunting": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "commercial licence",
+        "source": "https://github.com/akaunting/akaunting/blob/master/LICENSE.txt",
+        "statement": "commercial licence"
+      },
+      "use_restrictions": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/akaunting/akaunting/blob/master/LICENSE.txt",
+        "statement": "production use is permitted only while it stays within two users, one company and one thousand invoices; beyond any of these a commercial licence is required, and the name, logo and branding may not be removed to create a rebranded or white-labelled version for distribution; each release converts to GPLv3 four years after it is published"
+      }
+    },
     "domain": "Business operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MariaDB"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · MariaDB"
+    },
     "name": "Akaunting",
     "path": "business/akaunting",
     "role": "Accounting for small businesses: invoices, bills, customers, vendors, bank accounts and reports",
@@ -1323,7 +1345,15 @@
     "version": "817654a3f804…"
   },
   "business/solidinvoice": {
+    "decision_facts": {},
     "domain": "Business operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "SolidInvoice",
     "path": "business/solidinvoice",
     "role": "Invoicing: clients, quotes, invoices, recurring invoices and payments",
