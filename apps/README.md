@@ -191,6 +191,11 @@ here" for why that category stays out of this blueprint entirely.
 | [Dify](dify/) | 10 services | LLM application platform — chat and workflow apps, knowledge bases on pgvector, plugin-based model providers, sandboxed code nodes. Setup password guards the first account; agent runtime and `/e/` webhooks not carried |
 | [vLLM](vllm/) | Single container | High-throughput OpenAI-compatible model serving on an NVIDIA GPU. `--api-key` covers `/v1` only, so the route forwards `/v1/` and nothing else. CUDA image not yet run on a GPU |
 
+Held after evaluation: **obot** (MCP gateway and agent platform). It runs the MCP
+servers it hosts as containers and does not start without the Docker API; creating
+those containers takes write access, which is root-equivalent on the host. See
+[`../docs/audits/candidate-evaluation-2026-09-21.md`](../docs/audits/candidate-evaluation-2026-09-21.md).
+
 ### Developer & admin tools
 
 | App | Stack | Description |
