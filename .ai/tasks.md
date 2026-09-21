@@ -304,3 +304,23 @@ Listed with context in [`state.md`](state.md). Nothing proceeds on these until d
       production, but it is the only deviation from the form in
       `docs/standards/compose-structure.md`. Either give it the companion file or
       state the exception there — `local-pin-drift` covers it under both
+- [ ] Continue W8 — the maintained decision facts for the remaining stacks. The schema and
+      its checker exist (`Use restrictions`, `Edition gating`, `Commercial model` in
+      `UPSTREAM.md`, each with source and checked date; `new-app-checklist.md` documents
+      the rules), and four stacks are done: `core/portainer`, `business/matomo`,
+      `apps/n8n`, `core/authentik`.
+      Scanning the repository's own signals — licence class, the words enterprise,
+      community edition, premium or EULA in an existing field — finds 21 further
+      candidates: `apps/dify`, `apps/hemmelig`, `apps/litellm`, `apps/open-webui`,
+      `apps/seafile-pro`, `apps/unifi`, `apps/windmill`, `backup/urbackup`,
+      `business/invoiceninja`, `business/openproject`, `core/dockhand`, `core/infisical`,
+      `core/jumpserver`, `core/orion-belt`, `core/shellhub`, `core/teleport`,
+      `monitoring/langfuse`, `monitoring/ntfy`.
+      **That scan is not the work list.** `business/matomo` carries no signal — its licence
+      field says GPL-3.0 and nothing else — yet SAML single sign-on is a separate plugin
+      sold under the InnoCraft EULA. Any OSI-licensed stack can be in that position, so
+      the remaining stacks need the question asked rather than a filter applied.
+      Unresolved from the first batch: `apps/collabora`. CODE is widely described as
+      carrying a concurrent-connection and document limit, but the upstream page that
+      would state it is behind bot protection and the product page does not mention one.
+      Nothing was recorded rather than record it from memory.

@@ -142,3 +142,72 @@ class Footprint(unittest.TestCase):
 
     def test_a_host_installed_stack_has_no_footprint(self):
         self.assertIsNone(sc.footprint([], []))
+
+
+class DecisionFacts(unittest.TestCase):
+    """Facts read from upstream's terms, each rejected unless it says where it came from.
+
+    An unsourced claim about someone else's licence is the thing this exists to
+    stop, so provenance is a parse requirement rather than a convention.
+    """
+
+    def _facts(self, line):
+        problems = []
+        return sc.decision_facts(line, "apps/demo", problems), problems
+
+    def test_a_sourced_fact_is_accepted(self):
+        out, problems = self._facts(
+            "- **Edition gating:** SAML is a paid plugin"
+            " — https://plugins.example.com/x · checked 2026-09-21\n")
+        self.assertEqual(problems, [])
+        self.assertEqual(out["edition_gating"]["source"], "https://plugins.example.com/x")
+        self.assertEqual(out["edition_gating"]["checked"], "2026-09-21")
+
+    def test_a_fact_without_provenance_is_rejected(self):
+        out, problems = self._facts("- **Edition gating:** SAML is a paid plugin\n")
+        self.assertEqual(out, {})
+        self.assertIn("checked YYYY-MM-DD", problems[0])
+
+    def test_a_source_without_a_date_is_rejected(self):
+        out, problems = self._facts(
+            "- **Edition gating:** SAML is a paid plugin — https://x.example.com\n")
+        self.assertEqual(out, {})
+        self.assertEqual(len(problems), 1)
+
+    def test_an_impossible_date_is_rejected(self):
+        out, problems = self._facts(
+            "- **Edition gating:** x — https://x.example.com · checked 2026-13-45\n")
+        self.assertEqual(out, {})
+        self.assertIn("no valid date", problems[0])
+
+    def test_an_em_dash_inside_the_statement_survives(self):
+        """The separator is anchored at the end, so prose may use em dashes."""
+        out, _ = self._facts(
+            "- **Edition gating:** SSO — the SAML kind — is paid"
+            " — https://x.example.com · checked 2026-09-21\n")
+        self.assertEqual(out["edition_gating"]["statement"], "SSO — the SAML kind — is paid")
+
+    def test_a_commercial_model_outside_the_vocabulary_is_rejected(self):
+        out, problems = self._facts(
+            "- **Commercial model:** costs money — https://x.example.com · checked 2026-09-21\n")
+        self.assertEqual(out, {})
+        self.assertIn("is not one of", problems[0])
+
+    def test_a_qualifier_after_the_term_is_allowed(self):
+        out, problems = self._facts(
+            "- **Commercial model:** paid add-on; the core is free"
+            " — https://x.example.com · checked 2026-09-21\n")
+        self.assertEqual(problems, [])
+        self.assertEqual(out["commercial_model"]["model"], "paid add-on")
+
+    def test_an_absent_field_is_not_an_empty_one(self):
+        """Absent means not researched, and must never be published as a finding."""
+        out, problems = self._facts("- **License:** MIT\n")
+        self.assertEqual(out, {})
+        self.assertEqual(problems, [])
+
+    def test_a_checked_stack_can_state_that_nothing_is_gated(self):
+        out, problems = self._facts(
+            "- **Edition gating:** none — https://x.example.com · checked 2026-09-21\n")
+        self.assertEqual(problems, [])
+        self.assertEqual(out["edition_gating"]["statement"], "none")

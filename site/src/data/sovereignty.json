@@ -219,7 +219,7 @@
     "bloc": "EU",
     "country": "Germany",
     "entity": "n8n GmbH",
-    "license": "[Sustainable Use License](https://docs.n8n.io/sustainable-use-license/) (source-available; free for internal + commercial use up to limits)",
+    "license": "[Sustainable Use License](https://github.com/n8n-io/n8n/blob/master/LICENSE.md) (source-available, not OSI-approved)",
     "license_class": "source-available",
     "origin": "Germany · n8n GmbH · EU"
   },

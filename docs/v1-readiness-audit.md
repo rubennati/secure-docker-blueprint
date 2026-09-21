@@ -146,7 +146,7 @@ Status is the state after the PR named.
 | W5 | Parity between repository and site is a manual list and fell 48 stacks behind | W1 | FIX BEFORE V1 | Resolved — #119, `site-catalogue.py --check` in CI |
 | W6 | Comparison pages beyond the catalogue's role column | site tree | POST-V1 / ON HOLD | Superseded by W1 — the catalogue gives every domain a role column, and the model neither ranks nor names a winner. Further comparison is editorial, not a defect |
 | W7 | Legal notice, privacy statement, domain and `security.txt` carry personal data in a public, forkable repository. Possible v1.0 impact: v1.0 asserts a forkable template and a fork inherits the imprint; whether that blocks depends on D3 | design in `.ai/decisions.md` | DECISION REQUIRED | Open — D3 |
-| W8 | The catalogue states a licence and an origin, which is not enough to choose software. Five facts are collapsed or absent: the **licence**, the **use rights** it grants, the **edition** a security-relevant feature sits in, the **commercial model**, and the **operational footprint** a stack brings with it. So the site cannot answer whether OIDC, audit logs or HA are paywalled, whether deploying a stack into a customer's infrastructure is permitted, or whether one of two comparable products is a single container and the other brings a database, a cache and workers — separate questions with separate answers, and decision support the catalogue implies it gives | `sovereignty.json` carries `license`, `license_class`, `origin` and nothing else; `catalogue.json` carries neither | PRE-V1 CANDIDATE | **Partly closed** — layer 5, the operational footprint, is derived from the compose files into `catalogue.json` and shown on the catalogue page; no field to fill and none to keep current. Layers 2–4 (use rights, edition gating, commercial model) are unchanged: they need upstream terms read per stack and cannot be derived. Scope in [Catalogue decision facts](#catalogue-decision-facts) |
+| W8 | The catalogue states a licence and an origin, which is not enough to choose software. Five facts are collapsed or absent: the **licence**, the **use rights** it grants, the **edition** a security-relevant feature sits in, the **commercial model**, and the **operational footprint** a stack brings with it. So the site cannot answer whether OIDC, audit logs or HA are paywalled, whether deploying a stack into a customer's infrastructure is permitted, or whether one of two comparable products is a single container and the other brings a database, a cache and workers — separate questions with separate answers, and decision support the catalogue implies it gives | `sovereignty.json` carries `license`, `license_class`, `origin` and nothing else; `catalogue.json` carries neither | PRE-V1 CANDIDATE | **Partly closed** — layer 5, the operational footprint, is derived from the compose files into `catalogue.json` and shown on the catalogue page; no field to fill and none to keep current. Layers 2–4 have a schema and a checker — `Use restrictions`, `Edition gating` and `Commercial model` in `UPSTREAM.md`, each rejected without a source and a checked date — and four stacks are filled from upstream's own terms. The rest need the same reading, one stack at a time. Scope in [Catalogue decision facts](#catalogue-decision-facts) |
 
 ### CI and automation
 
@@ -220,6 +220,14 @@ maintained facts is its own question, answered per stack.
    licensing or pricing link. A price that ever reaches the site data carries currency,
    billing unit, billing period, date checked and source — an undated price is not a
    repository fact.
+
+   **Implemented for layers 2 to 4.** The three fields live in `UPSTREAM.md` beside the
+   licence, each as `<statement> — <source url> · checked YYYY-MM-DD`, and
+   `site-catalogue.py --check` rejects one without provenance or with a commercial model
+   outside the vocabulary. No price is recorded: the source link is where an amount is
+   read. An absent field means the stack was not researched, never that it has nothing to
+   declare — a stack checked and found to gate nothing records `none`. Filled so far:
+   `core/portainer`, `business/matomo`, `apps/n8n`, `core/authentik`.
 
 5. **Operational footprint** — how much machinery a stack brings, as facts rather
    than a verdict. Two products solving one problem at very different weights is a
