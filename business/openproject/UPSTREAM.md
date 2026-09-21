@@ -9,6 +9,8 @@
 - **Docker Hub:** https://hub.docker.com/r/openproject/openproject
 - **Docs:** https://www.openproject.org/docs/installation-and-operations/installation/docker-compose/
 - **License:** GPL-3.0 (Community Edition; Enterprise features are separately licensed)
+- **Edition gating:** single sign-on through SAML, OpenID Connect, CAS or Kerberos is an Enterprise feature from the Professional plan upwards, and LDAP group synchronisation from the Corporate plan; two-factor authentication, plain LDAP authentication, user groups and permissions, and custom workflows are in the Community edition — https://www.openproject.org/pricing/ · checked 2026-09-21
+- **Commercial model:** paid self-hosted edition — https://www.openproject.org/pricing/ · checked 2026-09-21
 - **Origin:** Germany · OpenProject GmbH · EU
 - **Domain:** Business operations
 - **Role:** Project management with work packages, boards and Gantt planning

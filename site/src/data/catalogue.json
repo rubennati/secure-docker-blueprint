@@ -471,7 +471,13 @@
     "version": "1.1.0"
   },
   "apps/litellm": {
-    "decision_facts": {},
+    "decision_facts": {
+      "use_restrictions": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/BerriAI/litellm/blob/main/LICENSE",
+        "statement": "none for the MIT-licensed portion; content under the `enterprise/` directory is under the separate licence in `enterprise/LICENSE`"
+      }
+    },
     "domain": "AI and local AI",
     "footprint": {
       "gpu": null,
@@ -612,7 +618,13 @@
     "version": "34.0.4-fpm-alpine"
   },
   "apps/nocodb": {
-    "decision_facts": {},
+    "decision_facts": {
+      "use_restrictions": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/nocodb/nocodb/blob/master/LICENSE.md",
+        "statement": "it may be used or modified only for your own internal business purposes or for non-commercial or personal use, and given to others only free of charge for non-commercial purposes; licensing and copyright notices may not be removed. Only the `master` and `develop` branches are licensed at all"
+      }
+    },
     "domain": "Automation and data",
     "footprint": {
       "gpu": null,
@@ -1029,7 +1041,13 @@
     "version": "1.12.0"
   },
   "apps/windmill": {
-    "decision_facts": {},
+    "decision_facts": {
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/windmill-labs/windmill/blob/main/LICENSE",
+        "statement": "code behind the `enterprise` compile flag in `backend/`, and frontend code that requires a positive licence check to activate, is under a proprietary and commercial licence rather than the AGPLv3; forks must not include it"
+      }
+    },
     "domain": "Automation and data",
     "footprint": {
       "gpu": null,
@@ -1269,7 +1287,19 @@
     "version": "5.13.0-apache"
   },
   "business/openproject": {
-    "decision_facts": {},
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "paid self-hosted edition",
+        "source": "https://www.openproject.org/pricing/",
+        "statement": "paid self-hosted edition"
+      },
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://www.openproject.org/pricing/",
+        "statement": "single sign-on through SAML, OpenID Connect, CAS or Kerberos is an Enterprise feature from the Professional plan upwards, and LDAP group synchronisation from the Corporate plan; two-factor authentication, plain LDAP authentication, user groups and permissions, and custom workflows are in the Community edition"
+      }
+    },
     "domain": "Business operations",
     "footprint": {
       "gpu": null,
@@ -1704,7 +1734,13 @@
     "version": "0.30.2"
   },
   "core/teleport": {
-    "decision_facts": {},
+    "decision_facts": {
+      "use_restrictions": {
+        "checked": "2026-09-21",
+        "source": "https://goteleport.com/blog/teleport-community-license/",
+        "statement": "the compiled binaries, container images and AMIs — which is what this stack deploys — have carried the Teleport Community Edition commercial licence rather than Apache-2.0 since Teleport 16. Under it a company may use Community Edition only with fewer than 100 employees **and** less than $10M annual revenue, and may not resell or embed it; individuals are unrestricted for personal use. Compiling the AGPLv3 source yourself is the alternative"
+      }
+    },
     "domain": "Identity, access and secrets",
     "footprint": {
       "gpu": null,
@@ -1916,7 +1952,13 @@
     "version": "4.38.0"
   },
   "monitoring/ntfy": {
-    "decision_facts": {},
+    "decision_facts": {
+      "use_restrictions": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/binwiederhier/ntfy",
+        "statement": "none — the repository carries both `LICENSE` (Apache-2.0) and `LICENSE.GPLv2`, and neither restricts commercial or hosted use"
+      }
+    },
     "domain": "Monitoring",
     "footprint": {
       "gpu": null,

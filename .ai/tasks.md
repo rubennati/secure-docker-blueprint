@@ -307,16 +307,18 @@ Listed with context in [`state.md`](state.md). Nothing proceeds on these until d
 - [ ] Continue W8 — the maintained decision facts for the remaining stacks. The schema and
       its checker exist (`Use restrictions`, `Edition gating`, `Commercial model` in
       `UPSTREAM.md`, each with source and checked date; `new-app-checklist.md` documents
-      the rules). Eleven stacks are done: `apps/dify`, `apps/n8n`, `apps/open-webui`,
-      `business/invoiceninja`, `business/matomo`, `core/authentik`, `core/dockhand`,
-      `core/infisical`, `core/orion-belt`, `core/portainer`, `monitoring/langfuse`.
-      Still to research, with a signal already in the repository: `apps/litellm`,
-      `apps/seafile-pro`, `apps/unifi`, `apps/windmill`, `backup/urbackup`,
-      `business/openproject`, `core/jumpserver`, `core/shellhub`, `core/teleport`,
-      `monitoring/ntfy`. **That list is not the work list** — `business/matomo` carried no
-      signal at all, its licence field saying GPL-3.0 and nothing else, yet SAML sign-on is
-      a separate plugin under the InnoCraft EULA. Any OSI-licensed stack can be in that
-      position, so the rest need the question asked rather than a filter applied.
+      the rules). Seventeen stacks are done: `apps/dify`, `apps/litellm`, `apps/n8n`,
+      `apps/nocodb`, `apps/open-webui`, `apps/windmill`, `business/invoiceninja`,
+      `business/matomo`, `business/openproject`, `core/authentik`, `core/dockhand`,
+      `core/infisical`, `core/orion-belt`, `core/portainer`, `core/teleport`,
+      `monitoring/langfuse`, `monitoring/ntfy`.
+      Still carrying a signal in the repository: `apps/seafile-pro`, `apps/unifi`,
+      `backup/urbackup`, `core/jumpserver`, `core/shellhub`.
+      **The signal list is only an order, never the scope.** Two stacks with no signal at
+      all turned out to matter most: `business/matomo`, whose licence field said GPL-3.0
+      while SAML sign-on is a separate plugin under the InnoCraft EULA, and `apps/nocodb`,
+      recorded as AGPL-3.0 when upstream had relicensed to the Sustainable Use License.
+      The roughly 70 remaining stacks need the question asked, not a filter applied.
 - [ ] Resolve `apps/hemmelig`'s licence — two upstream sources disagree. The README states
       an "O'Saasy License Agreement — Copyright © 2025 ... a modified MIT license that
       prohibits using the software to compete with the original licensor as a hosted SaaS
