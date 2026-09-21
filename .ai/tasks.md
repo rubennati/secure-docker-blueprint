@@ -92,9 +92,9 @@ was verified by running it. Three of the fifteen already ship.
 - [ ] Upstream requests, filed by the maintainer; drafts are in the local
       `inbox/upstream-requests/` working area. obot (start without a runtime backend
       when no MCP servers are hosted), DayOtter and Dapta Calendars (publish an
-      image), rclone (`rclone gui` logs a supplied RC password), and a fix PR to
-      FacturaScripts (its unattended installer fails when `mysql_socket` is not
-      sent). None for Crater (images requested since 2021 in #659, no maintainer
+      image), rclone (`rclone gui` logs a supplied RC password). Filed: the
+      FacturaScripts installer fix, NeoRazorX/facturascripts#2041 (open), linked in
+      `../business/facturascripts/UPSTREAM.md`. None for Crater (images requested since 2021 in #659, no maintainer
       reply), MAILFLOW-AI (#20 and #21 still open) or httpbin (the failing image is
       psf/httpbin#69, fix proposed in #70). Once posted, the link goes into the
       stack's `UPSTREAM.md` or the candidate evaluation.
