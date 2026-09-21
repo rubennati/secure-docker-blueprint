@@ -84,6 +84,8 @@ was verified by running it. Three of the fifteen already ship.
       Batch D: CISO Assistant and DefectDojo shipped (#150). Batch E: obot held —
       it does not start without the Docker API. Batch F: ERPNext shipped. See the
       evaluation's *Findings from implementation*.
+- [x] Batch G, proposed later: rclone-web (`backup/`) and httpbin (`apps/`)
+      shipped; Cabot held — no image since January 2019.
 - [ ] Four publish no image (DayOtter, Dapta Calendars, MAILFLOW-AI, Crater) and
       stay evaluation entries. Proposed: ask DayOtter's maintainer to publish a tag;
       record the other three with the reason. No fork is proposed.
@@ -323,7 +325,7 @@ Listed with context in [`state.md`](state.md). Nothing proceeds on these until d
       is complete: schema, provenance rules, generation, the per-stack marker and the check
       that refuses a stack stating neither a date nor `not yet`. Nothing in the baseline
       waits on this. What continues is reading upstream terms, one stack at a time.
-      **34 of 99 researched — 32 with facts, 2 checked and clear — 65 remain.**
+      **36 of 101 researched — 32 with facts, 4 checked and clear — 65 remain.**
 
       **Pages already read that do not answer the question — do not retry these:**
       `apps/onlyoffice` (the Enterprise pricing page prices per user and never compares

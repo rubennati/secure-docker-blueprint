@@ -4,7 +4,7 @@
 
 Generated 2026-09-21 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-99 stacks: 1 ops-proven · 13 baseline-aligned · 85 scaffolded. 89 carry a local test stack.
+101 stacks: 1 ops-proven · 13 baseline-aligned · 87 scaffolded. 91 carry a local test stack.
 
 This is the maintainer's view: what has been established about each stack. It makes no statement about whether a stack suits a given deployment.
 
@@ -65,6 +65,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/hemmelig`](apps/hemmelig/) | `scaffolded` | `APP_TAG=v7.4.8` | — | ✅ | documented | missing |
 | [`apps/homarr`](apps/homarr/) | `scaffolded` | `APP_TAG=v1.77.1` | 2026-05-02 | ✅ | documented | missing |
 | [`apps/homepage`](apps/homepage/) | `scaffolded` | `APP_TAG=v2.3.0` | 2026-05-03 | ✅ | documented | missing |
+| [`apps/httpbin`](apps/httpbin/) | `scaffolded` | `APP_TAG=0.10.4` | — | ✅ | documented | missing |
 | [`apps/immich`](apps/immich/) | `scaffolded` | `APP_TAG=v3.2.0` | 2026-04-17 ⚠️ | ✅ | documented | documented |
 | [`apps/it-tools`](apps/it-tools/) | `baseline-aligned` | `APP_TAG=2024.10.22-7ca5933` | 2026-05-02 | ✅ | documented | missing |
 | [`apps/librephotos`](apps/librephotos/) | `scaffolded` | `APP_TAG=1.1.0` | 2026-04-17 ⚠️ | ✅ | documented | missing |
@@ -137,6 +138,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | Stack | State | Pinned | Last verified | Local | Backup docs | Restore docs |
 |---|---|---|---|---|---|---|
 | [`backup/borgmatic`](backup/borgmatic/) | `baseline-aligned` | *host-installed* | 2026-07-29 | — | n/a | documented |
+| [`backup/rclone-web`](backup/rclone-web/) | `scaffolded` | `APP_TAG=1.75.1` | — | ✅ | documented | missing |
 | [`backup/urbackup`](backup/urbackup/) | `scaffolded` | `APP_TAG=2.5.x@sha256:fd218c45192f…` | — | ✅ | documented | documented |
 
 ## Source of truth

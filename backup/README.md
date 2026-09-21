@@ -15,6 +15,7 @@ What has been established about each stack — verified against which version an
 |---|---|---|
 | [Borgmatic](borgmatic/) | This host → off-site | **The documented default for server backup.** Host-installed; a backup and a restore have both been performed and are logged in [`borgmatic/RESTORE.md`](borgmatic/RESTORE.md#rehearsal-log). Append-only enforcement is the one documented mechanism not yet exercised. |
 | [UrBackup](urbackup/) | Your devices → this host | Client backup for Windows, macOS and Linux; whole-disk image restore on Windows. Configuration complete, not yet verified. |
+| [Rclone Web](rclone-web/) | Files ⇄ storage providers | Browser interface for rclone: remotes, copy and sync jobs, serves. Interface and API on one host; the API holds every remote's credentials. Not yet verified. |
 
 ## Planned
 

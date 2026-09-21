@@ -489,6 +489,26 @@
     "verified_version": "v0.10.9",
     "version": "2.3.0"
   },
+  "apps/httpbin": {
+    "decision_facts": {},
+    "decision_facts_checked": "2026-09-21",
+    "domain": "Developer tools",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
+    "name": "httpbin",
+    "path": "apps/httpbin",
+    "role": "HTTP request and response service for testing clients: echoes requests, returns chosen status codes, redirects, delays and payloads",
+    "state": "scaffolded",
+    "upstream": "https://github.com/psf/httpbin/pkgs/container/httpbin",
+    "verified": null,
+    "verified_version": null,
+    "version": "0.10.4"
+  },
   "apps/immich": {
     "decision_facts": {
       "commercial_model": {
@@ -1272,6 +1292,26 @@
     "verified": "2026-07-29",
     "verified_version": "2.1.6",
     "version": "2.1.6"
+  },
+  "backup/rclone-web": {
+    "decision_facts": {},
+    "decision_facts_checked": "2026-09-21",
+    "domain": "Backup",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
+    "name": "Rclone Web",
+    "path": "backup/rclone-web",
+    "role": "Browser interface for rclone: storage remotes, copy and sync jobs, serves and transfer statistics",
+    "state": "scaffolded",
+    "upstream": "https://hub.docker.com/r/rclone/rclone",
+    "verified": null,
+    "verified_version": null,
+    "version": "1.75.1"
   },
   "backup/urbackup": {
     "decision_facts": {},

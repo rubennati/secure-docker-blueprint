@@ -206,6 +206,7 @@ those containers takes write access, which is root-equivalent on the host. See
 | [Mailpit](mailpit/) | Single container | SMTP sink for trying out the stacks that send mail — accepts every message, shows it, delivers nothing |
 | [Whoami](whoami/) | Single container | Traefik debug service to verify routing, TLS and middlewares — deploy temporarily, then disable |
 | [Windmill](windmill/) | Server + 2 workers + PostgreSQL 18 | Code-first scripts, flows, APIs and scheduled jobs on a Postgres-backed queue. Replace the built-in administrator before exposing it |
+| [httpbin](httpbin/) | Single container | HTTP request and response service for testing clients — echoes, status codes, redirects, delays. The Python Software Foundation's fork; start command replaced because the image's own fails in 0.10.4 |
 
 Docker-management tools (Dockhand / Portainer / Hawser) are in [`core/`](../core/): they control Docker itself, which is an installation-scoped capability. Whoami sits here instead — it is a routed diagnostic that serves no other stack.
 

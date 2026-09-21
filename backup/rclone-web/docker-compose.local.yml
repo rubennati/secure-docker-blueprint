@@ -1,0 +1,44 @@
+# Rclone Web — local
+#
+#   cp .env.local.example .env.local
+#   ops/init.sh
+#   sudo chown -R 1000:1000 volumes/config volumes/data
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   open http://localhost:5522        # RC URL http://localhost:5533/api, user admin,
+#                                     # password from .secrets/gui_pwd.txt
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+#
+# Same image, same read-only settings and the same mounts as the production file,
+# without Traefik and without the Docker Secrets mechanism. It mounts the same
+# volumes/, so run one at a time. Here the interface and the API are two ports,
+# so the API allows the interface's origin.
+
+services:
+
+  rclone-web:
+    image: rclone/rclone:${APP_TAG}
+    container_name: rclone-web-local
+    restart: unless-stopped
+    user: "${APP_UID}:${APP_GID}"
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    command:
+      - gui
+      - --no-open-browser
+      - --addr=0.0.0.0:5522
+      - --api-addr=0.0.0.0:5533
+      - --rc-baseurl=/api
+      - --rc-htpasswd=/run/secrets/GUI_HTPASSWD
+      - --rc-allow-origin=http://localhost:5522
+    environment:
+      TZ: ${TZ}
+    volumes:
+      - ./.secrets/gui_htpasswd:/run/secrets/GUI_HTPASSWD:ro
+      - ./volumes/config:/config/rclone
+      - ./volumes/data:/data
+    tmpfs:
+      - /tmp
+    ports:
+      - "127.0.0.1:5522:5522"
+      - "127.0.0.1:5533:5533"

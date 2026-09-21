@@ -281,6 +281,21 @@ wait for the difference — 3 hours 30 minutes for Central European Summer Time.
 Upstream's backup override runs Ofelia with the Docker socket; the stack leaves it
 out.
 
+**Batch G — rclone-web, httpbin, Cabot.** Proposed after the first fifteen and
+checked the same way. Two shipped, one held.
+
+- **rclone-web** runs from the official rclone image, whose `rclone gui` embeds
+  the interface. Upstream's example exposes two ports and passes the login on the
+  command line. The stack puts the API under `/api/` on the interface's host and
+  checks logins against a htpasswd file: a password set through `RCLONE_RC_PASS`
+  appeared in the start log.
+- **httpbin** comes from the Python Software Foundation's fork, which publishes
+  versioned images; the original publishes only `latest`, from 2018. The fork's
+  0.10.3 and 0.10.4 images exit at start (psf/httpbin#69), so the stack starts the
+  same server with another worker class.
+- **Cabot** is held. Its newest image, 0.11.16, is from January 2019 and builds on
+  Node 4, and the repository's last push was in 2023.
+
 ## Proposed order
 
 Eleven Tier 1 products, in batches that share a category and a review:

@@ -1,0 +1,26 @@
+# httpbin — local
+#
+#   cp .env.local.example .env.local
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   open http://localhost:8080
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+#
+# Same image and the same read-only settings as the production file, without
+# Traefik.
+
+services:
+
+  httpbin-app:
+    image: ghcr.io/psf/httpbin:${APP_TAG}
+    container_name: httpbin-local
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    command: ["/opt/httpbin/bin/gunicorn", "-b", "0.0.0.0:8080", "-k", "gthread", "--threads", "8", "--no-control-socket", "httpbin:app"]
+    environment:
+      TZ: ${TZ}
+    tmpfs:
+      - /tmp
+    ports:
+      - "127.0.0.1:8080:8080"
