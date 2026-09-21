@@ -448,6 +448,146 @@ def parse_env(path: Path) -> tuple[list[tuple[str, str]], list[str]]:
     return variables, sections
 
 
+IMAGE_VAR = re.compile(r"\$\{([A-Za-z0-9_]+)(?::?-([^}]*))?\}")
+
+
+def split_image_ref(ref: str) -> tuple[str, str]:
+    """An image reference as (repository, pin), the pin keeping any digest.
+
+    A colon also separates a registry from its port, so only a colon after the
+    last `/` introduces a tag: `registry:5000/app` is a repository with no pin,
+    `uroni/urbackup-server:2.5.x@sha256:…` pins through both halves and the
+    digest is the part that actually fixes the image.
+    """
+    base, _, digest = ref.partition("@")
+    suffix = f"@{digest}" if digest else ""
+    head, sep, tail = base.rpartition(":")
+    if not sep or "/" in tail:
+        return base, suffix.lstrip("@") if suffix else ""
+    return head, tail + suffix
+
+
+def _substitute(env: dict):
+    """Replace `${VAR}` from `env`, leaving an unknown one in place.
+
+    Substituting an unknown variable with "" would turn `app:${MISSING}` into
+    `app:`, which reads as a repository pinned to nothing rather than as a
+    reference that could not be resolved. The caller relies on the `${` marker
+    surviving to tell those apart.
+    """
+    def one(m):
+        name, default = m.group(1), m.group(2)
+        if name in env:
+            return env[name]
+        return default if default is not None else m.group(0)
+    return one
+
+
+def resolved_images(compose: Path, env: dict) -> dict[str, set[str]]:
+    """{repository: {pin, ...}} for one compose file, variables substituted.
+
+    A reference that still holds an unresolved variable is skipped rather than
+    guessed at: it means the example file does not define what the compose file
+    reads, which is a different finding and belongs to whoever reports that.
+    """
+    out: dict[str, set[str]] = {}
+    for body in ((compose_load(compose) or {}).get("services") or {}).values():
+        ref = str((body or {}).get("image") or "")
+        if not ref:
+            continue
+        ref = IMAGE_VAR.sub(_substitute(env), ref)
+        if not ref or "${" in ref:
+            continue
+        repo, pin = split_image_ref(ref)
+        out.setdefault(repo, set()).add(pin)
+    return out
+
+
+def check_local_pins(app: Path, findings: list[dict]) -> None:
+    """Where the local stack runs production's image, it runs production's version.
+
+    The local file exists so a stack can be tried on one machine. That only
+    means anything if what gets tried is what the repository ships: 41 pins had
+    drifted behind production when this rule was written, one by ten minor
+    versions, and nothing had decided they should differ — `docs/maintenance.md`
+    simply never named `.env.local.example` in the Version Chain, so no bump
+    ever reached it.
+
+    The comparison joins on the image repository rather than on the variable
+    name or the service key, both of which legitimately differ between the two
+    files. That makes the exceptions fall out instead of needing a list: a local
+    stack on a different image (`apps/vllm` runs the CPU build) shares no
+    repository and is never compared, and a service the local stack does not run
+    at all simply is not there.
+    """
+    local = app / "docker-compose.local.yml"
+    if not local.exists():
+        return
+
+    prod: dict[str, set[str]] = {}
+    for path in compose_files(app):
+        for repo, pins in resolved_images(path, dict(parse_env(app / ".env.example")[0])).items():
+            prod.setdefault(repo, set()).update(pins)
+
+    env_local = app / ".env.local.example"
+    mine = resolved_images(local, dict(parse_env(env_local)[0]) if env_local.exists() else {})
+    for repo in sorted(set(prod) & set(mine)):
+        if prod[repo] != mine[repo]:
+            want = ", ".join(sorted(prod[repo])) or "(none)"
+            got = ", ".join(sorted(mine[repo])) or "(none)"
+            findings.append({"level": "FAIL", "rule": "local-pin-drift",
+                             "detail": f"{repo}: local pins {got}, production pins {want} "
+                                       "— the local stack must evaluate the shipped version"})
+
+
+def pinned_tag(key: str, value: str) -> str | None:
+    """The tag a variable pins, for both pinning styles in this repository.
+
+    Most stacks split the reference, naming the image in the compose file and
+    the version in `<NAME>_TAG`. A few carry the whole reference in
+    `<NAME>_IMAGE` instead — Seafile for all eight of its images, Authentik and
+    Traefik for one each. The rule is about reproducibility, which does not
+    depend on which half of the reference the variable holds.
+
+    Returns None for a variable that pins nothing. Any digest is stripped
+    first: `2.5.x@sha256:…` is reproducible through the digest, and it is the
+    tag that has to be judged on its own.
+    """
+    if key.endswith("_TAG"):
+        tag = value
+    elif key.endswith("_IMAGE"):
+        tag = split_image_ref(value)[1]
+        if not tag:
+            return None
+    else:
+        return None
+    tag = tag.split("@")[0]
+    return tag or None
+
+
+def check_env_pins(app: Path, findings: list[dict]) -> None:
+    """The tag rule, over every committed `*.env*.example` file in the stack.
+
+    `check_env` reads `.env.example` alone, because the structural rules —
+    section order, `COMPOSE_PROJECT_NAME` first — describe that file and no
+    other. Reproducibility is not like that: an unpinned image in
+    `.env.local.example` is as irreproducible as one in the production file,
+    and someone evaluating a stack from the local path is the person least
+    able to tell which version they ended up running.
+
+    84 committed example files sat outside the check until this ran over them,
+    and none violated the rule. That is what makes this enforcement of a
+    property the repository already has rather than a migration.
+    """
+    for path in sorted(app.glob("*.env*.example")):
+        for key, value in parse_env(path)[0]:
+            tag = pinned_tag(key, value)
+            if tag and BAD_TAG.match(tag):
+                findings.append({"level": "FAIL", "rule": "latest-tag",
+                                 "detail": f"{path.name}: {key}={value} is not "
+                                           "reproducible — pin a full version"})
+
+
 def check_env(app: Path, findings: list[dict]) -> None:
     env = app / ".env.example"
     if not env.exists():
@@ -479,13 +619,7 @@ def check_env(app: Path, findings: list[dict]) -> None:
             findings.append({"level": "FAIL", "rule": "plaintext-secret",
                              "detail": f"{key} carries a value — secrets belong in .secrets/"})
 
-        # -- image tags (FAIL) ------------------------------------------------
-        if key.endswith("_TAG"):
-            # Strip any digest pin before judging the tag itself.
-            tag = value.split("@")[0]
-            if BAD_TAG.match(tag):
-                findings.append({"level": "FAIL", "rule": "latest-tag",
-                                 "detail": f"{key}={value} is not reproducible — pin a full version"})
+        # -- image tags: check_env_pins owns them, across every example file ---
 
         # -- container naming (WARN) ------------------------------------------
         if key.startswith("CONTAINER_NAME_") and "${COMPOSE_PROJECT_NAME}" not in value:
@@ -702,6 +836,8 @@ def main() -> int:
         findings: list[dict] = []
         check_files(app, findings, root_gi)
         check_env(app, findings)
+        check_env_pins(app, findings)
+        check_local_pins(app, findings)
         check_compose(app, findings)
         if findings:
             by_app.setdefault(app, []).extend(findings)

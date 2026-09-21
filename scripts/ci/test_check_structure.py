@@ -431,6 +431,153 @@ class ComposeTags(unittest.TestCase):
             self.assertFalse(cs.is_compose(f))
 
 
+class ImagePins(unittest.TestCase):
+    """Reproducibility is checked in every committed example file, both styles.
+
+    The rule used to read `.env.example` and match `*_TAG`. That left 84
+    committed `*.env*.example` files unchecked, and missed the `*_IMAGE` style
+    inside the file it did read — so `APP_IMAGE=x:latest` passed while
+    `APP_TAG=latest` failed, for the same defect.
+    """
+
+    def test_tag_variable_yields_its_tag(self):
+        self.assertEqual(cs.pinned_tag("APP_TAG", "1.2.3"), "1.2.3")
+
+    def test_image_variable_yields_the_tag_half(self):
+        self.assertEqual(cs.pinned_tag("APP_IMAGE", "seafileltd/seafile-mc:13.0.20"), "13.0.20")
+
+    def test_registry_port_is_not_mistaken_for_a_tag(self):
+        self.assertEqual(cs.pinned_tag("APP_IMAGE", "registry:5000/app:2.1"), "2.1")
+
+    def test_digest_is_stripped_before_the_tag_is_judged(self):
+        self.assertEqual(cs.pinned_tag("APP_TAG", "2.5.x@sha256:abc"), "2.5.x")
+
+    def test_a_variable_that_pins_nothing_is_ignored(self):
+        self.assertIsNone(cs.pinned_tag("APP_HOST", "example.com"))
+        self.assertIsNone(cs.pinned_tag("APP_IMAGE", "nginx"))
+
+    def test_a_registry_port_without_a_tag_is_not_read_as_one(self):
+        self.assertIsNone(cs.pinned_tag("APP_IMAGE", "registry:5000/app"))
+
+    def test_unpinned_local_example_fails(self):
+        """The case the old rule could not see: a bad tag outside .env.example."""
+        with tempfile.TemporaryDirectory() as tmp:
+            app = Path(tmp)
+            (app / ".env.local.example").write_text("APP_TAG=latest\n")
+            findings: list[dict] = []
+            cs.check_env_pins(app, findings)
+            self.assertEqual([f["rule"] for f in findings], ["latest-tag"])
+            self.assertIn(".env.local.example", findings[0]["detail"])
+
+    def test_unpinned_image_variable_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            app = Path(tmp)
+            (app / ".env.example").write_text("APP_IMAGE=nginx:latest\n")
+            findings: list[dict] = []
+            cs.check_env_pins(app, findings)
+            self.assertEqual([f["rule"] for f in findings], ["latest-tag"])
+
+    def test_a_pinned_example_file_passes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            app = Path(tmp)
+            (app / ".env.example").write_text("APP_TAG=1.2.3\nAPP_IMAGE=nginx:1.27-alpine\n")
+            (app / ".env.local.example").write_text("APP_TAG=1.2.3\n")
+            findings: list[dict] = []
+            cs.check_env_pins(app, findings)
+            self.assertEqual(findings, [])
+
+
+class LocalPinDrift(unittest.TestCase):
+    """A local stack runs production's version of production's image.
+
+    The join is on the image repository, not the variable name or the service
+    key — both legitimately differ between the two files — so the exceptions
+    fall out of the rule instead of needing a list.
+    """
+
+    @staticmethod
+    def _stack(tmp, prod_image, local_image, prod_env="", local_env=""):
+        app = Path(tmp)
+        (app / "docker-compose.yml").write_text(
+            f"services:\n  app:\n    image: {prod_image}\n")
+        (app / "docker-compose.local.yml").write_text(
+            f"services:\n  app:\n    image: {local_image}\n")
+        (app / ".env.example").write_text(prod_env)
+        (app / ".env.local.example").write_text(local_env)
+        return app
+
+    def _findings(self, app):
+        out: list[dict] = []
+        cs.check_local_pins(app, out)
+        return out
+
+    def test_same_image_different_version_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            app = self._stack(tmp, "app:${APP_TAG}", "app:${APP_TAG}",
+                              "APP_TAG=2.0.0\n", "APP_TAG=1.0.0\n")
+            f = self._findings(app)
+            self.assertEqual([x["rule"] for x in f], ["local-pin-drift"])
+            self.assertIn("production pins 2.0.0", f[0]["detail"])
+
+    def test_same_image_same_version_passes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            app = self._stack(tmp, "app:${APP_TAG}", "app:${APP_TAG}",
+                              "APP_TAG=2.0.0\n", "APP_TAG=2.0.0\n")
+            self.assertEqual(self._findings(app), [])
+
+    def test_a_deliberately_different_image_is_never_compared(self):
+        """apps/vllm runs the CPU build locally — no shared repository, no rule."""
+        with tempfile.TemporaryDirectory() as tmp:
+            app = self._stack(tmp, "vllm/vllm-openai:${APP_TAG}",
+                              "vllm/vllm-openai-cpu:${APP_TAG}",
+                              "APP_TAG=1.0.0\n", "APP_TAG=1.0.0\n")
+            self.assertEqual(self._findings(app), [])
+
+    def test_the_two_pinning_styles_compare_equal(self):
+        """Seafile writes the whole reference in production, a bare tag locally."""
+        with tempfile.TemporaryDirectory() as tmp:
+            app = self._stack(tmp, "${APP_IMAGE}", "seafileltd/seafile-mc:${APP_TAG}",
+                              "APP_IMAGE=seafileltd/seafile-mc:13.0.20\n",
+                              "APP_TAG=13.0.20\n")
+            self.assertEqual(self._findings(app), [])
+
+    def test_a_differing_digest_on_the_same_tag_fails(self):
+        """urbackup pins a moving tag, so the digest is what fixes the image."""
+        with tempfile.TemporaryDirectory() as tmp:
+            app = self._stack(tmp, "u/s:${APP_TAG}", "u/s:${APP_TAG}",
+                              "APP_TAG=2.5.x@sha256:aaa\n", "APP_TAG=2.5.x@sha256:bbb\n")
+            self.assertEqual([x["rule"] for x in self._findings(app)], ["local-pin-drift"])
+
+    def test_a_service_absent_locally_is_not_a_finding(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            app = Path(tmp)
+            (app / "docker-compose.yml").write_text(
+                "services:\n  app:\n    image: app:1.0.0\n  search:\n    image: es:8.1\n")
+            (app / "docker-compose.local.yml").write_text(
+                "services:\n  app:\n    image: app:1.0.0\n")
+            (app / ".env.example").write_text("")
+            (app / ".env.local.example").write_text("")
+            self.assertEqual(self._findings(app), [])
+
+    def test_a_stack_without_a_local_file_is_skipped(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            app = Path(tmp)
+            (app / "docker-compose.yml").write_text("services:\n  app:\n    image: app:1.0.0\n")
+            self.assertEqual(self._findings(app), [])
+
+    def test_an_unresolved_variable_is_not_guessed_at(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            app = self._stack(tmp, "app:${APP_TAG}", "app:${MISSING}", "APP_TAG=2.0.0\n", "")
+            self.assertEqual(self._findings(app), [])
+
+    def test_registry_port_splits_on_the_tag_not_the_port(self):
+        self.assertEqual(cs.split_image_ref("registry:5000/app:2.1"), ("registry:5000/app", "2.1"))
+        self.assertEqual(cs.split_image_ref("registry:5000/app"), ("registry:5000/app", ""))
+
+    def test_digest_stays_with_the_pin(self):
+        self.assertEqual(cs.split_image_ref("u/s:2.5.x@sha256:abc"), ("u/s", "2.5.x@sha256:abc"))
+
+
 class OverlayDiscovery(unittest.TestCase):
     """Which files are canonical production, and which are opt-in overlays."""
 
