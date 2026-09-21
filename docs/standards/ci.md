@@ -226,7 +226,23 @@ Runs `scripts/ci/check-structure.py`. Severity is per rule rather than per
 category: `:latest` or major-only tags, a plaintext secret in `.env.example`, a
 `.gitignore` that does not cover `.secrets/`, a datastore on `proxy-public`, a
 service without resource limits, and a memory limit without a stated swap policy
-(`memswap_limit`) all fail. A missing healthcheck and `env_file:` are reported as
+(`memswap_limit`) all fail.
+
+The tag rule reads **every committed `*.env*.example` file in a stack**, not just
+`.env.example`, and matches both pinning styles — `<NAME>_TAG` and the whole
+reference in `<NAME>_IMAGE`. Neither was true before: 84 example files were
+outside the check, and `APP_IMAGE=x:latest` passed where `APP_TAG=latest` failed,
+for the same defect. Someone evaluating a stack from the local path is the person
+least able to tell which version they ended up running. The structural rules —
+section order, `COMPOSE_PROJECT_NAME` first — still describe `.env.example`
+alone, because they describe that file's shape rather than reproducibility.
+
+`local-pin-drift` fails when a stack's local file pins a different version of an
+image its production file also pins. It joins on the image repository, so a
+local stack that deliberately runs a *different* image is never compared. The
+rule is in [`compose-structure.md`](compose-structure.md); the reason it needed
+a checker is that the Version Chain never named `.env.local.example`, so 41 pins
+drifted behind production without a decision. A missing healthcheck and `env_file:` are reported as
 warnings — the numeric values behind the limits still need measuring on a real
 host, which is v0.10.0; whether a policy is stated at all is settled.
 

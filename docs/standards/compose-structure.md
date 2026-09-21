@@ -484,6 +484,16 @@ Its companion `.env.local.example` carries only the variables the local file
 uses, with `__REPLACE_ME__` for anything secret and the generating command above
 it.
 
+**Where the local stack runs production's image, it pins production's version.**
+Unlike the resource baseline above, this one does not stop at the local file: a
+stack that can be tried is only worth trying if what gets tried is what the
+repository ships. `check-structure.py` enforces it as `local-pin-drift`, joining
+on the image repository rather than on the variable name or the service key,
+both of which legitimately differ between the two files. So the exceptions need
+no list — a local stack on a *different* image shares no repository and is never
+compared (`apps/vllm` runs the CPU build, because an evaluation box has no GPU),
+and a service the local stack does not run is simply absent.
+
 The header is the app name and the commands, and nothing else:
 
 ```yaml
