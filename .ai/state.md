@@ -2,14 +2,18 @@
 
 > If this file conflicts with git (branch, commits, tags), trust git.
 
-**Last updated:** 2026-09-20
+**Last updated:** 2026-09-21
 
 - **Phase:** pre-1.0. Latest tag `v0.9.1` (2026-09-19), which is where `main`
-  stands; `dev` carries ten commits beyond it, unreleased. Work happens on a
+  stands; `dev` carries a substantial unreleased run beyond it — `git rev-list
+  --count v0.9.1..dev` is the number, and it is not repeated here. Work happens on a
   short-lived branch and reaches `dev` through a pull request; `dev` reaches
   `main` the same way. Both branches reject a direct push.
-- **Last completed:** the stabilization programme — PRs #115, #119, #124, #125,
-  #126. What each changed, what remains and why:
+- **Last completed:** the stabilization programme, in two runs. The first was PRs
+  #115, #119, #124, #125, #126. The second closed R14 and R15, built and corrected
+  W8's system, and wrote the production deployment lifecycle
+  ([`../docs/standards/deployment-lifecycle.md`](../docs/standards/deployment-lifecycle.md)).
+  What each changed, what remains and why:
   [`../docs/v1-readiness-audit.md`](../docs/v1-readiness-audit.md) → *What the
   stabilization programme did* and *Remaining work*. Actionable items are GitHub
   Issues; [`tasks.md`](tasks.md) holds only what no issue owns.
@@ -21,7 +25,9 @@
   (`docs/resource-measurement.md`).
 - **The one thing a new session should know:** nothing structural is broken. The
   checkers, the generated views and the site catalogue agree with the tree. What
-  is left needs a host, or a decision that is written down and waiting.
+  is left needs a host, or a decision that is written down and waiting. The single
+  finding still marked **FIX BEFORE V1** is C1, the missing Trivy gate; everything
+  else open is evidence, a recorded decision, or standing research coverage.
 
 ## Snapshot
 
