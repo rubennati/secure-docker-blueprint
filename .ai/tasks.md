@@ -75,11 +75,17 @@ was verified by running it. Three of the fifteen already ship.
       C Twenty+Chatwoot · D CISO Assistant+DefectDojo · E obot · F ERPNext).
       Batch A shipped (#140). Batch B: Akaunting and SolidInvoice shipped,
       FacturaScripts held (#145). Batch C: Twenty and Chatwoot shipped (#146).
-      Batch D: CISO Assistant and DefectDojo shipped — see the evaluation's
-      *Findings from implementation*.
+      Batch D: CISO Assistant and DefectDojo shipped (#150). Batch E: obot held —
+      it does not start without the Docker API. Batch F (ERPNext) open. See the
+      evaluation's *Findings from implementation*.
 - [ ] Four publish no image (DayOtter, Dapta Calendars, MAILFLOW-AI, Crater) and
       stay evaluation entries. Proposed: ask DayOtter's maintainer to publish a tag;
       record the other three with the reason. No fork is proposed.
+- [ ] Upstream requests, filed by the maintainer: obot (start without a runtime
+      backend when no MCP servers are hosted), DayOtter and Dapta Calendars (publish
+      an image). None for FacturaScripts (the in-app updater is its documented update
+      path; issues are closed on both repositories), Crater (images requested since
+      2021 in #659, no maintainer reply) or MAILFLOW-AI (#20 and #21 still open).
 - [ ] Adding these while `../ROADMAP.md` holds applications is a deliberate
       exception and needs recording where the hold is stated.
 

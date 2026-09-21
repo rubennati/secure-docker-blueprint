@@ -218,6 +218,8 @@ caveat, one moved back to evaluation.
   webroot and the image copies the code into it only on the first start, so a newer
   image does not update a running install and the pinned tag describes only the first
   one. It also makes the webroot world-writable and sets up through a web wizard.
+  Upstream's Docker page states this as intended: updates run through the in-app
+  updater, and a newer image leaves a running install unchanged.
 
 **Batch C — Twenty, Chatwoot.** Both shipped, fully exercised. Twenty sits in
 `business/` rather than `apps/`: it is a company CRM, beside Invoice Ninja and
@@ -233,6 +235,27 @@ key and for the key that encrypts stored integration credentials, and prints a
 generated administrator password to the log when none is set; the stack replaces
 both keys and sets the password. CISO Assistant's community images are AGPLv3 in
 full — its commercially licensed code ships only in separate enterprise images.
+
+**Batch E — obot.** Held as an evaluation entry; no stack. obot runs the MCP servers
+it hosts as containers, through Docker or Kubernetes (`OBOT_SERVER_MCPRUNTIME_BACKEND`).
+Remote MCP servers have needed no container since v0.24.0, but the server still needs
+the runtime to start: v0.25.6, started here without the Docker API, exited with code 1:
+
+```text
+failed to initialize Docker backend: failed to cleanup deprecated containers:
+failed to list containers for cleanup: failed to connect to the docker API
+```
+
+obot's README limits its Docker deployment, which mounts the host's socket, to
+development, evaluation, or trusted single-tenant environments, and points production
+to Kubernetes. The security baseline allows Docker API access only through the socket
+proxy. Creating containers needs write access there too, and a caller with write
+access can start a container that mounts the host's filesystem, so it is root on the
+host either way. `core/dockhand` holds that access as a tool for managing the host's
+containers; obot would hold it to run the MCP servers its users add. Authentication
+is off unless `OBOT_SERVER_ENABLE_AUTHENTICATION=true` is set, as the README's quick
+start does, and credentials are stored unencrypted by default — the start log reads
+`Encryption: No encryption config file provided, using unencrypted storage`.
 
 ## Proposed order
 
