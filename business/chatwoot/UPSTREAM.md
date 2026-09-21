@@ -6,6 +6,8 @@
 - **GitHub:** https://github.com/chatwoot/chatwoot
 - **Docs:** https://www.chatwoot.com/docs/self-hosted
 - **License:** MIT (core; the `enterprise/` directory is under a separate enterprise licence)
+- **Use restrictions:** none for the MIT-licensed portion; content under the `enterprise/` directory is under the separate licence defined there — https://github.com/chatwoot/chatwoot/blob/develop/LICENSE · checked 2026-09-21
+- **Decision facts checked:** 2026-09-21
 - **Origin:** United States · Chatwoot Inc · non-EU
 - **Domain:** Business operations
 - **Role:** Customer support across website chat, email and messaging channels in one shared inbox

@@ -1247,8 +1247,14 @@
         "checked": "2026-09-21",
         "source": "https://github.com/chatwoot/chatwoot/blob/develop/LICENSE",
         "statement": "everything under the repository's `enterprise/` directory is licensed under `enterprise/LICENSE` rather than MIT"
+      },
+      "use_restrictions": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/chatwoot/chatwoot/blob/develop/LICENSE",
+        "statement": "none for the MIT-licensed portion; content under the `enterprise/` directory is under the separate licence defined there"
       }
     },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Business operations",
     "footprint": {
       "gpu": null,
@@ -1503,8 +1509,14 @@
         "checked": "2026-09-21",
         "source": "https://github.com/twentyhq/twenty/blob/main/LICENSE",
         "statement": "files marked `@license Enterprise` at the top are covered by a commercial licence rather than the AGPL-3.0"
+      },
+      "use_restrictions": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/twentyhq/twenty/blob/main/LICENSE",
+        "statement": "none for the AGPL-3.0 portion; individual files carrying a `/* @license Enterprise */` comment at the top are under a separate commercial licence"
       }
     },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Business operations",
     "footprint": {
       "gpu": null,

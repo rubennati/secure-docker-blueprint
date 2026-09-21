@@ -234,7 +234,7 @@ maintained facts is its own question, answered per stack.
    a process record and carries no source; a `none` *fact* asserts something about
    upstream and does.
 
-   Researched so far: **28 of 93** — 19 with facts, 9 checked and clear.
+   Researched so far: **30 of 95** — 21 with facts, 9 checked and clear.
    Listed in `.ai/tasks.md`. Unresolved and left
    unrecorded rather than inferred: `apps/hemmelig`, whose README and `LICENSE` file
    disagree, and `apps/collabora`, whose limits no reachable upstream page states.
