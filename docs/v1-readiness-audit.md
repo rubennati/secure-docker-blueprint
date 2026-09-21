@@ -226,8 +226,12 @@ maintained facts is its own question, answered per stack.
    `site-catalogue.py --check` rejects one without provenance or with a commercial model
    outside the vocabulary. No price is recorded: the source link is where an amount is
    read. An absent field means the stack was not researched, never that it has nothing to
-   declare — a stack checked and found to gate nothing records `none`. Filled so far:
-   `core/portainer`, `business/matomo`, `apps/n8n`, `core/authentik`.
+   declare — a stack checked and found to gate nothing records `none`. Filled so far: eleven of 91 —
+   `apps/dify`, `apps/n8n`, `apps/open-webui`, `business/invoiceninja`,
+   `business/matomo`, `core/authentik`, `core/dockhand`, `core/infisical`,
+   `core/orion-belt`, `core/portainer`, `monitoring/langfuse`. Unresolved and left
+   unrecorded rather than inferred: `apps/hemmelig`, whose README and `LICENSE` file
+   disagree, and `apps/collabora`, whose limits no reachable upstream page states.
 
 5. **Operational footprint** — how much machinery a stack brings, as facts rather
    than a verdict. Two products solving one problem at very different weights is a

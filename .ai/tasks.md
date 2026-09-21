@@ -307,20 +307,29 @@ Listed with context in [`state.md`](state.md). Nothing proceeds on these until d
 - [ ] Continue W8 — the maintained decision facts for the remaining stacks. The schema and
       its checker exist (`Use restrictions`, `Edition gating`, `Commercial model` in
       `UPSTREAM.md`, each with source and checked date; `new-app-checklist.md` documents
-      the rules), and four stacks are done: `core/portainer`, `business/matomo`,
-      `apps/n8n`, `core/authentik`.
-      Scanning the repository's own signals — licence class, the words enterprise,
-      community edition, premium or EULA in an existing field — finds 21 further
-      candidates: `apps/dify`, `apps/hemmelig`, `apps/litellm`, `apps/open-webui`,
+      the rules). Eleven stacks are done: `apps/dify`, `apps/n8n`, `apps/open-webui`,
+      `business/invoiceninja`, `business/matomo`, `core/authentik`, `core/dockhand`,
+      `core/infisical`, `core/orion-belt`, `core/portainer`, `monitoring/langfuse`.
+      Still to research, with a signal already in the repository: `apps/litellm`,
       `apps/seafile-pro`, `apps/unifi`, `apps/windmill`, `backup/urbackup`,
-      `business/invoiceninja`, `business/openproject`, `core/dockhand`, `core/infisical`,
-      `core/jumpserver`, `core/orion-belt`, `core/shellhub`, `core/teleport`,
-      `monitoring/langfuse`, `monitoring/ntfy`.
-      **That scan is not the work list.** `business/matomo` carries no signal — its licence
-      field says GPL-3.0 and nothing else — yet SAML single sign-on is a separate plugin
-      sold under the InnoCraft EULA. Any OSI-licensed stack can be in that position, so
-      the remaining stacks need the question asked rather than a filter applied.
-      Unresolved from the first batch: `apps/collabora`. CODE is widely described as
-      carrying a concurrent-connection and document limit, but the upstream page that
-      would state it is behind bot protection and the product page does not mention one.
-      Nothing was recorded rather than record it from memory.
+      `business/openproject`, `core/jumpserver`, `core/shellhub`, `core/teleport`,
+      `monitoring/ntfy`. **That list is not the work list** — `business/matomo` carried no
+      signal at all, its licence field saying GPL-3.0 and nothing else, yet SAML sign-on is
+      a separate plugin under the InnoCraft EULA. Any OSI-licensed stack can be in that
+      position, so the rest need the question asked rather than a filter applied.
+- [ ] Resolve `apps/hemmelig`'s licence — two upstream sources disagree. The README states
+      an "O'Saasy License Agreement — Copyright © 2025 ... a modified MIT license that
+      prohibits using the software to compete with the original licensor as a hosted SaaS
+      product", while `LICENSE` on `main` is the unmodified MIT text with a 2021 copyright
+      line and no SaaS, competition or branding clause. This repository records the README's
+      version, and `license_class: source-available` rests on it. Nothing was recorded as a
+      use restriction because neither source can be relied on while they disagree; ask
+      upstream which governs.
+- [ ] Source `core/infisical`'s edition gating. Its `LICENSE` places content under any
+      `ee/` directory under a separate licence, which is recorded, but the docs page that
+      would name the gated features returns 404. The feature list needs a reachable source
+      before it can be stated.
+- [ ] Decide `apps/collabora`'s entry. CODE is widely described as carrying a
+      concurrent-connection and document limit, but the upstream page that would state it is
+      behind bot protection and the product page does not mention one. Nothing was recorded
+      rather than record it from memory.

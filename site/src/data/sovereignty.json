@@ -547,7 +547,7 @@
     "bloc": "none",
     "country": "Finsys",
     "entity": "**no country or legal entity stated** — no imprint on fnsys.pro or dockhand.pro",
-    "license": "BSL 1.1 — source-available, **not** open source; converts to Apache-2.0 on 2029-01-01. Free for personal, internal business, non-profit and educational use; offering it as a hosted service is not permitted",
+    "license": "BSL 1.1 — source-available, **not** open source. Each version converts to Apache-2.0 four years after Licensor first distributes it publicly, so the date differs per version rather than being one fixed day",
     "license_class": "source-available",
     "origin": "Finsys · **no country or legal entity stated** — no imprint on fnsys.pro or dockhand.pro"
   },
