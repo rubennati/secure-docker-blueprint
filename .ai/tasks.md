@@ -308,7 +308,7 @@ Listed with context in [`state.md`](state.md). Nothing proceeds on these until d
       `docs/standards/compose-structure.md`. Either give it the companion file or
       state the exception there — `local-pin-drift` covers it under both
 - [ ] Continue W8 until every stack states a research date rather than `not yet`.
-      **28 of 95 are researched — 26 with facts, 2 checked and clear — and 67 remain.**
+      **29 of 97 are researched — 27 with facts, 2 checked and clear — and 68 remain.**
 
       Vendor pages read and found not to answer the question, so the stack stays `not yet`
       rather than being half-stated: `apps/onlyoffice` (the Enterprise page prices per user
