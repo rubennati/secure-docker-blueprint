@@ -122,7 +122,7 @@ Status is the state after the PR named.
 | R11 | `renovate.json` is committed, the Renovate app is not installed, no pin carries a `# renovate:` marker, and `docs/renovate-proposal.md` describes it as pending | 30 Dependabot PRs, 0 Renovate | Dormant configuration and a proposal nobody has closed | DECISION REQUIRED | Open |
 | R12 | Three stacks have `COMPOSE_PROJECT_NAME` differing from the directory (`lycheeorg`, `monicahq`, `paperless-ngx`) | `check-structure.py` `identity-source` | Renaming either side breaks existing deployments' volume and network names | DECISION REQUIRED | Open |
 | R13 | `docs/host-session-*.md`, `docs/site-review-2026-08-03.md` and four files under `docs/audits/` are dated working records | file headers | Accumulated history in `docs/` | CLEANUP | Open — kept as evidence; a decision on archiving is not needed for v1.0 |
-| R14 | `check_env()` reads only `.env.example`, so image tags in the other 81 committed `*.env*.example` files are never checked — 80 `.env.local.example` plus `core/orion-belt/.env.agent.example`. Measured: **0 would violate the tag rule today**, so this is coverage that is absent rather than a defect being hidden. The same measurement surfaced a separate question — 42 local pins lag their production pin (e.g. `apps/homepage` prod `v2.3.0` / local `v1.13.2`) | `git ls-files`, `BAD_TAG` applied to each | A checker claiming tag coverage it does not have | CLEANUP | Open — generalisation shown, not adopted; the 42-pin drift is a separate decision |
+| R14 | `check_env()` read only `.env.example` and matched only `<NAME>_TAG`, so 84 committed `*.env*.example` files and the 12 `<NAME>_IMAGE` pins were never checked. Measured: **0 violated the tag rule**. The same measurement surfaced the separate question of 41 local pins lagging production | `git ls-files`, `BAD_TAG` applied to each | A checker claiming tag coverage it does not have | CLEANUP | **Closed** — the tag rule reads every example file and both pinning styles; `local-pin-drift` now enforces that a local stack pins what production ships, and all 41 pins are synchronised (D7) |
 | R15 | The hardening coverage figures in `docs/security-verification.md` were maintained by hand and went stale twice in three days — corrected to 166 services on 2026-09-19, already wrong at 205 on 2026-09-20 because four stacks landed in between. Every one is derivable from the compose files the checkers already parse | the table's own numbers against `check-structure.py --list` | A security document whose numbers are usually wrong | CLEANUP | **Closed** — `scripts/ci/security-coverage.py` counts them from the compose files into [`security-coverage.md`](security-coverage.md), verified in CI. `security-verification.md` keeps the descriptions and links to the figures |
 
 ### Stacks
@@ -325,15 +325,10 @@ deliberately deferred.
 | Renovate: install it or remove the dormant configuration (R11) | D5 |
 | Three project-name mismatches, where a rename moves live volumes (R12) | D6 |
 | Personal data on the public site (W7) | D3 |
-| Whether a local pin should track production by default (R14) | D7 |
 | Restore sections: 85 of 89 READMEs have none (S2) | D2 |
 
 **Deferred by design, scoped but not built**
 
-- **R14** — tag validation reads only `.env.example`; 81 other committed
-  `*.env*.example` files are unchecked. Measured: none violates the rule today.
-  42 local pins differ from production — 38 stale, 3 different image or version
-  schemes, 1 digest-only. All 79 local stacks resolve. No pin was changed.
 - **W8** — catalogue decision facts, five layers, scoped in
   [Catalogue decision facts](#catalogue-decision-facts). Licence and commercial
   model partly exist; operational footprint is derivable from the compose files;
@@ -359,4 +354,4 @@ deliberately deferred.
 | D4 | Does v0.10.0 remain a release, or does measurement become continuous, applied when a stack is verified? | Continuous — the measurement needs the same host session as S1 |
 | D5 | Install Renovate or delete `renovate.json` and its proposal? | Delete — Dependabot already covers Actions and npm, no pin carries a `# renovate:` marker, and no Renovate pull request has ever been opened |
 | D6 | Resolve the three project-name mismatches by editing `.env.example` or the directory? | Neither before v1.0 — a rename breaks live deployments; record it as an exception |
-| D7 | Should a local pin track its production pin by default? | Yes, with recorded exceptions — that turns 38 stale pins into a mechanical sync and leaves the 3 scheme differences and 1 digest case as stated facts. Nothing moves until this is decided |
+| D7 | Should a local pin track its production pin by default? | **Decided — yes, enforced.** No exception list was needed: joining on the image repository rather than the variable name makes the legitimate cases fall out. `apps/vllm` runs the CPU build locally and is never compared; a service the local stack does not run is simply absent. 41 pins synchronised, Version Chain step 4 added |

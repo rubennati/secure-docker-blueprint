@@ -152,10 +152,17 @@ A chain is a defined sequence of files to check and update for a specific trigge
 | 1 | Release notes | Read changelog — any breaking changes, removed features, required migrations? |
 | 2 | Security advisories | Check the upstream GitHub repo for open CVEs or security advisories against the current and new version (`Security` tab → `Advisories`) |
 | 3 | `<app>/.env.example` | Bump image tag — test on clean install first, then commit |
-| 4 | `<app>/UPSTREAM.md` | Update version reference and release notes link |
-| 5 | `<app>/docker-compose.yml` | Check if any compose changes are needed (new envs, removed features, healthcheck changes) |
-| 6 | `docs/bugfixes/` | If anything broke during upgrade, document it here |
-| 7 | `CHANGELOG.md` | Version bump documented |
+| 4 | `<app>/.env.local.example` | Bump the same pin, where the local stack runs the same image. `check-structure.py` fails on a local pin that lags production (`local-pin-drift`) |
+| 5 | `<app>/UPSTREAM.md` | Update version reference and release notes link |
+| 6 | `<app>/docker-compose.yml` | Check if any compose changes are needed (new envs, removed features, healthcheck changes) |
+| 7 | `docs/bugfixes/` | If anything broke during upgrade, document it here |
+| 8 | `CHANGELOG.md` | Version bump documented |
+
+Step 4 exists because its absence was the whole defect: the chain named only
+`.env.example`, so no bump ever reached the local file, and 41 pins across 39
+stacks had drifted behind production — `apps/homepage` by ten minor versions —
+without anyone deciding they should. A local stack whose version nobody ships is
+not an evaluation of this repository.
 
 ---
 
