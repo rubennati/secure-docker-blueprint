@@ -234,7 +234,7 @@ maintained facts is its own question, answered per stack.
    a process record and carries no source; a `none` *fact* asserts something about
    upstream and does.
 
-   Researched so far: **30 of 95** — 21 with facts, 9 checked and clear.
+   Researched so far: **50 of 95** — 22 with facts, 28 checked and clear.
    Listed in `.ai/tasks.md`. Unresolved and left
    unrecorded rather than inferred: `apps/hemmelig`, whose README and `LICENSE` file
    disagree, and `apps/collabora`, whose limits no reachable upstream page states.
@@ -243,10 +243,11 @@ maintained facts is its own question, answered per stack.
    `apps/nocodb` was recorded as AGPL-3.0 after upstream relicensed to the Sustainable
    Use License, `core/dockhand` told operators internal business use was free where the
    licence requires a Commercial Licence for it, `core/teleport`'s container images
-   have not been Apache-2.0 since version 16, and `backup/urbackup` was recorded as
-   GPL-3.0-or-later where its `COPYING` is the Affero GPL, whose §13 obliges an
-   operator to offer source to network users. None of the four carried a signal that a
-   filter would have caught.
+   have not been Apache-2.0 since version 16, and four stacks — `backup/urbackup`,
+   `apps/photoview`, `apps/vaultwarden` and `apps/homarr` — carried the wrong licence
+   outright, three of them recording a plain GPL where the file is the Affero GPL,
+   whose §13 obliges an operator to offer source to network users. None of the seven
+   carried a signal that a filter would have caught.
 
 5. **Operational footprint** — how much machinery a stack brings, as facts rather
    than a verdict. Two products solving one problem at very different weights is a

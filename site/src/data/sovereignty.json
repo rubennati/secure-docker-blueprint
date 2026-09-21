@@ -147,7 +147,7 @@
     "bloc": "EU",
     "country": "Community",
     "entity": "homarr-labs",
-    "license": "MIT (fork heritage: originally forked from `ajnart/homarr`; current maintainer `homarr-labs`)",
+    "license": "Apache-2.0 (fork heritage: originally forked from `ajnart/homarr`, which was MIT; `homarr-labs/homarr` ships the Apache licence)",
     "license_class": "osi",
     "origin": "Community · homarr-labs · EU contributors"
   },
@@ -299,7 +299,7 @@
     "bloc": "EU",
     "country": "Denmark",
     "entity": "community",
-    "license": "GPL-3.0",
+    "license": "AGPL-3.0 — `LICENSE.txt` upstream is the GNU **Affero** GPL v3, not the plain GPL recorded here; §13 obliges an operator to offer source to users reaching it over a network",
     "license_class": "osi",
     "origin": "Denmark · community · EU"
   },
@@ -363,7 +363,7 @@
     "bloc": "none",
     "country": "Community",
     "entity": "unofficial Bitwarden reimplementation",
-    "license": "GPL-3.0",
+    "license": "AGPL-3.0 — `LICENSE.txt` upstream is the GNU **Affero** GPL v3, not the plain GPL recorded here; §13 obliges an operator to offer source to users reaching it over a network",
     "license_class": "osi",
     "origin": "Community · unofficial Bitwarden reimplementation · no single jurisdiction"
   },

@@ -6,7 +6,7 @@
 - **Project home:** https://www.adminer.org/
 - **GitHub:** https://github.com/vrana/adminer
 - **License:** Apache-2.0
-- **Decision facts checked:** not yet
+- **Decision facts checked:** 2026-09-21
 - **Origin:** Czech Republic · Jakub Vrána · EU
 - **Domain:** Developer tools
 - **Role:** Web interface onto a database another stack already runs

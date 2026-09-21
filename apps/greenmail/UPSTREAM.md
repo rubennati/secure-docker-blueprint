@@ -6,7 +6,7 @@
 - **GitHub:** https://github.com/greenmail-mail-test/greenmail
 - **Docs:** https://greenmail-mail-test.github.io/greenmail/
 - **License:** Apache-2.0
-- **Decision facts checked:** not yet
+- **Decision facts checked:** 2026-09-21
 - **Origin:** Community · Marcel May · Germany · EU
 - **Domain:** Developer tools
 - **Role:** SMTP, IMAP and POP3 test server with a mailbox per recipient, for automated tests

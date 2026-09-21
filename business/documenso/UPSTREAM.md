@@ -7,7 +7,9 @@
 - **Docs:** https://docs.documenso.com/developers/self-hosting
 - **Self-host compose reference:** `docker/production/compose.yml` in the upstream repo
 - **License:** AGPL-3.0
-- **Decision facts checked:** not yet
+- **Edition gating:** single sign-on, the embed editor white label and 21 CFR Part 11 compliance are enterprise features activated with a licence key; the AGPL-3.0 self-hosted edition carries the core functionality without them — https://docs.documenso.com/developers/self-hosting · checked 2026-09-21
+- **Commercial model:** paid self-hosted edition — https://docs.documenso.com/developers/self-hosting · checked 2026-09-21
+- **Decision facts checked:** 2026-09-21
 - **Origin:** US · Documenso Inc · non-EU (development largely from Hamburg, Germany)
 - **Domain:** Documents and e-signature
 - **Role:** Document signing with your own certificate

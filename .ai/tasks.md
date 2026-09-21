@@ -313,7 +313,10 @@ Listed with context in [`state.md`](state.md). Nothing proceeds on these until d
       Sustainable Use License), `core/teleport` (images not Apache-2.0 since v16) and
       `backup/urbackup` (recorded GPL where the file is AGPL) would all have been
       skipped by one.
-      **65 stacks still say `not yet`.** For each, ask three questions against
+      **45 stacks still say `not yet`.** Sweeping the recorded licence of every unresearched
+      stack against the upstream file, via the API call below, is the cheapest first pass:
+      it has now found seven wrong licences, four of them a plain GPL where the file is the
+      Affero GPL. For each, ask three questions against
       authoritative upstream sources — current licence and use rights, decision-relevant
       edition or security-feature gating, decision-relevant commercial model — and then
       either record the facts or just date the marker. Only facts that change an
