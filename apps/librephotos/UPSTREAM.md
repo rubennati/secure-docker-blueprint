@@ -6,7 +6,7 @@
 - **GitHub:** https://github.com/LibrePhotos/librephotos
 - **Docker Hub:** https://hub.docker.com/u/reallibrephotos
 - **License:** MIT
-- **Decision facts checked:** 2026-09-21
+- **Decision facts checked:** not yet
 - **Origin:** Community · no single company · no single jurisdiction
 - **Domain:** Photos
 - **Role:** Photo library with face recognition and search

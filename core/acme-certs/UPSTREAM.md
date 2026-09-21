@@ -9,7 +9,7 @@
   image wraps. Its version follows whatever the image was built against; read it with
   `docker compose exec acme-certs acme.sh --version`.
 - **License:** GPL-3.0 (acme.sh)
-- **Decision facts checked:** 2026-09-21
+- **Decision facts checked:** not yet
 - **Origin:** Austria · maintained in this project · EU (the bundled acme.sh is independent, original author Neil Pang)
 - **Domain:** Infrastructure
 - **Role:** Certificates for devices that never pass through the reverse proxy: NAS, routers, mail servers

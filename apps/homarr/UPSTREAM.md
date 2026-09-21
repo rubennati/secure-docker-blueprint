@@ -6,7 +6,7 @@
 - **GitHub:** https://github.com/homarr-labs/homarr
 - **Docs:** https://homarr.dev/
 - **License:** Apache-2.0 (fork heritage: originally forked from `ajnart/homarr`, which was MIT; `homarr-labs/homarr` ships the Apache licence)
-- **Decision facts checked:** 2026-09-21
+- **Decision facts checked:** not yet
 - **Origin:** Community · homarr-labs · EU contributors
 - **Domain:** Dashboards
 - **Role:** Dashboard with integrations into the services you run

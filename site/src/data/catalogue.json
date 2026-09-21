@@ -1,7 +1,7 @@
 {
   "apps/adminer": {
     "decision_facts": {},
-    "decision_facts_checked": "2026-09-21",
+    "decision_facts_checked": null,
     "domain": "Developer tools",
     "footprint": {
       "gpu": null,
@@ -146,7 +146,7 @@
   },
   "apps/dashy": {
     "decision_facts": {},
-    "decision_facts_checked": "2026-09-21",
+    "decision_facts_checked": null,
     "domain": "Dashboards",
     "footprint": {
       "gpu": null,
@@ -245,7 +245,7 @@
   },
   "apps/docling-serve": {
     "decision_facts": {},
-    "decision_facts_checked": "2026-09-21",
+    "decision_facts_checked": null,
     "domain": "AI and local AI",
     "footprint": {
       "gpu": null,
@@ -329,7 +329,7 @@
   },
   "apps/greenmail": {
     "decision_facts": {},
-    "decision_facts_checked": "2026-09-21",
+    "decision_facts_checked": null,
     "domain": "Developer tools",
     "footprint": {
       "gpu": null,
@@ -349,7 +349,7 @@
   },
   "apps/heimdall": {
     "decision_facts": {},
-    "decision_facts_checked": "2026-09-21",
+    "decision_facts_checked": null,
     "domain": "Dashboards",
     "footprint": {
       "gpu": null,
@@ -389,7 +389,7 @@
   },
   "apps/homarr": {
     "decision_facts": {},
-    "decision_facts_checked": "2026-09-21",
+    "decision_facts_checked": null,
     "domain": "Dashboards",
     "footprint": {
       "gpu": null,
@@ -409,7 +409,7 @@
   },
   "apps/homepage": {
     "decision_facts": {},
-    "decision_facts_checked": "2026-09-21",
+    "decision_facts_checked": null,
     "domain": "Dashboards",
     "footprint": {
       "gpu": null,
@@ -453,7 +453,7 @@
   },
   "apps/it-tools": {
     "decision_facts": {},
-    "decision_facts_checked": "2026-09-21",
+    "decision_facts_checked": null,
     "domain": "Developer tools",
     "footprint": {
       "gpu": null,
@@ -473,7 +473,7 @@
   },
   "apps/librephotos": {
     "decision_facts": {},
-    "decision_facts_checked": "2026-09-21",
+    "decision_facts_checked": null,
     "domain": "Photos",
     "footprint": {
       "gpu": null,
@@ -523,7 +523,7 @@
   },
   "apps/lycheeorg": {
     "decision_facts": {},
-    "decision_facts_checked": "2026-09-21",
+    "decision_facts_checked": null,
     "domain": "Photos",
     "footprint": {
       "gpu": null,
@@ -546,7 +546,7 @@
   },
   "apps/mailpit": {
     "decision_facts": {},
-    "decision_facts_checked": "2026-09-21",
+    "decision_facts_checked": null,
     "domain": "Developer tools",
     "footprint": {
       "gpu": null,
@@ -789,7 +789,7 @@
   },
   "apps/paperless-ngx": {
     "decision_facts": {},
-    "decision_facts_checked": "2026-09-21",
+    "decision_facts_checked": null,
     "domain": "Documents and e-signature",
     "footprint": {
       "gpu": null,
@@ -834,7 +834,7 @@
   },
   "apps/photoview": {
     "decision_facts": {},
-    "decision_facts_checked": "2026-09-21",
+    "decision_facts_checked": null,
     "domain": "Photos",
     "footprint": {
       "gpu": null,
@@ -856,7 +856,7 @@
   },
   "apps/privatebin": {
     "decision_facts": {},
-    "decision_facts_checked": "2026-09-21",
+    "decision_facts_checked": null,
     "domain": "Identity, access and secrets",
     "footprint": {
       "gpu": null,
@@ -957,7 +957,7 @@
   },
   "apps/threat-dragon": {
     "decision_facts": {},
-    "decision_facts_checked": "2026-09-21",
+    "decision_facts_checked": null,
     "domain": "Security operations",
     "footprint": {
       "gpu": null,
@@ -1021,7 +1021,7 @@
   },
   "apps/vaultwarden": {
     "decision_facts": {},
-    "decision_facts_checked": "2026-09-21",
+    "decision_facts_checked": null,
     "domain": "Identity, access and secrets",
     "footprint": {
       "gpu": null,
@@ -1083,7 +1083,7 @@
   },
   "apps/whoami": {
     "decision_facts": {},
-    "decision_facts_checked": "2026-09-21",
+    "decision_facts_checked": null,
     "domain": "Developer tools",
     "footprint": {
       "gpu": null,
@@ -1153,7 +1153,7 @@
   },
   "apps/yopass": {
     "decision_facts": {},
-    "decision_facts_checked": "2026-09-21",
+    "decision_facts_checked": null,
     "domain": "Identity, access and secrets",
     "footprint": {
       "gpu": null,
@@ -1189,7 +1189,7 @@
   },
   "backup/urbackup": {
     "decision_facts": {},
-    "decision_facts_checked": "2026-09-21",
+    "decision_facts_checked": null,
     "domain": "Backup",
     "footprint": {
       "gpu": null,
@@ -1598,7 +1598,7 @@
   },
   "core/acme-certs": {
     "decision_facts": {},
-    "decision_facts_checked": "2026-09-21",
+    "decision_facts_checked": null,
     "domain": "Infrastructure",
     "footprint": {
       "gpu": null,
@@ -1673,7 +1673,7 @@
   },
   "core/dnsmasq": {
     "decision_facts": {},
-    "decision_facts_checked": "2026-09-21",
+    "decision_facts_checked": null,
     "domain": "Infrastructure",
     "footprint": {
       "gpu": null,
@@ -1732,7 +1732,7 @@
   },
   "core/hawser": {
     "decision_facts": {},
-    "decision_facts_checked": "2026-09-21",
+    "decision_facts_checked": null,
     "domain": "Infrastructure",
     "footprint": {
       "gpu": null,
@@ -1752,7 +1752,7 @@
   },
   "core/host-watchdog": {
     "decision_facts": {},
-    "decision_facts_checked": null,
+    "decision_facts_checked": "2026-09-21",
     "domain": "Infrastructure",
     "footprint": null,
     "name": "Host Watchdog",
@@ -1815,7 +1815,7 @@
   },
   "core/keycloak": {
     "decision_facts": {},
-    "decision_facts_checked": "2026-09-21",
+    "decision_facts_checked": null,
     "domain": "Identity, access and secrets",
     "footprint": {
       "gpu": null,
@@ -2046,7 +2046,7 @@
   },
   "monitoring/beszel": {
     "decision_facts": {},
-    "decision_facts_checked": "2026-09-21",
+    "decision_facts_checked": null,
     "domain": "Monitoring",
     "footprint": {
       "gpu": null,
@@ -2066,7 +2066,7 @@
   },
   "monitoring/beszel-agent": {
     "decision_facts": {},
-    "decision_facts_checked": "2026-09-21",
+    "decision_facts_checked": null,
     "domain": "Monitoring",
     "footprint": {
       "gpu": null,
@@ -2106,7 +2106,7 @@
   },
   "monitoring/gatus": {
     "decision_facts": {},
-    "decision_facts_checked": "2026-09-21",
+    "decision_facts_checked": null,
     "domain": "Monitoring",
     "footprint": {
       "gpu": null,
@@ -2214,7 +2214,7 @@
   },
   "monitoring/uptime-kuma": {
     "decision_facts": {},
-    "decision_facts_checked": "2026-09-21",
+    "decision_facts_checked": null,
     "domain": "Monitoring",
     "footprint": {
       "gpu": null,

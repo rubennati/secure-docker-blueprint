@@ -234,7 +234,15 @@ maintained facts is its own question, answered per stack.
    a process record and carries no source; a `none` *fact* asserts something about
    upstream and does.
 
-   Researched so far: **50 of 95** — 22 with facts, 28 checked and clear.
+   Researched so far: **24 of 95** — 22 with facts, 2 checked and clear.
+
+   Two sweeps cover every stack and are recorded in `.ai/tasks.md` as progress rather
+   than as a verdict: each recorded licence has been checked against the upstream file,
+   and no remaining repository carries an edition carve-out in its root. **Neither
+   licenses a checked date.** `business/matomo` is plain GPL-3.0 with no enterprise
+   directory and still sells SAML sign-on as a separate EULA plugin, so a stack is
+   checked only once a source speaking to edition gating and the commercial model has
+   been read.
    Listed in `.ai/tasks.md`. Unresolved and left
    unrecorded rather than inferred: `apps/hemmelig`, whose README and `LICENSE` file
    disagree, and `apps/collabora`, whose limits no reachable upstream page states.
