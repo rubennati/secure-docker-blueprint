@@ -235,8 +235,8 @@
     "bloc": "non-EU",
     "country": "US",
     "entity": "NocoDB Inc",
-    "license": "AGPL-3.0",
-    "license_class": "osi",
+    "license": "Sustainable Use License 1.0 (source-available, **not** OSI-approved). NocoDB relicensed from AGPL-3.0; the licence file is dated 2026-01-29",
+    "license_class": "source-available",
     "origin": "US · NocoDB Inc · non-EU"
   },
   "apps/ollama": {
