@@ -669,8 +669,8 @@
     ]
   },
   "unscanned": {
-    "docker.langfuse.com/langfuse/langfuse": "registry serves no anonymous pull; the image is not reachable from CI",
-    "docker.langfuse.com/langfuse/langfuse-worker": "registry serves no anonymous pull; the image is not reachable from CI",
-    "docker.n8n.io/n8nio/n8n": "registry serves no anonymous pull; the image is not reachable from CI"
+    "docker.langfuse.com/langfuse/langfuse": "Docker Hub unauthenticated pull rate limit (TOOMANYREQUESTS) — transient, not an access denial: the image scans once the limit resets, and which of the three is affected differs per run",
+    "docker.langfuse.com/langfuse/langfuse-worker": "Docker Hub unauthenticated pull rate limit (TOOMANYREQUESTS) — transient, not an access denial: the image scans once the limit resets, and which of the three is affected differs per run",
+    "docker.n8n.io/n8nio/n8n": "Docker Hub unauthenticated pull rate limit (TOOMANYREQUESTS) — transient, not an access denial: the image scans once the limit resets, and which of the three is affected differs per run"
   }
 }

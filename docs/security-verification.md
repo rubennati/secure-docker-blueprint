@@ -377,8 +377,13 @@ document restates their coverage, severity or exit behavior — it points here.
   finding has gone is reported as prunable and does not fail the gate.
 - **Coverage can only shrink deliberately.** An unscanned image contributes no
   findings, so it can never fail the CVE half of the gate; it fails on its own
-  unless `.trivy-baseline.json` acknowledges it with a reason. Three registries
-  serve no anonymous pull and are acknowledged there today. The same applies to
+  unless `.trivy-baseline.json` acknowledges it with a reason. Three images are
+  acknowledged there today, all for the same reason: Docker Hub's unauthenticated
+  pull rate limit. That is transient rather than an access denial — which of the
+  three trips it differs per run, and two of them scanned normally on the next
+  one. Acknowledging them keeps a rate limit from turning the gate flaky; the
+  cost is that a genuine future access failure for those three would pass, which
+  is the trade the alternative does not improve on. The same applies to
   an image discovery resolved that produced neither a report nor a recorded
   failure, and to a report that cannot be parsed — "could not be read" and "was
   never reached" must never arrive at the gate as "found nothing".
