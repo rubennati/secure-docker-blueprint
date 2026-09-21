@@ -9,6 +9,11 @@
  * What was checked is shown as evidence, not as a grade: a date and the version
  * it was checked against, or the plain statement that no host run has happened.
  * The filter is plain DOM — it narrows the list; it does not rank it.
+ *
+ * The footprint line is the same kind of statement. It says how much machinery a
+ * stack brings — services, the infrastructure it needs beside the application, a
+ * GPU where one is reserved — and deliberately carries no memory figure: the
+ * repository configures a limit, which is not what the application requires.
  */
 import catalogue from '../data/catalogue.json';
 
@@ -21,6 +26,13 @@ type Entry = {
 	state: string;
 	verified: string | null;
 	verified_version: string | null;
+	footprint: {
+		services: number;
+		init_services: number;
+		infrastructure: string[];
+		gpu: string | null;
+		summary: string;
+	} | null;
 	path: string;
 };
 
@@ -78,12 +90,13 @@ const checked = (e: Entry) =>
 				<h2 id={g.id}>{g.domain}</h2>
 				<ul>
 					{g.items.map((e) => (
-						<li data-text={`${e.name} ${e.role}`.toLowerCase()}>
+						<li data-text={`${e.name} ${e.role} ${e.footprint?.summary ?? ''}`.toLowerCase()}>
 							<div class="cat__head">
 								<strong>{e.name}</strong>
 								{e.version && <code>{e.version}</code>}
 							</div>
 							<p>{e.role}</p>
+							{e.footprint && <p class="cat__footprint">{e.footprint.summary}</p>}
 							<p class="cat__meta">
 								<span>{checked(e)}</span>
 								<a href={`${REPO}${e.path}`}>Files</a>
@@ -176,6 +189,12 @@ const checked = (e: Entry) =>
 		margin: 0.3rem 0 0;
 		font-size: 0.88rem;
 	}
+	.cat__footprint {
+		font-size: 0.75rem !important;
+		color: var(--sl-color-gray-3);
+		margin-block: 0.15rem !important;
+	}
+
 	.cat__meta {
 		display: flex;
 		flex-wrap: wrap;

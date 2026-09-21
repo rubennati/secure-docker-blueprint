@@ -31,6 +31,22 @@ A stack reaches the operator site by existing: the catalogue is generated from
 `UPSTREAM.md`, so `Domain` and `Role` are what put it there. Nothing else has to be
 added to the site by hand.
 
+Its **operational footprint** — service count, the infrastructure it needs beside
+the application, a reserved GPU — is read from the stack's own compose files by the
+same generator. There is no field to fill and none to keep current: change the
+compose file and the catalogue follows. The point is comparison without judgement,
+so that a two-service stack with a MariaDB and a ten-service one with a database, a
+cache and workers are distinguishable without either being called the better
+choice.
+
+**No memory figure appears there, and none should be added from the compose files.**
+`deploy.resources.limits.memory` is the ceiling this repository sets on a service,
+not what the application needs — publishing it as a requirement would turn a local
+policy into a fabricated fact about upstream. What upstream publishes as a minimum
+is per-stack metadata with a source; real idle, typical and peak figures need a
+host, which is what [`../resource-measurement.md`](../resource-measurement.md)
+governs.
+
 ---
 
 ## 1. Research the Image
