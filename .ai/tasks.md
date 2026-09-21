@@ -307,8 +307,11 @@ Listed with context in [`state.md`](state.md). Nothing proceeds on these until d
       production, but it is the only deviation from the form in
       `docs/standards/compose-structure.md`. Either give it the companion file or
       state the exception there — `local-pin-drift` covers it under both
-- [ ] Continue W8 until every stack states a research date rather than `not yet`.
-      **32 of 97 are researched — 30 with facts, 2 checked and clear — and 65 remain.**
+- [ ] **W8 research coverage — a standing activity, not a stabilization item.** The system
+      is complete: schema, provenance rules, generation, the per-stack marker and the check
+      that refuses a stack stating neither a date nor `not yet`. Nothing in the baseline
+      waits on this. What continues is reading upstream terms, one stack at a time.
+      **32 of 97 researched — 30 with facts, 2 checked and clear — 65 remain.**
 
       **Pages already read that do not answer the question — do not retry these:**
       `apps/onlyoffice` (the Enterprise pricing page prices per user and never compares
