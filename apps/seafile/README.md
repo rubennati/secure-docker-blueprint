@@ -68,7 +68,9 @@ openssl rand -base64 32 | tr -d '\n' > .secrets/db_root_pwd.txt
 openssl rand -base64 32 | tr -d '\n' > .secrets/seafile_db_pwd.txt
 openssl rand -base64 32 | tr -d '\n' > .secrets/seafile_admin_pwd.txt
 openssl rand -base64 48 | tr -d '\n' > .secrets/jwt_key.txt
-openssl rand -base64 32 | tr -d '\n' > .secrets/redis_pwd.txt
+# Redis: hex, not base64 — Seafile builds its Redis connection URL from this
+# value without escaping it, and a "/" would terminate the URL early.
+openssl rand -hex 32 | tr -d '\n' > .secrets/redis_pwd.txt
 
 # 3. SMTP secret file — always required (mounted unconditionally by compose)
 # SMTP disabled:
