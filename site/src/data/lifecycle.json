@@ -219,6 +219,16 @@
     "verified_anchored": true,
     "verified_version": "v0.10.9"
   },
+  "apps/httpbin": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=0.10.4",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "apps/immich": {
     "backup_docs": "documented",
     "local_stack": "✅",
@@ -548,6 +558,16 @@
     "verified": "2026-07-29",
     "verified_anchored": true,
     "verified_version": "2.1.6"
+  },
+  "backup/rclone-web": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=1.75.1",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "backup/urbackup": {
     "backup_docs": "documented",

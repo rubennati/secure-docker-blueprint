@@ -175,6 +175,14 @@
     "license_class": "osi",
     "origin": "US · community (gethomepage) · non-EU"
   },
+  "apps/httpbin": {
+    "bloc": "non-EU",
+    "country": "United States",
+    "entity": "Python Software Foundation",
+    "license": "MIT or ISC (either, at the user's choice, per the repository's LICENSE)",
+    "license_class": "osi",
+    "origin": "United States · Python Software Foundation · non-EU"
+  },
   "apps/immich": {
     "bloc": "non-EU",
     "country": "US",
@@ -438,6 +446,14 @@
     "license": "GPL-3.0-or-later",
     "license_class": "osi",
     "origin": "Community · borgmatic-collective (Dan Helfman) · no single jurisdiction"
+  },
+  "backup/rclone-web": {
+    "bloc": "non-EU",
+    "country": "UK",
+    "entity": "Nick Craig-Wood (rclone)",
+    "license": "MIT",
+    "license_class": "osi",
+    "origin": "UK · Nick Craig-Wood (rclone) · non-EU"
   },
   "backup/urbackup": {
     "bloc": "EU",

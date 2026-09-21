@@ -1,0 +1,88 @@
+# =============================================================================
+# httpbin — production stack (Traefik)
+# =============================================================================
+# HTTP request and response service for testing clients: it echoes headers,
+# query arguments and bodies, and returns chosen status codes, redirects,
+# delays and payloads.
+#
+# Image: ghcr.io/psf/httpbin
+# Source: https://github.com/psf/httpbin (fork of postmanlabs/httpbin)
+#
+# Spec: docs/standards/compose-structure.md · security-baseline.md
+# =============================================================================
+
+services:
+
+  # --------------------------------------------------------
+  # HTTPBIN
+  # On proxy-public, so it carries the stack identity + role suffix
+  # --------------------------------------------------------
+  httpbin-app:
+    # --- Identity ---
+    image: ghcr.io/psf/httpbin:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+    # The image runs as uid 999 (httpbin).
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+
+    # --- Resources ---
+    # One Gunicorn worker with eight threads; derived starting values, not measured.
+    memswap_limit: 256m        # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.50"
+          pids: 100
+        reservations:
+          memory: 32m
+
+    # --- Configuration ---
+    # The image's start script runs Gunicorn with the gevent worker, which exits
+    # at start in 0.10.3 and 0.10.4 (psf/httpbin#69). Same server, gthread worker.
+    # The control socket would be written into the read-only image; it is off.
+    command: ["/opt/httpbin/bin/gunicorn", "-b", "0.0.0.0:8080", "-k", "gthread", "--threads", "8", "--no-control-socket", "httpbin:app"]
+    environment:
+      TZ: ${TZ}
+
+    # --- Storage ---
+    tmpfs:
+      - /tmp
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+
+    # --- Traefik ---
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.service=${COMPOSE_PROJECT_NAME}"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8080"
+
+    # --- Health & Observability ---
+    # The image has no curl or wget; Python is there.
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/status/200', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true

@@ -1,0 +1,124 @@
+# =============================================================================
+# Rclone Web — production stack (Traefik + Docker Secrets)
+# =============================================================================
+# Browser interface for rclone: storage remotes, copy and sync jobs, serves and
+# transfer statistics. `rclone gui` serves the interface, embedded in the binary
+# at build time, and rclone's remote control API beside it.
+#
+# Image: rclone/rclone
+# Source: https://github.com/rclone/rclone-web (interface), https://github.com/rclone/rclone
+#
+# One host name: the interface at /, the API at /api/. The API holds every
+# remote's credentials, so the shipped access policy is VPN-only.
+#
+# Spec: docs/standards/compose-structure.md · security-baseline.md
+# =============================================================================
+
+services:
+
+  # --------------------------------------------------------
+  # RCLONE (interface + remote control API)
+  # On proxy-public, so it carries the stack identity + role suffix
+  # --------------------------------------------------------
+  rclone-web:
+    # --- Identity ---
+    image: rclone/rclone:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+    # The image runs as root by default; it works unprivileged when the config
+    # and data directories belong to this uid.
+    user: "${APP_UID}:${APP_GID}"
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+
+    # --- Resources ---
+    # Transfers buffer in memory; derived starting values, not measured.
+    memswap_limit: 1G          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "2.00"
+          pids: 200
+        reservations:
+          memory: 64M
+
+    # --- Configuration ---
+    # The API checks logins against a htpasswd file, so rclone never holds the
+    # password itself. --rc-baseurl puts the API under /api/ on the same host.
+    command:
+      - gui
+      - --no-open-browser
+      - --addr=0.0.0.0:5522
+      - --api-addr=0.0.0.0:5533
+      - --rc-baseurl=/api
+      - --rc-htpasswd=/run/secrets/GUI_HTPASSWD
+    environment:
+      TZ: ${TZ}
+    secrets:
+      - GUI_HTPASSWD
+
+    # --- Storage ---
+    # rclone.conf (every remote and its credentials) and the local files rclone
+    # may read and write. Both belong to APP_UID on the host.
+    volumes:
+      - ./volumes/config:/config/rclone
+      - ./volumes/data:/data
+    tmpfs:
+      - /tmp
+
+    # --- Networking ---
+    # proxy-public only: rclone reaches the storage providers from here, and
+    # there is no second service to isolate.
+    networks:
+      - proxy-public
+
+    # --- Traefik ---
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      # Interface
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.priority=1"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.service=${COMPOSE_PROJECT_NAME}"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=5522"
+      # Remote control API
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/api/`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.priority=100"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.service=${COMPOSE_PROJECT_NAME}-api"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}-api.loadbalancer.server.port=5533"
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO /dev/null http://127.0.0.1:5522/ && nc -z 127.0.0.1 5533 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  GUI_HTPASSWD:
+    file: ./.secrets/gui_htpasswd
