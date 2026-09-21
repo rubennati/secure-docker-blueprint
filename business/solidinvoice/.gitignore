@@ -1,0 +1,3 @@
+volumes/
+.env
+.env.local

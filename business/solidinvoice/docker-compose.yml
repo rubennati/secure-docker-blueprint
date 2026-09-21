@@ -1,0 +1,108 @@
+# =============================================================================
+# SolidInvoice — production stack (Traefik)
+# =============================================================================
+# Invoicing: clients, quotes, invoices, recurring invoices and payments. One
+# self-contained binary — PHP and a web server embedded — with SQLite in the
+# configuration volume, the database the application's own installer recommends.
+#
+# Image: solidinvoice/solidinvoice (https://hub.docker.com/r/solidinvoice/solidinvoice)
+# Source: https://github.com/SolidInvoice/SolidInvoice
+#
+# Setup is the web installer. Its command-line counterpart does not complete in
+# this release — see UPSTREAM.md — so the router ships VPN-only until the
+# installer has run.
+#
+# Spec: docs/standards/compose-structure.md · security-baseline.md
+# =============================================================================
+
+services:
+
+  # --------------------------------------------------------
+  # SOLIDINVOICE
+  # On proxy-public, so it carries the stack identity + role suffix
+  # --------------------------------------------------------
+  solidinvoice-app:
+    # --- Identity ---
+    image: solidinvoice/solidinvoice:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+    # The image runs as root by default; it works unprivileged when the
+    # configuration directory belongs to this uid. Verified — see UPSTREAM.md.
+    user: "${APP_UID}:${APP_GID}"
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+
+    # --- Resources ---
+    # Measured, not derived: 2.2 GiB at peak during start and 1.8 GiB once
+    # running — about 1.4 GiB of process memory (the main process alone 1.38 GiB)
+    # plus 0.6 GiB in the tmpfs, which counts against this limit. At 1G the
+    # container was killed for memory 25 times in a row and never came up.
+    memswap_limit: 3G          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 3G
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 1G
+
+    # --- Configuration ---
+    # HTTPS is Traefik's job; the binary would otherwise try to obtain its own
+    # certificate. The image's entrypoint is the binary itself.
+    command: ["run", "--disable-https", "--skip-intro"]
+    environment:
+      # The binary unpacks its PHP application into $HOME on every start. With a
+      # read-only root that has to be the tmpfs below.
+      HOME: /tmp
+      # Telemetry is off by default in this release; stated here so the
+      # installer's own choice cannot turn it on.
+      SOLIDINVOICE_ENABLE_TELEMETRY: "0"
+      TZ: ${TZ}
+
+    # --- Storage ---
+    # The configuration directory holds the application's secrets vault and, in
+    # db/, the SQLite database. It belongs to APP_UID on the host.
+    volumes:
+      - ./volumes/config:/etc/solidinvoice
+    tmpfs:
+      # The unpacked application (310 MB measured) plus its caches; 0.6 GiB in
+      # use once running. Counts against the memory limit above.
+      - /tmp:size=1g
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+
+    # --- Traefik ---
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.service=${COMPOSE_PROJECT_NAME}"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8765"
+
+    # --- Health & Observability ---
+    # Unpacking and warming the cache takes about a minute at every start.
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO /dev/null http://127.0.0.1:8765/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true

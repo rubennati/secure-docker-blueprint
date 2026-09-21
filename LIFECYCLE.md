@@ -4,7 +4,7 @@
 
 Generated 2026-09-21 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-91 stacks: 1 ops-proven · 13 baseline-aligned · 77 scaffolded. 81 carry a local test stack.
+93 stacks: 1 ops-proven · 13 baseline-aligned · 79 scaffolded. 83 carry a local test stack.
 
 This is the maintainer's view: what has been established about each stack. It makes no statement about whether a stack suits a given deployment.
 
@@ -100,6 +100,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 
 | Stack | State | Pinned | Last verified | Local | Backup docs | Restore docs |
 |---|---|---|---|---|---|---|
+| [`business/akaunting`](business/akaunting/) | `scaffolded` | `APP_TAG=3.1.21` | — | ✅ | documented | missing |
 | [`business/documenso`](business/documenso/) | `scaffolded` | `APP_TAG=v2.18.0` | — | ✅ | documented | missing |
 | [`business/dolibarr`](business/dolibarr/) | `scaffolded` | `APP_TAG=23.0.4` | 2026-04-17 ⚠️ | ✅ | documented | missing |
 | [`business/invoiceninja`](business/invoiceninja/) | `baseline-aligned` | `APP_TAG=5.13.40` | 2026-09-13 | ✅ | documented | missing |
@@ -108,6 +109,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`business/matomo`](business/matomo/) | `scaffolded` | `APP_TAG=5.13.0-apache` | 2026-04-17 ⚠️ | ✅ | documented | missing |
 | [`business/openproject`](business/openproject/) | `scaffolded` | `APP_TAG=17.8.0-slim` | 2026-05-06 | ✅ | documented | missing |
 | [`business/opensign`](business/opensign/) | `scaffolded` | `APP_TAG=main@sha256:817654a3f804…` | 2026-05-11 ⚠️ | ✅ | documented | missing |
+| [`business/solidinvoice`](business/solidinvoice/) | `scaffolded` | `APP_TAG=3.0.1` | — | ✅ | documented | missing |
 | [`business/vikunja`](business/vikunja/) | `scaffolded` | `APP_TAG=2.6.0` | 2026-05-06 | ✅ | documented | missing |
 | [`business/zammad`](business/zammad/) | `scaffolded` | `APP_TAG=7.1.3-0012` | 2026-08-16 ⚠️ | ✅ | documented | missing |
 

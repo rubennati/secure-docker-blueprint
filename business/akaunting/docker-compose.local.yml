@@ -1,0 +1,87 @@
+# Akaunting — local
+#
+#   cp .env.local.example .env.local
+#   ops/init.sh
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   open http://localhost:8080        # the web installer, or run the artisan
+#                                     # command from ops/install.sh by hand
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+#
+# Same image, same read-only settings and the same mounts as the production file,
+# without Traefik and without the Docker Secrets mechanism. It mounts the same
+# volumes/, so run one at a time.
+
+services:
+
+  db:
+    image: mariadb:${DB_TAG}
+    container_name: akaunting-local-db
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [CHOWN, SETUID, SETGID, DAC_OVERRIDE]
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD_FILE: /run/secrets/DB_PWD
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/DB_ROOT_PWD
+      TZ: ${TZ}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - ./.secrets/db_pwd.txt:/run/secrets/DB_PWD:ro
+      - ./.secrets/db_root_pwd.txt:/run/secrets/DB_ROOT_PWD:ro
+      - ./volumes/mysql:/var/lib/mysql
+    networks: [akaunting-local]
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  akaunting-app:
+    image: akaunting/akaunting:${APP_TAG}
+    container_name: akaunting-local-app
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [SETUID, SETGID]
+    read_only: true
+    entrypoint: ["/bin/sh", "/entrypoint.sh"]
+    command: ["docker-php-entrypoint", "apache2-foreground"]
+    environment:
+      APP_URL: http://localhost:8080
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_DATABASE: ${DB_NAME}
+      DB_USERNAME: ${DB_USER}
+      DB_PREFIX: ${DB_PREFIX}
+      TZ: ${TZ}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./config/entrypoint.sh:/entrypoint.sh:ro
+      - ./config/rewrite.load:/etc/apache2/mods-enabled/rewrite.load:ro
+      - ./.secrets/db_pwd.txt:/run/secrets/DB_PWD:ro
+      - ./.secrets/admin_pwd.txt:/run/secrets/ADMIN_PWD:ro
+      - ./volumes/storage:/var/www/html/storage
+      - ./volumes/app.env:/var/www/html/.env
+      - type: tmpfs
+        target: /var/www/html/bootstrap/cache
+        tmpfs:
+          mode: 1023
+    tmpfs:
+      - /tmp
+      - /var/run/apache2
+      - /var/lock/apache2
+      - /var/log/apache2
+    ports:
+      - "127.0.0.1:8080:80"
+    networks: [akaunting-local]
+
+networks:
+  akaunting-local:
+    name: akaunting-local

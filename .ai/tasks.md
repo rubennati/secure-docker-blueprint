@@ -73,7 +73,8 @@ was verified by running it. Three of the fifteen already ship.
 - [ ] Eleven products have a version-tagged image and can be written as stacks, in
       six batches (A calrs+Calnode · B SolidInvoice+FacturaScripts+Akaunting ·
       C Twenty+Chatwoot · D CISO Assistant+DefectDojo · E obot · F ERPNext).
-      Batch A is exercised; nothing is written yet.
+      Batch A shipped (#140). Batch B: Akaunting and SolidInvoice shipped,
+      FacturaScripts held — see the evaluation's *Findings from implementation*.
 - [ ] Four publish no image (DayOtter, Dapta Calendars, MAILFLOW-AI, Crater) and
       stay evaluation entries. Proposed: ask DayOtter's maintainer to publish a tag;
       record the other three with the reason. No fork is proposed.
