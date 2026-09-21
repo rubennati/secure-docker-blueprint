@@ -9,6 +9,7 @@
 - **License:** AGPL-3.0 (source) / Commercial (Community Edition compiled
   binaries and container images, since Teleport 16) — see "Community
   Edition license" below, this is not a simple open-source license
+- **Use restrictions:** the compiled binaries, container images and AMIs — which is what this stack deploys — have carried the Teleport Community Edition commercial licence rather than Apache-2.0 since Teleport 16. Under it a company may use Community Edition only with fewer than 100 employees **and** less than $10M annual revenue, and may not resell or embed it; individuals are unrestricted for personal use. Compiling the AGPLv3 source yourself is the alternative — https://goteleport.com/blog/teleport-community-license/ · checked 2026-09-21
 - **Origin:** USA · Gravitational, Inc. · non-EU
 - **Domain:** Identity, access and secrets
 - **Role:** Access through short-lived certificates instead of standing credentials
