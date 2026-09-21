@@ -63,19 +63,36 @@ A decision, with a possible v1.0 impact — see [`decisions.md`](decisions.md) a
 Phased plan in [`../apps/caldiy/docs/hardening-plan.md`](../apps/caldiy/docs/hardening-plan.md).
 The stack builds from a reviewed fork; the hardening phases are not finished.
 
-### 6. Held: Priority 2 and other candidates
+### 6. Fifteen proposed products — evaluated 2026-09-21
+
+Full evidence per product in
+[`../docs/audits/candidate-evaluation-2026-09-21.md`](../docs/audits/candidate-evaluation-2026-09-21.md):
+what each publishes, where its compose actually lives, the licence splits, and what
+was verified by running it. Three of the fifteen already ship.
+
+- [ ] Eleven products have a version-tagged image and can be written as stacks, in
+      six batches (A calrs+Calnode · B SolidInvoice+FacturaScripts+Akaunting ·
+      C Twenty+Chatwoot · D CISO Assistant+DefectDojo · E obot · F ERPNext).
+      Batch A is exercised; nothing is written yet.
+- [ ] Four publish no image (DayOtter, Dapta Calendars, MAILFLOW-AI, Crater) and
+      stay evaluation entries. Proposed: ask DayOtter's maintainer to publish a tag;
+      record the other three with the reason. No fork is proposed.
+- [ ] Adding these while `../ROADMAP.md` holds applications is a deliberate
+      exception and needs recording where the hold is stated.
+
+### 7. Held: Priority 2 and other candidates
 
 No application is added while the v1.0 items are open — S1 (verification), C1
 (above) and D3. Candidates are in `../ROADMAP.md` under "On hold": the per-category
 planned lists, Plane / Leantime / AppFlowy, Suricata, Coraza. The AI candidates that were
 held are shipped.
 
-### 7. Milestone v0.10.0 — measured resource limits
+### 8. Milestone v0.10.0 — measured resource limits
 
 Every `✅` stack's limits from a measurement on a real install
 ([`../docs/resource-measurement.md`](../docs/resource-measurement.md)). Needs a host.
 
-### 8. Small items
+### 9. Small items
 
 - Vikunja's `.env.example` carries `smtp-relay.brevo.com` as the mailer host with the
   mailer disabled — a vendor value where the convention is `example.com` or empty.
