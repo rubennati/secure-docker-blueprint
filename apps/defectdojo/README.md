@@ -79,7 +79,7 @@ when none is set. Here it is set, so nothing is printed.
 
 `scaffolded` — see [UPSTREAM.md](UPSTREAM.md#verification-performed-2026-09-21).
 
-## Local deployment validation
+## Try it locally
 
 ```bash
 cp .env.local.example .env.local

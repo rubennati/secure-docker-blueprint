@@ -75,7 +75,7 @@ needs a wider access policy — and the agent dashboard sits behind the same one
 
 `scaffolded` — see [UPSTREAM.md](UPSTREAM.md#verification-performed-2026-09-21).
 
-## Local deployment validation
+## Try it locally
 
 ```bash
 cp .env.local.example .env.local
