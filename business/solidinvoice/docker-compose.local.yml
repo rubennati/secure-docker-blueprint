@@ -1,0 +1,37 @@
+# SolidInvoice — local
+#
+#   cp .env.local.example .env.local
+#   ops/init.sh
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   open http://localhost:8765/install      # after about a minute
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+#
+# Same image and read-only settings as the production file, without Traefik.
+# It mounts the same volumes/config, so run one at a time.
+
+services:
+
+  solidinvoice-app:
+    image: solidinvoice/solidinvoice:${APP_TAG}
+    container_name: solidinvoice-local-app
+    restart: unless-stopped
+    user: "${APP_UID}:${APP_GID}"
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    command: ["run", "--disable-https", "--skip-intro"]
+    environment:
+      HOME: /tmp
+      SOLIDINVOICE_ENABLE_TELEMETRY: "0"
+      TZ: ${TZ}
+    volumes:
+      - ./volumes/config:/etc/solidinvoice
+    tmpfs:
+      - /tmp:size=1g
+    ports:
+      - "127.0.0.1:8765:8765"
+    networks: [solidinvoice-local]
+
+networks:
+  solidinvoice-local:
+    name: solidinvoice-local

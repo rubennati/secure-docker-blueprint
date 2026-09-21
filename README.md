@@ -26,13 +26,13 @@ Quick Navigation: [Getting started](#getting-started) · [Repository layout](#re
 
 ## Stacks
 
-91 stacks in five categories. Each category below links to its full list.
+93 stacks in five categories. Each category below links to its full list.
 
 | Browse | Stacks | Examples |
 |---|---|---|
 | [**`core/`** — proxy, identity, threat detection, secrets, Docker management](core/) | 19 | Traefik · Authentik · Keycloak · CrowdSec · Infisical · dnsmasq · Portainer |
 | [**`apps/`** — general self-hosted applications](apps/) | 52 | Nextcloud · Immich · Paperless-ngx · Vaultwarden · Ollama · Windmill · Ghost · n8n · Mailpit |
-| [**`business/`** — invoicing, project management, helpdesk, analytics, e-signature](business/) | 10 | Invoice Ninja · OpenProject · Vikunja · Zammad · Matomo · Documenso |
+| [**`business/`** — invoicing, project management, helpdesk, analytics, e-signature](business/) | 12 | Invoice Ninja · OpenProject · Vikunja · Zammad · Matomo · Documenso |
 | [**`monitoring/`** — uptime, metrics, notifications](monitoring/) | 8 | Uptime Kuma · Gatus · Beszel · Healthchecks · ntfy · Langfuse |
 | [**`backup/`** — this host outward, your devices inward](backup/) | 2 | Borgmatic · UrBackup |
 

@@ -593,6 +593,17 @@
     "verified_version": null,
     "version": "fd218c45192f…"
   },
+  "business/akaunting": {
+    "domain": "Business operations",
+    "name": "Akaunting",
+    "path": "business/akaunting",
+    "role": "Accounting for small businesses: invoices, bills, customers, vendors, bank accounts and reports",
+    "state": "scaffolded",
+    "upstream": "https://hub.docker.com/r/akaunting/akaunting",
+    "verified": null,
+    "verified_version": null,
+    "version": "3.1.21"
+  },
   "business/documenso": {
     "domain": "Documents and e-signature",
     "name": "Documenso",
@@ -680,6 +691,17 @@
     "verified": null,
     "verified_version": null,
     "version": "817654a3f804…"
+  },
+  "business/solidinvoice": {
+    "domain": "Business operations",
+    "name": "SolidInvoice",
+    "path": "business/solidinvoice",
+    "role": "Invoicing: clients, quotes, invoices, recurring invoices and payments",
+    "state": "scaffolded",
+    "upstream": "https://hub.docker.com/r/solidinvoice/solidinvoice",
+    "verified": null,
+    "verified_version": null,
+    "version": "3.0.1"
   },
   "business/vikunja": {
     "domain": "Business operations",

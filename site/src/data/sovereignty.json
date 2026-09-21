@@ -431,6 +431,14 @@
     "license_class": "osi",
     "origin": "Germany · Martin Raiber (uroni) · EU"
   },
+  "business/akaunting": {
+    "bloc": "non-EU",
+    "country": "Turkey",
+    "entity": "Akaunting Inc",
+    "license": "BSL (Business Source License; production use free up to two users, one company or one thousand invoices; converts to GPLv3 four years after each release)",
+    "license_class": "source-available",
+    "origin": "Turkey · Akaunting Inc · non-EU"
+  },
   "business/documenso": {
     "bloc": "non-EU",
     "country": "US",
@@ -494,6 +502,14 @@
     "license": "AGPL-3.0",
     "license_class": "osi",
     "origin": "India · OpenSign Inc · non-EU"
+  },
+  "business/solidinvoice": {
+    "bloc": "none",
+    "country": "SolidInvoice",
+    "entity": "no country stated in its published terms",
+    "license": "MIT",
+    "license_class": "osi",
+    "origin": "SolidInvoice · no country stated in its published terms · no country"
   },
   "business/vikunja": {
     "bloc": "EU",

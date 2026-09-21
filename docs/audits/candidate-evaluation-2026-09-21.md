@@ -195,6 +195,30 @@ the volume comes up empty.
 
 Nothing else on the list was started. No stack files were written for any of them.
 
+## Findings from implementation
+
+What building the stacks turned up, recorded here so the table above is not
+mistaken for the end state.
+
+**Batch A — calrs, Calnode.** Both shipped (#140). Nothing changed the tiering.
+
+**Batch B — invoicing.** One of the three shipped as planned, one shipped with a
+caveat, one moved back to evaluation.
+
+- **Akaunting** shipped. Its licence is the Business Source License, with an
+  additional use grant that allows production use only up to two users, one company
+  or one thousand invoices — a licence limit, recorded as such in the stack. Upstream
+  mounts the whole webroot; the stack keeps the code in the image and mounts only
+  `storage/` and `.env`, so the pinned tag is what runs.
+- **SolidInvoice** shipped with setup unverified. Its command-line installer does not
+  create the schema in 3.0.1 on any database tried, with or without hardening; the web
+  installer is the working path and was not completed here. It also needs 3 GiB of
+  memory, measured.
+- **FacturaScripts** moved to evaluation. Its supported compose mounts the entire
+  webroot and the image copies the code into it only on the first start, so a newer
+  image does not update a running install and the pinned tag describes only the first
+  one. It also makes the webroot world-writable and sets up through a web wizard.
+
 ## Proposed order
 
 Eleven Tier 1 products, in batches that share a category and a review:
