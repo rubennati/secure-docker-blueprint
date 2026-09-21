@@ -39,6 +39,35 @@ so that a two-service stack with a MariaDB and a ten-service one with a database
 cache and workers are distinguishable without either being called the better
 choice.
 
+### Licence and edition facts — optional, and only where they are true
+
+Three further fields may appear in the `## Source` block. They are **not** part of
+adding a stack, and a stack without them is normal:
+
+```text
+- **Use restrictions:** <statement> — <source url> · checked YYYY-MM-DD
+- **Edition gating:** <statement> — <source url> · checked YYYY-MM-DD
+- **Commercial model:** <term> — <source url> · checked YYYY-MM-DD
+```
+
+- **An absent field means nobody has looked**, not that there is nothing to
+  declare. A stack that was checked and gates nothing records `none` with its
+  source, which is a different statement and reads differently on the site.
+- **Every field carries a source and a date.** `site-catalogue.py --check`
+  rejects one that does not: an unsourced claim about someone else's licence is
+  the failure these fields exist to prevent. Each carries its own date because a
+  licence changes rarely and a pricing page often.
+- **`Commercial model` takes one of** `free self-hosted` · `no paid edition` ·
+  `paid add-on` · `paid self-hosted edition` · `per-user subscription` ·
+  `commercial licence` · `quote only` · `none`, optionally followed by `;` and a
+  qualifier. A **price is not a value here.** It moves, and an undated number in
+  a repository is worse than none — the source link is where the amount is read.
+- **State what upstream states.** "Feature X is listed as Enterprise" is a fact;
+  "feature X is missing from the free edition" usually is not, unless upstream
+  says so. The licence does not decide whether a stack needs these fields: an
+  OSI-licensed project can reserve OIDC, SAML, audit logs or HA for a paid
+  edition just as a source-available one can.
+
 **No memory figure appears there, and none should be added from the compose files.**
 `deploy.resources.limits.memory` is the ceiling this repository sets on a service,
 not what the application needs — publishing it as a requirement would turn a local

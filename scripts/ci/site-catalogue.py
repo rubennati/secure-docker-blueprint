@@ -18,6 +18,7 @@ import importlib.util
 import json
 import re
 import sys
+from datetime import date
 from pathlib import Path
 
 # Compose discovery and parsing belong to check-structure.py. A second copy here
@@ -109,6 +110,83 @@ INFRASTRUCTURE = {
 def _reserves_gpu(body: dict) -> bool:
     reservations = ((body.get("deploy") or {}).get("resources") or {}).get("reservations") or {}
     return bool(reservations.get("devices"))
+
+
+# The maintained decision facts. Unlike the footprint these cannot be derived:
+# what a licence permits, which features sit behind a paid edition and how money
+# is asked for are answered by reading upstream's own terms.
+#
+# A field that is absent means **not researched** — never "nothing to declare".
+# Filling all 91 stacks with a placeholder would be dormant configuration and
+# would make the site imply an answer nobody looked up; a stack that was checked
+# and gates nothing says so explicitly with `none`.
+DECISION_FACTS = {
+    "Use restrictions": "use_restrictions",
+    "Edition gating": "edition_gating",
+    "Commercial model": "commercial_model",
+}
+
+# Durable descriptions of how money is asked for. A price is deliberately not one
+# of them: it moves, and an undated number in a repository is worse than none.
+# Where the amount matters, the source link is where it is read.
+COMMERCIAL_MODELS = {
+    "free self-hosted", "no paid edition", "paid add-on", "paid self-hosted edition",
+    "per-user subscription", "commercial licence", "quote only", "none",
+}
+
+# `<statement> — <source url> · checked YYYY-MM-DD`. Anchored at the end so an
+# em dash inside the statement cannot be mistaken for the provenance separator.
+PROVENANCE = re.compile(
+    r"^(?P<statement>.+?)\s+—\s+(?P<source>https?://\S+)\s+·\s+checked\s+(?P<checked>\d{4}-\d{2}-\d{2})$"
+)
+
+
+def decision_facts(text: str, key: str, problems: list[str]) -> dict:
+    """The maintained facts a stack records, each with where it came from and when.
+
+    Every fact carries its own source and date because they are checked at
+    different times: a licence changes rarely, a pricing page often. A fact
+    without both is rejected rather than published — an unsourced claim about
+    someone else's terms is the thing this exists to prevent.
+
+    The date is validated as a calendar date only. CI deliberately runs no
+    time-based staleness math, so nothing here compares it against today; a
+    fact going stale is a maintenance question, not a build failure.
+    """
+    out = {}
+    for label, name in DECISION_FACTS.items():
+        raw = field(text, label)
+        if not raw:
+            continue
+        m = PROVENANCE.match(raw)
+        if not m:
+            problems.append(
+                f"{key}: `- **{label}:**` needs `<statement> — <source url> · checked YYYY-MM-DD`"
+            )
+            continue
+        try:
+            date.fromisoformat(m.group("checked"))
+        except ValueError:
+            problems.append(f"{key}: {label} has no valid date — {m.group('checked')!r}")
+            continue
+        entry = {
+            "statement": m.group("statement"),
+            "source": m.group("source"),
+            "checked": m.group("checked"),
+        }
+        if name == "commercial_model":
+            # The vocabulary term is the leading clause; anything after `;` is a
+            # qualifier the reader needs but the vocabulary should not grow for.
+            term = entry["statement"].split(";")[0].strip()
+            if term not in COMMERCIAL_MODELS:
+                problems.append(
+                    f"{key}: commercial model {term!r} is not one of "
+                    f"{', '.join(sorted(COMMERCIAL_MODELS))}"
+                )
+                continue
+            entry["model"] = term
+        out[name] = entry
+    return out
 
 
 def footprint(production: list[Path], overlays: list[Path]) -> dict | None:
@@ -221,6 +299,7 @@ def collect() -> tuple[dict, list[str]]:
             "footprint": footprint(
                 _structure.compose_files(stack), _structure.overlay_files(stack)
             ),
+            "decision_facts": decision_facts(text, key, problems),
             "path": key,
         }
     return rows, problems

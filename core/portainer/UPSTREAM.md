@@ -6,6 +6,8 @@
 - **GitHub:** https://github.com/portainer/portainer
 - **Docs:** https://docs.portainer.io/
 - **License:** zlib
+- **Edition gating:** Portainer lists role-based access control, Active Directory with automatic user sync, pre-configured SSO provider templates, and authentication and activity logs as Business Edition features — https://www.portainer.io/features · checked 2026-09-21
+- **Commercial model:** paid self-hosted edition; a separate free tier for homelab, personal and learning use is offered — https://www.portainer.io/business-enterprise-it-pricing · checked 2026-09-21
 - **Origin:** New Zealand · Portainer.io Ltd · non-EU
 - **Domain:** Infrastructure
 - **Role:** Docker management web interface, reaching Docker through a filtered socket proxy

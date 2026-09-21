@@ -1,5 +1,6 @@
 {
   "apps/adminer": {
+    "decision_facts": {},
     "domain": "Developer tools",
     "footprint": {
       "gpu": null,
@@ -18,6 +19,7 @@
     "version": "5.5.1-standalone"
   },
   "apps/agentgateway": {
+    "decision_facts": {},
     "domain": "AI and local AI",
     "footprint": {
       "gpu": null,
@@ -36,6 +38,7 @@
     "version": "1.5.0"
   },
   "apps/bookstack": {
+    "decision_facts": {},
     "domain": "Files, wiki and collaboration",
     "footprint": {
       "gpu": null,
@@ -56,6 +59,7 @@
     "version": "version-v26.05.4"
   },
   "apps/caldiy": {
+    "decision_facts": {},
     "domain": "Publishing, forms and scheduling",
     "footprint": {
       "gpu": null,
@@ -77,6 +81,7 @@
     "version": "538cbb4a2273…"
   },
   "apps/calnode": {
+    "decision_facts": {},
     "domain": "Publishing, forms and scheduling",
     "footprint": {
       "gpu": null,
@@ -95,6 +100,7 @@
     "version": "0.9.0"
   },
   "apps/calrs": {
+    "decision_facts": {},
     "domain": "Publishing, forms and scheduling",
     "footprint": {
       "gpu": null,
@@ -113,6 +119,7 @@
     "version": "1.17.1"
   },
   "apps/collabora": {
+    "decision_facts": {},
     "domain": "Documents and e-signature",
     "footprint": {
       "gpu": null,
@@ -131,6 +138,7 @@
     "version": "26.04.3.2.1"
   },
   "apps/dashy": {
+    "decision_facts": {},
     "domain": "Dashboards",
     "footprint": {
       "gpu": null,
@@ -149,6 +157,7 @@
     "version": "4.6.0"
   },
   "apps/dependency-track": {
+    "decision_facts": {},
     "domain": "Security operations",
     "footprint": {
       "gpu": null,
@@ -169,6 +178,7 @@
     "version": "5.1.0"
   },
   "apps/dfir-iris": {
+    "decision_facts": {},
     "domain": "Security operations",
     "footprint": {
       "gpu": null,
@@ -189,6 +199,7 @@
     "version": "2.4.29"
   },
   "apps/dify": {
+    "decision_facts": {},
     "domain": "AI and local AI",
     "footprint": {
       "gpu": null,
@@ -210,6 +221,7 @@
     "version": "1.17.1"
   },
   "apps/docling-serve": {
+    "decision_facts": {},
     "domain": "AI and local AI",
     "footprint": {
       "gpu": null,
@@ -228,6 +240,7 @@
     "version": "1.34.0"
   },
   "apps/easyappointments": {
+    "decision_facts": {},
     "domain": "Publishing, forms and scheduling",
     "footprint": {
       "gpu": null,
@@ -248,6 +261,7 @@
     "version": "1.6.0"
   },
   "apps/euro-office": {
+    "decision_facts": {},
     "domain": "Documents and e-signature",
     "footprint": {
       "gpu": null,
@@ -266,6 +280,7 @@
     "version": "9.3.4-hotfix.1"
   },
   "apps/ghost": {
+    "decision_facts": {},
     "domain": "Publishing, forms and scheduling",
     "footprint": {
       "gpu": null,
@@ -286,6 +301,7 @@
     "version": "6.63.0-alpine"
   },
   "apps/greenmail": {
+    "decision_facts": {},
     "domain": "Developer tools",
     "footprint": {
       "gpu": null,
@@ -304,6 +320,7 @@
     "version": "2.1.13"
   },
   "apps/heimdall": {
+    "decision_facts": {},
     "domain": "Dashboards",
     "footprint": {
       "gpu": null,
@@ -322,6 +339,7 @@
     "version": "2.8.3"
   },
   "apps/hemmelig": {
+    "decision_facts": {},
     "domain": "Identity, access and secrets",
     "footprint": {
       "gpu": null,
@@ -340,6 +358,7 @@
     "version": "7.4.8"
   },
   "apps/homarr": {
+    "decision_facts": {},
     "domain": "Dashboards",
     "footprint": {
       "gpu": null,
@@ -358,6 +377,7 @@
     "version": "1.77.1"
   },
   "apps/homepage": {
+    "decision_facts": {},
     "domain": "Dashboards",
     "footprint": {
       "gpu": null,
@@ -376,6 +396,7 @@
     "version": "2.3.0"
   },
   "apps/immich": {
+    "decision_facts": {},
     "domain": "Photos",
     "footprint": {
       "gpu": null,
@@ -398,6 +419,7 @@
     "version": "3.2.0"
   },
   "apps/it-tools": {
+    "decision_facts": {},
     "domain": "Developer tools",
     "footprint": {
       "gpu": null,
@@ -416,6 +438,7 @@
     "version": "2024.10.22-7ca5933"
   },
   "apps/librephotos": {
+    "decision_facts": {},
     "domain": "Photos",
     "footprint": {
       "gpu": null,
@@ -436,6 +459,7 @@
     "version": "1.1.0"
   },
   "apps/litellm": {
+    "decision_facts": {},
     "domain": "AI and local AI",
     "footprint": {
       "gpu": null,
@@ -456,6 +480,7 @@
     "version": "1.101.0"
   },
   "apps/lycheeorg": {
+    "decision_facts": {},
     "domain": "Photos",
     "footprint": {
       "gpu": null,
@@ -477,6 +502,7 @@
     "version": "7.8.3"
   },
   "apps/mailpit": {
+    "decision_facts": {},
     "domain": "Developer tools",
     "footprint": {
       "gpu": null,
@@ -495,6 +521,7 @@
     "version": "1.31.1"
   },
   "apps/monicahq": {
+    "decision_facts": {},
     "domain": "Business operations",
     "footprint": {
       "gpu": null,
@@ -515,6 +542,24 @@
     "version": "4.1.2-apache"
   },
   "apps/n8n": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "commercial licence",
+        "source": "https://github.com/n8n-io/n8n/blob/master/LICENSE.md",
+        "statement": "commercial licence"
+      },
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/n8n-io/n8n/blob/master/LICENSE.md",
+        "statement": "files and directories whose names contain `.ee.` are covered by a separate enterprise licence rather than by the Sustainable Use License"
+      },
+      "use_restrictions": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/n8n-io/n8n/blob/master/LICENSE.md",
+        "statement": "free for internal business purposes and for non-commercial use; it may be given to others only free of charge and for non-commercial purposes, and its licensing and copyright notices may not be altered, removed or obscured"
+      }
+    },
     "domain": "Automation and data",
     "footprint": {
       "gpu": null,
@@ -533,6 +578,7 @@
     "version": "2.38.7"
   },
   "apps/nextcloud": {
+    "decision_facts": {},
     "domain": "Files, wiki and collaboration",
     "footprint": {
       "gpu": null,
@@ -554,6 +600,7 @@
     "version": "34.0.4-fpm-alpine"
   },
   "apps/nocodb": {
+    "decision_facts": {},
     "domain": "Automation and data",
     "footprint": {
       "gpu": null,
@@ -572,6 +619,7 @@
     "version": "2026.09.0"
   },
   "apps/ollama": {
+    "decision_facts": {},
     "domain": "AI and local AI",
     "footprint": {
       "gpu": "optional",
@@ -590,6 +638,7 @@
     "version": "0.34.2"
   },
   "apps/onlyoffice": {
+    "decision_facts": {},
     "domain": "Documents and e-signature",
     "footprint": {
       "gpu": null,
@@ -608,6 +657,7 @@
     "version": "9.4.0"
   },
   "apps/open-webui": {
+    "decision_facts": {},
     "domain": "AI and local AI",
     "footprint": {
       "gpu": null,
@@ -626,6 +676,7 @@
     "version": "0.11.3"
   },
   "apps/opencanary": {
+    "decision_facts": {},
     "domain": "Security operations",
     "footprint": {
       "gpu": null,
@@ -644,6 +695,7 @@
     "version": "0.9.9"
   },
   "apps/opnform": {
+    "decision_facts": {},
     "domain": "Publishing, forms and scheduling",
     "footprint": {
       "gpu": null,
@@ -665,6 +717,7 @@
     "version": "2.5.0"
   },
   "apps/paperless-ngx": {
+    "decision_facts": {},
     "domain": "Documents and e-signature",
     "footprint": {
       "gpu": null,
@@ -686,6 +739,7 @@
     "version": "3.1.3"
   },
   "apps/photoprism": {
+    "decision_facts": {},
     "domain": "Photos",
     "footprint": {
       "gpu": null,
@@ -706,6 +760,7 @@
     "version": "260728"
   },
   "apps/photoview": {
+    "decision_facts": {},
     "domain": "Photos",
     "footprint": {
       "gpu": null,
@@ -726,6 +781,7 @@
     "version": "2.4.0"
   },
   "apps/privatebin": {
+    "decision_facts": {},
     "domain": "Identity, access and secrets",
     "footprint": {
       "gpu": null,
@@ -744,6 +800,7 @@
     "version": "2.0.6"
   },
   "apps/qdrant": {
+    "decision_facts": {},
     "domain": "AI and local AI",
     "footprint": {
       "gpu": null,
@@ -764,6 +821,7 @@
     "version": "1.19.1-unprivileged"
   },
   "apps/seafile": {
+    "decision_facts": {},
     "domain": "Files, wiki and collaboration",
     "footprint": {
       "gpu": null,
@@ -785,6 +843,7 @@
     "version": "13.0.20"
   },
   "apps/seafile-pro": {
+    "decision_facts": {},
     "domain": "Files, wiki and collaboration",
     "footprint": {
       "gpu": null,
@@ -807,6 +866,7 @@
     "version": "13.0.21"
   },
   "apps/threat-dragon": {
+    "decision_facts": {},
     "domain": "Security operations",
     "footprint": {
       "gpu": null,
@@ -825,6 +885,7 @@
     "version": "2.6.2"
   },
   "apps/tymeslot": {
+    "decision_facts": {},
     "domain": "Publishing, forms and scheduling",
     "footprint": {
       "gpu": null,
@@ -845,6 +906,7 @@
     "version": "4bde62fd9bb1…"
   },
   "apps/unifi": {
+    "decision_facts": {},
     "domain": "Infrastructure",
     "footprint": {
       "gpu": null,
@@ -865,6 +927,7 @@
     "version": "10.6.101"
   },
   "apps/vaultwarden": {
+    "decision_facts": {},
     "domain": "Identity, access and secrets",
     "footprint": {
       "gpu": null,
@@ -885,6 +948,7 @@
     "version": "1.37.3"
   },
   "apps/velociraptor": {
+    "decision_facts": {},
     "domain": "Security operations",
     "footprint": {
       "gpu": null,
@@ -903,6 +967,7 @@
     "version": "0.77.2"
   },
   "apps/vllm": {
+    "decision_facts": {},
     "domain": "AI and local AI",
     "footprint": {
       "gpu": "required",
@@ -921,6 +986,7 @@
     "version": "0.29.0"
   },
   "apps/whoami": {
+    "decision_facts": {},
     "domain": "Developer tools",
     "footprint": {
       "gpu": null,
@@ -939,6 +1005,7 @@
     "version": "1.12.0"
   },
   "apps/windmill": {
+    "decision_facts": {},
     "domain": "Automation and data",
     "footprint": {
       "gpu": null,
@@ -959,6 +1026,7 @@
     "version": "1.814.0"
   },
   "apps/wordpress": {
+    "decision_facts": {},
     "domain": "Publishing, forms and scheduling",
     "footprint": {
       "gpu": null,
@@ -979,6 +1047,7 @@
     "version": "7.0.4-php8.3-apache"
   },
   "apps/yopass": {
+    "decision_facts": {},
     "domain": "Identity, access and secrets",
     "footprint": {
       "gpu": null,
@@ -999,6 +1068,7 @@
     "version": "14.10.0"
   },
   "backup/borgmatic": {
+    "decision_facts": {},
     "domain": "Backup",
     "footprint": null,
     "name": "Borgmatic",
@@ -1011,6 +1081,7 @@
     "version": "2.1.6"
   },
   "backup/urbackup": {
+    "decision_facts": {},
     "domain": "Backup",
     "footprint": {
       "gpu": null,
@@ -1029,6 +1100,7 @@
     "version": "fd218c45192f…"
   },
   "business/documenso": {
+    "decision_facts": {},
     "domain": "Documents and e-signature",
     "footprint": {
       "gpu": null,
@@ -1049,6 +1121,7 @@
     "version": "2.18.0"
   },
   "business/dolibarr": {
+    "decision_facts": {},
     "domain": "Business operations",
     "footprint": {
       "gpu": null,
@@ -1069,6 +1142,7 @@
     "version": "23.0.4"
   },
   "business/invoiceninja": {
+    "decision_facts": {},
     "domain": "Business operations",
     "footprint": {
       "gpu": null,
@@ -1090,6 +1164,7 @@
     "version": "5.13.40"
   },
   "business/kimai": {
+    "decision_facts": {},
     "domain": "Business operations",
     "footprint": {
       "gpu": null,
@@ -1110,6 +1185,7 @@
     "version": "2.66.0"
   },
   "business/listmonk": {
+    "decision_facts": {},
     "domain": "Publishing, forms and scheduling",
     "footprint": {
       "gpu": null,
@@ -1130,6 +1206,19 @@
     "version": "6.2.0"
   },
   "business/matomo": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "paid add-on",
+        "source": "https://plugins.matomo.org/LoginSaml",
+        "statement": "paid add-on; the self-hosted core itself is free"
+      },
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://plugins.matomo.org/LoginSaml",
+        "statement": "SAML single sign-on is the separate LoginSaml plugin, sold under the InnoCraft EULA rather than shipped under the GPL core"
+      }
+    },
     "domain": "Business operations",
     "footprint": {
       "gpu": null,
@@ -1150,6 +1239,7 @@
     "version": "5.13.0-apache"
   },
   "business/openproject": {
+    "decision_facts": {},
     "domain": "Business operations",
     "footprint": {
       "gpu": null,
@@ -1171,6 +1261,7 @@
     "version": "17.8.0-slim"
   },
   "business/opensign": {
+    "decision_facts": {},
     "domain": "Documents and e-signature",
     "footprint": {
       "gpu": null,
@@ -1191,6 +1282,7 @@
     "version": "817654a3f804…"
   },
   "business/vikunja": {
+    "decision_facts": {},
     "domain": "Business operations",
     "footprint": {
       "gpu": null,
@@ -1211,6 +1303,7 @@
     "version": "2.6.0"
   },
   "business/zammad": {
+    "decision_facts": {},
     "domain": "Business operations",
     "footprint": {
       "gpu": null,
@@ -1234,6 +1327,7 @@
     "version": "7.1.3-0012"
   },
   "core/acme-certs": {
+    "decision_facts": {},
     "domain": "Infrastructure",
     "footprint": {
       "gpu": null,
@@ -1252,6 +1346,19 @@
     "version": "0.2.1"
   },
   "core/authentik": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "per-user subscription",
+        "source": "https://goauthentik.io/pricing/",
+        "statement": "per-user subscription"
+      },
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://docs.goauthentik.io/enterprise/enterprise-features/",
+        "statement": "enhanced audit logging, client certificate authentication, RADIUS EAP-TLS, password history compliance, privileged access management, account lockdown, and Google Workspace and Microsoft Entra ID provisioning are listed as Enterprise; the list does not include the OIDC or SAML provider"
+      }
+    },
     "domain": "Identity, access and secrets",
     "footprint": {
       "gpu": null,
@@ -1273,6 +1380,7 @@
     "version": "2026.5.7"
   },
   "core/crowdsec": {
+    "decision_facts": {},
     "domain": "Security operations",
     "footprint": {
       "gpu": null,
@@ -1291,6 +1399,7 @@
     "version": "1.7.8"
   },
   "core/dnsmasq": {
+    "decision_facts": {},
     "domain": "Infrastructure",
     "footprint": {
       "gpu": null,
@@ -1309,6 +1418,7 @@
     "version": "2.93"
   },
   "core/dockhand": {
+    "decision_facts": {},
     "domain": "Infrastructure",
     "footprint": {
       "gpu": null,
@@ -1329,6 +1439,7 @@
     "version": "1.0.47"
   },
   "core/hawser": {
+    "decision_facts": {},
     "domain": "Infrastructure",
     "footprint": {
       "gpu": null,
@@ -1347,6 +1458,7 @@
     "version": "0.2.47"
   },
   "core/host-watchdog": {
+    "decision_facts": {},
     "domain": "Infrastructure",
     "footprint": null,
     "name": "Host Watchdog",
@@ -1359,6 +1471,7 @@
     "version": ""
   },
   "core/infisical": {
+    "decision_facts": {},
     "domain": "Identity, access and secrets",
     "footprint": {
       "gpu": null,
@@ -1380,6 +1493,7 @@
     "version": "0.165.10"
   },
   "core/jumpserver": {
+    "decision_facts": {},
     "domain": "Identity, access and secrets",
     "footprint": {
       "gpu": null,
@@ -1398,6 +1512,7 @@
     "version": "4.10.19"
   },
   "core/keycloak": {
+    "decision_facts": {},
     "domain": "Identity, access and secrets",
     "footprint": {
       "gpu": null,
@@ -1418,6 +1533,7 @@
     "version": "26.7.3"
   },
   "core/orion-belt": {
+    "decision_facts": {},
     "domain": "Identity, access and secrets",
     "footprint": {
       "gpu": null,
@@ -1438,6 +1554,19 @@
     "version": "1.2.0"
   },
   "core/portainer": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "paid self-hosted edition",
+        "source": "https://www.portainer.io/business-enterprise-it-pricing",
+        "statement": "paid self-hosted edition; a separate free tier for homelab, personal and learning use is offered"
+      },
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://www.portainer.io/features",
+        "statement": "Portainer lists role-based access control, Active Directory with automatic user sync, pre-configured SSO provider templates, and authentication and activity logs as Business Edition features"
+      }
+    },
     "domain": "Infrastructure",
     "footprint": {
       "gpu": null,
@@ -1456,6 +1585,7 @@
     "version": "2.39.7"
   },
   "core/portainer-agent": {
+    "decision_facts": {},
     "domain": "Infrastructure",
     "footprint": {
       "gpu": null,
@@ -1474,6 +1604,7 @@
     "version": "2.39.7"
   },
   "core/shellhub": {
+    "decision_facts": {},
     "domain": "Identity, access and secrets",
     "footprint": {
       "gpu": null,
@@ -1495,6 +1626,7 @@
     "version": "0.27.0-rc.11"
   },
   "core/step-ca": {
+    "decision_facts": {},
     "domain": "Identity, access and secrets",
     "footprint": {
       "gpu": null,
@@ -1513,6 +1645,7 @@
     "version": "0.30.2"
   },
   "core/teleport": {
+    "decision_facts": {},
     "domain": "Identity, access and secrets",
     "footprint": {
       "gpu": null,
@@ -1531,6 +1664,7 @@
     "version": "18.11.0"
   },
   "core/traefik": {
+    "decision_facts": {},
     "domain": "Infrastructure",
     "footprint": {
       "gpu": null,
@@ -1549,6 +1683,7 @@
     "version": "3.7"
   },
   "core/warpgate": {
+    "decision_facts": {},
     "domain": "Identity, access and secrets",
     "footprint": {
       "gpu": null,
@@ -1567,6 +1702,7 @@
     "version": "0.29.0"
   },
   "core/zot": {
+    "decision_facts": {},
     "domain": "Developer tools",
     "footprint": {
       "gpu": null,
@@ -1585,6 +1721,7 @@
     "version": "2.1.21"
   },
   "monitoring/beszel": {
+    "decision_facts": {},
     "domain": "Monitoring",
     "footprint": {
       "gpu": null,
@@ -1603,6 +1740,7 @@
     "version": "0.19.0"
   },
   "monitoring/beszel-agent": {
+    "decision_facts": {},
     "domain": "Monitoring",
     "footprint": {
       "gpu": null,
@@ -1621,6 +1759,7 @@
     "version": "0.19.0"
   },
   "monitoring/changedetection": {
+    "decision_facts": {},
     "domain": "Monitoring",
     "footprint": {
       "gpu": null,
@@ -1639,6 +1778,7 @@
     "version": "0.60.4"
   },
   "monitoring/gatus": {
+    "decision_facts": {},
     "domain": "Monitoring",
     "footprint": {
       "gpu": null,
@@ -1657,6 +1797,7 @@
     "version": "5.36.0"
   },
   "monitoring/healthchecks": {
+    "decision_facts": {},
     "domain": "Monitoring",
     "footprint": {
       "gpu": null,
@@ -1675,6 +1816,7 @@
     "version": "4.4"
   },
   "monitoring/langfuse": {
+    "decision_facts": {},
     "domain": "AI and local AI",
     "footprint": {
       "gpu": null,
@@ -1698,6 +1840,7 @@
     "version": "4.38.0"
   },
   "monitoring/ntfy": {
+    "decision_facts": {},
     "domain": "Monitoring",
     "footprint": {
       "gpu": null,
@@ -1716,6 +1859,7 @@
     "version": "2.28.0"
   },
   "monitoring/uptime-kuma": {
+    "decision_facts": {},
     "domain": "Monitoring",
     "footprint": {
       "gpu": null,

@@ -271,7 +271,10 @@ stack landing between two edits moves a denominator nobody remembers.
 exists, or when `catalogue.json` is stale. The staleness half now also covers each
 stack's operational footprint, which is derived from its compose files rather than
 recorded anywhere, so adding a database to a stack updates its catalogue entry or
-fails the check. This is what keeps the operator site
+fails the check. It also rejects a licence or edition fact that does not name its
+source and the date it was checked, or a commercial model outside the recorded
+vocabulary — those facts are read from upstream's terms rather than derived, and
+an unsourced one would be a claim this repository cannot stand behind. This is what keeps the operator site
 from falling behind the repository: a stack cannot land in `dev` while being
 absent from the site's catalogue.
 
