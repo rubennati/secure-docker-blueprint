@@ -51,7 +51,7 @@ A decision, with a possible v1.0 impact — see [`decisions.md`](decisions.md) a
 
 ### 4. Operator site
 
-- [ ] The catalogue is live and lists all 89 stacks; only stacks with a guide appear in
+- [ ] The catalogue is live and lists every stack; only stacks with a guide appear in
       the Applications sidebar. Guides for the newer stacks (AI, PAM, secret sharing,
       security tooling) do not exist; the audit does not require them.
 - [ ] The start page has no link to the catalogue; it is reachable from the sidebar of
@@ -94,8 +94,8 @@ was verified by running it. Three of the fifteen already ship.
       an image). None for FacturaScripts (the in-app updater is its documented update
       path; issues are closed on both repositories), Crater (images requested since
       2021 in #659, no maintainer reply) or MAILFLOW-AI (#20 and #21 still open).
-- [ ] Adding these while `../ROADMAP.md` holds applications is a deliberate
-      exception and needs recording where the hold is stated.
+- [x] Adding these while `../ROADMAP.md` holds applications is a deliberate
+      exception — recorded in `../ROADMAP.md` and `decisions.md` (2026-09-21).
 
 ### 7. Held: Priority 2 and other candidates
 

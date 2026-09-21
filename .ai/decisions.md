@@ -6,6 +6,29 @@ this file is the index and covers decisions that have no other home.
 
 ---
 
+## 2026-09-21 · Proposed products go in as stacks while the application hold stands
+
+`ROADMAP.md` adds no application while the v1.0 items are open. The maintainer asked
+for the products proposed on 2026-09-21, and three proposed after them, to be added
+anyway so they can be tried.
+
+**A deliberate exception, not a lifted hold.** Twelve went in as stacks: calrs,
+Calnode, Akaunting, SolidInvoice, FacturaScripts, Twenty, Chatwoot, CISO Assistant,
+DefectDojo, ERPNext, Rclone Web and httpbin. Six stayed evaluation entries: obot,
+which does not start without the Docker API; DayOtter, Dapta Calendars, MAILFLOW-AI
+and Crater, which publish no image; and Cabot, whose newest image is from 2019.
+
+Each went through the same bar as any stack: a published, version-tagged image; a
+deployment its project supports; licence and origin stated; and a functional test
+before its status was claimed. All are `scaffolded`. The exception changes nothing
+that v1.0 requires and does not open the hold for the other candidates in
+`ROADMAP.md`. None was forked; that stays the last step, as with Cal.diY.
+
+Evidence per product:
+[`../docs/audits/candidate-evaluation-2026-09-21.md`](../docs/audits/candidate-evaluation-2026-09-21.md).
+
+---
+
 ## 2026-09-20 · Image findings are recorded as facts, and the shipped access default follows them
 
 The Trivy image scan blocks nothing (`--exit-code 0`), and the last full scan found
