@@ -1,0 +1,268 @@
+# CISO Assistant — local
+#
+#   cp .env.local.example .env.local
+#   ops/init.sh
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   open http://localhost:3000        # log in as ADMIN_EMAIL, .secrets/admin_pwd.txt
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+#
+# The first start runs every migration and loads the framework library — about
+# ten minutes. Same images, wrapper and read-only settings as the production
+# file, without Traefik and without the Docker Secrets mechanism. It mounts the
+# same volumes/, so run one at a time.
+
+x-ciso-env: &ciso-env
+  CISO_ASSISTANT_URL: http://localhost:3000
+  ALLOWED_HOSTS: ciso-assistant-backend,localhost
+  DJANGO_DEBUG: "False"
+  AUTH_TOKEN_TTL: "7200"
+  POSTGRES_NAME: ${DB_NAME}
+  POSTGRES_USER: ${DB_USER}
+  DB_HOST: db
+  # The image expects writable caches under $HOME; both point at the tmpfs.
+  HOME: /tmp
+  XDG_CACHE_HOME: /tmp/.cache
+  XDG_CONFIG_HOME: /tmp/.config
+  XDG_DATA_HOME: /tmp/.local/share
+  TZ: ${TZ}
+
+services:
+
+  # --------------------------------------------------------
+  # BACKEND (Django API; migrates the database at start)
+  # --------------------------------------------------------
+  ciso-assistant-backend:
+    # --- Identity ---
+    image: ghcr.io/intuitem/ciso-assistant-community/backend:${APP_TAG}
+    container_name: ciso-assistant-local-backend
+    restart: unless-stopped
+    # Upstream's own compose runs the backend as 1001; the image default is root.
+    user: "1001:1001"
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+
+    # --- Resources ---
+    # Django under Gunicorn with three workers; derived starting values.
+    memswap_limit: 2G          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "2.00"
+          pids: 300
+        reservations:
+          memory: 512M
+
+    # --- Configuration ---
+    # entrypoint.sh exports the secrets, then runs the image's own start command:
+    # migrations, the framework libraries, the first administrator, Gunicorn.
+    entrypoint: ["/bin/sh", "/secrets-entrypoint.sh", "uv", "run", "bash", "startup.sh"]
+    environment:
+      <<: *ciso-env
+      # Created once, on the first start of an empty database.
+      DJANGO_SUPERUSER_EMAIL: ${ADMIN_EMAIL}
+    depends_on:
+      db:
+        condition: service_healthy
+
+    # --- Storage ---
+    # Evidence attachments and uploaded files; the directory belongs to uid 1001.
+    volumes:
+      - ./.secrets/db_pwd.txt:/run/secrets/DB_PWD:ro
+      - ./.secrets/django_secret_key.txt:/run/secrets/DJANGO_SECRET_KEY:ro
+      - ./.secrets/admin_pwd.txt:/run/secrets/ADMIN_PWD:ro
+      - ./config/entrypoint.sh:/secrets-entrypoint.sh:ro
+      - ./volumes/data:/code/db
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev
+
+    # --- Networking ---
+    networks:
+      - ciso-assistant-local
+
+    # --- Health & Observability ---
+    # Django answers 400 to a Host header outside ALLOWED_HOSTS, so the check
+    # uses `localhost`, not 127.0.0.1. The first start runs every migration and
+    # loads the framework library: about ten minutes, measured; later starts
+    # take seconds. A long start period only delays an "unhealthy" verdict.
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS -o /dev/null http://localhost:8000/api/health/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 900s
+
+  # --------------------------------------------------------
+  # HUEY (task queue: scheduled jobs, notifications)
+  # --------------------------------------------------------
+  ciso-assistant-huey:
+    # --- Identity ---
+    image: ghcr.io/intuitem/ciso-assistant-community/backend:${APP_TAG}
+    container_name: ciso-assistant-local-huey
+    restart: unless-stopped
+    user: "1001:1001"
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+
+    # --- Resources ---
+    memswap_limit: 1G          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 256M
+
+    # --- Configuration ---
+    entrypoint: ["/bin/sh", "/secrets-entrypoint.sh", "python", "manage.py", "run_huey", "-w", "2", "--scheduler-interval", "60"]
+    environment: *ciso-env
+    depends_on:
+      ciso-assistant-backend:
+        condition: service_healthy
+
+    # --- Storage ---
+    volumes:
+      - ./.secrets/db_pwd.txt:/run/secrets/DB_PWD:ro
+      - ./.secrets/django_secret_key.txt:/run/secrets/DJANGO_SECRET_KEY:ro
+      - ./config/entrypoint.sh:/secrets-entrypoint.sh:ro
+      - ./volumes/data:/code/db
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev
+
+    # --- Networking ---
+    networks:
+      - ciso-assistant-local
+
+    # --- Health & Observability ---
+    # healthcheck: none — Huey serves no port; its tasks are stored in the
+    # database it shares with the backend.
+
+  # --------------------------------------------------------
+  # FRONTEND (SvelteKit)
+  # --------------------------------------------------------
+  ciso-assistant-frontend:
+    # --- Identity ---
+    image: ghcr.io/intuitem/ciso-assistant-community/frontend:${APP_TAG}
+    container_name: ciso-assistant-local-frontend
+    restart: unless-stopped
+    # The image already runs as 1000:1000 and ships no shell.
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+
+    # --- Resources ---
+    memswap_limit: 512m        # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "1.00"
+          pids: 100
+        reservations:
+          memory: 128m
+
+    # --- Configuration ---
+    environment:
+      # Server-side calls from the frontend to the backend stay inside the stack.
+      PUBLIC_BACKEND_API_URL: http://ciso-assistant-backend:8000/api
+      PUBLIC_BACKEND_API_EXPOSED_URL: http://localhost:3000/api
+      PROTOCOL_HEADER: x-forwarded-proto
+      HOST_HEADER: x-forwarded-host
+      TZ: ${TZ}
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev
+    depends_on:
+      ciso-assistant-backend:
+        condition: service_healthy
+
+    # --- Networking ---
+    networks:
+      - ciso-assistant-local
+
+    ports:
+      - "127.0.0.1:3000:3000"
+
+    # --- Health & Observability ---
+    # No shell in the image, so the check runs in Node itself.
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # --------------------------------------------------------
+  # DATABASE (PostgreSQL)
+  # --------------------------------------------------------
+  db:
+    # --- Identity ---
+    image: postgres:${DB_TAG}
+    container_name: ciso-assistant-local-db
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+
+    # --- Resources ---
+    memswap_limit: 1G          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 256M
+
+    # --- Configuration ---
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/DB_PWD
+      TZ: ${TZ}
+
+    # --- Storage ---
+    volumes:
+      - ./.secrets/db_pwd.txt:/run/secrets/DB_PWD:ro
+      - ./volumes/postgres:/var/lib/postgresql/data
+
+    # --- Networking ---
+    networks:
+      - ciso-assistant-local
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME} -h 127.0.0.1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+networks:
+  ciso-assistant-local:
+    name: ciso-assistant-local
