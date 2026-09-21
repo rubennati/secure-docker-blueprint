@@ -9,6 +9,7 @@
   `docker-compose.prod.agent.yml` in the upstream repo
 - **License:** Apache-2.0 (with Commons Clause)
 - **Use restrictions:** Apache-2.0 with the Commons Clause, which withholds the right to Sell — defined as providing to third parties, for a fee or other consideration, a product or service whose value derives entirely or substantially from its functionality, including fees for hosting or for consulting and support related to it — https://github.com/orion-belt-dev/orion-belt/blob/master/LICENSE · checked 2026-09-21
+- **Decision facts checked:** 2026-09-21
 - **Origin:** Individual maintainer · Mohamed Zrouga · no single jurisdiction
 - **Domain:** Identity, access and secrets
 - **Role:** Privileged access gateway for SSH sessions, from a young single-maintainer project

@@ -6,6 +6,7 @@
 - **GitHub:** https://github.com/Dolibarr/dolibarr
 - **Docker image:** https://hub.docker.com/r/tuxgasy/dolibarr (community-maintained, widely used)
 - **License:** GPL-3.0
+- **Decision facts checked:** not yet
 - **Origin:** France · Dolibarr Association · EU
 - **Domain:** Business operations
 - **Role:** ERP and CRM: contacts, quotes, invoices, stock and accounting

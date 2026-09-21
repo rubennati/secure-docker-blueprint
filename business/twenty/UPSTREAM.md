@@ -6,6 +6,8 @@
 - **GitHub:** https://github.com/twentyhq/twenty
 - **Docs:** https://twenty.com/developers/section/self-hosting
 - **License:** AGPL-3.0 (core; files marked `@license Enterprise` are under a separate enterprise licence, and the SDK and UI packages are MIT)
+- **Use restrictions:** none for the AGPL-3.0 portion; individual files carrying a `/* @license Enterprise */` comment at the top are under a separate commercial licence — https://github.com/twentyhq/twenty/blob/main/LICENSE · checked 2026-09-21
+- **Decision facts checked:** 2026-09-21
 - **Origin:** United States · Twenty.com PBC · non-EU
 - **Domain:** Business operations
 - **Role:** CRM: companies, people, opportunities and tasks, with an extensible data model and an API

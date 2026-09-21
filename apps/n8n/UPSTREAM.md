@@ -9,6 +9,7 @@
 - **Use restrictions:** free for internal business purposes and for non-commercial use; it may be given to others only free of charge and for non-commercial purposes, and its licensing and copyright notices may not be altered, removed or obscured — https://github.com/n8n-io/n8n/blob/master/LICENSE.md · checked 2026-09-21
 - **Edition gating:** files and directories whose names contain `.ee.` are covered by a separate enterprise licence rather than by the Sustainable Use License — https://github.com/n8n-io/n8n/blob/master/LICENSE.md · checked 2026-09-21
 - **Commercial model:** commercial licence — https://github.com/n8n-io/n8n/blob/master/LICENSE.md · checked 2026-09-21
+- **Decision facts checked:** 2026-09-21
 - **Origin:** Germany · n8n GmbH · EU
 - **Domain:** Automation and data
 - **Role:** Visual workflow automation

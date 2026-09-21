@@ -7,6 +7,7 @@
 - **Docs:** https://www.windmill.dev/docs/
 - **License:** AGPL-3.0 (Community Edition core, with Apache-2.0 components); Enterprise features are under a separate commercial licence
 - **Edition gating:** code behind the `enterprise` compile flag in `backend/`, and frontend code that requires a positive licence check to activate, is under a proprietary and commercial licence rather than the AGPLv3; forks must not include it — https://github.com/windmill-labs/windmill/blob/main/LICENSE · checked 2026-09-21
+- **Decision facts checked:** 2026-09-21
 - **Origin:** Windmill Labs · no country stated in its published terms · no country
 - **Domain:** Automation and data
 - **Role:** Code-first scripts, flows, APIs and scheduled jobs on a queue

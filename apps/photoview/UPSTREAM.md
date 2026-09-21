@@ -6,6 +6,7 @@
 - **GitHub:** https://github.com/photoview/photoview
 - **Docker Hub:** https://hub.docker.com/r/photoview/photoview
 - **License:** GPL-3.0
+- **Decision facts checked:** not yet
 - **Origin:** Denmark · community · EU
 - **Domain:** Photos
 - **Role:** Photo gallery that reads your existing folders, with RAW support and face recognition

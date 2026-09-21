@@ -6,6 +6,7 @@
 - **GitHub:** https://github.com/axllent/mailpit
 - **Docs:** https://mailpit.axllent.org/docs/
 - **License:** MIT
+- **Decision facts checked:** 2026-09-21
 - **Origin:** New Zealand · Ralph Slooten (axllent) · non-EU
 - **Domain:** Developer tools
 - **Role:** SMTP sink that catches every outgoing message and shows it, delivering nothing

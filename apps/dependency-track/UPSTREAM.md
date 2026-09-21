@@ -6,6 +6,7 @@
 - **GitHub:** https://github.com/DependencyTrack/dependency-track
 - **Docs:** https://docs.dependencytrack.org
 - **License:** Apache-2.0
+- **Decision facts checked:** not yet
 - **Origin:** OWASP Foundation project · United States (OWASP Foundation) · non-EU
 - **Domain:** Security operations
 - **Role:** Software composition analysis: SBOMs, components and known vulnerabilities across a portfolio

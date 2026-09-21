@@ -6,6 +6,7 @@
 - **GitHub (LinuxServer build):** https://github.com/linuxserver/docker-heimdall
 - **GitHub (Heimdall upstream):** https://github.com/linuxserver/Heimdall
 - **License:** MIT
+- **Decision facts checked:** not yet
 - **Origin:** UK · linuxserver.io community · non-EU
 - **Domain:** Dashboards
 - **Role:** Application launcher with widgets

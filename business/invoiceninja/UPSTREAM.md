@@ -8,6 +8,7 @@
 - **Image:** https://hub.docker.com/r/invoiceninja/invoiceninja-debian
 - **License:** Elastic License 2.0
 - **Use restrictions:** Elastic License 2.0 — it may not be provided to third parties as a hosted or managed service giving them access to a substantial set of its features, the licence-key functionality may not be moved, changed, disabled or circumvented, and licensing or copyright notices may not be removed — https://github.com/invoiceninja/invoiceninja/blob/v5-stable/LICENSE · checked 2026-09-21
+- **Decision facts checked:** 2026-09-21
 - **Origin:** US · Invoice Ninja LLC · non-EU
 - **Domain:** Business operations
 - **Role:** Invoicing, quotes and payments

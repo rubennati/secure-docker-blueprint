@@ -211,3 +211,53 @@ class DecisionFacts(unittest.TestCase):
             "- **Edition gating:** none — https://x.example.com · checked 2026-09-21\n")
         self.assertEqual(problems, [])
         self.assertEqual(out["edition_gating"]["statement"], "none")
+
+
+class ResearchState(unittest.TestCase):
+    """Three states, told apart without padding every file with placeholders.
+
+    The marker is a process record — it says the questions were asked — so it
+    carries no source. A `none` *fact* asserts something about upstream's terms
+    and does. Conflating the two is what would turn this into bookkeeping.
+    """
+
+    def _state(self, line, has_facts=False):
+        problems = []
+        return sc.decision_facts_checked(line, "apps/demo", has_facts, problems), problems
+
+    def test_a_missing_marker_is_rejected(self):
+        """This is what stops a new stack entering with its state unstated."""
+        out, problems = self._state("- **License:** MIT\n")
+        self.assertIsNone(out)
+        self.assertIn("Decision facts checked", problems[0])
+
+    def test_not_yet_means_nobody_has_looked(self):
+        out, problems = self._state("- **Decision facts checked:** not yet\n")
+        self.assertIsNone(out)
+        self.assertEqual(problems, [])
+
+    def test_a_date_means_the_questions_were_asked(self):
+        out, problems = self._state("- **Decision facts checked:** 2026-09-21\n")
+        self.assertEqual(out, "2026-09-21")
+        self.assertEqual(problems, [])
+
+    def test_a_date_with_no_facts_is_legal(self):
+        """Checked and nothing found needs no placeholder fields."""
+        out, problems = self._state("- **Decision facts checked:** 2026-09-21\n", has_facts=False)
+        self.assertEqual(out, "2026-09-21")
+        self.assertEqual(problems, [])
+
+    def test_facts_alongside_not_yet_contradict(self):
+        out, problems = self._state("- **Decision facts checked:** not yet\n", has_facts=True)
+        self.assertIsNone(out)
+        self.assertIn("date it instead", problems[0])
+
+    def test_a_marker_that_is_not_a_date_is_rejected(self):
+        out, problems = self._state("- **Decision facts checked:** soon\n")
+        self.assertIsNone(out)
+        self.assertIn("needs YYYY-MM-DD", problems[0])
+
+    def test_an_impossible_date_is_rejected(self):
+        out, problems = self._state("- **Decision facts checked:** 2026-02-31\n")
+        self.assertIsNone(out)
+        self.assertEqual(len(problems), 1)

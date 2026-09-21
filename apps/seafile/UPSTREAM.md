@@ -7,6 +7,7 @@
 - **Image (main):** https://hub.docker.com/r/seafileltd/seafile-mc
 - **GitHub:** https://github.com/haiwen/seafile
 - **License:** AGPL-3.0
+- **Decision facts checked:** not yet
 - **Origin:** China · Seafile Ltd · non-EU
 - **Domain:** Files, wiki and collaboration
 - **Role:** File sync and share, community edition

@@ -5,6 +5,7 @@
 - **Repo:** https://github.com/Finsys/hawser
 - **Docs:** https://github.com/Finsys/hawser/blob/main/README.md
 - **License:** MIT
+- **Decision facts checked:** not yet
 - **Origin:** Finsys · **no country or legal entity stated** — no imprint on fnsys.pro
 - **Domain:** Infrastructure
 - **Role:** Remote Docker agent for Dockhand, connecting outbound so the managed host publishes no port

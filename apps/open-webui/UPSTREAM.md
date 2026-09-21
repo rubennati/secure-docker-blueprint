@@ -8,6 +8,7 @@
 - **License:** Open WebUI License (BSD-3-Clause with an added branding-preservation clause; not OSI-approved)
 - **Use restrictions:** the Open WebUI name and branding may not be removed or altered, except for deployments whose end users do not exceed fifty individuals in any rolling thirty-day period, or with prior written permission or an executed enterprise licence — https://github.com/open-webui/open-webui/blob/main/LICENSE · checked 2026-09-21
 - **Commercial model:** commercial licence — https://github.com/open-webui/open-webui/blob/main/LICENSE · checked 2026-09-21
+- **Decision facts checked:** 2026-09-21
 - **Origin:** Open WebUI · no country stated in its published terms · no country
 - **Domain:** AI and local AI
 - **Role:** Chat interface for any OpenAI-compatible endpoint, with accounts, history and document upload

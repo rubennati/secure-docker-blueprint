@@ -6,6 +6,7 @@
 - **GitHub:** https://github.com/louislam/uptime-kuma
 - **Docker Hub:** https://hub.docker.com/r/louislam/uptime-kuma
 - **License:** MIT
+- **Decision facts checked:** 2026-09-21
 - **Origin:** Hong Kong · Louis Lam · non-EU
 - **Domain:** Monitoring
 - **Role:** Uptime monitoring with a status page and many notification channels

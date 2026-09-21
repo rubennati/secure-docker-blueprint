@@ -8,6 +8,7 @@
 - **Docker Hub:** https://hub.docker.com/r/vikunja/vikunja
 - **Docs:** https://vikunja.io/docs/
 - **License:** AGPL-3.0
+- **Decision facts checked:** not yet
 - **Origin:** Germany · Konrad Langenberg Software · EU
 - **Domain:** Business operations
 - **Role:** Task and project management with lists, boards and calendars

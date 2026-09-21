@@ -5,6 +5,9 @@
 - **Repo:** https://manual.seafile.com/13.0/docker/pro/deploy_seafile_pro_with_docker/
 - **Config source:** Official Seafile Pro Docker Compose files (inbox/seafile-pro_original)
 - **License:** Commercial
+- **Use restrictions:** end-user customers may not redistribute it further, the software and its source may not be disclosed or made available to any third party, and derivative works may not be created or distributed — https://manual.seafile.com/latest/introduction/seafile_professional_edition_software_license_agreement/ · checked 2026-09-21
+- **Commercial model:** per-user subscription; no licence file is needed to run the Pro edition for three users — https://www.seafile.com/en/pricing/ · checked 2026-09-21
+- **Decision facts checked:** 2026-09-21
 - **Origin:** China · Seafile Ltd · non-EU
 - **Domain:** Files, wiki and collaboration
 - **Role:** File sync and share, professional edition

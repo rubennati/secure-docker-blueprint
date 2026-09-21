@@ -8,6 +8,7 @@
 - **Image registry:** https://github.com/zammad/zammad/pkgs/container/zammad
 - **Image:** `ghcr.io/zammad/zammad`
 - **License:** AGPL-3.0
+- **Decision facts checked:** not yet
 - **Origin:** Germany · Zammad GmbH · EU
 - **Domain:** Business operations
 - **Role:** Helpdesk and ticket system across mail, chat and phone

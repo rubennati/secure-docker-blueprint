@@ -8,6 +8,7 @@
 - **Docker Hub:** https://hub.docker.com/r/binwiederhier/ntfy
 - **License:** Apache-2.0 / GPL-2.0 (dual-licensed)
 - **Use restrictions:** none — the repository carries both `LICENSE` (Apache-2.0) and `LICENSE.GPLv2`, and neither restricts commercial or hosted use — https://github.com/binwiederhier/ntfy · checked 2026-09-21
+- **Decision facts checked:** 2026-09-21
 - **Origin:** Germany · Philipp Heckel · EU
 - **Domain:** Monitoring
 - **Role:** Push notifications over HTTP, the receiving end for every other alert

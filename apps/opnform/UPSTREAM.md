@@ -6,6 +6,7 @@
 - **GitHub:** https://github.com/JhumanJ/OpnForm
 - **Docker images:** `jhumanj/opnform-api` + `jhumanj/opnform-client` on ghcr.io and Docker Hub
 - **License:** AGPL-3.0
+- **Decision facts checked:** not yet
 - **Origin:** France · Julien Nahum · EU
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Form builder with shareable forms and submissions

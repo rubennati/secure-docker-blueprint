@@ -6,6 +6,7 @@
 - **GitHub:** https://github.com/smallstep/certificates
 - **Docs:** https://smallstep.com/docs/step-ca/
 - **License:** Apache-2.0
+- **Decision facts checked:** not yet
 - **Origin:** United States · Smallstep Labs, Inc. · non-EU
 - **Domain:** Identity, access and secrets
 - **Role:** Internal certificate authority for machines and services: X.509, ACME and optional SSH certificates

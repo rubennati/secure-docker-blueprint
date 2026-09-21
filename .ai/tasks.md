@@ -306,21 +306,22 @@ Listed with context in [`state.md`](state.md). Nothing proceeds on these until d
       production, but it is the only deviation from the form in
       `docs/standards/compose-structure.md`. Either give it the companion file or
       state the exception there — `local-pin-drift` covers it under both
-- [ ] Continue W8 — the maintained decision facts for the remaining stacks. The schema and
-      its checker exist (`Use restrictions`, `Edition gating`, `Commercial model` in
-      `UPSTREAM.md`, each with source and checked date; `new-app-checklist.md` documents
-      the rules). Seventeen stacks are done: `apps/dify`, `apps/litellm`, `apps/n8n`,
-      `apps/nocodb`, `apps/open-webui`, `apps/windmill`, `business/invoiceninja`,
-      `business/matomo`, `business/openproject`, `core/authentik`, `core/dockhand`,
-      `core/infisical`, `core/orion-belt`, `core/portainer`, `core/teleport`,
-      `monitoring/langfuse`, `monitoring/ntfy`.
-      Still carrying a signal in the repository: `apps/seafile-pro`, `apps/unifi`,
-      `backup/urbackup`, `core/jumpserver`, `core/shellhub`.
-      **The signal list is only an order, never the scope.** Two stacks with no signal at
-      all turned out to matter most: `business/matomo`, whose licence field said GPL-3.0
-      while SAML sign-on is a separate plugin under the InnoCraft EULA, and `apps/nocodb`,
-      recorded as AGPL-3.0 when upstream had relicensed to the Sustainable Use License.
-      The roughly 70 remaining stacks need the question asked, not a filter applied.
+- [ ] Continue W8 until every stack states a research date rather than `not yet`.
+      The decision is that W8 covers the whole catalogue: licence class and product
+      signals both proved unreliable as a filter. `business/matomo` (GPL-3.0 on paper,
+      SAML behind an EULA plugin), `apps/nocodb` (recorded AGPL-3.0, relicensed to the
+      Sustainable Use License), `core/teleport` (images not Apache-2.0 since v16) and
+      `backup/urbackup` (recorded GPL where the file is AGPL) would all have been
+      skipped by one.
+      **65 stacks still say `not yet`.** For each, ask three questions against
+      authoritative upstream sources — current licence and use rights, decision-relevant
+      edition or security-feature gating, decision-relevant commercial model — and then
+      either record the facts or just date the marker. Only facts that change an
+      operator's decision: not sponsorship tiers, consulting, support contracts or the
+      vendor's own hosted service.
+      `gh api repos/<owner>/<repo>/license -q .content | base64 -d` is the reliable way
+      to the licence text; raw URLs miss `LICENSE.md` and non-`main` default branches,
+      and several vendor doc sites return 404 or sit behind bot protection.
 - [ ] Resolve `apps/hemmelig`'s licence — two upstream sources disagree. The README states
       an "O'Saasy License Agreement — Copyright © 2025 ... a modified MIT license that
       prohibits using the software to compete with the original licensor as a hosted SaaS
