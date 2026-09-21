@@ -314,16 +314,25 @@ Listed with context in [`state.md`](state.md). Nothing proceeds on these until d
       `docs/standards/compose-structure.md`. Either give it the companion file or
       state the exception there — `local-pin-drift` covers it under both
 - [ ] Continue W8 until every stack states a research date rather than `not yet`.
-      **29 of 97 are researched — 27 with facts, 2 checked and clear — and 68 remain.**
+      **32 of 97 are researched — 30 with facts, 2 checked and clear — and 65 remain.**
 
-      Vendor pages read and found not to answer the question, so the stack stays `not yet`
-      rather than being half-stated: `apps/onlyoffice` (the Enterprise page prices per user
-      but never compares Community), `apps/qdrant` (the pricing page describes Cloud tiers,
-      not self-hosted OSS), `business/zammad` (the pricing page covers the hosted service
-      and says only that self-hosting runs "on **your** servers"), `monitoring/healthchecks`
-      (the self-hosting docs give the licence but no feature comparison), `apps/bookstack`
-      (the about page mentions support plans and donations and states nothing about
-      editions). Each needs a different page, not a retry of the same one.
+      **Pages already read that do not answer the question — do not retry these:**
+      `apps/onlyoffice` (the Enterprise pricing page prices per user and never compares
+      Community; the Docs download page does not compare either), `apps/qdrant` (the pricing
+      page describes Cloud tiers, not self-hosted OSS), `business/zammad` (the pricing page
+      covers the hosted service and says only that self-hosting runs "on **your** servers"),
+      `monitoring/healthchecks` (the self-hosting docs give the licence but no feature
+      comparison; the pricing page mentions self-hosting nowhere), `apps/bookstack` (the
+      about page mentions support plans and donations and states nothing about editions),
+      `apps/velociraptor` (the docs overview calls it open source and says nothing about
+      Rapid7 commercial offerings), `business/dolibarr` (the features page returns 404),
+      `core/shellhub` (the pricing page lists Cloud, Managed and On Premises with identical
+      feature lists and never says what Community omits).
+
+      **A search summary is not a source.** A web search claimed JumpServer gates SSO behind
+      Enterprise; the vendor's own comparison page says OIDC, SAML2, OAuth2, LDAP, CAS and
+      RADIUS are all in the Community edition. Always read the vendor page the search points
+      at rather than the summary of it.
 
       **Two sweeps are done for every stack and must not be repeated.** They are research
       progress, not a per-stack verdict:
