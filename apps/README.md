@@ -148,7 +148,8 @@ secrets and shares nothing between people.
 ### Security operations
 
 Specialized security-operations tools — deception, supply-chain risk
-tracking, incident response, endpoint hunting. Each is a standard,
+tracking, vulnerability management, governance and compliance, incident
+response, endpoint hunting. Each is a standard,
 Traefik-or-direct-port app: no other stack in this repository depends on
 them, which is why they sit here rather than in `core/`, alongside
 [step-ca](../core/step-ca/) (PKI) and [zot](../core/zot/) (registry), the
@@ -160,7 +161,9 @@ here" for why that category stays out of this blueprint entirely.
 | App | Stack | Description |
 |---|---|---|
 | [OpenCanary](opencanary/) | Single container | Deception/honeypot — fake FTP, Telnet, HTTP, MySQL, RDP services that log every connection attempt. Not an IDS, EDR or SIEM — see its README |
+| [CISO Assistant](ciso-assistant/) | Backend + task worker + frontend + Postgres | Governance, risk and compliance — ISO 27001, NIS2, NIST CSF and 300+ further frameworks mapped to controls, risks and evidence. Administrator created at first start; the first start takes about ten minutes |
 | [Dependency-Track](dependency-track/) | API + frontend + Postgres | Software Composition Analysis — SBOM ingestion, component and vulnerability tracking across a portfolio over time. Not a container/image scanner — see its README for the Trivy distinction |
+| [DefectDojo](defectdojo/) | nginx + uWSGI + Celery worker and beat + initializer + Postgres + Valkey | Vulnerability management — imports scanner and pentest output, deduplicates findings, tracks them to closure. Upstream's public default keys replaced |
 | [DFIR-IRIS](dfir-iris/) | App + worker + Postgres + RabbitMQ | Collaborative incident-response case management — cases, IOCs, evidence, timelines. Holds real incident data; read its Security model before deploying |
 | [Velociraptor](velociraptor/) | Single container (server only) | Endpoint DFIR / threat hunting — VQL queries and collection across a fleet. An operative platform, not an always-on convenience app; losing its config breaks existing client trust — see its README |
 

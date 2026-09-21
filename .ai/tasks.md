@@ -74,8 +74,9 @@ was verified by running it. Three of the fifteen already ship.
       six batches (A calrs+Calnode · B SolidInvoice+FacturaScripts+Akaunting ·
       C Twenty+Chatwoot · D CISO Assistant+DefectDojo · E obot · F ERPNext).
       Batch A shipped (#140). Batch B: Akaunting and SolidInvoice shipped,
-      FacturaScripts held (#145). Batch C: Twenty and Chatwoot shipped — see the
-      evaluation's *Findings from implementation*.
+      FacturaScripts held (#145). Batch C: Twenty and Chatwoot shipped (#146).
+      Batch D: CISO Assistant and DefectDojo shipped — see the evaluation's
+      *Findings from implementation*.
 - [ ] Four publish no image (DayOtter, Dapta Calendars, MAILFLOW-AI, Crater) and
       stay evaluation entries. Proposed: ask DayOtter's maintainer to publish a tag;
       record the other three with the reason. No fork is proposed.

@@ -4,7 +4,7 @@
 
 Generated 2026-09-21 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-95 stacks: 1 ops-proven · 13 baseline-aligned · 81 scaffolded. 85 carry a local test stack.
+97 stacks: 1 ops-proven · 13 baseline-aligned · 83 scaffolded. 87 carry a local test stack.
 
 This is the maintainer's view: what has been established about each stack. It makes no statement about whether a stack suits a given deployment.
 
@@ -49,8 +49,10 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/caldiy`](apps/caldiy/) | `scaffolded` | `APP_TAG=v6.2.0-6@sha256:538cbb4a2273…` | 2026-07-26 | ✅ | documented | missing |
 | [`apps/calnode`](apps/calnode/) | `scaffolded` | `APP_TAG=0.9.0` | — | ✅ | documented | missing |
 | [`apps/calrs`](apps/calrs/) | `scaffolded` | `APP_TAG=1.17.1` | — | ✅ | documented | missing |
+| [`apps/ciso-assistant`](apps/ciso-assistant/) | `scaffolded` | `APP_TAG=v4.0.5` | — | ✅ | documented | missing |
 | [`apps/collabora`](apps/collabora/) | `scaffolded` | `APP_TAG=26.04.3.2.1` | — | ✅ | documented | missing |
 | [`apps/dashy`](apps/dashy/) | `scaffolded` | `APP_TAG=4.6.0` | 2026-05-02 | ✅ | documented | missing |
+| [`apps/defectdojo`](apps/defectdojo/) | `scaffolded` | `APP_TAG=3.3.100` | — | ✅ | documented | missing |
 | [`apps/dependency-track`](apps/dependency-track/) | `scaffolded` | `APP_TAG=5.1.0` | — | ✅ | documented | missing |
 | [`apps/dfir-iris`](apps/dfir-iris/) | `scaffolded` | `APP_TAG=v2.4.29` | — | ✅ | documented | missing |
 | [`apps/dify`](apps/dify/) | `scaffolded` | `APP_TAG=1.17.1` | — | ✅ | documented | missing |

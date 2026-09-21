@@ -47,6 +47,14 @@
     "license_class": "osi",
     "origin": "France · Olivier Lambert · EU"
   },
+  "apps/ciso-assistant": {
+    "bloc": "EU",
+    "country": "France",
+    "entity": "intuitem",
+    "license": "AGPL-3.0",
+    "license_class": "osi",
+    "origin": "France · intuitem · EU"
+  },
   "apps/collabora": {
     "bloc": "non-EU",
     "country": "UK",
@@ -62,6 +70,14 @@
     "license": "MIT",
     "license_class": "osi",
     "origin": "UK · Alicia Sykes (Lissy93) · non-EU"
+  },
+  "apps/defectdojo": {
+    "bloc": "none",
+    "country": "DefectDojo Inc",
+    "entity": "no country stated in the sources checked",
+    "license": "BSD 3-Clause",
+    "license_class": "osi",
+    "origin": "DefectDojo Inc · no country stated in the sources checked · no country"
   },
   "apps/dependency-track": {
     "bloc": "non-EU",

@@ -59,6 +59,16 @@
     "verified_anchored": false,
     "verified_version": ""
   },
+  "apps/ciso-assistant": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=v4.0.5",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "apps/collabora": {
     "backup_docs": "documented",
     "local_stack": "✅",
@@ -78,6 +88,16 @@
     "verified": "2026-05-02",
     "verified_anchored": true,
     "verified_version": "v4.0.4"
+  },
+  "apps/defectdojo": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=3.3.100",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "apps/dependency-track": {
     "backup_docs": "documented",
