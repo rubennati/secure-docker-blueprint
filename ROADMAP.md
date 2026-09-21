@@ -129,8 +129,15 @@ itself stands: this concerns the site only.
 
 ## On hold — after v1.0 or not yet needed
 
-No application is added while the v1.0 items above are open. Candidates, each
-independently useful and none excluded because a similar product already ships:
+No application is added while the v1.0 items above are open. One exception was
+made on 2026-09-21: twelve proposed products that publish a versioned image went in
+as stacks so they can be tried, all `scaffolded`. It changes nothing v1.0 requires
+and does not open the hold for the candidates below — reasoning in
+[`.ai/decisions.md`](.ai/decisions.md), evidence in
+[`docs/audits/candidate-evaluation-2026-09-21.md`](docs/audits/candidate-evaluation-2026-09-21.md).
+
+Candidates, each independently useful and none excluded because a similar product
+already ships:
 
 - **Per category** — each README owns its own planned list:
   [`apps/`](apps/README.md), [`business/`](business/README.md),
