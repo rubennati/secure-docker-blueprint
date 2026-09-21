@@ -307,24 +307,29 @@ Listed with context in [`state.md`](state.md). Nothing proceeds on these until d
       `docs/standards/compose-structure.md`. Either give it the companion file or
       state the exception there — `local-pin-drift` covers it under both
 - [ ] Continue W8 until every stack states a research date rather than `not yet`.
-      The decision is that W8 covers the whole catalogue: licence class and product
-      signals both proved unreliable as a filter. `business/matomo` (GPL-3.0 on paper,
-      SAML behind an EULA plugin), `apps/nocodb` (recorded AGPL-3.0, relicensed to the
-      Sustainable Use License), `core/teleport` (images not Apache-2.0 since v16) and
-      `backup/urbackup` (recorded GPL where the file is AGPL) would all have been
-      skipped by one.
-      **45 stacks still say `not yet`.** Sweeping the recorded licence of every unresearched
-      stack against the upstream file, via the API call below, is the cheapest first pass:
-      it has now found seven wrong licences, four of them a plain GPL where the file is the
-      Affero GPL. For each, ask three questions against
-      authoritative upstream sources — current licence and use rights, decision-relevant
-      edition or security-feature gating, decision-relevant commercial model — and then
-      either record the facts or just date the marker. Only facts that change an
-      operator's decision: not sponsorship tiers, consulting, support contracts or the
-      vendor's own hosted service.
-      `gh api repos/<owner>/<repo>/license -q .content | base64 -d` is the reliable way
-      to the licence text; raw URLs miss `LICENSE.md` and non-`main` default branches,
-      and several vendor doc sites return 404 or sit behind bot protection.
+      **24 of 95 are researched — 22 with facts, 2 checked and clear — and 71 remain.**
+
+      **Two sweeps are done for every stack and must not be repeated.** They are research
+      progress, not a per-stack verdict:
+
+      1. Every recorded licence has been checked against the upstream licence file
+         (`gh api repos/<owner>/<repo>/license -q .content | base64 -d`). It found seven
+         wrong records, four of them a plain GPL where the file is the Affero GPL.
+      2. No remaining repository carries an `ee/`, `enterprise/` or `LICENSE_EE` carve-out
+         in its root.
+
+      **Neither is enough to mark a stack checked, and an earlier batch wrongly treated
+      them as if they were.** `business/matomo` is the standing counterexample: its licence
+      is plain GPL-3.0, its repository has no enterprise directory, and SAML single sign-on
+      is still sold as a separate plugin under the InnoCraft EULA. Gating lives wherever the
+      vendor puts it, which is often a marketplace, a pricing page or a docs page and not
+      the source tree. A date may only be set once a source has actually been read that
+      speaks to edition gating and the commercial model — not merely to the licence.
+
+      The two exceptions that legitimately need no vendor source: `core/host-watchdog`,
+      which is first-party to this repository so no upstream can gate it, and
+      `apps/nextcloud`, whose Enterprise page was read and sells support, early patches,
+      SLAs and branding rather than gating SSO, LDAP or audit logging.
 - [ ] Resolve `apps/hemmelig`'s licence — two upstream sources disagree. The README states
       an "O'Saasy License Agreement — Copyright © 2025 ... a modified MIT license that
       prohibits using the software to compete with the original licensor as a hosted SaaS

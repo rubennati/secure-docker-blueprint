@@ -10,7 +10,7 @@
   contributors). Bundled front-end assets carry their own separate licenses
   (MIT, BSD-3-Clause, Apache-2.0, GPL-2.0 for one vendored library, CC-BY-4.0
   for icons) — all permissive, none affecting self-hosted use.
-- **Decision facts checked:** 2026-09-21
+- **Decision facts checked:** not yet
 - **Origin:** Community project, no single company, maintained collectively on GitHub · no single jurisdiction
 - **Domain:** Identity, access and secrets
 - **Role:** Zero-knowledge paste service for text and secrets

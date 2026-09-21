@@ -3,7 +3,7 @@
 ## Source
 
 - **License:** Apache-2.0
-- **Decision facts checked:** not yet
+- **Decision facts checked:** 2026-09-21
 - **Origin:** First-party · this repository · no single jurisdiction
 - **Domain:** Infrastructure
 - **Role:** Optional host scripts that restart the Docker daemon or the proxy after a confirmed, sustained failure

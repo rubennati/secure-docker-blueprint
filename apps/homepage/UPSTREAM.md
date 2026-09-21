@@ -6,7 +6,7 @@
 - **GitHub:** https://github.com/gethomepage/homepage
 - **Docs:** https://gethomepage.dev/
 - **License:** GPL-3.0
-- **Decision facts checked:** 2026-09-21
+- **Decision facts checked:** not yet
 - **Origin:** US · community (gethomepage) · non-EU
 - **Domain:** Dashboards
 - **Role:** Dashboard configured with YAML files
