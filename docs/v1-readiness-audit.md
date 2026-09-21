@@ -122,7 +122,7 @@ Status is the state after the PR named.
 | R11 | `renovate.json` is committed, the Renovate app is not installed, no pin carries a `# renovate:` marker, and `docs/renovate-proposal.md` describes it as pending | 30 Dependabot PRs, 0 Renovate | Dormant configuration and a proposal nobody has closed | DECISION REQUIRED | Open |
 | R12 | Three stacks have `COMPOSE_PROJECT_NAME` differing from the directory (`lycheeorg`, `monicahq`, `paperless-ngx`) | `check-structure.py` `identity-source` | Renaming either side breaks existing deployments' volume and network names | DECISION REQUIRED | Open |
 | R13 | `docs/host-session-*.md`, `docs/site-review-2026-08-03.md` and four files under `docs/audits/` are dated working records | file headers | Accumulated history in `docs/` | CLEANUP | Open — kept as evidence; a decision on archiving is not needed for v1.0 |
-| R14 | `check_env()` reads only `.env.example`, so image tags in the other 81 committed `*.env*.example` files are never checked — 80 `.env.local.example` plus `core/orion-belt/.env.agent.example`. Measured: **0 would violate the tag rule today**, so this is coverage that is absent rather than a defect being hidden. The same measurement surfaced a separate question — 42 local pins lag their production pin (e.g. `apps/homepage` prod `v2.3.0` / local `v1.13.2`) | `git ls-files`, `BAD_TAG` applied to each | A checker claiming tag coverage it does not have | CLEANUP | Open — generalisation shown, not adopted; the 42-pin drift is a separate decision |
+| R14 | `check_env()` read only `.env.example` and matched only `<NAME>_TAG`, so 84 committed `*.env*.example` files and the 12 `<NAME>_IMAGE` pins were never checked. Measured: **0 violated the tag rule**. The same measurement surfaced the separate question of 41 local pins lagging production | `git ls-files`, `BAD_TAG` applied to each | A checker claiming tag coverage it does not have | CLEANUP | **Closed** — the tag rule reads every example file and both pinning styles; `local-pin-drift` now enforces that a local stack pins what production ships, and all 41 pins are synchronised (D7) |
 | R15 | The hardening coverage figures in `docs/security-verification.md` were maintained by hand and went stale twice in three days — corrected to 166 services on 2026-09-19, already wrong at 205 on 2026-09-20 because four stacks landed in between. Every one is derivable from the compose files the checkers already parse | the table's own numbers against `check-structure.py --list` | A security document whose numbers are usually wrong | CLEANUP | **Closed** — `scripts/ci/security-coverage.py` counts them from the compose files into [`security-coverage.md`](security-coverage.md), verified in CI. `security-verification.md` keeps the descriptions and links to the figures |
 
 ### Stacks
@@ -146,7 +146,7 @@ Status is the state after the PR named.
 | W5 | Parity between repository and site is a manual list and fell 48 stacks behind | W1 | FIX BEFORE V1 | Resolved — #119, `site-catalogue.py --check` in CI |
 | W6 | Comparison pages beyond the catalogue's role column | site tree | POST-V1 / ON HOLD | Superseded by W1 — the catalogue gives every domain a role column, and the model neither ranks nor names a winner. Further comparison is editorial, not a defect |
 | W7 | Legal notice, privacy statement, domain and `security.txt` carry personal data in a public, forkable repository. Possible v1.0 impact: v1.0 asserts a forkable template and a fork inherits the imprint; whether that blocks depends on D3 | design in `.ai/decisions.md` | DECISION REQUIRED | Open — D3 |
-| W8 | The catalogue states a licence and an origin, which is not enough to choose software. Five facts are collapsed or absent: the **licence**, the **use rights** it grants, the **edition** a security-relevant feature sits in, the **commercial model**, and the **operational footprint** a stack brings with it. So the site cannot answer whether OIDC, audit logs or HA are paywalled, whether deploying a stack into a customer's infrastructure is permitted, or whether one of two comparable products is a single container and the other brings a database, a cache and workers — separate questions with separate answers, and decision support the catalogue implies it gives | `sovereignty.json` carries `license`, `license_class`, `origin` and nothing else; `catalogue.json` carries neither | PRE-V1 CANDIDATE | Open — scope in [Catalogue decision facts](#catalogue-decision-facts); belongs with the site information-architecture work, not before it |
+| W8 | The catalogue states a licence and an origin, which is not enough to choose software. Five facts are collapsed or absent: the **licence**, the **use rights** it grants, the **edition** a security-relevant feature sits in, the **commercial model**, and the **operational footprint** a stack brings with it. So the site cannot answer whether OIDC, audit logs or HA are paywalled, whether deploying a stack into a customer's infrastructure is permitted, or whether one of two comparable products is a single container and the other brings a database, a cache and workers — separate questions with separate answers, and decision support the catalogue implies it gives | `sovereignty.json` carries `license`, `license_class`, `origin` and nothing else; `catalogue.json` carries neither | PRE-V1 CANDIDATE | **Partly closed** — layer 5, the operational footprint, is derived from the compose files into `catalogue.json` and shown on the catalogue page; no field to fill and none to keep current. Layers 2–4 (use rights, edition gating, commercial model) are unchanged: they need upstream terms read per stack and cannot be derived. Scope in [Catalogue decision facts](#catalogue-decision-facts) |
 
 ### CI and automation
 
@@ -190,6 +190,13 @@ Scope for W8 — five factual layers, one model. No stack is researched or fille
 
 **Five layers, kept apart.** Collapsing them is the current defect.
 
+**The licence does not decide which stacks need layers 2–4.** A source-available or
+mixed licence is the obvious prompt, but an OSI-licensed project can still reserve
+OIDC, SAML, audit logs or HA for a paid edition, and can still sell support or a
+hosted tier. Scoping the work by `license_class` would miss exactly those
+and leave the catalogue implying a completeness it does not have. Which stacks need
+maintained facts is its own question, answered per stack.
+
 1. **Licence** — what governs the software: MIT, Apache-2.0, GPL, AGPL, BSL, Elastic,
    Sustainable Use, proprietary, or open-core mixtures. Already recorded.
 2. **Use rights** — never one "commercial use" field. Per right, from the upstream
@@ -222,8 +229,12 @@ Scope for W8 — five factual layers, one model. No stack is researched or fille
    `3 services · PostgreSQL + Redis · CPU only`. That separates
    `apps/easyappointments` from `apps/caldiy` without any editorial judgement.
 
-   **Already derivable — generate it, do not type it.** Measured against the tree
-   while scoping this:
+   **Done.** `scripts/ci/site-catalogue.py` derives it into `catalogue.json` and the
+   catalogue page renders one line per stack — `2 services · MariaDB` beside
+   `3 services · PostgreSQL + Redis`, `1 service · GPU required` for `apps/vllm`,
+   `GPU optional` for `apps/ollama` from its overlay. Nothing is typed and nothing
+   needs keeping current. Measured against the tree while scoping this, and
+   unchanged by the implementation:
 
    | Fact | Source | State |
    |---|---|---|
@@ -325,19 +336,16 @@ deliberately deferred.
 | Renovate: install it or remove the dormant configuration (R11) | D5 |
 | Three project-name mismatches, where a rename moves live volumes (R12) | D6 |
 | Personal data on the public site (W7) | D3 |
-| Whether a local pin should track production by default (R14) | D7 |
 | Restore sections: 85 of 89 READMEs have none (S2) | D2 |
 
 **Deferred by design, scoped but not built**
 
-- **R14** — tag validation reads only `.env.example`; 81 other committed
-  `*.env*.example` files are unchecked. Measured: none violates the rule today.
-  42 local pins differ from production — 38 stale, 3 different image or version
-  schemes, 1 digest-only. All 79 local stacks resolve. No pin was changed.
 - **W8** — catalogue decision facts, five layers, scoped in
-  [Catalogue decision facts](#catalogue-decision-facts). Licence and commercial
-  model partly exist; operational footprint is derivable from the compose files;
-  use rights and edition gates need reading upstream terms.
+  [Catalogue decision facts](#catalogue-decision-facts). Layer 5, the operational
+  footprint, is generated. Layer 1, the licence, already existed and the site shows
+  its class. What is left is layers 2–4 — use rights per right, edition gating, and
+  the commercial model — none of which is derivable: each needs the upstream terms
+  read for one stack at a time, with the source recorded beside the answer.
 - **R13** — dated working records under `docs/`. Kept as evidence.
 - **S4** — ShellHub pins a release candidate, which upstream publishes as its only
   tag. Revisit at the first stable release.
@@ -359,4 +367,4 @@ deliberately deferred.
 | D4 | Does v0.10.0 remain a release, or does measurement become continuous, applied when a stack is verified? | Continuous — the measurement needs the same host session as S1 |
 | D5 | Install Renovate or delete `renovate.json` and its proposal? | Delete — Dependabot already covers Actions and npm, no pin carries a `# renovate:` marker, and no Renovate pull request has ever been opened |
 | D6 | Resolve the three project-name mismatches by editing `.env.example` or the directory? | Neither before v1.0 — a rename breaks live deployments; record it as an exception |
-| D7 | Should a local pin track its production pin by default? | Yes, with recorded exceptions — that turns 38 stale pins into a mechanical sync and leaves the 3 scheme differences and 1 digest case as stated facts. Nothing moves until this is decided |
+| D7 | Should a local pin track its production pin by default? | **Decided — yes, enforced.** No exception list was needed: joining on the image repository rather than the variable name makes the legitimate cases fall out. `apps/vllm` runs the CPU build locally and is never compared; a service the local stack does not run is simply absent. 41 pins synchronised, Version Chain step 4 added |

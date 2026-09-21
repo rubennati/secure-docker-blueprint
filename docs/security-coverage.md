@@ -15,8 +15,8 @@ Two scopes exist and they differ by the directories `check-structure.py` lists i
 
 | Scope | Stacks | Compose files | Services |
 |---|---|---|---|
-| **Deployable** | 87 | **99** | **205** |
-| Checker universe | 90 | 102 | 209 |
+| **Deployable** | 89 | **101** | **207** |
+| Checker universe | 92 | 104 | 211 |
 
 The difference is `apps/_reference`, `development/static-site`, `development/web-api` — parsed and held to the baseline, deployed by nobody.
 
@@ -26,8 +26,8 @@ A merge is blocked when one of these is violated without a documented exception.
 
 | Control | Coverage | Documented exceptions |
 |---|---|---|
-| `no-new-privileges:true` | 202 / 205 services | 3 |
-| `privileged: true` forbidden | 0 violation(s) across 99 compose files | 0 |
+| `no-new-privileges:true` | 204 / 207 services | 3 |
+| `privileged: true` forbidden | 0 violation(s) across 101 compose files | 0 |
 | Docker socket via proxy only | — | 7 |
 | `network_mode: host` | — | 4 |
 
@@ -35,7 +35,7 @@ A merge is blocked when one of these is violated without a documented exception.
 
 | Control | Coverage |
 |---|---|
-| Network isolation — a network with `internal: true` | 50 / 99 compose files |
+| Network isolation — a network with `internal: true` | 50 / 101 compose files |
 | `__REPLACE_ME__` sentinels an operator must replace | 45 occurrences across `.env.example` files |
 
 ## Soft controls
@@ -46,8 +46,8 @@ image property, established by running it rather than by counting.
 
 | Control | Coverage |
 |---|---|
-| `read_only: true` | 58 / 205 services |
-| `cap_drop: ALL` | 89 / 205 services |
-| Non-root `user:` | 15 / 205 services |
-| Resource limits — `memory` and `pids` | 205 / 205 services |
-| Docker Secrets — a `secrets:` block | 107 / 205 services |
+| `read_only: true` | 60 / 207 services |
+| `cap_drop: ALL` | 91 / 207 services |
+| Non-root `user:` | 16 / 207 services |
+| Resource limits — `memory` and `pids` | 207 / 207 services |
+| Docker Secrets — a `secrets:` block | 109 / 207 services |
