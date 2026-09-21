@@ -9,7 +9,10 @@
 - **Origin:** France · intuitem · EU
 - **Domain:** Security operations
 - **Role:** Governance, risk and compliance: frameworks such as ISO 27001 and NIS2 mapped to controls, risks and evidence
-- **Edition gating:** files in the repository's `enterprise/` directory are under the intuitem Commercial Software License and ship only in separate enterprise binaries; the community images this stack pins are released under AGPLv3 — https://github.com/intuitem/ciso-assistant-community/blob/main/LICENSE.md · checked 2026-09-21
+- **Decision facts checked:** 2026-09-21
+- **Use restrictions:** none — the community images this stack pins are released under AGPLv3, and the commercially licensed code in `enterprise/` ships only in separate enterprise binaries — https://github.com/intuitem/ciso-assistant-community/blob/main/LICENSE.md · checked 2026-09-21
+- **Edition gating:** SSO/SAML, the API, multiple frameworks and self-hosting are in the community edition; the Pro edition adds, among others, SCIM group provisioning, fine-grained per-object permissions, a multi-level domain hierarchy and custom fields — https://intuitem.com/compare · checked 2026-09-21
+- **Commercial model:** paid self-hosted edition — https://intuitem.com/compare · checked 2026-09-21
 - **Based on version:** `v4.0.5`
 
 No `Last verified` line yet — see [Verification performed](#verification-performed-2026-09-21)

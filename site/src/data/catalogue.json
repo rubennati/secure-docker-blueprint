@@ -126,12 +126,24 @@
   },
   "apps/ciso-assistant": {
     "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "paid self-hosted edition",
+        "source": "https://intuitem.com/compare",
+        "statement": "paid self-hosted edition"
+      },
       "edition_gating": {
         "checked": "2026-09-21",
+        "source": "https://intuitem.com/compare",
+        "statement": "SSO/SAML, the API, multiple frameworks and self-hosting are in the community edition; the Pro edition adds, among others, SCIM group provisioning, fine-grained per-object permissions, a multi-level domain hierarchy and custom fields"
+      },
+      "use_restrictions": {
+        "checked": "2026-09-21",
         "source": "https://github.com/intuitem/ciso-assistant-community/blob/main/LICENSE.md",
-        "statement": "files in the repository's `enterprise/` directory are under the intuitem Commercial Software License and ship only in separate enterprise binaries; the community images this stack pins are released under AGPLv3"
+        "statement": "none — the community images this stack pins are released under AGPLv3, and the commercially licensed code in `enterprise/` ships only in separate enterprise binaries"
       }
     },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Security operations",
     "footprint": {
       "gpu": null,
@@ -193,6 +205,7 @@
   },
   "apps/defectdojo": {
     "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Security operations",
     "footprint": {
       "gpu": null,

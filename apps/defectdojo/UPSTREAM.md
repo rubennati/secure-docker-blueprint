@@ -7,6 +7,7 @@
 - **Docs:** https://docs.defectdojo.com
 - **License:** BSD 3-Clause
 - **Origin:** DefectDojo Inc · no country stated in the sources checked · no country
+- **Decision facts checked:** not yet
 - **Domain:** Security operations
 - **Role:** Vulnerability management: import scanner and pentest findings, deduplicate them and track them to closure
 - **Based on version:** `3.3.100`
