@@ -1,6 +1,13 @@
 {
   "apps/adminer": {
     "domain": "Developer tools",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "Adminer",
     "path": "apps/adminer",
     "role": "Web interface onto a database another stack already runs",
@@ -12,6 +19,13 @@
   },
   "apps/agentgateway": {
     "domain": "AI and local AI",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "agentgateway",
     "path": "apps/agentgateway",
     "role": "LLM and MCP gateway: one authenticated endpoint in front of model providers and MCP servers",
@@ -23,6 +37,15 @@
   },
   "apps/bookstack": {
     "domain": "Files, wiki and collaboration",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MariaDB"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · MariaDB"
+    },
     "name": "BookStack",
     "path": "apps/bookstack",
     "role": "Wiki with structure: shelves, books, chapters and pages",
@@ -34,6 +57,16 @@
   },
   "apps/caldiy": {
     "domain": "Publishing, forms and scheduling",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL",
+        "Redis"
+      ],
+      "init_services": 0,
+      "services": 3,
+      "summary": "3 services · PostgreSQL + Redis"
+    },
     "name": "Cal.diy",
     "path": "apps/caldiy",
     "role": "Appointment booking pages, the community edition of Cal.com",
@@ -45,6 +78,13 @@
   },
   "apps/collabora": {
     "domain": "Documents and e-signature",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "Collabora Online",
     "path": "apps/collabora",
     "role": "Office document editing server based on LibreOffice",
@@ -56,6 +96,13 @@
   },
   "apps/dashy": {
     "domain": "Dashboards",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "Dashy",
     "path": "apps/dashy",
     "role": "One page linking everything you run, configured in a single YAML file",
@@ -67,6 +114,15 @@
   },
   "apps/dependency-track": {
     "domain": "Security operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL"
+      ],
+      "init_services": 0,
+      "services": 3,
+      "summary": "3 services · PostgreSQL"
+    },
     "name": "Dependency-Track",
     "path": "apps/dependency-track",
     "role": "Software composition analysis: SBOMs, components and known vulnerabilities across a portfolio",
@@ -78,6 +134,15 @@
   },
   "apps/dfir-iris": {
     "domain": "Security operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "RabbitMQ"
+      ],
+      "init_services": 0,
+      "services": 4,
+      "summary": "4 services · RabbitMQ"
+    },
     "name": "DFIR-IRIS",
     "path": "apps/dfir-iris",
     "role": "Collaborative incident-response case management: cases, indicators, evidence and timelines",
@@ -89,6 +154,16 @@
   },
   "apps/dify": {
     "domain": "AI and local AI",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL",
+        "Redis"
+      ],
+      "init_services": 0,
+      "services": 10,
+      "summary": "10 services · PostgreSQL + Redis"
+    },
     "name": "Dify",
     "path": "apps/dify",
     "role": "LLM application platform: chat and workflow apps, knowledge bases, plugin-based model providers",
@@ -100,6 +175,13 @@
   },
   "apps/docling-serve": {
     "domain": "AI and local AI",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "docling-serve",
     "path": "apps/docling-serve",
     "role": "Document understanding as an API: layout, tables and Markdown or JSON export for AI pipelines",
@@ -111,6 +193,15 @@
   },
   "apps/easyappointments": {
     "domain": "Publishing, forms and scheduling",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MariaDB"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · MariaDB"
+    },
     "name": "Easy!Appointments",
     "path": "apps/easyappointments",
     "role": "Appointment booking in PHP, established since 2013",
@@ -122,6 +213,13 @@
   },
   "apps/euro-office": {
     "domain": "Documents and e-signature",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "Euro-Office",
     "path": "apps/euro-office",
     "role": "EU-governed fork of OnlyOffice, a drop-in document editing server",
@@ -133,6 +231,15 @@
   },
   "apps/ghost": {
     "domain": "Publishing, forms and scheduling",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MySQL"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · MySQL"
+    },
     "name": "Ghost",
     "path": "apps/ghost",
     "role": "Publishing platform for blogs and newsletters, with optional Fediverse publishing",
@@ -144,6 +251,13 @@
   },
   "apps/greenmail": {
     "domain": "Developer tools",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "GreenMail",
     "path": "apps/greenmail",
     "role": "SMTP, IMAP and POP3 test server with a mailbox per recipient, for automated tests",
@@ -155,6 +269,13 @@
   },
   "apps/heimdall": {
     "domain": "Dashboards",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "Heimdall",
     "path": "apps/heimdall",
     "role": "Application launcher with widgets",
@@ -166,6 +287,13 @@
   },
   "apps/hemmelig": {
     "domain": "Identity, access and secrets",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "Hemmelig",
     "path": "apps/hemmelig",
     "role": "Ephemeral secret sharing with a built-in request flow",
@@ -177,6 +305,13 @@
   },
   "apps/homarr": {
     "domain": "Dashboards",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "Homarr",
     "path": "apps/homarr",
     "role": "Dashboard with integrations into the services you run",
@@ -188,6 +323,13 @@
   },
   "apps/homepage": {
     "domain": "Dashboards",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "Homepage",
     "path": "apps/homepage",
     "role": "Dashboard configured with YAML files",
@@ -199,6 +341,17 @@
   },
   "apps/immich": {
     "domain": "Photos",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL",
+        "Redis",
+        "Valkey"
+      ],
+      "init_services": 0,
+      "services": 4,
+      "summary": "4 services · PostgreSQL + Redis + Valkey"
+    },
     "name": "Immich",
     "path": "apps/immich",
     "role": "Photo and video backup with mobile apps and machine-learning search",
@@ -210,6 +363,13 @@
   },
   "apps/it-tools": {
     "domain": "Developer tools",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "IT-Tools",
     "path": "apps/it-tools",
     "role": "Collection of small utilities: converters, generators and formatters",
@@ -221,6 +381,15 @@
   },
   "apps/librephotos": {
     "domain": "Photos",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL"
+      ],
+      "init_services": 0,
+      "services": 4,
+      "summary": "4 services · PostgreSQL"
+    },
     "name": "LibrePhotos",
     "path": "apps/librephotos",
     "role": "Photo library with face recognition and search",
@@ -232,6 +401,15 @@
   },
   "apps/litellm": {
     "domain": "AI and local AI",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · PostgreSQL"
+    },
     "name": "LiteLLM",
     "path": "apps/litellm",
     "role": "OpenAI-compatible gateway in front of any model backend, with virtual keys, budgets and a spend log",
@@ -243,6 +421,16 @@
   },
   "apps/lycheeorg": {
     "domain": "Photos",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MariaDB",
+        "Redis"
+      ],
+      "init_services": 0,
+      "services": 3,
+      "summary": "3 services · MariaDB + Redis"
+    },
     "name": "Lychee",
     "path": "apps/lycheeorg",
     "role": "Photo gallery",
@@ -254,6 +442,13 @@
   },
   "apps/mailpit": {
     "domain": "Developer tools",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "Mailpit",
     "path": "apps/mailpit",
     "role": "SMTP sink that catches every outgoing message and shows it, delivering nothing",
@@ -265,6 +460,15 @@
   },
   "apps/monicahq": {
     "domain": "Business operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MariaDB"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · MariaDB"
+    },
     "name": "Monica",
     "path": "apps/monicahq",
     "role": "Personal CRM for the people in your life",
@@ -276,6 +480,13 @@
   },
   "apps/n8n": {
     "domain": "Automation and data",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "n8n",
     "path": "apps/n8n",
     "role": "Visual workflow automation",
@@ -287,6 +498,16 @@
   },
   "apps/nextcloud": {
     "domain": "Files, wiki and collaboration",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MariaDB",
+        "Redis"
+      ],
+      "init_services": 0,
+      "services": 5,
+      "summary": "5 services · MariaDB + Redis"
+    },
     "name": "Nextcloud",
     "path": "apps/nextcloud",
     "role": "File sync and share with calendars, contacts and collaborative editing",
@@ -298,6 +519,13 @@
   },
   "apps/nocodb": {
     "domain": "Automation and data",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "NocoDB",
     "path": "apps/nocodb",
     "role": "Spreadsheet-style interface on top of a database",
@@ -309,6 +537,13 @@
   },
   "apps/ollama": {
     "domain": "AI and local AI",
+    "footprint": {
+      "gpu": "optional",
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service · GPU optional"
+    },
     "name": "Ollama",
     "path": "apps/ollama",
     "role": "Local model runtime that pulls models by name and serves them on CPU or an NVIDIA GPU",
@@ -320,6 +555,13 @@
   },
   "apps/onlyoffice": {
     "domain": "Documents and e-signature",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "OnlyOffice Document Server",
     "path": "apps/onlyoffice",
     "role": "Document editing server for Nextcloud, Seafile and similar",
@@ -331,6 +573,13 @@
   },
   "apps/open-webui": {
     "domain": "AI and local AI",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "Open WebUI",
     "path": "apps/open-webui",
     "role": "Chat interface for any OpenAI-compatible endpoint, with accounts, history and document upload",
@@ -342,6 +591,13 @@
   },
   "apps/opencanary": {
     "domain": "Security operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "OpenCanary",
     "path": "apps/opencanary",
     "role": "Honeypot: fake network services that log every connection attempt",
@@ -353,6 +609,16 @@
   },
   "apps/opnform": {
     "domain": "Publishing, forms and scheduling",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL",
+        "Redis"
+      ],
+      "init_services": 0,
+      "services": 7,
+      "summary": "7 services · PostgreSQL + Redis"
+    },
     "name": "OpnForm",
     "path": "apps/opnform",
     "role": "Form builder with shareable forms and submissions",
@@ -364,6 +630,16 @@
   },
   "apps/paperless-ngx": {
     "domain": "Documents and e-signature",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL",
+        "Redis"
+      ],
+      "init_services": 0,
+      "services": 5,
+      "summary": "5 services · PostgreSQL + Redis"
+    },
     "name": "Paperless-ngx",
     "path": "apps/paperless-ngx",
     "role": "Document management with OCR, tagging and full-text search",
@@ -375,6 +651,15 @@
   },
   "apps/photoprism": {
     "domain": "Photos",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MariaDB"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · MariaDB"
+    },
     "name": "PhotoPrism",
     "path": "apps/photoprism",
     "role": "Photo library with machine-learning classification and WebDAV",
@@ -386,6 +671,15 @@
   },
   "apps/photoview": {
     "domain": "Photos",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MariaDB"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · MariaDB"
+    },
     "name": "Photoview",
     "path": "apps/photoview",
     "role": "Photo gallery that reads your existing folders, with RAW support and face recognition",
@@ -397,6 +691,13 @@
   },
   "apps/privatebin": {
     "domain": "Identity, access and secrets",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "PrivateBin",
     "path": "apps/privatebin",
     "role": "Zero-knowledge paste service for text and secrets",
@@ -408,6 +709,15 @@
   },
   "apps/qdrant": {
     "domain": "AI and local AI",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "Qdrant"
+      ],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service · Qdrant"
+    },
     "name": "Qdrant",
     "path": "apps/qdrant",
     "role": "Vector database: collections, similarity search with filters, snapshots",
@@ -419,6 +729,16 @@
   },
   "apps/seafile": {
     "domain": "Files, wiki and collaboration",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "Memcached",
+        "Redis"
+      ],
+      "init_services": 0,
+      "services": 8,
+      "summary": "8 services · Memcached + Redis"
+    },
     "name": "Seafile",
     "path": "apps/seafile",
     "role": "File sync and share, community edition",
@@ -430,6 +750,17 @@
   },
   "apps/seafile-pro": {
     "domain": "Files, wiki and collaboration",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "Elasticsearch",
+        "MariaDB",
+        "Redis"
+      ],
+      "init_services": 0,
+      "services": 11,
+      "summary": "11 services · Elasticsearch + MariaDB + Redis"
+    },
     "name": "Seafile Pro",
     "path": "apps/seafile-pro",
     "role": "File sync and share, professional edition",
@@ -441,6 +772,13 @@
   },
   "apps/threat-dragon": {
     "domain": "Security operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "OWASP Threat Dragon",
     "path": "apps/threat-dragon",
     "role": "Threat modelling: data-flow diagrams, trust boundaries, threats and mitigations",
@@ -452,6 +790,15 @@
   },
   "apps/tymeslot": {
     "domain": "Publishing, forms and scheduling",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · PostgreSQL"
+    },
     "name": "Tymeslot",
     "path": "apps/tymeslot",
     "role": "Meeting scheduling with booking pages, calendar sync and video links",
@@ -463,6 +810,15 @@
   },
   "apps/unifi": {
     "domain": "Infrastructure",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MongoDB"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · MongoDB"
+    },
     "name": "UniFi Network Application",
     "path": "apps/unifi",
     "role": "Controller for Ubiquiti UniFi network devices",
@@ -474,6 +830,15 @@
   },
   "apps/vaultwarden": {
     "domain": "Identity, access and secrets",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MariaDB"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · MariaDB"
+    },
     "name": "Vaultwarden",
     "path": "apps/vaultwarden",
     "role": "Password manager: logins, TOTP and shared collections",
@@ -485,6 +850,13 @@
   },
   "apps/velociraptor": {
     "domain": "Security operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "Velociraptor",
     "path": "apps/velociraptor",
     "role": "Endpoint forensics and threat hunting across a fleet, driven by queries",
@@ -496,6 +868,13 @@
   },
   "apps/vllm": {
     "domain": "AI and local AI",
+    "footprint": {
+      "gpu": "required",
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service · GPU required"
+    },
     "name": "vLLM",
     "path": "apps/vllm",
     "role": "High-throughput OpenAI-compatible model serving on an NVIDIA GPU",
@@ -507,6 +886,13 @@
   },
   "apps/whoami": {
     "domain": "Developer tools",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "Whoami",
     "path": "apps/whoami",
     "role": "Tiny service that shows what the proxy forwards, to check routing and TLS",
@@ -518,6 +904,15 @@
   },
   "apps/windmill": {
     "domain": "Automation and data",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL"
+      ],
+      "init_services": 0,
+      "services": 4,
+      "summary": "4 services · PostgreSQL"
+    },
     "name": "Windmill",
     "path": "apps/windmill",
     "role": "Code-first scripts, flows, APIs and scheduled jobs on a queue",
@@ -529,6 +924,15 @@
   },
   "apps/wordpress": {
     "domain": "Publishing, forms and scheduling",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MariaDB"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · MariaDB"
+    },
     "name": "WordPress",
     "path": "apps/wordpress",
     "role": "Content management system for sites and blogs",
@@ -540,6 +944,15 @@
   },
   "apps/yopass": {
     "domain": "Identity, access and secrets",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "Memcached"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · Memcached"
+    },
     "name": "Yopass",
     "path": "apps/yopass",
     "role": "Self-destructing links for handing someone a credential once",
@@ -551,6 +964,7 @@
   },
   "backup/borgmatic": {
     "domain": "Backup",
+    "footprint": null,
     "name": "Borgmatic",
     "path": "backup/borgmatic",
     "role": "Deduplicated, encrypted server backup, installed on the host",
@@ -562,6 +976,13 @@
   },
   "backup/urbackup": {
     "domain": "Backup",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "UrBackup Server",
     "path": "backup/urbackup",
     "role": "Client backup for Windows, macOS and Linux, with whole-disk image restore on Windows",
@@ -573,6 +994,15 @@
   },
   "business/documenso": {
     "domain": "Documents and e-signature",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · PostgreSQL"
+    },
     "name": "Documenso",
     "path": "business/documenso",
     "role": "Document signing with your own certificate",
@@ -584,6 +1014,15 @@
   },
   "business/dolibarr": {
     "domain": "Business operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MariaDB"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · MariaDB"
+    },
     "name": "Dolibarr",
     "path": "business/dolibarr",
     "role": "ERP and CRM: contacts, quotes, invoices, stock and accounting",
@@ -595,6 +1034,16 @@
   },
   "business/invoiceninja": {
     "domain": "Business operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MySQL",
+        "Redis"
+      ],
+      "init_services": 0,
+      "services": 4,
+      "summary": "4 services · MySQL + Redis"
+    },
     "name": "Invoice Ninja",
     "path": "business/invoiceninja",
     "role": "Invoicing, quotes and payments",
@@ -606,6 +1055,15 @@
   },
   "business/kimai": {
     "domain": "Business operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MariaDB"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · MariaDB"
+    },
     "name": "Kimai",
     "path": "business/kimai",
     "role": "Time tracking with reports and invoicing hooks",
@@ -617,6 +1075,15 @@
   },
   "business/listmonk": {
     "domain": "Publishing, forms and scheduling",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · PostgreSQL"
+    },
     "name": "Listmonk",
     "path": "business/listmonk",
     "role": "Newsletter and mailing-list manager",
@@ -628,6 +1095,15 @@
   },
   "business/matomo": {
     "domain": "Business operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MariaDB"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · MariaDB"
+    },
     "name": "Matomo",
     "path": "business/matomo",
     "role": "Web analytics under your control",
@@ -639,6 +1115,16 @@
   },
   "business/openproject": {
     "domain": "Business operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "Memcached",
+        "PostgreSQL"
+      ],
+      "init_services": 0,
+      "services": 6,
+      "summary": "6 services · Memcached + PostgreSQL"
+    },
     "name": "OpenProject CE",
     "path": "business/openproject",
     "role": "Project management with work packages, boards and Gantt planning",
@@ -650,6 +1136,15 @@
   },
   "business/opensign": {
     "domain": "Documents and e-signature",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MongoDB"
+      ],
+      "init_services": 0,
+      "services": 3,
+      "summary": "3 services · MongoDB"
+    },
     "name": "OpenSign",
     "path": "business/opensign",
     "role": "Document signing with qualified-certificate support",
@@ -661,6 +1156,15 @@
   },
   "business/vikunja": {
     "domain": "Business operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · PostgreSQL"
+    },
     "name": "Vikunja",
     "path": "business/vikunja",
     "role": "Task and project management with lists, boards and calendars",
@@ -672,6 +1176,18 @@
   },
   "business/zammad": {
     "domain": "Business operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "Elasticsearch",
+        "Memcached",
+        "PostgreSQL",
+        "Redis"
+      ],
+      "init_services": 0,
+      "services": 9,
+      "summary": "9 services · Elasticsearch + Memcached + PostgreSQL + Redis"
+    },
     "name": "Zammad",
     "path": "business/zammad",
     "role": "Helpdesk and ticket system across mail, chat and phone",
@@ -683,6 +1199,13 @@
   },
   "core/acme-certs": {
     "domain": "Infrastructure",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "acme-certs",
     "path": "core/acme-certs",
     "role": "Certificates for devices that never pass through the reverse proxy: NAS, routers, mail servers",
@@ -694,6 +1217,16 @@
   },
   "core/authentik": {
     "domain": "Identity, access and secrets",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL",
+        "Redis"
+      ],
+      "init_services": 1,
+      "services": 4,
+      "summary": "4 services · 1 one-shot · PostgreSQL + Redis"
+    },
     "name": "Authentik",
     "path": "core/authentik",
     "role": "Identity provider with forward-auth, OAuth2, OpenID Connect and SAML",
@@ -705,6 +1238,13 @@
   },
   "core/crowdsec": {
     "domain": "Security operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "CrowdSec",
     "path": "core/crowdsec",
     "role": "Threat detection from logs, with a choice of where decisions are enforced",
@@ -716,6 +1256,13 @@
   },
   "core/dnsmasq": {
     "domain": "Infrastructure",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "dnsmasq",
     "path": "core/dnsmasq",
     "role": "DNS forwarder with wildcard zones for split-DNS setups",
@@ -727,6 +1274,15 @@
   },
   "core/dockhand": {
     "domain": "Infrastructure",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL"
+      ],
+      "init_services": 0,
+      "services": 3,
+      "summary": "3 services · PostgreSQL"
+    },
     "name": "Dockhand",
     "path": "core/dockhand",
     "role": "Docker management with Git-based stacks: deploy and update by pushing to Git",
@@ -738,6 +1294,13 @@
   },
   "core/hawser": {
     "domain": "Infrastructure",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "Hawser",
     "path": "core/hawser",
     "role": "Remote Docker agent for Dockhand, connecting outbound so the managed host publishes no port",
@@ -749,6 +1312,7 @@
   },
   "core/host-watchdog": {
     "domain": "Infrastructure",
+    "footprint": null,
     "name": "Host Watchdog",
     "path": "core/host-watchdog",
     "role": "Optional host scripts that restart the Docker daemon or the proxy after a confirmed, sustained failure",
@@ -760,6 +1324,16 @@
   },
   "core/infisical": {
     "domain": "Identity, access and secrets",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL",
+        "Redis"
+      ],
+      "init_services": 0,
+      "services": 3,
+      "summary": "3 services · PostgreSQL + Redis"
+    },
     "name": "Infisical",
     "path": "core/infisical",
     "role": "Central secret manager, an alternative to per-stack Docker Secrets",
@@ -771,6 +1345,13 @@
   },
   "core/jumpserver": {
     "domain": "Identity, access and secrets",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "JumpServer",
     "path": "core/jumpserver",
     "role": "Privileged access management: stored target credentials, session recording, approval workflows",
@@ -782,6 +1363,15 @@
   },
   "core/keycloak": {
     "domain": "Identity, access and secrets",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · PostgreSQL"
+    },
     "name": "Keycloak",
     "path": "core/keycloak",
     "role": "Identity provider for applications that speak OpenID Connect or SAML, with LDAP and AD federation",
@@ -793,6 +1383,15 @@
   },
   "core/orion-belt": {
     "domain": "Identity, access and secrets",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · PostgreSQL"
+    },
     "name": "Orion Belt",
     "path": "core/orion-belt",
     "role": "Privileged access gateway for SSH sessions, from a young single-maintainer project",
@@ -804,6 +1403,13 @@
   },
   "core/portainer": {
     "domain": "Infrastructure",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services"
+    },
     "name": "Portainer CE",
     "path": "core/portainer",
     "role": "Docker management web interface, reaching Docker through a filtered socket proxy",
@@ -815,6 +1421,13 @@
   },
   "core/portainer-agent": {
     "domain": "Infrastructure",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "Portainer Agent",
     "path": "core/portainer-agent",
     "role": "Remote Docker agent for Portainer",
@@ -826,6 +1439,16 @@
   },
   "core/shellhub": {
     "domain": "Identity, access and secrets",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL",
+        "Valkey"
+      ],
+      "init_services": 0,
+      "services": 5,
+      "summary": "5 services · PostgreSQL + Valkey"
+    },
     "name": "ShellHub",
     "path": "core/shellhub",
     "role": "SSH access through agents on each target that connect out, so targets open no inbound port",
@@ -837,6 +1460,13 @@
   },
   "core/step-ca": {
     "domain": "Identity, access and secrets",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "step-ca",
     "path": "core/step-ca",
     "role": "Internal certificate authority for machines and services: X.509, ACME and optional SSH certificates",
@@ -848,6 +1478,13 @@
   },
   "core/teleport": {
     "domain": "Identity, access and secrets",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "Teleport",
     "path": "core/teleport",
     "role": "Access through short-lived certificates instead of standing credentials",
@@ -859,6 +1496,13 @@
   },
   "core/traefik": {
     "domain": "Infrastructure",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services"
+    },
     "name": "Traefik Reverse Proxy",
     "path": "core/traefik",
     "role": "Reverse proxy: TLS, access policies and security headers in front of every other service",
@@ -870,6 +1514,13 @@
   },
   "core/warpgate": {
     "domain": "Identity, access and secrets",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "Warpgate",
     "path": "core/warpgate",
     "role": "Lightweight access proxy for SSH, HTTPS, databases, Kubernetes, RDP and VNC",
@@ -881,6 +1532,13 @@
   },
   "core/zot": {
     "domain": "Developer tools",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "zot",
     "path": "core/zot",
     "role": "OCI registry for your own build output",
@@ -892,6 +1550,13 @@
   },
   "monitoring/beszel": {
     "domain": "Monitoring",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 3,
+      "summary": "3 services"
+    },
     "name": "Beszel",
     "path": "monitoring/beszel",
     "role": "Lightweight host and per-container metrics hub",
@@ -903,6 +1568,13 @@
   },
   "monitoring/beszel-agent": {
     "domain": "Monitoring",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services"
+    },
     "name": "Beszel Agent",
     "path": "monitoring/beszel-agent",
     "role": "Agent that reports a remote host's metrics to Beszel",
@@ -914,6 +1586,13 @@
   },
   "monitoring/changedetection": {
     "domain": "Monitoring",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "changedetection.io",
     "path": "monitoring/changedetection",
     "role": "Watches web pages for changes: restocks, prices, terms",
@@ -925,6 +1604,13 @@
   },
   "monitoring/gatus": {
     "domain": "Monitoring",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "Gatus",
     "path": "monitoring/gatus",
     "role": "Uptime and status page defined as YAML",
@@ -936,6 +1622,13 @@
   },
   "monitoring/healthchecks": {
     "domain": "Monitoring",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "Healthchecks",
     "path": "monitoring/healthchecks",
     "role": "Dead-man's switch that alerts when a cron job or backup stops reporting",
@@ -947,6 +1640,18 @@
   },
   "monitoring/langfuse": {
     "domain": "AI and local AI",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "ClickHouse",
+        "PostgreSQL",
+        "Redis",
+        "object storage"
+      ],
+      "init_services": 0,
+      "services": 6,
+      "summary": "6 services · ClickHouse + PostgreSQL + Redis + object storage"
+    },
     "name": "Langfuse",
     "path": "monitoring/langfuse",
     "role": "LLM observability: traces, scores and prompts from any instrumented application",
@@ -958,6 +1663,13 @@
   },
   "monitoring/ntfy": {
     "domain": "Monitoring",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "ntfy",
     "path": "monitoring/ntfy",
     "role": "Push notifications over HTTP, the receiving end for every other alert",
@@ -969,6 +1681,13 @@
   },
   "monitoring/uptime-kuma": {
     "domain": "Monitoring",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "Uptime Kuma",
     "path": "monitoring/uptime-kuma",
     "role": "Uptime monitoring with a status page and many notification channels",

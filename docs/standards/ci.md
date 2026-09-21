@@ -268,7 +268,10 @@ stack landing between two edits moves a denominator nobody remembers.
 
 `scripts/ci/site-catalogue.py --check` fails when a stack has no `Domain` or
 `Role` in its `UPSTREAM.md`, when a catalogue entry names a stack that no longer
-exists, or when `catalogue.json` is stale. This is what keeps the operator site
+exists, or when `catalogue.json` is stale. The staleness half now also covers each
+stack's operational footprint, which is derived from its compose files rather than
+recorded anywhere, so adding a database to a stack updates its catalogue entry or
+fails the check. This is what keeps the operator site
 from falling behind the repository: a stack cannot land in `dev` while being
 absent from the site's catalogue.
 

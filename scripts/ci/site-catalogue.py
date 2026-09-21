@@ -14,10 +14,20 @@ Usage:
     scripts/ci/site-catalogue.py --check    # verify it is current and complete
 """
 
+import importlib.util
 import json
 import re
 import sys
 from pathlib import Path
+
+# Compose discovery and parsing belong to check-structure.py. A second copy here
+# would drift from the checker that decides which files are a stack's production
+# set and which are opt-in overlays.
+_spec = importlib.util.spec_from_file_location(
+    "check_structure", Path(__file__).parent / "check-structure.py"
+)
+_structure = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_structure)
 
 CATEGORIES = ["core", "apps", "business", "monitoring", "backup"]
 EXCEPT = {"apps/_reference": "the canonical reference itself"}
@@ -82,6 +92,95 @@ def title(stack: Path) -> str:
     return stack.name
 
 
+# Images that mean a stack needs a piece of infrastructure beside the application.
+# Matched as a substring of the image reference, so a registry prefix or a variant
+# suffix does not hide it.
+INFRASTRUCTURE = {
+    "postgres": "PostgreSQL", "pgvector": "PostgreSQL", "pgautoupgrade": "PostgreSQL",
+    "timescale": "PostgreSQL", "mariadb": "MariaDB", "mysql": "MySQL", "percona": "MySQL",
+    "redis": "Redis", "valkey": "Valkey", "memcached": "Memcached",
+    "minio": "object storage", "seaweedfs": "object storage",
+    "elasticsearch": "Elasticsearch", "opensearch": "OpenSearch",
+    "clickhouse": "ClickHouse", "rabbitmq": "RabbitMQ", "mongo": "MongoDB",
+    "nats": "NATS", "kafka": "Kafka", "qdrant": "Qdrant", "weaviate": "Weaviate",
+}
+
+
+def _reserves_gpu(body: dict) -> bool:
+    reservations = ((body.get("deploy") or {}).get("resources") or {}).get("reservations") or {}
+    return bool(reservations.get("devices"))
+
+
+def footprint(production: list[Path], overlays: list[Path]) -> dict | None:
+    """How much machinery a stack brings, read from its own compose files.
+
+    Facts, not a verdict. Two products solving one problem at very different
+    weights is a reason for both to exist here, not a reason to rank them: this
+    is what separates a two-service stack with a MariaDB from a ten-service one
+    with a database, a cache and workers, and it says nothing about which is
+    better.
+
+    **Memory is deliberately absent.** The compose files carry
+    `deploy.resources.limits.memory`, which is the ceiling this repository sets
+    on a service — not what the application needs. Publishing a configured limit
+    as a RAM requirement would turn a policy into a fabricated fact about
+    upstream. What upstream publishes as a minimum needs per-stack metadata with
+    a source, and real idle, typical and peak figures need a host, which is what
+    `docs/resource-measurement.md` governs.
+
+    Takes the two file sets rather than finding them, so which files are a
+    stack's production set and which are opt-in stays check-structure.py's
+    decision and this stays answerable about any pair of lists.
+
+    Returns None for a host-installed stack, which has no compose file to read.
+    """
+    if not production:
+        return None
+
+    services = init = 0
+    infrastructure: set[str] = set()
+    gpu = None
+    for path in production:
+        for body in ((_structure.compose_load(path) or {}).get("services") or {}).values():
+            body = body or {}
+            # A one-shot container runs once and exits; counting it as a running
+            # service would overstate what the stack costs to keep up.
+            if str(body.get("restart", "")).strip('"') == "no":
+                init += 1
+            else:
+                services += 1
+            image = str(body.get("image") or "").lower()
+            for needle, label in INFRASTRUCTURE.items():
+                if needle in image:
+                    infrastructure.add(label)
+            if _reserves_gpu(body):
+                gpu = "required"
+
+    if gpu is None:
+        for path in overlays:
+            data = _structure.compose_load(path) or {}
+            if any(_reserves_gpu(b or {}) for b in (data.get("services") or {}).values()):
+                gpu = "optional"
+                break
+
+    parts = [f"{services} service" + ("s" if services != 1 else "")]
+    if init:
+        parts.append(f"{init} one-shot")
+    if infrastructure:
+        parts.append(" + ".join(sorted(infrastructure)))
+    if gpu:
+        parts.append(f"GPU {gpu}")
+    return {
+        "services": services,
+        "init_services": init,
+        "infrastructure": sorted(infrastructure),
+        "gpu": gpu,
+        # One owner for the wording, so the site and llms.txt cannot phrase the
+        # same facts two ways.
+        "summary": " · ".join(parts),
+    }
+
+
 def version(life: dict, upstream: str) -> str:
     """The pinned tag, without a leading `v` and without the image name."""
     pinned = life.get("pinned", "")
@@ -119,6 +218,9 @@ def collect() -> tuple[dict, list[str]]:
             "state": life.get("state", "scaffolded"),
             "verified": life.get("verified") if life.get("verified_anchored") and life.get("verified") not in (None, "—") else None,
             "verified_version": life.get("verified_version") or None,
+            "footprint": footprint(
+                _structure.compose_files(stack), _structure.overlay_files(stack)
+            ),
             "path": key,
         }
     return rows, problems
