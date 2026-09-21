@@ -7,6 +7,7 @@
 - **Docs:** https://docs.crowdsec.net/
 - **Hub (Collections):** https://hub.crowdsec.net/
 - **License:** MIT
+- **Decision facts checked:** not yet
 - **Origin:** France · CrowdSec SAS · EU
 - **Domain:** Security operations
 - **Role:** Threat detection from logs, with a choice of where decisions are enforced

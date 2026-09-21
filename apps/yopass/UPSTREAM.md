@@ -6,6 +6,7 @@
 - **GitHub:** https://github.com/jhaals/yopass
 - **Docs:** https://yopass.se/docs
 - **License:** Apache-2.0
+- **Decision facts checked:** 2026-09-21
 - **Origin:** Sweden · Jonas Haals (individual maintainer, corporate-adjacent — Spotify, Doddle and Gumtree Australia are named as users, not owners) · EU
 - **Domain:** Identity, access and secrets
 - **Role:** Self-destructing links for handing someone a credential once

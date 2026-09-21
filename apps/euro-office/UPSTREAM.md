@@ -7,6 +7,7 @@
 - **Image registry:** `ghcr.io/euro-office/documentserver`
 - **Forked from:** OnlyOffice Document Server (Ascensio System) — EU-governed, sovereignty-focused fork
 - **License:** AGPL-3.0 (as OnlyOffice Document Server)
+- **Decision facts checked:** not yet
 - **Origin:** EU · euro-office consortium (Nextcloud, IONOS, XWiki, Proton) · EU
 - **Domain:** Documents and e-signature
 - **Role:** EU-governed fork of OnlyOffice, a drop-in document editing server

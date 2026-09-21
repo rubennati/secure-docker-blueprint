@@ -7,6 +7,7 @@
 - **Docs:** https://warpgate.null.page/
 - **Self-host compose reference:** `docker/docker-compose.yml` in the upstream repo
 - **License:** Apache-2.0
+- **Decision facts checked:** not yet
 - **Origin:** Germany · Eugen Pankov Softwareentwicklung · EU
 - **Domain:** Identity, access and secrets
 - **Role:** Lightweight access proxy for SSH, HTTPS, databases, Kubernetes, RDP and VNC

@@ -5,6 +5,7 @@
 - **Image:** https://hub.docker.com/_/wordpress
 - **GitHub:** https://github.com/docker-library/wordpress
 - **License:** GPL-2.0
+- **Decision facts checked:** not yet
 - **Origin:** US · Automattic / WordPress Foundation · non-EU
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Content management system for sites and blogs

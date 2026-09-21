@@ -6,6 +6,7 @@
 - **GitHub:** https://github.com/olivierlambert/calrs
 - **Docs:** https://cal.rs/docs/
 - **License:** AGPL-3.0
+- **Decision facts checked:** not yet
 - **Origin:** France · Olivier Lambert · EU
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Scheduling with booking pages and availability read from a CalDAV calendar you already run

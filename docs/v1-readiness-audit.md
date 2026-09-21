@@ -226,15 +226,26 @@ maintained facts is its own question, answered per stack.
    `site-catalogue.py --check` rejects one without provenance or with a commercial model
    outside the vocabulary. No price is recorded: the source link is where an amount is
    read. An absent field means the stack was not researched, never that it has nothing to
-   declare — a stack checked and found to gate nothing records `none`. Filled so far: **seventeen of 91**, listed in `.ai/tasks.md`. Unresolved and left
+   declare — a stack checked and found to gate nothing records `none`. **Completeness model.** Every stack carries `- **Decision facts checked:**`, a date
+   or `not yet`, and `site-catalogue.py --check` fails without it — a stack can no
+   longer enter the repository with its research state unsaid. It separates three
+   states without padding any file: nobody has looked · looked and nothing an
+   operator decides on came back · looked and the facts are recorded. The marker is
+   a process record and carries no source; a `none` *fact* asserts something about
+   upstream and does.
+
+   Researched so far: **28 of 93** — 19 with facts, 9 checked and clear.
+   Listed in `.ai/tasks.md`. Unresolved and left
    unrecorded rather than inferred: `apps/hemmelig`, whose README and `LICENSE` file
    disagree, and `apps/collabora`, whose limits no reachable upstream page states.
 
    The research has corrected the repository as often as it has extended it:
    `apps/nocodb` was recorded as AGPL-3.0 after upstream relicensed to the Sustainable
    Use License, `core/dockhand` told operators internal business use was free where the
-   licence requires a Commercial Licence for it, and `core/teleport`'s container images
-   have not been Apache-2.0 since version 16. None of the three carried a signal that a
+   licence requires a Commercial Licence for it, `core/teleport`'s container images
+   have not been Apache-2.0 since version 16, and `backup/urbackup` was recorded as
+   GPL-3.0-or-later where its `COPYING` is the Affero GPL, whose §13 obliges an
+   operator to offer source to network users. None of the four carried a signal that a
    filter would have caught.
 
 5. **Operational footprint** — how much machinery a stack brings, as facts rather

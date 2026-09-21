@@ -6,6 +6,7 @@
 - **LSIO image:** https://docs.linuxserver.io/images/docker-unifi-network-application/
 - **LSIO GitHub:** https://github.com/linuxserver/docker-unifi-network-application
 - **License:** EULA (Ubiquiti) / GPL-3 (LSIO scripts)
+- **Decision facts checked:** not yet
 - **Origin:** US · Ubiquiti Inc · non-EU
 - **Domain:** Infrastructure
 - **Role:** Controller for Ubiquiti UniFi network devices

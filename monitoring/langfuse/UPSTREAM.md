@@ -9,6 +9,7 @@
 - **Use restrictions:** none for the MIT-licensed portion; content under `ee/`, `web/src/ee/` and `worker/src/ee/` is under the separate licence in `ee/LICENSE` — https://github.com/langfuse/langfuse/blob/main/LICENSE · checked 2026-09-21
 - **Edition gating:** project-level RBAC roles, audit logs, data retention policies, server-side data masking, SCIM with the organisation management API, and the instance management API require a paid licence key when self-hosting — https://langfuse.com/self-hosting/license-key · checked 2026-09-21
 - **Commercial model:** paid self-hosted edition — https://langfuse.com/self-hosting/license-key · checked 2026-09-21
+- **Decision facts checked:** 2026-09-21
 - **Origin:** United States · ClickHouse, Inc. (Langfuse has been part of it since 2026-01) · non-EU
 - **Domain:** AI and local AI
 - **Role:** LLM observability: traces, scores and prompts from any instrumented application

@@ -10,6 +10,7 @@
   competing hosted/SaaS product. **Not an OSI-approved open-source license**
   (GitHub's own license detector reports `NOASSERTION` for it). Self-hosting
   for your own use is fully permitted. See README.md's License section.
+- **Decision facts checked:** not yet
 - **Origin:** Norway · Bjarne Øverli (individual maintainer) · non-EU (EEA, not EU)
 - **Domain:** Identity, access and secrets
 - **Role:** Ephemeral secret sharing with a built-in request flow

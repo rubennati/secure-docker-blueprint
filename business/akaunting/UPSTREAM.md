@@ -9,6 +9,7 @@
 - **Origin:** Turkey · Akaunting Inc · non-EU
 - **Use restrictions:** production use is permitted only while it stays within two users, one company and one thousand invoices; beyond any of these a commercial licence is required, and the name, logo and branding may not be removed to create a rebranded or white-labelled version for distribution; each release converts to GPLv3 four years after it is published — https://github.com/akaunting/akaunting/blob/master/LICENSE.txt · checked 2026-09-21
 - **Commercial model:** commercial licence — https://github.com/akaunting/akaunting/blob/master/LICENSE.txt · checked 2026-09-21
+- **Decision facts checked:** 2026-09-21
 - **Domain:** Business operations
 - **Role:** Accounting for small businesses: invoices, bills, customers, vendors, bank accounts and reports
 - **Based on version:** `3.1.21`

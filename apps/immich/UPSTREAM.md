@@ -6,6 +6,7 @@
 - **GitHub:** https://github.com/immich-app/immich
 - **Stock compose:** https://github.com/immich-app/immich/releases/latest/download/docker-compose.yml
 - **License:** AGPL-3.0
+- **Decision facts checked:** not yet
 - **Origin:** US · Alex Tran · non-EU
 - **Domain:** Photos
 - **Role:** Photo and video backup with mobile apps and machine-learning search

@@ -6,6 +6,7 @@
 - **GitHub:** https://github.com/project-zot/zot
 - **Docs:** https://zotregistry.dev
 - **License:** Apache-2.0
+- **Decision facts checked:** not yet
 - **Origin:** Community project under the CNCF sandbox umbrella, no single company · no single jurisdiction
 - **Domain:** Developer tools
 - **Role:** OCI registry for your own build output

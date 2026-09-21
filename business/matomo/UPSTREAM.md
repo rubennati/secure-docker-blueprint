@@ -8,6 +8,7 @@
 - **License:** GPL-3.0
 - **Edition gating:** SAML single sign-on is the separate LoginSaml plugin, sold under the InnoCraft EULA rather than shipped under the GPL core — https://plugins.matomo.org/LoginSaml · checked 2026-09-21
 - **Commercial model:** paid add-on; the self-hosted core itself is free — https://plugins.matomo.org/LoginSaml · checked 2026-09-21
+- **Decision facts checked:** 2026-09-21
 - **Origin:** New Zealand · InnoCraft Ltd · non-EU
 - **Domain:** Business operations
 - **Role:** Web analytics under your control

@@ -141,6 +141,53 @@ PROVENANCE = re.compile(
 )
 
 
+# The per-stack research marker. Required on every stack, which is what stops a
+# new one entering the repository with its W8 state unstated.
+#
+# It is a **process record, not a claim about upstream**: it says the three
+# questions were asked on that day, so it carries no source. That is the whole
+# difference between it and a `none` *fact*, which asserts something about
+# someone else's terms and therefore does carry one. Without it the only way to
+# say "asked, nothing worth recording" would be three `none` fields per stack,
+# which is bookkeeping pretending to be knowledge.
+CHECKED_FIELD = "Decision facts checked"
+NOT_RESEARCHED = "not yet"
+
+
+def decision_facts_checked(text: str, key: str, has_facts: bool, problems: list[str]) -> str | None:
+    """The date the three questions were asked, or None when they have not been.
+
+    Three states, told apart without padding any file:
+
+      absent           → rejected; a stack may not leave its research state unsaid
+      `not yet`        → nobody has looked
+      a calendar date  → looked. Facts alongside it mean something was found;
+                         none alongside it means nothing an operator decides on
+    """
+    raw = field(text, CHECKED_FIELD)
+    if not raw:
+        problems.append(
+            f"{key}: UPSTREAM.md has no `- **{CHECKED_FIELD}:**` — give it a date "
+            f"or `{NOT_RESEARCHED}`"
+        )
+        return None
+    if raw == NOT_RESEARCHED:
+        if has_facts:
+            problems.append(
+                f"{key}: {CHECKED_FIELD} says {NOT_RESEARCHED!r} but the stack records "
+                "decision facts — date it instead"
+            )
+        return None
+    try:
+        date.fromisoformat(raw)
+    except ValueError:
+        problems.append(
+            f"{key}: {CHECKED_FIELD} is {raw!r} — needs YYYY-MM-DD or {NOT_RESEARCHED!r}"
+        )
+        return None
+    return raw
+
+
 def decision_facts(text: str, key: str, problems: list[str]) -> dict:
     """The maintained facts a stack records, each with where it came from and when.
 
@@ -286,6 +333,7 @@ def collect() -> tuple[dict, list[str]]:
         elif len(role) > ROLE_MAX:
             problems.append(f"{key}: role is {len(role)} characters, limit {ROLE_MAX}")
 
+        facts = decision_facts(text, key, problems)
         life = lifecycle.get(key, {})
         rows[key] = {
             "name": title(stack),
@@ -299,7 +347,8 @@ def collect() -> tuple[dict, list[str]]:
             "footprint": footprint(
                 _structure.compose_files(stack), _structure.overlay_files(stack)
             ),
-            "decision_facts": decision_facts(text, key, problems),
+            "decision_facts": facts,
+            "decision_facts_checked": decision_facts_checked(text, key, bool(facts), problems),
             "path": key,
         }
     return rows, problems

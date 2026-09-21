@@ -6,6 +6,7 @@
 - **GitHub:** https://github.com/henrygd/beszel
 - **Docker Hub:** https://hub.docker.com/r/henrygd/beszel-agent
 - **License:** MIT
+- **Decision facts checked:** not yet
 - **Origin:** US · Henry Gd (community) · non-EU
 - **Domain:** Monitoring
 - **Role:** Agent that reports a remote host's metrics to Beszel

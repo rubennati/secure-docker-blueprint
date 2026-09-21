@@ -427,7 +427,7 @@
     "bloc": "EU",
     "country": "Germany",
     "entity": "Martin Raiber (uroni)",
-    "license": "AGPL-3.0-or-later — self-hosting for personal or commercial use is explicitly permitted",
+    "license": "AGPL-3.0 — the server's `COPYING` is the GNU Affero General Public License v3, not the plain GPL this file recorded; §13 obliges you to offer the source to users who interact with it over a network",
     "license_class": "osi",
     "origin": "Germany · Martin Raiber (uroni) · EU"
   },

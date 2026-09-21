@@ -9,6 +9,7 @@
 - **Use restrictions:** production use is granted free only for personal non-commercial use, recognised non-profit and charitable organisations, and schools or non-commercial research institutions. **Production use by or on behalf of a company, sole trader, public body or any other organisation requires a Commercial Licence**, and offering it to third parties as a hosted, managed or SaaS container-management service requires a separate written agreement — https://github.com/Finsys/dockhand/blob/main/LICENSE.md · checked 2026-09-21
 - **Edition gating:** Enterprise Features are gated by a License Key, which the licence forbids sharing, publishing or circumventing — https://github.com/Finsys/dockhand/blob/main/LICENSE.md · checked 2026-09-21
 - **Commercial model:** commercial licence — https://github.com/Finsys/dockhand/blob/main/LICENSE.md · checked 2026-09-21
+- **Decision facts checked:** 2026-09-21
 - **Origin:** Finsys · **no country or legal entity stated** — no imprint on fnsys.pro or dockhand.pro
 - **Domain:** Infrastructure
 - **Role:** Docker management with Git-based stacks: deploy and update by pushing to Git

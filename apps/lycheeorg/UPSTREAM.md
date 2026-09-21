@@ -7,6 +7,7 @@
 - **Docker repo:** https://github.com/LycheeOrg/Lychee-Docker
 - **Docker Hub:** https://hub.docker.com/r/lycheeorg/lychee
 - **License:** MIT
+- **Decision facts checked:** not yet
 - **Origin:** Community · LycheeOrg · EU contributors
 - **Domain:** Photos
 - **Role:** Photo gallery

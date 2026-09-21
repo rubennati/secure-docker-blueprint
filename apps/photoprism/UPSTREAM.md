@@ -7,6 +7,7 @@
 - **Docker Hub:** https://hub.docker.com/r/photoprism/photoprism
 - **Compose docs:** https://docs.photoprism.app/getting-started/docker-compose/
 - **License:** AGPL-3.0
+- **Decision facts checked:** not yet
 - **Origin:** Germany · PhotoPrism AG · EU
 - **Domain:** Photos
 - **Role:** Photo library with machine-learning classification and WebDAV

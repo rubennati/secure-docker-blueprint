@@ -6,6 +6,7 @@
 - **GitHub:** https://github.com/qdrant/qdrant
 - **Docs:** https://qdrant.tech/documentation/
 - **License:** Apache-2.0
+- **Decision facts checked:** not yet
 - **Origin:** Germany · Qdrant Solutions GmbH (Berlin) · EU
 - **Domain:** AI and local AI
 - **Role:** Vector database: collections, similarity search with filters, snapshots
