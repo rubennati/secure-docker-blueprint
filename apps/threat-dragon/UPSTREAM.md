@@ -6,7 +6,7 @@
 - **GitHub:** https://github.com/OWASP/threat-dragon
 - **Docs:** in-repo `docs/`, published at the project's GitHub Pages site
 - **License:** Apache-2.0
-- **Decision facts checked:** not yet
+- **Decision facts checked:** 2026-09-21
 - **Origin:** United States · OWASP Foundation (nonprofit) · non-EU
 - **Domain:** Security operations
 - **Role:** Threat modelling: data-flow diagrams, trust boundaries, threats and mitigations

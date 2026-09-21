@@ -4,8 +4,8 @@
 
 - **Repo:** https://github.com/dani-garcia/vaultwarden
 - **Wiki:** https://github.com/dani-garcia/vaultwarden/wiki
-- **License:** GPL-3.0
-- **Decision facts checked:** not yet
+- **License:** AGPL-3.0 — `LICENSE.txt` upstream is the GNU **Affero** GPL v3, not the plain GPL recorded here; §13 obliges an operator to offer source to users reaching it over a network
+- **Decision facts checked:** 2026-09-21
 - **Origin:** Community · unofficial Bitwarden reimplementation · no single jurisdiction
 - **Domain:** Identity, access and secrets
 - **Role:** Password manager: logins, TOTP and shared collections

@@ -6,7 +6,7 @@
 - **GitHub:** https://github.com/henrygd/beszel
 - **Docker Hub:** https://hub.docker.com/r/henrygd/beszel
 - **License:** MIT
-- **Decision facts checked:** not yet
+- **Decision facts checked:** 2026-09-21
 - **Origin:** US · Henry Gd (community) · non-EU
 - **Domain:** Monitoring
 - **Role:** Lightweight host and per-container metrics hub
