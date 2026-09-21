@@ -22,23 +22,20 @@ The control model has three tiers:
 
 ## Implemented Controls
 
-### What the counts below are counted against
+### Where the counts live
 
-Two scopes exist and they differ by four services. Every figure in this document is
-stated against the first.
+**Every coverage figure is generated — see [`security-coverage.md`](security-coverage.md).**
+It is counted straight from the compose files by
+[`scripts/ci/security-coverage.py`](../scripts/ci/security-coverage.py) and checked in CI, so
+it cannot drift from the repository the way a hand-written number does.
 
-| Scope | Files | Services | What it is |
-|---|---|---|---|
-| **Deployable stacks** | 99 | **205** | The 89 stacks an operator deploys. The denominator for every coverage figure here |
-| Checker universe | 102 | 209 | The above plus `apps/_reference` and the two `development/` patterns, which the checkers still parse and hold to the baseline although nobody deploys them |
+That document also states the two scopes and which one each figure belongs to:
+the stacks an operator deploys, against the wider set the checkers parse
+(`EXCEPT_DIRS` in `check-structure.py`). Mixing a numerator from one with a
+denominator from the other is the mistake the split exists to prevent.
 
-`EXCEPT_DIRS` in `check-structure.py` names the three, and waives the *structure*
-rules for them rather than removing their files from validation — which is why a
-checker's own summary line reports the wider number. Mixing a numerator from one
-scope with a denominator from the other is the mistake this table exists to prevent.
-
-Counts change whenever a stack lands and are maintained by hand; see the drift
-note in [`v1-readiness-audit.md`](v1-readiness-audit.md) (R15).
+This document describes what each control **is**, how it is enforced and what it
+misses. It does not restate the numbers.
 
 ### CI-Enforced (Hard Controls)
 
@@ -50,7 +47,7 @@ These controls block merges if violated. Evidence is the CI output from `.github
 |-------|-------|
 | **Implemented?** | Yes |
 | **Enforcement** | CI FAIL — `scripts/ci/check-baseline.py` |
-| **Coverage** | 202 / 205 services in deployable stacks. Three documented exceptions: `apps/nextcloud` `app` and `cron`, `core/jumpserver` `jumpserver` |
+| **Coverage** | Every service except three documented exceptions — `apps/nextcloud` `app` and `cron`, `core/jumpserver` `jumpserver`. Figures: [`security-coverage.md`](security-coverage.md) |
 | **Location** | Every `docker-compose.yml` under `core/`, `apps/`, `business/`, `monitoring/` |
 | **Verification** | `python3 scripts/ci/check-baseline.py` — exits 1 if any service is missing the flag |
 | **Exceptions** | 3 services documented with `reason` / `alternatives` / `risk acceptance` fields: `apps/nextcloud` app + cron (s6-overlay requires root at startup), `core/jumpserver` (its entrypoint calls `sudo`) |
@@ -62,7 +59,7 @@ These controls block merges if violated. Evidence is the CI output from `.github
 |-------|-------|
 | **Implemented?** | Yes |
 | **Enforcement** | CI FAIL — `scripts/ci/check-baseline.py` |
-| **Coverage** | 0 violations across 71 compose files |
+| **Coverage** | No violations. Figures: [`security-coverage.md`](security-coverage.md) |
 | **Verification** | `grep -r "privileged: true" --include="docker-compose.yml"` returns nothing |
 | **Gaps** | No exception path exists — `privileged: true` is always a hard failure with no allowlist |
 
@@ -83,7 +80,7 @@ These controls block merges if violated. Evidence is the CI output from `.github
 |-------|-------|
 | **Implemented?** | Yes |
 | **Enforcement** | CI FAIL — structure check in `.github/workflows/ci.yml` |
-| **Coverage** | 0 violations. The one `:latest` occurrence in the repo is in a comment (`monitoring/changedetection/docker-compose.yml:61`) |
+| **Coverage** | No violations. The one `:latest` occurrence is inside a comment in `monitoring/changedetection/docker-compose.yml` |
 | **Verification** | `grep -rP '^\s+image:\s+\S+:latest' --include="docker-compose.yml"` |
 | **Gaps** | Tags are pinned to version strings but are **not pinned to digest** (`image: name@sha256:...`). A version tag can be overwritten by an upstream registy push without detection. |
 
@@ -102,7 +99,7 @@ These controls block merges if violated. Evidence is the CI output from `.github
 | Field | Value |
 |-------|-------|
 | **Implemented?** | Yes |
-| **Enforcement** | CI FAIL — `docker compose config --quiet` on all 71 compose files |
+| **Enforcement** | CI FAIL — `docker compose config --quiet` on every compose file `check-structure.py` discovers |
 | **Scope** | All compose files in `core/`, `apps/`, `business/`, `monitoring/` |
 | **Method** | Each compose file is tested with its `.env.example` substituted as `.env` |
 | **Gaps** | Validates YAML syntax and compose schema, but does not catch semantic errors (e.g. a volume referencing a path that will not exist at runtime) |
@@ -205,7 +202,7 @@ These controls are enforced by Traefik configuration rendered from templates in 
 | Field | Value |
 |-------|-------|
 | **Implemented?** | Yes |
-| **Coverage** | 35 / 71 compose files declare a network with `internal: true` |
+| **Coverage** | Compose files declaring a network with `internal: true` — figures: [`security-coverage.md`](security-coverage.md) |
 | **Pattern** | Database and internal services on `app-internal` (internal: true). Web services on `proxy-public` + `app-internal`. No database ports exposed on host. |
 | **Gaps** | Not CI-enforced. Nothing prevents a developer from adding a database to `proxy-public`. Several apps intentionally do NOT mark `app-internal` as internal (e.g. Nextcloud — documented in README). |
 
@@ -214,7 +211,7 @@ These controls are enforced by Traefik configuration rendered from templates in 
 | Field | Value |
 |-------|-------|
 | **Implemented?** | Partially |
-| **Coverage** | 50 occurrences of `__REPLACE_ME__` across `.env.example` files |
+| **Coverage** | `__REPLACE_ME__` across the `.env.example` files — figures: [`security-coverage.md`](security-coverage.md) |
 | **Purpose** | Force the deployer to set required values before first run |
 | **Gaps** | CI does **not** check that `__REPLACE_ME__` is absent at runtime. A user can copy `.env.example` to `.env` without substitution and start containers with sentinel values. The Traefik `validate.sh` script checks for this locally but it is not run in CI. |
 
@@ -224,14 +221,16 @@ These controls are enforced by Traefik configuration rendered from templates in 
 
 These are in `docs/standards/security-baseline.md` and applied inconsistently across the repository.
 
-| Control | Coverage | Standard Location | CI-Enforced? |
-|---------|----------|------------------|-------------|
-| `read_only: true` | 58 / 205 services | `docs/standards/security-baseline.md` | No |
-| `cap_drop: ALL` | 89 / 205 services | `docs/standards/security-baseline.md` | No |
-| Non-root `user:` | 15 / 205 services | `docs/standards/security-baseline.md` | No |
-| Resource limits (`deploy.resources`) | 205 / 205 services — `memory` and `pids` on every one | `docs/standards/security-baseline.md` | No |
-| Config mounts with `:ro` | Inconsistent | `docs/standards/security-baseline.md` | No |
-| Docker Secrets (no raw passwords in `environment:`) | 107 / 205 services use a `secrets:` block | `docs/standards/security-baseline.md` | No |
+Coverage for each is generated — see [`security-coverage.md`](security-coverage.md).
+
+| Control | Standard Location | CI-Enforced? |
+|---------|------------------|-------------|
+| `read_only: true` | `docs/standards/security-baseline.md` | No |
+| `cap_drop: ALL` | `docs/standards/security-baseline.md` | No |
+| Non-root `user:` | `docs/standards/security-baseline.md` | No |
+| Resource limits (`deploy.resources`) — `memory` and `pids` | `docs/standards/security-baseline.md` | No |
+| Config mounts with `:ro` | `docs/standards/security-baseline.md` | No |
+| Docker Secrets (no raw passwords in `environment:`) | `docs/standards/security-baseline.md` | No |
 
 The soft controls are well-documented but application is inconsistent. `read_only` and `cap_drop` appear to be applied only when the developer remembered to do so, not systematically.
 
@@ -246,7 +245,7 @@ Based on **CIS Docker Benchmark v1.6.0**.
 
 | CIS Control | Status | Evidence | Notes |
 |-------------|--------|----------|-------|
-| **4.1** Create user for container | ⚠ Partial | `user:` on 15/205 services; `no-new-privileges` on 202/205 | Most containers run as image-defined users. No systematic non-root enforcement. |
+| **4.1** Create user for container | ⚠ Partial | `user:` and `no-new-privileges` coverage in [`security-coverage.md`](security-coverage.md) | Most containers run as image-defined users. No systematic non-root enforcement. |
 | **4.2** Use trusted base images | ⚠ Partial | Well-known registries (ghcr.io, docker.io). No image signing or digest pinning. | Tags pinned but not digests. No provenance verification. |
 | **4.3** Do not install unnecessary packages | ℹ N/A | Not applicable to compose blueprint — image content is upstream responsibility | |
 | **4.4** Scan images for vulnerabilities | ⚠ Partial | `trivy.yml` § Job 2 (Automated Verification, below) has the current coverage, severity filter and exit behavior | Enforcement is absent — every finding is reported, none fails the job. Coverage is complete for registry images only: locally built images are skipped because Trivy cannot pull them, so `business/vikunja`'s `vikunja-local` is unscanned — see `docs/standards/custom-application.md` |
@@ -256,16 +255,16 @@ Based on **CIS Docker Benchmark v1.6.0**.
 | **4.9** Use COPY not ADD | ✅ | `business/vikunja/Dockerfile` uses `COPY` only, no `ADD` | Not CI-enforced; no checker reads a Dockerfile |
 | **5.1** AppArmor profile | ❌ Not implemented | No `--security-opt apparmor:` in any compose file | |
 | **5.2** SELinux options | ❌ Not implemented | No `--security-opt label:` in any compose file | |
-| **5.3** Capabilities (cap_drop) | ⚠ Partial | Applied on 89/205 services | `cap_drop: ALL` documented as recommended, not enforced |
+| **5.3** Capabilities (cap_drop) | ⚠ Partial | Coverage in [`security-coverage.md`](security-coverage.md) | `cap_drop: ALL` documented as recommended, not enforced |
 | **5.4** Privileged containers | ✅ Enforced | CI FAIL — `scripts/ci/check-baseline.py` | Zero violations |
 | **5.5** Sensitive host paths | ✅ Enforced | Docker socket via proxy only — CI FAIL for direct mounts | Documented exceptions |
 | **5.6** SSH in containers | ✅ Not present | No SSH daemon in any service | |
 | **5.7** Privileged ports | ✅ Not needed | Traefik handles port binding; app containers use internal ports | |
 | **5.8** Open ports | ✅ Minimal | Only Traefik 80/443 exposed. No DB port exposure on host. | |
 | **5.9** Shared host network | ⚠ Documented | `network_mode: host` in 2 services (dnsmasq, Beszel agent) — documented exceptions | |
-| **5.10** Memory limits | ✅ | `memory` and `pids` on 205/205 services | Values are derived rather than measured — v0.10.0 |
+| **5.10** Memory limits | ✅ | `memory` and `pids` on every service — [`security-coverage.md`](security-coverage.md) | Values are derived rather than measured — v0.10.0 |
 | **5.11** CPU limits | ❌ Partial | Same as memory limits | |
-| **5.12** Read-only root FS | ⚠ Partial | Applied on 58/205 services | Not CI-enforced; many images write to their root filesystem |
+| **5.12** Read-only root FS | ⚠ Partial | Coverage in [`security-coverage.md`](security-coverage.md) | Not CI-enforced; many images write to their root filesystem |
 | **5.14** Bind only to required interfaces | ✅ Yes | `ping` entryPoint bound to `127.0.0.1:8082` | |
 | **5.15** `docker.sock` mount | ✅ Enforced | CI FAIL — socket proxy pattern enforced | Documented exceptions with risk acceptance |
 | **5.25** Restart policy | ✅ Yes | All services use `restart: unless-stopped` | |
@@ -283,10 +282,10 @@ Based on **OWASP Docker Security Cheat Sheet**.
 | Use specific image tags | ✅ Enforced | CI FAIL for `:latest` tags | Not pinned to digest |
 | Do not store secrets in images | ✅ Yes | Docker Secrets pattern; `.gitignore` covers `.env` | Redis password exception documented |
 | Use non-root users | ⚠ Partial | `no-new-privileges` enforced; explicit `user:` in 1 file only | |
-| Use read-only filesystems | ⚠ Partial | 58/205 services | Not systematically enforced |
-| Drop capabilities | ⚠ Partial | 89/205 services | |
+| Use read-only filesystems | ⚠ Partial | [`security-coverage.md`](security-coverage.md) | Not systematically enforced |
+| Drop capabilities | ⚠ Partial | [`security-coverage.md`](security-coverage.md) | |
 | Disable inter-container communication | ✅ Yes | `internal: true` networks isolate DB tier | |
-| Set resource limits | ✅ | 205/205 services | `memory` and `pids` on every service |
+| Set resource limits | ✅ | [`security-coverage.md`](security-coverage.md) | `memory` and `pids` on every service |
 | Use security profiles (AppArmor/SELinux) | ❌ No | None configured | Significant gap |
 | Enable Docker Content Trust | ❌ No | Not configured | |
 | Scan for vulnerabilities | ⚠ Partial | `trivy.yml` § Job 2 (Automated Verification, below) has the current coverage, severity filter and exit behavior | Non-blocking (`--exit-code 0`) — see Missing Verification section |
@@ -310,7 +309,7 @@ Based on **OWASP Docker Security Cheat Sheet**.
 
 **Job 2: Compose syntax validation**
 
-- Runs `docker compose config --quiet` on all 71 compose files
+- Runs `docker compose config --quiet` on every compose file `check-structure.py` discovers
 - Substitutes `.env.example` as `.env` for validation
 - Catches YAML errors and undefined variable references
 
@@ -433,8 +432,8 @@ The following controls are absent from CI. Ordered by security value.
 | **Image signing / provenance** | No verification that images come from the claimed publisher. | cosign, SLSA provenance, Sigstore |
 | **SBOM generation** | No Software Bill of Materials. Unknown what packages are in running containers. | Syft, Trivy SBOM mode |
 | **GitHub Actions pinning** | ✅ Addressed — all workflow actions pinned to commit SHA in Batch 1/2 (ci.yml, trivy.yml, scorecard.yml) | Dependabot (`github-actions` ecosystem) keeps pins current |
-| **`read_only: true` coverage** | 58 of 205 services (28%), in 43 of 99 compose files. No CI enforcement. Many images write to their root filesystem and cannot take it. | Extension to `check-baseline.py` |
-| **`cap_drop` coverage** | 89 of 205 services (43%), in 52 of 99 compose files. No CI enforcement. | Extension to `check-baseline.py` |
+| **`read_only: true` coverage** | Counted in [`security-coverage.md`](security-coverage.md). No CI enforcement. Many images write to their root filesystem and cannot take it. | Extension to `check-baseline.py` |
+| **`cap_drop` coverage** | Counted in [`security-coverage.md`](security-coverage.md). No CI enforcement. | Extension to `check-baseline.py` |
 | **Dependency review** | No automated check for newly introduced vulnerable dependencies on PRs. | `dependency-review-action` |
 | **Docker Bench for Security** | Runtime checks against host Docker daemon config. Not coverable in CI without host access. | Docker Bench for Security |
 | **TLS profile enforcement** | No CI check that each app uses an appropriate TLS profile. | Extension to structure check |

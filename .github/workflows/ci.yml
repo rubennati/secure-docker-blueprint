@@ -221,6 +221,13 @@ jobs:
       - name: Check the site catalogue is complete and current
         run: python3 scripts/ci/site-catalogue.py --check
 
+      # Hardening coverage figures went stale twice in three days while they
+      # were maintained by hand — a stack landing between two edits moves a
+      # denominator nobody remembers. They are counted from the compose files
+      # now, and this is what keeps the committed document honest.
+      - name: Check security coverage figures are current
+        run: python3 scripts/ci/security-coverage.py --check "$GITHUB_STEP_SUMMARY"
+
   # ─────────────────────────────────────────────
   # 8. CHECKER COVERAGE
   # Inverts the question the other jobs ask: not "does this stack comply?" but

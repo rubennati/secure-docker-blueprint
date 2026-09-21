@@ -53,14 +53,12 @@ README.
 | **Lifecycle-tracked total** | | **89** | 87 with a production Compose file, 2 host-installed |
 | `development/` | 2 | 0 | `static-site`, `web-api` — patterns, checked like a stack, never deployed as one |
 
-- **Services — two scopes, never mixed (#125).** **205 in deployable stacks**,
-  across 99 Compose files: every one states `memory`, `pids_limit` and
-  `memswap_limit`; 202 carry `no-new-privileges` (three documented exceptions:
-  Nextcloud `app` and `cron`, JumpServer); 89 drop all capabilities, 58 have a
-  read-only root filesystem, 15 set `user:`, 107 use a `secrets:` block. The
-  checkers report **209 across 102 files**, which is the same set plus
-  `apps/_reference` and the two `development/` patterns — they are validated,
-  never deployed. `docs/security-verification.md` opens with the same table.
+- **Services — two scopes, never mixed (#125).** The deployable stacks and the
+  wider set the checkers parse are counted separately: the difference is
+  `apps/_reference` and the two `development/` patterns, which are validated and
+  never deployed. Both scopes and every per-control figure are generated into
+  [`security-coverage.md`](security-coverage.md) — the numbers that used to
+  stand here are what R15 removed, so they are not restated.
 - **Opt-in overlays:** 6, each merge-validated as its own deployment variant
   through `docker compose config` (#124). Five affect services and get the full
   baseline; one redefines only networks. None is counted as a stack or a service —
@@ -125,7 +123,7 @@ Status is the state after the PR named.
 | R12 | Three stacks have `COMPOSE_PROJECT_NAME` differing from the directory (`lycheeorg`, `monicahq`, `paperless-ngx`) | `check-structure.py` `identity-source` | Renaming either side breaks existing deployments' volume and network names | DECISION REQUIRED | Open |
 | R13 | `docs/host-session-*.md`, `docs/site-review-2026-08-03.md` and four files under `docs/audits/` are dated working records | file headers | Accumulated history in `docs/` | CLEANUP | Open — kept as evidence; a decision on archiving is not needed for v1.0 |
 | R14 | `check_env()` reads only `.env.example`, so image tags in the other 81 committed `*.env*.example` files are never checked — 80 `.env.local.example` plus `core/orion-belt/.env.agent.example`. Measured: **0 would violate the tag rule today**, so this is coverage that is absent rather than a defect being hidden. The same measurement surfaced a separate question — 42 local pins lag their production pin (e.g. `apps/homepage` prod `v2.3.0` / local `v1.13.2`) | `git ls-files`, `BAD_TAG` applied to each | A checker claiming tag coverage it does not have | CLEANUP | Open — generalisation shown, not adopted; the 42-pin drift is a separate decision |
-| R15 | The hardening coverage figures in `docs/security-verification.md` are maintained by hand and went stale twice in three days — corrected to 166 services on 2026-09-19, already wrong at 205 on 2026-09-20 because four stacks landed in between. Every one is derivable from the compose files the checkers already parse | the table's own numbers against `check-structure.py --list` | A security document whose numbers are usually wrong | CLEANUP | Open — generate them, as `LIFECYCLE.md` and `catalogue.json` already are; the scope table added 2026-09-20 makes the denominator unambiguous in the meantime |
+| R15 | The hardening coverage figures in `docs/security-verification.md` were maintained by hand and went stale twice in three days — corrected to 166 services on 2026-09-19, already wrong at 205 on 2026-09-20 because four stacks landed in between. Every one is derivable from the compose files the checkers already parse | the table's own numbers against `check-structure.py --list` | A security document whose numbers are usually wrong | CLEANUP | **Closed** — `scripts/ci/security-coverage.py` counts them from the compose files into [`security-coverage.md`](security-coverage.md), verified in CI. `security-verification.md` keeps the descriptions and links to the figures |
 
 ### Stacks
 
@@ -133,7 +131,7 @@ Status is the state after the PR named.
 |---|---|---|---|---|
 | S1 | 75 of 89 stacks are `scaffolded`; 26 carry a legacy stamp, 32 have no verification date, 17 are pin-drifted, and none states why it stays there. The promise is that a fork deploys without the author's mental model, and a state resting on no evidence breaks it | `LIFECYCLE.md` | **NEEDS HOST EVIDENCE** — the largest remaining item | Open — D1 decides how a reason is recorded, not whether one is needed |
 | S2 | 85 of 89 READMEs have no restore section; `docs/standards/restore.md` carries the model | generated Restore column | DECISION REQUIRED | Open — D2 |
-| S3 | `cap_drop`, `read_only` and non-root `user` are conditional controls, applied to 69, 44 and 9 of 166 services and not CI-enforced. A later option, not a gap: a non-failing coverage report or per-service exception records | `security-verification.md` §4–5 | POST-V1 / ON HOLD | Open |
+| S3 | `cap_drop`, `read_only` and non-root `user` are conditional controls and not CI-enforced — the current coverage of each is in [`security-coverage.md`](security-coverage.md). A later option, not a gap: per-service exception records. The non-failing coverage report R15 also called for now exists | `security-verification.md` §4–5 | POST-V1 / ON HOLD | Open — narrowed to the exception records |
 | S4 | ShellHub pins a release candidate | `core/shellhub/UPSTREAM.md` | CLEANUP — documented limitation, revisit at the first stable tag | Open |
 | S5 | Structure checks otherwise clean: no `:latest`, no plaintext secrets, no datastore on `proxy-public`, 13 published-port services all by design, 7 socket mounts all documented exceptions | `check-structure.py`, `check-baseline.py` | — | No finding |
 
@@ -336,10 +334,6 @@ deliberately deferred.
   `*.env*.example` files are unchecked. Measured: none violates the rule today.
   42 local pins differ from production — 38 stale, 3 different image or version
   schemes, 1 digest-only. All 79 local stacks resolve. No pin was changed.
-- **R15** — the hardening figures in `docs/security-verification.md` are
-  hand-maintained and went stale twice in three days. They are derivable from the
-  compose files the checkers already parse and should be generated, as
-  `LIFECYCLE.md`, `sovereignty.json` and `catalogue.json` are.
 - **W8** — catalogue decision facts, five layers, scoped in
   [Catalogue decision facts](#catalogue-decision-facts). Licence and commercial
   model partly exist; operational footprint is derivable from the compose files;
