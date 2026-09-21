@@ -280,3 +280,10 @@ Listed with context in [`state.md`](state.md). Nothing proceeds on these until d
       comments are corrected. What each endpoint answers during startup decides
       whether `-f` can go in. `apps/euro-office`, `core/dockhand` and
       `apps/paperless-ngx` already use `curl -fsS`
+- [ ] Decide `apps/dify`'s local stack form. It is the one stack with a
+      `docker-compose.local.yml` and no `.env.local.example`: the file hardcodes all
+      eight image references and reads no variable, and its own header documents a
+      start without `--env-file`. Internally consistent, and every pin agrees with
+      production, but it is the only deviation from the form in
+      `docs/standards/compose-structure.md`. Either give it the companion file or
+      state the exception there — `local-pin-drift` covers it under both
