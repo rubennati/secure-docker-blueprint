@@ -6,6 +6,8 @@
 - **GitHub:** https://github.com/langgenius/dify
 - **Docs:** https://docs.dify.ai/
 - **License:** Dify Open Source License (Apache-2.0 with additional conditions: no multi-tenant service without written authorisation, frontend logo and copyright preserved; not OSI-approved)
+- **Use restrictions:** operating a multi-tenant environment requires written commercial permission, and the LOGO and copyright information in the console and applications may not be removed or modified; the branding condition applies to the frontend, meaning the `web/` directory and the web image — https://github.com/langgenius/dify/blob/main/LICENSE · checked 2026-09-21
+- **Commercial model:** commercial licence — https://github.com/langgenius/dify/blob/main/LICENSE · checked 2026-09-21
 - **Origin:** LangGenius · no country stated in its published terms · no country
 - **Domain:** AI and local AI
 - **Role:** LLM application platform: chat and workflow apps, knowledge bases, plugin-based model providers

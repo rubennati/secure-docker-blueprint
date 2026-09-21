@@ -199,7 +199,19 @@
     "version": "2.4.29"
   },
   "apps/dify": {
-    "decision_facts": {},
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "commercial licence",
+        "source": "https://github.com/langgenius/dify/blob/main/LICENSE",
+        "statement": "commercial licence"
+      },
+      "use_restrictions": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/langgenius/dify/blob/main/LICENSE",
+        "statement": "operating a multi-tenant environment requires written commercial permission, and the LOGO and copyright information in the console and applications may not be removed or modified; the branding condition applies to the frontend, meaning the `web/` directory and the web image"
+      }
+    },
     "domain": "AI and local AI",
     "footprint": {
       "gpu": null,
@@ -657,7 +669,19 @@
     "version": "9.4.0"
   },
   "apps/open-webui": {
-    "decision_facts": {},
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "commercial licence",
+        "source": "https://github.com/open-webui/open-webui/blob/main/LICENSE",
+        "statement": "commercial licence"
+      },
+      "use_restrictions": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/open-webui/open-webui/blob/main/LICENSE",
+        "statement": "the Open WebUI name and branding may not be removed or altered, except for deployments whose end users do not exceed fifty individuals in any rolling thirty-day period, or with prior written permission or an executed enterprise licence"
+      }
+    },
     "domain": "AI and local AI",
     "footprint": {
       "gpu": null,
@@ -1142,7 +1166,13 @@
     "version": "23.0.4"
   },
   "business/invoiceninja": {
-    "decision_facts": {},
+    "decision_facts": {
+      "use_restrictions": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/invoiceninja/invoiceninja/blob/v5-stable/LICENSE",
+        "statement": "Elastic License 2.0 — it may not be provided to third parties as a hosted or managed service giving them access to a substantial set of its features, the licence-key functionality may not be moved, changed, disabled or circumvented, and licensing or copyright notices may not be removed"
+      }
+    },
     "domain": "Business operations",
     "footprint": {
       "gpu": null,
@@ -1418,7 +1448,24 @@
     "version": "2.93"
   },
   "core/dockhand": {
-    "decision_facts": {},
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "commercial licence",
+        "source": "https://github.com/Finsys/dockhand/blob/main/LICENSE.md",
+        "statement": "commercial licence"
+      },
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/Finsys/dockhand/blob/main/LICENSE.md",
+        "statement": "Enterprise Features are gated by a License Key, which the licence forbids sharing, publishing or circumventing"
+      },
+      "use_restrictions": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/Finsys/dockhand/blob/main/LICENSE.md",
+        "statement": "production use is granted free only for personal non-commercial use, recognised non-profit and charitable organisations, and schools or non-commercial research institutions. **Production use by or on behalf of a company, sole trader, public body or any other organisation requires a Commercial Licence**, and offering it to third parties as a hosted, managed or SaaS container-management service requires a separate written agreement"
+      }
+    },
     "domain": "Infrastructure",
     "footprint": {
       "gpu": null,
@@ -1471,7 +1518,13 @@
     "version": ""
   },
   "core/infisical": {
-    "decision_facts": {},
+    "decision_facts": {
+      "use_restrictions": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/Infisical/infisical/blob/main/LICENSE",
+        "statement": "none for the MIT-licensed portion; content under any `ee/` directory is under the separate licence in `ee/LICENSE`"
+      }
+    },
     "domain": "Identity, access and secrets",
     "footprint": {
       "gpu": null,
@@ -1533,7 +1586,13 @@
     "version": "26.7.3"
   },
   "core/orion-belt": {
-    "decision_facts": {},
+    "decision_facts": {
+      "use_restrictions": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/orion-belt-dev/orion-belt/blob/master/LICENSE",
+        "statement": "Apache-2.0 with the Commons Clause, which withholds the right to Sell — defined as providing to third parties, for a fee or other consideration, a product or service whose value derives entirely or substantially from its functionality, including fees for hosting or for consulting and support related to it"
+      }
+    },
     "domain": "Identity, access and secrets",
     "footprint": {
       "gpu": null,
@@ -1816,7 +1875,24 @@
     "version": "4.4"
   },
   "monitoring/langfuse": {
-    "decision_facts": {},
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "paid self-hosted edition",
+        "source": "https://langfuse.com/self-hosting/license-key",
+        "statement": "paid self-hosted edition"
+      },
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://langfuse.com/self-hosting/license-key",
+        "statement": "project-level RBAC roles, audit logs, data retention policies, server-side data masking, SCIM with the organisation management API, and the instance management API require a paid licence key when self-hosting"
+      },
+      "use_restrictions": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/langfuse/langfuse/blob/main/LICENSE",
+        "statement": "none for the MIT-licensed portion; content under `ee/`, `web/src/ee/` and `worker/src/ee/` is under the separate licence in `ee/LICENSE`"
+      }
+    },
     "domain": "AI and local AI",
     "footprint": {
       "gpu": null,
