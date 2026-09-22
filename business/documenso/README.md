@@ -94,7 +94,7 @@ same care as the database, and keep a copy off the host.
 
 **Restore order:** database first, then the app.
 
-## Local testing (no Traefik)
+## Try it locally
 
 ```bash
 cp .env.local.example .env.local     # fill values; generate .secrets/cert.p12 first

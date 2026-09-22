@@ -12,7 +12,20 @@ views, forms. One container with its own SQLite store by default.
 <StackEvidence stack="apps/nocodb"
   gap="a restore. The data directory and the signing secret have to come back together, and that has not been performed here." />
 
-Needs: [Traefik](/infrastructure/traefik/) running and a domain.
+**To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
+
+**To deploy it behind the proxy:** [Traefik](/infrastructure/traefik/) running and a domain.
+
+## Try it locally
+
+On your own machine, with no proxy, domain or certificate. From `apps/nocodb/`:
+
+```bash
+cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+```
+
+Then open `http://localhost:8080`. Stop it again with the same command and `down`.
 
 ## Installation
 

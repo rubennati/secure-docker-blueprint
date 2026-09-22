@@ -86,6 +86,10 @@ mid-request. Size the limit to the largest model you will run plus one to two
 GB, and more for long contexts. `OLLAMA_KEEP_ALIVE` controls how long an idle
 model stays resident.
 
+Requests to a model are served one at a time by default
+(`OLLAMA_NUM_PARALLEL` is 1): a second request waits until the first has
+finished. A 3.2B-parameter model peaked at 2.5 GiB on CPU.
+
 ## Network egress
 
 The container needs outbound access to pull models from the registry. That is
@@ -97,15 +101,12 @@ has not been traced.
 
 ## Status
 
-`scaffolded`. 2026-09-18 (0.34.2): the local and production compose files were
-booted with `read_only`, `cap_drop: ALL`, `no-new-privileges` and uid 1000,
-reached `healthy`, pulled `smollm2:135m` from the registry and answered real
-requests on both the native and the OpenAI-compatible API on CPU; the model
-survived a restart. Traefik routing and TLS have not been run against a real
-host, and nothing has run on a GPU. Full log in
-[`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-18).
+Run behind Traefik with TLS on 2026-09-21 (0.34.2): models up to 3.2B
+parameters pulled and served through the route on CPU, two concurrent requests,
+a restart, and a restore of `volumes/data`. Nothing has run on a GPU. Full log
+in [`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-21).
 
-## Local deployment validation
+## Try it locally
 
 ```bash
 cp .env.local.example .env.local

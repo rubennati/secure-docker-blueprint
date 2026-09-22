@@ -14,6 +14,19 @@ Three-service stack with Traefik path-based split (same pattern as OpnForm):
 
 Traefik routes `PathPrefix(/app)` to the API (priority 100), everything else to the UI (priority 1). No `/api` prefix — Traefik routes directly to Parse's mount path without stripping (unlike Caddy in the upstream default).
 
+## Try it locally
+
+Runs on `http://localhost:3000` without Traefik, DNS or a certificate; port 8080 is the Parse API.
+
+```bash
+cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+# http://localhost:3000
+docker compose -f docker-compose.local.yml --env-file .env.local down
+```
+
+`.env.local` holds plain values, not Docker Secrets — local only.
+
 ## Setup
 
 ```bash

@@ -7,6 +7,7 @@
 - **Docs:** https://dashy.to/docs
 - **Live demo:** https://demo.dashy.to/
 - **License:** MIT
+- **Decision facts checked:** not yet
 - **Origin:** UK · Alicia Sykes (Lissy93) · non-EU
 - **Domain:** Dashboards
 - **Role:** One page linking everything you run, configured in a single YAML file

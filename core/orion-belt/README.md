@@ -24,6 +24,17 @@ The agent (`docker-compose.agent.yml`) is not part of this stack — it runs
 on each host you want to protect, the same relationship
 `monitoring/beszel-agent` has to `monitoring/beszel`.
 
+## Try it locally
+
+Runs on `http://localhost:8080` without Traefik, DNS or a certificate; port 2222 is the SSH entry point.
+
+```bash
+cp .env.local.example .env.local
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+# http://localhost:8080
+docker compose -f docker-compose.local.yml --env-file .env.local down
+```
+
 ## Setup
 
 ```bash

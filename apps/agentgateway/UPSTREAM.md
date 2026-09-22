@@ -6,14 +6,12 @@
 - **GitHub:** https://github.com/agentgateway/agentgateway
 - **Docs:** https://agentgateway.dev/docs/
 - **License:** Apache-2.0
+- **Decision facts checked:** not yet
 - **Origin:** United States · Linux Foundation project (contributed by Solo.io) · non-EU
 - **Domain:** AI and local AI
 - **Role:** LLM and MCP gateway: one authenticated endpoint in front of model providers and MCP servers
 - **Based on version:** `v1.5.0`
-
-No `Last verified` line yet — see [Verification performed](#verification-performed-2026-09-19)
-below. The field asserts Traefik/TLS routing was confirmed on a real host, which
-has not happened; this stack stays `scaffolded` until it does.
+- **Last verified:** 2026-09-21 (v1.5.0) — behind Traefik with TLS: both routes, a provider credential from a Docker Secret, an MCP target under `/mcp`, a restart, and a restore
 
 ## What we use
 
@@ -34,6 +32,39 @@ has not happened; this stack stays `scaffolded` until it does.
 | No healthcheck | Distroless image; marker comment in the compose file |
 | `read_only: true`, `cap_drop: ALL` | Verified compatible; SQLite writes only to `/data` |
 
+## Verification performed (2026-09-21)
+
+Behind Traefik with TLS, both routes on the shipped `acc-private` and `sec-2`:
+
+- A client outside the access policy's ranges got `403` on both routes, over
+  IPv4 and IPv6
+- `/v1/models`: `401` without a key and with a wrong key, `200` with the key; a
+  chat completion through the shipped `"*"` model to `http://ollama:11434/v1`
+- UI route: `401` without credentials and with a wrong password, `200` with the
+  generated login; in headless Chromium (Playwright 1.63) the UI loaded with
+  12 requests, all `200`; the metrics port unreachable from a peer container,
+  `:15021/healthz/ready` answered `ready`
+- Provider credential: a model with `auth: {key: {file: /run/secrets/AGW_PROVIDER_KEY}}`,
+  the file mounted as an additional Docker Secret (group 65532, mode 640)
+  through an override. An echo provider logged `Authorization: Bearer` followed
+  by the provider key; the client's gateway key did not reach it.
+  `--validate-only` fails with `failed to read from file` unless the secret file
+  is mounted into the validation run as well
+- A provider over TLS: a model with `baseUrl` set to the Ollama stack's route
+  answered through Traefik
+- MCP: the template's `mcp:` block with one streamable-HTTP target (a Python MCP
+  SDK 1.x server): `401` without the key; `initialize`, `tools/list` and
+  `tools/call` through the route with it
+- After `docker compose down` and `up -d` the provider answered
+- Restore: `volumes/data` and `config/config.yaml` archived with the container
+  stopped — `data.db` keeps its `-wal` and `-shm` files after the stop, and the
+  archive holds all three — then removed, extracted and started: requests
+  answered, and the request log continued from four to five rows
+- Peak 8.8 MiB of memory, 16 PIDs
+
+**Not yet exercised:** a hosted provider's own check of the credential — none
+was available; the injection was proven against the echo provider.
+
 ## Verification performed (2026-09-19)
 
 Against `docker-compose.local.yml` on v1.5.0, with a throwaway Ollama container
@@ -51,9 +82,6 @@ serving `smollm2:135m` as the backend:
   `data.db` in `volumes/data`; the key does not appear in the container environment
 
 - Production `docker-compose.yml` on a throwaway `proxy-public` network, without Traefik: Docker Secret mounted, `/v1` `401`/`200`, UI `401`/`308`, metrics port unreachable from a peer container, no published ports
-
-**Not yet exercised:** Traefik routing and TLS; hosted
-providers and `backendAuth`; restore from backup.
 
 ## Upgrade checklist
 

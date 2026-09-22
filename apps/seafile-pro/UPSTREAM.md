@@ -5,6 +5,9 @@
 - **Repo:** https://manual.seafile.com/13.0/docker/pro/deploy_seafile_pro_with_docker/
 - **Config source:** Official Seafile Pro Docker Compose files (inbox/seafile-pro_original)
 - **License:** Commercial
+- **Use restrictions:** end-user customers may not redistribute it further, the software and its source may not be disclosed or made available to any third party, and derivative works may not be created or distributed — https://manual.seafile.com/latest/introduction/seafile_professional_edition_software_license_agreement/ · checked 2026-09-21
+- **Commercial model:** per-user subscription; no licence file is needed to run the Pro edition for three users — https://www.seafile.com/en/pricing/ · checked 2026-09-21
+- **Decision facts checked:** 2026-09-21
 - **Origin:** China · Seafile Ltd · non-EU
 - **Domain:** Files, wiki and collaboration
 - **Role:** File sync and share, professional edition
@@ -45,6 +48,7 @@
 | `seahub_custom.py` Pattern | For OnlyOffice + Metadata + Thumbnail Config |
 | `clamd-remote.conf` mounted as `/etc/clamav/clamd.conf` | ClamAV runs in separate container, needs TCP connection |
 | Entrypoint wrapper reduced to seahub_custom.py only | Secrets via my_init didn't work, passwords now in .env |
+| `SEAFILE_SERVER_HOSTNAME: 127.0.0.1:8001` in `docker-compose.local.yml` | First-boot setup (`setup-seafile-mysql.py`, 13.0.21) accepts only a host name that contains a dot. On `localhost:8001` it exits with status 255 before it writes a file or opens the database, Seahub never starts, and the stack answers `502`. Seahub builds `SERVICE_URL` and `FILE_SERVER_ROOT` from this value, so the local stack is opened at the same address |
 
 ## Known limitations
 

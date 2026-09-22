@@ -8,6 +8,126 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
+## [0.9.2] — 2026-09-22 — Stabilization and release readiness
+
+Eighteen stacks verified behind Traefik with TLS on a host: nine that v0.9.1 added and nine of the twelve this release adds. Each verification covers the route and its certificate, the access policy refusing a client outside its ranges over IPv4 and IPv6, the stack's smoke test, a restart and a restore from the stack's README. The image scan now fails on a CRITICAL finding it has not recorded. Upgrading Beszel, Langfuse, Traefik, Dify, Open WebUI or LiteLLM from v0.9.1 takes the steps under Migration.
+
+### Added
+
+- **Twelve stacks, each shipping `acc-tailscale`** — nine verified on a host on 2026-09-22, three recorded with a known limitation:
+  - `apps/calrs` and `apps/calnode` — scheduling, one container each with SQLite; calrs reads availability from a CalDAV server you already run. Both verified.
+  - `business/akaunting`, `business/solidinvoice` and `business/facturascripts` — invoicing and accounting, all three verified. Akaunting keeps the pages that create records closed without an akaunting.com API key. FacturaScripts updates itself in place after the first start, so its `APP_TAG` sets PHP, Apache and the version a first install starts from.
+  - `business/erpnext` — ERP from frappe_docker's deployment, ten services with MariaDB and Redis. Its realtime service cannot reach the public URL it checks sessions against, so the desk gets no live updates.
+  - `business/twenty` (CRM) and `business/chatwoot` (customer support). Chatwoot verified; Twenty's first load exceeds the rate limit of both `sec-2` and `sec-2-spa`.
+  - `apps/ciso-assistant` (governance, risk and compliance) and `apps/defectdojo` (vulnerability management), both verified.
+  - `backup/rclone-web` — rclone's web interface and remote-control API on one host name, signed in against an htpasswd file from a Docker Secret. Version 1.75.1 takes its API address only from a login link that also carries the password.
+  - `apps/httpbin` — HTTP request and response testing, from the Python Software Foundation's fork. Verified.
+
+  How each product was evaluated: [`docs/audits/candidate-evaluation-2026-09-21.md`](docs/audits/candidate-evaluation-2026-09-21.md).
+
+- **The image scan fails on a CRITICAL finding it has not recorded** (`scripts/ci/trivy-gate.py`, `.trivy-baseline.json`, `.github/workflows/trivy.yml`). `.trivy-baseline.json` records the CRITICAL findings with a published fix that exist in the images as upstream publishes them — 530 across 79 image repositories in the scan of 2026-09-22 — and the scan fails on any CRITICAL outside it. The baseline is keyed by image repository rather than by tag, so moving a pin surfaces only what is new. An image that could not be scanned fails the job unless the baseline names it with a reason; three are named, each for Docker Hub's anonymous pull rate limit. HIGH findings are counted in the job summary and do not fail the job, and findings without a published fix are not counted. The scan runs weekly, and on a pull request into or a push to `main` that changes a compose file, an `.env.example` or the scan scripts.
+
+- **A deployment lifecycle an operator can follow** (`docs/standards/deployment-lifecycle.md`, `README.md`, `scripts/overview.sh`): which release to deploy, what order to start things in, what updating the blueprint does to a running host, how that differs from moving an image pin, what rolls back and what does not, and how a host states which release it came from. **Blueprint releases and upstream images are two lifecycles**, and the document separates them — each has its own trigger, its own record, its own procedure and its own reversibility. Deployment order is derived rather than judged: a stack starts after whatever creates a network it declares as external or provides a middleware its Traefik labels name, and the commands to read that off the tree are given alongside it. `./scripts/overview.sh` states the release a deployment came from, or that the checkout has drifted from one, or that it is not a Git checkout and the question cannot be answered. Rollback is asymmetric: returning to an earlier blueprint tag is reliable, returning to an earlier image usually is not, because a database migrated on first start does not come back with a pin change.
+
+- **Licence and edition facts, read from upstream and sourced** (`UPSTREAM.md`, `scripts/ci/site-catalogue.py`, `docs/standards/new-app-checklist.md`). Three optional fields — `Use restrictions`, `Edition gating`, `Commercial model` — each written as `<statement> — <source url> · checked YYYY-MM-DD`: what a licence permits, which security-relevant features sit behind a paid edition, and how money is asked for. `site-catalogue.py --check` rejects a fact without a source or date, and the catalogue page shows each statement in full. No price is recorded; the source link is where an amount is read. Every stack also states `Decision facts checked:` — a date or `not yet` — so a missing fact never reads as "nothing to declare": 36 of 101 stacks have been researched, and 32 carry at least one sourced fact. Among them: `core/teleport`'s compiled binaries and images, which this stack deploys, are under the Teleport Community Edition commercial licence, which limits a company to fewer than 100 employees and less than $10M annual revenue; `business/openproject` keeps SAML, OIDC, CAS and Kerberos single sign-on in its Enterprise edition; `business/matomo` sells SAML single sign-on as a separate plugin; `core/jumpserver` keeps LDAP, OIDC, SAML2, RADIUS, session monitoring and command auditing in its Community edition.
+
+- **The catalogue states what a stack brings with it** (`scripts/ci/site-catalogue.py`, `site/src/components/Catalogue.astro`). Each entry carries an operational footprint derived from the stack's own compose files: runtime services, one-shot containers counted apart, the infrastructure needed beside the application, and a GPU where one is reserved — `required` from the production file, `optional` where only an overlay declares it. `apps/easyappointments` reads `2 services · MariaDB` beside `apps/caldiy`'s `3 services · PostgreSQL + Redis`; 51 of 101 stacks need no infrastructure at all. There is nothing to fill in or keep current: `site-catalogue.py --check` fails when the committed data no longer matches the compose files. **No memory figure appears:** `deploy.resources.limits.memory` is the ceiling this repository sets, not what the application needs.
+
+- **Hardening coverage is generated** (`scripts/ci/security-coverage.py`, `docs/security-coverage.md`). The coverage of every hardening control is counted from the compose files through the discovery `check-structure.py` owns and the exceptions `check-baseline.py` owns, so a figure cannot disagree with the checker that enforces it. Both scopes are stated: the stacks an operator deploys, and the wider set the checkers parse. `security-coverage.py --check` runs in CI's Status model job; `docs/security-verification.md` keeps what each control is, how it is enforced and what it misses.
+
+- **Opt-in compose overlays are validated as deployment variants** (`scripts/ci/check-overlays.py`). CI's Compose validation job merges each overlay with its stack through `docker compose config` and judges the result against the mandatory baseline. The defects it found are under Fixed.
+
+### Changed
+
+- **Nine of the stacks v0.9.1 added are verified behind Traefik with TLS** (`UPSTREAM.md`): `apps/ollama`, `apps/qdrant`, `apps/litellm`, `apps/agentgateway` and `apps/open-webui` on 2026-09-21; `apps/dify`, `monitoring/langfuse`, `apps/greenmail` and `apps/docling-serve` on 2026-09-22. `apps/windmill` carries the same record without `Last verified`: its interface does not load under the shipped `sec-2`, as its README states. `apps/vllm` needs a GPU and was not run. The defects these runs found are under Fixed.
+
+- **The Beszel agent no longer runs with `network_mode: host`, and no longer listens** (`monitoring/beszel`, `monitoring/beszel-agent`). It ran as a host-network container serving SSH on `*:45876` — an implicit listener on every interface, which the README asked the operator to compensate for with a host firewall or Tailscale ACL the blueprint neither ships nor verifies. The agent is now an ordinary bridged container that opens no port at all: it initiates the connection to the hub itself, over the stack's private network on the hub host and over outbound WSS/443 from a remote host. **Container metrics never worked in the shipped configuration.** The socket proxy published `127.0.0.1:2375` while attached only to an `internal: true` network, and Docker silently ignores `ports:` on such a container — the mapping is accepted and never created, so `DOCKER_HOST=tcp://127.0.0.1:2375` had nothing to reach. Nothing reported an error: hub up, agent up, proxy healthy, no container metrics. The agent now reaches the proxy by service name on that internal network, the way `core/dockhand` already did, and the ineffective publish is gone. Discovery, per-container CPU, memory and network all arrive at the hub with the socket proxy still at `CONTAINERS=1` and `PING=1` — `/version` and `/info` answer `403`, which the agent treats as non-fatal. `docker-compose.local.yml` follows the same model.
+
+- **Host interface bandwidth is no longer reported from inside the container** (`monitoring/beszel`, `monitoring/beszel-agent`). A container cannot see the host's network namespace, and the agent's own `eth0` passes upstream's auto-filter — so the stack reported *this container's* traffic as the system's bandwidth: a plausible small number on an interface named like a real NIC, indistinguishable from the host's. Both stacks now ship `NICS=-*`, which selects no interface; the bandwidth and per-interface fields are omitted rather than carrying a wrong value. **Host NIC statistics are therefore unavailable in the containerised agent, and Beszel's system Bandwidth alert cannot fire.** Both READMEs state this. Host CPU, memory, swap, root-filesystem usage, disk I/O and load average are unaffected, as are all per-container metrics including network.
+
+- **The tag rule reads every committed example env file, and both pinning styles** (`scripts/ci/check-structure.py`). It read `.env.example` and matched `<NAME>_TAG`, which left 84 committed `*.env*.example` files outside the check — 81 `.env.local.example`, `core/orion-belt/.env.agent.example` and the two host-watchdog files — and missed the `<NAME>_IMAGE` style inside the file it did read, so `APP_IMAGE=x:latest` passed where `APP_TAG=latest` failed for the same defect. None of the newly covered pins violates the rule.
+
+- **Every local stack is reached the same way.** 91 of 101 stacks ship a `docker-compose.local.yml`, and each README carries a `## Try it locally` section with the command, the local address it answers on and any credential step. The two `development/` patterns keep `Local deployment validation`, because validating a built image is not evaluating a product.
+
+- **The operator site separates trying a stack from deploying it** (`site/`, #43, #44). The 31 guides whose stack has a local path separate *To try it* from *To deploy it behind the proxy*, keep feature-specific requirements with their feature, and reach `## Try it locally` at the same point. The server setup checks out the newest release instead of `main`, and the About page names the current release.
+
+- **Adding a stack has one contract** (`docs/standards/new-app-checklist.md`): what is mandatory, what is conditional, what is generated and never edited, and what only a host can establish. The catalogue, lifecycle and sovereignty views are generated from `UPSTREAM.md`, so a new stack reaches the site by existing rather than by being added to a list.
+
+### Fixed
+
+- **Langfuse lost its PostgreSQL data on every `down` and `up`** (`monitoring/langfuse`). The database was mounted at `/var/lib/postgresql`, one level above the PostgreSQL 17 image's data `VOLUME`, so the cluster lived in an anonymous volume and every recreated container started on a new, empty one. Prompts, users, projects and keys created afterwards were lost; the organisation, project, key pair and administrator from `LANGFUSE_INIT_*` came back on each start and hid the loss. Both compose files now mount the data at `/var/lib/postgresql/data`. Existing installations need the migration step below.
+
+- **Traefik stayed down after a crash once the nightly log rotation had run** (`core/traefik`, `docs/standards/logrotate.md`). The logrotate configuration sent `docker kill --signal=USR1 traefik-core` after rotating the access log. Docker treats any `docker kill`, whatever the signal, as a stop by hand and cancels the restart policy until the next start: when Traefik was later killed for memory, `restart: unless-stopped` did not bring it back, and every route stayed down until it was started by hand. Both logs are now truncated in place (`copytruncate`) and no signal is sent; `TROUBLESHOOTING.md` §8.4 describes the case. Existing hosts need the migration step below.
+
+- **Langfuse and Dify could answer `502` behind Traefik** (`monitoring/langfuse`, `apps/dify`). Next.js listens on the address `HOSTNAME` resolves to — Docker's container ID, which resolves to one of the container's two network addresses. When that was the internal one, Traefik could not connect, while the healthcheck probed the same address and reported `healthy`. Both web services now set `HOSTNAME: 0.0.0.0` and check `127.0.0.1`.
+
+- **Dify's `worker-beat` restarted in a loop, so scheduled tasks never ran** (`apps/dify`). Its app factory creates the storage directory at start, and the read-only container had no storage mount (`OSError: [Errno 30] Read-only file system`). It now mounts `./volumes/storage` like `dify-api` and `worker`.
+
+- **Windmill's server was killed every 30 seconds** (`apps/windmill`). It uses 470–558 MiB and was limited to 512 MiB; the kernel's cgroup OOM killer restarted it in a loop, and Traefik answered `404` and `502` between restarts. The limit is now 1 GiB, derived from that measurement.
+
+- **LiteLLM did not start on a Linux host and could not store a provider credential** (`apps/litellm`). The proxy runs as uid/gid 65534 and could not read the owner-only secrets `ops/init.sh` wrote; `init.sh` now writes them with mode `640`, and the README adds `chown "$USER":65534`. `POST /model/new`, the documented way to add a provider with an encrypted credential, refused without `store_model_in_db`, which `config/config.yaml` now sets.
+
+- **Three restore procedures did not bring the data back intact** (`apps/windmill`, `apps/dify`, `monitoring/langfuse`). Windmill's single-database dump lacks the cluster roles its row-level security is granted to: restored into a fresh cluster, it started `healthy` and every workspace call failed with `role "windmill_admin" does not exist`. The README now dumps the cluster — `pg_dumpall`, or borgmatic's `name: all`. Dify's backup stopped `api`, a name Compose skips without an error, so the API kept writing during the archive; it now names `dify-api`, and the restore steps are written out. Langfuse archived ClickHouse while it ran (`file changed as we read it`); ClickHouse and MinIO are now stopped for the archive. Open WebUI's README allowed restoring without `cache/`; under `HF_HUB_OFFLINE=1` that starts `healthy` with retrieval silently off, and the README now says how to fetch the model once.
+
+- **Open WebUI and Dify did not load in a browser** (`apps/open-webui`, `apps/dify`). `sec-2`'s rate limit (burst 50) answered part of the first load with `429`: Open WebUI showed `500: Internal Error`, Dify's workflow editor stayed on its loading spinner. Both now ship `sec-2-spa`; an existing `.env` keeps `sec-2` until it is changed as described below. Windmill's first load, about 850 requests, exceeds `sec-2-spa`'s burst of 200 as well, and its UI shows an error under either chain; it keeps `sec-2`, and its README records the limitation until the security chains are reviewed before v1.0.
+
+- **Dify's first-account setup could not be done as documented** (`apps/dify`). The README kept the router at `acc-deny` until `/install` was done, which refuses the browser that has to open `/install`. It now opens `/install` through the shipped `acc-private`, with the setup password as the guard — `/console/api/setup` answers `401` without it.
+
+- **Seafile's and Seafile Pro's local stacks did not start** (`apps/seafile`, `apps/seafile-pro`, #133). First-boot setup accepts only a host name that contains a dot: with `SEAFILE_SERVER_HOSTNAME: localhost:8000` it exited with status 255 before it opened the database, Seahub never started and the stack answered `502`. Both local files now set `127.0.0.1:<port>`, and the READMEs and the site guides open the stack at that address. The production files take a real domain and are unchanged.
+
+- **`apps/seafile` generated a Redis password that can break Seafile's own connection URL.** The setup instructions produced it with `openssl rand -base64 32`, and Seafile builds `redis://:<password>@<host>:<port>` by string interpolation without escaping the value. The base64 alphabet contains `/`, which terminates the URL's authority component, so the host and port are parsed from the wrong text. Seahub then answers `500` on every request, its healthcheck fails, and because the optional services depend on it with `condition: service_healthy`, `seadoc`, `notification`, `thumbnail` and `md-server` never start. Roughly half of generated passwords contain at least one `/`, so the same tree succeeded or failed per install. The three places that documented the generator now use `openssl rand -hex 32` and say why. `apps/seafile-pro` already specified hex for this secret; `business/kimai` and `business/opensign` document the same constraint.
+
+- **Two opt-in overlays could not start, and two carried no limits** (`apps/paperless-ngx/sso.yml`, `backup/urbackup/network-host.yml`, `core/orion-belt/docker-compose.agent.yml`, `apps/ghost/activitypub.yml`). `sso.yml` and `network-host.yml` patched a service named `app`, which neither stack defines (`paperless-app`, `urbackup-app`), so Compose rejected the project and neither documented feature could start. The orion-belt agent overlay carried no memory or PID ceiling and no swap policy, and both Ghost ActivityPub services carried no swap policy. `network-host.yml` moves a service into the host network namespace and now carries a documented exception with its reason, alternative and accepted risk.
+
+- **Local stacks ran older versions than production** (`local-pin-drift` in `scripts/ci/check-structure.py`, `docs/standards/compose-structure.md`, Version Chain step 4 in `docs/maintenance.md`). 41 pins across 39 stacks had drifted behind their production pin — `apps/homepage` at `v1.13.2` against `v2.3.0`, `apps/n8n` at `2.31.6` against `2.38.7`. All are synchronised, the Version Chain names the local file, and `local-pin-drift` fails when a local pin differs from the production pin of the same image.
+
+- **Six licence records were wrong** (`UPSTREAM.md`). `apps/nocodb` relicensed from AGPL-3.0 to the Sustainable Use License 1.0 (licence file dated 2026-01-29) and is now classed source-available. `apps/photoview` and `apps/vaultwarden` ship the Affero GPL v3, not the plain GPL, so §13 obliges an operator to offer the source to anyone using the instance over a network. `apps/homarr` ships Apache-2.0, not MIT. `core/dockhand`'s BSL converts each version four years after its release rather than on one date, and its Additional Use Grant covers personal non-commercial, non-profit and educational use only — production use by a company needs a commercial licence. `apps/n8n`'s Sustainable Use License limits the kind of use — internal business purposes, non-commercial or personal — rather than setting a quota.
+
+- **Two statements about the project were wrong** (`site/`, `README.md`). The site's About page said a filtering proxy is the only service that mounts the Docker socket and that it exposes only containers, networks and events: that holds for Traefik's proxy, while the Portainer and Dockhand proxies allow changes and the Portainer and Hawser agents mount the socket directly, as documented exceptions. The README said no pattern exists for software you build yourself; `development/` holds two.
+
+- **A stack could be absent from its category README and nothing noticed** — the one inventory still written by hand. `check-coverage.py` now fails on `unlisted-stack`.
+
+- **The old project name survived the rename** in `.gitignore`, `scripts/overview.sh` (twice, one of them printed on every run) and the `LICENSE` copyright line.
+
+### Migration
+
+- **Upgrading an existing Beszel install requires operator action** — an existing `.env` still resolves, because the new variables carry safe Compose defaults, but the agent will not report until it is reconfigured. The hub-initiated SSH model is gone: set `AGENT_TOKEN` (hub UI → Settings → Tokens & Fingerprints), keep `AGENT_KEY`, and set `AGENT_SYSTEM_NAME` — without it the agent registers under its container ID, which changes on every recreate. `monitoring/beszel-agent` additionally requires `HUB_URL` and refuses to start without it. The agent registers as a **new** system record; the previous SSH-registered entry stops reporting and should be deleted once the new one is up. `AGENT_PORT` is removed from `monitoring/beszel-agent/.env.example` — there is no listener to configure.
+
+- **Upgrading an existing Langfuse installation requires operator action** — an installation from v0.9.1 keeps its database in an anonymous volume, and the corrected mount starts on an empty `volumes/postgres`. Dump the database while the old stack still runs, then restore it after the update. Docker's former mount point, an empty `volumes/postgres/data`, has to go first: `initdb` refuses a directory that is not empty.
+
+  ```bash
+  docker exec langfuse-db pg_dump -U langfuse langfuse > langfuse-postgres.sql   # before updating
+  docker compose down
+  # update the checkout, then:
+  sudo rmdir volumes/postgres/data
+  docker compose up -d postgres
+  docker exec -i langfuse-db psql -U langfuse -d langfuse < langfuse-postgres.sql
+  docker compose up -d
+  ```
+
+  The old anonymous volume stays in place after `down` until it is removed explicitly.
+
+- **Traefik's logrotate configuration:** install the current one, then restart Traefik once — the last rotation cancelled its restart policy, and the next start arms it again:
+
+  ```bash
+  cd /path/to/secure-docker-blueprint/core/traefik
+  sudo sed 's|/path/to/secure-docker-blueprint|'"$(cd ../.. && pwd)"'|g' \
+    config/logrotate/traefik | sudo tee /etc/logrotate.d/traefik >/dev/null
+  docker restart traefik-core
+  ```
+
+- **Dify and Open WebUI:** an existing `.env` keeps `APP_TRAEFIK_SECURITY=sec-2`, under which the interface does not load. Set it to `sec-2-spa`, then run `docker compose up -d`.
+
+- **LiteLLM, set up with the earlier `ops/init.sh`:** its secrets are mode `600`, which the proxy, running as uid/gid 65534, cannot read:
+
+  ```bash
+  chmod 640 .secrets/*.txt
+  sudo chown "$USER":65534 .secrets/*.txt
+  docker compose up -d
+  ```
+
+- **Existing Seafile installations do not need to rotate their Redis password because of this change.** A deployment that is running is one whose password happens to be URL-safe, and it keeps working untouched. New installations should follow the corrected instruction. An installation that fails with Seahub returning `500` and a Redis connection error in `seahub.log` — a wrong host, an uncastable port, or `localhost` — is the case this fixes: replace `.secrets/redis_pwd.txt` with `openssl rand -hex 32`, then recreate both the `redis` and `seafile` containers so each side takes the new value.
+
 ## [0.9.1] — 2026-09-19 — Priority 1 stacks
 
 Twenty-six new stacks and two deployment patterns, all `scaffolded`: each was run against its own dependencies, none behind Traefik with TLS on a host, none restored from a backup. The v0.9.0 promise is unchanged; nothing new counts as verified.
@@ -644,7 +764,8 @@ Initial public release.
 - No CI workflows yet (compose validate, markdown lint, secret scan) — planned for 0.2.0
 - No automatic backup orchestration — planned in Evaluating section of ROADMAP
 
-[Unreleased]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.9.1...HEAD
+[Unreleased]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.9.2...HEAD
+[0.9.2]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.9.1...v0.9.2
 [0.9.1]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.8.4...v0.9.0
 [0.8.4]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.8.3...v0.8.4

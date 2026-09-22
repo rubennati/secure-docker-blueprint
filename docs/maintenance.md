@@ -32,6 +32,7 @@ Four models describe documentation in this repository, each answering one questi
 | Image provenance — where a deployable image comes from, and what pins it | `docs/standards/custom-application.md` | `business/vikunja` (in-repo build), `apps/caldiy/UPSTREAM.md` (external pipeline) |
 | Secret generation, handling and rotation | `docs/standards/secrets.md` | `env-structure.md` references it; every stack's setup steps |
 | Application recovery once data is restored | `docs/standards/restore.md` | `backup/borgmatic/RESTORE.md` and the stack READMEs that cross-link it |
+| Taking a deployment into production and keeping it there — release selection, deployment order, blueprint updates as against image updates, rollback, release identity | `docs/standards/deployment-lifecycle.md` | `README.md` Getting started; this file is its maintainer-side counterpart |
 | Local test stack — shape, header, which stacks get one | `docs/standards/compose-structure.md` | Every `docker-compose.local.yml` and `.env.local.example`; `apps/_reference/` is the worked example |
 | Security rules that are on or off — privileges, capabilities, secrets, socket access, network isolation | `docs/standards/security-baseline.md` | Every service in every compose |
 | Naming conventions | `docs/standards/naming-conventions.md` | Every compose, env, container name |
@@ -152,10 +153,17 @@ A chain is a defined sequence of files to check and update for a specific trigge
 | 1 | Release notes | Read changelog — any breaking changes, removed features, required migrations? |
 | 2 | Security advisories | Check the upstream GitHub repo for open CVEs or security advisories against the current and new version (`Security` tab → `Advisories`) |
 | 3 | `<app>/.env.example` | Bump image tag — test on clean install first, then commit |
-| 4 | `<app>/UPSTREAM.md` | Update version reference and release notes link |
-| 5 | `<app>/docker-compose.yml` | Check if any compose changes are needed (new envs, removed features, healthcheck changes) |
-| 6 | `docs/bugfixes/` | If anything broke during upgrade, document it here |
-| 7 | `CHANGELOG.md` | Version bump documented |
+| 4 | `<app>/.env.local.example` | Bump the same pin, where the local stack runs the same image. `check-structure.py` fails on a local pin that lags production (`local-pin-drift`) |
+| 5 | `<app>/UPSTREAM.md` | Update version reference and release notes link |
+| 6 | `<app>/docker-compose.yml` | Check if any compose changes are needed (new envs, removed features, healthcheck changes) |
+| 7 | `docs/bugfixes/` | If anything broke during upgrade, document it here |
+| 8 | `CHANGELOG.md` | Version bump documented |
+
+Step 4 exists because its absence was the whole defect: the chain named only
+`.env.example`, so no bump ever reached the local file, and 41 pins across 39
+stacks had drifted behind production — `apps/homepage` by ten minor versions —
+without anyone deciding they should. A local stack whose version nobody ships is
+not an evaluation of this repository.
 
 ---
 

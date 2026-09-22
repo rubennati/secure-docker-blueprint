@@ -5,11 +5,14 @@
 - **n8n project:** https://n8n.io/
 - **GitHub:** https://github.com/n8n-io/n8n
 - **Docker docs:** https://docs.n8n.io/hosting/installation/docker/
-- **License:** [Sustainable Use License](https://docs.n8n.io/sustainable-use-license/) (source-available; free for internal + commercial use up to limits)
+- **License:** [Sustainable Use License](https://github.com/n8n-io/n8n/blob/master/LICENSE.md) (source-available, not OSI-approved)
+- **Use restrictions:** free for internal business purposes and for non-commercial use; it may be given to others only free of charge and for non-commercial purposes, and its licensing and copyright notices may not be altered, removed or obscured — https://github.com/n8n-io/n8n/blob/master/LICENSE.md · checked 2026-09-21
+- **Edition gating:** files and directories whose names contain `.ee.` are covered by a separate enterprise licence rather than by the Sustainable Use License — https://github.com/n8n-io/n8n/blob/master/LICENSE.md · checked 2026-09-21
+- **Commercial model:** commercial licence — https://github.com/n8n-io/n8n/blob/master/LICENSE.md · checked 2026-09-21
+- **Decision facts checked:** 2026-09-21
 - **Origin:** Germany · n8n GmbH · EU
 - **Domain:** Automation and data
 - **Role:** Visual workflow automation
-- **Note:** Not OSI-approved open source — source-available. Free for internal and personal use; commercial SaaS use requires a paid plan.
 - **Based on version:** `2.38.7`
 - **Last verified:** 2026-05-02 (v2.19.2)
 

@@ -29,6 +29,9 @@ FAIL (blocks CI — content nothing verifies):
                     neither checker enumerates it
   unknown-root      a tracked top-level directory is neither a stack root nor a
                     declared non-stack area
+  unlisted-stack    a stack its own category README never links. The generated
+                    views cannot catch this — the category list is written by
+                    hand, and `apps/docling-serve` sat outside it unnoticed
 
 WARN (reported — worth a look, not a defect):
   structure-blind   covered by the lifecycle report but not by the structure
@@ -40,6 +43,7 @@ Usage:
   python3 scripts/ci/check-coverage.py [github-summary-path]
 """
 
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -74,6 +78,34 @@ NON_STACK_ROOTS = {
 # Any tracked file makes a directory content. Keying on marker filenames instead
 # is what let backup/borgmatic — README, restore playbook, config example, no
 # compose — pass unnoticed by an earlier version of this very check.
+
+
+def category_readme_links(root: str) -> str:
+    """The text of a category README, or '' when it has none."""
+    readme = Path(root) / "README.md"
+    return readme.read_text(encoding="utf-8", errors="replace") if readme.exists() else ""
+
+
+def unlisted_stacks(directories) -> list[str]:
+    """Stacks their own category README never links.
+
+    LIFECYCLE.md, sovereignty.json and catalogue.json are generated, so a new
+    stack reaches them by existing. A category README does not: somebody has to
+    add the row. `apps/docling-serve` shipped without one and nothing noticed,
+    which is what this answers.
+    """
+    out = []
+    for directory in sorted(directories):
+        parts = Path(directory).parts
+        if len(parts) != 2:
+            continue
+        root, name = parts
+        text = category_readme_links(root)
+        if not text:
+            continue
+        if not re.search(r"\]\(" + re.escape(name) + r"/", text):
+            out.append(directory)
+    return out
 
 
 def tracked_paths() -> list[Path]:
@@ -123,6 +155,17 @@ def main() -> int:
             "path": directory,
             "detail": "holds tracked files, but neither check-structure.py nor "
                       "lifecycle-report.py enumerates it",
+        })
+
+    # ── unlisted-stack: the one inventory still written by hand ─────────────
+    for directory in unlisted_stacks(by_lifecycle):
+        findings.append({
+            "level": "FAIL",
+            "rule": "unlisted-stack",
+            "path": directory,
+            "detail": f"{Path(directory).parts[0]}/README.md does not link "
+                      f"{Path(directory).parts[1]}/ — a reader browsing the "
+                      "category cannot find it",
         })
 
     # ── structure-blind: the lifecycle sees it, the structure checker cannot ─

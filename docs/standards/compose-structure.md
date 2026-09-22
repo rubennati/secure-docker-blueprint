@@ -400,6 +400,62 @@ Complex stacks like Paperless (App + DB + Redis + Gotenberg + Tika) or Seafile:
 
 ---
 
+## Opt-in overlays
+
+An overlay is a second file applied on top of the stack — an optional feature
+(`activitypub.yml`) or an alternative to something the base file sets
+(`network-host.yml`, `docker-compose.gpu.yml`). It is never part of the stack's
+service inventory: several overlays replace each other, so counting them would
+claim services that cannot run together.
+
+Two shapes, and the rules follow the shape:
+
+| Shape | Has `image:` / `build:` | Judged as |
+|---|---|---|
+| **Introduces** a service | yes | a service on a host — pinned tag, memory and PID ceilings, swap policy, datastore isolation, `no-new-privileges` |
+| **Patches** a base service | no | inherits the base service, which is already checked. Only the name is verified |
+
+**A patch must name a service the base file defines.** Compose reads a block it
+cannot match as a new service, finds no image, and refuses the whole project —
+so the overlay does not start at all:
+
+```text
+service "app" has neither an image nor a build context specified: invalid compose project
+```
+
+Every overlay is validated as its own deployment variant — the stack merged with
+that one overlay, through `docker compose config`.
+
+Two levels, and the second follows what the overlay actually does:
+
+1. **The merge must resolve.** This applies to every overlay, including one that
+   only redefines networks and changes no service.
+2. **Services the overlay adds or changes** are judged against the mandatory
+   baseline. This covers a patch too: a block with no image adds no service, but
+   it can still hand an existing one the Docker socket, set `privileged: true`,
+   or clear a ceiling with `!reset`, and the merged result is what gets checked.
+
+A variable an overlay needs that `.env.example` ships commented out is enabled
+from that commented value for the check, because uncommenting it is what enabling
+the overlay means. A variable with no committed example anywhere fails.
+
+```bash
+python3 scripts/ci/check-structure.py --list-overlays   # which files count as overlays
+python3 scripts/ci/check-overlays.py                    # validate each variant (needs Docker)
+```
+
+Compose's own `!reset` and `!override` tags are supported, and needed when a
+patch has to clear an inherited value rather than merge into it:
+
+```yaml
+services:
+  urbackup-app:
+    network_mode: host
+    networks: !reset null      # network_mode and networks cannot be combined
+```
+
+---
+
 ## Local test stack
 
 A stack may carry `docker-compose.local.yml` beside the production file, for
@@ -427,6 +483,16 @@ resource policy, only the explicit statement that the production one stops here.
 Its companion `.env.local.example` carries only the variables the local file
 uses, with `__REPLACE_ME__` for anything secret and the generating command above
 it.
+
+**Where the local stack runs production's image, it pins production's version.**
+Unlike the resource baseline above, this one does not stop at the local file: a
+stack that can be tried is only worth trying if what gets tried is what the
+repository ships. `check-structure.py` enforces it as `local-pin-drift`, joining
+on the image repository rather than on the variable name or the service key,
+both of which legitimately differ between the two files. So the exceptions need
+no list — a local stack on a *different* image shares no repository and is never
+compared (`apps/vllm` runs the CPU build, because an evaluation box has no GPU),
+and a service the local stack does not run is simply absent.
 
 The header is the app name and the commands, and nothing else:
 

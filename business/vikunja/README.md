@@ -11,6 +11,19 @@ Open-source task management with kanban boards, to-do lists, Gantt views, and ta
 
 The upstream image ships without a shell or any utilities (`FROM scratch`). A custom build layer adds the minimum needed: a shell and `cat` for reading secrets at startup, and `wget` for the health check.
 
+## Try it locally
+
+Runs on `http://localhost:3456` without Traefik, DNS or a certificate.
+
+```bash
+cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+# http://localhost:3456
+docker compose -f docker-compose.local.yml --env-file .env.local down
+```
+
+`.env.local` holds plain values, not Docker Secrets — local only.
+
 ## Setup
 
 ```bash

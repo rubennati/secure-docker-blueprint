@@ -12,6 +12,17 @@ Single-container deployment (HTTP fetcher only):
 
 For JavaScript-heavy sites (SPAs), uncomment the optional `browser` service in `docker-compose.yml` — it runs a Playwright Chrome instance.
 
+## Try it locally
+
+Runs on `http://localhost:5000` without Traefik, DNS or a certificate.
+
+```bash
+cp .env.local.example .env.local
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+# http://localhost:5000
+docker compose -f docker-compose.local.yml --env-file .env.local down
+```
+
 ## Setup
 
 ```bash

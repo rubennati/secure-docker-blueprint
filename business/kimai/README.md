@@ -9,6 +9,19 @@ Self-hosted time-tracking for freelancers and small teams. Project/customer hier
 | `app` | `kimai/kimai2:2.66.0` | PHP/Symfony + Apache + cron |
 | `db` | `mariadb:11.4` | Timesheets, users, customers, projects |
 
+## Try it locally
+
+Runs on `http://localhost:8001` without Traefik, DNS or a certificate.
+
+```bash
+cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+# http://localhost:8001
+docker compose -f docker-compose.local.yml --env-file .env.local down
+```
+
+`.env.local` holds plain values, not Docker Secrets — local only.
+
 ## Setup
 
 ```bash

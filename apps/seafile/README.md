@@ -42,6 +42,19 @@ The same `entrypoint.sh` is mounted into every Seafile service. Each secret expo
 
 Full details: [config/README.md](config/README.md).
 
+## Try it locally
+
+Runs on `http://127.0.0.1:8000` without Traefik, DNS or a certificate.
+
+```bash
+cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+# http://127.0.0.1:8000
+docker compose -f docker-compose.local.yml --env-file .env.local down
+```
+
+`.env.local` holds plain values, not Docker Secrets — local only.
+
 ## Setup
 
 ```bash
@@ -55,7 +68,9 @@ openssl rand -base64 32 | tr -d '\n' > .secrets/db_root_pwd.txt
 openssl rand -base64 32 | tr -d '\n' > .secrets/seafile_db_pwd.txt
 openssl rand -base64 32 | tr -d '\n' > .secrets/seafile_admin_pwd.txt
 openssl rand -base64 48 | tr -d '\n' > .secrets/jwt_key.txt
-openssl rand -base64 32 | tr -d '\n' > .secrets/redis_pwd.txt
+# Redis: hex, not base64 — Seafile builds its Redis connection URL from this
+# value without escaping it, and a "/" would terminate the URL early.
+openssl rand -hex 32 | tr -d '\n' > .secrets/redis_pwd.txt
 
 # 3. SMTP secret file — always required (mounted unconditionally by compose)
 # SMTP disabled:

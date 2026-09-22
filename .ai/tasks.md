@@ -3,6 +3,142 @@
 Current work items. Larger direction lives in [`../ROADMAP.md`](../ROADMAP.md);
 this file is the short list.
 
+## Open after v0.9.1
+
+State at the v0.9.1 tag (2026-09-19): `dev` and `main` level, no open pull requests,
+no open Dependabot alerts, CI green. Everything below is what is not done.
+
+### 1. Image findings as facts — closes audit finding C1
+
+Decision and reasoning: [`decisions.md`](decisions.md#2026-09-20--image-findings-are-recorded-as-facts-and-the-shipped-access-default-follows-them).
+Input data: the last full Trivy scan on `main` (2026-09-17, `trivy-image-scan-results`
+artifact; a new run started after the v0.9.1 merge and includes the 26 new images).
+Snapshot of the 2026-09-17 scan: 99 images, 59 with at least one CRITICAL finding, 1003
+CRITICAL in total, every one with a published fix, plus 11 466 HIGH; n8n could not be
+scanned (registry rate limit). Largest: `opensign/opensign` 196, `opensign/opensignserver`
+206, `louislam/uptime-kuma` 127, `cal.diy` 45, `lycheeorg/lychee` 25, `sdoc-server` 24,
+Paperless-ngx 23, OpenProject 22, Seafile 20.
+
+- [ ] Generate a per-image facts file from the scan: CRITICAL and HIGH counts, how many
+      have a fix, image age, scan date. Checked in CI for staleness like the other
+      generated files.
+- [ ] Add an `Exposure` field to `UPSTREAM.md` with a reason, first for the five images
+      above; the rest get the rule-derived value.
+- [ ] Checker: a stack whose findings mark it private-only or lab-only cannot ship
+      `APP_TRAEFIK_ACCESS=acc-public`.
+- [x] Trivy gate: block only on CRITICAL findings absent from the recorded facts.
+      Done — `scripts/ci/trivy-gate.py` against `.trivy-baseline.json`, which records
+      513 findings across 76 image repositories as of the 2026-09-21 scan of `dev`.
+      Closes audit C1. The bullets around it — the per-image facts file, the
+      `Exposure` field and the access checker — are the *decision-data* half and
+      remain open; the gate does not depend on them.
+- [ ] Catalogue page: show the facts (counts, fix available, age, licence limits) in
+      neutral wording; no judgement of the project.
+- [ ] For OpenSign and Uptime Kuma: check whether upstream has published a newer image;
+      if so bump the pin (normal upgrade), if not record the facts.
+
+### 2. Host verification of the scaffolded stacks (audit S1)
+
+[`../docs/host-session-priority-1.md`](../docs/host-session-priority-1.md) is the ordered
+run: Traefik with TLS, a refused client, restart, restore, and each stack's own open
+items. Needs a host; nothing in the 26 new stacks has one. Until then they stay
+`scaffolded`.
+
+### 3. Personal data on the public site (audit W7 / D3)
+
+A decision, with a possible v1.0 impact — see [`decisions.md`](decisions.md) and
+`../ROADMAP.md`. Not decided.
+
+### 4. Operator site
+
+- [ ] The catalogue is live and lists every stack; only stacks with a guide appear in
+      the Applications sidebar. Guides for the newer stacks (AI, PAM, secret sharing,
+      security tooling) do not exist; the audit does not require them.
+- [ ] The start page has no link to the catalogue; it is reachable from the sidebar of
+      the other pages and from the search.
+- [ ] The FAQ names "around thirty" application guides (correct) without pointing to
+      the catalogue.
+- [ ] The catalogue's "Files" links point at `tree/main`; correct now that v0.9.1 is on
+      `main`, but each new stack needs a repository check once.
+- [ ] The catalogue page was verified through its built HTML and a public fetch, not in
+      a browser.
+
+### 5. Cal.diY hardening
+
+Phased plan in [`../apps/caldiy/docs/hardening-plan.md`](../apps/caldiy/docs/hardening-plan.md).
+The stack builds from a reviewed fork; the hardening phases are not finished.
+
+### 6. Fifteen proposed products — evaluated 2026-09-21
+
+Full evidence per product in
+[`../docs/audits/candidate-evaluation-2026-09-21.md`](../docs/audits/candidate-evaluation-2026-09-21.md):
+what each publishes, where its compose actually lives, the licence splits, and what
+was verified by running it. Three of the fifteen already ship.
+
+- [x] Eleven products have a version-tagged image and can be written as stacks, in
+      six batches (A calrs+Calnode · B SolidInvoice+FacturaScripts+Akaunting ·
+      C Twenty+Chatwoot · D CISO Assistant+DefectDojo · E obot · F ERPNext).
+      Batch A shipped (#140). Batch B: Akaunting and SolidInvoice shipped,
+      FacturaScripts held (#145), then shipped on upstream's update model — the
+      in-app updater owns the webroot. Batch C: Twenty and Chatwoot shipped (#146).
+      Batch D: CISO Assistant and DefectDojo shipped (#150). Batch E: obot held —
+      it does not start without the Docker API. Batch F: ERPNext shipped. See the
+      evaluation's *Findings from implementation*.
+- [x] Batch G, proposed later: rclone-web (`backup/`) and httpbin (`apps/`)
+      shipped; Cabot held — no image since January 2019.
+- [ ] Four publish no image (DayOtter, Dapta Calendars, MAILFLOW-AI, Crater) and
+      stay evaluation entries. Proposed: ask DayOtter's maintainer to publish a tag;
+      record the other three with the reason. No fork is proposed.
+- [ ] Upstream requests, filed by the maintainer; drafts are in the local
+      `inbox/upstream-requests/` working area. obot (start without a runtime backend
+      when no MCP servers are hosted), DayOtter and Dapta Calendars (publish an
+      image), rclone (`rclone gui` logs a supplied RC password). Filed: the
+      FacturaScripts installer fix, NeoRazorX/facturascripts#2041 (open), linked in
+      `../business/facturascripts/UPSTREAM.md`. None for Crater (images requested since 2021 in #659, no maintainer
+      reply), MAILFLOW-AI (#20 and #21 still open) or httpbin (the failing image is
+      psf/httpbin#69, fix proposed in #70). Once posted, the link goes into the
+      stack's `UPSTREAM.md` or the candidate evaluation.
+- [x] Adding these while `../ROADMAP.md` holds applications is a deliberate
+      exception — recorded in `../ROADMAP.md` and `decisions.md` (2026-09-21).
+- [x] Host verification, 2026-09-22: all twelve behind Traefik with TLS, with the
+      refused client, a smoke test, a restart and the README's restore — each
+      stack's `UPSTREAM.md`. `Last verified` for nine; Twenty (rate limit, as
+      Windmill), rclone-web (its sign-in needs the password in a URL) and ERPNext
+      (the realtime service's session check) are recorded without. Fixed on the
+      way: calrs, Akaunting, SolidInvoice, CISO Assistant.
+- [ ] Follow-ups from that session: rclone-web's sign-in — upstream would need a
+      field for the API address, or to keep it after a failed attempt · ERPNext's
+      realtime service checks sessions against the public URL, which it cannot
+      reach from `app-internal` — route that check to the stack's own frontend ·
+      calnode sets `Secure` on its session cookie only with Google or Microsoft
+      sign-in configured (upstream) · Akaunting needs an akaunting.com account's API
+      key before any create page opens — decide whether that fits this repository ·
+      the candidate stacks write their secrets with mode `644` inside a `700`
+      directory, a third variant beside `600` and `640` in
+      `../docs/standards/secrets.md` — recorded, not changed.
+
+### 7. Held: Priority 2 and other candidates
+
+No application is added while the v1.0 items are open — S1 (verification), C1
+(above) and D3. Candidates are in `../ROADMAP.md` under "On hold": the per-category
+planned lists, Plane / Leantime / AppFlowy, Suricata, Coraza. The AI candidates that were
+held are shipped.
+
+### 8. Milestone v0.10.0 — measured resource limits
+
+Every `✅` stack's limits from a measurement on a real install
+([`../docs/resource-measurement.md`](../docs/resource-measurement.md)). Needs a host.
+
+### 9. Small items
+
+- Vikunja's `.env.example` carries `smtp-relay.brevo.com` as the mailer host with the
+  mailer disabled — a vendor value where the convention is `example.com` or empty.
+- The five AI stacks and Dify/Langfuse have no restore procedure performed; the READMEs
+  document one.
+- The Trivy scan does not cover images built locally (Cal.diY, the vikunja layer).
+
+---
+
 ## Blocked on a host
 
 v0.8.0 closed on 2026-09-08 — the record is
@@ -33,7 +169,8 @@ session left open is in
       The agent's `network_mode: host` has no Docker network to resolve a
       service name on, so the proxy publishes `127.0.0.1:2375` and the agent's
       `DOCKER_HOST` points there. `docker compose config` validated on both
-      stacks; not yet run against a real daemon — no host in this environment.
+      stacks. Per-container metrics through the proxy are unverified on a real
+      daemon — issue #36 holds that acceptance test open.
 - [x] Verify `monitoring/ntfy` — done 2026-09-08: `read_only` holds, a message
       arrived on an iPhone through the public read-only router; a publish burst
       against the rate limit is still unmeasured
@@ -70,23 +207,16 @@ session left open is in
       is covered by the thresholds v0.8.0 verified, and recovery should not depend on
       someone watching a terminal.
 - [ ] Boot `apps/_reference/` once to confirm the template actually runs
-- [ ] Count the first-load requests for the four photo galleries — `apps/photoprism`,
-      `apps/librephotos`, `apps/lycheeorg`, `apps/photoview`. All four sit at `sec-2`,
-      whose `rl-soft` allows a burst of 50 per client address, and a thumbnail grid
-      is the shape that exceeds it. `apps/immich` already needed `sec-2-spa` for the
-      same reason. The method is in `docs/standards/traefik-security.md` under
-      Choosing the level for an app; above 50 the answer is the `-spa` variant, which
-      leaves the sustained rate untouched. `apps/it-tools` is the same question — a
-      Vue single-page app at `sec-3`, never counted. `core/portainer` first: it runs
-      `sec-4`, whose burst is 40, and its interface is a single-page app. Load it
-      once with an empty cache and read the request count
-- [ ] Decide `APP_TRAEFIK_SECURITY` for Seafile's four path-scoped routers.
-      They carry the access policy; the chain is deliberately absent until an
-      instance shows what it survives. `/sdoc-server` is the open one — `sec-2`
-      sets `frameDeny` and upstream documents neither the header nor whether
-      SeaDoc is framed, so it is `sec-2` or `sec-2e` and only a running editor
-      answers it. `/socket.io` and `/notification` are WebSockets and
-      `/thumbnail` issues many parallel requests, all against `rl-soft`
+- [ ] Count the first-load requests for the four photo galleries —
+      `apps/photoprism`, `apps/librephotos`, `apps/lycheeorg`, `apps/photoview` —
+      and for `apps/it-tools`, a Vue single-page app at `sec-3`. All five sit
+      behind `rl-soft`, whose burst is 50 per client address, and a thumbnail
+      grid is the shape that exceeds it; `apps/immich` already needed
+      `sec-2-spa` for the same reason. Method in
+      `docs/standards/traefik-security.md` under Choosing the level for an app.
+      `core/portainer` was measured on 2026-09-20 and fits `sec-4` (issue #37)
+- [ ] Decide `APP_TRAEFIK_SECURITY` for Seafile's four path-scoped routers —
+      issue #39 carries the per-endpoint acceptance test
 - [ ] `business/openproject` after `internal: true` — whether mail leaves `worker`
       and whether first-run seeding completes without an outbound path. If either
       fails, `worker` and `cron` get a second network, not a removed flag.
@@ -196,8 +326,6 @@ Listed with context in [`state.md`](state.md). Nothing proceeds on these until d
       `site/src/content/docs/infrastructure/index.md`, ahead of Traefik
 - [x] Decide the `TROUBLESHOOTING.md` / `docs/standards/troubleshooting.md` overlap
       — index and method, declared in both files and in the File Map
-- [ ] Add `Checker coverage`, `Docs QA` and `Workflow supply chain` to the required
-      checks in branch protection — all three run, but nothing blocks on them yet
 - [ ] Decide `-f` per HTTP healthcheck. 19 checks across 17 files run
       `curl -sS -o /dev/null --max-time 5`, which succeeds on any answer including
       a 5xx — a broken application reports healthy and only a connection error or
@@ -206,3 +334,71 @@ Listed with context in [`state.md`](state.md). Nothing proceeds on these until d
       comments are corrected. What each endpoint answers during startup decides
       whether `-f` can go in. `apps/euro-office`, `core/dockhand` and
       `apps/paperless-ngx` already use `curl -fsS`
+- [ ] Decide `apps/dify`'s local stack form. It is the one stack with a
+      `docker-compose.local.yml` and no `.env.local.example`: the file hardcodes all
+      eight image references and reads no variable, and its own header documents a
+      start without `--env-file`. Internally consistent, and every pin agrees with
+      production, but it is the only deviation from the form in
+      `docs/standards/compose-structure.md`. Either give it the companion file or
+      state the exception there — `local-pin-drift` covers it under both
+- [ ] **W8 research coverage — a standing activity, not a stabilization item.** The system
+      is complete: schema, provenance rules, generation, the per-stack marker and the check
+      that refuses a stack stating neither a date nor `not yet`. Nothing in the baseline
+      waits on this. What continues is reading upstream terms, one stack at a time.
+      **36 of 101 researched — 32 with facts, 4 checked and clear — 65 remain.**
+
+      **Pages already read that do not answer the question — do not retry these:**
+      `apps/onlyoffice` (the Enterprise pricing page prices per user and never compares
+      Community; the Docs download page does not compare either), `apps/qdrant` (the pricing
+      page describes Cloud tiers, not self-hosted OSS), `business/zammad` (the pricing page
+      covers the hosted service and says only that self-hosting runs "on **your** servers"),
+      `monitoring/healthchecks` (the self-hosting docs give the licence but no feature
+      comparison; the pricing page mentions self-hosting nowhere), `apps/bookstack` (the
+      about page mentions support plans and donations and states nothing about editions),
+      `apps/velociraptor` (the docs overview calls it open source and says nothing about
+      Rapid7 commercial offerings), `business/dolibarr` (the features page returns 404),
+      `core/shellhub` (the pricing page lists Cloud, Managed and On Premises with identical
+      feature lists and never says what Community omits).
+
+      **A search summary is not a source.** A web search claimed JumpServer gates SSO behind
+      Enterprise; the vendor's own comparison page says OIDC, SAML2, OAuth2, LDAP, CAS and
+      RADIUS are all in the Community edition. Always read the vendor page the search points
+      at rather than the summary of it.
+
+      **Two sweeps are done for every stack and must not be repeated.** They are research
+      progress, not a per-stack verdict:
+
+      1. Every recorded licence has been checked against the upstream licence file
+         (`gh api repos/<owner>/<repo>/license -q .content | base64 -d`). It found seven
+         wrong records, four of them a plain GPL where the file is the Affero GPL.
+      2. No remaining repository carries an `ee/`, `enterprise/` or `LICENSE_EE` carve-out
+         in its root.
+
+      **Neither is enough to mark a stack checked, and an earlier batch wrongly treated
+      them as if they were.** `business/matomo` is the standing counterexample: its licence
+      is plain GPL-3.0, its repository has no enterprise directory, and SAML single sign-on
+      is still sold as a separate plugin under the InnoCraft EULA. Gating lives wherever the
+      vendor puts it, which is often a marketplace, a pricing page or a docs page and not
+      the source tree. A date may only be set once a source has actually been read that
+      speaks to edition gating and the commercial model — not merely to the licence.
+
+      The two exceptions that legitimately need no vendor source: `core/host-watchdog`,
+      which is first-party to this repository so no upstream can gate it, and
+      `apps/nextcloud`, whose Enterprise page was read and sells support, early patches,
+      SLAs and branding rather than gating SSO, LDAP or audit logging.
+- [ ] Resolve `apps/hemmelig`'s licence — two upstream sources disagree. The README states
+      an "O'Saasy License Agreement — Copyright © 2025 ... a modified MIT license that
+      prohibits using the software to compete with the original licensor as a hosted SaaS
+      product", while `LICENSE` on `main` is the unmodified MIT text with a 2021 copyright
+      line and no SaaS, competition or branding clause. This repository records the README's
+      version, and `license_class: source-available` rests on it. Nothing was recorded as a
+      use restriction because neither source can be relied on while they disagree; ask
+      upstream which governs.
+- [ ] Source `core/infisical`'s edition gating. Its `LICENSE` places content under any
+      `ee/` directory under a separate licence, which is recorded, but the docs page that
+      would name the gated features returns 404. The feature list needs a reachable source
+      before it can be stated.
+- [ ] Decide `apps/collabora`'s entry. CODE is widely described as carrying a
+      concurrent-connection and document limit, but the upstream page that would state it is
+      behind bot protection and the product page does not mention one. Nothing was recorded
+      rather than record it from memory.

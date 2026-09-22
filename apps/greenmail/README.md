@@ -44,13 +44,11 @@ Two things follow from the test-double design:
 
 ## Status
 
-`scaffolded`. 2026-09-18 (2.1.13): the local and production compose files were
-booted with the hardened settings, a message was sent over SMTP and retrieved
-over IMAP and POP3, and a second container used the server by service name.
-Traefik routing has not been run against a real host. Full log in
-[`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-18).
+Run behind Traefik with TLS on 2026-09-22 (2.1.13): the REST API and
+Swagger UI through the route, SMTPS and POP3S with a TLS client, and a restart.
+Full log in [`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-22).
 
-## Local deployment validation
+## Try it locally
 
 ```bash
 cp .env.local.example .env.local

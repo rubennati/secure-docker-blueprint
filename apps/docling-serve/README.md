@@ -40,15 +40,12 @@ The full API reference is at `/docs` on the running instance; the interactive
 
 ## Status
 
-`scaffolded`. 2026-09-18 (v1.34.0): the local test stack was pulled, booted
-with `no-new-privileges`, `cap_drop: ALL`, `read_only`, `tmpfs: [/tmp]`,
-reached `healthy`, and completed a real conversion (`POST /v1/convert/source`
-against a live PDF) under those same hardened flags. The production stack —
-Traefik, TLS, the secret-injection entrypoint — has not been run against a
-real host yet. Full log in
-[`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-18).
+Run behind Traefik with TLS on 2026-09-22 (v1.34.0): the API key from
+the Docker Secret, a real PDF converted through the route, a URL conversion,
+and a restart. Full log in
+[`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-22).
 
-## Local deployment validation
+## Try it locally
 
 ```bash
 cp .env.local.example .env.local

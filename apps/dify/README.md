@@ -38,11 +38,12 @@ docker compose up -d
 ```
 
 The first start runs the database migrations; the API reports healthy after about a
-minute. Open `https://<host>/install` and enter the setup password from
-`.secrets/init_password.txt`, then create the administrator account. Until that is
-done anyone who reaches `/install` could try to become the administrator, which is
-why the setup password exists: the router's access policy should stay closed
-(`acc-deny`) until the account exists.
+minute. Open `https://<host>/install` from a client the access policy admits
+(`acc-private` as shipped), enter the setup password from
+`.secrets/init_password.txt`, then create the administrator account. The setup
+password is what guards that step: until the account exists, anyone who reaches
+`/install` can try to become the administrator, and without the password
+`/console/api/setup` answers `401`.
 
 ### Add a model
 
@@ -98,9 +99,13 @@ and pgvector 1 GB each, the rest 256–512 MB.
 
 ## Status
 
-`scaffolded` — see [UPSTREAM.md](UPSTREAM.md#verification-performed-2026-09-19).
+Run behind Traefik with TLS on 2026-09-22 (1.17.1): the first-account
+setup through `/install`, the console in a browser, a marketplace plugin and a
+model provider, a workflow with code, HTTP and LLM nodes through the service API,
+a restart, and the restore above. Full log in
+[`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-22).
 
-## Local deployment validation
+## Try it locally
 
 ```bash
 ops/init.sh
@@ -122,13 +127,30 @@ Three data sets and the secrets:
 docker exec dify-db pg_dump -U postgres dify > dify.sql
 docker exec dify-db pg_dump -U postgres dify_plugin > dify_plugin.sql
 docker exec dify-pgvector pg_dump -U postgres dify > dify_vectors.sql
-docker compose stop api worker worker-beat plugin-daemon
+docker compose stop dify-api worker worker-beat plugin-daemon
 tar -C volumes -czf dify-volumes.tar.gz storage plugin_daemon
-docker compose start api worker worker-beat plugin-daemon
+docker compose start dify-api worker worker-beat plugin-daemon
 ```
 
 `storage` holds uploaded files, `plugin_daemon` the installed plugin packages. Keep
 `.secrets/secret_key.txt` with the dumps: without it stored provider credentials
-cannot be decrypted. Restore into empty volumes with `psql` and by unpacking the
-archive, put the secrets back unchanged and run `docker compose up -d`. Restore is
-not exercised here.
+cannot be decrypted. The API service is `dify-api`; `docker compose stop` skips an
+unknown name without an error, so a misspelt name leaves it writing during the
+archive.
+
+Restore into empty volumes, with the secrets put back unchanged:
+
+```bash
+mkdir -p volumes/{storage,plugin_daemon,db,pgvector,redis}
+sudo chown 1001:1001 volumes/storage volumes/plugin_daemon
+sudo chown 999:999 volumes/redis
+docker compose up -d db pgvector
+docker exec -i dify-db psql -U postgres -d dify < dify.sql
+docker exec -i dify-db psql -U postgres -d dify_plugin < dify_plugin.sql
+docker exec -i dify-pgvector psql -U postgres -d dify < dify_vectors.sql
+sudo tar -C volumes -xzf dify-volumes.tar.gz
+docker compose up -d
+```
+
+The first start of `db` creates both `dify` and `dify_plugin`, so the dumps load
+into existing, empty databases.

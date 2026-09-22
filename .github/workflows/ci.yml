@@ -84,6 +84,14 @@ jobs:
           done < <(python3 scripts/ci/check-structure.py --list | xargs -n1 dirname | sort -u)
           exit $failed
 
+      # Opt-in overlays are excluded from the discovery above on purpose: they are
+      # applied on top of a stack, not instead of it, and several are alternatives
+      # to each other. Each is validated as its own merged deployment variant —
+      # the only way to see that a patch-only overlay hands an existing service
+      # the Docker socket or clears its memory ceiling.
+      - name: Validate opt-in overlay variants
+        run: python3 scripts/ci/check-overlays.py --require-docker "$GITHUB_STEP_SUMMARY"
+
   # ─────────────────────────────────────────────
   # 3. STRUCTURE CHECK
   # ─────────────────────────────────────────────
@@ -212,6 +220,13 @@ jobs:
       # leaving the site quietly behind the repository.
       - name: Check the site catalogue is complete and current
         run: python3 scripts/ci/site-catalogue.py --check
+
+      # Hardening coverage figures went stale twice in three days while they
+      # were maintained by hand — a stack landing between two edits moves a
+      # denominator nobody remembers. They are counted from the compose files
+      # now, and this is what keeps the committed document honest.
+      - name: Check security coverage figures are current
+        run: python3 scripts/ci/security-coverage.py --check "$GITHUB_STEP_SUMMARY"
 
   # ─────────────────────────────────────────────
   # 8. CHECKER COVERAGE

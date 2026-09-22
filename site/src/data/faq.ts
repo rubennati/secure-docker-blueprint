@@ -10,14 +10,14 @@
 // - Every answer stands on its own. Linking to ROADMAP.md/UPSTREAM.md
 //   in the repository as the actual answer is not allowed — the site
 //   is for operators, the repository is for developers (see
-//   src/content/docs/project/index.md). `link` may point to another
+//   src/content/docs/project/index.mdx). `link` may point to another
 //   page on this site for more detail, never to a repository file as
 //   the primary answer.
 // - Answers are plain text (no markdown) — this is what lets them be
 //   reused verbatim in JSON-LD without a markdown-stripping step.
 // - No questions about the site itself (is this the source of truth,
 //   why is the site smaller than the repo, etc.) — that's covered once
-//   in src/content/docs/project/index.md, not duplicated here.
+//   in src/content/docs/project/index.mdx, not duplicated here.
 
 export interface FaqLink {
   text: string;
@@ -92,12 +92,12 @@ export const faqCategories: FaqCategory[] = [
       {
         question: 'Can I try a service without setting up a server?',
         answer:
-          'Partly. The guides assume a host with a domain and a reverse proxy in front, because that is the configuration they were written and checked against. Some stacks also carry a second Compose file for localhost — Cal.diY and Tymeslot are two, and their guides say so — which runs the application on one machine without TLS or a proxy. It is for trying the application out, not for running it.',
+          'Yes, for most stacks. They carry a second Compose file that runs the application on one machine, without a domain, TLS or a reverse proxy, and every guide whose stack has one starts with it under Try it locally. It is for trying the application out, not for running it: its values sit in a plain env file rather than in Docker Secrets.',
       },
       {
         question: 'Can I deploy only some services to a new server?',
         answer:
-          'Yes — clone the repository once, then copy only the directories for the services you actually need to the target host. There is no dedicated deploy tool for this yet; copying the directories you need is the current path.',
+          'Yes. Check out a release of the repository on the server and start only the stacks you need — a stack that is not started is only files on disk. Keeping the Git checkout is what lets the server state which release it runs and move to the next one; a copied directory can answer neither.',
       },
       {
         question: 'What does it cost?',

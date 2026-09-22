@@ -76,7 +76,7 @@ paste restored past its own expiration is simply gone the next time
 PrivateBin's garbage collection runs — that is expected, not a restore
 failure.
 
-## Local testing (no Traefik)
+## Try it locally
 
 ```bash
 cp .env.local.example .env.local

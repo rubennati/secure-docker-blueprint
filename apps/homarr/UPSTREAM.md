@@ -5,7 +5,8 @@
 - **Image:** https://github.com/homarr-labs/homarr/pkgs/container/homarr
 - **GitHub:** https://github.com/homarr-labs/homarr
 - **Docs:** https://homarr.dev/
-- **License:** MIT (fork heritage: originally forked from `ajnart/homarr`; current maintainer `homarr-labs`)
+- **License:** Apache-2.0 (fork heritage: originally forked from `ajnart/homarr`, which was MIT; `homarr-labs/homarr` ships the Apache licence)
+- **Decision facts checked:** not yet
 - **Origin:** Community · homarr-labs · EU contributors
 - **Domain:** Dashboards
 - **Role:** Dashboard with integrations into the services you run

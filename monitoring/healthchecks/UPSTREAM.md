@@ -7,6 +7,7 @@
 - **GitHub:** https://github.com/healthchecks/healthchecks
 - **Docs:** https://healthchecks.io/docs/self_hosted/
 - **License:** BSD 3-Clause
+- **Decision facts checked:** not yet
 - **Origin:** Latvia · Pēteris Caune · EU
 - **Domain:** Monitoring
 - **Role:** Dead-man's switch that alerts when a cron job or backup stops reporting

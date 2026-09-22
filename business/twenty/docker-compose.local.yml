@@ -1,0 +1,264 @@
+# Twenty — local
+#
+#   cp .env.local.example .env.local
+#   ops/init.sh
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   open http://localhost:3000        # sign up: the first account creates the workspace
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+#
+# Same images, secrets wrapper and read-only settings as the production file,
+# without Traefik and without the Docker Secrets mechanism. It mounts the same
+# volumes/, so run one at a time.
+
+x-twenty-env: &twenty-env
+  SERVER_URL: http://localhost:3000
+  # Used by entrypoint.sh to build PG_DATABASE_URL from the secret.
+  DB_USER: ${DB_USER}
+  DB_NAME: ${DB_NAME}
+  STORAGE_TYPE: local
+  TZ: ${TZ}
+
+services:
+
+  # --------------------------------------------------------
+  # TWENTY SERVER (web interface and API)
+  # --------------------------------------------------------
+  twenty-server:
+    # --- Identity ---
+    image: twentycrm/twenty:${APP_TAG}
+    container_name: twenty-local-server
+    restart: unless-stopped
+
+    # --- Security ---
+    # The image already runs as uid 1000 (node).
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+
+    # --- Resources ---
+    # Node.js; derived starting values, not measured.
+    memswap_limit: 2G          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "2.00"
+          pids: 300
+        reservations:
+          memory: 512M
+
+    # --- Configuration ---
+    # entrypoint.sh builds the connection URLs and the encryption key from the
+    # Docker Secrets, then runs the image's own entrypoint, which migrates the
+    # database and starts the server. Overriding the entrypoint clears the
+    # image's command, so it is restated.
+    entrypoint: ["/bin/sh", "/secrets-entrypoint.sh", "/app/entrypoint.sh"]
+    command: ["node", "dist/main"]
+    environment:
+      <<: *twenty-env
+      NODE_PORT: "3000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    # --- Storage ---
+    # Attachments and uploaded files; the directory belongs to uid 1000.
+    volumes:
+      - ./.secrets/db_pwd.txt:/run/secrets/DB_PWD:ro
+      - ./.secrets/redis_pwd.txt:/run/secrets/REDIS_PWD:ro
+      - ./.secrets/encryption_key.txt:/run/secrets/ENCRYPTION_KEY:ro
+      - ./config/entrypoint.sh:/secrets-entrypoint.sh:ro
+      - ./volumes/storage:/app/packages/twenty-server/.local-storage
+    tmpfs:
+      - /tmp
+
+    # --- Networking ---
+    networks:
+      - twenty-local
+
+    ports:
+      - "127.0.0.1:3000:3000"
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS -o /dev/null http://127.0.0.1:3000/healthz || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+
+  # --------------------------------------------------------
+  # TWENTY WORKER (background jobs: email and calendar sync, imports)
+  # --------------------------------------------------------
+  twenty-worker:
+    # --- Identity ---
+    image: twentycrm/twenty:${APP_TAG}
+    container_name: twenty-local-worker
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+
+    # --- Resources ---
+    memswap_limit: 1G          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 256M
+
+    # --- Configuration ---
+    # The server runs the migrations and registers the scheduled jobs.
+    entrypoint: ["/bin/sh", "/secrets-entrypoint.sh", "/app/entrypoint.sh"]
+    command: ["yarn", "worker:prod"]
+    environment:
+      <<: *twenty-env
+      DISABLE_DB_MIGRATIONS: "true"
+      DISABLE_CRON_JOBS_REGISTRATION: "true"
+    depends_on:
+      twenty-server:
+        condition: service_healthy
+
+    # --- Storage ---
+    volumes:
+      - ./.secrets/db_pwd.txt:/run/secrets/DB_PWD:ro
+      - ./.secrets/redis_pwd.txt:/run/secrets/REDIS_PWD:ro
+      - ./.secrets/encryption_key.txt:/run/secrets/ENCRYPTION_KEY:ro
+      - ./config/entrypoint.sh:/secrets-entrypoint.sh:ro
+      - ./volumes/storage:/app/packages/twenty-server/.local-storage
+    tmpfs:
+      - /tmp
+
+    # --- Networking ---
+    # app-internal only. Syncing mail or calendars from external providers needs
+    # outbound access, which this network does not give — see README.
+    networks:
+      - twenty-local
+
+    # --- Health & Observability ---
+    # healthcheck: none — the worker serves no port; its jobs are visible in the
+    # server's logs and in the queue it shares through Redis.
+
+  # --------------------------------------------------------
+  # DATABASE (PostgreSQL)
+  # --------------------------------------------------------
+  db:
+    # --- Identity ---
+    image: postgres:${DB_TAG}
+    container_name: twenty-local-db
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+
+    # --- Resources ---
+    memswap_limit: 1G          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 256M
+
+    # --- Configuration ---
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/DB_PWD
+      TZ: ${TZ}
+
+    # --- Storage ---
+    volumes:
+      - ./.secrets/db_pwd.txt:/run/secrets/DB_PWD:ro
+      - ./volumes/postgres:/var/lib/postgresql/data
+
+    # --- Networking ---
+    networks:
+      - twenty-local
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME} -h 127.0.0.1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # --------------------------------------------------------
+  # REDIS (queue and cache)
+  # --------------------------------------------------------
+  redis:
+    # --- Identity ---
+    image: redis:${REDIS_TAG}
+    container_name: twenty-local-redis
+    restart: unless-stopped
+    user: "999:999"
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+
+    # --- Resources ---
+    memswap_limit: 256m        # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.50"
+          pids: 100
+        reservations:
+          memory: 64m
+
+    # --- Configuration ---
+    # Password in a tmpfs config file rather than on the command line. Upstream
+    # requires noeviction: the queue must not lose jobs under memory pressure.
+    entrypoint: ["/bin/sh", "/redis-entrypoint.sh"]
+
+    # --- Storage ---
+    volumes:
+      - ./.secrets/redis_pwd.txt:/run/secrets/REDIS_PWD:ro
+      - ./config/redis-entrypoint.sh:/redis-entrypoint.sh:ro
+      - ./volumes/redis:/data
+    tmpfs:
+      - /tmp
+
+    # --- Networking ---
+    networks:
+      - twenty-local
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "REDISCLI_AUTH=\"$$(cat /run/secrets/REDIS_PWD)\" redis-cli ping | grep -q PONG || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+networks:
+  twenty-local:
+    name: twenty-local

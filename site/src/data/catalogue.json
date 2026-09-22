@@ -1,6 +1,15 @@
 {
   "apps/adminer": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Developer tools",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "Adminer",
     "path": "apps/adminer",
     "role": "Web interface onto a database another stack already runs",
@@ -11,18 +20,38 @@
     "version": "5.5.1-standalone"
   },
   "apps/agentgateway": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "AI and local AI",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "agentgateway",
     "path": "apps/agentgateway",
     "role": "LLM and MCP gateway: one authenticated endpoint in front of model providers and MCP servers",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://github.com/agentgateway/agentgateway/pkgs/container/agentgateway",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-09-21",
+    "verified_version": "v1.5.0",
     "version": "1.5.0"
   },
   "apps/bookstack": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Files, wiki and collaboration",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MariaDB"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · MariaDB"
+    },
     "name": "BookStack",
     "path": "apps/bookstack",
     "role": "Wiki with structure: shelves, books, chapters and pages",
@@ -33,7 +62,19 @@
     "version": "version-v26.05.4"
   },
   "apps/caldiy": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Publishing, forms and scheduling",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL",
+        "Redis"
+      ],
+      "init_services": 0,
+      "services": 3,
+      "summary": "3 services · PostgreSQL + Redis"
+    },
     "name": "Cal.diy",
     "path": "apps/caldiy",
     "role": "Appointment booking pages, the community edition of Cal.com",
@@ -43,8 +84,96 @@
     "verified_version": "v6.2.0-3",
     "version": "538cbb4a2273…"
   },
+  "apps/calnode": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
+    "domain": "Publishing, forms and scheduling",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
+    "name": "Calnode",
+    "path": "apps/calnode",
+    "role": "Scheduling with booking pages, an admin interface and a REST API, as one binary with SQLite",
+    "state": "baseline-aligned",
+    "upstream": "https://github.com/Calnode/calnode/pkgs/container/calnode",
+    "verified": "2026-09-22",
+    "verified_version": "0.9.0",
+    "version": "0.9.0"
+  },
+  "apps/calrs": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
+    "domain": "Publishing, forms and scheduling",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
+    "name": "calrs",
+    "path": "apps/calrs",
+    "role": "Scheduling with booking pages and availability read from a CalDAV calendar you already run",
+    "state": "baseline-aligned",
+    "upstream": "https://github.com/olivierlambert/calrs/pkgs/container/calrs",
+    "verified": "2026-09-22",
+    "verified_version": "1.17.1",
+    "version": "1.17.1"
+  },
+  "apps/ciso-assistant": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "paid self-hosted edition",
+        "source": "https://intuitem.com/compare",
+        "statement": "paid self-hosted edition"
+      },
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://intuitem.com/compare",
+        "statement": "SSO/SAML, the API, multiple frameworks and self-hosting are in the community edition; the Pro edition adds, among others, SCIM group provisioning, fine-grained per-object permissions, a multi-level domain hierarchy and custom fields"
+      },
+      "use_restrictions": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/intuitem/ciso-assistant-community/blob/main/LICENSE.md",
+        "statement": "none — the community images this stack pins are released under AGPLv3, and the commercially licensed code in `enterprise/` ships only in separate enterprise binaries"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
+    "domain": "Security operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL"
+      ],
+      "init_services": 0,
+      "services": 4,
+      "summary": "4 services · PostgreSQL"
+    },
+    "name": "CISO Assistant",
+    "path": "apps/ciso-assistant",
+    "role": "Governance, risk and compliance: frameworks such as ISO 27001 and NIS2 mapped to controls, risks and evidence",
+    "state": "baseline-aligned",
+    "upstream": "https://github.com/intuitem/ciso-assistant-community/pkgs/container/ciso-assistant-community%2Fbackend",
+    "verified": "2026-09-22",
+    "verified_version": "v4.0.5",
+    "version": "4.0.5"
+  },
   "apps/collabora": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Documents and e-signature",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "Collabora Online",
     "path": "apps/collabora",
     "role": "Office document editing server based on LibreOffice",
@@ -55,7 +184,16 @@
     "version": "26.04.3.2.1"
   },
   "apps/dashy": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Dashboards",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "Dashy",
     "path": "apps/dashy",
     "role": "One page linking everything you run, configured in a single YAML file",
@@ -65,8 +203,42 @@
     "verified_version": "v4.0.4",
     "version": "4.6.0"
   },
-  "apps/dependency-track": {
+  "apps/defectdojo": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Security operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL",
+        "Valkey"
+      ],
+      "init_services": 1,
+      "services": 6,
+      "summary": "6 services · 1 one-shot · PostgreSQL + Valkey"
+    },
+    "name": "DefectDojo",
+    "path": "apps/defectdojo",
+    "role": "Vulnerability management: import scanner and pentest findings, deduplicate them and track them to closure",
+    "state": "baseline-aligned",
+    "upstream": "https://hub.docker.com/r/defectdojo/defectdojo-django",
+    "verified": "2026-09-22",
+    "verified_version": "3.3.100",
+    "version": "3.3.100"
+  },
+  "apps/dependency-track": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
+    "domain": "Security operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL"
+      ],
+      "init_services": 0,
+      "services": 3,
+      "summary": "3 services · PostgreSQL"
+    },
     "name": "Dependency-Track",
     "path": "apps/dependency-track",
     "role": "Software composition analysis: SBOMs, components and known vulnerabilities across a portfolio",
@@ -77,7 +249,18 @@
     "version": "5.1.0"
   },
   "apps/dfir-iris": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Security operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "RabbitMQ"
+      ],
+      "init_services": 0,
+      "services": 4,
+      "summary": "4 services · RabbitMQ"
+    },
     "name": "DFIR-IRIS",
     "path": "apps/dfir-iris",
     "role": "Collaborative incident-response case management: cases, indicators, evidence and timelines",
@@ -88,29 +271,73 @@
     "version": "2.4.29"
   },
   "apps/dify": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "commercial licence",
+        "source": "https://github.com/langgenius/dify/blob/main/LICENSE",
+        "statement": "commercial licence"
+      },
+      "use_restrictions": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/langgenius/dify/blob/main/LICENSE",
+        "statement": "operating a multi-tenant environment requires written commercial permission, and the LOGO and copyright information in the console and applications may not be removed or modified; the branding condition applies to the frontend, meaning the `web/` directory and the web image"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
     "domain": "AI and local AI",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL",
+        "Redis"
+      ],
+      "init_services": 0,
+      "services": 10,
+      "summary": "10 services · PostgreSQL + Redis"
+    },
     "name": "Dify",
     "path": "apps/dify",
     "role": "LLM application platform: chat and workflow apps, knowledge bases, plugin-based model providers",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://hub.docker.com/r/langgenius/dify-api",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-09-22",
+    "verified_version": "1.17.1",
     "version": "1.17.1"
   },
   "apps/docling-serve": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "AI and local AI",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "docling-serve",
     "path": "apps/docling-serve",
     "role": "Document understanding as an API: layout, tables and Markdown or JSON export for AI pipelines",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://github.com/docling-project/docling-serve/pkgs/container/docling-serve-cpu",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-09-22",
+    "verified_version": "v1.34.0",
     "version": "1.34.0"
   },
   "apps/easyappointments": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Publishing, forms and scheduling",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MariaDB"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · MariaDB"
+    },
     "name": "Easy!Appointments",
     "path": "apps/easyappointments",
     "role": "Appointment booking in PHP, established since 2013",
@@ -121,7 +348,16 @@
     "version": "1.6.0"
   },
   "apps/euro-office": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Documents and e-signature",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "Euro-Office",
     "path": "apps/euro-office",
     "role": "EU-governed fork of OnlyOffice, a drop-in document editing server",
@@ -132,7 +368,18 @@
     "version": "9.3.4-hotfix.1"
   },
   "apps/ghost": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Publishing, forms and scheduling",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MySQL"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · MySQL"
+    },
     "name": "Ghost",
     "path": "apps/ghost",
     "role": "Publishing platform for blogs and newsletters, with optional Fediverse publishing",
@@ -143,18 +390,36 @@
     "version": "6.63.0-alpine"
   },
   "apps/greenmail": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Developer tools",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "GreenMail",
     "path": "apps/greenmail",
     "role": "SMTP, IMAP and POP3 test server with a mailbox per recipient, for automated tests",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://hub.docker.com/r/greenmail/standalone",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-09-22",
+    "verified_version": "2.1.13",
     "version": "2.1.13"
   },
   "apps/heimdall": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Dashboards",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "Heimdall",
     "path": "apps/heimdall",
     "role": "Application launcher with widgets",
@@ -165,7 +430,16 @@
     "version": "2.8.3"
   },
   "apps/hemmelig": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Identity, access and secrets",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "Hemmelig",
     "path": "apps/hemmelig",
     "role": "Ephemeral secret sharing with a built-in request flow",
@@ -176,7 +450,16 @@
     "version": "7.4.8"
   },
   "apps/homarr": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Dashboards",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "Homarr",
     "path": "apps/homarr",
     "role": "Dashboard with integrations into the services you run",
@@ -187,7 +470,16 @@
     "version": "1.77.1"
   },
   "apps/homepage": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Dashboards",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "Homepage",
     "path": "apps/homepage",
     "role": "Dashboard configured with YAML files",
@@ -197,8 +489,53 @@
     "verified_version": "v0.10.9",
     "version": "2.3.0"
   },
+  "apps/httpbin": {
+    "decision_facts": {},
+    "decision_facts_checked": "2026-09-21",
+    "domain": "Developer tools",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
+    "name": "httpbin",
+    "path": "apps/httpbin",
+    "role": "HTTP request and response service for testing clients: echoes requests, returns chosen status codes, redirects, delays and payloads",
+    "state": "baseline-aligned",
+    "upstream": "https://github.com/psf/httpbin/pkgs/container/httpbin",
+    "verified": "2026-09-22",
+    "verified_version": "0.10.4",
+    "version": "0.10.4"
+  },
   "apps/immich": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "free self-hosted",
+        "source": "https://docs.immich.app/overview/support-the-project/",
+        "statement": "free self-hosted"
+      },
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://docs.immich.app/overview/support-the-project/",
+        "statement": "none — upstream states that \"all features will be free, forever\" and that nothing will be put behind a paywall; buying a product supports the developers and unlocks nothing"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Photos",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL",
+        "Redis",
+        "Valkey"
+      ],
+      "init_services": 0,
+      "services": 4,
+      "summary": "4 services · PostgreSQL + Redis + Valkey"
+    },
     "name": "Immich",
     "path": "apps/immich",
     "role": "Photo and video backup with mobile apps and machine-learning search",
@@ -209,7 +546,16 @@
     "version": "3.2.0"
   },
   "apps/it-tools": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Developer tools",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "IT-Tools",
     "path": "apps/it-tools",
     "role": "Collection of small utilities: converters, generators and formatters",
@@ -220,7 +566,18 @@
     "version": "2024.10.22-7ca5933"
   },
   "apps/librephotos": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Photos",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL"
+      ],
+      "init_services": 0,
+      "services": 4,
+      "summary": "4 services · PostgreSQL"
+    },
     "name": "LibrePhotos",
     "path": "apps/librephotos",
     "role": "Photo library with face recognition and search",
@@ -231,18 +588,47 @@
     "version": "1.1.0"
   },
   "apps/litellm": {
+    "decision_facts": {
+      "use_restrictions": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/BerriAI/litellm/blob/main/LICENSE",
+        "statement": "none for the MIT-licensed portion; content under the `enterprise/` directory is under the separate licence in `enterprise/LICENSE`"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
     "domain": "AI and local AI",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · PostgreSQL"
+    },
     "name": "LiteLLM",
     "path": "apps/litellm",
     "role": "OpenAI-compatible gateway in front of any model backend, with virtual keys, budgets and a spend log",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://github.com/BerriAI/litellm/pkgs/container/litellm-non_root",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-09-21",
+    "verified_version": "v1.101.0",
     "version": "1.101.0"
   },
   "apps/lycheeorg": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Photos",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MariaDB",
+        "Redis"
+      ],
+      "init_services": 0,
+      "services": 3,
+      "summary": "3 services · MariaDB + Redis"
+    },
     "name": "Lychee",
     "path": "apps/lycheeorg",
     "role": "Photo gallery",
@@ -253,7 +639,16 @@
     "version": "7.8.3"
   },
   "apps/mailpit": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Developer tools",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "Mailpit",
     "path": "apps/mailpit",
     "role": "SMTP sink that catches every outgoing message and shows it, delivering nothing",
@@ -264,7 +659,18 @@
     "version": "1.31.1"
   },
   "apps/monicahq": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Business operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MariaDB"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · MariaDB"
+    },
     "name": "Monica",
     "path": "apps/monicahq",
     "role": "Personal CRM for the people in your life",
@@ -275,7 +681,33 @@
     "version": "4.1.2-apache"
   },
   "apps/n8n": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "commercial licence",
+        "source": "https://github.com/n8n-io/n8n/blob/master/LICENSE.md",
+        "statement": "commercial licence"
+      },
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/n8n-io/n8n/blob/master/LICENSE.md",
+        "statement": "files and directories whose names contain `.ee.` are covered by a separate enterprise licence rather than by the Sustainable Use License"
+      },
+      "use_restrictions": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/n8n-io/n8n/blob/master/LICENSE.md",
+        "statement": "free for internal business purposes and for non-commercial use; it may be given to others only free of charge and for non-commercial purposes, and its licensing and copyright notices may not be altered, removed or obscured"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Automation and data",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "n8n",
     "path": "apps/n8n",
     "role": "Visual workflow automation",
@@ -286,7 +718,19 @@
     "version": "2.38.7"
   },
   "apps/nextcloud": {
+    "decision_facts": {},
+    "decision_facts_checked": "2026-09-21",
     "domain": "Files, wiki and collaboration",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MariaDB",
+        "Redis"
+      ],
+      "init_services": 0,
+      "services": 5,
+      "summary": "5 services · MariaDB + Redis"
+    },
     "name": "Nextcloud",
     "path": "apps/nextcloud",
     "role": "File sync and share with calendars, contacts and collaborative editing",
@@ -297,7 +741,22 @@
     "version": "34.0.4-fpm-alpine"
   },
   "apps/nocodb": {
+    "decision_facts": {
+      "use_restrictions": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/nocodb/nocodb/blob/master/LICENSE.md",
+        "statement": "it may be used or modified only for your own internal business purposes or for non-commercial or personal use, and given to others only free of charge for non-commercial purposes; licensing and copyright notices may not be removed. Only the `master` and `develop` branches are licensed at all"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Automation and data",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "NocoDB",
     "path": "apps/nocodb",
     "role": "Spreadsheet-style interface on top of a database",
@@ -308,18 +767,36 @@
     "version": "2026.09.0"
   },
   "apps/ollama": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "AI and local AI",
+    "footprint": {
+      "gpu": "optional",
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service · GPU optional"
+    },
     "name": "Ollama",
     "path": "apps/ollama",
     "role": "Local model runtime that pulls models by name and serves them on CPU or an NVIDIA GPU",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://hub.docker.com/r/ollama/ollama",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-09-21",
+    "verified_version": "0.34.2",
     "version": "0.34.2"
   },
   "apps/onlyoffice": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Documents and e-signature",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "OnlyOffice Document Server",
     "path": "apps/onlyoffice",
     "role": "Document editing server for Nextcloud, Seafile and similar",
@@ -330,18 +807,48 @@
     "version": "9.4.0"
   },
   "apps/open-webui": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "commercial licence",
+        "source": "https://github.com/open-webui/open-webui/blob/main/LICENSE",
+        "statement": "commercial licence"
+      },
+      "use_restrictions": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/open-webui/open-webui/blob/main/LICENSE",
+        "statement": "the Open WebUI name and branding may not be removed or altered, except for deployments whose end users do not exceed fifty individuals in any rolling thirty-day period, or with prior written permission or an executed enterprise licence"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
     "domain": "AI and local AI",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "Open WebUI",
     "path": "apps/open-webui",
     "role": "Chat interface for any OpenAI-compatible endpoint, with accounts, history and document upload",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://github.com/open-webui/open-webui/pkgs/container/open-webui",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-09-21",
+    "verified_version": "v0.11.3",
     "version": "0.11.3"
   },
   "apps/opencanary": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Security operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "OpenCanary",
     "path": "apps/opencanary",
     "role": "Honeypot: fake network services that log every connection attempt",
@@ -352,7 +859,19 @@
     "version": "0.9.9"
   },
   "apps/opnform": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Publishing, forms and scheduling",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL",
+        "Redis"
+      ],
+      "init_services": 0,
+      "services": 7,
+      "summary": "7 services · PostgreSQL + Redis"
+    },
     "name": "OpnForm",
     "path": "apps/opnform",
     "role": "Form builder with shareable forms and submissions",
@@ -363,7 +882,19 @@
     "version": "2.5.0"
   },
   "apps/paperless-ngx": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Documents and e-signature",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL",
+        "Redis"
+      ],
+      "init_services": 0,
+      "services": 5,
+      "summary": "5 services · PostgreSQL + Redis"
+    },
     "name": "Paperless-ngx",
     "path": "apps/paperless-ngx",
     "role": "Document management with OCR, tagging and full-text search",
@@ -374,7 +905,30 @@
     "version": "3.1.3"
   },
   "apps/photoprism": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "paid self-hosted edition",
+        "source": "https://www.photoprism.app/editions",
+        "statement": "paid self-hosted edition"
+      },
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://www.photoprism.app/editions",
+        "statement": "the admin web UI for user management and any role beyond Super Admin, Admin and Guest, together with session monitoring and hardened security, require a paid Essentials or Plus membership; two-factor login and OpenID Connect are in the Community edition"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Photos",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MariaDB"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · MariaDB"
+    },
     "name": "PhotoPrism",
     "path": "apps/photoprism",
     "role": "Photo library with machine-learning classification and WebDAV",
@@ -385,7 +939,18 @@
     "version": "260728"
   },
   "apps/photoview": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Photos",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MariaDB"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · MariaDB"
+    },
     "name": "Photoview",
     "path": "apps/photoview",
     "role": "Photo gallery that reads your existing folders, with RAW support and face recognition",
@@ -396,7 +961,16 @@
     "version": "2.4.0"
   },
   "apps/privatebin": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Identity, access and secrets",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "PrivateBin",
     "path": "apps/privatebin",
     "role": "Zero-knowledge paste service for text and secrets",
@@ -407,18 +981,41 @@
     "version": "2.0.6"
   },
   "apps/qdrant": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "AI and local AI",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "Qdrant"
+      ],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service · Qdrant"
+    },
     "name": "Qdrant",
     "path": "apps/qdrant",
     "role": "Vector database: collections, similarity search with filters, snapshots",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://hub.docker.com/r/qdrant/qdrant",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-09-21",
+    "verified_version": "v1.19.1-unprivileged",
     "version": "1.19.1-unprivileged"
   },
   "apps/seafile": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Files, wiki and collaboration",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "Memcached",
+        "Redis"
+      ],
+      "init_services": 0,
+      "services": 8,
+      "summary": "8 services · Memcached + Redis"
+    },
     "name": "Seafile",
     "path": "apps/seafile",
     "role": "File sync and share, community edition",
@@ -429,7 +1026,32 @@
     "version": "13.0.20"
   },
   "apps/seafile-pro": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "per-user subscription",
+        "source": "https://www.seafile.com/en/pricing/",
+        "statement": "per-user subscription; no licence file is needed to run the Pro edition for three users"
+      },
+      "use_restrictions": {
+        "checked": "2026-09-21",
+        "source": "https://manual.seafile.com/latest/introduction/seafile_professional_edition_software_license_agreement/",
+        "statement": "end-user customers may not redistribute it further, the software and its source may not be disclosed or made available to any third party, and derivative works may not be created or distributed"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Files, wiki and collaboration",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "Elasticsearch",
+        "MariaDB",
+        "Redis"
+      ],
+      "init_services": 0,
+      "services": 11,
+      "summary": "11 services · Elasticsearch + MariaDB + Redis"
+    },
     "name": "Seafile Pro",
     "path": "apps/seafile-pro",
     "role": "File sync and share, professional edition",
@@ -440,7 +1062,16 @@
     "version": "13.0.21"
   },
   "apps/threat-dragon": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Security operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "OWASP Threat Dragon",
     "path": "apps/threat-dragon",
     "role": "Threat modelling: data-flow diagrams, trust boundaries, threats and mitigations",
@@ -451,7 +1082,18 @@
     "version": "2.6.2"
   },
   "apps/tymeslot": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Publishing, forms and scheduling",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · PostgreSQL"
+    },
     "name": "Tymeslot",
     "path": "apps/tymeslot",
     "role": "Meeting scheduling with booking pages, calendar sync and video links",
@@ -462,7 +1104,18 @@
     "version": "4bde62fd9bb1…"
   },
   "apps/unifi": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Infrastructure",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MongoDB"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · MongoDB"
+    },
     "name": "UniFi Network Application",
     "path": "apps/unifi",
     "role": "Controller for Ubiquiti UniFi network devices",
@@ -473,7 +1126,18 @@
     "version": "10.6.101"
   },
   "apps/vaultwarden": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Identity, access and secrets",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MariaDB"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · MariaDB"
+    },
     "name": "Vaultwarden",
     "path": "apps/vaultwarden",
     "role": "Password manager: logins, TOTP and shared collections",
@@ -484,7 +1148,16 @@
     "version": "1.37.3"
   },
   "apps/velociraptor": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Security operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "Velociraptor",
     "path": "apps/velociraptor",
     "role": "Endpoint forensics and threat hunting across a fleet, driven by queries",
@@ -495,7 +1168,16 @@
     "version": "0.77.2"
   },
   "apps/vllm": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "AI and local AI",
+    "footprint": {
+      "gpu": "required",
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service · GPU required"
+    },
     "name": "vLLM",
     "path": "apps/vllm",
     "role": "High-throughput OpenAI-compatible model serving on an NVIDIA GPU",
@@ -506,7 +1188,16 @@
     "version": "0.29.0"
   },
   "apps/whoami": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Developer tools",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "Whoami",
     "path": "apps/whoami",
     "role": "Tiny service that shows what the proxy forwards, to check routing and TLS",
@@ -517,7 +1208,24 @@
     "version": "1.12.0"
   },
   "apps/windmill": {
+    "decision_facts": {
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/windmill-labs/windmill/blob/main/LICENSE",
+        "statement": "code behind the `enterprise` compile flag in `backend/`, and frontend code that requires a positive licence check to activate, is under a proprietary and commercial licence rather than the AGPLv3; forks must not include it"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Automation and data",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL"
+      ],
+      "init_services": 0,
+      "services": 4,
+      "summary": "4 services · PostgreSQL"
+    },
     "name": "Windmill",
     "path": "apps/windmill",
     "role": "Code-first scripts, flows, APIs and scheduled jobs on a queue",
@@ -528,7 +1236,18 @@
     "version": "1.814.0"
   },
   "apps/wordpress": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Publishing, forms and scheduling",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MariaDB"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · MariaDB"
+    },
     "name": "WordPress",
     "path": "apps/wordpress",
     "role": "Content management system for sites and blogs",
@@ -539,7 +1258,18 @@
     "version": "7.0.4-php8.3-apache"
   },
   "apps/yopass": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Identity, access and secrets",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "Memcached"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · Memcached"
+    },
     "name": "Yopass",
     "path": "apps/yopass",
     "role": "Self-destructing links for handing someone a credential once",
@@ -550,7 +1280,10 @@
     "version": "14.10.0"
   },
   "backup/borgmatic": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Backup",
+    "footprint": null,
     "name": "Borgmatic",
     "path": "backup/borgmatic",
     "role": "Deduplicated, encrypted server backup, installed on the host",
@@ -560,8 +1293,37 @@
     "verified_version": "2.1.6",
     "version": "2.1.6"
   },
-  "backup/urbackup": {
+  "backup/rclone-web": {
+    "decision_facts": {},
+    "decision_facts_checked": "2026-09-21",
     "domain": "Backup",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
+    "name": "Rclone Web",
+    "path": "backup/rclone-web",
+    "role": "Browser interface for rclone: storage remotes, copy and sync jobs, serves and transfer statistics",
+    "state": "scaffolded",
+    "upstream": "https://hub.docker.com/r/rclone/rclone",
+    "verified": null,
+    "verified_version": null,
+    "version": "1.75.1"
+  },
+  "backup/urbackup": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
+    "domain": "Backup",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "UrBackup Server",
     "path": "backup/urbackup",
     "role": "Client backup for Windows, macOS and Linux, with whole-disk image restore on Windows",
@@ -571,8 +1333,99 @@
     "verified_version": null,
     "version": "fd218c45192f…"
   },
+  "business/akaunting": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "commercial licence",
+        "source": "https://github.com/akaunting/akaunting/blob/master/LICENSE.txt",
+        "statement": "commercial licence"
+      },
+      "use_restrictions": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/akaunting/akaunting/blob/master/LICENSE.txt",
+        "statement": "production use is permitted only while it stays within two users, one company and one thousand invoices; beyond any of these a commercial licence is required, and the name, logo and branding may not be removed to create a rebranded or white-labelled version for distribution; each release converts to GPLv3 four years after it is published"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
+    "domain": "Business operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MariaDB"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · MariaDB"
+    },
+    "name": "Akaunting",
+    "path": "business/akaunting",
+    "role": "Accounting for small businesses: invoices, bills, customers, vendors, bank accounts and reports",
+    "state": "baseline-aligned",
+    "upstream": "https://hub.docker.com/r/akaunting/akaunting",
+    "verified": "2026-09-22",
+    "verified_version": "3.1.21",
+    "version": "3.1.21"
+  },
+  "business/chatwoot": {
+    "decision_facts": {
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/chatwoot/chatwoot/blob/develop/LICENSE",
+        "statement": "everything under the repository's `enterprise/` directory is licensed under `enterprise/LICENSE` rather than MIT"
+      },
+      "use_restrictions": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/chatwoot/chatwoot/blob/develop/LICENSE",
+        "statement": "none for the MIT-licensed portion; content under the `enterprise/` directory is under the separate licence defined there"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
+    "domain": "Business operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL",
+        "Redis"
+      ],
+      "init_services": 0,
+      "services": 4,
+      "summary": "4 services · PostgreSQL + Redis"
+    },
+    "name": "Chatwoot",
+    "path": "business/chatwoot",
+    "role": "Customer support across website chat, email and messaging channels in one shared inbox",
+    "state": "baseline-aligned",
+    "upstream": "https://hub.docker.com/r/chatwoot/chatwoot",
+    "verified": "2026-09-22",
+    "verified_version": "v4.18.0",
+    "version": "4.18.0"
+  },
   "business/documenso": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "paid self-hosted edition",
+        "source": "https://docs.documenso.com/developers/self-hosting",
+        "statement": "paid self-hosted edition"
+      },
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://docs.documenso.com/developers/self-hosting",
+        "statement": "single sign-on, the embed editor white label and 21 CFR Part 11 compliance are enterprise features activated with a licence key; the AGPL-3.0 self-hosted edition carries the core functionality without them"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Documents and e-signature",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · PostgreSQL"
+    },
     "name": "Documenso",
     "path": "business/documenso",
     "role": "Document signing with your own certificate",
@@ -583,7 +1436,18 @@
     "version": "2.18.0"
   },
   "business/dolibarr": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Business operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MariaDB"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · MariaDB"
+    },
     "name": "Dolibarr",
     "path": "business/dolibarr",
     "role": "ERP and CRM: contacts, quotes, invoices, stock and accounting",
@@ -593,8 +1457,90 @@
     "verified_version": null,
     "version": "23.0.4"
   },
-  "business/invoiceninja": {
+  "business/erpnext": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "no paid edition",
+        "source": "https://frappe.io/erpnext/pricing",
+        "statement": "no paid edition"
+      },
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://frappe.io/erpnext/pricing",
+        "statement": "none — upstream states that ERPNext is 100% open source with no features behind paywalls"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Business operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MariaDB",
+        "Redis"
+      ],
+      "init_services": 0,
+      "services": 10,
+      "summary": "10 services · MariaDB + Redis"
+    },
+    "name": "ERPNext",
+    "path": "business/erpnext",
+    "role": "ERP on the Frappe framework: accounting, invoicing, stock, buying, selling, manufacturing, projects and HR",
+    "state": "scaffolded",
+    "upstream": "https://hub.docker.com/r/frappe/erpnext",
+    "verified": null,
+    "verified_version": null,
+    "version": "16.35.0"
+  },
+  "business/facturascripts": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "paid add-on",
+        "source": "https://facturascripts.com/plugins",
+        "statement": "paid add-on; the core is free, and some plugins are sold on facturascripts.com"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
+    "domain": "Business operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MariaDB"
+      ],
+      "init_services": 0,
+      "services": 3,
+      "summary": "3 services · MariaDB"
+    },
+    "name": "FacturaScripts",
+    "path": "business/facturascripts",
+    "role": "Invoicing, accounting and inventory for small businesses, extended through plugins",
+    "state": "baseline-aligned",
+    "upstream": "https://hub.docker.com/r/facturascripts/facturascripts",
+    "verified": "2026-09-22",
+    "verified_version": "2026.5",
+    "version": "2026.5"
+  },
+  "business/invoiceninja": {
+    "decision_facts": {
+      "use_restrictions": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/invoiceninja/invoiceninja/blob/v5-stable/LICENSE",
+        "statement": "Elastic License 2.0 — it may not be provided to third parties as a hosted or managed service giving them access to a substantial set of its features, the licence-key functionality may not be moved, changed, disabled or circumvented, and licensing or copyright notices may not be removed"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
+    "domain": "Business operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MySQL",
+        "Redis"
+      ],
+      "init_services": 0,
+      "services": 4,
+      "summary": "4 services · MySQL + Redis"
+    },
     "name": "Invoice Ninja",
     "path": "business/invoiceninja",
     "role": "Invoicing, quotes and payments",
@@ -605,7 +1551,30 @@
     "version": "5.13.40"
   },
   "business/kimai": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "paid add-on",
+        "source": "https://www.kimai.org/store/audit-trail-bundle.html",
+        "statement": "paid add-on"
+      },
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://www.kimai.org/store/audit-trail-bundle.html",
+        "statement": "audit trail logs, which record changes to timesheets, customers, projects and activities, are a paid store plugin rather than part of the AGPL core; paid plugins are annual subscriptions with a perpetual fallback licence, so the last downloaded version keeps working while updates need an active subscription"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Business operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MariaDB"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · MariaDB"
+    },
     "name": "Kimai",
     "path": "business/kimai",
     "role": "Time tracking with reports and invoicing hooks",
@@ -616,7 +1585,18 @@
     "version": "2.66.0"
   },
   "business/listmonk": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Publishing, forms and scheduling",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · PostgreSQL"
+    },
     "name": "Listmonk",
     "path": "business/listmonk",
     "role": "Newsletter and mailing-list manager",
@@ -627,7 +1607,30 @@
     "version": "6.2.0"
   },
   "business/matomo": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "paid add-on",
+        "source": "https://plugins.matomo.org/LoginSaml",
+        "statement": "paid add-on; the self-hosted core itself is free"
+      },
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://plugins.matomo.org/LoginSaml",
+        "statement": "SAML single sign-on is the separate LoginSaml plugin, sold under the InnoCraft EULA rather than shipped under the GPL core"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Business operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MariaDB"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · MariaDB"
+    },
     "name": "Matomo",
     "path": "business/matomo",
     "role": "Web analytics under your control",
@@ -638,7 +1641,31 @@
     "version": "5.13.0-apache"
   },
   "business/openproject": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "paid self-hosted edition",
+        "source": "https://www.openproject.org/pricing/",
+        "statement": "paid self-hosted edition"
+      },
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://www.openproject.org/pricing/",
+        "statement": "single sign-on through SAML, OpenID Connect, CAS or Kerberos is an Enterprise feature from the Professional plan upwards, and LDAP group synchronisation from the Corporate plan; two-factor authentication, plain LDAP authentication, user groups and permissions, and custom workflows are in the Community edition"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Business operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "Memcached",
+        "PostgreSQL"
+      ],
+      "init_services": 0,
+      "services": 6,
+      "summary": "6 services · Memcached + PostgreSQL"
+    },
     "name": "OpenProject CE",
     "path": "business/openproject",
     "role": "Project management with work packages, boards and Gantt planning",
@@ -649,7 +1676,18 @@
     "version": "17.8.0-slim"
   },
   "business/opensign": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Documents and e-signature",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MongoDB"
+      ],
+      "init_services": 0,
+      "services": 3,
+      "summary": "3 services · MongoDB"
+    },
     "name": "OpenSign",
     "path": "business/opensign",
     "role": "Document signing with qualified-certificate support",
@@ -659,8 +1697,85 @@
     "verified_version": null,
     "version": "817654a3f804…"
   },
-  "business/vikunja": {
+  "business/solidinvoice": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Business operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
+    "name": "SolidInvoice",
+    "path": "business/solidinvoice",
+    "role": "Invoicing: clients, quotes, invoices, recurring invoices and payments",
+    "state": "baseline-aligned",
+    "upstream": "https://hub.docker.com/r/solidinvoice/solidinvoice",
+    "verified": "2026-09-22",
+    "verified_version": "3.0.1",
+    "version": "3.0.1"
+  },
+  "business/twenty": {
+    "decision_facts": {
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/twentyhq/twenty/blob/main/LICENSE",
+        "statement": "files marked `@license Enterprise` at the top are covered by a commercial licence rather than the AGPL-3.0"
+      },
+      "use_restrictions": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/twentyhq/twenty/blob/main/LICENSE",
+        "statement": "none for the AGPL-3.0 portion; individual files carrying a `/* @license Enterprise */` comment at the top are under a separate commercial licence"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
+    "domain": "Business operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL",
+        "Redis"
+      ],
+      "init_services": 0,
+      "services": 4,
+      "summary": "4 services · PostgreSQL + Redis"
+    },
+    "name": "Twenty",
+    "path": "business/twenty",
+    "role": "CRM: companies, people, opportunities and tasks, with an extensible data model and an API",
+    "state": "scaffolded",
+    "upstream": "https://hub.docker.com/r/twentycrm/twenty",
+    "verified": null,
+    "verified_version": null,
+    "version": "2.41.0"
+  },
+  "business/vikunja": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "paid self-hosted edition",
+        "source": "https://vikunja.io/pricing/",
+        "statement": "paid self-hosted edition; the Cloud offering is the same features without the operations work"
+      },
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://vikunja.io/pricing/",
+        "statement": "the self-hosted core is complete and free for personal or company use; a Pro tier for instances you host yourself adds an admin panel, audit logs and time tracking"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
+    "domain": "Business operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · PostgreSQL"
+    },
     "name": "Vikunja",
     "path": "business/vikunja",
     "role": "Task and project management with lists, boards and calendars",
@@ -671,7 +1786,21 @@
     "version": "2.6.0"
   },
   "business/zammad": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Business operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "Elasticsearch",
+        "Memcached",
+        "PostgreSQL",
+        "Redis"
+      ],
+      "init_services": 0,
+      "services": 9,
+      "summary": "9 services · Elasticsearch + Memcached + PostgreSQL + Redis"
+    },
     "name": "Zammad",
     "path": "business/zammad",
     "role": "Helpdesk and ticket system across mail, chat and phone",
@@ -682,7 +1811,16 @@
     "version": "7.1.3-0012"
   },
   "core/acme-certs": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Infrastructure",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "acme-certs",
     "path": "core/acme-certs",
     "role": "Certificates for devices that never pass through the reverse proxy: NAS, routers, mail servers",
@@ -693,7 +1831,31 @@
     "version": "0.2.1"
   },
   "core/authentik": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "per-user subscription",
+        "source": "https://goauthentik.io/pricing/",
+        "statement": "per-user subscription"
+      },
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://docs.goauthentik.io/enterprise/enterprise-features/",
+        "statement": "enhanced audit logging, client certificate authentication, RADIUS EAP-TLS, password history compliance, privileged access management, account lockdown, and Google Workspace and Microsoft Entra ID provisioning are listed as Enterprise; the list does not include the OIDC or SAML provider"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Identity, access and secrets",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL",
+        "Redis"
+      ],
+      "init_services": 1,
+      "services": 4,
+      "summary": "4 services · 1 one-shot · PostgreSQL + Redis"
+    },
     "name": "Authentik",
     "path": "core/authentik",
     "role": "Identity provider with forward-auth, OAuth2, OpenID Connect and SAML",
@@ -704,7 +1866,16 @@
     "version": "2026.5.7"
   },
   "core/crowdsec": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Security operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "CrowdSec",
     "path": "core/crowdsec",
     "role": "Threat detection from logs, with a choice of where decisions are enforced",
@@ -715,7 +1886,16 @@
     "version": "1.7.8"
   },
   "core/dnsmasq": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Infrastructure",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "dnsmasq",
     "path": "core/dnsmasq",
     "role": "DNS forwarder with wildcard zones for split-DNS setups",
@@ -726,7 +1906,35 @@
     "version": "2.93"
   },
   "core/dockhand": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "commercial licence",
+        "source": "https://github.com/Finsys/dockhand/blob/main/LICENSE.md",
+        "statement": "commercial licence"
+      },
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/Finsys/dockhand/blob/main/LICENSE.md",
+        "statement": "Enterprise Features are gated by a License Key, which the licence forbids sharing, publishing or circumventing"
+      },
+      "use_restrictions": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/Finsys/dockhand/blob/main/LICENSE.md",
+        "statement": "production use is granted free only for personal non-commercial use, recognised non-profit and charitable organisations, and schools or non-commercial research institutions. **Production use by or on behalf of a company, sole trader, public body or any other organisation requires a Commercial Licence**, and offering it to third parties as a hosted, managed or SaaS container-management service requires a separate written agreement"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Infrastructure",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL"
+      ],
+      "init_services": 0,
+      "services": 3,
+      "summary": "3 services · PostgreSQL"
+    },
     "name": "Dockhand",
     "path": "core/dockhand",
     "role": "Docker management with Git-based stacks: deploy and update by pushing to Git",
@@ -737,7 +1945,16 @@
     "version": "1.0.47"
   },
   "core/hawser": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Infrastructure",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "Hawser",
     "path": "core/hawser",
     "role": "Remote Docker agent for Dockhand, connecting outbound so the managed host publishes no port",
@@ -748,7 +1965,10 @@
     "version": "0.2.47"
   },
   "core/host-watchdog": {
+    "decision_facts": {},
+    "decision_facts_checked": "2026-09-21",
     "domain": "Infrastructure",
+    "footprint": null,
     "name": "Host Watchdog",
     "path": "core/host-watchdog",
     "role": "Optional host scripts that restart the Docker daemon or the proxy after a confirmed, sustained failure",
@@ -759,7 +1979,25 @@
     "version": ""
   },
   "core/infisical": {
+    "decision_facts": {
+      "use_restrictions": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/Infisical/infisical/blob/main/LICENSE",
+        "statement": "none for the MIT-licensed portion; content under any `ee/` directory is under the separate licence in `ee/LICENSE`"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Identity, access and secrets",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL",
+        "Redis"
+      ],
+      "init_services": 0,
+      "services": 3,
+      "summary": "3 services · PostgreSQL + Redis"
+    },
     "name": "Infisical",
     "path": "core/infisical",
     "role": "Central secret manager, an alternative to per-stack Docker Secrets",
@@ -770,7 +2008,28 @@
     "version": "0.165.10"
   },
   "core/jumpserver": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "paid self-hosted edition",
+        "source": "https://www.jumpserver.com/docs/compare-versions",
+        "statement": "paid self-hosted edition"
+      },
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://www.jumpserver.com/docs/compare-versions",
+        "statement": "the Community edition carries LDAP, CAS, OIDC, SAML2, OAuth2 and RADIUS authentication, role and organisation management, asset session monitoring, session command auditing, file-transfer tracking, login audit logs and command filtering. Enterprise adds LDAP high availability, chat-platform integrations, passkey support, cloud asset synchronisation and RemoteApp or VirtualApp delivery"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Identity, access and secrets",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "JumpServer",
     "path": "core/jumpserver",
     "role": "Privileged access management: stored target credentials, session recording, approval workflows",
@@ -781,7 +2040,18 @@
     "version": "4.10.19"
   },
   "core/keycloak": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Identity, access and secrets",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · PostgreSQL"
+    },
     "name": "Keycloak",
     "path": "core/keycloak",
     "role": "Identity provider for applications that speak OpenID Connect or SAML, with LDAP and AD federation",
@@ -792,7 +2062,24 @@
     "version": "26.7.3"
   },
   "core/orion-belt": {
+    "decision_facts": {
+      "use_restrictions": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/orion-belt-dev/orion-belt/blob/master/LICENSE",
+        "statement": "Apache-2.0 with the Commons Clause, which withholds the right to Sell — defined as providing to third parties, for a fee or other consideration, a product or service whose value derives entirely or substantially from its functionality, including fees for hosting or for consulting and support related to it"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Identity, access and secrets",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · PostgreSQL"
+    },
     "name": "Orion Belt",
     "path": "core/orion-belt",
     "role": "Privileged access gateway for SSH sessions, from a young single-maintainer project",
@@ -803,7 +2090,28 @@
     "version": "1.2.0"
   },
   "core/portainer": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "paid self-hosted edition",
+        "source": "https://www.portainer.io/business-enterprise-it-pricing",
+        "statement": "paid self-hosted edition; a separate free tier for homelab, personal and learning use is offered"
+      },
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://www.portainer.io/features",
+        "statement": "Portainer lists role-based access control, Active Directory with automatic user sync, pre-configured SSO provider templates, and authentication and activity logs as Business Edition features"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Infrastructure",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services"
+    },
     "name": "Portainer CE",
     "path": "core/portainer",
     "role": "Docker management web interface, reaching Docker through a filtered socket proxy",
@@ -814,7 +2122,16 @@
     "version": "2.39.7"
   },
   "core/portainer-agent": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Infrastructure",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "Portainer Agent",
     "path": "core/portainer-agent",
     "role": "Remote Docker agent for Portainer",
@@ -825,7 +2142,19 @@
     "version": "2.39.7"
   },
   "core/shellhub": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Identity, access and secrets",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL",
+        "Valkey"
+      ],
+      "init_services": 0,
+      "services": 5,
+      "summary": "5 services · PostgreSQL + Valkey"
+    },
     "name": "ShellHub",
     "path": "core/shellhub",
     "role": "SSH access through agents on each target that connect out, so targets open no inbound port",
@@ -836,7 +2165,28 @@
     "version": "0.27.0-rc.11"
   },
   "core/step-ca": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "free self-hosted",
+        "source": "https://smallstep.com/certificate-manager/",
+        "statement": "free self-hosted; Step CA Pro is sold as a separate drop-in replacement"
+      },
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://smallstep.com/certificate-manager/",
+        "statement": "step-ca is complete and production-ready for self-hosting. Smallstep sells Step CA Pro as \"a drop in replacement for step-ca\" adding advanced features and compliance options, cloud-based integrations, a management interface and ACME device attestation"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Identity, access and secrets",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "step-ca",
     "path": "core/step-ca",
     "role": "Internal certificate authority for machines and services: X.509, ACME and optional SSH certificates",
@@ -847,7 +2197,22 @@
     "version": "0.30.2"
   },
   "core/teleport": {
+    "decision_facts": {
+      "use_restrictions": {
+        "checked": "2026-09-21",
+        "source": "https://goteleport.com/blog/teleport-community-license/",
+        "statement": "the compiled binaries, container images and AMIs — which is what this stack deploys — have carried the Teleport Community Edition commercial licence rather than Apache-2.0 since Teleport 16. Under it a company may use Community Edition only with fewer than 100 employees **and** less than $10M annual revenue, and may not resell or embed it; individuals are unrestricted for personal use. Compiling the AGPLv3 source yourself is the alternative"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Identity, access and secrets",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "Teleport",
     "path": "core/teleport",
     "role": "Access through short-lived certificates instead of standing credentials",
@@ -858,7 +2223,28 @@
     "version": "18.11.0"
   },
   "core/traefik": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "free self-hosted",
+        "source": "https://traefik.io/pricing/",
+        "statement": "free self-hosted; Traefik Hub is sold as a separate product built on it"
+      },
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://traefik.io/pricing/",
+        "statement": "Traefik Proxy is complete as ingress controller, reverse proxy and load balancer. A native web application firewall, the LDAP, JWT, OAuth and OIDC authentication middleware, HashiCorp Vault integration, distributed rate limiting, HTTP caching and multi-cluster management belong to Traefik Hub, a separate commercial product"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Infrastructure",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services"
+    },
     "name": "Traefik Reverse Proxy",
     "path": "core/traefik",
     "role": "Reverse proxy: TLS, access policies and security headers in front of every other service",
@@ -869,7 +2255,16 @@
     "version": "3.7"
   },
   "core/warpgate": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Identity, access and secrets",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "Warpgate",
     "path": "core/warpgate",
     "role": "Lightweight access proxy for SSH, HTTPS, databases, Kubernetes, RDP and VNC",
@@ -880,7 +2275,16 @@
     "version": "0.29.0"
   },
   "core/zot": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Developer tools",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "zot",
     "path": "core/zot",
     "role": "OCI registry for your own build output",
@@ -891,7 +2295,16 @@
     "version": "2.1.21"
   },
   "monitoring/beszel": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Monitoring",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 3,
+      "summary": "3 services"
+    },
     "name": "Beszel",
     "path": "monitoring/beszel",
     "role": "Lightweight host and per-container metrics hub",
@@ -902,7 +2315,16 @@
     "version": "0.19.0"
   },
   "monitoring/beszel-agent": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Monitoring",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services"
+    },
     "name": "Beszel Agent",
     "path": "monitoring/beszel-agent",
     "role": "Agent that reports a remote host's metrics to Beszel",
@@ -913,7 +2335,16 @@
     "version": "0.19.0"
   },
   "monitoring/changedetection": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Monitoring",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "changedetection.io",
     "path": "monitoring/changedetection",
     "role": "Watches web pages for changes: restocks, prices, terms",
@@ -924,7 +2355,16 @@
     "version": "0.60.4"
   },
   "monitoring/gatus": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Monitoring",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "Gatus",
     "path": "monitoring/gatus",
     "role": "Uptime and status page defined as YAML",
@@ -935,7 +2375,16 @@
     "version": "5.36.0"
   },
   "monitoring/healthchecks": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Monitoring",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "Healthchecks",
     "path": "monitoring/healthchecks",
     "role": "Dead-man's switch that alerts when a cron job or backup stops reporting",
@@ -946,18 +2395,64 @@
     "version": "4.4"
   },
   "monitoring/langfuse": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-21",
+        "model": "paid self-hosted edition",
+        "source": "https://langfuse.com/self-hosting/license-key",
+        "statement": "paid self-hosted edition"
+      },
+      "edition_gating": {
+        "checked": "2026-09-21",
+        "source": "https://langfuse.com/self-hosting/license-key",
+        "statement": "project-level RBAC roles, audit logs, data retention policies, server-side data masking, SCIM with the organisation management API, and the instance management API require a paid licence key when self-hosting"
+      },
+      "use_restrictions": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/langfuse/langfuse/blob/main/LICENSE",
+        "statement": "none for the MIT-licensed portion; content under `ee/`, `web/src/ee/` and `worker/src/ee/` is under the separate licence in `ee/LICENSE`"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
     "domain": "AI and local AI",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "ClickHouse",
+        "PostgreSQL",
+        "Redis",
+        "object storage"
+      ],
+      "init_services": 0,
+      "services": 6,
+      "summary": "6 services · ClickHouse + PostgreSQL + Redis + object storage"
+    },
     "name": "Langfuse",
     "path": "monitoring/langfuse",
     "role": "LLM observability: traces, scores and prompts from any instrumented application",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://github.com/langfuse/langfuse/pkgs/container/langfuse",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-09-22",
+    "verified_version": "4.38.0",
     "version": "4.38.0"
   },
   "monitoring/ntfy": {
+    "decision_facts": {
+      "use_restrictions": {
+        "checked": "2026-09-21",
+        "source": "https://github.com/binwiederhier/ntfy",
+        "statement": "none — the repository carries both `LICENSE` (Apache-2.0) and `LICENSE.GPLv2`, and neither restricts commercial or hosted use"
+      }
+    },
+    "decision_facts_checked": "2026-09-21",
     "domain": "Monitoring",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "ntfy",
     "path": "monitoring/ntfy",
     "role": "Push notifications over HTTP, the receiving end for every other alert",
@@ -968,7 +2463,16 @@
     "version": "2.28.0"
   },
   "monitoring/uptime-kuma": {
+    "decision_facts": {},
+    "decision_facts_checked": null,
     "domain": "Monitoring",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
     "name": "Uptime Kuma",
     "path": "monitoring/uptime-kuma",
     "role": "Uptime monitoring with a status page and many notification channels",

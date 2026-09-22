@@ -19,6 +19,17 @@ dependency on anything else in the repository. Put it on a second host, a small
 VPS, or use the public instance the ntfy project operates instead of running one
 at all. The reasoning is in [`../README.md`](../README.md#where-the-receiver-runs).
 
+## Try it locally
+
+Runs on `http://localhost:8080` without Traefik, DNS or a certificate.
+
+```bash
+cp .env.local.example .env.local
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+# http://localhost:8080
+docker compose -f docker-compose.local.yml --env-file .env.local down
+```
+
 ## Setup
 
 ```bash

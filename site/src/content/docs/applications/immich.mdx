@@ -13,8 +13,20 @@ vector extensions, and Valkey for the job queue.
 <StackEvidence stack="apps/immich"
   gap="everything below. The stack has never been brought up here: the first-run migrations, mobile app upload and the restore path are read from the stack's files and upstream documentation rather than observed." />
 
-Needs: [Traefik](/infrastructure/traefik/) running, a domain, and storage for the
-library.
+**To try it:** Docker, and storage for whatever library you import. See [Try it locally](#try-it-locally).
+
+**To deploy it behind the proxy:** [Traefik](/infrastructure/traefik/) running, a domain, and storage for the library.
+
+## Try it locally
+
+On your own machine, with no proxy, domain or certificate. From `apps/immich/`:
+
+```bash
+cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+```
+
+Then open `http://localhost:2283`. Stop it again with the same command and `down`.
 
 ## Installation
 

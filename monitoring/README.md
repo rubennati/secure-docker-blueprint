@@ -57,6 +57,10 @@ Not deployable here yet. See [`ROADMAP.md`](../ROADMAP.md) for status.
 - **Zabbix**, **Grafana + Prometheus** — metrics and dashboards
 - **Scrutiny** — disk S.M.A.R.T. health
 - **Gotify** — push notifications
+- **Cabot** — alerts on Graphite metrics, Jenkins jobs and HTTP checks. Evaluated
+  2026-09-21 and held: its newest image, 0.11.16, is from January 2019 and builds
+  on Node 4, and the repository's last push was in 2023. See
+  [`../docs/audits/candidate-evaluation-2026-09-21.md`](../docs/audits/candidate-evaluation-2026-09-21.md).
 
 ## Recommended starter combo
 

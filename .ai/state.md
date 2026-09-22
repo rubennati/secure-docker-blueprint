@@ -2,17 +2,43 @@
 
 > If this file conflicts with git (branch, commits, tags), trust git.
 
-**Last updated:** 2026-09-19
+**Last updated:** 2026-09-22
 
-- **Phase:** pre-1.0. Latest tag `v0.9.0` (2026-09-17); `dev` carries the Priority 1
-  capability work below, unreleased. Work happens on a
+- **Phase:** pre-1.0. Latest tag `v0.9.2` (2026-09-22), which is where `main`
+  stands; what `dev` carries beyond it is `git rev-list --count v0.9.2..dev`, and
+  it is not repeated here. Work happens on a
   short-lived branch and reaches `dev` through a pull request; `dev` reaches
   `main` the same way. Both branches reject a direct push.
-- **Current milestone:** v0.10.0 — Measured resource limits. The path to v1.0.0 and
-  what still blocks it: [`../docs/v1-readiness-audit.md`](../docs/v1-readiness-audit.md).
+- **Last completed:** the stabilization programme, in two runs. The first was PRs
+  #115, #119, #124, #125, #126. The second closed R14 and R15, built and corrected
+  W8's system, and wrote the production deployment lifecycle
+  ([`../docs/standards/deployment-lifecycle.md`](../docs/standards/deployment-lifecycle.md)).
+  What each changed, what remains and why:
+  [`../docs/v1-readiness-audit.md`](../docs/v1-readiness-audit.md) → *What the
+  stabilization programme did* and *Remaining work*. Actionable items are GitHub
+  Issues; [`tasks.md`](tasks.md) holds only what no issue owns.
+- **Also completed (2026-09-21/22):** the candidate batches A–G (#140, #145, #146,
+  #150, #153, #156, #159, #160, #161, #162) —
+  twelve stacks added as a recorded exception to the application hold
+  ([`decisions.md`](decisions.md), 2026-09-21), six held as evaluation entries,
+  and one fix they surfaced in `business/akaunting`. Evidence per product:
+  [`../docs/audits/candidate-evaluation-2026-09-21.md`](../docs/audits/candidate-evaluation-2026-09-21.md).
+  Host verification ran on 2026-09-22: `Last verified` for nine, three recorded
+  with a limitation; what is left is upstream requests and follow-ups —
+  `tasks.md` §6.
+- **Current milestone:** v0.10.0 — Measured resource limits. Whether it stays a
+  release is open (D4 in the audit): the measurement needs the same host session
+  as the verification backlog.
 - **Definition of done for v0.10.0:** every `✅` stack's limits come from a
   measurement on a real install rather than from the derivation rule
   (`docs/resource-measurement.md`).
+- **The one thing a new session should know:** nothing structural is broken. The
+  checkers, the generated views and the site catalogue agree with the tree. What
+  is left needs a host, or a decision that is written down and waiting. C1, the missing
+  Trivy gate, is closed: `.trivy-baseline.json` records the CRITICAL findings that
+  exist and `scripts/ci/trivy-gate.py` fails the scan on any that is not recorded.
+  **No finding is marked FIX BEFORE V1 any more** — everything else open is
+  evidence, a recorded decision, or standing research coverage.
 
 ## Snapshot
 
@@ -42,13 +68,15 @@
   `docs/standards/compose-structure.md`, coverage in the generated Local column.
 - Trivy scans every image the checkers discover rather than a hand-kept list, and
   reports images it could not pull instead of passing over them — currently
-  `docker.n8n.io/n8nio/n8n`, hitting Docker Hub's anonymous pull rate limit.
+  `docker.n8n.io/n8nio/n8n` and Langfuse's two images, each acknowledged in
+  `.trivy-baseline.json` for Docker Hub's anonymous pull rate limit.
   Each image's full findings go to a per-run artifact; the job summary carries
   the count-level index (`scripts/ci/trivy-summarize.py`) instead of a raw
   per-image table in the log. The vulnerability database is cached across runs,
   one entry per UTC day; Trivy's own staleness check still governs refreshes.
-  CLI pinned to `v0.74.0`. Still `--exit-code 0` — the assessment pass
-  `docs/security-verification.md` names as the prerequisite has not run yet.
+  CLI pinned to `v0.74.0`. Trivy's own exit code stays 0; `scripts/ci/trivy-gate.py`
+  fails the job on a CRITICAL finding not recorded in `.trivy-baseline.json`. It
+  is not a required check.
 - CI jobs and what each one blocks on: [`quality-gates.md`](quality-gates.md),
   documented per job in `docs/standards/ci.md`. All ten are required on a pull
   request into `dev` and into `main`, and both rulesets require the branch to be
@@ -279,6 +307,58 @@ presets stay for applications that set nothing. Keycloak, Authentik,
 Nextcloud, Vaultwarden and Matomo move after a measurement each, and Keycloak
 also needs an access policy for the stacks that call it and a router for its
 admin paths.
+
+**The rate limits break code-split interfaces as well.** Measured on the test host
+on 2026-09-22, with a browser engine and with a replay of each first page load
+over one HTTP/2 connection. Open WebUI requests 173 files: under `sec-2` (burst
+50) 65 came back `429` and the interface showed an error, under `sec-2-spa` (burst
+200) none. Dify's workflow editor requests 291, of them 164 static files: 64 × `429`
+under `sec-2`, none under `sec-2-spa`. Windmill requests about 850 and fails under
+both — 412 × `429` under `sec-2-spa`. Langfuse (152) and LiteLLM (160) stayed
+under the limit. Of the twelve candidate stacks, CISO Assistant (77 files, 14 ×
+`429` under `sec-2`) moved to `sec-2-spa`; Twenty requests 412 and serves its
+assets with `max-age=0`, so a warm browser revalidates every one — `429` under
+both chains, as Windmill; the other interfaces stayed under `sec-2`
+(DefectDojo 42 on its dashboard, ERPNext 67 on its desk, calnode's admin
+interface 54).
+→ *Decided 2026-09-22:* no stack drops to `sec-1` to get past a limit. The
+measurements go into the review below.
+
+**Traefik labels and middlewares are reviewed as a whole before v1.0.0** — see
+[`../ROADMAP.md`](../ROADMAP.md). They grew stack by stack; 89 stacks route
+through Traefik, 84 of them take their chain from `.env`. After v1.0.0 a renamed
+middleware disables the router of every deployment that names it. Open, besides
+the two points above:
+
+- **Names.** Twelve chains put headers, framing and rate limit into one name.
+  38 stacks default to `sec-2` and 35 to `sec-3`; `sec-0` and `sec-1e` are used
+  by none. `e` reads as "embeddable" and permits only the application's own
+  origin. `spa` names a kind of application rather than what the chain changes, a
+  burst of 200 — the chain file calls the `-spa` chains VPN-only, the block they
+  use is described as fit for public applications. `sec-authentik` carries the
+  chains' prefix but is an authentication gate, and the label pattern has no slot
+  for it.
+- **Fit per application**, Nextcloud for one: what an application needs to start
+  without errors and stay responsive under a working day's load, and whether
+  presets or per-application settings answer that. Every rate-limit figure above
+  is a first page load; no stack has a measurement under sustained use.
+- **CrowdSec.** 45 of those 84 stacks have no `APP_TRAEFIK_THREAT` slot, so a
+  bouncer middleware cannot be attached from `.env`. The profile ladder is in
+  [`../core/crowdsec/docs/profiles.md`](../core/crowdsec/docs/profiles.md).
+- **Authentik.** Forward auth exists only as a commented-out block in
+  `core/traefik/ops/templates/dynamic/integrations.yml.tmpl`.
+- **Client address.** The rate limits and access policies do not say which
+  address counts, and Traefik's documentation says both then use the connecting
+  address: an office behind one NAT address shares one bucket, traffic through
+  Cloudflare counts per edge address. The comment in `traefik.yml.tmpl` says
+  trusting Cloudflare's forwarded headers gives `ipAllowList` the real client.
+  Not measured.
+- **Already tracked.** First-load counts for the four photo galleries and
+  `apps/it-tools` ([`tasks.md`](tasks.md), *Blocked on a host*), and the chain for
+  Seafile's four path-scoped routers (issue #39). `core/portainer`'s first load
+  fits `sec-4` (issue #37).
+
+→ The review may change names and structure, or confirm them.
 
 ## Active constraints
 

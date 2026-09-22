@@ -7,6 +7,7 @@
 - **Docs:** https://sdk.collaboraonline.com/docs/installation/CODE_Docker_image.html
 - **Vendor:** Collabora Productivity (Cambridge, UK) — LibreOffice-based
 - **License:** MPL-2.0
+- **Decision facts checked:** not yet
 - **Origin:** UK · Collabora Productivity Ltd · non-EU
 - **Domain:** Documents and e-signature
 - **Role:** Office document editing server based on LibreOffice

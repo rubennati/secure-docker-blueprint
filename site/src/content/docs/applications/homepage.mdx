@@ -12,7 +12,21 @@ bookmarks, one for widgets, one for settings. One container, no database.
 <StackEvidence stack="apps/homepage"
   gap="a restore. There is nothing here to restore as long as the configuration is committed — which is the assumption, not a verified fact." />
 
-Needs: [Traefik](/infrastructure/traefik/) running and a domain.
+**To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
+
+**To deploy it behind the proxy:** [Traefik](/infrastructure/traefik/) running and a domain.
+
+## Try it locally
+
+On your own machine, with no proxy, domain or certificate. From `apps/homepage/`:
+
+```bash
+cp .env.local.example .env.local
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+```
+
+Then open `http://localhost:3000`. Stop it again with the same command and `down`.
+
 
 ## Installation
 

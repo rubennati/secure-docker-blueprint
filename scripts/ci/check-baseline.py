@@ -220,6 +220,24 @@ HOST_MODE_EXCEPTIONS: dict[str, dict[str, Exception]] = {
             "risk":         "Same as monitoring/beszel — accepted, low risk.",
         },
     },
+    # Reached only through backup/urbackup/network-host.yml, an opt-in overlay.
+    # check-overlays.py validates that merged variant, which is what surfaced
+    # this: the base stack is on a bridge network and has no host-mode service.
+    "backup/urbackup": {
+        "urbackup-app": {
+            "reason":       "The host network namespace is what UDP broadcast client discovery "
+                            "needs — a bridged container never sees the subnet's broadcast "
+                            "traffic. Opt-in only: the base stack is bridged and Traefik-routed.",
+            "alternatives": "Adding clients by hostname or IP works on the bridge network and is "
+                            "the default; the server initiates those connections outbound. The "
+                            "overlay exists for LAN discovery alone.",
+            "risk":         "Accepted where applied, and deliberately not the default. Applying it "
+                            "gives up Traefik routing and TLS — the web interface answers on "
+                            "http://<host>:55414 with no access policy in front of it, holding "
+                            "every client's file index. The overlay documents restricting that "
+                            "port at the host firewall or to a VPN interface.",
+        },
+    },
 }
 
 
@@ -238,13 +256,18 @@ def fmt_exception(exc: Exception) -> str:
     )
 
 
-def check_compose(path: Path) -> list[dict]:
-    """Return a list of findings for a single compose file."""
+def check_compose(path: Path, doc: dict | None = None) -> list[dict]:
+    """Return a list of findings for a single compose file.
+
+    `doc` supplies an already-resolved configuration instead of reading `path`,
+    so check-overlays.py can hand in the effective result of merging a stack with
+    one of its overlays. `path` still identifies the stack, which is how the
+    documented exceptions are keyed.
+    """
     findings = []
 
     try:
-        with open(path) as f:
-            doc = yaml.safe_load(f)
+        doc = _structure.compose_load(path) if doc is None else doc
     except yaml.YAMLError as e:
         return [{"level": "FAIL", "service": "—", "rule": "YAML parse error", "detail": str(e)}]
 
@@ -335,6 +358,9 @@ def check_compose(path: Path) -> list[dict]:
 
 
 def main() -> int:
+    # Opt-in overlays are not listed here. They change the effective configuration
+    # of a stack rather than standing alone, so check-overlays.py validates each
+    # merged variant instead — using these same rules.
     compose_files = sorted(
         f for app in _structure.find_apps() for f in _structure.compose_files(app)
     )

@@ -8,6 +8,7 @@
 - **Release notes:** https://github.com/paperless-ngx/paperless-ngx/releases
 - **Config reference:** https://docs.paperless-ngx.com/configuration/
 - **License:** MIT
+- **Decision facts checked:** not yet
 - **Origin:** Community · no single company · no single jurisdiction
 - **Domain:** Documents and e-signature
 - **Role:** Document management with OCR, tagging and full-text search

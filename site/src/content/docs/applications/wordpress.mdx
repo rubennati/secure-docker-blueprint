@@ -12,8 +12,21 @@ rules applied after installation. Two containers.
 <StackEvidence stack="apps/wordpress"
   gap="everything below. The stack has never been brought up here: the installer, the .htaccess hardening step and the upgrade path from 6.x are read from the stack's files rather than observed." />
 
-Needs: [Traefik](/infrastructure/traefik/) running, a domain, and an SMTP relay
-for anything WordPress sends.
+**To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
+
+**To deploy it behind the proxy:** [Traefik](/infrastructure/traefik/) running and a domain, and an SMTP relay via plugin.
+
+## Try it locally
+
+On your own machine, with no proxy, domain or certificate. From `apps/wordpress/`:
+
+```bash
+cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+```
+
+Then open `http://localhost:8080`. Stop it again with the same command and `down`.
+
 
 ## Installation
 

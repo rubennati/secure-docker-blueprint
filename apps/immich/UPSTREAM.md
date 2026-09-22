@@ -6,6 +6,9 @@
 - **GitHub:** https://github.com/immich-app/immich
 - **Stock compose:** https://github.com/immich-app/immich/releases/latest/download/docker-compose.yml
 - **License:** AGPL-3.0
+- **Edition gating:** none — upstream states that "all features will be free, forever" and that nothing will be put behind a paywall; buying a product supports the developers and unlocks nothing — https://docs.immich.app/overview/support-the-project/ · checked 2026-09-21
+- **Commercial model:** free self-hosted — https://docs.immich.app/overview/support-the-project/ · checked 2026-09-21
+- **Decision facts checked:** 2026-09-21
 - **Origin:** US · Alex Tran · non-EU
 - **Domain:** Photos
 - **Role:** Photo and video backup with mobile apps and machine-learning search

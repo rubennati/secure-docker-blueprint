@@ -6,6 +6,7 @@
 - **GitHub:** https://github.com/Velocidex/velociraptor
 - **Docs:** https://docs.velociraptor.app
 - **License:** AGPL-3.0 (GitHub's own license detector reports `NOASSERTION` for this repository; the actual `LICENSE` file at the repository root is the unmodified GNU AGPLv3 text, confirmed by reading it directly)
+- **Decision facts checked:** not yet
 - **Origin:** Originally Velocidex (Australia), acquired by Rapid7 (United States) in 2021, which maintains it today · non-EU
 - **Domain:** Security operations
 - **Role:** Endpoint forensics and threat hunting across a fleet, driven by queries

@@ -28,6 +28,17 @@ No Traefik, no separate database — the smallest possible single-node
 Teleport, and the only one of the five PAM/bastion stacks here that does
 not use this repository's reverse proxy at all. See "Network exposure".
 
+## Try it locally
+
+Runs on `http://localhost:3080` without Traefik, DNS or a certificate; port 3025 is the auth service.
+
+```bash
+cp .env.local.example .env.local
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+# http://localhost:3080
+docker compose -f docker-compose.local.yml --env-file .env.local down
+```
+
 ## Setup
 
 Generate the config once, before the first real start — this is not

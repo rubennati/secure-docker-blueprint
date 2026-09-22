@@ -7,6 +7,7 @@
 - **Docs:** https://docs.nextcloud.com/server/latest/admin_manual/
 - **Example path:** `.examples/docker-compose/with-nginx-proxy/mariadb/fpm/`
 - **License:** AGPL-3.0
+- **Decision facts checked:** 2026-09-21
 - **Origin:** Germany · Nextcloud GmbH · EU
 - **Domain:** Files, wiki and collaboration
 - **Role:** File sync and share with calendars, contacts and collaborative editing

@@ -7,6 +7,7 @@
 - **Docs:** https://www.keycloak.org/guides
 - **Release notes:** https://www.keycloak.org/docs/latest/release_notes/
 - **License:** Apache-2.0
+- **Decision facts checked:** not yet
 - **Origin:** US · Red Hat, Inc. (CNCF incubating project) · non-EU
 - **Domain:** Identity, access and secrets
 - **Role:** Identity provider for applications that speak OpenID Connect or SAML, with LDAP and AD federation

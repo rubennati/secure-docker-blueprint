@@ -6,6 +6,7 @@
 - **Previous image:** https://hub.docker.com/r/4km3/dnsmasq — retired 2026-09-13, see Version / tag notes
 - **dnsmasq docs:** https://thekelleys.org.uk/dnsmasq/doc.html
 - **License:** GPL-2.0 or GPL-3.0, at your discretion
+- **Decision facts checked:** not yet
 - **Origin:** UK · Simon Kelley · non-EU
 - **Domain:** Infrastructure
 - **Role:** DNS forwarder with wildcard zones for split-DNS setups

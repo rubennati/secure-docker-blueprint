@@ -5,7 +5,9 @@
 - **NocoDB project:** https://nocodb.com/
 - **GitHub:** https://github.com/nocodb/nocodb
 - **Docker Hub:** https://hub.docker.com/r/nocodb/nocodb
-- **License:** AGPL-3.0
+- **License:** Sustainable Use License 1.0 (source-available, **not** OSI-approved). NocoDB relicensed from AGPL-3.0; the licence file is dated 2026-01-29
+- **Use restrictions:** it may be used or modified only for your own internal business purposes or for non-commercial or personal use, and given to others only free of charge for non-commercial purposes; licensing and copyright notices may not be removed. Only the `master` and `develop` branches are licensed at all — https://github.com/nocodb/nocodb/blob/master/LICENSE.md · checked 2026-09-21
+- **Decision facts checked:** 2026-09-21
 - **Origin:** US · NocoDB Inc · non-EU
 - **Domain:** Automation and data
 - **Role:** Spreadsheet-style interface on top of a database

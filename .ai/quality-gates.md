@@ -9,7 +9,10 @@ in [`../docs/standards/ci.md`](../docs/standards/ci.md).
 python3 scripts/ci/check-baseline.py         # security baseline per container
 python3 scripts/ci/check-crowdsec-config.py --templates   # CrowdSec ships default-off
 python3 scripts/ci/check-structure.py        # canonical structure, tags, secrets
+python3 scripts/ci/check-overlays.py         # opt-in overlay variants (needs Docker)
 python3 scripts/ci/lifecycle-report.py --check   # status consistency + LIFECYCLE freshness
+python3 scripts/ci/sovereignty-report.py --check # licence and origin complete and current
+python3 scripts/ci/site-catalogue.py --check  # every stack has a catalogue entry
 python3 scripts/ci/check-coverage.py         # content no checker covers
 python3 scripts/ci/check-links.py            # broken relative links and anchors
 npx markdownlint-cli2                        # markdown style
@@ -38,12 +41,12 @@ docker compose config --quiet          # in the stack directory
 | Job | Blocks on |
 |---|---|
 | Secret scan (gitleaks) | credentials anywhere in history |
-| Compose validation | a compose file that does not parse or resolve |
+| Compose validation | a compose file that does not parse or resolve; an opt-in overlay whose merged variant Compose refuses, adds an unbaselined service, or weakens an existing one |
 | Required files | a stack without `README.md` or `.env.example` |
 | Sentinel value check | `__REPLACE_ME__` in a committed `.env` |
 | Security baseline | missing `no-new-privileges`, `privileged: true`, socket-proxy violations; `core/traefik` rendered with the shipped `.env.example` yielding a CrowdSec plugin or a `crowdsec-*` middleware, or rendered with `CROWDSEC_BOUNCER_ENABLED=true` yielding anything less than the plugin plus both middlewares keyed |
-| Canonical structure | `:latest` or major-only tags, plaintext secrets, unprotected `.secrets/`, a datastore on the public network |
-| Status model | owner and mirror disagreeing on a status, ✅ without a verification date, stale `LIFECYCLE.md`; warns when `UPSTREAM.md` duplicates the README's backup procedure |
+| Canonical structure | `:latest` or major-only tags, plaintext secrets, unprotected `.secrets/`, a datastore on the public network, a service without a memory/PID ceiling or a swap policy, an opt-in overlay patching a service its stack does not define |
+| Status model | owner and mirror disagreeing on a status, ✅ without a verification date, stale `LIFECYCLE.md`; a stack with no licence, origin, domain or role, or a stale `sovereignty.json` / `catalogue.json`; warns when `UPSTREAM.md` duplicates the README's backup procedure |
 | Checker coverage | a content directory no checker enumerates, a top-level directory declared nowhere |
 | Docs QA | markdown style drift, a link to a missing file, a link to a missing heading, a prose-register phrase anywhere in a reader-facing file |
 | Workflow supply chain | an action pinned to a mutable tag, a SHA without a version comment, a workflow without `permissions:` |
@@ -109,8 +112,8 @@ What neither mode covers:
 
 ## Not blocking, deliberately
 
-- **Trivy** runs weekly with `exit-code: 0` — informational until the existing
-  CRITICAL findings have been assessed once.
+- **Trivy** is not a required check. It runs weekly and on pull requests into
+  `main`, and fails on a CRITICAL finding not recorded in `.trivy-baseline.json`.
 - **Structure warnings** (missing resource limits, missing healthchecks) are
   reported, not enforced. They need values measured on a real host — v0.10.0.
 - **`legacy-stamp`** — a stack carrying the pre-v0.5.1 `Last checked:` field.

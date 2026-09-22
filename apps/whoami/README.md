@@ -27,6 +27,17 @@ This lets you confirm:
 - Middlewares are seeing the correct client IP (important when CrowdSec or IP allowlists are active)
 - TLS terminated correctly at Traefik (no request reached the backend over plain HTTP)
 
+## Try it locally
+
+Runs on `http://localhost:8080` without Traefik, DNS or a certificate.
+
+```bash
+cp .env.local.example .env.local
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+# http://localhost:8080
+docker compose -f docker-compose.local.yml --env-file .env.local down
+```
+
 ## Setup
 
 ```bash

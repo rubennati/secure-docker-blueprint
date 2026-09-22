@@ -48,11 +48,13 @@ Five options.
 
 ### Scheduling & booking
 
-Three 1:1-booking apps.
+Five 1:1-booking apps.
 
 | App | Stack | When to use |
 |---|---|---|
 | [Cal.diy](caldiy/) | Next.js + Postgres + Redis | MIT community edition of Cal.com (community fork, personal use). |
+| [calnode](calnode/) | Single Go binary + SQLite | Booking pages, admin interface and a REST API in one container. The first-run setup route is public until it has run once; pre-1.0. |
+| [calrs](calrs/) | Single Rust binary + SQLite | Availability read from a CalDAV server you already run. Registration is open until the first administrator exists. |
 | [Easy!Appointments](easyappointments/) | PHP + MariaDB | Lightweight PHP alternative, established 2013, GPL-3.0. |
 | [Tymeslot](tymeslot/) | Elixir/Phoenix + Postgres | Calendar sync with Google, Outlook, Apple and CalDAV, video links, reminder mail; AGPL-3.0, releases several times a week. |
 
@@ -146,7 +148,8 @@ secrets and shares nothing between people.
 ### Security operations
 
 Specialized security-operations tools — deception, supply-chain risk
-tracking, incident response, endpoint hunting. Each is a standard,
+tracking, vulnerability management, governance and compliance, incident
+response, endpoint hunting. Each is a standard,
 Traefik-or-direct-port app: no other stack in this repository depends on
 them, which is why they sit here rather than in `core/`, alongside
 [step-ca](../core/step-ca/) (PKI) and [zot](../core/zot/) (registry), the
@@ -158,7 +161,9 @@ here" for why that category stays out of this blueprint entirely.
 | App | Stack | Description |
 |---|---|---|
 | [OpenCanary](opencanary/) | Single container | Deception/honeypot — fake FTP, Telnet, HTTP, MySQL, RDP services that log every connection attempt. Not an IDS, EDR or SIEM — see its README |
+| [CISO Assistant](ciso-assistant/) | Backend + task worker + frontend + Postgres | Governance, risk and compliance — ISO 27001, NIS2, NIST CSF and 300+ further frameworks mapped to controls, risks and evidence. Administrator created at first start; the first start takes about ten minutes |
 | [Dependency-Track](dependency-track/) | API + frontend + Postgres | Software Composition Analysis — SBOM ingestion, component and vulnerability tracking across a portfolio over time. Not a container/image scanner — see its README for the Trivy distinction |
+| [DefectDojo](defectdojo/) | nginx + uWSGI + Celery worker and beat + initializer + Postgres + Valkey | Vulnerability management — imports scanner and pentest output, deduplicates findings, tracks them to closure. Upstream's public default keys replaced |
 | [DFIR-IRIS](dfir-iris/) | App + worker + Postgres + RabbitMQ | Collaborative incident-response case management — cases, IOCs, evidence, timelines. Holds real incident data; read its Security model before deploying |
 | [Velociraptor](velociraptor/) | Single container (server only) | Endpoint DFIR / threat hunting — VQL queries and collection across a fleet. An operative platform, not an always-on convenience app; losing its config breaks existing client trust — see its README |
 
@@ -186,6 +191,11 @@ here" for why that category stays out of this blueprint entirely.
 | [Dify](dify/) | 10 services | LLM application platform — chat and workflow apps, knowledge bases on pgvector, plugin-based model providers, sandboxed code nodes. Setup password guards the first account; agent runtime and `/e/` webhooks not carried |
 | [vLLM](vllm/) | Single container | High-throughput OpenAI-compatible model serving on an NVIDIA GPU. `--api-key` covers `/v1` only, so the route forwards `/v1/` and nothing else. CUDA image not yet run on a GPU |
 
+Held after evaluation: **obot** (MCP gateway and agent platform). It runs the MCP
+servers it hosts as containers and does not start without the Docker API; creating
+those containers takes write access, which is root-equivalent on the host. See
+[`../docs/audits/candidate-evaluation-2026-09-21.md`](../docs/audits/candidate-evaluation-2026-09-21.md).
+
 ### Developer & admin tools
 
 | App | Stack | Description |
@@ -196,6 +206,7 @@ here" for why that category stays out of this blueprint entirely.
 | [Mailpit](mailpit/) | Single container | SMTP sink for trying out the stacks that send mail — accepts every message, shows it, delivers nothing |
 | [Whoami](whoami/) | Single container | Traefik debug service to verify routing, TLS and middlewares — deploy temporarily, then disable |
 | [Windmill](windmill/) | Server + 2 workers + PostgreSQL 18 | Code-first scripts, flows, APIs and scheduled jobs on a Postgres-backed queue. Replace the built-in administrator before exposing it |
+| [httpbin](httpbin/) | Single container | HTTP request and response service for testing clients — echoes, status codes, redirects, delays. The Python Software Foundation's fork; start command replaced because the image's own fails in 0.10.4 |
 
 Docker-management tools (Dockhand / Portainer / Hawser) are in [`core/`](../core/): they control Docker itself, which is an installation-scoped capability. Whoami sits here instead — it is a routed diagnostic that serves no other stack.
 

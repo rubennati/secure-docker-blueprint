@@ -8,6 +8,9 @@
 - **Release notes:** https://docs.goauthentik.io/docs/releases/
 - **Reference compose:** https://docs.goauthentik.io/docs/installation/docker-compose
 - **License:** MIT
+- **Edition gating:** enhanced audit logging, client certificate authentication, RADIUS EAP-TLS, password history compliance, privileged access management, account lockdown, and Google Workspace and Microsoft Entra ID provisioning are listed as Enterprise; the list does not include the OIDC or SAML provider — https://docs.goauthentik.io/enterprise/enterprise-features/ · checked 2026-09-21
+- **Commercial model:** per-user subscription — https://goauthentik.io/pricing/ · checked 2026-09-21
+- **Decision facts checked:** 2026-09-21
 - **Origin:** Netherlands · Authentik Security · EU
 - **Domain:** Identity, access and secrets
 - **Role:** Identity provider with forward-auth, OAuth2, OpenID Connect and SAML

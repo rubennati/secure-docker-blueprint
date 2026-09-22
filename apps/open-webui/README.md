@@ -26,8 +26,8 @@ mkdir -p volumes/data && sudo chown 1000:1000 volumes/data
 docker compose up -d
 ```
 
-The first start downloads a ~90 MB embedding model from Hugging Face into
-`volumes/data` and takes a couple of minutes. Log in as `ADMIN_EMAIL` with the
+The first start downloads the embedding model's full Hugging Face repository,
+about 890 MB, into `volumes/data/cache` and takes a couple of minutes. Log in as `ADMIN_EMAIL` with the
 password `ops/init.sh` printed. After the first start, set `HF_HUB_OFFLINE=1` in
 `.env` and run `docker compose up -d`: the model is cached and no request leaves
 for Hugging Face. Set `.secrets/openai_api_key.txt` to the backend's key if it
@@ -52,10 +52,11 @@ host.
   `cap_drop: ALL`, `no-new-privileges`, only `/tmp` (tmpfs) and `volumes/data`
   writable, no published port.
 - **Startup errors that are safe to ignore.** The log shows
-  `Read-only file system: '…/static/favicon.png'` (and `custom.css`, `splash.png`).
-  Open WebUI tries to copy branding files it already ships; the files exist and are
-  served (`200`). The same error occurs for any non-root user, since the directory
-  is root-owned in the image.
+  `Read-only file system: '/app/backend/open_webui/static/…'` for a dozen files
+  (`favicon.png`, `logo.png`, `loader.js`, `site.webmanifest` and others). Open
+  WebUI tries to copy branding files it already ships; the files exist and are
+  served (`200`). The same error occurs for any non-root user, since the
+  directory is root-owned in the image.
 - **Egress.** Only Hugging Face (first start, see Setup) and `BACKEND_URL`. The
   update check and telemetry variables are switched off. Document upload and web
   search features make further outbound requests when used.
@@ -66,9 +67,12 @@ host.
 
 ## Status
 
-`scaffolded` — see [UPSTREAM.md](UPSTREAM.md#verification-performed-2026-09-19).
+Run behind Traefik with TLS on 2026-09-21 (v0.11.3): login, a document
+uploaded and answered from, LiteLLM as a second backend, offline mode, a restart,
+and the restore below. Full log in
+[`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-21).
 
-## Local deployment validation
+## Try it locally
 
 ```bash
 cp .env.local.example .env.local
@@ -85,5 +89,11 @@ Ports bind to `127.0.0.1`; Traefik and the Docker Secrets mechanism are not used
 
 Back up `volumes/data` (`webui.db`, `uploads/`, `vector_db/`) and
 `.secrets/webui_secret_key.txt`. Stop the container first for a consistent SQLite
-copy. Restore by placing both back and running `docker compose up -d`; the
-`cache/` directory can be omitted, it is downloaded again.
+copy. Restore by placing both back and running `docker compose up -d`.
+
+`cache/` can be left out of the backup; the embedding model in it is downloaded
+again — but only while `HF_HUB_OFFLINE=0`. With `HF_HUB_OFFLINE=1` a restore
+without `cache/` starts `healthy` and logs `Error loading SentenceTransformer`:
+answers ignore attached documents and new uploads fail to process. Start once
+with `HF_HUB_OFFLINE=0`, then set it back to `1` and run `docker compose up -d`
+again — or keep `cache/embedding` in the backup.

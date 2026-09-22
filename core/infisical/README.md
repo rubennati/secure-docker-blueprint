@@ -79,7 +79,7 @@ yield both halves.
 
 **Restore order:** database first, then the app.
 
-## Local testing (no Traefik)
+## Try it locally
 
 Run standalone on `http://localhost:8080` — plain env, no Traefik/Docker Secrets:
 

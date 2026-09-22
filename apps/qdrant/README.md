@@ -67,16 +67,13 @@ under `./volumes` it does not appear.
 
 ## Status
 
-`scaffolded`. 2026-09-18 (v1.19.1): the local and production compose files were
-booted with `read_only`, `cap_drop: ALL`, `no-new-privileges` and uid 1000, and
-reached `healthy`. A collection was created, four vectors inserted, plain and
-filtered similarity searches returned the expected nearest points, a snapshot
-was written, and the data survived both a container restart and removing and
-recreating the container. Requests without the key or with a wrong key returned
-`401`. Traefik routing and TLS have not been run against a real host. Full log
-in [`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-18).
+Run behind Traefik with TLS on 2026-09-21 (v1.19.1): the REST API
+through the route, gRPC from a peer container with a 100,000-point collection,
+the read-only key through an override, snapshot recovery, a restart, and the
+restore below. Full log in
+[`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-21).
 
-## Local deployment validation
+## Try it locally
 
 ```bash
 cp .env.local.example .env.local       # set QDRANT_API_KEY: openssl rand -hex 24
@@ -107,7 +104,14 @@ Add `./volumes/snapshots` to the borgmatic source list; the key belongs in the
 same repository as the other `.secrets/` files.
 
 **Restore order:** put the key file and `volumes/snapshots` back, start the
-container, then recover each collection from its snapshot
-(`PUT /collections/<name>/snapshots/recover` — not yet rehearsed here). Copying a stopped instance's
-`volumes/storage` back also works when nothing was writing at the time. Full
-architecture: [`backup/README.md`](../../backup/README.md).
+container, then recover each collection from its snapshot:
+
+```bash
+curl -X PUT -H "api-key: $(cat .secrets/qdrant_api_key.txt)" \
+  -H 'Content-Type: application/json' \
+  https://qdrant.example.com/collections/<name>/snapshots/recover \
+  -d '{"location":"file:///qdrant/snapshots/<name>/<snapshot-file>"}'
+```
+
+Copying a stopped instance's `volumes/storage` back also works when nothing was
+writing at the time. Full architecture: [`backup/README.md`](../../backup/README.md).

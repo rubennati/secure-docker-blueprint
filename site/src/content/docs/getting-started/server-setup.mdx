@@ -109,12 +109,13 @@ traffic over IPv4 and leaves the IPv6 path untested.
 
 <Steps>
 
-1. Clone into its own directory:
+1. Clone into its own directory and check out the newest release:
 
    ```bash
    sudo mkdir -p /srv/blueprint && sudo chown "$USER" /srv/blueprint
    cd /srv/blueprint
-   git clone --branch main https://github.com/rubennati/secure-docker-blueprint.git .
+   git clone https://github.com/rubennati/secure-docker-blueprint.git .
+   git checkout "$(git tag --sort=-v:refname | head -n1)"   # the newest release
    ```
 
    :::note

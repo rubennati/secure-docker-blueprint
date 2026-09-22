@@ -15,7 +15,7 @@ services:
   #      https://<HOST>/accounts/oidc/<SSO_PROVIDER_ID>/login/callback/
   #   4. Copy Client ID + Secret to .env
   # --------------------------------------------------------
-  app:
+  paperless-app:
     environment:
       # -- SSO / OpenID Connect --
       PAPERLESS_DISABLE_REGULAR_LOGIN: "true"

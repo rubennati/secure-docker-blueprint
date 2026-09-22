@@ -5,6 +5,101 @@ Each item links to the relevant standard or lesson learned.
 
 ---
 
+## What a stack owes, before the steps
+
+The nine steps below are the order of work. This table is the contract they add up
+to — what is mandatory, what depends on the stack, what nobody types, and what only
+a host can establish.
+
+| | What | Enforced by |
+|---|---|---|
+| **Mandatory** | `docker-compose.yml`, `.env.example`, `README.md`, `UPSTREAM.md`, `.gitignore` | `check-structure.py`, `Required files` |
+| | Pinned image tag — never `latest` or a bare major | `check-structure.py` |
+| | `no-new-privileges`, no direct socket mount, datastores off `proxy-public` | `check-baseline.py` |
+| | `memory`, `pids` and `memswap_limit` on every service | `check-structure.py` |
+| | `License`, `Origin`, `Domain`, `Role` in `UPSTREAM.md` | `sovereignty-report.py --check`, `site-catalogue.py --check` |
+| | A row in the category `README.md` linking the directory | `check-coverage.py` (`unlisted-stack`) |
+| | A `## Backup` section, or `n/a` with the reason | `lifecycle-report.py --check` |
+| **Conditional** | Ships `docker-compose.local.yml` → the README needs a `## Try it locally` section with the command, the URL and any credential step | review |
+| | Ships an opt-in overlay → it must merge and stay inside the baseline | `check-overlays.py` |
+| | Reachable over the network → Traefik labels, an access policy and a security chain | `traefik-security.md` |
+| | Holds persistent state → the backup section names every volume and database a restore needs | review |
+| **Generated — never edited** | `LIFECYCLE.md`, `site/src/data/lifecycle.json`, `sovereignty.json`, `catalogue.json` | the three `--check` runs fail when stale |
+| **Runtime evidence only** | `Last verified: DATE (vX.Y.Z)`, and any lifecycle state above `scaffolded` | a host, not a checker |
+
+A stack reaches the operator site by existing: the catalogue is generated from
+`UPSTREAM.md`, so `Domain` and `Role` are what put it there. Nothing else has to be
+added to the site by hand.
+
+Its **operational footprint** — service count, the infrastructure it needs beside
+the application, a reserved GPU — is read from the stack's own compose files by the
+same generator. There is no field to fill and none to keep current: change the
+compose file and the catalogue follows. The point is comparison without judgement,
+so that a two-service stack with a MariaDB and a ten-service one with a database, a
+cache and workers are distinguishable without either being called the better
+choice.
+
+### Licence and edition facts
+
+**Every stack states its research state. This one is required:**
+
+```text
+- **Decision facts checked:** YYYY-MM-DD   # the questions below were asked that day
+- **Decision facts checked:** not yet      # nobody has looked
+```
+
+`site-catalogue.py --check` fails without it, which is what stops a new stack
+entering with its state unsaid. The marker is a **process record, not a claim
+about upstream**, so it carries no source — that is the whole difference between
+it and a `none` fact, which asserts something about someone else's terms and does
+carry one.
+
+It buys the distinction that matters: a dated marker with no fields means the
+questions were asked and nothing an operator decides on came back. Without it the
+only way to say that would be three `none` fields in every file, which is
+bookkeeping wearing the clothes of knowledge.
+
+Three further fields may then appear in the `## Source` block. A stack with a date
+and none of them is normal and complete:
+
+```text
+- **Use restrictions:** <statement> — <source url> · checked YYYY-MM-DD
+- **Edition gating:** <statement> — <source url> · checked YYYY-MM-DD
+- **Commercial model:** <term> — <source url> · checked YYYY-MM-DD
+```
+
+- **An absent field means nobody has looked**, not that there is nothing to
+  declare. A stack that was checked and gates nothing records `none` with its
+  source, which is a different statement and reads differently on the site.
+- **Every field carries a source and a date.** `site-catalogue.py --check`
+  rejects one that does not: an unsourced claim about someone else's licence is
+  the failure these fields exist to prevent. Each carries its own date because a
+  licence changes rarely and a pricing page often.
+- **`Commercial model` takes one of** `free self-hosted` · `no paid edition` ·
+  `paid add-on` · `paid self-hosted edition` · `per-user subscription` ·
+  `commercial licence` · `quote only` · `none`, optionally followed by `;` and a
+  qualifier. A **price is not a value here.** It moves, and an undated number in
+  a repository is worse than none — the source link is where the amount is read.
+- **Only facts an operator decides on.** A paid edition that gates SSO, a licence
+  that forbids hosting it for customers, a user ceiling — those change a decision.
+  Sponsorship tiers, consulting, support contracts and the vendor's own hosted
+  offering do not: `UPSTREAM.md` is not a catalogue of how a project earns money.
+- **State what upstream states.** "Feature X is listed as Enterprise" is a fact;
+  "feature X is missing from the free edition" usually is not, unless upstream
+  says so. The licence does not decide whether a stack needs these fields: an
+  OSI-licensed project can reserve OIDC, SAML, audit logs or HA for a paid
+  edition just as a source-available one can.
+
+**No memory figure appears there, and none should be added from the compose files.**
+`deploy.resources.limits.memory` is the ceiling this repository sets on a service,
+not what the application needs — publishing it as a requirement would turn a local
+policy into a fabricated fact about upstream. What upstream publishes as a minimum
+is per-stack metadata with a source; real idle, typical and peak figures need a
+host, which is what [`../resource-measurement.md`](../resource-measurement.md)
+governs.
+
+---
+
 ## 1. Research the Image
 
 Before writing any YAML, answer these questions:
@@ -228,6 +323,18 @@ incident. Keep the heading exactly `## Backup` — `lifecycle-report.py` reads i
 
 ## 9. Document
 
+- [ ] Add a row to the category `README.md` linking the new directory — the one
+      inventory that is not generated, and the one CI now guards
+- [ ] If the stack ships `docker-compose.local.yml`, give the README a
+      `## Try it locally` section: the command, the `http://localhost:<port>` it
+      answers on, and any credential or bootstrap step. That heading is the
+      user-facing name for this path everywhere except the `development/`
+      patterns, which validate a build rather than evaluate a product
+- [ ] Add a `## [Unreleased]` entry to `CHANGELOG.md`
+- [ ] Regenerate the derived views and commit them:
+      `python3 scripts/ci/lifecycle-report.py --write`,
+      `python3 scripts/ci/sovereignty-report.py`,
+      `python3 scripts/ci/site-catalogue.py`
 - [ ] Add any bugs found to `docs/bugfixes/` with root cause and fix
 - [ ] Update this checklist if you discovered a new pitfall
 

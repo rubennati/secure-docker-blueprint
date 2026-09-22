@@ -18,6 +18,19 @@ Cloud file storage with collaboration, search, and antivirus scanning.
 | seasearch | seasearch | Full-text search |
 | clamav | clamav | Antivirus scanning |
 
+## Try it locally
+
+Runs on `http://127.0.0.1:8001` without Traefik, DNS or a certificate.
+
+```bash
+cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+# http://127.0.0.1:8001
+docker compose -f docker-compose.local.yml --env-file .env.local down
+```
+
+`.env.local` holds plain values, not Docker Secrets — local only.
+
 ## Quick Start
 
 ```bash

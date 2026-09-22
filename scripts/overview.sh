@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # =============================================
-# Docker Ops Blueprint – Service Overview
+# Secure Docker Blueprint – Service Overview
 # =============================================
 # Scans all components and prints a summary
 # table from .env (or .env.example as fallback).
@@ -35,7 +35,10 @@ scan_component() {
     env_file="${dir}/.env.example"
     source_label="example"
   else
-    return
+    # A stack with no env file of either kind — host-installed, or not yet
+        # configured. Bare `return` would inherit the failed test's status and, under
+        # `set -e`, end the whole survey at the first such stack.
+        return 0
   fi
 
   local name
@@ -85,8 +88,27 @@ done
 
 # Print table
 printf "\n"
-printf "${BOLD} Docker Ops Blueprint – Service Overview${RESET}\n"
+printf "${BOLD} Secure Docker Blueprint – Service Overview${RESET}\n"
 printf "${DIM} Scanned: $(date '+%Y-%m-%d %H:%M')${RESET}\n"
+
+# Which blueprint release this deployment came from, and whether it still matches
+# it. A host that has drifted from a tag cannot be reasoned about from the
+# CHANGELOG, so the drift is stated rather than left to be discovered later.
+if git -C "$ROOT_DIR" rev-parse --git-dir >/dev/null 2>&1; then
+  release="$(git -C "$ROOT_DIR" describe --tags --exact-match 2>/dev/null || true)"
+  if [ -n "$release" ]; then
+    printf "${DIM} Blueprint: ${RESET}${BOLD}%s${RESET}\n" "$release"
+  else
+    nearest="$(git -C "$ROOT_DIR" describe --tags --abbrev=0 2>/dev/null || echo 'no tag reachable')"
+    printf "${DIM} Blueprint: ${YELLOW}not on a release${RESET}${DIM} — %s + %s commit(s)${RESET}\n" \
+      "$nearest" "$(git -C "$ROOT_DIR" rev-list --count "$nearest"..HEAD 2>/dev/null || echo '?')"
+  fi
+  if [ -n "$(git -C "$ROOT_DIR" status --porcelain 2>/dev/null | grep -vE '\.env$|\.secrets/|/volumes/' || true)" ]; then
+    printf "${DIM} ${YELLOW}Working tree modified${RESET}${DIM} beyond .env, .secrets/ and volumes/${RESET}\n"
+  fi
+else
+  printf "${DIM} Blueprint: ${YELLOW}not a git checkout${RESET}${DIM} — the release cannot be identified${RESET}\n"
+fi
 printf "\n"
 
 # Header

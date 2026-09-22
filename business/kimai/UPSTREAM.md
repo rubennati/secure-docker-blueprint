@@ -6,6 +6,9 @@
 - **GitHub:** https://github.com/kimai/kimai
 - **Docker Hub:** https://hub.docker.com/r/kimai/kimai2
 - **License:** AGPL-3.0
+- **Edition gating:** audit trail logs, which record changes to timesheets, customers, projects and activities, are a paid store plugin rather than part of the AGPL core; paid plugins are annual subscriptions with a perpetual fallback licence, so the last downloaded version keeps working while updates need an active subscription — https://www.kimai.org/store/audit-trail-bundle.html · checked 2026-09-21
+- **Commercial model:** paid add-on — https://www.kimai.org/store/audit-trail-bundle.html · checked 2026-09-21
+- **Decision facts checked:** 2026-09-21
 - **Origin:** Germany · Kevin Papst · EU
 - **Domain:** Business operations
 - **Role:** Time tracking with reports and invoicing hooks

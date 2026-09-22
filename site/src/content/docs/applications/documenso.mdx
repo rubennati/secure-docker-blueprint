@@ -12,8 +12,20 @@ the application and PostgreSQL.
 <StackEvidence stack="business/documenso"
   gap="everything below. The stack has never been brought up here: the entrypoint that injects the secrets, the signing certificate, and a document actually being signed are all read from the stack's files rather than observed." />
 
-Needs: [Traefik](/infrastructure/traefik/) running, a domain, SMTP credentials,
-and OpenSSL to create the signing certificate.
+**To try it:** Docker, and a signing certificate — the local stack mounts the same `cert.p12`. See [Try it locally](#try-it-locally).
+
+**To deploy it behind the proxy:** [Traefik](/infrastructure/traefik/) running, a domain, SMTP, and OpenSSL for the certificate.
+
+## Try it locally
+
+`docker-compose.local.yml` runs the stack on `http://localhost:3000` with no
+Traefik, DNS or certificate. Generate `cert.p12` first — the local stack mounts
+the same file.
+
+```bash
+cp .env.local.example .env.local
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+```
 
 Documenso ships no signing certificate. You generate one during installation, and
 every signature the instance produces is made with it — see [Backup](#backup).
@@ -99,17 +111,6 @@ To use the SDKs, name the parent origins rather than removing the header: `sec-3
 for same-origin framing, or a per-app middleware replacing `X-Frame-Options` with
 a `frame-ancestors` allowlist. Neither has been run against Documenso's embed
 flow here.
-
-### Trying it without a proxy
-
-`docker-compose.local.yml` runs the stack on `http://localhost:3000` with no
-Traefik, DNS or certificate. Generate `cert.p12` first — the local stack mounts
-the same file.
-
-```bash
-cp .env.local.example .env.local
-docker compose -f docker-compose.local.yml --env-file .env.local up -d
-```
 
 ## Backup
 

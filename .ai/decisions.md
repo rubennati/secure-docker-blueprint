@@ -6,6 +6,62 @@ this file is the index and covers decisions that have no other home.
 
 ---
 
+## 2026-09-21 · Proposed products go in as stacks while the application hold stands
+
+`ROADMAP.md` adds no application while the v1.0 items are open. The maintainer asked
+for the products proposed on 2026-09-21, and three proposed after them, to be added
+anyway so they can be tried.
+
+**A deliberate exception, not a lifted hold.** Twelve went in as stacks: calrs,
+Calnode, Akaunting, SolidInvoice, FacturaScripts, Twenty, Chatwoot, CISO Assistant,
+DefectDojo, ERPNext, Rclone Web and httpbin. Six stayed evaluation entries: obot,
+which does not start without the Docker API; DayOtter, Dapta Calendars, MAILFLOW-AI
+and Crater, which publish no image; and Cabot, whose newest image is from 2019.
+
+Each went through the same bar as any stack: a published, version-tagged image; a
+deployment its project supports; licence and origin stated; and a functional test
+before its status was claimed. All are `scaffolded`. The exception changes nothing
+that v1.0 requires and does not open the hold for the other candidates in
+`ROADMAP.md`. None was forked; that stays the last step, as with Cal.diY.
+
+Evidence per product:
+[`../docs/audits/candidate-evaluation-2026-09-21.md`](../docs/audits/candidate-evaluation-2026-09-21.md).
+
+---
+
+## 2026-09-20 · Image findings are recorded as facts, and the shipped access default follows them
+
+The Trivy image scan blocks nothing (`--exit-code 0`), and the last full scan found
+1003 CRITICAL findings across 59 of 99 images, all with a published fix. Almost all sit
+in the operating-system layer or in bundled components of the image as upstream
+publishes it — Perl, libc headers, GnuTLS, ImageMagick, Chromium. The blueprint does not
+build those images, so the question is not how to fix them but how to record and handle
+them.
+
+**Facts, not a grade.** Each image gets recorded facts: CRITICAL and HIGH counts, how
+many have a fix, the age of the release, the scan date, and licence limits where they
+exist (a commercial edition with a user cap is a licence fact, not a security one). The
+existing dimensions — owner, origin, licence — already work this way and the
+sovereignty report is explicit that it is not a score; this is a third set beside them.
+Wording on the site names findings in the image as published and passes no judgement on
+the project.
+
+**The facts drive one thing: the shipped default.** A stack with findings that make it
+unsuitable for open exposure ships a restricted access class (`acc-private`,
+`acc-tailscale`, or `acc-deny`), and a checker refuses `acc-public` for it. This is the
+existing rule that every stack starts restricted, made machine-checked. Counts alone
+mislead — a Perl fix in a Postgres image is not an ImageMagick fix in an upload
+server — so the judgement of reach is an authored `Exposure` field with a reason, and the
+generated facts only suggest the value.
+
+**Handling, in order.** (1) Upstream has a fix: raise the pin, as any upgrade. (2) No fix
+yet, but the stack is contained: record the facts and the reason; the Trivy gate then
+blocks only findings that are not already recorded. (3) No fix, upstream not reacting,
+and the service is exposed: fork or remove. Cal.diY is the precedent for the third step —
+it was forked from a project that had been compromised and is hardened in phases
+(`apps/caldiy/docs/hardening-plan.md`). The list of steps to build this is in
+[`tasks.md`](tasks.md#1-image-findings-as-facts--closes-audit-finding-c1).
+
 ## 2026-09 · Personal data on the public site
 
 **Status: direction, not yet a decision.** Summary in [`../ROADMAP.md`](../ROADMAP.md#a-public-repository-should-not-carry-personal-data); the full reasoning is here.
@@ -612,15 +668,34 @@ removed from every compose file, from the four healthchecks that read it, and fr
 every `.env.example`. Changing the value moves the label away from the port the image
 listens on, so it breaks routing instead of relocating it.
 
-## 2026-08 · No review gate on `main`
+## 2026-09-20 · No approving-review gate while there is one maintainer
 
-Branch protection on `main` requires seven status checks and no approving review.
-With a single maintainer, a required review is satisfied by the author approving
-their own pull request, which records an approval that nobody performed. The status
-checks are the part of the gate that reports a result.
+**Decided.** While this repository has a single maintainer:
 
-`CHANGELOG.md` recorded five checks and one approving review. That was not the live
-configuration.
+- `required_approving_review_count` stays **0** on both protected branches;
+- the required CI checks stay enforced — ten on `dev` and ten on `main`;
+- the rulesets keep **no bypass actor**, so a red check blocks the owner too;
+- no approval rule is introduced that the sole author cannot satisfy;
+- the requirement is revisited when a second maintainer exists.
+
+Both branches are governed by rulesets rather than classic branch protection, and
+both also require the branch to be up to date before merging.
+
+With a single maintainer a required review has only two shapes, and neither is worth
+having. GitHub does not let an author approve their own pull request, so a required
+review plus no bypass means nothing can ever merge; a required review with a bypass
+means the rule is bypassed on every single merge. The second is what would raise the
+OpenSSF Scorecard Branch-Protection check from 3 to 6 — a score describing a rule
+nobody honours.
+
+The ceiling is not reachable anyway: Scorecard's tier 4 requires **two** reviewers,
+so 10/10 is out of reach for a single-maintainer repository regardless of
+configuration. Recorded so the question is not reopened expecting a different answer.
+Revisit when a second maintainer exists — that is the condition that changes it, not
+the score.
+
+`CHANGELOG.md` once recorded five checks and one approving review, and an earlier
+version of this entry recorded seven checks. Neither was the live configuration.
 
 ## 2026-07 · Two troubleshooting documents, one entry point
 

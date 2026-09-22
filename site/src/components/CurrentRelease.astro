@@ -1,0 +1,19 @@
+---
+/**
+ * The repository's current release, read at build time from the newest release
+ * heading in CHANGELOG.md — the file that owns shipped work — so the site never
+ * carries a second copy of the version. The site deploys from `main`, where the
+ * newest heading is the release `main` stands on.
+ */
+import changelog from '../../../CHANGELOG.md?raw';
+
+const REPO = 'https://github.com/rubennati/secure-docker-blueprint';
+
+const match = changelog.match(/^## \[(\d+\.\d+\.\d+)\] — (\d{4}-\d{2}-\d{2})/m);
+if (!match) {
+	throw new Error('CurrentRelease: CHANGELOG.md has no "## [X.Y.Z] — YYYY-MM-DD" release heading.');
+}
+const [, version, date] = match;
+---
+
+<a href={`${REPO}/releases/tag/v${version}`}>v{version}</a> · {date} · <a href={`${REPO}/blob/main/CHANGELOG.md`}>what changed</a>

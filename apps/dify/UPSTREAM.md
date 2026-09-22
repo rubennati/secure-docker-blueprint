@@ -6,14 +6,14 @@
 - **GitHub:** https://github.com/langgenius/dify
 - **Docs:** https://docs.dify.ai/
 - **License:** Dify Open Source License (Apache-2.0 with additional conditions: no multi-tenant service without written authorisation, frontend logo and copyright preserved; not OSI-approved)
+- **Use restrictions:** operating a multi-tenant environment requires written commercial permission, and the LOGO and copyright information in the console and applications may not be removed or modified; the branding condition applies to the frontend, meaning the `web/` directory and the web image — https://github.com/langgenius/dify/blob/main/LICENSE · checked 2026-09-21
+- **Commercial model:** commercial licence — https://github.com/langgenius/dify/blob/main/LICENSE · checked 2026-09-21
+- **Decision facts checked:** 2026-09-21
 - **Origin:** LangGenius · no country stated in its published terms · no country
 - **Domain:** AI and local AI
 - **Role:** LLM application platform: chat and workflow apps, knowledge bases, plugin-based model providers
 - **Based on version:** `1.17.1`
-
-No `Last verified` line yet — see [Verification performed](#verification-performed-2026-09-19)
-below. The field asserts Traefik/TLS routing was confirmed on a real host, which
-has not happened; this stack stays `scaffolded` until it does.
+- **Last verified:** 2026-09-22 (1.17.1) — behind Traefik with TLS: the setup through `/install`, a marketplace plugin with a model provider, a workflow with code, HTTP and LLM nodes, a restart, and a restore from its three dumps
 
 ## What we use
 
@@ -58,7 +58,68 @@ PostgreSQL profile, pgvector as the vector store, minus what is listed below:
 | `ssrf-proxy`: root, five capabilities, writable root | Squid's entrypoint writes `/etc/squid` and the cache at start and Squid drops privileges itself. Not narrowed further |
 | Two networks besides `proxy-public` | `app-internal` (no route out) for everything; `app-egress` for the SSRF proxy and the plugin daemon, the two services that must reach the internet |
 | `CHECK_UPDATE_URL=""` | Upstream's update check |
+| `worker-beat` mounts `./volumes/storage` | The app factory creates the storage directory at start, beat included; on the read-only root without the mount it stopped with `OSError: [Errno 30]` and restarted in a loop |
+| `dify-web`: `HOSTNAME: 0.0.0.0`, healthcheck on `127.0.0.1` | Next.js listens on the address `HOSTNAME` resolves to; Docker's container ID can resolve to the `app-internal` address, and Traefik then gets `502` while the healthcheck on `$(hostname)` passes |
+| `APP_TRAEFIK_SECURITY=sec-2-spa` | Sign-in, the app list and the workflow editor load over 160 script chunks; `sec-2`'s burst of 50 answered part of them with `429` and the editor stayed on its spinner |
 | Web and plugin-daemon healthchecks | `web` probes its own hostname address (it does not bind loopback). The plugin daemon, worker, beat and Squid have no meaningful probe; marker comments in the compose file |
+
+## Verification performed (2026-09-22)
+
+Behind Traefik with TLS, with the Ollama stack's route as the model endpoint:
+
+- A client outside the access policy's ranges got `403` on the route, over IPv4
+  and IPv6
+- `worker-beat` restarted in a loop: the app factory creates its storage
+  directory at start, and beat — read-only, with no storage mount — stopped with
+  `OSError: [Errno 30] Read-only file system: 'storage'`. With
+  `./volumes/storage` mounted as for `dify-api` and `worker` it ran; the compose
+  file now mounts it
+- Setup while the router was `acc-deny` (every route path `403`): through the
+  API inside `dify-api` — `/console/api/setup` `401` before `/console/api/init`,
+  `/init` `401` with a wrong setup password and `201` with the right one,
+  `/setup` `201`, step `finished`. The README's sequence — keep `acc-deny`, then
+  open `/install` in a browser — could not be followed, because `acc-deny`
+  refuses the browser as well. The README now opens `/install` through the
+  shipped `acc-private`, with the setup password as the guard: on a fresh
+  instance in headless Chromium, `/install` led to `/init`, a wrong setup
+  password stayed there, the right one opened the account form, and the console
+  followed
+- After switching to `acc-private`: `dify-web` answered `502` after one
+  recreation. Next.js listens on the address `HOSTNAME` resolves to; Docker sets
+  it to the container ID, which resolved to the `app-internal` address, where
+  Traefik does not connect, and the healthcheck probed the same address and
+  stayed `healthy`. `HOSTNAME: 0.0.0.0` and a healthcheck on `127.0.0.1` are now
+  in the compose file
+- Headless Chromium (Playwright 1.63): sign-in and the app list under `sec-2`
+  without `429`; opening the workflow editor once got 4 × `429` on script chunks
+  and stayed on its loading spinner. Replaying the 164 script chunks of sign-in,
+  app list and editor over one HTTP/2 connection: 64 × `429` under `sec-2`, none
+  under `sec-2-spa`, which `.env.example` now ships. The editor showed the Code,
+  HTTP Request and LLM nodes
+- The console login API expects the password Base64-encoded, as the web app
+  sends it (`FieldEncryption.decrypt_field`)
+- `langgenius/openai_api_compatible` 0.0.66 installed from the marketplace;
+  `volumes/plugin_daemon`, owned by uid 1001, received the package, its `cwd`
+  and a `uv` cache. A model added with the Ollama route as endpoint was
+  validated `active`
+- A workflow imported from DSL (start → code → HTTP → LLM → end), published, run
+  through `/v1/workflows/run` with an app key: `succeeded`, the code node's
+  output, `http_status` `200` for a public site through Squid, and the LLM's
+  reply; a wrong app key `401`
+- After `docker compose down` and `up -d` the workflow ran again
+- Backup as the README describes: `docker compose stop api …` exits `0` and
+  leaves `dify-api` running — Compose skips the unknown name; the README now
+  names `dify-api`
+- Restore into empty volumes: the three dumps loaded with `ON_ERROR_STOP` and no
+  error, the archive unpacked, the stack started — sign-in, the plugin, the
+  model (`active`, its credential decrypted with the unchanged `SECRET_KEY`) and
+  the workflow run all came back, with no container restart
+- Peaks: `dify-api` 575 MiB, `worker` 411 MiB, `worker-beat` 408 MiB of its
+  512 MiB, `plugin-daemon` 245 MiB, `dify-web` 180 MiB, `sandbox` 147 MiB,
+  PostgreSQL 93 MiB, pgvector 69 MiB
+
+**Not yet exercised:** webhooks and `/e/`; workflow collaboration over `/socket.io/`, which is not
+routed; an Agent app; upgrade from an earlier Dify.
 
 ## Verification performed (2026-09-19)
 
@@ -88,12 +149,6 @@ the model backend:
   absent from the configured environment of api, worker, plugin-daemon and sandbox
 - Two further plugins installed while the plugin daemon ran as uid 1001 with a
   read-only root
-
-**Not yet exercised:** Traefik routing and TLS (the router rules are validated by
-`docker compose config` only); the browser console (all steps used the API); workflow
-and Agent apps; webhooks and `/e/`; workflow collaboration; a hosted model provider;
-resource use under load; backup and restore; the plugin daemon's volume ownership on
-Linux (the test volumes were world-writable); upgrade from an earlier Dify.
 
 ## Upgrade checklist
 

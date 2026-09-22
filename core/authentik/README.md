@@ -36,6 +36,19 @@ AUTHENTIK_EMAIL__PASSWORD:       file:///run/secrets/SMTP_PASSWORD
 
 No entrypoint wrapper needed.
 
+## Try it locally
+
+Runs on `http://localhost:9000` without Traefik, DNS or a certificate.
+
+```bash
+cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+# http://localhost:9000
+docker compose -f docker-compose.local.yml --env-file .env.local down
+```
+
+`.env.local` holds plain values, not Docker Secrets — local only.
+
 ## Setup
 
 ```bash

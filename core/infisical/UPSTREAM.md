@@ -7,6 +7,8 @@
 - **Docs:** https://infisical.com/docs/self-hosting/overview
 - **Self-host compose reference:** `docker-compose.prod.yml` in the upstream repo
 - **License:** MIT (core; some features under a separate enterprise licence)
+- **Use restrictions:** none for the MIT-licensed portion; content under any `ee/` directory is under the separate licence in `ee/LICENSE` — https://github.com/Infisical/infisical/blob/main/LICENSE · checked 2026-09-21
+- **Decision facts checked:** 2026-09-21
 - **Origin:** US · Infisical Inc · non-EU
 - **Domain:** Identity, access and secrets
 - **Role:** Central secret manager, an alternative to per-stack Docker Secrets

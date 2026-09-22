@@ -1,0 +1,120 @@
+# Upstream Reference
+
+## Source
+
+- **Image:** https://github.com/intuitem/ciso-assistant-community/pkgs/container/ciso-assistant-community%2Fbackend
+- **GitHub:** https://github.com/intuitem/ciso-assistant-community
+- **Docs:** https://intuitem.gitbook.io/ciso-assistant
+- **License:** AGPL-3.0
+- **Origin:** France · intuitem · EU
+- **Domain:** Security operations
+- **Role:** Governance, risk and compliance: frameworks such as ISO 27001 and NIS2 mapped to controls, risks and evidence
+- **Decision facts checked:** 2026-09-21
+- **Use restrictions:** none — the community images this stack pins are released under AGPLv3, and the commercially licensed code in `enterprise/` ships only in separate enterprise binaries — https://github.com/intuitem/ciso-assistant-community/blob/main/LICENSE.md · checked 2026-09-21
+- **Edition gating:** SSO/SAML, the API, multiple frameworks and self-hosting are in the community edition; the Pro edition adds, among others, SCIM group provisioning, fine-grained per-object permissions, a multi-level domain hierarchy and custom fields — https://intuitem.com/compare · checked 2026-09-21
+- **Commercial model:** paid self-hosted edition — https://intuitem.com/compare · checked 2026-09-21
+- **Based on version:** `v4.0.5`
+- **Last verified:** 2026-09-22 (v4.0.5) — behind Traefik with TLS: the interface and the `/api` split, a framework imported into a compliance assessment, Huey's scheduled tasks, a restart, and the README's restore
+
+The origin comes from intuitem's legal notice (RCS Versailles, France).
+
+## What we use
+
+- `ghcr.io/intuitem/ciso-assistant-community/backend:v4.0.5` for backend and Huey,
+  and `…/frontend:v4.0.5`. Upstream's compose pins `:latest` with `pull_policy:
+  always`; not used here. Per upstream's licence file, the community binaries are
+  AGPLv3; the commercially licensed code ships only in separate enterprise images.
+- `postgres:16.14` — upstream's template runs `postgres:16`.
+- The shape of upstream's `config/templates/docker-compose-postgresql-traefik.yml.j2`:
+  backend, Huey, frontend and PostgreSQL, with `/api` routed to the backend.
+
+## What we changed and why
+
+| Change | Reason |
+|--------|--------|
+| `config/entrypoint.sh` exports `POSTGRES_PASSWORD`, `DJANGO_SECRET_KEY` and `DJANGO_SUPERUSER_PASSWORD` | No `_FILE` variants; upstream's template writes the database password into the compose file |
+| `DJANGO_SECRET_KEY` from a Docker Secret | Left unset, the image generates the key into the data directory, next to the data — with it set, no such file is written (verified) |
+| First administrator from `DJANGO_SUPERUSER_EMAIL` and the secret | The image's `startup.sh` creates it unattended when the email is set; upstream's templates leave the variable out |
+| Healthcheck against `localhost`, not `127.0.0.1` | Django answers 400 to a Host outside `ALLOWED_HOSTS`, measured |
+| `start_period: 900s` on the backend | The first start took about ten minutes: every migration plus 326 framework libraries. Later starts took two to three and a half minutes until every service was up |
+| `APP_TRAEFIK_SECURITY=sec-2-spa` | The interface's first load requests 77 files; under `sec-2` fourteen got `429` — script chunks, page nodes and an SVG — and the page did not load. Under `sec-2-spa` all 84 requests were answered — measured |
+| Frontend healthcheck in Node | The image has no shell |
+| No Qdrant, no MCP server | Both are absent from upstream's PostgreSQL + Traefik template; Qdrant serves the AI features, MCP is an optional profile |
+
+Upstream's own hardening — `read_only`, `cap_drop: ALL`, `no-new-privileges`, uid
+1001 — is kept as it is.
+
+## Verification performed (2026-09-22)
+
+Behind Traefik with TLS, with the shipped `acc-tailscale`, and `./volumes` on a
+local ext4 filesystem:
+
+- A client outside the access policy's ranges got `403` on `/`, `/login` and
+  `/api/health/`, over IPv4 and IPv6
+- First load of the interface: 77 requests, 14 of them `429` under `sec-2`
+  (script chunks, page nodes, one SVG) and the page did not load; under
+  `sec-2-spa` 84 requests, all answered. `.env.example` now ships `sec-2-spa`
+- Through the route, the frontend at `/` and the backend at `/api`: login through
+  `POST /api/_allauth/app/v1/auth/login` returned a token; with it
+  `/api/iam/current-user/` answered `200`, without it or with a wrong one `401`
+- The ISO/IEC 27001:2022 library loaded through
+  `POST /api/stored-libraries/<id>/import/` in 6.6 s; a domain, a perimeter and a
+  compliance assessment on that framework created through the API — 140
+  requirement assessments; one set to `compliant`
+- In the browser: login, the analytics page and the assessment, all requests
+  answered (82, 38 and 101)
+- Huey executed its scheduled tasks every minute (`automation.workflows.tasks.*`)
+- After `docker compose down` and `up`: the token, the assessment and its result
+  unchanged; about two and a half minutes until every service was up
+- Backup as the README describes. The archive of `volumes/data` needs `sudo`
+  (uid 1001, mode `700`); Huey was stopped around it. Restore into an empty
+  database: `psql` without errors in 18 s, the archive unpacked, ownership
+  restored — the assessment with its 140 requirements, the domain and the loaded
+  framework back, and the earlier token still valid. The backend's start tried to
+  create the administrator again and logged `That email is already taken`
+- `volumes/data` holds Huey's queue (`huey.db`, SQLite, shared with the backend)
+  and `idp_oidc_private_key.pem`, generated on the first start for the built-in
+  OIDC provider
+- Peaks over the first start, the checks and the restore: backend 955 MiB (limit
+  2 GiB), PostgreSQL 136 MiB (1 GiB), frontend 431 MiB (512 MiB — about 410 MiB
+  right after a start), Huey 276 MiB (1 GiB)
+
+**Not yet exercised:** email; SSO; the MCP server and the AI features, which this
+stack leaves out.
+
+## Verification performed (2026-09-21)
+
+Against the production `docker-compose.yml` (Docker Secrets, wrapper,
+`app-internal`) on a throwaway `proxy-public` network without Traefik:
+
+- All four services started; the first start ran the migrations and loaded the
+  framework library, and the administrator was created from the environment
+  (`is_superuser` true in the database)
+- Login through `POST /api/_allauth/app/v1/auth/login` returned an access token; a
+  wrong password returned 400
+- Public sign-up through the same API returned 403
+- With `Authorization: Token …`, a domain was created and listed next to the
+  built-in "Global"; without a token the API returned 401
+- 326 stored libraries were available, among them ISO/IEC 27001:2013 and 2022
+- The frontend redirected to its login page
+- After `docker compose down` and `up`, the domain was still there
+- Hardening from `docker inspect`: backend and Huey uid 1001, frontend 1000:1000,
+  all three read-only with all capabilities dropped; no published port; the secret
+  values absent from the configured environment; no `django_secret_key` file in the
+  data directory; Huey and PostgreSQL without a route out
+
+**Not yet exercised:** Traefik routing and TLS, including the `/api` split in
+practice; the browser interface; Huey actually running a task (it started and
+loaded its configuration against PostgreSQL); email; SSO; importing a framework
+into an assessment; backup and restore.
+
+## Upgrade checklist
+
+1. Read the release notes: https://github.com/intuitem/ciso-assistant-community/releases
+2. Check the GitHub Security tab for advisories against the current version
+3. Back up the database, `volumes/data` and `django_secret_key.txt`
+4. Bump `APP_TAG` in `.env.example` — backend, Huey and frontend move together
+5. `docker compose pull && docker compose up -d`; the backend migrates at start
+6. Log in and open an assessment
+7. Update **Based on version** above — and add **Last verified** only if the
+   upgrade was exercised on a real install

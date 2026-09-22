@@ -100,7 +100,7 @@ files:
 **Restore order:** stop the container, restore both volumes together (the
 database may reference uploaded file paths), start the container.
 
-## Local testing (no Traefik)
+## Try it locally
 
 ```bash
 cp .env.local.example .env.local   # fill BETTER_AUTH_SECRET

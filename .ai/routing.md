@@ -9,11 +9,12 @@ Every entry below is **in addition to** `state.md`, which is always read first.
 | **Adding or changing an app** | `domains/coding.md` · `docs/standards/new-app-checklist.md` · `compose-structure.md` · `env-structure.md` · `security-baseline.md` · the app's own README + UPSTREAM |
 | **Version bump** | `docs/maintenance.md` Version Chain · the app's `UPSTREAM.md` · upstream release notes |
 | **Traefik, routing, middleware, TLS** | `docs/standards/traefik-security.md` · `traefik-labels.md` · `networking.md` |
-| **Security hardening** | `docs/standards/security-baseline.md` · `docs/security-verification.md` · `SECURITY.md` |
+| **Security hardening** | `docs/standards/security-baseline.md` · `docs/security-verification.md` for the controls · `docs/security-coverage.md` for the current figures (generated — never hand-edited) · `SECURITY.md` |
 | **Documentation change** | `domains/documentation.md` · `docs/standards/documentation-workflow.md` · `docs/standards/writing-style.md` · `docs/maintenance.md` File Map — roles below |
 | **Status or lifecycle** | `docs/standards/status-model.md` · `docs/maintenance.md` baseline-aligned criteria · `LIFECYCLE.md` for the current per-stack figures (generated — never hand-edited) |
 | **Architecture question** | `domains/architecture.md` · `docs/architecture.md` · `decisions.md` |
 | **Release** | `domains/release.md` · `docs/maintenance.md` Release Chain · `ROADMAP.md` |
+| **Operating a deployment** | `docs/standards/deployment-lifecycle.md` · `secrets.md` · `restore.md` · `scripts/overview.sh` |
 | **Commit, branch, push** | `docs/standards/commit-rules.md` — binding, read before every commit |
 | **Verification and CI** | `quality-gates.md` · `docs/standards/ci.md` |
 | **Continuation after interruption** | `state.md` · `progress.md` · `tasks.md` · `decisions.md` |

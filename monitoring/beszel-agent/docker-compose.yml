@@ -4,9 +4,10 @@ services:
   # BESZEL AGENT (standalone — remote host)
   # --------------------------------------------------------
   # Runs on each additional host that a central Beszel hub should
-  # monitor. The hub SSHes INTO this agent on port 45876 using its
-  # generated Ed25519 private key. This agent does not connect back
-  # to the hub — it only listens.
+  # monitor. The agent opens an outbound WSS/HTTPS connection to the
+  # hub's own address and registers itself with a token. Nothing
+  # connects IN: no listener, no published port, no inbound firewall
+  # rule on the monitored host.
   #
   # Counterpart to monitoring/beszel/ (hub + local agent).
   # Deploy this compose on every host beyond the hub host.
@@ -74,14 +75,12 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
 
     # --- Networking ---
+    # No published port, and app-internal only — the proxy never needs a route
+    # out. The agent shares this network and reaches it by service name.
+    # Publishing would be ineffective in any case: Docker silently ignores
+    # `ports:` on a container attached only to an `internal: true` network.
     networks:
       - app-internal
-    # The agent runs with network_mode: host (below), which cannot join a
-    # Docker network — it reaches this proxy over the host's loopback
-    # interface instead. Bound to 127.0.0.1 only: never the LAN, never a
-    # public interface.
-    ports:
-      - "127.0.0.1:2375:2375"
 
     # --- Health & Observability ---
     healthcheck:
@@ -121,16 +120,27 @@ services:
     # --- Configuration ---
     environment:
       TZ: ${TZ}
-      PORT: ${AGENT_PORT}
+      # The hub's own address, as the operator publishes it. The agent dials
+      # this over app-egress; the hub never dials back.
+      HUB_URL: ${HUB_URL:?Set HUB_URL in .env — the agent connects out to the hub}
+      # Registration token from the hub UI (Settings -> Tokens & Fingerprints).
+      TOKEN: ${AGENT_TOKEN:-}
       # Hub's SSH public key — paste the full key from the hub UI
       # ("+ Add System", top right), including the "ssh-ed25519" type prefix.
-      KEY: ${AGENT_KEY}
+      KEY: ${AGENT_KEY:-}
+      # Stable name for this system. Without it the agent registers under its
+      # container ID, which changes every time the container is recreated.
+      SYSTEM_NAME: ${AGENT_SYSTEM_NAME:-}
+      # Container metrics through the socket proxy, resolved by service name
+      # on app-internal — never the raw socket, never a fixed address.
+      DOCKER_HOST: tcp://socket-proxy:2375
+      # A container cannot see the host's network namespace. Left unset, the
+      # agent reports THIS CONTAINER's interface counters as the system's
+      # bandwidth. `-*` selects no interface, so the field is omitted rather
+      # than carrying a misleading value. See README, "What this provides".
+      NICS: ${AGENT_NICS:--*}
       # Optional: comma-separated mount points beyond root FS.
       EXTRA_FILESYSTEMS: ${EXTRA_FILESYSTEMS}
-      # Container metrics via the socket proxy above, not the raw socket.
-      # 127.0.0.1 because network_mode: host below has no Docker network to
-      # resolve "socket-proxy" on.
-      DOCKER_HOST: tcp://127.0.0.1:2375
 
     # --- Health & Observability ---
     # healthcheck: none — the image has no shell, so there is nothing for
@@ -138,25 +148,26 @@ services:
     # `docker run --rm --entrypoint sh <image>`.
 
     # --- Networking ---
-    # network_mode: host — required for accurate host network interface
-    # stats (eth0, tailscale0, etc.). Without it the agent sees only
-    # the container's veth, not the real host interfaces. CPU / RAM /
-    # disk still work with bridge networking if you prefer isolation.
-    #
-    # Security note: port ${AGENT_PORT} binds directly on the host network
-    # stack, not behind Traefik. This is SSH/TCP, not HTTP — Traefik does
-    # not apply. Protect with Tailscale ACLs or host firewall:
-    #   ufw allow from <hub-tailscale-ip> to any port 45876
-    # Same pattern as core/portainer-agent/ and core/hawser/.
-    network_mode: host
+    # app-internal — reaches the socket proxy, which has no route out.
+    # app-egress  — the one outbound path, used to dial the hub.
+    # No network_mode: host, no published port, no listener: nothing on this
+    # host has to be opened or firewalled for the agent.
+    networks:
+      - app-internal
+      - app-egress
 
 # --------------------------------------------------------
 # NETWORKS
 # --------------------------------------------------------
 networks:
-  # Private to the socket proxy. internal: true — no route to the internet,
-  # no route from other stacks. The agent reaches the proxy over the
-  # loopback-only published port instead (network_mode: host, above).
+  # Private to the agent and the socket proxy. internal: true — no route to
+  # the internet, no route from other stacks. The agent reaches the proxy
+  # here, by service name.
   app-internal:
     name: ${COMPOSE_PROJECT_NAME}-internal
     internal: true
+
+  # Outbound for the agent only — it dials the hub. The socket proxy stays on
+  # app-internal alone and has no route out.
+  app-egress:
+    name: ${COMPOSE_PROJECT_NAME}-egress

@@ -6,6 +6,7 @@
 - **GitHub:** https://github.com/henrygd/beszel
 - **Docker Hub:** https://hub.docker.com/r/henrygd/beszel-agent
 - **License:** MIT
+- **Decision facts checked:** not yet
 - **Origin:** US · Henry Gd (community) · non-EU
 - **Domain:** Monitoring
 - **Role:** Agent that reports a remote host's metrics to Beszel
@@ -29,7 +30,7 @@ See `monitoring/beszel/UPSTREAM.md` for the full architecture overview.
 | Change from upstream | Reason |
 |---|---|
 | **`security_opt: no-new-privileges:true`** | Baseline hardening |
-| **Socket proxy instead of a direct socket mount** | The agent's Docker client only calls `/containers/json`, `/containers/{id}/json`, `/containers/{id}/stats` and `/containers/{id}/logs` (`agent/docker.go` upstream) — `tecnativa/docker-socket-proxy` with `CONTAINERS=1` covers exactly that, `POST=0` blocks everything else. The agent reaches it over `127.0.0.1:2375` because `network_mode: host` has no Docker network to resolve a service name on. |
+| **Socket proxy instead of a direct socket mount** | The agent's Docker client only calls `/containers/json`, `/containers/{id}/json`, `/containers/{id}/stats` and `/containers/{id}/logs` (`agent/docker.go` upstream) — `tecnativa/docker-socket-proxy` with `CONTAINERS=1` covers exactly that, `POST=0` blocks everything else. The agent reaches it by service name on the stack's `internal: true` network — no published port, no fixed address. Verified against a live daemon: that permission set is exactly sufficient for discovery, per-container CPU, memory and network; `/version` and `/info` answer `403` and the agent treats both as non-fatal. |
 | **SSH public key in env, not baked in** | Blueprint: no credentials in image |
 
 ## Upgrade checklist

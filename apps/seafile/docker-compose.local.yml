@@ -3,7 +3,7 @@
 #   cp .env.local.example .env.local
 #   mkdir -p volumes/local/mysql volumes/local/redis volumes/local/seafile-data
 #   docker compose -f docker-compose.local.yml --env-file .env.local up -d
-#   http://localhost:8000
+#   http://127.0.0.1:8000
 #   docker compose -f docker-compose.local.yml --env-file .env.local down
 
 services:
@@ -143,7 +143,7 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: "6379"
       REDIS_PASSWORD: ${REDIS_PASSWORD}
-      SEAFILE_SERVER_HOSTNAME: localhost:8000
+      SEAFILE_SERVER_HOSTNAME: 127.0.0.1:8000
       SEAFILE_SERVER_PROTOCOL: http
       SITE_ROOT: /
       ENABLE_GO_FILESERVER: "true"

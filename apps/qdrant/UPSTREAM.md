@@ -6,16 +6,12 @@
 - **GitHub:** https://github.com/qdrant/qdrant
 - **Docs:** https://qdrant.tech/documentation/
 - **License:** Apache-2.0
+- **Decision facts checked:** not yet
 - **Origin:** Germany · Qdrant Solutions GmbH (Berlin) · EU
 - **Domain:** AI and local AI
 - **Role:** Vector database: collections, similarity search with filters, snapshots
 - **Based on version:** `v1.19.1`
-
-No `Last verified` line yet — see [Verification performed](#verification-performed-2026-09-18)
-below for exactly what has been exercised and what has not. The field
-asserts Traefik/TLS routing was confirmed on a real host, which this session
-could not do; setting it early would claim evidence that does not exist. This
-stack stays `scaffolded` until that happens.
+- **Last verified:** 2026-09-21 (v1.19.1-unprivileged) — behind Traefik with TLS: the REST API through the route, gRPC with 100,000 points, snapshot recovery, a restart, and the README's restore
 
 ## What we use
 
@@ -58,6 +54,38 @@ Traefik terminates it.
 Anonymous telemetry, disabled above. No other outbound connection appears in
 the log; network traffic itself was not captured.
 
+## Verification performed (2026-09-21)
+
+Behind Traefik with TLS, with the shipped `acc-private` and `sec-2`, and
+`./volumes` on a local ext4 filesystem:
+
+- A client outside the access policy's ranges got `403` on the route, over IPv4
+  and IPv6
+- `healthy` under the same hardening; no FUSE warning in the log
+- Through the route: `/healthz`, `/readyz` and `/dashboard/` `200` without a
+  key; `/collections` and `/metrics` `401` without a key and with a wrong one;
+  a collection created, four points upserted, plain and filtered queries
+  returned the expected nearest points
+- gRPC: from a peer container, `qdrant-client` with `prefer_grpc=True` created a
+  768-dimension collection and upserted 100,000 points in 32 s; indexing
+  finished after 168 s; a filtered search answered in 147 ms
+- Memory for that collection: 415 MiB peak while indexing, 193 MiB afterwards;
+  359 MB in `volumes/storage`
+- Read-only key, set through a temporary override
+  (`QDRANT__SERVICE__READ_ONLY_API_KEY`): listing, `query` and `count` `200`;
+  upsert, collection create, delete and snapshot `403`
+- Snapshot of both collections through the API, collection deleted,
+  `PUT /collections/demo/snapshots/recover` with
+  `{"location":"file:///qdrant/snapshots/demo/<file>"}` — all four points back
+- Restore as the README describes: key file and `volumes/snapshots` kept,
+  `volumes/storage` replaced by an empty directory, container started, both
+  collections recovered from their snapshots (the 375 MB snapshot in 1.7 s),
+  counts `4` and `100000`, search results unchanged
+- Both collections intact after `docker compose down` and `up -d`
+
+**Not yet exercised:** the read-only key as shipped configuration — the stack
+does not set it.
+
 ## Verification performed (2026-09-18)
 
 Against the local test stack, and against the production `docker-compose.yml`
@@ -83,11 +111,6 @@ on a throwaway `proxy-public` network without Traefik:
   startup (reproduced)
 - On the macOS test host's virtiofs bind mount Qdrant logs `FUSE filesystems
   may cause data corruption`; a Docker named volume on the VM's disk did not
-
-**Not yet exercised:** Traefik routing, TLS and the dashboard through it;
-gRPC calls (only that the port accepts a connection); the read-only key;
-snapshot recovery (`snapshots/recover`); collections large enough to size
-memory; a real Linux host filesystem under `./volumes`.
 
 ## Upgrade checklist
 

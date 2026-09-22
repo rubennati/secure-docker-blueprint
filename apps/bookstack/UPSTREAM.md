@@ -7,6 +7,7 @@
 - **LSIO image:** https://docs.linuxserver.io/images/docker-bookstack/
 - **LSIO GitHub:** https://github.com/linuxserver/docker-bookstack
 - **License:** MIT (BookStack) / GPL-3 (LSIO scripts)
+- **Decision facts checked:** not yet
 - **Origin:** UK · Dan Brown (BookStack) · non-EU
 - **Domain:** Files, wiki and collaboration
 - **Role:** Wiki with structure: shelves, books, chapters and pages

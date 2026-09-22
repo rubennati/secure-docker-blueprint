@@ -1,0 +1,45 @@
+# Calnode — local
+#
+#   cp .env.local.example .env.local
+#   ops/init.sh
+#   mkdir -p volumes/data
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   curl -s -X POST -H 'content-type: application/json' \
+#        -d '{"name":"Administrator","email":"admin@example.com","timezone":"UTC"}' \
+#        http://localhost:3000/v1/setup
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+#
+# BASE_URL stays http:// here, which is the application's development mode:
+# cookies are not marked Secure. It mounts the same volumes/data as the
+# production file, so run one at a time.
+
+services:
+
+  calnode-app:
+    image: ghcr.io/calnode/calnode:${APP_TAG}
+    container_name: calnode-local-app
+    restart: unless-stopped
+    user: "${APP_UID}:${APP_GID}"
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    entrypoint: ["/bin/sh", "/secrets-entrypoint.sh", "/entrypoint.sh"]
+    environment:
+      BASE_URL: http://localhost:3000
+      DATABASE_URL: sqlite:///data/calnode.db
+      PORT: "3000"
+      TZ: ${TZ}
+    volumes:
+      - ./config/entrypoint.sh:/secrets-entrypoint.sh:ro
+      - ./.secrets/calnode_encryption_key.txt:/run/secrets/CALNODE_ENCRYPTION_KEY:ro
+      - ./.secrets/calnode_recovery_secret.txt:/run/secrets/CALNODE_RECOVERY_SECRET:ro
+      - ./volumes/data:/data
+    tmpfs:
+      - /tmp
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks: [calnode-local]
+
+networks:
+  calnode-local:
+    name: calnode-local

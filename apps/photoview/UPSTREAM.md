@@ -5,7 +5,8 @@
 - **Photoview project:** https://photoview.github.io/
 - **GitHub:** https://github.com/photoview/photoview
 - **Docker Hub:** https://hub.docker.com/r/photoview/photoview
-- **License:** GPL-3.0
+- **License:** AGPL-3.0 — `LICENSE.txt` upstream is the GNU **Affero** GPL v3, not the plain GPL recorded here; §13 obliges an operator to offer source to users reaching it over a network
+- **Decision facts checked:** not yet
 - **Origin:** Denmark · community · EU
 - **Domain:** Photos
 - **Role:** Photo gallery that reads your existing folders, with RAW support and face recognition

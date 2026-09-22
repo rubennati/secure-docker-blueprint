@@ -77,6 +77,36 @@ copied to `.env` so variable substitution does not cause false failures.
 invalid volume/network references.  
 **Blocks merge:** yes
 
+#### Opt-in overlay variants
+
+A second step runs `scripts/ci/check-overlays.py --require-docker`. The discovery
+above deliberately excludes overlays — a file applied *on top of* a stack, such as
+`activitypub.yml` or `network-host.yml` — because they are not part of the stack
+and several are alternatives to one another.
+
+Each overlay is instead validated as its own deployment variant: `docker compose
+config` merges the stack with that one overlay, and the result is judged. Merging
+through Compose rather than in YAML is the point — the merge rules differ per key,
+and `!reset` / `!override` change them again, so an approximation would disagree
+with what an operator runs.
+
+Every overlay is merge-validated, including one that only redefines networks. The
+mandatory baseline is then applied to the services the overlay **adds or
+changes**; services it leaves alone are already covered by the canonical run, and
+an overlay that changes none is proved to resolve without inventing service checks
+it could never fail. That split is what catches a patch-only overlay — a block
+with no image, which adds no service and reads as harmless — handing an existing
+service the Docker socket, setting `privileged: true`, or clearing its memory
+ceiling.
+
+Local runs without Docker report that they could not run and exit 0;
+`--require-docker` in CI turns that into a failure.
+
+**What it catches:** a merge Compose refuses (including an overlay patching a
+service the stack does not define), an added service outside the baseline, and an
+existing service the overlay weakens.  
+**Blocks merge:** yes
+
 ---
 
 ### 3 — Structure check
@@ -196,7 +226,23 @@ Runs `scripts/ci/check-structure.py`. Severity is per rule rather than per
 category: `:latest` or major-only tags, a plaintext secret in `.env.example`, a
 `.gitignore` that does not cover `.secrets/`, a datastore on `proxy-public`, a
 service without resource limits, and a memory limit without a stated swap policy
-(`memswap_limit`) all fail. A missing healthcheck and `env_file:` are reported as
+(`memswap_limit`) all fail.
+
+The tag rule reads **every committed `*.env*.example` file in a stack**, not just
+`.env.example`, and matches both pinning styles — `<NAME>_TAG` and the whole
+reference in `<NAME>_IMAGE`. Neither was true before: 84 example files were
+outside the check, and `APP_IMAGE=x:latest` passed where `APP_TAG=latest` failed,
+for the same defect. Someone evaluating a stack from the local path is the person
+least able to tell which version they ended up running. The structural rules —
+section order, `COMPOSE_PROJECT_NAME` first — still describe `.env.example`
+alone, because they describe that file's shape rather than reproducibility.
+
+`local-pin-drift` fails when a stack's local file pins a different version of an
+image its production file also pins. It joins on the image repository, so a
+local stack that deliberately runs a *different* image is never compared. The
+rule is in [`compose-structure.md`](compose-structure.md); the reason it needed
+a checker is that the Version Chain never named `.env.local.example`, so 41 pins
+drifted behind production without a decision. A missing healthcheck and `env_file:` are reported as
 warnings — the numeric values behind the limits still need measuring on a real
 host, which is v0.10.0; whether a policy is stated at all is settled.
 
@@ -206,9 +252,33 @@ host, which is v0.10.0; whether a policy is stated at all is settled.
 
 ### 7 — Status model
 
-Runs `scripts/ci/lifecycle-report.py --check`. Fails on a status claim that is not
+Four generated views, each checked against the files that own it.
+
+`scripts/ci/lifecycle-report.py --check` fails on a status claim that is not
 backed: an owner and its mirror disagreeing, a ✅ without `Last verified`, or a
 `LIFECYCLE.md` left stale against its sources.
+
+`scripts/ci/sovereignty-report.py --check` fails when a stack states no licence
+or origin, or when `sovereignty.json` is stale.
+
+`scripts/ci/security-coverage.py --check` fails when `docs/security-coverage.md`
+no longer matches the compose files it is counted from. The hardening figures
+were maintained by hand until then and went stale twice in three days, because a
+stack landing between two edits moves a denominator nobody remembers.
+
+`scripts/ci/site-catalogue.py --check` fails when a stack has no `Domain` or
+`Role` in its `UPSTREAM.md`, when a catalogue entry names a stack that no longer
+exists, or when `catalogue.json` is stale. The staleness half now also covers each
+stack's operational footprint, which is derived from its compose files rather than
+recorded anywhere, so adding a database to a stack updates its catalogue entry or
+fails the check. It also rejects a stack whose `UPSTREAM.md` does not
+state its W8 research state — a date or `not yet` — which is what stops a new stack
+entering the repository with that state unsaid, and rejects a licence or edition
+fact that does not name its source and the date it was checked, or a commercial
+model outside the recorded vocabulary — those facts are read from upstream's terms rather than derived, and
+an unsourced one would be a claim this repository cannot stand behind. This is what keeps the operator site
+from falling behind the repository: a stack cannot land in `dev` while being
+absent from the site's catalogue.
 
 **Blocks merge:** yes
 
@@ -304,6 +374,7 @@ pip install pyyaml
 python3 scripts/ci/check-baseline.py
 python3 scripts/ci/check-structure.py
 python3 scripts/ci/lifecycle-report.py --check
+python3 scripts/ci/security-coverage.py --check
 python3 scripts/ci/check-coverage.py
 
 # What the Docs QA prose gate will see — uncommitted work included

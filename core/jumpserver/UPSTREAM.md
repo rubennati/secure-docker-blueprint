@@ -10,6 +10,9 @@
   compose file exists (see below)
 - **License:** GPL-3.0 (Community Edition; Enterprise Edition is a separate
   closed-source product from the same vendor)
+- **Edition gating:** the Community edition carries LDAP, CAS, OIDC, SAML2, OAuth2 and RADIUS authentication, role and organisation management, asset session monitoring, session command auditing, file-transfer tracking, login audit logs and command filtering. Enterprise adds LDAP high availability, chat-platform integrations, passkey support, cloud asset synchronisation and RemoteApp or VirtualApp delivery — https://www.jumpserver.com/docs/compare-versions · checked 2026-09-21
+- **Commercial model:** paid self-hosted edition — https://www.jumpserver.com/docs/compare-versions · checked 2026-09-21
+- **Decision facts checked:** 2026-09-21
 - **Origin:** China · FIT2CLOUD · non-EU
 - **Domain:** Identity, access and secrets
 - **Role:** Privileged access management: stored target credentials, session recording, approval workflows
