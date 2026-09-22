@@ -11,12 +11,7 @@
 - **Domain:** AI and local AI
 - **Role:** Document understanding as an API: layout, tables and Markdown or JSON export for AI pipelines
 - **Based on version:** `v1.34.0`
-
-No `Last verified` line yet — see [Verification performed](#verification-performed-2026-09-18)
-below for exactly what has been exercised and what has not. The field
-asserts Traefik/TLS routing was confirmed on a real host, which this session
-could not do; setting it early would claim evidence that does not exist. This
-stack stays `scaffolded` until that happens.
+- **Last verified:** 2026-09-22 (v1.34.0) — behind Traefik with TLS: a PDF converted through the route with the key from the Docker Secret, a URL conversion, and a restart
 
 ## What we use
 
@@ -47,6 +42,27 @@ per-conversion scratch files.
 | `read_only: true` + `tmpfs: [/tmp]` | Verified working against a real conversion (`POST /v1/convert/source` against a live PDF) — see below |
 | `app-internal` network not added | No database or internal service to isolate — same reasoning as `development/web-api/`'s base pattern |
 
+## Verification performed (2026-09-22)
+
+The production `docker-compose.yml` behind Traefik with TLS, with the shipped
+`acc-private` and `sec-2`:
+
+- A client outside the access policy's ranges got `403` on the route, over IPv4
+  and IPv6
+- `/health`, `/ready` and `/docs` answered `200` through the route; `/ui`
+  answered `404` with `DOCLING_ENABLE_UI=0`
+- The convert endpoints answered `401` without a key and with a wrong one; the
+  key reached the server from the Docker Secret through `config/entrypoint.sh`
+  and is absent from the container's configured environment
+- A real PDF (six pages, 590 kB) uploaded to `/v1/convert/file` through the
+  route: `success` in 56.5 s, 37,081 characters of Markdown including its
+  tables
+- Peak during that conversion: 2.16 GiB of the 3 GiB limit, 186 % CPU, 50 PIDs
+- `/docs` in headless Chromium (Playwright 1.63): 8 requests, all `200`
+- After `docker compose down` and `up -d`, `/v1/convert/source` with the same
+  document's `https` URL — fetched by the server — returned the same result
+- Nothing to restore: the stack keeps no state
+
 ## Verification performed (2026-09-18)
 
 Against the local test stack, without Traefik:
@@ -61,10 +77,6 @@ Against the local test stack, without Traefik:
 - No API key set → any request succeeds (upstream's documented default); a
   Docker Secret set via `config/entrypoint.sh` requires `X-Api-Key` on every
   request
-
-**Not yet exercised:** the production `docker-compose.yml` against a real
-Traefik instance — TLS termination, the access/security middleware chain, and
-the entrypoint wrapper's secret injection have not been run end-to-end.
 
 ## Upgrade checklist
 

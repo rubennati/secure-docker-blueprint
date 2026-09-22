@@ -89,7 +89,10 @@ application, the six services together used roughly 1.9 GB after start.
 
 ## Status
 
-`scaffolded` — see [UPSTREAM.md](UPSTREAM.md#verification-performed-2026-09-19).
+Run behind Traefik with TLS on 2026-09-22 (4.38.0): the web UI, the
+Python SDK sending traces, scores and a prompt to the routed host, a restart,
+and the restore above. Full log in
+[`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-22).
 
 ## Try it locally
 

@@ -95,13 +95,11 @@ v1.0 — see [`ROADMAP.md`](../../ROADMAP.md#v10--complete-and-hand-off-ready).
 
 ## Status
 
-`scaffolded`. 2026-09-18 (1.814.0): the local and the production compose files
-were booted with the hardened settings, all services reached `healthy`, the
-default administrator was replaced and its login stopped working, and real
-jobs ran through the API on both workers — Python on `worker`, TypeScript on
-`worker-native`, each on a read-only root filesystem. Traefik routing and TLS
-have not been run against a real host yet. Full log in
-[`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-18).
+Run behind Traefik with TLS on 2026-09-22 (1.814.0): the bootstrap
+behind `acc-deny`, jobs on both workers with outbound calls, a restart, and the
+restore below. The UI loaded only under `sec-1`; under the shipped `sec-2` it
+shows the error above. Nothing has run with job isolation. Full log in
+[`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-22).
 
 ## Try it locally
 

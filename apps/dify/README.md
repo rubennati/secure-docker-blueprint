@@ -99,7 +99,11 @@ and pgvector 1 GB each, the rest 256–512 MB.
 
 ## Status
 
-`scaffolded` — see [UPSTREAM.md](UPSTREAM.md#verification-performed-2026-09-19).
+Run behind Traefik with TLS on 2026-09-22 (1.17.1): the first-account
+setup through `/install`, the console in a browser, a marketplace plugin and a
+model provider, a workflow with code, HTTP and LLM nodes through the service API,
+a restart, and the restore above. Full log in
+[`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-22).
 
 ## Try it locally
 

@@ -72,7 +72,11 @@ curl -H "Authorization: Bearer $(cat .secrets/litellm_master_key.txt)" \
 
 ## Status
 
-`scaffolded` — see [UPSTREAM.md](UPSTREAM.md#verification-performed-2026-09-19).
+Run behind Traefik with TLS on 2026-09-21 (v1.101.0): a provider
+added through the admin API with its credential stored encrypted, a virtual key
+limited to it, the admin login, a restart, and a database dump restored into an
+empty database. Full log in
+[`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-21).
 
 ## Try it locally
 
