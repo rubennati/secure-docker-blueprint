@@ -86,12 +86,12 @@ was verified by running it. Three of the fifteen already ship.
       evaluation's *Findings from implementation*.
 - [x] Batch G, proposed later: rclone-web (`backup/`) and httpbin (`apps/`)
       shipped; Cabot held — no image since January 2019.
-- [ ] Four publish no image (DayOtter, Dapta Calendars, MAILFLOW-AI, Crater) and
-      stay evaluation entries. Proposed: ask DayOtter's maintainer to publish a tag;
-      record the other three with the reason. No fork is proposed.
+- [x] Four publish no image (DayOtter, Dapta Calendars, MAILFLOW-AI, Crater).
+      Decided 2026-09-22: DayOtter is a build candidate — §7; the other three are
+      not added, with the reason in the 2026-09-22 evaluation.
 - [ ] Upstream requests, filed by the maintainer; drafts are in the local
       `inbox/upstream-requests/` working area. obot (start without a runtime backend
-      when no MCP servers are hosted), DayOtter and Dapta Calendars (publish an
+      when no MCP servers are hosted), DayOtter (publish an
       image), rclone (`rclone gui` logs a supplied RC password). Filed: the
       FacturaScripts installer fix, NeoRazorX/facturascripts#2041 (open), linked in
       `../business/facturascripts/UPSTREAM.md`. None for Crater (images requested since 2021 in #659, no maintainer
@@ -117,12 +117,24 @@ was verified by running it. Three of the fifteen already ship.
       directory, a third variant beside `600` and `640` in
       `../docs/standards/secrets.md` — recorded, not changed.
 
-### 7. Held: Priority 2 and other candidates
+### 7. The held candidates — decided 2026-09-22
 
 No application is added while the v1.0 items are open — S1 (verification), C1
-(above) and D3. Candidates are in `../ROADMAP.md` under "On hold": the per-category
-planned lists, Plane / Leantime / AppFlowy, Suricata, Coraza. The AI candidates that were
-held are shipped.
+(above) and D3. The candidates `../ROADMAP.md` held were narrowed to open-source
+products and are added as a second deliberate exception (`decisions.md`,
+2026-09-22). Evidence, what was not added and why, and the batch order:
+[`../docs/audits/candidate-evaluation-2026-09-22.md`](../docs/audits/candidate-evaluation-2026-09-22.md).
+
+- [ ] Batches H–V, each its own pull request: H Gotify+ciao · I Wiki.js+Shlink ·
+      J paperless-gpt · K Kopia · L Leantime · M Plausible CE · N Checkmate · O obot ·
+      P Headscale · Q Grafana+Prometheus · R Zabbix · S Scrutiny · T Plane ·
+      U HeyForm, dropped if it does not run on a current MongoDB and Valkey ·
+      V Suricata+Coraza.
+- [ ] Build candidates — Live Helper Chat, DayOtter, Bareos: ask upstream to
+      publish an image first; otherwise a fork and an image built here under
+      `../docs/standards/custom-application.md`.
+- [ ] paperless-ai: revisit once upstream's announced rewrite is released or the
+      repository is maintained again — its README says it is not.
 
 ### 8. Milestone v0.10.0 — measured resource limits
 

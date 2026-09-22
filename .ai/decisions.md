@@ -6,6 +6,53 @@ this file is the index and covers decisions that have no other home.
 
 ---
 
+## 2026-09-22 · The held candidates are narrowed to open source and added
+
+`ROADMAP.md` adds no application while the v1.0 items are open, and the exception
+of 2026-09-21 left the candidates it listed on hold. The maintainer decided to add
+them after narrowing the list. This is a second deliberate exception of the same
+kind: it changes nothing v1.0 requires, every stack lands `scaffolded`, the batches
+follow the order in the evaluation, and the hold still applies to anything proposed
+from here on.
+
+**Open source is the entry condition for this list.** A product whose deployed code
+is not under an OSI licence is not added: Outline (BSL 1.1), AppFlowy (the
+self-hosted server comes from a closed-source commercial codebase; its free tier is
+one user) and Eramba Community (proprietary terms, activation with the vendor
+required). The condition is applied to this list only. Stacks already shipped keep
+their licences, whether it extends to them is not decided, and
+`docs/sovereignty/provenance.md` still states what the blueprint accepts.
+
+**Dropped for reasons of their own:** Formbricks (enterprise code in the image, SSO
+and two-factor authentication behind a licence), Rallly (one registered user without
+a purchased key), Ackee (its administrator login shares the public tracker path),
+Statping (no release since 2020) and its fork Statping-ng (a high advisory with no
+fixed release), Cabot (newest image from 2019), SnapPass, Dapta Calendars,
+MAILFLOW-AI and Crater (no image, and no recent release or no release at all), and
+Tika, Gotenberg and ClamAV as standalone stacks — they stay inside Paperless-ngx and
+Seafile Pro, where they are used.
+
+**A missing image is a detour, not an exclusion.** A product worth having whose
+project publishes no pinnable image gets one built here from a fork, under
+`docs/standards/custom-application.md` — the route Cal.diY took — after upstream has
+been asked to publish one. Live Helper Chat, DayOtter and Bareos are the build
+candidates.
+
+**obot is added with its Docker API access documented as a deviation**, as Hawser's
+direct socket mount is: creating the containers obot runs is root-equivalent on the
+host, and the stack says so. A read-only socket proxy is tried first; whether the
+current release starts behind one is established on its first run.
+
+**Two products proposed the same day were checked the same way.** paperless-gpt is
+added. paperless-ai stays a candidate: its README states that the repository is not
+maintained, and it is revisited once the announced rewrite is released or
+maintenance resumes.
+
+Evidence per product and the batch order:
+[`../docs/audits/candidate-evaluation-2026-09-22.md`](../docs/audits/candidate-evaluation-2026-09-22.md).
+
+---
+
 ## 2026-09-21 · Proposed products go in as stacks while the application hold stands
 
 `ROADMAP.md` adds no application while the v1.0 items are open. The maintainer asked

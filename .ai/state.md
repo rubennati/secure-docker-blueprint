@@ -26,6 +26,11 @@
   Host verification ran on 2026-09-22: `Last verified` for nine, three recorded
   with a limitation; what is left is upstream requests and follow-ups —
   `tasks.md` §6.
+- **Decided 2026-09-22:** the candidates `ROADMAP.md` held are narrowed to
+  open-source products and added in batches H–V, a second recorded exception to the
+  hold ([`decisions.md`](decisions.md)). What was not added and why, and the batch
+  order: [`../docs/audits/candidate-evaluation-2026-09-22.md`](../docs/audits/candidate-evaluation-2026-09-22.md).
+  Progress: `tasks.md` §7.
 - **Current milestone:** v0.10.0 — Measured resource limits. Whether it stays a
   release is open (D4 in the audit): the measurement needs the same host session
   as the verification backlog.
@@ -182,8 +187,9 @@ documents no way to retire one.
 current reference implementation, and no maintained second implementation justifies
 a migration. A future architectural consideration, not debt.
 
-Suricata and Coraza are evaluation entries in [`../ROADMAP.md`](../ROADMAP.md) →
-"Evaluating"; neither is implemented. SIEM/XDR/SOC platforms are out of scope there.
+Suricata and Coraza are being added, as the last batch of the 2026-09-22 candidates;
+each has a design question open in [`../ROADMAP.md`](../ROADMAP.md) → "Being
+added". Neither is implemented. SIEM/XDR/SOC platforms are out of scope there.
 
 ## Mission scope — established 2026-09
 

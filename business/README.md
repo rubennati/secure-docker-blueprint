@@ -63,11 +63,10 @@ Not deployable here yet. See [`ROADMAP.md`](../ROADMAP.md) for status.
 
 - **Plane** — project management
 - **Leantime** — project management
-- **AppFlowy** — Notion-style workspace
-- **Ackee** — analytics
 - **Plausible CE** — analytics
-- **Live Helper Chat** — customer chat
-- **Eramba GRC** — governance/risk/compliance
+- **Live Helper Chat** — customer chat. It publishes no versioned image, so it waits
+  for upstream to publish one or for one built here — see
+  [`../docs/audits/candidate-evaluation-2026-09-22.md`](../docs/audits/candidate-evaluation-2026-09-22.md#decided-on-2026-09-22).
 
 ## The n8n hub
 
