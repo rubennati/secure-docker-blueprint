@@ -54,6 +54,15 @@ Open in this repository:
   no stack left at `scaffolded` without a documented reason. Most stacks are
   `scaffolded` today — [`LIFECYCLE.md`](LIFECYCLE.md) has the count. A state rises
   only on evidence, so this is measured in host sessions, not in editing.
+- **Traefik labels and middlewares, checked against the applications.** The label
+  pattern, the security chains and their names, the header and rate-limit blocks,
+  and the CrowdSec and Authentik middlewares grew stack by stack; 89 stacks now
+  route through Traefik. The review asks what each application needs to start
+  without errors, keep the headers it sets itself and stay responsive under a
+  working day's load. It may change names and structure or confirm them — before
+  v1.0.0, because afterwards a renamed middleware disables the router of every
+  deployment that names it. Inputs in [`.ai/state.md`](.ai/state.md) under *Open
+  decisions*.
 - **Trivy blocks.** The image scan runs with `exit-code: 0` and blocks nothing
   until the existing CRITICAL findings have been assessed once
   ([`docs/security-verification.md`](docs/security-verification.md)).

@@ -304,6 +304,49 @@ Nextcloud, Vaultwarden and Matomo move after a measurement each, and Keycloak
 also needs an access policy for the stacks that call it and a router for its
 admin paths.
 
+**The rate limits break code-split interfaces as well.** Measured on the test host
+on 2026-09-22, with a browser engine and with a replay of each first page load
+over one HTTP/2 connection. Open WebUI requests 173 files: under `sec-2` (burst
+50) 65 came back `429` and the interface showed an error, under `sec-2-spa` (burst
+200) none. Dify's workflow editor requests 291, of them 164 static files: 64 × `429`
+under `sec-2`, none under `sec-2-spa`. Windmill requests about 850 and fails under
+both — 412 × `429` under `sec-2-spa`. Langfuse (152) and LiteLLM (160) stayed
+under the limit.
+→ *Decided 2026-09-22:* no stack drops to `sec-1` to get past a limit. The
+measurements go into the review below.
+
+**Traefik labels and middlewares are reviewed as a whole before v1.0.0** — see
+[`../ROADMAP.md`](../ROADMAP.md). They grew stack by stack; 89 stacks route
+through Traefik, 84 of them take their chain from `.env`. After v1.0.0 a renamed
+middleware disables the router of every deployment that names it. Open, besides
+the two points above:
+
+- **Names.** Twelve chains put headers, framing and rate limit into one name.
+  38 stacks default to `sec-2` and 35 to `sec-3`; `sec-0` and `sec-1e` are used
+  by none. `e` reads as "embeddable" and permits only the application's own
+  origin. `spa` names a kind of application rather than what the chain changes, a
+  burst of 200 — the chain file calls the `-spa` chains VPN-only, the block they
+  use is described as fit for public applications. `sec-authentik` carries the
+  chains' prefix but is an authentication gate, and the label pattern has no slot
+  for it.
+- **Fit per application**, Nextcloud for one: what an application needs to start
+  without errors and stay responsive under a working day's load, and whether
+  presets or per-application settings answer that. Every rate-limit figure above
+  is a first page load; no stack has a measurement under sustained use.
+- **CrowdSec.** 45 of those 84 stacks have no `APP_TRAEFIK_THREAT` slot, so a
+  bouncer middleware cannot be attached from `.env`. The profile ladder is in
+  [`../core/crowdsec/docs/profiles.md`](../core/crowdsec/docs/profiles.md).
+- **Authentik.** Forward auth exists only as a commented-out block in
+  `core/traefik/ops/templates/dynamic/integrations.yml.tmpl`.
+- **Client address.** The rate limits and access policies do not say which
+  address counts, and Traefik's documentation says both then use the connecting
+  address: an office behind one NAT address shares one bucket, traffic through
+  Cloudflare counts per edge address. The comment in `traefik.yml.tmpl` says
+  trusting Cloudflare's forwarded headers gives `ipAllowList` the real client.
+  Not measured.
+
+→ The review may change names and structure, or confirm them.
+
 ## Active constraints
 
 - **A host to experiment on, not a host at all.** The blueprint's stacks run in
