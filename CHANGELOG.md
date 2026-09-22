@@ -44,11 +44,41 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ### Fixed
 
+- **Langfuse lost its PostgreSQL data on every `down` and `up`** (`monitoring/langfuse`). The database was mounted at `/var/lib/postgresql`, one level above the PostgreSQL 17 image's data `VOLUME`, so the cluster lived in an anonymous volume and every recreated container started on a new, empty one. Prompts, users, projects and keys created afterwards were lost; the organisation, project, key pair and administrator from `LANGFUSE_INIT_*` came back on each start and hid the loss. Both compose files now mount the data at `/var/lib/postgresql/data`. Existing installations need the migration step below.
+
+- **Langfuse and Dify could answer `502` behind Traefik** (`monitoring/langfuse`, `apps/dify`). Next.js listens on the address `HOSTNAME` resolves to — Docker's container ID, which resolves to one of the container's two network addresses. When that was the internal one, Traefik could not connect, while the healthcheck probed the same address and reported `healthy`. Both web services now set `HOSTNAME: 0.0.0.0` and check `127.0.0.1`.
+
+- **Dify's `worker-beat` restarted in a loop, so scheduled tasks never ran** (`apps/dify`). Its app factory creates the storage directory at start, and the read-only container had no storage mount (`OSError: [Errno 30] Read-only file system`). It now mounts `./volumes/storage` like `dify-api` and `worker`.
+
+- **Windmill's server was killed every 30 seconds** (`apps/windmill`). It uses 470–558 MiB and was limited to 512 MiB; the kernel's cgroup OOM killer restarted it in a loop, and Traefik answered `404` and `502` between restarts. The limit is now 1 GiB, derived from that measurement.
+
+- **LiteLLM did not start on a Linux host and could not store a provider credential** (`apps/litellm`). The proxy runs as uid/gid 65534 and could not read the owner-only secrets `ops/init.sh` wrote; `init.sh` now writes them with mode `640`, and the README adds `chown "$USER":65534`. `POST /model/new`, the documented way to add a provider with an encrypted credential, refused without `store_model_in_db`, which `config/config.yaml` now sets.
+
+- **Three restore procedures did not bring the data back intact** (`apps/windmill`, `apps/dify`, `monitoring/langfuse`). Windmill's single-database dump lacks the cluster roles its row-level security is granted to: restored into a fresh cluster, it started `healthy` and every workspace call failed with `role "windmill_admin" does not exist`. The README now dumps the cluster — `pg_dumpall`, or borgmatic's `name: all`. Dify's backup stopped `api`, a name Compose skips without an error, so the API kept writing during the archive; it now names `dify-api`, and the restore steps are written out. Langfuse archived ClickHouse while it ran (`file changed as we read it`); ClickHouse and MinIO are now stopped for the archive. Open WebUI's README allowed restoring without `cache/`; under `HF_HUB_OFFLINE=1` that starts `healthy` with retrieval silently off, and the README now says how to fetch the model once.
+
+- **Open WebUI and Dify did not load in a browser** (`apps/open-webui`, `apps/dify`). `sec-2`'s rate limit (burst 50) answered part of the first load with `429`: Open WebUI showed `500: Internal Error`, Dify's workflow editor stayed on its loading spinner. Both now ship `sec-2-spa`. Windmill's first load, about 850 requests, exceeds `sec-2-spa`'s burst of 200 as well, and its UI shows an error under either chain; it keeps `sec-2`, and its README records the limitation until the security chains are reviewed before v1.0.
+
+- **Dify's first-account setup could not be done as documented** (`apps/dify`). The README kept the router at `acc-deny` until `/install` was done, which refuses the browser that has to open `/install`. It now opens `/install` through the shipped `acc-private`, with the setup password as the guard — `/console/api/setup` answers `401` without it.
+
 - **`scripts/overview.sh` ended at the first stack with no env file.** The README points an operator at it to see what is configured and running; it exited 1 partway through the survey whenever it reached a stack carrying neither `.env` nor `.env.example` — `core/host-watchdog` on any checkout — because a bare `return` inherits the failed test's status under `set -e`. The survey now completes and reports all 82 components.
 
 - **`apps/seafile` generated a Redis password that can break Seafile's own connection URL.** The setup instructions produced it with `openssl rand -base64 32`, and Seafile builds `redis://:<password>@<host>:<port>` by string interpolation without escaping the value. The base64 alphabet contains `/`, which terminates the URL's authority component, so the host and port are parsed from the wrong text. Seahub then answers `500` on every request, its healthcheck fails, and because the optional services depend on it with `condition: service_healthy`, `seadoc`, `notification`, `thumbnail` and `md-server` never start. Roughly half of generated passwords contain at least one `/`, so the same tree succeeded or failed per install — which is why it read as a configuration fault. The three places that documented the generator now use `openssl rand -hex 32` and say why. Reproduced deterministically and verified against a real daemon: with a `/` in the password the stack fails as described; with a hex password a clean first boot brings up the whole stack. `apps/seafile-pro` already specified hex for this secret and is unaffected. The same constraint is already documented in `business/kimai` and `business/opensign`, whose applications assemble a DSN the same way.
 
 ### Migration
+
+- **Upgrading an existing Langfuse installation requires operator action** — an installation from v0.9.1 keeps its database in an anonymous volume, and the corrected mount starts on an empty `volumes/postgres`. Dump the database while the old stack still runs, then restore it after the update. Docker's former mount point, an empty `volumes/postgres/data`, has to go first: `initdb` refuses a directory that is not empty.
+
+  ```bash
+  docker exec langfuse-db pg_dump -U langfuse langfuse > langfuse-postgres.sql   # before updating
+  docker compose down
+  # update the checkout, then:
+  sudo rmdir volumes/postgres/data
+  docker compose up -d postgres
+  docker exec -i langfuse-db psql -U langfuse -d langfuse < langfuse-postgres.sql
+  docker compose up -d
+  ```
+
+  The old anonymous volume stays in place after `down` until it is removed explicitly.
 
 - **Existing Seafile installations do not need to rotate their Redis password because of this change.** A deployment that is running is one whose password happens to be URL-safe, and it keeps working untouched. New installations should follow the corrected instruction. An installation that fails with Seahub returning `500` and a Redis connection error in `seahub.log` — a wrong host, an uncastable port, or `localhost` — is the case this fixes: replace `.secrets/redis_pwd.txt` with `openssl rand -hex 32`, then recreate both the `redis` and `seafile` containers so each side takes the new value.
 

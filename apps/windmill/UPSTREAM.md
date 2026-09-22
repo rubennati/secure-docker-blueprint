@@ -68,6 +68,7 @@ Internet → Traefik (TLS, port 443) → windmill-server :8000
 | `DISABLE_NSJAIL` left at the image default (sandboxing off) | See the NSJAIL finding below |
 | `worker` mounts `/tmp` and `/tmp/windmill` as long-syntax tmpfs with `mode: 1023`, plus a bind mount at `/tmp/windmill/cache` | See the two mount findings below |
 | `read_only: true` on the server and both workers | Verified with real jobs on read-only workers. The only writable paths are `/tmp` and `/tmp/windmill` (tmpfs) and the worker's cache bind mount |
+| `windmill-server` memory 1 GiB | Measured: 470–535 MiB idle and under UI load, 558 MiB peak at start; at 512 MiB the kernel killed it every 30 s |
 | Workers join `app-egress`, a per-stack outbound network | On `app-internal` alone a Python job cannot download its interpreter (`dns error … failed to lookup address information`) and dependency installs fail; the native TypeScript job, which downloads nothing, passed. The database stays on `app-internal` only — `getent hosts github.com` from it fails. Same pattern as `apps/nextcloud` and `business/invoiceninja` |
 | `APP_TRAEFIK_ACCESS=acc-deny` in `.env.example` | A fresh instance carries a published superadmin password; the router stays closed until `ops/bootstrap-admin.sh` has replaced it |
 | `ops/bootstrap-admin.sh` | Replaces `admin@windmill.dev` with an operator account and proves the built-in one no longer authenticates — see below |
@@ -150,6 +151,15 @@ The worker logged a request to `https://hub.windmill.dev/getip` at start
 report it as unretrievable"). The server's `hub_api_secret` setting loaded as
 `None`. Neither was traced further; `docs/sovereignty/data-egress.md` is the
 place to record it once a host run has captured the full picture.
+
+## Known limitation: the UI and the rate limit
+
+The UI's first load issues about 850 requests. Under `sec-2` (burst 50), the
+shipped chain, and under `sec-2-spa` (burst 200) part of them get `429` and the
+page shows `500 Internal Error`; under `sec-1`, which has no rate limit, it
+loads. The chain stays `sec-2` until the security chains are reviewed against
+the applications before v1.0 —
+[`ROADMAP.md`](../../ROADMAP.md#v10--complete-and-hand-off-ready).
 
 ## Verification performed (2026-09-18)
 

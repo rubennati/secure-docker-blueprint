@@ -85,5 +85,11 @@ Ports bind to `127.0.0.1`; Traefik and the Docker Secrets mechanism are not used
 
 Back up `volumes/data` (`webui.db`, `uploads/`, `vector_db/`) and
 `.secrets/webui_secret_key.txt`. Stop the container first for a consistent SQLite
-copy. Restore by placing both back and running `docker compose up -d`; the
-`cache/` directory can be omitted, it is downloaded again.
+copy. Restore by placing both back and running `docker compose up -d`.
+
+`cache/` can be left out of the backup; the embedding model in it is downloaded
+again — but only while `HF_HUB_OFFLINE=0`. With `HF_HUB_OFFLINE=1` a restore
+without `cache/` starts `healthy` and logs `Error loading SentenceTransformer`:
+answers ignore attached documents and new uploads fail to process. Start once
+with `HF_HUB_OFFLINE=0`, then set it back to `1` and run `docker compose up -d`
+again — or keep `cache/embedding` in the backup.

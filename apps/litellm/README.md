@@ -21,8 +21,14 @@ Internet → Traefik (TLS) → litellm :4000 ──→ model backend (outbound)
 ```bash
 cp .env.example .env            # set the host name
 ops/init.sh                     # three secrets in .secrets/
+sudo chown "$USER":65534 .secrets/*.txt   # the proxy runs as uid/gid 65534
 docker compose up -d
 ```
+
+Compose mounts each secret with the host file's owner and mode, and the proxy
+reads all three as uid 65534. `ops/init.sh` writes them with mode `640`; the
+`chown` gives group 65534 that read access. Without it the proxy restarts in a
+loop with `cat: can't open '/run/secrets/DB_PWD': Permission denied`.
 
 The first start applies the database migrations and takes about a minute.
 Edit `config/config.yaml` before or after: the shipped model entry points at
@@ -35,7 +41,7 @@ network with this stack.
 |---|---|---|
 | Operator (admin API, UI) | Master key | Docker Secret `LITELLM_MASTER_KEY` |
 | API client | Virtual key from `POST /key/generate` | PostgreSQL (hashed); limited to the models and budget set at creation |
-| Gateway calling a provider | Provider API key | Not in the config. Add the model through the admin API: LiteLLM stores the credential encrypted with the salt key (`LITELLM_SALT_KEY`) |
+| Gateway calling a provider | Provider API key | Not in the config. Add the model through the admin API (`POST /model/new`, enabled by `store_model_in_db: true` in `config/config.yaml`): LiteLLM stores the credential encrypted with the salt key (`LITELLM_SALT_KEY`) |
 
 ```bash
 curl -H "Authorization: Bearer $(cat .secrets/litellm_master_key.txt)" \
@@ -55,7 +61,8 @@ curl -H "Authorization: Bearer $(cat .secrets/litellm_master_key.txt)" \
 - **Unauthenticated routes.** `/health/liveliness`, `/health/readiness`, `/routes`
   and `/openapi.json` answer without a key (`/routes` and the OpenAPI document list
   the API surface, no data). Everything else, including `/v1/models`, `/metrics`
-  and `/health`, returned `401`. `/ui` redirects to the admin login (not exercised beyond the redirect).
+  and `/health`, returned `401`. `/ui` redirects to the admin login, where the user `admin` signs in with the
+  master key.
 - **Hardening.** Non-root image (uid 65534), `read_only`, `cap_drop: ALL`,
   `no-new-privileges`, only `/tmp` writable (tmpfs), no published ports.
 - **Network.** The database has no route out. The proxy is on `proxy-public` to

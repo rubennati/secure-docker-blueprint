@@ -41,7 +41,9 @@ has not happened; this stack stays `scaffolded` until it does.
 | Traefik only in front of `langfuse-web`; MinIO, ClickHouse, Redis, PostgreSQL and the worker on `app-internal` | Upstream publishes MinIO's port 9090 and the web port on all interfaces; only the UI and API need to be reachable |
 | Explicit `command` on web and worker | Overriding `entrypoint` clears the image's `CMD`; without it the container exits `0` immediately |
 | Web at 2 GB with `NODE_OPTIONS=--max-old-space-size=1536` | At a 1 GB limit the Node heap (~512 MB default) was exhausted during startup and the container restarted in a loop |
-| Healthchecks call `$(hostname)` instead of `127.0.0.1` | Both Node services bind to the container's hostname address; loopback is refused |
+| `HOSTNAME: 0.0.0.0` on web; its healthcheck on `127.0.0.1` | Next.js binds to the address `HOSTNAME` resolves to — the container ID, which resolved to the `app-internal` address on the host, so Traefik got `502` while the healthcheck on `$(hostname)` passed |
+| Worker healthcheck on `$(hostname)` | The worker binds to the container's hostname address and refuses loopback; nothing outside the stack connects to it |
+| PostgreSQL data mounted at `/var/lib/postgresql/data` | The 17.x image declares that path as a `VOLUME`; mounted one level up, the cluster stayed in an anonymous volume and each `down` + `up` started on a new, empty one |
 | ClickHouse: `user: 101:101`, `read_only`, tmpfs on `users.d` | The image's entrypoint writes the user definition there at start. A tmpfs over `config.d` was tried and removed: it hid the image's `listen_host` file, so port 9000 was refused from other containers |
 | ClickHouse `pids: 2000` | At 500 the entrypoint failed with `fork: retry: Resource temporarily unavailable`; ClickHouse's threads count against the limit |
 | `TELEMETRY_ENABLED=false` | Upstream's usage telemetry |

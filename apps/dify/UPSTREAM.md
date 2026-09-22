@@ -61,6 +61,9 @@ PostgreSQL profile, pgvector as the vector store, minus what is listed below:
 | `ssrf-proxy`: root, five capabilities, writable root | Squid's entrypoint writes `/etc/squid` and the cache at start and Squid drops privileges itself. Not narrowed further |
 | Two networks besides `proxy-public` | `app-internal` (no route out) for everything; `app-egress` for the SSRF proxy and the plugin daemon, the two services that must reach the internet |
 | `CHECK_UPDATE_URL=""` | Upstream's update check |
+| `worker-beat` mounts `./volumes/storage` | The app factory creates the storage directory at start, beat included; on the read-only root without the mount it stopped with `OSError: [Errno 30]` and restarted in a loop |
+| `dify-web`: `HOSTNAME: 0.0.0.0`, healthcheck on `127.0.0.1` | Next.js listens on the address `HOSTNAME` resolves to; Docker's container ID resolved to the `app-internal` address after a recreation, and Traefik got `502` while the healthcheck on `$(hostname)` passed |
+| `APP_TRAEFIK_SECURITY=sec-2-spa` | Sign-in, the app list and the workflow editor load over 160 script chunks; `sec-2`'s burst of 50 answered part of them with `429` and the editor stayed on its spinner |
 | Web and plugin-daemon healthchecks | `web` probes its own hostname address (it does not bind loopback). The plugin daemon, worker, beat and Squid have no meaningful probe; marker comments in the compose file |
 
 ## Verification performed (2026-09-19)

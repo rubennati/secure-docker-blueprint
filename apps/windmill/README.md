@@ -85,6 +85,14 @@ too — the workers hold the connection string. Restrict who can create
 scripts accordingly. The same exception exists in
 [Nextcloud](../nextcloud/) and [Invoice Ninja](../../business/invoiceninja/).
 
+## Known limitation — the web UI behind the rate limit
+
+The UI's first load issues about 850 requests. Traefik's rate limit answers part
+of them with `429` under the shipped `sec-2` (burst 50) and under `sec-2-spa`
+(burst 200) alike, and the page shows `500 Internal Error`. The API and jobs are
+not affected. The security chains are reviewed against the applications before
+v1.0 — see [`ROADMAP.md`](../../ROADMAP.md#v10--complete-and-hand-off-ready).
+
 ## Status
 
 `scaffolded`. 2026-09-18 (1.814.0): the local and the production compose files
@@ -122,18 +130,41 @@ cache.
 | **Reproducible** | `./volumes/worker_cache` — language runtimes and dependencies, safe to exclude |
 | **Quiescing** | Not needed. The dump is consistent on its own. |
 
+Dump the whole cluster, not only the `windmill` database. Windmill's
+row-level security policies are granted to the cluster roles `windmill_user`
+and `windmill_admin`, which a single-database dump does not contain: restored
+into a fresh cluster, such a dump starts `healthy` and every workspace call
+fails with `role "windmill_admin" does not exist`. The cluster dump also carries
+the `datatable`, DuckLake and fork databases Windmill keeps beside `windmill`.
+
+With borgmatic, `name: all` without a `format` dumps with `pg_dumpall`:
+
 ```yaml
 postgresql_databases:
-    - name: windmill
+    - name: all
       container: windmill-db
       username: postgres
       password: "{credential file /srv/docker/apps/windmill/.secrets/db_pwd.txt}"
 ```
 
-**Restore order:** database first, then server, then workers. The operator
-account lives in the database, so a restored instance keeps it;
+By hand:
+
+```bash
+docker exec windmill-db pg_dumpall -U postgres > windmill-cluster.sql
+```
+
+**Restore order:** database first, then server, then workers. Start only `db` on
+an empty `volumes/postgres`, load the dump, then start the rest:
+
+```bash
+docker compose up -d db
+docker exec -i windmill-db psql -U postgres -d postgres < windmill-cluster.sql
+docker compose up -d
+```
+
+Two errors are expected and harmless: the `windmill` database and the
+`postgres` role already exist in the fresh cluster. The operator account lives
+in the database, so a restored instance keeps it;
 `.secrets/windmill_admin_pwd.txt` is its password and belongs in the same
-backup as `db_pwd.txt`. Windmill also keeps `datatable`, DuckLake and fork
-databases beside `windmill` in the same cluster; a single-database dump does
-not carry them, so dump the whole cluster if you use those features. Full
-architecture: [`backup/README.md`](../../backup/README.md).
+backup as `db_pwd.txt`. Full architecture:
+[`backup/README.md`](../../backup/README.md).

@@ -263,6 +263,9 @@ services:
     # --- Storage ---
     volumes:
       - ./config/entrypoint.sh:/secrets-entrypoint.sh:ro
+      # The app factory creates its storage directory at start, beat included;
+      # without the mount the read-only root stops it with Errno 30.
+      - ./volumes/storage:/app/api/storage
     tmpfs:
       - /tmp
 
@@ -307,6 +310,10 @@ services:
       NEXT_TELEMETRY_DISABLED: "1"
       MARKETPLACE_API_URL: https://marketplace.dify.ai
       MARKETPLACE_URL: https://marketplace.dify.ai
+      # Next.js listens on whatever HOSTNAME names. Docker sets it to the
+      # container ID, which resolves to one of the two network addresses —
+      # the internal one leaves Traefik with 502. 0.0.0.0 covers both.
+      HOSTNAME: 0.0.0.0
       TZ: ${TZ}
     tmpfs:
       - /tmp
@@ -331,7 +338,7 @@ services:
 
     # --- Health & Observability ---
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O /dev/null http://$$(hostname):3000/ || exit 1"]
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:3000/ || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
