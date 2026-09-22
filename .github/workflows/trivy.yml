@@ -5,8 +5,9 @@ name: Trivy
 #      Results are uploaded to the GitHub Security tab as SARIF.
 #   2. CVEs in container images — every image the checkers discover (scripts/ci/list-images.sh)
 #      Full per-image findings go to a workflow artifact (trivy-image-scan-results);
-#      the job's own summary page carries the concise index. Non-blocking on every
-#      severity, on every image — see docs/security-verification.md for the current
+#      the job's own summary page carries the concise index. Trivy's own exit code
+#      stays 0; the gate step fails the job on a CRITICAL absent from
+#      .trivy-baseline.json — see docs/security-verification.md for the current
 #      control description.
 #
 # Triggers: push/PR to main, weekly Monday 04:00 UTC, manual dispatch. On

@@ -4,9 +4,9 @@
 
 **Last updated:** 2026-09-22
 
-- **Phase:** pre-1.0. Latest tag `v0.9.1` (2026-09-19), which is where `main`
-  stands; `dev` carries a substantial unreleased run beyond it — `git rev-list
-  --count v0.9.1..dev` is the number, and it is not repeated here. Work happens on a
+- **Phase:** pre-1.0. Latest tag `v0.9.2` (2026-09-22), which is where `main`
+  stands; what `dev` carries beyond it is `git rev-list --count v0.9.2..dev`, and
+  it is not repeated here. Work happens on a
   short-lived branch and reaches `dev` through a pull request; `dev` reaches
   `main` the same way. Both branches reject a direct push.
 - **Last completed:** the stabilization programme, in two runs. The first was PRs
@@ -68,13 +68,15 @@
   `docs/standards/compose-structure.md`, coverage in the generated Local column.
 - Trivy scans every image the checkers discover rather than a hand-kept list, and
   reports images it could not pull instead of passing over them — currently
-  `docker.n8n.io/n8nio/n8n`, hitting Docker Hub's anonymous pull rate limit.
+  `docker.n8n.io/n8nio/n8n` and Langfuse's two images, each acknowledged in
+  `.trivy-baseline.json` for Docker Hub's anonymous pull rate limit.
   Each image's full findings go to a per-run artifact; the job summary carries
   the count-level index (`scripts/ci/trivy-summarize.py`) instead of a raw
   per-image table in the log. The vulnerability database is cached across runs,
   one entry per UTC day; Trivy's own staleness check still governs refreshes.
-  CLI pinned to `v0.74.0`. Still `--exit-code 0` — the assessment pass
-  `docs/security-verification.md` names as the prerequisite has not run yet.
+  CLI pinned to `v0.74.0`. Trivy's own exit code stays 0; `scripts/ci/trivy-gate.py`
+  fails the job on a CRITICAL finding not recorded in `.trivy-baseline.json`. It
+  is not a required check.
 - CI jobs and what each one blocks on: [`quality-gates.md`](quality-gates.md),
   documented per job in `docs/standards/ci.md`. All ten are required on a pull
   request into `dev` and into `main`, and both rulesets require the branch to be

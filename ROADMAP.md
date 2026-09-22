@@ -18,11 +18,10 @@ Pre-1.0 tags are set when a natural milestone is reached, not on a fixed cadence
 The single criterion for v1.0 is: **could someone fork this and run it without
 needing my mental model?**
 
-**Latest tag: v0.9.1 — Priority 1 stacks (2026-09-19).** It carries the
-`development/` patterns and 26 new stacks — document processing, developer tools,
-AI, PAM/bastion, secret sharing and security tooling — plus the optional host
-watchdogs and the site catalogue. What has and has not been established
-per stack is in [`LIFECYCLE.md`](LIFECYCLE.md).
+**Latest tag: v0.9.2 — Stabilization and release readiness (2026-09-22).**
+Eighteen stacks verified behind Traefik with TLS on a host, twelve new stacks,
+and an image scan that fails on a CRITICAL finding it has not recorded. What has
+and has not been established per stack is in [`LIFECYCLE.md`](LIFECYCLE.md).
 
 ### v0.10.0 — Measured resource limits
 
@@ -99,8 +98,8 @@ verified today must meet the current baseline-aligned criteria in
   WordPress, Nextcloud, Seafile / Seafile Pro, Invoice Ninja.
 - Pinned to a new major in a dependency sweep and not yet run anywhere —
   [`LIFECYCLE.md`](LIFECYCLE.md) marks each `pin-drifted` and carries the pin.
-- Never started on a host: UrBackup, and the security, AI, PAM/bastion and
-  secret-sharing stacks added in v0.9.1.
+- Never started on a host: UrBackup, `apps/vllm`, and the security-tooling,
+  PAM/bastion and secret-sharing stacks added in v0.9.1.
 
 **Cal.diY hardening** ([`apps/caldiy/docs/hardening-plan.md`](apps/caldiy/docs/hardening-plan.md))
 runs on its own track. Phase 0 and Phase 1 configuration has landed; the Phase 0

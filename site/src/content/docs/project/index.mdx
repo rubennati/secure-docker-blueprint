@@ -3,6 +3,8 @@ title: About this project
 description: What SecDockBlue and Secure Docker Blueprint each are, what the compose defaults are set to, and how to report a security issue.
 ---
 
+import CurrentRelease from '../../../components/CurrentRelease.astro';
+
 ## Two names
 
 **SecDockBlue** is this site — operator guidance, security knowledge, and the
@@ -22,6 +24,8 @@ project deliberately leaves to you.
 It is aimed at homelabs, self-hosted infrastructure and small-team production systems.
 
 [GitHub repository →](https://github.com/rubennati/secure-docker-blueprint)
+
+Current release: <CurrentRelease />
 
 ## What it covers
 
@@ -48,7 +52,7 @@ the gaps are visible per service rather than averaged away.
 Set on every service, and checked on every change before it is merged:
 
 - `no-new-privileges`, so a process inside the container cannot gain rights it was not started with. An exception has to record the reason, the alternatives that were weighed, and an explicit acceptance of the remaining risk
-- No `privileged` container. Neither the reverse proxy nor any application mounts the Docker socket; a dedicated filtering proxy is the only service that does, and it exposes only containers, networks and events
+- No `privileged` container. Neither the reverse proxy nor any application mounts the Docker socket: Traefik reads it through a filtering proxy that allows read calls only. The Docker-management tools are the documented exceptions — their proxies allow changes, and the Portainer and Hawser agents mount the socket directly
 - Databases and caches on `internal` networks, never published to the host
 - Every image pinned to an exact version, never `:latest` and never a major-only tag such as `8` or `v2`
 

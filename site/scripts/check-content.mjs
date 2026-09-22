@@ -48,7 +48,7 @@ const ALLOW = [
 	},
 	{
 		rule: 'privileged',
-		file: 'project/index.md',
+		file: 'project/index.mdx',
 		reason: 'States that no container runs privileged.',
 	},
 ];
