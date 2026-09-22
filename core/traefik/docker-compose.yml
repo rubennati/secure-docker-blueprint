@@ -75,15 +75,18 @@ services:
     container_name: ${TRAEFIK_CONTAINER_NAME}
     restart: unless-stopped
     # --- Resources ---
-    # Measured in single-digit MB; this is a ceiling, not an appetite.
-    memswap_limit: 128M          # == memory: no swap
+    # Measured with about forty routers: 42 MiB idle, 200–285 MiB while browsers
+    # loaded code-split interfaces, and killed by the cgroup OOM killer at 128M
+    # with about 400 TLS connections open. An application, not a web server in
+    # the role table's sense: peak + ~50%.
+    memswap_limit: 512M          # == memory: no swap
     deploy:
       resources:
         limits:
-          memory: 128M
+          memory: 512M
           pids: 50
         reservations:
-          memory: 32M
+          memory: 64M
 
     depends_on:
       docker-socket-proxy:
