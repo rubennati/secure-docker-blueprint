@@ -666,6 +666,46 @@ sudo logrotate -d /etc/logrotate.d/traefik                       # dry run: two 
 (`grep flags /proc/$pid/fdinfo/<fd>` shows the `02000` bit): after the truncate
 it continues at the new end of the file.
 
+### 8.4 Traefik stays down after a crash, although it has `restart: unless-stopped`
+
+**Symptom:** every route fails; `docker ps -a` shows `traefik-core` as
+`Exited (137)` or another exit code, and `docker inspect traefik-core` shows
+`RestartCount` 0 — Docker never tried to start it again. An OOM kill shows as
+`OOMKilled: true`.
+
+**Cause:** Docker treats any `docker kill`, whatever the signal, as a stop by
+hand: it cancels the container's restart policy until the next start. Until
+2026-09-22 the logrotate configuration sent `docker kill --signal=USR1
+traefik-core` after every rotation of the access log, so from the first nightly
+rotation on, a crash left Traefik down until someone started it.
+
+**Check:**
+
+```bash
+id=$(docker inspect -f '{{.Id}}' traefik-core | cut -c1-12)
+sudo journalctl -u docker | grep "$id" | grep 'stopping restart-manager'
+sudo journalctl -u logrotate.service | grep Starting
+grep -n 'docker kill' /etc/logrotate.d/traefik
+```
+
+A `stopping restart-manager` line at the minute logrotate ran, with no start
+after it, is this case.
+
+**Repair:** start Traefik, then install the current logrotate configuration,
+which sends no signal:
+
+```bash
+docker start traefik-core
+cd /path/to/secure-docker-blueprint/core/traefik
+sudo sed 's|/path/to/secure-docker-blueprint|'"$(cd ../.. && pwd)"'|g' \
+  config/logrotate/traefik | sudo tee /etc/logrotate.d/traefik >/dev/null
+sudo logrotate -d /etc/logrotate.d/traefik                       # dry run: two stanzas, no errors
+```
+
+A Traefik that is still running but whose restart policy the last rotation
+cancelled is armed again by its next start: `docker restart traefik-core` does
+it now, at the cost of a second without routes.
+
 ---
 
 ## Quick Diagnostic Checklist

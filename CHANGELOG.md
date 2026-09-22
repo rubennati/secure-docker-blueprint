@@ -70,6 +70,8 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 - **Dify's first-account setup could not be done as documented** (`apps/dify`). The README kept the router at `acc-deny` until `/install` was done, which refuses the browser that has to open `/install`. It now opens `/install` through the shipped `acc-private`, with the setup password as the guard — `/console/api/setup` answers `401` without it.
 
+- **Traefik stayed down after a crash once the nightly log rotation had run** (`core/traefik`, `docs/standards/logrotate.md`). The logrotate configuration sent `docker kill --signal=USR1 traefik-core` after rotating the access log. Docker treats any `docker kill`, whatever the signal, as a stop by hand and cancels the restart policy until the next start: when Traefik was later killed for memory, `restart: unless-stopped` did not bring it back, and every route stayed down until it was started by hand. Measured on Docker 29.8.1 and reproduced with a throwaway container, restarted after an OOM kill without the signal and not with it. Both logs are now truncated in place (`copytruncate`) and no signal is sent; `TROUBLESHOOTING.md` §8.4 describes the case.
+
 - **`scripts/overview.sh` ended at the first stack with no env file.** The README points an operator at it to see what is configured and running; it exited 1 partway through the survey whenever it reached a stack carrying neither `.env` nor `.env.example` — `core/host-watchdog` on any checkout — because a bare `return` inherits the failed test's status under `set -e`. The survey now completes and reports all 82 components.
 
 - **`apps/seafile` generated a Redis password that can break Seafile's own connection URL.** The setup instructions produced it with `openssl rand -base64 32`, and Seafile builds `redis://:<password>@<host>:<port>` by string interpolation without escaping the value. The base64 alphabet contains `/`, which terminates the URL's authority component, so the host and port are parsed from the wrong text. Seahub then answers `500` on every request, its healthcheck fails, and because the optional services depend on it with `condition: service_healthy`, `seadoc`, `notification`, `thumbnail` and `md-server` never start. Roughly half of generated passwords contain at least one `/`, so the same tree succeeded or failed per install — which is why it read as a configuration fault. The three places that documented the generator now use `openssl rand -hex 32` and say why. Reproduced deterministically and verified against a real daemon: with a `/` in the password the stack fails as described; with a hex password a clean first boot brings up the whole stack. `apps/seafile-pro` already specified hex for this secret and is unaffected. The same constraint is already documented in `business/kimai` and `business/opensign`, whose applications assemble a DSN the same way.
@@ -102,6 +104,15 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
   The old anonymous volume stays in place after `down` until it is removed explicitly.
 
 - **Existing Seafile installations do not need to rotate their Redis password because of this change.** A deployment that is running is one whose password happens to be URL-safe, and it keeps working untouched. New installations should follow the corrected instruction. An installation that fails with Seahub returning `500` and a Redis connection error in `seahub.log` — a wrong host, an uncastable port, or `localhost` — is the case this fixes: replace `.secrets/redis_pwd.txt` with `openssl rand -hex 32`, then recreate both the `redis` and `seafile` containers so each side takes the new value.
+
+- **Traefik's logrotate configuration:** install the current one, then restart Traefik once — the last rotation cancelled its restart policy, and the next start arms it again:
+
+  ```bash
+  cd /path/to/secure-docker-blueprint/core/traefik
+  sudo sed 's|/path/to/secure-docker-blueprint|'"$(cd ../.. && pwd)"'|g' \
+    config/logrotate/traefik | sudo tee /etc/logrotate.d/traefik >/dev/null
+  docker restart traefik-core
+  ```
 
 ### Changed
 
