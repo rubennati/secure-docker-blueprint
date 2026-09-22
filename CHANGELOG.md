@@ -8,6 +8,10 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
+### Fixed
+
+- **Seafile Pro's AI overlay pulled a moving tag** (`apps/seafile-pro/seafile-ai.yml`). It now pins `seafileltd/seafile-ai:13.0.10` instead of `13.0-latest`, so an unchanged file no longer pulls a different image. Both tags pointed to the same image when this changed.
+
 ## [0.9.2] — 2026-09-22 — Stabilization and release readiness
 
 Eighteen stacks verified behind Traefik with TLS on a host: nine that v0.9.1 added and nine of the twelve this release adds. Each verification covers the route and its certificate, the access policy refusing a client outside its ranges over IPv4 and IPv6, the stack's smoke test, a restart and a restore from the stack's README. The image scan now fails on a CRITICAL finding it has not recorded. Upgrading Beszel, Langfuse, Traefik, Dify, Open WebUI or LiteLLM from v0.9.1 takes the steps under Migration.
