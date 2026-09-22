@@ -4,7 +4,7 @@
 #   mkdir -p volumes/local/mysql volumes/local/redis volumes/local/seafile-data
 #   docker compose -f docker-compose.local.yml --env-file .env.local up -d
 #   docker compose -f docker-compose.local.yml --env-file .env.local logs -f app
-#   http://localhost:8001
+#   http://127.0.0.1:8001
 #   docker compose -f docker-compose.local.yml --env-file .env.local down
 
 services:
@@ -111,7 +111,7 @@ services:
       SEAFILE_MYSQL_DB_CCNET_DB_NAME: ccnet_db
       SEAFILE_MYSQL_DB_SEAFILE_DB_NAME: seafile_db
       SEAFILE_MYSQL_DB_SEAHUB_DB_NAME: ${SEAHUB_DB_NAME}
-      SEAFILE_SERVER_HOSTNAME: localhost:8001
+      SEAFILE_SERVER_HOSTNAME: 127.0.0.1:8001
       SEAFILE_SERVER_PROTOCOL: http
       SITE_ROOT: /
       NON_ROOT: "false"
