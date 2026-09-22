@@ -439,7 +439,7 @@ The following controls are absent from CI. Ordered by security value.
 
 | Gap | Status | Remaining limitation |
 |-----|--------|----------------------|
-| **CVE / vulnerability scanning** | ⚠ Partial — see `trivy.yml` § Job 2 above for current coverage | Coverage is no longer the gap; blocking is. Nothing fails the job at any severity yet — see the same section for the summary, artifact and cache behavior that now makes the findings reviewable |
+| **CVE / vulnerability scanning** | ⚠ Partial — see `trivy.yml` § Job 2 above for current coverage | Coverage is no longer the gap. The job fails on a CRITICAL finding not recorded in `.trivy-baseline.json`, but it is not a required check, so a failing scan does not block a merge on its own — see the same section |
 | **IaC static analysis** | ⚠ Partial — `trivy.yml` config scan runs but is non-blocking | Overlaps with `check-baseline.py`; Trivy config scan exit-code is 0 |
 | **Resource limits coverage** | ✅ Addressed — every service carries a `memory` and a `pids` limit, and `check-structure.py`'s `no-resources` rule names which of the two is missing | A failure in CI. The values are derived rather than measured — v0.10.0 |
 | **`__REPLACE_ME__` sentinel check** | ✅ Addressed — `ci.yml` sentinel job | Only covers committed `.env` files; runtime `.env` files are gitignored and unchecked |
@@ -481,7 +481,7 @@ CVE scanning now covers every image `list-images.sh` discovers via `trivy.yml`, 
 
 ### Supply Chain Security: 2 / 5 *(updated)*
 
-Tags are pinned. OpenSSF Scorecard now publishes a public score. CVE scanning exists for every discovered image, non-blocking. The score moves from 1 to 2. It remains low because: no digest pinning, no image signing, no provenance verification, no SBOM, no dependency review, and GitHub Actions are still referenced by floating version tags (`@v2`, `@v6`) not commit SHAs.
+Tags are pinned. OpenSSF Scorecard now publishes a public score. CVE scanning exists for every discovered image and fails on a CRITICAL finding the baseline does not record; it is not a required check. The score moves from 1 to 2. It remains low because: no digest pinning, no image signing, no provenance verification, no SBOM, no dependency review, and GitHub Actions are still referenced by floating version tags (`@v2`, `@v6`) not commit SHAs.
 
 ---
 
@@ -493,7 +493,7 @@ These close the largest gaps with the least complexity. Implement before anythin
 
 | Item | What | Complexity | Maintenance | Security Value |
 |------|------|-----------|-------------|----------------|
-| **Trivy in CI** — ⚠ partly done: `trivy.yml` covers every discovered image and stays non-blocking | Decide the severity that fails the job, using the summary and per-image artifact this job now produces. | Low — one flag | Medium — a blocking scan stops merges | High — CVE visibility |
+| **Trivy in CI** — ✅ done: `trivy.yml` covers every discovered image and fails on an unrecorded CRITICAL | The failing severity is CRITICAL, judged against `.trivy-baseline.json` — see `trivy.yml` § Job 2. | Low — one flag | Medium — a blocking scan stops merges | High — CVE visibility |
 | **`__REPLACE_ME__` CI check** — ✅ done, `ci.yml` sentinel job | Add step that fails if any `.env` file (not `.env.example`) contains `__REPLACE_ME__`. Catches deployment of unsubstituted configs. | Trivial — 3-line grep | None | Medium — prevents silent misconfigurations |
 | **`read_only: true` CI enforcement** | Extend `check-baseline.py` to WARN (not FAIL initially) for services missing `read_only: true`. Add to exception system. | Low | Low | Medium |
 | **GitHub Actions SHA pinning** — ✅ done, enforced by `check-workflows.py` | Pin `actions/checkout`, `gitleaks-action` etc. to commit SHAs instead of floating tags. | Trivial | Low (Renovate automates updates) | Medium — supply chain |

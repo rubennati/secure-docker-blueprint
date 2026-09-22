@@ -36,6 +36,7 @@
 | `JWT_PRIVATE_KEY` and `SEAFILE_MYSQL_DB_PASSWORD` as direct env vars for `thumbnail-server` | Unlike other services, the thumbnail-server image does not use the shared `entrypoint.sh` wrapper — it runs its own init without reading Docker Secrets. Passing `_FILE` paths works for the main `seafile` container (wrapper reads them) but silently fails in the thumbnail container, causing 403 on all thumbnail requests. Upstream's reference stack avoids this by running all services under the same nginx process with a shared env. |
 | `ENABLE_GO_FILESERVER: "true"` | Seafile 13 default, but explicit — the Go file server is required for modern sync clients |
 | MariaDB healthcheck includes `--mariadbupgrade --innodb_initialized` | Avoids the race where Seafile connects before MariaDB has finished a version upgrade on restart |
+| `SEAFILE_SERVER_HOSTNAME: 127.0.0.1:8000` in `docker-compose.local.yml` | First-boot setup (`setup-seafile-mysql.py`, 13.0.20) accepts only a host name that contains a dot. On `localhost:8000` it exits with status 255 before it writes a file or opens the database, Seahub never starts, and the stack answers `502`. Seahub builds `SERVICE_URL` and `FILE_SERVER_ROOT` from this value, so the local stack is opened at the same address |
 
 ## Version / tag notes
 

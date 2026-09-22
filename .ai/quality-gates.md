@@ -112,8 +112,8 @@ What neither mode covers:
 
 ## Not blocking, deliberately
 
-- **Trivy** runs weekly with `exit-code: 0` — informational until the existing
-  CRITICAL findings have been assessed once.
+- **Trivy** is not a required check. It runs weekly and on pull requests into
+  `main`, and fails on a CRITICAL finding not recorded in `.trivy-baseline.json`.
 - **Structure warnings** (missing resource limits, missing healthchecks) are
   reported, not enforced. They need values measured on a real host — v0.10.0.
 - **`legacy-stamp`** — a stack carrying the pre-v0.5.1 `Last checked:` field.

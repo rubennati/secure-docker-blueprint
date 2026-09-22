@@ -44,12 +44,12 @@ Full details: [config/README.md](config/README.md).
 
 ## Try it locally
 
-Runs on `http://localhost:8000` without Traefik, DNS or a certificate.
+Runs on `http://127.0.0.1:8000` without Traefik, DNS or a certificate.
 
 ```bash
 cp .env.local.example .env.local # fill the __REPLACE_ME__ values
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
-# http://localhost:8000
+# http://127.0.0.1:8000
 docker compose -f docker-compose.local.yml --env-file .env.local down
 ```
 
