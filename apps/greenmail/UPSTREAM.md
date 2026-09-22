@@ -11,12 +11,7 @@
 - **Domain:** Developer tools
 - **Role:** SMTP, IMAP and POP3 test server with a mailbox per recipient, for automated tests
 - **Based on version:** `2.1.13`
-
-No `Last verified` line yet — see [Verification performed](#verification-performed-2026-09-18)
-below for exactly what has been exercised and what has not. The field
-asserts Traefik/TLS routing was confirmed on a real host, which this session
-could not do; setting it early would claim evidence that does not exist. This
-stack stays `scaffolded` until that happens.
+- **Last verified:** 2026-09-22 (2.1.13) — behind Traefik with TLS: the REST API through the route, SMTPS and POP3S with a TLS client, and a restart
 
 ## What we use
 
@@ -47,6 +42,26 @@ no volume.
 | Traefik routes only port 8080 | The mail protocol ports are not HTTP; other stacks reach them directly on `proxy-public`, the same pattern `apps/mailpit` already uses |
 | `app-internal` network not added | No database or internal service to isolate |
 
+## Verification performed (2026-09-22)
+
+Behind Traefik with TLS, with the shipped `acc-private` and `sec-2`:
+
+- A client outside the access policy's ranges got `403` on the route, over IPv4
+  and IPv6
+- Through the route: the Swagger UI at `/`, `/api/configuration`, `/api/user`
+  and `/api/service/readiness` answered `200`; after a delivery, `/api/user`
+  listed the recipient and `/api/user/<address>/messages/INBOX` returned the
+  message with its full MIME source
+- SMTPS (`:3465`): Python's `smtplib.SMTP_SSL` from a peer container on
+  `proxy-public`, certificate verification off for the baked-in keystore —
+  TLS 1.3 (`TLS_AES_256_GCM_SHA384`), message accepted
+- POP3S (`:3995`): `poplib.POP3_SSL`, TLS 1.3 — `STAT` one message, `RETR`
+  returned the subject and body; IMAPS (`:3993`) found it with `SEARCH ALL`
+- The Swagger UI in headless Chromium (Playwright 1.63): 5 requests, all `200`
+- After `docker compose down` and `up -d` the mailboxes were empty, as the
+  in-memory design intends, and the same TLS round trip passed again
+- Nothing to restore: the stack keeps no volume
+
 ## Verification performed (2026-09-18)
 
 Against the local test stack, and against the production `docker-compose.yml`
@@ -74,11 +89,6 @@ on a throwaway `proxy-public` network without Traefik:
 
 Only the Swagger UI at `:8080/` was confirmed for the REST API; its endpoints
 were not exercised.
-
-**Not yet exercised:** Traefik routing of the API (the router label
-`acc-private@file,sec-2@file` resolves, but no Traefik ran), and the SMTPS
-and POP3S listeners (`:3465`, `:3995`) — a plain TCP connect to a TLS port is
-logged by GreenMail as a failed handshake, so probe them with a TLS client.
 
 ## Upgrade checklist
 

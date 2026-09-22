@@ -14,10 +14,7 @@
 - **Domain:** AI and local AI
 - **Role:** LLM observability: traces, scores and prompts from any instrumented application
 - **Based on version:** `4.38.0`
-
-No `Last verified` line yet — see [Verification performed](#verification-performed-2026-09-19)
-below. The field asserts Traefik/TLS routing was confirmed on a real host, which
-has not happened; this stack stays `scaffolded` until it does.
+- **Last verified:** 2026-09-22 (4.38.0) — behind Traefik with TLS: the UI, the Python SDK sending traces, scores and a prompt, a restart, and a restore
 
 ## What we use
 
@@ -41,12 +38,55 @@ has not happened; this stack stays `scaffolded` until it does.
 | Traefik only in front of `langfuse-web`; MinIO, ClickHouse, Redis, PostgreSQL and the worker on `app-internal` | Upstream publishes MinIO's port 9090 and the web port on all interfaces; only the UI and API need to be reachable |
 | Explicit `command` on web and worker | Overriding `entrypoint` clears the image's `CMD`; without it the container exits `0` immediately |
 | Web at 2 GB with `NODE_OPTIONS=--max-old-space-size=1536` | At a 1 GB limit the Node heap (~512 MB default) was exhausted during startup and the container restarted in a loop |
-| `HOSTNAME: 0.0.0.0` on web; its healthcheck on `127.0.0.1` | Next.js binds to the address `HOSTNAME` resolves to — the container ID, which resolved to the `app-internal` address on the host, so Traefik got `502` while the healthcheck on `$(hostname)` passed |
+| `HOSTNAME: 0.0.0.0` on web; its healthcheck on `127.0.0.1` | Next.js binds to the address `HOSTNAME` resolves to — the container ID, which can resolve to the `app-internal` address; Traefik then gets `502` while the healthcheck on `$(hostname)` passes |
 | Worker healthcheck on `$(hostname)` | The worker binds to the container's hostname address and refuses loopback; nothing outside the stack connects to it |
 | PostgreSQL data mounted at `/var/lib/postgresql/data` | The 17.x image declares that path as a `VOLUME`; mounted one level up, the cluster stayed in an anonymous volume and each `down` + `up` started on a new, empty one |
 | ClickHouse: `user: 101:101`, `read_only`, tmpfs on `users.d` | The image's entrypoint writes the user definition there at start. A tmpfs over `config.d` was tried and removed: it hid the image's `listen_host` file, so port 9000 was refused from other containers |
 | ClickHouse `pids: 2000` | At 500 the entrypoint failed with `fork: retry: Resource temporarily unavailable`; ClickHouse's threads count against the limit |
 | `TELEMETRY_ENABLED=false` | Upstream's usage telemetry |
+
+## Verification performed (2026-09-22)
+
+Behind Traefik with TLS, with the shipped `acc-private` and `sec-2`:
+
+- A client outside the access policy's ranges got `403` on the route, over IPv4
+  and IPv6
+- The route answered `502` on the first start: `langfuse-web` listened on its
+  `app-internal` address only (`192.168.160.7:3000`), Traefik connected to the
+  `proxy-public` one, and the healthcheck on `$(hostname)` passed. With
+  `HOSTNAME: 0.0.0.0` it listened on all addresses and the route answered
+- Headless Chromium (Playwright 1.63): sign-in and the organisation page,
+  152 requests, all `200` under `sec-2`
+- Python SDK 4.15.4 from a container sending to the routed host: `auth_check`
+  `True`; a span with a generation and a trace score; a text prompt created and
+  fetched back (`v1`, compiled). The UI listed the trace under Tracing and the
+  prompt under Prompts; `/api/public/v2/observations` returned the span and the
+  generation. The spans went through `/api/public/otel/v1/traces` into the
+  `events_core` and `events_full` tables; `traces` and `observations` stayed
+  empty, so `/api/public/traces/<id>` answered `404`
+- 300 traces with a generation and a score each, sent in 4.3 s: 602 rows in
+  `events_core`, 301 scores. Peaks during these checks: ClickHouse 1.28 GiB and
+  739 PIDs, web 951 MiB, worker 618 MiB, MinIO 268 MiB, PostgreSQL 145 MiB,
+  Redis 8 MiB
+- The worker logged `Queue job trace-upsert errored: Error: Socket timeout`
+  from `ioredis` every 30 s from the first start, before any trace was sent;
+  ingestion was not affected
+- After `docker compose down` and `up -d`, and in the first backup, the prompt
+  was gone from PostgreSQL: the mount was one level above the 17.x image's data
+  `VOLUME`, and three dangling anonymous volumes held one cluster each — from
+  the first start, the restart and the restore. The organisation, project, key
+  pair and administrator reappeared each time from `LANGFUSE_INIT_*`. With the
+  data mounted at `/var/lib/postgresql/data` the prompt survived the restart
+- Backup as the README described: `tar` warned `file changed as we read it` on
+  ClickHouse's `store/`, which kept running; with ClickHouse and MinIO stopped
+  the archive was clean. The README now stops both
+- Restore into empty volumes: the dump loaded with `ON_ERROR_STOP` and no error,
+  the archive unpacked — the prompt came back through the API, ClickHouse held
+  606 events and 303 scores, and the SDK sent again with the restored keys
+
+**Not yet exercised:** evaluations, which the `trace-upsert` queue feeds; media
+uploads (not supported, see README); the in-app agent; upgrade from a v3
+database.
 
 ## Verification performed (2026-09-19)
 
@@ -69,12 +109,6 @@ Against the production `docker-compose.yml` (Docker Secrets, `entrypoint.sh`,
   `no-new-privileges` as documented, no published port; the secret values are absent
   from the configured environment of web, worker, ClickHouse and MinIO; the worker
   and ClickHouse have no route out
-
-**Not yet exercised:** Traefik routing and TLS; the browser UI beyond the login
-API; media uploads (not supported, see README); prompt management, evaluations and
-the in-app agent; the legacy `/api/public/ingestion` endpoint (in v4 it accepts only
-score events, so traces go through OpenTelemetry); backup and restore; upgrade from
-a v3 database.
 
 ## Upgrade checklist
 

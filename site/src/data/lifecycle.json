@@ -14,10 +14,10 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=v1.5.0",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "—",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "baseline-aligned",
+    "verified": "2026-09-21",
+    "verified_anchored": true,
+    "verified_version": "v1.5.0"
   },
   "apps/bookstack": {
     "backup_docs": "documented",
@@ -124,20 +124,20 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=1.17.1",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "—",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "baseline-aligned",
+    "verified": "2026-09-22",
+    "verified_anchored": true,
+    "verified_version": "1.17.1"
   },
   "apps/docling-serve": {
     "backup_docs": "documented",
     "local_stack": "✅",
     "pinned": "APP_TAG=v1.34.0",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "—",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "baseline-aligned",
+    "verified": "2026-09-22",
+    "verified_anchored": true,
+    "verified_version": "v1.34.0"
   },
   "apps/easyappointments": {
     "backup_docs": "documented",
@@ -174,10 +174,10 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=2.1.13",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "—",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "baseline-aligned",
+    "verified": "2026-09-22",
+    "verified_anchored": true,
+    "verified_version": "2.1.13"
   },
   "apps/heimdall": {
     "backup_docs": "documented",
@@ -264,10 +264,10 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=v1.101.0",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "—",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "baseline-aligned",
+    "verified": "2026-09-21",
+    "verified_anchored": true,
+    "verified_version": "v1.101.0"
   },
   "apps/lycheeorg": {
     "backup_docs": "documented",
@@ -334,10 +334,10 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=0.34.2",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "—",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "baseline-aligned",
+    "verified": "2026-09-21",
+    "verified_anchored": true,
+    "verified_version": "0.34.2"
   },
   "apps/onlyoffice": {
     "backup_docs": "documented",
@@ -354,10 +354,10 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=v0.11.3",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "—",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "baseline-aligned",
+    "verified": "2026-09-21",
+    "verified_anchored": true,
+    "verified_version": "v0.11.3"
   },
   "apps/opencanary": {
     "backup_docs": "documented",
@@ -424,10 +424,10 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=v1.19.1-unprivileged",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "—",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "baseline-aligned",
+    "verified": "2026-09-21",
+    "verified_anchored": true,
+    "verified_version": "v1.19.1-unprivileged"
   },
   "apps/seafile": {
     "backup_docs": "documented",
@@ -984,10 +984,10 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=4.38.0",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "—",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "baseline-aligned",
+    "verified": "2026-09-22",
+    "verified_anchored": true,
+    "verified_version": "4.38.0"
   },
   "monitoring/ntfy": {
     "backup_docs": "documented",

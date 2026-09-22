@@ -13,12 +13,6 @@
 - **Role:** Code-first scripts, flows, APIs and scheduled jobs on a queue
 - **Based on version:** `1.814.0`
 
-No `Last verified` line yet — see [Verification performed](#verification-performed-2026-09-18)
-below for exactly what has been exercised and what has not. The field
-asserts Traefik/TLS routing was confirmed on a real host, which this session
-could not do; setting it early would claim evidence that does not exist. This
-stack stays `scaffolded` until that happens.
-
 ## What we use
 
 - Official image, pinned tag: `ghcr.io/windmill-labs/windmill:1.814.0`. Upstream's
@@ -161,6 +155,49 @@ loads. The chain stays `sec-2` until the security chains are reviewed against
 the applications before v1.0 —
 [`ROADMAP.md`](../../ROADMAP.md#v10--complete-and-hand-off-ready).
 
+## Verification performed (2026-09-22)
+
+Behind Traefik with TLS:
+
+- A client outside the access policy's ranges got `403` on the route, over IPv4
+  and IPv6
+- Set up as the README describes; the route answered `403` for every path while
+  `APP_TRAEFIK_ACCESS=acc-deny`; `ops/bootstrap-admin.sh` created the operator,
+  removed `admin@windmill.dev` and reported "already bootstrapped" on a second
+  run; after switching to `acc-private` the built-in login answered `400`
+  through the route
+- `windmill-server` at the shipped 512 MiB was killed by the kernel's cgroup
+  OOM killer about every 30 s (`Memory cgroup out of memory: Killed process …
+  (windmill) anon-rss:454704kB`), and Traefik answered `404` and `502` between
+  restarts. With a 2 GiB ceiling it settled at 500–535 MiB idle, reached
+  535 MiB while two browser sessions loaded the UI and 558 MiB starting on a
+  restored database; the limit is now 1 GiB, where it ran at 470 MiB with no
+  kill
+- Through the route as the operator: a Python job on `worker` (`42`), a native
+  TypeScript job on `worker-native`; both made an outbound HTTPS call from job
+  code and got `200`. Each job's `worker` field named the worker group it ran on
+- The UI's first load issues about 850 requests: headless Chromium (Playwright
+  1.63) got 584 × `429` under `sec-2` and 412 × `429` under `sec-2-spa`, and the
+  page showed `500 Internal Error` both times. Under `sec-1` (no rate limit) all
+  requests passed and the operator signed in to the workspace list. The stack
+  keeps `sec-2` — see [Known limitation](#known-limitation-the-ui-and-the-rate-limit)
+- The UI shows the newest release beside the running one (`v1.816.0` at the
+  time); the stack does not switch that lookup off
+- A saved script ran before and after `docker compose down` and `up -d`; the job
+  history survived
+- Restore with the README's single-database dump (`pg_dump windmill`) into a
+  fresh cluster: 806 errors, all `role "windmill_user" does not exist` or
+  `role "windmill_admin" does not exist`. The server started `healthy` and
+  sign-in worked, but every workspace call failed with `role "windmill_admin"
+  does not exist`, and `pg_policies` was empty. Loading `pg_dumpall
+  --roles-only` first, then the dump: no error, 366 policies, jobs ran. A full
+  `pg_dumpall` restored into a fresh cluster the same way (two errors: the
+  database and the `postgres` role already exist). borgmatic 2.1.6 dumps with
+  `pg_dumpall` when `name: all` has no `format`, and with `pg_dump` for a named
+  database; the README now uses `name: all`
+
+**Not yet exercised:** NSJAIL on bare metal; job isolation of any kind.
+
 ## Verification performed (2026-09-18)
 
 Against the local test stack (`db`, `windmill-server`, `worker`, `worker-native`)
@@ -186,10 +223,6 @@ Traefik:
 - The Python job failed on `app-internal` alone and passed once the workers
   joined `app-egress`; the database has no route out
 - The default-administrator replacement above
-
-**Not yet exercised:** Traefik routing and TLS; job isolation of any kind (see
-the NSJAIL finding); `worker-native` making outbound calls from job code;
-restore of the Postgres data.
 
 ## Upgrade checklist
 

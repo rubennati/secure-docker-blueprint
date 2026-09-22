@@ -12,10 +12,7 @@
 - **Domain:** AI and local AI
 - **Role:** OpenAI-compatible gateway in front of any model backend, with virtual keys, budgets and a spend log
 - **Based on version:** `v1.101.0`
-
-No `Last verified` line yet — see [Verification performed](#verification-performed-2026-09-19)
-below. The field asserts Traefik/TLS routing was confirmed on a real host, which
-has not happened; this stack stays `scaffolded` until it does.
+- **Last verified:** 2026-09-21 (v1.101.0) — behind Traefik with TLS: a provider credential stored encrypted through the admin API, a virtual key limited to it, the admin login, a restart, and a database restore
 
 ## What we use
 
@@ -39,6 +36,47 @@ has not happened; this stack stays `scaffolded` until it does.
 | `store_model_in_db: true` | `POST /model/new` refuses without it, so the admin-API path for provider credentials needs it |
 | Secret files mode `640`, group 65534 | The proxy runs as uid/gid 65534 and Compose mounts the files with their host owner and mode |
 
+## Verification performed (2026-09-21)
+
+Behind Traefik with TLS, with the shipped `acc-private` and `sec-2`, and the
+Ollama stack as the backend:
+
+- A client outside the access policy's ranges got `403` on the route, over IPv4
+  and IPv6
+- The proxy did not start with `ops/init.sh`'s owner-only secret files: it runs
+  as uid/gid 65534, Compose mounts the files with the host's owner and mode, and
+  the entrypoint looped on `cat: can't open '/run/secrets/DB_PWD': Permission
+  denied`. With group 65534 and mode `640` it started; the README and
+  `init.sh` now say so
+- Unauthenticated: `/health/liveliness`, `/health/readiness`, `/routes`,
+  `/openapi.json` `200`; `/v1/models`, `/health`, `/metrics` `401`
+- The shipped `local-chat` entry answered through the route
+- `POST /model/new` answered `Set 'STORE_MODEL_IN_DB='True'' in your env to
+  enable this feature` with the shipped config. With `store_model_in_db: true`
+  in `general_settings` (now in `config/config.yaml`) a model was added with
+  `api_base` set to the Ollama route and a placeholder `api_key`; in
+  `LiteLLM_ProxyModelTable` both fields are stored encrypted and the key's
+  plaintext does not occur
+- A virtual key limited to that model: a completion `200`, another model `403`,
+  `POST /key/generate` `401`, `/v1/models` listing only its model
+- Admin login: `POST /login` with user `admin` and the master key `303` to
+  `/ui` with a session cookie; a wrong password `401`. The redirect `Location`
+  carries `http://` for the routed host; `strict-transport-security` from the
+  security chain keeps browsers on HTTPS
+- Headless Chromium (Playwright 1.63): the login form and, after signing in
+  with the master key, the dashboard listing the virtual keys — 160 requests,
+  none answered `429` under `sec-2`
+- After `docker compose down` and `up -d` the virtual key still completed
+- Restore as the README describes: `pg_dump` while running, `volumes/postgres`
+  replaced by an empty directory, the database container started alone, the
+  dump loaded with `psql -v ON_ERROR_STOP=1`, the proxy started: the virtual key
+  completed against the stored model, so the credential decrypted with the
+  unchanged salt key
+- Peak 593 MiB for the proxy, 61 MiB for the database
+
+**Not yet exercised:** a hosted provider's own check of the credential — none
+was available; a placeholder key reached the Ollama route.
+
 ## Verification performed (2026-09-19)
 
 Against `docker-compose.local.yml` and the production `docker-compose.yml`
@@ -56,10 +94,6 @@ throwaway Ollama container serving `smollm2:135m`:
   requests
 - The key, salt and database URL are absent from the container's configured environment
 - Production: no published ports, `read_only`, uid 65534, database without outbound route
-
-**Not yet exercised:** Traefik routing and TLS; a hosted provider and
-credential storage through the admin API; the admin UI login beyond the redirect;
-backup and restore of the database.
 
 ## Upgrade checklist
 
