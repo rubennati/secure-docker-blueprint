@@ -13,10 +13,7 @@
 - **Role:** Customer support across website chat, email and messaging channels in one shared inbox
 - **Edition gating:** everything under the repository's `enterprise/` directory is licensed under `enterprise/LICENSE` rather than MIT — https://github.com/chatwoot/chatwoot/blob/develop/LICENSE · checked 2026-09-21
 - **Based on version:** `v4.18.0`
-
-No `Last verified` line yet — see [Verification performed](#verification-performed-2026-09-21)
-below. The field asserts Traefik/TLS routing was confirmed on a real host, which
-has not happened; this stack stays `scaffolded` until it does.
+- **Last verified:** 2026-09-22 (v4.18.0) — behind Traefik with TLS: the onboarding, the dashboard and its websocket, the API, a website widget, a restart, and the README's restore
 
 The origin comes from the governing-law clause of Chatwoot's terms of service
 (State of California).
@@ -43,6 +40,28 @@ The origin comes from the governing-law clause of Chatwoot's terms of service
 | Redis password from a secret, via a tmpfs config file | Upstream passes it on the command line |
 | `FORCE_SSL=false` | TLS terminates at Traefik |
 | `APP_TRAEFIK_ACCESS=acc-tailscale` | The first visit creates the administrator |
+
+## Verification performed (2026-09-22)
+
+Behind Traefik with TLS, with the shipped `acc-tailscale` and `sec-2`:
+
+- A client outside the access policy's ranges got `403`, over IPv4 and IPv6
+- First load: the onboarding page in 7 requests; the onboarding created the first
+  account as super administrator (84 requests), the dashboard followed (51) — no
+  `429` under `sec-2`
+- The dashboard's websocket (`/cable`) opened through the route
+- `GET /api/v1/profile` with the session's token headers returned the personal
+  access token; with it a contact created and listed through the API; a wrong
+  token got `401`
+- A website inbox created through the API; its widget page loaded through the
+  route with its websocket
+- After `docker compose down` and `up`: login, the contact and the websocket
+- Backup as the README describes; restore into an empty database without errors,
+  the archive unpacked — login and the contact back
+- Peaks: Sidekiq 559 MiB, Rails 484 MiB, PostgreSQL 78 MiB, Redis 14 MiB
+
+**Not yet exercised:** email in and out; channels other than the website widget;
+the captain and AI features.
 
 ## Verification performed (2026-09-21)
 

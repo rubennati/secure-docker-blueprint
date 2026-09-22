@@ -23,13 +23,26 @@ sudo chown -R 1000:1000 volumes/config volumes/data
 docker compose up -d
 ```
 
-Open the host name and log in with:
+The login is the user `admin` (or the name given to `ops/init.sh`) with the
+password in `.secrets/gui_pwd.txt`, on the API under `https://<host name>/api`.
 
-| Field | Value |
-|---|---|
-| RC URL | `https://<host name>/api` |
-| User | `admin`, or the name given to `ops/init.sh` |
-| Password | `.secrets/gui_pwd.txt` |
+## Known limitation — the interface's sign-in
+
+The interface in 1.75.1 has no field for the API address. It reads `url`, `user`
+and `pass` from the link it is opened with (`/login?url=…&user=…&pass=…`), signs
+in with them and keeps them in the browser's local storage. Given only `url`, it
+drops the address again after its first attempt without credentials fails, and
+the Connect button stays disabled. With the htpasswd login this stack uses, the
+interface can therefore only be opened with the password inside a URL — which
+lands in the reverse proxy's access log and in the browser history.
+
+Until that changes upstream, use the API directly; `curl` asks for the password:
+
+```bash
+curl -u admin -X POST https://<host name>/api/core/version
+curl -u admin -X POST -H 'Content-Type: application/json' \
+  -d '{}' https://<host name>/api/config/listremotes
+```
 
 ## What is mounted
 
@@ -49,8 +62,10 @@ To give rclone other host directories, mount them beside `/data`, owned by
 - **The login is a htpasswd file.** rclone checks the password against an APR1
   hash in the Docker Secret and never receives the password itself. rclone does
   not accept SHA-512 crypt (`$6$`) hashes.
-- **The start log prints a login link with generated credentials.** With the
-  htpasswd file in place they are refused; only the htpasswd login works.
+- **The interface keeps the login in the browser.** Once signed in, it stores the
+  API address, the user and the password in the browser's local storage.
+- **The dashboard fetches from GitHub.** It requests rclone's changelog and a
+  sponsor list from `raw.githubusercontent.com` in the visitor's browser.
 - **`rclone.conf` is not encrypted.** rclone obscures the stored passwords,
   which is reversible, so the file and its backups carry the remotes' credentials.
 - **Mounts are not available.** A FUSE mount needs `/dev/fuse` and
@@ -60,7 +75,11 @@ To give rclone other host directories, mount them beside `/data`, owned by
 
 ## Status
 
-`scaffolded` — see [UPSTREAM.md](UPSTREAM.md#verification-performed-2026-09-21).
+Run behind Traefik with TLS on 2026-09-22 (1.75.1): the API under `/api/` on the
+same host name, a remote with an upload and a copy job, the interface, a restart,
+and the restore below. The interface can be signed into only with the password in
+its URL — see the limitation above. Full log in
+[`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-22).
 
 ## Try it locally
 
@@ -86,5 +105,4 @@ sudo tar -czf rclone-web.tar.gz volumes/config .secrets
 
 `volumes/config/rclone.conf` holds the credentials of every remote. The files in
 `volumes/data` belong to whatever you put there. Restore by unpacking the archive,
-restoring the `1000:1000` ownership and running `docker compose up -d`. Restore is
-not exercised here.
+restoring the `1000:1000` ownership and running `docker compose up -d`.

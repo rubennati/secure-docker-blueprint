@@ -15,9 +15,8 @@
 - **Role:** ERP on the Frappe framework: accounting, invoicing, stock, buying, selling, manufacturing, projects and HR
 - **Based on version:** `v16.35.0`
 
-No `Last verified` line yet — see [Verification performed](#verification-performed-2026-09-21)
-below. The field asserts Traefik/TLS routing was confirmed on a real host, which
-has not happened; this stack stays `scaffolded` until it does.
+No `Last verified` line: the realtime service cannot check sessions, so the desk
+runs without live updates — see [Known limitation](#known-limitation-no-live-updates).
 
 The origin comes from Frappe's cloud and enterprise terms, which name Frappe
 Technologies Pvt. Ltd. and place arbitration in Mumbai. The licence is the
@@ -48,6 +47,47 @@ AGPL-3.0. The Frappe framework underneath is MIT.
 | Healthchecks: TCP for nginx, Gunicorn and Socket.IO; the process for workers and scheduler | The image ships no `healthcheck.sh`, although upstream's operations page refers to one |
 | No backup-cron override | Upstream's runs Ofelia with the Docker socket |
 | `APP_TRAEFIK_ACCESS=acc-tailscale` | A company's books in one place |
+
+## Known limitation: no live updates
+
+Frappe's realtime server (`realtime/middlewares/authenticate.js`) authenticates a
+socket by fetching `<Origin>/api/method/frappe.realtime.get_user_info` with the
+session cookie. The frontend's nginx sets `Origin` to the public
+`https://<host>`, and the websocket container sits on `app-internal` only, where
+that address is unreachable: every socket is refused with
+`Unauthorized: TypeError: fetch failed`, and the desk falls back to no realtime at
+all. Upstream's compose leaves the container on a network with a way out. A fix
+inside the stack — the check sent to the frontend on `app-internal` — is open.
+
+## Verification performed (2026-09-22)
+
+Behind Traefik with TLS, with the shipped `acc-tailscale` and `sec-2`:
+
+- All services `healthy` about two minutes after the first `up`; the configurator
+  exited `0`
+- `ops/create-site.sh` created the site in 137 s; a second run changed nothing;
+  `logs/bench.log` contained no password
+- A client outside the access policy's ranges got `403`, over IPv4 and IPv6
+- Login as Administrator, then the setup wizard in the browser: language,
+  country, time zone and currency; a user; the persona questions; company and
+  chart of accounts — "Complete Setup" took 42 s and opened the desk (67
+  requests, no `429` under `sec-2`)
+- The site had been created with the scheduler off (`*** Scheduler is disabled
+  ***`); after the wizard `enable_scheduler` was `1`
+- The scheduler delay as the README describes: with the site switched to a zone
+  30 minutes behind Asia/Kolkata, the 82 scheduled job types carried creation
+  times ahead of the site's clock, and no scheduled job ran for the 22 minutes
+  observed after the wizard. The first run after the delay was not waited for
+- A customer created with the desk's own client API and listed at `/app/customer`
+- The realtime socket did not connect (`Unauthorized: TypeError: fetch failed`,
+  see above); polling and the websocket upgrade themselves answered through the
+  route
+- Company and customer unchanged after `docker compose down` and `up`
+- Backup as the README describes (737 tables); restore into an empty database in
+  12 s, the archive unpacked, ownership restored — site, company and customer back
+
+**Not yet exercised:** a scheduled job's first run after the delay; email;
+reports and printing; the queues under load.
 
 ## Verification performed (2026-09-21)
 

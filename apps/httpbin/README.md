@@ -27,8 +27,12 @@ The host name's root lists every endpoint.
 - **No login, and an open redirect.** Every endpoint answers whoever reaches it,
   and `/redirect-to` sends a visitor on to any URL it is given. `.env.example`
   ships `APP_TRAEFIK_ACCESS=acc-tailscale`, the VPN only.
-- **It echoes what it receives,** including the headers Traefik adds, such as
-  `X-Forwarded-For`.
+- **It echoes what it receives.** `/get` and `/headers` return the request's
+  headers and put the client's address in `origin`; the proxy headers
+  `X-Forwarded-For`, `X-Forwarded-Proto`, `X-Forwarded-Port` and `X-Real-Ip`
+  appear only with `?show_env=1`.
+- **The root page loads fonts from Google.** Its API explorer requests
+  `fonts.googleapis.com` in the visitor's browser.
 - **Bounded per request.** `/delay` stops at 10 seconds and `/bytes` at 102,400
   bytes.
 - **Replaced start command.** The image's own command fails in this version; the
@@ -38,7 +42,10 @@ The host name's root lists every endpoint.
 
 ## Status
 
-`scaffolded` — see [UPSTREAM.md](UPSTREAM.md#verification-performed-2026-09-21).
+Run behind Traefik with TLS on 2026-09-22 (0.10.4): the endpoints through the
+route, `/redirect-to` refused outside the access policy, the per-request bounds,
+and a restart. Full log in
+[`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-22).
 
 ## Try it locally
 

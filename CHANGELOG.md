@@ -44,6 +44,16 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ### Fixed
 
+- **calrs wrote a second encryption key next to its data** (`apps/calrs`). `ops/bootstrap-admin.sh` ran the command line through `docker compose exec`, which bypasses the entrypoint: the CLI started without `CALRS_SECRET_KEY`, generated `volumes/data/secret.key` and would have encrypted with it — while the server uses the Docker Secret, so CalDAV and SMTP passwords set from the command line could not have been read by it. The script now calls the CLI through the entrypoint, and the README says to do the same.
+
+- **Akaunting did not start on a fresh install, and a second `ops/install.sh` replaced its application key** (`business/akaunting`). The entrypoint runs as root without `CAP_DAC_OVERRIDE` and could not enter `volumes/storage`, which belongs to `www-data` with mode `700`; the container restarted in a loop. It now creates the directories as `www-data`. `ops/install.sh` read and edited `volumes/app.env` (`www-data`, mode `600`) from the host: its "already installed" check could not read the file, so a second run reinstalled and wrote a new `APP_KEY`, and the database password was never removed from the file although the script reported success. Both steps now run inside the container, and the script stops if the password line is still there.
+
+- **SolidInvoice's vault key was readable by every local user** (`business/solidinvoice`). The application writes the decryption key of its secrets vault with mode `644`; `ops/init.sh` now creates `volumes/config` with mode `700`.
+
+- **CISO Assistant's interface did not load behind the shipped rate limit** (`apps/ciso-assistant`). Under `sec-2` fourteen of the first load's 77 requests came back `429`; `.env.example` now ships `sec-2-spa`. Its backup archived a directory of mode `700` without `sudo` and did not stop Huey, whose queue is a SQLite file in that directory; the README now does both and writes out the restore.
+
+- **Three setups did not lead to a working login or to creating records** (`apps/calnode`, `backup/rclone-web`, `business/akaunting`). calnode's first-run route creates the owner without a password, so its admin interface offered no login method; the README now sets one with upstream's `reset-admin`. Rclone Web 1.75.1 has no field for the API address and takes it only from its login link, together with the password; the README drops the login table that assumed such a field and records the limitation. Akaunting fetches its plan limits from `api.akaunting.com` before every page that creates a record and keeps those pages closed without an akaunting.com API key; the README says so.
+
 - **Langfuse lost its PostgreSQL data on every `down` and `up`** (`monitoring/langfuse`). The database was mounted at `/var/lib/postgresql`, one level above the PostgreSQL 17 image's data `VOLUME`, so the cluster lived in an anonymous volume and every recreated container started on a new, empty one. Prompts, users, projects and keys created afterwards were lost; the organisation, project, key pair and administrator from `LANGFUSE_INIT_*` came back on each start and hid the loss. Both compose files now mount the data at `/var/lib/postgresql/data`. Existing installations need the migration step below.
 
 - **Langfuse and Dify could answer `502` behind Traefik** (`monitoring/langfuse`, `apps/dify`). Next.js listens on the address `HOSTNAME` resolves to — Docker's container ID, which resolves to one of the container's two network addresses. When that was the internal one, Traefik could not connect, while the healthcheck probed the same address and reported `healthy`. Both web services now set `HOSTNAME: 0.0.0.0` and check `127.0.0.1`.
@@ -65,6 +75,17 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 - **`apps/seafile` generated a Redis password that can break Seafile's own connection URL.** The setup instructions produced it with `openssl rand -base64 32`, and Seafile builds `redis://:<password>@<host>:<port>` by string interpolation without escaping the value. The base64 alphabet contains `/`, which terminates the URL's authority component, so the host and port are parsed from the wrong text. Seahub then answers `500` on every request, its healthcheck fails, and because the optional services depend on it with `condition: service_healthy`, `seadoc`, `notification`, `thumbnail` and `md-server` never start. Roughly half of generated passwords contain at least one `/`, so the same tree succeeded or failed per install — which is why it read as a configuration fault. The three places that documented the generator now use `openssl rand -hex 32` and say why. Reproduced deterministically and verified against a real daemon: with a `/` in the password the stack fails as described; with a hex password a clean first boot brings up the whole stack. `apps/seafile-pro` already specified hex for this secret and is unaffected. The same constraint is already documented in `business/kimai` and `business/opensign`, whose applications assemble a DSN the same way.
 
 ### Migration
+
+- **calrs, bootstrapped with the earlier `ops/bootstrap-admin.sh`:** `volumes/data/secret.key` exists. The server does not use it; anything the command line encrypted with it — CalDAV sources or SMTP settings added there — cannot be read by the server. Re-enter those in the web interface, then remove the file with `sudo rm volumes/data/secret.key`.
+
+- **Akaunting, installed with the earlier `ops/install.sh`:** the database password is still in `volumes/app.env`. Remove the line and restart; the container reads the password from the Docker Secret:
+
+  ```bash
+  sudo sed -i '/^DB_PASSWORD=/d' volumes/app.env
+  docker compose restart akaunting-app
+  ```
+
+- **SolidInvoice:** close the existing configuration directory with `sudo chmod 700 volumes/config`.
 
 - **Upgrading an existing Langfuse installation requires operator action** — an installation from v0.9.1 keeps its database in an anonymous volume, and the corrected mount starts on an empty `volumes/postgres`. Dump the database while the old stack still runs, then restore it after the update. Docker's former mount point, an empty `volumes/postgres/data`, has to go first: `initdb` refuses a directory that is not empty.
 

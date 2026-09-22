@@ -5,7 +5,10 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 # The SQLite database lives in db/ under the configuration directory. The
-# application does not create that directory itself.
+# application does not create that directory itself. The directory also holds
+# the secrets vault and its decryption key, which the application writes
+# world-readable, so the directory itself is closed to other users.
+umask 077
 mkdir -p volumes/config/db
 
 echo "Created volumes/config/db"

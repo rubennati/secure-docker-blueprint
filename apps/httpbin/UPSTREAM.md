@@ -11,10 +11,7 @@
 - **Domain:** Developer tools
 - **Role:** HTTP request and response service for testing clients: echoes requests, returns chosen status codes, redirects, delays and payloads
 - **Based on version:** `0.10.4`
-
-No `Last verified` line yet — see [Verification performed](#verification-performed-2026-09-21)
-below. The field asserts Traefik/TLS routing was confirmed on a real host, which
-has not happened; this stack stays `scaffolded` until it does.
+- **Last verified:** 2026-09-22 (0.10.4) — behind Traefik with TLS: the endpoints through the route, `/redirect-to` refused outside the access policy, the per-request bounds, and a restart
 
 The fork's README gives its reason: the original's maintainers could not be
 reached, and the `httpbin` package on PyPI is released from the fork. It also
@@ -35,6 +32,26 @@ only `latest` and `test`, both from 2018.
 | `--no-control-socket` | Gunicorn 26 writes a control socket under `/opt/httpbin/.gunicorn`; on a read-only root that logs an error at start |
 | `read_only`, `cap_drop: ALL` | The image already runs unprivileged |
 | `APP_TRAEFIK_ACCESS=acc-tailscale` | No login on any endpoint, and `/redirect-to` redirects to any URL |
+
+## Verification performed (2026-09-22)
+
+Behind Traefik with TLS, with the shipped `acc-tailscale` and `sec-2`:
+
+- A client outside the access policy's ranges got `403` on `/`, `/get`,
+  `/status/200` and `/redirect-to?url=https://example.com/`, over IPv4 and IPv6 —
+  the open redirect is closed to it
+- Through the route: the root page `200` in six requests, plus one request to
+  `fonts.googleapis.com` from the browser; `POST /post` echoed its JSON body;
+  `/status/418` answered `418`; `/redirect-to` answered `302` with the given
+  `Location`; a custom request header came back from `/headers`
+- `/get` put the client's address in `origin`; `X-Forwarded-For`,
+  `X-Forwarded-Proto`, `X-Forwarded-Port` and `X-Real-Ip` appeared only with
+  `?show_env=1`, `X-Forwarded-Host` and `X-Forwarded-Server` always
+- Bounds: `/delay/12` answered after 10.2 s; `/bytes/200000` returned 102,400 bytes
+- The same answers after `docker compose down` and `up`
+- Peak 41 MiB (limit 256 MiB)
+
+**Not yet exercised:** the streaming endpoints; load.
 
 ## Verification performed (2026-09-21)
 

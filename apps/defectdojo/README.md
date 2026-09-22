@@ -77,7 +77,9 @@ when none is set. Here it is set, so nothing is printed.
 
 ## Status
 
-`scaffolded` — see [UPSTREAM.md](UPSTREAM.md#verification-performed-2026-09-21).
+Run behind Traefik with TLS on 2026-09-22 (3.3.100): the first start, the API
+with a token, two scan imports, the interface, a restart, and the restore below.
+Full log in [`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-22).
 
 ## Try it locally
 
@@ -99,11 +101,13 @@ Back up the database, `volumes/media` and `.secrets/`:
 
 ```bash
 docker exec defectdojo-db sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' > defectdojo.sql
-tar -czf defectdojo-files.tar.gz volumes/media .secrets
+sudo tar -czf defectdojo-files.tar.gz volumes/media .secrets
 ```
+
+`volumes/media` belongs to uid 1001 with mode `700`, hence `sudo`.
 
 Valkey holds the task queue and a cache. Restore into an empty database with
 `psql`, unpack the archive, restore the `1001:1001` ownership on `volumes/media`,
 and run `docker compose up -d`; the initializer finds the schema in place. Without
 the original `dd_credential_aes_256_key.txt`, stored integration credentials cannot
-be decrypted. Restore is not exercised here.
+be decrypted.

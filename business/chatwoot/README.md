@@ -73,7 +73,10 @@ needs a wider access policy — and the agent dashboard sits behind the same one
 
 ## Status
 
-`scaffolded` — see [UPSTREAM.md](UPSTREAM.md#verification-performed-2026-09-21).
+Run behind Traefik with TLS on 2026-09-22 (v4.18.0): the onboarding, the
+dashboard with its websocket, the API with a personal access token, a website
+widget, a restart, and the restore below. Full log in
+[`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-22).
 
 ## Try it locally
 
@@ -99,4 +102,4 @@ tar -czf chatwoot-files.tar.gz volumes/storage .secrets/secret_key_base.txt
 
 Redis holds queues and caches. Restore into an empty database with `psql`, unpack
 the archive, restore the `1000:1000` ownership on `volumes/storage`, and run
-`docker compose up -d`. Restore is not exercised here.
+`docker compose up -d`.

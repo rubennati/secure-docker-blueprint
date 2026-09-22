@@ -23,10 +23,22 @@ if ! docker compose ps --status running --services | grep -qx akaunting-app; the
   exit 1
 fi
 
-if grep -q '^APP_INSTALLED=true' volumes/app.env 2>/dev/null; then
-  echo "already installed — volumes/app.env has APP_INSTALLED=true. Nothing changed."
-  exit 0
-fi
+# volumes/app.env belongs to www-data with mode 600, so it is read inside the
+# container. The guard matters: the installer writes a new APP_KEY on every run,
+# and a second run would make everything encrypted with the old key unreadable.
+installed=$(docker compose exec -T --user www-data akaunting-app \
+  sh -c 'grep -c "^APP_INSTALLED=true" .env || true')
+case "$installed" in
+  0) ;;
+  "")
+    echo "cannot read .env inside the container — nothing changed" >&2
+    exit 1
+    ;;
+  *)
+    echo "already installed — .env has APP_INSTALLED=true. Nothing changed."
+    exit 0
+    ;;
+esac
 
 set -a
 # shellcheck disable=SC1091
@@ -50,8 +62,14 @@ docker compose exec -T --user www-data \
 
 # The installer writes the database password into .env. Laravel reads real
 # environment variables first, and the container already has it from the
-# secret — so the copy in the file is removed.
-sed -i.bak '/^DB_PASSWORD=/d' volumes/app.env && rm -f volumes/app.env.bak
+# secret — so the copy in the file is removed. Inside the container, as the
+# file's owner, and rewritten in place: the file is a bind mount.
+docker compose exec -T --user www-data akaunting-app sh -c '
+  grep -v "^DB_PASSWORD=" .env > /tmp/app.env && cat /tmp/app.env > .env && rm -f /tmp/app.env'
+if [ "$(docker compose exec -T --user www-data akaunting-app sh -c 'grep -c "^DB_PASSWORD=" .env || true')" != 0 ]; then
+  echo "the database password is still in .env — remove the DB_PASSWORD line from volumes/app.env" >&2
+  exit 1
+fi
 
 docker compose restart akaunting-app >/dev/null
 

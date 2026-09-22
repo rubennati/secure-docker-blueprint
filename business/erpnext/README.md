@@ -30,7 +30,7 @@ ops/init.sh                     # secrets and the mounted paths
 sudo chown -R 1000:1000 volumes/sites volumes/logs
 sudo chown -R 999:999 volumes/redis-queue
 docker compose up -d
-ops/create-site.sh              # about five minutes
+ops/create-site.sh              # a few minutes
 ```
 
 `ops/create-site.sh` creates the Frappe site `SITE_NAME` — the host name — and
@@ -48,8 +48,19 @@ Frappe creates a new site in its default time zone, Asia/Kolkata, and records wh
 each scheduled job type was created in that zone. When the setup wizard switches
 the site to another zone, those times lie ahead of the site's clock, and no
 scheduled job runs until the clock passes them — the email queue included. The
-wait is the difference between the two zones: 3 hours 30 minutes for Central
-European Summer Time. Upstream behaviour; it resolves itself.
+wait is the difference between the two zones, counted from the site's creation:
+3 hours 30 minutes for Central European Summer Time. Upstream behaviour; it
+resolves itself. The site is created with the scheduler switched off; the setup
+wizard switches it on.
+
+## Known limitation — no live updates
+
+The realtime service (`erpnext-websocket`) checks each browser session by calling
+the site at the address in the request's `Origin` header — the public host name.
+From `app-internal` it cannot reach that address, so it refuses every session
+(`Unauthorized: TypeError: fetch failed`) and the desk runs without live updates:
+no pushed notifications, list refreshes or progress bars. Everything else works.
+A fix that routes the check to the stack's own frontend is open.
 
 ## What is mounted
 
@@ -91,7 +102,10 @@ them at start, so a new image brings its own.
 
 ## Status
 
-`scaffolded` — see [UPSTREAM.md](UPSTREAM.md#verification-performed-2026-09-21).
+Run behind Traefik with TLS on 2026-09-22 (v16.35.0): the site created, the setup
+wizard, a customer, a restart, and the restore below. The realtime service refuses
+every session — see above. Full log in
+[`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-22).
 
 ## Try it locally
 
@@ -123,4 +137,4 @@ sudo tar -czf erpnext-files.tar.gz volumes/sites .secrets
 Restore into an empty database with `mariadb`, unpack the archive, restore the
 `1000:1000` ownership on `volumes/sites`, and run `docker compose up -d`. Without
 the original `site_config.json` the encrypted values in the database cannot be
-read. Restore is not exercised here.
+read.

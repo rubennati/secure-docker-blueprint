@@ -44,30 +44,30 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=0.9.0",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "—",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "baseline-aligned",
+    "verified": "2026-09-22",
+    "verified_anchored": true,
+    "verified_version": "0.9.0"
   },
   "apps/calrs": {
     "backup_docs": "documented",
     "local_stack": "✅",
     "pinned": "APP_TAG=1.17.1",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "—",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "baseline-aligned",
+    "verified": "2026-09-22",
+    "verified_anchored": true,
+    "verified_version": "1.17.1"
   },
   "apps/ciso-assistant": {
     "backup_docs": "documented",
     "local_stack": "✅",
     "pinned": "APP_TAG=v4.0.5",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "—",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "baseline-aligned",
+    "verified": "2026-09-22",
+    "verified_anchored": true,
+    "verified_version": "v4.0.5"
   },
   "apps/collabora": {
     "backup_docs": "documented",
@@ -94,10 +94,10 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=3.3.100",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "—",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "baseline-aligned",
+    "verified": "2026-09-22",
+    "verified_anchored": true,
+    "verified_version": "3.3.100"
   },
   "apps/dependency-track": {
     "backup_docs": "documented",
@@ -224,10 +224,10 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=0.10.4",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "—",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "baseline-aligned",
+    "verified": "2026-09-22",
+    "verified_anchored": true,
+    "verified_version": "0.10.4"
   },
   "apps/immich": {
     "backup_docs": "documented",
@@ -584,20 +584,20 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=3.1.21",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "—",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "baseline-aligned",
+    "verified": "2026-09-22",
+    "verified_anchored": true,
+    "verified_version": "3.1.21"
   },
   "business/chatwoot": {
     "backup_docs": "documented",
     "local_stack": "✅",
     "pinned": "APP_TAG=v4.18.0",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "—",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "baseline-aligned",
+    "verified": "2026-09-22",
+    "verified_anchored": true,
+    "verified_version": "v4.18.0"
   },
   "business/documenso": {
     "backup_docs": "documented",
@@ -634,10 +634,10 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=2026.5",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "—",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "baseline-aligned",
+    "verified": "2026-09-22",
+    "verified_anchored": true,
+    "verified_version": "2026.5"
   },
   "business/invoiceninja": {
     "backup_docs": "documented",
@@ -704,10 +704,10 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=3.0.1",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "—",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "baseline-aligned",
+    "verified": "2026-09-22",
+    "verified_anchored": true,
+    "verified_version": "3.0.1"
   },
   "business/twenty": {
     "backup_docs": "documented",
