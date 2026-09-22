@@ -649,19 +649,20 @@ cat /etc/logrotate.d/traefik
 sudo logrotate -d /etc/logrotate.d/traefik
 ```
 
-The config rotates daily, keeps 7 days, compresses with gzip — in two stanzas,
-because Traefik treats its two logs differently:
+The config rotates daily, keeps 7 days and compresses with gzip. Both logs are
+copied out and truncated in place (`copytruncate`); no signal is sent to the
+container:
 
-| Log | Rotation | Why |
-|---|---|---|
-| `access.log` | rename, then `USR1` to the container | Traefik reopens the access log on `USR1`, the same mechanism as nginx |
-| `traefik.log` | `copytruncate` — copied out and truncated in place, no signal | Traefik 3 announces "Closing and re-opening log files for rotation" on `USR1` and reopens the access log only; the main log descriptor stays on the renamed file. Measured on v3.7.13 on 2026-09-14. The file is opened `O_APPEND`, so truncating in place is safe |
+| Choice | Why |
+|---|---|
+| No `docker kill --signal=USR1` | Docker treats any `docker kill`, whatever the signal, as a stop by hand and cancels the restart policy until the next start. After a rotation that sent `USR1`, an OOM kill left Traefik down with every route. Measured on 2026-09-22 (Docker 29.8.1) |
+| No rename for `traefik.log` | Traefik 3 announces "Closing and re-opening log files for rotation" on `USR1` and reopens the access log only; the main log descriptor stays on the renamed file. Measured on v3.7.13 on 2026-09-14 |
+| `copytruncate` is safe | Traefik opens both files `O_APPEND` and continues at the new end. Lines written between the copy and the truncate are lost |
 
-With a single rename-and-signal stanza for both — the shape this file had until
-2026-09-14 — `traefik.log` reads as empty after the first rotation while Traefik
-writes into `traefik.log.1`, and the next rotation compresses the file it is
-writing to. If an installation is in that state, `TROUBLESHOOTING.md` §8.3 has
-the repair.
+Earlier shapes of this file each had a failure: until 2026-09-14 one
+rename-and-signal stanza for both logs left `traefik.log` empty after the first
+rotation (`TROUBLESHOOTING.md` §8.3); until 2026-09-22 the signal for the access
+log switched off the restart policy (§8.4). Both sections have the repair.
 
 > **Note:** logrotate runs on the host, not inside the container. This is the correct approach for bind-mounted Docker log files — it is standard practice for any containerized app that writes logs to a host volume.
 

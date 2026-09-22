@@ -9,20 +9,24 @@
 # The path must match the HOST-side volume mount in docker-compose.yml:
 #   ./volumes/logs:/var/log/traefik
 #
-# The two logs rotate differently, because Traefik treats them differently.
+# Both logs are truncated in place (copytruncate), and no signal is sent.
 #
-# access.log: USR1 makes Traefik close and reopen it (like nginx's USR1), so
-# the classic rename-and-signal rotation works.
+# No `docker kill --signal=USR1`: Docker treats any `docker kill`, whatever the
+# signal, as a stop by hand and cancels the container's restart policy until
+# the next start. Measured on 2026-09-22 (Docker 29.8.1): after the nightly
+# rotation had sent USR1, Traefik was killed for memory and stayed down, and
+# every route with it; a throwaway container was restarted after an OOM kill
+# without the signal and not restarted with it.
 #
-# traefik.log: Traefik 3 does NOT reopen its main log on USR1 — measured on
-# 2026-09-14 (v3.7.13): after the signal the access log descriptor pointed at
-# the new access.log, the main log descriptor still at traefik.log.1. With
-# rename-based rotation Traefik keeps writing into the rotated file, the
-# visible traefik.log stays at zero bytes, and the next rotation compresses
-# the file Traefik is writing to — the log is then lost until a restart.
-# copytruncate copies the content out and truncates the file in place;
-# Traefik keeps its descriptor and, because the file is opened O_APPEND,
-# continues at the new end.
+# Renaming traefik.log never worked anyway: Traefik 3 reopens only the access
+# log on USR1 — measured on 2026-09-14 (v3.7.13). The main log's descriptor
+# stayed on traefik.log.1, the visible file at zero bytes, and the next
+# rotation compressed the file Traefik was writing to.
+#
+# copytruncate copies the content out and truncates the file in place. Traefik
+# opens both logs O_APPEND, so it keeps its descriptors and continues at the
+# new end. Lines written between the copy and the truncate are lost — the
+# requests of that instant.
 #
 # "systemctl reload traefik" does NOT work because Traefik runs in Docker.
 
@@ -33,7 +37,6 @@
     delaycompress
     missingok
     notifempty
-    create 0640 root adm
     # Rotate on size as well as on the day, so a request flood does not fill the
     # disk waiting for tomorrow. Access logs are one line per request: a burst
     # reaches this in minutes, and the fastest route to a full disk is the log
@@ -48,10 +51,8 @@
     #   OnCalendar=
     #   OnCalendar=hourly
     maxsize 100M
-
-    postrotate
-        docker kill --signal=USR1 traefik-core >/dev/null 2>&1 || true
-    endscript
+    # No signal, no create: the file is truncated in place. See the note at the top.
+    copytruncate
 }
 
 /path/to/secure-docker-blueprint/core/traefik/volumes/logs/traefik.log {

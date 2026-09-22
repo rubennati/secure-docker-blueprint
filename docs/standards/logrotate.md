@@ -107,31 +107,34 @@ sudo cat /var/lib/logrotate/status | grep traefik
     delaycompress      # Don't compress yesterday's log (still being read)
     missingok          # Don't error if log file doesn't exist
     notifempty         # Don't rotate empty files
-    create 0640 root adm
-    postrotate
-        docker kill --signal=USR1 traefik-core >/dev/null 2>&1 || true
-    endscript
+    maxsize 100M       # Rotate early on size, at the next run
+    copytruncate       # Copy out, truncate in place — no signal to the container
 }
 ```
 
-### Why USR1?
+The shipped file has one stanza per log, with the reasons as comments.
 
-After logrotate renames `access.log` → `access.log.1`, Traefik still writes to the
-old file descriptor. `USR1` tells Traefik to close and reopen its log files — same
-mechanism as nginx.
+### Why no signal
+
+Renaming a log and then signalling the process to reopen it is the classic
+rotation. It does not fit here, for two reasons:
+
+- **A signal through Docker switches off the restart policy.** Docker treats any
+  `docker kill`, whatever the signal, as a stop by hand and cancels the
+  container's restart policy until the next start (the daemon logs
+  `stopping restart-manager`). With `docker kill --signal=USR1` in `postrotate`,
+  every crash after the first nightly rotation left Traefik down — measured on
+  2026-09-22 with an OOM kill.
+- **Traefik 3 reopens only its access log on `USR1`.** Its main log stays on the
+  renamed file (measured on v3.7.13, 2026-09-14).
+
+`copytruncate` needs neither. Traefik opens both logs `O_APPEND` and keeps
+writing at the new end; the lines written between the copy and the truncate are
+lost. Use the same pattern for any container: never `docker kill --signal` from a
+cron job or a logrotate hook.
 
 **`systemctl reload traefik` does NOT work** because Traefik runs inside Docker,
 not as a systemd service.
-
-### Container name
-
-The `docker kill --signal=USR1 traefik-core` command uses the container name from `.env`:
-
-```env
-TRAEFIK_CONTAINER_NAME=traefik-core
-```
-
-If you change the container name, update the logrotate config too.
 
 ## When does logrotate run?
 
