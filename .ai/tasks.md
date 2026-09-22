@@ -100,6 +100,22 @@ was verified by running it. Three of the fifteen already ship.
       stack's `UPSTREAM.md` or the candidate evaluation.
 - [x] Adding these while `../ROADMAP.md` holds applications is a deliberate
       exception — recorded in `../ROADMAP.md` and `decisions.md` (2026-09-21).
+- [x] Host verification, 2026-09-22: all twelve behind Traefik with TLS, with the
+      refused client, a smoke test, a restart and the README's restore — each
+      stack's `UPSTREAM.md`. `Last verified` for nine; Twenty (rate limit, as
+      Windmill), rclone-web (its sign-in needs the password in a URL) and ERPNext
+      (the realtime service's session check) are recorded without. Fixed on the
+      way: calrs, Akaunting, SolidInvoice, CISO Assistant.
+- [ ] Follow-ups from that session: rclone-web's sign-in — upstream would need a
+      field for the API address, or to keep it after a failed attempt · ERPNext's
+      realtime service checks sessions against the public URL, which it cannot
+      reach from `app-internal` — route that check to the stack's own frontend ·
+      calnode sets `Secure` on its session cookie only with Google or Microsoft
+      sign-in configured (upstream) · Akaunting needs an akaunting.com account's API
+      key before any create page opens — decide whether that fits this repository ·
+      the candidate stacks write their secrets with mode `644` inside a `700`
+      directory, a third variant beside `600` and `640` in
+      `../docs/standards/secrets.md` — recorded, not changed.
 
 ### 7. Held: Priority 2 and other candidates
 

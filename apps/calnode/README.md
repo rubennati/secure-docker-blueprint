@@ -31,6 +31,21 @@ ops/setup.sh you@example.com "Your Name" Europe/Vienna
 API key it returns. **Store that key — the application shows it once and cannot
 read it back.** A second run answers `409 Conflict` and changes nothing.
 
+The first-run route creates the owner without a password, so the admin interface
+offers no way to sign in ("No login methods are configured"). Set one with
+upstream's `reset-admin`, which also switches on email login — through the
+entrypoint, which provides the encryption key:
+
+```bash
+read -rsp 'Password: ' pw; echo
+docker compose exec -T calnode-app /bin/sh /secrets-entrypoint.sh \
+  /calnode reset-admin you@example.com "$pw"
+unset pw
+```
+
+A new owner has no availability yet: the booking page shows every day as
+unavailable until working hours are set in the admin interface.
+
 ## The open window, and why the router starts closed
 
 `POST /v1/setup` is public and unauthenticated until it has run. Whoever calls it
@@ -47,7 +62,7 @@ closed for good.
 
 | Who | Credential | Where it lives |
 |---|---|---|
-| Owner and further users | Account in the admin interface | SQLite in `volumes/data` |
+| Owner and further users | Account in the admin interface; the owner's password comes from `reset-admin` | SQLite in `volumes/data` |
 | API and agent clients | API key, `cno_…` | Created at setup and in the admin interface; stored hashed |
 | Stored calendar and provider credentials | Encrypted with a key derived from `CALNODE_ENCRYPTION_KEY` | Docker Secret |
 | Key recovery | `CALNODE_RECOVERY_SECRET` | Docker Secret |
@@ -56,10 +71,15 @@ The API key is accepted as `Authorization: Bearer …` and as `X-API-Key: …`.
 
 ## Security notes
 
-- **Production mode is decided by the URL.** An `https://` `BASE_URL` marks cookies
-  `Secure` and makes the encryption key mandatory — the application refuses to
-  start without it, which was confirmed here. The local file uses `http://` and is
-  therefore in development mode.
+- **Production mode is decided by the URL.** An `https://` `BASE_URL` makes the
+  encryption key mandatory — the application refuses to start without it, which
+  was confirmed here. The local file uses `http://` and is therefore in
+  development mode.
+- **The session cookie lacks `Secure` in 0.9.0.** The `https://` `BASE_URL` is
+  meant to mark it `Secure`, but upstream applies that setting only while
+  configuring Google or Microsoft sign-in. With email login alone, `calnode_session`
+  is set `HttpOnly` and `SameSite=Lax`, without `Secure` — measured. The router
+  answers on HTTPS only.
 - **Secrets.** Neither variable has a `_FILE` form, so `config/entrypoint.sh`
   exports both Docker Secrets before the image's own entrypoint runs. They are
   absent from `docker inspect`.
@@ -75,7 +95,10 @@ The API key is accepted as `Authorization: Bearer …` and as `X-API-Key: …`.
 
 ## Status
 
-`scaffolded` — see [UPSTREAM.md](UPSTREAM.md#verification-performed-2026-09-21).
+Run behind Traefik with TLS on 2026-09-22 (0.9.0): the setup, the API with its
+key, the admin interface once `reset-admin` had set a password, a guest booking, a
+restart, and the restore below. Full log in
+[`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-22).
 
 ## Try it locally
 
@@ -109,4 +132,4 @@ docker compose start calnode-app
 Restore by unpacking both back into place, restoring the `1000:1000` ownership on
 `volumes/data`, and running `docker compose up -d`. Without the original
 encryption key the stored calendar credentials cannot be decrypted. Litestream is
-upstream's own continuous alternative to this; neither path is exercised here.
+upstream's own continuous alternative to this and is not exercised here.

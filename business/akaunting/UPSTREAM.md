@@ -13,10 +13,7 @@
 - **Domain:** Business operations
 - **Role:** Accounting for small businesses: invoices, bills, customers, vendors, bank accounts and reports
 - **Based on version:** `3.1.21`
-
-No `Last verified` line yet — see [Verification performed](#verification-performed-2026-09-21)
-below. The field asserts Traefik/TLS routing was confirmed on a real host, which
-has not happened; this stack stays `scaffolded` until it does.
+- **Last verified:** 2026-09-22 (3.1.21) — behind Traefik with TLS: the install, the login and company wizard, a customer, the reports, a restart, and the README's restore; creating records needs an akaunting.com API key
 
 The origin comes from the governing-law clause of Akaunting's terms of service
 (law of Turkey, courts of Istanbul).
@@ -43,7 +40,46 @@ The origin comes from the governing-law clause of Akaunting's terms of service
 | `cap_add: SETUID, SETGID` | Apache's master starts as root and drops its workers to `www-data`. Measured: with both, the master is uid 0 and six workers uid 33; with `SETUID` alone **all seven stay root while the site still answers 200**. `NET_BIND_SERVICE` is not needed — Docker lets a container bind port 80 |
 | Database connection as environment variables, password from a Docker Secret | Laravel reads real environment variables before `.env`. The installer still writes the password into `.env`; `ops/install.sh` deletes that line, and the application keeps working |
 | `ops/install.sh` instead of the web wizard | Upstream's own `php artisan install`, run as `www-data`, with both passwords read from the secrets inside the container |
+| `config/entrypoint.sh` creates `storage/`'s directories as `www-data` (`setpriv`) | The script runs as root without `CAP_DAC_OVERRIDE`, and `volumes/storage` belongs to `www-data` with mode `700`: as root, `mkdir -p` could not enter it and the container restarted in a loop on a fresh install — measured |
+| `ops/install.sh` reads and edits `.env` inside the container | `volumes/app.env` belongs to `www-data` with mode `600`. Read from the host, the "already installed" check could not see the file and let a second run through — and the installer writes a new `APP_KEY` on every run (measured: the key changed); the database password also stayed in the file. Both now run as `www-data` in the container, and the script stops if the password line is still there |
 | `APP_TRAEFIK_ACCESS=acc-tailscale` | The web installer is open until the install has run |
+
+## Verification performed (2026-09-22)
+
+Behind Traefik with TLS, with the shipped `acc-tailscale` and `sec-2`:
+
+- On a fresh install the application container restarted in a loop:
+  `mkdir: cannot create directory 'storage': Permission denied` — the entrypoint
+  runs as root without `CAP_DAC_OVERRIDE`, `volumes/storage` is `www-data`'s with
+  mode `700`. With the directories created as `www-data` it came up `healthy`
+- `ops/install.sh` as shipped installed the application but could not read
+  `volumes/app.env` from the host: `sed` failed, `DB_PASSWORD` stayed in the file,
+  and the script still reported success. A second run passed the "already
+  installed" check (`grep` could not read the file), replaced `APP_KEY` and then
+  failed at "Creating company". With both steps moved into the container, on a
+  fresh instance: `DB_PASSWORD` gone, `APP_INSTALLED=true`, and a second run
+  reported the install and left `APP_KEY` unchanged
+- A client outside the access policy's ranges got `403` on `/` and `/install`,
+  over IPv4 and IPv6
+- Login in the browser, then the company wizard (company, currencies, finish); the
+  dashboard in 25 requests; the reports page
+- Every `…/create` page redirected to the user list with "Not able to create a new
+  user.": Akaunting fetches its plan limits from `api.akaunting.com`, which answered
+  `403` without an API key (the call made from the container). A customer was
+  created through the application's store endpoint with the session's CSRF token;
+  the same `POST` without the token got `419`
+- The interface requests `akaunting.com` and `assets.akaunting.com` from the
+  visitor's browser; the API's `ping` answered, its write endpoints refused the
+  administrator (`403`) with `X-Company` set
+- Customer and login unchanged after `docker compose down` and `up`
+- Backup as the README describes; the archive needs `sudo`. Restore into an empty
+  database (46 tables), the archive unpacked, ownership restored: `APP_KEY`
+  unchanged, login and customer back
+- Peaks: application 136 MiB, MariaDB 133 MiB
+
+**Not yet exercised:** invoices, bills and payments — the pages that create them
+need an akaunting.com API key; email; the in-app module store (read-only by design
+here); an upgrade to a newer image.
 
 ## Verification performed (2026-09-21)
 

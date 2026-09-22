@@ -11,10 +11,7 @@
 - **Domain:** Security operations
 - **Role:** Vulnerability management: import scanner and pentest findings, deduplicate them and track them to closure
 - **Based on version:** `3.3.100`
-
-No `Last verified` line yet — see [Verification performed](#verification-performed-2026-09-21)
-below. The field asserts Traefik/TLS routing was confirmed on a real host, which
-has not happened; this stack stays `scaffolded` until it does.
+- **Last verified:** 2026-09-22 (3.3.100) — behind Traefik with TLS: the first start, the API with a token, scan imports, the interface, a restart, and the README's restore
 
 The licence names DefectDojo, Inc.; no jurisdiction was found in the pages checked.
 
@@ -40,6 +37,39 @@ The licence names DefectDojo, Inc.; no jurisdiction was found in the pages check
 | uWSGI healthcheck against `localhost:8081` | Django answers 400 to a Host outside `DD_ALLOWED_HOSTS` |
 | nginx healthcheck against `127.0.0.1` with `Host: localhost` | In that container `localhost` resolves to `::1` while nginx listens on IPv4 only, and the Host header must still be allowed |
 | Celery worker on `app-egress` | It sends notifications and talks to ticketing integrations; nothing else gets a route out |
+
+## Verification performed (2026-09-22)
+
+Behind Traefik with TLS, with the shipped `acc-tailscale` and `sec-2`:
+
+- First start about four and a half minutes; the initializer migrated, created the
+  administrator and exited `0`, then the application started
+- A client outside the access policy's ranges got `403` on `/` and `/api/v2/`,
+  over IPv4 and IPv6
+- `POST /api/v2/api-token-auth/` returned a token; a wrong password `400`; the API
+  `403` without a token, `200` with it
+- `POST /api/v2/import-scan/` with a two-finding report (Generic Findings Import)
+  and `auto_create_context`: product type, product, engagement and test created,
+  both findings active. A second import of the same report added a second test
+  with the same two findings, not marked as duplicates — deduplication is a
+  system setting, off by default
+- The Celery worker ran the tasks the imports queued (search index, notifications,
+  finding post-processing)
+- In the browser: login page 37 requests, dashboard 42, the findings list 41 with
+  the imported findings
+- After `docker compose down` and `up` (54 s, the initializer exited `0` again):
+  token, product and the four findings unchanged
+- Backup as the README describes; the archive of `volumes/media` needs `sudo`
+  (uid 1001, mode `700`). Restore into an empty database without errors, the
+  archive unpacked, ownership restored — token, product and findings back
+- Each recreated database container leaves an empty anonymous volume: the
+  PostgreSQL 18 image declares `VOLUME /var/lib/postgresql`, while `PGDATA` points
+  into the bind mount, where the data stays
+- Peaks: uWSGI 552 MiB, initializer 324 MiB, Celery worker 182 MiB, Celery beat
+  178 MiB, PostgreSQL 93 MiB, nginx 14 MiB, Valkey 13 MiB
+
+**Not yet exercised:** notifications and ticketing integrations; deduplication
+switched on; scanners pushing results; large imports.
 
 ## Verification performed (2026-09-21)
 

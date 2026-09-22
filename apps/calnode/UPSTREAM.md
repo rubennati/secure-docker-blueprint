@@ -11,10 +11,7 @@
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Scheduling with booking pages, an admin interface and a REST API, as one binary with SQLite
 - **Based on version:** `0.9.0`
-
-No `Last verified` line yet — see [Verification performed](#verification-performed-2026-09-21)
-below. The field asserts Traefik/TLS routing was confirmed on a real host, which
-has not happened; this stack stays `scaffolded` until it does.
+- **Last verified:** 2026-09-22 (0.9.0) — behind Traefik with TLS: the setup, the API, the admin interface after `reset-admin`, a guest booking, a restart, and the README's restore
 
 ## Project maturity
 
@@ -40,6 +37,37 @@ project's longevity.
 | `APP_TRAEFIK_ACCESS=acc-tailscale` | `POST /v1/setup` is public until it has run once |
 | `ops/setup.sh` calls the route from inside the container | No port is published, and the route is reached over loopback |
 | Litestream left unconfigured | It is built into the image's entrypoint and inert without `LITESTREAM_REPLICA_URL` |
+
+## Verification performed (2026-09-22)
+
+Behind Traefik with TLS, with the shipped `acc-tailscale` and `sec-2`:
+
+- A client outside the access policy's ranges got `403` on `/` and on
+  `POST /v1/setup`, over IPv4 and IPv6
+- `ops/setup.sh` returned the owner's API key once; a second run got `409`
+- API through the route: `/v1/event-types` `401` without a key, `200` with
+  `Authorization: Bearer` and with `X-API-Key`, `401` with a wrong key; an event
+  type and working hours for five weekdays created through the API
+- The admin interface said "No login methods are configured": `/v1/setup` creates
+  the owner without a password (`/v1/auth/status`: `email_login` false). Upstream's
+  `calnode reset-admin`, run through the entrypoint, set a password and enabled
+  email login; the admin interface then signed in
+- `Set-Cookie: calnode_session=…; Path=/; Max-Age=2592000; HttpOnly; SameSite=Lax` —
+  no `Secure` despite the `https://` `BASE_URL`. Upstream sets the flag only in the
+  Google and Microsoft sign-in setup (`internal/server/server.go`)
+- The guest booking page `/book/<slug>` showed every day unavailable until working
+  hours existed; afterwards a guest booked a slot (`POST /v1/bookings` `201`), and
+  the API listed it as confirmed
+- First loads under `sec-2`: admin interface 54 requests, login 28, after login 34,
+  booking page 3; the admin interface requests `fonts.googleapis.com`
+- Event type, working hours, booking and the email login unchanged after
+  `docker compose down` and `up`
+- Backup as the README describes; restore into place with the ownership restored —
+  all of it back
+- Peak 149 MiB (limit 512 MiB)
+
+**Not yet exercised:** calendar providers; SMTP; Litestream; the MCP endpoint and
+its OAuth flow.
 
 ## Verification performed (2026-09-21)
 

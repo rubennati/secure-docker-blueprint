@@ -13,6 +13,20 @@ required. Removing its branding to redistribute it is not permitted. Each releas
 converts to GPLv3 four years after it is published. The full text is upstream's
 `LICENSE.txt`.
 
+## Creating records needs an Akaunting account
+
+Akaunting enforces those limits by asking `api.akaunting.com`. Every page that
+creates something — `…/create` for customers, items, invoices, bills — first
+fetches the plan limits from `https://api.akaunting.com/plans/limits` with the
+API key from an akaunting.com account, and caches the answer for an hour.
+Without a key the service answers `403`, and each of those pages redirects to the
+user list with "Not able to create a new user." Logging in, the dashboard, the
+lists and the reports work without it.
+
+Enter the key from an akaunting.com account where the banner "You have not
+entered your API Key!" links to. From then on the server sends it with every
+check. A working key was not exercised here.
+
 ## Architecture
 
 ```text
@@ -87,7 +101,10 @@ modules the image ships (offline payments, PayPal Standard) are present.
 
 ## Status
 
-`scaffolded` — see [UPSTREAM.md](UPSTREAM.md#verification-performed-2026-09-21).
+Run behind Traefik with TLS on 2026-09-22 (3.1.21): the install, the login and
+company wizard, a customer, the reports, a restart, and the restore below. The
+pages that create records stayed closed without an akaunting.com API key — see
+above. Full log in [`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-22).
 
 ## Try it locally
 
@@ -108,10 +125,23 @@ Back up the database, `volumes/storage`, `volumes/app.env` and `.secrets/`:
 
 ```bash
 docker exec akaunting-db sh -c 'mariadb-dump -u"$MYSQL_USER" -p"$(cat /run/secrets/DB_PWD)" "$MYSQL_DATABASE"' > akaunting.sql
-tar -czf akaunting-files.tar.gz volumes/storage volumes/app.env .secrets
+sudo tar -czf akaunting-files.tar.gz volumes/storage volumes/app.env .secrets
 ```
 
-Restore into an empty database with `mariadb`, unpack the archive, restore the
-`33:33` ownership on `volumes/storage` and `volumes/app.env`, and run
-`docker compose up -d`. Without the original `APP_KEY` the encrypted values in the
-database cannot be read. Restore is not exercised here.
+`volumes/storage` and `volumes/app.env` belong to `www-data` (33) and are closed to
+other users, hence `sudo`. Restore into an empty database:
+
+```bash
+docker compose down
+# move volumes/ aside, then:
+(umask 077; mkdir -p volumes/mysql)
+docker compose up -d db
+docker exec -i akaunting-db sh -c 'mariadb -u"$MYSQL_USER" -p"$(cat /run/secrets/DB_PWD)" "$MYSQL_DATABASE"' < akaunting.sql
+sudo tar -xzf akaunting-files.tar.gz
+sudo chown -R 33:33 volumes/storage volumes/app.env
+docker compose up -d
+```
+
+Without the original `APP_KEY` the encrypted values in the database cannot be
+read — which is why `ops/install.sh` refuses a second run: the installer writes a
+new key every time.

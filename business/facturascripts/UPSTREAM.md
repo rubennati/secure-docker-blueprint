@@ -13,10 +13,7 @@
 - **Domain:** Business operations
 - **Role:** Invoicing, accounting and inventory for small businesses, extended through plugins
 - **Based on version:** `2026.5`
-
-No `Last verified` line yet — see [Verification performed](#verification-performed-2026-09-21)
-below. The field asserts Traefik/TLS routing was confirmed on a real host, which
-has not happened; this stack stays `scaffolded` until it does.
+- **Last verified:** 2026-09-22 (2026.5) — behind Traefik with TLS: the unattended install, the login and wizard, a customer, the in-app updater across a restart, and the README's restore
 
 The origin comes from the terms on facturascripts.com, which name the site's owner
 and apply Spanish law.
@@ -48,6 +45,32 @@ and apply Spanish law.
 | `FS_DB_PASS` reads the Docker Secret | The installer writes the password into `config.php` in plain text; `ops/install.sh` replaces the line with `file_get_contents('/run/secrets/DB_PWD')` |
 | `FS_INITIAL_USER` and `FS_INITIAL_PASS` removed after the install | The installer writes the administrator's password into `config.php`. It is read once, when the `users` table is created |
 | `APP_TRAEFIK_ACCESS=acc-tailscale` | The web installer is open until the install has run |
+
+## Verification performed (2026-09-22)
+
+Behind Traefik with TLS, with the shipped `acc-tailscale` and `sec-2`:
+
+- A client outside the access policy's ranges got `403` on `/` and `/cron`, over
+  IPv4 and IPv6; `/cron` answered `403` inside the policy as well
+- `ops/install.sh admin` finished; `config.php` afterwards read `FS_DB_PASS` from
+  the Docker Secret and held no `FS_INITIAL_*` line; a second run reported the
+  install and changed nothing
+- Login in the browser, the wizard (company, country), a customer created and
+  listed; login page 9 requests, the customer list 23
+- The updater at 2026.5: "No updates at this time"
+- In-app update, on a separate install from the `2026.41` image: the updater
+  offered the core update to 2026.5; "Download", then "Update" — the webroot's
+  `Core/Kernel.php` reported 2026.5. After `docker compose down` and `up` on the
+  same `2026.41` image, the webroot still ran 2026.5 while the image's own copy
+  in `/usr/src/facturascripts` was 2026.41, and the updater showed 2026.5 with no
+  further update
+- Customer and login unchanged after `docker compose down` and `up`
+- Backup as the README describes; restore into an empty database (83 tables), the
+  archive unpacked, ownership restored — login and customer back
+- Peaks: application 113 MiB, MariaDB 130 MiB, cron 10 MiB
+
+**Not yet exercised:** invoices and accounting entries; plugins; email; the
+installation's registration, which starts the weekly telemetry.
 
 ## Verification performed (2026-09-21)
 

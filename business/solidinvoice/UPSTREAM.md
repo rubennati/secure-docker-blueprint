@@ -11,10 +11,7 @@
 - **Domain:** Business operations
 - **Role:** Invoicing: clients, quotes, invoices, recurring invoices and payments
 - **Based on version:** `3.0.1`
-
-No `Last verified` line yet — see [Verification performed](#verification-performed-2026-09-21)
-below. The field asserts Traefik/TLS routing was confirmed on a real host, which
-has not happened; this stack stays `scaffolded` until it does.
+- **Last verified:** 2026-09-22 (3.0.1) — behind Traefik with TLS: the web installer to the end, the onboarding with a client and an invoice, a restart, and the README's restore
 
 ## What we use
 
@@ -44,9 +41,9 @@ trying the others, so nobody repeats it:
 - **When the command fails, it logs its full command line, administrator password
   included, in plain text.**
 
-The web installer loads on this stack and runs up to its database step. It was not
-completed here: the next steps ask for passwords in a browser form, which was left
-to the operator.
+The web installer completes on this stack — database, user account, review,
+install — and hands over to the application's onboarding (verified 2026-09-22,
+below).
 
 ## What we changed and why
 
@@ -59,6 +56,34 @@ to the operator.
 | `SOLIDINVOICE_ENABLE_TELEMETRY=0` | Already the default; set so the installer cannot change it |
 | `APP_TRAEFIK_ACCESS=acc-tailscale` | The web installer is the setup and is open until it has run |
 | `volumes/config/db` created by `ops/init.sh` | The default SQLite path is `/etc/solidinvoice/db/solidinvoice.db`, and the application does not create the directory |
+
+## Verification performed (2026-09-22)
+
+Behind Traefik with TLS, with the shipped `acc-tailscale` and `sec-2`:
+
+- A client outside the access policy's ranges got `403` on `/` and `/install`,
+  over IPv4 and IPv6
+- `healthy` 36 s after the first start, at 2.0 GiB
+- The web installer in a browser, to the end: welcome, database (Embedded
+  Database, SQLite), user account (locale, application URL, name, email, password;
+  telemetry left off), review, install ("Generating secret", "Generating build
+  id", …), "Installation Complete!". Its four database icons (`/img/*-icon.png`)
+  answer `500`; nothing else did
+- `volumes/config` then held the vault — its decryption key
+  `solidinvoice.decrypt.private.php` with mode `644` — and `db/solidinvoice.db`.
+  `ops/init.sh` now creates the directory with mode `700`; with it the container
+  started `healthy` and served the login page
+- Login, then the onboarding: company and currency, a first client, a first
+  invoice (`/invoices/view/<id>`); clients and invoices listed it
+- First loads under `sec-2`: the installer 10 requests, login 9, the dashboard 10
+- Client and invoice unchanged after `docker compose down` and `up` (`healthy`
+  after 30 s)
+- Backup as the README describes; restore into place with the ownership restored —
+  login, client and invoice back
+- Peak 2.2 GiB (limit 3 GiB), as the README states
+
+**Not yet exercised:** payments and payment gateways; recurring invoices; email;
+the MySQL and PostgreSQL alternatives.
 
 ## Verification performed (2026-09-21)
 
