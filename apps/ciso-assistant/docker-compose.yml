@@ -166,8 +166,8 @@ services:
       - app-internal
 
     # --- Health & Observability ---
-    # healthcheck: none — Huey serves no port; its tasks are stored in the
-    # database it shares with the backend.
+    # healthcheck: none — Huey serves no port. Its queue is the SQLite file
+    # huey.db in volumes/data, which the backend mounts as well.
 
   # --------------------------------------------------------
   # FRONTEND (SvelteKit)
