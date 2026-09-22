@@ -63,9 +63,6 @@ Open in this repository:
   v1.0.0, because afterwards a renamed middleware disables the router of every
   deployment that names it. Inputs in [`.ai/state.md`](.ai/state.md) under *Open
   decisions*.
-- **Trivy blocks.** The image scan runs with `exit-code: 0` and blocks nothing
-  until the existing CRITICAL findings have been assessed once
-  ([`docs/security-verification.md`](docs/security-verification.md)).
 
 Decision pending, with a possible impact on v1.0 — the site's personal data:
 see [A public repository should not carry personal data](#a-public-repository-should-not-carry-personal-data).

@@ -198,7 +198,7 @@ session left open is in
       grid is the shape that exceeds it; `apps/immich` already needed
       `sec-2-spa` for the same reason. Method in
       `docs/standards/traefik-security.md` under Choosing the level for an app.
-      `core/portainer` is the same measurement and is tracked as issue #37
+      `core/portainer` was measured on 2026-09-20 and fits `sec-4` (issue #37)
 - [ ] Decide `APP_TRAEFIK_SECURITY` for Seafile's four path-scoped routers —
       issue #39 carries the per-endpoint acceptance test
 - [ ] `business/openproject` after `internal: true` — whether mail leaves `worker`

@@ -344,6 +344,10 @@ the two points above:
   Cloudflare counts per edge address. The comment in `traefik.yml.tmpl` says
   trusting Cloudflare's forwarded headers gives `ipAllowList` the real client.
   Not measured.
+- **Already tracked.** First-load counts for the four photo galleries and
+  `apps/it-tools` ([`tasks.md`](tasks.md), *Blocked on a host*), and the chain for
+  Seafile's four path-scoped routers (issue #39). `core/portainer`'s first load
+  fits `sec-4` (issue #37).
 
 → The review may change names and structure, or confirm them.
 
