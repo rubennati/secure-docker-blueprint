@@ -36,6 +36,8 @@ has not happened; this stack stays `scaffolded` until it does.
 | `litellm_settings.telemetry: false` | Upstream's anonymous usage telemetry |
 | Database on `app-internal` only | It needs no route out; `getent hosts github.com` from it fails |
 | Provider keys kept out of `config.yaml` | Added through the admin API and stored encrypted with the salt key |
+| `store_model_in_db: true` | `POST /model/new` refuses without it, so the admin-API path for provider credentials needs it |
+| Secret files mode `640`, group 65534 | The proxy runs as uid/gid 65534 and Compose mounts the files with their host owner and mode |
 
 ## Verification performed (2026-09-19)
 

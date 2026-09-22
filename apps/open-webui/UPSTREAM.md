@@ -39,6 +39,7 @@ has not happened; this stack stays `scaffolded` until it does.
 | `ENABLE_OLLAMA_API=false`, `OPENAI_API_BASE_URL` | One configurable OpenAI-compatible backend |
 | `ENABLE_VERSION_UPDATE_CHECK`, `SCARF_NO_ANALYTICS`, `DO_NOT_TRACK`, `ANONYMIZED_TELEMETRY` off | Upstream's update check and telemetry |
 | `HF_HUB_OFFLINE` variable | The embedding model downloads from Hugging Face at first start; `1` afterwards is verified to stop all requests to it |
+| `APP_TRAEFIK_SECURITY=sec-2-spa` | The first load requests 224 files at once over one HTTP/2 connection; `sec-2` (burst 50) answered 103 of them with `429` and the web app showed `500: Internal Error`. `sec-2-spa` has the same average rate with a burst of 200 |
 
 ## Verification performed (2026-09-19)
 

@@ -103,11 +103,14 @@ services:
     user: "${WM_UID}:${WM_GID}"
 
     # --- Resources ---
-    memswap_limit: 512m
+    # Measured 2026-09-22 on 1.814.0: 470-510 MiB idle, 535 MiB while two
+    # browser sessions loaded the UI, 558 MiB peak starting on a restored
+    # database. At 512m the kernel killed it every ~30 s.
+    memswap_limit: 1g
     deploy:
       resources:
         limits:
-          memory: 512m
+          memory: 1g
           cpus: "1.00"
           pids: 200
         reservations:

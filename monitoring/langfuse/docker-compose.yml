@@ -89,6 +89,10 @@ services:
     environment:
       <<: *langfuse-env
       NEXTAUTH_SECRET__FILE: /run/secrets/NEXTAUTH_SECRET
+      # Next.js listens on whatever HOSTNAME names. Docker sets it to the
+      # container ID, which resolves to one of the two network addresses —
+      # the internal one leaves Traefik with 502. 0.0.0.0 covers both.
+      HOSTNAME: 0.0.0.0
       # Only the administrator below is provisioned; nobody else can register.
       NODE_OPTIONS: --max-old-space-size=1536
       AUTH_DISABLE_SIGNUP: "true"
@@ -148,7 +152,7 @@ services:
     # --- Health & Observability ---
     # Both Node services bind to the container's hostname address, not loopback.
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O /dev/null http://$$(hostname):3000/api/public/health || exit 1"]
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:3000/api/public/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -265,8 +269,11 @@ services:
       - PG_PASSWORD
 
     # --- Storage ---
+    # PostgreSQL 17 keeps its cluster in /var/lib/postgresql/data, the image's
+    # VOLUME. A mount one level up leaves the cluster in an anonymous volume,
+    # and the next `down` + `up` starts on an empty one.
     volumes:
-      - ./volumes/postgres:/var/lib/postgresql
+      - ./volumes/postgres:/var/lib/postgresql/data
 
     # --- Networking ---
     networks:

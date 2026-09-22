@@ -15,6 +15,9 @@ model_list:
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY
   database_url: os.environ/DATABASE_URL
+  # Models added through the admin API or UI are stored in the database, their
+  # credentials encrypted with the salt key. Without it, /model/new refuses.
+  store_model_in_db: true
 
 litellm_settings:
   # Upstream's anonymous usage telemetry.
