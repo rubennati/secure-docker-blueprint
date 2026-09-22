@@ -33,10 +33,10 @@
     "name": "agentgateway",
     "path": "apps/agentgateway",
     "role": "LLM and MCP gateway: one authenticated endpoint in front of model providers and MCP servers",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://github.com/agentgateway/agentgateway/pkgs/container/agentgateway",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-09-21",
+    "verified_version": "v1.5.0",
     "version": "1.5.0"
   },
   "apps/bookstack": {
@@ -98,10 +98,10 @@
     "name": "Calnode",
     "path": "apps/calnode",
     "role": "Scheduling with booking pages, an admin interface and a REST API, as one binary with SQLite",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://github.com/Calnode/calnode/pkgs/container/calnode",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-09-22",
+    "verified_version": "0.9.0",
     "version": "0.9.0"
   },
   "apps/calrs": {
@@ -118,10 +118,10 @@
     "name": "calrs",
     "path": "apps/calrs",
     "role": "Scheduling with booking pages and availability read from a CalDAV calendar you already run",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://github.com/olivierlambert/calrs/pkgs/container/calrs",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-09-22",
+    "verified_version": "1.17.1",
     "version": "1.17.1"
   },
   "apps/ciso-assistant": {
@@ -157,10 +157,10 @@
     "name": "CISO Assistant",
     "path": "apps/ciso-assistant",
     "role": "Governance, risk and compliance: frameworks such as ISO 27001 and NIS2 mapped to controls, risks and evidence",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://github.com/intuitem/ciso-assistant-community/pkgs/container/ciso-assistant-community%2Fbackend",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-09-22",
+    "verified_version": "v4.0.5",
     "version": "4.0.5"
   },
   "apps/collabora": {
@@ -220,10 +220,10 @@
     "name": "DefectDojo",
     "path": "apps/defectdojo",
     "role": "Vulnerability management: import scanner and pentest findings, deduplicate them and track them to closure",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://hub.docker.com/r/defectdojo/defectdojo-django",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-09-22",
+    "verified_version": "3.3.100",
     "version": "3.3.100"
   },
   "apps/dependency-track": {
@@ -299,10 +299,10 @@
     "name": "Dify",
     "path": "apps/dify",
     "role": "LLM application platform: chat and workflow apps, knowledge bases, plugin-based model providers",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://hub.docker.com/r/langgenius/dify-api",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-09-22",
+    "verified_version": "1.17.1",
     "version": "1.17.1"
   },
   "apps/docling-serve": {
@@ -319,10 +319,10 @@
     "name": "docling-serve",
     "path": "apps/docling-serve",
     "role": "Document understanding as an API: layout, tables and Markdown or JSON export for AI pipelines",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://github.com/docling-project/docling-serve/pkgs/container/docling-serve-cpu",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-09-22",
+    "verified_version": "v1.34.0",
     "version": "1.34.0"
   },
   "apps/easyappointments": {
@@ -403,10 +403,10 @@
     "name": "GreenMail",
     "path": "apps/greenmail",
     "role": "SMTP, IMAP and POP3 test server with a mailbox per recipient, for automated tests",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://hub.docker.com/r/greenmail/standalone",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-09-22",
+    "verified_version": "2.1.13",
     "version": "2.1.13"
   },
   "apps/heimdall": {
@@ -503,10 +503,10 @@
     "name": "httpbin",
     "path": "apps/httpbin",
     "role": "HTTP request and response service for testing clients: echoes requests, returns chosen status codes, redirects, delays and payloads",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://github.com/psf/httpbin/pkgs/container/httpbin",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-09-22",
+    "verified_version": "0.10.4",
     "version": "0.10.4"
   },
   "apps/immich": {
@@ -609,10 +609,10 @@
     "name": "LiteLLM",
     "path": "apps/litellm",
     "role": "OpenAI-compatible gateway in front of any model backend, with virtual keys, budgets and a spend log",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://github.com/BerriAI/litellm/pkgs/container/litellm-non_root",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-09-21",
+    "verified_version": "v1.101.0",
     "version": "1.101.0"
   },
   "apps/lycheeorg": {
@@ -780,10 +780,10 @@
     "name": "Ollama",
     "path": "apps/ollama",
     "role": "Local model runtime that pulls models by name and serves them on CPU or an NVIDIA GPU",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://hub.docker.com/r/ollama/ollama",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-09-21",
+    "verified_version": "0.34.2",
     "version": "0.34.2"
   },
   "apps/onlyoffice": {
@@ -832,10 +832,10 @@
     "name": "Open WebUI",
     "path": "apps/open-webui",
     "role": "Chat interface for any OpenAI-compatible endpoint, with accounts, history and document upload",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://github.com/open-webui/open-webui/pkgs/container/open-webui",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-09-21",
+    "verified_version": "v0.11.3",
     "version": "0.11.3"
   },
   "apps/opencanary": {
@@ -996,10 +996,10 @@
     "name": "Qdrant",
     "path": "apps/qdrant",
     "role": "Vector database: collections, similarity search with filters, snapshots",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://hub.docker.com/r/qdrant/qdrant",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-09-21",
+    "verified_version": "v1.19.1-unprivileged",
     "version": "1.19.1-unprivileged"
   },
   "apps/seafile": {
@@ -1361,10 +1361,10 @@
     "name": "Akaunting",
     "path": "business/akaunting",
     "role": "Accounting for small businesses: invoices, bills, customers, vendors, bank accounts and reports",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://hub.docker.com/r/akaunting/akaunting",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-09-22",
+    "verified_version": "3.1.21",
     "version": "3.1.21"
   },
   "business/chatwoot": {
@@ -1395,10 +1395,10 @@
     "name": "Chatwoot",
     "path": "business/chatwoot",
     "role": "Customer support across website chat, email and messaging channels in one shared inbox",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://hub.docker.com/r/chatwoot/chatwoot",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-09-22",
+    "verified_version": "v4.18.0",
     "version": "4.18.0"
   },
   "business/documenso": {
@@ -1515,10 +1515,10 @@
     "name": "FacturaScripts",
     "path": "business/facturascripts",
     "role": "Invoicing, accounting and inventory for small businesses, extended through plugins",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://hub.docker.com/r/facturascripts/facturascripts",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-09-22",
+    "verified_version": "2026.5",
     "version": "2026.5"
   },
   "business/invoiceninja": {
@@ -1711,10 +1711,10 @@
     "name": "SolidInvoice",
     "path": "business/solidinvoice",
     "role": "Invoicing: clients, quotes, invoices, recurring invoices and payments",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://hub.docker.com/r/solidinvoice/solidinvoice",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-09-22",
+    "verified_version": "3.0.1",
     "version": "3.0.1"
   },
   "business/twenty": {
@@ -2430,10 +2430,10 @@
     "name": "Langfuse",
     "path": "monitoring/langfuse",
     "role": "LLM observability: traces, scores and prompts from any instrumented application",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://github.com/langfuse/langfuse/pkgs/container/langfuse",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-09-22",
+    "verified_version": "4.38.0",
     "version": "4.38.0"
   },
   "monitoring/ntfy": {

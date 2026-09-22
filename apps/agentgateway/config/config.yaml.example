@@ -32,8 +32,9 @@ llm:
         # SHA-256 of the client key, so no usable key lives in this file.
         - keyHash: sha256:__API_KEY_HASH__
   models:
-    # Any OpenAI-compatible upstream. Replace baseUrl; provider keys for hosted
-    # providers go under params.apiKey — see README, "Upstream providers".
+    # Any OpenAI-compatible upstream. Replace baseUrl; a hosted provider's key
+    # goes in the model's auth, read from a Docker Secret — see README,
+    # "Hosted providers".
     - name: "*"
       provider: openAI
       params:

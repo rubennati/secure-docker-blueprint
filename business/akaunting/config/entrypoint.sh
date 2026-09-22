@@ -14,8 +14,11 @@ _db="$(cat /run/secrets/DB_PWD)"
 export DB_PASSWORD="$_db"
 unset _db
 
-# The directories Laravel expects under storage/, created on the bind mount.
-mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache \
-         storage/app/uploads storage/logs
+# The directories Laravel expects under storage/, created on the bind mount —
+# as www-data. This script runs as root, but without CAP_DAC_OVERRIDE root
+# cannot enter storage/, which belongs to www-data with mode 700.
+setpriv --reuid=www-data --regid=www-data --clear-groups \
+  mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache \
+           storage/app/uploads storage/logs
 
 exec "$@"

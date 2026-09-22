@@ -29,12 +29,28 @@ ops/bootstrap-admin.sh you@example.com "Your Name"
 ```
 
 `ops/bootstrap-admin.sh` creates the first administrator and closes registration.
-It asks for the password twice and cannot be piped — the prompt comes from the
+It asks for the password once and cannot be piped — the prompt comes from the
 application and needs a terminal. Run it a second time and it reports that a user
 exists and changes nothing.
 
 Then connect a calendar in the dashboard under *Sources*: a CalDAV URL with its
-own credentials, which are encrypted with the key from `ops/init.sh`.
+own credentials, which are encrypted with the key from `ops/init.sh`. Set up the
+SMTP relay before the booking page is shared: without one, a booking still tells
+the guest that a confirmation email has been sent.
+
+## The command line
+
+Run the `calrs` command line through the entrypoint, as `ops/bootstrap-admin.sh`
+does:
+
+```bash
+docker compose exec calrs-app /bin/sh /entrypoint.sh calrs user list
+```
+
+`docker compose exec` bypasses the entrypoint. A bare `calrs` starts without
+`CALRS_SECRET_KEY`, generates its own `secret.key` in `volumes/data` and encrypts
+with that — while the server keeps using the Docker Secret, so CalDAV and SMTP
+passwords set from the command line that way cannot be read by it.
 
 ## The open window, and why the router starts closed
 
@@ -52,7 +68,7 @@ is the login form rather than an open registration form.
 
 | Who | Credential | Where it lives |
 |---|---|---|
-| Administrator and further users | Email + password | SQLite in `volumes/data`; accounts are created with `calrs user create` |
+| Administrator and further users | Email + password | SQLite in `volumes/data`; accounts are created with `calrs user create`, through the entrypoint |
 | Stored CalDAV and SMTP passwords | Encrypted with `CALRS_SECRET_KEY` | Docker Secret. Do not change it once calendars are connected |
 | Browser sessions | Cookie, with a separate cross-site request forgery token | Set by the application |
 
@@ -61,7 +77,8 @@ is the login form rather than an open registration form.
 - **Secrets.** `CALRS_SECRET_KEY` has no `_FILE` variant, so `config/entrypoint.sh`
   exports the Docker Secret before starting the binary. The key is absent from
   `docker inspect`. Given the environment variable, the application does not write
-  its own `secret.key` into the data directory — verified here.
+  its own `secret.key` into the data directory — as long as command-line calls go
+  through the entrypoint too, see above.
 - **Hardening.** The image already runs as uid 999. `read_only`, `cap_drop: ALL`,
   `no-new-privileges`, no published port; `/tmp` is the only writable path besides
   the data volume.
@@ -75,7 +92,9 @@ is the login form rather than an open registration form.
 
 ## Status
 
-`scaffolded` — see [UPSTREAM.md](UPSTREAM.md#verification-performed-2026-09-21).
+Run behind Traefik with TLS on 2026-09-22 (1.17.1): the bootstrap, the
+administrator's login, an event type booked by a guest, a restart, and the restore
+below. Full log in [`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-22).
 
 ## Try it locally
 
@@ -107,4 +126,4 @@ docker compose start calrs-app
 Restore by unpacking both back into place, restoring the `999:999` ownership on
 `volumes/data`, and running `docker compose up -d`. Without the original key the
 stored CalDAV and SMTP passwords cannot be decrypted, and each calendar has to be
-reconnected. Restore is not exercised here.
+reconnected.

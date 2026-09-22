@@ -14,9 +14,8 @@
 - **Edition gating:** files marked `@license Enterprise` at the top are covered by a commercial licence rather than the AGPL-3.0 — https://github.com/twentyhq/twenty/blob/main/LICENSE · checked 2026-09-21
 - **Based on version:** `v2.41.0`
 
-No `Last verified` line yet — see [Verification performed](#verification-performed-2026-09-21)
-below. The field asserts Traefik/TLS routing was confirmed on a real host, which
-has not happened; this stack stays `scaffolded` until it does.
+No `Last verified` line: the interface does not load under the shipped `sec-2` —
+see [Known limitation](#known-limitation-the-interface-and-the-rate-limit).
 
 The origin comes from Twenty's terms of service, which name Twenty.com PBC as a
 public benefit corporation incorporated in Delaware.
@@ -39,6 +38,48 @@ public benefit corporation incorporated in Delaware.
 | `read_only: true` on server and worker | Verified: migrations, sign-up, workspace activation, records and a restart |
 | Worker on `app-internal` only | It needs no route out for the CRM itself; mail and calendar sync would, see README |
 | `APP_TRAEFIK_ACCESS=acc-tailscale` | The first account creates the workspace |
+
+## Known limitation: the interface and the rate limit
+
+The first load issues 412 requests. Assets are served with
+`cache-control: public, max-age=0`, so a returning browser revalidates every one
+of them instead of using its cache. Measured under the shipped `acc-tailscale`:
+
+| Chain | Load | Requests | `429` |
+|---|---|---|---|
+| `sec-2` (burst 50) | first | 412 | 302 |
+| `sec-2-spa` (burst 200) | first | 412 | 130 |
+| `sec-2` | warm browser | 379 | 289 |
+| `sec-2-spa` | warm browser | 412 | 159 |
+| `sec-1` (no rate limit) | warm browser | 518 | 0 |
+
+Three cold loads in a row under `sec-2`: 1,216 requests, 919 of them `429`. The
+interface stays blank under both limited chains. The stack keeps `sec-2`, as
+Windmill does, until the chains are reviewed against the applications before
+v1.0.
+
+## Verification performed (2026-09-22)
+
+Behind Traefik with TLS, with the shipped `acc-tailscale`; the interface under
+`sec-1` (see above):
+
+- A client outside the access policy's ranges got `403`, over IPv4 and IPv6
+- The first sign-up in the browser created the workspace and its first user; an
+  uninvited second sign-up was refused
+  (`SignUpInWorkspace: User does not have access to this workspace`)
+- A company created in the interface and read back over REST with the session
+  (`GET /rest/companies` `200`); REST writes with the session alone got `403`
+- The interface requests company logos from `twenty-icons.com`, and
+  `twentyhq.github.io`, in the visitor's browser
+- After `docker compose down` and `up`: the interface in 572 requests, the company
+  still there
+- Backup as the README describes; restore into an empty database without errors,
+  the archive unpacked — the interface loaded (572 requests) and the company was
+  back
+- Peaks: server 1,033 MiB, worker 751 MiB, PostgreSQL 106 MiB, Redis 20 MiB
+
+**Not yet exercised:** API keys (creating one through the session's GraphQL call
+got `403`); mail and calendar sync; the interface under the shipped `sec-2`.
 
 ## Verification performed (2026-09-21)
 

@@ -107,7 +107,10 @@ uid 33.
 
 ## Status
 
-`scaffolded` — see [UPSTREAM.md](UPSTREAM.md#verification-performed-2026-09-21).
+Run behind Traefik with TLS on 2026-09-22 (2026.5): the unattended install, the
+login and wizard, a customer, an in-app update that survived a restart on the
+older image, a restart, and the restore below. Full log in
+[`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-22).
 
 ## Try it locally
 
@@ -136,4 +139,4 @@ sudo tar -czf facturascripts-files.tar.gz volumes/facturascripts .secrets
 The webroot is the installed version, so restore the database and the webroot
 from the same point in time. Restore into an empty database with `mariadb`,
 unpack the archive, restore the `33:33` ownership on `volumes/facturascripts`,
-and run `docker compose up -d`. Restore is not exercised here.
+and run `docker compose up -d`.

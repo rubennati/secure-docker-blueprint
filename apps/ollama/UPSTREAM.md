@@ -11,12 +11,7 @@
 - **Domain:** AI and local AI
 - **Role:** Local model runtime that pulls models by name and serves them on CPU or an NVIDIA GPU
 - **Based on version:** `0.34.2`
-
-No `Last verified` line yet — see [Verification performed](#verification-performed-2026-09-18)
-below for exactly what has been exercised and what has not. The field
-asserts Traefik/TLS routing was confirmed on a real host, which this session
-could not do; setting it early would claim evidence that does not exist. This
-stack stays `scaffolded` until that happens.
+- **Last verified:** 2026-09-21 (0.34.2) — behind Traefik with TLS: models to 3.2B parameters pulled and served through the route on CPU, concurrent requests, a restart, and a restore of `volumes/data`
 
 ## What we use
 
@@ -61,6 +56,33 @@ removed. The same network reaches the pull, create and generate endpoints.
   traced.
 - Cloud features are disabled by `OLLAMA_NO_CLOUD`.
 
+## Verification performed (2026-09-21)
+
+Behind Traefik with TLS, with the shipped `acc-private` and `sec-2`, on CPU
+without a GPU:
+
+- A client outside the access policy's ranges got `403` on the route, over IPv4
+  and IPv6
+- Set up from a copy of `.env.example` and the README's `chown`; `healthy` under
+  the same hardening, with `memory` 8 GiB, `memswap_limit` equal to it and
+  `pids` 512 in force
+- Through the route: `qwen2.5:0.5b` (494M parameters) and `llama3.2:3b` (3.2B)
+  pulled with `POST /api/pull`; `/api/chat` and `/v1/chat/completions` answered;
+  a model created with `POST /api/create` from `qwen2.5:0.5b` answered with its
+  system prompt
+- Two concurrent `/api/generate` requests to the 3.2B model both completed, one
+  after the other: the server reports `OLLAMA_NUM_PARALLEL:1`, and the second
+  request took 25 s against 14 s for the first
+- Peak with the 3.2B model loaded: 2.5 GiB of memory, four cores (403 % CPU),
+  43 PIDs
+- After `docker compose down` and `up -d` all three models were listed and
+  answered
+- Restore: `volumes/data` archived with the container stopped, the directory
+  removed, the archive extracted into an empty `volumes/data`, the container
+  started — all three models listed, and the custom model answered
+
+**Not yet exercised:** any GPU — the overlay only merges cleanly.
+
 ## Verification performed (2026-09-18)
 
 Against the local test stack, and against the production `docker-compose.yml`
@@ -78,11 +100,6 @@ Docker VM with six CPUs and 12 GB of memory and no GPU:
 - A separate container on `proxy-public` reached `ollama:11434` by service name
 - The model was still listed after a container restart
 - The unauthenticated `DELETE` described above
-
-**Not yet exercised:** Traefik routing and TLS; any GPU (the overlay only
-merges cleanly — `docker compose config` shows the device reservation); models
-larger than 135M parameters and therefore real memory sizing; concurrent
-requests.
 
 ## Upgrade checklist
 

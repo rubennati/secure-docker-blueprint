@@ -89,7 +89,10 @@ application, the six services together used roughly 1.9 GB after start.
 
 ## Status
 
-`scaffolded` — see [UPSTREAM.md](UPSTREAM.md#verification-performed-2026-09-19).
+Run behind Traefik with TLS on 2026-09-22 (4.38.0): the web UI, the
+Python SDK sending traces, scores and a prompt to the routed host, a restart,
+and the restore above. Full log in
+[`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-22).
 
 ## Try it locally
 
@@ -112,13 +115,25 @@ data; MinIO holds the raw event payloads; Redis holds only a queue.
 
 ```bash
 docker exec langfuse-db pg_dump -U langfuse langfuse > langfuse-postgres.sql
-docker compose stop langfuse-web langfuse-worker
+docker compose stop langfuse-web langfuse-worker clickhouse minio
 tar -C volumes -czf langfuse-volumes.tar.gz clickhouse minio
-docker compose start langfuse-web langfuse-worker
+docker compose start clickhouse minio langfuse-web langfuse-worker
 ```
+
+Stop ClickHouse and MinIO as well as the two Langfuse services: a running
+ClickHouse merges parts while `tar` reads them (`file changed as we read it`).
 
 Keep `.secrets/salt.txt` and `.secrets/encryption_key.txt` with the dump: without
 them API keys and stored credentials from the restored data no longer work.
-Restore into empty volumes with `psql` and by unpacking the archive, place the
-secrets back unchanged and run `docker compose up -d`. Restore is not exercised
-here.
+Restore into empty volumes, with the secrets back unchanged:
+
+```bash
+mkdir -p volumes/{postgres,clickhouse,redis,minio}
+sudo chown 101:101 volumes/clickhouse
+sudo chown 999:999 volumes/redis
+sudo chown 1000:1000 volumes/minio
+docker compose up -d postgres
+docker exec -i langfuse-db psql -U langfuse -d langfuse < langfuse-postgres.sql
+sudo tar -C volumes -xzf langfuse-volumes.tar.gz
+docker compose up -d
+```

@@ -5,11 +5,6 @@ and payments. One self-contained binary — PHP and a web server embedded — wi
 SQLite in the configuration volume. Upstream:
 [SolidInvoice](https://github.com/SolidInvoice/SolidInvoice).
 
-> **Setup not verified.** The web installer was reached and runs up to its
-> database step on this stack, but it was not completed here, and its
-> command-line counterpart does not complete in this release. Treat the first
-> install as the test. Details in [UPSTREAM.md](UPSTREAM.md#installation-in-301).
-
 ## Architecture
 
 ```text
@@ -31,9 +26,14 @@ sudo chown -R 1000:1000 volumes/config
 docker compose up -d            # about a minute until healthy
 ```
 
-Then open `https://<host>/install` over the VPN and choose **Embedded Database
-(SQLite)**. The installer creates the administrator and generates the
-application's secret, which it stores in `volumes/config`.
+Then open `https://<host>/install` over the VPN. The installer asks, in turn, for
+the database — choose **Embedded Database (SQLite)** — then the administrator's
+account (locale, the application's URL, name, email, password), shows a review,
+and installs: it generates the application's secret, stores it in
+`volumes/config` and creates the schema. The first login continues into the
+application's onboarding — company and currency, optionally a first client and a
+first invoice. The installer's command-line counterpart does not complete in this
+release; see [UPSTREAM.md](UPSTREAM.md#installation-in-301).
 
 ## The open window, and why the router starts closed
 
@@ -61,6 +61,9 @@ is set to 3 GiB.
   into `$HOME/.SolidInvoice`, so `HOME` points at the tmpfs.
 - **HTTPS is Traefik's.** The binary can obtain its own certificate; it runs with
   `--disable-https` here.
+- **The vault key is written world-readable.** The configuration directory holds
+  the encrypted secrets vault and its decryption key, which the application
+  writes with mode `644`. `ops/init.sh` creates the directory with mode `700`.
 - **Telemetry.** Off by default in this release; the compose file sets
   `SOLIDINVOICE_ENABLE_TELEMETRY=0` so an installer choice cannot enable it.
 - **Installer logging.** When the command-line installer fails, it writes its full
@@ -70,7 +73,9 @@ is set to 3 GiB.
 
 ## Status
 
-`scaffolded` — see [UPSTREAM.md](UPSTREAM.md#verification-performed-2026-09-21).
+Run behind Traefik with TLS on 2026-09-22 (3.0.1): the web installer to the end,
+the onboarding with a client and an invoice, a restart, and the restore below.
+Full log in [`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-22).
 
 ## Try it locally
 
@@ -99,4 +104,4 @@ docker compose start solidinvoice-app
 Restore by unpacking it back into place, restoring the `1000:1000` ownership, and
 running `docker compose up -d`. The vault's decryption key is in the same
 directory, so the archive is self-contained — and has to be kept as private as
-the data. Restore is not exercised here.
+the data.

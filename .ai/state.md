@@ -23,7 +23,9 @@
   ([`decisions.md`](decisions.md), 2026-09-21), six held as evaluation entries,
   and one fix they surfaced in `business/akaunting`. Evidence per product:
   [`../docs/audits/candidate-evaluation-2026-09-21.md`](../docs/audits/candidate-evaluation-2026-09-21.md).
-  What is left of it is upstream requests and host verification — `tasks.md` §6.
+  Host verification ran on 2026-09-22: `Last verified` for nine, three recorded
+  with a limitation; what is left is upstream requests and follow-ups —
+  `tasks.md` §6.
 - **Current milestone:** v0.10.0 — Measured resource limits. Whether it stays a
   release is open (D4 in the audit): the measurement needs the same host session
   as the verification backlog.
@@ -311,7 +313,12 @@ over one HTTP/2 connection. Open WebUI requests 173 files: under `sec-2` (burst
 200) none. Dify's workflow editor requests 291, of them 164 static files: 64 × `429`
 under `sec-2`, none under `sec-2-spa`. Windmill requests about 850 and fails under
 both — 412 × `429` under `sec-2-spa`. Langfuse (152) and LiteLLM (160) stayed
-under the limit.
+under the limit. Of the twelve candidate stacks, CISO Assistant (77 files, 14 ×
+`429` under `sec-2`) moved to `sec-2-spa`; Twenty requests 412 and serves its
+assets with `max-age=0`, so a warm browser revalidates every one — `429` under
+both chains, as Windmill; the other interfaces stayed under `sec-2`
+(DefectDojo 42 on its dashboard, ERPNext 67 on its desk, calnode's admin
+interface 54).
 → *Decided 2026-09-22:* no stack drops to `sec-1` to get past a limit. The
 measurements go into the review below.
 

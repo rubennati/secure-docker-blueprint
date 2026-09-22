@@ -13,10 +13,7 @@
 - **Domain:** AI and local AI
 - **Role:** Chat interface for any OpenAI-compatible endpoint, with accounts, history and document upload
 - **Based on version:** `v0.11.3`
-
-No `Last verified` line yet — see [Verification performed](#verification-performed-2026-09-19)
-below. The field asserts Traefik/TLS routing was confirmed on a real host, which
-has not happened; this stack stays `scaffolded` until it does.
+- **Last verified:** 2026-09-21 (v0.11.3) — behind Traefik with TLS: sign-in and an answer from an attached document in a browser, LiteLLM as a second backend, offline mode, a restart, and a restore
 
 ## What we use
 
@@ -39,6 +36,51 @@ has not happened; this stack stays `scaffolded` until it does.
 | `ENABLE_OLLAMA_API=false`, `OPENAI_API_BASE_URL` | One configurable OpenAI-compatible backend |
 | `ENABLE_VERSION_UPDATE_CHECK`, `SCARF_NO_ANALYTICS`, `DO_NOT_TRACK`, `ANONYMIZED_TELEMETRY` off | Upstream's update check and telemetry |
 | `HF_HUB_OFFLINE` variable | The embedding model downloads from Hugging Face at first start; `1` afterwards is verified to stop all requests to it |
+| `APP_TRAEFIK_SECURITY=sec-2-spa` | The first load requests 224 files at once over one HTTP/2 connection; `sec-2` (burst 50) answered 103 of them with `429` and the web app showed `500: Internal Error`. `sec-2-spa` has the same average rate with a burst of 200 |
+
+## Verification performed (2026-09-21)
+
+Behind Traefik with TLS, with the shipped `acc-private` and the Ollama stack as
+the first backend:
+
+- A client outside the access policy's ranges got `403` on the route, over IPv4
+  and IPv6
+- In a browser the page failed with `500: Internal Error`: the first load
+  requested 224 files, and `sec-2`'s rate limit answered 74 of the browser's
+  requests with `429`. Replaying the same 224 paths over one HTTP/2 connection:
+  103 × `429` under `sec-2`, 224 × `200` under `sec-2-spa`. Headless Chromium
+  (Playwright 1.63) on a fresh profile: 65 of 173 requests `429` and the same
+  error page under `sec-2`; all 173 `200` and the sign-in page under
+  `sec-2-spa`. `.env.example` now ships `sec-2-spa`
+- In that browser: signed in as the administrator, attached a text file in the
+  chat, asked about it — `llama3.2:3b` answered from the file, citing one
+  retrieved source
+- Through the route: wrong password `400`, sign-up `403`, `/api/models` `401`
+  without a token; the administrator from the environment signed in
+- A text file uploaded through `/api/v1/files/`, processed, and a question about
+  it answered from its content by `llama3.2:3b`
+- Second backend: LiteLLM added through `/openai/config/update` at its route
+  with a virtual key; its models were listed and a completion went Open WebUI →
+  LiteLLM → Ollama, each hop through Traefik
+- The first start downloaded the embedding model's whole Hugging Face
+  repository, 888 MB, into `volumes/data/cache` — every format the repository
+  carries, not only the one loaded
+- `HF_HUB_OFFLINE=1` after the first start: a capture on the `proxy-public`
+  bridge saw no outbound connection from the container during the restart
+- The log warns `CORS_ALLOW_ORIGIN IS SET TO '*'`; the stack does not set it
+- After `docker compose down` and `up -d`: the chat, the file and a session
+  token issued before the restart were intact; retrieval answered offline
+- Restore as the README described: `volumes/data` without `cache/` and the
+  session key, container stopped, restored into an empty directory. Login, chats
+  and old session tokens worked; with `HF_HUB_OFFLINE=1` the embedding model did
+  not load (`LocalEntryNotFoundError`, `Error loading SentenceTransformer`) while
+  the container reported `healthy` — answers ignored the attached document and a
+  new upload's processing `failed`. One start with `HF_HUB_OFFLINE=0` downloaded
+  it again, and after switching back to `1` retrieval answered. The README now
+  says so
+- Peak 1.3 GiB of memory, 87 PIDs
+
+**Not yet exercised:** web search.
 
 ## Verification performed (2026-09-19)
 
@@ -57,10 +99,6 @@ container (`smollm2:135m`) as the OpenAI-compatible backend at `/v1`:
   Hugging Face
 - The production stack: login from a peer container, no published port, the
   secret values absent from the configured environment
-
-**Not yet exercised:** Traefik routing and TLS; the browser UI itself (all checks
-went through the API); document upload and retrieval; web search; a backend
-other than Ollama; backup and restore.
 
 ## Upgrade checklist
 

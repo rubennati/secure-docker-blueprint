@@ -71,9 +71,26 @@ Not configured here, and not exercised.
 - **Network.** Worker, PostgreSQL and Redis are on `app-internal` and have no route
   out.
 
+## Known limitation — the web UI behind the rate limit
+
+Twenty's first load issues about 410 requests — script chunks, styles, icons —
+and its assets are served with `max-age=0`, so every later load revalidates them
+all. `sec-2` answered 302 of the first 412 with `429`, `sec-2-spa` still 130; a
+warm browser got `429` on 289 and 159 of them. The interface does not load under
+either. It loads under `sec-1`, which has no rate limit; the stack keeps `sec-2`
+until the security chains are reviewed against the applications before v1.0 (see
+[ROADMAP](../../ROADMAP.md#v10--complete-and-hand-off-ready)).
+
+The interface also requests company logos from `twenty-icons.com` in the
+visitor's browser.
+
 ## Status
 
-`scaffolded` — see [UPSTREAM.md](UPSTREAM.md#verification-performed-2026-09-21).
+Run behind Traefik with TLS on 2026-09-22 (v2.41.0): the first sign-up and
+workspace, a company created in the interface and read over REST, a restart, and
+the restore below — with the interface under `sec-1`; under the shipped `sec-2` it
+does not load, see above. Full log in
+[`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-22).
 
 ## Try it locally
 
@@ -100,4 +117,4 @@ tar -czf twenty-files.tar.gz volumes/storage .secrets/encryption_key.txt
 Redis holds only queues and caches. Restore into an empty database with `psql`,
 unpack the archive, restore the `1000:1000` ownership on `volumes/storage`, and run
 `docker compose up -d`. Without the original encryption key, stored connection
-credentials cannot be decrypted. Restore is not exercised here.
+credentials cannot be decrypted.

@@ -47,7 +47,7 @@ docker run --rm -v "$PWD/config/config.yaml:/config/config.yaml:ro" \
 |---|---|---|
 | Client calling the gateway | Bearer API key | `.secrets/agw_api_key.txt`; the config holds only its SHA-256 (`keyHash`) |
 | Operator opening the UI | Basic-auth login | htpasswd file mounted as the Docker Secret `AGW_UI_HTPASSWD` |
-| Gateway calling a hosted provider | Provider API key | Not part of this stack's defaults. An Ollama or vLLM backend needs none; for a hosted provider, use upstream's `policies.backendAuth` with a `file:` source pointing at a mounted secret rather than a literal in the config |
+| Gateway calling a hosted provider | Provider API key | Not part of this stack's defaults. An Ollama or vLLM backend needs none; for a hosted provider, point the model's `auth` at a mounted Docker Secret — see [Hosted providers](#hosted-providers) |
 
 Rotating the client key means re-running `init.sh` on a fresh directory state
 (or hashing a new key with `printf '%s' KEY | openssl dgst -sha256`) and
@@ -70,6 +70,37 @@ restarting.
   and every other container on that network. Restrict the backend list in the
   config to what you intend to route to.
 
+## Hosted providers
+
+Keep a provider's key out of the config file: mount it as a Docker Secret and
+point the model's `auth` at the file.
+
+```yaml
+llm:
+  models:
+    - name: hosted-model
+      provider: openAI
+      params:
+        baseUrl: https://llm.example.com/v1
+      auth:
+        key:
+          file: /run/secrets/AGW_PROVIDER_KEY
+```
+
+Add `AGW_PROVIDER_KEY` to the service's `secrets:` in `docker-compose.yml`, with
+`file: ./.secrets/agw_provider_key.txt` in the top-level `secrets:` block. The
+container runs as uid 65532 and Compose keeps the host file's permissions, so
+give that group read access instead of making the key world-readable:
+
+```bash
+sudo chown "$USER":65532 .secrets/agw_provider_key.txt
+chmod 640 .secrets/agw_provider_key.txt
+```
+
+With `provider: openAI` the key arrives as `Authorization: Bearer <key>`, in
+place of the client's gateway key. `--validate-only` reads the file too: mount
+it into the validation run, or validation fails with `failed to read from file`.
+
 ## MCP
 
 The template contains a commented `mcp:` block on the same gateway: an MCP target
@@ -78,7 +109,10 @@ host, port and path.
 
 ## Status
 
-`scaffolded` — see [UPSTREAM.md](UPSTREAM.md#verification-performed-2026-09-19).
+Run behind Traefik with TLS on 2026-09-21 (v1.5.0): both routes, a
+provider credential from a Docker Secret, an MCP target under `/mcp`, a restart,
+and a restore of `volumes/data` with the config. Full log in
+[`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-21).
 
 ## Try it locally
 

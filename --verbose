@@ -1,0 +1,49 @@
+## Lifecycle
+
+✅ 101 stacks — 1 ops-proven, 31 baseline-aligned, 69 scaffolded, **0 failure(s)**, 43 warning(s)
+
+| Level | Rule | Stack | Detail |
+|---|---|---|---|
+| 🟡 WARN | `legacy-stamp` | `core/acme-certs` | carries the pre-v0.5.1 `Last checked: 2026-04-14` — stays at `scaffolded` until converted to `Last verified: DATE (vX.Y.Z)` against confirmed evidence |
+| 🟡 WARN | `pin-drifted` | `core/authentik` | pinned to `APP_TAG=2026.5.7`, but last verified against `v2026.5.6` — stays at `scaffolded` until re-verified at the current pin |
+| 🟡 WARN | `legacy-stamp` | `core/dnsmasq` | carries the pre-v0.5.1 `Last checked: 2026-04-14` — stays at `scaffolded` until converted to `Last verified: DATE (vX.Y.Z)` against confirmed evidence |
+| 🟡 WARN | `legacy-stamp` | `core/dockhand` | carries the pre-v0.5.1 `Last checked: 2026-04-16` — stays at `scaffolded` until converted to `Last verified: DATE (vX.Y.Z)` against confirmed evidence |
+| 🟡 WARN | `legacy-stamp` | `core/hawser` | carries the pre-v0.5.1 `Last checked: 2026-04-14` — stays at `scaffolded` until converted to `Last verified: DATE (vX.Y.Z)` against confirmed evidence |
+| 🟡 WARN | `legacy-stamp` | `core/portainer` | carries the pre-v0.5.1 `Last checked: 2026-04-16` — stays at `scaffolded` until converted to `Last verified: DATE (vX.Y.Z)` against confirmed evidence |
+| 🟡 WARN | `pin-drifted` | `core/portainer-agent` | pinned to `APP_TAG=2.39.7`, but last verified against `v2.39.1` — stays at `scaffolded` until re-verified at the current pin |
+| 🟡 WARN | `pin-drifted` | `core/traefik` | pinned to `TRAEFIK_IMAGE=traefik:v3.7`, but last verified against `v3.7.13, socket-proxy v0.5.0` — stays at `scaffolded` until re-verified at the current pin |
+| 🟡 WARN | `pin-drifted` | `apps/adminer` | pinned to `APP_TAG=5.5.1-standalone`, but last verified against `v4.8.1-standalone` — stays at `scaffolded` until re-verified at the current pin |
+| 🟡 WARN | `pin-drifted` | `apps/bookstack` | pinned to `APP_TAG=version-v26.05.4`, but last verified against `v25.02` — stays at `scaffolded` until re-verified at the current pin |
+| 🟡 WARN | `pin-drifted` | `apps/caldiy` | pinned to `APP_TAG=v6.2.0-6@sha256:538cbb4a2273…`, but last verified against `v6.2.0-3` — stays at `scaffolded` until re-verified at the current pin |
+| 🟡 WARN | `pin-drifted` | `apps/dashy` | pinned to `APP_TAG=4.6.0`, but last verified against `v4.0.4` — stays at `scaffolded` until re-verified at the current pin |
+| 🟡 WARN | `pin-drifted` | `apps/easyappointments` | pinned to `APP_TAG=1.6.0`, but last verified against `1.5.x` — stays at `scaffolded` until re-verified at the current pin |
+| 🟡 WARN | `pin-drifted` | `apps/ghost` | pinned to `APP_TAG=6.63.0-alpine`, but last verified against `v6.54.0-alpine` — stays at `scaffolded` until re-verified at the current pin |
+| 🟡 WARN | `pin-drifted` | `apps/heimdall` | pinned to `APP_TAG=2.8.3`, but last verified against `v2.6.3` — stays at `scaffolded` until re-verified at the current pin |
+| 🟡 WARN | `pin-drifted` | `apps/homarr` | pinned to `APP_TAG=v1.77.1`, but last verified against `v1.60.0` — stays at `scaffolded` until re-verified at the current pin |
+| 🟡 WARN | `pin-drifted` | `apps/homepage` | pinned to `APP_TAG=v2.3.0`, but last verified against `v0.10.9` — stays at `scaffolded` until re-verified at the current pin |
+| 🟡 WARN | `legacy-stamp` | `apps/immich` | carries the pre-v0.5.1 `Last checked: 2026-04-17` — stays at `scaffolded` until converted to `Last verified: DATE (vX.Y.Z)` against confirmed evidence |
+| 🟡 WARN | `legacy-stamp` | `apps/librephotos` | carries the pre-v0.5.1 `Last checked: 2026-04-17` — stays at `scaffolded` until converted to `Last verified: DATE (vX.Y.Z)` against confirmed evidence |
+| 🟡 WARN | `legacy-stamp` | `apps/lycheeorg` | carries the pre-v0.5.1 `Last checked: 2026-04-17` — stays at `scaffolded` until converted to `Last verified: DATE (vX.Y.Z)` against confirmed evidence |
+| 🟡 WARN | `legacy-stamp` | `apps/monicahq` | carries the pre-v0.5.1 `Last checked: 2026-04-17` — stays at `scaffolded` until converted to `Last verified: DATE (vX.Y.Z)` against confirmed evidence |
+| 🟡 WARN | `pin-drifted` | `apps/n8n` | pinned to `APP_TAG=2.38.7`, but last verified against `v2.19.2` — stays at `scaffolded` until re-verified at the current pin |
+| 🟡 WARN | `pin-drifted` | `apps/nocodb` | pinned to `APP_TAG=2026.09.0`, but last verified against `v0.301.5` — stays at `scaffolded` until re-verified at the current pin |
+| 🟡 WARN | `legacy-stamp` | `apps/onlyoffice` | carries the pre-v0.5.1 `Last checked: 2026-06-14` — stays at `scaffolded` until converted to `Last verified: DATE (vX.Y.Z)` against confirmed evidence |
+| 🟡 WARN | `legacy-stamp` | `apps/opnform` | carries the pre-v0.5.1 `Last checked: 2026-04-17` — stays at `scaffolded` until converted to `Last verified: DATE (vX.Y.Z)` against confirmed evidence |
+| 🟡 WARN | `pin-drifted` | `apps/paperless-ngx` | pinned to `APP_TAG=3.1.3`, but last verified against `v2.20.13` — stays at `scaffolded` until re-verified at the current pin |
+| 🟡 WARN | `legacy-stamp` | `apps/photoprism` | carries the pre-v0.5.1 `Last checked: 2026-04-17` — stays at `scaffolded` until converted to `Last verified: DATE (vX.Y.Z)` against confirmed evidence |
+| 🟡 WARN | `legacy-stamp` | `apps/photoview` | carries the pre-v0.5.1 `Last checked: 2026-04-17` — stays at `scaffolded` until converted to `Last verified: DATE (vX.Y.Z)` against confirmed evidence |
+| 🟡 WARN | `legacy-stamp` | `apps/seafile` | carries the pre-v0.5.1 `Last checked: 2026-04-16` — stays at `scaffolded` until converted to `Last verified: DATE (vX.Y.Z)` against confirmed evidence |
+| 🟡 WARN | `legacy-stamp` | `apps/seafile-pro` | carries the pre-v0.5.1 `Last checked: 2026-04-13` — stays at `scaffolded` until converted to `Last verified: DATE (vX.Y.Z)` against confirmed evidence |
+| 🟡 WARN | `legacy-stamp` | `apps/unifi` | carries the pre-v0.5.1 `Last checked: 2026-04-17` — stays at `scaffolded` until converted to `Last verified: DATE (vX.Y.Z)` against confirmed evidence |
+| 🟡 WARN | `legacy-stamp` | `apps/vaultwarden` | carries the pre-v0.5.1 `Last checked: 2026-06-14` — stays at `scaffolded` until converted to `Last verified: DATE (vX.Y.Z)` against confirmed evidence |
+| 🟡 WARN | `legacy-stamp` | `apps/wordpress` | carries the pre-v0.5.1 `Last checked: 2026-04-15` — stays at `scaffolded` until converted to `Last verified: DATE (vX.Y.Z)` against confirmed evidence |
+| 🟡 WARN | `legacy-stamp` | `business/dolibarr` | carries the pre-v0.5.1 `Last checked: 2026-04-17` — stays at `scaffolded` until converted to `Last verified: DATE (vX.Y.Z)` against confirmed evidence |
+| 🟡 WARN | `legacy-stamp` | `business/kimai` | carries the pre-v0.5.1 `Last checked: 2026-05-03` — stays at `scaffolded` until converted to `Last verified: DATE (vX.Y.Z)` against confirmed evidence |
+| 🟡 WARN | `legacy-stamp` | `business/listmonk` | carries the pre-v0.5.1 `Last checked: 2026-05-03` — stays at `scaffolded` until converted to `Last verified: DATE (vX.Y.Z)` against confirmed evidence |
+| 🟡 WARN | `legacy-stamp` | `business/matomo` | carries the pre-v0.5.1 `Last checked: 2026-04-17` — stays at `scaffolded` until converted to `Last verified: DATE (vX.Y.Z)` against confirmed evidence |
+| 🟡 WARN | `pin-drifted` | `business/openproject` | pinned to `APP_TAG=17.8.0-slim`, but last verified against `v17.3.1` — stays at `scaffolded` until re-verified at the current pin |
+| 🟡 WARN | `legacy-stamp` | `business/opensign` | carries the pre-v0.5.1 `Last checked: 2026-05-11` — stays at `scaffolded` until converted to `Last verified: DATE (vX.Y.Z)` against confirmed evidence |
+| 🟡 WARN | `pin-drifted` | `business/vikunja` | pinned to `APP_TAG=2.6.0`, but last verified against `v2.3.0` — stays at `scaffolded` until re-verified at the current pin |
+| 🟡 WARN | `legacy-stamp` | `business/zammad` | carries the pre-v0.5.1 `Last checked: 2026-08-16` — stays at `scaffolded` until converted to `Last verified: DATE (vX.Y.Z)` against confirmed evidence |
+| 🟡 WARN | `legacy-stamp` | `monitoring/beszel-agent` | carries the pre-v0.5.1 `Last checked: 2026-05-03` — stays at `scaffolded` until converted to `Last verified: DATE (vX.Y.Z)` against confirmed evidence |
+| 🟡 WARN | `legacy-stamp` | `monitoring/gatus` | carries the pre-v0.5.1 `Last checked: 2026-05-03` — stays at `scaffolded` until converted to `Last verified: DATE (vX.Y.Z)` against confirmed evidence |
