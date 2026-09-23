@@ -1,0 +1,48 @@
+# Gotify — local
+#
+#   cp .env.local.example .env.local
+#   mkdir -p .secrets volumes/data
+#   openssl rand -base64 24 | tr -d '\n' > .secrets/gotify_admin_pass.txt
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   open http://localhost:8080        # sign in as admin with that password
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+#
+# No Traefik and no TLS, so the session cookie cannot carry Secure here; on a
+# loopback port that costs nothing. The production file sets it.
+
+services:
+
+  gotify-app:
+    image: ghcr.io/gotify/server:${APP_TAG}
+    container_name: gotify-local-app
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    user: "${APP_UID}:${APP_GID}"
+    environment:
+      GOTIFY_DEFAULTUSER_NAME: ${GOTIFY_ADMIN_USER}
+      GOTIFY_DEFAULTUSER_PASS_FILE: /run/secrets/GOTIFY_ADMIN_PASS
+      GOTIFY_REGISTRATION: "false"
+      GOTIFY_PLUGINSDIR: ""
+      GOTIFY_DATABASE_DIALECT: sqlite3
+      GOTIFY_DATABASE_CONNECTION: data/gotify.db
+      TZ: ${TZ}
+    volumes:
+      - ./.secrets/gotify_admin_pass.txt:/run/secrets/GOTIFY_ADMIN_PASS:ro
+      - ./volumes/data:/app/data
+    tmpfs:
+      - /tmp
+    ports:
+      - "127.0.0.1:8080:80"
+    networks: [gotify-local]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:80/health | grep -q '\"health\":\"green\"' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+networks:
+  gotify-local:
+    name: gotify-local

@@ -1,0 +1,118 @@
+services:
+
+  # --------------------------------------------------------
+  # GOTIFY (push notification server)
+  # One container with SQLite. Applications post a message with their own token,
+  # the phone and desktop clients hold a connection open and receive it.
+  # Like ntfy, it belongs on a different host than the services that publish to
+  # it — monitoring/README.md, "Where the receiver runs".
+  # --------------------------------------------------------
+  gotify-app:
+    # --- Identity ---
+    image: ghcr.io/gotify/server:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    # Upstream runs as root. The server binds port 80, which Docker's default
+    # net.ipv4.ip_unprivileged_port_start=0 allows an unprivileged process to do,
+    # so it runs as the owner of ./volumes/data instead. That directory has to
+    # exist before the first start — Docker would create it as root, and root
+    # without capabilities cannot write into a directory it does not own.
+    user: "${APP_UID}:${APP_GID}"
+
+    # --- Resources ---
+    # Starting values, not measured ones. Retune from `docker stats` to ~2x peak.
+    memswap_limit: 256m          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          # cpus: derived starting value, not measured — v0.10.0
+          cpus: "0.50"
+          pids: 100
+        reservations:
+          memory: 64m
+
+    # --- Configuration ---
+    environment:
+      # The first start creates this administrator. Without the password file it
+      # would be the published default, admin/admin.
+      GOTIFY_DEFAULTUSER_NAME: ${GOTIFY_ADMIN_USER}
+      GOTIFY_DEFAULTUSER_PASS_FILE: /run/secrets/GOTIFY_ADMIN_PASS
+      # A notification receiver has no reason to take sign-ups; the administrator
+      # creates the accounts. This is upstream's default, set here so it is visible.
+      GOTIFY_REGISTRATION: "false"
+      # Empty: no plugin directory is created, and no Go plugin is loaded from the
+      # data volume. Gotify plugins are compiled code that runs in the server.
+      GOTIFY_PLUGINSDIR: ""
+      # Traefik terminates TLS, so the session cookie carries Secure.
+      GOTIFY_SERVER_SECURECOOKIE: "true"
+      # Comma-separated list. Naming the proxy network's subnet makes the access
+      # log carry the client's address instead of Traefik's.
+      GOTIFY_SERVER_TRUSTEDPROXIES: ${GOTIFY_TRUSTED_PROXIES}
+      # Upstream's defaults, restated so the data path is visible next to the mount.
+      GOTIFY_DATABASE_DIALECT: sqlite3
+      GOTIFY_DATABASE_CONNECTION: data/gotify.db
+      TZ: ${TZ}
+    secrets:
+      - GOTIFY_ADMIN_PASS
+
+    # --- Storage ---
+    # gotify.db holds users, applications, tokens and the messages that have not
+    # been delivered yet; images/ holds the icons uploaded per application.
+    volumes:
+      - ./volumes/data:/app/data
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+
+    # --- Traefik ---
+    labels:
+      # Router
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      # TLS
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      # Uncomment ONLY for per-domain certificates; leave off when a wildcard
+      # certificate already covers this host.
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Middlewares — who may reach it, then what headers apply.
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      # Service
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
+
+    # --- Health & Observability ---
+    # /health answers without a token and reports the database separately, so the
+    # check reads the payload rather than the status code. curl is in the image.
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:80/health | grep -q '\"health\":\"green\"' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  GOTIFY_ADMIN_PASS:
+    file: ./.secrets/gotify_admin_pass.txt
