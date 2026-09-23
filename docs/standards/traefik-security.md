@@ -331,6 +331,34 @@ Recommendation: `tls-aplus` for most services. Use `tls-modern` for password man
 
 ---
 
+## Reaching a backend over TLS (`servers-transports.yml`)
+
+The profiles above cover the connection a *client* makes to Traefik. A
+**serversTransport** covers the other hop: the one Traefik makes to the
+container behind it. Nothing needs it while a backend speaks plain HTTP on the
+internal network, which is the normal case here.
+
+One case needs it. A service whose clients speak gRPC needs HTTP/2 with TLS the
+whole way, so the container terminates TLS itself with a certificate no public
+authority issued. `backend-selfsigned` is the transport for that:
+
+```yaml
+traefik.http.services.<name>.loadbalancer.server.scheme=https
+traefik.http.services.<name>.loadbalancer.serverstransport=backend-selfsigned@file
+```
+
+Traefik does not verify that certificate. The hop stays encrypted and stays on
+this host's Docker network; what is given up is the assurance that the container
+answering is the one the certificate was issued for. It is therefore for a
+backend on this host, not for one reached across a network somebody else routes.
+
+**A serversTransport comes from the file provider only.** The equivalent Docker
+labels are ignored — a service naming `<name>@docker` fails with "servers
+transport not found" and its router serves nothing. Measured against Traefik
+v3.7 on 2026-09-23. `backup/kopia` is the stack that uses it.
+
+---
+
 ## Incident Response
 
 | Action | How |
