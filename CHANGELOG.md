@@ -15,6 +15,8 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ### Fixed
 
+- **ERPNext's desk ran without live updates** (`business/erpnext`). Frappe's realtime service authenticates a socket by fetching the session from the address in the request's `Origin` header, and the image's nginx puts the public URL there — which the websocket container, on an internal network by design, cannot reach. Every socket was refused with `Unauthorized: TypeError: fetch failed`: no pushed notifications, no list refreshes, no progress bars. A second nginx listener now serves `/socket.io` with an `Origin` that exists on that network — the frontend itself, under the site's own name, added as a network alias — and Traefik routes `/socket.io` to it. Measured against both listeners from inside the websocket container: the old one refuses the namespace, the new one connects.
+
 - **Seafile Pro's AI overlay pulled a moving tag** (`apps/seafile-pro/seafile-ai.yml`). It now pins `seafileltd/seafile-ai:13.0.10` instead of `13.0-latest`, so an unchanged file no longer pulls a different image. Both tags pointed to the same image when this changed.
 
 ## [0.9.2] — 2026-09-22 — Stabilization and release readiness

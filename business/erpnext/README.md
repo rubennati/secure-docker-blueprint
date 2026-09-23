@@ -8,7 +8,8 @@ invoicing, stock, buying, selling, manufacturing, projects and HR. Upstream:
 ## Architecture
 
 ```text
-Internet → Traefik (TLS) → erpnext-frontend :8080 (nginx)
+Internet → Traefik (TLS) ─┬→ erpnext-frontend :8080 (nginx)   everything else
+                          └→ erpnext-frontend :8081 (nginx)   /socket.io
                                   │
                      app-internal (internal: true)
                                   │
@@ -53,14 +54,20 @@ wait is the difference between the two zones, counted from the site's creation:
 resolves itself. The site is created with the scheduler switched off; the setup
 wizard switches it on.
 
-## Known limitation — no live updates
+## Live updates go through a second listener
 
-The realtime service (`erpnext-websocket`) checks each browser session by calling
-the site at the address in the request's `Origin` header — the public host name.
-From `app-internal` it cannot reach that address, so it refuses every session
-(`Unauthorized: TypeError: fetch failed`) and the desk runs without live updates:
-no pushed notifications, list refreshes or progress bars. Everything else works.
-A fix that routes the check to the stack's own frontend is open.
+The realtime service checks each browser session by calling the site at the
+address in the request's `Origin` header. The image's own nginx puts the public
+URL there, which a container on `app-internal` cannot reach: every socket was
+refused with `Unauthorized: TypeError: fetch failed`, and the desk ran without
+pushed notifications, list refreshes or progress bars.
+
+`config/nginx-socketio.conf` adds a second listener on port 8081 that serves
+`/socket.io` alone and sends an `Origin` that exists on `app-internal`: the
+frontend itself, under the site's own name, which the compose file adds as a
+network alias. Traefik routes `/socket.io` to that port; everything else stays on
+8080. The site name travels in `Host`, so the backend resolves the site the same
+way as for any other request.
 
 ## What is mounted
 
