@@ -109,9 +109,9 @@ them at start, so a new image brings its own.
 
 ## Status
 
-Run behind Traefik with TLS on 2026-09-22 (v16.35.0): the site created, the setup
-wizard, a customer, a restart, and the restore below. The realtime service refuses
-every session — see above. Full log in
+Run behind Traefik with TLS on 2026-09-23 (v16.35.0): the site created, the setup
+wizard, a customer, live updates over the websocket, a restart, and the restore
+below. Full log in
 [`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-22).
 
 ## Try it locally

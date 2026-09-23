@@ -14,10 +14,7 @@
 - **Domain:** Business operations
 - **Role:** ERP on the Frappe framework: accounting, invoicing, stock, buying, selling, manufacturing, projects and HR
 - **Based on version:** `v16.35.0`
-
-No `Last verified` line yet: the realtime service's session check is fixed and
-proven inside the stack (below), and the desk it serves has not been opened in a
-browser since.
+- **Last verified:** 2026-09-23 (v16.35.0) — behind Traefik with TLS: the site created and the setup wizard, a customer, live updates over the websocket, a restart, and the README's restore
 
 The origin comes from Frappe's cloud and enterprise terms, which name Frappe
 Technologies Pvt. Ltd. and place arbitration in Mumbai. The licence is the
@@ -77,8 +74,12 @@ port 8081 (this listener):         40 … {"sid":"…"}     — the namespace co
 `GET /api/method/frappe.realtime.get_user_info` through the internal address
 answered `200` where the same call had failed to connect at all.
 
-**Not yet exercised:** the desk in a browser with the fix in place — pushed
-notifications, list refreshes and progress bars.
+Checked in a browser afterwards, through the route: the desk's realtime socket
+connects over the websocket transport, stays connected, and reconnects when asked
+to. The desk loaded in 66 requests, with the company and the customer in place.
+
+**Not yet exercised:** a scheduled job's first run after the time-zone delay;
+email; reports and printing; the queues under load.
 
 ## Verification performed (2026-09-22)
 

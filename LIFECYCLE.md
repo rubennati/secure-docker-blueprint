@@ -4,7 +4,7 @@
 
 Generated 2026-09-23 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-105 stacks: 1 ops-proven · 31 baseline-aligned · 73 scaffolded. 95 carry a local test stack.
+106 stacks: 1 ops-proven · 32 baseline-aligned · 73 scaffolded. 96 carry a local test stack.
 
 This is the maintainer's view: what has been established about each stack. It makes no statement about whether a stack suits a given deployment.
 
@@ -81,6 +81,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/open-webui`](apps/open-webui/) | `baseline-aligned` | `APP_TAG=v0.11.3` | 2026-09-21 | ✅ | documented | missing |
 | [`apps/opencanary`](apps/opencanary/) | `scaffolded` | `APP_TAG=0.9.9` | — | ✅ | documented | missing |
 | [`apps/opnform`](apps/opnform/) | `scaffolded` | `APP_TAG=2.5.0` | 2026-04-17 ⚠️ | ✅ | documented | missing |
+| [`apps/paperless-gpt`](apps/paperless-gpt/) | `scaffolded` | `APP_TAG=v0.28.0` | — | ✅ | documented | missing |
 | [`apps/paperless-ngx`](apps/paperless-ngx/) | `scaffolded` | `APP_TAG=3.1.3` | 2026-05-03 | ✅ | documented | missing |
 | [`apps/photoprism`](apps/photoprism/) | `scaffolded` | `APP_TAG=260728` | 2026-04-17 ⚠️ | ✅ | documented | missing |
 | [`apps/photoview`](apps/photoview/) | `scaffolded` | `APP_TAG=2.4.0` | 2026-04-17 ⚠️ | ✅ | documented | missing |
@@ -109,7 +110,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`business/chatwoot`](business/chatwoot/) | `baseline-aligned` | `APP_TAG=v4.18.0` | 2026-09-22 | ✅ | documented | missing |
 | [`business/documenso`](business/documenso/) | `scaffolded` | `APP_TAG=v2.18.0` | — | ✅ | documented | missing |
 | [`business/dolibarr`](business/dolibarr/) | `scaffolded` | `APP_TAG=23.0.4` | 2026-04-17 ⚠️ | ✅ | documented | missing |
-| [`business/erpnext`](business/erpnext/) | `scaffolded` | `APP_TAG=v16.35.0` | — | ✅ | documented | missing |
+| [`business/erpnext`](business/erpnext/) | `baseline-aligned` | `APP_TAG=v16.35.0` | 2026-09-23 | ✅ | documented | missing |
 | [`business/facturascripts`](business/facturascripts/) | `baseline-aligned` | `APP_TAG=2026.5` | 2026-09-22 | ✅ | documented | missing |
 | [`business/invoiceninja`](business/invoiceninja/) | `baseline-aligned` | `APP_TAG=5.13.40` | 2026-09-13 | ✅ | documented | missing |
 | [`business/kimai`](business/kimai/) | `scaffolded` | `APP_TAG=2.66.0` | 2026-05-03 ⚠️ | ✅ | documented | missing |
