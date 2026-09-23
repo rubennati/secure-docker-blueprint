@@ -4,7 +4,7 @@
 
 Generated 2026-09-23 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-105 stacks: 1 ops-proven · 31 baseline-aligned · 73 scaffolded. 95 carry a local test stack.
+106 stacks: 1 ops-proven · 33 baseline-aligned · 72 scaffolded. 96 carry a local test stack.
 
 This is the maintainer's view: what has been established about each stack. It makes no statement about whether a stack suits a given deployment.
 
@@ -81,6 +81,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/open-webui`](apps/open-webui/) | `baseline-aligned` | `APP_TAG=v0.11.3` | 2026-09-21 | ✅ | documented | missing |
 | [`apps/opencanary`](apps/opencanary/) | `scaffolded` | `APP_TAG=0.9.9` | — | ✅ | documented | missing |
 | [`apps/opnform`](apps/opnform/) | `scaffolded` | `APP_TAG=2.5.0` | 2026-04-17 ⚠️ | ✅ | documented | missing |
+| [`apps/paperless-gpt`](apps/paperless-gpt/) | `scaffolded` | `APP_TAG=v0.28.0` | — | ✅ | documented | missing |
 | [`apps/paperless-ngx`](apps/paperless-ngx/) | `scaffolded` | `APP_TAG=3.1.3` | 2026-05-03 | ✅ | documented | missing |
 | [`apps/photoprism`](apps/photoprism/) | `scaffolded` | `APP_TAG=260728` | 2026-04-17 ⚠️ | ✅ | documented | missing |
 | [`apps/photoview`](apps/photoview/) | `scaffolded` | `APP_TAG=2.4.0` | 2026-04-17 ⚠️ | ✅ | documented | missing |
@@ -97,7 +98,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/vllm`](apps/vllm/) | `scaffolded` | `APP_TAG=v0.29.0` | — | ✅ | documented | missing |
 | [`apps/whoami`](apps/whoami/) | `baseline-aligned` | `APP_TAG=v1.12.0` | 2026-09-13 | ✅ | documented | missing |
 | [`apps/wikijs`](apps/wikijs/) | `scaffolded` | `APP_TAG=2.5.315` | — | ✅ | documented | missing |
-| [`apps/windmill`](apps/windmill/) | `scaffolded` | `APP_TAG=1.814.0` | — | ✅ | documented | missing |
+| [`apps/windmill`](apps/windmill/) | `baseline-aligned` | `APP_TAG=1.814.0` | 2026-09-23 | ✅ | documented | missing |
 | [`apps/wordpress`](apps/wordpress/) | `scaffolded` | `APP_TAG=7.0.4-php8.3-apache` | 2026-04-15 ⚠️ | ✅ | documented | missing |
 | [`apps/yopass`](apps/yopass/) | `scaffolded` | `APP_TAG=14.10.0` | — | ✅ | documented | missing |
 
@@ -118,7 +119,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`business/openproject`](business/openproject/) | `scaffolded` | `APP_TAG=17.8.0-slim` | 2026-05-06 | ✅ | documented | missing |
 | [`business/opensign`](business/opensign/) | `scaffolded` | `APP_TAG=main@sha256:817654a3f804…` | 2026-05-11 ⚠️ | ✅ | documented | missing |
 | [`business/solidinvoice`](business/solidinvoice/) | `baseline-aligned` | `APP_TAG=3.0.1` | 2026-09-22 | ✅ | documented | missing |
-| [`business/twenty`](business/twenty/) | `scaffolded` | `APP_TAG=v2.41.0` | — | ✅ | documented | missing |
+| [`business/twenty`](business/twenty/) | `baseline-aligned` | `APP_TAG=v2.41.0` | 2026-09-23 | ✅ | documented | missing |
 | [`business/vikunja`](business/vikunja/) | `scaffolded` | `APP_TAG=2.6.0` | 2026-05-06 | ✅ | documented | missing |
 | [`business/zammad`](business/zammad/) | `scaffolded` | `APP_TAG=7.1.3-0012` | 2026-08-16 ⚠️ | ✅ | documented | missing |
 
