@@ -1449,6 +1449,11 @@
         "source": "https://github.com/akaunting/akaunting/blob/master/LICENSE.txt",
         "statement": "commercial licence"
       },
+      "edition_gating": {
+        "checked": "2026-09-23",
+        "source": "https://github.com/akaunting/akaunting/blob/3.1.21/app/Http/Middleware/RedirectIfHitPlanLimits.php",
+        "statement": "the pages that create records are gated at runtime, not by the licence text: the `plan.limits` middleware runs on every GET whose last segment is `create` and asks `https://api.akaunting.com/plans/limits` for the plan, with the API key of an akaunting.com account (setting `apps.api_key`); without a key the service answers `403` and each of those pages redirects, and the image carries no switch to skip the check. Signing in, the dashboard, the lists and the reports do not touch it"
+      },
       "use_restrictions": {
         "checked": "2026-09-21",
         "source": "https://github.com/akaunting/akaunting/blob/master/LICENSE.txt",

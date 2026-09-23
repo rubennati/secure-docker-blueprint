@@ -47,7 +47,10 @@ reset to what the browser had stored — nothing, on a first visit — so `?url=
 alone ends at "URL is not configured" with Connect disabled. Only a link carrying
 the password works, and that link reaches the proxy's access log and the browser
 history. The API itself is unaffected. The way out — a field for the address, or
-keeping it after a failed attempt — is a change upstream.
+keeping it after a failed attempt — is a change upstream, reported as
+https://github.com/rclone/rclone-web/issues/139 (2026-09-23). Separate, in the
+other repository: https://github.com/rclone/rclone/issues/9957, where `rclone gui`
+prints a supplied password into its log line.
 
 ## Verification performed (2026-09-22)
 
