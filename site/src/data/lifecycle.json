@@ -449,6 +449,16 @@
     "verified_anchored": false,
     "verified_version": ""
   },
+  "apps/shlink": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=5.1.7",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "apps/threat-dragon": {
     "backup_docs": "documented",
     "local_stack": "✅",
@@ -518,6 +528,16 @@
     "verified": "2026-09-13",
     "verified_anchored": true,
     "verified_version": "v1.12.0"
+  },
+  "apps/wikijs": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=2.5.315",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
   },
   "apps/windmill": {
     "backup_docs": "documented",

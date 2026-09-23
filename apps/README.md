@@ -33,6 +33,8 @@ structure every stack in this repository follows.
 | [Ghost](ghost/) | App + MySQL | Blog / CMS with SMTP + optional ActivityPub (Fediverse) |
 | [WordPress](wordpress/) | App + MariaDB | Classic CMS, hardened (mu-plugin + test-script) |
 | [BookStack](bookstack/) | App (LSIO) + MariaDB | Wiki / knowledge base (Laravel) |
+| [Wiki.js](wikijs/) | App (Node) + Postgres | Wiki with Markdown and visual editors, per-page permissions, about twenty authentication modules. The 2.5 line takes security fixes while 3.0 is in beta; the setup wizard is open until it has run once |
+| [Shlink](shlink/) | Server + Postgres + optional web client | URL shortener on your own domain with visit statistics and a REST API. No accounts — API keys. Three routers: the redirects, `/rest`, and the browser interface |
 
 ### Photo galleries
 
@@ -217,7 +219,7 @@ will carry that access as a documented deviation. See
 
 Docker-management tools (Dockhand / Portainer / Hawser) are in [`core/`](../core/): they control Docker itself, which is an installation-scoped capability. Whoami sits here instead — it is a routed diagnostic that serves no other stack.
 
-Planned (apps/): Wiki.js, HeyForm, Shlink.
+Planned (apps/): HeyForm.
 
 ## Related
 
