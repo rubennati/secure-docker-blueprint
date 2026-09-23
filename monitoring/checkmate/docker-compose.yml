@@ -1,0 +1,203 @@
+services:
+
+  # --------------------------------------------------------
+  # MONGODB
+  # Monitors, their history, incidents, users and status pages. Everything
+  # Checkmate holds is here; the application container keeps no state.
+  #
+  # Authentication is on, which upstream's own compose does without — it runs
+  # `mongod --bind_ip_all` with no credentials at all.
+  # --------------------------------------------------------
+  checkmate-db:
+    # --- Identity ---
+    image: mongo:${DB_TAG}
+    container_name: ${CONTAINER_NAME_DB}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # The entrypoint starts as root, fixes ownership on the data directory and
+    # drops to the mongodb user.
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+
+    # --- Resources ---
+    # 111 MiB anonymous plus 212 MiB reclaimable page cache with the
+    # collections created, measured 2026-09-23. WiredTiger sizes its cache from
+    # the machine it sees rather than from its cgroup, so the ceiling is where
+    # it is told to stop rather than where it idles — and a monitor's history
+    # grows into it.
+    memswap_limit: 1g            # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          # cpus: derived starting value, not measured — v0.10.0
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 256m
+
+    # --- Configuration ---
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${DB_ROOT_USER}
+      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/DB_ROOT_PWD
+      MONGO_INITDB_DATABASE: ${DB_NAME}
+      TZ: ${TZ}
+    command: ["mongod", "--quiet", "--bind_ip_all"]
+    secrets:
+      - DB_ROOT_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/mongodb:/data/db
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ping:1}).ok"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  # --------------------------------------------------------
+  # CHECKMATE
+  # One container carrying the API, the built dashboard and the worker that
+  # runs the checks. Two ports: 52345 serves everything, 52346 answers
+  # /livez for the worker and is not routed.
+  # --------------------------------------------------------
+  checkmate-app:
+    # --- Identity ---
+    image: ghcr.io/bluewave-labs/checkmate:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+    depends_on:
+      checkmate-db:
+        condition: service_healthy
+    # Upstream asks for this: the worker finishes the checks in flight rather
+    # than leaving monitors with a gap on every restart.
+    stop_grace_period: 60s
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    # No `user:` — the image already runs as uid 1000 (`node`).
+
+    # --- Resources ---
+    # 135 MiB anonymous plus 55 MiB page cache with one monitor running,
+    # measured 2026-09-23. Each monitor is an outbound request on its own
+    # interval, so the ceiling leaves room for a list that grows.
+    memswap_limit: 1g            # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          # cpus: derived starting value, not measured — v0.10.0
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 256m
+
+    # --- Configuration ---
+    # config/entrypoint.sh exports the three credentials from Docker Secrets;
+    # Checkmate reads everything from the environment and has no _FILE variant.
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
+    command: ["node", "dist/index.js"]
+    environment:
+      # Upstream's schema defaults these to `development` and `debug`.
+      NODE_ENV: production
+      LOG_LEVEL: ${APP_LOG_LEVEL}
+      # The address the dashboard is reached at. It is required, has to be a
+      # URL, and is what the status-page code compares a request's host against
+      # to decide whether it is on a custom domain.
+      CLIENT_HOST: https://${APP_TRAEFIK_HOST}
+      # How long a session token stays valid. Upstream's default is `99d` and
+      # there is no refresh flow, so that is a bearer token with three months
+      # of life. A week is the compromise here — see README.
+      TOKEN_TTL: ${APP_TOKEN_TTL}
+      TZ: ${TZ}
+    secrets:
+      - DB_CONNECTION_STRING
+      - JWT_SECRET
+      - ENCRYPTION_KEY
+
+    # --- Storage ---
+    # No data volume: the container keeps nothing. Only the wrapper is mounted.
+    volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+      - app-internal
+
+    # --- Traefik ---
+    labels:
+      # Router
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      # TLS
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      # Uncomment ONLY for per-domain certificates; leave off when a wildcard
+      # certificate already covers this host.
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Middlewares — who may reach it, then what headers apply.
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      # Service — 52345 only. 52346 is the worker's own health port and has no
+      # authentication in front of it, so it stays off the router.
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=52345"
+
+    # --- Health & Observability ---
+    # Upstream's own check, against the worker health port. The image carries
+    # no curl and no wget — node is the HTTP client.
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:52346/livez',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  DB_ROOT_PWD:
+    file: ./.secrets/db_root_pwd.txt
+  DB_CONNECTION_STRING:
+    file: ./.secrets/db_connection_string.txt
+  JWT_SECRET:
+    file: ./.secrets/jwt_secret.txt
+  # Only Docker monitors that speak TLS to a daemon need this. ops/init.sh
+  # writes one anyway, so the file always exists and the mount never fails.
+  ENCRYPTION_KEY:
+    file: ./.secrets/encryption_key.txt
