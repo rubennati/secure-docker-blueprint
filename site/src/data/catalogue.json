@@ -1375,6 +1375,32 @@
     "verified_version": "2.1.6",
     "version": "2.1.6"
   },
+  "backup/kopia": {
+    "decision_facts": {
+      "use_restrictions": {
+        "checked": "2026-09-23",
+        "source": "https://github.com/kopia/kopia/blob/master/LICENSE",
+        "statement": "none"
+      }
+    },
+    "decision_facts_checked": "2026-09-23",
+    "domain": "Backup",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
+    "name": "Kopia",
+    "path": "backup/kopia",
+    "role": "Repository server for Kopia clients — deduplicated, encrypted snapshots from other machines, without handing them the repository password",
+    "state": "scaffolded",
+    "upstream": "https://hub.docker.com/r/kopia/kopia",
+    "verified": null,
+    "verified_version": null,
+    "version": "0.23.1"
+  },
   "backup/rclone-web": {
     "decision_facts": {},
     "decision_facts_checked": "2026-09-21",

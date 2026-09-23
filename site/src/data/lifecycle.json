@@ -589,6 +589,16 @@
     "verified_anchored": true,
     "verified_version": "2.1.6"
   },
+  "backup/kopia": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=0.23.1",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "backup/rclone-web": {
     "backup_docs": "documented",
     "local_stack": "✅",
