@@ -145,6 +145,8 @@ products and are added as a second deliberate exception (`decisions.md`,
       Q Grafana+Prometheus · R Zabbix · S Scrutiny · T Plane ·
       U HeyForm, dropped if it does not run on a current MongoDB and Valkey ·
       V Suricata+Coraza.
+      Batch P put Headscale in `core/`, not the `apps/` this list had: the
+      category test asks about capability for the installation.
       Which of them have landed is in [`../CHANGELOG.md`](../CHANGELOG.md).
       Each stack ships `scaffolded` — verified on its image, not yet behind
       Traefik.

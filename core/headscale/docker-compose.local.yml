@@ -1,0 +1,93 @@
+# headscale — local
+#
+#   cp .env.local.example .env.local
+#   ops/init.sh
+#   sudo chown -R 1000:1000 volumes/lib
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+#
+# On http://localhost:8080. A real client cannot register against this: the
+# embedded relay needs an https server_url, and nodes are told to come back to
+# whatever HEADSCALE_SERVER_URL says. This variant is for seeing the control
+# server run and working the CLI, not for a tailnet.
+
+services:
+
+  # --------------------------------------------------------
+  # HEADSCALE
+  # A self-hosted control server for Tailscale clients: it holds the node
+  # registry, the keys and the access policy for a tailnet you run yourself.
+  # Upstream states it is not associated with Tailscale Inc.
+  #
+  # It belongs in core/ by the test in docs/architecture.md: it provides a
+  # shared network capability for the installation rather than for users of its
+  # own — the same axis `acc-tailscale` already sits on.
+  # --------------------------------------------------------
+  headscale:
+    # --- Identity ---
+    image: ghcr.io/juanfont/headscale:${APP_TAG}
+    container_name: headscale-local
+    restart: unless-stopped
+    command: ["serve"]
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      # The control socket the CLI talks to, and nothing else.
+      - /var/run/headscale:mode=1777
+      - /tmp
+    # The image declares uid 0 and does not need it: everything headscale
+    # writes is under /var/lib/headscale, which is a volume. Verified on
+    # v0.29.4 — see UPSTREAM.md.
+    user: "${APP_UID}:${APP_GID}"
+
+    # --- Resources ---
+    # 13 MiB anonymous with no node registered, measured 2026-09-23. A control
+    # server holds a session per node, not a workload.
+    memswap_limit: 256m          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          # cpus: derived starting value, not measured — v0.10.0
+          cpus: "0.50"
+          pids: 100
+        reservations:
+          memory: 64m
+
+    # --- Configuration ---
+    # config/config.yaml holds everything that does not vary per installation.
+    # These two do, and headscale reads HEADSCALE_-prefixed variables over the
+    # file — which is also how derp.yml switches the embedded relay on.
+    environment:
+      # The address every client is told to come back to. It has to be the one
+      # they can actually reach, and https, or the embedded relay refuses.
+      HEADSCALE_SERVER_URL: http://localhost:8080
+      # The DNS suffix inside the tailnet — `<node>.${APP_TAILNET_DOMAIN}`.
+      # It must not contain the host name above.
+      HEADSCALE_DNS_BASE_DOMAIN: ${APP_TAILNET_DOMAIN}
+      TZ: ${TZ}
+
+    # --- Storage ---
+    volumes:
+      - ./config/config.yaml:/etc/headscale/config.yaml:ro
+      - ./volumes/lib:/var/lib/headscale
+
+    # --- Networking ---
+    ports:
+      - "127.0.0.1:8080:8080"
+
+    # --- Health & Observability ---
+    # headscale ships its own health command, which talks to the control socket
+    # in the tmpfs above. The image carries no HTTP client, so this is also the
+    # only probe available without adding one.
+    healthcheck:
+      test: ["CMD", "/ko-app/headscale", "health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s

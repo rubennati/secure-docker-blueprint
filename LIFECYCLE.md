@@ -4,7 +4,7 @@
 
 Generated 2026-09-23 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-111 stacks: 1 ops-proven · 34 baseline-aligned · 76 scaffolded. 101 carry a local test stack.
+112 stacks: 1 ops-proven · 34 baseline-aligned · 77 scaffolded. 102 carry a local test stack.
 
 This is the maintainer's view: what has been established about each stack. It makes no statement about whether a stack suits a given deployment.
 
@@ -25,6 +25,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`core/dnsmasq`](core/dnsmasq/) | `scaffolded` | `APP_TAG=2.93` | 2026-04-14 ⚠️ | — | documented | missing |
 | [`core/dockhand`](core/dockhand/) | `scaffolded` | `APP_TAG=v1.0.47` | 2026-04-16 ⚠️ | ✅ | documented | missing |
 | [`core/hawser`](core/hawser/) | `scaffolded` | `APP_TAG=0.2.47` | 2026-04-14 ⚠️ | — | documented | missing |
+| [`core/headscale`](core/headscale/) | `scaffolded` | `APP_TAG=v0.29.4` | — | ✅ | documented | missing |
 | [`core/host-watchdog`](core/host-watchdog/) | `scaffolded` | *host-installed* | — | — | missing | missing |
 | [`core/infisical`](core/infisical/) | `scaffolded` | `APP_TAG=v0.165.10` | — | ✅ | documented | missing |
 | [`core/jumpserver`](core/jumpserver/) | `scaffolded` | `APP_TAG=v4.10.19` | — | ✅ | documented | missing |

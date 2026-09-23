@@ -33,7 +33,10 @@ OUT = Path("site/src/data/sovereignty.json")
 # is reported as source-available or proprietary rather than silently counted as
 # open source — the distinction is the whole point of publishing the field.
 OSI = {
-    "AGPL-3.0", "AGPL-3.0-or-later", "Apache-2.0", "BSD 3-Clause",
+    "AGPL-3.0", "AGPL-3.0-or-later", "Apache-2.0",
+    # Both spellings: the stacks written first use the prose form, the SPDX
+    # identifier is what a project's own metadata reports.
+    "BSD 3-Clause", "BSD-3-Clause",
     "GPL-2.0", "GPL-3.0", "GPL-3.0-or-later", "GNU GPL v3.0",
     "LGPL-3.0", "MIT", "MPL-2.0", "zlib",
 }

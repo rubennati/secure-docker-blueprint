@@ -2195,6 +2195,43 @@
     "verified_version": null,
     "version": "0.2.47"
   },
+  "core/headscale": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-23",
+        "model": "no paid edition",
+        "source": "https://github.com/juanfont/headscale",
+        "statement": "no paid edition"
+      },
+      "edition_gating": {
+        "checked": "2026-09-23",
+        "source": "https://github.com/juanfont/headscale",
+        "statement": "none — one open-source implementation, no paid tier"
+      },
+      "use_restrictions": {
+        "checked": "2026-09-23",
+        "source": "https://github.com/juanfont/headscale/blob/main/LICENSE",
+        "statement": "none"
+      }
+    },
+    "decision_facts_checked": "2026-09-23",
+    "domain": "Infrastructure",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
+    "name": "headscale",
+    "path": "core/headscale",
+    "role": "Self-hosted control server for Tailscale clients — node registry, keys and access policy for a tailnet you run",
+    "state": "scaffolded",
+    "upstream": "https://github.com/juanfont/headscale/pkgs/container/headscale",
+    "verified": null,
+    "verified_version": null,
+    "version": "0.29.4"
+  },
   "core/host-watchdog": {
     "decision_facts": {},
     "decision_facts_checked": "2026-09-21",

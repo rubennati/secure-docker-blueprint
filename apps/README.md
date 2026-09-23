@@ -108,7 +108,10 @@ identity or a CI credential store), and Vaultwarden and Infisical do not do
 theirs — see [Choosing between the secret-sharing apps](#choosing-between-the-secret-sharing-apps)
 for what actually separates the three from each other.
 
-Planned (apps/): Headscale (self-hosted Tailscale control server).
+Headscale, once planned here, went to [`core/headscale`](../core/headscale/)
+instead: it provides a shared network capability for the installation rather
+than for users of its own, which is what the category test in
+[`docs/architecture.md`](../docs/architecture.md) asks.
 
 #### Choosing between the secret-sharing apps
 
