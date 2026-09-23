@@ -1,0 +1,109 @@
+# ---------------------------------------------------------------------------
+# headscale — configuration
+#
+# Trimmed from upstream's config-example.yaml (478 lines) to the settings this
+# stack sets or deliberately keeps. Everything omitted keeps its upstream
+# default; the full annotated example is at
+# https://github.com/juanfont/headscale/blob/main/config-example.yaml
+#
+# The two values that differ per installation are NOT here: HEADSCALE_SERVER_URL
+# and HEADSCALE_DNS_BASE_DOMAIN come from .env, because headscale reads
+# HEADSCALE_-prefixed environment variables over this file. Verified on v0.29.4.
+# ---------------------------------------------------------------------------
+
+# Overridden by HEADSCALE_SERVER_URL. The value here is a placeholder that makes
+# `configtest` pass on its own; it is never the one in use.
+server_url: http://127.0.0.1:8080
+
+# Upstream listens on 127.0.0.1, which a container cannot be reached on.
+listen_addr: 0.0.0.0:8080
+
+# Metrics and gRPC stay on loopback: nothing routes to them, and headscale's
+# metrics endpoint carries no authentication.
+metrics_listen_addr: 127.0.0.1:9090
+grpc_listen_addr: 127.0.0.1:50443
+grpc_allow_insecure: false
+
+# Traefik is the only thing that reaches this container, and it sets
+# X-Forwarded-For. Without a trusted proxy here headscale logs the proxy's
+# address for every client.
+trusted_proxies:
+  - 172.16.0.0/12
+
+noise:
+  private_key_path: /var/lib/headscale/noise_private.key
+
+# The addresses handed to nodes. 100.64.0.0/10 is the shared CGNAT range
+# Tailscale uses; change it only if something else on your network claims it.
+prefixes:
+  v4: 100.64.0.0/10
+  v6: fd7a:115c:a1e0::/48
+  allocation: sequential
+
+derp:
+  server:
+    # Off. The embedded relay needs a published UDP port, so it is a deliberate
+    # opt-in through derp.yml rather than something a first start brings up.
+    enabled: false
+    region_id: 999
+    region_code: "headscale"
+    region_name: "Headscale Embedded DERP"
+    verify_clients: true
+    stun_listen_addr: "0.0.0.0:3478"
+    private_key_path: /var/lib/headscale/derp_server_private.key
+    automatically_add_embedded_derp_region: true
+
+  # **This is an outbound dependency, and it is upstream's default.** Without a
+  # relay map, two clients that cannot reach each other directly cannot talk at
+  # all — so this stays on, and the README says what it costs. Enabling the
+  # embedded relay in derp.yml is what removes it.
+  urls:
+    - https://controlplane.tailscale.com/derpmap/default
+  paths: []
+  auto_update_enabled: true
+  update_frequency: 24h
+
+# Upstream default is false — headscale checks for its own updates on start.
+disable_check_updates: true
+
+# v0.29.4 renamed this; upstream's own config-example.yaml still uses the old
+# spelling and warns on start.
+node:
+  ephemeral:
+    inactivity_timeout: 30m
+
+database:
+  type: sqlite
+  debug: false
+  sqlite:
+    path: /var/lib/headscale/db.sqlite
+    write_ahead_log: true
+
+log:
+  format: text
+  level: info
+
+policy:
+  mode: database
+
+dns:
+  # Overridden by HEADSCALE_DNS_BASE_DOMAIN.
+  base_domain: tailnet.internal
+  magic_dns: true
+  override_local_dns: false
+  nameservers:
+    global: []
+    split: {}
+  search_domains: []
+  extra_records: []
+
+unix_socket: /var/run/headscale/headscale.sock
+unix_socket_permission: "0770"
+
+# Upstream ships this pointing at Tailscale's logging service, off by default.
+# Named here so it is visibly off rather than absent.
+logtail:
+  enabled: false
+
+# `randomize_client_port` was removed in v0.29.4 — it is a policy setting now.
+# Upstream's config-example.yaml still lists it and headscale exits on it.

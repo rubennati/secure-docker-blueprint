@@ -695,6 +695,14 @@
     "license_class": "osi",
     "origin": "Finsys · **no country or legal entity stated** — no imprint on fnsys.pro"
   },
+  "core/headscale": {
+    "bloc": "none",
+    "country": "Community",
+    "entity": "juanfont, Kristoffer Dalby and contributors",
+    "license": "BSD-3-Clause",
+    "license_class": "osi",
+    "origin": "Community · juanfont, Kristoffer Dalby and contributors · no single jurisdiction"
+  },
   "core/host-watchdog": {
     "bloc": "none",
     "country": "First-party",
