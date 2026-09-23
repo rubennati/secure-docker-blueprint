@@ -679,6 +679,16 @@
     "verified_anchored": false,
     "verified_version": ""
   },
+  "business/leantime": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=3.9.8",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "business/listmonk": {
     "backup_docs": "documented",
     "local_stack": "✅",
