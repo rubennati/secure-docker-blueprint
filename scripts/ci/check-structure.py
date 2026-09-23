@@ -18,7 +18,8 @@ FAIL (blocks CI — dangerous or leak-prone):
                     coverage completed 2026-09-16 (every production service);
                     this guards the property, it does not report a migration
   burst-exposure    a security chain whose rate-limit bucket holds a whole first
-                    load (sec-*-xl) on a router that is not VPN-only
+                    load (sec-*-xl) on a router open to more than a closed set
+                    of clients
 
 WARN (reported — structural drift):
   missing-file      .env.example / README.md / UPSTREAM.md absent
@@ -80,8 +81,9 @@ SECRET_VAR = re.compile(r"^[A-Z0-9_]*(PASSWORD|SECRET|TOKEN|PASSWD|PWD)$")
 
 # The -xl chains trade a wide first-load burst for a closed set of clients:
 # rl-spa-xl lets one address issue a thousand requests before the sustained
-# rate applies. Only these two access policies keep that set closed.
-VPN_ONLY_ACCESS = {"acc-private", "acc-tailscale"}
+# rate applies. These access policies keep that set closed — acc-deny closes
+# the router altogether.
+CLOSED_ACCESS = {"acc-private", "acc-tailscale", "acc-deny"}
 
 # Accepted placeholders in a committed example file.
 PLACEHOLDER = re.compile(r"^(__REPLACE_ME__|<.*>|changeme|CHANGEME|\$\{.*\}|)$")
@@ -646,10 +648,10 @@ def check_env(app: Path, findings: list[dict]) -> None:
     settings = dict(variables)
     chain = settings.get("APP_TRAEFIK_SECURITY", "")
     access = settings.get("APP_TRAEFIK_ACCESS", "")
-    if chain.endswith("-xl") and access not in VPN_ONLY_ACCESS:
+    if chain.endswith("-xl") and access not in CLOSED_ACCESS:
         findings.append({"level": "FAIL", "rule": "burst-exposure",
                          "detail": f"{chain} holds a whole first load in one burst — "
-                                   f"pair it with {' or '.join(sorted(VPN_ONLY_ACCESS))}, "
+                                   f"pair it with {' or '.join(sorted(CLOSED_ACCESS))}, "
                                    f"found '{access or 'unset'}'"})
 
 

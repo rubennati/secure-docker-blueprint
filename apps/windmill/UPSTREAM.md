@@ -12,6 +12,7 @@
 - **Domain:** Automation and data
 - **Role:** Code-first scripts, flows, APIs and scheduled jobs on a queue
 - **Based on version:** `1.814.0`
+- **Last verified:** 2026-09-23 (1.814.0) — behind Traefik with TLS: the bootstrap behind `acc-deny`, jobs on both workers, the UI under the shipped `sec-2-spa-xl` without a `429`, a restart, and the README's restore
 
 ## What we use
 
@@ -146,14 +147,28 @@ report it as unretrievable"). The server's `hub_api_secret` setting loaded as
 `None`. Neither was traced further; `docs/sovereignty/data-egress.md` is the
 place to record it once a host run has captured the full picture.
 
-## Known limitation: the UI and the rate limit
+## The UI and the rate limit
 
-The UI's first load issues about 850 requests. Under `sec-2` (burst 50), the
-shipped chain, and under `sec-2-spa` (burst 200) part of them get `429` and the
-page shows `500 Internal Error`; under `sec-1`, which has no rate limit, it
-loads. The chain stays `sec-2` until the security chains are reviewed against
-the applications before v1.0 —
-[`ROADMAP.md`](../../ROADMAP.md#v10--complete-and-hand-off-ready).
+The UI's first load issues about 850 requests. Under `sec-2` (burst 50) and
+under `sec-2-spa` (burst 200) part of them get `429` and the page shows
+`500 Internal Error`; under `sec-2-spa-xl`, whose bucket holds one whole first
+load, every request is answered — measured 2026-09-23, five loads in a row.
+`.env.example` ships that chain, and it belongs behind a closed access policy
+for the same reason the bucket is that wide.
+
+## Verification performed (2026-09-23)
+
+Behind Traefik with TLS, with the shipped `acc-private` on this run and
+`sec-2-spa-xl`:
+
+- Five loads of the UI in a row — cold, a reload, and three more cold loads:
+  857, 389, 857, 857, 857 requests, every one answered, no `429`. The nine `401`
+  in each cold load are the UI's own session check on the login page
+- The operator signed in; the workspace list and the run history rendered (262
+  and 811 requests, all answered)
+
+**Not yet exercised:** job isolation (NSJAIL needs bare metal); the UI's release
+check, which the stack does not switch off.
 
 ## Verification performed (2026-09-22)
 
@@ -180,7 +195,7 @@ Behind Traefik with TLS:
   1.63) got 584 × `429` under `sec-2` and 412 × `429` under `sec-2-spa`, and the
   page showed `500 Internal Error` both times. Under `sec-1` (no rate limit) all
   requests passed and the operator signed in to the workspace list. The stack
-  keeps `sec-2` — see [Known limitation](#known-limitation-the-ui-and-the-rate-limit)
+  moved to `sec-2-spa-xl` on 2026-09-23 — see below
 - The UI shows the newest release beside the running one (`v1.816.0` at the
   time); the stack does not switch that lookup off
 - A saved script ran before and after `docker compose down` and `up -d`; the job
