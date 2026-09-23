@@ -13,9 +13,7 @@
 - **Role:** CRM: companies, people, opportunities and tasks, with an extensible data model and an API
 - **Edition gating:** files marked `@license Enterprise` at the top are covered by a commercial licence rather than the AGPL-3.0 — https://github.com/twentyhq/twenty/blob/main/LICENSE · checked 2026-09-21
 - **Based on version:** `v2.41.0`
-
-No `Last verified` line: the interface does not load under the shipped `sec-2` —
-see [Known limitation](#known-limitation-the-interface-and-the-rate-limit).
+- **Last verified:** 2026-09-23 (v2.41.0) — behind Traefik with TLS: the first sign-up and workspace, a company over the interface and over REST, the interface under the shipped `sec-2-spa-xl` without a `429`, a restart, and the README's restore
 
 The origin comes from Twenty's terms of service, which name Twenty.com PBC as a
 public benefit corporation incorporated in Delaware.
@@ -39,7 +37,7 @@ public benefit corporation incorporated in Delaware.
 | Worker on `app-internal` only | It needs no route out for the CRM itself; mail and calendar sync would, see README |
 | `APP_TRAEFIK_ACCESS=acc-tailscale` | The first account creates the workspace |
 
-## Known limitation: the interface and the rate limit
+## The interface and the rate limit
 
 The first load issues 412 requests. Assets are served with
 `cache-control: public, max-age=0`, so a returning browser revalidates every one
@@ -54,9 +52,26 @@ of them instead of using its cache. Measured under the shipped `acc-tailscale`:
 | `sec-1` (no rate limit) | warm browser | 518 | 0 |
 
 Three cold loads in a row under `sec-2`: 1,216 requests, 919 of them `429`. The
-interface stays blank under both limited chains. The stack keeps `sec-2`, as
-Windmill does, until the chains are reviewed against the applications before
-v1.0.
+interface stays blank under both.
+
+Measured again on 2026-09-23 under `sec-2-spa-xl`, whose bucket holds one whole
+first load: 516 requests cold, 505 on a reload, and three further cold loads of
+516 each — every one answered, no `429`. That is the chain `.env.example` now
+ships.
+
+## Verification performed (2026-09-23)
+
+Behind Traefik with TLS, with the shipped `acc-tailscale` and `sec-2-spa-xl`:
+
+- Five loads of the interface in a row — cold, a reload, and three more cold
+  loads: 516, 505, 516, 516, 516 requests, every one answered, no `429`
+- Signed in, and the company created in September read back over REST
+  (`GET /rest/companies` `200`)
+- The interface requests `twentyhq.github.io` in the visitor's browser; those
+  requests were blocked in the browser and never left it
+
+**Not yet exercised:** API keys (creating one through the session's GraphQL call
+got `403`); mail and calendar sync.
 
 ## Verification performed (2026-09-22)
 
