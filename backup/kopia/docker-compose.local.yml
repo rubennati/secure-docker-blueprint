@@ -1,0 +1,62 @@
+# Kopia — local
+#
+#   cp .env.local.example .env.local
+#   COMPOSE_FILE=docker-compose.local.yml ENV_FILE=.env.local ops/init.sh
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   open https://localhost:51515     # the browser warns: the certificate is its own
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+#
+# The port is published here because there is no Traefik in front. The server
+# still serves TLS and still demands its login, so the exposure is the same
+# one the production file puts behind a router.
+
+services:
+
+  kopia-server:
+    image: kopia/kopia:${APP_TAG}
+    container_name: kopia-local-server
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs:
+      - /tmp
+    user: "${APP_UID}:${APP_GID}"
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
+    command:
+      - /bin/kopia
+      - server
+      - start
+      - --address
+      - 0.0.0.0:51515
+      - --tls-cert-file
+      - /app/config/tls.crt
+      - --tls-key-file
+      - /app/config/tls.key
+      - --no-check-for-updates
+    environment:
+      KOPIA_SERVER_USERNAME: ${KOPIA_SERVER_USER}
+      KOPIA_SERVER_CONTROL_USER: ${KOPIA_SERVER_CONTROL_USER}
+      TZ: ${TZ}
+    volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
+      - ./.secrets/kopia_repository_password.txt:/run/secrets/KOPIA_REPOSITORY_PASSWORD:ro
+      - ./.secrets/kopia_server_password.txt:/run/secrets/KOPIA_SERVER_PASSWORD:ro
+      - ./.secrets/kopia_server_control_password.txt:/run/secrets/KOPIA_SERVER_CONTROL_PASSWORD:ro
+      - ./volumes/repository:/repository
+      - ./volumes/config:/app/config
+      - ./volumes/cache:/app/cache
+      - ./volumes/logs:/app/logs
+    ports:
+      - "127.0.0.1:51515:51515"
+    networks: [kopia-local]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sk -o /dev/null -w '%{http_code}' https://127.0.0.1:51515/ | grep -qE '^(200|401)$$' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+networks:
+  kopia-local:
+    name: kopia-local
