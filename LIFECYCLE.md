@@ -4,7 +4,7 @@
 
 Generated 2026-09-23 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-109 stacks: 1 ops-proven · 34 baseline-aligned · 75 scaffolded. 99 carry a local test stack.
+109 stacks: 1 ops-proven · 34 baseline-aligned · 74 scaffolded. 99 carry a local test stack.
 
 This is the maintainer's view: what has been established about each stack. It makes no statement about whether a stack suits a given deployment.
 
