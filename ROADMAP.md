@@ -55,7 +55,7 @@ Open in this repository:
   only on evidence, so this is measured in host sessions, not in editing.
 - **Traefik labels and middlewares, checked against the applications.** The label
   pattern, the security chains and their names, the header and rate-limit blocks,
-  and the CrowdSec and Authentik middlewares grew stack by stack; 89 stacks now
+  and the CrowdSec and Authentik middlewares grew stack by stack; 99 stacks now
   route through Traefik. The review asks what each application needs to start
   without errors, keep the headers it sets itself and stay responsive under a
   working day's load. It may change names and structure or confirm them — before
