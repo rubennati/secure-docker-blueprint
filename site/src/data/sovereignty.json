@@ -591,6 +591,14 @@
     "license_class": "osi",
     "origin": "India · OpenSign Inc · non-EU"
   },
+  "business/plausible": {
+    "bloc": "EU",
+    "country": "Estonia",
+    "entity": "Plausible Insights OÜ",
+    "license": "AGPL-3.0 (application) / MIT (the JavaScript tracker, deliberately, so a website that embeds it is not pulled into the AGPL)",
+    "license_class": "osi",
+    "origin": "Estonia · Plausible Insights OÜ · EU"
+  },
   "business/solidinvoice": {
     "bloc": "none",
     "country": "SolidInvoice",
