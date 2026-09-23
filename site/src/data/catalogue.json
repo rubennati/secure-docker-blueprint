@@ -1692,6 +1692,45 @@
     "verified_version": null,
     "version": "2.66.0"
   },
+  "business/leantime": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-23",
+        "model": "paid add-on",
+        "source": "https://leantime.io/pricing/",
+        "statement": "paid add-on"
+      },
+      "edition_gating": {
+        "checked": "2026-09-23",
+        "source": "https://leantime.io/pricing/",
+        "statement": "the platform itself is open source and free; advanced functionality is sold as marketplace plugins, for the self-hosted version as well as the hosted one, and a plugin licence is perpetual with one year of updates"
+      },
+      "use_restrictions": {
+        "checked": "2026-09-23",
+        "source": "https://github.com/leantime/leantime/blob/master/LICENSE",
+        "statement": "none"
+      }
+    },
+    "decision_facts_checked": "2026-09-23",
+    "domain": "Business operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MySQL"
+      ],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services · MySQL"
+    },
+    "name": "Leantime",
+    "path": "business/leantime",
+    "role": "Project management for teams that do not have a project manager —",
+    "state": "scaffolded",
+    "upstream": "https://hub.docker.com/r/leantime/leantime",
+    "verified": null,
+    "verified_version": null,
+    "version": "3.9.8"
+  },
   "business/listmonk": {
     "decision_facts": {},
     "decision_facts_checked": null,

@@ -114,6 +114,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`business/facturascripts`](business/facturascripts/) | `baseline-aligned` | `APP_TAG=2026.5` | 2026-09-22 | ✅ | documented | missing |
 | [`business/invoiceninja`](business/invoiceninja/) | `baseline-aligned` | `APP_TAG=5.13.40` | 2026-09-13 | ✅ | documented | missing |
 | [`business/kimai`](business/kimai/) | `scaffolded` | `APP_TAG=2.66.0` | 2026-05-03 ⚠️ | ✅ | documented | missing |
+| [`business/leantime`](business/leantime/) | `scaffolded` | `APP_TAG=3.9.8` | — | ✅ | documented | missing |
 | [`business/listmonk`](business/listmonk/) | `scaffolded` | `APP_TAG=v6.2.0` | 2026-05-03 ⚠️ | ✅ | documented | missing |
 | [`business/matomo`](business/matomo/) | `scaffolded` | `APP_TAG=5.13.0-apache` | 2026-04-17 ⚠️ | ✅ | documented | missing |
 | [`business/openproject`](business/openproject/) | `scaffolded` | `APP_TAG=17.8.0-slim` | 2026-05-06 | ✅ | documented | missing |
