@@ -13,6 +13,7 @@ What has been established about each stack — verified against which version an
 | [Uptime Kuma](uptime-kuma/) | UI-driven, SQLite | Community default. Click-config, 90+ notification integrations, public status pages. |
 | [Gatus](gatus/) | YAML-as-code, SQLite/Postgres | Config-as-code counterpart. Prometheus export built-in. |
 | [ciao](ciao/) | UI-driven, SQLite | HTTP checks on a cron expression each, with TLS expiry per target. One Rails container; webhooks and mail, no other channels. Its own authentication is HTTP basic auth and off until a user name is set. |
+| [Checkmate](checkmate/) | UI-driven, MongoDB | Ten monitor types, incidents with timelines, maintenance windows, role-based access and status pages. Every feature is in the open-source build. The first registration claims the instance as superadmin, so the dashboard has to be opened immediately after the first start. |
 
 ### Cron & scheduled-job monitoring
 
@@ -55,7 +56,6 @@ belongs on a different host than the services that publish to it; see
 
 Not deployable here yet. See [`ROADMAP.md`](../ROADMAP.md) for status.
 
-- **Checkmate** — uptime monitoring
 - **Zabbix**, **Grafana + Prometheus** — metrics and dashboards
 - **Scrutiny** — disk S.M.A.R.T. health
 

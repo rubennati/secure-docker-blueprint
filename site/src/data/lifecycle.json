@@ -1019,6 +1019,16 @@
     "verified_anchored": true,
     "verified_version": "0.60.4"
   },
+  "monitoring/checkmate": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=v3.12.0",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "monitoring/ciao": {
     "backup_docs": "documented",
     "local_stack": "✅",

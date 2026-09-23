@@ -815,6 +815,14 @@
     "license_class": "osi",
     "origin": "Australia · dgtlmoon · non-EU"
   },
+  "monitoring/checkmate": {
+    "bloc": "non-EU",
+    "country": "Canada",
+    "entity": "BlueWave Labs",
+    "license": "AGPL-3.0",
+    "license_class": "osi",
+    "origin": "Canada · BlueWave Labs · non-EU"
+  },
   "monitoring/ciao": {
     "bloc": "none",
     "country": "Brot & Games",

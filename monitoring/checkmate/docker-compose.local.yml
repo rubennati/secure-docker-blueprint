@@ -1,0 +1,80 @@
+# Checkmate — local
+#
+#   cp .env.local.example .env.local
+#   ops/init.sh                       # secrets and the data directory
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   open http://localhost:52345       # the first sign-up becomes superadmin
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+#
+# Here the sign-up screen is what claims the instance, which on a loopback port
+# is fine. The production file expects you to do it immediately, because there
+# the same endpoint answers whoever reaches the host name first — see README.
+#
+# `ops/init.sh` writes a connection string pointing at the service name
+# `checkmate-db`, which is the same in both files, so one run serves both.
+
+services:
+
+  checkmate-db:
+    image: mongo:${DB_TAG}
+    container_name: checkmate-local-db
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${DB_ROOT_USER}
+      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/DB_ROOT_PWD
+      MONGO_INITDB_DATABASE: ${DB_NAME}
+      TZ: ${TZ}
+    command: ["mongod", "--quiet", "--bind_ip_all"]
+    volumes:
+      - ./.secrets/db_root_pwd.txt:/run/secrets/DB_ROOT_PWD:ro
+      - ./volumes/mongodb:/data/db
+    networks: [checkmate-local]
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ping:1}).ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  checkmate-app:
+    image: ghcr.io/bluewave-labs/checkmate:${APP_TAG}
+    container_name: checkmate-local-app
+    restart: unless-stopped
+    depends_on:
+      checkmate-db:
+        condition: service_healthy
+    stop_grace_period: 60s
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs:
+      - /tmp
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
+    command: ["node", "dist/index.js"]
+    environment:
+      NODE_ENV: production
+      LOG_LEVEL: ${APP_LOG_LEVEL}
+      CLIENT_HOST: http://localhost:52345
+      TOKEN_TTL: ${APP_TOKEN_TTL}
+      TZ: ${TZ}
+    volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
+      - ./.secrets/db_connection_string.txt:/run/secrets/DB_CONNECTION_STRING:ro
+      - ./.secrets/jwt_secret.txt:/run/secrets/JWT_SECRET:ro
+      - ./.secrets/encryption_key.txt:/run/secrets/ENCRYPTION_KEY:ro
+    ports:
+      - "127.0.0.1:52345:52345"
+    networks: [checkmate-local]
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:52346/livez',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+      start_period: 60s
+
+networks:
+  checkmate-local:
+    name: checkmate-local
