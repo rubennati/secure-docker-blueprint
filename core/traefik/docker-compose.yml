@@ -75,15 +75,17 @@ services:
     container_name: ${TRAEFIK_CONTAINER_NAME}
     restart: unless-stopped
     # --- Resources ---
-    # Measured in single-digit MB; this is a ceiling, not an appetite.
-    memswap_limit: 128M          # == memory: no swap
+    # A ceiling against runaway growth, not an appetite. TRAEFIK_MEMORY in .env
+    # carries the measurement and the reason; the default here keeps an existing
+    # .env working.
+    memswap_limit: ${TRAEFIK_MEMORY:-256m}   # == memory: no swap
     deploy:
       resources:
         limits:
-          memory: 128M
+          memory: ${TRAEFIK_MEMORY:-256m}
           pids: 50
         reservations:
-          memory: 32M
+          memory: 64M
 
     depends_on:
       docker-socket-proxy:

@@ -303,6 +303,14 @@
     "license_class": "osi",
     "origin": "France · Julien Nahum · EU"
   },
+  "apps/paperless-gpt": {
+    "bloc": "none",
+    "country": "No country stated",
+    "entity": "icereed",
+    "license": "MIT",
+    "license_class": "osi",
+    "origin": "No country stated · icereed · no country"
+  },
   "apps/paperless-ngx": {
     "bloc": "none",
     "country": "Community",
