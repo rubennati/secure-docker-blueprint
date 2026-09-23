@@ -22,7 +22,9 @@ What has been established about each stack — verified against which version an
 Not deployable here yet. See [`ROADMAP.md`](../ROADMAP.md) for status.
 
 - **Kopia** — deduplicating backup, either direction
-- **Bareos** — tape / regulated-retention backup
+- **Bareos** — tape / regulated-retention backup. Bareos publishes no image, so it
+  waits for one built here — see
+  [`../docs/audits/candidate-evaluation-2026-09-22.md`](../docs/audits/candidate-evaluation-2026-09-22.md#decided-on-2026-09-22).
 
 ---
 

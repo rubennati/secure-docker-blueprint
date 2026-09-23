@@ -58,7 +58,7 @@ Five 1:1-booking apps.
 | [Easy!Appointments](easyappointments/) | PHP + MariaDB | Lightweight PHP alternative, established 2013, GPL-3.0. |
 | [Tymeslot](tymeslot/) | Elixir/Phoenix + Postgres | Calendar sync with Google, Outlook, Apple and CalDAV, video links, reminder mail; AGPL-3.0, releases several times a week. |
 
-Planned: **Rallly** (group scheduling polls — Doodle alternative, complementary not competing with the 1:1 bookers above).
+Planned: **DayOtter** (scheduling platform, AGPL-3.0). It publishes no image, so it waits for upstream to publish one or for one built here — see [`../docs/audits/candidate-evaluation-2026-09-22.md`](../docs/audits/candidate-evaluation-2026-09-22.md#decided-on-2026-09-22).
 
 ### Productivity & personal
 
@@ -106,7 +106,7 @@ identity or a CI credential store), and Vaultwarden and Infisical do not do
 theirs — see [Choosing between the secret-sharing apps](#choosing-between-the-secret-sharing-apps)
 for what actually separates the three from each other.
 
-Planned (apps/): Headscale (self-hosted Tailscale control server), SnapPass.
+Planned (apps/): Headscale (self-hosted Tailscale control server).
 
 #### Choosing between the secret-sharing apps
 
@@ -173,6 +173,12 @@ here" for why that category stays out of this blueprint entirely.
 |---|---|---|
 | [Docling Serve](docling-serve/) | Single container | Document understanding as an API — layout, structure, tables and Markdown/JSON export, aimed at RAG and other AI pipelines. Standalone; no other stack calls it |
 
+Planned: **paperless-gpt** (titles, tags and OCR for Paperless-ngx through a language
+model; Docling Serve is one of its OCR backends). Held: **paperless-ai** — its README
+states that the repository is not maintained, and it is revisited once the announced
+rewrite is released. See
+[`../docs/audits/candidate-evaluation-2026-09-22.md`](../docs/audits/candidate-evaluation-2026-09-22.md#decided-on-2026-09-22).
+
 ### Networking
 
 | App | Stack | Description |
@@ -191,10 +197,11 @@ here" for why that category stays out of this blueprint entirely.
 | [Dify](dify/) | 10 services | LLM application platform — chat and workflow apps, knowledge bases on pgvector, plugin-based model providers, sandboxed code nodes. Setup password guards the first account; agent runtime and `/e/` webhooks not carried |
 | [vLLM](vllm/) | Single container | High-throughput OpenAI-compatible model serving on an NVIDIA GPU. `--api-key` covers `/v1` only, so the route forwards `/v1/` and nothing else. CUDA image not yet run on a GPU |
 
-Held after evaluation: **obot** (MCP gateway and agent platform). It runs the MCP
-servers it hosts as containers and does not start without the Docker API; creating
-those containers takes write access, which is root-equivalent on the host. See
-[`../docs/audits/candidate-evaluation-2026-09-21.md`](../docs/audits/candidate-evaluation-2026-09-21.md).
+Planned: **obot** (MCP gateway and agent platform). It runs the MCP servers it
+hosts as containers and does not start without the Docker API; creating those
+containers takes write access, which is root-equivalent on the host, so its stack
+will carry that access as a documented deviation. See
+[`../docs/audits/candidate-evaluation-2026-09-22.md`](../docs/audits/candidate-evaluation-2026-09-22.md#decided-on-2026-09-22).
 
 ### Developer & admin tools
 
@@ -210,7 +217,7 @@ those containers takes write access, which is root-equivalent on the host. See
 
 Docker-management tools (Dockhand / Portainer / Hawser) are in [`core/`](../core/): they control Docker itself, which is an installation-scoped capability. Whoami sits here instead — it is a routed diagnostic that serves no other stack.
 
-Planned (apps/): Wiki.js, Outline, Formbricks, HeyForm, Shlink.
+Planned (apps/): Wiki.js, HeyForm, Shlink.
 
 ## Related
 

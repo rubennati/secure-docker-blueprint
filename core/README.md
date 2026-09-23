@@ -26,6 +26,10 @@ generated from the repository.
 | [Traefik](traefik/) | Reverse proxy with socket proxy, 5 security levels, 3 TLS profiles, access policies |
 | [CrowdSec](crowdsec/) | Threat detection engine — log analysis, scenarios, decisions. Enforcement is a separate choice: reverse-proxy or host-firewall remediation |
 
+Planned: **Suricata** (network IDS) and **Coraza** (web application firewall), two
+capabilities beside CrowdSec, each with a design question open in
+[`ROADMAP.md`](../ROADMAP.md#being-added--the-held-candidates).
+
 ### Shared identity
 
 Pick one. Both are maintained; they solve the same problem differently, and

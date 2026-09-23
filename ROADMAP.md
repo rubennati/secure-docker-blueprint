@@ -132,36 +132,49 @@ itself stands: this concerns the site only.
 
 ---
 
-## On hold — after v1.0 or not yet needed
+## Being added — the held candidates
 
-No application is added while the v1.0 items above are open. One exception was
-made on 2026-09-21: twelve proposed products that publish a versioned image went in
-as stacks so they can be tried, all `scaffolded`. It changes nothing v1.0 requires
-and does not open the hold for the candidates below — reasoning in
-[`.ai/decisions.md`](.ai/decisions.md), evidence in
-[`docs/audits/candidate-evaluation-2026-09-21.md`](docs/audits/candidate-evaluation-2026-09-21.md).
+The candidates this file held until 2026-09-22, and two proposed that day, are
+narrowed to open-source products and added in batches, each its own pull request
+and each stack landing `scaffolded`. It is a second deliberate exception to the hold below and changes
+nothing v1.0 requires — reasoning in [`.ai/decisions.md`](.ai/decisions.md),
+evidence and batch order in
+[`docs/audits/candidate-evaluation-2026-09-22.md`](docs/audits/candidate-evaluation-2026-09-22.md).
+Each category README owns what it still plans: [`apps/`](apps/README.md),
+[`business/`](business/README.md), [`monitoring/`](monitoring/README.md),
+[`backup/`](backup/README.md), [`core/`](core/README.md).
 
-Candidates, each independently useful and none excluded because a similar product
-already ships:
+Two of them are capabilities rather than applications, and each needs a design
+answer before its stack:
 
-- **Per category** — each README owns its own planned list:
-  [`apps/`](apps/README.md), [`business/`](business/README.md),
-  [`monitoring/`](monitoring/README.md), [`backup/`](backup/README.md).
-- **Project management** — Plane, Leantime and AppFlowy are candidates alongside
-  the shipped OpenProject and Vikunja. Judged on Docker complexity, OIDC support,
-  `_FILE` secret support, maintenance activity and what the community edition
-  withholds. AppFlowy runs only its backend in Docker; whether that fits the
-  blueprint model is part of the evaluation.
 - **Network IDS — Suricata.** A passive IDS sees packets, flows and protocol
-  anomalies that log-driven detection cannot. Open questions: which of that is
-  useful on one Docker host, who reads the alerts, the cost under deep packet
-  inspection, and the false-positive load. Passive only — inline IPS drops traffic
-  when the engine is down, the failure mode this blueprint avoids elsewhere.
+  anomalies that log-driven detection cannot. On one Docker host the physical
+  interface carries TLS to Traefik; inspecting payloads means capturing the Docker
+  bridges, which carry the plaintext traffic between Traefik and each application.
+  CrowdSec's Suricata collection bans a source on a single severity-1 alert, so the
+  alerts reach CrowdSec without that scenario or not at all. Open: which interfaces,
+  the cost under deep packet inspection, and the false-positive load. Passive
+  only — inline IPS drops traffic when the engine is down, the failure mode this
+  blueprint avoids elsewhere.
 - **Web application firewall — Coraza.** CrowdSec AppSec is the reference
   implementation; Coraza with the OWASP Core Rule Set is the documented
-  alternative. The engine is mature; the open-source Traefik connector describes
-  itself as experimental. Revisit when a maintained integration exists. Running
+  alternative. The open-source Traefik plugin describes itself as experimental and
+  in need of a maintainer, and Traefik's native Coraza integration is part of the
+  commercial Traefik Hub. CrowdSec's AppSec engine is built on Coraza and offers the
+  Core Rule Set as a collection, whose rule files are a 2022 pre-release. Running
   both inline is not the answer.
+
+---
+
+## On hold — after v1.0 or not yet needed
+
+No application is added while the v1.0 items above are open. Two exceptions were
+made: on 2026-09-21 twelve proposed products that publish a versioned image went in
+as stacks so they can be tried, and on 2026-09-22 the candidates this section held
+were narrowed and are being added — see
+[Being added](#being-added--the-held-candidates). Both change nothing v1.0 requires;
+reasoning in [`.ai/decisions.md`](.ai/decisions.md), evidence in the two evaluations
+under [`docs/audits/`](docs/audits/).
 
 Concepts with no timeline, picked up app by app as they are re-verified:
 
@@ -198,3 +211,5 @@ Concepts with no timeline, picked up app by app as they are re-verified:
 - OCRmyPDF as a standalone stack. Upstream ships its image as ephemeral — one
   container per job, exiting like a command-line program. A CLI/job tool with no
   independently operated service gets no blueprint entry.
+- The products evaluated on 2026-09-22 and not added — each is named with its reason
+  in [`docs/audits/candidate-evaluation-2026-09-22.md`](docs/audits/candidate-evaluation-2026-09-22.md#decided-on-2026-09-22).
