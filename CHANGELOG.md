@@ -16,6 +16,8 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ### Fixed
 
+- **Traefik's memory ceiling was 128 MiB, and is now measured and settable** (`core/traefik`). The value came from the role table's assumption of a web server using single-digit megabytes. Measured over 22 hours with about forty routers: 45–60 MiB idle, a plateau of about 124 MiB of application memory after a day of browser loads with no growth beyond it, and up to 285 MiB while browsers loaded code-split interfaces. At 128 MiB the kernel ended the container with about 400 TLS connections open, and every route went with it. `TRAEFIK_MEMORY` in `.env` now carries the ceiling, defaulting to `256m`, with the measurement and the reason beside it; an existing `.env` keeps working because the compose file carries the same default. Raise it to `512m` from the start where the proxy carries many stacks or more than a handful of people.
+
 - **Seafile Pro's AI overlay pulled a moving tag** (`apps/seafile-pro/seafile-ai.yml`). It now pins `seafileltd/seafile-ai:13.0.10` instead of `13.0-latest`, so an unchanged file no longer pulls a different image. Both tags pointed to the same image when this changed.
 
 ## [0.9.2] — 2026-09-22 — Stabilization and release readiness
