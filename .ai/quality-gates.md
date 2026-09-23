@@ -13,6 +13,7 @@ python3 scripts/ci/check-overlays.py         # opt-in overlay variants (needs Do
 python3 scripts/ci/lifecycle-report.py --check   # status consistency + LIFECYCLE freshness
 python3 scripts/ci/sovereignty-report.py --check # licence and origin complete and current
 python3 scripts/ci/site-catalogue.py --check  # every stack has a catalogue entry
+python3 scripts/ci/security-coverage.py --check # hardening figures match the compose files
 python3 scripts/ci/check-coverage.py         # content no checker covers
 python3 scripts/ci/check-links.py            # broken relative links and anchors
 npx markdownlint-cli2                        # markdown style

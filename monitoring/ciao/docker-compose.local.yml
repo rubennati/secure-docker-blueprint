@@ -1,0 +1,52 @@
+# ciao — local
+#
+#   cp .env.local.example .env.local
+#   mkdir -p .secrets volumes/db
+#   openssl rand -hex 64 | tr -d '\n' > .secrets/ciao_secret_key_base.txt
+#   openssl rand -base64 24 | tr -d '\n' > .secrets/ciao_basic_auth_password.txt
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   open http://localhost:8080        # sign in with CIAO_BASIC_AUTH_USER
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+#
+# Basic auth stays on here: it is the only gate, since there is no Traefik in
+# front and no access policy.
+
+services:
+
+  ciao-app:
+    image: brotandgames/ciao:${APP_TAG}
+    container_name: ciao-local-app
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
+    command: ["./start.sh"]
+    environment:
+      BASIC_AUTH_USERNAME: ${CIAO_BASIC_AUTH_USER}
+      RAILS_LOG_TO_STDOUT: "true"
+      TIME_ZONE: ${TZ}
+      TZ: ${TZ}
+    volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
+      - ./.secrets/ciao_secret_key_base.txt:/run/secrets/CIAO_SECRET_KEY_BASE:ro
+      - ./.secrets/ciao_basic_auth_password.txt:/run/secrets/CIAO_BASIC_AUTH_PASSWORD:ro
+      - ./volumes/db:/app/db/sqlite
+    tmpfs:
+      - /tmp:mode=1777
+      - /app/tmp:mode=1777
+      - /app/log:mode=1777
+      - /home/rails:mode=1777
+    ports:
+      - "127.0.0.1:8080:3000"
+    networks: [ciao-local]
+    healthcheck:
+      test: ["CMD", "ruby", "-rnet/http", "-e", "exit(Net::HTTP.get_response(URI('http://127.0.0.1:3000/')).code.to_i < 500 ? 0 : 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+networks:
+  ciao-local:
+    name: ciao-local

@@ -4,7 +4,7 @@
 
 Generated 2026-09-23 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-103 stacks: 1 ops-proven · 31 baseline-aligned · 71 scaffolded. 93 carry a local test stack.
+105 stacks: 1 ops-proven · 31 baseline-aligned · 73 scaffolded. 95 carry a local test stack.
 
 This is the maintainer's view: what has been established about each stack. It makes no statement about whether a stack suits a given deployment.
 
@@ -129,7 +129,9 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`monitoring/beszel`](monitoring/beszel/) | `baseline-aligned` | `APP_TAG=0.19.0` | 2026-09-08 | ✅ | documented | missing |
 | [`monitoring/beszel-agent`](monitoring/beszel-agent/) | `scaffolded` | `APP_TAG=0.19.0` | 2026-05-03 ⚠️ | — | documented | missing |
 | [`monitoring/changedetection`](monitoring/changedetection/) | `baseline-aligned` | `APP_TAG=0.60.4` | 2026-09-13 | ✅ | documented | missing |
+| [`monitoring/ciao`](monitoring/ciao/) | `scaffolded` | `APP_TAG=1.10.1` | — | ✅ | documented | missing |
 | [`monitoring/gatus`](monitoring/gatus/) | `scaffolded` | `APP_TAG=v5.36.0` | 2026-05-03 ⚠️ | ✅ | documented | missing |
+| [`monitoring/gotify`](monitoring/gotify/) | `scaffolded` | `APP_TAG=3.1.1` | — | ✅ | documented | missing |
 | [`monitoring/healthchecks`](monitoring/healthchecks/) | `baseline-aligned` | `APP_TAG=v4.4` | 2026-09-08 | ✅ | documented | missing |
 | [`monitoring/langfuse`](monitoring/langfuse/) | `baseline-aligned` | `APP_TAG=4.38.0` | 2026-09-22 | ✅ | documented | missing |
 | [`monitoring/ntfy`](monitoring/ntfy/) | `baseline-aligned` | `APP_TAG=v2.28.0` | 2026-09-08 | ✅ | documented | missing |

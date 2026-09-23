@@ -1,0 +1,138 @@
+services:
+
+  # --------------------------------------------------------
+  # CIAO (HTTP uptime checks)
+  # One Rails container with SQLite. Checks are created in the web interface,
+  # run on a cron expression each, and report through webhooks or mail.
+  # --------------------------------------------------------
+  ciao-app:
+    # --- Identity ---
+    image: brotandgames/ciao:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    # Rails writes its pid, its cache and the bootsnap cache below /app/tmp, and
+    # bundler falls back to the home directory when it cannot write there. Each
+    # mount carries mode=1777 because the image runs as uid 1000 and a tmpfs
+    # would otherwise belong to root — the server then dies on
+    # "Permission denied @ dir_s_mkdir - /app/tmp/cache". Verified 2026-09-23.
+    tmpfs:
+      - /tmp:mode=1777
+      - /app/tmp:mode=1777
+      - /app/log:mode=1777
+      - /home/rails:mode=1777
+    # No `user:` — the image already runs as uid 1000 (`rails`), which is what
+    # ./volumes/db has to belong to.
+
+    # --- Resources ---
+    # Starting values, not measured ones. Retune from `docker stats` to ~2x peak.
+    memswap_limit: 512m          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          # cpus: derived starting value, not measured — v0.10.0
+          cpus: "0.50"
+          pids: 200
+        reservations:
+          memory: 128m
+
+    # --- Configuration ---
+    # config/entrypoint.sh exports the secrets and then runs the image's own
+    # start script, which migrates the database and starts Puma.
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
+    command: ["./start.sh"]
+    environment:
+      # Without a user name ciao asks for no credentials at all — the interface
+      # and the REST API answer whoever reaches the port. The password is a
+      # Docker Secret; the entrypoint exports it.
+      BASIC_AUTH_USERNAME: ${CIAO_BASIC_AUTH_USER}
+      # Logs to stdout, so `docker compose logs` is the one place to look and
+      # nothing is written into the read-only image.
+      RAILS_LOG_TO_STDOUT: "true"
+      # Prometheus endpoint. When true, /metrics is served OUTSIDE the basic auth
+      # above and carries its own pair — set CIAO_PROMETHEUS_USER and the secret.
+      PROMETHEUS_ENABLED: ${CIAO_PROMETHEUS_ENABLED}
+      PROMETHEUS_BASIC_AUTH_USERNAME: ${CIAO_PROMETHEUS_USER}
+      # Mail notifications. Empty SMTP_ADDRESS leaves them off; webhooks need
+      # none of this — see README.
+      SMTP_ADDRESS: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_DOMAIN: ${SMTP_DOMAIN}
+      SMTP_USERNAME: ${SMTP_USERNAME}
+      SMTP_EMAIL_FROM: ${SMTP_FROM_ADDRESS}
+      SMTP_EMAIL_TO: ${SMTP_TO_ADDRESS}
+      TIME_ZONE: ${TZ}
+      TZ: ${TZ}
+    secrets:
+      - CIAO_SECRET_KEY_BASE
+      - CIAO_BASIC_AUTH_PASSWORD
+      - CIAO_PROMETHEUS_PASSWORD
+      - CIAO_SMTP_PASSWORD
+
+    # --- Storage ---
+    # Config mounts are read-only; the SQLite database is the only state.
+    volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
+      - ./volumes/db:/app/db/sqlite
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+
+    # --- Traefik ---
+    labels:
+      # Router
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      # TLS
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      # Uncomment ONLY for per-domain certificates; leave off when a wildcard
+      # certificate already covers this host.
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Middlewares — who may reach it, then what headers apply.
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      # Service
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=3000"
+
+    # --- Health & Observability ---
+    # The image carries no HTTP client and ciao has no unauthenticated health
+    # route, so the check asks Ruby — which is in the image — for the status
+    # code and accepts the 401 that basic auth returns. Anything at or above 500,
+    # or no answer at all, fails it.
+    healthcheck:
+      test: ["CMD", "ruby", "-rnet/http", "-e", "exit(Net::HTTP.get_response(URI('http://127.0.0.1:3000/')).code.to_i < 500 ? 0 : 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+# Optional ones still need the file to exist — `touch` is enough.
+secrets:
+  CIAO_SECRET_KEY_BASE:
+    file: ./.secrets/ciao_secret_key_base.txt
+  CIAO_BASIC_AUTH_PASSWORD:
+    file: ./.secrets/ciao_basic_auth_password.txt
+  CIAO_PROMETHEUS_PASSWORD:
+    file: ./.secrets/ciao_prometheus_password.txt
+  CIAO_SMTP_PASSWORD:
+    file: ./.secrets/ciao_smtp_password.txt

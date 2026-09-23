@@ -2410,6 +2410,32 @@
     "verified_version": "0.60.4",
     "version": "0.60.4"
   },
+  "monitoring/ciao": {
+    "decision_facts": {
+      "use_restrictions": {
+        "checked": "2026-09-23",
+        "source": "https://github.com/brotandgames/ciao/blob/master/LICENSE",
+        "statement": "none"
+      }
+    },
+    "decision_facts_checked": "2026-09-23",
+    "domain": "Monitoring",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
+    "name": "ciao",
+    "path": "monitoring/ciao",
+    "role": "HTTP checks on a cron schedule with a dashboard, webhook notifications and TLS expiry warnings",
+    "state": "scaffolded",
+    "upstream": "https://hub.docker.com/r/brotandgames/ciao",
+    "verified": null,
+    "verified_version": null,
+    "version": "1.10.1"
+  },
   "monitoring/gatus": {
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -2429,6 +2455,32 @@
     "verified": null,
     "verified_version": null,
     "version": "5.36.0"
+  },
+  "monitoring/gotify": {
+    "decision_facts": {
+      "use_restrictions": {
+        "checked": "2026-09-23",
+        "source": "https://github.com/gotify/server/blob/master/LICENSE",
+        "statement": "none"
+      }
+    },
+    "decision_facts_checked": "2026-09-23",
+    "domain": "Monitoring",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
+    "name": "Gotify",
+    "path": "monitoring/gotify",
+    "role": "Self-hosted push notifications — applications post with a token, clients hold a stream open",
+    "state": "scaffolded",
+    "upstream": "https://github.com/gotify/server/pkgs/container/server",
+    "verified": null,
+    "verified_version": null,
+    "version": "3.1.1"
   },
   "monitoring/healthchecks": {
     "decision_facts": {},
