@@ -85,21 +85,22 @@ too — the workers hold the connection string. Restrict who can create
 scripts accordingly. The same exception exists in
 [Nextcloud](../nextcloud/) and [Invoice Ninja](../../business/invoiceninja/).
 
-## Known limitation — the web UI behind the rate limit
+## The UI's first load
 
-The UI's first load issues about 850 requests. Traefik's rate limit answers part
-of them with `429` under the shipped `sec-2` (burst 50) and under `sec-2-spa`
-(burst 200) alike, and the page shows `500 Internal Error`. The API and jobs are
-not affected. The security chains are reviewed against the applications before
-v1.0 — see [`ROADMAP.md`](../../ROADMAP.md#v10--complete-and-hand-off-ready).
+The UI's first load issues about 850 requests. That is more than the shipped
+rate limits hold: under `sec-2` (burst 50) and `sec-2-spa` (burst 200) part of
+them came back `429` and the page showed `500 Internal Error`. `.env.example`
+therefore ships `sec-2-spa-xl`, whose bucket holds one whole first load, and
+which belongs behind a closed access policy for that reason. The API and jobs
+were never affected.
 
 ## Status
 
-Run behind Traefik with TLS on 2026-09-22 (1.814.0): the bootstrap
-behind `acc-deny`, jobs on both workers with outbound calls, a restart, and the
-restore below. The UI loaded only under `sec-1`; under the shipped `sec-2` it
-shows the error above. Nothing has run with job isolation. Full log in
-[`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-22).
+Run behind Traefik with TLS on 2026-09-23 (1.814.0): the bootstrap behind
+`acc-deny`, jobs on both workers with outbound calls, the UI under the shipped
+`sec-2-spa-xl` without a single `429`, a restart, and the restore below. Nothing
+has run with job isolation. Full log in
+[`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-23).
 
 ## Try it locally
 

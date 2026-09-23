@@ -96,7 +96,7 @@ Modular middleware components. Used by the sec-* chains, or individually for cus
 |-------|--------|
 | `rl-soft` | 100 requests/s average, 50 burst |
 | `rl-spa` | 100 requests/s average, 200 burst — same sustained rate as `rl-soft`, wider bucket for an application start |
-| `rl-spa-xl` | 100 requests/s average, 1000 burst — the same sustained rate again, with a bucket that holds one whole first load. VPN-only, enforced by CI |
+| `rl-spa-xl` | 100 requests/s average, 1000 burst — the same sustained rate again, with a bucket that holds one whole first load. Behind a closed access policy only, enforced by CI |
 | `rl-hard` | 20 requests/s average, 40 burst |
 
 ### Extras
@@ -129,7 +129,7 @@ Presets that combine building blocks. Each level builds on the previous — high
 | `sec-3` | hdr-strict, rl-soft, compress, permissions-policy | Public-facing, hardened |
 | `sec-3e` | hdr-strict-embed, rl-soft, compress, permissions-policy | Public-facing + iframe-friendly |
 | `sec-2-spa` | hdr-basic, rl-spa, compress | Standard, first load exceeds a burst of 50 |
-| `sec-2-spa-xl` | hdr-basic, rl-spa-xl, compress | Standard, first load exceeds a burst of 200 — only with `acc-private` or `acc-tailscale` |
+| `sec-2-spa-xl` | hdr-basic, rl-spa-xl, compress | Standard, first load exceeds a burst of 200 — only with `acc-private`, `acc-tailscale` or `acc-deny` |
 | `sec-3-spa` | hdr-strict, rl-spa, compress, permissions-policy | Hardened, first load exceeds a burst of 50 |
 | `sec-3e-spa` | hdr-strict-embed, rl-spa, compress, permissions-policy | Hardened, needs SAMEORIGIN and the wider burst |
 | `sec-4` | hdr-strict, rl-hard, compress, permissions-policy | Sensitive apps, login pages, admin panels |
@@ -211,7 +211,7 @@ requests and 130 of Twenty's came back `429`, and neither interface rendered.
 What that bucket costs is the first thousand requests from one address, so the
 `-xl` chains are for a closed set of clients: `scripts/ci/check-structure.py`
 fails (`burst-exposure`) when a stack pairs an `-xl` chain with anything but
-`acc-private` or `acc-tailscale`. A public interface that needs more than 200
+`acc-private`, `acc-tailscale` or `acc-deny`. A public interface that needs more than 200
 needs its assets cached or served beside the rate limit, not a wider bucket.
 
 **4. Is the surface a login, an admin panel, or an API holding credentials?**
