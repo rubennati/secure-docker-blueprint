@@ -118,8 +118,9 @@ was verified by running it. Three of the fifteen already ship.
       the address and then discards it again, so once the first attempt fails
       against an RC that wants credentials, there is no field left to type them
       into; read in the current source and reproduced on rclone 1.75.1 with the
-      GUI version it serves, to be filed in `rclone/rclone-web`, separate from
-      rclone/rclone#9957 on the logged password · calnode sets `Secure` on its
+      GUI version it serves. Filed as rclone/rclone-web#139 (2026-09-23), separate
+      from rclone/rclone#9957 on the logged password; the link is in the stack's
+      `../backup/rclone-web/UPSTREAM.md` · calnode sets `Secure` on its
       session cookie only with Google or Microsoft sign-in configured (upstream) ·
       the candidate stacks write their secrets with mode `644` inside a `700`
       directory, a third variant beside `600` and `640` in
