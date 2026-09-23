@@ -61,7 +61,9 @@ Open in this repository:
   working day's load. It may change names and structure or confirm them — before
   v1.0.0, because afterwards a renamed middleware disables the router of every
   deployment that names it. Inputs in [`.ai/state.md`](.ai/state.md) under *Open
-  decisions*.
+  decisions*; what the proxy owns, what its limits are for and which questions
+  the review has to answer are collected in
+  [`docs/audits/reverse-proxy-limits-2026-09-23.md`](docs/audits/reverse-proxy-limits-2026-09-23.md).
 
 Decision pending, with a possible impact on v1.0 — the site's personal data:
 see [A public repository should not carry personal data](#a-public-repository-should-not-carry-personal-data).
