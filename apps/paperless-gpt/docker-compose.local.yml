@@ -1,0 +1,63 @@
+# paperless-gpt — local
+#
+#   cp .env.local.example .env.local
+#   mkdir -p .secrets volumes/db volumes/config volumes/prompts
+#   printf '%s' 'your-paperless-api-token' > .secrets/paperless_api_token.txt
+#   touch .secrets/llm_api_key.txt
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   open http://localhost:8080
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+#
+# There is no Traefik here, so there is no password in front of it either: on a
+# loopback port that is a deliberate trade. The production file carries both an
+# access policy and a basic-auth middleware, because the application has no
+# authentication of its own.
+#
+# It needs a reachable Paperless-ngx and a model server to do any work. Without
+# them the interface starts and reports the failure.
+
+services:
+
+  paperless-gpt-app:
+    image: ghcr.io/icereed/paperless-gpt:${APP_TAG}
+    container_name: paperless-gpt-local-app
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs:
+      - /tmp
+    user: "${APP_UID}:${APP_GID}"
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
+    command: ["/app/entrypoint.sh"]
+    environment:
+      PAPERLESS_BASE_URL: ${PAPERLESS_BASE_URL}
+      LLM_PROVIDER: ${LLM_PROVIDER}
+      LLM_MODEL: ${LLM_MODEL}
+      OLLAMA_HOST: ${OLLAMA_HOST}
+      LLM_LANGUAGE: ${LLM_LANGUAGE}
+      OCR_PROVIDER: ${OCR_PROVIDER}
+      VISION_LLM_PROVIDER: ${VISION_LLM_PROVIDER}
+      VISION_LLM_MODEL: ${VISION_LLM_MODEL}
+      LOG_LEVEL: ${APP_LOG_LEVEL}
+      TZ: ${TZ}
+    volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
+      - ./.secrets/paperless_api_token.txt:/run/secrets/PAPERLESS_API_TOKEN:ro
+      - ./.secrets/llm_api_key.txt:/run/secrets/LLM_API_KEY:ro
+      - ./volumes/db:/app/db
+      - ./volumes/config:/app/config
+      - ./volumes/prompts:/app/prompts
+    ports:
+      - "127.0.0.1:8080:8080"
+    networks: [paperless-gpt-local]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+networks:
+  paperless-gpt-local:
+    name: paperless-gpt-local
