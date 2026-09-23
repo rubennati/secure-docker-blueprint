@@ -1,0 +1,202 @@
+# Grafana + Prometheus — local
+#
+#   cp .env.local.example .env.local
+#   ops/init.sh
+#   sudo chown -R 472:472 volumes/grafana
+#   sudo chown -R 65534:65534 volumes/prometheus
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   open http://localhost:3000   # the user in .env.local, password in .secrets/
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+#
+# The two host-collector overlays work here too and read the host just the
+# same — see README, "Collecting from the host".
+
+services:
+
+  # --------------------------------------------------------
+  # PROMETHEUS
+  # The time series database and the scraper that fills it.
+  #
+  # **Not routed, no published port.** Prometheus has no authentication of any
+  # kind: whatever reaches it can read every metric, run any query and read the
+  # scrape configuration. It sits on the internal network, where Grafana is the
+  # only thing that can reach it.
+  # --------------------------------------------------------
+  prometheus:
+    # --- Identity ---
+    image: prom/prometheus:${PROMETHEUS_TAG}
+    container_name: grafana-local-prometheus
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    # The image already runs as `nobody`; ./volumes/prometheus has to belong to
+    # that uid.
+    user: "${PROMETHEUS_UID}:${PROMETHEUS_GID}"
+
+    # --- Resources ---
+    # 41 MiB anonymous with three targets, measured 2026-09-23. Prometheus
+    # holds recent samples in memory before writing blocks, so this grows with
+    # the number of series rather than with the number of targets.
+    memswap_limit: 1g            # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          # cpus: derived starting value, not measured — v0.10.0
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 256m
+
+    # --- Configuration ---
+    # --web.listen-address on loopback would stop Grafana reaching it; the
+    # network is what keeps it private here.
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=${PROMETHEUS_RETENTION}
+      # /-/reload and /-/quit, both destructive and neither needed from outside
+      # the container. Off by default; named so it stays off. Prometheus uses
+      # kingpin flags, where the negative form is `--no-`, not `=false` — the
+      # latter is rejected with "unexpected false".
+      - --no-web.enable-lifecycle
+      # The admin API can delete series and snapshot the database.
+      - --no-web.enable-admin-api
+    environment:
+      TZ: ${TZ}
+
+    # --- Storage ---
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./volumes/prometheus:/prometheus
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    # The image is distroless: no shell, no curl, no wget. Prometheus answers
+    # its own health endpoint and ships a promtool that can ask for it.
+    healthcheck:
+      test: ["CMD", "/bin/promtool", "check", "healthy", "--url=http://127.0.0.1:9090"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # --------------------------------------------------------
+  # GRAFANA
+  # The interface. It is the only routed service here, and the only one with a
+  # login.
+  # --------------------------------------------------------
+  grafana:
+    # --- Identity ---
+    image: grafana/grafana:${APP_TAG}
+    container_name: grafana-local
+    restart: unless-stopped
+    depends_on:
+      prometheus:
+        condition: service_healthy
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+      # Grafana 13 registers its core data source plugins through this
+      # directory. Without it the container starts, logs nothing unusual, and
+      # every query fails with "Plugin not registered" — measured on 13.2.2,
+      # isolated to this one path.
+      - /usr/share/grafana/data
+    # The image already runs as uid 472.
+    user: "${APP_UID}:${APP_GID}"
+
+    # --- Resources ---
+    # 269 MiB anonymous with the provisioned data source and no dashboard
+    # open, measured 2026-09-23. Grafana renders server-side for alerts and
+    # reports, so the ceiling is well above the idle figure.
+    memswap_limit: 1g            # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          # cpus: derived starting value, not measured — v0.10.0
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 256m
+
+    # --- Configuration ---
+    environment:
+      # The administrator. Without the password file Grafana creates
+      # admin/admin and asks for a change at the first sign-in — which only
+      # helps if you are the first to arrive.
+      GF_SECURITY_ADMIN_USER: ${APP_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD__FILE: /run/secrets/GRAFANA_ADMIN_PASSWORD
+      # Nobody signs themselves up, and nobody browses without signing in.
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      # Served straight on a loopback port here.
+      GF_SERVER_ROOT_URL: http://localhost:3000
+      GF_SERVER_ENFORCE_DOMAIN: "false"
+      # No TLS on a loopback port, so a secure cookie would never come back.
+      GF_SECURITY_COOKIE_SECURE: "false"
+      GF_SECURITY_COOKIE_SAMESITE: lax
+      # Upstream checks grafana.com for its own updates and for plugin updates,
+      # and reports usage statistics. All three are on by default.
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES: "false"
+      # The "latest news" panel on the home dashboard fetches an RSS feed.
+      GF_NEWS_NEWS_FEED_ENABLED: "false"
+      TZ: ${TZ}
+    secrets:
+      - GRAFANA_ADMIN_PASSWORD
+
+    # --- Storage ---
+    # Dashboards, users and settings are in the volume — Grafana's own SQLite.
+    # The provisioning directory is read-only: it is configuration, not state.
+    volumes:
+      - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./volumes/grafana:/var/lib/grafana
+
+    # --- Networking ---
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    # /api/health answers without a session. The image carries no curl; busybox
+    # provides wget.
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  app-internal:
+    name: grafana-local-internal
+    internal: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  GRAFANA_ADMIN_PASSWORD:
+    file: ./.secrets/grafana_admin_password.txt

@@ -1,0 +1,2 @@
+# Empty on purpose: Grafana logs an error for a provisioning directory that
+# does not exist. Drop files here to provision plugins.

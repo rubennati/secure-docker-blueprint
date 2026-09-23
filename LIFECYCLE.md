@@ -4,7 +4,7 @@
 
 Generated 2026-09-23 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-112 stacks: 1 ops-proven · 34 baseline-aligned · 77 scaffolded. 102 carry a local test stack.
+113 stacks: 1 ops-proven · 34 baseline-aligned · 78 scaffolded. 103 carry a local test stack.
 
 This is the maintainer's view: what has been established about each stack. It makes no statement about whether a stack suits a given deployment.
 
@@ -138,6 +138,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`monitoring/ciao`](monitoring/ciao/) | `scaffolded` | `APP_TAG=1.10.1` | — | ✅ | documented | missing |
 | [`monitoring/gatus`](monitoring/gatus/) | `scaffolded` | `APP_TAG=v5.36.0` | 2026-05-03 ⚠️ | ✅ | documented | missing |
 | [`monitoring/gotify`](monitoring/gotify/) | `scaffolded` | `APP_TAG=3.1.1` | — | ✅ | documented | missing |
+| [`monitoring/grafana-prometheus`](monitoring/grafana-prometheus/) | `scaffolded` | `APP_TAG=13.2.2` | — | ✅ | documented | missing |
 | [`monitoring/healthchecks`](monitoring/healthchecks/) | `baseline-aligned` | `APP_TAG=v4.4` | 2026-09-08 | ✅ | documented | missing |
 | [`monitoring/langfuse`](monitoring/langfuse/) | `baseline-aligned` | `APP_TAG=4.38.0` | 2026-09-22 | ✅ | documented | missing |
 | [`monitoring/ntfy`](monitoring/ntfy/) | `baseline-aligned` | `APP_TAG=v2.28.0` | 2026-09-08 | ✅ | documented | missing |

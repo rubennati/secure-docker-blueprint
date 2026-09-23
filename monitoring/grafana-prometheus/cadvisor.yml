@@ -1,0 +1,68 @@
+# ---------------------------------------------------------------------------
+# cAdvisor — per-container metrics (opt-in)
+#
+#   docker compose -f docker-compose.yml -f cadvisor.yml up -d
+#
+# What it adds: CPU, memory, network and filesystem figures per container,
+# which is what turns "the host is busy" into "this stack is busy".
+#
+# What it costs: read-only mounts of the host's cgroup and container state, and
+# a read-only Docker socket. Upstream's documented command uses
+# `--privileged`; this does not, and the README records what that costs.
+#
+# Remember to add the job to config/prometheus.yml and restart Prometheus:
+#
+#   - job_name: cadvisor
+#     static_configs:
+#       - targets: ["cadvisor:8080"]
+# ---------------------------------------------------------------------------
+
+services:
+  cadvisor:
+    image: ghcr.io/google/cadvisor:${CADVISOR_TAG}
+    container_name: ${CONTAINER_NAME_CADVISOR}
+    restart: unless-stopped
+
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+    memswap_limit: 512m          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 128m
+
+    devices:
+      # cAdvisor reads this to attribute disk io to containers. Without it the
+      # disk figures are missing and nothing else changes.
+      - /dev/kmsg:/dev/kmsg:r
+
+    command:
+      # Only the metrics this stack scrapes. cAdvisor's default set is large
+      # and most of it produces series nobody queries.
+      - --docker_only=true
+      - --housekeeping_interval=30s
+      - --store_container_labels=false
+
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+
+    networks:
+      - app-internal
+
+    healthcheck:
+      test: ["CMD", "/usr/bin/cadvisor", "--version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s

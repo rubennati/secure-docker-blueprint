@@ -27,6 +27,7 @@ What has been established about each stack — verified against which version an
 |---|---|---|
 | [Beszel](beszel/) | Hub + local agent | Lightweight (~20 MB per agent), modern, per-container Docker stats. |
 | [Beszel Agent](beszel-agent/) | Standalone agent for remote hosts | Deploy on each additional host; same hub key, no hub needed on the remote. |
+| [Grafana + Prometheus](grafana-prometheus/) | Scrape and query, dashboards | The general-purpose end: every metric anything exposes, and you say which. Prometheus is not routed and has no port — it has no authentication at all, so Grafana is the only way in. Host and per-container collectors are opt-in overlays; cAdvisor runs without `privileged` |
 
 ### Content & web change detection
 
@@ -56,7 +57,7 @@ belongs on a different host than the services that publish to it; see
 
 Not deployable here yet. See [`ROADMAP.md`](../ROADMAP.md) for status.
 
-- **Zabbix**, **Grafana + Prometheus** — metrics and dashboards
+- **Zabbix** — metrics and dashboards
 - **Scrutiny** — disk S.M.A.R.T. health
 
 ## Recommended starter combo
