@@ -7,7 +7,7 @@ category is defined relative to the other four.
 
 ## What's here
 
-16 stacks, deployable now. What has been established about each — verified against
+17 stacks, deployable now. What has been established about each — verified against
 which version and when, whether a restore was performed — is in
 [`LIFECYCLE.md`](../LIFECYCLE.md), generated from the repository.
 
@@ -36,6 +36,7 @@ which version and when, whether a restore was performed — is in
 |---|---|---|
 | [Listmonk](listmonk/) | Newsletter, mailing lists, transactional mail | Two-router pattern documented: admin VPN-only + subscriber paths public |
 | [Matomo](matomo/) | GDPR-compliant web analytics for company / customer sites | Migrated from `apps/matomo/` — primary use-case is the business website |
+| [Plausible CE](plausible/) | Cookie-free, consent-banner-free web analytics for your own sites | PostgreSQL + ClickHouse. The first account is created from the command line: until one exists, the sign-up form makes whoever completes it the owner. Dashboard and tracker want different access policies — the two-router split is documented |
 
 ### Customer relationships
 
@@ -63,7 +64,6 @@ Not deployable here yet. See [`ROADMAP.md`](../ROADMAP.md) for status.
 
 - **Plane** — project management
 - **Leantime** — project management
-- **Plausible CE** — analytics
 - **Live Helper Chat** — customer chat. It publishes no versioned image, so it waits
   for upstream to publish one or for one built here — see
   [`../docs/audits/candidate-evaluation-2026-09-22.md`](../docs/audits/candidate-evaluation-2026-09-22.md#decided-on-2026-09-22).
