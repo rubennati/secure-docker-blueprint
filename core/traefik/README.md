@@ -66,6 +66,7 @@ ops/
       routers-system.yml.tmpl         # Dashboard router
       redirects.yml.tmpl              # Redirects (empty by default)
       acme-wildcard.yml.tmpl          # Wildcard cert router (optional)
+      servers-transports.yml.tmpl     # How Traefik reaches a backend that serves its own TLS
   scripts/
     validate.sh                       # Check .env + rendered config
     render.sh                         # envsubst all .tmpl files -> config/

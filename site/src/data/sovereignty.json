@@ -471,6 +471,14 @@
     "license_class": "osi",
     "origin": "Community · borgmatic-collective (Dan Helfman) · no single jurisdiction"
   },
+  "backup/kopia": {
+    "bloc": "none",
+    "country": "No country stated",
+    "entity": "Kopia community project",
+    "license": "Apache-2.0",
+    "license_class": "osi",
+    "origin": "No country stated · Kopia community project · no country"
+  },
   "backup/rclone-web": {
     "bloc": "non-EU",
     "country": "UK",

@@ -125,9 +125,15 @@ products and are added as a second deliberate exception (`decisions.md`,
 2026-09-22). Evidence, what was not added and why, and the batch order:
 [`../docs/audits/candidate-evaluation-2026-09-22.md`](../docs/audits/candidate-evaluation-2026-09-22.md).
 
-- [ ] Batches H–V, each its own pull request. **H, I and J shipped** (Gotify,
-      ciao, Wiki.js, Shlink, paperless-gpt — all `scaffolded`, verified on the
-      image, not behind Traefik):
+- [ ] Batches H–V, each its own pull request, in this order:
+      H Gotify+ciao · I Wiki.js+Shlink · J paperless-gpt · K Kopia ·
+      L Leantime · M Plausible CE · N Checkmate · O obot · P Headscale ·
+      Q Grafana+Prometheus · R Zabbix · S Scrutiny · T Plane ·
+      U HeyForm, dropped if it does not run on a current MongoDB and Valkey ·
+      V Suricata+Coraza.
+      Which of them have landed is in [`../CHANGELOG.md`](../CHANGELOG.md).
+      Each stack ships `scaffolded` — verified on its image, not yet behind
+      Traefik.
       H Gotify+ciao · I Wiki.js+Shlink ·
       both `scaffolded`, verified on the image, not behind Traefik):
       H Gotify+ciao · I Wiki.js+Shlink ·

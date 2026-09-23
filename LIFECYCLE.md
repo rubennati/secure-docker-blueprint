@@ -4,7 +4,7 @@
 
 Generated 2026-09-23 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-106 stacks: 1 ops-proven · 33 baseline-aligned · 72 scaffolded. 96 carry a local test stack.
+107 stacks: 1 ops-proven · 33 baseline-aligned · 73 scaffolded. 97 carry a local test stack.
 
 This is the maintainer's view: what has been established about each stack. It makes no statement about whether a stack suits a given deployment.
 
@@ -143,6 +143,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | Stack | State | Pinned | Last verified | Local | Backup docs | Restore docs |
 |---|---|---|---|---|---|---|
 | [`backup/borgmatic`](backup/borgmatic/) | `baseline-aligned` | *host-installed* | 2026-07-29 | — | n/a | documented |
+| [`backup/kopia`](backup/kopia/) | `scaffolded` | `APP_TAG=0.23.1` | — | ✅ | documented | missing |
 | [`backup/rclone-web`](backup/rclone-web/) | `scaffolded` | `APP_TAG=1.75.1` | — | ✅ | documented | missing |
 | [`backup/urbackup`](backup/urbackup/) | `scaffolded` | `APP_TAG=2.5.x@sha256:fd218c45192f…` | — | ✅ | documented | documented |
 
