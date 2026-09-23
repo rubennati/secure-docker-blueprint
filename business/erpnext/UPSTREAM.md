@@ -14,9 +14,7 @@
 - **Domain:** Business operations
 - **Role:** ERP on the Frappe framework: accounting, invoicing, stock, buying, selling, manufacturing, projects and HR
 - **Based on version:** `v16.35.0`
-
-No `Last verified` line: the realtime service cannot check sessions, so the desk
-runs without live updates — see [Known limitation](#known-limitation-no-live-updates).
+- **Last verified:** 2026-09-23 (v16.35.0) — behind Traefik with TLS: the site created and the setup wizard, a customer, live updates over the websocket, a restart, and the README's restore
 
 The origin comes from Frappe's cloud and enterprise terms, which name Frappe
 Technologies Pvt. Ltd. and place arbitration in Mumbai. The licence is the
@@ -47,17 +45,41 @@ AGPL-3.0. The Frappe framework underneath is MIT.
 | Healthchecks: TCP for nginx, Gunicorn and Socket.IO; the process for workers and scheduler | The image ships no `healthcheck.sh`, although upstream's operations page refers to one |
 | No backup-cron override | Upstream's runs Ofelia with the Docker socket |
 | `APP_TRAEFIK_ACCESS=acc-tailscale` | A company's books in one place |
+| `config/nginx-socketio.conf`: a second listener on 8081 for `/socket.io`, with `Origin http://$host:8080`, and the site name as a network alias of the frontend on `app-internal` | The realtime service authenticates a socket by fetching `<Origin>/api/method/frappe.realtime.get_user_info`. The image's nginx puts the public URL in `Origin`, which a container on `app-internal` cannot reach — every socket was refused with `Unauthorized: TypeError: fetch failed`. Upstream's own compose leaves that container on a network with a way out; this keeps the isolation and gives it an address that exists |
 
-## Known limitation: no live updates
+## The realtime service's session check (2026-09-23)
 
 Frappe's realtime server (`realtime/middlewares/authenticate.js`) authenticates a
 socket by fetching `<Origin>/api/method/frappe.realtime.get_user_info` with the
-session cookie. The frontend's nginx sets `Origin` to the public
-`https://<host>`, and the websocket container sits on `app-internal` only, where
-that address is unreachable: every socket is refused with
-`Unauthorized: TypeError: fetch failed`, and the desk falls back to no realtime at
-all. Upstream's compose leaves the container on a network with a way out. A fix
-inside the stack — the check sent to the frontend on `app-internal` — is open.
+session cookie. The image's nginx template sets `Origin` to
+`$proxy_x_forwarded_proto://${FRAPPE_SITE_NAME_HEADER}` — the public URL — and
+the websocket container sits on `app-internal` only, where that address does not
+resolve and could not be reached if it did.
+
+`config/nginx-socketio.conf` serves `/socket.io` from a second listener on 8081
+and sends `Origin http://$host:8080` instead. The frontend carries the site name
+as a network alias on `app-internal`, so that address exists there; `Host` still
+carries the site name, so the backend resolves the site as it does for any other
+request, and `X-Frappe-Site-Name` keeps the namespace check happy. Traefik routes
+`/socket.io` to 8081 and everything else to 8080.
+
+Measured from inside the websocket container, with a session opened through the
+same internal address, the same handshake against both listeners:
+
+```text
+port 8080 (the image's own block): 44 … {"message":"Unauthorized: TypeError: fetch failed"}
+port 8081 (this listener):         40 … {"sid":"…"}     — the namespace connected
+```
+
+`GET /api/method/frappe.realtime.get_user_info` through the internal address
+answered `200` where the same call had failed to connect at all.
+
+Checked in a browser afterwards, through the route: the desk's realtime socket
+connects over the websocket transport, stays connected, and reconnects when asked
+to. The desk loaded in 66 requests, with the company and the customer in place.
+
+**Not yet exercised:** a scheduled job's first run after the time-zone delay;
+email; reports and printing; the queues under load.
 
 ## Verification performed (2026-09-22)
 

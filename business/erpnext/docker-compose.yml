@@ -94,6 +94,7 @@ services:
     volumes:
       - ./volumes/sites:/home/frappe/frappe-bench/sites
       - ./volumes/logs:/home/frappe/frappe-bench/logs
+      - ./config/nginx-socketio.conf:/etc/nginx/sites-enabled/socketio-internal.conf:ro
       - type: tmpfs
         target: /etc/nginx/conf.d
         tmpfs:
@@ -111,8 +112,11 @@ services:
 
     # --- Networking ---
     networks:
-      - proxy-public
-      - app-internal
+      proxy-public:
+      app-internal:
+        aliases:
+          # The realtime service reaches the site under its own name here.
+          - ${SITE_NAME}
 
     # --- Traefik ---
     labels:
@@ -125,6 +129,14 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.service=${COMPOSE_PROJECT_NAME}"
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8080"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-socketio.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/socket.io`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-socketio.priority=100"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-socketio.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-socketio.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-socketio.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-socketio.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-socketio.service=${COMPOSE_PROJECT_NAME}-socketio"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}-socketio.loadbalancer.server.port=8081"
 
     # --- Health & Observability ---
     healthcheck:

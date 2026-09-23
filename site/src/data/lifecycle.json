@@ -664,10 +664,10 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=v16.35.0",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "—",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "baseline-aligned",
+    "verified": "2026-09-23",
+    "verified_anchored": true,
+    "verified_version": "v16.35.0"
   },
   "business/facturascripts": {
     "backup_docs": "documented",
