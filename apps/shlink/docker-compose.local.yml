@@ -1,0 +1,106 @@
+# Shlink — local
+#
+#   cp .env.local.example .env.local
+#   mkdir -p .secrets volumes/data volumes/postgres
+#   openssl rand -hex 32 | tr -d '\n' > .secrets/db_pwd.txt
+#   openssl rand -hex 32 | tr -d '\n' > .secrets/initial_api_key.txt
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   open http://localhost:8081        # the web client — add http://localhost:8080 as its server
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+#
+# Short links answer on http://localhost:8080/<slug>, the API on
+# http://localhost:8080/rest. Both are on one loopback port here; the production
+# file splits them into two routers with their own access policies.
+
+services:
+
+  shlink-db:
+    image: postgres:${DB_TAG}
+    container_name: shlink-local-db
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/DB_PWD
+      PGDATA: /var/lib/postgresql/data
+      TZ: ${TZ}
+    volumes:
+      - ./.secrets/db_pwd.txt:/run/secrets/DB_PWD:ro
+      - ./volumes/postgres:/var/lib/postgresql/data
+    networks: [shlink-local]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME} -h 127.0.0.1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  shlink-app:
+    image: ghcr.io/shlinkio/shlink:${APP_TAG}
+    container_name: shlink-local-app
+    restart: unless-stopped
+    depends_on:
+      shlink-db:
+        condition: service_healthy
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs:
+      - /tmp
+    environment:
+      DB_DRIVER: postgres
+      DB_HOST: shlink-db
+      DB_PORT: "5432"
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD_FILE: /run/secrets/DB_PWD
+      DEFAULT_DOMAIN: localhost:8080
+      # No TLS in front here, so links are issued as http://
+      IS_HTTPS_ENABLED: "false"
+      INITIAL_API_KEY_FILE: /run/secrets/INITIAL_API_KEY
+      AUTO_RESOLVE_TITLES: "false"
+      SKIP_INITIAL_GEOLITE_DOWNLOAD: "true"
+      ANONYMIZE_REMOTE_ADDR: "true"
+      TIMEZONE: ${TZ}
+      TZ: ${TZ}
+    volumes:
+      - ./.secrets/db_pwd.txt:/run/secrets/DB_PWD:ro
+      - ./.secrets/initial_api_key.txt:/run/secrets/INITIAL_API_KEY:ro
+      - ./volumes/data:/etc/shlink/data
+    ports:
+      - "127.0.0.1:8080:8080"
+    networks: [shlink-local]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/rest/health | grep -q '\"status\":\"pass\"' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 45s
+
+  shlink-client:
+    image: ghcr.io/shlinkio/shlink-web-client:${CLIENT_TAG}
+    container_name: shlink-local-client
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs:
+      - /tmp
+    environment:
+      TZ: ${TZ}
+    ports:
+      - "127.0.0.1:8081:8080"
+    networks: [shlink-local]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS -o /dev/null http://127.0.0.1:8080/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+networks:
+  shlink-local:
+    name: shlink-local

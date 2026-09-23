@@ -359,6 +359,14 @@
     "license_class": "proprietary",
     "origin": "China · Seafile Ltd · non-EU"
   },
+  "apps/shlink": {
+    "bloc": "EU",
+    "country": "Spain",
+    "entity": "Alejandro Celaya",
+    "license": "MIT",
+    "license_class": "osi",
+    "origin": "Spain · Alejandro Celaya · EU"
+  },
   "apps/threat-dragon": {
     "bloc": "non-EU",
     "country": "United States",
@@ -414,6 +422,14 @@
     "license": "Apache-2.0",
     "license_class": "osi",
     "origin": "France · Traefik Labs · EU"
+  },
+  "apps/wikijs": {
+    "bloc": "non-EU",
+    "country": "Canada",
+    "entity": "Requarks",
+    "license": "AGPL-3.0",
+    "license_class": "osi",
+    "origin": "Canada · Requarks · non-EU"
   },
   "apps/windmill": {
     "bloc": "none",
