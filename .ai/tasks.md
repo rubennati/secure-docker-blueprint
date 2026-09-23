@@ -148,3 +148,13 @@ products and are added as a second deliberate exception (`decisions.md`,
       Which of them have landed is in [`../CHANGELOG.md`](../CHANGELOG.md).
       Each stack ships `scaffolded` — verified on its image, not yet behind
       Traefik.
+- [ ] Build candidates — Live Helper Chat, DayOtter, Bareos: ask upstream to
+      publish an image first; otherwise a fork and an image built here under
+      `../docs/standards/custom-application.md`.
+- [ ] paperless-ai: revisit once upstream's announced rewrite is released or the
+      repository is maintained again — its README says it is not.
+- [ ] `backup/borgmatic/README.md` counts database engines as "24 · 16 · 13
+      stacks" for PostgreSQL · MySQL · MariaDB. Counting `image:` lines by stack
+      on 2026-09-23 gives 27 · 3 · 15; the MySQL figure is far enough apart that
+      the table is counting something else. Establish the rule, then correct the
+      table or state the rule beside it.

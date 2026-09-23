@@ -199,7 +199,6 @@ it is revisited once the announced rewrite is released. See
 | [vLLM](vllm/) | Single container | High-throughput OpenAI-compatible model serving on an NVIDIA GPU. `--api-key` covers `/v1` only, so the route forwards `/v1/` and nothing else. CUDA image not yet run on a GPU |
 | [obot](obot/) | 3 services | MCP gateway and agent platform — catalogues MCP servers and runs the hosted ones as containers on this host. **That access is root-equivalent**, narrowed by a socket proxy and stated rather than mitigated away; authentication is off in upstream's default and switched on here |
 
-
 ### Developer & admin tools
 
 | App | Stack | Description |
