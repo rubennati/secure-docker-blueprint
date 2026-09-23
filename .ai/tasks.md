@@ -125,12 +125,21 @@ products and are added as a second deliberate exception (`decisions.md`,
 2026-09-22). Evidence, what was not added and why, and the batch order:
 [`../docs/audits/candidate-evaluation-2026-09-22.md`](../docs/audits/candidate-evaluation-2026-09-22.md).
 
-- [ ] Batches H–V, each its own pull request. **H, I and L shipped** — Gotify,
-      ciao, Wiki.js, Shlink and Leantime, all `scaffolded`, verified on the
-      image and not yet behind Traefik. J and K are open pull requests.
+- [ ] Batches H–V, each its own pull request, in this order:
       H Gotify+ciao · I Wiki.js+Shlink · J paperless-gpt · K Kopia ·
       L Leantime · M Plausible CE · N Checkmate · O obot · P Headscale ·
       Q Grafana+Prometheus · R Zabbix · S Scrutiny · T Plane ·
+      U HeyForm, dropped if it does not run on a current MongoDB and Valkey ·
+      V Suricata+Coraza.
+      Which of them have landed is in [`../CHANGELOG.md`](../CHANGELOG.md).
+      Each stack ships `scaffolded` — verified on its image, not yet behind
+      Traefik.
+      Which of them have landed is in [`../CHANGELOG.md`](../CHANGELOG.md).
+      Each stack ships `scaffolded` — verified on its image, not yet behind
+      Traefik.
+      Which of them have landed is in [`../CHANGELOG.md`](../CHANGELOG.md).
+      Each stack ships `scaffolded` — verified on its image, not yet behind
+      Traefik.
       U HeyForm, dropped if it does not run on a current MongoDB and Valkey ·
       V Suricata+Coraza.
 - [ ] Build candidates — Live Helper Chat, DayOtter, Bareos: ask upstream to

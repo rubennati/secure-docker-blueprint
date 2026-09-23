@@ -173,12 +173,11 @@ here" for why that category stays out of this blueprint entirely.
 
 | App | Stack | Description |
 |---|---|---|
-| [Docling Serve](docling-serve/) | Single container | Document understanding as an API — layout, structure, tables and Markdown/JSON export, aimed at RAG and other AI pipelines. Standalone; no other stack calls it |
+| [Docling Serve](docling-serve/) | Single container | Document understanding as an API — layout, structure, tables and Markdown/JSON export, aimed at RAG and other AI pipelines. `apps/paperless-gpt` can use it as its OCR backend |
+| [paperless-gpt](paperless-gpt/) | Single container | Titles, tags, correspondents and OCR for Paperless-ngx through a language model — Ollama, any OpenAI-compatible endpoint, or Docling Serve for OCR. It has no authentication of its own, so its router carries an access policy and a basic-auth middleware |
 
-Planned: **paperless-gpt** (titles, tags and OCR for Paperless-ngx through a language
-model; Docling Serve is one of its OCR backends). Held: **paperless-ai** — its README
-states that the repository is not maintained, and it is revisited once the announced
-rewrite is released. See
+Held: **paperless-ai** — its README states that the repository is not maintained, and
+it is revisited once the announced rewrite is released. See
 [`../docs/audits/candidate-evaluation-2026-09-22.md`](../docs/audits/candidate-evaluation-2026-09-22.md#decided-on-2026-09-22).
 
 ### Networking
