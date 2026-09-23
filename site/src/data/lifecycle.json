@@ -959,6 +959,16 @@
     "verified_anchored": true,
     "verified_version": "0.60.4"
   },
+  "monitoring/ciao": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=1.10.1",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "monitoring/gatus": {
     "backup_docs": "documented",
     "local_stack": "✅",
@@ -966,6 +976,16 @@
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-05-03",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
+  "monitoring/gotify": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=3.1.1",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
     "verified_anchored": false,
     "verified_version": ""
   },

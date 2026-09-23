@@ -767,6 +767,14 @@
     "license_class": "osi",
     "origin": "Australia · dgtlmoon · non-EU"
   },
+  "monitoring/ciao": {
+    "bloc": "none",
+    "country": "Brot & Games",
+    "entity": "no country stated",
+    "license": "MIT",
+    "license_class": "osi",
+    "origin": "Brot & Games · no country stated · no country"
+  },
   "monitoring/gatus": {
     "bloc": "non-EU",
     "country": "Canada",
@@ -774,6 +782,14 @@
     "license": "Apache-2.0",
     "license_class": "osi",
     "origin": "Canada · TwinProduction · non-EU"
+  },
+  "monitoring/gotify": {
+    "bloc": "EU",
+    "country": "Germany",
+    "entity": "Gotify community project",
+    "license": "MIT (the logo is CC BY 4.0, stated in the same file)",
+    "license_class": "osi",
+    "origin": "Germany · Gotify community project · EU"
   },
   "monitoring/healthchecks": {
     "bloc": "EU",
