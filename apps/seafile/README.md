@@ -493,7 +493,6 @@ If applying this fix to a running deployment:
   ```
 
 - **First boot is slow** (2–4 min). The main server's healthcheck uses `start_period: 180s` for this reason.
-- **SeaDoc + Notification server images are tagged `:13.0-latest` / `:2.0-latest`.** These are moving tags; pin to a concrete digest in production if you want reproducible builds.
 - **`seahub_custom.py` is always skipped on first boot.** `seahub_settings.py` doesn't exist when `entrypoint.sh` runs; Seafile generates it after `exec` exits into the init system. After first startup completes, run `docker compose up -d --force-recreate seafile` (setup step 7) to inject the block. See [config/README.md](config/README.md).
 - **Env var naming is inconsistent with the rest of the repo.** `.env.example` still uses `APP_IMAGE=…:tag` (not split into `*_TAG`) and `TIMEZONE` (not `TZ`). Unifying this would touch all five YAMLs simultaneously — left for a dedicated refactor with testing, not mixed into a documentation pass.
 

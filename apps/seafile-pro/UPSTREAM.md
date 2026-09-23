@@ -48,6 +48,7 @@
 | `seahub_custom.py` Pattern | For OnlyOffice + Metadata + Thumbnail Config |
 | `clamd-remote.conf` mounted as `/etc/clamav/clamd.conf` | ClamAV runs in separate container, needs TCP connection |
 | Entrypoint wrapper reduced to seahub_custom.py only | Secrets via my_init didn't work, passwords now in .env |
+| `seafile-ai` pinned to `13.0.10` instead of upstream's `13.0-latest` | A moving tag changes the image under an unchanged file. `13.0.10` is the newest 13.0 release; `13.0-latest` pointed to the same digest on 2026-09-22 |
 | `SEAFILE_SERVER_HOSTNAME: 127.0.0.1:8001` in `docker-compose.local.yml` | First-boot setup (`setup-seafile-mysql.py`, 13.0.21) accepts only a host name that contains a dot. On `localhost:8001` it exits with status 255 before it writes a file or opens the database, Seahub never starts, and the stack answers `502`. Seahub builds `SERVICE_URL` and `FILE_SERVER_ROOT` from this value, so the local stack is opened at the same address |
 
 ## Known limitations
