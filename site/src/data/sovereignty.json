@@ -559,6 +559,14 @@
     "license_class": "osi",
     "origin": "Germany · Kevin Papst · EU"
   },
+  "business/leantime": {
+    "bloc": "non-EU",
+    "country": "US",
+    "entity": "Leantime, Inc.",
+    "license": "AGPL-3.0",
+    "license_class": "osi",
+    "origin": "US · Leantime, Inc. · non-EU"
+  },
   "business/listmonk": {
     "bloc": "non-EU",
     "country": "India",
