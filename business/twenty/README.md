@@ -71,26 +71,26 @@ Not configured here, and not exercised.
 - **Network.** Worker, PostgreSQL and Redis are on `app-internal` and have no route
   out.
 
-## Known limitation — the web UI behind the rate limit
+## The interface's first load
 
-Twenty's first load issues about 410 requests — script chunks, styles, icons —
-and its assets are served with `max-age=0`, so every later load revalidates them
-all. `sec-2` answered 302 of the first 412 with `429`, `sec-2-spa` still 130; a
-warm browser got `429` on 289 and 159 of them. The interface does not load under
-either. It loads under `sec-1`, which has no rate limit; the stack keeps `sec-2`
-until the security chains are reviewed against the applications before v1.0 (see
-[ROADMAP](../../ROADMAP.md#v10--complete-and-hand-off-ready)).
+Twenty's first load issues over 500 requests — script chunks, styles, icons —
+and its assets are served with `max-age=0`, so every later load repeats them
+instead of using the browser's cache. That is more than the shipped rate limits
+hold: under `sec-2` (burst 50) and `sec-2-spa` (burst 200) part of the load came
+back `429` and the interface stayed blank. `.env.example` therefore ships
+`sec-2-spa-xl`, whose bucket holds one whole first load, and which belongs
+behind a closed access policy for that reason.
 
 The interface also requests company logos from `twenty-icons.com` in the
 visitor's browser.
 
 ## Status
 
-Run behind Traefik with TLS on 2026-09-22 (v2.41.0): the first sign-up and
-workspace, a company created in the interface and read over REST, a restart, and
-the restore below — with the interface under `sec-1`; under the shipped `sec-2` it
-does not load, see above. Full log in
-[`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-22).
+Run behind Traefik with TLS on 2026-09-23 (v2.41.0): the first sign-up and
+workspace, a company created in the interface and read over REST, the interface
+under the shipped `sec-2-spa-xl` without a single `429`, a restart, and the
+restore below. Full log in
+[`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-23).
 
 ## Try it locally
 
