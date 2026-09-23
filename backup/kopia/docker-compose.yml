@@ -1,0 +1,140 @@
+services:
+
+  # --------------------------------------------------------
+  # KOPIA (repository server)
+  # Holds the repository and serves it to Kopia clients on other machines:
+  # they connect with their own account, snapshot their own data, and never
+  # see the repository password or the storage credentials.
+  #
+  # This is the shape backup/README.md allows for a container — the agent that
+  # reads a machine's files stays installed on that machine. Nothing of the
+  # host is mounted here.
+  # --------------------------------------------------------
+  kopia-server:
+    # --- Identity ---
+    image: kopia/kopia:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    # The image runs as root and needs nothing root can do here. The four
+    # directories below have to belong to this uid before the first start.
+    user: "${APP_UID}:${APP_GID}"
+
+    # --- Resources ---
+    # 142 MiB idle, measured 2026-09-23 with one connected client. Client
+    # snapshots stream through this process, so the ceiling leaves room; a
+    # measurement under a real backup window is still v0.10.0's job.
+    memswap_limit: 512m          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          # cpus: derived starting value, not measured — v0.10.0
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 128m
+
+    # --- Configuration ---
+    # config/entrypoint.sh exports the three passwords from Docker Secrets.
+    # The certificate is generated once by ops/init.sh: `--tls-generate-cert`
+    # refuses to start when the file already exists, so it has no place in a
+    # command that runs on every restart.
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
+    command:
+      - /bin/kopia
+      - server
+      - start
+      - --address
+      - 0.0.0.0:51515
+      - --tls-cert-file
+      - /app/config/tls.crt
+      - --tls-key-file
+      - /app/config/tls.key
+      - --no-check-for-updates
+    environment:
+      # The web interface and the control API each take a name here and a
+      # password from the secrets above.
+      KOPIA_SERVER_USERNAME: ${KOPIA_SERVER_USER}
+      KOPIA_SERVER_CONTROL_USER: ${KOPIA_SERVER_CONTROL_USER}
+      TZ: ${TZ}
+    secrets:
+      - KOPIA_REPOSITORY_PASSWORD
+      - KOPIA_SERVER_PASSWORD
+      - KOPIA_SERVER_CONTROL_PASSWORD
+
+    # --- Storage ---
+    # repository/ is the repository itself when it lives on this host's disk;
+    # with a remote provider it stays empty and the credentials sit in
+    # config/repository.config. config/ also holds the TLS certificate, cache/
+    # the local content cache, logs/ the server log.
+    volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
+      - ./volumes/repository:/repository
+      - ./volumes/config:/app/config
+      - ./volumes/cache:/app/cache
+      - ./volumes/logs:/app/logs
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+
+    # --- Traefik ---
+    labels:
+      # Router
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      # TLS
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      # Uncomment ONLY for per-domain certificates; leave off when a wildcard
+      # certificate already covers this host.
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Middlewares — who may reach it, then what headers apply. Kopia carries
+      # its own login on top of this.
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      # Service — over TLS, because Kopia's clients speak gRPC and that needs
+      # HTTP/2 with TLS the whole way. `backend-selfsigned@file` comes from
+      # core/traefik's dynamic configuration; without it Traefik answers
+      # nothing on this router and logs "servers transport not found".
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=51515"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.scheme=https"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.serverstransport=backend-selfsigned@file"
+
+    # --- Health & Observability ---
+    # Every path needs the server login, so 401 is the proof that the server is
+    # up. curl is in the image; -k because the certificate is its own.
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sk -o /dev/null -w '%{http_code}' https://127.0.0.1:51515/ | grep -qE '^(200|401)$$' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  KOPIA_REPOSITORY_PASSWORD:
+    file: ./.secrets/kopia_repository_password.txt
+  KOPIA_SERVER_PASSWORD:
+    file: ./.secrets/kopia_server_password.txt
+  KOPIA_SERVER_CONTROL_PASSWORD:
+    file: ./.secrets/kopia_server_control_password.txt
