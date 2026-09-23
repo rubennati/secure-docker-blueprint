@@ -379,6 +379,16 @@
     "verified_anchored": false,
     "verified_version": ""
   },
+  "apps/paperless-gpt": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=v0.28.0",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "apps/paperless-ngx": {
     "backup_docs": "documented",
     "local_stack": "✅",
