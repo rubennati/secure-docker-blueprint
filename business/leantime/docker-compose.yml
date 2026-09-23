@@ -1,0 +1,235 @@
+services:
+
+  # --------------------------------------------------------
+  # DATABASE (MySQL)
+  # Everything Leantime holds lives here — projects, tickets, users, settings.
+  # The volumes on the application hold uploads and caches only.
+  #
+  # MySQL rather than MariaDB: upstream's own compose example ships `mysql:8.4`
+  # and the migrations are written against it.
+  # --------------------------------------------------------
+  leantime-db:
+    # --- Identity ---
+    image: mysql:${DB_TAG}
+    container_name: ${CONTAINER_NAME_DB}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # The entrypoint starts as root, fixes ownership on the data directory and
+    # drops to the mysql user. Without these it exits on `chown: Operation not
+    # permitted`.
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+
+    # --- Resources ---
+    # 478 MiB anonymous plus 214 MiB reclaimable page cache on a freshly
+    # created schema, measured 2026-09-23. MySQL 8.4 starts heavier than the
+    # MariaDB the other stacks here run, so the ceiling is 2 GiB: a limit the
+    # normal workload already sits halfway into is a limit that kills the first
+    # large import.
+    memswap_limit: 2g            # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          # cpus: derived starting value, not measured — v0.10.0
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 512m
+
+    # --- Configuration ---
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD_FILE: /run/secrets/DB_PWD
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/DB_ROOT_PWD
+      TZ: ${TZ}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    secrets:
+      - DB_PWD
+      - DB_ROOT_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/mysql:/var/lib/mysql
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # --------------------------------------------------------
+  # LEANTIME (project management)
+  # One container: nginx, php-fpm and the scheduler under supervisord. The
+  # scheduler is what runs recurring work — notifications, the daily digest —
+  # so it is not optional.
+  #
+  # IMPORTANT: the database schema is created from the command line before the
+  # router is opened. See README — a fresh instance answers the web installer
+  # to whoever asks first.
+  # --------------------------------------------------------
+  leantime-app:
+    # --- Identity ---
+    image: leantime/leantime:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+    depends_on:
+      leantime-db:
+        condition: service_healthy
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    # nginx, php-fpm, supervisord and Laravel write here; none of it survives a
+    # restart by design. Mode 1777 because a tmpfs is root-owned and the
+    # processes run as www-data — the same correction monitoring/ciao needed.
+    #
+    # bootstrap/cache holds Laravel's package manifest, rebuilt from the image's
+    # own composer.lock on every start. Without it the framework refuses to boot
+    # at all: "The /var/www/html/bootstrap/cache directory must be present and
+    # writable" — measured, both in the web process and in bin/leantime.
+    tmpfs:
+      - /run:mode=1777
+      - /tmp:mode=1777
+      - /var/lib/nginx/tmp:mode=1777
+      - /var/www/html/bootstrap/cache:mode=1777
+    # No `user:` — the image already runs as www-data, uid/gid 1000, which is
+    # what the volume directories have to belong to.
+
+    # --- Resources ---
+    # 131 MiB idle with the scheduler running, measured 2026-09-23. php-fpm
+    # spawns a worker per concurrent request, so the ceiling is well above that.
+    memswap_limit: 1g            # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          # cpus: derived starting value, not measured — v0.10.0
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 256m
+
+    # --- Configuration ---
+    # /start.sh resolves every LEAN_*_FILE variable from Docker Secrets before
+    # it starts supervisord, so no wrapper of ours is needed.
+    environment:
+      # Database
+      LEAN_DB_HOST: leantime-db
+      LEAN_DB_PORT: "3306"
+      LEAN_DB_DATABASE: ${DB_NAME}
+      LEAN_DB_USER: ${DB_USER}
+      LEAN_DB_PASSWORD_FILE: /run/secrets/DB_PWD
+
+      # Sessions. The salt is a secret; `secure` is set rather than left to
+      # auto-detection because TLS ends at Traefik.
+      LEAN_SESSION_PASSWORD_FILE: /run/secrets/SESSION_PASSWORD
+      LEAN_SESSION_SECURE: "true"
+      LEAN_SESSION_EXPIRATION: ${APP_SESSION_EXPIRATION}
+
+      # Appearance and locale
+      LEAN_APP_URL: https://${APP_TRAEFIK_HOST}
+      LEAN_SITENAME: ${APP_SITENAME}
+      LEAN_LANGUAGE: ${APP_LANGUAGE}
+      LEAN_DEFAULT_TIMEZONE: ${TZ}
+
+      # Both outbound calls the application makes on its own, off. Telemetry
+      # posts to telemetry.leantime.io once a day from the scheduler; the news
+      # service pulls an RSS feed from leantime.io. See UPSTREAM.md.
+      LEAN_ALLOW_TELEMETRY: "false"
+      LEAN_NEWS_ENABLED: "false"
+
+      # Logs to the container log rather than to a file inside the volume.
+      LEAN_LOG_CHANNELS: stderr
+      LEAN_DEBUG: "0"
+      TZ: ${TZ}
+    secrets:
+      - DB_PWD
+      - SESSION_PASSWORD
+
+    # --- Storage ---
+    # userfiles/ holds file attachments, public/ the logo and anything served
+    # without a session, storage/ the Laravel cache, compiled views and the
+    # session files, plugins/ whatever is installed from the marketplace.
+    volumes:
+      - ./volumes/userfiles:/var/www/html/userfiles
+      - ./volumes/public-userfiles:/var/www/html/public/userfiles
+      - ./volumes/storage:/var/www/html/storage
+      - ./volumes/plugins:/var/www/html/app/Plugins
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+      - app-internal
+
+    # --- Traefik ---
+    labels:
+      # Router
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      # TLS
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      # Uncomment ONLY for per-domain certificates; leave off when a wildcard
+      # certificate already covers this host.
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Middlewares — who may reach it, then what headers apply.
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      # Service
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8080"
+
+    # --- Health & Observability ---
+    # The login page, which answers without a session. curl is in the image.
+    # The image ships the same check against `localhost`; this one names the
+    # address so it cannot resolve to an interface nginx is not on.
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS -o /dev/null http://127.0.0.1:8080/auth/login || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  DB_PWD:
+    file: ./.secrets/db_pwd.txt
+  DB_ROOT_PWD:
+    file: ./.secrets/db_root_pwd.txt
+  SESSION_PASSWORD:
+    file: ./.secrets/session_password.txt

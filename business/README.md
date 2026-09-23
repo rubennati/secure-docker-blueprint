@@ -7,7 +7,7 @@ category is defined relative to the other four.
 
 ## What's here
 
-17 stacks, deployable now. What has been established about each — verified against
+18 stacks, deployable now. What has been established about each — verified against
 which version and when, whether a restore was performed — is in
 [`LIFECYCLE.md`](../LIFECYCLE.md), generated from the repository.
 
@@ -17,6 +17,7 @@ which version and when, whether a restore was performed — is in
 |---|---|---|
 | [OpenProject CE](openproject/) | Full PM — Gantt, kanban, work packages, time tracking, wikis | 6-service stack; Trello + Jira alternative. CE = local accounts only, no SSO. |
 | [Vikunja](vikunja/) | Task management — kanban, lists, Gantt, table view | 2-service stack; Authentik OIDC, SSO-ready |
+| [Leantime](leantime/) | Project management for teams without a project manager — projects, milestones, tasks, time tracking, goals | MySQL + one container running nginx, php-fpm and the scheduler. The schema is created from the command line: the web installer hands out ownership to whoever reaches it first. OIDC and LDAP are in the open-source core |
 
 ### Billing & operations
 
@@ -63,7 +64,6 @@ which version and when, whether a restore was performed — is in
 Not deployable here yet. See [`ROADMAP.md`](../ROADMAP.md) for status.
 
 - **Plane** — project management
-- **Leantime** — project management
 - **Live Helper Chat** — customer chat. It publishes no versioned image, so it waits
   for upstream to publish one or for one built here — see
   [`../docs/audits/candidate-evaluation-2026-09-22.md`](../docs/audits/candidate-evaluation-2026-09-22.md#decided-on-2026-09-22).
