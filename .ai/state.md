@@ -329,6 +329,10 @@ both chains, as Windmill; the other interfaces stayed under `sec-2`
 interface 54).
 → *Decided 2026-09-22:* no stack drops to `sec-1` to get past a limit. The
 measurements go into the review below.
+→ *2026-09-23:* the questions behind this — what the proxy owns, what its limits
+are measured against, where the client address comes from with a CDN proxy in
+front, and what threat enforcement already covers — are collected in
+[`../docs/audits/reverse-proxy-limits-2026-09-23.md`](../docs/audits/reverse-proxy-limits-2026-09-23.md).
 → *2026-09-23:* `rl-spa-xl` (average 100, burst 1000) and `sec-2-spa-xl` exist for
 the two interfaces whose first load does not fit 200. The bucket holds one whole
 first load; `check-structure.py` fails an `-xl` chain outside `acc-private` or
