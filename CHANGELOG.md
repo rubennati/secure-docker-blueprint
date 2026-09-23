@@ -22,6 +22,8 @@ Eighteen stacks verified behind Traefik with TLS on a host: nine that v0.9.1 add
 
 ### Added
 
+- **A rate-limit bucket that holds a whole first load, for VPN-only interfaces** (`core/traefik`, `docs/standards/traefik-security.md`, `scripts/ci/check-structure.py`). `rl-spa`'s burst of 200 is smaller than the first load of some code-split interfaces: measured on 2026-09-22 behind this proxy, Windmill issues about 850 requests and Twenty 412, of which 412 and 130 came back `429` under `rl-spa` — neither interface rendered. `rl-spa-xl` keeps the sustained rate at 100 requests/s, the one that bounds abuse, and widens the bucket to 1000; `sec-2-spa-xl` is the chain that uses it. A bucket that wide is only defensible for a closed set of clients, so `check-structure.py` fails (`burst-exposure`) when an `-xl` chain meets anything but `acc-private` or `acc-tailscale`. No stack is switched yet: Twenty and Windmill follow once their first load has been measured against it.
+
 - **Twelve stacks, each shipping `acc-tailscale`** — nine verified on a host on 2026-09-22, three recorded with a known limitation:
   - `apps/calrs` and `apps/calnode` — scheduling, one container each with SQLite; calrs reads availability from a CalDAV server you already run. Both verified.
   - `business/akaunting`, `business/solidinvoice` and `business/facturascripts` — invoicing and accounting, all three verified. Akaunting keeps the pages that create records closed without an akaunting.com API key. FacturaScripts updates itself in place after the first start, so its `APP_TAG` sets PHP, Apache and the version a first install starts from.
