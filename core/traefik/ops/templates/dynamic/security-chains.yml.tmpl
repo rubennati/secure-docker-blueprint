@@ -20,6 +20,7 @@ http:
     # sec-2      sec-1 + rl-soft                          Standard (most apps)
     # sec-2e     ↑ iframe-friendly variant                Standard, must be embedded
     # sec-2-spa  sec-1 + rl-spa                           VPN-only SPA, basic headers
+    # sec-2-spa-xl sec-1 + rl-spa-xl                      VPN-only SPA, first load > 200
     # sec-3      sec-2 + strict headers + permissions     Public-facing, hardened
     # sec-3e     ↑ iframe-friendly variant                Hardened, must be embedded
     # sec-3-spa  sec-3 with rl-spa instead of rl-soft     SPA, hardened
@@ -40,7 +41,9 @@ http:
     # Upgrade to sec-3 when the app handles strict headers.
     # Use sec-*e only when the app must be embedded in iframes.
     # sec-*-spa keeps the sustained rate of rl-soft and only widens the burst;
-    # use it wherever an app's first load needs it.
+    # use it wherever an app's first load needs it. sec-2-spa-xl widens the
+    # bucket to one full first load, for interfaces that do not fit 200 — only
+    # with a VPN-only access policy, which CI enforces.
     # ==========================================================
 
     # Debug — no hardening at all
@@ -84,6 +87,14 @@ http:
         middlewares:
           - hdr-basic
           - rl-spa
+          - compress
+
+    # Standard, first load beyond rl-spa's bucket — VPN-only only
+    sec-2-spa-xl:
+      chain:
+        middlewares:
+          - hdr-basic
+          - rl-spa-xl
           - compress
 
     # Hardened — public-facing apps, strict headers
