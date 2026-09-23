@@ -1,0 +1,115 @@
+# Plausible Community Edition — local
+#
+#   cp .env.local.example .env.local
+#   ops/init.sh                       # secrets and volume directories
+#   sudo chown -R 999:999 volumes/plausible
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   open http://localhost:8000        # the sign-up form creates the first account
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+#
+# Here the sign-up form is what creates the first account, which on a loopback
+# port is fine. The production file closes that door from the command line
+# instead — see ops/create-admin.sh — because there the same form answers
+# whoever reaches the host name first.
+#
+# `ops/init.sh` writes a DATABASE_URL pointing at the service name
+# `plausible-db`, which is the same in both files, so one run serves both.
+
+services:
+
+  plausible-db:
+    image: postgres:${DB_TAG}
+    container_name: plausible-local-db
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/DB_PWD
+      PGDATA: /var/lib/postgresql/data
+      TZ: ${TZ}
+    volumes:
+      - ./.secrets/db_pwd.txt:/run/secrets/DB_PWD:ro
+      - ./volumes/postgres:/var/lib/postgresql/data
+    networks: [plausible-local]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME} -h 127.0.0.1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  plausible-events-db:
+    image: clickhouse/clickhouse-server:${CLICKHOUSE_TAG}
+    container_name: plausible-local-events-db
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    environment:
+      CLICKHOUSE_SKIP_USER_SETUP: "1"
+      TZ: ${TZ}
+    volumes:
+      - ./config/clickhouse/logs.xml:/etc/clickhouse-server/config.d/logs.xml:ro
+      - ./config/clickhouse/ipv4-only.xml:/etc/clickhouse-server/config.d/ipv4-only.xml:ro
+      - ./config/clickhouse/low-resources.xml:/etc/clickhouse-server/config.d/low-resources.xml:ro
+      - ./config/clickhouse/users.d/default-profile-low-resources-overrides.xml:/etc/clickhouse-server/users.d/default-profile-low-resources-overrides.xml:ro
+      - ./volumes/clickhouse:/var/lib/clickhouse
+      - ./volumes/clickhouse-logs:/var/log/clickhouse-server
+    networks: [plausible-local]
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 -O - http://127.0.0.1:8123/ping || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+
+  plausible-app:
+    image: ghcr.io/plausible/community-edition:${APP_TAG}
+    container_name: plausible-local-app
+    restart: unless-stopped
+    depends_on:
+      plausible-db:
+        condition: service_healthy
+      plausible-events-db:
+        condition: service_healthy
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs:
+      - /tmp
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+    command: sh -c "/entrypoint.sh db createdb && /entrypoint.sh db migrate && /entrypoint.sh run"
+    environment:
+      BASE_URL: http://localhost:8000
+      TMPDIR: /var/lib/plausible/tmp
+      LOG_LEVEL: ${APP_LOG_LEVEL}
+      TZ: ${TZ}
+    volumes:
+      - ./.secrets/secret_key_base.txt:/run/secrets/SECRET_KEY_BASE:ro
+      - ./.secrets/database_url.txt:/run/secrets/DATABASE_URL:ro
+      - ./.secrets/clickhouse_database_url.txt:/run/secrets/CLICKHOUSE_DATABASE_URL:ro
+      - ./.secrets/totp_vault_key.txt:/run/secrets/TOTP_VAULT_KEY:ro
+      - ./volumes/plausible:/var/lib/plausible
+    ports:
+      - "127.0.0.1:8000:8000"
+    networks: [plausible-local]
+    healthcheck:
+      test: ["CMD-SHELL", "busybox wget -q -O /dev/null http://127.0.0.1:8000/api/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+      start_period: 90s
+
+networks:
+  plausible-local:
+    name: plausible-local
