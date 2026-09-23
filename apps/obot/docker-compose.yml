@@ -1,0 +1,296 @@
+services:
+
+  # --------------------------------------------------------
+  # SOCKET PROXY
+  # obot runs each MCP server it hosts as a container, so it needs the Docker
+  # API. This narrows what it can reach: no exec, no swarm, no configs, no
+  # secrets.
+  #
+  # It does NOT make that access safe. Creating a container is enough to own
+  # the host — see README, "The deviation this stack carries".
+  # --------------------------------------------------------
+  obot-socket-proxy:
+    # --- Identity ---
+    image: tecnativa/docker-socket-proxy:${SOCKET_PROXY_TAG}
+    container_name: ${CONTAINER_NAME_SOCKET_PROXY}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /run
+      - /tmp
+
+    # --- Resources ---
+    # Measured in single-digit MB; this is a ceiling, not an appetite.
+    memswap_limit: 128m          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+          # cpus: derived starting value, not measured — v0.10.0
+          cpus: "0.50"
+          pids: 50
+        reservations:
+          memory: 32m
+
+    # --- Configuration ---
+    # The allow-list is what obot's pkg/mcp/docker.go actually calls: create,
+    # start, stop, remove, inspect, list, logs and wait on containers; pull and
+    # inspect on images; create, inspect and list on volumes.
+    #
+    # DELETE is on because obot removes the containers it created — without it
+    # every stopped MCP server would stay on the host. EXEC stays off: obot
+    # never calls it, and it is the one verb that turns API access into a shell
+    # in someone else's container.
+    environment:
+      CONTAINERS: "1"
+      IMAGES: "1"
+      VOLUMES: "1"
+      NETWORKS: "1"
+      INFO: "1"
+      PING: "1"
+      VERSION: "1"
+      EVENTS: "1"
+      POST: "1"
+      DELETE: "1"
+      ALLOW_START: "1"
+      ALLOW_STOP: "1"
+      ALLOW_RESTARTS: "1"
+      EXEC: "0"
+      SERVICES: "0"
+      SWARM: "0"
+      CONFIGS: "0"
+      SECRETS: "0"
+      NODES: "0"
+      TASKS: "0"
+      PLUGINS: "0"
+      SYSTEM: "0"
+      AUTH: "0"
+      BUILD: "0"
+      COMMIT: "0"
+      DISTRIBUTION: "0"
+      SESSION: "0"
+
+    # --- Storage ---
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:2375/_ping >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
+
+  # --------------------------------------------------------
+  # POSTGRESQL
+  # Everything obot holds: users, MCP server definitions, credentials, audit
+  # logs.
+  #
+  # The image bundles its own PostgreSQL and starts it when OBOT_SERVER_DSN is
+  # unset — with the user and password `obot`/`obot` baked in, on the same
+  # container as the application. Setting the DSN is what turns that off.
+  # --------------------------------------------------------
+  obot-db:
+    # --- Identity ---
+    image: postgres:${DB_TAG}
+    container_name: ${CONTAINER_NAME_DB}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # The official entrypoint starts as root, fixes ownership on the data
+    # directory and then drops to the postgres user.
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+
+    # --- Resources ---
+    memswap_limit: 512m          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          # cpus: derived starting value, not measured — v0.10.0
+          cpus: "0.50"
+          pids: 200
+        reservations:
+          memory: 128m
+
+    # --- Configuration ---
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/DB_PWD
+      # PostgreSQL 18 keeps its cluster under /var/lib/postgresql/<major> and
+      # refuses to start when a volume sits on the old path without this. Same
+      # pattern as apps/defectdojo.
+      PGDATA: /var/lib/postgresql/data
+      TZ: ${TZ}
+    secrets:
+      - DB_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/postgres:/var/lib/postgresql/data
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME} -h 127.0.0.1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # --------------------------------------------------------
+  # OBOT
+  # An MCP gateway and agent platform: it catalogues MCP servers, runs the ones
+  # it hosts as containers, and puts an LLM gateway and a chat interface in
+  # front of them.
+  #
+  # This is the one stack here that can start containers on the host. Read
+  # README before deploying it anywhere that is not yours.
+  # --------------------------------------------------------
+  obot-app:
+    # --- Identity ---
+    image: ghcr.io/obot-platform/obot:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+    depends_on:
+      obot-db:
+        condition: service_healthy
+      obot-socket-proxy:
+        condition: service_healthy
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # The image declares `USER 0`, and does not need it: with OBOT_SERVER_DSN
+    # set it never starts the bundled PostgreSQL, and everything else it writes
+    # is under /data. Verified running as uid 1000 — see UPSTREAM.md.
+    #
+    # This matters more than usual here. A process that can create containers
+    # can give itself root on the host whatever uid it runs as, so this is not
+    # the line that contains obot — but it is the line that stops a bug in the
+    # application itself from being a root bug.
+    user: "${APP_UID}:${APP_GID}"
+    # No `read_only`: the entrypoint writes to /data, /tmp and the provider
+    # directory the image ships. See README, "Known limits".
+
+    # --- Resources ---
+    # 153 MiB anonymous with no MCP server hosted, measured 2026-09-23. Each
+    # hosted MCP server is a container of its own, so it does not count against
+    # this ceiling — and nothing here limits how many obot starts.
+    memswap_limit: 2g            # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          # cpus: derived starting value, not measured — v0.10.0
+          cpus: "2.00"
+          pids: 500
+        reservations:
+          memory: 512m
+
+    # --- Configuration ---
+    # config/entrypoint.sh exports the database URL and the bootstrap token from
+    # Docker Secrets; obot reads everything from the environment and has no
+    # _FILE variant.
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
+    environment:
+      # **Authentication is off unless this is set.** Upstream's flag is
+      # `--enable-authentication`, and without it obot serves everything to
+      # whoever reaches the port.
+      OBOT_SERVER_ENABLE_AUTHENTICATION: "true"
+      # Where obot thinks it lives; it builds redirect URLs from this.
+      OBOT_SERVER_HOSTNAME: https://${APP_TRAEFIK_HOST}
+      # The Docker API, through the proxy above rather than the raw socket.
+      # obot's client is `client.FromEnv`, so this is all it takes.
+      DOCKER_HOST: tcp://obot-socket-proxy:2375
+      # Upstream checks for new releases on its own.
+      OBOT_SERVER_DISABLE_UPDATE_CHECK: "true"
+      TZ: ${TZ}
+    secrets:
+      - OBOT_SERVER_DSN
+      - OBOT_BOOTSTRAP_TOKEN
+
+    # --- Storage ---
+    volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
+      - ./volumes/data:/data
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+      - app-internal
+
+    # --- Traefik ---
+    labels:
+      # Router
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      # TLS
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      # Uncomment ONLY for per-domain certificates; leave off when a wildcard
+      # certificate already covers this host.
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Middlewares — who may reach it, then what headers apply.
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      # Service
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8080"
+
+    # --- Health & Observability ---
+    # The image ships no HTTP client at all — no curl, no wget, and busybox is
+    # built without the wget applet. bash is present, so the probe opens the
+    # socket itself. The endpoint is /api/healthz; /healthz is a 404.
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080; printf 'GET /api/healthz HTTP/1.0\r\nHost: localhost\r\n\r\n' >&3; head -1 <&3 | grep -q ' 200 '"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  DB_PWD:
+    file: ./.secrets/db_pwd.txt
+  OBOT_SERVER_DSN:
+    file: ./.secrets/obot_server_dsn.txt
+  OBOT_BOOTSTRAP_TOKEN:
+    file: ./.secrets/obot_bootstrap_token.txt

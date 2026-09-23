@@ -263,6 +263,14 @@
     "license_class": "source-available",
     "origin": "US · NocoDB Inc · non-EU"
   },
+  "apps/obot": {
+    "bloc": "non-EU",
+    "country": "US",
+    "entity": "Obot AI, Inc",
+    "license": "MIT",
+    "license_class": "osi",
+    "origin": "US · Obot AI, Inc · non-EU"
+  },
   "apps/ollama": {
     "bloc": "non-EU",
     "country": "United States",

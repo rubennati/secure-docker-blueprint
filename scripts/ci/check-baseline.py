@@ -84,6 +84,23 @@ SOCKET_EXCEPTIONS: dict[str, dict[str, Exception]] = {
                             "surface exposed by this proxy.",
         },
     },
+    "apps/obot": {
+        "obot-socket-proxy": {
+            "reason":       "This service IS the socket proxy for the obot stack — it exposes a "
+                            "filtered Docker API to obot, which runs each MCP server it hosts as a "
+                            "container and does not start without a runtime backend.",
+            "alternatives": "There is no upstream proxy to route through; this is the proxy layer. "
+                            "The socket is bound :ro against the file being replaced; the API "
+                            "surface is limited by the proxy's allow-list, not by the mount. A "
+                            "read-only allow-list was evaluated and does not work: obot calls "
+                            "ContainerCreate, ContainerRemove, ImagePull and VolumeCreate.",
+            "risk":         "Accepted and stated, not mitigated away. The allow-list denies exec, "
+                            "swarm, configs and secrets, but creating a container is enough to take "
+                            "the host — apps/obot/README.md says so in its own section, and the "
+                            "router ships acc-tailscale. Upstream issue 7978 asks for a start "
+                            "without a runtime backend, which would remove the need entirely.",
+        },
+    },
     "core/hawser": {
         "hawser": {
             "reason":       "Hawser is a remote Docker agent that proxies Docker API access to "

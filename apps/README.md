@@ -197,12 +197,7 @@ it is revisited once the announced rewrite is released. See
 | [agentgateway](agentgateway/) | Single container | LLM and MCP gateway — API-key-protected `/v1` and `/mcp` on one port, web UI behind basic auth. Distroless, no healthcheck |
 | [Dify](dify/) | 10 services | LLM application platform — chat and workflow apps, knowledge bases on pgvector, plugin-based model providers, sandboxed code nodes. Setup password guards the first account; agent runtime and `/e/` webhooks not carried |
 | [vLLM](vllm/) | Single container | High-throughput OpenAI-compatible model serving on an NVIDIA GPU. `--api-key` covers `/v1` only, so the route forwards `/v1/` and nothing else. CUDA image not yet run on a GPU |
-
-Planned: **obot** (MCP gateway and agent platform). It runs the MCP servers it
-hosts as containers and does not start without the Docker API; creating those
-containers takes write access, which is root-equivalent on the host, so its stack
-will carry that access as a documented deviation. See
-[`../docs/audits/candidate-evaluation-2026-09-22.md`](../docs/audits/candidate-evaluation-2026-09-22.md#decided-on-2026-09-22).
+| [obot](obot/) | 3 services | MCP gateway and agent platform — catalogues MCP servers and runs the hosted ones as containers on this host. **That access is root-equivalent**, narrowed by a socket proxy and stated rather than mitigated away; authentication is off in upstream's default and switched on here |
 
 ### Developer & admin tools
 
