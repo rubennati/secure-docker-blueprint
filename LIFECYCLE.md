@@ -4,7 +4,7 @@
 
 Generated 2026-09-23 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-107 stacks: 1 ops-proven · 33 baseline-aligned · 73 scaffolded. 97 carry a local test stack.
+108 stacks: 1 ops-proven · 33 baseline-aligned · 74 scaffolded. 98 carry a local test stack.
 
 This is the maintainer's view: what has been established about each stack. It makes no statement about whether a stack suits a given deployment.
 
@@ -118,6 +118,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`business/matomo`](business/matomo/) | `scaffolded` | `APP_TAG=5.13.0-apache` | 2026-04-17 ⚠️ | ✅ | documented | missing |
 | [`business/openproject`](business/openproject/) | `scaffolded` | `APP_TAG=17.8.0-slim` | 2026-05-06 | ✅ | documented | missing |
 | [`business/opensign`](business/opensign/) | `scaffolded` | `APP_TAG=main@sha256:817654a3f804…` | 2026-05-11 ⚠️ | ✅ | documented | missing |
+| [`business/plausible`](business/plausible/) | `scaffolded` | `APP_TAG=v3.2.1` | — | ✅ | documented | missing |
 | [`business/solidinvoice`](business/solidinvoice/) | `baseline-aligned` | `APP_TAG=3.0.1` | 2026-09-22 | ✅ | documented | missing |
 | [`business/twenty`](business/twenty/) | `baseline-aligned` | `APP_TAG=v2.41.0` | 2026-09-23 | ✅ | documented | missing |
 | [`business/vikunja`](business/vikunja/) | `scaffolded` | `APP_TAG=2.6.0` | 2026-05-06 | ✅ | documented | missing |
