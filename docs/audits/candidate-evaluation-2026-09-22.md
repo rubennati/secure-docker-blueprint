@@ -550,12 +550,15 @@ Facts that recur, so each stack handles them the same way.
 HeyForm, obot and Headscale; Plane, Leantime and Plausible CE; Gotify, ciao,
 Checkmate, Zabbix, Grafana + Prometheus and Scrutiny; Kopia; Suricata and Coraza.
 obot was held on 2026-09-21 and is added with its Docker API access documented as a
-deviation. HeyForm is added on a condition: if it does not run on a current MongoDB
+deviation; the deviation is what the upstream request
+https://github.com/obot-platform/obot/issues/7978 (2026-09-21) asks to remove — a
+start without a runtime backend where no MCP servers are hosted. HeyForm is added on a condition: if it does not run on a current MongoDB
 and Valkey, it is dropped.
 
 **Build candidates — wanted, but no image to pin.** Live Helper Chat, DayOtter and
-Bareos. Upstream is asked to publish an image first; one built here from a fork,
-under [`custom-application.md`](../standards/custom-application.md), is the
+Bareos. Upstream is asked to publish an image first — for DayOtter that is
+https://github.com/Dayotter/dayotter/issues/291 (2026-09-21); one built here from a
+fork, under [`custom-application.md`](../standards/custom-application.md), is the
 fallback — the route `apps/caldiy` took.
 
 **Held until its upstream decides.** paperless-ai: its README states that the

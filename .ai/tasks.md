@@ -89,15 +89,20 @@ was verified by running it. Three of the fifteen already ship.
 - [x] Four publish no image (DayOtter, Dapta Calendars, MAILFLOW-AI, Crater).
       Decided 2026-09-22: DayOtter is a build candidate — §7; the other three are
       not added, with the reason in the 2026-09-22 evaluation.
-- [ ] Upstream requests, filed by the maintainer; drafts are in the local
-      `inbox/upstream-requests/` working area. obot (start without a runtime backend
-      when no MCP servers are hosted), DayOtter (publish an
-      image), rclone (`rclone gui` logs a supplied RC password). Filed: the
-      FacturaScripts installer fix, NeoRazorX/facturascripts#2041 (open), linked in
-      `../business/facturascripts/UPSTREAM.md`. None for Crater (images requested since 2021 in #659, no maintainer
-      reply), MAILFLOW-AI (#20 and #21 still open) or httpbin (the failing image is
-      psf/httpbin#69, fix proposed in #70). Once posted, the link goes into the
-      stack's `UPSTREAM.md` or the candidate evaluation.
+- [x] Upstream requests, filed by the maintainer; drafts are in the local
+      `inbox/upstream-requests/` working area. Filed and linked where the rule says
+      — the stack's `UPSTREAM.md` where one exists, the candidate evaluation
+      otherwise: the FacturaScripts installer fix NeoRazorX/facturascripts#2041 ·
+      rclone/rclone#9957 (`rclone gui` logs a supplied RC password) and
+      rclone/rclone-web#139 (its sign-in discards the address) in
+      `../backup/rclone-web/UPSTREAM.md` · obot-platform/obot#7978 (start without a
+      runtime backend) in the 2026-09-22 evaluation · Dayotter/dayotter#291 and
+      Dapta-Tech/dapta-calendars-slate#173 (publish an image) and
+      NeoNexAI/MAILFLOW-AI_MAILING#20 and #21 (a patched Next.js, secure defaults)
+      in the 2026-09-21 evaluation. All open. None filed for Crater, where images
+      have been asked for since 2021 in crater-invoice/crater#659 without a reply,
+      or for httpbin, where the failing image is psf/httpbin#69 with a fix proposed
+      in #70. When the next one is posted, its link goes the same way.
 - [x] Adding these while `../ROADMAP.md` holds applications is a deliberate
       exception — recorded in `../ROADMAP.md` and `decisions.md` (2026-09-21).
 - [x] Host verification, 2026-09-22: all twelve behind Traefik with TLS, with the

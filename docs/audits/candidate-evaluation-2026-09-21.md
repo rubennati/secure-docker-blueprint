@@ -168,6 +168,18 @@ Route 3 is proposed for none of the four. Nothing here is in the position Cal.di
 was in, where the product was already deployed and the fork protected an
 existing installation.
 
+**Filed since, route 1:** DayOtter — publish images on every release,
+https://github.com/Dayotter/dayotter/issues/291 (2026-09-21). Dapta Calendars —
+publish the API and web images on release,
+https://github.com/Dapta-Tech/dapta-calendars-slate/issues/173 (2026-09-21). For
+MAILFLOW-AI the two open requests are about what a self-hosted deployment would
+need before an image helps: a patched Next.js,
+https://github.com/NeoNexAI/MAILFLOW-AI_MAILING/issues/20, and secure defaults,
+https://github.com/NeoNexAI/MAILFLOW-AI_MAILING/issues/21 (both 2026-09-20).
+Nothing was filed for Crater, where images have been asked for since 2021 in
+https://github.com/crater-invoice/crater/issues/659 without a maintainer reply.
+Each stays route 2 until an image exists.
+
 ## What was verified by running it
 
 Two products were started here, on the full baseline (`read_only`,
