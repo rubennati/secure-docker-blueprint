@@ -77,6 +77,22 @@ http:
         average: 100
         burst: 200
 
+    # First load of a code-split interface that does not fit rl-spa's bucket.
+    #
+    # Measured 2026-09-22 behind this proxy: Windmill's first load issues about
+    # 850 requests and Twenty's 412. With a burst of 200, 412 of Windmill's and
+    # 130 of Twenty's came back 429 and neither interface rendered. This bucket
+    # holds one full first load of the heavier of the two; the sustained rate —
+    # the one that bounds abuse — is identical to rl-soft and rl-spa.
+    #
+    # A bucket this wide belongs behind a VPN-only access policy: with
+    # acc-public one address could issue a thousand requests before the
+    # sustained rate applies. scripts/ci/check-structure.py enforces that.
+    rl-spa-xl:
+      rateLimit:
+        average: 100
+        burst: 1000
+
     rl-hard:
       rateLimit:
         average: 20

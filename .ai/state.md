@@ -329,6 +329,11 @@ both chains, as Windmill; the other interfaces stayed under `sec-2`
 interface 54).
 → *Decided 2026-09-22:* no stack drops to `sec-1` to get past a limit. The
 measurements go into the review below.
+→ *2026-09-23:* `rl-spa-xl` (average 100, burst 1000) and `sec-2-spa-xl` exist for
+the two interfaces whose first load does not fit 200. The bucket holds one whole
+first load; `check-structure.py` fails an `-xl` chain outside `acc-private` or
+`acc-tailscale`. No stack switched yet — Twenty and Windmill follow once their
+first load has been measured against the new chain on a host.
 
 **Traefik labels and middlewares are reviewed as a whole before v1.0.0** — see
 [`../ROADMAP.md`](../ROADMAP.md). They grew stack by stack; 89 stacks route
