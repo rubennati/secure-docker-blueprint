@@ -340,13 +340,13 @@ first load; `check-structure.py` fails an `-xl` chain outside `acc-private` or
 first load has been measured against the new chain on a host.
 
 **Traefik labels and middlewares are reviewed as a whole before v1.0.0** — see
-[`../ROADMAP.md`](../ROADMAP.md). They grew stack by stack; 89 stacks route
-through Traefik, 84 of them take their chain from `.env`. After v1.0.0 a renamed
+[`../ROADMAP.md`](../ROADMAP.md). They grew stack by stack; 99 stacks route
+through Traefik, 94 of them take their chain from `.env`. After v1.0.0 a renamed
 middleware disables the router of every deployment that names it. Open, besides
 the two points above:
 
 - **Names.** Twelve chains put headers, framing and rate limit into one name.
-  38 stacks default to `sec-2` and 35 to `sec-3`; `sec-0` and `sec-1e` are used
+  43 stacks default to `sec-2` and 35 to `sec-3`; `sec-0` and `sec-1e` are used
   by none. `e` reads as "embeddable" and permits only the application's own
   origin. `spa` names a kind of application rather than what the chain changes, a
   burst of 200 — the chain file calls the `-spa` chains VPN-only, the block they
@@ -357,7 +357,7 @@ the two points above:
   without errors and stay responsive under a working day's load, and whether
   presets or per-application settings answer that. Every rate-limit figure above
   is a first page load; no stack has a measurement under sustained use.
-- **CrowdSec.** 45 of those 84 stacks have no `APP_TRAEFIK_THREAT` slot, so a
+- **CrowdSec.** 45 of those 94 stacks have no `APP_TRAEFIK_THREAT` slot, so a
   bouncer middleware cannot be attached from `.env`. The profile ladder is in
   [`../core/crowdsec/docs/profiles.md`](../core/crowdsec/docs/profiles.md).
 - **Authentik.** Forward auth exists only as a commented-out block in
