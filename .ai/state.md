@@ -336,8 +336,10 @@ front, and what threat enforcement already covers — are collected in
 → *2026-09-23:* `rl-spa-xl` (average 100, burst 1000) and `sec-2-spa-xl` exist for
 the two interfaces whose first load does not fit 200. The bucket holds one whole
 first load; `check-structure.py` fails an `-xl` chain outside `acc-private` or
-`acc-tailscale`. No stack switched yet — Twenty and Windmill follow once their
-first load has been measured against the new chain on a host.
+`acc-tailscale`. Measured 2026-09-23 behind Traefik with TLS with the shipped
+`acc-tailscale`: Twenty's interface (412 requests) and Windmill's (about 850)
+load under `sec-2-spa-xl` without a single `429`, five loads each. Both ship the
+chain now; no other stack uses it.
 
 **Traefik labels and middlewares are reviewed as a whole before v1.0.0** — see
 [`../ROADMAP.md`](../ROADMAP.md). They grew stack by stack; 99 stacks route

@@ -102,17 +102,25 @@ was verified by running it. Three of the fifteen already ship.
       exception — recorded in `../ROADMAP.md` and `decisions.md` (2026-09-21).
 - [x] Host verification, 2026-09-22: all twelve behind Traefik with TLS, with the
       refused client, a smoke test, a restart and the README's restore — each
-      stack's `UPSTREAM.md`. `Last verified` for nine; Twenty (rate limit, as
-      Windmill), rclone-web (its sign-in needs the password in a URL) and ERPNext
-      (the realtime service's session check) are recorded without. Fixed on the
-      way: calrs, Akaunting, SolidInvoice, CISO Assistant.
-- [ ] Follow-ups from that session: rclone-web's sign-in — upstream would need a
-      field for the API address, or to keep it after a failed attempt · ERPNext's
-      realtime service checks sessions against the public URL, which it cannot
-      reach from `app-internal` — route that check to the stack's own frontend ·
-      calnode sets `Secure` on its session cookie only with Google or Microsoft
-      sign-in configured (upstream) · Akaunting needs an akaunting.com account's API
-      key before any create page opens — decide whether that fits this repository ·
+      stack's `UPSTREAM.md`. `Last verified` for nine that day; Twenty and ERPNext
+      followed on 2026-09-23 once their causes were fixed. rclone-web is still
+      recorded without it — its sign-in takes the password only from a URL. Fixed
+      on the way: calrs, Akaunting, SolidInvoice, CISO Assistant.
+- [x] Closed on 2026-09-23: Twenty's and Windmill's interfaces — `sec-2-spa-xl`
+      holds one whole first load and both ship it, measured without a `429` ·
+      ERPNext's realtime service — a second nginx listener for `/socket.io` gives
+      its session check an address it can reach from `app-internal` · Akaunting —
+      the stack stays, and the runtime gate is a decision fact in its
+      `../business/akaunting/UPSTREAM.md`: every `…/create` page asks
+      `api.akaunting.com` for the plan limits with an akaunting.com account's API
+      key, and the code has no switch to skip it.
+- [ ] Still open from that session: rclone-web's sign-in — `/login?url=…` applies
+      the address and then discards it again, so once the first attempt fails
+      against an RC that wants credentials, there is no field left to type them
+      into; read in the current source and reproduced on rclone 1.75.1 with the
+      GUI version it serves, to be filed in `rclone/rclone-web`, separate from
+      rclone/rclone#9957 on the logged password · calnode sets `Secure` on its
+      session cookie only with Google or Microsoft sign-in configured (upstream) ·
       the candidate stacks write their secrets with mode `644` inside a `700`
       directory, a third variant beside `600` and `640` in
       `../docs/standards/secrets.md` — recorded, not changed.
