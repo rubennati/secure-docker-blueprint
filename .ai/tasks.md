@@ -125,14 +125,12 @@ products and are added as a second deliberate exception (`decisions.md`,
 2026-09-22). Evidence, what was not added and why, and the batch order:
 [`../docs/audits/candidate-evaluation-2026-09-22.md`](../docs/audits/candidate-evaluation-2026-09-22.md).
 
-- [ ] Batches H–V, each its own pull request. **H and I shipped** (Gotify,
-      ciao, Wiki.js, Shlink — all `scaffolded`, verified on the image, not
-      behind Traefik):
-      H Gotify+ciao · I Wiki.js+Shlink ·
-      both `scaffolded`, verified on the image, not behind Traefik):
-      H Gotify+ciao · I Wiki.js+Shlink ·
-      J paperless-gpt · K Kopia · L Leantime · M Plausible CE · N Checkmate · O obot ·
-      P Headscale · Q Grafana+Prometheus · R Zabbix · S Scrutiny · T Plane ·
+- [ ] Batches H–V, each its own pull request. **H, I and M shipped** — Gotify,
+      ciao, Wiki.js, Shlink and Plausible CE, all `scaffolded`, verified on the
+      image and not yet behind Traefik. J, K and L are open pull requests.
+      H Gotify+ciao · I Wiki.js+Shlink · J paperless-gpt · K Kopia ·
+      L Leantime · M Plausible CE · N Checkmate · O obot · P Headscale ·
+      Q Grafana+Prometheus · R Zabbix · S Scrutiny · T Plane ·
       U HeyForm, dropped if it does not run on a current MongoDB and Valkey ·
       V Suricata+Coraza.
 - [ ] Build candidates — Live Helper Chat, DayOtter, Bareos: ask upstream to
