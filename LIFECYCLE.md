@@ -4,7 +4,7 @@
 
 Generated 2026-09-23 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-110 stacks: 1 ops-proven · 34 baseline-aligned · 75 scaffolded. 100 carry a local test stack.
+111 stacks: 1 ops-proven · 34 baseline-aligned · 76 scaffolded. 101 carry a local test stack.
 
 This is the maintainer's view: what has been established about each stack. It makes no statement about whether a stack suits a given deployment.
 
@@ -76,6 +76,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/n8n`](apps/n8n/) | `scaffolded` | `APP_TAG=2.38.7` | 2026-05-02 | ✅ | documented | missing |
 | [`apps/nextcloud`](apps/nextcloud/) | `ops-proven` | `APP_TAG=34.0.4-fpm-alpine` | 2026-09-13 | ✅ | documented | documented |
 | [`apps/nocodb`](apps/nocodb/) | `scaffolded` | `APP_TAG=2026.09.0` | 2026-05-02 | ✅ | documented | missing |
+| [`apps/obot`](apps/obot/) | `scaffolded` | `APP_TAG=v0.26.0` | — | ✅ | documented | missing |
 | [`apps/ollama`](apps/ollama/) | `baseline-aligned` | `APP_TAG=0.34.2` | 2026-09-21 | ✅ | documented | missing |
 | [`apps/onlyoffice`](apps/onlyoffice/) | `scaffolded` | `APP_TAG=9.4.0` | 2026-06-14 ⚠️ | ✅ | documented | missing |
 | [`apps/open-webui`](apps/open-webui/) | `baseline-aligned` | `APP_TAG=v0.11.3` | 2026-09-21 | ✅ | documented | missing |

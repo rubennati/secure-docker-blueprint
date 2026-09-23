@@ -766,6 +766,45 @@
     "verified_version": "v0.301.5",
     "version": "2026.09.0"
   },
+  "apps/obot": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-23",
+        "model": "no paid edition",
+        "source": "https://github.com/obot-platform/obot",
+        "statement": "no paid edition"
+      },
+      "edition_gating": {
+        "checked": "2026-09-23",
+        "source": "https://github.com/obot-platform/obot/blob/main/LICENSE",
+        "statement": "none found — the repository is MIT throughout and names no paid tier"
+      },
+      "use_restrictions": {
+        "checked": "2026-09-23",
+        "source": "https://github.com/obot-platform/obot/blob/main/LICENSE",
+        "statement": "none"
+      }
+    },
+    "decision_facts_checked": "2026-09-23",
+    "domain": "AI and local AI",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL"
+      ],
+      "init_services": 0,
+      "services": 3,
+      "summary": "3 services · PostgreSQL"
+    },
+    "name": "obot",
+    "path": "apps/obot",
+    "role": "MCP gateway and agent platform — catalogues MCP servers, runs the hosted ones as containers, with an LLM gateway in front",
+    "state": "scaffolded",
+    "upstream": "https://github.com/obot-platform/obot/pkgs/container/obot",
+    "verified": null,
+    "verified_version": null,
+    "version": "0.26.0"
+  },
   "apps/ollama": {
     "decision_facts": {},
     "decision_facts_checked": null,
