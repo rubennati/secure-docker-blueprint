@@ -156,6 +156,55 @@ cancelled its restart policy.
 11. **Local use.** A stack run without a proxy at all is a supported case; no
     decision here may assume the chain exists.
 
+## What four of these already have evidence for
+
+Gathered 2026-09-23, from the configuration in this repository and from the
+first loads measured in September. It answers nothing on its own — it removes
+the guessing from four of the questions above.
+
+**Question 2, static files and dynamic endpoints.** In every interface measured,
+the first load is almost entirely static files under a single prefix:
+
+| Interface | Requests on first load | Under one static prefix | Prefix |
+|---|---|---|---|
+| Twenty | 412 | 411 (99 %) | `/assets` |
+| CISO Assistant | 225 | 219 (97 %) | `/_app` |
+| DefectDojo | 120 | 112 (93 %) | `/static` |
+| Akaunting | 38 | 34 (89 %) | `/public` |
+| Chatwoot | 84 | 72 (86 %) | `/vite` |
+| ERPNext | 126 | 94 (74 %) | `/assets` |
+
+A router for that one prefix would take between three quarters and all of the
+first load out of the counter, and leave the limit on what is left: the login,
+the API, the pages. The cost is one prefix to know per stack.
+
+**Question 5, timeouts at the entrypoint.** Traefik 3.7 defaults to a read
+timeout of 60 s and an idle timeout of 180 s, and to **no write timeout at all**;
+this repository sets none of the three. A client that holds connections open
+while the response trickles is therefore bounded on the read side and unbounded
+on the write side — which is the shape of the load that took the proxy down.
+
+**Question 7, where the client address comes from.** Already answered in the
+static configuration: both entrypoints set `forwardedHeaders.trustedIPs` to
+Cloudflare's published ranges and never `insecure`, so a forwarded address is
+trusted from those senders and from nobody else. What is left for the review is
+narrower than the question suggested: the list is Cloudflare's alone and is
+maintained by hand, and an installation behind another CDN has no equivalent.
+
+**Question 8, what threat enforcement already covers.** The CrowdSec instance
+this repository ships runs 8 collections and 55 scenarios against Traefik's
+access log, plus the AppSec rules. Among them: `http-generic-bf` — password
+guessing; `http-crawl-non_statics` — crawling, and it excludes static files by
+design; probing of admin interfaces, path traversal, known CVEs, bad user
+agents; and virtual patching. The two abuses a blanket rate limit is usually
+justified with are therefore already owned by the layer that decides on
+behaviour over time and can ban, and that layer already draws the line between
+static and dynamic that the counter in the proxy does not.
+
+The bouncer ships default-off, so a chain may not assume it. That is the
+argument for keeping a limit in the proxy at all — and it is an argument about
+what the limit is *for*, which is where this document started.
+
 ## What decides, and where it is written
 
 Each question is answered with the same three sentences: what does it protect,
