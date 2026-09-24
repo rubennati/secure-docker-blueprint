@@ -174,8 +174,13 @@ products and are added as a second deliberate exception (`decisions.md`,
       `../docs/standards/custom-application.md`.
 - [ ] paperless-ai: revisit once upstream's announced rewrite is released or the
       repository is maintained again — its README says it is not.
-- [ ] `backup/borgmatic/README.md` counts database engines as "24 · 16 · 13
-      stacks" for PostgreSQL · MySQL · MariaDB. Counting `image:` lines by stack
-      on 2026-09-23 gives 27 · 3 · 15; the MySQL figure is far enough apart that
-      the table is counting something else. Establish the rule, then correct the
-      table or state the rule beside it.
+- [x] `backup/borgmatic/README.md` counted database engines as "24 · 16 · 13"
+      for PostgreSQL · MySQL · MariaDB. The rule is now stated beside the table —
+      stacks whose compose files name that database image, MariaDB and MySQL
+      apart because borgmatic has a hook for each — with the command to
+      re-measure. On 2026-09-24 that gives 31 · 3 · 17. Three more rows were
+      stale in the same table: Zabbix stood as planned, and ntfy and rclone as
+      absent, though all three now have stacks; MongoDB listed two of its four.
+      Both hook names given there were wrong and are checked against upstream's
+      schema now — Zabbix reaches the web interface's `/api_jsonrpc.php`, not
+      the trapper port, and ntfy's key is `topic`, not `topic_url`.
