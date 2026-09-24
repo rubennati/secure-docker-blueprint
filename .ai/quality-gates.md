@@ -16,12 +16,27 @@ python3 scripts/ci/site-catalogue.py --check  # every stack has a catalogue entr
 python3 scripts/ci/security-coverage.py --check # hardening figures match the compose files
 python3 scripts/ci/check-coverage.py         # content no checker covers
 python3 scripts/ci/check-links.py            # broken relative links and anchors
-npx markdownlint-cli2                        # markdown style
+npx markdownlint-cli2                        # markdown style — needs Node; see below
 python3 scripts/ci/check-workflows.py        # action pinning, workflow permissions
 python3 scripts/ci/check-prose.py            # register — what CI gates on
 ```
 
 `--hints` adds the suggested replacement to each finding, in either mode.
+
+### markdownlint without Node
+
+`npx` needs a Node runtime, which not every environment has. The same version
+CI runs is available as a container, and passing the tracked files explicitly
+keeps `volumes/` out of the run — those directories exist on a host and not in
+CI's checkout, and they hold thousands of findings that are not yours:
+
+```bash
+docker run --rm -v "$PWD:/workdir" -w /workdir \
+    davidanson/markdownlint-cli2:v0.18.1 $(git ls-files '*.md')
+```
+
+Skipping this gate is how MD012 — two consecutive blank lines, which a scripted
+edit produces easily — reaches CI instead of being caught here.
 
 Requires PyYAML: `pip install --require-hashes -r scripts/ci/requirements.txt`
 

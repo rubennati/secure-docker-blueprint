@@ -62,8 +62,7 @@ belongs on a different host than the services that publish to it; see
 
 ## Planned
 
-Not deployable here yet. See [`ROADMAP.md`](../ROADMAP.md) for status.
-
+Nothing. Every stack this category planned is deployable above.
 
 ## Recommended starter combo
 
