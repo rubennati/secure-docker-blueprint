@@ -30,6 +30,12 @@ What has been established about each stack — verified against which version an
 | [Grafana + Prometheus](grafana-prometheus/) | Scrape and query, dashboards | The general-purpose end: every metric anything exposes, and you say which. Prometheus is not routed and has no port — it has no authentication at all, so Grafana is the only way in. Host and per-container collectors are opt-in overlays; cAdvisor runs without `privileged` |
 | [Zabbix](zabbix/) | Server, web interface, PostgreSQL | The one that also knows SNMP, IPMI, escalation chains and maintenance windows, on the 7.0 long-term-support line. No agent container — upstream's needs `privileged` — so the agent goes on the host or a Prometheus endpoint feeds it. Sign in as `Admin`/`zabbix` and change it |
 
+### Disk health
+
+| App | Approach | Notes |
+|---|---|---|
+| [Scrutiny](scrutiny/) | Web interface + InfluxDB, collector opt-in | The axis nothing else here covers: a disk about to fail answers pings and serves HTTP right up until it does not. The interface has no password of its own, so the proxy carries one. The collector needs `SYS_RAWIO` and is an overlay — or a binary on the host |
+
 ### Content & web change detection
 
 | App | Approach | Notes |
@@ -56,9 +62,7 @@ belongs on a different host than the services that publish to it; see
 
 ## Planned
 
-Not deployable here yet. See [`ROADMAP.md`](../ROADMAP.md) for status.
-
-- **Scrutiny** — disk S.M.A.R.T. health
+Nothing. Every stack this category planned is deployable above.
 
 ## Recommended starter combo
 
