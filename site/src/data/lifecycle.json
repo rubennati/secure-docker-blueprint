@@ -1128,5 +1128,15 @@
     "verified": "2026-09-13",
     "verified_anchored": true,
     "verified_version": "2.5.4"
+  },
+  "monitoring/zabbix": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=alpine-7.0.31",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
   }
 }

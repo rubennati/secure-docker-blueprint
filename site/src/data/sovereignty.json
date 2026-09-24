@@ -902,5 +902,13 @@
     "license": "MIT",
     "license_class": "osi",
     "origin": "Hong Kong · Louis Lam · non-EU"
+  },
+  "monitoring/zabbix": {
+    "bloc": "EU",
+    "country": "Latvia",
+    "entity": "Zabbix, Riga — the project's own record adds Tokyo and New York; the site's copyright line reads \"Zabbix LLC\"",
+    "license": "AGPL-3.0",
+    "license_class": "osi",
+    "origin": "Latvia · Zabbix, Riga — the project's own record adds Tokyo and New York; the site's copyright line reads \"Zabbix LLC\" · EU"
   }
 }
