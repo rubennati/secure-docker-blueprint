@@ -2858,6 +2858,43 @@
     "verified_version": "v2.28.0",
     "version": "2.28.0"
   },
+  "monitoring/scrutiny": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-24",
+        "model": "no paid edition",
+        "source": "https://github.com/AnalogJ/scrutiny",
+        "statement": "no paid edition"
+      },
+      "edition_gating": {
+        "checked": "2026-09-24",
+        "source": "https://github.com/AnalogJ/scrutiny",
+        "statement": "none — one build, no paid tier"
+      },
+      "use_restrictions": {
+        "checked": "2026-09-24",
+        "source": "https://github.com/AnalogJ/scrutiny/blob/master/LICENSE",
+        "statement": "none"
+      }
+    },
+    "decision_facts_checked": "2026-09-24",
+    "domain": "Monitoring",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 2,
+      "summary": "2 services"
+    },
+    "name": "Scrutiny",
+    "path": "monitoring/scrutiny",
+    "role": "S.M.A.R.T. disk health — collects the counters, keeps their history and warns before a drive fails",
+    "state": "scaffolded",
+    "upstream": "https://github.com/AnalogJ/scrutiny/pkgs/container/scrutiny",
+    "verified": null,
+    "verified_version": null,
+    "version": "0.9.4-web"
+  },
   "monitoring/uptime-kuma": {
     "decision_facts": {},
     "decision_facts_checked": null,

@@ -4,7 +4,7 @@
 
 Generated 2026-09-24 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-114 stacks: 1 ops-proven · 34 baseline-aligned · 79 scaffolded. 104 carry a local test stack.
+115 stacks: 1 ops-proven · 34 baseline-aligned · 80 scaffolded. 105 carry a local test stack.
 
 This is the maintainer's view: what has been established about each stack. It makes no statement about whether a stack suits a given deployment.
 
@@ -142,6 +142,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`monitoring/healthchecks`](monitoring/healthchecks/) | `baseline-aligned` | `APP_TAG=v4.4` | 2026-09-08 | ✅ | documented | missing |
 | [`monitoring/langfuse`](monitoring/langfuse/) | `baseline-aligned` | `APP_TAG=4.38.0` | 2026-09-22 | ✅ | documented | missing |
 | [`monitoring/ntfy`](monitoring/ntfy/) | `baseline-aligned` | `APP_TAG=v2.28.0` | 2026-09-08 | ✅ | documented | missing |
+| [`monitoring/scrutiny`](monitoring/scrutiny/) | `scaffolded` | `APP_TAG=v0.9.4-web` | — | ✅ | documented | missing |
 | [`monitoring/uptime-kuma`](monitoring/uptime-kuma/) | `baseline-aligned` | `APP_TAG=2.5.4` | 2026-09-13 | ✅ | documented | missing |
 | [`monitoring/zabbix`](monitoring/zabbix/) | `scaffolded` | `APP_TAG=alpine-7.0.31` | — | ✅ | documented | missing |
 

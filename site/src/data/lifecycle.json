@@ -1119,6 +1119,16 @@
     "verified_anchored": true,
     "verified_version": "v2.28.0"
   },
+  "monitoring/scrutiny": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=v0.9.4-web",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "monitoring/uptime-kuma": {
     "backup_docs": "documented",
     "local_stack": "✅",

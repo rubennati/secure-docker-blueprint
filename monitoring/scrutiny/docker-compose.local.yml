@@ -1,0 +1,188 @@
+# Scrutiny — local
+#
+#   cp .env.local.example .env.local
+#   ops/init.sh
+#   sudo chown -R 1000:1000 volumes/
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   open http://localhost:8080
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+#
+# No password here: the production file puts one at the proxy, and on a
+# loopback port there is no proxy. The interface is open to whoever can
+# reach 127.0.0.1:8080 — which on your own machine is you.
+#
+# collector.yml works here too, and needs the same edit to `devices:`.
+
+services:
+
+  # --------------------------------------------------------
+  # INFLUXDB
+  # Where the S.M.A.R.T. readings are kept. Scrutiny writes the summary of each
+  # collection here and queries it back for the graphs.
+  #
+  # Pinned by digest: the `influxdb` tags are rebuilt in place, so a tag alone
+  # does not identify an image.
+  # --------------------------------------------------------
+  scrutiny-influxdb:
+    # --- Identity ---
+    image: influxdb:${INFLUXDB_TAG}@${INFLUXDB_DIGEST}
+    container_name: scrutiny-local-influxdb
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    # The image already runs as uid 1000; ./volumes/influxdb has to belong to
+    # it.
+    user: "${INFLUXDB_UID}:${INFLUXDB_GID}"
+
+    # --- Resources ---
+    # 50 MiB anonymous with the bucket created, measured 2026-09-24. A reading
+    # per disk per collection is a small write volume; this grows with how long
+    # you keep the history rather than with how many disks you have.
+    memswap_limit: 512m          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          # cpus: derived starting value, not measured — v0.10.0
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 128m
+
+    # --- Configuration ---
+    # The first start creates the organisation, the bucket and the token
+    # Scrutiny authenticates with.
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: ${INFLUXDB_USER}
+      DOCKER_INFLUXDB_INIT_PASSWORD_FILE: /run/secrets/INFLUXDB_PASSWORD
+      DOCKER_INFLUXDB_INIT_ORG: ${INFLUXDB_ORG}
+      DOCKER_INFLUXDB_INIT_BUCKET: ${INFLUXDB_BUCKET}
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN_FILE: /run/secrets/INFLUXDB_TOKEN
+      TZ: ${TZ}
+    secrets:
+      - INFLUXDB_PASSWORD
+      - INFLUXDB_TOKEN
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/influxdb:/var/lib/influxdb2
+      - ./volumes/influxdb-config:/etc/influxdb2
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD", "influx", "ping", "--host", "http://127.0.0.1:8086"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # --------------------------------------------------------
+  # SCRUTINY (web interface and API)
+  # Draws the S.M.A.R.T. history and raises the warnings. It reads nothing from
+  # a disk itself — the collector does that, and the collector is an opt-in
+  # overlay because of what it needs.
+  #
+  # **Scrutiny has no authentication.** `POST /api/settings` changes the
+  # instance's configuration and `DELETE /api/device/:uuid` removes a disk and
+  # its history, both without a credential. The router carries a password for
+  # that reason; see README.
+  # --------------------------------------------------------
+  scrutiny-web:
+    # --- Identity ---
+    image: ghcr.io/analogj/scrutiny:${APP_TAG}
+    container_name: scrutiny-local-web
+    restart: unless-stopped
+    depends_on:
+      scrutiny-influxdb:
+        condition: service_healthy
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    # The image declares root. The web half reads no device and writes only its
+    # configuration directory and the database it talks to over the network.
+    user: "${APP_UID}:${APP_GID}"
+
+    # --- Resources ---
+    # 5 MiB anonymous with one disk registered, measured 2026-09-24. The web
+    # half holds no history; InfluxDB beside it does.
+    memswap_limit: 256m          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          # cpus: derived starting value, not measured — v0.10.0
+          cpus: "0.50"
+          pids: 100
+        reservations:
+          memory: 64m
+
+    # --- Configuration ---
+    # config/entrypoint.sh exports the InfluxDB token from the Docker Secret:
+    # Scrutiny reads its settings through viper and has no _FILE variant, and
+    # without the token it falls back to the one baked into the binary.
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
+    command: ["start"]
+    environment:
+      SCRUTINY_WEB_INFLUXDB_HOST: scrutiny-influxdb
+      SCRUTINY_WEB_INFLUXDB_PORT: "8086"
+      SCRUTINY_WEB_INFLUXDB_ORG: ${INFLUXDB_ORG}
+      SCRUTINY_WEB_INFLUXDB_BUCKET: ${INFLUXDB_BUCKET}
+      TZ: ${TZ}
+    secrets:
+      - INFLUXDB_TOKEN
+
+    # --- Storage ---
+    volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
+      - ./volumes/scrutiny-config:/opt/scrutiny/config
+
+    # --- Networking ---
+    ports:
+      - "127.0.0.1:8080:8080"
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    # curl, not wget: the image carries curl and no wget, and no busybox to
+    # provide one.
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS -o /dev/null http://127.0.0.1:8080/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  app-internal:
+    name: scrutiny-local-internal
+    internal: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  INFLUXDB_PASSWORD:
+    file: ./.secrets/influxdb_password.txt
+  INFLUXDB_TOKEN:
+    file: ./.secrets/influxdb_token.txt
