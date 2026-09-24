@@ -1,0 +1,123 @@
+# HeyForm — local
+#
+#   cp .env.local.example .env.local
+#   ops/init.sh                       # secrets and the data directories
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   open http://localhost:9157        # sign up, then build a form
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+#
+# Registration is open here, which on a loopback port is fine. The production
+# file ships with it closed, because there the same page answers whoever
+# reaches the host name — see README, "Who may create an account".
+#
+# `ops/init.sh` writes a connection URL pointing at the service name
+# `heyform-db`, which is the same in both files, so one run serves both.
+
+services:
+
+  heyform-db:
+    image: mongo:${DB_TAG}
+    container_name: heyform-local-db
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${DB_ROOT_USER}
+      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/DB_ROOT_PWD
+      MONGO_INITDB_DATABASE: ${DB_NAME}
+      TZ: ${TZ}
+    command: ["mongod", "--quiet", "--bind_ip_all"]
+    volumes:
+      - ./.secrets/db_root_pwd.txt:/run/secrets/DB_ROOT_PWD:ro
+      - ./volumes/mongodb:/data/db
+    networks: [heyform-local]
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ping:1}).ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  heyform-cache:
+    image: valkey/valkey:${CACHE_TAG}
+    container_name: heyform-local-cache
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    entrypoint: ["/bin/sh", "/config/cache-entrypoint.sh"]
+    environment:
+      TZ: ${TZ}
+    volumes:
+      - ./config/cache-entrypoint.sh:/config/cache-entrypoint.sh:ro
+      - ./.secrets/cache_pwd.txt:/run/secrets/CACHE_PWD:ro
+    networks: [heyform-local]
+    healthcheck:
+      test: ["CMD-SHELL", "valkey-cli -a \"$$(cat /run/secrets/CACHE_PWD)\" --no-auth-warning ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 5s
+
+  heyform-app:
+    image: heyform/community-edition:${APP_TAG}
+    container_name: heyform-local-app
+    restart: unless-stopped
+    depends_on:
+      heyform-db:
+        condition: service_healthy
+      heyform-cache:
+        condition: service_healthy
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs:
+      - /tmp
+    user: "1000:1000"
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
+    # Compose clears the image's CMD when `entrypoint` is set, so the start
+    # command is repeated here. Upstream's CMD probes three paths for the
+    # built server; v3.0.3 has it at dist/src/main.js.
+    command: ["node", "--enable-source-maps", "./dist/src/main.js"]
+    environment:
+      NODE_ENV: production
+      APP_HOMEPAGE_URL: http://localhost:9157
+      # No proxy in front of it here, so the socket's peer address is the
+      # client and X-Forwarded-For is nobody's to be trusted.
+      TRUST_PROXY: "false"
+      APP_DISABLE_REGISTRATION: "false"
+      ENABLE_GOOGLE_FONTS: ${APP_ENABLE_GOOGLE_FONTS}
+      VERIFY_USER_EMAIL: "false"
+      UPLOAD_FILE_SIZE: ${APP_UPLOAD_FILE_SIZE}
+      SESSION_MAX_AGE: ${APP_SESSION_MAX_AGE}
+      REDIS_HOST: heyform-cache
+      REDIS_PORT: 6379
+      REDIS_DB: 0
+      SMTP_FROM: ${SMTP_FROM}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_SECURE: ${SMTP_SECURE}
+      SMTP_USER: ${SMTP_USER}
+      TZ: ${TZ}
+    volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
+      - ./volumes/upload:/app/packages/server/static/upload
+      - ./.secrets/mongo_uri.txt:/run/secrets/MONGO_URI:ro
+      - ./.secrets/session_key.txt:/run/secrets/SESSION_KEY:ro
+      - ./.secrets/form_encryption_key.txt:/run/secrets/FORM_ENCRYPTION_KEY:ro
+      - ./.secrets/cache_pwd.txt:/run/secrets/CACHE_PWD:ro
+      - ./.secrets/smtp_pwd.txt:/run/secrets/SMTP_PWD:ro
+    ports:
+      - "127.0.0.1:9157:9157"
+    networks: [heyform-local]
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:9157/health/ready"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+      start_period: 60s
+
+networks:
+  heyform-local:
+    name: heyform-local

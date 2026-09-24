@@ -147,6 +147,11 @@ products and are added as a second deliberate exception (`decisions.md`,
       V Suricata+Coraza.
       Batch P put Headscale in `core/`, not the `apps/` this list had: the
       category test asks about capability for the installation.
+      Batch U's condition was tested and not met, so HeyForm was built: v3.0.3
+      runs on `mongo:8.0.32` and `valkey/valkey:8.1.4-alpine` under the full
+      baseline — sign-in, a published form, an anonymous submission stored with
+      its answer, and an upload under `read_only` as uid 1000. Recorded in
+      `../apps/heyform/UPSTREAM.md`.
       Which of them have landed is in [`../CHANGELOG.md`](../CHANGELOG.md).
       Each stack ships `scaffolded` — verified on its image, not yet behind
       Traefik.

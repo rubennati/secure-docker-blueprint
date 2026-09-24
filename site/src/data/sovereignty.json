@@ -159,6 +159,14 @@
     "license_class": "source-available",
     "origin": "Norway · Bjarne Øverli (individual maintainer) · non-EU (EEA, not EU)"
   },
+  "apps/heyform": {
+    "bloc": "non-EU",
+    "country": "United States",
+    "entity": "HeyForm",
+    "license": "AGPL-3.0",
+    "license_class": "osi",
+    "origin": "United States · HeyForm · non-EU"
+  },
   "apps/homarr": {
     "bloc": "EU",
     "country": "Community",

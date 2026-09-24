@@ -1,0 +1,327 @@
+services:
+
+  # --------------------------------------------------------
+  # MONGODB
+  # Forms, their schemas, submissions, users and workspaces. Everything
+  # HeyForm holds is here, except uploaded files.
+  #
+  # Authentication is on. Upstream's compose runs Percona MongoDB 4.4 with no
+  # credentials at all; this is a current MongoDB with a password.
+  # --------------------------------------------------------
+  heyform-db:
+    # --- Identity ---
+    image: mongo:${DB_TAG}
+    container_name: ${CONTAINER_NAME_DB}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # The entrypoint starts as root, fixes ownership on the data directory and
+    # drops to the mongodb user.
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+
+    # --- Resources ---
+    # 110 MiB anonymous plus 207 MiB reclaimable page cache with the 24
+    # collections created and a handful of submissions, measured 2026-09-24.
+    # WiredTiger sizes its cache from the machine it sees rather than from its
+    # cgroup, so the ceiling is where it is told to stop rather than where it
+    # idles — and submissions accumulate into it.
+    memswap_limit: 1g            # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          # cpus: derived starting value, not measured — v0.10.0
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 256m
+
+    # --- Configuration ---
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${DB_ROOT_USER}
+      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/DB_ROOT_PWD
+      MONGO_INITDB_DATABASE: ${DB_NAME}
+      TZ: ${TZ}
+    command: ["mongod", "--quiet", "--bind_ip_all"]
+    secrets:
+      - DB_ROOT_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/mongodb:/data/db
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ping:1}).ok"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  # --------------------------------------------------------
+  # VALKEY
+  # Sessions, e-mail verification codes, sign-in attempt limits and the
+  # per-form submission cooldown. Losing it signs everyone out; it holds
+  # nothing that has to survive a restart, so there is no persistence.
+  #
+  # Upstream's compose runs KeyDB 6.3.3 — last released 2023-10 — with
+  # `--protected-mode no` and no password. This is Valkey with a password.
+  # --------------------------------------------------------
+  heyform-cache:
+    # --- Identity ---
+    image: valkey/valkey:${CACHE_TAG}
+    container_name: ${CONTAINER_NAME_CACHE}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    # No `user:` — the image already runs as uid 999 (`valkey`).
+
+    # --- Resources ---
+    # 3 MiB anonymous, measured 2026-09-24. The four key families are small and
+    # every one of them expires; `maxmemory` in the wrapper is the real ceiling.
+    memswap_limit: 256m          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          # cpus: derived starting value, not measured — v0.10.0
+          cpus: "0.50"
+          pids: 100
+        reservations:
+          memory: 32m
+
+    # --- Configuration ---
+    # config/cache-entrypoint.sh reads the password from the Docker Secret and
+    # starts valkey-server with it, so it is not in this file and not in
+    # `docker inspect`. It is on the server's command line inside the
+    # container, which is what Valkey offers — see the wrapper.
+    entrypoint: ["/bin/sh", "/config/cache-entrypoint.sh"]
+    environment:
+      TZ: ${TZ}
+    secrets:
+      - CACHE_PWD
+
+    # --- Storage ---
+    # No data volume: nothing here has to survive a restart, and `--save ""`
+    # in the wrapper turns snapshotting off so there is nothing to write.
+    volumes:
+      - ./config/cache-entrypoint.sh:/config/cache-entrypoint.sh:ro
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "valkey-cli -a \"$$(cat /run/secrets/CACHE_PWD)\" --no-auth-warning ping | grep -q PONG"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # --------------------------------------------------------
+  # HEYFORM
+  # One container carrying the API, the GraphQL endpoint and the built web
+  # application. Port 9157 serves all of it — including the pages respondents
+  # fill in, which is why publishing this stack is all or nothing; see README.
+  # --------------------------------------------------------
+  heyform-app:
+    # --- Identity ---
+    image: heyform/community-edition:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+    depends_on:
+      heyform-db:
+        condition: service_healthy
+      heyform-cache:
+        condition: service_healthy
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    # The image runs as root and declares no user. Nothing in it needs root:
+    # its entrypoint only decides whether to prepend `node`, and the one path
+    # it writes to is the upload directory, which the volume below hands to
+    # this uid. ops/init.sh creates that directory owned by 1000:1000.
+    user: "1000:1000"
+
+    # --- Resources ---
+    # 150 MiB anonymous plus 7 MiB page cache, 11 processes, with one workspace
+    # and a published form — measured 2026-09-24 on v3.0.3. A Node process that
+    # holds the GraphQL schema in memory; uploads stream to disk rather than
+    # being buffered whole, so a large one does not move this.
+    memswap_limit: 1g            # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          # cpus: derived starting value, not measured — v0.10.0
+          cpus: "2.00"
+          pids: 200
+        reservations:
+          memory: 256m
+
+    # --- Configuration ---
+    # config/entrypoint.sh exports the five credentials from Docker Secrets;
+    # HeyForm reads everything from the environment and has no _FILE variant.
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
+    # Compose clears the image's CMD when `entrypoint` is set, so the start
+    # command is repeated here. Upstream's CMD probes three paths for the
+    # built server; v3.0.3 has it at dist/src/main.js.
+    command: ["node", "--enable-source-maps", "./dist/src/main.js"]
+    environment:
+      NODE_ENV: production
+
+      # The address the instance is reached at. Three things derive from it:
+      # the session cookie's Domain, the allowed CORS origin, and every
+      # absolute link in an outgoing e-mail. Set to anything but the real host
+      # name and sign-in succeeds while the cookie is dropped.
+      APP_HOMEPAGE_URL: https://${APP_TRAEFIK_HOST}
+
+      # Behind Traefik the client address arrives in X-Forwarded-For. Without
+      # this, every request looks like it came from the proxy — which makes
+      # the per-address sign-in limiter count the whole instance as one client.
+      TRUST_PROXY: ${APP_TRUST_PROXY}
+
+      # Closed. Upstream leaves this false, so a reachable instance hands an
+      # account to anyone who asks. Open it deliberately, or invite people
+      # into a workspace and let the invitation carry them through — see
+      # README, "Who may create an account".
+      APP_DISABLE_REGISTRATION: ${APP_DISABLE_REGISTRATION}
+
+      # Upstream defaults this to true, which loads the form editor's fonts
+      # from Google on every page view — for whoever fills in the form as much
+      # as for whoever builds it. Off here; the bundled fonts are used instead.
+      ENABLE_GOOGLE_FONTS: ${APP_ENABLE_GOOGLE_FONTS}
+
+      # Whether a new account has to confirm its e-mail address before it can
+      # sign in. Needs SMTP below to be reachable, so it is off unless you
+      # configure mail.
+      VERIFY_USER_EMAIL: ${APP_VERIFY_USER_EMAIL}
+
+      # Upload ceiling per file, and how long a session lasts.
+      UPLOAD_FILE_SIZE: ${APP_UPLOAD_FILE_SIZE}
+      SESSION_MAX_AGE: ${APP_SESSION_MAX_AGE}
+
+      # --- Database ---
+      # MONGO_URI carries the credentials inline and comes from a secret.
+      # Valkey is addressed by parts; only the password is a secret.
+      REDIS_HOST: heyform-cache
+      REDIS_PORT: 6379
+      REDIS_DB: 0
+
+      # --- Mail ---
+      # Outgoing mail: workspace invitations, password resets, e-mail
+      # verification and the sign-in-from-a-new-device alert. Leave SMTP_HOST
+      # empty and none of them are sent — see README, "Without SMTP".
+      SMTP_FROM: ${SMTP_FROM}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_SECURE: ${SMTP_SECURE}
+      SMTP_USER: ${SMTP_USER}
+
+      TZ: ${TZ}
+    secrets:
+      - MONGO_URI
+      - SESSION_KEY
+      - FORM_ENCRYPTION_KEY
+      - CACHE_PWD
+      - SMTP_PWD
+
+    # --- Storage ---
+    # Uploads only. Everything else the container writes goes to /tmp, and the
+    # rest of the filesystem is read-only.
+    volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
+      - ./volumes/upload:/app/packages/server/static/upload
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+      - app-internal
+
+    # --- Traefik ---
+    labels:
+      # Router
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      # TLS
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      # Uncomment ONLY for per-domain certificates; leave off when a wildcard
+      # certificate already covers this host.
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Middlewares — who may reach it, then what headers apply.
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      # Service
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=9157"
+
+    # --- Health & Observability ---
+    # The image carries busybox wget and no curl. /health answers without
+    # touching MongoDB or Valkey, so it reports the process rather than the
+    # stack; /health/ready is the one that checks both.
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:9157/health/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  DB_ROOT_PWD:
+    file: ./.secrets/db_root_pwd.txt
+  # The whole connection URL, because it carries the user and password inline.
+  MONGO_URI:
+    file: ./.secrets/mongo_uri.txt
+  CACHE_PWD:
+    file: ./.secrets/cache_pwd.txt
+  # Signs the session cookie. Changing it signs everyone out.
+  SESSION_KEY:
+    file: ./.secrets/session_key.txt
+  # Encrypts form-level passwords and the hidden-field payloads in a form URL.
+  # Changing it after forms exist makes those unreadable.
+  FORM_ENCRYPTION_KEY:
+    file: ./.secrets/form_encryption_key.txt
+  # Only instances with SMTP need this. ops/init.sh writes an empty file so
+  # the mount never fails on a stack without mail.
+  SMTP_PWD:
+    file: ./.secrets/smtp_pwd.txt
