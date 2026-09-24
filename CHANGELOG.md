@@ -8,6 +8,10 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
+### Fixed
+
+- **Borgmatic's integration table described a smaller repository than the one it sits in** (`backup/borgmatic/README.md`). Zabbix stood as planned, and ntfy and rclone as "not in this repository", though all three have stacks; MongoDB named two of the four that run it; and the engine counts read "24 · 16 · 13" for PostgreSQL · MySQL · MariaDB against 31 · 3 · 17 measured. The rule the figures follow is now stated beside them — stacks whose compose files name that database image, MariaDB and MySQL apart because borgmatic has a hook for each — with the command to re-measure, so the next reader checks rather than trusts. Both hook names the new rows would have carried were wrong before this and are now taken from upstream's schema: borgmatic reaches Zabbix through the web interface's `/api_jsonrpc.php` endpoint rather than the trapper port, and ntfy's key is `topic`, not `topic_url`.
+
 ## [0.9.3] — 2026-09-24 — Sixteen stacks, and a baseline for capabilities
 
 ### Added
