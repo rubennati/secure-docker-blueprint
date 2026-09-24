@@ -2,7 +2,7 @@
 
 > If this file conflicts with git (branch, commits, tags), trust git.
 
-**Last updated:** 2026-09-22
+**Last updated:** 2026-09-24
 
 - **Phase:** pre-1.0. Latest tag `v0.9.2` (2026-09-22), which is where `main`
   stands; what `dev` carries beyond it is `git rev-list --count v0.9.2..dev`, and
@@ -26,11 +26,16 @@
   Host verification ran on 2026-09-22: `Last verified` for nine, three recorded
   with a limitation; what is left is upstream requests and follow-ups —
   `tasks.md` §6.
-- **Decided 2026-09-22:** the candidates `ROADMAP.md` held are narrowed to
-  open-source products and added in batches H–V, a second recorded exception to the
-  hold ([`decisions.md`](decisions.md)). What was not added and why, and the batch
-  order: [`../docs/audits/candidate-evaluation-2026-09-22.md`](../docs/audits/candidate-evaluation-2026-09-22.md).
-  Progress: `tasks.md` §7.
+- **Also completed (2026-09-24):** the candidate batches H–V, decided on
+  2026-09-22 as a second recorded exception to the hold
+  ([`decisions.md`](decisions.md)). Sixteen stacks landed, one per pull request,
+  each `scaffolded`. Batch V added none: Coraza's condition — a maintained Traefik
+  integration — is not met, and the capability is already here because CrowdSec's
+  AppSec engine is Coraza, so what was missing was documentation; Suricata's two
+  remaining questions need a host that can be flooded without consequence. Both in
+  `decisions.md`, 2026-09-24. What was not added and why:
+  [`../docs/audits/candidate-evaluation-2026-09-22.md`](../docs/audits/candidate-evaluation-2026-09-22.md).
+  Moving the sixteen from `scaffolded` to `baseline-aligned` is S1, `tasks.md` §2.
 - **Current milestone:** v0.10.0 — Measured resource limits. Whether it stays a
   release is open (D4 in the audit): the measurement needs the same host session
   as the verification backlog.
@@ -135,8 +140,8 @@ unchanged — the capability model is a layer above it.
 | Reverse Proxy | Traefik | implemented |
 | Identity & Access | Authentik | implemented, per app |
 | Threat Detection & Remediation | CrowdSec | implemented |
-| Web Application Security | CrowdSec AppSec | implemented, opt-in |
-| Network Security / IDS | — | evaluation candidate |
+| Web Application Security | CrowdSec AppSec, whose engine is Coraza | implemented, opt-in |
+| Network Security / IDS | — | evaluation candidate, deferred 2026-09-24 |
 
 Three states are kept apart: **implemented**, **documented alternative**,
 **evaluation candidate**. Controls follow exposure, not a numbered ladder. An

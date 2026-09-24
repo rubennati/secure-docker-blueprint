@@ -92,6 +92,61 @@ instance.
 
 ---
 
+## The engine is Coraza, and the Core Rule Set is available
+
+CrowdSec's AppSec engine is [Coraza](https://github.com/corazawaf/coraza), the
+open-source successor to ModSecurity. Rules are written in SecLang, the same syntax
+ModSecurity used, which is why `cscli appsec-rules` output looks the way it does and why
+the OWASP Core Rule Set runs here at all.
+
+That answers the question a reader arrives with: **a Coraza WAF with the OWASP Core Rule
+Set does not need a second piece of software.** It is the engine already in this container.
+
+### The Core Rule Set collections
+
+Two hub entries carry CRS, and **neither is installed by this stack**:
+
+| Collection | Behaviour |
+|---|---|
+| `crowdsecurity/crs` | evaluates out of band — matches are logged, requests pass |
+| `crowdsecurity/crs-inband` | blocks the request on a match |
+
+Add either to `CROWDSEC_COLLECTIONS` in `.env` to install it. Start with
+`crowdsecurity/crs`, because CRS at its default paranoia level produces false positives
+against ordinary application traffic — the same caution as in "Enabling AppSec safely"
+below, and more so.
+
+They are left out here for a reason worth checking before you add them: the rule files
+CrowdSec serves identify themselves as `OWASP_CRS/4.0.0-rc1`, a release candidate, while
+the Core Rule Set project's current release is v4.29.0 from 2026-08-17. Verify it yourself
+rather than trusting this line, since it will age:
+
+```bash
+curl -s https://hub-data.crowdsec.net/appsec/crs/REQUEST-901-INITIALIZATION.conf \
+    | grep SecComponentSignature
+# checked 2026-09-24 → SecComponentSignature "OWASP_CRS/4.0.0-rc1"
+```
+
+The two collections this stack does install — `appsec-generic-rules` and
+`appsec-virtual-patching` — are maintained by CrowdSec directly and do not carry that gap.
+
+### Why Coraza is not run in front of Traefik instead
+
+Running Coraza as its own layer ahead of the proxy was considered and not taken:
+
+- The Traefik WASM extension is the only open-source route, and Coraza's own README lists
+  it as "experimental, needs a maintainer". Its newest release, v0.3.0, is from
+  2024-10-29.
+- Traefik's native Coraza integration belongs to Traefik Hub, a commercial product.
+- Two WAFs inline is not an improvement. Each request would be evaluated twice, false
+  positives would come from two rule sets, and a block would have two possible origins to
+  diagnose.
+
+If the Traefik extension finds a maintainer and cuts a current release, the trade changes
+and this section should be revisited.
+
+---
+
 ## Enabling AppSec safely
 
 AppSec is enabled in one place: `crowdsecAppsecEnabled` in the `crowdsec-appsec` middleware

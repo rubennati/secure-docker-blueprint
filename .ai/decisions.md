@@ -6,6 +6,50 @@ this file is the index and covers decisions that have no other home.
 
 ---
 
+## 2026-09-24 · Neither Suricata nor Coraza becomes a stack
+
+The candidate list held two capabilities rather than two applications, each with a
+condition attached. Both conditions were tested, and the answer in each case was a
+stack that should not be built.
+
+**Coraza.** The condition was a maintained Traefik integration. It is not met —
+Coraza's own README lists the WASM extension as "experimental, needs a maintainer",
+its newest release is v0.3.0 from 2024-10-29, and Traefik's native integration is
+part of the commercial Traefik Hub. The more useful finding is that the question was
+already answered: CrowdSec's AppSec engine *is* Coraza, and the OWASP Core Rule Set
+installs as the hub collections `crowdsecurity/crs` and `crowdsecurity/crs-inband`.
+A reader asking for a Coraza WAF with the Core Rule Set needed documentation, not
+software. That gap is closed in `../core/crowdsec/docs/appsec.md`, which also records
+why the CRS collections stay uninstalled by default: the rule files CrowdSec serves
+still identify as `OWASP_CRS/4.0.0-rc1` while the project's current release is
+v4.29.0.
+
+A second WAF inline would also have been a loss rather than a gain — each request
+evaluated twice, false positives from two rule sets, and a block with two possible
+origins to diagnose.
+
+**Suricata.** Two of the four open questions now have answers, and both narrow
+rather than settle the case. Inspecting payloads on a single Docker host means
+capturing the bridges, because the physical interface carries TLS to Traefik — so
+the traffic examined is decrypted user traffic between the proxy and each
+application. And `crowdsecurity/suricata` bans a source on a single severity-1
+alert, which turns a passive IDS into an enforcing one; the alerts reach CrowdSec
+without that scenario or not at all.
+
+The remaining two — the cost under deep packet inspection and the false-positive
+load — need a host that can be flooded and misconfigured without consequence.
+Measuring them on a host carrying live services is not an option, so the stack
+waits rather than shipping on estimates. When it comes it is passive only: an
+inline IPS drops traffic when the engine is down, the failure mode this blueprint
+avoids everywhere else.
+
+**What would change each answer.** For Coraza, a maintained Traefik extension with
+a current release. For Suricata, a disposable host — at which point the two
+measurements are a day's work, and a `HOST_MODE_EXCEPTIONS` entry and a `core/`
+stack follow.
+
+---
+
 ## 2026-09-22 · The held candidates are narrowed to open source and added
 
 `ROADMAP.md` adds no application while the v1.0 items are open, and the exception
