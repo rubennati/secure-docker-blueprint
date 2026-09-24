@@ -822,7 +822,7 @@
   "business/zammad": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "pinned": "APP_TAG=7.1.3-0012",
+    "pinned": "APP_TAG=7.2.0-0004",
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-08-16",
