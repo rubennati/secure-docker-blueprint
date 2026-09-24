@@ -46,7 +46,7 @@ What has been established about each stack — verified against which version an
 
 | App | Approach | Notes |
 |---|---|---|
-| [Langfuse](langfuse/) | Traces, scores and prompts for LLM applications | Six services (web, worker, PostgreSQL, ClickHouse, Redis, MinIO). Fed by an SDK or OpenTelemetry; independent of any model server, gateway or chat application. |
+| [Langfuse](langfuse/) | Traces, scores and prompts for LLM applications | **Does not start as written — MinIO withdrew its public images; see its README.** Six services (web, worker, PostgreSQL, ClickHouse, Redis, MinIO). Fed by an SDK or OpenTelemetry; independent of any model server, gateway or chat application. |
 
 ### Notification receivers
 

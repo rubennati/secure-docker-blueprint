@@ -6,6 +6,26 @@ not depend on, or assume, any model server, gateway or chat application; whateve
 instruments its code to send traces is the client. Upstream:
 [Langfuse](https://github.com/langfuse/langfuse).
 
+> **This stack does not start as written.** MinIO withdrew its public container
+> images: `quay.io/minio/minio` answers `401 Unauthorized`, the Docker Hub
+> repository is gone, and the `minio/minio` source repository was archived on
+> GitHub with its last push on 2026-04-24. The pinned tag cannot be pulled from
+> anywhere public, and `langfuse-web` and `langfuse-worker` wait on it, so the
+> stack stops there.
+>
+> Nothing here is wrong with the configuration — the image it names no longer
+> exists to pull.
+>
+> `cgr.dev/chainguard/minio` is still public and is what Langfuse's own compose
+> file uses, but it publishes `latest` and nothing else: no version tags, and a
+> digest pinned from it is not guaranteed to stay pullable. That makes it a way
+> to get running today, not a pin this repository can ship. A versioned
+> S3-compatible store in its place changes more than a tag and is not done here
+> yet.
+>
+> Until then: supply the image from a registry you control, or treat this stack
+> as unavailable.
+
 ## Architecture
 
 ```text
