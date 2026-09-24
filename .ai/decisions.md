@@ -6,6 +6,49 @@ this file is the index and covers decisions that have no other home.
 
 ---
 
+## 2026-09-24 · `cap_add` and `devices` get exception tables
+
+The candidate evaluation attached one decision to batches N, Q, R and S: where
+monitoring collectors get host access, and whether `cap_add` and `devices` get an
+exception table beside `HOST_MODE_EXCEPTIONS`. The first half was answered in each
+batch. The second was raised three times while those stacks were built and settled
+in none of them, which is why it is recorded separately here.
+
+The gap was real. `check-baseline.py` enforced `privileged`, the Docker socket,
+host networking and the host PID namespace — and nothing about capabilities or
+devices. A service could carry `cap_drop: ALL` beside `SYS_RAWIO` and a read-write
+`/dev/sda` and pass every gate without a word. `monitoring/scrutiny`'s collector
+overlay does exactly that, deliberately and documented in its README, but the
+checker had no opinion either way.
+
+**Three rules now.** `cap_add: ALL` fails outright and has no exception path, for
+the reason `privileged: true` has none: written under a `cap_drop: ALL` it reads as
+hardened and is the opposite. A capability outside `CAP_BASELINE` warns until the
+service is listed in `CAP_ADD_EXCEPTIONS`. Any `devices:` entry warns until the
+service is listed in `DEVICE_EXCEPTIONS`. Both tables carry the same three fields
+as every other exception table.
+
+**`CAP_BASELINE` is six capabilities**, not an arbitrary allow-list. Five of them —
+`CHOWN`, `DAC_OVERRIDE`, `FOWNER`, `SETGID`, `SETUID` — are one pattern: an
+entrypoint that takes ownership of its data directory and drops to its own user.
+They reach no further than the container's own filesystem and namespaces, and they
+appear in over a hundred services here, so warning on them would train the reader
+to ignore the warning. `NET_BIND_SERVICE` is the sixth for a different reason: it
+permits binding a port below 1024 and nothing else, which is narrower than running
+the process as root to reach the same result.
+
+The repository needed five exception entries and no compose change, which is the
+outcome that made the rule worth adding rather than a rule that would have forced
+a rewrite: Collabora's `MKNOD` for its per-document jail, Dify's `SYS_CHROOT` for
+the sandbox that isolates user code, Scrutiny's `SYS_RAWIO` and `/dev/sda`, and
+cAdvisor's read-only `/dev/kmsg`.
+
+`scripts/ci/test_check_baseline.py` covers both rules, including that the
+exception path does not extend to `cap_add: ALL` and that a baseline capability
+does not mask an unlisted one beside it. The checker had no tests before.
+
+---
+
 ## 2026-09-24 · Neither Suricata nor Coraza becomes a stack
 
 The candidate list held two capabilities rather than two applications, each with a
