@@ -2877,5 +2877,44 @@
     "verified": "2026-09-13",
     "verified_version": "2.5.4",
     "version": "2.5.4"
+  },
+  "monitoring/zabbix": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-24",
+        "model": "no paid edition",
+        "source": "https://www.zabbix.com/support",
+        "statement": "no paid edition"
+      },
+      "edition_gating": {
+        "checked": "2026-09-24",
+        "source": "https://www.zabbix.com/support",
+        "statement": "none — one edition, every feature in the open-source build; Zabbix sells support and services rather than features"
+      },
+      "use_restrictions": {
+        "checked": "2026-09-24",
+        "source": "https://www.zabbix.com/license",
+        "statement": "none"
+      }
+    },
+    "decision_facts_checked": "2026-09-24",
+    "domain": "Monitoring",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL"
+      ],
+      "init_services": 0,
+      "services": 3,
+      "summary": "3 services · PostgreSQL"
+    },
+    "name": "Zabbix",
+    "path": "monitoring/zabbix",
+    "role": "Enterprise monitoring — agents, SNMP, IPMI and HTTP checks with triggers, escalation and history",
+    "state": "scaffolded",
+    "upstream": "https://hub.docker.com/r/zabbix/zabbix-server-pgsql",
+    "verified": null,
+    "verified_version": null,
+    "version": "alpine-7.0.31"
   }
 }

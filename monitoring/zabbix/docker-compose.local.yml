@@ -1,0 +1,241 @@
+# Zabbix — local
+#
+#   cp .env.local.example .env.local
+#   ops/init.sh
+#   sudo chown -R 1997:1997 volumes/alertscripts volumes/externalscripts
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   open http://localhost:8080   # Admin / zabbix, then change it
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+#
+# The first start creates the schema and takes a few minutes.
+# trapper.yml works here too and publishes 10051 just the same.
+
+services:
+
+  # --------------------------------------------------------
+  # POSTGRESQL
+  # Everything Zabbix holds: hosts, items, triggers, history, users.
+  #
+  # Pinned to 17 because that is the client the server image ships
+  # (postgresql17-client). A newer major is not what upstream tests this
+  # long-term-support line against.
+  # --------------------------------------------------------
+  zabbix-db:
+    # --- Identity ---
+    image: postgres:${DB_TAG}
+    container_name: zabbix-local-db
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # The official entrypoint starts as root, fixes ownership on the data
+    # directory and then drops to the postgres user.
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+
+    # --- Resources ---
+    # 52 MiB anonymous with the schema created and nothing monitored, measured
+    # 2026-09-24. Zabbix writes history continuously, so this grows with the
+    # number of monitored items rather than with the number of hosts.
+    memswap_limit: 1g            # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          # cpus: derived starting value, not measured — v0.10.0
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 256m
+
+    # --- Configuration ---
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/DB_PWD
+      TZ: ${TZ}
+    secrets:
+      - DB_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/postgres:/var/lib/postgresql/data
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME} -h 127.0.0.1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # --------------------------------------------------------
+  # ZABBIX SERVER
+  # The collector and the rule engine. It reaches out to what it monitors; the
+  # only thing that reaches in is the web interface beside it.
+  #
+  # **Port 10051 is not published.** It is how active agents and zabbix_sender
+  # talk to the server, so a deployment that monitors machines other than this
+  # one needs it — as a deliberate step, through trapper.yml.
+  # --------------------------------------------------------
+  zabbix-server:
+    # --- Identity ---
+    image: zabbix/zabbix-server-pgsql:${APP_TAG}
+    container_name: zabbix-local-server
+    restart: unless-stopped
+    depends_on:
+      zabbix-db:
+        condition: service_healthy
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # No `read_only`: the entrypoint rewrites /etc/zabbix/zabbix_server.conf in
+    # place on every start, and the database password is one of the values it
+    # writes there. See README, "Known limits".
+    # The image already runs as uid 1997.
+
+    # --- Resources ---
+    # 26 MiB anonymous with nothing monitored, measured 2026-09-24. A server
+    # that polls hundreds of items needs more; this ceiling is a starting
+    # point, not a measurement of a real installation.
+    memswap_limit: 1g            # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          # cpus: derived starting value, not measured — v0.10.0
+          cpus: "2.00"
+          pids: 500
+        reservations:
+          memory: 256m
+
+    # --- Configuration ---
+    environment:
+      DB_SERVER_HOST: zabbix-db
+      DB_SERVER_PORT: "5432"
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/DB_PWD
+      # Upstream's default is 1: the server asks zabbix.com whether a newer
+      # release exists and shows the answer in the interface.
+      ZBX_ALLOWSOFTWAREUPDATECHECK: "0"
+      TZ: ${TZ}
+    secrets:
+      - DB_PWD
+
+    # --- Storage ---
+    # Scripts and modules an operator adds. The server keeps no state outside
+    # the database.
+    volumes:
+      - ./volumes/alertscripts:/usr/lib/zabbix/alertscripts
+      - ./volumes/externalscripts:/usr/lib/zabbix/externalscripts
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    # The image ships no HTTP client and the server speaks its own protocol on
+    # 10051. zabbix_get is in the image and asks the server directly.
+    healthcheck:
+      test: ["CMD-SHELL", "zabbix_get -s 127.0.0.1 -p 10051 -k agent.ping >/dev/null 2>&1 || nc -z 127.0.0.1 10051"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # --------------------------------------------------------
+  # ZABBIX WEB INTERFACE
+  # nginx and PHP in one container. The only routed service here.
+  # --------------------------------------------------------
+  zabbix-web:
+    # --- Identity ---
+    image: zabbix/zabbix-web-nginx-pgsql:${APP_TAG}
+    container_name: zabbix-local-web
+    restart: unless-stopped
+    depends_on:
+      zabbix-db:
+        condition: service_healthy
+      zabbix-server:
+        condition: service_healthy
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # No `read_only`: this entrypoint rewrites the nginx and PHP configuration
+    # under /etc on every start, the same as the server's.
+    # The image already runs as uid 1997.
+
+    # --- Resources ---
+    # 30 MiB anonymous idle, measured 2026-09-24. PHP-FPM spawns a worker per
+    # concurrent request.
+    memswap_limit: 512m          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          # cpus: derived starting value, not measured — v0.10.0
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 128m
+
+    # --- Configuration ---
+    environment:
+      DB_SERVER_HOST: zabbix-db
+      DB_SERVER_PORT: "5432"
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/DB_PWD
+      ZBX_SERVER_HOST: zabbix-server
+      ZBX_SERVER_PORT: "10051"
+      # The time zone the interface renders in, separate from the containers'.
+      PHP_TZ: ${TZ}
+      TZ: ${TZ}
+    secrets:
+      - DB_PWD
+
+    # --- Networking ---
+    ports:
+      - "127.0.0.1:8080:8080"
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS -o /dev/null http://127.0.0.1:8080/ping || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  app-internal:
+    name: zabbix-local-internal
+    internal: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  DB_PWD:
+    file: ./.secrets/db_pwd.txt
