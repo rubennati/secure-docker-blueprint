@@ -615,6 +615,14 @@
     "license_class": "osi",
     "origin": "India · OpenSign Inc · non-EU"
   },
+  "business/plane": {
+    "bloc": "non-EU",
+    "country": "US",
+    "entity": "Plane Software, Inc.",
+    "license": "AGPL-3.0",
+    "license_class": "osi",
+    "origin": "US · Plane Software, Inc. · non-EU"
+  },
   "business/plausible": {
     "bloc": "EU",
     "country": "Estonia",
