@@ -199,6 +199,16 @@
     "verified_anchored": false,
     "verified_version": ""
   },
+  "apps/heyform": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=v3.0.3",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "apps/homarr": {
     "backup_docs": "documented",
     "local_stack": "✅",

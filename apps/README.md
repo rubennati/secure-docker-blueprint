@@ -66,6 +66,7 @@ Planned: **DayOtter** (scheduling platform, AGPL-3.0). It publishes no image, so
 
 | App | Stack | Description |
 |---|---|---|
+| [HeyForm](heyform/) | App (NestJS) + MongoDB + Valkey | Form builder with conversational forms; AGPL-3.0. Ships with registration closed — see its README before publishing it |
 | [Monica](monicahq/) | App (Laravel) + MariaDB | Personal CRM for relationships |
 | [NocoDB](nocodb/) | Single container + SQLite | No-code database / spreadsheet UI (Airtable alternative) |
 | [OpnForm](opnform/) | API (Laravel) + UI (Nuxt) + Postgres + Redis | Self-hosted form builder (Typeform alternative) |

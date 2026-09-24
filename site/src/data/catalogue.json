@@ -449,6 +449,46 @@
     "verified_version": null,
     "version": "7.4.8"
   },
+  "apps/heyform": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-24",
+        "model": "free self-hosted",
+        "source": "https://heyform.net/pricing",
+        "statement": "free self-hosted; the paid plans are the hosted service, billed on responses, storage and team size, with a commission on payments collected through a form"
+      },
+      "edition_gating": {
+        "checked": "2026-09-24",
+        "source": "https://heyform.net/pricing",
+        "statement": "none in the self-hosted build — the server carries no plan, quota or licence check; the limits on the pricing page are quotas of the hosted service"
+      },
+      "use_restrictions": {
+        "checked": "2026-09-24",
+        "source": "https://github.com/heyform/heyform/blob/main/LICENSE",
+        "statement": "none"
+      }
+    },
+    "decision_facts_checked": "2026-09-24",
+    "domain": "Publishing, forms and scheduling",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MongoDB",
+        "Valkey"
+      ],
+      "init_services": 0,
+      "services": 3,
+      "summary": "3 services · MongoDB + Valkey"
+    },
+    "name": "HeyForm",
+    "path": "apps/heyform",
+    "role": "Form builder and response collector, with conversational forms, logic, file uploads and submission export",
+    "state": "scaffolded",
+    "upstream": "https://hub.docker.com/r/heyform/community-edition",
+    "verified": null,
+    "verified_version": null,
+    "version": "3.0.3"
+  },
   "apps/homarr": {
     "decision_facts": {},
     "decision_facts_checked": null,

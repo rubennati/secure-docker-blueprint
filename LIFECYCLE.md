@@ -4,7 +4,7 @@
 
 Generated 2026-09-24 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-115 stacks: 1 ops-proven · 34 baseline-aligned · 80 scaffolded. 105 carry a local test stack.
+116 stacks: 1 ops-proven · 34 baseline-aligned · 81 scaffolded. 106 carry a local test stack.
 
 This is the maintainer's view: what has been established about each stack. It makes no statement about whether a stack suits a given deployment.
 
@@ -64,6 +64,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/greenmail`](apps/greenmail/) | `baseline-aligned` | `APP_TAG=2.1.13` | 2026-09-22 | ✅ | documented | missing |
 | [`apps/heimdall`](apps/heimdall/) | `scaffolded` | `APP_TAG=2.8.3` | 2026-05-02 | ✅ | documented | missing |
 | [`apps/hemmelig`](apps/hemmelig/) | `scaffolded` | `APP_TAG=v7.4.8` | — | ✅ | documented | missing |
+| [`apps/heyform`](apps/heyform/) | `scaffolded` | `APP_TAG=v3.0.3` | — | ✅ | documented | missing |
 | [`apps/homarr`](apps/homarr/) | `scaffolded` | `APP_TAG=v1.77.1` | 2026-05-02 | ✅ | documented | missing |
 | [`apps/homepage`](apps/homepage/) | `scaffolded` | `APP_TAG=v2.3.0` | 2026-05-03 | ✅ | documented | missing |
 | [`apps/httpbin`](apps/httpbin/) | `baseline-aligned` | `APP_TAG=0.10.4` | 2026-09-22 | ✅ | documented | missing |
