@@ -146,25 +146,33 @@ Each category README owns what it still plans: [`apps/`](apps/README.md),
 [`business/`](business/README.md), [`monitoring/`](monitoring/README.md),
 [`backup/`](backup/README.md), [`core/`](core/README.md).
 
-Two of them are capabilities rather than applications, and each needs a design
-answer before its stack:
+Two of them were capabilities rather than applications. Both were decided on
+2026-09-24, and neither became a stack:
 
-- **Network IDS — Suricata.** A passive IDS sees packets, flows and protocol
-  anomalies that log-driven detection cannot. On one Docker host the physical
-  interface carries TLS to Traefik; inspecting payloads means capturing the Docker
-  bridges, which carry the plaintext traffic between Traefik and each application.
-  CrowdSec's Suricata collection bans a source on a single severity-1 alert, so the
-  alerts reach CrowdSec without that scenario or not at all. Open: which interfaces,
-  the cost under deep packet inspection, and the false-positive load. Passive
-  only — inline IPS drops traffic when the engine is down, the failure mode this
-  blueprint avoids elsewhere.
-- **Web application firewall — Coraza.** CrowdSec AppSec is the reference
-  implementation; Coraza with the OWASP Core Rule Set is the documented
-  alternative. The open-source Traefik plugin describes itself as experimental and
-  in need of a maintainer, and Traefik's native Coraza integration is part of the
-  commercial Traefik Hub. CrowdSec's AppSec engine is built on Coraza and offers the
-  Core Rule Set as a collection, whose rule files are a 2022 pre-release. Running
-  both inline is not the answer.
+- **Web application firewall — Coraza. Not a stack: the capability is already
+  here.** CrowdSec's AppSec engine *is* Coraza, so a Coraza WAF with the OWASP Core
+  Rule Set needs no second piece of software — the Core Rule Set installs as the hub
+  collections `crowdsecurity/crs` and `crowdsecurity/crs-inband`. The condition this
+  entry set for a separate stack, a maintained Traefik integration, is not met:
+  Coraza's own README lists the WASM extension as "experimental, needs a maintainer"
+  and its newest release is v0.3.0 from 2024-10-29, while Traefik's native
+  integration belongs to the commercial Traefik Hub. What was missing was
+  documentation, not software, and it is now in
+  [`core/crowdsec/docs/appsec.md`](core/crowdsec/docs/appsec.md) — including why the
+  CRS collections are not installed by default, their rule files still identifying as
+  a 4.0.0 release candidate.
+- **Network IDS — Suricata. Not a stack yet: two questions still need a disposable
+  host.** A passive IDS sees packets, flows and protocol anomalies that log-driven
+  detection cannot, and two of the four open questions now have answers. On one
+  Docker host the physical interface carries TLS to Traefik, so inspecting payloads
+  means capturing the Docker bridges — which carry the plaintext traffic between
+  Traefik and each application, cookies and form data included. And
+  `crowdsecurity/suricata` bans a source on a single severity-1 alert, so the alerts
+  reach CrowdSec without that scenario or not at all. The two that remain — the cost
+  under deep packet inspection and the false-positive load — cannot be measured on a
+  host carrying live services, which is what adding the stack would require next.
+  Passive only when it comes: inline IPS drops traffic when the engine is down, the
+  failure mode this blueprint avoids elsewhere.
 
 ---
 

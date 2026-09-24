@@ -139,7 +139,7 @@ products and are added as a second deliberate exception (`decisions.md`,
 2026-09-22). Evidence, what was not added and why, and the batch order:
 [`../docs/audits/candidate-evaluation-2026-09-22.md`](../docs/audits/candidate-evaluation-2026-09-22.md).
 
-- [ ] Batches H–V, each its own pull request, in this order:
+- [x] Batches H–V, each its own pull request, in this order:
       H Gotify+ciao · I Wiki.js+Shlink · J paperless-gpt · K Kopia ·
       L Leantime · M Plausible CE · N Checkmate · O obot · P Headscale ·
       Q Grafana+Prometheus · R Zabbix · S Scrutiny · T Plane ·
@@ -152,9 +152,15 @@ products and are added as a second deliberate exception (`decisions.md`,
       baseline — sign-in, a published form, an anonymous submission stored with
       its answer, and an upload under `read_only` as uid 1000. Recorded in
       `../apps/heyform/UPSTREAM.md`.
-      Which of them have landed is in [`../CHANGELOG.md`](../CHANGELOG.md).
+      Batch V added no stack. Coraza's condition — a maintained Traefik
+      integration — is not met, and the capability is already here, because
+      CrowdSec's AppSec engine is Coraza; what was missing was documentation,
+      now in `../core/crowdsec/docs/appsec.md`. Suricata's two remaining
+      questions need a host that can be flooded without consequence, so it
+      waits. Both in `decisions.md`, 2026-09-24.
+      Which of them landed is in [`../CHANGELOG.md`](../CHANGELOG.md).
       Each stack ships `scaffolded` — verified on its image, not yet behind
-      Traefik.
+      Traefik. Moving them to `baseline-aligned` is S1, above.
 - [ ] Build candidates — Live Helper Chat, DayOtter, Bareos: ask upstream to
       publish an image first; otherwise a fork and an image built here under
       `../docs/standards/custom-application.md`.
