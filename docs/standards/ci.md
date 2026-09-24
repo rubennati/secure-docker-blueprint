@@ -137,9 +137,12 @@ validates every compose file against the rules in
 |---|---|---|
 | **FAIL** | `no-new-privileges` missing | Service lacks `security_opt: [no-new-privileges:true]` |
 | **FAIL** | `privileged: true` | Any service with privileged mode enabled |
+| **FAIL** | `cap_add: ALL` | Undoes `cap_drop: ALL`; no exception path, like `privileged` |
 | **FAIL** | Direct Docker socket mount | `/var/run/docker.sock` mounted outside an exception |
 | **WARN** | `network_mode: host` | Container shares the host network namespace |
 | **WARN** | `pid: host` | Container shares the host PID namespace |
+| **WARN** | Capability outside `CAP_BASELINE` | Anything but the six routine ones — see `security-baseline.md` |
+| **WARN** | `devices:` | A host device handed to a container |
 
 The same job runs `scripts/ci/check-crowdsec-config.py --templates`. It renders
 `core/traefik` into a scratch copy three times — with the shipped `.env.example`,
@@ -174,6 +177,8 @@ Open `scripts/ci/check-baseline.py` and add an entry to the appropriate table:
 | `SOCKET_EXCEPTIONS` | Direct `/var/run/docker.sock` mounts |
 | `NO_NEW_PRIVILEGES_EXCEPTIONS` | Missing `no-new-privileges:true` |
 | `HOST_MODE_EXCEPTIONS` | `network_mode: host` or `pid: host` |
+| `CAP_ADD_EXCEPTIONS` | A capability outside `CAP_BASELINE` |
+| `DEVICE_EXCEPTIONS` | A `devices:` entry |
 
 ### Required fields
 
