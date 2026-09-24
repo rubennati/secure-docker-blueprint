@@ -1,6 +1,6 @@
 # Roadmap
 
-Direction reviewed 2026-09-20.
+Direction reviewed 2026-09-24.
 
 What remains to be built, what blocks it, and what proves it finished. Shipped
 work belongs to [`CHANGELOG.md`](CHANGELOG.md), per-stack status to the generated
@@ -18,10 +18,12 @@ Pre-1.0 tags are set when a natural milestone is reached, not on a fixed cadence
 The single criterion for v1.0 is: **could someone fork this and run it without
 needing my mental model?**
 
-**Latest tag: v0.9.2 — Stabilization and release readiness (2026-09-22).**
-Eighteen stacks verified behind Traefik with TLS on a host, twelve new stacks,
-and an image scan that fails on a CRITICAL finding it has not recorded. What has
-and has not been established per stack is in [`LIFECYCLE.md`](LIFECYCLE.md).
+**Latest tag: v0.9.3 — Sixteen stacks, and a baseline for capabilities
+(2026-09-24).** Each new stack lands `scaffolded`. The security baseline now
+covers capabilities and host devices, which it did not before: `cap_add: ALL`
+is refused, and anything beyond a small routine set needs a written exception.
+What has and has not been established per stack is in
+[`LIFECYCLE.md`](LIFECYCLE.md).
 
 ### v0.10.0 — Measured resource limits
 
@@ -134,14 +136,18 @@ itself stands: this concerns the site only.
 
 ---
 
-## Being added — the held candidates
+## Added — the held candidates
 
-The candidates this file held until 2026-09-22, and two proposed that day, are
-narrowed to open-source products and added in batches, each its own pull request
-and each stack landing `scaffolded`. It is a second deliberate exception to the hold below and changes
-nothing v1.0 requires — reasoning in [`.ai/decisions.md`](.ai/decisions.md),
-evidence and batch order in
+The candidates this file held until 2026-09-22, and two proposed that day, were
+narrowed to open-source products and added by 2026-09-24 — sixteen stacks, each
+landing `scaffolded`. What each one is belongs to
+[`CHANGELOG.md`](CHANGELOG.md). It was a second deliberate exception to the hold
+below and changed nothing v1.0 requires; the reasoning is in
+[`.ai/decisions.md`](.ai/decisions.md) and the evidence for each product in
 [`docs/audits/candidate-evaluation-2026-09-22.md`](docs/audits/candidate-evaluation-2026-09-22.md).
+
+Moving those sixteen from `scaffolded` to `baseline-aligned` is part of the
+verification backlog, not of this section.
 Each category README owns what it still plans: [`apps/`](apps/README.md),
 [`business/`](business/README.md), [`monitoring/`](monitoring/README.md),
 [`backup/`](backup/README.md), [`core/`](core/README.md).
@@ -182,7 +188,7 @@ No application is added while the v1.0 items above are open. Two exceptions were
 made: on 2026-09-21 twelve proposed products that publish a versioned image went in
 as stacks so they can be tried, and on 2026-09-22 the candidates this section held
 were narrowed and are being added — see
-[Being added](#being-added--the-held-candidates). Both change nothing v1.0 requires;
+[Added](#added--the-held-candidates). Both change nothing v1.0 requires;
 reasoning in [`.ai/decisions.md`](.ai/decisions.md), evidence in the two evaluations
 under [`docs/audits/`](docs/audits/).
 

@@ -28,7 +28,7 @@ generated from the repository.
 
 Planned: **Suricata** (network IDS) and **Coraza** (web application firewall), two
 capabilities beside CrowdSec, each with a design question open in
-[`ROADMAP.md`](../ROADMAP.md#being-added--the-held-candidates).
+[`ROADMAP.md`](../ROADMAP.md#added--the-held-candidates).
 
 ### Shared identity
 
