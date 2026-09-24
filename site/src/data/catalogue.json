@@ -2122,7 +2122,7 @@
     "upstream": "https://zammad.org",
     "verified": null,
     "verified_version": null,
-    "version": "7.1.3-0012"
+    "version": "7.2.0-0004"
   },
   "core/acme-certs": {
     "decision_facts": {},

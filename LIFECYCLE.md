@@ -127,7 +127,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`business/solidinvoice`](business/solidinvoice/) | `baseline-aligned` | `APP_TAG=3.0.1` | 2026-09-22 | ✅ | documented | missing |
 | [`business/twenty`](business/twenty/) | `baseline-aligned` | `APP_TAG=v2.41.0` | 2026-09-23 | ✅ | documented | missing |
 | [`business/vikunja`](business/vikunja/) | `scaffolded` | `APP_TAG=2.6.0` | 2026-05-06 | ✅ | documented | missing |
-| [`business/zammad`](business/zammad/) | `scaffolded` | `APP_TAG=7.1.3-0012` | 2026-08-16 ⚠️ | ✅ | documented | missing |
+| [`business/zammad`](business/zammad/) | `scaffolded` | `APP_TAG=7.2.0-0004` | 2026-08-16 ⚠️ | ✅ | documented | missing |
 
 ## `monitoring/`
 

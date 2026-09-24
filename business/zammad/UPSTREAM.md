@@ -12,7 +12,7 @@
 - **Origin:** Germany · Zammad GmbH · EU
 - **Domain:** Business operations
 - **Role:** Helpdesk and ticket system across mail, chat and phone
-- **Based on version:** `7.1.3-0012` (Zammad publishes no clean semver — only `X.Y.Z-NNNN`; pin the
+- **Based on version:** `7.2.0-0004` (Zammad publishes no clean semver — only `X.Y.Z-NNNN`; pin the
   highest build of the target release, not the first)
 - **Last checked:** 2026-08-16
 
