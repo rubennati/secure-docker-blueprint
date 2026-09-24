@@ -202,20 +202,26 @@ Borgmatic's integrations map onto stacks this blueprint already ships. This tabl
 
 | Borgmatic integration | In this repository | How it connects |
 |---|---|---|
-| PostgreSQL · MySQL · MariaDB · SQLite | 24 · 16 · 13 stacks, plus several SQLite | `container:` dump hook, plus that engine's client on the host |
-| MongoDB | `apps/unifi`, `business/opensign` | `container:` dump hook, plus the MongoDB tools on the host |
-| Healthchecks | `monitoring/healthchecks` ✅ | `healthchecks.ping_url` |
-| Uptime Kuma | `monitoring/uptime-kuma` ✅ | `uptime_kuma.push_url` |
-| Zabbix | `monitoring/` — planned | available when that stack lands |
+| PostgreSQL · MySQL · MariaDB · SQLite | 31 · 3 · 17 stacks, plus several SQLite | `container:` dump hook, plus that engine's client on the host |
+| MongoDB | `apps/heyform`, `apps/unifi`, `business/opensign`, `monitoring/checkmate` | `container:` dump hook, plus the MongoDB tools on the host |
+| Healthchecks | `monitoring/healthchecks` | `healthchecks.ping_url` |
+| Uptime Kuma | `monitoring/uptime-kuma` | `uptime_kuma.push_url` |
+| Zabbix | `monitoring/zabbix` | `zabbix.server` — that stack's web interface, the `/api_jsonrpc.php` endpoint, not its trapper port |
+| ntfy | `monitoring/ntfy` | `ntfy.topic`, with `ntfy.server` pointing at that stack |
 | btrfs · ZFS · LVM | host filesystem | borgmatic takes the snapshot itself |
 | systemd | host | the scheduling timer |
-| ntfy · Loki · Apprise · PagerDuty · Pushover · Sentry | not in this repository | external services, all optional |
-| rclone · BorgBase | not in this repository | alternative storage targets |
+| rclone | `backup/rclone-web` administers one | also a storage target for the repository itself |
+| Loki · Apprise · PagerDuty · Pushover · Sentry · BorgBase | not in this repository | external services, all optional |
+
+The three engine figures count the stacks whose compose files name that
+database image — MariaDB and MySQL separately, because borgmatic has a separate
+hook for each. Re-measure with `grep -l 'image:.*mariadb' */*/\*.yml` and its
+two siblings rather than trusting the numbers above.
 
 Two of these change how the layers work:
 
 - **Filesystem snapshots.** Borgmatic can take a btrfs, ZFS or LVM snapshot, back up from the frozen view, and discard it. That removes the "files changed while I was reading them" problem for the Docker volume directory — the one place file-level backup is otherwise weakest. Snapshots still are not backups; here one is used as a consistent *source* for the backup.
-- **MongoDB.** Easy to miss because it is not in the usual list, but two stacks here run it.
+- **MongoDB.** Easy to miss because it is not in the usual list, but four stacks here run it.
 
 ## Databases
 
