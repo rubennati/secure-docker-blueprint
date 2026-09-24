@@ -203,6 +203,20 @@ NO_NEW_PRIVILEGES_EXCEPTIONS: dict[str, dict[str, Exception]] = {
 
 # Services allowed to use network_mode: host or pid: host.
 HOST_MODE_EXCEPTIONS: dict[str, dict[str, Exception]] = {
+    "monitoring/grafana-prometheus": {
+        "node-exporter": {
+            "reason":       "node_exporter reports on the host, and without the host PID namespace it "
+                            "reports on its own: process counts, per-process figures and the load "
+                            "attribution all describe the container instead of the machine.",
+            "alternatives": "None that keep the metric. The exporter is an opt-in overlay rather than "
+                            "part of the stack, so a deployment that does not want this reads no host "
+                            "metrics and loses nothing else.",
+            "risk":         "Accepted and bounded. Every mount is read-only, the exporter writes "
+                            "nothing, and it listens only on the stack's internal network — not on "
+                            "the host. What it can see is what /proc exposes, process names and "
+                            "command lines included, which is why it is a decision and not a default.",
+        },
+    },
     "core/dnsmasq": {
         "dnsmasq": {
             "reason":       "A DNS server must bind to port 53 on the host's physical network "

@@ -1079,6 +1079,16 @@
     "verified_anchored": false,
     "verified_version": ""
   },
+  "monitoring/grafana-prometheus": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=13.2.2",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "monitoring/healthchecks": {
     "backup_docs": "documented",
     "local_stack": "✅",

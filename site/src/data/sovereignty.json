@@ -863,6 +863,14 @@
     "license_class": "osi",
     "origin": "Germany · Gotify community project · EU"
   },
+  "monitoring/grafana-prometheus": {
+    "bloc": "none",
+    "country": "US",
+    "entity": "Grafana Labs (Raintank, Inc.)",
+    "license": "AGPL-3.0 (Grafana) / Apache-2.0 (Prometheus, node_exporter, cAdvisor)",
+    "license_class": "osi",
+    "origin": "US · Grafana Labs (Raintank, Inc.) · non-EU (Prometheus: CNCF, no single jurisdiction)"
+  },
   "monitoring/healthchecks": {
     "bloc": "EU",
     "country": "Latvia",

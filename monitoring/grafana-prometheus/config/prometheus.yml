@@ -1,0 +1,28 @@
+# ---------------------------------------------------------------------------
+# Prometheus — scrape configuration
+#
+# Prometheus is on the internal network with no router and no published port:
+# it has no authentication of its own, and anything that can reach it can read
+# every metric and use its query API. Grafana is what you open.
+#
+# Adding a target means adding a job here and restarting Prometheus. The two
+# overlays beside this stack add theirs the same way.
+# ---------------------------------------------------------------------------
+
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+
+scrape_configs:
+  # Prometheus' own metrics. Present so a fresh install has something to show.
+  - job_name: prometheus
+    static_configs:
+      - targets: ["127.0.0.1:9090"]
+
+  # Every service in this repository that exposes /metrics can be added the
+  # same way, as long as Prometheus can reach it — which means joining this
+  # stack's network or putting the target on one Prometheus is also on.
+  #
+  # - job_name: traefik
+  #   static_configs:
+  #     - targets: ["traefik:8080"]

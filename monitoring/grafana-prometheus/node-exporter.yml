@@ -1,0 +1,71 @@
+# ---------------------------------------------------------------------------
+# node_exporter — host metrics (opt-in)
+#
+#   docker compose -f docker-compose.yml -f node-exporter.yml up -d
+#
+# What it adds: CPU, memory, disk, filesystem and network figures for the host
+# itself, which a container cannot see from inside its own namespaces.
+#
+# What it costs: the host's /proc, /sys and / mounted read-only into a
+# container, and the host PID namespace. That is a read of everything the
+# kernel exposes about the machine — process names and command lines included.
+# Nothing is written, and the exporter listens only on this stack's internal
+# network, not on the host.
+#
+# Remember to add the job to config/prometheus.yml and restart Prometheus:
+#
+#   - job_name: node
+#     static_configs:
+#       - targets: ["node-exporter:9100"]
+# ---------------------------------------------------------------------------
+
+services:
+  node-exporter:
+    image: prom/node-exporter:${NODE_EXPORTER_TAG}
+    container_name: ${CONTAINER_NAME_NODE_EXPORTER}
+    restart: unless-stopped
+
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    # The image runs as `nobody` and needs nothing more: every mount below is
+    # read-only, and the figures it collects are world-readable.
+    user: "65534:65534"
+    # Without this the exporter reports the container's own namespace, which is
+    # not what anyone wants from a host exporter.
+    pid: host
+
+    memswap_limit: 128m          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+          cpus: "0.50"
+          pids: 100
+        reservations:
+          memory: 32m
+
+    command:
+      - --path.procfs=/host/proc
+      - --path.sysfs=/host/sys
+      - --path.rootfs=/host/root
+      # Do not report on the container filesystems Docker creates; they are
+      # noise, and there is one per container.
+      - --collector.filesystem.mount-points-exclude=^/(dev|proc|sys|run/containerd|var/lib/docker/.+)($$|/)
+
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/host/root:ro,rslave
+
+    networks:
+      - app-internal
+
+    healthcheck:
+      test: ["CMD", "/bin/node_exporter", "--version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
