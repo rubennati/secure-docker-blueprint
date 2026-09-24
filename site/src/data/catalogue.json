@@ -1888,6 +1888,49 @@
     "verified_version": null,
     "version": "817654a3f804…"
   },
+  "business/plane": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-09-24",
+        "model": "paid self-hosted edition",
+        "source": "https://plane.so/pricing",
+        "statement": "paid self-hosted edition"
+      },
+      "edition_gating": {
+        "checked": "2026-09-24",
+        "source": "https://plane.so/pricing",
+        "statement": "OIDC and SAML single sign-on are in the paid editions, which are a separate codebase rather than a flag in this one"
+      },
+      "use_restrictions": {
+        "checked": "2026-09-24",
+        "source": "https://github.com/makeplane/plane/blob/master/LICENSE.txt",
+        "statement": "none for the Community Edition"
+      }
+    },
+    "decision_facts_checked": "2026-09-24",
+    "domain": "Business operations",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL",
+        "RabbitMQ",
+        "Redis",
+        "Valkey",
+        "object storage"
+      ],
+      "init_services": 0,
+      "services": 13,
+      "summary": "13 services · PostgreSQL + RabbitMQ + Redis + Valkey + object storage"
+    },
+    "name": "Plane",
+    "path": "business/plane",
+    "role": "Project management — issues, cycles, modules and pages, with a collaborative editor and public project pages",
+    "state": "scaffolded",
+    "upstream": "https://hub.docker.com/u/makeplane",
+    "verified": null,
+    "verified_version": null,
+    "version": "1.4.2"
+  },
   "business/plausible": {
     "decision_facts": {
       "commercial_model": {
