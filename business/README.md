@@ -17,7 +17,7 @@ which version and when, whether a restore was performed — is in
 |---|---|---|
 | [OpenProject CE](openproject/) | Full PM — Gantt, kanban, work packages, time tracking, wikis | 6-service stack; Trello + Jira alternative. CE = local accounts only, no SSO. |
 | [Vikunja](vikunja/) | Task management — kanban, lists, Gantt, table view | 2-service stack; Authentik OIDC, SSO-ready |
-| [Plane](plane/) | Project management — issues, cycles, modules, pages, collaborative editor, public project pages | Thirteen services and about 1.4 GiB at rest; the Jira-alternative shape. The first visitor to `/god-mode` becomes the instance administrator and sign-up is open until they close it. OIDC and SAML are in the paid editions |
+| [Plane](plane/) | Project management — issues, cycles, modules, pages, collaborative editor, public project pages | **Does not start as written — MinIO withdrew its public images; see its README.** Thirteen services and about 1.4 GiB at rest; the Jira-alternative shape. The first visitor to `/god-mode` becomes the instance administrator and sign-up is open until they close it. OIDC and SAML are in the paid editions |
 | [Leantime](leantime/) | Project management for teams without a project manager — projects, milestones, tasks, time tracking, goals | MySQL + one container running nginx, php-fpm and the scheduler. The schema is created from the command line: the web installer hands out ownership to whoever reaches it first. OIDC and LDAP are in the open-source core |
 
 ### Billing & operations

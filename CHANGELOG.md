@@ -8,6 +8,10 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
+### Fixed
+
+- **Two stacks stop at an image that no longer exists** (`business/plane`, `monitoring/langfuse`). MinIO withdrew its public container images: `quay.io/minio/minio` answers `401 Unauthorized`, the Docker Hub repository is gone, and [`minio/minio`](https://github.com/minio/minio) was archived on GitHub with its last push on 2026-04-24 — its final release, `RELEASE.2025-10-15`, is newer than the tag pinned here and equally unavailable. `plane-api` waits on it, and so do `langfuse-web` and `langfuse-worker`, so neither stack starts. `quay.io` itself is fine: `quay.io/prometheus/prometheus` pulls from the same host. Both READMEs now say this before anything else, both category tables carry it, and both `UPSTREAM.md` files record what was checked. `cgr.dev/chainguard/minio` is public and is what Langfuse's own compose file uses, but its public repository carries `latest` and `latest-dev` and no version tags, so it gets an installation running without being something this repository can pin. A versioned S3-compatible store in its place is the fix and changes configuration rather than a tag; it is an open item, not done here.
+
 ## [0.9.3] — 2026-09-24 — Sixteen stacks, and a baseline for capabilities
 
 ### Added

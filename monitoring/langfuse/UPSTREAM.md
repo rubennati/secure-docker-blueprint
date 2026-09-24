@@ -110,6 +110,26 @@ Against the production `docker-compose.yml` (Docker Secrets, `entrypoint.sh`,
   from the configured environment of web, worker, ClickHouse and MinIO; the worker
   and ClickHouse have no route out
 
+## MinIO withdrew its public images (2026-09-24)
+
+`quay.io/minio/minio` answers `401 Unauthorized`, the Docker Hub repository is
+gone, and [`minio/minio`](https://github.com/minio/minio) was archived on GitHub
+with its last push on 2026-04-24. Its final release, `RELEASE.2025-10-15`, is
+newer than the tag pinned here and is equally unavailable.
+
+Checked on 2026-09-24: `quay.io`, Docker Hub, `ghcr.io`, and an older release
+tag — all refused. `quay.io` itself is fine; `quay.io/prometheus/prometheus`
+pulls from the same host.
+
+`cgr.dev/chainguard/minio` is public and is what upstream's own compose file
+uses. Its public repository carries `latest` and `latest-dev` and no version
+tags — the rest of its tag list is signatures and attestations — so a pin taken
+from it is a digest with no promise of staying pullable. It gets an installation
+running; it is not something this repository can pin.
+
+A versioned, S3-compatible replacement — SeaweedFS and Garage both publish one —
+is the real fix, and it changes the configuration rather than a tag.
+
 ## Upgrade checklist
 
 1. Read the release notes: https://github.com/langfuse/langfuse/releases and the

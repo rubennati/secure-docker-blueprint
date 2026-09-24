@@ -161,6 +161,14 @@ products and are added as a second deliberate exception (`decisions.md`,
       Which of them landed is in [`../CHANGELOG.md`](../CHANGELOG.md).
       Each stack ships `scaffolded` — verified on its image, not yet behind
       Traefik. Moving them to `baseline-aligned` is S1, above.
+- [ ] Replace MinIO in `business/plane` and `monitoring/langfuse`. Both stacks
+      stop at it: MinIO withdrew every public image on 2026-09-24 and archived
+      its source repository, so the pinned tag cannot be pulled and the services
+      that depend on it never start. Each README says so. `cgr.dev/chainguard/minio`
+      is public and is what Langfuse's own compose uses, but it ships `latest`
+      only, so it runs an installation without being pinnable. A versioned
+      S3-compatible store — SeaweedFS or Garage — is the fix, and it needs a run
+      against each stack rather than a tag change.
 - [ ] Build candidates — Live Helper Chat, DayOtter, Bareos: ask upstream to
       publish an image first; otherwise a fork and an image built here under
       `../docs/standards/custom-application.md`.
