@@ -26,6 +26,10 @@ generated from the repository.
 | [Traefik](traefik/) | Reverse proxy with socket proxy, 5 security levels, 3 TLS profiles, access policies |
 | [CrowdSec](crowdsec/) | Threat detection engine — log analysis, scenarios, decisions. Enforcement is a separate choice: reverse-proxy or host-firewall remediation |
 
+Planned: **Suricata** (network IDS) and **Coraza** (web application firewall), two
+capabilities beside CrowdSec, each with a design question open in
+[`ROADMAP.md`](../ROADMAP.md#added--the-held-candidates).
+
 ### Shared identity
 
 Pick one. Both are maintained; they solve the same problem differently, and
@@ -43,6 +47,12 @@ Pick one. Both are maintained; they solve the same problem differently, and
 | [dnsmasq](dnsmasq/) | DNS forwarder with wildcard zones for Tailscale / split-DNS setups |
 | [acme-certs](acme-certs/) | Certificate tool (acme.sh) for the devices that never pass through Traefik — NAS, routers, mail servers, firewalls |
 | [step-ca](step-ca/) | Internal PKI — X.509, ACME and optional SSH certificates for machines and services inside this installation. Not for public web TLS; see its README for the split from Traefik/ACME |
+
+### Shared private network
+
+| Service | Description |
+|---|---|
+| [headscale](headscale/) | Control server for Tailscale clients — the node registry, keys and policy of a tailnet you run yourself. `acc-tailscale` means this tailnet where it is deployed. Ships closed on `acc-local`; the embedded relay is an opt-in overlay because it needs a published UDP port |
 
 ### Shared secrets
 

@@ -11,7 +11,7 @@ Hardened configurations for 80+ services — standardized security baseline, Doc
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/rubennati/secure-docker-blueprint/badge)](https://scorecard.dev/viewer/?uri=github.com/rubennati/secure-docker-blueprint)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/13091/badge)](https://www.bestpractices.dev/projects/13091)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v0.9.2-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v0.9.3-blue)](CHANGELOG.md)
 
 **[Architecture](docs/architecture.md) · [Standards](docs/standards/) · [Verified status](LIFECYCLE.md) · [SecDockBlue](https://secdockblue.rubennati.at)**
 
@@ -26,15 +26,15 @@ Quick Navigation: [Getting started](#getting-started) · [Repository layout](#re
 
 ## Stacks
 
-101 stacks in five categories. Each category below links to its full list.
+117 stacks in five categories. Each category below links to its full list.
 
 | Browse | Stacks | Examples |
 |---|---|---|
-| [**`core/`** — proxy, identity, threat detection, secrets, Docker management](core/) | 19 | Traefik · Authentik · Keycloak · CrowdSec · Infisical · dnsmasq · Portainer |
-| [**`apps/`** — general self-hosted applications](apps/) | 55 | Nextcloud · Immich · Paperless-ngx · Vaultwarden · Ollama · Windmill · Ghost · n8n · Mailpit |
-| [**`business/`** — invoicing, project management, helpdesk, analytics, e-signature](business/) | 16 | Invoice Ninja · OpenProject · Vikunja · Zammad · Matomo · Documenso |
-| [**`monitoring/`** — uptime, metrics, notifications](monitoring/) | 8 | Uptime Kuma · Gatus · Beszel · Healthchecks · ntfy · Langfuse |
-| [**`backup/`** — this host outward, your devices inward](backup/) | 3 | Borgmatic · UrBackup |
+| [**`core/`** — proxy, identity, threat detection, secrets, Docker management](core/) | 20 | Traefik · Authentik · Keycloak · CrowdSec · Infisical · dnsmasq · Portainer |
+| [**`apps/`** — general self-hosted applications](apps/) | 60 | Nextcloud · Immich · Paperless-ngx · Vaultwarden · Ollama · Windmill · Ghost · n8n · Mailpit |
+| [**`business/`** — invoicing, project management, helpdesk, analytics, e-signature](business/) | 19 | Invoice Ninja · OpenProject · Vikunja · Zammad · Matomo · Documenso |
+| [**`monitoring/`** — uptime, metrics, notifications](monitoring/) | 14 | Uptime Kuma · Gatus · Beszel · Healthchecks · ntfy · Langfuse |
+| [**`backup/`** — this host outward, your devices inward](backup/) | 4 | Borgmatic · UrBackup |
 
 Where several tools solve the same problem, more than one is included.
 

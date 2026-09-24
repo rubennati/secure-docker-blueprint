@@ -159,6 +159,14 @@
     "license_class": "source-available",
     "origin": "Norway · Bjarne Øverli (individual maintainer) · non-EU (EEA, not EU)"
   },
+  "apps/heyform": {
+    "bloc": "non-EU",
+    "country": "United States",
+    "entity": "HeyForm",
+    "license": "AGPL-3.0",
+    "license_class": "osi",
+    "origin": "United States · HeyForm · non-EU"
+  },
   "apps/homarr": {
     "bloc": "EU",
     "country": "Community",
@@ -263,6 +271,14 @@
     "license_class": "source-available",
     "origin": "US · NocoDB Inc · non-EU"
   },
+  "apps/obot": {
+    "bloc": "non-EU",
+    "country": "US",
+    "entity": "Obot AI, Inc",
+    "license": "MIT",
+    "license_class": "osi",
+    "origin": "US · Obot AI, Inc · non-EU"
+  },
   "apps/ollama": {
     "bloc": "non-EU",
     "country": "United States",
@@ -302,6 +318,14 @@
     "license": "AGPL-3.0",
     "license_class": "osi",
     "origin": "France · Julien Nahum · EU"
+  },
+  "apps/paperless-gpt": {
+    "bloc": "none",
+    "country": "No country stated",
+    "entity": "icereed",
+    "license": "MIT",
+    "license_class": "osi",
+    "origin": "No country stated · icereed · no country"
   },
   "apps/paperless-ngx": {
     "bloc": "none",
@@ -359,6 +383,14 @@
     "license_class": "proprietary",
     "origin": "China · Seafile Ltd · non-EU"
   },
+  "apps/shlink": {
+    "bloc": "EU",
+    "country": "Spain",
+    "entity": "Alejandro Celaya",
+    "license": "MIT",
+    "license_class": "osi",
+    "origin": "Spain · Alejandro Celaya · EU"
+  },
   "apps/threat-dragon": {
     "bloc": "non-EU",
     "country": "United States",
@@ -415,6 +447,14 @@
     "license_class": "osi",
     "origin": "France · Traefik Labs · EU"
   },
+  "apps/wikijs": {
+    "bloc": "non-EU",
+    "country": "Canada",
+    "entity": "Requarks",
+    "license": "AGPL-3.0",
+    "license_class": "osi",
+    "origin": "Canada · Requarks · non-EU"
+  },
   "apps/windmill": {
     "bloc": "none",
     "country": "Windmill Labs",
@@ -446,6 +486,14 @@
     "license": "GPL-3.0-or-later",
     "license_class": "osi",
     "origin": "Community · borgmatic-collective (Dan Helfman) · no single jurisdiction"
+  },
+  "backup/kopia": {
+    "bloc": "none",
+    "country": "No country stated",
+    "entity": "Kopia community project",
+    "license": "Apache-2.0",
+    "license_class": "osi",
+    "origin": "No country stated · Kopia community project · no country"
   },
   "backup/rclone-web": {
     "bloc": "non-EU",
@@ -527,6 +575,14 @@
     "license_class": "osi",
     "origin": "Germany · Kevin Papst · EU"
   },
+  "business/leantime": {
+    "bloc": "non-EU",
+    "country": "US",
+    "entity": "Leantime, Inc.",
+    "license": "AGPL-3.0",
+    "license_class": "osi",
+    "origin": "US · Leantime, Inc. · non-EU"
+  },
   "business/listmonk": {
     "bloc": "non-EU",
     "country": "India",
@@ -558,6 +614,22 @@
     "license": "AGPL-3.0",
     "license_class": "osi",
     "origin": "India · OpenSign Inc · non-EU"
+  },
+  "business/plane": {
+    "bloc": "non-EU",
+    "country": "US",
+    "entity": "Plane Software, Inc.",
+    "license": "AGPL-3.0",
+    "license_class": "osi",
+    "origin": "US · Plane Software, Inc. · non-EU"
+  },
+  "business/plausible": {
+    "bloc": "EU",
+    "country": "Estonia",
+    "entity": "Plausible Insights OÜ",
+    "license": "AGPL-3.0 (application) / MIT (the JavaScript tracker, deliberately, so a website that embeds it is not pulled into the AGPL)",
+    "license_class": "osi",
+    "origin": "Estonia · Plausible Insights OÜ · EU"
   },
   "business/solidinvoice": {
     "bloc": "none",
@@ -638,6 +710,14 @@
     "license": "MIT",
     "license_class": "osi",
     "origin": "Finsys · **no country or legal entity stated** — no imprint on fnsys.pro"
+  },
+  "core/headscale": {
+    "bloc": "none",
+    "country": "Community",
+    "entity": "juanfont, Kristoffer Dalby and contributors",
+    "license": "BSD-3-Clause",
+    "license_class": "osi",
+    "origin": "Community · juanfont, Kristoffer Dalby and contributors · no single jurisdiction"
   },
   "core/host-watchdog": {
     "bloc": "none",
@@ -767,6 +847,22 @@
     "license_class": "osi",
     "origin": "Australia · dgtlmoon · non-EU"
   },
+  "monitoring/checkmate": {
+    "bloc": "non-EU",
+    "country": "Canada",
+    "entity": "BlueWave Labs",
+    "license": "AGPL-3.0",
+    "license_class": "osi",
+    "origin": "Canada · BlueWave Labs · non-EU"
+  },
+  "monitoring/ciao": {
+    "bloc": "none",
+    "country": "Brot & Games",
+    "entity": "no country stated",
+    "license": "MIT",
+    "license_class": "osi",
+    "origin": "Brot & Games · no country stated · no country"
+  },
   "monitoring/gatus": {
     "bloc": "non-EU",
     "country": "Canada",
@@ -774,6 +870,22 @@
     "license": "Apache-2.0",
     "license_class": "osi",
     "origin": "Canada · TwinProduction · non-EU"
+  },
+  "monitoring/gotify": {
+    "bloc": "EU",
+    "country": "Germany",
+    "entity": "Gotify community project",
+    "license": "MIT (the logo is CC BY 4.0, stated in the same file)",
+    "license_class": "osi",
+    "origin": "Germany · Gotify community project · EU"
+  },
+  "monitoring/grafana-prometheus": {
+    "bloc": "none",
+    "country": "US",
+    "entity": "Grafana Labs (Raintank, Inc.)",
+    "license": "AGPL-3.0 (Grafana) / Apache-2.0 (Prometheus, node_exporter, cAdvisor)",
+    "license_class": "osi",
+    "origin": "US · Grafana Labs (Raintank, Inc.) · non-EU (Prometheus: CNCF, no single jurisdiction)"
   },
   "monitoring/healthchecks": {
     "bloc": "EU",
@@ -799,6 +911,14 @@
     "license_class": "mixed",
     "origin": "Germany · Philipp Heckel · EU"
   },
+  "monitoring/scrutiny": {
+    "bloc": "none",
+    "country": "Community",
+    "entity": "Jason Kulatunga (AnalogJ)",
+    "license": "MIT",
+    "license_class": "osi",
+    "origin": "Community · Jason Kulatunga (AnalogJ) · no single jurisdiction"
+  },
   "monitoring/uptime-kuma": {
     "bloc": "non-EU",
     "country": "Hong Kong",
@@ -806,5 +926,13 @@
     "license": "MIT",
     "license_class": "osi",
     "origin": "Hong Kong · Louis Lam · non-EU"
+  },
+  "monitoring/zabbix": {
+    "bloc": "EU",
+    "country": "Latvia",
+    "entity": "Zabbix, Riga — the project's own record adds Tokyo and New York; the site's copyright line reads \"Zabbix LLC\"",
+    "license": "AGPL-3.0",
+    "license_class": "osi",
+    "origin": "Latvia · Zabbix, Riga — the project's own record adds Tokyo and New York; the site's copyright line reads \"Zabbix LLC\" · EU"
   }
 }

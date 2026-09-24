@@ -41,7 +41,7 @@
 ## Version / tag notes
 
 - `seafileltd/seafile-mc:13.0.20` — pinned; main server is the most sensitive to schema migrations
-- `sdoc-server:2.0-latest`, `notification-server:13.0-latest`, `md-server:13.0-latest`, `thumbnail-server:13.0-latest` — Seafile ships these with moving `:latest` tags inside a major line. For production, pin to the digest shown by `docker compose images`.
+- `sdoc-server:2.0.9`, `notification-server:13.0.10`, `md-server:13.0.20`, `thumbnail-server:13.0.20` — pinned to exact releases; upstream's compose files use moving `-latest` tags inside a major line.
 
 ## Upgrade checklist
 

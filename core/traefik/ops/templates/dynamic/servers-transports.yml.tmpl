@@ -1,0 +1,35 @@
+http:
+  serversTransports:
+
+    # ==========================================================
+    # SERVERS TRANSPORTS
+    # ==========================================================
+    # A serversTransport changes how Traefik connects to the service behind
+    # it — not how a client connects to Traefik. Nothing here has any effect
+    # until a service names one:
+    #
+    #   traefik.http.services.<name>.loadbalancer.serverstransport=backend-selfsigned@file
+    #   traefik.http.services.<name>.loadbalancer.server.scheme=https
+    #
+    # Traefik reads serversTransports from the file provider only. The
+    # equivalent Docker labels are ignored: a service that names
+    # `<name>@docker` fails with "servers transport not found" and its router
+    # serves nothing. Measured against Traefik v3.7 on 2026-09-23.
+    # ==========================================================
+
+    # ----------------------------------------------------------
+    # backend-selfsigned — the backend terminates TLS itself
+    # ----------------------------------------------------------
+    # For a service that cannot be reached over plain HTTP. `backup/kopia` is
+    # the case this exists for: its clients speak gRPC, which needs HTTP/2 with
+    # TLS the whole way, so the container serves its own certificate — issued
+    # by nobody, and therefore not verifiable.
+    #
+    # What this does and does not cost: the hop from Traefik to the container
+    # stays encrypted, and it runs on this host's Docker network, which no
+    # other host reaches. What is given up is the assurance that the container
+    # answering is the one the certificate was issued for. Use it for a service
+    # on this host's own network, never for a backend reached across a network
+    # somebody else can route.
+    backend-selfsigned:
+      insecureSkipVerify: true

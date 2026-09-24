@@ -33,6 +33,8 @@ structure every stack in this repository follows.
 | [Ghost](ghost/) | App + MySQL | Blog / CMS with SMTP + optional ActivityPub (Fediverse) |
 | [WordPress](wordpress/) | App + MariaDB | Classic CMS, hardened (mu-plugin + test-script) |
 | [BookStack](bookstack/) | App (LSIO) + MariaDB | Wiki / knowledge base (Laravel) |
+| [Wiki.js](wikijs/) | App (Node) + Postgres | Wiki with Markdown and visual editors, per-page permissions, about twenty authentication modules. The 2.5 line takes security fixes while 3.0 is in beta; the setup wizard is open until it has run once |
+| [Shlink](shlink/) | Server + Postgres + optional web client | URL shortener on your own domain with visit statistics and a REST API. No accounts — API keys. Three routers: the redirects, `/rest`, and the browser interface |
 
 ### Photo galleries
 
@@ -58,12 +60,13 @@ Five 1:1-booking apps.
 | [Easy!Appointments](easyappointments/) | PHP + MariaDB | Lightweight PHP alternative, established 2013, GPL-3.0. |
 | [Tymeslot](tymeslot/) | Elixir/Phoenix + Postgres | Calendar sync with Google, Outlook, Apple and CalDAV, video links, reminder mail; AGPL-3.0, releases several times a week. |
 
-Planned: **Rallly** (group scheduling polls — Doodle alternative, complementary not competing with the 1:1 bookers above).
+Planned: **DayOtter** (scheduling platform, AGPL-3.0). It publishes no image, so it waits for upstream to publish one or for one built here — see [`../docs/audits/candidate-evaluation-2026-09-22.md`](../docs/audits/candidate-evaluation-2026-09-22.md#decided-on-2026-09-22).
 
 ### Productivity & personal
 
 | App | Stack | Description |
 |---|---|---|
+| [HeyForm](heyform/) | App (NestJS) + MongoDB + Valkey | Form builder with conversational forms; AGPL-3.0. Ships with registration closed — see its README before publishing it |
 | [Monica](monicahq/) | App (Laravel) + MariaDB | Personal CRM for relationships |
 | [NocoDB](nocodb/) | Single container + SQLite | No-code database / spreadsheet UI (Airtable alternative) |
 | [OpnForm](opnform/) | API (Laravel) + UI (Nuxt) + Postgres + Redis | Self-hosted form builder (Typeform alternative) |
@@ -106,7 +109,10 @@ identity or a CI credential store), and Vaultwarden and Infisical do not do
 theirs — see [Choosing between the secret-sharing apps](#choosing-between-the-secret-sharing-apps)
 for what actually separates the three from each other.
 
-Planned (apps/): Headscale (self-hosted Tailscale control server), SnapPass.
+Headscale, once planned here, went to [`core/headscale`](../core/headscale/)
+instead: it provides a shared network capability for the installation rather
+than for users of its own, which is what the category test in
+[`docs/architecture.md`](../docs/architecture.md) asks.
 
 #### Choosing between the secret-sharing apps
 
@@ -171,7 +177,12 @@ here" for why that category stays out of this blueprint entirely.
 
 | App | Stack | Description |
 |---|---|---|
-| [Docling Serve](docling-serve/) | Single container | Document understanding as an API — layout, structure, tables and Markdown/JSON export, aimed at RAG and other AI pipelines. Standalone; no other stack calls it |
+| [Docling Serve](docling-serve/) | Single container | Document understanding as an API — layout, structure, tables and Markdown/JSON export, aimed at RAG and other AI pipelines. `apps/paperless-gpt` can use it as its OCR backend |
+| [paperless-gpt](paperless-gpt/) | Single container | Titles, tags, correspondents and OCR for Paperless-ngx through a language model — Ollama, any OpenAI-compatible endpoint, or Docling Serve for OCR. It has no authentication of its own, so its router carries an access policy and a basic-auth middleware |
+
+Held: **paperless-ai** — its README states that the repository is not maintained, and
+it is revisited once the announced rewrite is released. See
+[`../docs/audits/candidate-evaluation-2026-09-22.md`](../docs/audits/candidate-evaluation-2026-09-22.md#decided-on-2026-09-22).
 
 ### Networking
 
@@ -190,11 +201,7 @@ here" for why that category stays out of this blueprint entirely.
 | [agentgateway](agentgateway/) | Single container | LLM and MCP gateway — API-key-protected `/v1` and `/mcp` on one port, web UI behind basic auth. Distroless, no healthcheck |
 | [Dify](dify/) | 10 services | LLM application platform — chat and workflow apps, knowledge bases on pgvector, plugin-based model providers, sandboxed code nodes. Setup password guards the first account; agent runtime and `/e/` webhooks not carried |
 | [vLLM](vllm/) | Single container | High-throughput OpenAI-compatible model serving on an NVIDIA GPU. `--api-key` covers `/v1` only, so the route forwards `/v1/` and nothing else. CUDA image not yet run on a GPU |
-
-Held after evaluation: **obot** (MCP gateway and agent platform). It runs the MCP
-servers it hosts as containers and does not start without the Docker API; creating
-those containers takes write access, which is root-equivalent on the host. See
-[`../docs/audits/candidate-evaluation-2026-09-21.md`](../docs/audits/candidate-evaluation-2026-09-21.md).
+| [obot](obot/) | 3 services | MCP gateway and agent platform — catalogues MCP servers and runs the hosted ones as containers on this host. **That access is root-equivalent**, narrowed by a socket proxy and stated rather than mitigated away; authentication is off in upstream's default and switched on here |
 
 ### Developer & admin tools
 
@@ -210,7 +217,7 @@ those containers takes write access, which is root-equivalent on the host. See
 
 Docker-management tools (Dockhand / Portainer / Hawser) are in [`core/`](../core/): they control Docker itself, which is an installation-scoped capability. Whoami sits here instead — it is a routed diagnostic that serves no other stack.
 
-Planned (apps/): Wiki.js, Outline, Formbricks, HeyForm, Shlink.
+Planned (apps/): HeyForm.
 
 ## Related
 

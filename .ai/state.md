@@ -2,9 +2,9 @@
 
 > If this file conflicts with git (branch, commits, tags), trust git.
 
-**Last updated:** 2026-09-22
+**Last updated:** 2026-09-24
 
-- **Phase:** pre-1.0. Latest tag `v0.9.2` (2026-09-22), which is where `main`
+- **Phase:** pre-1.0. Latest tag `v0.9.3` (2026-09-24), which is where `main`
   stands; what `dev` carries beyond it is `git rev-list --count v0.9.2..dev`, and
   it is not repeated here. Work happens on a
   short-lived branch and reaches `dev` through a pull request; `dev` reaches
@@ -26,6 +26,16 @@
   Host verification ran on 2026-09-22: `Last verified` for nine, three recorded
   with a limitation; what is left is upstream requests and follow-ups —
   `tasks.md` §6.
+- **Also completed (2026-09-24):** the candidate batches H–V, decided on
+  2026-09-22 as a second recorded exception to the hold
+  ([`decisions.md`](decisions.md)). Sixteen stacks landed, one per pull request,
+  each `scaffolded`. Batch V added none: Coraza's condition — a maintained Traefik
+  integration — is not met, and the capability is already here because CrowdSec's
+  AppSec engine is Coraza, so what was missing was documentation; Suricata's two
+  remaining questions need a host that can be flooded without consequence. Both in
+  `decisions.md`, 2026-09-24. What was not added and why:
+  [`../docs/audits/candidate-evaluation-2026-09-22.md`](../docs/audits/candidate-evaluation-2026-09-22.md).
+  Moving the sixteen from `scaffolded` to `baseline-aligned` is S1, `tasks.md` §2.
 - **Current milestone:** v0.10.0 — Measured resource limits. Whether it stays a
   release is open (D4 in the audit): the measurement needs the same host session
   as the verification backlog.
@@ -130,8 +140,8 @@ unchanged — the capability model is a layer above it.
 | Reverse Proxy | Traefik | implemented |
 | Identity & Access | Authentik | implemented, per app |
 | Threat Detection & Remediation | CrowdSec | implemented |
-| Web Application Security | CrowdSec AppSec | implemented, opt-in |
-| Network Security / IDS | — | evaluation candidate |
+| Web Application Security | CrowdSec AppSec, whose engine is Coraza | implemented, opt-in |
+| Network Security / IDS | — | evaluation candidate, deferred 2026-09-24 |
 
 Three states are kept apart: **implemented**, **documented alternative**,
 **evaluation candidate**. Controls follow exposure, not a numbered ladder. An
@@ -182,8 +192,9 @@ documents no way to retire one.
 current reference implementation, and no maintained second implementation justifies
 a migration. A future architectural consideration, not debt.
 
-Suricata and Coraza are evaluation entries in [`../ROADMAP.md`](../ROADMAP.md) →
-"Evaluating"; neither is implemented. SIEM/XDR/SOC platforms are out of scope there.
+Suricata and Coraza are being added, as the last batch of the 2026-09-22 candidates;
+each has a design question open in [`../ROADMAP.md`](../ROADMAP.md) → "Being
+added". Neither is implemented. SIEM/XDR/SOC platforms are out of scope there.
 
 ## Mission scope — established 2026-09
 
@@ -323,15 +334,26 @@ both chains, as Windmill; the other interfaces stayed under `sec-2`
 interface 54).
 → *Decided 2026-09-22:* no stack drops to `sec-1` to get past a limit. The
 measurements go into the review below.
+→ *2026-09-23:* the questions behind this — what the proxy owns, what its limits
+are measured against, where the client address comes from with a CDN proxy in
+front, and what threat enforcement already covers — are collected in
+[`../docs/audits/reverse-proxy-limits-2026-09-23.md`](../docs/audits/reverse-proxy-limits-2026-09-23.md).
+→ *2026-09-23:* `rl-spa-xl` (average 100, burst 1000) and `sec-2-spa-xl` exist for
+the two interfaces whose first load does not fit 200. The bucket holds one whole
+first load; `check-structure.py` fails an `-xl` chain outside `acc-private` or
+`acc-tailscale`. Measured 2026-09-23 behind Traefik with TLS with the shipped
+`acc-tailscale`: Twenty's interface (412 requests) and Windmill's (about 850)
+load under `sec-2-spa-xl` without a single `429`, five loads each. Both ship the
+chain now; no other stack uses it.
 
 **Traefik labels and middlewares are reviewed as a whole before v1.0.0** — see
-[`../ROADMAP.md`](../ROADMAP.md). They grew stack by stack; 89 stacks route
-through Traefik, 84 of them take their chain from `.env`. After v1.0.0 a renamed
+[`../ROADMAP.md`](../ROADMAP.md). They grew stack by stack; 106 stacks route
+through Traefik, 101 of them take their chain from `.env`. After v1.0.0 a renamed
 middleware disables the router of every deployment that names it. Open, besides
 the two points above:
 
 - **Names.** Twelve chains put headers, framing and rate limit into one name.
-  38 stacks default to `sec-2` and 35 to `sec-3`; `sec-0` and `sec-1e` are used
+  48 stacks default to `sec-2` and 35 to `sec-3`; `sec-0` and `sec-1e` are used
   by none. `e` reads as "embeddable" and permits only the application's own
   origin. `spa` names a kind of application rather than what the chain changes, a
   burst of 200 — the chain file calls the `-spa` chains VPN-only, the block they
@@ -342,7 +364,7 @@ the two points above:
   without errors and stay responsive under a working day's load, and whether
   presets or per-application settings answer that. Every rate-limit figure above
   is a first page load; no stack has a measurement under sustained use.
-- **CrowdSec.** 45 of those 84 stacks have no `APP_TRAEFIK_THREAT` slot, so a
+- **CrowdSec.** 43 of those 101 stacks have no `APP_TRAEFIK_THREAT` slot, so a
   bouncer middleware cannot be attached from `.env`. The profile ladder is in
   [`../core/crowdsec/docs/profiles.md`](../core/crowdsec/docs/profiles.md).
 - **Authentik.** Forward auth exists only as a commented-out block in

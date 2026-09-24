@@ -66,6 +66,7 @@ ops/
       routers-system.yml.tmpl         # Dashboard router
       redirects.yml.tmpl              # Redirects (empty by default)
       acme-wildcard.yml.tmpl          # Wildcard cert router (optional)
+      servers-transports.yml.tmpl     # How Traefik reaches a backend that serves its own TLS
   scripts/
     validate.sh                       # Check .env + rendered config
     render.sh                         # envsubst all .tmpl files -> config/
@@ -151,6 +152,7 @@ Each level builds on the previous one. `e` = `SAMEORIGIN` instead of `DENY`: the
 | **`sec-2`** | **+ soft rate limit** | **Standard for most apps** (recommended default) |
 | `sec-2e` | Like sec-2, iframe-friendly | OnlyOffice, editors embedded in other apps |
 | `sec-2-spa` | sec-1 + SPA rate limit | VPN-only SPA, basic headers |
+| `sec-2-spa-xl` | sec-1 + whole-first-load rate limit | VPN-only SPA whose first load exceeds 200 requests |
 | `sec-3` | + strict headers + permissions-policy | Public-facing apps, hardened |
 | `sec-3e` | Like sec-3, iframe-friendly | Vaultwarden, apps needing SAMEORIGIN |
 | `sec-3-spa` | sec-3 + SPA rate limit instead of soft | VPN-only SPA, hardened — e.g. Dockhand, n8n, NocoDB |
@@ -199,6 +201,7 @@ Available building blocks (defined in `security-blocks.yml`):
 | `rl-soft` | 100 avg / 50 burst |
 | `rl-hard` | 20 avg / 40 burst |
 | `rl-spa` | High burst allowance for SPA initial load |
+| `rl-spa-xl` | 100 avg / 1000 burst — one whole first load, VPN-only (CI-enforced) |
 | `compress` | gzip compression |
 | `permissions-policy` | Blocks camera, mic, geolocation, payment, USB, gyroscope |
 | `csp-enforce` | Enforcing CSP (may break apps with external scripts) |

@@ -8,11 +8,14 @@ against the mandatory rules defined in docs/standards/security-baseline.md.
 Rules enforced (FAIL = blocks CI):
   FAIL  no-new-privileges:true must be in security_opt of every service
   FAIL  privileged: true is forbidden
+  FAIL  cap_add: ALL is forbidden — it undoes cap_drop: ALL entirely
   FAIL  direct /var/run/docker.sock mount on non-proxy services
 
 Informational (WARN = reported, does not block CI):
   WARN  network_mode: host
   WARN  pid: host
+  WARN  a capability outside CAP_BASELINE
+  WARN  devices: — a host device handed to a container
 
 ──────────────────────────────────────────────────────────────────────────────
 DOCUMENTED EXCEPTIONS
@@ -82,6 +85,23 @@ SOCKET_EXCEPTIONS: dict[str, dict[str, Exception]] = {
                             "The socket is bound :ro against the file being replaced; the API surface is limited by the proxy's allow-list, not by the mount.",
             "risk":         "Accepted and by design. Dockhand is constrained to the filtered API "
                             "surface exposed by this proxy.",
+        },
+    },
+    "apps/obot": {
+        "obot-socket-proxy": {
+            "reason":       "This service IS the socket proxy for the obot stack — it exposes a "
+                            "filtered Docker API to obot, which runs each MCP server it hosts as a "
+                            "container and does not start without a runtime backend.",
+            "alternatives": "There is no upstream proxy to route through; this is the proxy layer. "
+                            "The socket is bound :ro against the file being replaced; the API "
+                            "surface is limited by the proxy's allow-list, not by the mount. A "
+                            "read-only allow-list was evaluated and does not work: obot calls "
+                            "ContainerCreate, ContainerRemove, ImagePull and VolumeCreate.",
+            "risk":         "Accepted and stated, not mitigated away. The allow-list denies exec, "
+                            "swarm, configs and secrets, but creating a container is enough to take "
+                            "the host — apps/obot/README.md says so in its own section, and the "
+                            "router ships acc-tailscale. Upstream issue 7978 asks for a start "
+                            "without a runtime backend, which would remove the need entirely.",
         },
     },
     "core/hawser": {
@@ -184,8 +204,114 @@ NO_NEW_PRIVILEGES_EXCEPTIONS: dict[str, dict[str, Exception]] = {
     },
 }
 
+# Capabilities that need no exception. Every one of them is part of the same
+# pattern: an image whose entrypoint starts as root, takes ownership of its data
+# directory and then drops to its own user. They grant nothing that reaches past
+# the container's own filesystem and namespaces.
+#
+# NET_BIND_SERVICE is here for a different reason — it permits binding a port
+# below 1024 and nothing else, which is narrower than running the process as
+# root to achieve the same thing.
+CAP_BASELINE: frozenset[str] = frozenset({
+    "CHOWN",
+    "DAC_OVERRIDE",
+    "FOWNER",
+    "SETGID",
+    "SETUID",
+    "NET_BIND_SERVICE",
+})
+
+# Services allowed a capability outside CAP_BASELINE.
+CAP_ADD_EXCEPTIONS: dict[str, dict[str, Exception]] = {
+    "apps/collabora": {
+        "collabora-app": {
+            "reason":       "Collabora builds a per-document LibreOffice jail and calls mknod for it. "
+                            "Without MKNOD the jail is not created and no document opens.",
+            "alternatives": "None that keep the jail, which is the isolation between one document's "
+                            "rendering and the next. Upstream's own compose grants the same capability.",
+            "risk":         "Accepted and narrow. MKNOD permits creating device nodes inside the "
+                            "container's own filesystem; it grants no access to a host device, which "
+                            "would need a devices: entry as well.",
+        },
+        "app": {
+            "reason":       "The local compose file runs the same image for the same reason — see "
+                            "collabora-app above.",
+            "alternatives": "Same as collabora-app.",
+            "risk":         "Same as collabora-app, on a loopback port.",
+        },
+    },
+    "apps/dify": {
+        "sandbox": {
+            "reason":       "The sandbox runs user-submitted code, chrooting each run and dropping to "
+                            "a per-run user. SYS_CHROOT is what lets it do that. Removing any of its "
+                            "five capabilities in turn made a code node fail — measured, recorded in "
+                            "UPSTREAM.md.",
+            "alternatives": "None inside this design. The alternative is not running code nodes, which "
+                            "is a Dify feature rather than a deployment choice.",
+            "risk":         "Accepted. SYS_CHROOT is the capability the sandbox uses to build the "
+                            "isolation it exists for; without it the code would run less isolated, "
+                            "not more.",
+        },
+    },
+    "monitoring/scrutiny": {
+        "scrutiny-collector": {
+            "reason":       "S.M.A.R.T. counters are read with raw ATA/NVMe commands against the disk "
+                            "device, which is what SYS_RAWIO permits.",
+            "alternatives": "The better one, where the host is yours: every release publishes the "
+                            "collector as a Linux binary, and on the host it needs no container "
+                            "capability at all — the README says so. The collector is an opt-in "
+                            "overlay, so a deployment that does not want this reads no disk health "
+                            "and loses nothing else.",
+            "risk":         "Accepted and deliberate. Upstream describes SYS_RAWIO as allowing "
+                            "\"data exfiltration/modification from SATA drives\"; it is granted with "
+                            "the named devices: entry below and nothing wider. SYS_ADMIN, which "
+                            "upstream reaches for and which only NVMe needs, is left out, and "
+                            "privileged is never used.",
+        },
+    },
+}
+
+# Services allowed to map a host device into the container.
+DEVICE_EXCEPTIONS: dict[str, dict[str, Exception]] = {
+    "monitoring/grafana-prometheus": {
+        "cadvisor": {
+            "reason":       "cAdvisor reads /dev/kmsg to report OOM kills. Without it the container "
+                            "starts and the OOM event is the one thing missing from its metrics.",
+            "alternatives": "None that keep the metric. cAdvisor is an opt-in overlay rather than part "
+                            "of the stack.",
+            "risk":         "Accepted and bounded. The mapping is read-only (:r), so the container "
+                            "reads the kernel log and cannot write to it.",
+        },
+    },
+    "monitoring/scrutiny": {
+        "scrutiny-collector": {
+            "reason":       "The collector reads S.M.A.R.T. counters from the disk device itself. Each "
+                            "disk is named individually rather than mapping a class of devices.",
+            "alternatives": "The collector on the host as a released Linux binary, which needs no "
+                            "device mapping into a container — see the README. The overlay is opt-in.",
+            "risk":         "Accepted and deliberate. Raw access to a block device is read and write "
+                            "at the sector level, which is why the disks are enumerated by name and "
+                            "why this is an overlay rather than part of the stack.",
+        },
+    },
+}
+
 # Services allowed to use network_mode: host or pid: host.
 HOST_MODE_EXCEPTIONS: dict[str, dict[str, Exception]] = {
+    "monitoring/grafana-prometheus": {
+        "node-exporter": {
+            "reason":       "node_exporter reports on the host, and without the host PID namespace it "
+                            "reports on its own: process counts, per-process figures and the load "
+                            "attribution all describe the container instead of the machine.",
+            "alternatives": "None that keep the metric. The exporter is an opt-in overlay rather than "
+                            "part of the stack, so a deployment that does not want this reads no host "
+                            "metrics and loses nothing else.",
+            "risk":         "Accepted and bounded. Every mount is read-only, the exporter writes "
+                            "nothing, and it listens only on the stack's internal network — not on "
+                            "the host. What it can see is what /proc exposes, process names and "
+                            "command lines included, which is why it is a decision and not a default.",
+        },
+    },
     "core/dnsmasq": {
         "dnsmasq": {
             "reason":       "A DNS server must bind to port 53 on the host's physical network "
@@ -307,6 +433,56 @@ def check_compose(path: Path, doc: dict | None = None) -> list[dict]:
                 "service": svc_name,
                 "rule": "privileged: true",
                 "detail": "Forbidden. Add a documented exception with reason/alternatives/risk if unavoidable.",
+            })
+
+        # ── FAIL: cap_add: ALL ───────────────────────────────────────────────
+        # cap_drop: ALL followed by cap_add: ALL reads as hardened and is not.
+        # There is no exception path, for the same reason privileged has none.
+        cap_add = [str(c).upper() for c in (svc.get("cap_add") or [])]
+        if "ALL" in cap_add:
+            findings.append({
+                "level": "FAIL",
+                "service": svc_name,
+                "rule": "cap_add: ALL",
+                "detail": "Forbidden — it undoes cap_drop: ALL. Name the capabilities the image needs.",
+            })
+
+        # ── WARN: a capability outside CAP_BASELINE ──────────────────────────
+        exc = get_exception(CAP_ADD_EXCEPTIONS, path, svc_name)
+        extra_caps = [c for c in cap_add if c not in CAP_BASELINE and c != "ALL"]
+        if extra_caps and exc:
+            findings.append({
+                "level": "SKIP",
+                "service": svc_name,
+                "rule": f"cap_add: {', '.join(extra_caps)}",
+                "detail": fmt_exception(exc),
+            })
+        elif extra_caps:
+            findings.append({
+                "level": "WARN",
+                "service": svc_name,
+                "rule": f"cap_add: {', '.join(extra_caps)}",
+                "detail": "Outside the baseline set — add to CAP_ADD_EXCEPTIONS with "
+                          "reason/alternatives/risk if the image genuinely needs it.",
+            })
+
+        # ── WARN: host devices ───────────────────────────────────────────────
+        exc = get_exception(DEVICE_EXCEPTIONS, path, svc_name)
+        devices = [str(d) for d in (svc.get("devices") or [])]
+        if devices and exc:
+            findings.append({
+                "level": "SKIP",
+                "service": svc_name,
+                "rule": f"devices: {', '.join(devices)}",
+                "detail": fmt_exception(exc),
+            })
+        elif devices:
+            findings.append({
+                "level": "WARN",
+                "service": svc_name,
+                "rule": f"devices: {', '.join(devices)}",
+                "detail": "Hands a host device to the container — add to DEVICE_EXCEPTIONS with "
+                          "reason/alternatives/risk if intentional.",
             })
 
         # ── FAIL: direct Docker socket mount ────────────────────────────────

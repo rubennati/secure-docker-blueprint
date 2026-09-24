@@ -1,0 +1,279 @@
+services:
+
+  # --------------------------------------------------------
+  # DATABASE (PostgreSQL)
+  # Short URLs, visits and API keys. SQLite is Shlink's default and upstream
+  # states it is not supported for production.
+  # --------------------------------------------------------
+  shlink-db:
+    # --- Identity ---
+    image: postgres:${DB_TAG}
+    container_name: ${CONTAINER_NAME_DB}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # The official entrypoint starts as root, fixes ownership on the data
+    # directory and then drops to the postgres user.
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+
+    # --- Resources ---
+    memswap_limit: 512m          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          # cpus: derived starting value, not measured — v0.10.0
+          cpus: "0.50"
+          pids: 200
+        reservations:
+          memory: 128m
+
+    # --- Configuration ---
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/DB_PWD
+      # PostgreSQL 18 keeps its cluster under /var/lib/postgresql/<major> and
+      # refuses to start when a volume sits on the old path without this. Same
+      # pattern as apps/defectdojo.
+      PGDATA: /var/lib/postgresql/data
+      TZ: ${TZ}
+    secrets:
+      - DB_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/postgres:/var/lib/postgresql/data
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME} -h 127.0.0.1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # --------------------------------------------------------
+  # SHLINK (the server)
+  # Serves the short URLs and the REST API on the same host name. There are no
+  # user accounts: the API takes keys, and a key without roles is an
+  # administrator. Two routers split the two — see the Traefik block.
+  # --------------------------------------------------------
+  shlink-app:
+    # --- Identity ---
+    image: ghcr.io/shlinkio/shlink:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+    depends_on:
+      shlink-db:
+        condition: service_healthy
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    # No `user:` — the image already runs as uid 1001, which is what
+    # ./volumes/data has to belong to.
+
+    # --- Resources ---
+    # RoadRunner keeps PHP workers resident: 455 MiB idle, measured 2026-09-23
+    # right after the first start. The ceiling leaves room above that; a
+    # measurement under real traffic is still v0.10.0's job.
+    memswap_limit: 1g            # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          # cpus: derived starting value, not measured — v0.10.0
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 256m
+
+    # --- Configuration ---
+    # Every Shlink variable has a `_FILE` counterpart, which the entrypoint
+    # resolves through its own CLI before the server starts.
+    environment:
+      DB_DRIVER: postgres
+      DB_HOST: shlink-db
+      DB_PORT: "5432"
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD_FILE: /run/secrets/DB_PWD
+      # The host name short links are issued for.
+      DEFAULT_DOMAIN: ${APP_TRAEFIK_HOST}
+      IS_HTTPS_ENABLED: "true"
+      # The first API key, created on the first start only.
+      INITIAL_API_KEY_FILE: /run/secrets/INITIAL_API_KEY
+      # Off: with it on, the server fetches every long URL that is shortened to
+      # read its <title>, which turns "create a short link" into "this host
+      # makes a request to an address of the caller's choosing".
+      AUTO_RESOLVE_TITLES: "false"
+      # Without a MaxMind licence key no GeoLite database is downloaded and
+      # visits are simply not geolocated.
+      SKIP_INITIAL_GEOLITE_DOWNLOAD: "true"
+      # Upstream's default, restated: the visitor's address is truncated before
+      # it is stored.
+      ANONYMIZE_REMOTE_ADDR: "true"
+      # Comma-separated. Traefik's address on the proxy network, so a visit
+      # records the visitor rather than the proxy.
+      TRUSTED_PROXIES: ${SHLINK_TRUSTED_PROXIES}
+      TIMEZONE: ${TZ}
+      TZ: ${TZ}
+    secrets:
+      - DB_PWD
+      - INITIAL_API_KEY
+
+    # --- Storage ---
+    # Cache, locks and logs. The short URLs themselves live in the database.
+    volumes:
+      - ./volumes/data:/etc/shlink/data
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+      - app-internal
+
+    # --- Traefik ---
+    labels:
+      # Router: the REST API and the CLI's entry point. Longer rule, so Traefik
+      # matches it before the redirect router below, and it carries its own
+      # access policy — the API creates and deletes short URLs and reads every
+      # visit.
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/rest`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_API_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      # Router: the short links themselves. This is the one that has to be
+      # reachable by whoever follows a link — see .env.example before changing
+      # its access policy.
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      # Uncomment ONLY for per-domain certificates; leave off when a wildcard
+      # certificate already covers this host.
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      # Service
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8080"
+
+    # --- Health & Observability ---
+    # /rest/health answers without an API key and reports the database with it.
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/rest/health | grep -q '\"status\":\"pass\"' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 45s
+
+  # --------------------------------------------------------
+  # WEB CLIENT (optional)
+  # A browser application that talks to the REST API. It holds the API key in
+  # the browser, not on the server, so it is only as private as the device it
+  # runs on — and it is served from its own host name, on its own policy.
+  # --------------------------------------------------------
+  shlink-client:
+    # --- Identity ---
+    image: ghcr.io/shlinkio/shlink-web-client:${CLIENT_TAG}
+    container_name: ${CONTAINER_NAME_CLIENT}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    # nginx's pid file and every temp path in this image point below /tmp.
+    tmpfs:
+      - /tmp
+
+    # --- Resources ---
+    memswap_limit: 128m          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+          # cpus: derived starting value, not measured — v0.10.0
+          cpus: "0.25"
+          pids: 100
+        reservations:
+          memory: 32m
+
+    # --- Configuration ---
+    # No SHLINK_SERVER_* here on purpose: those bake the server URL and an API
+    # key into the configuration this container serves, and upstream warns the
+    # key can then be read by anyone who loads the page. The server is added in
+    # the browser instead.
+    environment:
+      TZ: ${TZ}
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+
+    # --- Traefik ---
+    labels:
+      # Router
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-client.rule=Host(`${CLIENT_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-client.entrypoints=websecure"
+      # TLS
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-client.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-client.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Middlewares
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-client.middlewares=${APP_TRAEFIK_THREAT}${CLIENT_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      # Service
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}-client.loadbalancer.server.port=8080"
+
+    # --- Health & Observability ---
+    # curl is in the image; the interface is static files, so a 200 on the
+    # index is the whole check.
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS -o /dev/null http://127.0.0.1:8080/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  DB_PWD:
+    file: ./.secrets/db_pwd.txt
+  INITIAL_API_KEY:
+    file: ./.secrets/initial_api_key.txt

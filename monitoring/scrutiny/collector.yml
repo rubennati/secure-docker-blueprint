@@ -1,0 +1,79 @@
+# ---------------------------------------------------------------------------
+# Scrutiny collector (opt-in)
+#
+#   docker compose -f docker-compose.yml -f collector.yml up -d
+#
+# What it adds: the half of Scrutiny that actually reads the disks. Without it
+# the interface runs and shows nothing, because nothing is reporting.
+#
+# What it costs, in upstream's own words:
+#
+#   SYS_RAWIO   "allows for data exfiltration/modification from SATA drives"
+#   SYS_ADMIN   "would theoretically allow for significant system compromise"
+#
+# SYS_ADMIN is only needed for NVMe drives and is left out here. Add it if your
+# disks are NVMe and you accept that sentence.
+#
+# Each disk is named individually in `devices:` below. There is no wildcard:
+# list the ones you want read, and nothing else is reachable.
+#
+# **The alternative is not to run this container at all.** Every Scrutiny
+# release publishes the collector as a Linux binary, and running it on the host
+# — from cron or a systemd timer, pointed at the interface's URL — needs no
+# container capability, because on the host it is simply a program that can
+# read /dev. That is the same split `backup/` uses for its agent, and it is the
+# better answer where you control the host.
+# ---------------------------------------------------------------------------
+
+services:
+  scrutiny-collector:
+    image: ghcr.io/analogj/scrutiny:${COLLECTOR_TAG}
+    container_name: ${CONTAINER_NAME_COLLECTOR}
+    restart: unless-stopped
+    depends_on:
+      scrutiny-web:
+        condition: service_healthy
+
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      # Reading S.M.A.R.T. data means sending commands to the drive.
+      - SYS_RAWIO
+      # The entrypoint drops privileges with `su`, which needs these two.
+      # Without them the container restart-loops on
+      # `su: cannot set groups: Operation not permitted`.
+      - SETGID
+      - SETUID
+      # NVMe needs this as well. Left out on purpose — see the note above.
+      #- SYS_ADMIN
+
+    # Single-digit MB between runs — it is a cron that sleeps, and smartctl
+    # for a moment when it fires. Measured 2026-09-24.
+    memswap_limit: 256m          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.50"
+          pids: 100
+        reservations:
+          memory: 64m
+
+    environment:
+      COLLECTOR_API_ENDPOINT: http://scrutiny-web:8080
+      COLLECTOR_CRON_SCHEDULE: ${COLLECTOR_CRON_SCHEDULE}
+      TZ: ${TZ}
+
+    devices:
+      # One entry per disk. `/dev/sda` is an example, not a default that fits
+      # your machine — check `lsblk` and list what you have.
+      - /dev/sda:/dev/sda
+
+    volumes:
+      # smartctl asks udev which device is which.
+      - /run/udev:/run/udev:ro
+
+    networks:
+      - app-internal

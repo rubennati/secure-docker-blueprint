@@ -1,0 +1,32 @@
+# ---------------------------------------------------------------------------
+# headscale — embedded DERP relay (opt-in)
+#
+#   docker compose -f docker-compose.yml -f derp.yml up -d
+#
+# What it changes: headscale runs its own relay instead of pointing clients at
+# Tailscale's. Two clients that cannot reach each other directly then relay
+# through this host rather than through infrastructure operated by Tailscale
+# Inc.
+#
+# What it costs: a published UDP port. STUN is not HTTP, so Traefik cannot
+# route it — 3478/udp goes straight to the host, which is the one thing the
+# base file avoids. Whether that port is acceptable, and what protects it, is a
+# decision for the deployment, not for the blueprint. The README weighs it.
+#
+# Both relays are end-to-end encrypted; neither sees the traffic. The
+# difference is who sees the metadata, and what you depend on.
+# ---------------------------------------------------------------------------
+
+services:
+  headscale:
+    environment:
+      # headscale reads HEADSCALE_-prefixed variables over config.yaml, so this
+      # needs no second configuration file. Verified on v0.29.4.
+      HEADSCALE_DERP_SERVER_ENABLED: "true"
+      # With its own relay in the map, the outbound fetch of Tailscale's map is
+      # no longer what clients depend on.
+      HEADSCALE_DERP_AUTO_UPDATE_ENABLED: "false"
+
+    ports:
+      # STUN, for NAT traversal. Not HTTP, not routable through Traefik.
+      - "${APP_DERP_STUN_PORT}:3478/udp"

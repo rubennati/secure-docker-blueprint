@@ -16,13 +16,15 @@ What has been established about each stack — verified against which version an
 | [Borgmatic](borgmatic/) | This host → off-site | **The documented default for server backup.** Host-installed; a backup and a restore have both been performed and are logged in [`borgmatic/RESTORE.md`](borgmatic/RESTORE.md#rehearsal-log). Append-only enforcement is the one documented mechanism not yet exercised. |
 | [UrBackup](urbackup/) | Your devices → this host | Client backup for Windows, macOS and Linux; whole-disk image restore on Windows. Configuration complete, not yet verified. |
 | [Rclone Web](rclone-web/) | Files ⇄ storage providers | Browser interface for rclone: remotes, copy and sync jobs, serves. Interface and API on one host; the API holds every remote's credentials. Not yet verified. |
+| [Kopia](kopia/) | Your machines → this host | Repository server: each machine runs its own Kopia client with its own account and never holds the repository password. Deduplicated and encrypted; the repository lives on this host's disk or on a remote provider. Not yet verified behind Traefik. |
 
 ## Planned
 
 Not deployable here yet. See [`ROADMAP.md`](../ROADMAP.md) for status.
 
-- **Kopia** — deduplicating backup, either direction
-- **Bareos** — tape / regulated-retention backup
+- **Bareos** — tape / regulated-retention backup. Bareos publishes no image, so it
+  waits for one built here — see
+  [`../docs/audits/candidate-evaluation-2026-09-22.md`](../docs/audits/candidate-evaluation-2026-09-22.md#decided-on-2026-09-22).
 
 ---
 
@@ -193,7 +195,7 @@ backup/borgmatic/
 └── RESTORE.md               # the rehearsal, step by step
 ```
 
-A tool that does run in a container (Kopia's server mode, for instance) follows the normal stack layout with `docker-compose.yml` and `.env.example`.
+A tool that does run in a container follows the normal stack layout with `docker-compose.yml` and `.env.example` — [`kopia/`](kopia/) is the one that does, in repository-server mode: the container holds the repository, and the agent that reads a machine's files stays on that machine.
 
 ---
 

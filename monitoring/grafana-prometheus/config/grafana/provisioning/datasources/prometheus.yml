@@ -1,0 +1,13 @@
+# Grafana finds Prometheus without anyone clicking through a form. The URL is
+# the service name on the internal network; nothing else can reach it.
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false
+    jsonData:
+      timeInterval: 30s

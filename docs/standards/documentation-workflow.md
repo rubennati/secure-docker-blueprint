@@ -314,6 +314,7 @@ Concrete rules: when X happens, update Y.
 | Bug discovered | `docs/bugfixes/<app>-<date>.md` (OPEN status) |
 | Bug fixed | Same bugfix doc (RESOLVED status), app `README.md` Known Issues if user-facing |
 | Bug parked (upstream) | Same bugfix doc (PARKED status), note in app README |
+| Reported upstream | The issue link in the stack's `UPSTREAM.md`, beside the limitation it describes — or in the candidate evaluation when the product has no stack here |
 | Recurring pattern across bugs | `.ai/errors.md` — the pattern, not the individual incident |
 
 ### Process Changes

@@ -1,0 +1,145 @@
+services:
+
+  # --------------------------------------------------------
+  # PAPERLESS-GPT
+  # Titles, tags, correspondents and OCR for an existing Paperless-ngx, through
+  # a language model the operator points it at. One container; its own state is
+  # a small database beside the prompts it renders.
+  #
+  # It has NO authentication of its own — upstream says so plainly — so the
+  # router carries an access policy AND a basic-auth middleware. Anyone who
+  # reaches it can rewrite documents in the connected Paperless-ngx and spend
+  # the configured model's budget.
+  # --------------------------------------------------------
+  paperless-gpt-app:
+    # --- Identity ---
+    image: ghcr.io/icereed/paperless-gpt:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    # The image starts as root, creates a user from PUID/PGID and drops to it.
+    # Started with `user:` it skips that branch and runs directly — no `chown`
+    # against a read-only filesystem, and no root in the process tree at all.
+    user: "${APP_UID}:${APP_GID}"
+
+    # --- Resources ---
+    memswap_limit: 512m          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          # cpus: derived starting value, not measured — v0.10.0
+          cpus: "1.00"
+          pids: 200
+        reservations:
+          memory: 128m
+
+    # --- Configuration ---
+    # config/entrypoint.sh exports the secrets and then runs the image's own
+    # entrypoint, which creates its directories and starts the server.
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
+    command: ["/app/entrypoint.sh"]
+    environment:
+      # Where Paperless-ngx answers. A container alias on proxy-public keeps the
+      # call off the public route; PAPERLESS_PUBLIC_URL is what the links in the
+      # interface point at.
+      PAPERLESS_BASE_URL: ${PAPERLESS_BASE_URL}
+      PAPERLESS_PUBLIC_URL: ${PAPERLESS_PUBLIC_URL}
+      # The model. `openai` covers every OpenAI-compatible endpoint, including
+      # apps/litellm; `ollama` talks to apps/ollama directly.
+      LLM_PROVIDER: ${LLM_PROVIDER}
+      LLM_MODEL: ${LLM_MODEL}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL}
+      OLLAMA_HOST: ${OLLAMA_HOST}
+      LLM_LANGUAGE: ${LLM_LANGUAGE}
+      # OCR. `llm` sends page images to a vision model; `docling` sends them to
+      # a Docling server — apps/docling-serve is one.
+      OCR_PROVIDER: ${OCR_PROVIDER}
+      DOCLING_URL: ${DOCLING_URL}
+      VISION_LLM_PROVIDER: ${VISION_LLM_PROVIDER}
+      VISION_LLM_MODEL: ${VISION_LLM_MODEL}
+      # The tags it watches and sets. All three are created in Paperless-ngx on
+      # the first start if they do not exist.
+      MANUAL_TAG: ${MANUAL_TAG}
+      AUTO_TAG: ${AUTO_TAG}
+      FAIL_TAG: ${FAIL_TAG}
+      LOG_LEVEL: ${APP_LOG_LEVEL}
+      TZ: ${TZ}
+    secrets:
+      - PAPERLESS_API_TOKEN
+      - LLM_API_KEY
+
+    # --- Storage ---
+    # db holds its own job and suggestion state, prompts the templates it
+    # renders, config the settings changed in the interface. All three are
+    # mounts because the root filesystem is read-only.
+    volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
+      - ./volumes/db:/app/db
+      - ./volumes/config:/app/config
+      - ./volumes/prompts:/app/prompts
+
+    # --- Networking ---
+    # proxy-public only: it calls Paperless-ngx and the model server by their
+    # aliases there, and keeps no datastore of its own that needs isolating.
+    networks:
+      - proxy-public
+
+    # --- Traefik ---
+    labels:
+      # Router
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      # TLS
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      # Uncomment ONLY for per-domain certificates; leave off when a wildcard
+      # certificate already covers this host.
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Middlewares — who may reach it, what headers apply, then the password.
+      # The basic-auth middleware is defined below and belongs to this stack; it
+      # is the only credential in front of an application that has none.
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file,${COMPOSE_PROJECT_NAME}-auth@docker"
+      # Middleware: HTTP basic auth. The value is `user:hash` from .env, which is
+      # gitignored — see .env.example for how to generate it.
+      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-auth.basicauth.users=${APP_BASIC_AUTH_USERS}"
+      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-auth.basicauth.realm=paperless-gpt"
+      # Service
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8080"
+
+    # --- Health & Observability ---
+    # There is no health endpoint; the interface's index is the only thing that
+    # answers without work. The image carries wget, not curl.
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+# The model key is optional — the file still has to exist. `touch` is enough.
+secrets:
+  PAPERLESS_API_TOKEN:
+    file: ./.secrets/paperless_api_token.txt
+  LLM_API_KEY:
+    file: ./.secrets/llm_api_key.txt

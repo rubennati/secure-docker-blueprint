@@ -96,6 +96,7 @@ Modular middleware components. Used by the sec-* chains, or individually for cus
 |-------|--------|
 | `rl-soft` | 100 requests/s average, 50 burst |
 | `rl-spa` | 100 requests/s average, 200 burst — same sustained rate as `rl-soft`, wider bucket for an application start |
+| `rl-spa-xl` | 100 requests/s average, 1000 burst — the same sustained rate again, with a bucket that holds one whole first load. Behind a closed access policy only, enforced by CI |
 | `rl-hard` | 20 requests/s average, 40 burst |
 
 ### Extras
@@ -128,6 +129,7 @@ Presets that combine building blocks. Each level builds on the previous — high
 | `sec-3` | hdr-strict, rl-soft, compress, permissions-policy | Public-facing, hardened |
 | `sec-3e` | hdr-strict-embed, rl-soft, compress, permissions-policy | Public-facing + iframe-friendly |
 | `sec-2-spa` | hdr-basic, rl-spa, compress | Standard, first load exceeds a burst of 50 |
+| `sec-2-spa-xl` | hdr-basic, rl-spa-xl, compress | Standard, first load exceeds a burst of 200 — only with `acc-private`, `acc-tailscale` or `acc-deny` |
 | `sec-3-spa` | hdr-strict, rl-spa, compress, permissions-policy | Hardened, first load exceeds a burst of 50 |
 | `sec-3e-spa` | hdr-strict-embed, rl-spa, compress, permissions-policy | Hardened, needs SAMEORIGIN and the wider burst |
 | `sec-4` | hdr-strict, rl-hard, compress, permissions-policy | Sensitive apps, login pages, admin panels |
@@ -199,6 +201,18 @@ Above 50 in the initial burst, use the `-spa` variant. It keeps `average: 100`
 unchanged and only widens the bucket to 200, so the sustained limit — the one that
 bounds abuse — is identical. A 429 on first load presents as a blank page or a
 half-rendered interface, which nobody attributes to the proxy.
+
+Above 200, use `sec-2-spa-xl`. Measured on 2026-09-22: Windmill's first load
+issues about 850 requests and Twenty's 412, and Twenty's assets carry
+`max-age=0`, so every later load repeats them. Under `rl-spa` 412 of Windmill's
+requests and 130 of Twenty's came back `429`, and neither interface rendered.
+`rl-spa-xl` keeps `average: 100` and holds one whole first load in its bucket.
+
+What that bucket costs is the first thousand requests from one address, so the
+`-xl` chains are for a closed set of clients: `scripts/ci/check-structure.py`
+fails (`burst-exposure`) when a stack pairs an `-xl` chain with anything but
+`acc-private`, `acc-tailscale` or `acc-deny`. A public interface that needs more than 200
+needs its assets cached or served beside the rate limit, not a wider bucket.
 
 **4. Is the surface a login, an admin panel, or an API holding credentials?**
 
@@ -314,6 +328,34 @@ See the [Traefik README](../../core/traefik/README.md) for step-by-step enable/d
 | `tls-modern` | 1.3 | Current browsers only (strictest) |
 
 Recommendation: `tls-aplus` for most services. Use `tls-modern` for password managers and admin panels. Use `tls-basic` only when older clients must connect.
+
+---
+
+## Reaching a backend over TLS (`servers-transports.yml`)
+
+The profiles above cover the connection a *client* makes to Traefik. A
+**serversTransport** covers the other hop: the one Traefik makes to the
+container behind it. Nothing needs it while a backend speaks plain HTTP on the
+internal network, which is the normal case here.
+
+One case needs it. A service whose clients speak gRPC needs HTTP/2 with TLS the
+whole way, so the container terminates TLS itself with a certificate no public
+authority issued. `backend-selfsigned` is the transport for that:
+
+```yaml
+traefik.http.services.<name>.loadbalancer.server.scheme=https
+traefik.http.services.<name>.loadbalancer.serverstransport=backend-selfsigned@file
+```
+
+Traefik does not verify that certificate. The hop stays encrypted and stays on
+this host's Docker network; what is given up is the assurance that the container
+answering is the one the certificate was issued for. It is therefore for a
+backend on this host, not for one reached across a network somebody else routes.
+
+**A serversTransport comes from the file provider only.** The equivalent Docker
+labels are ignored — a service naming `<name>@docker` fails with "servers
+transport not found" and its router serves nothing. Measured against Traefik
+v3.7 on 2026-09-23. `backup/kopia` is the stack that uses it.
 
 ---
 

@@ -15,8 +15,8 @@ Two scopes exist and they differ by the directories `check-structure.py` lists i
 
 | Scope | Stacks | Compose files | Services |
 |---|---|---|---|
-| **Deployable** | 99 | **111** | **244** |
-| Checker universe | 102 | 114 | 248 |
+| **Deployable** | 115 | **127** | **287** |
+| Checker universe | 118 | 130 | 291 |
 
 The difference is `apps/_reference`, `development/static-site`, `development/web-api` — parsed and held to the baseline, deployed by nobody.
 
@@ -26,17 +26,17 @@ A merge is blocked when one of these is violated without a documented exception.
 
 | Control | Coverage | Documented exceptions |
 |---|---|---|
-| `no-new-privileges:true` | 241 / 244 services | 3 |
-| `privileged: true` forbidden | 0 violation(s) across 111 compose files | 0 |
-| Docker socket via proxy only | — | 7 |
-| `network_mode: host` | — | 4 |
+| `no-new-privileges:true` | 284 / 287 services | 3 |
+| `privileged: true` forbidden | 0 violation(s) across 127 compose files | 0 |
+| Docker socket via proxy only | — | 8 |
+| `network_mode: host` | — | 5 |
 
 ## Repository-structure controls
 
 | Control | Coverage |
 |---|---|
-| Network isolation — a network with `internal: true` | 57 / 111 compose files |
-| `__REPLACE_ME__` sentinels an operator must replace | 45 occurrences across `.env.example` files |
+| Network isolation — a network with `internal: true` | 68 / 127 compose files |
+| `__REPLACE_ME__` sentinels an operator must replace | 46 occurrences across `.env.example` files |
 
 ## Soft controls
 
@@ -46,8 +46,8 @@ image property, established by running it rather than by counting.
 
 | Control | Coverage |
 |---|---|
-| `read_only: true` | 90 / 244 services |
-| `cap_drop: ALL` | 128 / 244 services |
-| Non-root `user:` | 28 / 244 services |
-| Resource limits — `memory` and `pids` | 244 / 244 services |
-| Docker Secrets — a `secrets:` block | 137 / 244 services |
+| `read_only: true` | 109 / 287 services |
+| `cap_drop: ALL` | 170 / 287 services |
+| Non-root `user:` | 45 / 287 services |
+| Resource limits — `memory` and `pids` | 287 / 287 services |
+| Docker Secrets — a `secrets:` block | 170 / 287 services |

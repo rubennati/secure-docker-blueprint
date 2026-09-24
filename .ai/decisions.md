@@ -6,6 +6,140 @@ this file is the index and covers decisions that have no other home.
 
 ---
 
+## 2026-09-24 · `cap_add` and `devices` get exception tables
+
+The candidate evaluation attached one decision to batches N, Q, R and S: where
+monitoring collectors get host access, and whether `cap_add` and `devices` get an
+exception table beside `HOST_MODE_EXCEPTIONS`. The first half was answered in each
+batch. The second was raised three times while those stacks were built and settled
+in none of them, which is why it is recorded separately here.
+
+The gap was real. `check-baseline.py` enforced `privileged`, the Docker socket,
+host networking and the host PID namespace — and nothing about capabilities or
+devices. A service could carry `cap_drop: ALL` beside `SYS_RAWIO` and a read-write
+`/dev/sda` and pass every gate without a word. `monitoring/scrutiny`'s collector
+overlay does exactly that, deliberately and documented in its README, but the
+checker had no opinion either way.
+
+**Three rules now.** `cap_add: ALL` fails outright and has no exception path, for
+the reason `privileged: true` has none: written under a `cap_drop: ALL` it reads as
+hardened and is the opposite. A capability outside `CAP_BASELINE` warns until the
+service is listed in `CAP_ADD_EXCEPTIONS`. Any `devices:` entry warns until the
+service is listed in `DEVICE_EXCEPTIONS`. Both tables carry the same three fields
+as every other exception table.
+
+**`CAP_BASELINE` is six capabilities**, not an arbitrary allow-list. Five of them —
+`CHOWN`, `DAC_OVERRIDE`, `FOWNER`, `SETGID`, `SETUID` — are one pattern: an
+entrypoint that takes ownership of its data directory and drops to its own user.
+They reach no further than the container's own filesystem and namespaces, and they
+appear in over a hundred services here, so warning on them would train the reader
+to ignore the warning. `NET_BIND_SERVICE` is the sixth for a different reason: it
+permits binding a port below 1024 and nothing else, which is narrower than running
+the process as root to reach the same result.
+
+The repository needed five exception entries and no compose change, which is the
+outcome that made the rule worth adding rather than a rule that would have forced
+a rewrite: Collabora's `MKNOD` for its per-document jail, Dify's `SYS_CHROOT` for
+the sandbox that isolates user code, Scrutiny's `SYS_RAWIO` and `/dev/sda`, and
+cAdvisor's read-only `/dev/kmsg`.
+
+`scripts/ci/test_check_baseline.py` covers both rules, including that the
+exception path does not extend to `cap_add: ALL` and that a baseline capability
+does not mask an unlisted one beside it. The checker had no tests before.
+
+---
+
+## 2026-09-24 · Neither Suricata nor Coraza becomes a stack
+
+The candidate list held two capabilities rather than two applications, each with a
+condition attached. Both conditions were tested, and the answer in each case was a
+stack that should not be built.
+
+**Coraza.** The condition was a maintained Traefik integration. It is not met —
+Coraza's own README lists the WASM extension as "experimental, needs a maintainer",
+its newest release is v0.3.0 from 2024-10-29, and Traefik's native integration is
+part of the commercial Traefik Hub. The more useful finding is that the question was
+already answered: CrowdSec's AppSec engine *is* Coraza, and the OWASP Core Rule Set
+installs as the hub collections `crowdsecurity/crs` and `crowdsecurity/crs-inband`.
+A reader asking for a Coraza WAF with the Core Rule Set needed documentation, not
+software. That gap is closed in `../core/crowdsec/docs/appsec.md`, which also records
+why the CRS collections stay uninstalled by default: the rule files CrowdSec serves
+still identify as `OWASP_CRS/4.0.0-rc1` while the project's current release is
+v4.29.0.
+
+A second WAF inline would also have been a loss rather than a gain — each request
+evaluated twice, false positives from two rule sets, and a block with two possible
+origins to diagnose.
+
+**Suricata.** Two of the four open questions now have answers, and both narrow
+rather than settle the case. Inspecting payloads on a single Docker host means
+capturing the bridges, because the physical interface carries TLS to Traefik — so
+the traffic examined is decrypted user traffic between the proxy and each
+application. And `crowdsecurity/suricata` bans a source on a single severity-1
+alert, which turns a passive IDS into an enforcing one; the alerts reach CrowdSec
+without that scenario or not at all.
+
+The remaining two — the cost under deep packet inspection and the false-positive
+load — need a host that can be flooded and misconfigured without consequence.
+Measuring them on a host carrying live services is not an option, so the stack
+waits rather than shipping on estimates. When it comes it is passive only: an
+inline IPS drops traffic when the engine is down, the failure mode this blueprint
+avoids everywhere else.
+
+**What would change each answer.** For Coraza, a maintained Traefik extension with
+a current release. For Suricata, a disposable host — at which point the two
+measurements are a day's work, and a `HOST_MODE_EXCEPTIONS` entry and a `core/`
+stack follow.
+
+---
+
+## 2026-09-22 · The held candidates are narrowed to open source and added
+
+`ROADMAP.md` adds no application while the v1.0 items are open, and the exception
+of 2026-09-21 left the candidates it listed on hold. The maintainer decided to add
+them after narrowing the list. This is a second deliberate exception of the same
+kind: it changes nothing v1.0 requires, every stack lands `scaffolded`, the batches
+follow the order in the evaluation, and the hold still applies to anything proposed
+from here on.
+
+**Open source is the entry condition for this list.** A product whose deployed code
+is not under an OSI licence is not added: Outline (BSL 1.1), AppFlowy (the
+self-hosted server comes from a closed-source commercial codebase; its free tier is
+one user) and Eramba Community (proprietary terms, activation with the vendor
+required). The condition is applied to this list only. Stacks already shipped keep
+their licences, whether it extends to them is not decided, and
+`docs/sovereignty/provenance.md` still states what the blueprint accepts.
+
+**Dropped for reasons of their own:** Formbricks (enterprise code in the image, SSO
+and two-factor authentication behind a licence), Rallly (one registered user without
+a purchased key), Ackee (its administrator login shares the public tracker path),
+Statping (no release since 2020) and its fork Statping-ng (a high advisory with no
+fixed release), Cabot (newest image from 2019), SnapPass, Dapta Calendars,
+MAILFLOW-AI and Crater (no image, and no recent release or no release at all), and
+Tika, Gotenberg and ClamAV as standalone stacks — they stay inside Paperless-ngx and
+Seafile Pro, where they are used.
+
+**A missing image is a detour, not an exclusion.** A product worth having whose
+project publishes no pinnable image gets one built here from a fork, under
+`docs/standards/custom-application.md` — the route Cal.diY took — after upstream has
+been asked to publish one. Live Helper Chat, DayOtter and Bareos are the build
+candidates.
+
+**obot is added with its Docker API access documented as a deviation**, as Hawser's
+direct socket mount is: creating the containers obot runs is root-equivalent on the
+host, and the stack says so. A read-only socket proxy is tried first; whether the
+current release starts behind one is established on its first run.
+
+**Two products proposed the same day were checked the same way.** paperless-gpt is
+added. paperless-ai stays a candidate: its README states that the repository is not
+maintained, and it is revisited once the announced rewrite is released or
+maintenance resumes.
+
+Evidence per product and the batch order:
+[`../docs/audits/candidate-evaluation-2026-09-22.md`](../docs/audits/candidate-evaluation-2026-09-22.md).
+
+---
+
 ## 2026-09-21 · Proposed products go in as stacks while the application hold stands
 
 `ROADMAP.md` adds no application while the v1.0 items are open. The maintainer asked

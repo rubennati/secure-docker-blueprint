@@ -63,6 +63,48 @@ docker run --rm --cap-drop ALL <image>     # read the first denial in the log
 Add back what the log names, one capability at a time, and record the result beside
 the `cap_add` block. A set copied from another stack is a guess.
 
+**Six capabilities need no exception.** `CHOWN`, `DAC_OVERRIDE`, `FOWNER`, `SETGID`
+and `SETUID` are the set above — an entrypoint taking ownership of its data
+directory and then dropping to its own user. They reach no further than the
+container's own filesystem and namespaces. `NET_BIND_SERVICE` is there for a
+different reason: it permits binding a port below 1024 and nothing else, which is
+narrower than running the process as root to achieve the same thing.
+
+**Anything else is a decision, and `check-baseline.py` asks for it in writing.** A
+capability outside those six warns until the service has an entry in
+`CAP_ADD_EXCEPTIONS` carrying reason, alternatives and risk — the same three fields
+every other exception table uses. `SYS_ADMIN`, `NET_ADMIN`, `SYS_PTRACE` and
+`SYS_RAWIO` each hand out a class of access that the drop was there to remove, and
+naming one is cheaper than discovering it later in a diff.
+
+**`cap_add: ALL` is forbidden and has no exception path**, like `privileged: true`.
+Written under a `cap_drop: ALL` it reads as hardened and is not.
+
+### Host devices
+
+```yaml
+devices:
+  - /dev/sda:/dev/sda
+```
+
+A host device in a container is raw access to hardware — for a block device, read
+and write at the sector level, whatever the filesystem above it says. Every
+`devices:` entry warns until the service has an entry in `DEVICE_EXCEPTIONS`.
+
+Three things make such an entry defensible rather than routine:
+
+- **Name each device.** `/dev/sda`, not a whole class of devices.
+- **Map it read-only where the use allows it** — `/dev/kmsg:/dev/kmsg:r` rather
+  than `/dev/kmsg:/dev/kmsg`.
+- **Put it in an opt-in overlay**, not in the stack's own compose file, so a
+  deployment that does not want it is not carrying it by default. See
+  `docs/standards/compose-structure.md`.
+
+Where the host is yours, check whether the software also ships as a host binary.
+A collector reading disks needs no container capability and no device mapping when
+it runs on the machine directly — `monitoring/scrutiny` documents both routes and
+recommends that one.
+
 ### Non-root User
 
 ```yaml

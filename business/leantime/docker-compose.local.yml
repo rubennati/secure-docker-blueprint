@@ -1,0 +1,99 @@
+# Leantime — local
+#
+#   cp .env.local.example .env.local
+#   mkdir -p .secrets volumes/mysql volumes/userfiles volumes/public-userfiles \
+#       volumes/storage volumes/plugins
+#   openssl rand -hex 24 | tr -d '\n' > .secrets/db_pwd.txt
+#   openssl rand -hex 24 | tr -d '\n' > .secrets/db_root_pwd.txt
+#   openssl rand -hex 32 | tr -d '\n' > .secrets/session_password.txt
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   open http://localhost:8080        # the installer creates the administrator
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+#
+# Here the web installer is what sets the instance up, which is the one place
+# that is fine: it answers on a loopback port only. The production file starts
+# the schema from the command line instead — see ops/install.sh — because there
+# the same form would answer whoever reaches the host name first.
+#
+# Sessions are not marked `secure` here: this variant speaks plain HTTP, and a
+# secure cookie would never be sent back.
+
+services:
+
+  leantime-db:
+    image: mysql:${DB_TAG}
+    container_name: leantime-local-db
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD_FILE: /run/secrets/DB_PWD
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/DB_ROOT_PWD
+      TZ: ${TZ}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - ./.secrets/db_pwd.txt:/run/secrets/DB_PWD:ro
+      - ./.secrets/db_root_pwd.txt:/run/secrets/DB_ROOT_PWD:ro
+      - ./volumes/mysql:/var/lib/mysql
+    networks: [leantime-local]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+
+  leantime-app:
+    image: leantime/leantime:${APP_TAG}
+    container_name: leantime-local-app
+    restart: unless-stopped
+    depends_on:
+      leantime-db:
+        condition: service_healthy
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs:
+      - /run:mode=1777
+      - /tmp:mode=1777
+      - /var/lib/nginx/tmp:mode=1777
+      - /var/www/html/bootstrap/cache:mode=1777
+    environment:
+      LEAN_DB_HOST: leantime-db
+      LEAN_DB_PORT: "3306"
+      LEAN_DB_DATABASE: ${DB_NAME}
+      LEAN_DB_USER: ${DB_USER}
+      LEAN_DB_PASSWORD_FILE: /run/secrets/DB_PWD
+      LEAN_SESSION_PASSWORD_FILE: /run/secrets/SESSION_PASSWORD
+      LEAN_SESSION_SECURE: "false"
+      LEAN_APP_URL: http://localhost:8080
+      LEAN_ALLOW_TELEMETRY: "false"
+      LEAN_NEWS_ENABLED: "false"
+      LEAN_LOG_CHANNELS: stderr
+      LEAN_DEBUG: "0"
+      TZ: ${TZ}
+    volumes:
+      - ./.secrets/db_pwd.txt:/run/secrets/DB_PWD:ro
+      - ./.secrets/session_password.txt:/run/secrets/SESSION_PASSWORD:ro
+      - ./volumes/userfiles:/var/www/html/userfiles
+      - ./volumes/public-userfiles:/var/www/html/public/userfiles
+      - ./volumes/storage:/var/www/html/storage
+      - ./volumes/plugins:/var/www/html/app/Plugins
+    ports:
+      - "127.0.0.1:8080:8080"
+    networks: [leantime-local]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS -o /dev/null http://127.0.0.1:8080/auth/login || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 6
+      start_period: 60s
+
+networks:
+  leantime-local:
+    name: leantime-local

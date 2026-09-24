@@ -12,6 +12,8 @@ What has been established about each stack — verified against which version an
 |---|---|---|
 | [Uptime Kuma](uptime-kuma/) | UI-driven, SQLite | Community default. Click-config, 90+ notification integrations, public status pages. |
 | [Gatus](gatus/) | YAML-as-code, SQLite/Postgres | Config-as-code counterpart. Prometheus export built-in. |
+| [ciao](ciao/) | UI-driven, SQLite | HTTP checks on a cron expression each, with TLS expiry per target. One Rails container; webhooks and mail, no other channels. Its own authentication is HTTP basic auth and off until a user name is set. |
+| [Checkmate](checkmate/) | UI-driven, MongoDB | Ten monitor types, incidents with timelines, maintenance windows, role-based access and status pages. Every feature is in the open-source build. The first registration claims the instance as superadmin, so the dashboard has to be opened immediately after the first start. |
 
 ### Cron & scheduled-job monitoring
 
@@ -25,6 +27,14 @@ What has been established about each stack — verified against which version an
 |---|---|---|
 | [Beszel](beszel/) | Hub + local agent | Lightweight (~20 MB per agent), modern, per-container Docker stats. |
 | [Beszel Agent](beszel-agent/) | Standalone agent for remote hosts | Deploy on each additional host; same hub key, no hub needed on the remote. |
+| [Grafana + Prometheus](grafana-prometheus/) | Scrape and query, dashboards | The general-purpose end: every metric anything exposes, and you say which. Prometheus is not routed and has no port — it has no authentication at all, so Grafana is the only way in. Host and per-container collectors are opt-in overlays; cAdvisor runs without `privileged` |
+| [Zabbix](zabbix/) | Server, web interface, PostgreSQL | The one that also knows SNMP, IPMI, escalation chains and maintenance windows, on the 7.0 long-term-support line. No agent container — upstream's needs `privileged` — so the agent goes on the host or a Prometheus endpoint feeds it. Sign in as `Admin`/`zabbix` and change it |
+
+### Disk health
+
+| App | Approach | Notes |
+|---|---|---|
+| [Scrutiny](scrutiny/) | Web interface + InfluxDB, collector opt-in | The axis nothing else here covers: a disk about to fail answers pings and serves HTTP right up until it does not. The interface has no password of its own, so the proxy carries one. The collector needs `SYS_RAWIO` and is an overlay — or a binary on the host |
 
 ### Content & web change detection
 
@@ -48,19 +58,11 @@ belongs on a different host than the services that publish to it; see
 | App | Approach | Notes |
 |---|---|---|
 | [ntfy](ntfy/) | Topic-based push over HTTP | Self-hosted, no account. A free public instance exists, so an off-host path costs no second machine. iOS push needs `upstream-base-url`. |
+| [Gotify](gotify/) | Token-based push over HTTP | Self-hosted, no public instance — it needs a home of its own. Applications publish with their own token; the Android app and the browser hold a stream open, and upstream lists no iOS client. |
 
 ## Planned
 
-Not deployable here yet. See [`ROADMAP.md`](../ROADMAP.md) for status.
-
-- **Statping**, **ciao**, **Checkmate** — uptime monitoring
-- **Zabbix**, **Grafana + Prometheus** — metrics and dashboards
-- **Scrutiny** — disk S.M.A.R.T. health
-- **Gotify** — push notifications
-- **Cabot** — alerts on Graphite metrics, Jenkins jobs and HTTP checks. Evaluated
-  2026-09-21 and held: its newest image, 0.11.16, is from January 2019 and builds
-  on Node 4, and the repository's last push was in 2023. See
-  [`../docs/audits/candidate-evaluation-2026-09-21.md`](../docs/audits/candidate-evaluation-2026-09-21.md).
+Nothing. Every stack this category planned is deployable above.
 
 ## Recommended starter combo
 
@@ -84,6 +86,7 @@ Each ships its own notification channels; none of them needs a separate tool.
 |---|---|---|
 | Uptime Kuma | an endpoint stops responding | per monitor, in the UI — many channel integrations |
 | Gatus | a condition in `config.yaml` fails | `alerting:` block plus `alerts:` per endpoint |
+| ciao | a check's status changes, or a certificate is about to expire | webhook endpoints and payloads in the environment, read at start; mail through `SMTP_*` |
 | Healthchecks | an expected ping **fails to arrive** | per check; email needs working SMTP, otherwise webhook or chat |
 | Beszel | a threshold is crossed (CPU, memory, disk, temperature) | per system, in the hub |
 | changedetection.io | a watched page changed | per watch |
@@ -100,6 +103,11 @@ Verified against upstream documentation, 2026-07-27:
 | Healthchecks | ✅ | via Apprise | ✅ | ✅ | ✅ |
 | changedetection.io | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Beszel | ✅ | ✅ | ✅ | ✅ | — |
+| ciao | via webhook | via webhook | via webhook | ✅ | ✅ |
+
+**ciao has no per-channel integrations.** It posts a JSON body of your own writing
+to any URL, so each channel is set up as a webhook payload — which is what the
+three "via webhook" entries mean.
 
 Two entries decide setups:
 
@@ -147,7 +155,7 @@ The two self-hostable receivers leave different room for that:
 | Receiver | Self-hosted | Operated by the project |
 |---|---|---|
 | [ntfy](ntfy/) | Docker — this repository | free public instance |
-| Gotify | Docker — *planned* | — |
+| [Gotify](gotify/) | Docker — this repository | — |
 
 ntfy has an off-host path that costs no second machine. Gotify always needs a home,
 so choosing that home is part of the design rather than an afterthought.

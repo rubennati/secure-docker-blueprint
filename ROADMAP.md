@@ -1,6 +1,6 @@
 # Roadmap
 
-Direction reviewed 2026-09-20.
+Direction reviewed 2026-09-24.
 
 What remains to be built, what blocks it, and what proves it finished. Shipped
 work belongs to [`CHANGELOG.md`](CHANGELOG.md), per-stack status to the generated
@@ -18,10 +18,12 @@ Pre-1.0 tags are set when a natural milestone is reached, not on a fixed cadence
 The single criterion for v1.0 is: **could someone fork this and run it without
 needing my mental model?**
 
-**Latest tag: v0.9.2 — Stabilization and release readiness (2026-09-22).**
-Eighteen stacks verified behind Traefik with TLS on a host, twelve new stacks,
-and an image scan that fails on a CRITICAL finding it has not recorded. What has
-and has not been established per stack is in [`LIFECYCLE.md`](LIFECYCLE.md).
+**Latest tag: v0.9.3 — Sixteen stacks, and a baseline for capabilities
+(2026-09-24).** Each new stack lands `scaffolded`. The security baseline now
+covers capabilities and host devices, which it did not before: `cap_add: ALL`
+is refused, and anything beyond a small routine set needs a written exception.
+What has and has not been established per stack is in
+[`LIFECYCLE.md`](LIFECYCLE.md).
 
 ### v0.10.0 — Measured resource limits
 
@@ -55,13 +57,15 @@ Open in this repository:
   only on evidence, so this is measured in host sessions, not in editing.
 - **Traefik labels and middlewares, checked against the applications.** The label
   pattern, the security chains and their names, the header and rate-limit blocks,
-  and the CrowdSec and Authentik middlewares grew stack by stack; 89 stacks now
+  and the CrowdSec and Authentik middlewares grew stack by stack; 106 stacks now
   route through Traefik. The review asks what each application needs to start
   without errors, keep the headers it sets itself and stay responsive under a
   working day's load. It may change names and structure or confirm them — before
   v1.0.0, because afterwards a renamed middleware disables the router of every
   deployment that names it. Inputs in [`.ai/state.md`](.ai/state.md) under *Open
-  decisions*.
+  decisions*; what the proxy owns, what its limits are for and which questions
+  the review has to answer are collected in
+  [`docs/audits/reverse-proxy-limits-2026-09-23.md`](docs/audits/reverse-proxy-limits-2026-09-23.md).
 
 Decision pending, with a possible impact on v1.0 — the site's personal data:
 see [A public repository should not carry personal data](#a-public-repository-should-not-carry-personal-data).
@@ -132,36 +136,61 @@ itself stands: this concerns the site only.
 
 ---
 
+## Added — the held candidates
+
+The candidates this file held until 2026-09-22, and two proposed that day, were
+narrowed to open-source products and added by 2026-09-24 — sixteen stacks, each
+landing `scaffolded`. What each one is belongs to
+[`CHANGELOG.md`](CHANGELOG.md). It was a second deliberate exception to the hold
+below and changed nothing v1.0 requires; the reasoning is in
+[`.ai/decisions.md`](.ai/decisions.md) and the evidence for each product in
+[`docs/audits/candidate-evaluation-2026-09-22.md`](docs/audits/candidate-evaluation-2026-09-22.md).
+
+Moving those sixteen from `scaffolded` to `baseline-aligned` is part of the
+verification backlog, not of this section.
+Each category README owns what it still plans: [`apps/`](apps/README.md),
+[`business/`](business/README.md), [`monitoring/`](monitoring/README.md),
+[`backup/`](backup/README.md), [`core/`](core/README.md).
+
+Two of them were capabilities rather than applications. Both were decided on
+2026-09-24, and neither became a stack:
+
+- **Web application firewall — Coraza. Not a stack: the capability is already
+  here.** CrowdSec's AppSec engine *is* Coraza, so a Coraza WAF with the OWASP Core
+  Rule Set needs no second piece of software — the Core Rule Set installs as the hub
+  collections `crowdsecurity/crs` and `crowdsecurity/crs-inband`. The condition this
+  entry set for a separate stack, a maintained Traefik integration, is not met:
+  Coraza's own README lists the WASM extension as "experimental, needs a maintainer"
+  and its newest release is v0.3.0 from 2024-10-29, while Traefik's native
+  integration belongs to the commercial Traefik Hub. What was missing was
+  documentation, not software, and it is now in
+  [`core/crowdsec/docs/appsec.md`](core/crowdsec/docs/appsec.md) — including why the
+  CRS collections are not installed by default, their rule files still identifying as
+  a 4.0.0 release candidate.
+- **Network IDS — Suricata. Not a stack yet: two questions still need a disposable
+  host.** A passive IDS sees packets, flows and protocol anomalies that log-driven
+  detection cannot, and two of the four open questions now have answers. On one
+  Docker host the physical interface carries TLS to Traefik, so inspecting payloads
+  means capturing the Docker bridges — which carry the plaintext traffic between
+  Traefik and each application, cookies and form data included. And
+  `crowdsecurity/suricata` bans a source on a single severity-1 alert, so the alerts
+  reach CrowdSec without that scenario or not at all. The two that remain — the cost
+  under deep packet inspection and the false-positive load — cannot be measured on a
+  host carrying live services, which is what adding the stack would require next.
+  Passive only when it comes: inline IPS drops traffic when the engine is down, the
+  failure mode this blueprint avoids elsewhere.
+
+---
+
 ## On hold — after v1.0 or not yet needed
 
-No application is added while the v1.0 items above are open. One exception was
-made on 2026-09-21: twelve proposed products that publish a versioned image went in
-as stacks so they can be tried, all `scaffolded`. It changes nothing v1.0 requires
-and does not open the hold for the candidates below — reasoning in
-[`.ai/decisions.md`](.ai/decisions.md), evidence in
-[`docs/audits/candidate-evaluation-2026-09-21.md`](docs/audits/candidate-evaluation-2026-09-21.md).
-
-Candidates, each independently useful and none excluded because a similar product
-already ships:
-
-- **Per category** — each README owns its own planned list:
-  [`apps/`](apps/README.md), [`business/`](business/README.md),
-  [`monitoring/`](monitoring/README.md), [`backup/`](backup/README.md).
-- **Project management** — Plane, Leantime and AppFlowy are candidates alongside
-  the shipped OpenProject and Vikunja. Judged on Docker complexity, OIDC support,
-  `_FILE` secret support, maintenance activity and what the community edition
-  withholds. AppFlowy runs only its backend in Docker; whether that fits the
-  blueprint model is part of the evaluation.
-- **Network IDS — Suricata.** A passive IDS sees packets, flows and protocol
-  anomalies that log-driven detection cannot. Open questions: which of that is
-  useful on one Docker host, who reads the alerts, the cost under deep packet
-  inspection, and the false-positive load. Passive only — inline IPS drops traffic
-  when the engine is down, the failure mode this blueprint avoids elsewhere.
-- **Web application firewall — Coraza.** CrowdSec AppSec is the reference
-  implementation; Coraza with the OWASP Core Rule Set is the documented
-  alternative. The engine is mature; the open-source Traefik connector describes
-  itself as experimental. Revisit when a maintained integration exists. Running
-  both inline is not the answer.
+No application is added while the v1.0 items above are open. Two exceptions were
+made: on 2026-09-21 twelve proposed products that publish a versioned image went in
+as stacks so they can be tried, and on 2026-09-22 the candidates this section held
+were narrowed and are being added — see
+[Added](#added--the-held-candidates). Both change nothing v1.0 requires;
+reasoning in [`.ai/decisions.md`](.ai/decisions.md), evidence in the two evaluations
+under [`docs/audits/`](docs/audits/).
 
 Concepts with no timeline, picked up app by app as they are re-verified:
 
@@ -198,3 +227,5 @@ Concepts with no timeline, picked up app by app as they are re-verified:
 - OCRmyPDF as a standalone stack. Upstream ships its image as ephemeral — one
   container per job, exiting like a command-line program. A CLI/job tool with no
   independently operated service gets no blueprint entry.
+- The products evaluated on 2026-09-22 and not added — each is named with its reason
+  in [`docs/audits/candidate-evaluation-2026-09-22.md`](docs/audits/candidate-evaluation-2026-09-22.md#decided-on-2026-09-22).

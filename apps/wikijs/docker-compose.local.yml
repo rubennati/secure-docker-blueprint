@@ -1,0 +1,81 @@
+# Wiki.js — local
+#
+#   cp .env.local.example .env.local
+#   mkdir -p .secrets volumes/data volumes/postgres
+#   openssl rand -hex 32 | tr -d '\n' > .secrets/db_pwd.txt
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   open http://localhost:8080        # the setup wizard creates the administrator
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+#
+# The wizard is open until it has run once. On a loopback port that is the
+# point; the production file ships a VPN-only router for the same reason.
+
+services:
+
+  wikijs-db:
+    image: postgres:${DB_TAG}
+    container_name: wikijs-local-db
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/DB_PWD
+      # PostgreSQL 18 keeps its cluster under /var/lib/postgresql/<major> and
+      # refuses to start when a volume sits on the old path without this. Same
+      # pattern as apps/defectdojo.
+      PGDATA: /var/lib/postgresql/data
+      TZ: ${TZ}
+    volumes:
+      - ./.secrets/db_pwd.txt:/run/secrets/DB_PWD:ro
+      - ./volumes/postgres:/var/lib/postgresql/data
+    networks: [wikijs-local]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME} -h 127.0.0.1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  wikijs-app:
+    image: ghcr.io/requarks/wiki:${APP_TAG}
+    container_name: wikijs-local-app
+    restart: unless-stopped
+    depends_on:
+      wikijs-db:
+        condition: service_healthy
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs:
+      - /tmp
+    environment:
+      DB_TYPE: postgres
+      DB_HOST: wikijs-db
+      DB_PORT: "5432"
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASS_FILE: /run/secrets/DB_PWD
+      DB_SSL: "false"
+      SSL_ACTIVE: "false"
+      HA_ACTIVE: "false"
+      LOG_LEVEL: ${APP_LOG_LEVEL}
+      TZ: ${TZ}
+    volumes:
+      - ./.secrets/db_pwd.txt:/run/secrets/DB_PWD:ro
+      - ./volumes/data:/wiki/data
+    ports:
+      - "127.0.0.1:8080:3000"
+    networks: [wikijs-local]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:3000/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
+networks:
+  wikijs-local:
+    name: wikijs-local

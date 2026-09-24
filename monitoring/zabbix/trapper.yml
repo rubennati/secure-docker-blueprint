@@ -1,0 +1,36 @@
+# ---------------------------------------------------------------------------
+# Zabbix trapper port (opt-in)
+#
+#   docker compose -f docker-compose.yml -f trapper.yml up -d
+#
+# What it adds: 10051/tcp published on the host, which is how **active agents**
+# and `zabbix_sender` reach the server. Without it Zabbix can still monitor
+# anything it can reach outward — HTTP, SNMP, ICMP, a Prometheus endpoint, a
+# passive agent it connects to — but nothing can report in.
+#
+# What it costs: a port outside Traefik. Zabbix' own protocol is not HTTP, so
+# no access policy, no TLS termination and no rate limit from the proxy apply
+# to it. What protects it is the host firewall and Zabbix' own PSK or
+# certificate encryption, neither of which this stack configures.
+#
+# Bind it to one address rather than all of them where you can:
+#   APP_TRAPPER_BIND=10.0.0.5:10051
+#
+# The second network is not optional. In the base file the server is only on
+# `app-internal`, which is `internal: true` — and Docker accepts a `ports:`
+# entry for such a container, records the binding, and never activates it:
+# `docker inspect` shows the PortBindings set and NetworkSettings.Ports null.
+# Publishing needs a network that can route, so this adds one.
+# ---------------------------------------------------------------------------
+
+services:
+  zabbix-server:
+    ports:
+      - "${APP_TRAPPER_BIND}:10051"
+    networks:
+      - app-internal
+      - trapper
+
+networks:
+  trapper:
+    name: ${COMPOSE_PROJECT_NAME}-trapper
