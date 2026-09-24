@@ -11,7 +11,7 @@ Hardened configurations for 80+ services — standardized security baseline, Doc
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/rubennati/secure-docker-blueprint/badge)](https://scorecard.dev/viewer/?uri=github.com/rubennati/secure-docker-blueprint)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/13091/badge)](https://www.bestpractices.dev/projects/13091)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v0.9.2-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v0.9.3-blue)](CHANGELOG.md)
 
 **[Architecture](docs/architecture.md) · [Standards](docs/standards/) · [Verified status](LIFECYCLE.md) · [SecDockBlue](https://secdockblue.rubennati.at)**
 

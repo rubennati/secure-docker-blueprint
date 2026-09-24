@@ -4,7 +4,7 @@
 
 **Last updated:** 2026-09-24
 
-- **Phase:** pre-1.0. Latest tag `v0.9.2` (2026-09-22), which is where `main`
+- **Phase:** pre-1.0. Latest tag `v0.9.3` (2026-09-24), which is where `main`
   stands; what `dev` carries beyond it is `git rev-list --count v0.9.2..dev`, and
   it is not repeated here. Work happens on a
   short-lived branch and reaches `dev` through a pull request; `dev` reaches
