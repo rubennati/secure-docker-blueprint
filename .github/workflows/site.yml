@@ -1,7 +1,11 @@
 name: Site build
 
+# A push builds only on main, the branch that deploys. Every other branch is
+# covered by its own pull request, and building one commit twice publishes
+# nothing that the first build did not.
 on:
   push:
+    branches: [main]
     paths:
       - 'site/**'
       - '.github/workflows/site.yml'
