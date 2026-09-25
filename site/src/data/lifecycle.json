@@ -422,7 +422,7 @@
   "apps/photoprism": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "pinned": "APP_TAG=260728",
+    "pinned": "APP_TAG=260919",
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-04-17",
