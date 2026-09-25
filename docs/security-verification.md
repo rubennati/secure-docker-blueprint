@@ -416,7 +416,7 @@ document restates their coverage, severity or exit behavior — it points here.
 push and deletion prevented) is satisfied. Tier 2 needs an approving review, which a
 single-maintainer repository can only satisfy by bypassing it on every merge, and
 tier 4 needs two reviewers. What the repository does enforce instead is stricter than
-the score shows: ten required checks on both protected branches, up-to-date branches,
+the score shows: ten required checks on `dev` and twelve on `main`, up-to-date branches,
 and no bypass actor, so a red check blocks the owner too. The reasoning is in
 [`.ai/decisions.md`](../.ai/decisions.md) under *No review gate on `main`*; a second
 maintainer is what would change it.
