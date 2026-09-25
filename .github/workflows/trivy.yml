@@ -10,11 +10,12 @@ name: Trivy
 #      .trivy-baseline.json — see docs/security-verification.md for the current
 #      control description.
 #
-# Triggers: push/PR to main, weekly Monday 04:00 UTC, manual dispatch. On
-# push/PR, job 2 (image-scan) only runs when an input that can change the
-# discovered image set changed (see the detect-changes job below); job 1
-# (config-scan) stays unconditional. Schedule and manual dispatch always run
-# both jobs in full.
+# Triggers: push/PR to main, weekly Monday 04:00 UTC, manual dispatch. A pull
+# request to main scans in full, whatever changed: it is the last check before
+# the published branch, and both jobs are required there. On push, job 2
+# (image-scan) only runs when an input that can change the discovered image set
+# changed (see the detect-changes job below); job 1 (config-scan) stays
+# unconditional. Schedule and manual dispatch always run both jobs in full.
 #
 # Limitations (documented in docs/security-verification.md):
 #   - Image scanning covers every compose file check-structure.py --list reports.
@@ -50,7 +51,8 @@ jobs:
   # ─────────────────────────────────────────────────────────────────────────
   # 0. DETECT IMAGE-RELEVANT CHANGES
   # ─────────────────────────────────────────────────────────────────────────
-  # Gates job 2 (image-scan) only. Job 1 (config-scan) is fast and stays
+  # Gates job 2 (image-scan) on a push only. A pull request to main scans in
+  # full — see the first branch below. Job 1 (config-scan) is fast and stays
   # unconditional on its existing triggers.
   #
   # list-images.sh's actual inputs, verified from source rather than assumed:
@@ -59,9 +61,9 @@ jobs:
   # from image resolution, so they don't gate this either), each stack's
   # .env.example (sourced to resolve ${VAR} image tags), and the discovery/
   # scan/summarize scripts themselves. A change to none of these cannot change
-  # which images get pulled or scanned. Schedule and manual dispatch always
-  # scan everything: new CVEs appear in already-published images independent
-  # of any commit here.
+  # which images get pulled or scanned. A pull request to main, the schedule
+  # and a manual dispatch always scan everything: new CVEs appear in
+  # already-published images independent of any commit here.
   detect-changes:
     name: Detect image-relevant changes
     runs-on: ubuntu-latest
@@ -74,6 +76,12 @@ jobs:
 
       - id: diff
         run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "Pull request to \`main\` — scanning all images regardless of changes: the last check before the published branch." >> "$GITHUB_STEP_SUMMARY"
+            echo "images_changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           if [[ "${{ github.event_name }}" == "schedule" || "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             echo "${{ github.event_name }} run — scanning all images regardless of changes." >> "$GITHUB_STEP_SUMMARY"
             echo "images_changed=true" >> "$GITHUB_OUTPUT"
