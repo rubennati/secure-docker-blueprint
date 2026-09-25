@@ -13,7 +13,7 @@
 - **Origin:** Germany · PhotoPrism AG · EU
 - **Domain:** Photos
 - **Role:** Photo library with machine-learning classification and WebDAV
-- **Based on version:** `260728` (upstream tags `YYMMDD`)
+- **Based on version:** `260919` (upstream tags `YYMMDD`)
 - **Last checked:** 2026-04-17
 
 ## What we use
