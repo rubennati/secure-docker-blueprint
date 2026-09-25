@@ -92,7 +92,8 @@ was verified by running it. Three of the fifteen already ship.
 - [x] Upstream requests, filed by the maintainer; drafts are in the local
       `inbox/upstream-requests/` working area. Filed and linked where the rule says
       — the stack's `UPSTREAM.md` where one exists, the candidate evaluation
-      otherwise: the FacturaScripts installer fix NeoRazorX/facturascripts#2041 ·
+      otherwise: the FacturaScripts installer fix NeoRazorX/facturascripts#2041, merged
+      2026-09-25 ·
       rclone/rclone#9957 (`rclone gui` logs a supplied RC password) and
       rclone/rclone-web#139 (its sign-in discards the address) in
       `../backup/rclone-web/UPSTREAM.md` · obot-platform/obot#7978 (start without a
