@@ -839,6 +839,16 @@
     "verified_anchored": false,
     "verified_version": ""
   },
+  "core/authelia": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=4.39.28",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "core/authentik": {
     "backup_docs": "documented",
     "local_stack": "✅",

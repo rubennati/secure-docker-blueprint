@@ -2144,6 +2144,29 @@
     "verified_version": null,
     "version": "0.2.1"
   },
+  "core/authelia": {
+    "decision_facts": {},
+    "decision_facts_checked": "2026-09-26",
+    "domain": "Identity, access and secrets",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL",
+        "Redis"
+      ],
+      "init_services": 0,
+      "services": 3,
+      "summary": "3 services · PostgreSQL + Redis"
+    },
+    "name": "Authelia",
+    "path": "core/authelia",
+    "role": "Login portal with two-factor authentication that Traefik asks through forward-auth",
+    "state": "scaffolded",
+    "upstream": "https://hub.docker.com/r/authelia/authelia",
+    "verified": null,
+    "verified_version": null,
+    "version": "4.39.28"
+  },
   "core/authentik": {
     "decision_facts": {
       "commercial_model": {

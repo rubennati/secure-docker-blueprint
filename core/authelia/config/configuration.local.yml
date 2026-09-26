@@ -1,0 +1,45 @@
+# Authelia — local configuration, read by docker-compose.local.yml
+#
+# SQLite instead of PostgreSQL, sessions in memory instead of Redis, one-time
+# codes in a file instead of mail. Authelia serves TLS itself with the
+# certificate ops/init.sh --local creates: it refuses a portal that is not https.
+# Browsers resolve *.localhost to 127.0.0.1, so no hosts entry is needed.
+
+server:
+  address: 'tcp://:9091'
+  tls:
+    certificate: '/tls/public.crt'
+    key: '/tls/private.pem'
+
+log:
+  level: 'debug'
+
+theme: 'auto'
+
+totp:
+  issuer: 'example.localhost'
+
+authentication_backend:
+  file:
+    path: '/data/users_database.yml'
+    password:
+      algorithm: 'argon2'
+
+access_control:
+  default_policy: 'deny'
+  rules:
+    - domain: '*.example.localhost'
+      policy: 'two_factor'
+
+session:
+  cookies:
+    - domain: 'example.localhost'
+      authelia_url: 'https://auth.example.localhost:9091'
+
+storage:
+  local:
+    path: '/data/db.sqlite3'
+
+notifier:
+  filesystem:
+    filename: '/data/notification.txt'

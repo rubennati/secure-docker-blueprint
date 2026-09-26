@@ -671,6 +671,14 @@
     "license_class": "osi",
     "origin": "Austria · maintained in this project · EU (the bundled acme.sh is independent, original author Neil Pang)"
   },
+  "core/authelia": {
+    "bloc": "none",
+    "country": "Community",
+    "entity": "no single company",
+    "license": "Apache-2.0",
+    "license_class": "osi",
+    "origin": "Community · no single company · no single jurisdiction"
+  },
   "core/authentik": {
     "bloc": "EU",
     "country": "Netherlands",
