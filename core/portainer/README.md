@@ -22,7 +22,8 @@ Runs on `http://localhost:9000` without Traefik, DNS or a certificate.
 ```bash
 cp .env.local.example .env.local
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
-# http://localhost:9000
+docker compose -f docker-compose.local.yml --env-file .env.local logs app | grep setup_token
+# http://localhost:9000 — the token goes into the Setup token field
 docker compose -f docker-compose.local.yml --env-file .env.local down
 ```
 
@@ -33,13 +34,24 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 cp .env.example .env
 # Edit: APP_TRAEFIK_HOST, TZ
 
-# 2. Start (no secrets needed — Portainer prompts on first login)
+# 2. Start (no secrets needed — the first administrator is created in the UI)
 docker compose up -d
 
-# 3. Open the web UI within 5 minutes of first start
+# 3. Read the setup token, printed once at startup
+docker compose logs portainer-app | grep setup_token
+
+# 4. Open the web UI within 5 minutes of first start
 # https://<APP_TRAEFIK_HOST>
-# Portainer locks out admin creation after 5 min of idleness — restart if missed
+# Paste the token into "Setup token", then create the administrator. Past those
+# five minutes the setup locks until the container restarts — read the token again
 ```
+
+**The setup token is not optional.** From 2.39.4 a new instance refuses to create the
+first administrator without it, and the same token is asked for when restoring Portainer
+from a backup — [upstream's FAQ](https://docs.portainer.io/faqs/installing/setup-token)
+has the detail. `--no-setup-token` turns the requirement off and this stack does not pass
+it: the token is what keeps whoever reaches the port during those five minutes from
+claiming the instance.
 
 Default access policy is `acc-tailscale` + `sec-4` + `tls-modern` (admin tool, VPN-only, hardened).
 
