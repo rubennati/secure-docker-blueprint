@@ -376,9 +376,11 @@ the two points above:
   trusting Cloudflare's forwarded headers gives `ipAllowList` the real client.
   Not measured.
 - **Already tracked.** First-load counts for the four photo galleries and
-  `apps/it-tools` ([`tasks.md`](tasks.md), *Blocked on a host*), and the chain for
-  Seafile's four path-scoped routers (issue #39). `core/portainer`'s first load
-  fits `sec-4` (issue #37).
+  `apps/it-tools` ([`tasks.md`](tasks.md), *Blocked on a host*), the chain for
+  Seafile's four path-scoped routers (issue #39), and `acc-private` admitting the
+  Docker bridge and host-local sources, which its own description does not say
+  (issue #129). `core/portainer`'s first load fits `sec-4` (issue #37). Both open
+  issues close through this review rather than beside it.
 
 → The review may change names and structure, or confirm them.
 
