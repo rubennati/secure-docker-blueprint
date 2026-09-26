@@ -32,11 +32,11 @@ capabilities beside CrowdSec, each with a design question open in
 
 ### Shared identity
 
-Pick one. Both are maintained; they solve the same problem differently, and
-[`keycloak/README.md`](keycloak/README.md) compares them.
+Pick one; [`authelia/README.md`](authelia/README.md) compares the three.
 
 | Service | Description |
 |---|---|
+| [Authelia](authelia/) | Login portal with two-factor authentication for Traefik forward-auth — users and rules in files, no admin interface |
 | [Authentik](authentik/) | Identity provider for centralised authentication — Forward-Auth, OAuth2 / OIDC / SAML. The reference implementation |
 | [Keycloak](keycloak/) | Identity provider for applications that speak OIDC or SAML themselves, with LDAP and AD federation. Two containers, no proxy of its own |
 

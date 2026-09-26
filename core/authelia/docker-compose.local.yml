@@ -1,0 +1,44 @@
+# Authelia — local
+#
+#   cp .env.local.example .env.local      # then fill the three secrets
+#   ops/init.sh --local                   # certificate and first user
+#   docker compose -f docker-compose.local.yml --env-file .env.local up -d
+#   # https://auth.example.localhost:9091 — accept the self-signed certificate,
+#   # log in as admin with the password in volumes/local/admin_pwd.txt
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  authelia:
+    image: authelia/authelia:${APP_TAG}
+    container_name: authelia-local-app
+    restart: unless-stopped
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs: [/tmp]
+    user: "1000:1000"
+    environment:
+      TZ: ${TZ}
+      X_AUTHELIA_CONFIG: /config/configuration.local.yml
+      AUTHELIA_IDENTITY_VALIDATION_RESET_PASSWORD_JWT_SECRET: ${JWT_SECRET}
+      AUTHELIA_SESSION_SECRET: ${SESSION_SECRET}
+      AUTHELIA_STORAGE_ENCRYPTION_KEY: ${STORAGE_ENCRYPTION_KEY}
+    volumes:
+      - ./config/configuration.local.yml:/config/configuration.local.yml:ro
+      - ./volumes/local/data:/data
+      - ./volumes/local/tls:/tls:ro
+      - ./volumes/local/runtime/healthcheck.env:/app/.healthcheck.env
+    ports:
+      - "127.0.0.1:9091:9091"
+    networks: [authelia-local]
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider --no-check-certificate https://127.0.0.1:9091/api/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+networks:
+  authelia-local:
+    name: authelia-local
