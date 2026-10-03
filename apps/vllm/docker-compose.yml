@@ -30,7 +30,7 @@ services:
     # --- Security ---
     # The image runs as root by default. uid 1000, read_only and dropped
     # capabilities were validated against the CPU build of the same release
-    # (vllm/vllm-openai-cpu:v0.29.0, real inference) with every cache redirected
+    # (vllm/vllm-openai-cpu:v0.30.0, real inference) with every cache redirected
     # to /cache. They were NOT run on the CUDA image — see README. /tmp is
     # noexec tmpfs, which is why no compiler cache points there.
     security_opt:

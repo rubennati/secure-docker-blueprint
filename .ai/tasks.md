@@ -44,6 +44,10 @@ run: Traefik with TLS, a refused client, restart, restore, and each stack's own 
 items. Needs a host; nothing in the 26 new stacks has one. Until then they stay
 `scaffolded`.
 
+- [ ] `apps/litellm`, `apps/ciso-assistant` and `monitoring/langfuse` were verified on a
+      host at the previous pin and moved on 2026-10-04 (`v1.101.4`, `v4.0.9`, `4.50.0`).
+      They are `scaffolded` until the run is repeated at the new pin.
+
 ### 3. Personal data on the public site (audit W7 / D3)
 
 A decision, with a possible v1.0 impact — see [`decisions.md`](decisions.md) and
@@ -67,6 +71,10 @@ A decision, with a possible v1.0 impact — see [`decisions.md`](decisions.md) a
 
 Phased plan in [`../apps/caldiy/docs/hardening-plan.md`](../apps/caldiy/docs/hardening-plan.md).
 The stack builds from a reviewed fork; the hardening phases are not finished.
+
+- [ ] The fork image `v6.2.0-6` is built on Next.js 16.2.3. GHSA-vcvr-r3jv-pc5j (remote code
+      execution in `next/og`) is fixed in 16.3.6 and recorded in `.trivy-baseline.json` since
+      2026-10-04; a fork build on a fixed Next.js removes it.
 
 ### 6. Fifteen proposed products — evaluated 2026-09-21
 

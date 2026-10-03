@@ -157,11 +157,11 @@
     "name": "CISO Assistant",
     "path": "apps/ciso-assistant",
     "role": "Governance, risk and compliance: frameworks such as ISO 27001 and NIS2 mapped to controls, risks and evidence",
-    "state": "baseline-aligned",
+    "state": "scaffolded",
     "upstream": "https://github.com/intuitem/ciso-assistant-community/pkgs/container/ciso-assistant-community%2Fbackend",
     "verified": "2026-09-22",
     "verified_version": "v4.0.5",
-    "version": "4.0.5"
+    "version": "4.0.9"
   },
   "apps/collabora": {
     "decision_facts": {},
@@ -662,7 +662,7 @@
     "upstream": "https://www.librephotos.com/",
     "verified": null,
     "verified_version": null,
-    "version": "1.1.0"
+    "version": "1.2.1"
   },
   "apps/litellm": {
     "decision_facts": {
@@ -686,11 +686,11 @@
     "name": "LiteLLM",
     "path": "apps/litellm",
     "role": "OpenAI-compatible gateway in front of any model backend, with virtual keys, budgets and a spend log",
-    "state": "baseline-aligned",
+    "state": "scaffolded",
     "upstream": "https://github.com/BerriAI/litellm/pkgs/container/litellm-non_root",
     "verified": "2026-09-21",
     "verified_version": "v1.101.0",
-    "version": "1.101.0"
+    "version": "1.101.4"
   },
   "apps/lycheeorg": {
     "decision_facts": {},
@@ -1432,7 +1432,7 @@
     "upstream": "https://hub.docker.com/r/vllm/vllm-openai",
     "verified": null,
     "verified_version": null,
-    "version": "0.29.0"
+    "version": "0.30.0"
   },
   "apps/whoami": {
     "decision_facts": {},
@@ -3046,11 +3046,11 @@
     "name": "Langfuse",
     "path": "monitoring/langfuse",
     "role": "LLM observability: traces, scores and prompts from any instrumented application",
-    "state": "baseline-aligned",
+    "state": "scaffolded",
     "upstream": "https://github.com/langfuse/langfuse/pkgs/container/langfuse",
     "verified": "2026-09-22",
     "verified_version": "4.38.0",
-    "version": "4.38.0"
+    "version": "4.50.0"
   },
   "monitoring/ntfy": {
     "decision_facts": {

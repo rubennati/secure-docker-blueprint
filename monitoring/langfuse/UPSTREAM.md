@@ -13,12 +13,12 @@
 - **Origin:** United States · ClickHouse, Inc. (Langfuse has been part of it since 2026-01) · non-EU
 - **Domain:** AI and local AI
 - **Role:** LLM observability: traces, scores and prompts from any instrumented application
-- **Based on version:** `4.38.0`
+- **Based on version:** `4.50.0`
 - **Last verified:** 2026-09-22 (4.38.0) — behind Traefik with TLS: the UI, the Python SDK sending traces, scores and a prompt, a restart, and a restore
 
 ## What we use
 
-- `docker.langfuse.com/langfuse/langfuse:4.38.0` and `…/langfuse-worker:4.38.0`.
+- `docker.langfuse.com/langfuse/langfuse:4.50.0` and `…/langfuse-worker:4.50.0`.
   Upstream's compose file uses the floating `:4`; not used here.
 - `postgres:17.6`, `clickhouse/clickhouse-server:25.12`, `redis:7.4-alpine` and
   `quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z` — the same five components as
