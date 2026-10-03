@@ -15,8 +15,8 @@ Two scopes exist and they differ by the directories `check-structure.py` lists i
 
 | Scope | Stacks | Compose files | Services |
 |---|---|---|---|
-| **Deployable** | 118 | **130** | **292** |
-| Checker universe | 121 | 133 | 296 |
+| **Deployable** | 119 | **131** | **299** |
+| Checker universe | 122 | 134 | 303 |
 
 The difference is `apps/_reference`, `development/static-site`, `development/web-api` — parsed and held to the baseline, deployed by nobody.
 
@@ -26,8 +26,8 @@ A merge is blocked when one of these is violated without a documented exception.
 
 | Control | Coverage | Documented exceptions |
 |---|---|---|
-| `no-new-privileges:true` | 289 / 292 services | 3 |
-| `privileged: true` forbidden | 0 violation(s) across 130 compose files | 0 |
+| `no-new-privileges:true` | 296 / 299 services | 3 |
+| `privileged: true` forbidden | 0 violation(s) across 131 compose files | 0 |
 | Docker socket via proxy only | — | 8 |
 | `network_mode: host` | — | 5 |
 
@@ -35,7 +35,7 @@ A merge is blocked when one of these is violated without a documented exception.
 
 | Control | Coverage |
 |---|---|
-| Network isolation — a network with `internal: true` | 69 / 130 compose files |
+| Network isolation — a network with `internal: true` | 70 / 131 compose files |
 | `__REPLACE_ME__` sentinels an operator must replace | 46 occurrences across `.env.example` files |
 
 ## Soft controls
@@ -46,8 +46,8 @@ image property, established by running it rather than by counting.
 
 | Control | Coverage |
 |---|---|
-| `read_only: true` | 112 / 292 services |
-| `cap_drop: ALL` | 175 / 292 services |
-| Non-root `user:` | 47 / 292 services |
-| Resource limits — `memory` and `pids` | 292 / 292 services |
-| Docker Secrets — a `secrets:` block | 172 / 292 services |
+| `read_only: true` | 117 / 299 services |
+| `cap_drop: ALL` | 182 / 299 services |
+| Non-root `user:` | 48 / 299 services |
+| Resource limits — `memory` and `pids` | 299 / 299 services |
+| Docker Secrets — a `secrets:` block | 178 / 299 services |

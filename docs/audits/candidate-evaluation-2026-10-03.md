@@ -415,6 +415,29 @@ on the image.
 - **No web interface, so no router:** the stack has no Traefik labels and does
   not join `proxy-public`.
 
+**Batch Y — jeboehm/docker-mailserver.** Shipped as `apps/mailserver-jeboehm`,
+verified on the images.
+
+- **Seven services, five without any capability.** `mda`, `filter`, `web`,
+  `unbound` and `redis` run as their own users, read-only, under `cap_drop: ALL`;
+  `mta` and `db` start as root and keep the routine set. Upstream's `ssl` and
+  `fetchmail` services are left out.
+- **The images read every credential from the environment**, so a wrapper
+  exports them from Docker Secrets. The web image's entrypoint passes no
+  `APP_SECRET` through and is replaced by one that reads it from a file.
+- **Submission is on 587 with STARTTLS**; the product has no port 465. The
+  overlay publishes 25, 587 and 993.
+- **Setup can be scripted.** The web image's console has `domain:add`,
+  `user:add` and `dkim:setup`; the stack's script uses them instead of the
+  interactive wizard.
+- **Rspamd signs only once the DKIM record is published** — it looks the key up
+  in DNS first — so a signature cannot be produced without a real domain.
+- **Nothing bans an address after failed logins.** Postfix limits a client to 20
+  connections a minute; that is the product's own brake.
+- **Postfix checks the ownership of its certificate files.** The certificate
+  directory is `root:1000` with the key at mode `640`, which Postfix accepts and
+  Dovecot, as uid 1000, can read.
+
 ## Repository findings from this evaluation
 
 Facts about files that already exist, found while checking the candidates. Each

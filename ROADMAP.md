@@ -182,18 +182,19 @@ Two of them were capabilities rather than applications. Both were decided on
 
 ---
 
-## Being added — mail servers
+## Added — mail servers
 
-Three mail servers are added, each its own pull request and each landing
-`scaffolded`. Stalwart and docker-mailserver are in —
-[`apps/stalwart`](apps/stalwart/) and
-[`apps/docker-mailserver`](apps/docker-mailserver/) — with the mail ports
-published by an opt-in overlay. jeboehm/docker-mailserver follows the same way. Mailu meets
-the requirements and waits for a release that carries a published security fix.
-It is a third deliberate exception to the hold below and changes nothing v1.0
-requires — reasoning in [`.ai/decisions.md`](.ai/decisions.md), evidence and
-batch order in
+Three mail servers were added, each landing `scaffolded`, with the mail ports
+published by an opt-in overlay: [`apps/stalwart`](apps/stalwart/),
+[`apps/docker-mailserver`](apps/docker-mailserver/) and
+[`apps/mailserver-jeboehm`](apps/mailserver-jeboehm/). Mailu meets the
+requirements and waits for a release that carries a published security fix. It
+was a third deliberate exception to the hold below and changed nothing v1.0
+requires — reasoning in [`.ai/decisions.md`](.ai/decisions.md), evidence in
 [`docs/audits/candidate-evaluation-2026-10-03.md`](docs/audits/candidate-evaluation-2026-10-03.md).
+
+Moving the three from `scaffolded` to `baseline-aligned` is part of the
+verification backlog.
 
 ---
 
@@ -203,8 +204,8 @@ No application is added while the v1.0 items above are open. Three exceptions we
 made: on 2026-09-21 twelve proposed products that publish a versioned image went in
 as stacks so they can be tried, on 2026-09-22 the candidates this section held
 were narrowed and added — see [Added](#added--the-held-candidates) — and on
-2026-10-03 three mail servers were decided — see
-[Being added](#being-added--mail-servers). None changes what v1.0 requires;
+2026-10-03 three mail servers were added — see
+[Added — mail servers](#added--mail-servers). None changes what v1.0 requires;
 reasoning in [`.ai/decisions.md`](.ai/decisions.md), evidence in the three
 evaluations under [`docs/audits/`](docs/audits/).
 

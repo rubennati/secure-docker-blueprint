@@ -247,6 +247,14 @@
     "license_class": "osi",
     "origin": "New Zealand · Ralph Slooten (axllent) · non-EU"
   },
+  "apps/mailserver-jeboehm": {
+    "bloc": "EU",
+    "country": "Germany",
+    "entity": "Jeffrey Boehm (individual maintainer)",
+    "license": "MIT",
+    "license_class": "osi",
+    "origin": "Germany · Jeffrey Boehm (individual maintainer) · EU"
+  },
   "apps/monicahq": {
     "bloc": "non-EU",
     "country": "Canada",
