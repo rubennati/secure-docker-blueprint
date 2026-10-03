@@ -6,6 +6,54 @@ this file is the index and covers decisions that have no other home.
 
 ---
 
+## 2026-10-03 · Three mail servers are added, and Mailu waits for a fixed release
+
+`ROADMAP.md` adds no application while the v1.0 items are open, and the exception
+of 2026-09-22 left the hold in place for anything proposed afterwards. Seven mail
+servers were proposed and checked the same way. Three are added — a third
+deliberate exception of the same kind: it changes nothing v1.0 requires, every
+stack lands `scaffolded`, and the hold still applies to anything proposed from here
+on.
+
+**Added: Stalwart, docker-mailserver and jeboehm/docker-mailserver.** The repository
+had no mail server. The three differ in shape — one binary with its own web
+interface, one container configured by files, one container per function with an
+administration interface and webmail — so the batch covers three ways of running
+mail rather than three variants of one.
+
+**Open source is the entry condition for this list as well.** poste.io and Axigen
+are proprietary and are not added.
+
+**Mailu is held, not dropped.** CVE-2026-86008, rated high and published on
+2026-09-23, lets an account with the domain-manager role take over administrator
+accounts. The fix is on `master`; the newest release, 2024.06.61, does not contain
+it, and the maintainers preferred the next release over a backport. A published
+advisory with no fixed release is what the verdict *Held* is for. Mailu meets every
+other requirement and is revisited when a release carries the fix.
+
+**mailcow is not added.** `netfilter-mailcow` runs `privileged: true`, which the
+baseline refuses without an exception path, and upstream's configuration has no
+switch that leaves the service out. A stack without it would be a deployment its
+upstream does not describe.
+
+**Stalwart's licence is recorded, not resolved here.** The published image is built
+with the enterprise feature, so code under the Stalwart Enterprise License v2 is in
+it, unlocked only by a licence key. Whether the stack pins that image or one built
+here without the feature is decided with the stack; `business/twenty` is the
+precedent for the first.
+
+**The stacks wait for two answers from the Traefik review.** SMTP and IMAP are not
+HTTP: either each stack publishes its mail ports through an opt-in overlay, or
+Traefik routes them through TCP entrypoints with PROXY protocol. And each server
+holds its own certificate, from its own ACME client, from Traefik's `acme.json`, or
+from files issued outside the proxy. Both questions touch `core/traefik`, which is
+why they are settled once, there, rather than three times in three stacks.
+
+Evidence per product, the batch order and the decisions each batch depends on:
+[`../docs/audits/candidate-evaluation-2026-10-03.md`](../docs/audits/candidate-evaluation-2026-10-03.md).
+
+---
+
 ## 2026-09-24 · `cap_add` and `devices` get exception tables
 
 The candidate evaluation attached one decision to batches N, Q, R and S: where

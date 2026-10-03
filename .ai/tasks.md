@@ -185,3 +185,21 @@ products and are added as a second deliberate exception (`decisions.md`,
       Both hook names given there were wrong and are checked against upstream's
       schema now — Zabbix reaches the web interface's `/api_jsonrpc.php`, not
       the trapper port, and ntfy's key is `topic`, not `topic_url`.
+
+### 8. Mail servers — decided 2026-10-03
+
+Three mail servers are added as a third deliberate exception (`decisions.md`,
+2026-10-03). Evidence, what was held or not added and why, and the batch order:
+[`../docs/audits/candidate-evaluation-2026-10-03.md`](../docs/audits/candidate-evaluation-2026-10-03.md).
+
+- [ ] Decide how mail ports are exposed — published by the stack through an opt-in
+      overlay, or routed by Traefik as TCP with PROXY protocol — and where a mail
+      server's certificate comes from. Both are inputs to the Traefik review
+      (`state.md`, *Open decisions*) and come before the first stack.
+- [ ] Batches W–Y, each its own pull request, in this order: W Stalwart ·
+      X docker-mailserver · Y jeboehm/docker-mailserver. Before W: which image
+      Stalwart runs — upstream's, which carries its enterprise code, or one built
+      here without the `enterprise` feature. Before X and Y: the directory names
+      of the two docker-mailserver stacks. Each stack ships `scaffolded`.
+- [ ] Mailu: revisit when a release contains the fix for CVE-2026-86008 — a new
+      release line, or a backport into `2024.06`.
