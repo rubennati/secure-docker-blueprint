@@ -1,0 +1,77 @@
+services:
+
+  # --------------------------------------------------------
+  # DOCKER-MAILSERVER
+  # --------------------------------------------------------
+  app:
+    # --- Identity ---
+    image: ghcr.io/docker-mailserver/docker-mailserver:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    hostname: ${APP_MAIL_HOST}
+    restart: unless-stopped
+    stop_grace_period: 1m
+
+    # --- Security ---
+    # No `user:` and no `read_only`: supervisord starts as root and the start
+    # script writes its configuration under /etc.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+      - NET_BIND_SERVICE
+      # Fail2ban writes its bans with nftables. Without it nothing is banned.
+      - NET_ADMIN
+
+    # --- Resources ---
+    # 308 MiB idle with Rspamd and two mailboxes, measured 2026-10-03. The limit
+    # is derived, not measured under load — v0.10.0.
+    memswap_limit: 2g            # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          pids: 500
+        reservations:
+          memory: 384m
+
+    # --- Configuration ---
+    environment:
+      POSTMASTER_ADDRESS: postmaster@${APP_MAIL_DOMAIN}
+      PERMIT_DOCKER: none
+      SPOOF_PROTECTION: 1
+      SSL_TYPE: manual
+      SSL_CERT_PATH: /certs/fullchain.pem
+      SSL_KEY_PATH: /certs/privkey.pem
+      ENABLE_FAIL2BAN: 1
+      ENABLE_RSPAMD: 1
+      ENABLE_OPENDKIM: 0
+      ENABLE_OPENDMARC: 0
+      ENABLE_POLICYD_SPF: 0
+      ENABLE_AMAVIS: 0
+      ENABLE_SPAMASSASSIN: 0
+      ENABLE_CLAMAV: ${APP_CLAMAV}
+      ENABLE_MTA_STS: 1
+      ENABLE_UPDATE_CHECK: 0
+      TZ: ${TZ}
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/mail-data:/var/mail
+      - ./volumes/mail-state:/var/mail-state
+      - ./volumes/mail-logs:/var/log/mail
+      - ./volumes/config:/tmp/docker-mailserver
+      - ./volumes/certs:/certs:ro
+
+    # --- Health ---
+    healthcheck:
+      test: ["CMD", "dms-healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 2m

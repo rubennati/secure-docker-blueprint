@@ -4,7 +4,7 @@
 
 Generated 2026-10-03 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-119 stacks: 1 ops-proven · 34 baseline-aligned · 84 scaffolded. 109 carry a local test stack.
+120 stacks: 1 ops-proven · 34 baseline-aligned · 85 scaffolded. 110 carry a local test stack.
 
 This is the maintainer's view: what has been established about each stack. It makes no statement about whether a stack suits a given deployment.
 
@@ -58,6 +58,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/dependency-track`](apps/dependency-track/) | `scaffolded` | `APP_TAG=5.1.0` | — | ✅ | documented | missing |
 | [`apps/dfir-iris`](apps/dfir-iris/) | `scaffolded` | `APP_TAG=v2.4.29` | — | ✅ | documented | missing |
 | [`apps/dify`](apps/dify/) | `baseline-aligned` | `APP_TAG=1.17.1` | 2026-09-22 | ✅ | documented | missing |
+| [`apps/docker-mailserver`](apps/docker-mailserver/) | `scaffolded` | `APP_TAG=16.0.1` | — | ✅ | documented | missing |
 | [`apps/docling-serve`](apps/docling-serve/) | `baseline-aligned` | `APP_TAG=v1.34.0` | 2026-09-22 | ✅ | documented | missing |
 | [`apps/easyappointments`](apps/easyappointments/) | `scaffolded` | `APP_TAG=1.6.0` | 2026-05-03 | ✅ | documented | missing |
 | [`apps/euro-office`](apps/euro-office/) | `scaffolded` | `APP_TAG=v9.3.4-hotfix.1` | — | ✅ | documented | missing |

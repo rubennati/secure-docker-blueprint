@@ -103,6 +103,14 @@
     "license_class": "source-available",
     "origin": "LangGenius · no country stated in its published terms · no country"
   },
+  "apps/docker-mailserver": {
+    "bloc": "none",
+    "country": "Community",
+    "entity": "docker-mailserver organisation",
+    "license": "MIT",
+    "license_class": "osi",
+    "origin": "Community · docker-mailserver organisation · no single jurisdiction"
+  },
   "apps/docling-serve": {
     "bloc": "non-EU",
     "country": "LF AI & Data Foundation (US non-profit)",

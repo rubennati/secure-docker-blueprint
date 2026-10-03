@@ -90,6 +90,7 @@ Planned: **DayOtter** (scheduling platform, AGPL-3.0). It publishes no image, so
 
 | App | Stack | Description |
 |---|---|---|
+| [docker-mailserver](docker-mailserver/) | Single container | Postfix, Dovecot and Rspamd in one container, configured by files — no database, no web interface, nothing behind Traefik. The mail ports 25, 465 and 993 are published by an opt-in overlay. Fail2ban, Rspamd and sender-address checks are on, which upstream ships off |
 | [Stalwart](stalwart/) | Single container | Mail and collaboration server — SMTP, IMAP, JMAP, calendars and contacts in one binary. The web interface goes through Traefik; the mail ports 25, 465 and 993 are published by an opt-in overlay. Setup runs over the API and sets ban expiry and the forwarded client address |
 
 ### Identity & security
@@ -223,8 +224,8 @@ it is revisited once the announced rewrite is released. See
 
 Docker-management tools (Dockhand / Portainer / Hawser) are in [`core/`](../core/): they control Docker itself, which is an installation-scoped capability. Whoami sits here instead — it is a routed diagnostic that serves no other stack.
 
-Planned (apps/): two more mail servers — **docker-mailserver** and
-**jeboehm/docker-mailserver**. Held: **Mailu** — it waits for a release that carries a
+Planned (apps/): one more mail server — **jeboehm/docker-mailserver**. Held:
+**Mailu** — it waits for a release that carries a
 published security fix. See
 [`../docs/audits/candidate-evaluation-2026-10-03.md`](../docs/audits/candidate-evaluation-2026-10-03.md#decided-on-2026-10-03).
 

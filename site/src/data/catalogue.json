@@ -305,6 +305,43 @@
     "verified_version": "1.17.1",
     "version": "1.17.1"
   },
+  "apps/docker-mailserver": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-10-03",
+        "model": "no paid edition",
+        "source": "https://github.com/docker-mailserver/docker-mailserver",
+        "statement": "no paid edition"
+      },
+      "edition_gating": {
+        "checked": "2026-10-03",
+        "source": "https://github.com/docker-mailserver/docker-mailserver",
+        "statement": "none — one implementation, no paid tier"
+      },
+      "use_restrictions": {
+        "checked": "2026-10-03",
+        "source": "https://github.com/docker-mailserver/docker-mailserver/blob/master/LICENSE",
+        "statement": "none"
+      }
+    },
+    "decision_facts_checked": "2026-10-03",
+    "domain": "Files, wiki and collaboration",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
+    "name": "docker-mailserver",
+    "path": "apps/docker-mailserver",
+    "role": "Mail server — Postfix, Dovecot and Rspamd in one container, configured by files, without a database or a web interface",
+    "state": "scaffolded",
+    "upstream": "https://github.com/docker-mailserver/docker-mailserver/pkgs/container/docker-mailserver",
+    "verified": null,
+    "verified_version": null,
+    "version": "16.0.1"
+  },
   "apps/docling-serve": {
     "decision_facts": {},
     "decision_facts_checked": null,

@@ -197,9 +197,15 @@ Three mail servers are added as a third deliberate exception (`decisions.md`,
       from, Stalwart runs upstream's image, mail servers sit in `apps/`.
 - [x] Batch W, Stalwart — `../apps/stalwart`, `scaffolded`, verified on the
       image. What a host still has to establish is in its `UPSTREAM.md`.
-- [ ] Batches X and Y, each its own pull request: X docker-mailserver ·
-      Y jeboehm/docker-mailserver. Before both: the directory names of the two
-      docker-mailserver stacks. Each stack ships `scaffolded`.
+- [x] Batch X, docker-mailserver — `../apps/docker-mailserver`, `scaffolded`,
+      verified on the image. Fail2ban is on and needs `NET_ADMIN`, recorded in
+      `CAP_ADD_EXCEPTIONS`.
+- [ ] Batch Y, jeboehm/docker-mailserver, its own pull request. Its directory
+      needs a name that does not collide with `apps/docker-mailserver`. It ships
+      `scaffolded`.
+- [ ] `apps/docker-mailserver` on a host: which client address the container
+      sees on a published port — Fail2ban bans that address — and delivery to
+      and from another mail system.
 - [ ] `apps/stalwart` on a host: a certificate on the mail ports, delivery to and
       from another mail system, and the client address Stalwart sees on a
       published port — its bans depend on it.
