@@ -182,15 +182,32 @@ Two of them were capabilities rather than applications. Both were decided on
 
 ---
 
+## Being added — mail servers
+
+The repository has no mail server. Three are added, each its own pull request and
+each landing `scaffolded`: Stalwart, docker-mailserver and
+jeboehm/docker-mailserver. Mailu meets the requirements and waits for a release
+that carries a published security fix. It is a third deliberate exception to the
+hold below and changes nothing v1.0 requires — reasoning in [`.ai/decisions.md`](.ai/decisions.md),
+evidence and batch order in
+[`docs/audits/candidate-evaluation-2026-10-03.md`](docs/audits/candidate-evaluation-2026-10-03.md).
+
+Two answers come before the first stack, and both belong to the Traefik review
+above: how ports that are not HTTP are exposed — published by the stack, or routed
+by Traefik as TCP — and where a mail server's certificate comes from.
+
+---
+
 ## On hold — after v1.0 or not yet needed
 
-No application is added while the v1.0 items above are open. Two exceptions were
+No application is added while the v1.0 items above are open. Three exceptions were
 made: on 2026-09-21 twelve proposed products that publish a versioned image went in
-as stacks so they can be tried, and on 2026-09-22 the candidates this section held
-were narrowed and are being added — see
-[Added](#added--the-held-candidates). Both change nothing v1.0 requires;
-reasoning in [`.ai/decisions.md`](.ai/decisions.md), evidence in the two evaluations
-under [`docs/audits/`](docs/audits/).
+as stacks so they can be tried, on 2026-09-22 the candidates this section held
+were narrowed and added — see [Added](#added--the-held-candidates) — and on
+2026-10-03 three mail servers were decided — see
+[Being added](#being-added--mail-servers). None changes what v1.0 requires;
+reasoning in [`.ai/decisions.md`](.ai/decisions.md), evidence in the three
+evaluations under [`docs/audits/`](docs/audits/).
 
 Concepts with no timeline, picked up app by app as they are re-verified:
 
@@ -229,3 +246,5 @@ Concepts with no timeline, picked up app by app as they are re-verified:
   independently operated service gets no blueprint entry.
 - The products evaluated on 2026-09-22 and not added — each is named with its reason
   in [`docs/audits/candidate-evaluation-2026-09-22.md`](docs/audits/candidate-evaluation-2026-09-22.md#decided-on-2026-09-22).
+- The mail servers evaluated on 2026-10-03 and not added — each is named with its
+  reason in [`docs/audits/candidate-evaluation-2026-10-03.md`](docs/audits/candidate-evaluation-2026-10-03.md#decided-on-2026-10-03).
