@@ -1,0 +1,12 @@
+# mailserver (jeboehm) — mail ports (opt-in)
+#
+#   docker compose -f docker-compose.yml -f mail.yml up -d
+
+services:
+  mta:
+    ports:
+      - "${APP_MAIL_BIND}:25:25"       # SMTP, from other mail servers
+      - "${APP_MAIL_BIND}:587:587"     # submission, STARTTLS, mail clients
+  mda:
+    ports:
+      - "${APP_MAIL_BIND}:993:31993"   # IMAP, implicit TLS, mail clients

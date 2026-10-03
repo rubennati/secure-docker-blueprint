@@ -309,6 +309,16 @@
     "verified_anchored": true,
     "verified_version": "v1.31.1"
   },
+  "apps/mailserver-jeboehm": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=8.0.8",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "apps/monicahq": {
     "backup_docs": "documented",
     "local_stack": "✅",

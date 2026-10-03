@@ -4,7 +4,7 @@
 
 Generated 2026-10-03 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-120 stacks: 1 ops-proven · 34 baseline-aligned · 85 scaffolded. 110 carry a local test stack.
+121 stacks: 1 ops-proven · 34 baseline-aligned · 86 scaffolded. 111 carry a local test stack.
 
 This is the maintainer's view: what has been established about each stack. It makes no statement about whether a stack suits a given deployment.
 
@@ -76,6 +76,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/litellm`](apps/litellm/) | `baseline-aligned` | `APP_TAG=v1.101.0` | 2026-09-21 | ✅ | documented | missing |
 | [`apps/lycheeorg`](apps/lycheeorg/) | `scaffolded` | `APP_TAG=v7.8.3` | 2026-04-17 ⚠️ | ✅ | documented | missing |
 | [`apps/mailpit`](apps/mailpit/) | `baseline-aligned` | `APP_TAG=v1.31.1` | 2026-09-07 | ✅ | documented | missing |
+| [`apps/mailserver-jeboehm`](apps/mailserver-jeboehm/) | `scaffolded` | `APP_TAG=8.0.8` | — | ✅ | documented | missing |
 | [`apps/monicahq`](apps/monicahq/) | `scaffolded` | `APP_TAG=4.1.2-apache` | 2026-04-17 ⚠️ | ✅ | documented | missing |
 | [`apps/n8n`](apps/n8n/) | `scaffolded` | `APP_TAG=2.38.7` | 2026-05-02 | ✅ | documented | missing |
 | [`apps/nextcloud`](apps/nextcloud/) | `ops-proven` | `APP_TAG=34.0.4-fpm-alpine` | 2026-09-13 | ✅ | documented | documented |

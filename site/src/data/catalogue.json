@@ -735,6 +735,46 @@
     "verified_version": "v1.31.1",
     "version": "1.31.1"
   },
+  "apps/mailserver-jeboehm": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-10-03",
+        "model": "no paid edition",
+        "source": "https://github.com/jeboehm/docker-mailserver",
+        "statement": "no paid edition"
+      },
+      "edition_gating": {
+        "checked": "2026-10-03",
+        "source": "https://github.com/jeboehm/docker-mailserver",
+        "statement": "none — one implementation, no paid tier"
+      },
+      "use_restrictions": {
+        "checked": "2026-10-03",
+        "source": "https://github.com/jeboehm/docker-mailserver/blob/main/LICENSE",
+        "statement": "none"
+      }
+    },
+    "decision_facts_checked": "2026-10-03",
+    "domain": "Files, wiki and collaboration",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MySQL",
+        "Redis"
+      ],
+      "init_services": 0,
+      "services": 7,
+      "summary": "7 services · MySQL + Redis"
+    },
+    "name": "mailserver",
+    "path": "apps/mailserver-jeboehm",
+    "role": "Mail server — Postfix, Dovecot and Rspamd as separate containers, with an administration interface and webmail",
+    "state": "scaffolded",
+    "upstream": "https://github.com/jeboehm?tab=packages&repo_name=docker-mailserver",
+    "verified": null,
+    "verified_version": null,
+    "version": "8.0.8"
+  },
   "apps/monicahq": {
     "decision_facts": {},
     "decision_facts_checked": null,

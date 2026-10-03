@@ -1,0 +1,365 @@
+# mailserver (jeboehm) — local
+#
+#   cp .env.local.example .env.local
+#   ops/init.sh --local
+#   ops/setup.sh --local
+#   http://localhost:8080 — user and password are printed by setup.sh
+#   SMTP localhost:1025 · submission localhost:1587 · IMAP localhost:1993
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  # --------------------------------------------------------
+  # MTA (Postfix — SMTP in and out, submission)
+  # --------------------------------------------------------
+  mta:
+    # --- Identity ---
+    image: ghcr.io/jeboehm/mailserver-mta:${APP_TAG}
+    container_name: mailserver-jeboehm-local-mta
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      mda:
+        condition: service_healthy
+      filter:
+        condition: service_healthy
+
+    # --- Security ---
+    # No `read_only`: the entrypoint writes Postfix's settings with postconf.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+      - NET_BIND_SERVICE
+
+    # --- Configuration ---
+    environment:
+      MAILNAME: mail.${APP_MAIL_DOMAIN}
+      POSTMASTER: postmaster@${APP_MAIL_DOMAIN}
+      DB_DRIVER: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      WAITSTART_TIMEOUT: 2m
+      TZ: ${TZ}
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/local/certs:/etc/postfix/tls:ro
+      - ./volumes/local/spool:/var/spool/postfix
+
+    # --- Networking ---
+    networks:
+      - mailserver-jeboehm-local
+    ports:
+      - "127.0.0.1:1025:25"
+      - "127.0.0.1:1587:587"
+
+    # --- Health ---
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 1m
+
+  # --------------------------------------------------------
+  # MDA (Dovecot — IMAP, mail storage, authentication)
+  # --------------------------------------------------------
+  mda:
+    # --- Identity ---
+    image: ghcr.io/jeboehm/mailserver-mda:${APP_TAG}
+    container_name: mailserver-jeboehm-local-mda
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:mode=0755,uid=1000,gid=1000
+      - /run/dovecot:mode=0755,uid=1000,gid=1000
+
+    # --- Configuration ---
+    environment:
+      POSTMASTER: postmaster@${APP_MAIL_DOMAIN}
+      DB_DRIVER: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DOVEADM_API_KEY: ${DOVEADM_API_KEY}
+      TZ: ${TZ}
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/local/certs:/etc/dovecot/tls:ro
+      - ./volumes/local/mail:/srv/vmail
+
+    # --- Networking ---
+    networks:
+      - mailserver-jeboehm-local
+    ports:
+      - "127.0.0.1:1993:31993"
+
+    # --- Health ---
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # --------------------------------------------------------
+  # FILTER (Rspamd — spam scoring, DKIM signing)
+  # --------------------------------------------------------
+  filter:
+    # --- Identity ---
+    image: ghcr.io/jeboehm/mailserver-filter:${APP_TAG}
+    container_name: mailserver-jeboehm-local-filter
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+      unbound:
+        condition: service_healthy
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:mode=0755,uid=11333,gid=11333
+
+    # --- Configuration ---
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      CONTROLLER_PASSWORD: ${CONTROLLER_PASSWORD}
+      TZ: ${TZ}
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/local/filter:/var/lib/rspamd
+
+    # --- Networking ---
+    networks:
+      - mailserver-jeboehm-local
+
+    # --- Health ---
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # --------------------------------------------------------
+  # WEB (administration interface, Roundcube webmail)
+  # --------------------------------------------------------
+  web:
+    # --- Identity ---
+    image: ghcr.io/jeboehm/mailserver-web:${APP_TAG}
+    container_name: mailserver-jeboehm-local-web
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /opt/admin/var/cache/prod:mode=0777
+      - /opt/admin/var/log:mode=0777
+      - /opt/roundcube/temp:mode=0777
+      - /opt/roundcube/logs:mode=0777
+      - /tmp:mode=0777
+
+    # --- Configuration ---
+    environment:
+      MAILNAME: mail.${APP_MAIL_DOMAIN}
+      POSTMASTER: postmaster@${APP_MAIL_DOMAIN}
+      DB_DRIVER: mysql
+      DB_SERVER_VERSION: "8.4"
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      CONTROLLER_PASSWORD: ${CONTROLLER_PASSWORD}
+      DOVEADM_API_KEY: ${DOVEADM_API_KEY}
+      WAITSTART_TIMEOUT: 2m
+      TZ: ${TZ}
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/local/certs:/opt/admin/tls:ro
+
+    # --- Networking ---
+    networks:
+      - mailserver-jeboehm-local
+    ports:
+      - "127.0.0.1:8080:8080"
+
+    # --- Health ---
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 1m
+
+  # --------------------------------------------------------
+  # UNBOUND (resolver for Rspamd)
+  # --------------------------------------------------------
+  unbound:
+    # --- Identity ---
+    image: ghcr.io/jeboehm/mailserver-unbound:${APP_TAG}
+    container_name: mailserver-jeboehm-local-unbound
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /run/unbound:mode=0755,uid=100,gid=101
+
+    # --- Configuration ---
+    environment:
+      TZ: ${TZ}
+
+    # --- Networking ---
+    networks:
+      - mailserver-jeboehm-local
+
+    # --- Health ---
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # --------------------------------------------------------
+  # DB (MySQL — domains, accounts, aliases)
+  # --------------------------------------------------------
+  db:
+    # --- Identity ---
+    image: mysql:${DB_TAG}
+    container_name: mailserver-jeboehm-local-db
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # The entrypoint starts as root, fixes ownership on the data directory and
+    # drops to the mysql user.
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+
+    # --- Configuration ---
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      TZ: ${TZ}
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/local/db:/var/lib/mysql
+
+    # --- Networking ---
+    networks:
+      - mailserver-jeboehm-local
+
+    # --- Health ---
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 1m
+
+  # --------------------------------------------------------
+  # REDIS (Rspamd state, web sessions)
+  # --------------------------------------------------------
+  redis:
+    # --- Identity ---
+    image: redis:${REDIS_TAG}
+    container_name: mailserver-jeboehm-local-redis
+    restart: unless-stopped
+    user: "999:999"
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+
+    # --- Configuration ---
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}", "--dir", "/data"]
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/local/redis:/data
+
+    # --- Networking ---
+    networks:
+      - mailserver-jeboehm-local
+
+    # --- Health ---
+    healthcheck:
+      test: ["CMD-SHELL", "REDISCLI_AUTH=\"$$REDIS_PASSWORD\" redis-cli ping | grep -q PONG || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  mailserver-jeboehm-local:
+    name: mailserver-jeboehm-local

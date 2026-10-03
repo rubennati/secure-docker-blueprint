@@ -200,9 +200,12 @@ Three mail servers are added as a third deliberate exception (`decisions.md`,
 - [x] Batch X, docker-mailserver — `../apps/docker-mailserver`, `scaffolded`,
       verified on the image. Fail2ban is on and needs `NET_ADMIN`, recorded in
       `CAP_ADD_EXCEPTIONS`.
-- [ ] Batch Y, jeboehm/docker-mailserver, its own pull request. Its directory
-      needs a name that does not collide with `apps/docker-mailserver`. It ships
-      `scaffolded`.
+- [x] Batch Y, jeboehm/docker-mailserver — `../apps/mailserver-jeboehm`,
+      `scaffolded`, verified on the images. It has no automatic ban; its README
+      says so.
+- [ ] `apps/mailserver-jeboehm` on a host: sign-in to the administration
+      interface behind Traefik, a DKIM signature against a published record,
+      and delivery to and from another mail system.
 - [ ] `apps/docker-mailserver` on a host: which client address the container
       sees on a published port — Fail2ban bans that address — and delivery to
       and from another mail system.
