@@ -217,7 +217,11 @@ it is revisited once the announced rewrite is released. See
 
 Docker-management tools (Dockhand / Portainer / Hawser) are in [`core/`](../core/): they control Docker itself, which is an installation-scoped capability. Whoami sits here instead — it is a routed diagnostic that serves no other stack.
 
-Planned (apps/): HeyForm.
+Planned (apps/): three mail servers — **Stalwart**, **docker-mailserver** and
+**jeboehm/docker-mailserver**. They wait for the decision on how mail ports and
+certificates are handled. Held: **Mailu** — it waits for a release that carries a
+published security fix. See
+[`../docs/audits/candidate-evaluation-2026-10-03.md`](../docs/audits/candidate-evaluation-2026-10-03.md#decided-on-2026-10-03).
 
 ## Related
 
