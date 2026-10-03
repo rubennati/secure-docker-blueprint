@@ -489,6 +489,16 @@
     "verified_anchored": false,
     "verified_version": ""
   },
+  "apps/stalwart": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=v0.16.24",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "apps/threat-dragon": {
     "backup_docs": "documented",
     "local_stack": "✅",

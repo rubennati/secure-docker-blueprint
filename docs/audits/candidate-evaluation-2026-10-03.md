@@ -303,6 +303,14 @@ Facts that recur, so each stack handles them the same way.
 - **Memory with ClamAV.** docker-mailserver's figure is about 850 MB for the
   signatures alone and 3 GB without swap; the repository's default swap policy is
   none.
+- **A CDN proxy does not cover the mail ports.** Cloudflare proxies HTTP and
+  HTTPS and states that it does not proxy mail traffic on port 25; mail records
+  stay DNS-only. Arbitrary TCP ports go through Spectrum, which Cloudflare
+  offers for custom ports on the Enterprise plan only. Its Email Routing, on the
+  free plan, receives mail and forwards it to another address, which is a
+  different arrangement from a proxy in front of this server. A stack's web
+  interface can sit behind the proxy; the host's address is public for mail
+  either way.
 - **A relay for the other stacks is not part of these batches.** The stacks that
   send mail reach their relay over the internet. Submitting to a mail stack on the
   same host needs a network both are on, and stacks share none except
@@ -349,9 +357,41 @@ Decisions the batches depend on:
 | Which image Stalwart runs — upstream's, with the SELv2 code in it, or one built here without the `enterprise` feature | W |
 | Whether a mail server sits in `apps/`, which the category test gives for a stack that serves its own users, and what the two docker-mailserver directories are called | W, X, Y |
 
-The first two are inputs to the Traefik review in
-[`ROADMAP.md`](../../ROADMAP.md#v10--complete-and-hand-off-ready); they are listed
-with its other open points in [`.ai/state.md`](../../.ai/state.md).
+**Decided on 2026-10-03, with batch W:** the stack publishes its mail ports
+through an opt-in overlay, and `core/traefik` stays as it is; each stack states
+where its certificate comes from; Stalwart runs upstream's image; mail servers
+sit in `apps/`. The reasoning is in [`.ai/decisions.md`](../../.ai/decisions.md).
+
+## Findings from implementation
+
+What building the stacks turned up, recorded here so the tables above are not
+mistaken for the end state.
+
+**Batch W — Stalwart.** Shipped as `apps/stalwart`, verified on the image.
+
+- **A ban lands on the proxy unless the forwarded address is read.** 110 failed
+  logins from one address banned that address for the whole HTTP listener. Behind
+  Traefik that address is the proxy's, so the web interface would stop answering
+  for everyone. With `useXForwarded` on, the ban landed on the address in
+  `X-Forwarded-For` and a second client behind the same address was still
+  answered. The stack sets it.
+- **A ban has no expiry by default.** All four ban periods are unset, which keeps
+  a ban until it is removed by hand. The stack sets 24 hours.
+- **Setup runs over the API.** `x:Bootstrap/set` on the bootstrap listener takes
+  the wizard's fields and returns the permanent administrator; the stack's
+  script uses it, with a one-time administrator that exists for a single start.
+- **The listeners after setup are 25, 465, 993, 995, 4190, 443 and 8080.** 587,
+  143 and 110 are in the image's `EXPOSE` list and are not listened on. The
+  overlay publishes 25, 465 and 993.
+- **Upstream's protections as they ship:** port 25 refuses to relay and offers
+  no AUTH, submission on 465 requires a login and refuses a sender address the
+  account does not own. The zone file it generates carries SPF with `-all` and
+  DMARC with `p=reject`.
+- **More leaves the machine than the web interface bundle.** The start log also
+  shows four address-data files fetched from GitHub, and 18 DNS block lists are
+  configured.
+- **DANE is off behind Docker's resolver**, which cannot validate DNSSEC;
+  Stalwart says so at start.
 
 ## Repository findings from this evaluation
 

@@ -1,0 +1,67 @@
+# Stalwart — local
+#
+#   cp .env.local.example .env.local
+#   ops/init.sh --local
+#   ops/setup.sh --local
+#   http://localhost:8080/admin — user and password are printed by setup.sh
+#   docker compose -f docker-compose.local.yml --env-file .env.local down
+
+services:
+
+  # --------------------------------------------------------
+  # STALWART
+  # --------------------------------------------------------
+  stalwart:
+    # --- Identity ---
+    image: stalwartlabs/stalwart:${APP_TAG}
+    container_name: stalwart-local
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      # The binary carries this file capability; without it the exec is refused.
+      - NET_BIND_SERVICE
+    read_only: true
+    tmpfs:
+      # The web interface bundle is unpacked here.
+      - /tmp
+
+    # --- Configuration ---
+    environment:
+      STALWART_PUBLIC_URL: http://localhost:8080
+      # Set by ops/setup.sh for the first start, empty afterwards.
+      STALWART_RECOVERY_ADMIN: ${STALWART_RECOVERY_ADMIN:-}
+      TZ: ${TZ}
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/local/etc:/etc/stalwart
+      - ./volumes/local/data:/var/lib/stalwart
+
+    # --- Networking ---
+    networks:
+      - stalwart-local
+    ports:
+      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:1025:25"
+      - "127.0.0.1:1465:465"
+      - "127.0.0.1:1993:993"
+
+    # --- Health ---
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1:8080/healthz/live"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  stalwart-local:
+    name: stalwart-local

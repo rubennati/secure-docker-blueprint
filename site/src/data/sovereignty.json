@@ -391,6 +391,14 @@
     "license_class": "osi",
     "origin": "Spain · Alejandro Celaya · EU"
   },
+  "apps/stalwart": {
+    "bloc": "non-EU",
+    "country": "United States and United Kingdom",
+    "entity": "Stalwart Labs LLC",
+    "license": "AGPL-3.0 (core; files marked SEL are under the Stalwart Enterprise License v2, and the published image is built with them)",
+    "license_class": "mixed",
+    "origin": "United States and United Kingdom · Stalwart Labs LLC · non-EU"
+  },
   "apps/threat-dragon": {
     "bloc": "non-EU",
     "country": "United States",

@@ -184,17 +184,15 @@ Two of them were capabilities rather than applications. Both were decided on
 
 ## Being added — mail servers
 
-The repository has no mail server. Three are added, each its own pull request and
-each landing `scaffolded`: Stalwart, docker-mailserver and
-jeboehm/docker-mailserver. Mailu meets the requirements and waits for a release
-that carries a published security fix. It is a third deliberate exception to the
-hold below and changes nothing v1.0 requires — reasoning in [`.ai/decisions.md`](.ai/decisions.md),
-evidence and batch order in
+Three mail servers are added, each its own pull request and each landing
+`scaffolded`. Stalwart is in — [`apps/stalwart`](apps/stalwart/) — with its web
+interface behind Traefik and its mail ports published by an opt-in overlay.
+docker-mailserver and jeboehm/docker-mailserver follow the same way. Mailu meets
+the requirements and waits for a release that carries a published security fix.
+It is a third deliberate exception to the hold below and changes nothing v1.0
+requires — reasoning in [`.ai/decisions.md`](.ai/decisions.md), evidence and
+batch order in
 [`docs/audits/candidate-evaluation-2026-10-03.md`](docs/audits/candidate-evaluation-2026-10-03.md).
-
-Two answers come before the first stack, and both belong to the Traefik review
-above: how ports that are not HTTP are exposed — published by the stack, or routed
-by Traefik as TCP — and where a mail server's certificate comes from.
 
 ---
 

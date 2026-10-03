@@ -192,14 +192,16 @@ Three mail servers are added as a third deliberate exception (`decisions.md`,
 2026-10-03). Evidence, what was held or not added and why, and the batch order:
 [`../docs/audits/candidate-evaluation-2026-10-03.md`](../docs/audits/candidate-evaluation-2026-10-03.md).
 
-- [ ] Decide how mail ports are exposed — published by the stack through an opt-in
-      overlay, or routed by Traefik as TCP with PROXY protocol — and where a mail
-      server's certificate comes from. Both are inputs to the Traefik review
-      (`state.md`, *Open decisions*) and come before the first stack.
-- [ ] Batches W–Y, each its own pull request, in this order: W Stalwart ·
-      X docker-mailserver · Y jeboehm/docker-mailserver. Before W: which image
-      Stalwart runs — upstream's, which carries its enterprise code, or one built
-      here without the `enterprise` feature. Before X and Y: the directory names
-      of the two docker-mailserver stacks. Each stack ships `scaffolded`.
+- [x] Decided 2026-10-03 (`decisions.md`): the stack publishes its mail ports
+      through an opt-in overlay, each stack states where its certificate comes
+      from, Stalwart runs upstream's image, mail servers sit in `apps/`.
+- [x] Batch W, Stalwart — `../apps/stalwart`, `scaffolded`, verified on the
+      image. What a host still has to establish is in its `UPSTREAM.md`.
+- [ ] Batches X and Y, each its own pull request: X docker-mailserver ·
+      Y jeboehm/docker-mailserver. Before both: the directory names of the two
+      docker-mailserver stacks. Each stack ships `scaffolded`.
+- [ ] `apps/stalwart` on a host: a certificate on the mail ports, delivery to and
+      from another mail system, and the client address Stalwart sees on a
+      published port — its bans depend on it.
 - [ ] Mailu: revisit when a release contains the fix for CVE-2026-86008 — a new
       release line, or a backport into `2024.06`.
