@@ -1,6 +1,6 @@
 # Roadmap
 
-Direction reviewed 2026-09-24.
+Direction reviewed 2026-10-03.
 
 What remains to be built, what blocks it, and what proves it finished. Shipped
 work belongs to [`CHANGELOG.md`](CHANGELOG.md), per-stack status to the generated
@@ -18,12 +18,12 @@ Pre-1.0 tags are set when a natural milestone is reached, not on a fixed cadence
 The single criterion for v1.0 is: **could someone fork this and run it without
 needing my mental model?**
 
-**Latest tag: v0.9.3 — Sixteen stacks, and a baseline for capabilities
-(2026-09-24).** Each new stack lands `scaffolded`. The security baseline now
-covers capabilities and host devices, which it did not before: `cap_add: ALL`
-is refused, and anything beyond a small routine set needs a written exception.
-What has and has not been established per stack is in
-[`LIFECYCLE.md`](LIFECYCLE.md).
+**Latest tag: v0.9.4 — Mail servers, wider rate limits, Authelia
+(2026-10-03).** Three mail servers and a second login portal are in, each
+`scaffolded`. Mail ports are published by the stack through an opt-in overlay
+and do not pass through Traefik. The proxy's rate limits are wider, as an
+interim until the review below settles what each chain is for. What has and has
+not been established per stack is in [`LIFECYCLE.md`](LIFECYCLE.md).
 
 ### v0.10.0 — Measured resource limits
 
