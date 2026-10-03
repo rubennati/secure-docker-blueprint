@@ -393,6 +393,28 @@ mistaken for the end state.
 - **DANE is off behind Docker's resolver**, which cannot validate DNSSEC;
   Stalwart says so at start.
 
+**Batch X — docker-mailserver.** Shipped as `apps/docker-mailserver`, verified
+on the image.
+
+- **Fail2ban works in the container, and only with `NET_ADMIN`.** With the
+  capability a client was banned after repeated failed IMAP logins and its next
+  connection timed out; without it the ban failed with `Operation not permitted`
+  and the service stayed `RUNNING`. The stack ships it on, with the capability
+  recorded in `CAP_ADD_EXCEPTIONS`.
+- **The capability set is the baseline six and `NET_ADMIN`.** `KILL` and
+  `SYS_CHROOT` were tried and are not needed for the start, the mail checks, a
+  service restart or a container stop.
+- **Upstream's defaults leave three protections off:** Fail2ban, a spam filter,
+  and the check that an account sends only as itself. The stack switches on
+  Fail2ban, Rspamd and `SPOOF_PROTECTION`.
+- **A ban lands on the address the container sees.** In the local run every
+  client arrived as the Docker gateway, and one ban blocked them all. Which
+  address arrives on a host is the first thing to read there.
+- **A bind mount without Unix ownership does not work** — Postfix stops on its
+  first socket. On a Linux filesystem the stack's own scripts run through.
+- **No web interface, so no router:** the stack has no Traefik labels and does
+  not join `proxy-public`.
+
 ## Repository findings from this evaluation
 
 Facts about files that already exist, found while checking the candidates. Each

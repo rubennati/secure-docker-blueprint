@@ -39,11 +39,11 @@
 - **Decided (2026-10-03):** three mail servers — Stalwart, docker-mailserver and
   jeboehm/docker-mailserver — as a third recorded exception to the hold
   ([`decisions.md`](decisions.md)). Mailu is held until a release carries the fix
-  for CVE-2026-86008. `apps/stalwart` is the first, `scaffolded`: the web
-  interface behind Traefik, the mail ports published by an opt-in overlay.
+  for CVE-2026-86008. `apps/stalwart` and `apps/docker-mailserver` are in,
+  both `scaffolded`, with the mail ports published by an opt-in overlay.
   Evidence:
   [`../docs/audits/candidate-evaluation-2026-10-03.md`](../docs/audits/candidate-evaluation-2026-10-03.md).
-  Batches X and Y are `tasks.md` §8.
+  Batch Y is `tasks.md` §8.
 - **Current milestone:** v0.10.0 — Measured resource limits. Whether it stays a
   release is open (D4 in the audit): the measurement needs the same host session
   as the verification backlog.

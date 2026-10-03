@@ -129,6 +129,16 @@
     "verified_anchored": true,
     "verified_version": "1.17.1"
   },
+  "apps/docker-mailserver": {
+    "backup_docs": "documented",
+    "local_stack": "✅",
+    "pinned": "APP_TAG=16.0.1",
+    "restore_docs": "missing",
+    "state": "scaffolded",
+    "verified": "—",
+    "verified_anchored": false,
+    "verified_version": ""
+  },
   "apps/docling-serve": {
     "backup_docs": "documented",
     "local_stack": "✅",

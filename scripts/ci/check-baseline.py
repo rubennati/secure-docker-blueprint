@@ -240,6 +240,21 @@ CAP_ADD_EXCEPTIONS: dict[str, dict[str, Exception]] = {
             "risk":         "Same as collabora-app, on a loopback port.",
         },
     },
+    "apps/docker-mailserver": {
+        "app": {
+            "reason":       "Fail2ban writes its bans as nftables rules in the container's own "
+                            "network namespace, which NET_ADMIN permits. Measured: without it "
+                            "Fail2ban finds the failed logins and the ban fails with 'Operation "
+                            "not permitted', while the service stays RUNNING.",
+            "alternatives": "ENABLE_FAIL2BAN=0 and no capability — the mail ports then have no "
+                            "brute-force protection of their own, since Traefik's middlewares do "
+                            "not reach them. A ban from the host's firewall would need the "
+                            "container's log read on the host.",
+            "risk":         "Accepted. NET_ADMIN reaches the container's network namespace, not "
+                            "the host's: it can change this container's own firewall rules, "
+                            "addresses and routes.",
+        },
+    },
     "apps/dify": {
         "sandbox": {
             "reason":       "The sandbox runs user-submitted code, chrooting each run and dropping to "

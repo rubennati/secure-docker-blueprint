@@ -185,9 +185,10 @@ Two of them were capabilities rather than applications. Both were decided on
 ## Being added — mail servers
 
 Three mail servers are added, each its own pull request and each landing
-`scaffolded`. Stalwart is in — [`apps/stalwart`](apps/stalwart/) — with its web
-interface behind Traefik and its mail ports published by an opt-in overlay.
-docker-mailserver and jeboehm/docker-mailserver follow the same way. Mailu meets
+`scaffolded`. Stalwart and docker-mailserver are in —
+[`apps/stalwart`](apps/stalwart/) and
+[`apps/docker-mailserver`](apps/docker-mailserver/) — with the mail ports
+published by an opt-in overlay. jeboehm/docker-mailserver follows the same way. Mailu meets
 the requirements and waits for a release that carries a published security fix.
 It is a third deliberate exception to the hold below and changes nothing v1.0
 requires — reasoning in [`.ai/decisions.md`](.ai/decisions.md), evidence and
