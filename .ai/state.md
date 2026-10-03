@@ -39,11 +39,11 @@
 - **Decided (2026-10-03):** three mail servers — Stalwart, docker-mailserver and
   jeboehm/docker-mailserver — as a third recorded exception to the hold
   ([`decisions.md`](decisions.md)). Mailu is held until a release carries the fix
-  for CVE-2026-86008. No stack is written yet: how the mail ports are exposed and
-  where the certificates come from is decided first, in the Traefik review under
-  *Open decisions*. Evidence:
+  for CVE-2026-86008. `apps/stalwart` is the first, `scaffolded`: the web
+  interface behind Traefik, the mail ports published by an opt-in overlay.
+  Evidence:
   [`../docs/audits/candidate-evaluation-2026-10-03.md`](../docs/audits/candidate-evaluation-2026-10-03.md).
-  Batches W–Y are `tasks.md` §8.
+  Batches X and Y are `tasks.md` §8.
 - **Current milestone:** v0.10.0 — Measured resource limits. Whether it stays a
   release is open (D4 in the audit): the measurement needs the same host session
   as the verification backlog.
@@ -393,15 +393,11 @@ the two points above:
   Cloudflare counts per edge address. The comment in `traefik.yml.tmpl` says
   trusting Cloudflare's forwarded headers gives `ipAllowList` the real client.
   Not measured.
-- **Mail protocols.** `core/traefik` has the entrypoints `web` and `websecure` and
-  no TCP router, and three mail servers are decided ([`decisions.md`](decisions.md),
-  2026-10-03). Their SMTP and IMAP ports are either published by each stack through
-  an opt-in overlay, where no access policy, chain or bouncer middleware applies,
-  or routed by Traefik through TCP entrypoints with PROXY protocol, where the mail
-  server trusts the header by source address and `proxy-public` holds the
-  web-facing container of every routed stack. Each server also holds its own
-  certificate; docker-mailserver reads `acme.json`, which carries every
-  certificate Traefik has obtained. What each option changes:
+- **Mail protocols.** Decided 2026-10-03 ([`decisions.md`](decisions.md)): a mail
+  stack publishes its SMTP and IMAP ports through an opt-in overlay, and
+  `core/traefik` gets no TCP entrypoints. No access policy, chain or bouncer
+  middleware applies to those ports; the mail server's own protections do. The
+  review does not have to answer it. What each option would have changed:
   [`../docs/audits/candidate-evaluation-2026-10-03.md`](../docs/audits/candidate-evaluation-2026-10-03.md#across-the-list).
 - **Already tracked.** First-load counts for the four photo galleries and
   `apps/it-tools` ([`tasks.md`](tasks.md), *Blocked on a host*), the chain for

@@ -6,6 +6,40 @@ this file is the index and covers decisions that have no other home.
 
 ---
 
+## 2026-10-03 · Mail ports are published by the stack, not routed by Traefik
+
+The mail evaluation left two questions for before the first stack: how SMTP and
+IMAP are exposed, and where a mail server's certificate comes from. Both are
+answered with the first stack, `apps/stalwart`.
+
+**The stack publishes its mail ports, through an opt-in overlay.** `mail.yml`
+publishes 25, 465 and 993, as `trapper.yml` does for Zabbix and `derp.yml` for
+headscale. `core/traefik` gets no TCP entrypoints: that would publish mail ports
+on the proxy of every installation that enables it, and the mail server would
+have to trust a PROXY header by source address on a network every routed stack
+shares. Port 25 has to be open to the whole internet for mail to arrive, so an
+access policy in front of it would have nothing to decide.
+
+**What protects those ports is the mail server, set up by the stack.** The
+blueprint's part is to ship the server's own protections switched on and
+measured — no relay, authenticated submission, automatic bans with an expiry —
+and to say what the operator owns: the firewall, the provider's outbound port
+25, DNS and reverse DNS.
+
+**The certificate is stated per stack.** A mail server holds its own; which
+sources it supports differs by product, so each README names them. Traefik's
+`acme.json` is not mounted into a mail container by default, because it carries
+every certificate the proxy has obtained.
+
+**Stalwart runs upstream's image**, with its separately licensed enterprise code
+in it and unlocked only by a key — `business/twenty` is the precedent — and mail
+servers sit in `apps/`: they serve their own users.
+
+**What would change it.** A stack that needs the client address and cannot get
+it on a published port, established on a host.
+
+---
+
 ## 2026-10-03 · The rate limits are widened until the Traefik review settles them
 
 Sync clients of Seafile and Nextcloud failed with `429` in operation, and the

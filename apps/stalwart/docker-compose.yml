@@ -1,0 +1,84 @@
+services:
+
+  # --------------------------------------------------------
+  # STALWART
+  # --------------------------------------------------------
+  stalwart:
+    # --- Identity ---
+    image: stalwartlabs/stalwart:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      # The binary carries this file capability; without it the exec is refused.
+      - NET_BIND_SERVICE
+    read_only: true
+    tmpfs:
+      # The web interface bundle is unpacked here.
+      - /tmp
+
+    # --- Resources ---
+    # 115 MiB idle with one mailbox, measured 2026-10-03. The limit is derived,
+    # not measured under load — v0.10.0.
+    memswap_limit: 1g            # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          pids: 200
+        reservations:
+          memory: 128m
+
+    # --- Configuration ---
+    environment:
+      STALWART_PUBLIC_URL: https://${APP_TRAEFIK_HOST}
+      # Set by ops/setup.sh for the first start, empty afterwards.
+      STALWART_RECOVERY_ADMIN: ${STALWART_RECOVERY_ADMIN:-}
+      TZ: ${TZ}
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/etc:/etc/stalwart
+      - ./volumes/data:/var/lib/stalwart
+
+    # --- Networking ---
+    networks:
+      - proxy-public
+
+    # --- Traefik ---
+    labels:
+      # Router
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      # TLS
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      # Uncomment ONLY for per-domain certificates; leave off when a wildcard
+      # certificate already covers this host.
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Middlewares
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      # Service
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8080"
+
+    # --- Health ---
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1:8080/healthz/live"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
