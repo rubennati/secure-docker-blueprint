@@ -8,42 +8,42 @@ http:
     # "e" variants   = SAMEORIGIN instead of DENY. The app may frame its own
     #                  pages; a different subdomain is a different origin, so
     #                  this does not let one stack embed another.
-    # "spa" variants = high-burst rate limit for code-split SPAs (VPN-only).
+    # "spa" variants  = wider burst, for a first load beyond rl-soft's.
+    # "sync" variants = rate limit for applications with file-sync clients.
     #
     # Building blocks are defined in security-blocks.yml.
     #
-    # Level      Content                                  Use case
-    # ---------  ---------------------------------------  ----------------------------
-    # sec-0      nothing                                  Debug, naked proxy
-    # sec-1      basic headers + compress                 Internal tools (no rl)
-    # sec-1e     ↑ iframe-friendly variant                Internal, must be embedded
-    # sec-2      sec-1 + rl-soft                          Standard (most apps)
-    # sec-2e     ↑ iframe-friendly variant                Standard, must be embedded
-    # sec-2-spa  sec-1 + rl-spa                           VPN-only SPA, basic headers
-    # sec-2-spa-xl sec-1 + rl-spa-xl                      VPN-only SPA, first load > 200
-    # sec-3      sec-2 + strict headers + permissions     Public-facing, hardened
-    # sec-3e     ↑ iframe-friendly variant                Hardened, must be embedded
-    # sec-3-spa  sec-3 with rl-spa instead of rl-soft     SPA, hardened
-    # sec-3e-spa ↑ iframe-friendly variant                 SPA needing SAMEORIGIN
-    # sec-4      sec-3 with rl-hard                       Sensitive (login, admin)
-    # sec-5      sec-4 + CSP enforce                      Maximum (CSP-tested only)
+    # Level        Content                                Use case
+    # -----------  -------------------------------------  --------------------------
+    # sec-0        nothing                                Debug, naked proxy
+    # sec-1        basic headers + compress               Internal tools (no rl)
+    # sec-1e       ↑ iframe-friendly variant              Internal, must be embedded
+    # sec-2        sec-1 + rl-soft                        Standard (most apps)
+    # sec-2e       ↑ iframe-friendly variant              Standard, must be embedded
+    # sec-2-spa    sec-1 + rl-spa                         First load > 200 requests
+    # sec-2-spa-xl sec-1 + rl-spa-xl                      First load > 500, VPN-only
+    # sec-2-sync   sec-1 + rl-sync                        File-sync clients
+    # sec-3        sec-2 + strict headers + permissions   Public-facing, hardened
+    # sec-3e       ↑ iframe-friendly variant              Hardened, must be embedded
+    # sec-3-spa    sec-3 with rl-spa instead of rl-soft   Hardened, first load > 200
+    # sec-3e-spa   ↑ iframe-friendly variant              ↑ needing SAMEORIGIN
+    # sec-3e-sync  sec-3e with rl-sync instead of rl-soft Hardened, file-sync clients
+    # sec-4        sec-3 with rl-hard                     Sensitive (login, admin)
+    # sec-5        sec-4 + CSP enforce                    Maximum (CSP-tested only)
     #
     # Examples:
-    #   WordPress        → sec-2      (CMS with inline scripts)
-    #   Vaultwarden      → sec-3e     (strict + SAMEORIGIN for browser extension)
-    #   OnlyOffice       → sec-2e     (embeddable in iframes)
-    #   Traefik Dashboard→ sec-4      (admin UI, hard rate limit)
-    #   Whoami           → sec-5      (static page, perfect for CSP enforce)
-    #   NocoDB / n8n     → sec-3-spa  (SPA, many parallel chunk requests)
-    #   Nextcloud        → sec-3e-spa (SPA that also requires SAMEORIGIN)
+    #   WordPress        → sec-2       (CMS with inline scripts)
+    #   Vaultwarden      → sec-3e      (strict + SAMEORIGIN for browser extension)
+    #   OnlyOffice       → sec-2e      (embeddable in iframes)
+    #   Traefik Dashboard→ sec-4       (admin UI, hard rate limit)
+    #   Whoami           → sec-5       (static page, perfect for CSP enforce)
+    #   NocoDB / n8n     → sec-3-spa   (many parallel chunk requests)
+    #   Seafile          → sec-2-sync  (desktop and mobile sync clients)
+    #   Nextcloud        → sec-3e-sync (sync clients, and requires SAMEORIGIN)
     #
     # Recommendation: Start with sec-2 for new apps.
     # Upgrade to sec-3 when the app handles strict headers.
     # Use sec-*e only when the app must be embedded in iframes.
-    # sec-*-spa keeps the sustained rate of rl-soft and only widens the burst;
-    # use it wherever an app's first load needs it. sec-2-spa-xl widens the
-    # bucket to one full first load, for interfaces that do not fit 200 — only
-    # with a VPN-only access policy, which CI enforces.
     # ==========================================================
 
     # Debug — no hardening at all
@@ -81,7 +81,7 @@ http:
           - rl-soft
           - compress
 
-    # Standard, SPA burst — VPN-only code-split SPAs (basic headers)
+    # Standard, first load beyond rl-soft's burst
     sec-2-spa:
       chain:
         middlewares:
@@ -89,12 +89,21 @@ http:
           - rl-spa
           - compress
 
-    # Standard, first load beyond rl-spa's bucket — VPN-only only
+    # Standard, first load beyond rl-spa's burst — only with acc-private,
+    # acc-tailscale or acc-deny
     sec-2-spa-xl:
       chain:
         middlewares:
           - hdr-basic
           - rl-spa-xl
+          - compress
+
+    # Standard, file-sync clients
+    sec-2-sync:
+      chain:
+        middlewares:
+          - hdr-basic
+          - rl-sync
           - compress
 
     # Hardened — public-facing apps, strict headers
@@ -115,7 +124,7 @@ http:
           - compress
           - permissions-policy
 
-    # Hardened, SPA burst — VPN-only code-split SPAs (strict headers)
+    # Hardened, first load beyond rl-soft's burst
     sec-3-spa:
       chain:
         middlewares:
@@ -124,13 +133,21 @@ http:
           - compress
           - permissions-policy
 
-    # Hardened, iframe-friendly, SPA burst — apps that need SAMEORIGIN *and*
-    # a large first-load bucket (Nextcloud).
+    # Hardened, iframe-friendly, first load beyond rl-soft's burst
     sec-3e-spa:
       chain:
         middlewares:
           - hdr-strict-embed
           - rl-spa
+          - compress
+          - permissions-policy
+
+    # Hardened, iframe-friendly, file-sync clients
+    sec-3e-sync:
+      chain:
+        middlewares:
+          - hdr-strict-embed
+          - rl-sync
           - compress
           - permissions-policy
 

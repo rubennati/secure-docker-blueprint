@@ -59,6 +59,10 @@ first load: 516 requests cold, 505 on a reload, and three further cold loads of
 516 each — every one answered, no `429`. That is the chain `.env.example` now
 ships.
 
+The bursts in the table are the ones those chains carried when it was measured.
+`sec-2` and `sec-2-spa` carry 200 and 500 since 2026-10-03, and the load has not
+been measured against them.
+
 ## Verification performed (2026-09-23)
 
 Behind Traefik with TLS, with the shipped `acc-tailscale` and `sec-2-spa-xl`:

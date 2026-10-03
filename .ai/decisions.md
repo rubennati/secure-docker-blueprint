@@ -6,6 +6,52 @@ this file is the index and covers decisions that have no other home.
 
 ---
 
+## 2026-10-03 · The rate limits are widened until the Traefik review settles them
+
+Sync clients of Seafile and Nextcloud failed with `429` in operation, and the
+first loads measured in September — 77 to 291 requests — did not fit the default
+burst of 50. The Traefik review owns the real answer: what each chain is for, and
+whether static files and sync paths belong under the counter at all. Until it
+lands, the limits are wide enough that ordinary use passes.
+
+**What the limit is for stays as the review states it.** It keeps the proxy and
+the origin answering while one client asks for a lot; it is not the defence
+against password guessing
+([`../docs/audits/reverse-proxy-limits-2026-09-23.md`](../docs/audits/reverse-proxy-limits-2026-09-23.md)).
+A limit that answers `429` to a first load or to a sync protects nothing and
+breaks the application.
+
+**The values.** `rl-soft` 125 requests per second with a burst of 200, from 100
+and 50: the bucket refills during a load, and on 2026-09-22 a bucket of 200
+answered all 291 requests of the heaviest interface below the `-xl` pair.
+`rl-spa` keeps the rate and widens the burst from 200 to 500. `rl-spa-xl` keeps
+its bucket of 1000 and its restriction to a closed access policy. `rl-hard`, 20
+and 40, is unchanged — it is chosen where each request is worth slowing down.
+
+**A sync is bounded by the rate, not by the bucket.** The Nextcloud desktop
+client runs up to 20 requests in parallel over HTTP/2, the Seafile client three
+upload and three download threads with one request per block. The rate is the
+parallelism divided by the time one request takes — 400 per second at 20 in
+parallel and 50 ms each — so no bucket holds a sync of ten thousand files.
+`rl-sync` allows 1000 requests per second, in `sec-2-sync` and `sec-3e-sync`.
+
+**The sync chains are not tied to a closed access policy**, unlike the `-xl`
+chains. Nextcloud and Seafile ship `acc-private` and are opened once configured —
+an office server calls back over the public name — and their sync endpoints
+require credentials.
+
+**No name is removed or renamed.** A deployment that names a chain keeps its
+router; `sec-3e-spa` stays although no shipped stack uses it now. The decision
+of 2026-09-22 stands: no stack drops to `sec-1` to get past a limit.
+
+**What this does not establish.** The sync figures are read from the clients'
+source, not counted on a host; the first run with real clients counts the `429`
+in the proxy's access log. And the limit counts per client address: where every
+client arrives from one address — a NAT, or the Docker gateway — they share one
+bucket, which no value here changes.
+
+---
+
 ## 2026-10-03 · Three mail servers are added, and Mailu waits for a fixed release
 
 `ROADMAP.md` adds no application while the v1.0 items are open, and the exception

@@ -35,6 +35,7 @@
 |--------|--------|
 | Caddy → Traefik labels | Blueprint uses Traefik, not Caddy |
 | Traefik priority=1 on main router, priority=100 on sub-services | Prevents main router from catching /thumbnail, /notification, /sdoc-server paths |
+| `APP_TRAEFIK_SECURITY=sec-2-sync` | The sync client runs three upload and three download threads and issues one request per block, through the main router. Above the 125 requests per second of `sec-2` a sync of many small files is answered `429` and fails; `rl-sync` allows 1000 |
 | `seafile-net` → `app-internal` + `proxy-public` | Blueprint network schema |
 | Passwords in .env (not Docker Secrets) | Phusion's my_init clears exported env vars; Secrets wrapper failed |
 | Container names → variables | Blueprint standard |

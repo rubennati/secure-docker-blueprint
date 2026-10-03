@@ -151,15 +151,19 @@ Each level builds on the previous one. `e` = `SAMEORIGIN` instead of `DENY`: the
 | `sec-1e` | Like sec-1, iframe-friendly | Internal tools embedded in other apps |
 | **`sec-2`** | **+ soft rate limit** | **Standard for most apps** (recommended default) |
 | `sec-2e` | Like sec-2, iframe-friendly | OnlyOffice, editors embedded in other apps |
-| `sec-2-spa` | sec-1 + SPA rate limit | VPN-only SPA, basic headers |
-| `sec-2-spa-xl` | sec-1 + whole-first-load rate limit | VPN-only SPA whose first load exceeds 200 requests |
+| `sec-2-spa` | sec-1 + wider-burst rate limit | First load exceeds 200 requests |
+| `sec-2-spa-xl` | sec-1 + whole-first-load rate limit | VPN-only SPA whose first load exceeds 500 requests |
+| `sec-2-sync` | sec-1 + sync rate limit | Applications with file-sync clients — e.g. Seafile |
 | `sec-3` | + strict headers + permissions-policy | Public-facing apps, hardened |
 | `sec-3e` | Like sec-3, iframe-friendly | Vaultwarden, apps needing SAMEORIGIN |
-| `sec-3-spa` | sec-3 + SPA rate limit instead of soft | VPN-only SPA, hardened — e.g. Dockhand, n8n, NocoDB |
+| `sec-3-spa` | sec-3 + wider-burst rate limit instead of soft | First load exceeds 200 requests, hardened — e.g. Dockhand, n8n, NocoDB |
+| `sec-3e-sync` | sec-3e + sync rate limit instead of soft | Hardened, iframe-friendly, file-sync clients — e.g. Nextcloud |
 | `sec-4` | + hard rate limit | Sensitive apps, login pages, admin panels |
 | `sec-5` | + CSP enforce | Maximum — only for CSP-tested apps (e.g. Whoami) |
 
-> **SPA variants** (`sec-*-spa`): SPA frameworks (SvelteKit, React, Vue) load 50–100 JS chunks on initial page load. `rl-soft` and `rl-hard` throttle this burst with 429s. `rl-spa` allows the initial burst and applies rate limiting thereafter. Use `sec-*-spa` only for VPN-gated apps — `rl-spa` is more permissive than `rl-soft`.
+> **SPA variants** (`sec-*-spa`): for an interface whose first load issues more requests at once than `rl-soft`'s burst of 200. `rl-spa` holds 500 and `rl-spa-xl` 1000; use the `-xl` chain only with `acc-private`, `acc-tailscale` or `acc-deny`.
+>
+> **Sync variants** (`sec-*-sync`): for an application whose desktop or mobile clients synchronise files. A sync is bounded by the sustained rate, not by the burst; `rl-sync` allows 1000 requests per second.
 >
 > Note: `sec-4-spa` does not exist — it would be identical to `sec-3-spa` (both replace the rate limiter with `rl-spa`, the only difference between sec-3 and sec-4 is `rl-soft` vs `rl-hard`).
 
@@ -170,11 +174,11 @@ Each level builds on the previous one. `e` = `SAMEORIGIN` instead of `DENY`: the
 | Whoami | `sec-5` | Static page, no external resources → perfect for CSP enforce |
 | Traefik Dashboard | `sec-4` + `acc-tailscale` | Sensitive admin UI, VPN-only, hard rate limit |
 | Vaultwarden | `sec-3e` + `acc-tailscale` | Password manager: strict but needs SAMEORIGIN for browser extension |
-| Nextcloud | `sec-3` + `acc-public` | Public-facing, hardened headers |
+| Nextcloud | `sec-3e-sync` + `acc-private` | Needs SAMEORIGIN, and its sync clients need the higher sustained rate |
 | WordPress / Ghost | `sec-2` + `acc-public` | CMS with inline scripts, standard protection |
 | OnlyOffice | `sec-2e` | Must be embeddable in iframes by other apps |
 | Paperless | `sec-3` + `acc-tailscale` | Internal tool, hardened, VPN-only |
-| Dockhand / n8n / NocoDB | `sec-3-spa` + `acc-tailscale` | VPN-only SPA — hard/soft rate limit causes 429 on initial chunk burst |
+| Dockhand / n8n / NocoDB | `sec-3-spa` + `acc-tailscale` | VPN-only SPA — many parallel chunk requests on first load |
 
 ### Pro Mode: Custom Combinations
 
@@ -198,10 +202,11 @@ Available building blocks (defined in `security-blocks.yml`):
 | `hdr-basic-embed` | HSTS, nosniff, SAMEORIGIN |
 | `hdr-strict` | + HSTS preload, referrer-policy, CSP report-only |
 | `hdr-strict-embed` | + HSTS preload, same-origin referrer, CSP report-only |
-| `rl-soft` | 100 avg / 50 burst |
+| `rl-soft` | 125 avg / 200 burst |
 | `rl-hard` | 20 avg / 40 burst |
-| `rl-spa` | High burst allowance for SPA initial load |
-| `rl-spa-xl` | 100 avg / 1000 burst — one whole first load, VPN-only (CI-enforced) |
+| `rl-spa` | 125 avg / 500 burst — first load beyond `rl-soft`'s burst |
+| `rl-spa-xl` | 125 avg / 1000 burst — one whole first load, VPN-only (CI-enforced) |
+| `rl-sync` | 1000 avg / 1000 burst — file-sync clients |
 | `compress` | gzip compression |
 | `permissions-policy` | Blocks camera, mic, geolocation, payment, USB, gyroscope |
 | `csp-enforce` | Enforcing CSP (may break apps with external scripts) |

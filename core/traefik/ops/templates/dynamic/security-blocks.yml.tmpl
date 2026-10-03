@@ -59,40 +59,35 @@ http:
         addVaryHeader: true
 
     # -------- Rate Limiting --------
+    # Counted per client address and per router. `burst` requests pass at
+    # once, `average` per second refills the bucket; beyond that: 429.
 
+    # Default
     rl-soft:
       rateLimit:
-        average: 100
-        burst: 50
-
-    # SPA burst — for apps that load 100+ JS chunks simultaneously on first
-    # visit (Nextcloud, NocoDB, n8n, Authentik login, …).
-    #
-    # Same sustained rate as rl-soft; only the bucket is larger, so the initial
-    # chunk requests pass without 429. Sustained abuse is bounded by `average`,
-    # which is identical — this is not a weaker limit, and it is appropriate for
-    # public apps whose first load needs it.
-    rl-spa:
-      rateLimit:
-        average: 100
+        average: 125
         burst: 200
 
-    # First load of a code-split interface that does not fit rl-spa's bucket.
-    #
-    # Measured 2026-09-22 behind this proxy: Windmill's first load issues about
-    # 850 requests and Twenty's 412. With a burst of 200, 412 of Windmill's and
-    # 130 of Twenty's came back 429 and neither interface rendered. This bucket
-    # holds one full first load of the heavier of the two; the sustained rate —
-    # the one that bounds abuse — is identical to rl-soft and rl-spa.
-    #
-    # A bucket this wide belongs behind a VPN-only access policy: with
-    # acc-public one address could issue a thousand requests before the
-    # sustained rate applies. scripts/ci/check-structure.py enforces that.
+    # Interfaces whose first load exceeds rl-soft's burst
+    rl-spa:
+      rateLimit:
+        average: 125
+        burst: 500
+
+    # Interfaces whose first load exceeds rl-spa's burst — only with
+    # acc-private, acc-tailscale or acc-deny
     rl-spa-xl:
       rateLimit:
-        average: 100
+        average: 125
         burst: 1000
 
+    # Applications with file-sync clients
+    rl-sync:
+      rateLimit:
+        average: 1000
+        burst: 1000
+
+    # Login pages, admin panels
     rl-hard:
       rateLimit:
         average: 20

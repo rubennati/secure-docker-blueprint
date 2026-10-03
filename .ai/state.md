@@ -353,6 +353,16 @@ first load; `check-structure.py` fails an `-xl` chain outside `acc-private` or
 `acc-tailscale`: Twenty's interface (412 requests) and Windmill's (about 850)
 load under `sec-2-spa-xl` without a single `429`, five loads each. Both ship the
 chain now; no other stack uses it.
+→ *2026-10-03:* the limits are widened as an interim, so the bucket sizes named
+above are the ones in force when each measurement was taken. Now: `rl-soft` 125
+requests per second, burst 200 · `rl-spa` 125, burst 500 · `rl-spa-xl` 125, burst
+1000 · `rl-hard` 20, burst 40. Sync clients met the sustained rate rather than the
+burst — the Nextcloud client runs up to 20 requests in parallel, the Seafile
+client three threads in each direction — so `rl-sync` (1000 per second) exists,
+in `sec-2-sync` and `sec-3e-sync`, shipped by `apps/seafile`, `apps/seafile-pro`
+and `apps/nextcloud`. Not counted on a host yet. Reasoning in
+[`decisions.md`](decisions.md), 2026-10-03; the review still decides what each
+chain is for.
 
 **Traefik labels and middlewares are reviewed as a whole before v1.0.0** — see
 [`../ROADMAP.md`](../ROADMAP.md). They grew stack by stack; 106 stacks route

@@ -78,8 +78,8 @@ docker compose logs -f app
 Expect `Initializing nextcloud` followed by `Nextcloud was successfully
 installed`.
 
-Default access policy is `acc-private` + `sec-3e-spa` — reachable from LAN and
-VPN, hardened headers with `SAMEORIGIN` framing, and the wider burst the sync
+Default access policy is `acc-private` + `sec-3e-sync` — reachable from LAN and
+VPN, hardened headers with `SAMEORIGIN` framing, and the rate limit the sync
 clients need. `acc-private` also covers the Docker gateway, which the instance
 needs to run its own setup checks against itself.
 
@@ -588,18 +588,18 @@ allocation — raise the variable if that appears, rather than pre-emptively.
 
 ### Traefik security profile
 
-`APP_TRAEFIK_SECURITY=sec-3e-spa`, not the generic `sec-3`. Two properties differ, and Nextcloud needs both — which is why this chain was added for it.
+`APP_TRAEFIK_SECURITY=sec-3e-sync`, not the generic `sec-3`. Two properties differ, and Nextcloud needs both.
 
 **Framing.** `sec-3` sets `X-Frame-Options: DENY`. Nextcloud's own setup checks require `SAMEORIGIN`, and several of its apps render in an iframe against the same origin. The `e` variants use `hdr-strict-embed`, identical to the strict headers apart from that one value.
 
-**Burst.** Nextcloud generates continuous legitimate background traffic that does not fit a standard web application:
+**Rate limit.** Nextcloud's clients issue traffic that a limit sized for page views does not fit:
 
-- Sync clients poll OCS API endpoints continuously
+- The desktop client runs up to 20 requests in parallel over HTTP/2 while it synchronises, for as long as it has files to move
 - WebDAV and PROPFIND requests are issued for every mounted folder
+- Sync clients poll OCS API endpoints continuously
 - Activity, notifications, and dashboard widgets poll at regular intervals
-- Mobile clients maintain persistent connections
 
-`rl-soft` allows 100 req/s average with a burst of 50; `rl-spa` allows the same 100 req/s average with a burst of 200. The sustained rate is unchanged — only the burst differs, so this is not a weaker limit, it is the same limit with room for a first page load that fetches a hundred assets at once.
+`rl-soft` refills at 125 requests per second. A sync of many small files runs above that: it empties the bucket within seconds, every further request above the rate is answered `429`, and the client reports those files as failed. `sec-3e-sync` carries `rl-sync`, 1000 requests per second, with the same headers as `sec-3e`.
 
 ## Recommended application set
 

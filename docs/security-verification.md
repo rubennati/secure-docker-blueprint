@@ -154,7 +154,7 @@ These controls are enforced by Traefik configuration rendered from templates in 
 |-------|-------|
 | **Implemented?** | Yes |
 | **Location** | `core/traefik/ops/templates/dynamic/security-blocks.yml.tmpl` |
-| **Limits** | `rl-soft`: 100 avg / 50 burst. `rl-hard`: 20 avg / 40 burst. `rl-spa`: 100 avg / 200 burst (for SPA initial load) |
+| **Limits** | `rl-soft`: 125 avg / 200 burst. `rl-hard`: 20 avg / 40 burst. `rl-spa`: 125 avg / 500 burst (first load beyond `rl-soft`'s). `rl-sync`: 1000 avg / 1000 burst (file-sync clients) |
 | **Applied from** | sec-2 (soft) / sec-4 (hard) |
 | **Gaps** | Rate limits are per-IP at the Traefik level. No distributed rate limiting. Behind a CDN or NAT, all users share one bucket. |
 
