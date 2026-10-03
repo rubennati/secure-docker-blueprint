@@ -94,10 +94,16 @@ Modular middleware components. Used by the sec-* chains, or individually for cus
 
 | Block | Limits |
 |-------|--------|
-| `rl-soft` | 100 requests/s average, 50 burst |
-| `rl-spa` | 100 requests/s average, 200 burst — same sustained rate as `rl-soft`, wider bucket for an application start |
-| `rl-spa-xl` | 100 requests/s average, 1000 burst — the same sustained rate again, with a bucket that holds one whole first load. Behind a closed access policy only, enforced by CI |
+| `rl-soft` | 125 requests/s average, 200 burst |
+| `rl-spa` | 125 requests/s average, 500 burst — same sustained rate as `rl-soft`, wider bucket for an application start |
+| `rl-spa-xl` | 125 requests/s average, 1000 burst — the same sustained rate again, with a bucket that holds one whole first load. Behind a closed access policy only, enforced by CI |
+| `rl-sync` | 1000 requests/s average, 1000 burst — for applications whose sync clients transfer files in bulk |
 | `rl-hard` | 20 requests/s average, 40 burst |
+
+Each limit counts per client address and per router. `burst` is the size of the
+bucket: that many requests pass at once. `average` is what refills it per second.
+A request the bucket cannot cover is answered `429`: Traefik holds it for at most
+half the interval between two refills — 4 ms at 125 per second — and no longer.
 
 ### Extras
 
@@ -128,10 +134,12 @@ Presets that combine building blocks. Each level builds on the previous — high
 | `sec-2e` | hdr-basic-embed, rl-soft, compress | Standard + iframe-friendly |
 | `sec-3` | hdr-strict, rl-soft, compress, permissions-policy | Public-facing, hardened |
 | `sec-3e` | hdr-strict-embed, rl-soft, compress, permissions-policy | Public-facing + iframe-friendly |
-| `sec-2-spa` | hdr-basic, rl-spa, compress | Standard, first load exceeds a burst of 50 |
-| `sec-2-spa-xl` | hdr-basic, rl-spa-xl, compress | Standard, first load exceeds a burst of 200 — only with `acc-private`, `acc-tailscale` or `acc-deny` |
-| `sec-3-spa` | hdr-strict, rl-spa, compress, permissions-policy | Hardened, first load exceeds a burst of 50 |
+| `sec-2-spa` | hdr-basic, rl-spa, compress | Standard, first load exceeds a burst of 200 |
+| `sec-2-spa-xl` | hdr-basic, rl-spa-xl, compress | Standard, first load exceeds a burst of 500 — only with `acc-private`, `acc-tailscale` or `acc-deny` |
+| `sec-2-sync` | hdr-basic, rl-sync, compress | Standard, file-sync clients |
+| `sec-3-spa` | hdr-strict, rl-spa, compress, permissions-policy | Hardened, first load exceeds a burst of 200 |
 | `sec-3e-spa` | hdr-strict-embed, rl-spa, compress, permissions-policy | Hardened, needs SAMEORIGIN and the wider burst |
+| `sec-3e-sync` | hdr-strict-embed, rl-sync, compress, permissions-policy | Hardened, needs SAMEORIGIN, file-sync clients |
 | `sec-4` | hdr-strict, rl-hard, compress, permissions-policy | Sensitive apps, login pages, admin panels |
 | `sec-5` | hdr-strict, rl-hard, compress, permissions-policy, csp-enforce | Maximum — only for CSP-tested apps |
 
@@ -187,7 +195,7 @@ none of this.
 
 **3. How many requests does one first load issue?**
 
-`rl-soft` allows a burst of 50 per client address. Measure rather than assume — a
+`rl-soft` allows a burst of 200 per client address. Measure rather than assume — a
 single-page app, a gallery grid and a dashboard all look alike from outside:
 
 ```bash
@@ -197,32 +205,43 @@ docker compose -f core/traefik/docker-compose.yml logs --since 1m app \
   | grep -c "$(date +%Y-%m-%d)"
 ```
 
-Above 50 in the initial burst, use the `-spa` variant. It keeps `average: 100`
-unchanged and only widens the bucket to 200, so the sustained limit — the one that
-bounds abuse — is identical. A 429 on first load presents as a blank page or a
-half-rendered interface, which nobody attributes to the proxy.
+The bucket refills while a load is under way, so a first load of somewhat more
+than 200 requests still passes: on 2026-09-22 a bucket of 200 answered all 291
+requests of Dify's editor. Above that, use the `-spa` variant. It keeps
+`average: 125` unchanged and only widens the bucket to 500, so the sustained rate
+is identical. A 429 on first load presents as a blank page or a half-rendered
+interface, which nobody attributes to the proxy.
 
-Above 200, use `sec-2-spa-xl`. Measured on 2026-09-22: Windmill's first load
-issues about 850 requests and Twenty's 412, and Twenty's assets carry
-`max-age=0`, so every later load repeats them. Under `rl-spa` 412 of Windmill's
-requests and 130 of Twenty's came back `429`, and neither interface rendered.
-`rl-spa-xl` keeps `average: 100` and holds one whole first load in its bucket.
+Above 500, use `sec-2-spa-xl`. Windmill's first load issues about 850 requests,
+measured on 2026-09-22. `rl-spa-xl` keeps `average: 125` and holds one whole first
+load in its bucket.
 
 What that bucket costs is the first thousand requests from one address, so the
 `-xl` chains are for a closed set of clients: `scripts/ci/check-structure.py`
 fails (`burst-exposure`) when a stack pairs an `-xl` chain with anything but
-`acc-private`, `acc-tailscale` or `acc-deny`. A public interface that needs more than 200
+`acc-private`, `acc-tailscale` or `acc-deny`. A public interface that needs more than 500
 needs its assets cached or served beside the rate limit, not a wider bucket.
+
+**Does the application have sync clients?** A desktop or mobile client that
+synchronises files is bounded by the sustained rate, not by the bucket: it keeps
+sending for as long as it has files to move. The Nextcloud desktop client runs
+up to 20 requests in parallel over HTTP/2, and the Seafile client three upload
+and three download threads with one request per block, so the rate is the
+parallelism divided by the time one request takes — 400 requests per second at
+20 in parallel and 50 ms each. Under `average: 125` such a run empties any bucket
+within seconds and every request above the rate is answered `429`, which the
+client reports as a failed sync. The `-sync` chains carry `rl-sync`, 1000 requests
+per second: `apps/nextcloud`, `apps/seafile` and `apps/seafile-pro` ship them.
 
 **4. Is the surface a login, an admin panel, or an API holding credentials?**
 
 **No chain combines a hard rate limit with a large first-load burst.** `sec-4` uses
-`rl-hard`: 20 requests per second, burst 40. The `-spa` variants use `rl-spa`: 100
-per second, burst 200. There is nothing between the two.
+`rl-hard`: 20 requests per second, burst 40. The `-spa` variants use `rl-spa`: 125
+per second, burst 500. There is nothing between the two.
 
 This shows up on admin interfaces that are single-page apps. `core/dockhand` and
 `core/infisical` run `sec-3-spa`, so their first load fits and their sustained
-limit is 100/s instead of 20/s. `core/portainer` runs `sec-4`, so its sustained
+limit is 125/s instead of 20/s. `core/portainer` runs `sec-4`, so its sustained
 limit is 20/s and its first load has to fit into 40 requests — which nobody has
 counted.
 
@@ -258,9 +277,9 @@ the next person cannot safely change.
 | Portainer | `sec-4` + `acc-tailscale` | Admin tool, VPN-only |
 | Vaultwarden | `sec-3e` + `acc-tailscale` | Password manager: strict + SAMEORIGIN (iframe-friendly for browser extension) |
 | OnlyOffice | `sec-2e` | Must be embeddable in iframes |
-| Nextcloud | `sec-3e-spa` + `acc-private` | Needs SAMEORIGIN for its own framing and the wider first-load burst; reachable from LAN and VPN |
+| Nextcloud | `sec-3e-sync` + `acc-private` | Needs SAMEORIGIN for its own framing, and its sync clients need the higher sustained rate; reachable from LAN and VPN |
 | Paperless | `sec-3` + `acc-tailscale` | Hardened, VPN-only |
-| Seafile Pro | `sec-3` | Public-facing |
+| Seafile, Seafile Pro | `sec-2-sync` + `acc-private` | Desktop and mobile sync clients; reachable from LAN and VPN |
 | Authentik | `sec-3` | Auth provider, should be hardened |
 | Keycloak | `sec-2-spa` + `acc-tailscale`, `strip-xfo` ahead of the chain | Sets its own frame headers per page and frames its cookie check; the per-app middleware removes the proxy's header |
 | Invoice Ninja | `sec-2` | Standard web app |

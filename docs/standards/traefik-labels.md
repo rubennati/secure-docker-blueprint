@@ -163,7 +163,7 @@ with what the endpoint does:
 |---|---|
 | WebSocket — `/socket.io`, notification streams | `rl-*` meters reconnects on a long-lived connection |
 | Embedded editor or viewer | `hdr-basic` sets `frameDeny`; the frame does not load. Use an `e` variant |
-| Asset or thumbnail service | one page view issues many parallel requests against `rl-soft`, which is average 100, burst 50 |
+| Asset or thumbnail service | one page view issues many parallel requests against `rl-soft`, which is average 125, burst 200 |
 
 Where the level has not been established against a running instance, set the
 access policy alone and record beside the label what is still open. The access

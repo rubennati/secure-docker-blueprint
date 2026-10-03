@@ -60,7 +60,7 @@ PostgreSQL profile, pgvector as the vector store, minus what is listed below:
 | `CHECK_UPDATE_URL=""` | Upstream's update check |
 | `worker-beat` mounts `./volumes/storage` | The app factory creates the storage directory at start, beat included; on the read-only root without the mount it stopped with `OSError: [Errno 30]` and restarted in a loop |
 | `dify-web`: `HOSTNAME: 0.0.0.0`, healthcheck on `127.0.0.1` | Next.js listens on the address `HOSTNAME` resolves to; Docker's container ID can resolve to the `app-internal` address, and Traefik then gets `502` while the healthcheck on `$(hostname)` passes |
-| `APP_TRAEFIK_SECURITY=sec-2-spa` | Sign-in, the app list and the workflow editor load over 160 script chunks; `sec-2`'s burst of 50 answered part of them with `429` and the editor stayed on its spinner |
+| `APP_TRAEFIK_SECURITY=sec-2-spa` | Sign-in, the app list and the workflow editor load over 160 script chunks; with a burst of 50, part of them were answered `429` and the editor stayed on its spinner |
 | Web and plugin-daemon healthchecks | `web` probes its own hostname address (it does not bind loopback). The plugin daemon, worker, beat and Squid have no meaningful probe; marker comments in the compose file |
 
 ## Verification performed (2026-09-22)

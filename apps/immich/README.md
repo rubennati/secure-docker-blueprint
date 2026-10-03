@@ -128,7 +128,7 @@ Two preconditions upstream states, both of which invalidate a restore if missed:
 
 ## Known Issues
 
-- **Rate limiter must be `sec-2-spa`** — Immich's service worker pre-caches ~100 JS chunks in parallel on first install. The default `rl-soft` burst cap of 50 is too low; requests return 429 and the app stays on a black screen. `sec-2-spa` raises the burst to 200 (same average). Already set correctly in `.env.example`.
+- **A `429` on first install leaves the app on a black screen** — Immich's service worker pre-caches about 100 JS chunks in parallel. With a burst of 50 part of them were answered `429`. `.env.example` ships `sec-2-spa`, whose burst of 500 holds them.
 - **`DB_PWD_INLINE` duplicates the DB password** — Immich-server's `DB_PASSWORD` env var has no `_FILE` support. The Postgres service reads `POSTGRES_PASSWORD_FILE` from a Docker Secret, but immich-server needs the same value inline in `.env`. Setup step 3 syncs them. Mismatch = connection refused.
 - **Custom Postgres image is required** — the vector extensions (pgvectors, vectorchord) used for photo similarity search are Immich-specific. Do NOT substitute a stock `postgres:14` image.
 - **Upload volume** — `UPLOAD_LOCATION` can be an NFS/SMB share. The `db` volume must be local storage (Postgres corrupts on network filesystems).

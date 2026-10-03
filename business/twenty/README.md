@@ -75,11 +75,10 @@ Not configured here, and not exercised.
 
 Twenty's first load issues over 500 requests — script chunks, styles, icons —
 and its assets are served with `max-age=0`, so every later load repeats them
-instead of using the browser's cache. That is more than the shipped rate limits
-hold: under `sec-2` (burst 50) and `sec-2-spa` (burst 200) part of the load came
-back `429` and the interface stayed blank. `.env.example` therefore ships
-`sec-2-spa-xl`, whose bucket holds one whole first load, and which belongs
-behind a closed access policy for that reason.
+instead of using the browser's cache. A load that does not fit its chain's burst
+comes back partly `429` and the interface stays blank. `.env.example` therefore
+ships `sec-2-spa-xl`, whose bucket of 1000 holds one whole first load, and which
+belongs behind a closed access policy for that reason.
 
 The interface also requests company logos from `twenty-icons.com` in the
 visitor's browser.

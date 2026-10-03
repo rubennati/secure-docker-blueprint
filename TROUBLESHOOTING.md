@@ -416,6 +416,37 @@ the integration before the switch".
 
 ---
 
+### 4.9 A sync client reports failed files, or an interface stays blank — the proxy answers `429`
+
+**Symptom:** the Nextcloud or Seafile client reports failed files or a sync
+error, or a web interface stays blank or half-rendered on its first load. The
+application's own log shows nothing, because the requests never reached it.
+
+**Cause:** the router's rate limit. Every chain from `sec-2` upward counts requests
+per client address: `burst` requests pass at once, `average` per second refill the
+bucket, and Traefik answers the rest with `429`. A first load of several hundred
+files exceeds the burst; a sync of many small files exceeds the sustained rate.
+
+**Check it in the access log** — which router answered `429`, and to which address:
+
+```bash
+docker exec traefik-core cat /var/log/traefik/access.log \
+  | jq -r 'select(.DownstreamStatus == 429) | "\(.RouterName)  \(.ClientHost)"' \
+  | sort | uniq -c | sort -rn | head
+```
+
+**Fix:** set the chain that fits the traffic in the stack's `.env` and run
+`docker compose up -d`, which recreates the container with the new label. A first
+load beyond 200 requests takes a `-spa` chain, an application with sync clients a
+`-sync` chain; the values are in
+[`docs/standards/traefik-security.md`](docs/standards/traefik-security.md#choosing-the-level-for-an-app).
+
+If every line carries the same client address, all clients share one bucket: they
+arrive through a NAT, a CDN, or a Docker network that does not carry their address
+(4.4). A wider chain then treats the symptom, and the address is the cause.
+
+---
+
 ## 5. Git & Deployment Issues
 
 ### 5.1 Server running old code after local commits

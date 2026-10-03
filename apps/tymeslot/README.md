@@ -106,7 +106,7 @@ What each one needs from the network:
   `acc-tailscale` and leaves that decision to you; on a public router, put
   `crowdsec-basic@file,` in `APP_TRAEFIK_THREAT` and keep registration closed.
 - **`sec-3`.** A first load is about ten requests, far below the soft burst of
-  50. The application sends its own nonce-based CSP with
+  200. The application sends its own nonce-based CSP with
   `frame-ancestors 'none'`, `nosniff`, a referrer policy and
   `Secure; HttpOnly; SameSite=Lax` cookies; the chain adds HSTS and
   `X-Frame-Options: DENY`, and the two agree.

@@ -87,12 +87,12 @@ scripts accordingly. The same exception exists in
 
 ## The UI's first load
 
-The UI's first load issues about 850 requests. That is more than the shipped
-rate limits hold: under `sec-2` (burst 50) and `sec-2-spa` (burst 200) part of
-them came back `429` and the page showed `500 Internal Error`. `.env.example`
-therefore ships `sec-2-spa-xl`, whose bucket holds one whole first load, and
-which belongs behind a closed access policy for that reason. The API and jobs
-were never affected.
+The UI's first load issues about 850 requests. That is more than the bursts of
+`sec-2` (200) and `sec-2-spa` (500) hold, and a load that does not fit comes back
+partly `429` and shows `500 Internal Error`. `.env.example` therefore ships
+`sec-2-spa-xl`, whose bucket of 1000 holds one whole first load, and which
+belongs behind a closed access policy for that reason. The API and jobs are not
+affected.
 
 ## Status
 

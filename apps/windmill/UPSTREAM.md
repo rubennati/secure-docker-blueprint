@@ -149,12 +149,13 @@ place to record it once a host run has captured the full picture.
 
 ## The UI and the rate limit
 
-The UI's first load issues about 850 requests. Under `sec-2` (burst 50) and
-under `sec-2-spa` (burst 200) part of them get `429` and the page shows
-`500 Internal Error`; under `sec-2-spa-xl`, whose bucket holds one whole first
-load, every request is answered — measured 2026-09-23, five loads in a row.
-`.env.example` ships that chain, and it belongs behind a closed access policy
-for the same reason the bucket is that wide.
+The UI's first load issues about 850 requests. Measured 2026-09-23, five loads in
+a row: with a burst of 50 and with a burst of 200 part of them got `429` and the
+page showed `500 Internal Error`; under `sec-2-spa-xl`, whose bucket of 1000
+holds one whole first load, every request was answered. `.env.example` ships that
+chain, and it belongs behind a closed access policy for the same reason the
+bucket is that wide. `sec-2` and `sec-2-spa` carry bursts of 200 and 500 since
+2026-10-03, both below the load.
 
 ## Verification performed (2026-09-23)
 

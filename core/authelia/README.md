@@ -147,7 +147,7 @@ access_control:
   The healthcheck asks `/api/health` directly instead of going through the image's
   script, which reports healthy whenever that file lacks its marker line.
 - **The portal's first load is 43 requests** (measured 2026-09-26, headless
-  Chrome) — under the burst of 50 in `sec-3`, the shipped chain.
+  Chrome) — under the burst of 200 in `sec-3`, the shipped chain.
 - **The portal's access policy follows the apps it protects.** It ships
   `acc-public`, because a public app needs a public login page. When every
   protected app is VPN-only, set `acc-tailscale` here as well.
