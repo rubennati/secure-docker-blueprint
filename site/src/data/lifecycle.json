@@ -62,9 +62,9 @@
   "apps/ciso-assistant": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "pinned": "APP_TAG=v4.0.5",
+    "pinned": "APP_TAG=v4.0.9",
     "restore_docs": "missing",
-    "state": "baseline-aligned",
+    "state": "scaffolded",
     "verified": "2026-09-22",
     "verified_anchored": true,
     "verified_version": "v4.0.5"
@@ -272,7 +272,7 @@
   "apps/librephotos": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "pinned": "APP_TAG=1.1.0",
+    "pinned": "APP_TAG=1.2.1",
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-04-17",
@@ -282,9 +282,9 @@
   "apps/litellm": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "pinned": "APP_TAG=v1.101.0",
+    "pinned": "APP_TAG=v1.101.4",
     "restore_docs": "missing",
-    "state": "baseline-aligned",
+    "state": "scaffolded",
     "verified": "2026-09-21",
     "verified_anchored": true,
     "verified_version": "v1.101.0"
@@ -572,7 +572,7 @@
   "apps/vllm": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "pinned": "APP_TAG=v0.29.0",
+    "pinned": "APP_TAG=v0.30.0",
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "—",
@@ -1162,9 +1162,9 @@
   "monitoring/langfuse": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "pinned": "APP_TAG=4.38.0",
+    "pinned": "APP_TAG=4.50.0",
     "restore_docs": "missing",
-    "state": "baseline-aligned",
+    "state": "scaffolded",
     "verified": "2026-09-22",
     "verified_anchored": true,
     "verified_version": "4.38.0"

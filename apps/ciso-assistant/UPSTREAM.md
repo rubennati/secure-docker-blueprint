@@ -13,15 +13,15 @@
 - **Use restrictions:** none — the community images this stack pins are released under AGPLv3, and the commercially licensed code in `enterprise/` ships only in separate enterprise binaries — https://github.com/intuitem/ciso-assistant-community/blob/main/LICENSE.md · checked 2026-09-21
 - **Edition gating:** SSO/SAML, the API, multiple frameworks and self-hosting are in the community edition; the Pro edition adds, among others, SCIM group provisioning, fine-grained per-object permissions, a multi-level domain hierarchy and custom fields — https://intuitem.com/compare · checked 2026-09-21
 - **Commercial model:** paid self-hosted edition — https://intuitem.com/compare · checked 2026-09-21
-- **Based on version:** `v4.0.5`
+- **Based on version:** `v4.0.9`
 - **Last verified:** 2026-09-22 (v4.0.5) — behind Traefik with TLS: the interface and the `/api` split, a framework imported into a compliance assessment, Huey's scheduled tasks, a restart, and the README's restore
 
 The origin comes from intuitem's legal notice (RCS Versailles, France).
 
 ## What we use
 
-- `ghcr.io/intuitem/ciso-assistant-community/backend:v4.0.5` for backend and Huey,
-  and `…/frontend:v4.0.5`. Upstream's compose pins `:latest` with `pull_policy:
+- `ghcr.io/intuitem/ciso-assistant-community/backend:v4.0.9` for backend and Huey,
+  and `…/frontend:v4.0.9`. Upstream's compose pins `:latest` with `pull_policy:
   always`; not used here. Per upstream's licence file, the community binaries are
   AGPLv3; the commercially licensed code ships only in separate enterprise images.
 - `postgres:16.14` — upstream's template runs `postgres:16`.

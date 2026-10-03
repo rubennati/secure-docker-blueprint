@@ -4,7 +4,7 @@
 
 Generated 2026-10-03 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-121 stacks: 1 ops-proven · 34 baseline-aligned · 86 scaffolded. 111 carry a local test stack.
+121 stacks: 1 ops-proven · 31 baseline-aligned · 89 scaffolded. 111 carry a local test stack.
 
 This is the maintainer's view: what has been established about each stack. It makes no statement about whether a stack suits a given deployment.
 
@@ -51,7 +51,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/caldiy`](apps/caldiy/) | `scaffolded` | `APP_TAG=v6.2.0-6@sha256:538cbb4a2273…` | 2026-07-26 | ✅ | documented | missing |
 | [`apps/calnode`](apps/calnode/) | `baseline-aligned` | `APP_TAG=0.9.0` | 2026-09-22 | ✅ | documented | missing |
 | [`apps/calrs`](apps/calrs/) | `baseline-aligned` | `APP_TAG=1.17.1` | 2026-09-22 | ✅ | documented | missing |
-| [`apps/ciso-assistant`](apps/ciso-assistant/) | `baseline-aligned` | `APP_TAG=v4.0.5` | 2026-09-22 | ✅ | documented | missing |
+| [`apps/ciso-assistant`](apps/ciso-assistant/) | `scaffolded` | `APP_TAG=v4.0.9` | 2026-09-22 | ✅ | documented | missing |
 | [`apps/collabora`](apps/collabora/) | `scaffolded` | `APP_TAG=26.04.3.2.1` | — | ✅ | documented | missing |
 | [`apps/dashy`](apps/dashy/) | `scaffolded` | `APP_TAG=4.6.0` | 2026-05-02 | ✅ | documented | missing |
 | [`apps/defectdojo`](apps/defectdojo/) | `baseline-aligned` | `APP_TAG=3.3.100` | 2026-09-22 | ✅ | documented | missing |
@@ -72,8 +72,8 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/httpbin`](apps/httpbin/) | `baseline-aligned` | `APP_TAG=0.10.4` | 2026-09-22 | ✅ | documented | missing |
 | [`apps/immich`](apps/immich/) | `scaffolded` | `APP_TAG=v3.2.0` | 2026-04-17 ⚠️ | ✅ | documented | documented |
 | [`apps/it-tools`](apps/it-tools/) | `baseline-aligned` | `APP_TAG=2024.10.22-7ca5933` | 2026-05-02 | ✅ | documented | missing |
-| [`apps/librephotos`](apps/librephotos/) | `scaffolded` | `APP_TAG=1.1.0` | 2026-04-17 ⚠️ | ✅ | documented | missing |
-| [`apps/litellm`](apps/litellm/) | `baseline-aligned` | `APP_TAG=v1.101.0` | 2026-09-21 | ✅ | documented | missing |
+| [`apps/librephotos`](apps/librephotos/) | `scaffolded` | `APP_TAG=1.2.1` | 2026-04-17 ⚠️ | ✅ | documented | missing |
+| [`apps/litellm`](apps/litellm/) | `scaffolded` | `APP_TAG=v1.101.4` | 2026-09-21 | ✅ | documented | missing |
 | [`apps/lycheeorg`](apps/lycheeorg/) | `scaffolded` | `APP_TAG=v7.8.3` | 2026-04-17 ⚠️ | ✅ | documented | missing |
 | [`apps/mailpit`](apps/mailpit/) | `baseline-aligned` | `APP_TAG=v1.31.1` | 2026-09-07 | ✅ | documented | missing |
 | [`apps/mailserver-jeboehm`](apps/mailserver-jeboehm/) | `scaffolded` | `APP_TAG=8.0.8` | — | ✅ | documented | missing |
@@ -102,7 +102,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/unifi`](apps/unifi/) | `scaffolded` | `APP_TAG=10.6.101` | 2026-04-17 ⚠️ | ✅ | documented | missing |
 | [`apps/vaultwarden`](apps/vaultwarden/) | `scaffolded` | `APP_TAG=1.37.3` | 2026-06-14 ⚠️ | ✅ | documented | missing |
 | [`apps/velociraptor`](apps/velociraptor/) | `scaffolded` | `APP_TAG=0.77.2` | — | ✅ | documented | missing |
-| [`apps/vllm`](apps/vllm/) | `scaffolded` | `APP_TAG=v0.29.0` | — | ✅ | documented | missing |
+| [`apps/vllm`](apps/vllm/) | `scaffolded` | `APP_TAG=v0.30.0` | — | ✅ | documented | missing |
 | [`apps/whoami`](apps/whoami/) | `baseline-aligned` | `APP_TAG=v1.12.0` | 2026-09-13 | ✅ | documented | missing |
 | [`apps/wikijs`](apps/wikijs/) | `scaffolded` | `APP_TAG=2.5.315` | — | ✅ | documented | missing |
 | [`apps/windmill`](apps/windmill/) | `baseline-aligned` | `APP_TAG=1.814.0` | 2026-09-23 | ✅ | documented | missing |
@@ -146,7 +146,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`monitoring/gotify`](monitoring/gotify/) | `scaffolded` | `APP_TAG=3.1.1` | — | ✅ | documented | missing |
 | [`monitoring/grafana-prometheus`](monitoring/grafana-prometheus/) | `scaffolded` | `APP_TAG=13.2.2` | — | ✅ | documented | missing |
 | [`monitoring/healthchecks`](monitoring/healthchecks/) | `baseline-aligned` | `APP_TAG=v4.4` | 2026-09-08 | ✅ | documented | missing |
-| [`monitoring/langfuse`](monitoring/langfuse/) | `baseline-aligned` | `APP_TAG=4.38.0` | 2026-09-22 | ✅ | documented | missing |
+| [`monitoring/langfuse`](monitoring/langfuse/) | `scaffolded` | `APP_TAG=4.50.0` | 2026-09-22 | ✅ | documented | missing |
 | [`monitoring/ntfy`](monitoring/ntfy/) | `baseline-aligned` | `APP_TAG=v2.28.0` | 2026-09-08 | ✅ | documented | missing |
 | [`monitoring/scrutiny`](monitoring/scrutiny/) | `scaffolded` | `APP_TAG=v0.9.4-web` | — | ✅ | documented | missing |
 | [`monitoring/uptime-kuma`](monitoring/uptime-kuma/) | `baseline-aligned` | `APP_TAG=2.5.4` | 2026-09-13 | ✅ | documented | missing |

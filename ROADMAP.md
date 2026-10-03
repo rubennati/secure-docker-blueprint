@@ -19,7 +19,7 @@ The single criterion for v1.0 is: **could someone fork this and run it without
 needing my mental model?**
 
 **Latest tag: v0.9.4 — Mail servers, wider rate limits, Authelia
-(2026-10-03).** Three mail servers and a second login portal are in, each
+(2026-10-04).** Three mail servers and a second login portal are in, each
 `scaffolded`. Mail ports are published by the stack through an opt-in overlay
 and do not pass through Traefik. The proxy's rate limits are wider, as an
 interim until the review below settles what each chain is for. What has and has

@@ -11,12 +11,12 @@
 - **Origin:** United States · BerriAI, Inc. · non-EU
 - **Domain:** AI and local AI
 - **Role:** OpenAI-compatible gateway in front of any model backend, with virtual keys, budgets and a spend log
-- **Based on version:** `v1.101.0`
+- **Based on version:** `v1.101.4`
 - **Last verified:** 2026-09-21 (v1.101.0) — behind Traefik with TLS: a provider credential stored encrypted through the admin API, a virtual key limited to it, the admin login, a restart, and a database restore
 
 ## What we use
 
-- `ghcr.io/berriai/litellm-non_root:v1.101.0` — upstream's non-root variant with
+- `ghcr.io/berriai/litellm-non_root:v1.101.4` — upstream's non-root variant with
   a versioned release tag. Upstream's own quick-start pins the floating
   `main-stable`; not used here.
 - `postgres:18.6` — LiteLLM's virtual keys, budgets and spend log need a

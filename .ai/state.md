@@ -2,9 +2,9 @@
 
 > If this file conflicts with git (branch, commits, tags), trust git.
 
-**Last updated:** 2026-10-03
+**Last updated:** 2026-10-04
 
-- **Phase:** pre-1.0. Latest tag `v0.9.4` (2026-10-03), which is where `main`
+- **Phase:** pre-1.0. Latest tag `v0.9.4` (2026-10-04), which is where `main`
   stands; what `dev` carries beyond it is `git rev-list --count v0.9.4..dev`, and
   it is not repeated here. Work happens on a
   short-lived branch and reaches `dev` through a pull request; `dev` reaches
