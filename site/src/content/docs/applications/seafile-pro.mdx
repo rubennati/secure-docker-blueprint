@@ -9,7 +9,7 @@ import StackEvidence from '../../../components/StackEvidence.astro';
 Seafile Pro is private cloud storage with browser-based Office editing (OnlyOffice), collaborative document editing (SeaDoc), full-text search (SeaSearch) and antivirus scanning (ClamAV). All nine services deploy as a single Compose stack, and it needs a commercial license.
 
 <StackEvidence stack="apps/seafile-pro"
-  gap="backup and restore. Three databases, the block store and the search index have to be recovered in order, and none of it has been rehearsed." />
+  gap="backup and restore. Three databases and the block store have to come back together, and none of it has been rehearsed." />
 
 **To try it:** Docker, and a Seafile Pro commercial licence, which the image requires either way. See [Try it locally](#try-it-locally).
 
@@ -218,6 +218,9 @@ repository, the schedule and the database hooks. What this stack contributes:
 - `volumes/mysql/` — all three databases (Seafile, Seahub, Ccnet)
 - `volumes/seadoc-data/` — collaborative document state
 - The `.env` file and any secrets
+
+The search index is not on that list. It is rebuilt rather than restored, with the
+command under [Going further](#going-further).
 
 The databases and the file volumes have to come back from the same point in time,
 and all three databases together. A restore that recovers one side without the

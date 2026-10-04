@@ -10,7 +10,7 @@
 - **Origin:** Community · no single company · no single jurisdiction
 - **Domain:** Photos
 - **Role:** Photo library with face recognition and search
-- **Based on version:** `1.1.0` (upstream moved from weekly builds to semver)
+- **Based on version:** `1.2.1` (upstream moved from weekly builds to semver)
 - **Last checked:** 2026-04-17
 
 ## What we use
@@ -42,10 +42,14 @@
 - **Upstream moved from weekly build tags to semver.** The pin was `2026w25`, a dated
   weekly build. Releases now carry semver tags (`1.0.0`, `1.1.0`), so the comparison a
   sweep makes changes shape with this bump. Moved to `1.1.0` on 2026-09-13.
-- `1.1.0` carries a security fix, and three advisories published 2026-08-31 name no
-  patched version at all: any authenticated user could trash, restore, unpublish or hide
-  another user's public photos. Check whether a later release closes them before treating
-  this stack as safe for more than one trusted user.
+- Moved to `1.2.1` on 2026-10-04. The six advisories upstream has published — among them
+  any authenticated user trashing, restoring, unpublishing or hiding another user's public
+  photos — name `1.1.0` as the last affected version.
+- `1.2.0` combines the first 100 database migrations. An installation on `2026w10` or
+  later, every `1.x` included, upgrades directly; an older one starts `1.1.0` once first.
+- The backend healthcheck calls upstream's liveness endpoint `/api/healthz` with the command
+  from upstream's own compose file (`deploy/compose/docker-compose.e2e.yml`). The `1.2.x`
+  backend image ships no `curl`.
 
 ## Upgrade checklist
 

@@ -146,7 +146,7 @@ Protect the credential and booking surfaces (Free plan = one rate-limit rule; Pr
 | Booking POST endpoints | sane per-IP cap | Managed Challenge |
 
 If you only get one rule on your plan, spend it on `/api/auth/*` (login brute-force is the
-highest-value target). The origin `sec-3` chain also rate-limits (100 req/s), but the edge stops
+highest-value target). The origin `sec-3` chain also rate-limits (125 req/s), but the edge stops
 it before it ever reaches your server.
 
 ---

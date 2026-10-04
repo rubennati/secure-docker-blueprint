@@ -6,6 +6,134 @@ this file is the index and covers decisions that have no other home.
 
 ---
 
+## 2026-10-03 · Mail ports are published by the stack, not routed by Traefik
+
+The mail evaluation left two questions for before the first stack: how SMTP and
+IMAP are exposed, and where a mail server's certificate comes from. Both are
+answered with the first stack, `apps/stalwart`.
+
+**The stack publishes its mail ports, through an opt-in overlay.** `mail.yml`
+publishes 25, 465 and 993, as `trapper.yml` does for Zabbix and `derp.yml` for
+headscale. `core/traefik` gets no TCP entrypoints: that would publish mail ports
+on the proxy of every installation that enables it, and the mail server would
+have to trust a PROXY header by source address on a network every routed stack
+shares. Port 25 has to be open to the whole internet for mail to arrive, so an
+access policy in front of it would have nothing to decide.
+
+**What protects those ports is the mail server, set up by the stack.** The
+blueprint's part is to ship the server's own protections switched on and
+measured — no relay, authenticated submission, automatic bans with an expiry —
+and to say what the operator owns: the firewall, the provider's outbound port
+25, DNS and reverse DNS.
+
+**The certificate is stated per stack.** A mail server holds its own; which
+sources it supports differs by product, so each README names them. Traefik's
+`acme.json` is not mounted into a mail container by default, because it carries
+every certificate the proxy has obtained.
+
+**Stalwart runs upstream's image**, with its separately licensed enterprise code
+in it and unlocked only by a key — `business/twenty` is the precedent — and mail
+servers sit in `apps/`: they serve their own users.
+
+**What would change it.** A stack that needs the client address and cannot get
+it on a published port, established on a host.
+
+---
+
+## 2026-10-03 · The rate limits are widened until the Traefik review settles them
+
+Sync clients of Seafile and Nextcloud failed with `429` in operation, and the
+first loads measured in September — 77 to 291 requests — did not fit the default
+burst of 50. The Traefik review owns the real answer: what each chain is for, and
+whether static files and sync paths belong under the counter at all. Until it
+lands, the limits are wide enough that ordinary use passes.
+
+**What the limit is for stays as the review states it.** It keeps the proxy and
+the origin answering while one client asks for a lot; it is not the defence
+against password guessing
+([`../docs/audits/reverse-proxy-limits-2026-09-23.md`](../docs/audits/reverse-proxy-limits-2026-09-23.md)).
+A limit that answers `429` to a first load or to a sync protects nothing and
+breaks the application.
+
+**The values.** `rl-soft` 125 requests per second with a burst of 200, from 100
+and 50: the bucket refills during a load, and on 2026-09-22 a bucket of 200
+answered all 291 requests of the heaviest interface below the `-xl` pair.
+`rl-spa` keeps the rate and widens the burst from 200 to 500. `rl-spa-xl` keeps
+its bucket of 1000 and its restriction to a closed access policy. `rl-hard`, 20
+and 40, is unchanged — it is chosen where each request is worth slowing down.
+
+**A sync is bounded by the rate, not by the bucket.** The Nextcloud desktop
+client runs up to 20 requests in parallel over HTTP/2, the Seafile client three
+upload and three download threads with one request per block. The rate is the
+parallelism divided by the time one request takes — 400 per second at 20 in
+parallel and 50 ms each — so no bucket holds a sync of ten thousand files.
+`rl-sync` allows 1000 requests per second, in `sec-2-sync` and `sec-3e-sync`.
+
+**The sync chains are not tied to a closed access policy**, unlike the `-xl`
+chains. Nextcloud and Seafile ship `acc-private` and are opened once configured —
+an office server calls back over the public name — and their sync endpoints
+require credentials.
+
+**No name is removed or renamed.** A deployment that names a chain keeps its
+router; `sec-3e-spa` stays although no shipped stack uses it now. The decision
+of 2026-09-22 stands: no stack drops to `sec-1` to get past a limit.
+
+**What this does not establish.** The sync figures are read from the clients'
+source, not counted on a host; the first run with real clients counts the `429`
+in the proxy's access log. And the limit counts per client address: where every
+client arrives from one address — a NAT, or the Docker gateway — they share one
+bucket, which no value here changes.
+
+---
+
+## 2026-10-03 · Three mail servers are added, and Mailu waits for a fixed release
+
+`ROADMAP.md` adds no application while the v1.0 items are open, and the exception
+of 2026-09-22 left the hold in place for anything proposed afterwards. Seven mail
+servers were proposed and checked the same way. Three are added — a third
+deliberate exception of the same kind: it changes nothing v1.0 requires, every
+stack lands `scaffolded`, and the hold still applies to anything proposed from here
+on.
+
+**Added: Stalwart, docker-mailserver and jeboehm/docker-mailserver.** The repository
+had no mail server. The three differ in shape — one binary with its own web
+interface, one container configured by files, one container per function with an
+administration interface and webmail — so the batch covers three ways of running
+mail rather than three variants of one.
+
+**Open source is the entry condition for this list as well.** poste.io and Axigen
+are proprietary and are not added.
+
+**Mailu is held, not dropped.** CVE-2026-86008, rated high and published on
+2026-09-23, lets an account with the domain-manager role take over administrator
+accounts. The fix is on `master`; the newest release, 2024.06.61, does not contain
+it, and the maintainers preferred the next release over a backport. A published
+advisory with no fixed release is what the verdict *Held* is for. Mailu meets every
+other requirement and is revisited when a release carries the fix.
+
+**mailcow is not added.** `netfilter-mailcow` runs `privileged: true`, which the
+baseline refuses without an exception path, and upstream's configuration has no
+switch that leaves the service out. A stack without it would be a deployment its
+upstream does not describe.
+
+**Stalwart's licence is recorded, not resolved here.** The published image is built
+with the enterprise feature, so code under the Stalwart Enterprise License v2 is in
+it, unlocked only by a licence key. Whether the stack pins that image or one built
+here without the feature is decided with the stack; `business/twenty` is the
+precedent for the first.
+
+**The stacks wait for two answers from the Traefik review.** SMTP and IMAP are not
+HTTP: either each stack publishes its mail ports through an opt-in overlay, or
+Traefik routes them through TCP entrypoints with PROXY protocol. And each server
+holds its own certificate, from its own ACME client, from Traefik's `acme.json`, or
+from files issued outside the proxy. Both questions touch `core/traefik`, which is
+why they are settled once, there, rather than three times in three stacks.
+
+Evidence per product, the batch order and the decisions each batch depends on:
+[`../docs/audits/candidate-evaluation-2026-10-03.md`](../docs/audits/candidate-evaluation-2026-10-03.md).
+
+---
+
 ## 2026-09-24 · `cap_add` and `devices` get exception tables
 
 The candidate evaluation attached one decision to batches N, Q, R and S: where

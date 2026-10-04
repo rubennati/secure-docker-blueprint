@@ -154,7 +154,7 @@ These controls are enforced by Traefik configuration rendered from templates in 
 |-------|-------|
 | **Implemented?** | Yes |
 | **Location** | `core/traefik/ops/templates/dynamic/security-blocks.yml.tmpl` |
-| **Limits** | `rl-soft`: 100 avg / 50 burst. `rl-hard`: 20 avg / 40 burst. `rl-spa`: 100 avg / 200 burst (for SPA initial load) |
+| **Limits** | `rl-soft`: 125 avg / 200 burst. `rl-hard`: 20 avg / 40 burst. `rl-spa`: 125 avg / 500 burst (first load beyond `rl-soft`'s). `rl-sync`: 1000 avg / 1000 burst (file-sync clients) |
 | **Applied from** | sec-2 (soft) / sec-4 (hard) |
 | **Gaps** | Rate limits are per-IP at the Traefik level. No distributed rate limiting. Behind a CDN or NAT, all users share one bucket. |
 
@@ -334,7 +334,7 @@ Based on **OWASP Docker Security Cheat Sheet**.
 
 ---
 
-#### `trivy.yml` — runs on push/PR to `main`, weekly Monday 04:00 UTC, manual dispatch *(updated)*
+#### `trivy.yml` — runs on a pull request to `main`, weekly Monday 04:00 UTC, manual dispatch
 
 This is the canonical description of both jobs. Nothing elsewhere in this
 document restates their coverage, severity or exit behavior — it points here.
@@ -347,14 +347,13 @@ document restates their coverage, severity or exit behavior — it points here.
 - Non-blocking (exit-code 0) — informational relative to `check-baseline.py`
 - Runs unconditionally on every trigger — no image pulls, completes in seconds
 
-**Job 2: Image CVE scan** *(now scoped on push/PR)*
+**Job 2: Image CVE scan**
 
-- On push/PR, only runs when a `detect-changes` job finds that a production
-  compose file, a stack's `.env.example`, or the discovery/scan/summarize
-  scripts changed — verified against what `list-images.sh` actually reads. An
-  unrelated change (docs, site content, an unrelated script) skips this job;
-  the skip and its reason are printed to that job's own step summary. The
-  weekly schedule and manual dispatch always run the full scan regardless.
+- Runs in full on every trigger. The pull request to `main` is where it
+  decides: both jobs are required checks there, so a red gate blocks the merge
+  rather than appearing on the published branch afterwards. The merge itself
+  starts no second scan — an up-to-date branch is required before merging, so
+  the push carries the tree the pull request already scanned.
 - Image references come from `scripts/ci/list-images.sh`, which reads the same
   discovery `check-structure.py --list` uses — every compose file in the
   repository, not a curated subset. A new stack is scanned the day it lands.
@@ -416,7 +415,7 @@ document restates their coverage, severity or exit behavior — it points here.
 push and deletion prevented) is satisfied. Tier 2 needs an approving review, which a
 single-maintainer repository can only satisfy by bypassing it on every merge, and
 tier 4 needs two reviewers. What the repository does enforce instead is stricter than
-the score shows: ten required checks on both protected branches, up-to-date branches,
+the score shows: ten required checks on `dev` and twelve on `main`, up-to-date branches,
 and no bypass actor, so a red check blocks the owner too. The reasoning is in
 [`.ai/decisions.md`](../.ai/decisions.md) under *No review gate on `main`*; a second
 maintainer is what would change it.

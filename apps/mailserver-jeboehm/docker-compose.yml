@@ -1,0 +1,481 @@
+services:
+
+  # --------------------------------------------------------
+  # MTA (Postfix — SMTP in and out, submission)
+  # --------------------------------------------------------
+  mta:
+    # --- Identity ---
+    image: ghcr.io/jeboehm/mailserver-mta:${APP_TAG}
+    container_name: ${CONTAINER_NAME_MTA}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      mda:
+        condition: service_healthy
+      filter:
+        condition: service_healthy
+
+    # --- Security ---
+    # No `read_only`: the entrypoint writes Postfix's settings with postconf.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+      - NET_BIND_SERVICE
+
+    # --- Resources ---
+    memswap_limit: 256m          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          pids: 300
+        reservations:
+          memory: 32m
+
+    # --- Configuration ---
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
+    environment:
+      MAILNAME: ${APP_TRAEFIK_HOST}
+      POSTMASTER: postmaster@${APP_MAIL_DOMAIN}
+      DB_DRIVER: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      WAITSTART_TIMEOUT: 2m
+      TZ: ${TZ}
+    secrets:
+      - DB_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
+      - ./volumes/certs:/etc/postfix/tls:ro
+      - ./volumes/spool:/var/spool/postfix
+
+    # --- Networking ---
+    networks:
+      - app-internal
+      - app-egress
+
+    # --- Health ---
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 1m
+
+  # --------------------------------------------------------
+  # MDA (Dovecot — IMAP, mail storage, authentication)
+  # --------------------------------------------------------
+  mda:
+    # --- Identity ---
+    image: ghcr.io/jeboehm/mailserver-mda:${APP_TAG}
+    container_name: ${CONTAINER_NAME_MDA}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:mode=0755,uid=1000,gid=1000
+      - /run/dovecot:mode=0755,uid=1000,gid=1000
+
+    # --- Resources ---
+    memswap_limit: 512m          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          pids: 300
+        reservations:
+          memory: 32m
+
+    # --- Configuration ---
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
+    environment:
+      POSTMASTER: postmaster@${APP_MAIL_DOMAIN}
+      DB_DRIVER: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      TZ: ${TZ}
+    secrets:
+      - DB_PWD
+      - DOVEADM_API_KEY
+
+    # --- Storage ---
+    volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
+      - ./volumes/certs:/etc/dovecot/tls:ro
+      - ./volumes/mail:/srv/vmail
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health ---
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # --------------------------------------------------------
+  # FILTER (Rspamd — spam scoring, DKIM signing)
+  # --------------------------------------------------------
+  filter:
+    # --- Identity ---
+    image: ghcr.io/jeboehm/mailserver-filter:${APP_TAG}
+    container_name: ${CONTAINER_NAME_FILTER}
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+      unbound:
+        condition: service_healthy
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:mode=0755,uid=11333,gid=11333
+
+    # --- Resources ---
+    memswap_limit: 768m          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 768m
+          pids: 200
+        reservations:
+          memory: 128m
+
+    # --- Configuration ---
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      TZ: ${TZ}
+    secrets:
+      - REDIS_PWD
+      - CONTROLLER_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
+      - ./volumes/filter:/var/lib/rspamd
+
+    # --- Networking ---
+    networks:
+      - app-internal
+      - app-egress
+
+    # --- Health ---
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # --------------------------------------------------------
+  # WEB (administration interface, Roundcube webmail)
+  # --------------------------------------------------------
+  mailserver-jeboehm-web:
+    # --- Identity ---
+    image: ghcr.io/jeboehm/mailserver-web:${APP_TAG}
+    container_name: ${CONTAINER_NAME_WEB}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /opt/admin/var/cache/prod:mode=0777
+      - /opt/admin/var/log:mode=0777
+      - /opt/roundcube/temp:mode=0777
+      - /opt/roundcube/logs:mode=0777
+      - /tmp:mode=0777
+
+    # --- Resources ---
+    memswap_limit: 512m          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          pids: 200
+        reservations:
+          memory: 64m
+
+    # --- Configuration ---
+    entrypoint: ["/bin/sh", "/config/entrypoint-web.sh"]
+    environment:
+      MAILNAME: ${APP_TRAEFIK_HOST}
+      POSTMASTER: postmaster@${APP_MAIL_DOMAIN}
+      DB_DRIVER: mysql
+      DB_SERVER_VERSION: "8.4"
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      TRUSTED_PROXIES: ${APP_TRAEFIK_TRUSTED_PROXIES}
+      WAITSTART_TIMEOUT: 2m
+      TZ: ${TZ}
+    secrets:
+      - DB_PWD
+      - REDIS_PWD
+      - CONTROLLER_PWD
+      - DOVEADM_API_KEY
+      - APP_SECRET
+
+    # --- Storage ---
+    volumes:
+      - ./config/entrypoint-web.sh:/config/entrypoint-web.sh:ro
+      - ./volumes/certs:/opt/admin/tls:ro
+
+    # --- Networking ---
+    networks:
+      - app-internal
+      - proxy-public
+
+    # --- Traefik ---
+    labels:
+      # Router
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      # TLS
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      # Uncomment ONLY for per-domain certificates; leave off when a wildcard
+      # certificate already covers this host.
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      # Middlewares
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      # Service
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8080"
+
+    # --- Health ---
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 1m
+
+  # --------------------------------------------------------
+  # UNBOUND (resolver for Rspamd)
+  # --------------------------------------------------------
+  unbound:
+    # --- Identity ---
+    image: ghcr.io/jeboehm/mailserver-unbound:${APP_TAG}
+    container_name: ${CONTAINER_NAME_UNBOUND}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /run/unbound:mode=0755,uid=100,gid=101
+
+    # --- Resources ---
+    memswap_limit: 128m          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+          pids: 50
+        reservations:
+          memory: 16m
+
+    # --- Configuration ---
+    environment:
+      TZ: ${TZ}
+
+    # --- Networking ---
+    networks:
+      - app-internal
+      - app-egress
+
+    # --- Health ---
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # --------------------------------------------------------
+  # DB (MySQL — domains, accounts, aliases)
+  # --------------------------------------------------------
+  db:
+    # --- Identity ---
+    image: mysql:${DB_TAG}
+    container_name: ${CONTAINER_NAME_DB}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # The entrypoint starts as root, fixes ownership on the data directory and
+    # drops to the mysql user.
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+
+    # --- Resources ---
+    memswap_limit: 2g            # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          pids: 200
+        reservations:
+          memory: 512m
+
+    # --- Configuration ---
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD_FILE: /run/secrets/DB_PWD
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/DB_ROOT_PWD
+      TZ: ${TZ}
+    secrets:
+      - DB_PWD
+      - DB_ROOT_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/db:/var/lib/mysql
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health ---
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 1m
+
+  # --------------------------------------------------------
+  # REDIS (Rspamd state, web sessions)
+  # --------------------------------------------------------
+  redis:
+    # --- Identity ---
+    image: redis:${REDIS_TAG}
+    container_name: ${CONTAINER_NAME_REDIS}
+    restart: unless-stopped
+    user: "999:999"
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+
+    # --- Resources ---
+    memswap_limit: 256m          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          pids: 100
+        reservations:
+          memory: 32m
+
+    # --- Configuration ---
+    entrypoint: ["/bin/sh", "/redis-entrypoint.sh"]
+    secrets:
+      - REDIS_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./config/redis-entrypoint.sh:/redis-entrypoint.sh:ro
+      - ./volumes/redis:/data
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health ---
+    healthcheck:
+      test: ["CMD-SHELL", "REDISCLI_AUTH=\"$$(cat /run/secrets/REDIS_PWD)\" redis-cli ping | grep -q PONG || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+  app-egress:
+    name: ${COMPOSE_PROJECT_NAME}-egress
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  DB_PWD:
+    file: ./.secrets/db_pwd.txt
+  DB_ROOT_PWD:
+    file: ./.secrets/db_root_pwd.txt
+  REDIS_PWD:
+    file: ./.secrets/redis_pwd.txt
+  CONTROLLER_PWD:
+    file: ./.secrets/controller_pwd.txt
+  DOVEADM_API_KEY:
+    file: ./.secrets/doveadm_api_key.txt
+  APP_SECRET:
+    file: ./.secrets/app_secret.txt

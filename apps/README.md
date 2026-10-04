@@ -86,6 +86,14 @@ Planned: **DayOtter** (scheduling platform, AGPL-3.0). It publishes no image, so
 | [Euro-Office](euro-office/) | Single container | EU-governed OnlyOffice fork (Nextcloud/IONOS/XWiki/Proton) — drop-in document server |
 | [Collabora](collabora/) | Single container | Lightweight LibreOffice-based office server (~1 GB) |
 
+### Mail
+
+| App | Stack | Description |
+|---|---|---|
+| [mailserver (jeboehm)](mailserver-jeboehm/) | 7 services | Postfix, Dovecot and Rspamd as separate containers, with an administration interface and Roundcube webmail behind Traefik. The mail ports 25, 587 and 993 are published by an opt-in overlay. Every credential comes from a file; five of the seven services run with no capability |
+| [docker-mailserver](docker-mailserver/) | Single container | Postfix, Dovecot and Rspamd in one container, configured by files — no database, no web interface, nothing behind Traefik. The mail ports 25, 465 and 993 are published by an opt-in overlay. Fail2ban, Rspamd and sender-address checks are on, which upstream ships off |
+| [Stalwart](stalwart/) | Single container | Mail and collaboration server — SMTP, IMAP, JMAP, calendars and contacts in one binary. The web interface goes through Traefik; the mail ports 25, 465 and 993 are published by an opt-in overlay. Setup runs over the API and sets ban expiry and the forwarded client address |
+
 ### Identity & security
 
 Five different jobs, not five competing password managers — each holds a
@@ -217,7 +225,9 @@ it is revisited once the announced rewrite is released. See
 
 Docker-management tools (Dockhand / Portainer / Hawser) are in [`core/`](../core/): they control Docker itself, which is an installation-scoped capability. Whoami sits here instead — it is a routed diagnostic that serves no other stack.
 
-Planned (apps/): HeyForm.
+Held: **Mailu** — it waits for a release that carries a
+published security fix. See
+[`../docs/audits/candidate-evaluation-2026-10-03.md`](../docs/audits/candidate-evaluation-2026-10-03.md#decided-on-2026-10-03).
 
 ## Related
 

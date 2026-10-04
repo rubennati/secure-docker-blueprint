@@ -44,6 +44,10 @@ run: Traefik with TLS, a refused client, restart, restore, and each stack's own 
 items. Needs a host; nothing in the 26 new stacks has one. Until then they stay
 `scaffolded`.
 
+- [ ] `apps/litellm`, `apps/ciso-assistant` and `monitoring/langfuse` were verified on a
+      host at the previous pin and moved on 2026-10-04 (`v1.101.4`, `v4.0.9`, `4.50.0`).
+      They are `scaffolded` until the run is repeated at the new pin.
+
 ### 3. Personal data on the public site (audit W7 / D3)
 
 A decision, with a possible v1.0 impact — see [`decisions.md`](decisions.md) and
@@ -67,6 +71,10 @@ A decision, with a possible v1.0 impact — see [`decisions.md`](decisions.md) a
 
 Phased plan in [`../apps/caldiy/docs/hardening-plan.md`](../apps/caldiy/docs/hardening-plan.md).
 The stack builds from a reviewed fork; the hardening phases are not finished.
+
+- [ ] The fork image `v6.2.0-6` is built on Next.js 16.2.3. GHSA-vcvr-r3jv-pc5j (remote code
+      execution in `next/og`) is fixed in 16.3.6 and recorded in `.trivy-baseline.json` since
+      2026-10-04; a fork build on a fixed Next.js removes it.
 
 ### 6. Fifteen proposed products — evaluated 2026-09-21
 
@@ -92,7 +100,8 @@ was verified by running it. Three of the fifteen already ship.
 - [x] Upstream requests, filed by the maintainer; drafts are in the local
       `inbox/upstream-requests/` working area. Filed and linked where the rule says
       — the stack's `UPSTREAM.md` where one exists, the candidate evaluation
-      otherwise: the FacturaScripts installer fix NeoRazorX/facturascripts#2041 ·
+      otherwise: the FacturaScripts installer fix NeoRazorX/facturascripts#2041, merged
+      2026-09-25 ·
       rclone/rclone#9957 (`rclone gui` logs a supplied RC password) and
       rclone/rclone-web#139 (its sign-in discards the address) in
       `../backup/rclone-web/UPSTREAM.md` · obot-platform/obot#7978 (start without a
@@ -161,13 +170,55 @@ products and are added as a second deliberate exception (`decisions.md`,
       Which of them landed is in [`../CHANGELOG.md`](../CHANGELOG.md).
       Each stack ships `scaffolded` — verified on its image, not yet behind
       Traefik. Moving them to `baseline-aligned` is S1, above.
+- [ ] Replace MinIO in `business/plane` and `monitoring/langfuse`. Both stacks
+      stop at it: MinIO withdrew every public image on 2026-09-24 and archived
+      its source repository, so the pinned tag cannot be pulled and the services
+      that depend on it never start. Each README says so. `cgr.dev/chainguard/minio`
+      is public and is what Langfuse's own compose uses, but it ships `latest`
+      only, so it runs an installation without being pinnable. A versioned
+      S3-compatible store — SeaweedFS or Garage — is the fix, and it needs a run
+      against each stack rather than a tag change.
 - [ ] Build candidates — Live Helper Chat, DayOtter, Bareos: ask upstream to
       publish an image first; otherwise a fork and an image built here under
       `../docs/standards/custom-application.md`.
 - [ ] paperless-ai: revisit once upstream's announced rewrite is released or the
       repository is maintained again — its README says it is not.
-- [ ] `backup/borgmatic/README.md` counts database engines as "24 · 16 · 13
-      stacks" for PostgreSQL · MySQL · MariaDB. Counting `image:` lines by stack
-      on 2026-09-23 gives 27 · 3 · 15; the MySQL figure is far enough apart that
-      the table is counting something else. Establish the rule, then correct the
-      table or state the rule beside it.
+- [x] `backup/borgmatic/README.md` counted database engines as "24 · 16 · 13"
+      for PostgreSQL · MySQL · MariaDB. The rule is now stated beside the table —
+      stacks whose compose files name that database image, MariaDB and MySQL
+      apart because borgmatic has a hook for each — with the command to
+      re-measure. On 2026-09-24 that gives 31 · 3 · 17. Three more rows were
+      stale in the same table: Zabbix stood as planned, and ntfy and rclone as
+      absent, though all three now have stacks; MongoDB listed two of its four.
+      Both hook names given there were wrong and are checked against upstream's
+      schema now — Zabbix reaches the web interface's `/api_jsonrpc.php`, not
+      the trapper port, and ntfy's key is `topic`, not `topic_url`.
+
+### 8. Mail servers — decided 2026-10-03
+
+Three mail servers are added as a third deliberate exception (`decisions.md`,
+2026-10-03). Evidence, what was held or not added and why, and the batch order:
+[`../docs/audits/candidate-evaluation-2026-10-03.md`](../docs/audits/candidate-evaluation-2026-10-03.md).
+
+- [x] Decided 2026-10-03 (`decisions.md`): the stack publishes its mail ports
+      through an opt-in overlay, each stack states where its certificate comes
+      from, Stalwart runs upstream's image, mail servers sit in `apps/`.
+- [x] Batch W, Stalwart — `../apps/stalwart`, `scaffolded`, verified on the
+      image. What a host still has to establish is in its `UPSTREAM.md`.
+- [x] Batch X, docker-mailserver — `../apps/docker-mailserver`, `scaffolded`,
+      verified on the image. Fail2ban is on and needs `NET_ADMIN`, recorded in
+      `CAP_ADD_EXCEPTIONS`.
+- [x] Batch Y, jeboehm/docker-mailserver — `../apps/mailserver-jeboehm`,
+      `scaffolded`, verified on the images. It has no automatic ban; its README
+      says so.
+- [ ] `apps/mailserver-jeboehm` on a host: sign-in to the administration
+      interface behind Traefik, a DKIM signature against a published record,
+      and delivery to and from another mail system.
+- [ ] `apps/docker-mailserver` on a host: which client address the container
+      sees on a published port — Fail2ban bans that address — and delivery to
+      and from another mail system.
+- [ ] `apps/stalwart` on a host: a certificate on the mail ports, delivery to and
+      from another mail system, and the client address Stalwart sees on a
+      published port — its bans depend on it.
+- [ ] Mailu: revisit when a release contains the fix for CVE-2026-86008 — a new
+      release line, or a backport into `2024.06`.

@@ -2,10 +2,10 @@
 
 > If this file conflicts with git (branch, commits, tags), trust git.
 
-**Last updated:** 2026-09-24
+**Last updated:** 2026-10-04
 
-- **Phase:** pre-1.0. Latest tag `v0.9.3` (2026-09-24), which is where `main`
-  stands; what `dev` carries beyond it is `git rev-list --count v0.9.2..dev`, and
+- **Phase:** pre-1.0. Latest tag `v0.9.4` (2026-10-04), which is where `main`
+  stands; what `dev` carries beyond it is `git rev-list --count v0.9.4..dev`, and
   it is not repeated here. Work happens on a
   short-lived branch and reaches `dev` through a pull request; `dev` reaches
   `main` the same way. Both branches reject a direct push.
@@ -36,6 +36,14 @@
   `decisions.md`, 2026-09-24. What was not added and why:
   [`../docs/audits/candidate-evaluation-2026-09-22.md`](../docs/audits/candidate-evaluation-2026-09-22.md).
   Moving the sixteen from `scaffolded` to `baseline-aligned` is S1, `tasks.md` §2.
+- **Decided (2026-10-03):** three mail servers — Stalwart, docker-mailserver and
+  jeboehm/docker-mailserver — as a third recorded exception to the hold
+  ([`decisions.md`](decisions.md)). Mailu is held until a release carries the fix
+  for CVE-2026-86008. `apps/stalwart`, `apps/docker-mailserver` and
+  `apps/mailserver-jeboehm` are in, each `scaffolded`, with the mail ports
+  published by an opt-in overlay. Evidence:
+  [`../docs/audits/candidate-evaluation-2026-10-03.md`](../docs/audits/candidate-evaluation-2026-10-03.md).
+  What a host still has to establish for each is `tasks.md` §8.
 - **Current milestone:** v0.10.0 — Measured resource limits. Whether it stays a
   release is open (D4 in the audit): the measurement needs the same host session
   as the verification backlog.
@@ -345,6 +353,16 @@ first load; `check-structure.py` fails an `-xl` chain outside `acc-private` or
 `acc-tailscale`: Twenty's interface (412 requests) and Windmill's (about 850)
 load under `sec-2-spa-xl` without a single `429`, five loads each. Both ship the
 chain now; no other stack uses it.
+→ *2026-10-03:* the limits are widened as an interim, so the bucket sizes named
+above are the ones in force when each measurement was taken. Now: `rl-soft` 125
+requests per second, burst 200 · `rl-spa` 125, burst 500 · `rl-spa-xl` 125, burst
+1000 · `rl-hard` 20, burst 40. Sync clients met the sustained rate rather than the
+burst — the Nextcloud client runs up to 20 requests in parallel, the Seafile
+client three threads in each direction — so `rl-sync` (1000 per second) exists,
+in `sec-2-sync` and `sec-3e-sync`, shipped by `apps/seafile`, `apps/seafile-pro`
+and `apps/nextcloud`. Not counted on a host yet. Reasoning in
+[`decisions.md`](decisions.md), 2026-10-03; the review still decides what each
+chain is for.
 
 **Traefik labels and middlewares are reviewed as a whole before v1.0.0** — see
 [`../ROADMAP.md`](../ROADMAP.md). They grew stack by stack; 106 stacks route
@@ -375,10 +393,18 @@ the two points above:
   Cloudflare counts per edge address. The comment in `traefik.yml.tmpl` says
   trusting Cloudflare's forwarded headers gives `ipAllowList` the real client.
   Not measured.
+- **Mail protocols.** Decided 2026-10-03 ([`decisions.md`](decisions.md)): a mail
+  stack publishes its SMTP and IMAP ports through an opt-in overlay, and
+  `core/traefik` gets no TCP entrypoints. No access policy, chain or bouncer
+  middleware applies to those ports; the mail server's own protections do. The
+  review does not have to answer it. What each option would have changed:
+  [`../docs/audits/candidate-evaluation-2026-10-03.md`](../docs/audits/candidate-evaluation-2026-10-03.md#across-the-list).
 - **Already tracked.** First-load counts for the four photo galleries and
-  `apps/it-tools` ([`tasks.md`](tasks.md), *Blocked on a host*), and the chain for
-  Seafile's four path-scoped routers (issue #39). `core/portainer`'s first load
-  fits `sec-4` (issue #37).
+  `apps/it-tools` ([`tasks.md`](tasks.md), *Blocked on a host*), the chain for
+  Seafile's four path-scoped routers (issue #39), and `acc-private` admitting the
+  Docker bridge and host-local sources, which its own description does not say
+  (issue #129). `core/portainer`'s first load fits `sec-4` (issue #37). Both open
+  issues close through this review rather than beside it.
 
 → The review may change names and structure, or confirm them.
 

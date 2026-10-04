@@ -103,6 +103,14 @@
     "license_class": "source-available",
     "origin": "LangGenius · no country stated in its published terms · no country"
   },
+  "apps/docker-mailserver": {
+    "bloc": "none",
+    "country": "Community",
+    "entity": "docker-mailserver organisation",
+    "license": "MIT",
+    "license_class": "osi",
+    "origin": "Community · docker-mailserver organisation · no single jurisdiction"
+  },
   "apps/docling-serve": {
     "bloc": "non-EU",
     "country": "LF AI & Data Foundation (US non-profit)",
@@ -238,6 +246,14 @@
     "license": "MIT",
     "license_class": "osi",
     "origin": "New Zealand · Ralph Slooten (axllent) · non-EU"
+  },
+  "apps/mailserver-jeboehm": {
+    "bloc": "EU",
+    "country": "Germany",
+    "entity": "Jeffrey Boehm (individual maintainer)",
+    "license": "MIT",
+    "license_class": "osi",
+    "origin": "Germany · Jeffrey Boehm (individual maintainer) · EU"
   },
   "apps/monicahq": {
     "bloc": "non-EU",
@@ -390,6 +406,14 @@
     "license": "MIT",
     "license_class": "osi",
     "origin": "Spain · Alejandro Celaya · EU"
+  },
+  "apps/stalwart": {
+    "bloc": "non-EU",
+    "country": "United States and United Kingdom",
+    "entity": "Stalwart Labs LLC",
+    "license": "AGPL-3.0 (core; files marked SEL are under the Stalwart Enterprise License v2, and the published image is built with them)",
+    "license_class": "mixed",
+    "origin": "United States and United Kingdom · Stalwart Labs LLC · non-EU"
   },
   "apps/threat-dragon": {
     "bloc": "non-EU",
@@ -670,6 +694,14 @@
     "license": "GPL-3.0 (acme.sh)",
     "license_class": "osi",
     "origin": "Austria · maintained in this project · EU (the bundled acme.sh is independent, original author Neil Pang)"
+  },
+  "core/authelia": {
+    "bloc": "none",
+    "country": "Community",
+    "entity": "no single company",
+    "license": "Apache-2.0",
+    "license_class": "osi",
+    "origin": "Community · no single company · no single jurisdiction"
   },
   "core/authentik": {
     "bloc": "EU",

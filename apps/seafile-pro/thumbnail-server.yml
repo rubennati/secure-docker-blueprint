@@ -81,7 +81,7 @@ services:
       # main one, so it decides the request. Without this, acc-tailscale on the
       # stack leaves this path answering wherever the host answers.
       # Thumbnail service. Access policy only: a gallery view issues many parallel
-      # requests and rl-soft (average 100, burst 50) has not been measured against it.
+      # requests and rl-soft has not been measured against it.
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.middlewares=${APP_TRAEFIK_ACCESS}@file"
       # TLS
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.tls=true"

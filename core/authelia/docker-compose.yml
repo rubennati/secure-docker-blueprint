@@ -1,0 +1,252 @@
+# =============================================================================
+# Authelia — single sign-on and two-factor authentication for the reverse proxy
+# =============================================================================
+# A login portal that Traefik asks, through forward-auth, whether a request may
+# pass. Apps behind it need no identity integration of their own.
+#
+# Image: authelia/authelia (https://hub.docker.com/r/authelia/authelia)
+# Source: https://github.com/authelia/authelia
+# =============================================================================
+
+services:
+
+  # --------------------------------------------------------
+  # DATABASE (PostgreSQL)
+  # --------------------------------------------------------
+  db:
+    # --- Identity ---
+    image: postgres:${DB_TAG}
+    container_name: ${CONTAINER_NAME_DB}
+    restart: unless-stopped
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # Re-added deliberately: the official entrypoint starts as root, fixes
+    # ownership on the data directory, then drops to the service user.
+    # Set established in apps/_reference on 2026-08-16.
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+
+    # --- Resources ---
+    memswap_limit: 512m          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          # cpus: derived starting value, not measured — v0.9.0
+          cpus: "0.50"
+          pids: 100
+        reservations:
+          memory: 64m
+
+    # --- Configuration ---
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/DB_PWD
+      TZ: ${TZ}
+    secrets:
+      - DB_PWD
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/postgres:/var/lib/postgresql/data
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME} -h 127.0.0.1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # --------------------------------------------------------
+  # SESSION STORE (Redis)
+  # --------------------------------------------------------
+  redis:
+    # --- Identity ---
+    image: redis:${REDIS_TAG}
+    container_name: ${CONTAINER_NAME_REDIS}
+    restart: unless-stopped
+    command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    # The image's entrypoint drops to its redis user only when it starts as root;
+    # starting as that user needs no capability at all.
+    user: "999:1000"
+
+    # --- Resources ---
+    memswap_limit: 128m          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+          # cpus: derived starting value, not measured — v0.9.0
+          cpus: "0.25"
+          pids: 50
+        reservations:
+          memory: 16m
+
+    # --- Storage ---
+    volumes:
+      - ./volumes/redis:/data
+
+    # --- Networking ---
+    networks:
+      - app-internal
+
+    # --- Health & Observability ---
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep -q PONG"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # --------------------------------------------------------
+  # AUTHELIA (portal and forward-auth endpoint)
+  # --------------------------------------------------------
+  authelia:
+    # --- Identity ---
+    image: authelia/authelia:${APP_TAG}
+    container_name: ${CONTAINER_NAME_APP}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    # --- Security ---
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    # The image defaults to root and would chown /config before dropping to
+    # PUID:PGID, which also default to 0. Starting as this user skips both.
+    user: "1000:1000"
+
+    # --- Resources ---
+    memswap_limit: 256m          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          # cpus: derived starting value, not measured — v0.9.0
+          cpus: "0.50"
+          pids: 100
+        reservations:
+          memory: 32m
+
+    # --- Configuration ---
+    # configuration.yml reads the values below through the template filter;
+    # the secrets arrive as files through Authelia's own _FILE variables.
+    environment:
+      X_AUTHELIA_CONFIG_FILTERS: template
+      TZ: ${TZ}
+      LOG_LEVEL: ${LOG_LEVEL}
+      SESSION_COOKIE_DOMAIN: ${SESSION_COOKIE_DOMAIN}
+      PORTAL_URL: https://${APP_TRAEFIK_HOST}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      SMTP_ADDRESS: ${SMTP_ADDRESS}
+      SMTP_USERNAME: ${SMTP_USERNAME}
+      SMTP_FROM_ADDRESS: ${SMTP_FROM_ADDRESS}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME}
+      AUTHELIA_IDENTITY_VALIDATION_RESET_PASSWORD_JWT_SECRET_FILE: /run/secrets/JWT_SECRET
+      AUTHELIA_SESSION_SECRET_FILE: /run/secrets/SESSION_SECRET
+      AUTHELIA_STORAGE_ENCRYPTION_KEY_FILE: /run/secrets/STORAGE_ENCRYPTION_KEY
+      AUTHELIA_STORAGE_POSTGRES_PASSWORD_FILE: /run/secrets/DB_PWD
+    secrets:
+      - JWT_SECRET
+      - SESSION_SECRET
+      - STORAGE_ENCRYPTION_KEY
+      - DB_PWD
+      - SMTP_PASSWORD
+
+    # --- Storage ---
+    # /data holds the user database, which Authelia rewrites when a password
+    # changes, and the notification file when no mail relay is set.
+    # Authelia rewrites /app/.healthcheck.env at every start and exits without
+    # naming the cause when it cannot — with read_only that is every start. The
+    # one file is mounted writable, the rest of /app stays read-only.
+    volumes:
+      - ./config/configuration.yml:/config/configuration.yml:ro
+      - ./volumes/data:/data
+      - ./volumes/runtime/healthcheck.env:/app/.healthcheck.env
+
+    # --- Networking ---
+    # proxy-public also carries the outbound connections: the mail relay and
+    # the time check Authelia runs at start.
+    networks:
+      - proxy-public
+      - app-internal
+
+    # --- Traefik ---
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=9091"
+
+    # --- Health & Observability ---
+    # Checked directly rather than through the image's healthcheck.sh, which
+    # exits 0 whenever the file above holds no X_AUTHELIA_HEALTHCHECK line.
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://127.0.0.1:9091/api/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+# --------------------------------------------------------
+# NETWORKS
+# --------------------------------------------------------
+networks:
+  proxy-public:
+    external: true
+
+  app-internal:
+    name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+
+# --------------------------------------------------------
+# SECRETS
+# --------------------------------------------------------
+secrets:
+  JWT_SECRET:
+    file: ./.secrets/jwt_secret.txt
+  SESSION_SECRET:
+    file: ./.secrets/session_secret.txt
+  STORAGE_ENCRYPTION_KEY:
+    file: ./.secrets/storage_encryption_key.txt
+  DB_PWD:
+    file: ./.secrets/db_pwd.txt
+  SMTP_PASSWORD:
+    file: ./.secrets/smtp_password.txt

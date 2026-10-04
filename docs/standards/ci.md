@@ -11,7 +11,8 @@ workflow_dispatch        ──┘
 
 Both `dev` and `main` are protected by an active ruleset that requires a pull
 request, requires all ten jobs below, and requires the branch to be up to date
-before merging. Neither ruleset has a standing bypass actor, so the pull-request
+before merging. `main` also requires the two jobs of `trivy.yml`, so a pull
+request from `dev` cannot land while the image CVE gate is red. Neither ruleset has a standing bypass actor, so the pull-request
 run is what decides whether a change can land on either branch.
 
 That is why `dev` has no post-merge run: the branch had to be current, so the

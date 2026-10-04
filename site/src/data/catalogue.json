@@ -157,11 +157,11 @@
     "name": "CISO Assistant",
     "path": "apps/ciso-assistant",
     "role": "Governance, risk and compliance: frameworks such as ISO 27001 and NIS2 mapped to controls, risks and evidence",
-    "state": "baseline-aligned",
+    "state": "scaffolded",
     "upstream": "https://github.com/intuitem/ciso-assistant-community/pkgs/container/ciso-assistant-community%2Fbackend",
     "verified": "2026-09-22",
     "verified_version": "v4.0.5",
-    "version": "4.0.5"
+    "version": "4.0.9"
   },
   "apps/collabora": {
     "decision_facts": {},
@@ -304,6 +304,43 @@
     "verified": "2026-09-22",
     "verified_version": "1.17.1",
     "version": "1.17.1"
+  },
+  "apps/docker-mailserver": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-10-03",
+        "model": "no paid edition",
+        "source": "https://github.com/docker-mailserver/docker-mailserver",
+        "statement": "no paid edition"
+      },
+      "edition_gating": {
+        "checked": "2026-10-03",
+        "source": "https://github.com/docker-mailserver/docker-mailserver",
+        "statement": "none — one implementation, no paid tier"
+      },
+      "use_restrictions": {
+        "checked": "2026-10-03",
+        "source": "https://github.com/docker-mailserver/docker-mailserver/blob/master/LICENSE",
+        "statement": "none"
+      }
+    },
+    "decision_facts_checked": "2026-10-03",
+    "domain": "Files, wiki and collaboration",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
+    "name": "docker-mailserver",
+    "path": "apps/docker-mailserver",
+    "role": "Mail server — Postfix, Dovecot and Rspamd in one container, configured by files, without a database or a web interface",
+    "state": "scaffolded",
+    "upstream": "https://github.com/docker-mailserver/docker-mailserver/pkgs/container/docker-mailserver",
+    "verified": null,
+    "verified_version": null,
+    "version": "16.0.1"
   },
   "apps/docling-serve": {
     "decision_facts": {},
@@ -625,7 +662,7 @@
     "upstream": "https://www.librephotos.com/",
     "verified": null,
     "verified_version": null,
-    "version": "1.1.0"
+    "version": "1.2.1"
   },
   "apps/litellm": {
     "decision_facts": {
@@ -649,11 +686,11 @@
     "name": "LiteLLM",
     "path": "apps/litellm",
     "role": "OpenAI-compatible gateway in front of any model backend, with virtual keys, budgets and a spend log",
-    "state": "baseline-aligned",
+    "state": "scaffolded",
     "upstream": "https://github.com/BerriAI/litellm/pkgs/container/litellm-non_root",
     "verified": "2026-09-21",
     "verified_version": "v1.101.0",
-    "version": "1.101.0"
+    "version": "1.101.4"
   },
   "apps/lycheeorg": {
     "decision_facts": {},
@@ -697,6 +734,46 @@
     "verified": "2026-09-07",
     "verified_version": "v1.31.1",
     "version": "1.31.1"
+  },
+  "apps/mailserver-jeboehm": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-10-03",
+        "model": "no paid edition",
+        "source": "https://github.com/jeboehm/docker-mailserver",
+        "statement": "no paid edition"
+      },
+      "edition_gating": {
+        "checked": "2026-10-03",
+        "source": "https://github.com/jeboehm/docker-mailserver",
+        "statement": "none — one implementation, no paid tier"
+      },
+      "use_restrictions": {
+        "checked": "2026-10-03",
+        "source": "https://github.com/jeboehm/docker-mailserver/blob/main/LICENSE",
+        "statement": "none"
+      }
+    },
+    "decision_facts_checked": "2026-10-03",
+    "domain": "Files, wiki and collaboration",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "MySQL",
+        "Redis"
+      ],
+      "init_services": 0,
+      "services": 7,
+      "summary": "7 services · MySQL + Redis"
+    },
+    "name": "mailserver",
+    "path": "apps/mailserver-jeboehm",
+    "role": "Mail server — Postfix, Dovecot and Rspamd as separate containers, with an administration interface and webmail",
+    "state": "scaffolded",
+    "upstream": "https://github.com/jeboehm?tab=packages&repo_name=docker-mailserver",
+    "verified": null,
+    "verified_version": null,
+    "version": "8.0.8"
   },
   "apps/monicahq": {
     "decision_facts": {},
@@ -1041,7 +1118,7 @@
     "upstream": "https://www.photoprism.app/",
     "verified": null,
     "verified_version": null,
-    "version": "260728"
+    "version": "260919"
   },
   "apps/photoview": {
     "decision_facts": {},
@@ -1194,6 +1271,43 @@
     "verified_version": null,
     "version": "5.1.7"
   },
+  "apps/stalwart": {
+    "decision_facts": {
+      "commercial_model": {
+        "checked": "2026-10-03",
+        "model": "paid self-hosted edition",
+        "source": "https://stalw.art/enterprise/",
+        "statement": "paid self-hosted edition; unlocked by a licence key"
+      },
+      "edition_gating": {
+        "checked": "2026-10-03",
+        "source": "https://stalw.art/enterprise/",
+        "statement": "multi-tenancy, branding, account archiving and un-deletion, live telemetry and alerts, AI models, masked addresses, SCIM, read replicas and sharded stores are listed as Enterprise"
+      },
+      "use_restrictions": {
+        "checked": "2026-10-03",
+        "source": "https://github.com/stalwartlabs/stalwart#license",
+        "statement": "none for the AGPL-3.0 code"
+      }
+    },
+    "decision_facts_checked": "2026-10-03",
+    "domain": "Files, wiki and collaboration",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [],
+      "init_services": 0,
+      "services": 1,
+      "summary": "1 service"
+    },
+    "name": "Stalwart",
+    "path": "apps/stalwart",
+    "role": "Mail and collaboration server — SMTP, IMAP, JMAP, calendars, contacts and files in one binary",
+    "state": "scaffolded",
+    "upstream": "https://hub.docker.com/r/stalwartlabs/stalwart",
+    "verified": null,
+    "verified_version": null,
+    "version": "0.16.24"
+  },
   "apps/threat-dragon": {
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -1318,7 +1432,7 @@
     "upstream": "https://hub.docker.com/r/vllm/vllm-openai",
     "verified": null,
     "verified_version": null,
-    "version": "0.29.0"
+    "version": "0.30.0"
   },
   "apps/whoami": {
     "decision_facts": {},
@@ -2122,7 +2236,7 @@
     "upstream": "https://zammad.org",
     "verified": null,
     "verified_version": null,
-    "version": "7.1.3-0012"
+    "version": "7.2.0-0004"
   },
   "core/acme-certs": {
     "decision_facts": {},
@@ -2143,6 +2257,29 @@
     "verified": null,
     "verified_version": null,
     "version": "0.2.1"
+  },
+  "core/authelia": {
+    "decision_facts": {},
+    "decision_facts_checked": "2026-09-26",
+    "domain": "Identity, access and secrets",
+    "footprint": {
+      "gpu": null,
+      "infrastructure": [
+        "PostgreSQL",
+        "Redis"
+      ],
+      "init_services": 0,
+      "services": 3,
+      "summary": "3 services · PostgreSQL + Redis"
+    },
+    "name": "Authelia",
+    "path": "core/authelia",
+    "role": "Login portal with two-factor authentication that Traefik asks through forward-auth",
+    "state": "scaffolded",
+    "upstream": "https://hub.docker.com/r/authelia/authelia",
+    "verified": null,
+    "verified_version": null,
+    "version": "4.39.28"
   },
   "core/authentik": {
     "decision_facts": {
@@ -2909,11 +3046,11 @@
     "name": "Langfuse",
     "path": "monitoring/langfuse",
     "role": "LLM observability: traces, scores and prompts from any instrumented application",
-    "state": "baseline-aligned",
+    "state": "scaffolded",
     "upstream": "https://github.com/langfuse/langfuse/pkgs/container/langfuse",
     "verified": "2026-09-22",
     "verified_version": "4.38.0",
-    "version": "4.38.0"
+    "version": "4.50.0"
   },
   "monitoring/ntfy": {
     "decision_facts": {

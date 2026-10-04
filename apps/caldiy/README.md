@@ -91,7 +91,7 @@ Secrets are plain env in `.env.local` (gitignored) — **local only**, never pro
 
 ### Security chain (sec-3)
 
-Cal.diy defaults to the **`sec-3`** Traefik middleware chain (`APP_TRAEFIK_SECURITY=sec-3`), one level stricter than the blueprint's standard `sec-2`. The difference is **header hardening only — no request is blocked at the proxy, and the rate limit is unchanged** (100 req/s average, 50 burst, same as sec-2):
+Cal.diy defaults to the **`sec-3`** Traefik middleware chain (`APP_TRAEFIK_SECURITY=sec-3`), one level stricter than the blueprint's standard `sec-2`. The difference is **header hardening only — no request is blocked at the proxy, and the rate limit is unchanged** (125 req/s average, 200 burst, same as sec-2):
 
 | Header | sec-2 | sec-3 |
 |--------|-------|-------|

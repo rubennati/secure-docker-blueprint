@@ -1,0 +1,61 @@
+# Authelia — configuration
+#
+# X_AUTHELIA_CONFIG_FILTERS=template renders every template expression before
+# the YAML is read — comments included, so none of them may hold one. mustEnv
+# stops the start when a variable is missing. The values come from
+# docker-compose.yml, the secrets from Authelia's own _FILE variables.
+#
+# Reference: https://www.authelia.com/configuration/prologue/introduction/
+
+server:
+  address: 'tcp://:9091'
+
+log:
+  level: '{{ mustEnv "LOG_LEVEL" }}'
+
+theme: 'auto'
+
+totp:
+  issuer: '{{ mustEnv "SESSION_COOKIE_DOMAIN" }}'
+
+authentication_backend:
+  file:
+    path: '/data/users_database.yml'
+    password:
+      algorithm: 'argon2'
+
+# Deny by default. Every host under the cookie domain that a router sends here
+# needs two factors; add rules above this one per app, most specific first.
+access_control:
+  default_policy: 'deny'
+  rules:
+    - domain: '*.{{ mustEnv "SESSION_COOKIE_DOMAIN" }}'
+      policy: 'two_factor'
+
+session:
+  cookies:
+    - domain: '{{ mustEnv "SESSION_COOKIE_DOMAIN" }}'
+      authelia_url: '{{ mustEnv "PORTAL_URL" }}'
+  redis:
+    host: 'redis'
+    port: 6379
+
+storage:
+  postgres:
+    address: 'tcp://db:5432'
+    database: '{{ mustEnv "DB_NAME" }}'
+    username: '{{ mustEnv "DB_USER" }}'
+
+# Mail when SMTP_ADDRESS is set; otherwise one-time codes and reset links go to
+# /data/notification.txt on the host.
+notifier:
+{{- if env "SMTP_ADDRESS" }}
+  smtp:
+    address: '{{ mustEnv "SMTP_ADDRESS" }}'
+    username: '{{ mustEnv "SMTP_USERNAME" }}'
+    password: {{ secret "/run/secrets/SMTP_PASSWORD" | squote }}
+    sender: '{{ mustEnv "SMTP_FROM_NAME" }} <{{ mustEnv "SMTP_FROM_ADDRESS" }}>'
+{{- else }}
+  filesystem:
+    filename: '/data/notification.txt'
+{{- end }}

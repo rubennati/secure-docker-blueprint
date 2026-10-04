@@ -63,7 +63,7 @@ curl https://vllm.example.com/v1/chat/completions \
 
 vLLM's API key does **not** protect the whole server. With a key set, the
 `/v1/*` API answers `401` without it — and these paths answer with no
-credentials at all (tested against v0.29.0):
+credentials at all (tested against v0.30.0):
 
 | Path | Without a key |
 |---|---|
@@ -95,8 +95,9 @@ one. gRPC is off unless `--grpc-port` is set, and it is not set.
 
 ## What has and has not been verified
 
-Verified, against `vllm/vllm-openai-cpu:v0.29.0` (the CPU build of this release)
-on an x86_64 Docker VM with six AVX2 cores:
+Verified, against `vllm/vllm-openai-cpu` (the CPU build of this release) on an
+x86_64 Docker VM with six AVX2 cores — at `v0.29.0`, and again at `v0.30.0`
+except for the Traefik allowlist and the two startup failures:
 
 - real inference through `/v1/chat/completions` with a 0.5B model
   (`The capital of Austria is Vienna.`), key supplied through `VLLM_API_KEY`;

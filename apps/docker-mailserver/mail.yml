@@ -1,0 +1,10 @@
+# docker-mailserver — mail ports (opt-in)
+#
+#   docker compose -f docker-compose.yml -f mail.yml up -d
+
+services:
+  app:
+    ports:
+      - "${APP_MAIL_BIND}:25:25"     # SMTP, from other mail servers
+      - "${APP_MAIL_BIND}:465:465"   # submission, implicit TLS, mail clients
+      - "${APP_MAIL_BIND}:993:993"   # IMAP, implicit TLS, mail clients

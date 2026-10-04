@@ -11,7 +11,7 @@
 - **Origin:** United States · vLLM project (originated at the UC Berkeley Sky Computing Lab) · non-EU
 - **Domain:** AI and local AI
 - **Role:** High-throughput OpenAI-compatible model serving on an NVIDIA GPU
-- **Based on version:** `v0.29.0`
+- **Based on version:** `v0.30.0`
 
 No `Last verified` line yet — see [Verification performed](#verification-performed-2026-09-18)
 below for exactly what has been exercised and what has not. The field
@@ -20,16 +20,16 @@ behind Traefik. This stack stays `scaffolded` until that happens.
 
 ## What we use
 
-- Official image, pinned tag: `vllm/vllm-openai:v0.29.0` — CUDA 13.0.2, `amd64`
-  and `arm64`, 8.67 GB compressed for `amd64`. Read from the registry
+- Official image, pinned tag: `vllm/vllm-openai:v0.30.0` — CUDA 13.0.2, `amd64`
+  and `arm64`, 8.73 GB compressed for `amd64`. Read from the registry
   (`docker buildx imagetools inspect`), **never pulled or run here**: it is
   larger than the free disk of the test VM and needs a GPU.
 - From that config: no `USER` (root), entrypoint `vllm serve`, workdir
   `/vllm-workspace`, no exposed ports declared, `NVIDIA_VISIBLE_DEVICES=all`,
   `TORCH_CUDA_ARCH_LIST=7.5 8.0 8.6 8.9 9.0 10.0 12.0`.
-- Local validation runs `vllm/vllm-openai-cpu:v0.29.0` (1.84 GB compressed):
+- Local validation runs `vllm/vllm-openai-cpu:v0.30.0` (2.28 GB compressed):
   the same release and entrypoint, root by default, Python 3.12, with `curl`,
-  `wget` and `bash`. It reports `0.29.0+cpu`.
+  `wget` and `bash`. It reports `0.30.0+cpu`.
 - Configuration is by `vllm serve` arguments and `VLLM_*` variables. The API
   key is `--api-key` or `VLLM_API_KEY`; the compose file uses the variable so the
   key stays out of the process arguments.
@@ -111,6 +111,15 @@ in float32:
 - The endpoint-by-endpoint authentication results and the Traefik allowlist
   results above
 - The two startup failures above, reproduced and fixed
+
+Repeated on 2026-10-04 against `vllm/vllm-openai-cpu:v0.30.0`, through
+`docker-compose.local.yml`: the hardened start reached `healthy` as uid 1000
+with a read-only root and no capabilities, `/v1/chat/completions` gave the same
+answer (396 s for the first request, 1 s for the second), `/v1/*` answered `401`
+without the key, and the paths in the README's table answered without one as
+before — `/invocations` ran inference, `/pause` returned `404`. Not repeated:
+the start as root, the wrapper run, the Traefik allowlist and the two startup
+failures.
 
 **Not exercised:** the CUDA image, any GPU, the NVIDIA runtime, tensor
 parallelism, the GPU device reservation on a real host, uid 1000 and a
