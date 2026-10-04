@@ -8,6 +8,14 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
+### Changed
+
+- **Dependabot watches the three examples under `development/`** (`.github/dependabot.yml`). Their lock files had no update source: the Astro example's had not changed since it was added on 2026-09-18 and carried the seven `devalue` advisories below. One grouped pull request a week against `dev`, like the site. No CI job builds the examples, so an update is built by hand before it merges.
+
+### Fixed
+
+- **Seven advisories against `devalue`, published on 2026-10-01, are closed by a lock-file update** (`site/`, `development/static-site/recipes/astro/`). `devalue` goes from 5.9.2 to 5.9.4 in both lock files; Astro 7.3.5 brings the package in and accepts the newer version, so nothing else moves. One advisory stays: `http-cache-semantics` 4.2.0, GHSA-ch52-4w7c-c8xp, has no fixed release. The lock files were written with npm 11 on Node 24, the version the site workflow uses, and both builds ran with them — the site's four workflow steps and the recipe's image.
+
 ## [0.9.4] — 2026-10-04 — Mail servers, wider rate limits, Authelia
 
 Three mail servers and a second login portal are added, each `scaffolded` and verified on its images rather than behind Traefik on a host. The proxy's rate limits are wider, and applications with file-sync clients get a limit of their own. Upgrading an existing installation takes the steps under [Migration](#migration).
