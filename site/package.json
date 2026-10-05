@@ -12,9 +12,9 @@
     "check:self": "node scripts/check-content.mjs --self-test"
   },
   "dependencies": {
-    "@astrojs/starlight": "^0.42.4",
+    "@astrojs/starlight": "^0.42.5",
     "astro": "^7.3.5",
-    "sharp": "^0.35.3"
+    "sharp": "^0.35.5"
   },
   "devDependencies": {
     "schema-dts": "^2.0.0"
