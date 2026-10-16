@@ -2,7 +2,7 @@
 
 > If this file conflicts with git (branch, commits, tags), trust git.
 
-**Last updated:** 2026-10-04
+**Last updated:** 2026-10-15
 
 - **Phase:** pre-1.0. Latest tag `v0.9.4` (2026-10-04), which is where `main`
   stands; what `dev` carries beyond it is `git rev-list --count v0.9.4..dev`, and
@@ -44,19 +44,27 @@
   published by an opt-in overlay. Evidence:
   [`../docs/audits/candidate-evaluation-2026-10-03.md`](../docs/audits/candidate-evaluation-2026-10-03.md).
   What a host still has to establish for each is `tasks.md` §8.
+- **Audited (2026-10-15):** the core layer — Traefik, CrowdSec, the update path and
+  this working memory — has its findings register in
+  [`../docs/audits/core-v1-readiness-2026-10-15.md`](../docs/audits/core-v1-readiness-2026-10-15.md):
+  66 findings with evidence, a programme in phases 0–6, and twelve decisions, all
+  taken on 2026-10-15 and 2026-10-16 and recorded in [`decisions.md`](decisions.md).
+  Phase 1 — documentation and memory brought to the state of the tree — is done;
+  phases 2–6 have not started.
 - **Current milestone:** v0.10.0 — Measured resource limits. Whether it stays a
   release is open (D4 in the audit): the measurement needs the same host session
   as the verification backlog.
 - **Definition of done for v0.10.0:** every `✅` stack's limits come from a
   measurement on a real install rather than from the derivation rule
   (`docs/resource-measurement.md`).
-- **The one thing a new session should know:** nothing structural is broken. The
+- **The one thing to know first:** nothing structural is broken. The
   checkers, the generated views and the site catalogue agree with the tree. What
   is left needs a host, or a decision that is written down and waiting. C1, the missing
   Trivy gate, is closed: `.trivy-baseline.json` records the CRITICAL findings that
   exist and `scripts/ci/trivy-gate.py` fails the scan on any that is not recorded.
-  **No finding is marked FIX BEFORE V1 any more** — everything else open is
-  evidence, a recorded decision, or standing research coverage.
+  **No finding of the stabilization audit is marked FIX BEFORE V1 any more** —
+  everything else open there is evidence, a recorded decision, or standing research
+  coverage. The core audit of 2026-10-15 opens its own, listed in that file by phase.
 
 ## Snapshot
 
@@ -119,7 +127,7 @@ request. What each stack found that changed its shape is in that stack's
 | secret sharing, Threat Dragon | 2026-09-19 | #113 |
 | zot, step-ca, OpenCanary, Dependency-Track, DFIR-IRIS, Velociraptor | 2026-09-19 | #114 |
 | LiteLLM, Open WebUI, agentgateway | 2026-09-19 | #116 |
-| Dify, Langfuse | 2026-09-19 | pending review |
+| Dify, Langfuse | 2026-09-19 | #117 |
 
 ## v0.8.1 on a host — 2026-09-13
 
@@ -130,7 +138,7 @@ Nextcloud (34.0.4 in place), Invoice Ninja (5.13.40, migrations) and Cal.diy's d
 and where it went: an orphaned container after a service rename blocks `up -d` and leaves
 the app created-not-started (`TROUBLESHOOTING.md` §5.3); the host's rendered Traefik
 config carried the CrowdSec integration while the tracked templates did not, so
-`render.sh` did not run for the move — it would have dropped both — and an env-gated render is in `tasks.md`; 3.7.12+
+`render.sh` did not run for the move — it would have dropped both; the switch, `CROWDSEC_BOUNCER_ENABLED`, landed on 2026-09-14 and that host was migrated the same day; 3.7.12+
 warns per entrypoint that `aliasHeadersStrategy` is unset (recorded in `UPSTREAM.md`).
 Still unverified from the sweep: `core/dnsmasq`, `apps/homepage`, `apps/librephotos` and
 the pins of stacks that host does not run.
@@ -200,9 +208,11 @@ documents no way to retire one.
 current reference implementation, and no maintained second implementation justifies
 a migration. A future architectural consideration, not debt.
 
-Suricata and Coraza are being added, as the last batch of the 2026-09-22 candidates;
-each has a design question open in [`../ROADMAP.md`](../ROADMAP.md) → "Being
-added". Neither is implemented. SIEM/XDR/SOC platforms are out of scope there.
+Suricata and Coraza were decided on 2026-09-24 ([`decisions.md`](decisions.md)):
+neither becomes a stack — CrowdSec's AppSec engine is Coraza, and Suricata waits for
+a host that can be flooded without consequence. What stands and why:
+[`../ROADMAP.md`](../ROADMAP.md#added--the-held-candidates). SIEM/XDR/SOC platforms
+are out of scope there.
 
 ## Mission scope — established 2026-09
 
@@ -233,8 +243,9 @@ which is how a container inside its cap still pages a host into uselessness.
 `security-baseline.md` owns the requirement, `compose-structure.md` the values.
 `no-resources` and `no-swap-policy` are both FAIL in `check-structure.py` —
 Every production service states `memswap_limit`, all at the default (equal to
-`memory`); no evidenced case for a higher value has come up yet. `live-restore` is in the reference
-daemon configuration. `resource-measurement.md` carries a drift procedure — compose
+`memory`); no evidenced case for a higher value has come up yet. `live-restore` is in the daemon
+configuration the operator site documents (`site/src/content/docs/getting-started/server-setup.mdx`);
+no stack in this repository ships a `daemon.json`. `resource-measurement.md` carries a drift procedure — compose
 config against `docker inspect` against cgroup state — and the corrected meaning of
 `reservations.memory`, which is a reclaim preference and never a guarantee.
 `TROUBLESHOOTING.md` §4.6 covers the swap-pressure symptom.
@@ -254,7 +265,8 @@ memory PSI — none covered by the thresholds v0.8.0 verified. Tracked in
 
 ## Immediate next steps
 
-The disposable host carried v0.7.0 and v0.8.0. What runs on it next, in this
+The disposable host carried v0.7.0, v0.8.0 and v0.8.1 (2026-09-13), then the
+candidate sessions of 2026-09-21 to 2026-09-23. What runs on it next, in this
 order:
 
 0. **Finish CrowdSec host-firewall acceptance** once a controllable second client
@@ -275,43 +287,24 @@ order:
 
 ## Open decisions
 
-Each is written to be answerable without reading any chat history: the conflict,
-the options, and a recommendation. None blocks the host session.
+Each is written to be answerable from this file alone: the conflict, the
+options, and a recommendation. None blocks the host session.
 
-**1. Commit message format** — 1 minute
-`docs/standards/commit-rules.md` prescribes `scope: subject`. Recent history uses
-conventional commits (`docs(monitoring): …`). Both are defensible; having both is
-not.
-→ *Recommendation:* correct the standard to match the practice. The practice is
-what everyone actually reads.
+Settled on 2026-10-15 — D9 of the core audit, recorded in
+[`decisions.md`](decisions.md): the commit message format (practice converged on
+the standard's `scope:` form; the rules are unchanged), backup repository isolation
+(`docs/architecture.md` adopts the trade-off `backup/README.md` states), the
+host-installed backup agent (a named exception beside the portability goal in
+`docs/architecture.md`), and the commit procedure (the standing rule to ask before
+every commit).
 
-**2. Backup repository isolation** — 5 minutes
-`docs/architecture.md:132` states one repository per app as a rule.
-`backup/README.md:176` presents it as a trade-off. The File Map makes
-`architecture.md` the owner, so the two disagree and the mirror is winning.
-→ *Recommendation:* change it at the owner. The trade-off in `backup/README.md`
-is the more honest text — separate repositories multiply the rehearsals, and a
-rehearsal nobody runs is worse than a shared repository that has been restored
-from.
-
-**3. Host-installed backup agent vs. the portability goal**
-`docs/architecture.md` promises "no host-specific assumptions beyond Debian +
-Docker". `backup/borgmatic` is installed on the host by design, with the
-reasoning in `backup/README.md`.
-→ *Recommendation:* record it in `architecture.md` as a named exception with its
-reason. The reasoning is sound; only the contradiction is unrecorded.
-
-**4. Commit procedure**
-`docs/standards/commit-rules.md` requires asking before every commit; an external
-standard would allow an agent to commit to non-`main` branches unprompted.
-→ *Recommendation:* keep the local rule. It has caught real mistakes, and the
-cost is one question per commit.
-
-**5. Dependency automation** — see
+**1. Dependency automation** — see
 [`../docs/renovate-proposal.md`](../docs/renovate-proposal.md)
-Three sub-questions: explicit `# renovate:` markers vs. normalising 28 outlying
-comments · Renovate App vs. self-hosted Action · whether `site/`'s unwatched
-`package-lock.json` rides along. Nothing runs until these are answered.
+`renovate.json` is committed (2026-09-17) and the App is not installed, so nothing
+runs. Three sub-questions: explicit `# renovate:` markers vs. normalising 28
+outlying comments · Renovate App vs. self-hosted Action · whether `site/`'s
+unwatched `package-lock.json` rides along. Now D6 of the core audit, with its
+recommendation there.
 
 **The security chains replace what an application sets.** Measured on 2026-09-07 (Traefik v3.6): every value in an `hdr-*` block replaces
 the application's own header — Keycloak's and Nextcloud's `no-referrer` become
@@ -365,14 +358,16 @@ and `apps/nextcloud`. Not counted on a host yet. Reasoning in
 chain is for.
 
 **Traefik labels and middlewares are reviewed as a whole before v1.0.0** — see
-[`../ROADMAP.md`](../ROADMAP.md). They grew stack by stack; 106 stacks route
-through Traefik, 101 of them take their chain from `.env`. After v1.0.0 a renamed
-middleware disables the router of every deployment that names it. Open, besides
-the two points above:
+[`../ROADMAP.md`](../ROADMAP.md). They grew stack by stack; 108 stacks route
+through Traefik, 105 of them take their chain from `.env` (counted 2026-10-15 —
+`traefik.enable=true` over the production compose files, `APP_TRAEFIK_SECURITY=`
+over the `.env.example` files). After v1.0.0 a renamed middleware disables the
+router of every deployment that names it. Open, besides the two points above:
 
-- **Names.** Twelve chains put headers, framing and rate limit into one name.
-  48 stacks default to `sec-2` and 35 to `sec-3`; `sec-0` and `sec-1e` are used
-  by none. `e` reads as "embeddable" and permits only the application's own
+- **Names.** Fifteen chains put headers, framing and rate limit into one name.
+  49 stacks default to `sec-2` and 36 to `sec-3`; `sec-0`, `sec-1`, `sec-1e`,
+  `sec-3e` and `sec-3e-spa` are selected by no `.env.example`. `e` reads as
+  "embeddable" and permits only the application's own
   origin. `spa` names a kind of application rather than what the chain changes, a
   burst of 200 — the chain file calls the `-spa` chains VPN-only, the block they
   use is described as fit for public applications. `sec-authentik` carries the
@@ -387,12 +382,15 @@ the two points above:
   [`../core/crowdsec/docs/profiles.md`](../core/crowdsec/docs/profiles.md).
 - **Authentik.** Forward auth exists only as a commented-out block in
   `core/traefik/ops/templates/dynamic/integrations.yml.tmpl`.
-- **Client address.** The rate limits and access policies do not say which
-  address counts, and Traefik's documentation says both then use the connecting
-  address: an office behind one NAT address shares one bucket, traffic through
-  Cloudflare counts per edge address. The comment in `traefik.yml.tmpl` says
-  trusting Cloudflare's forwarded headers gives `ipAllowList` the real client.
-  Not measured.
+- **Client address.** Confirmed against Traefik's reference on 2026-10-15: the
+  access policies and rate limits evaluate the connecting address, because the
+  templates set no `ipStrategy` and no `sourceCriterion`. An office behind one
+  NAT address shares one bucket on every path; behind Cloudflare's proxy the
+  closed policies refuse every request and one bucket serves every visitor
+  behind an edge address, while the access log and the application see the
+  client. Owner: `docs/standards/traefik-security.md` → Trusted Proxy Headers;
+  the render switch that changes it is D3 in the core audit. Not measured on a
+  host.
 - **Mail protocols.** Decided 2026-10-03 ([`decisions.md`](decisions.md)): a mail
   stack publishes its SMTP and IMAP ports through an opt-in overlay, and
   `core/traefik` gets no TCP entrypoints. No access policy, chain or bouncer

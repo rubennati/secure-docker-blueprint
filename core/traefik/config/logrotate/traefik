@@ -3,8 +3,11 @@
 # Traefik writes access.log and traefik.log to a bind-mounted volume.
 # Docker's json-file log driver does NOT manage these — logrotate must.
 #
-# Install on the HOST (not inside the container):
-#   sudo cp /path/to/secure-docker-blueprint/core/traefik/config/logrotate/traefik /etc/logrotate.d/traefik
+# Install on the HOST (not inside the container), with the deployment path
+# substituted — a stanza naming /path/to/... matches no file, and missingok
+# keeps logrotate silent about it:
+#   sudo sed 's|/path/to/secure-docker-blueprint|/srv/docker|g' \
+#     /srv/docker/core/traefik/config/logrotate/traefik | sudo tee /etc/logrotate.d/traefik
 #
 # The path must match the HOST-side volume mount in docker-compose.yml:
 #   ./volumes/logs:/var/log/traefik
