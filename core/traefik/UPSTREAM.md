@@ -15,7 +15,7 @@
 - **Origin:** France · Traefik Labs · EU
 - **Domain:** Infrastructure
 - **Role:** Reverse proxy: TLS, access policies and security headers in front of every other service
-- **Based on versions:** Traefik `v3.7`, docker-socket-proxy `v0.4.2`
+- **Based on versions:** Traefik `v3.7`, docker-socket-proxy `v0.5.0`
 - **Last verified:** 2026-09-13 (v3.7.13, socket-proxy v0.5.0) — moved from 3.6.10 on a live host with the dual-stack overlay: 13 routed hosts plus one external consumer answered with the same status codes before and after, HTTP/3 answered a `--http3-only` request, the CrowdSec bouncer plugin loaded and polled the LAPI within one second of start, and the socket proxy served the Docker API on the unchanged template. Nothing in the rendered configuration changed for the move.
 - **Support window:** upstream policy since 3.6 is six months of support from a minor's GA date, with the last minor of a major supported for two years after the next major — https://doc.traefik.io/traefik/deprecation/releases/. 3.7 went GA 2026-05-05 and is the current line. **3.6 left security support on 2026-08-16** and 2.11 on 2026-09-07; neither is a pin target. Check this date before the next bump, not the version number alone.
 
@@ -105,7 +105,7 @@
 
 ## Upgrade checklist
 
-### Minor bump (`v3.6` → `v3.x`)
+### Minor bump within v3
 
 A minor bump inside v3 still changes request handling. Read the per-version migration
 notes, not only the release notes — https://doc.traefik.io/traefik/migrate/v3/ carries a
@@ -119,7 +119,7 @@ section per patch release. Between 3.6 and 3.7.13 these apply to this blueprint:
 | 3.7.9 | HTTP/1 `CONNECT` rejected with 501 | no router here uses CONNECT |
 | 3.7.7 | bare `` Host(`*`) `` becomes a catch-all | no rule here uses a bare `*` |
 | 3.7.3 | `StripPrefix` / `StripPrefixRegex` reject with 400 when stripping yields a non-normalized path; `BasicAuth` with no users returns 404 | `apps/seafile` and `apps/seafile-pro` strip `/sdoc-server` |
-| 3.6.14 | `trustForwardHeader` on ForwardAuth deprecated in favour of entrypoint-level `forwardedHeaders.trustedIPs` | the commented Authentik block in `integrations.yml.tmpl` sets it; the entrypoint list is already present, so drop the option when uncommenting |
+| 3.6.14 | `trustForwardHeader` on ForwardAuth deprecated in favour of entrypoint-level `forwardedHeaders.trustedIPs` | the commented Authentik block in `integrations.yml.tmpl` does not set it, and `traefik.yml.tmpl` carries the entrypoint list on both entrypoints — nothing to change when uncommenting |
 
 1. Read the Traefik release notes: https://github.com/traefik/traefik/releases
 2. Bump `TRAEFIK_IMAGE` in `.env`
@@ -202,7 +202,7 @@ curl -s https://<TRAEFIK_DASHBOARD_HOST>/api/rawdata | jq '.routers, .middleware
 # Check what the socket-proxy actually exposes
 docker compose exec docker-socket-proxy env | grep -E "^(CONTAINERS|SERVICES|NETWORKS|VOLUMES|IMAGES|SYSTEM|EXEC|POST|DELETE|ALLOW_)"
 
-# Tail access log (if enabled in .env)
+# Tail the access log (written through a buffer of TRAEFIK_ACCESSLOG_BUFFER lines)
 tail -f volumes/logs/access.log
 
 # Inspect current ACME cert store

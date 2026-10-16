@@ -21,8 +21,9 @@ both at once, which is why the procedure below pins a release.
 
 ## 1 — Prepare the host
 
-Docker 24.0+ with Compose v2, a Linux host, `envsubst` from `gettext-base`, and a domain
-on a [DNS provider Traefik supports](https://doc.traefik.io/traefik/https/acme/#providers).
+Docker 24.0+ with Compose v2, a Linux host, `envsubst` from `gettext-base`, and a domain —
+at Cloudflare for DNS-01 certificates, the one provider `core/traefik` wires; at any
+provider for HTTP-01 or TLS-ALPN-01.
 The root [`README.md`](../../README.md#getting-started) states these as the requirements.
 
 **Not yet standardised here:** host firewall policy, unattended upgrades, the account the

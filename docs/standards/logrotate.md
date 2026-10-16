@@ -17,10 +17,17 @@ and do **not** need logrotate.
 
 ## Setup
 
-### 1. Copy config to host
+### 1. Install the stanza on the host, with the deployment path substituted
+
+The shipped file names `/path/to/secure-docker-blueprint`. A stanza carrying that
+placeholder matches no file, and `missingok` keeps logrotate silent about it, so
+substitute the real path while copying:
 
 ```bash
-sudo cp /path/to/secure-docker-blueprint/core/traefik/config/logrotate/traefik /etc/logrotate.d/traefik
+# Replace /srv/docker with your deployment path
+sudo sed 's|/path/to/secure-docker-blueprint|/srv/docker|g' \
+  /srv/docker/core/traefik/config/logrotate/traefik \
+  | sudo tee /etc/logrotate.d/traefik
 ```
 
 ### 2. Verify the path
@@ -33,15 +40,14 @@ volumes:
   - ./volumes/logs:/var/log/traefik
 ```
 
-If your deploy path is `/path/to/secure-docker-blueprint/core/traefik`, the host path is:
+If your deploy path is `/srv/docker/core/traefik`, the two stanzas name:
 
 ```text
-/path/to/secure-docker-blueprint/core/traefik/volumes/logs/*.log
+/srv/docker/core/traefik/volumes/logs/access.log
+/srv/docker/core/traefik/volumes/logs/traefik.log
 ```
 
-### 3. Prove it matches
-
-A pattern that matches nothing fails silently — the logs simply keep growing.
+A path that matches nothing fails silently — the logs simply keep growing.
 The dry run says which files it found:
 
 ```bash
@@ -52,7 +58,7 @@ Expect each log listed under `considering log …`, and the size threshold echoe
 back as `log files >= 104857600 are rotated earlier`. `Handling 0 logs` means the
 path is wrong.
 
-### 4. Know when it actually runs
+### 3. Know when it actually runs
 
 `daily` and `maxsize` describe *conditions*, not a schedule. Nothing rotates
 until logrotate itself runs, which on Debian is a systemd timer:
@@ -77,14 +83,6 @@ From `man logrotate`: *"Log files are rotated when they grow bigger than size
 bytes even before the additionally specified time interval"* — early, yes; but
 only ever at a run.
 
-### 3. Test (dry run)
-
-```bash
-sudo logrotate -d /etc/logrotate.d/traefik
-```
-
-This shows what **would** happen without actually rotating. Check for errors.
-
 ### 4. Force a rotation (optional, to verify)
 
 ```bash
@@ -99,8 +97,11 @@ sudo cat /var/lib/logrotate/status | grep traefik
 
 ## How it works
 
+The shipped file carries one stanza per log — `access.log` and `traefik.log` — with
+the same options in each; the reasons for each choice are comments in the file:
+
 ```text
-/path/to/secure-docker-blueprint/core/traefik/volumes/logs/*.log {
+/path/to/secure-docker-blueprint/core/traefik/volumes/logs/access.log {
     daily              # Rotate once per day
     rotate 7           # Keep 7 rotated files (1 week)
     compress           # gzip old logs
@@ -111,8 +112,6 @@ sudo cat /var/lib/logrotate/status | grep traefik
     copytruncate       # Copy out, truncate in place — no signal to the container
 }
 ```
-
-The shipped file has one stanza per log, with the reasons as comments.
 
 ### Why no signal
 
