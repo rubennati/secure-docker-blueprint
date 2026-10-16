@@ -33,6 +33,7 @@ Four models describe documentation in this repository, each answering one questi
 | Secret generation, handling and rotation | `docs/standards/secrets.md` | `env-structure.md` references it; every stack's setup steps |
 | Application recovery once data is restored | `docs/standards/restore.md` | `backup/borgmatic/RESTORE.md` and the stack READMEs that cross-link it |
 | Taking a deployment into production and keeping it there — release selection, deployment order, blueprint updates as against image updates, rollback, release identity | `docs/standards/deployment-lifecycle.md` | `README.md` Getting started; this file is its maintainer-side counterpart |
+| Files a stack installs outside the checkout — the manifest format, the three ways of comparing, the states `overview.sh --host` reports | `docs/standards/host-files.md` | each stack's `ops/host-files.manifest` and the install step in its README |
 | Local test stack — shape, header, which stacks get one | `docs/standards/compose-structure.md` | Every `docker-compose.local.yml` and `.env.local.example`; `apps/_reference/` is the worked example |
 | Security rules that are on or off — privileges, capabilities, secrets, socket access, network isolation | `docs/standards/security-baseline.md` | Every service in every compose |
 | Naming conventions | `docs/standards/naming-conventions.md` | Every compose, env, container name |

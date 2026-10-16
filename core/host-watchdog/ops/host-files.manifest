@@ -1,0 +1,7 @@
+# Host files of core/host-watchdog — format: docs/standards/host-files.md
+# The whole stack is optional; rendering it is the statement that it is in use.
+# source (relative to this stack)         target on the host                                      mode  owner      compare  required
+docker-daemon-watchdog.sh                 /usr/local/bin/docker-daemon-watchdog.sh                0755  root:root  exact    required
+docker-daemon-watchdog.env.example        /etc/docker-daemon-watchdog.env                         0600  root:root  derived  required
+docker-daemon-watchdog.service.example    /etc/systemd/system/docker-daemon-watchdog.service      0644  root:root  exact    required
+docker-daemon-watchdog.timer.example      /etc/systemd/system/docker-daemon-watchdog.timer        0644  root:root  exact    required

@@ -26,6 +26,14 @@ ping:
 entryPoints:
   web:
     address: ":80"
+    # How long one request may take to arrive, how long one response may take
+    # to be written, how long an idle keep-alive connection is kept. The values
+    # come from .env; their defaults are Traefik's own (60s / 0 = none / 180s).
+    transport:
+      respondingTimeouts:
+        readTimeout: ${TRAEFIK_READ_TIMEOUT}
+        writeTimeout: ${TRAEFIK_WRITE_TIMEOUT}
+        idleTimeout: ${TRAEFIK_IDLE_TIMEOUT}
     # forwardedHeaders.trustedIPs decides whose X-Forwarded-* headers survive
     # the entrypoint: kept from these senders, deleted from any other, with
     # X-Real-Ip then set from the connecting address. It does not change what
@@ -43,31 +51,10 @@ entryPoints:
     # Source: https://www.cloudflare.com/ips/ — re-verify periodically;
     # Cloudflare rarely changes these but does add ranges occasionally.
     forwardedHeaders:
+      # The list is ops/cloudflare-ips.txt, one range per line; render.sh turns
+      # it into the entries below. Edit the file, never this block.
       trustedIPs: &cloudflareTrustedIPs
-        # Cloudflare IPv4
-        - "173.245.48.0/20"
-        - "103.21.244.0/22"
-        - "103.22.200.0/22"
-        - "103.31.4.0/22"
-        - "141.101.64.0/18"
-        - "108.162.192.0/18"
-        - "190.93.240.0/20"
-        - "188.114.96.0/20"
-        - "197.234.240.0/22"
-        - "198.41.128.0/17"
-        - "162.158.0.0/15"
-        - "104.16.0.0/13"
-        - "104.24.0.0/14"
-        - "172.64.0.0/13"
-        - "131.0.72.0/22"
-        # Cloudflare IPv6
-        - "2400:cb00::/32"
-        - "2606:4700::/32"
-        - "2803:f800::/32"
-        - "2405:b500::/32"
-        - "2405:8100::/32"
-        - "2a06:98c0::/29"
-        - "2c0f:f248::/32"
+${CLOUDFLARE_TRUSTED_IPS_YAML}
     http:
       redirections:
         entryPoint:
@@ -76,6 +63,12 @@ entryPoints:
 
   websecure:
     address: ":443"
+    # Same timeouts as the "web" entrypoint above.
+    transport:
+      respondingTimeouts:
+        readTimeout: ${TRAEFIK_READ_TIMEOUT}
+        writeTimeout: ${TRAEFIK_WRITE_TIMEOUT}
+        idleTimeout: ${TRAEFIK_IDLE_TIMEOUT}
     # Same Cloudflare allowlist as the "web" entrypoint above.
     forwardedHeaders:
       trustedIPs: *cloudflareTrustedIPs

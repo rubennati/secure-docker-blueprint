@@ -1,0 +1,10 @@
+# Host files of backup/borgmatic — format: docs/standards/host-files.md
+# The agent is host-installed; rendering this stack is the statement that it
+# runs on this host. The two units are optional because a packaged borgmatic
+# may ship its own (README.md, step 8).
+# source (relative to this stack)   target on the host                          mode  owner      compare   required
+config.yaml.example                 /etc/borgmatic/config.yaml                  0600  root:root  derived   required
+borgmatic.service.example           /etc/systemd/system/borgmatic.service       0644  root:root  exact     optional
+borgmatic.timer.example             /etc/systemd/system/borgmatic.timer         0644  root:root  exact     optional
+-                                   /root/.borg-passphrase                      0600  root:root  presence  required
+-                                   /root/.ssh/id_borg                          0600  root:root  presence  required

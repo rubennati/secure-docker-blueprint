@@ -59,8 +59,11 @@ REQUIRED=(
   TZ
   TRAEFIK_IMAGE
   SOCKET_PROXY_IMAGE
+  TRAEFIK_CONTAINER_NAME
+  SOCKET_PROXY_CONTAINER_NAME
   PUBLIC_NETWORK
   SOCKET_PROXY_NETWORK
+  CROWDSEC_SECURITY_NETWORK
   TRAEFIK_HTTP_PORT
   TRAEFIK_HTTPS_PORT
   DOCKER_SOCKET_PROXY_ENDPOINT
@@ -94,11 +97,56 @@ for v in "${REQUIRED[@]}"; do
     missing=1
   fi
 done
-[ "$missing" -eq 0 ] || exit 1
+if [ "$missing" -ne 0 ]; then
+  echo ""
+  echo "An .env written before a variable existed lacks it; .env.example carries each"
+  echo "one with its default. CROWDSEC_SECURITY_NETWORK has no Compose default — unset,"
+  echo "docker-compose.yml would create a network with an empty name."
+  exit 1
+fi
 
 # Same defaults render.sh applies, so an .env written before a resolver
 # existed validates against what will actually be rendered.
 ACME_RESOLVER_TLS="${ACME_RESOLVER_TLS:-tlsResolver}"
+
+# Entrypoint timeouts: Go durations (60s, 2m, 1h30m) or a bare number of
+# seconds; 0 means no timeout. render.sh defaults each to Traefik's own value.
+for v in TRAEFIK_READ_TIMEOUT TRAEFIK_WRITE_TIMEOUT TRAEFIK_IDLE_TIMEOUT; do
+  val="${!v:-}"
+  [ -n "${val}" ] || continue
+  if ! printf '%s' "${val}" | grep -qE '^([0-9]+(ns|us|ms|s|m|h))+$|^[0-9]+$'; then
+    echo "ERROR: ${v} must be a duration such as 60s, 2m or 0 (got '${val}')."
+    exit 1
+  fi
+done
+
+# Memory ceiling, when set: Docker's byte value with an optional unit.
+if [ -n "${TRAEFIK_MEMORY:-}" ] && ! printf '%s' "${TRAEFIK_MEMORY}" | grep -qE '^[0-9]+[bkmgBKMG]?$'; then
+  echo "ERROR: TRAEFIK_MEMORY must be a size such as 256m or 1g (got '${TRAEFIK_MEMORY}')."
+  exit 1
+fi
+
+# The trusted proxy ranges render.sh reads: every line must be a range.
+CF_LIST="${ROOT_DIR}/ops/cloudflare-ips.txt"
+if [ ! -f "${CF_LIST}" ]; then
+  echo "ERROR: ${CF_LIST} not found — render.sh needs it for forwardedHeaders.trustedIPs."
+  exit 1
+fi
+cf_ranges=0
+while IFS= read -r range; do
+  range="${range%%#*}"
+  range="$(printf '%s' "${range}" | tr -d '[:space:]')"
+  [ -n "${range}" ] || continue
+  if ! printf '%s' "${range}" | grep -qE '^[0-9A-Fa-f:.]+/[0-9]{1,3}$'; then
+    echo "ERROR: ${CF_LIST}: '${range}' is not an IPv4 or IPv6 range."
+    exit 1
+  fi
+  cf_ranges=$((cf_ranges + 1))
+done < "${CF_LIST}"
+if [ "${cf_ranges}" -eq 0 ]; then
+  echo "ERROR: ${CF_LIST} carries no range."
+  exit 1
+fi
 
 # CrowdSec reverse-proxy remediation switch. render.sh applies it; this checks
 # that what .env says is complete and that config/ agrees with it.
@@ -176,10 +224,22 @@ if [ -f "${ROOT_DIR}/config/traefik.yml" ]; then
     exit 1
   fi
 
-  # check expected dynamic files exist
-  for f in access.yml security-blocks.yml security-chains.yml integrations.yml tls-profiles.yml routers-system.yml; do
+  # Every file render.sh writes unconditionally has to exist; the two
+  # conditional ones have to exist exactly when their switch is set.
+  test -f "${ROOT_DIR}/config/haproxy.cfg.template" \
+    || { echo "Missing config/haproxy.cfg.template (run render.sh) — docker-compose.yml mounts it"; exit 1; }
+  for f in access.yml security-blocks.yml security-chains.yml integrations.yml tls-profiles.yml \
+           routers-system.yml redirects.yml servers-transports.yml; do
     test -f "${ROOT_DIR}/config/dynamic/${f}" || { echo "Missing config/dynamic/${f} (run render.sh)"; exit 1; }
   done
+  if [ -n "${ACME_WILDCARD_DOMAIN:-}" ]; then
+    test -f "${ROOT_DIR}/config/dynamic/acme-wildcard.yml" \
+      || { echo "Missing config/dynamic/acme-wildcard.yml although ACME_WILDCARD_DOMAIN is set (run render.sh)"; exit 1; }
+  elif [ -f "${ROOT_DIR}/config/dynamic/acme-wildcard.yml" ]; then
+    echo "WARNING: config/dynamic/acme-wildcard.yml exists but ACME_WILDCARD_DOMAIN is empty —"
+    echo "         a wildcard router from an earlier render is still in place. Remove the file"
+    echo "         (bash ops/scripts/reset-templates.sh, then render.sh) if the wildcard is no longer wanted."
+  fi
 
   # The rendered state has to match the switch. Both directions are errors: the
   # integration present while the switch is off is the drift render.sh refuses

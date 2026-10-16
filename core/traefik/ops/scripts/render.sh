@@ -50,6 +50,38 @@ export ACME_RESOLVER_DNS="${ACME_RESOLVER_DNS:-cloudflare-dns}"
 export ACME_RESOLVER_HTTP="${ACME_RESOLVER_HTTP:-httpResolver}"
 export ACME_RESOLVER_TLS="${ACME_RESOLVER_TLS:-tlsResolver}"
 
+# Entrypoint timeouts. The defaults are Traefik's own, so an .env written
+# before the variables existed renders the behaviour it had.
+export TRAEFIK_READ_TIMEOUT="${TRAEFIK_READ_TIMEOUT:-60s}"
+export TRAEFIK_WRITE_TIMEOUT="${TRAEFIK_WRITE_TIMEOUT:-0s}"
+export TRAEFIK_IDLE_TIMEOUT="${TRAEFIK_IDLE_TIMEOUT:-180s}"
+
+# The senders whose forwarded headers the entrypoints trust: one range per line
+# in ops/cloudflare-ips.txt, rendered into the YAML list under
+# forwardedHeaders.trustedIPs. A list kept in a file can be compared with its
+# source by a script; one kept inside the template could not.
+CF_LIST="${ROOT_DIR}/ops/cloudflare-ips.txt"
+if [ ! -f "${CF_LIST}" ]; then
+  echo "ERROR: ${CF_LIST} not found — it carries the trusted proxy ranges."
+  exit 1
+fi
+CLOUDFLARE_TRUSTED_IPS_YAML=""
+while IFS= read -r range; do
+  range="${range%%#*}"
+  range="$(printf '%s' "${range}" | tr -d '[:space:]')"
+  [ -n "${range}" ] || continue
+  if ! printf '%s' "${range}" | grep -qE '^[0-9A-Fa-f:.]+/[0-9]{1,3}$'; then
+    echo "ERROR: ${CF_LIST}: '${range}' is not an IPv4 or IPv6 range."
+    exit 1
+  fi
+  CLOUDFLARE_TRUSTED_IPS_YAML="${CLOUDFLARE_TRUSTED_IPS_YAML}        - \"${range}\""$'\n'
+done < "${CF_LIST}"
+if [ -z "${CLOUDFLARE_TRUSTED_IPS_YAML}" ]; then
+  echo "ERROR: ${CF_LIST} carries no range — the entrypoints would trust no forwarded header."
+  exit 1
+fi
+export CLOUDFLARE_TRUSTED_IPS_YAML="${CLOUDFLARE_TRUSTED_IPS_YAML%$'\n'}"
+
 rendered_has_bouncer() {
   grep -qsE '^experimental:' "${CFG_DIR}/traefik.yml" && return 0
   grep -qsE '^[[:space:]]*crowdsec-(basic|appsec):' "${CFG_DIR}"/dynamic/*.yml 2>/dev/null

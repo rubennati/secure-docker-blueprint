@@ -17,23 +17,27 @@ and do **not** need logrotate.
 
 ## Setup
 
-### 1. Install the stanza on the host, with the deployment path substituted
+### 1. Render and install
 
-The shipped file names `/path/to/secure-docker-blueprint`. A stanza carrying that
-placeholder matches no file, and `missingok` keeps logrotate silent about it, so
-substitute the real path while copying:
+The shipped stanza carries the placeholder `/path/to/secure-docker-blueprint`;
+rendering replaces it with the checkout's path, and the printed command installs
+the result ([`host-files.md`](host-files.md)):
 
 ```bash
-# Replace /srv/docker with your deployment path
-sudo sed 's|/path/to/secure-docker-blueprint|/srv/docker|g' \
-  /srv/docker/core/traefik/config/logrotate/traefik \
-  | sudo tee /etc/logrotate.d/traefik
+# from the repository root
+scripts/host-files.sh render core/traefik
+scripts/host-files.sh install-commands core/traefik   # prints the sudo install line; run it
 ```
+
+A copy made by hand without the substitution names a path that matches no file,
+and logrotate says nothing about it (`missingok`): the logs keep growing. After a
+blueprint update, `./scripts/overview.sh --host` reports whether the installed
+stanza still matches the shipped one.
 
 ### 2. Verify the path
 
-The path inside the logrotate config must match the **host-side** of the volume mount.
-Check `docker-compose.yml`:
+The path inside the installed stanza must be the **host-side** of the volume
+mount in `docker-compose.yml`:
 
 ```yaml
 volumes:
