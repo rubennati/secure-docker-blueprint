@@ -29,6 +29,13 @@ http:
     #
     # Mode: stream (polls LAPI every 60s, caches decisions).
     #
+    # Which address the bouncer compares with the decisions follows
+    # TRAEFIK_FORWARDED_PROXY in .env: with `none` the connecting address; with
+    # `cloudflare` render.sh adds forwardedHeadersTrustedIPs (the ranges of
+    # ops/cloudflare-ips.txt) and forwardedHeadersCustomName CF-Connecting-IP,
+    # so the client Cloudflare names is compared, and only when the request
+    # arrives from a Cloudflare address.
+    #
     # AppSec/WAF is disabled here by default. The AppSec process does
     # not auto-start with CrowdSec — it needs its own config in
     # core/crowdsec/config/appsec.yaml and the port 7422 to be reachable
@@ -55,6 +62,7 @@ http:
           crowdsecAppsecHost: crowdsec:7422
           crowdsecAppsecFailureBlock: false
           crowdsecAppsecUnreachableBlock: false
+${CROWDSEC_BOUNCER_FORWARDED_YAML}
 
     # ------------------------------------------------------
     # CrowdSec Bouncer + AppSec (WAF)
@@ -90,3 +98,4 @@ http:
           crowdsecAppsecHost: crowdsec:7422
           crowdsecAppsecFailureBlock: false
           crowdsecAppsecUnreachableBlock: false
+${CROWDSEC_BOUNCER_FORWARDED_YAML}

@@ -48,11 +48,13 @@ entryPoints:
     # its address. Tailscale and LAN clients connect directly, so their
     # connecting address is the client (docs/ipv6-dual-stack.md, "The three
     # traffic paths").
-    # Source: https://www.cloudflare.com/ips/ — re-verify periodically;
-    # Cloudflare rarely changes these but does add ranges occasionally.
+    # Which senders are trusted is TRAEFIK_FORWARDED_PROXY in .env:
+    #   none        — nobody; the list below renders empty. Every client's
+    #                 forwarded headers are deleted at the entrypoint.
+    #   cloudflare  — Cloudflare's published ranges from ops/cloudflare-ips.txt,
+    #                 one range per line, compared with cloudflare.com weekly.
+    # render.sh fills the list; edit the file or the switch, never this block.
     forwardedHeaders:
-      # The list is ops/cloudflare-ips.txt, one range per line; render.sh turns
-      # it into the entries below. Edit the file, never this block.
       trustedIPs: &cloudflareTrustedIPs
 ${CLOUDFLARE_TRUSTED_IPS_YAML}
     http:

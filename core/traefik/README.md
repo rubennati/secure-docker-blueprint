@@ -620,6 +620,82 @@ bash ops/scripts/validate.sh && bash ops/scripts/render.sh && bash ops/scripts/v
 | Switching off | remove `auth-authentik@file` from every router first; a router naming a middleware that no longer exists is disabled by Traefik. Then `false`, render |
 | A `config/` that carries the middleware while `.env` says nothing | `render.sh` refuses, with the two ways out, instead of removing it silently |
 
+## Behind Cloudflare
+
+`TRAEFIK_FORWARDED_PROXY` in `.env` says who may set the client address.
+`none`, the default, trusts no sender: every client's `X-Forwarded-*` and
+`X-Real-Ip` are deleted at the entrypoint and the connecting address is the
+client. `cloudflare` is for a host whose public records Cloudflare proxies
+(orange cloud). What changes, hop by hop:
+
+| | `none` | `cloudflare` |
+|---|---|---|
+| Entrypoints | trust nobody | trust Cloudflare's published ranges — `ops/cloudflare-ips.txt`, compared with cloudflare.com weekly |
+| Access log, CrowdSec detection | `ClientHost` = connecting address | `ClientHost` = the client Cloudflare appends to `X-Forwarded-For` — also when the client sent a forged header first, because Cloudflare appends the real one behind it |
+| CrowdSec bouncer | compares the connecting address | compares `CF-Connecting-IP`, and only when the request arrives from a Cloudflare address |
+| `acc-local`, `acc-tailscale`, `acc-private` | connecting address | connecting address, unchanged — their clients connect directly; a request to such a host through Cloudflare arrives from an edge address and is refused |
+| Rate limits (`rl-*`) | per client | **per edge address** at the origin; per client at the edge, through a Cloudflare rate-limiting rule by IP on the public host names (one rule on the Free plan, two on Pro) |
+| The application | `X-Forwarded-For` and `X-Real-Ip` = client | `X-Forwarded-For` = `client, edge` (two hops), `X-Real-Ip` = edge, `CF-Connecting-IP` = client |
+
+Traefik's `ipAllowList` and `rateLimit` have no way to read a forwarded address
+from Cloudflare and the connecting address from everyone else in one
+definition — a strategy that reads the header leaves a direct client with no
+address at all. That is why the closed policies stay on the connecting address
+and the per-client limit of a public route moves to the edge.
+
+**What Cloudflare has to be set to**
+
+- Public host names proxied; VPN-only and LAN-only host names DNS-only, or
+  resolved by split DNS.
+- **Pseudo IPv4: Off.** With it on, Cloudflare replaces `CF-Connecting-IP` and
+  `X-Forwarded-For` with a pseudo-IPv4 address for IPv6 clients.
+- A rate-limiting rule by IP for the public host names, with the budget a
+  first load needs (`docs/standards/traefik-security.md`, "Choosing the
+  level").
+- Certificates: DNS-01 or HTTP-01. TLS-ALPN-01 cannot work behind the proxy
+  (above, Path C).
+
+**Protect the origin** — otherwise a client that connects to the host directly
+bypasses everything Cloudflare does, and a header it sends is not trusted
+either, which is the only reason that bypass is not also a spoof:
+
+```bash
+bash ops/scripts/render.sh                      # writes config/host/cloudflare-ranges.nft
+scripts/host-files.sh install-commands core/traefik   # prints the install line for it
+```
+
+The file defines `cloudflare_v4` and `cloudflare_v6`; a host firewall rule
+admits 80 and 443 from those sets and from the VPN and LAN ranges, and from
+nowhere else. The sets follow the file: after a change to
+`ops/cloudflare-ips.txt`, render, reinstall, reload nftables. Authenticated
+Origin Pulls — Cloudflare presenting a client certificate the proxy requires —
+is the stronger form; it needs a TLS option with `clientAuth` on the public
+routers and is not shipped here yet.
+
+**Per application**
+
+- A stack that reads `X-Real-Ip` for the client — `apps/vaultwarden`'s
+  `IP_HEADER` — reads the edge behind Cloudflare; set it to `CF-Connecting-IP`
+  there.
+- A stack that trusts one proxy hop in `X-Forwarded-For` (n8n, HeyForm) needs
+  two.
+- A stack with a trusted-proxy subnet keeps it: the proxy it sees is still
+  Traefik.
+
+**Switching an existing installation.** Before this switch, every rendered
+configuration trusted Cloudflare's ranges whether Cloudflare was in front or
+not. `render.sh` refuses to render over such a `config/` until `.env` says
+`cloudflare` or `none`, because rendering `none` over an installation behind
+Cloudflare would make every layer see edge addresses — and CrowdSec would ban
+them. Decide, render, then `docker compose up -d --force-recreate traefik`:
+the entrypoint list is static configuration.
+
+**Not verified on a host:** the address at every hop through Cloudflare, IPv4
+and IPv6; a closed route refusing a proxied request; a manual CrowdSec
+decision enforced by the bouncer through Cloudflare; forged headers from inside
+Cloudflare's ranges in `none` mode. The plan is
+`docs/host-verification-phase-2.md`'s shape, with a Phase 3 section to follow.
+
 ## Incident Quickmoves
 
 An application router takes its middlewares from labels, and the labels read the

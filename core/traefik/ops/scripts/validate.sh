@@ -147,6 +147,16 @@ if [ "${cf_ranges}" -eq 0 ]; then
   echo "ERROR: ${CF_LIST} carries no range."
   exit 1
 fi
+cf_first_range="$(grep -vE '^[[:space:]]*(#|$)' "${CF_LIST}" | head -1 | tr -d '[:space:]')"
+
+# Who may set the client address. render.sh applies it; this refuses a value
+# it does not know and, after a render, a config/ that disagrees with .env.
+proxy_declared="${TRAEFIK_FORWARDED_PROXY+yes}"
+TRAEFIK_FORWARDED_PROXY="$(printf '%s' "${TRAEFIK_FORWARDED_PROXY:-none}" | tr '[:upper:]' '[:lower:]')"
+case "${TRAEFIK_FORWARDED_PROXY}" in
+  none|cloudflare) ;;
+  *) echo "ERROR: TRAEFIK_FORWARDED_PROXY must be none or cloudflare (got '${TRAEFIK_FORWARDED_PROXY}')."; exit 1 ;;
+esac
 
 # CrowdSec reverse-proxy remediation switch. render.sh applies it; this checks
 # that what .env says is complete and that config/ agrees with it.
@@ -281,6 +291,34 @@ if [ -f "${ROOT_DIR}/config/traefik.yml" ]; then
       fi
       exit 1
     fi
+  fi
+
+  # The trusted senders, both directions: the rendered entrypoints carry
+  # Cloudflare's ranges exactly when the switch says cloudflare, and the
+  # CrowdSec middlewares carry the same list exactly then as well.
+  rendered_trusts_cf=false
+  grep -qsF "\"${cf_first_range}\"" "${ROOT_DIR}/config/traefik.yml" && rendered_trusts_cf=true
+  if [ "${TRAEFIK_FORWARDED_PROXY}" = cloudflare ]; then
+    if [ "${rendered_trusts_cf}" != true ]; then
+      echo "ERROR: TRAEFIK_FORWARDED_PROXY=cloudflare but config/traefik.yml trusts no Cloudflare range — run render.sh."
+      exit 1
+    fi
+    if [ -f "${ROOT_DIR}/config/dynamic/crowdsec.yml" ] && ! grep -qsE '^[[:space:]]*forwardedHeadersTrustedIPs:' "${ROOT_DIR}/config/dynamic/crowdsec.yml"; then
+      echo "ERROR: TRAEFIK_FORWARDED_PROXY=cloudflare but config/dynamic/crowdsec.yml carries no trusted-proxy list — run render.sh."
+      exit 1
+    fi
+    test -f "${ROOT_DIR}/config/host/cloudflare-ranges.nft" || { echo "Missing config/host/cloudflare-ranges.nft (run render.sh)"; exit 1; }
+  elif [ "${rendered_trusts_cf}" = true ]; then
+    if [ -z "${proxy_declared}" ]; then
+      echo "ERROR: config/traefik.yml trusts Cloudflare's ranges but TRAEFIK_FORWARDED_PROXY is not set in .env."
+      echo "       Set it to cloudflare if Cloudflare proxies this host's records, to none if not, then run render.sh."
+    else
+      echo "ERROR: TRAEFIK_FORWARDED_PROXY=none but config/traefik.yml still trusts Cloudflare's ranges — run render.sh."
+    fi
+    exit 1
+  elif grep -qsE '^[[:space:]]*forwardedHeadersTrustedIPs:' "${ROOT_DIR}/config/dynamic/crowdsec.yml" 2>/dev/null; then
+    echo "ERROR: TRAEFIK_FORWARDED_PROXY=none but config/dynamic/crowdsec.yml carries a trusted-proxy list — run render.sh."
+    exit 1
   fi
 
   # The Authentik middleware, both directions, like the CrowdSec integration.

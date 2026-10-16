@@ -81,7 +81,9 @@ read_manifest() {
     case "${cmp}" in exact|derived|presence) ;; *) echo "ERROR: ${manifest} line ${line_no}: compare must be exact, derived or presence (got '${cmp}')" >&2; return 1 ;; esac
     case "${req}" in required|optional) ;; *) echo "ERROR: ${manifest} line ${line_no}: last field must be required or optional (got '${req}')" >&2; return 1 ;; esac
     case "${tgt}" in /*) ;; *) echo "ERROR: ${manifest} line ${line_no}: target must be an absolute host path (got '${tgt}')" >&2; return 1 ;; esac
-    if [ "${cmp}" != presence ] && [ ! -f "${dir}/${src}" ]; then
+    # A source under config/host/ is produced by the stack's own render (for
+    # example core/traefik's firewall ranges) and may be absent until it runs.
+    if [ "${cmp}" != presence ] && [ ! -f "${dir}/${src}" ] && [ "${src#config/host/}" = "${src}" ]; then
       echo "ERROR: ${manifest} line ${line_no}: source ${src} does not exist in $(basename "${dir}")" >&2
       return 1
     fi
@@ -109,6 +111,10 @@ render_stack() {
   while IFS=$'\t' read -r src tgt mode owner cmp req; do
     [ "${cmp}" = presence ] && continue
     out="$(rendered_path "${dir}" "${tgt}")"
+    if [ "${src#config/host/}" != "${src}" ]; then
+      if [ -f "${dir}/${src}" ]; then echo "  -> config/host/$(basename "${tgt}")  (rendered by the stack itself)"; else echo "  -- config/host/$(basename "${tgt}")  (not rendered by the stack — nothing to install)"; fi
+      continue
+    fi
     # The one placeholder in use: the checkout path. Everything else is copied
     # as it is — a derived file is the operator's to fill in after installing.
     sed "s|${PLACEHOLDER}|${ROOT_DIR}|g" "${dir}/${src}" > "${out}.tmp"
