@@ -445,6 +445,23 @@ If every line carries the same client address, all clients share one bucket: the
 arrive through a NAT, a CDN, or a Docker network that does not carry their address
 (4.4). A wider chain then treats the symptom, and the address is the cause.
 
+### 4.10 SSH or HTTPS over the VPN stops answering after CrowdSec banned your own address
+
+**Symptom:** the host no longer answers over its VPN address on one or both families;
+other clients and public routes are fine. `docker exec crowdsec cscli decisions list
+--ip <your address>` names a decision, typically from `http-probing` or
+`http-crawl-non_statics` — the patterns an administrator's browser produces, and the
+scenario cannot know the source is trusted.
+
+**Cause:** a VPN address is outside CrowdSec's default whitelist (RFC1918 and loopback
+only), and the host-firewall bouncer or the Traefik bouncer enforces the decision.
+
+**Fix:** reach the host another way — the other family, the LAN, the hoster's console —
+stop the enforcement that closed the path, lift that one decision, exempt the device,
+start enforcement again. Step by step, without the VPN:
+[`core/crowdsec/docs/runbook.md`](core/crowdsec/docs/runbook.md#locked-out-over-the-vpn).
+The exemption that prevents the repeat is README step 5 of `core/crowdsec`.
+
 ---
 
 ## 5. Git & Deployment Issues
