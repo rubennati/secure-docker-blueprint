@@ -13,7 +13,10 @@ manage these files — they grow indefinitely without logrotate.
 | Traefik | `core/traefik/volumes/logs/*.log` | Access + error logs written to file via `accessLog.filePath` |
 
 Services that log only to stdout/stderr (most apps) are managed by Docker's log driver
-and do **not** need logrotate.
+and do **not** need logrotate — provided the daemon bounds them. Docker's default
+driver rotates nothing on its own; the bound is the `log-driver` and `log-opts`
+default in `/etc/docker/daemon.json`, a host prerequisite in
+[`deployment-lifecycle.md`](deployment-lifecycle.md#1--prepare-the-host).
 
 ## Setup
 
