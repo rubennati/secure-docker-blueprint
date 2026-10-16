@@ -54,9 +54,9 @@ Cloudflare edge                               Tailscale / MagicDNS / Split-DNS
    ▼                                              ▼
 ┌───────────────────────────────────────────────────────────────────────┐
 │ Traefik (core/traefik) — proxy-public network                         │
-│  · Cloudflare path: forwardedHeaders.trustedIPs (traefik.yml) recovers│
-│    the real client IP from X-Forwarded-For — works regardless of      │
-│    whether proxy-public is IPv4-only or dual-stack.                   │
+│  · Cloudflare path: forwardedHeaders.trustedIPs (traefik.yml) keeps   │
+│    the client address in X-Forwarded-For whatever the IP family;      │
+│    acc-* and rl-* evaluate the connecting address — the edge.         │
 │  · Tailscale path: ClientHost IS the real Tailscale IP already — IF   │
 │    the network can carry it end to end. IPv6 clients need IPv6 on     │
 │    proxy-public, or the source IP is lost before Traefik sees it.     │
@@ -563,25 +563,32 @@ docker network rm proxy-public-v6
 
 ## CrowdSec and real client IPs
 
-CrowdSec's Traefik bouncer and its scenario engine both work from the
-client IP Traefik records — bans, rate-based scenarios, and geo-blocking
-decisions are all keyed on it. If Traefik sees `172.19.0.1` instead of
-the real Tailscale IPv6 address:
+CrowdSec's scenario engine works from the client address Traefik writes to
+the access log (`ClientHost`), and the Traefik bouncer compares the
+connecting address of each request. If Traefik sees `172.19.0.1` instead
+of the real Tailscale IPv6 address:
 
-- A ban decision for one abusive client bans the shared gateway identity
-  — either over-blocking (every Tailscale IPv6 user behind that address)
-  or under-blocking (the real source rotates behind the same logged IP,
-  so per-client thresholds never trigger correctly).
-- Geo-blocking and reputation scenarios become meaningless for that
-  traffic — `172.19.0.1` has no real-world geography or reputation.
+- The engine derives no decision from that traffic at all. `172.19.0.1`
+  is inside the default `crowdsecurity/whitelists` parser (RFC1918 and
+  loopback), so every event from a masked client is whitelisted before a
+  scenario sees it — probing from an IPv6 client behind the gateway is
+  invisible to detection.
+- With that whitelist removed, a decision on `172.19.0.1` — derived or
+  added by hand — is enforced against every client the gateway masks, by
+  both remediation points.
+- Geo and reputation scenarios see no usable event for that traffic
+  either way: `172.19.0.1` has no geography and no reputation.
 
 After the fix in this document, `X-Forwarded-For` and Traefik's access
 log (`type: traefik` source in
 [`core/crowdsec/config/acquis.yaml`](../../crowdsec/config/acquis.yaml))
-contain the real client IP again, and CrowdSec decisions apply to the
+carry the real client address again, and CrowdSec decisions apply to the
 actual source. No CrowdSec-side configuration changes are needed — it
-already reads whatever IP Traefik logs. See
-[CrowdSec Operations Runbook](../../crowdsec/docs/runbook.md) for
+reads whatever address Traefik logs. Which address the bouncer and the
+access policies compare when a CDN proxy sits in front is a separate
+question:
+[Trusted Proxy Headers](../../../docs/standards/traefik-security.md#trusted-proxy-headers-traefikyml--forwardedheaders).
+See [CrowdSec Operations Runbook](../../crowdsec/docs/runbook.md) for
 day-to-day bouncer operations.
 
 ---

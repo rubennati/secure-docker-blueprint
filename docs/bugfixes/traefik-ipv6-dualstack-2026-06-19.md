@@ -60,7 +60,7 @@ Tailscale IPv6 client
 This is specific to the **Tailscale path**, which has no proxy in front
 of it to recover a lost client IP from a header. The **Cloudflare path**
 recovers the real client IP from `X-Forwarded-For` regardless of the
-network's IP family — see "Cloudflare vs. Tailscale" in the doc linked
+network's IP family — see "The three traffic paths" in the doc linked
 below. Cloudflare ingress was not affected by this bug.
 
 ---

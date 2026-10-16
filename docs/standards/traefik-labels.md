@@ -6,14 +6,15 @@ Every Traefik resource reference (middleware, TLS option, router, service) must 
 
 | Suffix | Provider | Used for |
 |--------|----------|----------|
-| `@file` | File provider | Resources defined in `core/traefik/config/dynamic/*.yml` (`access.yml`, `security-chains.yml`, `tls-profiles.yml`, `integrations.yml`) |
+| `@file` | File provider | Resources defined in `core/traefik/config/dynamic/*.yml` (`access.yml`, `security-chains.yml`, `tls-profiles.yml`, `crowdsec.yml` when the CrowdSec switch is on, `integrations.yml`) |
 | `@docker` | Docker provider | Resources defined inline via `traefik.*` labels in a service's `docker-compose.yml` |
 
 ### Common references in this blueprint
 
 - `acc-*@file`, `sec-*@file` — access and security chains defined in `access.yml` / `security-chains.yml`
 - `tls-*@file` — TLS profiles from `tls-profiles.yml`
-- `crowdsec-basic@file`, `crowdsec-appsec@file`, `sec-authentik@file` — integrations from `integrations.yml`
+- `crowdsec-basic@file`, `crowdsec-appsec@file` — from `crowdsec.yml`, rendered only with `CROWDSEC_BOUNCER_ENABLED=true` in `core/traefik/.env`
+- `sec-authentik@file` — the commented block in `integrations.yml`
 - `${COMPOSE_PROJECT_NAME}-headers@docker` — per-app custom middleware defined inline via labels
 
 ### Common failure mode
@@ -56,7 +57,7 @@ The middleware list carries three independent questions, in this order:
 |---|---|---|
 | `APP_TRAEFIK_THREAT` | Is this caller known to be bad? | empty, or a `crowdsec-*` profile |
 | `APP_TRAEFIK_ACCESS` | Is this caller allowed here at all? | `acc-public` · `acc-private` · `acc-local` · `acc-tailscale` · `acc-deny` |
-| `APP_TRAEFIK_SECURITY` | What headers and rate limit apply? | `sec-0` … `sec-5`, plus `-e` and `-spa` variants |
+| `APP_TRAEFIK_SECURITY` | What headers and rate limit apply? | `sec-0` … `sec-5`, plus the `e`, `-spa`, `-spa-xl` and `-sync` variants |
 
 They are chosen independently — a public app can run without threat enforcement,
 and a VPN-only one can have it. Picking one does not imply the others.
@@ -89,8 +90,8 @@ Which profile suits which app is [`core/crowdsec/docs/profiles.md`](../../core/c
 | `APP_TRAEFIK_HOST` | `app.example.com` |
 | `APP_TRAEFIK_CERT_RESOLVER` | `cloudflare-dns`, `httpResolver`, `tlsResolver` |
 | `APP_TRAEFIK_TLS_OPTION` | `tls-basic`, `tls-aplus`, `tls-modern` |
-| `APP_TRAEFIK_ACCESS` | `acc-public`, `acc-tailscale` |
-| `APP_TRAEFIK_SECURITY` | `sec-0` through `sec-5`, `e` suffix for embed (e.g. `sec-3e`) |
+| `APP_TRAEFIK_ACCESS` | `acc-public`, `acc-local`, `acc-tailscale`, `acc-private`, `acc-deny` |
+| `APP_TRAEFIK_SECURITY` | `sec-0` through `sec-5`; `e` suffix for embed (e.g. `sec-3e`); `-spa`, `-spa-xl` and `-sync` for a wider or a sync rate limit (e.g. `sec-2-spa`, `sec-3e-sync`) |
 | `TRAEFIK_NETWORK` | `proxy-public` |
 
 ## Security Levels
@@ -105,6 +106,10 @@ Each level builds on the previous. `e` variants send `SAMEORIGIN` instead of `DE
 | `sec-3` / `sec-3e` | + strict headers + permissions-policy | Public-facing, hardened |
 | `sec-4` | + hard rate limit | Sensitive apps, login pages |
 | `sec-5` | + CSP enforce | Maximum (CSP-tested only) |
+
+The `-spa`, `-spa-xl` and `-sync` variants of `sec-2` and `sec-3` swap the rate-limit
+block for a wider bucket or a sync rate; the full table with every variant is in
+[`traefik-security.md`](traefik-security.md#policy-chains-security-chainsyml).
 
 Building blocks and pro mode: see [Traefik README](../../core/traefik/README.md).
 

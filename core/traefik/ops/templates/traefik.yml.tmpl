@@ -34,15 +34,20 @@ entryPoints:
         readTimeout: ${TRAEFIK_READ_TIMEOUT}
         writeTimeout: ${TRAEFIK_WRITE_TIMEOUT}
         idleTimeout: ${TRAEFIK_IDLE_TIMEOUT}
-    # Trust X-Forwarded-* headers only from Cloudflare's edge IPs — this
-    # is what lets Traefik see the real client IP (ClientHost in access
-    # logs, ipAllowList evaluation) for traffic that arrives via
-    # Cloudflare instead of Cloudflare's own edge address. Never set
-    # forwardedHeaders.insecure=true — that trusts forwarded headers
-    # from ANY source, letting a client spoof its own IP and bypass
-    # ipAllowList entirely. Tailscale traffic does NOT need this — it
-    # connects directly, so its source IP is already the real one (see
-    # docs/ipv6-dual-stack.md "Cloudflare vs Tailscale").
+    # forwardedHeaders.trustedIPs decides whose X-Forwarded-* headers survive
+    # the entrypoint: kept from these senders, deleted from any other, with
+    # X-Real-Ip then set from the connecting address. It does not change what
+    # the middlewares evaluate — ipAllowList and rateLimit compare the
+    # connecting address unless an ipStrategy / sourceCriterion is set, and
+    # the dynamic templates set none. Behind Cloudflare's proxy the access
+    # policies and rate limits therefore see the edge address, while
+    # ClientHost in the access log and the application see the client
+    # (docs/standards/traefik-security.md, "Trusted Proxy Headers").
+    # Never set forwardedHeaders.insecure=true: the headers are then kept
+    # from every sender, and a client chooses what the application reads as
+    # its address. Tailscale and LAN clients connect directly, so their
+    # connecting address is the client (docs/ipv6-dual-stack.md, "The three
+    # traffic paths").
     # Source: https://www.cloudflare.com/ips/ — re-verify periodically;
     # Cloudflare rarely changes these but does add ranges occasionally.
     forwardedHeaders:

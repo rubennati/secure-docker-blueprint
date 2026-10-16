@@ -367,7 +367,7 @@ deliberately deferred.
 
 | | Owner |
 |---|---|
-| 75 of 89 stacks `scaffolded` (S1) — the largest item | this file, D1 |
+| The `scaffolded` stacks (S1) — the largest item; the count is in `LIFECYCLE.md` | this file, D1 |
 | Beszel per-container metrics through the socket proxy | [#36](https://github.com/rubennati/secure-docker-blueprint/issues/36) |
 | Portainer first load against `rl-hard`'s burst of 40 | [#37](https://github.com/rubennati/secure-docker-blueprint/issues/37) |
 | Seafile's four path-scoped routers | [#39](https://github.com/rubennati/secure-docker-blueprint/issues/39) |

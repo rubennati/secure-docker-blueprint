@@ -307,15 +307,17 @@ Add more collections from the [CrowdSec Hub](https://hub.crowdsec.net/).
 
 ### Detected Scenarios
 
-Scenarios that trigger on Traefik traffic:
+The scenarios come from the installed collections, and the list on a host is the
+authoritative one:
 
-| Scenario | What it detects |
-|----------|-----------------|
-| `crowdsecurity/http-probing` | Scanning for open ports and services |
-| `crowdsecurity/http-sensitive-files` | Access attempts to `.env`, `.git`, `wp-config`, etc. |
-| `crowdsecurity/http-admin-interface-probing` | Scanning for admin panels (`/admin`, `/wp-admin`) |
-| `crowdsecurity/http-crawl-non_statics` | Aggressive crawling of dynamic pages |
-| `crowdsecurity/http-path-traversal-probing` | `../` path traversal attempts |
+```bash
+docker exec crowdsec cscli scenarios list
+```
+
+`crowdsecurity/traefik` pulls in `crowdsecurity/base-http-scenarios`, whose scenarios
+cover crawling, probing, bad user agents, path traversal, sensitive-file access, SQL
+injection and XSS probing, backdoor and admin-interface probing, generic HTTP brute
+force and open-proxy abuse; `crowdsecurity/http-cve` adds probing for known CVEs.
 
 ---
 
@@ -402,13 +404,15 @@ template, because the rendered file is what Traefik loaded:
 
 ```bash
 grep -iE "appsec(Failure|Unreachable)Block" \
-  ../traefik/config/dynamic/integrations.yml
+  ../traefik/config/dynamic/crowdsec.yml
 ```
 
 Both must read `false`. A missing line is not `false`: the plugin defaults both to
-`true`, so a middleware that omits them is fail-closed. If either is effectively `true`,
-set both to `false` in `../traefik/ops/templates/dynamic/integrations.yml.tmpl`, run
-`../traefik/ops/scripts/render.sh`, and restore your setting after step 3.
+`true`, so a middleware that omits them is fail-closed. The shipped
+`crowdsec.yml.tmpl` carries both as `false`, so a rendered file where either is
+effectively `true` comes from a locally edited template: restore it
+(`git -C ../traefik checkout -- ops/templates`), run `../traefik/ops/scripts/render.sh`,
+and reapply your setting after step 3.
 
 ### Step 1 — Traefik joins the new network
 
@@ -638,6 +642,13 @@ bounded rollback, the known limitations and the verification status.
 ### Log Acquisition (`config/acquis.yaml`)
 
 Defines which log files CrowdSec monitors. Default: Traefik access logs in JSON format.
+
+Traefik writes that log through a buffer of `TRAEFIK_ACCESSLOG_BUFFER` lines
+(`core/traefik/.env`, default 100). A line reaches the file, and this engine, when the
+buffer flushes — on a quiet host that is a delay, not a loss. The measurement that a
+request refused by an `acc-*` policy writes no line at all was taken with a buffer of 0
+(`docs/host-session-findings.md` §2), so a missing line is the policy's doing, not the
+buffer's.
 
 The file ships with a commented-out SSH block. Uncomment it to enable SSH brute-force
 detection alongside host-firewall remediation — see [`docs/firewall-bouncer.md`](docs/firewall-bouncer.md)
