@@ -55,6 +55,7 @@ docs/
   ipv6-dual-stack.md                  # IPv4-only vs. dual-stack — concepts, migration, troubleshooting
 ops/
   cloudflare-ips.txt                  # Senders whose forwarded headers the entrypoints trust (Cloudflare's ranges)
+  host-files.manifest                 # Files installed outside the checkout (logrotate, watchdog) — docs/standards/host-files.md
   templates/
     traefik.yml.tmpl                  # Static Traefik config
     haproxy.cfg.template.tmpl         # Socket proxy ACL config
@@ -73,6 +74,7 @@ ops/
     render.sh                         # envsubst all .tmpl files -> config/
     reset-templates.sh                # Delete rendered files
 config/                               # Generated output (gitignored)
+  host/                               # Host files rendered with this checkout's path (scripts/host-files.sh render)
 ```
 
 Traefik does not substitute `${VARS}` in YAML. All `.tmpl` files are rendered via `envsubst` into `config/`.
@@ -656,18 +658,21 @@ Docker does **not** rotate bind-mount files. Without logrotate, `access.log` gro
 
 ### Activate logrotate (one-time, on the host)
 
+The stanza is a host file listed in `ops/host-files.manifest`. Render it with
+this checkout's path, then run the printed commands:
+
 ```bash
-# Replace path with your actual deployment path
-sudo sed 's|/path/to/secure-docker-blueprint|/srv/docker|g' \
-  /srv/docker/core/traefik/config/logrotate/traefik \
-  | sudo tee /etc/logrotate.d/traefik
-
-# Verify
-cat /etc/logrotate.d/traefik
-
-# Dry-run to confirm it works
-sudo logrotate -d /etc/logrotate.d/traefik
+# from the repository root
+scripts/host-files.sh render core/traefik
+scripts/host-files.sh install-commands core/traefik   # prints the sudo install lines; run them
+sudo logrotate -d /etc/logrotate.d/traefik             # dry run: every log must be listed
 ```
+
+After every blueprint update, `./scripts/overview.sh --host` compares the
+installed stanza with the one the checkout now ships and reports `differs` when
+they have drifted apart — the earlier shapes of this file (below) are what that
+catches. `scripts/host-files.sh diff core/traefik /etc/logrotate.d/traefik`
+shows the difference; the rule is [`docs/standards/host-files.md`](../../docs/standards/host-files.md).
 
 The config rotates daily, keeps 7 days and compresses with gzip. Both logs are
 copied out and truncated in place (`copytruncate`); no signal is sent to the
@@ -702,6 +707,13 @@ checks in a row, and only once per confirmed episode — see
 [`core/host-watchdog/README.md`](../host-watchdog/README.md) for the shared
 model, the reasoning, and why this is judged acceptable for Traefik
 specifically (it holds no state) and not a general pattern.
+
+Its four files — script, env, service, timer — are host files listed in
+`ops/host-files.manifest`: `scripts/host-files.sh render core/traefik`, then
+the lines `scripts/host-files.sh install-commands core/traefik` prints, then
+edit `/etc/traefik-watchdog.env` and `sudo systemctl enable --now
+traefik-watchdog.timer`. They are optional in the manifest, so a host without
+the watchdog reports them as `not installed` and nothing else.
 
 ## Backup
 
