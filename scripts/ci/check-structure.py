@@ -549,8 +549,25 @@ def check_local_pins(app: Path, findings: list[dict]) -> None:
                                        "— the local stack must evaluate the shipped version"})
 
 
-def pinned_tag(key: str, value: str) -> str | None:
-    """The tag a variable pins, for both pinning styles in this repository.
+IMAGE_LINE = re.compile(r"^\s*image:\s*(.+)$")
+IMAGE_VARIABLE = re.compile(r"\$\{([A-Z][A-Z0-9_]*)")
+
+
+def image_variables(app: Path) -> frozenset[str]:
+    """Every variable an `image:` line of the stack's production compose files
+    reads — the set that decides whether a `<NAME>_VERSION` variable is a pin.
+    """
+    names: set[str] = set()
+    for path in compose_files(app):
+        for line in path.read_text(encoding="utf-8").splitlines():
+            m = IMAGE_LINE.match(line)
+            if m:
+                names.update(IMAGE_VARIABLE.findall(m.group(1)))
+    return frozenset(names)
+
+
+def pinned_tag(key: str, value: str, image_vars: frozenset[str] = frozenset()) -> str | None:
+    """The tag a variable pins, for the pinning styles in this repository.
 
     Most stacks split the reference, naming the image in the compose file and
     the version in `<NAME>_TAG`. A few carry the whole reference in
@@ -558,11 +575,16 @@ def pinned_tag(key: str, value: str) -> str | None:
     Traefik for one each. The rule is about reproducibility, which does not
     depend on which half of the reference the variable holds.
 
+    A `<NAME>_VERSION` variable counts only when an `image:` line reads it —
+    `core/shellhub` pins three images through `SHELLHUB_VERSION`, while
+    `CROWDSEC_BOUNCER_PLUGIN_VERSION` names a Traefik plugin release and no
+    image. The name alone cannot tell the two apart; the compose file can.
+
     Returns None for a variable that pins nothing. Any digest is stripped
     first: `2.5.x@sha256:…` is reproducible through the digest, and it is the
     tag that has to be judged on its own.
     """
-    if key.endswith("_TAG"):
+    if key.endswith("_TAG") or (key.endswith("_VERSION") and key in image_vars):
         tag = value
     elif key.endswith("_IMAGE"):
         tag = split_image_ref(value)[1]
@@ -588,9 +610,10 @@ def check_env_pins(app: Path, findings: list[dict]) -> None:
     and none violated the rule. That is what makes this enforcement of a
     property the repository already has rather than a migration.
     """
+    image_vars = image_variables(app)
     for path in sorted(app.glob("*.env*.example")):
         for key, value in parse_env(path)[0]:
-            tag = pinned_tag(key, value)
+            tag = pinned_tag(key, value, image_vars)
             if tag and BAD_TAG.match(tag):
                 findings.append({"level": "FAIL", "rule": "latest-tag",
                                  "detail": f"{path.name}: {key}={value} is not "

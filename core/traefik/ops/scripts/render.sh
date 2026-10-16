@@ -43,6 +43,20 @@ case "${CROWDSEC_BOUNCER_ENABLED}" in
 esac
 export CROWDSEC_BOUNCER_PLUGIN_VERSION="${CROWDSEC_BOUNCER_PLUGIN_VERSION:-v1.7.1}"
 
+# Authentik forward-auth: the same shape. AUTHENTIK_FORWARD_AUTH_ENABLED decides
+# whether dynamic/authentik.yml.tmpl is rendered; the address defaults to the
+# embedded outpost of a core/authentik on this host.
+auth_switch_declared="${AUTHENTIK_FORWARD_AUTH_ENABLED+yes}"
+AUTHENTIK_FORWARD_AUTH_ENABLED="$(printf '%s' "${AUTHENTIK_FORWARD_AUTH_ENABLED:-false}" | tr '[:upper:]' '[:lower:]')"
+case "${AUTHENTIK_FORWARD_AUTH_ENABLED}" in
+  true|false) ;;
+  *)
+    echo "ERROR: AUTHENTIK_FORWARD_AUTH_ENABLED must be true or false (got '${AUTHENTIK_FORWARD_AUTH_ENABLED}')."
+    exit 1
+    ;;
+esac
+export AUTHENTIK_FORWARD_AUTH_ADDRESS="${AUTHENTIK_FORWARD_AUTH_ADDRESS:-http://authentik-server:9000/outpost.goauthentik.io/auth/traefik}"
+
 # Resolver names are keys in the rendered YAML. An .env written before a
 # resolver existed would render an empty key and an unparseable document, so
 # each one carries the default from .env.example.
@@ -109,6 +123,30 @@ if rendered_has_bouncer; then
   fi
 fi
 
+rendered_has_forward_auth() {
+  grep -qsE '^[[:space:]]*(auth-authentik|sec-authentik):' "${CFG_DIR}"/dynamic/*.yml 2>/dev/null
+}
+
+if rendered_has_forward_auth; then
+  if [ -z "${auth_switch_declared}" ]; then
+    echo "ERROR: config/dynamic carries the Authentik forward-auth middleware, but"
+    echo "       AUTHENTIK_FORWARD_AUTH_ENABLED is not set in .env. Rendering now would remove"
+    echo "       it while every router that names it goes dark."
+    echo ""
+    echo "       Keep it:   AUTHENTIK_FORWARD_AUTH_ENABLED=true"
+    echo "                  AUTHENTIK_FORWARD_AUTH_ADDRESS=<the address config/dynamic names>"
+    echo "       Remove it: AUTHENTIK_FORWARD_AUTH_ENABLED=false — after removing auth-authentik@file"
+    echo "                  and sec-authentik@file from every router."
+    echo "       Then run render.sh again. See core/traefik/README.md, 'Authentik forward-auth'."
+    exit 1
+  fi
+  if [ "${AUTHENTIK_FORWARD_AUTH_ENABLED}" = false ]; then
+    echo "NOTICE: AUTHENTIK_FORWARD_AUTH_ENABLED=false — the forward-auth middleware is removed"
+    echo "        from config/. A router still listing auth-authentik@file or sec-authentik@file"
+    echo "        is disabled by Traefik until it is relabelled."
+  fi
+fi
+
 mkdir -p "${CFG_DIR}/dynamic"
 
 # Every output is written to a temporary file next to its destination and moved
@@ -155,6 +193,14 @@ for f in "${TPL_DIR}/dynamic/"*.yml.tmpl; do
       if [ "${CROWDSEC_BOUNCER_ENABLED}" != true ]; then
         rm -f "$out"
         echo " -> ${base} (skipped — CROWDSEC_BOUNCER_ENABLED=false)"
+        continue
+      fi
+      ;;
+    authentik.yml)
+      # Same rule as crowdsec.yml: rendered with the switch on, absent with it off.
+      if [ "${AUTHENTIK_FORWARD_AUTH_ENABLED}" != true ]; then
+        rm -f "$out"
+        echo " -> ${base} (skipped — AUTHENTIK_FORWARD_AUTH_ENABLED=false)"
         continue
       fi
       ;;
