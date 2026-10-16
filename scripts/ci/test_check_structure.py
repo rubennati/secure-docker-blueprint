@@ -459,6 +459,49 @@ class ImagePins(unittest.TestCase):
     def test_a_registry_port_without_a_tag_is_not_read_as_one(self):
         self.assertIsNone(cs.pinned_tag("APP_IMAGE", "registry:5000/app"))
 
+    def test_version_variable_counts_only_where_an_image_reads_it(self):
+        """core/shellhub pins three images through SHELLHUB_VERSION, which the
+        rule never saw; CROWDSEC_BOUNCER_PLUGIN_VERSION names a plugin release
+        and no image. The compose file tells them apart, not the name."""
+        self.assertEqual(cs.pinned_tag("SHELLHUB_VERSION", "v0.27.0", frozenset({"SHELLHUB_VERSION"})), "v0.27.0")
+        self.assertIsNone(cs.pinned_tag("SHELLHUB_VERSION", "v0.27.0"))
+        self.assertIsNone(cs.pinned_tag("CROWDSEC_BOUNCER_PLUGIN_VERSION", "v1.7.1", frozenset({"SHELLHUB_VERSION"})))
+
+    def test_image_variables_are_read_from_image_lines_only(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            app = root / "core" / "demo"
+            app.mkdir(parents=True)
+            (app / "docker-compose.yml").write_text(
+                "services:\n  app:\n    image: vendor/app:${APP_VERSION}\n"
+                "    environment:\n      PLUGIN: ${PLUGIN_VERSION}\n"
+                "  db:\n    image: influxdb:${DB_TAG}@${DB_DIGEST}\n")
+            cwd = os.getcwd()
+            try:
+                os.chdir(root)
+                _reset_caches()
+                self.assertEqual(cs.image_variables(app), frozenset({"APP_VERSION", "DB_TAG", "DB_DIGEST"}))
+            finally:
+                os.chdir(cwd)
+
+    def test_unpinned_version_variable_feeding_an_image_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            app = root / "core" / "demo"
+            app.mkdir(parents=True)
+            (app / "docker-compose.yml").write_text("services:\n  app:\n    image: vendor/app:${APP_VERSION}\n")
+            (app / ".env.example").write_text("APP_VERSION=latest\nTOOL_VERSION=latest\n")
+            cwd = os.getcwd()
+            try:
+                os.chdir(root)
+                _reset_caches()
+                findings: list[dict] = []
+                cs.check_env_pins(app, findings)
+            finally:
+                os.chdir(cwd)
+            self.assertEqual([f["rule"] for f in findings], ["latest-tag"])
+            self.assertIn("APP_VERSION", findings[0]["detail"])
+
     def test_unpinned_local_example_fails(self):
         """The case the old rule could not see: a bad tag outside .env.example."""
         with tempfile.TemporaryDirectory() as tmp:
