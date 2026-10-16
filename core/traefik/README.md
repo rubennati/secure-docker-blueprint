@@ -54,6 +54,7 @@ network-dual-stack.yml                # Optional overlay: IPv4+IPv6 on proxy-pub
 docs/
   ipv6-dual-stack.md                  # IPv4-only vs. dual-stack — concepts, migration, troubleshooting
 ops/
+  cloudflare-ips.txt                  # Senders whose forwarded headers the entrypoints trust (Cloudflare's ranges)
   templates/
     traefik.yml.tmpl                  # Static Traefik config
     haproxy.cfg.template.tmpl         # Socket proxy ACL config
@@ -75,6 +76,17 @@ config/                               # Generated output (gitignored)
 ```
 
 Traefik does not substitute `${VARS}` in YAML. All `.tmpl` files are rendered via `envsubst` into `config/`.
+
+Two things in `.env` shape the entrypoints beyond the ports: the three
+timeouts (`TRAEFIK_READ_TIMEOUT`, `TRAEFIK_WRITE_TIMEOUT`, `TRAEFIK_IDLE_TIMEOUT`,
+shipped at Traefik's own defaults — the file says what each one ends), and the
+trusted proxy ranges, which are not in `.env` at all but in
+`ops/cloudflare-ips.txt`: one range per line, rendered into
+`forwardedHeaders.trustedIPs` on both entrypoints. `validate.sh` refuses a line
+that is not a range, CI checks that the file parses, and the `Cloudflare ranges`
+workflow compares it with Cloudflare's published lists once a week. After editing
+the file: `render.sh`, then `docker compose up -d --force-recreate traefik` — the
+entrypoint list is static configuration.
 
 ## IPv4-only vs. Dual-Stack Networking
 

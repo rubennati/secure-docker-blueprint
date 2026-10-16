@@ -8,7 +8,14 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
+### Added
+
+- **The entrypoint timeouts are in `.env`** (`core/traefik`). `TRAEFIK_READ_TIMEOUT`, `TRAEFIK_WRITE_TIMEOUT` and `TRAEFIK_IDLE_TIMEOUT` render `transport.respondingTimeouts` on both entrypoints and ship at Traefik's own defaults (60 s, none, 180 s), so a rendered configuration behaves as before; `validate.sh` refuses a value that is not a duration. The write timeout stays at none until the longest legitimate response has been read from the access log — a value there ends a large download over a slow link at that point. Measured on 2026-09-22: held connections, unbounded on the write side, were the load that ended the proxy.
+- **The trusted proxy ranges are a file CI can compare** (`core/traefik/ops/cloudflare-ips.txt`, `scripts/ci/check-cloudflare-ips.py`, `.github/workflows/cloudflare-ips.yml`). The Cloudflare ranges that `forwardedHeaders.trustedIPs` trusts were a list inside `traefik.yml.tmpl` that nothing compared with its source; `render.sh` now builds the list from the file, `validate.sh` refuses an entry that is not a range, the baseline job checks that the file parses, and a weekly workflow fetches `cloudflare.com/ips-v4` and `ips-v6` and fails on any difference. The rendered list is unchanged.
+
 ### Changed
+
+- **`validate.sh` checks what the compose file and the render need** (`core/traefik`). `TRAEFIK_CONTAINER_NAME`, `SOCKET_PROXY_CONTAINER_NAME` and `CROWDSEC_SECURITY_NETWORK` are required — the network variable has no Compose default, so an `.env` from before it existed created a network with an empty name — and `TRAEFIK_MEMORY` is checked for shape when set. After a render every file `render.sh` writes is checked for, including `servers-transports.yml`, `redirects.yml` and `config/haproxy.cfg.template`, which the compose file mounts; `acme-wildcard.yml` has to exist exactly when `ACME_WILDCARD_DOMAIN` is set. `.env.example` carries the `COMPOSE_FILE` line the dual-stack instructions say to uncomment.
 
 - **Dependabot watches the three examples under `development/`** (`.github/dependabot.yml`). Their lock files had no update source: the Astro example's had not changed since it was added on 2026-09-18 and carried the seven `devalue` advisories below. One grouped pull request a week against `dev`, like the site. No CI job builds the examples, so an update is built by hand before it merges.
 
