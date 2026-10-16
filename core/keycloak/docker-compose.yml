@@ -172,7 +172,7 @@ services:
       # response changes of the first middleware last, so the chain would set
       # the header again behind a strip that comes after it (measured on
       # v3.6). Keycloak's CSP frame-ancestors keeps protecting the console.
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${COMPOSE_PROJECT_NAME}-strip-xfo,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${COMPOSE_PROJECT_NAME}-strip-xfo@docker,${APP_TRAEFIK_SECURITY}@file"
       - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-strip-xfo.headers.customResponseHeaders.X-Frame-Options="
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8080"

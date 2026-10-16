@@ -163,9 +163,14 @@ services:
       # + permissions-policy. hdr-strict-embed within sec-3e would normally set
       # X-Frame-Options: SAMEORIGIN, but Vaultwarden's admin diagnostics require no XFO
       # header from the proxy — Vaultwarden controls it per-route itself (SAMEORIGIN for
-      # the vault UI, absent for 2FA connector pages). strip-xfo removes it after sec-3e.
+      # the vault UI, absent for 2FA connector pages). strip-xfo removes the chain's
+      # header and stands BEFORE the chain: Traefik applies the response changes of
+      # the first middleware in the list last, so a strip behind the chain is
+      # overwritten by it (measured on v3.6, docs/bugfixes/keycloak-admin-console-iframe-2026-09-07.md).
+      # What the proxy now lets through is Vaultwarden's own header — not verified
+      # on a host yet.
       - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-strip-xfo.headers.customResponseHeaders.X-Frame-Options="
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,sec-3e@file,${COMPOSE_PROJECT_NAME}-strip-xfo"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${COMPOSE_PROJECT_NAME}-strip-xfo@docker,sec-3e@file"
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
 

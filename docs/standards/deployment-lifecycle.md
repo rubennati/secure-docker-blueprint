@@ -26,6 +26,37 @@ at Cloudflare for DNS-01 certificates, the one provider `core/traefik` wires; at
 provider for HTTP-01 or TLS-ALPN-01.
 The root [`README.md`](../../README.md#getting-started) states these as the requirements.
 
+**The Docker daemon bounds container logs — the stacks do not.** No service in this
+repository sets a `logging:` block, and Docker's default driver, `json-file`, rotates
+nothing: a container's log grows until the disk is full. The bound is a daemon default
+in `/etc/docker/daemon.json`, set once for every container on the host:
+
+```json
+{
+  "log-driver": "local",
+  "log-opts": { "max-size": "10m", "max-file": "3" }
+}
+```
+
+`local` is the driver to prefer: it compresses, it rotates by default (20 MB × 5
+files when no option is given), and its files are read by the daemon alone — `docker
+compose logs` and the Docker API work as before, which is how every tool in this
+repository reads container output. `json-file` with the same `max-size` and `max-file`
+is the alternative for a host where a tool tails the files under
+`/var/lib/docker/containers/` directly; nothing in this repository does. Traefik's own
+access and error logs are files it writes itself and are rotated by `logrotate`
+([`logrotate.md`](logrotate.md)), not by the daemon.
+
+A changed daemon default applies to containers created after it. A container that
+already runs keeps the driver and options it was created with until it is recreated —
+`docker compose up -d --force-recreate` in the stack directory — so on an existing host
+the limit arrives stack by stack, not at the daemon restart.
+
+`live-restore` is a separate decision about the daemon, not about logging: with it,
+containers keep running while the daemon itself restarts or is upgraded. The operator
+site's server setup recommends it; it is recorded in `.ai/decisions.md` and belongs in
+the same file, as its own line.
+
 **Not yet standardised here:** host firewall policy, unattended upgrades, the account the
 stacks run under, and kernel or `sysctl` expectations. A deployment works without them
 being written down; it is simply not this repository that says what they should be.

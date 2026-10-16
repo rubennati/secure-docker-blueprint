@@ -302,26 +302,31 @@ All building blocks are standalone middlewares — use them individually or with
 
 ---
 
-## Integrations (`crowdsec.yml`, `integrations.yml`)
+## Integrations (`crowdsec.yml`, `authentik.yml`)
 
-External services that plug into Traefik as middleware. Each is independent and optional.
+External services that plug into Traefik as middleware. Each is independent and
+optional, and each is rendered by its own switch in `core/traefik/.env` — no
+template is edited to enable one, and `integrations.yml` renders empty.
 
-| Integration | Type | What it does |
-|-------------|------|-------------|
-| `crowdsec-basic` | Traefik plugin | CrowdSec decision remediation: blocks IPs the LAPI has a decision for (stream mode, fail-open, no request inspection) |
-| `crowdsec-appsec` | Traefik plugin | The same decision remediation, plus AppSec request inspection against the installed rule sets (fail-open) |
-| `sec-authentik` | Forward auth | SSO authentication via Authentik |
+| Integration | Type | What it does | Switch |
+|-------------|------|-------------|--------|
+| `crowdsec-basic` | Traefik plugin | CrowdSec decision remediation: blocks IPs the LAPI has a decision for (stream mode, fail-open, no request inspection) | `CROWDSEC_BOUNCER_ENABLED` |
+| `crowdsec-appsec` | Traefik plugin | The same decision remediation, plus AppSec request inspection against the installed rule sets (fail-open) | `CROWDSEC_BOUNCER_ENABLED` |
+| `auth-authentik` (older name `sec-authentik`, the same middleware) | Forward auth | A login in front of an application that has none: the Authentik outpost is asked for every request; no session, no pass; outpost unreachable, no pass | `AUTHENTIK_FORWARD_AUTH_ENABLED` |
 
-The two CrowdSec middlewares exist only when `CROWDSEC_BOUNCER_ENABLED=true` in
-`core/traefik/.env`. One switch renders both halves: the plugin into Traefik's
-**static** configuration, which takes effect only after a Traefik restart, and the two
-middleware definitions into `config/dynamic/crowdsec.yml`, which is hot-reloaded. With
-the switch off, `render.sh` removes the middleware file. No template is edited to
-enable them. `sec-authentik` is a commented block in `integrations.yml.tmpl`.
+With a switch off, its middlewares do not exist and no router attaches one. An
+application opts in deliberately, per stack: the CrowdSec middleware through
+`APP_TRAEFIK_THREAT` in [`traefik-labels.md`](traefik-labels.md), the
+forward-auth gate by naming `auth-authentik@file` on the router that needs it
+([`core/authentik/README.md`](../../core/authentik/README.md#integrating-other-apps-via-forward-auth)).
+Access policies, rate limits and headers do not depend on either switch.
 
-No router attaches any of the three by default. An application opts in deliberately,
-per stack, by prepending the middleware to its router chain — see `APP_TRAEFIK_THREAT`
-in [`traefik-labels.md`](traefik-labels.md).
+One switch renders both CrowdSec halves: the plugin into Traefik's **static**
+configuration, which takes effect only after a Traefik restart, and the two
+middleware definitions into `config/dynamic/crowdsec.yml`, which is hot-reloaded;
+with the switch off, `render.sh` removes the middleware file. The forward-auth
+gate is dynamic configuration only — `config/dynamic/authentik.yml`, hot-reloaded,
+removed the same way.
 
 `crowdsec-appsec` additionally requires the CrowdSec AppSec listener on port 7422 and a
 remediation plugin version that supports it. AppSec is CrowdSec's request-inspection
