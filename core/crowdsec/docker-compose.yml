@@ -53,8 +53,9 @@ services:
       # Traefik access logs (read-only, relative path by default)
       - ${TRAEFIK_LOG_PATH}:/var/log/traefik:ro
       # SSH authentication logs — opt-in, and only possible on a host that
-      # writes them to a file. The `sshd` collection ships enabled in
-      # CROWDSEC_COLLECTIONS, so its rules load either way; without a source
+      # writes them to a file. The `sshd` collection comes with the image —
+      # part of `crowdsecurity/linux`, installed at build time — so its rules
+      # load whether or not CROWDSEC_COLLECTIONS names it; without a source
       # they simply match nothing, which looks identical to working.
       #
       # Debian 12/13 log to journald and have no /var/log/auth.log. This

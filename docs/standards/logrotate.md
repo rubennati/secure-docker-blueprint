@@ -44,11 +44,14 @@ volumes:
   - ./volumes/logs:/var/log/traefik
 ```
 
-so for a checkout at `/srv/docker` it is `/srv/docker/core/traefik/volumes/logs/`.
+If your deploy path is `/srv/docker/core/traefik`, the two stanzas name:
 
-### 3. Prove it matches
+```text
+/srv/docker/core/traefik/volumes/logs/access.log
+/srv/docker/core/traefik/volumes/logs/traefik.log
+```
 
-A pattern that matches nothing fails silently — the logs simply keep growing.
+A path that matches nothing fails silently — the logs simply keep growing.
 The dry run says which files it found:
 
 ```bash
@@ -59,7 +62,7 @@ Expect each log listed under `considering log …`, and the size threshold echoe
 back as `log files >= 104857600 are rotated earlier`. `Handling 0 logs` means the
 path is wrong.
 
-### 4. Know when it actually runs
+### 3. Know when it actually runs
 
 `daily` and `maxsize` describe *conditions*, not a schedule. Nothing rotates
 until logrotate itself runs, which on Debian is a systemd timer:
@@ -84,13 +87,13 @@ From `man logrotate`: *"Log files are rotated when they grow bigger than size
 bytes even before the additionally specified time interval"* — early, yes; but
 only ever at a run.
 
-### 5. Force a rotation (optional, to verify)
+### 4. Force a rotation (optional, to verify)
 
 ```bash
 sudo logrotate -f /etc/logrotate.d/traefik
 ```
 
-### 6. Check status
+### 5. Check status
 
 ```bash
 sudo cat /var/lib/logrotate/status | grep traefik
@@ -98,8 +101,11 @@ sudo cat /var/lib/logrotate/status | grep traefik
 
 ## How it works
 
+The shipped file carries one stanza per log — `access.log` and `traefik.log` — with
+the same options in each; the reasons for each choice are comments in the file:
+
 ```text
-/path/to/secure-docker-blueprint/core/traefik/volumes/logs/*.log {
+/path/to/secure-docker-blueprint/core/traefik/volumes/logs/access.log {
     daily              # Rotate once per day
     rotate 7           # Keep 7 rotated files (1 week)
     compress           # gzip old logs
@@ -110,8 +116,6 @@ sudo cat /var/lib/logrotate/status | grep traefik
     copytruncate       # Copy out, truncate in place — no signal to the container
 }
 ```
-
-The shipped file has one stanza per log, with the reasons as comments.
 
 ### Why no signal
 

@@ -449,22 +449,25 @@ arrive through a NAT, a CDN, or a Docker network that does not carry their addre
 
 ## 5. Git & Deployment Issues
 
-### 5.1 Server running old code after local commits
+### 5.1 Server running old code after a fix landed in the repository
 
-**Symptom:** Config fix committed locally, `docker compose up -d` on server, still broken. `printenv` shows old value. `git log` on server shows old commit hash.
+**Symptom:** A fix is merged, `docker compose up -d` on the server, still broken. `printenv` shows the old value; `./scripts/overview.sh` or `git describe --tags` on the server names the earlier release.
 
-**Root cause:** Commits exist locally but were never pushed. Server's `git pull` has nothing to fetch.
+**Root cause:** A deployment is a checkout of a release tag and moves only when a newer tag is checked out. A change that is on `dev` and in no release is on no server; a release that is out does not arrive until the server checks it out.
 
 **Fix:**
 
 ```bash
-# On local machine:
-git push origin dev
-
-# On server:
-git pull
+# On the server, in the checkout:
+git fetch --tags
+git checkout <newer-tag>
+# core/traefik only, when the release changed a template:
+bash ops/scripts/render.sh && bash ops/scripts/validate.sh
 docker compose up -d --force-recreate <service>
 ```
+
+What to read between two tags, and the order in which stacks are recreated:
+[`docs/standards/deployment-lifecycle.md`](docs/standards/deployment-lifecycle.md#7--update-the-blueprint).
 
 **Important:** `docker compose restart` does NOT pick up new env vars or label changes from an updated compose file. You need `up -d` (or `up -d --force-recreate`) to recreate the container with the new config.
 
@@ -757,9 +760,9 @@ When something doesn't work after deployment, run through this in order:
    docker compose logs <service> --tail=30
    docker compose exec <service> wget -qO- http://127.0.0.1:<port>/
 
-5. Is the server on the latest commit?
-   git log --oneline -3
-   # If behind: git push origin dev (local), git pull (server)
+5. Is the server on the release it should be?
+   git describe --tags
+   # If behind: git fetch --tags && git checkout <tag> — docs/standards/deployment-lifecycle.md §7
 
 6. Are the env vars actually set correctly?
    docker compose exec <service> printenv | sort

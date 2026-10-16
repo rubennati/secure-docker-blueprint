@@ -16,11 +16,11 @@
 
 ## Architecture
 
-| Phase | Component | Where | Status |
-|---|---|---|---|
-| 1 | Security Engine | `core/crowdsec/` | Ready |
-| 2 | Traefik Bouncer Plugin | `core/traefik/` config | TODO |
-| 3 | Firewall Bouncer (nftables) | Host apt package | TODO |
+| Component | Where | Status |
+|---|---|---|
+| Core — engine, detection, decisions | `core/crowdsec/` | verified on a live host, 2026-07-29 |
+| Reverse-Proxy Remediation — Traefik bouncer plugin | `core/traefik/`, rendered by `CROWDSEC_BOUNCER_ENABLED` | verified on a live host: an enforced ban on 2026-07-29, the plugin across the Traefik 3.6 → 3.7 move on 2026-09-13 |
+| Host-Firewall Remediation — nftables bouncer | host package, `set-only` mode | lifecycle, readiness gate and the shape of the rules verified; enforcement against real traffic not — [`docs/firewall-bouncer.md`](docs/firewall-bouncer.md#verification-status) |
 
 ## What we changed and why
 
