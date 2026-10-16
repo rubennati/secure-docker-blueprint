@@ -138,3 +138,16 @@ printf "\n"
 printf " ${DIM}Total: ${#rows[@]} component(s)${RESET}\n"
 printf " ${DIM}Source: ${CYAN}live${RESET}${DIM} = .env | ${YELLOW}example${RESET}${DIM} = .env.example${RESET}\n"
 printf "\n"
+
+# --host: the files some stacks install outside the checkout — a logrotate
+# stanza, systemd units, a backup agent's configuration — compared with what
+# the repository ships. A blueprint update changes the checkout and nothing
+# under /etc; this is where that shows. Exit status follows the check, so the
+# command can close a deployment step.
+if [ "${1:-}" = "--host" ]; then
+  printf " ${BOLD}Host files${RESET} ${DIM}(scripts/host-files.sh check — docs/standards/host-files.md)${RESET}\n"
+  bash "${ROOT_DIR}/scripts/host-files.sh" check
+  host_rc=$?
+  printf "\n"
+  exit "${host_rc}"
+fi

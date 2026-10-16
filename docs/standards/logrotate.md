@@ -17,27 +17,34 @@ and do **not** need logrotate.
 
 ## Setup
 
-### 1. Copy config to host
+### 1. Render and install
+
+The shipped stanza carries the placeholder `/path/to/secure-docker-blueprint`;
+rendering replaces it with the checkout's path, and the printed command installs
+the result ([`host-files.md`](host-files.md)):
 
 ```bash
-sudo cp /path/to/secure-docker-blueprint/core/traefik/config/logrotate/traefik /etc/logrotate.d/traefik
+# from the repository root
+scripts/host-files.sh render core/traefik
+scripts/host-files.sh install-commands core/traefik   # prints the sudo install line; run it
 ```
+
+A copy made by hand without the substitution names a path that matches no file,
+and logrotate says nothing about it (`missingok`): the logs keep growing. After a
+blueprint update, `./scripts/overview.sh --host` reports whether the installed
+stanza still matches the shipped one.
 
 ### 2. Verify the path
 
-The path inside the logrotate config must match the **host-side** of the volume mount.
-Check `docker-compose.yml`:
+The path inside the installed stanza must be the **host-side** of the volume
+mount in `docker-compose.yml`:
 
 ```yaml
 volumes:
   - ./volumes/logs:/var/log/traefik
 ```
 
-If your deploy path is `/path/to/secure-docker-blueprint/core/traefik`, the host path is:
-
-```text
-/path/to/secure-docker-blueprint/core/traefik/volumes/logs/*.log
-```
+so for a checkout at `/srv/docker` it is `/srv/docker/core/traefik/volumes/logs/`.
 
 ### 3. Prove it matches
 
@@ -77,21 +84,13 @@ From `man logrotate`: *"Log files are rotated when they grow bigger than size
 bytes even before the additionally specified time interval"* — early, yes; but
 only ever at a run.
 
-### 3. Test (dry run)
-
-```bash
-sudo logrotate -d /etc/logrotate.d/traefik
-```
-
-This shows what **would** happen without actually rotating. Check for errors.
-
-### 4. Force a rotation (optional, to verify)
+### 5. Force a rotation (optional, to verify)
 
 ```bash
 sudo logrotate -f /etc/logrotate.d/traefik
 ```
 
-### 5. Check status
+### 6. Check status
 
 ```bash
 sudo cat /var/lib/logrotate/status | grep traefik

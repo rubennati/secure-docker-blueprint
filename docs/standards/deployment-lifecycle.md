@@ -108,6 +108,21 @@ the `CHANGELOG.md` entries between the two tags first: an entry saying an upgrad
 
 Then recreate the stacks the release touched. `docker compose up -d` applies a changed
 compose file; a stack whose service names changed also needs `--remove-orphans`.
+`core/traefik` renders its configuration from templates, so a release that changes
+a template takes effect only after `bash ops/scripts/render.sh` in that directory
+and a `--force-recreate` of the proxy where the static configuration changed.
+
+A checkout carries the stack files; it does not carry what a stack installed
+outside it — a logrotate stanza, systemd units, a backup agent's configuration.
+After the checkout, compare those with what the release ships:
+
+```bash
+./scripts/overview.sh --host
+```
+
+`differs` names the file in the checkout and the file on the host; the commands
+that bring the host file up to date are printed, never run
+([`host-files.md`](host-files.md)).
 
 ## 8 — Update an upstream image
 
