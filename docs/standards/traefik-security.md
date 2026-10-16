@@ -71,16 +71,24 @@ address of the TCP connection. Which address that is depends on the path:
 | Direct — Tailscale, LAN, a public client with no CDN in front | the client | evaluate the client | one bucket per client | `X-Forwarded-For` and `X-Real-Ip` carry the client; a header the client sent is deleted |
 | Cloudflare's proxy | Cloudflare's edge address | evaluate the edge, which is in none of their ranges — every request is refused | one bucket per edge address, shared by every visitor behind it | `X-Forwarded-For` = `client, edge`; `X-Real-Ip` = the edge |
 
-Behind Cloudflare's proxy, `acc-public` is the only access policy that admits a
-request, and a rate limit counts visitors per edge address. The templates carry
-no setting that changes this. The mechanism for a deployment behind Cloudflare is
-decision D3 in
-[`../audits/core-v1-readiness-2026-10-15.md`](../audits/core-v1-readiness-2026-10-15.md#j-decisions-required),
-which names where it is designed; it lands in Phase 3 of that audit.
+Which senders are trusted is `TRAEFIK_FORWARDED_PROXY` in `core/traefik/.env`:
 
-The Cloudflare ranges are a hard-coded list in `traefik.yml.tmpl`, for the same
-reason `acc-local`'s RFC1918 ranges are: `envsubst` cannot render a multi-entry
-list from one `.env` variable.
+| Mode | Entrypoints trust | CrowdSec bouncer compares | Rendered besides |
+|---|---|---|---|
+| `none` (default) | nobody — the list renders empty | the connecting address | — |
+| `cloudflare` | the ranges of `ops/cloudflare-ips.txt`, compared with cloudflare.com weekly | `CF-Connecting-IP`, and only on a request from one of those ranges (`forwardedHeadersTrustedIPs`, `forwardedHeadersCustomName`) | `config/host/cloudflare-ranges.nft`, the same ranges as nftables defines for the host firewall |
+
+The closed access policies evaluate the connecting address in both modes —
+their clients connect directly, and a proxied request to such a host is refused.
+The rate limits count per edge address at the origin behind Cloudflare: a
+`sourceCriterion` that reads a header leaves a direct client with no address,
+so the per-client limit of a public route is a Cloudflare rate-limiting rule by
+IP at the edge. What Cloudflare has to be set to, the origin firewall and the
+per-application consequences (`X-Forwarded-For` carries two hops, `X-Real-Ip`
+is the edge) are in `core/traefik/README.md`, "Behind Cloudflare". `render.sh`
+refuses to render over a configuration that trusts the ranges while `.env` does
+not declare the mode, so an installation from before the switch decides rather
+than loses its addresses.
 
 **Never set `forwardedHeaders.insecure=true`.** It keeps the forwarded headers
 from every sender — the reference: *"We recommend to use this option only for
