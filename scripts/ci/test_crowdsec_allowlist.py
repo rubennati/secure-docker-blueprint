@@ -14,7 +14,6 @@ Run:
     python3 -m unittest discover -s scripts/ci -p 'test_*.py'
 """
 
-import json
 import os
 import shutil
 import subprocess
