@@ -1,6 +1,7 @@
 # CrowdSec Operations Runbook
 
-Day-to-day operations and incident response for the three-phase CrowdSec stack.
+Day-to-day operations and incident response for the CrowdSec stack: Core and its two
+remediation points.
 
 **Components this runbook covers:**
 
@@ -37,9 +38,11 @@ docker exec crowdsec cscli bouncers list
 sudo systemctl status crowdsec-firewall-bouncer
 # Expected: "active (running)"
 
-# Host-firewall remediation — nftables chain exists?
-sudo nft list chain ip crowdsec crowdsec-chain
-# Expected: chain output (empty if no active bans — that is normal)
+# Host-firewall remediation — the set the bouncer fills, and the scoped rule
+sudo nft list set ip crowdsec crowdsec-blacklists
+# Expected: the set, one element per active ban (empty is normal)
+sudo nft list chain ip crowdsec cs-public-forward
+# Expected: one rule — iifname "<public interface>" ct original ip saddr @crowdsec-blacklists counter drop
 ```
 
 ### Core — Engine
@@ -87,8 +90,8 @@ sudo systemctl status crowdsec-firewall-bouncer
 # Recent bouncer logs
 sudo journalctl -u crowdsec-firewall-bouncer -n 50
 
-# nftables chain (shows active drop rules)
-sudo nft list chain ip crowdsec crowdsec-chain
+# Active bans at the host — the elements of the set the bouncer maintains
+sudo nft list set ip crowdsec crowdsec-blacklists
 
 # Bouncer registered with engine?
 docker exec crowdsec cscli bouncers list
@@ -155,15 +158,23 @@ Check that Traefik writes JSON-format access logs and that `type: traefik` is se
 
 ### Active nftables bans (host-firewall remediation)
 
+In `set-only` mode the bouncer maintains the two blacklist sets and nothing else. The
+DROP rule that consumes them is the blueprint's, in chain `cs-public-forward` of each
+table ([`firewall-bouncer.md`](firewall-bouncer.md#set-only-architecture)).
+
 ```bash
-# All active drop rules from the firewall bouncer
-sudo nft list chain ip crowdsec crowdsec-chain
+# IPv4 bans — one element per decision, each with its timeout
+sudo nft list set ip crowdsec crowdsec-blacklists
 
-# IPv6 rules (if IPv6 is active on the host)
-sudo nft list chain ip6 crowdsec crowdsec-chain
+# IPv6 bans
+sudo nft list set ip6 crowdsec6 crowdsec6-blacklists
 
-# Count of currently dropped IPs
-sudo nft list chain ip crowdsec crowdsec-chain | grep -c "ip saddr"
+# Count of banned IPv4 addresses
+sudo nft list set ip crowdsec crowdsec-blacklists | grep -o 'expires' | wc -l
+
+# The scoped rule, one per family — no output means nothing is enforced
+sudo nft list chain ip crowdsec cs-public-forward
+sudo nft list chain ip6 crowdsec6 cs-public-forward
 ```
 
 ### Log locations
@@ -383,20 +394,24 @@ Reverse-proxy remediation clears within ~60 s, host-firewall remediation within 
 
 Stops network-layer enforcement without affecting Core or reverse-proxy remediation.
 
-Stopping the service does **not** flush the nftables chain — existing drop rules remain
-in place until explicitly cleared. This is intentional: it prevents a service restart
-from temporarily exposing the host.
+Stopping the service removes the enforcement with it: the companion unit
+(`crowdsec-fw-scope.service`, bound to the bouncer) removes the scoped chains, and the
+bouncer's `ExecStopPost=cs-fw-cleanup` destroys both CrowdSec tables. Without that
+drop-in installed, the bouncer in `set-only` mode leaves both tables in place, clears the
+IPv4 set and leaves the IPv6 set populated
+([`firewall-bouncer.md`](firewall-bouncer.md#service-lifecycle)).
 
 ```bash
-# 1. Stop the bouncer service
+# 1. Stop the bouncer — the companion stops with it
 sudo systemctl stop crowdsec-firewall-bouncer
 
-# 2. Flush the nftables chain (required — rules do not clear automatically)
-sudo nft flush chain ip crowdsec crowdsec-chain
+# 2. Confirm both tables are gone
+sudo nft list tables | grep -E 'crowdsec6?$'
+# Expected: no output
 
-# 3. Confirm chain is empty
-sudo nft list chain ip crowdsec crowdsec-chain
-# Expected: chain exists but contains no drop rules
+# 3. Only on a host without the cleanup drop-in: remove what the bouncer left behind
+sudo nft destroy table ip  crowdsec
+sudo nft destroy table ip6 crowdsec6
 ```
 
 Core (detection) and reverse-proxy remediation (HTTP blocking) continue running.
@@ -405,7 +420,9 @@ To re-enable:
 
 ```bash
 sudo systemctl start crowdsec-firewall-bouncer
-# The bouncer syncs active decisions from the LAPI within ~10 s and repopulates the chain
+# ExecStartPre rebuilds both tables with empty sets, the bouncer syncs the active
+# decisions within ~10 s, and the companion installs the scoped chains once the
+# readiness gate confirms both sets are populated.
 ```
 
 ### Disable reverse-proxy remediation
@@ -439,9 +456,11 @@ Use when CrowdSec itself is causing a problem (false positives at scale, broken 
 configuration error).
 
 ```bash
-# 1. Stop host-firewall remediation and flush nftables rules
+# 1. Stop host-firewall remediation — the cleanup destroys both CrowdSec tables,
+#    chains and sets included; the destroy lines cover a host without the drop-in
 sudo systemctl stop crowdsec-firewall-bouncer
-sudo nft flush chain ip crowdsec crowdsec-chain 2>/dev/null || true
+sudo nft destroy table ip  crowdsec
+sudo nft destroy table ip6 crowdsec6
 
 # 2. Stop the CrowdSec engine (Core)
 #    the reverse-proxy bouncer loses its decision source — it will continue
@@ -453,13 +472,13 @@ docker compose down
 docker compose -f ../traefik/docker-compose.yml restart traefik
 ```
 
-**Effect on each phase:**
+**Effect on each component:**
 
-| Phase | After engine stops |
+| Component | After engine stops |
 |---|---|
 | Core | Down — no new detections or decisions |
 | Reverse-proxy remediation | Continues enforcing last cached decision list (~60 s cache window), then fails open |
-| Host-firewall remediation | Continues enforcing existing nftables rules until explicitly flushed |
+| Host-firewall remediation | Keeps enforcing the set membership it last synced, until each element's timeout expires or the service is stopped — the stop destroys both tables through the blueprint's cleanup |
 
 ### Restore after emergency
 
@@ -473,7 +492,7 @@ docker exec crowdsec cscli lapi status
 # 3. Start host-firewall remediation
 sudo systemctl start crowdsec-firewall-bouncer
 
-# 4. Confirm all phases healthy (see §1 Quick triage)
+# 4. Confirm all components healthy (see §1 Quick triage)
 ```
 
 Reverse-proxy remediation recovers automatically once the engine is reachable and the Traefik container
@@ -629,8 +648,9 @@ docker compose -f ../traefik/docker-compose.yml logs traefik 2>&1 \
 # Is the bouncer service running?
 sudo systemctl status crowdsec-firewall-bouncer
 
-# Is the chain populated?
-sudo nft list chain ip crowdsec crowdsec-chain
+# Is the set populated, and is the scoped rule in place?
+sudo nft list set ip crowdsec crowdsec-blacklists
+sudo nft list chain ip crowdsec cs-public-forward
 
 # Are there active decisions the bouncer should be enforcing?
 docker exec crowdsec cscli decisions list
@@ -677,8 +697,9 @@ docker compose logs crowdsec | grep -i "database\|db\|sqlite" | tail -20
 > **Recovery:** Stopping the engine and deleting `volumes/data/` forces a clean start.
 > **This permanently loses all decision history and alert history.**
 > All registered bouncers will lose their API keys — regenerate
-> with `cscli bouncers add` and update the keys in Traefik config and
-> `/etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml` before restarting those services.
+> with `cscli bouncers add` and update the keys in `core/traefik/.env`
+> (`CROWDSEC_BOUNCER_KEY`, then `render.sh`) and in
+> `/etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml.local` before restarting those services.
 
 ---
 
@@ -721,10 +742,11 @@ ss -tlnp | grep "$(grep CROWDSEC_LAPI_PORT .env | cut -d= -f2)"
 docker exec crowdsec cscli bouncers list
 # If firewall-bouncer is absent: key was deleted
 # Regenerate: docker exec crowdsec cscli bouncers add firewall-bouncer
-# Update api_key in /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
+# Update api_key in /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml.local
+# (the package-managed .yaml is never edited)
 
 # 4. Mode mismatch?
-grep "^mode:" /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
+grep "^mode:" /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml.local
 # Must be "nftables" on Debian 12+ / Ubuntu 22.04+
 # Verify nftables is active: sudo nft list ruleset
 ```

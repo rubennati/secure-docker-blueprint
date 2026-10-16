@@ -149,9 +149,11 @@ and this section should be revisited.
 
 ## Enabling AppSec safely
 
-AppSec is enabled in one place: `crowdsecAppsecEnabled` in the `crowdsec-appsec` middleware
-block in `core/traefik/ops/templates/dynamic/integrations.yml.tmpl`. `crowdsec-basic`
-leaves it off; the two profiles differ in exactly this flag.
+AppSec is enabled per router: a router that carries `crowdsec-appsec@file` sends its
+requests to AppSec, one that carries `crowdsec-basic@file` does not. The two middlewares
+in `core/traefik/ops/templates/dynamic/crowdsec.yml.tmpl` differ in exactly
+`crowdsecAppsecEnabled`, and both ship with the failure flags `false`. The file is
+rendered only with `CROWDSEC_BOUNCER_ENABLED=true` in `core/traefik/.env`.
 
 **Do not flip this switch directly to fail-closed.** If AppSec is unreachable at the
 moment Traefik evaluates a request and `crowdsecAppsecUnreachableBlock` is `true`, every
@@ -181,10 +183,22 @@ external network. If either container is missing from it, AppSec is unreachable 
 Traefik regardless of the flag settings. CrowdSec does not join `proxy-public`, so its
 absence there is the intended state and not the fault.
 
-#### Step 2 — Enable AppSec with fail-open
+#### Step 2 — Enable AppSec with fail-open, on one router
 
-In `core/traefik/ops/templates/dynamic/integrations.yml.tmpl`, set only
-`crowdsecAppsecEnabled: true`. Leave the failure flags as `false`:
+Attach `crowdsec-appsec` to one application — `apps/whoami` first, as
+[profiles.md](profiles.md) describes — through the threat slot in that application's
+`.env`:
+
+```ini
+APP_TRAEFIK_THREAT=crowdsec-appsec@file,
+```
+
+```bash
+# in that application's directory
+docker compose up -d
+```
+
+The middleware as rendered already carries the fail-open flags:
 
 ```yaml
 crowdsecAppsecEnabled: true
@@ -193,13 +207,8 @@ crowdsecAppsecFailureBlock: false        # fail-open on AppSec errors
 crowdsecAppsecUnreachableBlock: false    # fail-open if AppSec unreachable
 ```
 
-Re-render and hot-reload (no Traefik restart needed for dynamic config changes):
-
-```bash
-cd core/traefik
-./ops/scripts/render.sh
-# Traefik hot-reloads the dynamic config automatically.
-```
+No template is edited and Traefik is not restarted: the changed label recreates the
+application container, and Traefik picks the router up within seconds.
 
 #### Step 3 — Observe behavior
 
@@ -387,12 +396,14 @@ XSS exclusions there require more justification.
 If AppSec is causing widespread blocking and you need to restore access immediately:
 
 ```bash
-# 1. In core/traefik/ops/templates/dynamic/integrations.yml.tmpl,
-#    set crowdsecAppsecEnabled: false
+# 1. In the affected application's .env, fall back to decision-only remediation
+#    (or empty the slot to detach the bouncer from that router altogether):
+#      APP_TRAEFIK_THREAT=crowdsec-basic@file,
+#    then recreate the application — Traefik hot-reloads the router:
+docker compose up -d
 
-# 2. Re-render (hot-reloads without Traefik restart):
-cd core/traefik
-./ops/scripts/render.sh
+# 2. Repeat for every router that carries crowdsec-appsec@file:
+grep -rl 'crowdsec-appsec' --include=.env .
 
 # 3. Confirm AppSec is no longer being called:
 docker exec crowdsec cscli metrics show appsec   # verify subcommand exists on your version
