@@ -63,7 +63,9 @@ ops/
       access.yml.tmpl                 # Access policies (public / tailscale)
       security-blocks.yml.tmpl        # Security building blocks (headers, ratelimits, etc.)
       security-chains.yml.tmpl        # Policy presets (sec-0 to sec-5 + embed variants)
-      integrations.yml.tmpl           # CrowdSec + Authentik (optional)
+      crowdsec.yml.tmpl               # CrowdSec middlewares — rendered by CROWDSEC_BOUNCER_ENABLED
+      authentik.yml.tmpl              # Authentik forward-auth — rendered by AUTHENTIK_FORWARD_AUTH_ENABLED
+      integrations.yml.tmpl           # Empty; says which switch renders what
       tls-profiles.yml.tmpl           # TLS option profiles
       routers-system.yml.tmpl         # Dashboard router
       redirects.yml.tmpl              # Redirects (empty by default)
@@ -596,6 +598,30 @@ docker exec crowdsec cscli decisions delete --ip 1.2.3.4
 | WAF blocking valid requests | Set `crowdsecAppsecEnabled: false` temporarily. Check CrowdSec logs for false positives |
 | Bouncer not connecting | `docker exec crowdsec cscli bouncers list` — check last heartbeat. Verify both containers are on the `crowdsec-security` network |
 | High latency | Verify `crowdsecMode: stream` (not `live`). Stream mode has no per-request overhead |
+
+## Authentik forward-auth (optional)
+
+A login in front of an application that has none of its own: Traefik asks the
+Authentik outpost for every request and lets it through only with a session.
+The middleware is `auth-authentik` (the older name `sec-authentik` is the same
+middleware); it exists only while the switch is on.
+
+```bash
+# core/traefik/.env
+AUTHENTIK_FORWARD_AUTH_ENABLED=true
+AUTHENTIK_FORWARD_AUTH_ADDRESS=http://authentik-server:9000/outpost.goauthentik.io/auth/traefik
+
+bash ops/scripts/validate.sh && bash ops/scripts/render.sh && bash ops/scripts/validate.sh
+```
+
+| | |
+|---|---|
+| What the switch renders | `config/dynamic/authentik.yml` — dynamic configuration, hot-reloaded, no restart |
+| What it does not touch | access policies, limits, headers, the CrowdSec integration — none depends on it |
+| Which routers use it | none until one names `auth-authentik@file`; which application and how: [`core/authentik/README.md`](../authentik/README.md#integrating-other-apps-via-forward-auth) |
+| Outpost unreachable | the request is refused — forward-auth fails closed |
+| Switching off | remove `auth-authentik@file` from every router first; a router naming a middleware that no longer exists is disabled by Traefik. Then `false`, render |
+| A `config/` that carries the middleware while `.env` says nothing | `render.sh` refuses, with the two ways out, instead of removing it silently |
 
 ## Incident Quickmoves
 

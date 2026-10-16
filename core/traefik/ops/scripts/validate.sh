@@ -170,6 +170,24 @@ if [ "${CROWDSEC_BOUNCER_ENABLED}" = true ]; then
   fi
 fi
 
+# Authentik forward-auth switch: same checks as CrowdSec's — a value other than
+# true/false is refused, and with the switch on the address has to be a URL.
+auth_switch_declared="${AUTHENTIK_FORWARD_AUTH_ENABLED+yes}"
+AUTHENTIK_FORWARD_AUTH_ENABLED="$(printf '%s' "${AUTHENTIK_FORWARD_AUTH_ENABLED:-false}" | tr '[:upper:]' '[:lower:]')"
+case "${AUTHENTIK_FORWARD_AUTH_ENABLED}" in
+  true|false) ;;
+  *) echo "ERROR: AUTHENTIK_FORWARD_AUTH_ENABLED must be true or false (got '${AUTHENTIK_FORWARD_AUTH_ENABLED}')."; exit 1 ;;
+esac
+if [ "${AUTHENTIK_FORWARD_AUTH_ENABLED}" = true ]; then
+  auth_address="${AUTHENTIK_FORWARD_AUTH_ADDRESS:-http://authentik-server:9000/outpost.goauthentik.io/auth/traefik}"
+  if ! printf '%s' "${auth_address}" | grep -qE '^https?://[^[:space:]]+$'; then
+    echo "ERROR: AUTHENTIK_FORWARD_AUTH_ADDRESS must be an http:// or https:// URL (got '${auth_address}')."
+    echo "       The default is the embedded outpost of core/authentik on this host:"
+    echo "       http://authentik-server:9000/outpost.goauthentik.io/auth/traefik"
+    exit 1
+  fi
+fi
+
 # Warn about sentinel values (not a hard fail – HTTP-01 users don't need this)
 if [ "${CF_DNS_API_TOKEN:-}" = "__REPLACE_ME__" ]; then
   echo "WARNING: CF_DNS_API_TOKEN is still set to __REPLACE_ME__. DNS-01 (wildcard certs) will fail."
@@ -263,6 +281,24 @@ if [ -f "${ROOT_DIR}/config/traefik.yml" ]; then
       fi
       exit 1
     fi
+  fi
+
+  # The Authentik middleware, both directions, like the CrowdSec integration.
+  rendered_auth=false
+  grep -qsE '^[[:space:]]*(auth-authentik|sec-authentik):' "${ROOT_DIR}"/config/dynamic/*.yml 2>/dev/null && rendered_auth=true
+  if [ "${AUTHENTIK_FORWARD_AUTH_ENABLED}" = true ]; then
+    if [ "${rendered_auth}" != true ] || [ ! -f "${ROOT_DIR}/config/dynamic/authentik.yml" ]; then
+      echo "ERROR: AUTHENTIK_FORWARD_AUTH_ENABLED=true but config/dynamic carries no forward-auth middleware — run render.sh."
+      exit 1
+    fi
+  elif [ "${rendered_auth}" = true ]; then
+    if [ -z "${auth_switch_declared}" ]; then
+      echo "ERROR: config/dynamic carries the Authentik forward-auth middleware but AUTHENTIK_FORWARD_AUTH_ENABLED is not set in .env."
+      echo "       Set it to true to keep the middleware (plus AUTHENTIK_FORWARD_AUTH_ADDRESS), or to false to remove it, then run render.sh."
+    else
+      echo "ERROR: AUTHENTIK_FORWARD_AUTH_ENABLED=false but config/dynamic still carries the forward-auth middleware — run render.sh."
+    fi
+    exit 1
   fi
 
   # CrowdSec bouncer key. envsubst turns an unset CROWDSEC_BOUNCER_KEY into an

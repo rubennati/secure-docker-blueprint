@@ -1,0 +1,54 @@
+# ==========================================================
+# AUTHENTIK — forward-auth middleware
+# ==========================================================
+# Rendered to config/dynamic/authentik.yml only when
+# AUTHENTIK_FORWARD_AUTH_ENABLED=true in .env; with the switch off, render.sh
+# removes the rendered file. Dynamic configuration: hot-reloaded, no restart.
+#
+# Defining the middleware attaches it to nothing. A router carries it by naming
+# auth-authentik@file (or the older name sec-authentik@file, the same
+# middleware) in its middleware list — see core/authentik/README.md,
+# "Integrating other apps via Forward-Auth". Detach it from every router before
+# switching this off: a router that names a middleware that no longer exists is
+# disabled by Traefik, not left open.
+#
+# Traefik asks the address below for every request. No session: the outpost
+# answers with a redirect to the login page and the request stops here. The
+# outpost unreachable: the request stops here as well — forward-auth fails
+# closed, which is the one behaviour a login gate may have.
+#
+# trustForwardHeader is NOT set. Traefik deprecated it in v3.6.14 in favour of
+# forwardedHeaders.trustedIPs at entrypoint level, which traefik.yml.tmpl sets.
+# Setting it to true makes ForwardAuth trust X-Forwarded-* from any source,
+# which is the CVE-2026-35051 and CVE-2026-54764 class: a client spoofs
+# X-Forwarded-Prefix or X-Forwarded-Port and the auth decision follows it.
+#
+# The address does not have to be on this host: any outpost Traefik can reach
+# works, which is how one Authentik protects applications on several hosts.
+# ==========================================================
+
+http:
+  middlewares:
+
+    auth-authentik:
+      forwardAuth:
+        address: "${AUTHENTIK_FORWARD_AUTH_ADDRESS}"
+        authResponseHeaders:
+          - X-authentik-username
+          - X-authentik-groups
+          - X-authentik-email
+          - X-authentik-name
+          - X-authentik-uid
+          - X-authentik-jwt
+          - X-authentik-meta-jwks
+          - X-authentik-meta-outpost
+          - X-authentik-meta-provider
+          - X-authentik-meta-app
+          - X-authentik-meta-version
+
+    # The name this middleware carried while it lived commented out in
+    # integrations.yml.tmpl. A router that still names it keeps working.
+    sec-authentik:
+      chain:
+        middlewares:
+          - auth-authentik
