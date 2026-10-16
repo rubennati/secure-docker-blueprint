@@ -185,6 +185,53 @@ them — step 4 finishing means the path exists, not that anything is enforced.
 
 No secrets needed — the engine generates its own internal credentials on first start.
 
+**5. Decide the administrative exemption** — optional, and a decision rather than a
+default.
+
+The default whitelist covers RFC1918 and loopback and nothing else. A VPN address is
+neither: an administrator's browser producing `403` and `404` responses is what
+`http-probing` measures, and on 2026-08-28 that banned the administrator's own address
+on both families and closed the management path
+([`docs/bugfixes/crowdsec-firewall-bouncer-2026-08-28.md`](../../docs/bugfixes/crowdsec-firewall-bouncer-2026-08-28.md)).
+Once remediation is on, the same detection closes the same path again.
+
+The exemption that holds against every decision — local scenarios and community
+blocklists alike — is a LAPI AllowList. What it costs: an exempted device is never
+banned, a compromised one included. An AllowList is not evidence that a device is
+trustworthy; it is the decision to keep that device reachable whatever the engine
+concludes about it. That is why the entry is the administrator's devices, each by its
+own VPN address, IPv4 and IPv6 where both exist — not the VPN range. The range is
+accepted and named for what it is when it appears.
+
+```bash
+# .env — the devices, comma-separated; empty means no exemption, by decision
+CROWDSEC_ALLOWLIST_ADMIN=100.64.0.7,fd7a:115c:a1e0::1
+ops/allowlist.sh apply       # creates the list `admin-devices`, adds what is missing
+ops/allowlist.sh status
+```
+
+`apply` adds and never removes: an entry taken out of `.env` stays in the engine until
+`ops/allowlist.sh remove <value>` — a mistake in `.env` cannot lift an exemption. A value
+that is not an address or range stops `apply` before anything is applied.
+
+Verify from the device's side, each family on its own:
+
+```bash
+ops/allowlist.sh check 100.64.0.7           # "allowlisted by admin-devices"
+ops/allowlist.sh check fd7a:115c:a1e0::1
+docker exec crowdsec cscli metrics show acquisition   # the device's requests are still read and parsed:
+                                                        # the engine sees it; it only serves no decision against it
+```
+
+What a host test still has to establish, and this repository has not: that a manual
+decision against an exempted address (`cscli decisions add --ip …`) is not served, that
+one added with `--bypass-allowlist` is, and that the host-firewall bouncer follows both.
+Until then the exemption is a documented mechanism with one measurement behind it —
+`firewall-bouncer.md`, "A parser whitelist is not a universal exclusion".
+
+If the engine ever bans the device anyway, the way back is in
+[`docs/runbook.md`](docs/runbook.md#locked-out-over-the-vpn), and it does not need the VPN.
+
 ### Verify
 
 **First-boot takes ~5 minutes** before acquisition starts parsing. On startup the container runs `cscli hub update`, installs collections, loads parsers, then begins tailing the log file. During that window `cscli metrics` shows only `Local API Metrics` and `Local API Machines Metrics` — no Acquisition / Parser / Bucket tables. That is normal startup state, not a broken install. Wait about 5 minutes before running the verify commands.

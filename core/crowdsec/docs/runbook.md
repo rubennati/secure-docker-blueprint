@@ -189,12 +189,18 @@ sudo nft list chain ip6 crowdsec6 cs-public-forward
 
 ## 3. Whitelisting
 
-**Delete vs. whitelist:** `cscli decisions delete` removes the active ban but CrowdSec can
-re-ban the IP if it generates further suspicious traffic. A whitelist file prevents the
-engine from ever creating a decision for that IP in the first place.
+Three tools, three questions:
 
-Use decision delete for temporary unblocking. Use a whitelist file for IPs that should
-never be banned (your own monitoring systems, known good crawlers, office IPs).
+| Question | Tool |
+|---|---|
+| Lift one ban now; the address may be banned again | `cscli decisions delete --ip …` |
+| This address must never be served a decision — whatever produced it, the community blocklist included | LAPI AllowList — `ops/allowlist.sh`, the same procedure as README step 5 |
+| The engine must not derive detections from this traffic of mine — a monitoring probe, a known crawler — but a decision from elsewhere may still apply | parser whitelist |
+
+The second and the third look alike and are not: a parser whitelist sits in the engine's
+own log path, and a decision pulled from the central API never travels through it
+([`firewall-bouncer.md`](firewall-bouncer.md#a-parser-whitelist-is-not-a-universal-exclusion)).
+For an address that must stay reachable, the AllowList is the tool.
 
 ### Remove an active ban (temporary — IP can be re-banned)
 
@@ -220,7 +226,31 @@ docker exec crowdsec cscli decisions list --ip 1.2.3.4
 Host-firewall enforcement clears within ~10 seconds. Reverse-proxy enforcement clears within ~60 seconds
 (Traefik bouncer polling interval).
 
-### Permanent whitelist — single IP or CIDR
+### Exempt an address from every decision — the AllowList
+
+The administrative devices go into `CROWDSEC_ALLOWLIST_ADMIN` in `.env` and
+`ops/allowlist.sh apply` carries them into the LAPI AllowList `admin-devices` — README,
+step 5, which also says what the exemption costs. `apply` never removes an entry;
+`ops/allowlist.sh remove <value>` does, one at a time. A temporary exemption, for an
+investigation, goes straight to the engine with an expiry:
+
+```bash
+docker exec crowdsec cscli allowlists add admin-devices 203.0.113.10 -e 2h -d "investigating a false positive"
+docker exec crowdsec cscli allowlists inspect admin-devices
+docker exec crowdsec cscli allowlists check 203.0.113.10
+```
+
+Adding an entry also removes the decisions it covers — measured on v1.7.8
+(`firewall-bouncer.md`). Whether a decision added by hand with `cscli decisions add`
+is withheld, and whether `--bypass-allowlist` overrides the list, is a host test this
+repository has not run yet; until it has, lift an existing ban explicitly as well
+(above).
+
+### Suppress detections from your own traffic — the parser whitelist
+
+For traffic the engine should not even count — a monitoring probe, a known crawler —
+and only that. A decision from the community blocklist still applies to an address
+listed here; for an address that must stay reachable, use the AllowList above.
 
 Create a whitelist parser file in the persistent config volume. The file survives container
 restarts because `volumes/config` maps to `/etc/crowdsec`.
@@ -234,14 +264,11 @@ Create `volumes/config/parsers/s02-enrich/whitelist-trusted.yaml`:
 
 ```yaml
 name: whitelist-trusted
-description: "Trusted IPs that should never be banned"
+description: "Traffic the engine does not derive detections from"
 whitelist:
-  reason: "trusted"
+  reason: "own monitoring"
   ip:
     - 203.0.113.10       # example: your monitoring server
-  cidr:
-    - 100.64.0.0/10      # Tailscale / CGNAT range
-    - 192.168.0.0/16     # LAN
 ```
 
 Apply the whitelist (requires container restart to load the new parser):
@@ -281,10 +308,46 @@ docker exec crowdsec cscli alerts list --ip 1.2.3.4
 docker exec crowdsec cscli alerts inspect <ALERT_ID>
 ```
 
-If the IP keeps getting re-banned and it's legitimate traffic, add it to the permanent
-whitelist above.
+If the IP keeps getting re-banned and it's legitimate traffic, decide which of the two
+tools above it needs: the AllowList when the address must stay reachable, the parser
+whitelist when only your own traffic should stop counting.
 
-### Verify whitelist is effective
+### Locked out over the VPN
+
+The engine served a decision against your own address — both families, if both were
+in use — and the host-firewall bouncer or the Traefik bouncer enforces it. The way back
+must not depend on the VPN, because the VPN is what closed.
+
+1. **Reach the host another way.** The other address family, if only one is banned; the
+   LAN; otherwise the hoster's console (VNC or serial). An SSH session that was already
+   open stays open — conntrack passes an established flow — and is the first thing to
+   use before it closes.
+2. **Stop the enforcement that closed the path, not the engine.** For SSH over the
+   management interface that is the host-firewall bouncer:
+
+   ```bash
+   sudo systemctl stop crowdsec-firewall-bouncer
+   ```
+
+   The Traefik bouncer concerns HTTPS routes only; it fails open when the engine is
+   unreachable, and a ban it enforces clears within its polling interval once the
+   decision is gone.
+3. **Lift the one decision, and no other:**
+
+   ```bash
+   docker exec crowdsec cscli decisions list --ip <your address>
+   docker exec crowdsec cscli decisions delete --ip <your address> --all   # this address only
+   ```
+
+   `--all` reaches every origin for that address — the community blocklist included —
+   and nothing else. Do not delete decisions wholesale; every other ban is doing its job.
+4. **Exempt the device**, so the next detection does not repeat this: README step 5,
+   both families.
+5. **Start the enforcement again** and watch it: `sudo systemctl start
+   crowdsec-firewall-bouncer`, then a *new* connection from the device over the
+   management interface — an existing one proves nothing.
+
+### Verify a parser whitelist is effective
 
 Parser whitelists prevent the engine from automatically creating decisions based on
 log events. They do **not** prevent manual decisions added via `cscli decisions add`
