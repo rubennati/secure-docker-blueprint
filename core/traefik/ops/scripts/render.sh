@@ -94,7 +94,95 @@ if [ -z "${CLOUDFLARE_TRUSTED_IPS_YAML}" ]; then
   echo "ERROR: ${CF_LIST} carries no range — the entrypoints would trust no forwarded header."
   exit 1
 fi
-export CLOUDFLARE_TRUSTED_IPS_YAML="${CLOUDFLARE_TRUSTED_IPS_YAML%$'\n'}"
+CLOUDFLARE_TRUSTED_IPS_YAML="${CLOUDFLARE_TRUSTED_IPS_YAML%$'\n'}"
+
+# Does a rendered traefik.yml trust any sender? The shape decides, not a value:
+# the first entrypoint list under forwardedHeaders is `trustedIPs:` followed by
+# `- "<range>"` lines (trusting) or by `[]` (trusting nobody). A value would go
+# blind the day the ranges file changes its first entry. Comment lines are
+# skipped: every release up to v0.9.4 rendered `# Cloudflare IPv4` right after
+# the key, and a guard that read that line as "nobody" was blind to exactly
+# the installations it exists for.
+rendered_trusts_ranges() {  # <traefik.yml>
+  [ -f "$1" ] || return 1
+  awk '/^[[:space:]]*trustedIPs:[^*]*$/ { t = 1; next }
+       t { if ($0 ~ /^[[:space:]]*(#|$)/) next; exit ($0 ~ /^[[:space:]]*- /) ? 0 : 1 }
+       END { if (!t) exit 1 }' "$1"
+}
+
+# ---------------------------------------------------------------------------
+# Who may set the client address: TRAEFIK_FORWARDED_PROXY
+#
+#   none        the entrypoints trust no sender; every forwarded header is
+#               deleted and the connecting address is the client
+#   cloudflare  Cloudflare's published ranges are trusted at the entrypoints;
+#               the CrowdSec bouncer gets the same ranges as
+#               forwardedHeadersTrustedIPs and keeps its default header,
+#               X-Forwarded-For. The entrypoint deletes that header from every
+#               sender outside the ranges, so the bouncer compares a direct
+#               client by its connection and, on a request from Cloudflare,
+#               the last X-Forwarded-For entry outside the ranges — the client
+#               Cloudflare appended. CF-Connecting-IP is never used here: the
+#               plugin reads its header from any sender, and Traefik does not
+#               delete that one. config/host/cloudflare-ranges.nft carries the
+#               ranges for the host firewall.
+#
+# Absent or empty means none. Before this switch existed every rendered
+# configuration trusted the Cloudflare ranges, so a config/ that still carries
+# a list while .env says nothing is stopped: rendering `none` over it would make
+# an installation behind Cloudflare see edge addresses — and ban them.
+# ---------------------------------------------------------------------------
+proxy_declared=""
+[ -n "${TRAEFIK_FORWARDED_PROXY:-}" ] && proxy_declared=yes
+TRAEFIK_FORWARDED_PROXY="$(printf '%s' "${TRAEFIK_FORWARDED_PROXY:-none}" | tr '[:upper:]' '[:lower:]')"
+case "${TRAEFIK_FORWARDED_PROXY}" in
+  none|cloudflare) ;;
+  *)
+    echo "ERROR: TRAEFIK_FORWARDED_PROXY must be none or cloudflare (got '${TRAEFIK_FORWARDED_PROXY}')."
+    exit 1
+    ;;
+esac
+if [ -z "${proxy_declared}" ] && rendered_trusts_ranges "${CFG_DIR}/traefik.yml"; then
+  echo "ERROR: config/traefik.yml trusts Cloudflare's ranges, but TRAEFIK_FORWARDED_PROXY is not"
+  echo "       set in .env. Rendering now would trust no sender — an installation behind"
+  echo "       Cloudflare's proxy would then see edge addresses everywhere, and CrowdSec would"
+  echo "       ban them."
+  echo ""
+  echo "       Records proxied by Cloudflare (orange cloud):  TRAEFIK_FORWARDED_PROXY=cloudflare"
+  echo "       No Cloudflare proxy in front of this host:     TRAEFIK_FORWARDED_PROXY=none"
+  echo "       Then run render.sh again. See core/traefik/README.md, 'Behind Cloudflare'."
+  exit 1
+fi
+CROWDSEC_BOUNCER_FORWARDED_YAML=""
+if [ "${TRAEFIK_FORWARDED_PROXY}" = cloudflare ]; then
+  CROWDSEC_BOUNCER_FORWARDED_YAML="          forwardedHeadersTrustedIPs:"
+  while IFS= read -r range; do
+    range="${range%%#*}"; range="$(printf '%s' "${range}" | tr -d '[:space:]')"
+    [ -n "${range}" ] || continue
+    CROWDSEC_BOUNCER_FORWARDED_YAML="${CROWDSEC_BOUNCER_FORWARDED_YAML}"$'\n'"            - \"${range}\""
+  done < "${CF_LIST}"
+else
+  CLOUDFLARE_TRUSTED_IPS_YAML="        []"
+fi
+export CLOUDFLARE_TRUSTED_IPS_YAML CROWDSEC_BOUNCER_FORWARDED_YAML
+
+# The same ranges for the host firewall, as nftables defines, rendered only in
+# cloudflare mode and installed by the operator (ops/host-files.manifest).
+render_nft_ranges() {
+  local v4="" v6="" range
+  while IFS= read -r range; do
+    range="${range%%#*}"; range="$(printf '%s' "${range}" | tr -d '[:space:]')"
+    [ -n "${range}" ] || continue
+    case "${range}" in *:*) v6="${v6:+${v6}, }${range}" ;; *) v4="${v4:+${v4}, }${range}" ;; esac
+  done < "${CF_LIST}"
+  printf '%s\n' \
+    "# Rendered by core/traefik/ops/scripts/render.sh from ops/cloudflare-ips.txt — edit the" \
+    "# file, never this one. Cloudflare's published ranges, for a chain on the forward hook" \
+    "# (published container ports never traverse input) that admits 80 and 443 on the public" \
+    "# interface from these sets and drops the rest: core/traefik/README.md, 'Behind Cloudflare'." \
+    "define cloudflare_v4 = { ${v4} }" \
+    "define cloudflare_v6 = { ${v6} }"
+}
 
 rendered_has_bouncer() {
   grep -qsE '^experimental:' "${CFG_DIR}/traefik.yml" && return 0
@@ -177,6 +265,14 @@ else
   echo " -> traefik.yml (no plugin — CROWDSEC_BOUNCER_ENABLED=false)"
 fi
 envsubst < "${TPL_DIR}/haproxy.cfg.template.tmpl" | place "${CFG_DIR}/haproxy.cfg.template"
+if [ "${TRAEFIK_FORWARDED_PROXY}" = cloudflare ]; then
+  mkdir -p "${CFG_DIR}/host"
+  render_nft_ranges | place "${CFG_DIR}/host/cloudflare-ranges.nft"
+  echo " -> host/cloudflare-ranges.nft (TRAEFIK_FORWARDED_PROXY=cloudflare — the ranges for the host firewall)"
+else
+  rm -f "${CFG_DIR}/host/cloudflare-ranges.nft"
+  echo " -> trusted proxy ranges: none (TRAEFIK_FORWARDED_PROXY=none)"
+fi
 
 echo "Rendering dynamic configs..."
 for f in "${TPL_DIR}/dynamic/"*.yml.tmpl; do

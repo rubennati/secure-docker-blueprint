@@ -40,19 +40,22 @@ entryPoints:
     # the middlewares evaluate — ipAllowList and rateLimit compare the
     # connecting address unless an ipStrategy / sourceCriterion is set, and
     # the dynamic templates set none. Behind Cloudflare's proxy the access
-    # policies and rate limits therefore see the edge address, while
-    # ClientHost in the access log and the application see the client
+    # policies and rate limits therefore see the edge address, while the
+    # application sees the client in X-Forwarded-For and ClientHost in the
+    # access log carries that header's whole value, client last
     # (docs/standards/traefik-security.md, "Trusted Proxy Headers").
     # Never set forwardedHeaders.insecure=true: the headers are then kept
     # from every sender, and a client chooses what the application reads as
     # its address. Tailscale and LAN clients connect directly, so their
     # connecting address is the client (docs/ipv6-dual-stack.md, "The three
     # traffic paths").
-    # Source: https://www.cloudflare.com/ips/ — re-verify periodically;
-    # Cloudflare rarely changes these but does add ranges occasionally.
+    # Which senders are trusted is TRAEFIK_FORWARDED_PROXY in .env:
+    #   none        — nobody; the list below renders empty. Every client's
+    #                 forwarded headers are deleted at the entrypoint.
+    #   cloudflare  — Cloudflare's published ranges from ops/cloudflare-ips.txt,
+    #                 one range per line, compared with cloudflare.com weekly.
+    # render.sh fills the list; edit the file or the switch, never this block.
     forwardedHeaders:
-      # The list is ops/cloudflare-ips.txt, one range per line; render.sh turns
-      # it into the entries below. Edit the file, never this block.
       trustedIPs: &cloudflareTrustedIPs
 ${CLOUDFLARE_TRUSTED_IPS_YAML}
     http:

@@ -50,6 +50,13 @@ The one placeholder a source may carry is `/path/to/secure-docker-blueprint`;
 rendering replaces it with the checkout's path. A source without it is copied
 as it is.
 
+A source under `config/host/` is one the stack's own render writes, and only in
+the mode that needs it — `core/traefik`'s `cloudflare-ranges.nft` exists with
+`TRAEFIK_FORWARDED_PROXY=cloudflare` and not otherwise. Such an entry must be
+`optional`; it is the one source the manifest check does not require to exist,
+and `render` leaves it alone. A `required` source must exist in the checkout,
+under `config/host/` or anywhere else, so a wrong path fails in CI.
+
 ### The three ways of comparing
 
 | `compare` | For | `check` reports |
@@ -68,6 +75,7 @@ the content says.
 | `identical` | installed as shipped, or a secret present with the right mode and owner | — |
 | `adapted` | a derived file carrying every setting the example names | — |
 | `not installed` | an optional file that is absent | — |
+| `not produced` | an optional file under `config/host/` that the stack did not render in its current mode; nothing to install — and, if a copy is still installed, the line says so. `check` does not know the mode: whether the file *should* exist is the stack's own `validate.sh` to say | — |
 | `skipped` | a stack with a manifest and no `config/host/` — not rendered on this host | — |
 | `missing` | a required file that is absent | 1 |
 | `differs` | content, settings, mode or owner differ from the manifest | 1 |

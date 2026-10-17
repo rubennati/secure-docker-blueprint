@@ -98,7 +98,9 @@ class TrustedProxyRanges(unittest.TestCase):
         shutil.rmtree(r["tmp"], ignore_errors=True)
 
     def test_rendered_list_equals_the_file_on_both_entrypoints(self):
-        r = render(VALID_ENV)
+        """With TRAEFIK_FORWARDED_PROXY=cloudflare; the none mode (the default)
+        renders an empty list — test_traefik_forwarded_proxy.py covers both."""
+        r = render(dict(VALID_ENV, TRAEFIK_FORWARDED_PROXY="cloudflare"))
         self.addCleanup(self._cleanup, r)
         self.assertEqual(r["render_rc"], 0, r["render_out"])
         entries, problems = cf_check.read_ranges(TRAEFIK / "ops" / "cloudflare-ips.txt")

@@ -117,6 +117,13 @@ services:
       LOGIN_RATELIMIT_SECONDS: "60"
       LOGIN_RATELIMIT_MAX_BURST: "10"
       # Security
+      # The header Vaultwarden reads the client from, for its own rate limits
+      # and lockouts. Traefik sets X-Real-IP from the connection, so behind
+      # Cloudflare's proxy it names the edge: with TRAEFIK_FORWARDED_PROXY=cloudflare
+      # in core/traefik, set CF-Connecting-IP here. That header is honest from
+      # Cloudflare and unsanitised from a direct client — Traefik deletes only
+      # X-Forwarded-* — so the origin firewall is what keeps direct clients to
+      # LAN and VPN (core/traefik/README.md, "Behind Cloudflare").
       IP_HEADER: X-Real-IP
       PASSWORD_ITERATIONS: "600000"
       # Push Notifications (register at https://bitwarden.com/host/)
