@@ -4,11 +4,16 @@
 - none (and absent): the entrypoints trust no sender (empty trustedIPs), the
   CrowdSec middlewares carry no trusted-proxy list, no firewall file is rendered
 - cloudflare: the entrypoints trust the ranges of ops/cloudflare-ips.txt, both
-  CrowdSec middlewares carry the same list with CF-Connecting-IP as the header,
-  and config/host/cloudflare-ranges.nft carries the ranges as nftables defines
+  CrowdSec middlewares carry the same list and keep the plugin's default
+  header X-Forwarded-For (never a custom one — Traefik deletes only
+  X-Forwarded-* from untrusted senders), and config/host/cloudflare-ranges.nft
+  carries the ranges as nftables defines
 - any other value is refused by render.sh and validate.sh
-- a rendered configuration that trusts the ranges while .env does not declare
-  the switch is refused, both by render.sh and by validate.sh
+- a rendered configuration that trusts any list while .env does not declare
+  the switch (absent or empty) is refused, both by render.sh and by
+  validate.sh — also after the ranges file gained a new first entry
+- validate.sh refuses a rendered list that differs from the ranges file, a
+  middleware with forwardedHeadersCustomName, and a firewall file in none mode
 - closed access policies carry no ipStrategy in either mode
 
 Run:
@@ -81,7 +86,8 @@ class ForwardedProxySwitch(unittest.TestCase):
         for mw in ("crowdsec-basic", "crowdsec-appsec"):
             b = self.crowdsec()[mw]["plugin"]["bouncer"]
             self.assertEqual(b["forwardedHeadersTrustedIPs"], RANGES, mw)
-            self.assertEqual(b["forwardedHeadersCustomName"], "CF-Connecting-IP", mw)
+            self.assertNotIn("forwardedHeadersCustomName", b, f"{mw}: the plugin reads a custom header from any sender")
+            self.assertNotIn("clientTrustedIPs", b, mw)
         text = self.nft().read_text(encoding="utf-8")
         v4 = [x for x in RANGES if ":" not in x]
         v6 = [x for x in RANGES if ":" in x]
@@ -99,6 +105,20 @@ class ForwardedProxySwitch(unittest.TestCase):
             blocks = (self.root / "config" / "dynamic" / "security-blocks.yml").read_text(encoding="utf-8")
             self.assertNotIn("sourceCriterion", blocks, mode)
 
+    def test_no_mode_names_a_custom_header_for_the_bouncer(self):
+        for mode in ("none", "cloudflare"):
+            self.render(dict(VALID_ENV, TRAEFIK_FORWARDED_PROXY=mode))
+            text = (self.root / "config" / "dynamic" / "crowdsec.yml").read_text(encoding="utf-8")
+            self.assertNotRegex(text, r"(?m)^\s*forwardedHeadersCustomName:", mode)
+        # and validate.sh refuses one that got there by hand
+        self.render(dict(VALID_ENV, TRAEFIK_FORWARDED_PROXY="cloudflare"))
+        cs = self.root / "config" / "dynamic" / "crowdsec.yml"
+        cs.write_text(cs.read_text(encoding="utf-8").replace(
+            "          forwardedHeadersTrustedIPs:", "          forwardedHeadersCustomName: CF-Connecting-IP\n          forwardedHeadersTrustedIPs:", 1), encoding="utf-8")
+        v = self.validate()
+        self.assertNotEqual(v.returncode, 0)
+        self.assertIn("forwardedHeadersCustomName", v.stdout + v.stderr)
+
     def test_other_value_is_refused(self):
         r = self.render(dict(VALID_ENV, TRAEFIK_FORWARDED_PROXY="cdn"))
         self.assertNotEqual(r.returncode, 0)
@@ -114,6 +134,44 @@ class ForwardedProxySwitch(unittest.TestCase):
         self.assertEqual(self.static()["entryPoints"]["web"]["forwardedHeaders"]["trustedIPs"], RANGES, "nothing was changed")
         v = self.validate()
         self.assertNotEqual(v.returncode, 0)
+
+    def test_guard_holds_after_the_ranges_file_gained_a_new_first_entry(self):
+        """The guard is keyed on the shape of the rendered list, not on a value:
+        a range inserted at the top of the file must not make it blind."""
+        self.render(dict(VALID_ENV, TRAEFIK_FORWARDED_PROXY="cloudflare"))
+        f = self.root / "ops" / "cloudflare-ips.txt"
+        f.write_text("192.0.2.0/24\n" + f.read_text(encoding="utf-8"), encoding="utf-8")
+        r = self.render(VALID_ENV)
+        self.assertNotEqual(r.returncode, 0, "rendered over a trusting config without a declared mode")
+        self.assertIn("TRAEFIK_FORWARDED_PROXY is not", r.stdout + r.stderr)
+        self.assertEqual(self.static()["entryPoints"]["web"]["forwardedHeaders"]["trustedIPs"], RANGES, "nothing was changed")
+
+    def test_empty_value_counts_as_undeclared(self):
+        self.render(dict(VALID_ENV, TRAEFIK_FORWARDED_PROXY="cloudflare"))
+        r = self.render(dict(VALID_ENV, TRAEFIK_FORWARDED_PROXY=""))
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("TRAEFIK_FORWARDED_PROXY is not", r.stdout + r.stderr)
+        v = self.validate()
+        self.assertNotEqual(v.returncode, 0)
+        self.assertIn("not set", v.stdout + v.stderr)
+
+    def test_validate_notices_a_changed_ranges_file_in_cloudflare_mode(self):
+        self.render(dict(VALID_ENV, TRAEFIK_FORWARDED_PROXY="cloudflare"))
+        self.assertEqual(self.validate().returncode, 0)
+        f = self.root / "ops" / "cloudflare-ips.txt"
+        f.write_text(f.read_text(encoding="utf-8") + "198.51.100.0/24\n", encoding="utf-8")
+        v = self.validate()
+        self.assertNotEqual(v.returncode, 0)
+        self.assertIn("ranges file", v.stdout + v.stderr)
+        self.assertIn("run render.sh", v.stdout + v.stderr)
+
+    def test_validate_refuses_a_firewall_file_in_none_mode(self):
+        self.render(dict(VALID_ENV, TRAEFIK_FORWARDED_PROXY="none"))
+        self.nft().parent.mkdir(parents=True, exist_ok=True)
+        self.nft().write_text("define cloudflare_v4 = { 192.0.2.0/24 }\n", encoding="utf-8")
+        v = self.validate()
+        self.assertNotEqual(v.returncode, 0)
+        self.assertIn("cloudflare-ranges.nft", v.stdout + v.stderr)
 
     def test_explicit_none_over_a_trusting_config_renders(self):
         self.render(dict(VALID_ENV, TRAEFIK_FORWARDED_PROXY="cloudflare"))

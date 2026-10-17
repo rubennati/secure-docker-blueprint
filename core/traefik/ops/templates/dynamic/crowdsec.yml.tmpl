@@ -30,11 +30,20 @@ http:
     # Mode: stream (polls LAPI every 60s, caches decisions).
     #
     # Which address the bouncer compares with the decisions follows
-    # TRAEFIK_FORWARDED_PROXY in .env: with `none` the connecting address; with
-    # `cloudflare` render.sh adds forwardedHeadersTrustedIPs (the ranges of
-    # ops/cloudflare-ips.txt) and forwardedHeadersCustomName CF-Connecting-IP,
-    # so the client Cloudflare names is compared, and only when the request
-    # arrives from a Cloudflare address.
+    # TRAEFIK_FORWARDED_PROXY in .env. The plugin reads X-Forwarded-For, takes
+    # the last entry outside forwardedHeadersTrustedIPs, and falls back to the
+    # connection only when nothing is left. It never checks who sent the
+    # header — the entrypoint does: Traefik deletes X-Forwarded-For from every
+    # sender outside forwardedHeaders.trustedIPs. So with `none` the header
+    # never arrives and the connecting address is compared; with `cloudflare`
+    # render.sh adds forwardedHeadersTrustedIPs (the ranges of
+    # ops/cloudflare-ips.txt), a direct client is still compared by its
+    # connection, and a request from Cloudflare by the client Cloudflare
+    # appended last. forwardedHeadersCustomName is never set: Traefik deletes
+    # only X-Forwarded-* and X-Real-Ip, so CF-Connecting-IP or any other header
+    # would be read from any sender. A client whose own address lies inside
+    # the trusted ranges (Cloudflare WARP) is compared by the edge — and can
+    # place an entry before it (core/traefik/README.md, "Behind Cloudflare").
     #
     # AppSec/WAF is disabled here by default. The AppSec process does
     # not auto-start with CrowdSec — it needs its own config in

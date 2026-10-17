@@ -40,8 +40,9 @@ entryPoints:
     # the middlewares evaluate — ipAllowList and rateLimit compare the
     # connecting address unless an ipStrategy / sourceCriterion is set, and
     # the dynamic templates set none. Behind Cloudflare's proxy the access
-    # policies and rate limits therefore see the edge address, while
-    # ClientHost in the access log and the application see the client
+    # policies and rate limits therefore see the edge address, while the
+    # application sees the client in X-Forwarded-For and ClientHost in the
+    # access log carries that header's whole value, client last
     # (docs/standards/traefik-security.md, "Trusted Proxy Headers").
     # Never set forwardedHeaders.insecure=true: the headers are then kept
     # from every sender, and a client chooses what the application reads as
