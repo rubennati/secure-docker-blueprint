@@ -41,9 +41,11 @@ http:
     # connection, and a request from Cloudflare by the client Cloudflare
     # appended last. forwardedHeadersCustomName is never set: Traefik deletes
     # only X-Forwarded-* and X-Real-Ip, so CF-Connecting-IP or any other header
-    # would be read from any sender. A client whose own address lies inside
-    # the trusted ranges (Cloudflare WARP) is compared by the edge — and can
-    # place an entry before it (core/traefik/README.md, "Behind Cloudflare").
+    # would be read from any sender. A sender whose own address lies inside
+    # the trusted ranges — Cloudflare's egress space 172.64.0.0/13 is in the
+    # list; whether a WARP client arrives from inside it Cloudflare does not
+    # document — is compared as the edge and can place an entry before it
+    # (core/traefik/README.md, "Behind Cloudflare").
     #
     # AppSec/WAF is disabled here by default. The AppSec process does
     # not auto-start with CrowdSec — it needs its own config in

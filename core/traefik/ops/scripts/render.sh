@@ -99,11 +99,14 @@ CLOUDFLARE_TRUSTED_IPS_YAML="${CLOUDFLARE_TRUSTED_IPS_YAML%$'\n'}"
 # Does a rendered traefik.yml trust any sender? The shape decides, not a value:
 # the first entrypoint list under forwardedHeaders is `trustedIPs:` followed by
 # `- "<range>"` lines (trusting) or by `[]` (trusting nobody). A value would go
-# blind the day the ranges file changes its first entry.
+# blind the day the ranges file changes its first entry. Comment lines are
+# skipped: every release up to v0.9.4 rendered `# Cloudflare IPv4` right after
+# the key, and a guard that read that line as "nobody" was blind to exactly
+# the installations it exists for.
 rendered_trusts_ranges() {  # <traefik.yml>
   [ -f "$1" ] || return 1
   awk '/^[[:space:]]*trustedIPs:[^*]*$/ { t = 1; next }
-       t { if ($0 ~ /^[[:space:]]*$/) next; exit ($0 ~ /^[[:space:]]*- /) ? 0 : 1 }
+       t { if ($0 ~ /^[[:space:]]*(#|$)/) next; exit ($0 ~ /^[[:space:]]*- /) ? 0 : 1 }
        END { if (!t) exit 1 }' "$1"
 }
 

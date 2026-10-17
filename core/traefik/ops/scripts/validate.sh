@@ -151,16 +151,17 @@ fi
 # Who may set the client address. render.sh applies it; this refuses a value
 # it does not know and, after a render, a config/ that disagrees with .env or
 # with the ranges file. The shape of the rendered list decides whether it
-# trusts anyone (render.sh carries the same function).
+# trusts anyone (render.sh carries the same function); comment lines inside
+# the list, as every release up to v0.9.4 rendered them, are skipped.
 rendered_trusts_ranges() {  # <traefik.yml>
   [ -f "$1" ] || return 1
   awk '/^[[:space:]]*trustedIPs:[^*]*$/ { t = 1; next }
-       t { if ($0 ~ /^[[:space:]]*$/) next; exit ($0 ~ /^[[:space:]]*- /) ? 0 : 1 }
+       t { if ($0 ~ /^[[:space:]]*(#|$)/) next; exit ($0 ~ /^[[:space:]]*- /) ? 0 : 1 }
        END { if (!t) exit 1 }' "$1"
 }
 rendered_ranges() {  # <traefik.yml>: the entries of that list, one per line
   awk '/^[[:space:]]*trustedIPs:[^*]*$/ { t = 1; next }
-       t { if ($0 ~ /^[[:space:]]*$/) next
+       t { if ($0 ~ /^[[:space:]]*(#|$)/) next
            if ($0 ~ /^[[:space:]]*- /) { sub(/^[[:space:]]*- /, ""); gsub(/"/, ""); print; next }
            exit }' "$1"
 }
