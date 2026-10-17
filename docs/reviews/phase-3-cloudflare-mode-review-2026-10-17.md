@@ -433,3 +433,23 @@ security-relevant changes is due before merge.
 | F13 | recorded in the README as a measurement for D2, not settled | `a2a2432` |
 | F14 | recorded in the README ("What the mode cannot promise"), the CrowdSec README and the template comment | `a2a2432` |
 | F15 | the asymmetry is closed (F6); `.env.example` corrected with F1 | `2b1cda2` |
+
+### 6.1 What each correction is — and is not
+
+Three different things are easy to read as one. For every finding above:
+
+| | Corrected in the repository | Property held by an automated test (`scripts/ci`) | Still only provable on a host — **open, not verified** |
+|---|---|---|---|
+| F1 | the middlewares no longer name a custom header; the text says what the plugin and the entrypoint each do | `test_traefik_forwarded_proxy.py`: no `forwardedHeadersCustomName` in either mode, `validate.sh` refuses one, the cloudflare case carries the ranges and no `clientTrustedIPs` | that a direct client's forged `X-Forwarded-For` and `CF-Connecting-IP` are without effect on the bouncer, and that a request through Cloudflare is compared by the client — both over IPv4 and IPv6 (section 5, items 1 and 3). The reasoning rests on the Traefik and plugin sources at the pinned versions, read, not run |
+| F2 | `check`, `install-commands`, `diff` and `read_manifest` | `test_host_files.py`: the four cases | `check` and `overview.sh --host` on a real `none` host (section 5, item 6) |
+| F3 | the README places the rule on the forward hook and shows one table | none — the table is text; nftables syntax of the define file was parsed by the reviewer with `nft -c` in a container, the table itself was not | **the origin firewall is not verified on any host**: that Traefik becomes unreachable from a non-Cloudflare address, stays reachable from the VPN, and the CrowdSec tables survive the reload (section 5, item 5) |
+| F4 | the README states where the mode's trust ends | none | what a Worker or a second zone can deliver to this origin (section 5, item 4) |
+| F5 | the README and the standard state the requirement | none | the closed policies over IPv6 on both network shapes (section 5, item 2) |
+| F6 | guard and agreement checks keyed on the list's shape; empty value; list compared with the file; stray firewall file | `test_traefik_forwarded_proxy.py`: the inserted first entry, the empty value, the changed file, the stray file, both stale directions | none beyond those |
+| F7 | audit, decisions, pointers | `check-links.py` for the references | none |
+
+So, in one sentence each: **F1 is corrected and tested for the rendered
+configuration, and its security effect is derived from source, not measured on a
+host. The origin firewall of F3 is documented and parsed, and has not been run
+anywhere.** Neither may be called production-verified until the host checks of
+section 5 are run with the maintainer's release.
