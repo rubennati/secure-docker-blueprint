@@ -14,7 +14,10 @@
   validate.sh — also after the ranges file gained a new first entry, and in
   the shape every release up to v0.9.4 rendered (comment lines in the list)
 - validate.sh refuses a rendered list that differs from the ranges file, a
-  middleware with forwardedHeadersCustomName, and a firewall file in none mode
+  middleware with forwardedHeadersCustomName, and a firewall file in none mode;
+  it names the undeclared switch before any missing file
+- only the trustedIPs key under forwardedHeaders counts, a hand-written flow
+  list is read like the block list, and entries are compared by value
 - closed access policies carry no ipStrategy in either mode
 
 Run:
@@ -52,8 +55,11 @@ class ForwardedProxySwitch(unittest.TestCase):
         (tmp / "scripts" / "ci").mkdir(parents=True)
         shutil.copy(REPO / "scripts" / "ci" / "check-crowdsec-config.py", tmp / "scripts" / "ci" / "check-crowdsec-config.py")
 
-    def render(self, env):
+    def write_env(self, env):
         (self.root / ".env").write_text("".join(f'{k}="{v}"\n' for k, v in env.items()), encoding="utf-8")
+
+    def render(self, env):
+        self.write_env(env)
         return subprocess.run(["bash", str(self.root / "ops/scripts/render.sh")], capture_output=True, text=True)
 
     def validate(self):
@@ -230,6 +236,92 @@ class ForwardedProxySwitch(unittest.TestCase):
         self.assertEqual(self.static()["entryPoints"]["web"]["forwardedHeaders"]["trustedIPs"], RANGES)
         self.assertEqual(self.validate().returncode, 0)
 
+    def web_block(self):
+        """(start, end) line indexes of the web entrypoint's forwardedHeaders block."""
+        lines = (self.root / "config" / "traefik.yml").read_text(encoding="utf-8").splitlines(keepends=True)
+        start = next(i for i, l in enumerate(lines) if l.startswith("    forwardedHeaders:"))
+        end = start + 1
+        while end < len(lines) and (lines[end].startswith("      trustedIPs:") or lines[end].startswith("        ")):
+            end += 1
+        return lines, start, end
+
+    def rewrite_web_block(self, block):
+        lines, start, end = self.web_block()
+        (self.root / "config" / "traefik.yml").write_text("".join(lines[:start]) + block + "".join(lines[end:]), encoding="utf-8")
+
+    def test_a_flow_list_written_by_hand_is_read_like_the_block_list(self):
+        """The third review: `trustedIPs: ["…"]` on the key line was read as
+        "trusts nobody" and rendered over silently. Trusting flow list: refused
+        without the switch, valid with cloudflare. Empty flow list: none."""
+        self.render(dict(VALID_ENV, TRAEFIK_FORWARDED_PROXY="cloudflare"))
+        flow = ", ".join(f'"{r}"' for r in RANGES)
+        self.rewrite_web_block(f"    forwardedHeaders:\n      trustedIPs: &cloudflareTrustedIPs [{flow}]\n")
+        self.assertEqual(self.static()["entryPoints"]["websecure"]["forwardedHeaders"]["trustedIPs"], RANGES, "valid YAML, same list")
+        r = self.render(VALID_ENV)
+        self.assertNotEqual(r.returncode, 0, "rendered over a hand-written flow list without a declared mode")
+        self.assertIn("TRAEFIK_FORWARDED_PROXY is not", r.stdout + r.stderr)
+        v = self.validate()
+        self.assertNotEqual(v.returncode, 0)
+        self.assertIn("not set in .env", v.stdout + v.stderr)
+        self.write_env(dict(VALID_ENV, TRAEFIK_FORWARDED_PROXY="cloudflare"))
+        v = self.validate()
+        self.assertEqual(v.returncode, 0, v.stdout + v.stderr)
+        # the empty flow list is the none shape
+        self.render(dict(VALID_ENV, TRAEFIK_FORWARDED_PROXY="none"))
+        self.rewrite_web_block("    forwardedHeaders:\n      trustedIPs: &cloudflareTrustedIPs []\n")
+        self.assertEqual(self.validate().returncode, 0)
+        r = self.render(VALID_ENV)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+    def test_only_the_key_under_forwarded_headers_counts(self):
+        """A proxyProtocol.trustedIPs list written above forwardedHeaders must
+        not be the list the guard reads — in either direction."""
+        self.render(dict(VALID_ENV, TRAEFIK_FORWARDED_PROXY="none"))
+        lines, start, _ = self.web_block()
+        lines.insert(start, '    proxyProtocol:\n      trustedIPs:\n        - "10.0.0.0/8"\n')
+        (self.root / "config" / "traefik.yml").write_text("".join(lines), encoding="utf-8")
+        self.assertEqual(self.validate().returncode, 0, "a trusting proxyProtocol list is not the forwarded-headers list")
+        self.render(dict(VALID_ENV, TRAEFIK_FORWARDED_PROXY="cloudflare"))
+        lines, start, _ = self.web_block()
+        lines.insert(start, "    proxyProtocol:\n      trustedIPs: []\n")
+        (self.root / "config" / "traefik.yml").write_text("".join(lines), encoding="utf-8")
+        self.assertEqual(self.validate().returncode, 0, "an empty proxyProtocol list does not hide the trusting forwarded-headers list")
+        r = self.render(VALID_ENV)
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("TRAEFIK_FORWARDED_PROXY is not", r.stdout + r.stderr)
+
+    def test_hand_edited_entries_are_compared_by_value(self):
+        """A trailing comment, single quotes and CRLF endings on the rendered
+        entries are the operator's editor, not a changed ranges file."""
+        self.render(dict(VALID_ENV, TRAEFIK_FORWARDED_PROXY="cloudflare"))
+        lines, start, end = self.web_block()
+        entries = [i for i in range(start, end) if lines[i].lstrip().startswith('- "')]
+        lines[entries[0]] = lines[entries[0]].rstrip("\n") + "  # the edge\n"
+        lines[entries[1]] = lines[entries[1]].replace('"', "'")
+        for i in range(start, end):
+            lines[i] = lines[i].rstrip("\n") + "\r\n"
+        (self.root / "config" / "traefik.yml").write_text("".join(lines), encoding="utf-8")
+        v = self.validate()
+        self.assertEqual(v.returncode, 0, v.stdout + v.stderr)
+        # and a real difference is still named as the list, not the editor
+        f = self.root / "ops" / "cloudflare-ips.txt"
+        f.write_text(f.read_text(encoding="utf-8") + "198.51.100.0/24\n", encoding="utf-8")
+        v = self.validate()
+        self.assertNotEqual(v.returncode, 0)
+        self.assertIn("differs from ops/cloudflare-ips.txt", v.stdout + v.stderr)
+
+    def test_validate_names_the_switch_before_a_missing_file(self):
+        """A config/ from before v0.9.3 lacks servers-transports.yml; the
+        operator must read the migration message first, not a missing file."""
+        self.render(dict(VALID_ENV, TRAEFIK_FORWARDED_PROXY="cloudflare"))
+        (self.root / "config" / "dynamic" / "servers-transports.yml").unlink()
+        self.write_env(VALID_ENV)
+        v = self.validate()
+        self.assertNotEqual(v.returncode, 0)
+        out = v.stdout + v.stderr
+        self.assertIn("not set in .env", out)
+        self.assertNotIn("servers-transports", out)
+
     def test_empty_value_counts_as_undeclared(self):
         self.render(dict(VALID_ENV, TRAEFIK_FORWARDED_PROXY="cloudflare"))
         r = self.render(dict(VALID_ENV, TRAEFIK_FORWARDED_PROXY=""))
@@ -246,7 +338,7 @@ class ForwardedProxySwitch(unittest.TestCase):
         f.write_text(f.read_text(encoding="utf-8") + "198.51.100.0/24\n", encoding="utf-8")
         v = self.validate()
         self.assertNotEqual(v.returncode, 0)
-        self.assertIn("ranges file", v.stdout + v.stderr)
+        self.assertIn("differs from ops/cloudflare-ips.txt", v.stdout + v.stderr)
         self.assertIn("run render.sh", v.stdout + v.stderr)
 
     def test_validate_refuses_a_firewall_file_in_none_mode(self):

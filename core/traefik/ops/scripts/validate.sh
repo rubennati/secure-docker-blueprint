@@ -152,18 +152,38 @@ fi
 # it does not know and, after a render, a config/ that disagrees with .env or
 # with the ranges file. The shape of the rendered list decides whether it
 # trusts anyone (render.sh carries the same function); comment lines inside
-# the list, as every release up to v0.9.4 rendered them, are skipped.
+# the list, as every release up to v0.9.4 rendered them, are skipped; only the
+# key directly under forwardedHeaders: counts; a flow list on the key line is
+# read too. rendered_ranges prints the entries by value — quotes, a trailing
+# comment and a carriage return from a hand edit stripped — so the comparison
+# with the ranges file speaks of the list, not of the editor.
 rendered_trusts_ranges() {  # <traefik.yml>
   [ -f "$1" ] || return 1
-  awk '/^[[:space:]]*trustedIPs:[^*]*$/ { t = 1; next }
-       t { if ($0 ~ /^[[:space:]]*(#|$)/) next; exit ($0 ~ /^[[:space:]]*- /) ? 0 : 1 }
-       END { if (!t) exit 1 }' "$1"
+  awk '/^[[:space:]]*(#|$)/ { next }
+       /^[[:space:]]*trustedIPs:[^*]*$/ && prev ~ /^[[:space:]]*forwardedHeaders:[[:space:]]*$/ {
+         rest = $0; sub(/^[[:space:]]*trustedIPs:[[:space:]]*/, "", rest); sub(/^&[^[:space:]]+[[:space:]]*/, "", rest)
+         if (rest ~ /^\[/) { d = 1; exit (rest ~ /^\[[[:space:]]*\]/) ? 1 : 0 }
+         t = 1; next
+       }
+       t { d = 1; exit ($0 ~ /^[[:space:]]*-[[:space:]]/) ? 0 : 1 }
+       { prev = $0 }
+       END { if (!d && !t) exit 1 }' "$1"
 }
 rendered_ranges() {  # <traefik.yml>: the entries of that list, one per line
-  awk '/^[[:space:]]*trustedIPs:[^*]*$/ { t = 1; next }
-       t { if ($0 ~ /^[[:space:]]*(#|$)/) next
-           if ($0 ~ /^[[:space:]]*- /) { sub(/^[[:space:]]*- /, ""); gsub(/"/, ""); print; next }
-           exit }' "$1"
+  awk -v q="'" '/^[[:space:]]*(#|$)/ { next }
+       /^[[:space:]]*trustedIPs:[^*]*$/ && prev ~ /^[[:space:]]*forwardedHeaders:[[:space:]]*$/ {
+         rest = $0; sub(/^[[:space:]]*trustedIPs:[[:space:]]*/, "", rest); sub(/^&[^[:space:]]+[[:space:]]*/, "", rest)
+         if (rest ~ /^\[/) {
+           sub(/[[:space:]]*#.*$/, "", rest); gsub(/[][" \t\r]/, "", rest); gsub(q, "", rest)
+           n = split(rest, a, ","); for (i = 1; i <= n; i++) if (a[i] != "") print a[i]
+           exit
+         }
+         t = 1; next
+       }
+       t { if ($0 !~ /^[[:space:]]*-[[:space:]]/) exit
+           sub(/^[[:space:]]*-[[:space:]]*/, ""); sub(/[[:space:]]*#.*$/, ""); gsub(/["\r[:space:]]/, ""); gsub(q, "")
+           if ($0 != "") print; next }
+       { prev = $0 }' "$1"
 }
 proxy_declared=""
 [ -n "${TRAEFIK_FORWARDED_PROXY:-}" ] && proxy_declared=yes
@@ -267,6 +287,16 @@ if [ -f "${ROOT_DIR}/config/traefik.yml" ]; then
     exit 1
   fi
 
+  # Before any file is named: a configuration that trusts a list while .env
+  # does not say who may set the client address is the migration case, and
+  # its message has to be the first thing the operator reads — not a missing
+  # dynamic file from a later release (render.sh refuses for the same reason).
+  if [ -z "${proxy_declared}" ] && rendered_trusts_ranges "${ROOT_DIR}/config/traefik.yml"; then
+    echo "ERROR: config/traefik.yml trusts Cloudflare's ranges but TRAEFIK_FORWARDED_PROXY is not set in .env."
+    echo "       Set it to cloudflare if Cloudflare proxies this host's records, to none if not, then run render.sh."
+    exit 1
+  fi
+
   # Every file render.sh writes unconditionally has to exist; the two
   # conditional ones have to exist exactly when their switch is set.
   test -f "${ROOT_DIR}/config/haproxy.cfg.template" \
@@ -325,8 +355,8 @@ if [ -f "${ROOT_DIR}/config/traefik.yml" ]; then
       exit 1
     fi
     if [ "$(rendered_ranges "${ROOT_DIR}/config/traefik.yml" | sort)" != "$(grep -vE '^[[:space:]]*(#|$)' "${CF_LIST}" | sed 's/#.*//; s/[[:space:]]//g' | sort)" ]; then
-      echo "ERROR: config/traefik.yml trusts a different list than ops/cloudflare-ips.txt — the ranges file"
-      echo "       changed since the last render — run render.sh, then recreate the traefik container."
+      echo "ERROR: the list in config/traefik.yml differs from ops/cloudflare-ips.txt — the ranges file changed"
+      echo "       since the last render, or the block was edited by hand — run render.sh, then recreate the traefik container."
       exit 1
     fi
     if [ -f "${ROOT_DIR}/config/dynamic/crowdsec.yml" ] && ! grep -qsE '^[[:space:]]*forwardedHeadersTrustedIPs:' "${ROOT_DIR}/config/dynamic/crowdsec.yml"; then
@@ -335,12 +365,8 @@ if [ -f "${ROOT_DIR}/config/traefik.yml" ]; then
     fi
     test -f "${ROOT_DIR}/config/host/cloudflare-ranges.nft" || { echo "Missing config/host/cloudflare-ranges.nft (run render.sh)"; exit 1; }
   elif [ "${rendered_trusts_cf}" = true ]; then
-    if [ -z "${proxy_declared}" ]; then
-      echo "ERROR: config/traefik.yml trusts Cloudflare's ranges but TRAEFIK_FORWARDED_PROXY is not set in .env."
-      echo "       Set it to cloudflare if Cloudflare proxies this host's records, to none if not, then run render.sh."
-    else
-      echo "ERROR: TRAEFIK_FORWARDED_PROXY=none but config/traefik.yml still trusts Cloudflare's ranges — run render.sh."
-    fi
+    # the undeclared case was refused above, before the file checks
+    echo "ERROR: TRAEFIK_FORWARDED_PROXY=none but config/traefik.yml still trusts Cloudflare's ranges — run render.sh."
     exit 1
   elif grep -qsE '^[[:space:]]*forwardedHeadersTrustedIPs:' "${ROOT_DIR}/config/dynamic/crowdsec.yml" 2>/dev/null; then
     echo "ERROR: TRAEFIK_FORWARDED_PROXY=none but config/dynamic/crowdsec.yml carries a trusted-proxy list — run render.sh."
