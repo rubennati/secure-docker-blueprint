@@ -102,12 +102,21 @@ CLOUDFLARE_TRUSTED_IPS_YAML="${CLOUDFLARE_TRUSTED_IPS_YAML%$'\n'}"
 # blind the day the ranges file changes its first entry. Comment lines are
 # skipped: every release up to v0.9.4 rendered `# Cloudflare IPv4` right after
 # the key, and a guard that read that line as "nobody" was blind to exactly
-# the installations it exists for.
+# the installations it exists for. Only the key directly under
+# forwardedHeaders: counts (proxyProtocol has a trustedIPs of its own), and a
+# flow list on the key line — `["…"]` trusts, `[]` nobody — is read too, so a
+# hand-rewritten block cannot turn into a silent `none`.
 rendered_trusts_ranges() {  # <traefik.yml>
   [ -f "$1" ] || return 1
-  awk '/^[[:space:]]*trustedIPs:[^*]*$/ { t = 1; next }
-       t { if ($0 ~ /^[[:space:]]*(#|$)/) next; exit ($0 ~ /^[[:space:]]*- /) ? 0 : 1 }
-       END { if (!t) exit 1 }' "$1"
+  awk '/^[[:space:]]*(#|$)/ { next }
+       /^[[:space:]]*trustedIPs:[^*]*$/ && prev ~ /^[[:space:]]*forwardedHeaders:[[:space:]]*$/ {
+         rest = $0; sub(/^[[:space:]]*trustedIPs:[[:space:]]*/, "", rest); sub(/^&[^[:space:]]+[[:space:]]*/, "", rest)
+         if (rest ~ /^\[/) { d = 1; exit (rest ~ /^\[[[:space:]]*\]/) ? 1 : 0 }
+         t = 1; next
+       }
+       t { d = 1; exit ($0 ~ /^[[:space:]]*-[[:space:]]/) ? 0 : 1 }
+       { prev = $0 }
+       END { if (!d && !t) exit 1 }' "$1"
 }
 
 # ---------------------------------------------------------------------------
