@@ -86,6 +86,25 @@ Origin protection documented, so Cloudflare cannot be bypassed. Proof with and w
 Cloudflare, over IPv4 and IPv6, on real request paths, before the implementation counts
 as done.
 
+**Addendum 2026-10-17 — as shipped (Phase 3, branch `feature/cloudflare-mode`).** The
+proposal document lives on branch `feature/traefik-middleware-proposal`, which is not
+merged. Two parts of the decision above did not survive implementation. The limits do
+not use `requestHeaderName: X-Real-Ip`: Cloudflare's Transform Rules cannot modify
+`x-real-ip` (or `x-forwarded-for`, `true-client-ip`, `cf-connecting-ip`), and a
+header-reading strategy leaves a direct client without an address — `ipAllowList`
+refuses it, `rateLimit` shares one bucket. The limits therefore stay on the connecting
+address, per edge at the origin, and the per-client limit of a public route is a
+Cloudflare rate-limiting rule at the edge. And the CrowdSec middlewares keep the
+plugin's default header `X-Forwarded-For` with `forwardedHeadersTrustedIPs`: the first
+cut set `forwardedHeadersCustomName: CF-Connecting-IP`, which the independent review
+(`docs/reviews/phase-3-cloudflare-mode-review-2026-10-17.md`, F1) showed the plugin
+reads from any sender, since Traefik deletes only `X-Forwarded-*`. The condition "no
+client-supplied address header taken on trust" is met by the entrypoint deleting
+`X-Forwarded-For` from every sender outside the ranges. Trust is bounded by
+Cloudflare's network, not by this zone (Workers, other zones, WARP clients); binding it
+to the zone — Authenticated Origin Pulls or a Tunnel — is a follow-up. The proof over
+IPv4 and IPv6 on a host is open.
+
 ---
 
 ## 2026-10-15 · Authentik is the maintained forward-auth reference; Authelia and Keycloak are available applications

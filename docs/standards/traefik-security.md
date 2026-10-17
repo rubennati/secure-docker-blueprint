@@ -76,19 +76,37 @@ Which senders are trusted is `TRAEFIK_FORWARDED_PROXY` in `core/traefik/.env`:
 | Mode | Entrypoints trust | CrowdSec bouncer compares | Rendered besides |
 |---|---|---|---|
 | `none` (default) | nobody — the list renders empty | the connecting address | — |
-| `cloudflare` | the ranges of `ops/cloudflare-ips.txt`, compared with cloudflare.com weekly | `CF-Connecting-IP`, and only on a request from one of those ranges (`forwardedHeadersTrustedIPs`, `forwardedHeadersCustomName`) | `config/host/cloudflare-ranges.nft`, the same ranges as nftables defines for the host firewall |
+| `cloudflare` | the ranges of `ops/cloudflare-ips.txt`, compared with cloudflare.com weekly | the last `X-Forwarded-For` entry outside those ranges (`forwardedHeadersTrustedIPs`): the client Cloudflare appended; a direct client by its connection, because the entrypoint deleted its header | `config/host/cloudflare-ranges.nft`, the same ranges as nftables defines for a rule on the forward hook |
+
+The bouncer plugin never checks who sent its header: it takes the configured
+header from any request, walks it from the right past the trusted ranges and
+falls back to the connection only when nothing is left. What makes the result
+trustworthy is the entrypoint, which deletes `X-Forwarded-For` from every
+sender outside `trustedIPs` — so the plugin's default header is the only one
+that can be used, and `forwardedHeadersCustomName` (`CF-Connecting-IP`,
+`True-Client-IP`) must never be set: Traefik deletes only its own
+`X-Forwarded-*` set and `X-Real-Ip`, and any other header reaches the
+middleware from any client. `validate.sh` refuses a rendered middleware that
+names one. The same holds for an application: one that reads
+`CF-Connecting-IP`, `True-Client-IP` or `Forwarded` is on its own in both
+modes, since nothing deletes those from a direct client.
 
 The closed access policies evaluate the connecting address in both modes —
-their clients connect directly, and a proxied request to such a host is refused.
-The rate limits count per edge address at the origin behind Cloudflare: a
-`sourceCriterion` that reads a header leaves a direct client with no address,
-so the per-client limit of a public route is a Cloudflare rate-limiting rule by
-IP at the edge. What Cloudflare has to be set to, the origin firewall and the
-per-application consequences (`X-Forwarded-For` carries two hops, `X-Real-Ip`
-is the edge) are in `core/traefik/README.md`, "Behind Cloudflare". `render.sh`
-refuses to render over a configuration that trusts the ranges while `.env` does
-not declare the mode, so an installation from before the switch decides rather
-than loses its addresses.
+their clients connect directly, and a proxied request to such a host is refused
+over IPv4; over IPv6 on an IPv4-only `proxy-public` the edge arrives as the
+Docker gateway and `acc-local` admits it (README, "IPv6 between Cloudflare and
+the origin"). The rate limits count per edge address at the origin behind
+Cloudflare: a `sourceCriterion` that reads a header puts every direct client
+into one shared bucket, so the per-client limit of a public route is a
+Cloudflare rate-limiting rule by IP at the edge. What Cloudflare has to be set
+to, the origin firewall on the forward hook, where the mode's trust ends
+(Workers, other zones, WARP clients) and the per-application consequences
+(`X-Forwarded-For` carries two hops, `X-Real-Ip` is the edge) are in
+`core/traefik/README.md`, "Behind Cloudflare". `render.sh` refuses to render
+over a configuration whose list trusts anyone while `.env` does not declare
+the mode — absent or empty — so an installation from before the switch decides
+rather than loses its addresses; `validate.sh` refuses a rendered list that
+differs from the ranges file.
 
 **Never set `forwardedHeaders.insecure=true`.** It keeps the forwarded headers
 from every sender — the reference: *"We recommend to use this option only for
@@ -99,7 +117,10 @@ reads as its address, and any middleware that evaluates the header through an
 **IPv6 note:** Tailscale always gives a client an IPv6 address. If
 `proxy-public` is IPv4-only, that address is lost before Traefik ever
 sees it — no header carries it on this path, so Traefik sees the Docker
-gateway address instead, and `acc-tailscale` blocks it. See
+gateway address instead, and `acc-tailscale` blocks it. The same loss
+hits Cloudflare's proxy connecting to an `AAAA` record: the gateway is
+not a trusted sender, so the headers are deleted, and `acc-local` admits
+the gateway. See
 [`core/traefik/docs/ipv6-dual-stack.md`](../../core/traefik/docs/ipv6-dual-stack.md)
 for the full explanation, the dual-stack network setup, and the
 migration path for existing IPv4-only installs. Allowlisting the gateway

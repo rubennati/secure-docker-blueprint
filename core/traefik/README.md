@@ -96,7 +96,7 @@ entrypoint list is static configuration.
 
 `proxy-public` (the network Traefik and every routed app share) is **IPv4-only by default** — zero change for existing installs. Tailscale always hands out an IPv6 address to every client; if a Tailscale client connects over IPv6 while `proxy-public` is IPv4-only, Traefik loses the real client IP (access logs show `ClientHost=172.x.x.x`, the Docker gateway, instead of the real Tailscale address) and `acc-tailscale`'s `ipAllowList` blocks it. See [`docs/bugfixes/traefik-ipv6-dualstack-2026-06-19.md`](../../docs/bugfixes/traefik-ipv6-dualstack-2026-06-19.md) for the original incident.
 
-Cloudflare-fronted public traffic is unaffected by the network's IP family: the client address reaches the access log and the application through `X-Forwarded-For`, trusted from Cloudflare's published ranges in `traefik.yml.tmpl`. The access policies and rate limits evaluate the connecting address on every path — behind Cloudflare that is the edge address; see [Trusted Proxy Headers](../../docs/standards/traefik-security.md#trusted-proxy-headers-traefikyml--forwardedheaders).
+Cloudflare-fronted public traffic is affected too, in `cloudflare` mode: Cloudflare connects over IPv6 to an `AAAA` origin record, and on an IPv4-only `proxy-public` that connection arrives from the Docker gateway, which the entrypoint does not trust — see "Behind Cloudflare", "IPv6 between Cloudflare and the origin". The access policies and rate limits evaluate the connecting address on every path — behind Cloudflare that is the edge address; see [Trusted Proxy Headers](../../docs/standards/traefik-security.md#trusted-proxy-headers-traefikyml--forwardedheaders).
 
 **Recommended for new deployments — dual-stack from day one:**
 
@@ -631,52 +631,121 @@ client. `cloudflare` is for a host whose public records Cloudflare proxies
 | | `none` | `cloudflare` |
 |---|---|---|
 | Entrypoints | trust nobody | trust Cloudflare's published ranges — `ops/cloudflare-ips.txt`, compared with cloudflare.com weekly |
-| Access log, CrowdSec detection | `ClientHost` = connecting address | `ClientHost` = the client Cloudflare appends to `X-Forwarded-For` — also when the client sent a forged header first, because Cloudflare appends the real one behind it |
-| CrowdSec bouncer | compares the connecting address | compares `CF-Connecting-IP`, and only when the request arrives from a Cloudflare address |
-| `acc-local`, `acc-tailscale`, `acc-private` | connecting address | connecting address, unchanged — their clients connect directly; a request to such a host through Cloudflare arrives from an edge address and is refused |
+| Access log, CrowdSec detection | `ClientHost` = connecting address | `ClientHost` = the whole `X-Forwarded-For` value Cloudflare sent: `client`, or `forged, client` when the client sent a header first, because Cloudflare appends the real one behind it. CrowdSec's Traefik parser takes the last element; anything else that reads the log sees the list |
+| CrowdSec bouncer | compares the connecting address — no header reaches it | compares the last `X-Forwarded-For` entry outside the ranges, the client Cloudflare appended. A direct client is compared by its connection, because the entrypoint deleted its header. The plugin keeps its default header: `CF-Connecting-IP` is not used, because the plugin reads whatever header it is given from any sender, and Traefik deletes only `X-Forwarded-*` and `X-Real-Ip` |
+| `acc-local`, `acc-tailscale`, `acc-private` | connecting address | connecting address, unchanged — their clients connect directly; a request to such a host through Cloudflare arrives from an edge address and is refused. Over IPv6 on an IPv4-only `proxy-public` it is not — "IPv6 between Cloudflare and the origin" below |
 | Rate limits (`rl-*`) | per client | **per edge address** at the origin; per client at the edge, through a Cloudflare rate-limiting rule by IP on the public host names (one rule on the Free plan, two on Pro) |
-| The application | `X-Forwarded-For` and `X-Real-Ip` = client | `X-Forwarded-For` = `client, edge` (two hops), `X-Real-Ip` = edge, `CF-Connecting-IP` = client |
+| The application | `X-Forwarded-For` and `X-Real-Ip` = client | from Cloudflare: `X-Forwarded-For` = `client, edge` (two hops), `X-Real-Ip` = edge, `CF-Connecting-IP` = client. From a direct client: `X-Forwarded-For` and `X-Real-Ip` = that client, `CF-Connecting-IP` = whatever it sent |
 
 Traefik's `ipAllowList` and `rateLimit` have no way to read a forwarded address
 from Cloudflare and the connecting address from everyone else in one
-definition — a strategy that reads the header leaves a direct client with no
-address at all. That is why the closed policies stay on the connecting address
-and the per-client limit of a public route moves to the edge.
+definition. A strategy that reads the header leaves a direct client with no
+address: `ipAllowList` then refuses it, `rateLimit` puts every direct client
+into one shared bucket. That is why the closed policies stay on the connecting
+address and the per-client limit of a public route moves to the edge. Whether
+a shared bucket for direct clients — LAN and VPN only, behind the origin
+firewall — would serve better than per-edge buckets for the whole Internet is
+a measurement, not settled here (D2 in the core audit).
 
 **What Cloudflare has to be set to**
 
 - Public host names proxied; VPN-only and LAN-only host names DNS-only, or
   resolved by split DNS.
-- **Pseudo IPv4: Off.** With it on, Cloudflare replaces `CF-Connecting-IP` and
-  `X-Forwarded-For` with a pseudo-IPv4 address for IPv6 clients.
+- **Pseudo IPv4: Off.** Its *Overwrite headers* setting replaces
+  `CF-Connecting-IP` and `X-Forwarded-For` with a pseudo-IPv4 address for IPv6
+  clients; *Add header* adds `Cf-Pseudo-IPv4` and leaves both alone. Off is
+  the setting this mode is written for.
 - A rate-limiting rule by IP for the public host names, with the budget a
   first load needs (`docs/standards/traefik-security.md`, "Choosing the
   level").
+- Origin records: `A` only, or `proxy-public` dual-stack — next paragraph.
 - Certificates: DNS-01 or HTTP-01. TLS-ALPN-01 cannot work behind the proxy
   (above, Path C).
 
-**Protect the origin** — otherwise a client that connects to the host directly
-bypasses everything Cloudflare does, and a header it sends is not trusted
-either, which is the only reason that bypass is not also a spoof:
+**IPv6 between Cloudflare and the origin.** Cloudflare connects to the origin
+over IPv6 whenever the record it resolves is an `AAAA`. On an IPv4-only
+`proxy-public` such a connection reaches Traefik from the Docker gateway
+("IPv4-only vs. Dual-Stack Networking" above). The gateway is in none of the
+trusted ranges, so the entrypoint deletes Cloudflare's headers; `ClientHost`,
+`X-Real-Ip` and the bouncer's address become the gateway; every rate limit
+shares one bucket; and `acc-local` and `acc-private` **admit** the gateway,
+which lies in `172.16.0.0/12` — a public visitor reaches a LAN-only route. So
+in `cloudflare` mode one of two must hold: `proxy-public` is dual-stack (the
+overlay above), or the origin has `A` records only. Neither path is verified
+on a host yet.
+
+**Protect the origin.** Without this a client that connects to the host
+directly bypasses everything Cloudflare does — the edge rule, Cloudflare's own
+protections — and sends `CF-Connecting-IP` to any application that reads it.
+The rendered file carries the ranges as nftables defines:
 
 ```bash
-bash ops/scripts/render.sh                      # writes config/host/cloudflare-ranges.nft
+bash ops/scripts/render.sh                            # writes config/host/cloudflare-ranges.nft
 scripts/host-files.sh install-commands core/traefik   # prints the install line for it
 ```
 
-The file defines `cloudflare_v4` and `cloudflare_v6`; a host firewall rule
-admits 80 and 443 from those sets and from the VPN and LAN ranges, and from
-nowhere else. The sets follow the file: after a change to
-`ops/cloudflare-ips.txt`, render, reinstall, reload nftables. Authenticated
-Origin Pulls — Cloudflare presenting a client certificate the proxy requires —
-is the stronger form; it needs a TLS option with `clientAuth` on the public
-routers and is not shipped here yet.
+The rule that uses them goes on the **forward** hook. Traefik's ports are
+published by Docker, and a published port is DNAT'd and forwarded, never
+delivered to the host: a rule on `input` filters nothing of it and leaves the
+origin open while looking closed — measured on a host, in
+[`core/crowdsec/docs/firewall-bouncer.md`](../crowdsec/docs/firewall-bouncer.md),
+"Why Docker traffic needs FORWARD, not INPUT". One table of its own, loaded
+with `nft -f` and never through a ruleset flush (the same document, "Recovery":
+Docker and the VPN own live state). Public interface named `eth0` — substitute
+the real one; the define file is only visible inside the run that includes it:
+
+```text
+# /etc/nftables.d/origin-cloudflare.nft — load: sudo nft -f /etc/nftables.d/origin-cloudflare.nft
+include "/etc/nftables.d/cloudflare-ranges.nft"
+
+destroy table inet origin
+table inet origin {
+  chain public-forward {
+    type filter hook forward priority filter - 20; policy accept;
+    # Cloudflare's proxy, both families, to the published web ports
+    iifname "eth0" ct original ip  saddr $cloudflare_v4 tcp dport { 80, 443 } accept
+    iifname "eth0" ct original ip6 saddr $cloudflare_v6 tcp dport { 80, 443 } accept
+    # everything else on the public interface to those ports — including
+    # UDP 443, which Cloudflare does not use towards an origin
+    iifname "eth0" tcp dport { 80, 443 } drop
+    iifname "eth0" udp dport 443 drop
+  }
+}
+```
+
+VPN and LAN clients arrive on other interfaces and are not touched. A LAN that
+shares the public interface needs its ranges admitted in the same chain,
+before the drop. For boot, an `include` of this file from `/etc/nftables.conf`
+is enough — the flush there runs before Docker starts; on a running host never
+`systemctl restart nftables`, reload this file. After a change to
+`ops/cloudflare-ips.txt`: render, reinstall the define file, `nft -f` this one.
+`destroy` needs nftables 1.0.8 or later, as the CrowdSec chains do. The rule is
+written against the firewall document's measured architecture and has not been
+run on a host itself.
+
+**What the mode cannot promise.** The trusted ranges are Cloudflare's network,
+not this zone. Anything that leaves Cloudflare's edge arrives from them and
+passes the firewall above: a Worker, which towards an origin outside its own
+zone may set `CF-Connecting-IP` and `x-real-ip` as it likes (Cloudflare's
+header reference says so), and another tenant's zone pointed at this origin
+address, which carries none of this zone's edge rules — the per-client limit at
+the edge is advisory against it. What binds trust to this zone is
+Authenticated Origin Pulls (Cloudflare presenting a client certificate, a TLS
+option with `clientAuth` on the public routers) or a Tunnel; neither is shipped
+here. A client whose own address lies inside the ranges — Cloudflare WARP,
+Cloudflare's egress — is compared by the bouncer as the edge, because the
+plugin skips every trusted entry, and could place an entry before it; a
+decision against such a client is a host-firewall matter, where the bouncer's
+allowlist holds (`core/crowdsec/README.md`, step 5). None of this is a
+guarantee the mode gives; it is where the mode ends.
 
 **Per application**
 
 - A stack that reads `X-Real-Ip` for the client — `apps/vaultwarden`'s
   `IP_HEADER` — reads the edge behind Cloudflare; set it to `CF-Connecting-IP`
-  there.
+  there. That header is honest from Cloudflare and unsanitised from a direct
+  client, so Vaultwarden's own lockouts count against whatever a LAN or VPN
+  client sends; the origin firewall keeps everyone else out.
 - A stack that trusts one proxy hop in `X-Forwarded-For` (n8n, HeyForm) needs
   two.
 - A stack with a trusted-proxy subnet keeps it: the proxy it sees is still
@@ -685,16 +754,37 @@ routers and is not shipped here yet.
 **Switching an existing installation.** Before this switch, every rendered
 configuration trusted Cloudflare's ranges whether Cloudflare was in front or
 not. `render.sh` refuses to render over such a `config/` until `.env` says
-`cloudflare` or `none`, because rendering `none` over an installation behind
-Cloudflare would make every layer see edge addresses — and CrowdSec would ban
-them. Decide, render, then `docker compose up -d --force-recreate traefik`:
-the entrypoint list is static configuration.
+`cloudflare` or `none` — an empty value counts as not set — because rendering
+`none` over an installation behind Cloudflare would make every layer see edge
+addresses, and CrowdSec would ban them. The refusal is keyed on the shape of
+the rendered list, so it holds after the ranges file changes. Decide, render,
+then `docker compose up -d --force-recreate traefik`: the entrypoint list is
+static configuration. `validate.sh` afterwards refuses a rendered list that
+differs from the file — the weekly workflow changes the file, the host has to
+render again.
 
-**Not verified on a host:** the address at every hop through Cloudflare, IPv4
-and IPv6; a closed route refusing a proxied request; a manual CrowdSec
-decision enforced by the bouncer through Cloudflare; forged headers from inside
-Cloudflare's ranges in `none` mode. The plan is
-`docs/host-verification-phase-2.md`'s shape, with a Phase 3 section to follow.
+**Not verified on a host** — kept open, never marked passed here:
+
+1. The address at every hop through Cloudflare, IPv4 and IPv6: `whoami` behind
+   `acc-public`, the access log's `ClientHost` (last element), the bouncer's
+   compared address (a manual decision answered `403`), Vaultwarden's lockout
+   address.
+2. A closed route refusing a proxied request over IPv4 and over IPv6, with
+   `proxy-public` dual-stack and with it IPv4-only.
+3. Forged `CF-Connecting-IP` and `X-Forwarded-For` from a direct client in both
+   modes, with the origin firewall in place and absent.
+4. A Worker subrequest and a second zone pointing at the origin — what arrives,
+   what the bouncer compares, whether `Host` can be made to match a router.
+5. The forward-hook table above on a running Docker host: Traefik unreachable
+   from a non-Cloudflare address, reachable from the VPN, the CrowdSec tables
+   intact after the reload.
+6. `scripts/host-files.sh check` and `overview.sh --host` on a `none`-mode
+   host.
+7. The parser version on the host carries the last-element split
+   (`traefik-logs` from the hub).
+
+The plan is `docs/host-verification-phase-2.md`'s shape, with a Phase 3
+section to follow.
 
 ## Incident Quickmoves
 

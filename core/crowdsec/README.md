@@ -109,15 +109,20 @@ remediation for everything inside it, and the deployment keeps reporting healthy
 while doing so. Upstream's own note suggests it for a LAN or VPN range, which is
 the shape most likely to be pasted in without the consequence being obvious.
 
-This blueprint never sets `clientTrustedIPs`. It sets `forwardedHeadersTrustedIPs`
-in one case: with `TRAEFIK_FORWARDED_PROXY=cloudflare` in `core/traefik/.env`,
-`render.sh` writes Cloudflare's published ranges into both middlewares together
-with `forwardedHeadersCustomName: CF-Connecting-IP`, so the bouncer compares the
-client Cloudflare names — and only on a request that arrives from one of those
-ranges (`core/traefik/README.md`, "Behind Cloudflare"). If a source has to be
-exempt, prefer a CrowdSec AllowList, which is evaluated by the engine and is
-visible in `cscli` output, over an exemption that exists only in proxy
-configuration — README step 5 is that AllowList.
+This blueprint never sets `clientTrustedIPs` and never
+`forwardedHeadersCustomName`. It sets `forwardedHeadersTrustedIPs` in one case:
+with `TRAEFIK_FORWARDED_PROXY=cloudflare` in `core/traefik/.env`, `render.sh`
+writes Cloudflare's published ranges into both middlewares. The plugin then
+compares the last `X-Forwarded-For` entry outside those ranges — the client
+Cloudflare appended — and a direct client by its connection, because Traefik's
+entrypoint deleted that header from a sender outside the ranges. The plugin
+itself never checks who sent the header; a custom header such as
+`CF-Connecting-IP` would be read from any client, since Traefik deletes only
+`X-Forwarded-*`. A client whose own address lies inside the ranges (Cloudflare
+WARP) is compared as the edge (`core/traefik/README.md`, "Behind Cloudflare").
+If a source has to be exempt, prefer a CrowdSec AllowList, which is evaluated by
+the engine and is visible in `cscli` output, over an exemption that exists only
+in proxy configuration — README step 5 is that AllowList.
 
 ### Choosing
 
