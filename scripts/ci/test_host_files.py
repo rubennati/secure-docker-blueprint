@@ -119,6 +119,58 @@ class HostFiles(unittest.TestCase):
         self.assertIn("not installed  demo: ops/unit.service", out)
         self.assertNotIn("s3cret", out)
 
+    # ----- an optional file the stack renders itself, only in some mode -------
+    MODE_FILE = f"config/host/ranges.nft   /etc/nftables.d/ranges.nft   0644  {ME}  exact  optional\n"
+
+    def test_optional_file_the_stack_did_not_produce_is_a_state_not_a_problem(self):
+        self.s.manifest(STANDARD + self.MODE_FILE)
+        rc, out = self.s.run("render", "core/demo")
+        self.assertEqual(rc, 0, out)
+        self.assertIn("not rendered by the stack", out)
+        self.install("/etc/logrotate.d/demo")
+        self.install("/etc/demo.env", "CONTAINER_NAME=x\nPING_URL=y\nCONFIRM_AFTER=3\n", 0o600)
+        self.install("/root/.demo-secret", "x\n", 0o600)
+        rc, out = self.s.run("check", "core/demo")
+        self.assertEqual(rc, 0, out)
+        self.assertIn("not produced   demo: config/host/ranges.nft -> /etc/nftables.d/ranges.nft  (optional; the stack renders it only in the mode that needs it)", out)
+        self.assertNotIn("not rendered", out)
+        rc, out = self.s.run("install-commands", "core/demo")
+        self.assertEqual(rc, 0, out)
+        self.assertIn("# /etc/nftables.d/ranges.nft: not produced", out)
+        self.assertNotIn("install -m 0644", out.split("ranges.nft")[0][-80:])
+        rc, out = self.s.run("diff", "core/demo", "/etc/nftables.d/ranges.nft")
+        self.assertEqual(rc, 0, out)
+        self.assertIn("not produced", out)
+
+    def test_optional_file_the_stack_did_produce_is_checked_like_any_other(self):
+        self.s.manifest(STANDARD + self.MODE_FILE)
+        (self.s.stack / "config" / "host").mkdir(parents=True, exist_ok=True)
+        (self.s.stack / "config" / "host" / "ranges.nft").write_text("define v4 = { 192.0.2.0/24 }\n", encoding="utf-8")
+        self.s.run("render", "core/demo")
+        rc, out = self.s.run("check", "core/demo")
+        self.assertIn("not installed  demo: config/host/ranges.nft", out)
+        (self.s.host / "etc" / "nftables.d").mkdir(parents=True, exist_ok=True)
+        self.install("/etc/nftables.d/ranges.nft", "define v4 = { 198.51.100.0/24 }\n")
+        rc, out = self.s.run("check", "core/demo")
+        self.assertEqual(rc, 1)
+        self.assertIn("differs        demo: config/host/ranges.nft", out)
+
+    def test_installed_copy_of_a_file_the_stack_no_longer_produces_is_named(self):
+        self.s.manifest(STANDARD + self.MODE_FILE)
+        self.s.run("render", "core/demo")
+        (self.s.host / "etc" / "nftables.d").mkdir(parents=True, exist_ok=True)
+        self.install("/etc/nftables.d/ranges.nft", "define v4 = { 192.0.2.0/24 }\n")
+        rc, out = self.s.run("check", "core/demo")
+        self.assertIn("not produced   demo: config/host/ranges.nft -> /etc/nftables.d/ranges.nft  (optional; the stack did not render it in this mode, yet it is installed", out)
+
+    def test_required_source_under_config_host_must_exist(self):
+        self.s.manifest(STANDARD + f"config/host/ranges.nft   /etc/nftables.d/ranges.nft   0644  {ME}  exact  required\n")
+        rc, out = self.s.run("check", "core/demo")
+        self.assertEqual(rc, 1)
+        self.assertIn("source config/host/ranges.nft does not exist", out)
+        rc, out = self.s.run("render", "core/demo")
+        self.assertEqual(rc, 1)
+
     def test_exact_content_difference_is_reported_with_both_paths(self):
         self.s.run("render", "core/demo")
         self.install("/etc/logrotate.d/demo", "/old/path/x.log {\n    daily\n    postrotate\n    docker kill -s USR1 x\n    endscript\n}\n")

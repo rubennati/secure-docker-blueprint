@@ -81,9 +81,12 @@ read_manifest() {
     case "${cmp}" in exact|derived|presence) ;; *) echo "ERROR: ${manifest} line ${line_no}: compare must be exact, derived or presence (got '${cmp}')" >&2; return 1 ;; esac
     case "${req}" in required|optional) ;; *) echo "ERROR: ${manifest} line ${line_no}: last field must be required or optional (got '${req}')" >&2; return 1 ;; esac
     case "${tgt}" in /*) ;; *) echo "ERROR: ${manifest} line ${line_no}: target must be an absolute host path (got '${tgt}')" >&2; return 1 ;; esac
-    # A source under config/host/ is produced by the stack's own render (for
-    # example core/traefik's firewall ranges) and may be absent until it runs.
-    if [ "${cmp}" != presence ] && [ ! -f "${dir}/${src}" ] && [ "${src#config/host/}" = "${src}" ]; then
+    # An optional source under config/host/ is produced by the stack's own
+    # render, in the mode that needs it (core/traefik's firewall ranges), and
+    # is absent otherwise. Only that combination is exempt from existing: a
+    # required source must be in the checkout, so a wrong path is caught here.
+    if [ "${cmp}" != presence ] && [ ! -f "${dir}/${src}" ] \
+       && { [ "${src#config/host/}" = "${src}" ] || [ "${req}" != optional ]; }; then
       echo "ERROR: ${manifest} line ${line_no}: source ${src} does not exist in $(basename "${dir}")" >&2
       return 1
     fi
@@ -171,6 +174,8 @@ derived_state() {
 #   adapted        derived: every setting the example names is present —
 #                  values are the operator's
 #   not installed  an optional file that is absent
+#   not produced   an optional file the stack's own render writes only in
+#                  the mode that needs it, and did not write in this one
 #   missing        a required file that is absent                  -> error
 #   differs        content, mode or owner differ from the manifest -> error
 #   unreadable     the installed file cannot be read as this user  -> error
@@ -194,6 +199,16 @@ check_stack() {
   while IFS=$'\t' read -r src tgt mode owner cmp req; do
     installed="${PREFIX}${tgt}"
     detail=""
+    # An optional file the stack renders itself, absent in this mode: nothing
+    # to compare and nothing wrong. (read_manifest refuses a required one.)
+    if [ "${src#config/host/}" != "${src}" ] && [ ! -f "${dir}/${src}" ]; then
+      if [ -e "${installed}" ]; then
+        report "not produced" "${name}" "${src}" "${tgt}" "optional; the stack did not render it in this mode, yet it is installed — remove it from the host if the mode is final"
+      else
+        report "not produced" "${name}" "${src}" "${tgt}" "optional; the stack renders it only in the mode that needs it"
+      fi
+      continue
+    fi
     # A file that was never rendered cannot be compared; say so before anything
     # about the host, so "missing" always means "rendered, and absent there".
     if [ "${cmp}" != presence ] && [ ! -f "$(rendered_path "${dir}" "${tgt}")" ]; then
@@ -272,6 +287,9 @@ diff_file() {
         fi ;;
     esac
     rendered="$(rendered_path "${dir}" "${tgt}")"
+    if [ "${src#config/host/}" != "${src}" ] && [ ! -f "${rendered}" ]; then
+      echo "not produced — the stack renders ${src} only in the mode that needs it"; return 0
+    fi
     [ -f "${rendered}" ] || { echo "not rendered — run: scripts/host-files.sh render $(basename "${dir}")"; return 1; }
     [ -e "${installed}" ] || { echo "${tgt} is not installed"; return 1; }
     diff -u "${installed}" "${rendered}" && echo "identical"
@@ -291,6 +309,10 @@ install_commands() {
   while IFS=$'\t' read -r src tgt mode owner cmp req; do
     user="${owner%%:*}"; group="${owner#*:}"
     rendered="$(rendered_path "${dir}" "${tgt}")"
+    if [ "${src#config/host/}" != "${src}" ] && [ ! -f "${rendered}" ]; then
+      echo "# ${tgt}: not produced — the stack renders ${src} only in the mode that needs it; nothing to install"
+      continue
+    fi
     case "${cmp}" in
       presence)
         echo "# ${tgt}: a secret the operator creates (see ${name}/README.md); expected mode ${mode}, owner ${owner}" ;;
