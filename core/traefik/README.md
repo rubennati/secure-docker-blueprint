@@ -663,16 +663,18 @@ a measurement, not settled here (D2 in the core audit).
   (above, Path C).
 
 **IPv6 between Cloudflare and the origin.** Cloudflare connects to the origin
-over IPv6 whenever the record it resolves is an `AAAA`. On an IPv4-only
-`proxy-public` such a connection reaches Traefik from the Docker gateway
-("IPv4-only vs. Dual-Stack Networking" above). The gateway is in none of the
+over IPv6 when only an `AAAA` record exists, and possibly when both exist —
+Cloudflare documents a preference for IPv4 there, not a guarantee. On an
+IPv4-only `proxy-public` such a connection reaches Traefik from the Docker
+gateway ("IPv4-only vs. Dual-Stack Networking" above). The gateway is in none of the
 trusted ranges, so the entrypoint deletes Cloudflare's headers; `ClientHost`,
 `X-Real-Ip` and the bouncer's address become the gateway; every rate limit
 shares one bucket; and `acc-local` and `acc-private` **admit** the gateway,
 which lies in `172.16.0.0/12` — a public visitor reaches a LAN-only route. So
 in `cloudflare` mode one of two must hold: `proxy-public` is dual-stack (the
-overlay above), or the origin has `A` records only. Neither path is verified
-on a host yet.
+overlay above), or the origin has `A` records only. `A`-only bounds
+Cloudflare's path and nothing else — a direct IPv6 client takes the same
+gateway path, next section. Neither shape is verified on a host yet.
 
 **Protect the origin.** Without this a client that connects to the host
 directly bypasses everything Cloudflare does — the edge rule, Cloudflare's own
@@ -702,7 +704,8 @@ destroy table inet origin
 table inet origin {
   chain public-forward {
     type filter hook forward priority filter - 20; policy accept;
-    # Cloudflare's proxy, both families, to the published web ports
+    # Cloudflare's proxy, both families — the container ports after DNAT,
+    # whatever TRAEFIK_HTTP_PORT and TRAEFIK_HTTPS_PORT publish
     iifname "eth0" ct original ip  saddr $cloudflare_v4 tcp dport { 80, 443 } accept
     iifname "eth0" ct original ip6 saddr $cloudflare_v6 tcp dport { 80, 443 } accept
     # everything else on the public interface to those ports — including
@@ -719,9 +722,29 @@ before the drop. For boot, an `include` of this file from `/etc/nftables.conf`
 is enough — the flush there runs before Docker starts; on a running host never
 `systemctl restart nftables`, reload this file. After a change to
 `ops/cloudflare-ips.txt`: render, reinstall the define file, `nft -f` this one.
-`destroy` needs nftables 1.0.8 or later, as the CrowdSec chains do. The rule is
-written against the firewall document's measured architecture and has not been
-run on a host itself.
+`destroy` needs nftables 1.0.8 or later, as the CrowdSec chains do. The table
+parses and loads (checked with `nft -c` and `nft -f` in a container during the
+second review); it has not been run on a host.
+
+The table filters the DNAT path, and only that. A published port reached over
+a family the container network does not carry is not forwarded: the daemon
+listens on `[::]:443` regardless, and with the default `userland-proxy: true`
+`docker-proxy` terminates the connection on the host and opens a new IPv4 one
+to the container, sourced from the bridge gateway
+([`docs/ipv6-dual-stack.md`](docs/ipv6-dual-stack.md), "The three traffic
+paths"). That connection arrives on the host's **input** path, where the table
+above does nothing, and Traefik sees the gateway. So on a host with a global
+IPv6 address and an IPv4-only `proxy-public` a direct IPv6 client passes the
+firewall, bypasses Cloudflare, and arrives as `172.x` — inside `172.16.0.0/12`,
+which `acc-local` and `acc-private` admit; the bouncer compares the gateway and
+every rate limit shares one bucket. `A`-only records do nothing against this.
+One of two closes it: the dual-stack overlay with `userland-proxy: false` and
+`ip6tables: true` (the fix the IPv6 document describes), after which the forward
+table covers both families; or a second chain in the same table on the `input`
+hook, same priority, admitting TCP 80 and 443 on the public interface from
+`$cloudflare_v4` / `$cloudflare_v6` and dropping the rest — on that path
+`ip6 saddr` is still the real client, the relay has not run yet. Neither is
+verified on a host.
 
 **What the mode cannot promise.** The trusted ranges are Cloudflare's network,
 not this zone. Anything that leaves Cloudflare's edge arrives from them and
@@ -732,12 +755,17 @@ address, which carries none of this zone's edge rules — the per-client limit a
 the edge is advisory against it. What binds trust to this zone is
 Authenticated Origin Pulls (Cloudflare presenting a client certificate, a TLS
 option with `clientAuth` on the public routers) or a Tunnel; neither is shipped
-here. A client whose own address lies inside the ranges — Cloudflare WARP,
-Cloudflare's egress — is compared by the bouncer as the edge, because the
-plugin skips every trusted entry, and could place an entry before it; a
-decision against such a client is a host-firewall matter, where the bouncer's
-allowlist holds (`core/crowdsec/README.md`, step 5). None of this is a
-guarantee the mode gives; it is where the mode ends.
+here. A sender whose own address lies inside the ranges is compared by the
+bouncer as the edge, because the plugin skips every trusted entry, and can
+place an entry before it. Cloudflare's own egress space `172.64.0.0/13` is in
+the published list; whether a WARP client arrives from inside it Cloudflare
+does not document — it states that Zero Trust client egress addresses are not
+in the published ranges, and says nothing either way about consumer WARP. A
+WARP client outside the ranges is compared as its shared egress address, and a
+decision against it hits every client behind that address; both are
+host-firewall matters, where the bouncer's allowlist holds
+(`core/crowdsec/README.md`, step 5). None of this is a guarantee the mode
+gives; it is where the mode ends.
 
 **Per application**
 
@@ -757,7 +785,10 @@ not. `render.sh` refuses to render over such a `config/` until `.env` says
 `cloudflare` or `none` — an empty value counts as not set — because rendering
 `none` over an installation behind Cloudflare would make every layer see edge
 addresses, and CrowdSec would ban them. The refusal is keyed on the shape of
-the rendered list, so it holds after the ranges file changes. Decide, render,
+the rendered list, comment lines included — every release up to v0.9.4 rendered
+`# Cloudflare IPv4` right after the key, and a first version of the guard read
+that as "trusts nobody" — so it holds after the ranges file changes and against
+a release's file; the test carries that shape, a real host has not. Decide, render,
 then `docker compose up -d --force-recreate traefik`: the entrypoint list is
 static configuration. `validate.sh` afterwards refuses a rendered list that
 differs from the file — the weekly workflow changes the file, the host has to
@@ -782,6 +813,13 @@ render again.
    host.
 7. The parser version on the host carries the last-element split
    (`traefik-logs` from the hub).
+8. A direct IPv6 client to the published 443 on an IPv4-only `proxy-public`
+   with the table installed — what reaches Traefik, as which address, what
+   `acc-local` answers; the same after the dual-stack overlay.
+9. The address a WARP client arrives from, inside or outside the published
+   ranges, and what the bouncer compares for it.
+10. The migration guard on a real pre-switch host: `render.sh` with the switch
+    absent over the installed `config/traefik.yml` from a v0.9.x release.
 
 The plan is `docs/host-verification-phase-2.md`'s shape, with a Phase 3
 section to follow.

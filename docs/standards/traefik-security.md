@@ -118,9 +118,11 @@ reads as its address, and any middleware that evaluates the header through an
 `proxy-public` is IPv4-only, that address is lost before Traefik ever
 sees it — no header carries it on this path, so Traefik sees the Docker
 gateway address instead, and `acc-tailscale` blocks it. The same loss
-hits Cloudflare's proxy connecting to an `AAAA` record: the gateway is
-not a trusted sender, so the headers are deleted, and `acc-local` admits
-the gateway. See
+hits Cloudflare's proxy connecting over IPv6 (when only an `AAAA` record
+exists, possibly when both do): the gateway is not a trusted sender, so
+the headers are deleted, and `acc-local` admits the gateway. A direct
+IPv6 client takes the same path, past a forward-hook firewall (README,
+"Protect the origin"). See
 [`core/traefik/docs/ipv6-dual-stack.md`](../../core/traefik/docs/ipv6-dual-stack.md)
 for the full explanation, the dual-stack network setup, and the
 migration path for existing IPv4-only installs. Allowlisting the gateway

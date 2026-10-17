@@ -118,8 +118,9 @@ Cloudflare appended — and a direct client by its connection, because Traefik's
 entrypoint deleted that header from a sender outside the ranges. The plugin
 itself never checks who sent the header; a custom header such as
 `CF-Connecting-IP` would be read from any client, since Traefik deletes only
-`X-Forwarded-*`. A client whose own address lies inside the ranges (Cloudflare
-WARP) is compared as the edge (`core/traefik/README.md`, "Behind Cloudflare").
+`X-Forwarded-*`. A sender whose own address lies inside the ranges (Cloudflare's
+egress space `172.64.0.0/13` is; WARP clients are not documented either way) is
+compared as the edge (`core/traefik/README.md`, "Behind Cloudflare").
 If a source has to be exempt, prefer a CrowdSec AllowList, which is evaluated by
 the engine and is visible in `cscli` output, over an exemption that exists only
 in proxy configuration — README step 5 is that AllowList.
