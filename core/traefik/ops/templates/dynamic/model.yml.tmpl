@@ -1,0 +1,195 @@
+http:
+  middlewares:
+
+    # ==========================================================
+    # THE MIDDLEWARE MODEL — four positions per router
+    # ==========================================================
+    # Every router carries exactly four middlewares, in this order:
+    #
+    #   1  access-*    who may reach the router, by connecting address
+    #   2  limit-*     how fast one address may ask
+    #   3  headers-*   the response headers the proxy adds — always
+    #                  the HSTS base, never less
+    #   4  auth-*      admit only a confirmed identity
+    #
+    # plus, where a stack's README states the need, one named block
+    # placed BEFORE the headers profile (a response header that must
+    # win over it) or AFTER the four (backend compatibility).
+    #
+    # Transition (Phase 4.1): these definitions sit beside the sec-*,
+    # acc-*, hdr-* and rl-* names, which stay unchanged until every
+    # router has moved (Phase 4.3). Nothing here is referenced yet.
+    # Threat enforcement and compression move to the entrypoint in
+    # the same step as the routers — not before.
+    # ==========================================================
+
+    # -------- 1  access --------
+    # Evaluated on the connecting address in every TRAEFIK_FORWARDED_PROXY
+    # mode (docs/standards/traefik-security.md, "Trusted Proxy Headers").
+
+    access-public:
+      chain:
+        middlewares: []
+
+    access-lan:
+      ipAllowList:
+        sourceRange:
+          - "192.168.0.0/16"    # RFC1918
+          - "10.0.0.0/8"        # RFC1918
+          - "172.16.0.0/12"     # RFC1918 — includes the Docker bridge gateway
+          - "fc00::/7"          # IPv6 ULA
+
+    access-vpn:
+      ipAllowList:
+        sourceRange:
+          - "${TAILSCALE_CIDR_V4}"
+          - "${TAILSCALE_CIDR_V6}"
+
+    access-lan-vpn:
+      ipAllowList:
+        sourceRange:
+          - "192.168.0.0/16"
+          - "10.0.0.0/8"
+          - "172.16.0.0/12"
+          - "fc00::/7"
+          - "${TAILSCALE_CIDR_V4}"
+          - "${TAILSCALE_CIDR_V6}"
+
+    # The kill switch: nobody. Swap any access-* to this during an incident.
+    access-blocked:
+      ipAllowList:
+        sourceRange:
+          - "127.0.0.1/32"
+
+    # -------- 2  limit --------
+    # Counted per client address and per router: `burst` requests pass at
+    # once, `average` per second refills the bucket; beyond that, 429. The
+    # sustained rate bounds abuse; the burst is a first-load allowance.
+    # Values decided 2026-10-18 (D3): the standard bucket holds 500 —
+    # every first load measured in September except two fits.
+
+    limit-none:
+      chain:
+        middlewares: []
+
+    limit-standard:
+      rateLimit:
+        average: 125
+        burst: 500
+
+    # A whole first load in one bucket — only behind access-vpn,
+    # access-lan, access-lan-vpn or access-blocked (CI: burst-exposure).
+    # Measured: Windmill 857 and Twenty 516 requests on first load.
+    limit-extra-large:
+      rateLimit:
+        average: 125
+        burst: 1000
+
+    # File-sync clients are bounded by the sustained rate, not the burst.
+    # Measured: Nextcloud's client runs 20 requests in parallel, Seafile's
+    # one per block.
+    limit-sync:
+      rateLimit:
+        average: 1000
+        burst: 1000
+
+    # Administration surfaces and login-only routes.
+    limit-strict:
+      rateLimit:
+        average: 20
+        burst: 40
+
+    # -------- 3  headers --------
+    # One block per header. Traefik's headers middleware SETS a header; it
+    # never adds only what is missing (measured 2026-10-18). A profile
+    # therefore says "the proxy sets these", and an application that sends
+    # its own takes headers-application-owned plus the single blocks it
+    # lacks. Every profile starts with the HSTS base: HTTPS is the only
+    # operating mode, and a router with headers-none still commits its host
+    # name to it.
+
+    hsts-base:
+      headers:
+        forceSTSHeader: true
+        stsSeconds: ${HSTS_MAX_AGE}
+
+    header-nosniff:
+      headers:
+        contentTypeNosniff: true
+
+    header-frame-deny:
+      headers:
+        frameDeny: true
+
+    header-referrer:
+      headers:
+        referrerPolicy: "strict-origin-when-cross-origin"
+
+    header-permissions:
+      headers:
+        customResponseHeaders:
+          Permissions-Policy: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()"
+
+    # An application that sends none of these (the conservative default).
+    headers-standard:
+      chain:
+        middlewares:
+          - hsts-base
+          - header-nosniff
+          - header-frame-deny
+          - header-referrer
+          - header-permissions
+
+    # An application measured to send its own; append the header-* blocks
+    # it lacks (Keycloak: header-permissions; Matomo: header-nosniff and
+    # header-permissions; Vaultwarden: none).
+    headers-application-owned:
+      chain:
+        middlewares:
+          - hsts-base
+
+    # HSTS only — for debugging a route; never "nothing".
+    headers-none:
+      chain:
+        middlewares:
+          - hsts-base
+
+    # -------- per-app blocks, placed BEFORE the headers profile --------
+
+    # The application frames its own pages (listmonk's campaign preview).
+    frame-self:
+      headers:
+        customFrameOptionsValue: "SAMEORIGIN"
+
+    # The per-domain HSTS extension — a deliberate decision for the one host
+    # name served at the registrable domain; never a default, never preload
+    # without the submission it requires.
+    hsts-include-subdomains:
+      headers:
+        forceSTSHeader: true
+        stsSeconds: ${HSTS_MAX_AGE}
+        stsIncludeSubdomains: true
+        stsPreload: true
+
+    # An enforcing policy for an application tested against it (whoami).
+    csp-self-only:
+      headers:
+        contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:;"
+
+    # -------- per-app blocks, placed AFTER the four --------
+
+    # Backend compatibility, not a browser header: an application that
+    # derives its URLs from these two request headers.
+    forwarded-proto-https:
+      headers:
+        customRequestHeaders:
+          X-Forwarded-Proto: "https"
+
+    # -------- 4  auth --------
+    # auth-authentik is rendered by dynamic/authentik.yml.tmpl under
+    # AUTHENTIK_FORWARD_AUTH_ENABLED. A stack's own basicAuth middleware is
+    # referenced provider-qualified in APP_TRAEFIK_AUTH (name@docker).
+
+    auth-none:
+      chain:
+        middlewares: []

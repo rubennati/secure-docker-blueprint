@@ -187,6 +187,17 @@ rendered_ranges() {  # <traefik.yml>: the entries of that list, one per line
 }
 proxy_declared=""
 [ -n "${TRAEFIK_FORWARDED_PROXY:-}" ] && proxy_declared=yes
+
+# HSTS_MAX_AGE is optional (render.sh defaults it to two years) but, when set,
+# a number of seconds; TLS_DEFAULT_OPTION one of the three profiles, old or new name.
+if [ -n "${HSTS_MAX_AGE:-}" ] && ! printf '%s' "${HSTS_MAX_AGE}" | grep -qE '^[0-9]+$'; then
+  echo "ERROR: HSTS_MAX_AGE must be a number of seconds (got '${HSTS_MAX_AGE}')."
+  exit 1
+fi
+case "${TLS_DEFAULT_OPTION:-}" in
+  tls-compatible|tls-basic|tls-standard|tls-aplus|tls-strict|tls-modern) ;;
+  *) echo "ERROR: TLS_DEFAULT_OPTION must be tls-compatible, tls-standard or tls-strict (got '${TLS_DEFAULT_OPTION:-}')."; exit 1 ;;
+esac
 TRAEFIK_FORWARDED_PROXY="$(printf '%s' "${TRAEFIK_FORWARDED_PROXY:-none}" | tr '[:upper:]' '[:lower:]')"
 case "${TRAEFIK_FORWARDED_PROXY}" in
   none|cloudflare) ;;
@@ -302,9 +313,23 @@ if [ -f "${ROOT_DIR}/config/traefik.yml" ]; then
   test -f "${ROOT_DIR}/config/haproxy.cfg.template" \
     || { echo "Missing config/haproxy.cfg.template (run render.sh) — docker-compose.yml mounts it"; exit 1; }
   for f in access.yml security-blocks.yml security-chains.yml integrations.yml tls-profiles.yml \
-           routers-system.yml redirects.yml servers-transports.yml; do
+           routers-system.yml redirects.yml servers-transports.yml model.yml; do
     test -f "${ROOT_DIR}/config/dynamic/${f}" || { echo "Missing config/dynamic/${f} (run render.sh)"; exit 1; }
   done
+
+  # The model's header profiles each begin with the HSTS base — a router with
+  # headers-none still commits its host name to HTTPS. Checked on the
+  # rendered file: the line after `headers-<profile>:` + `chain:` +
+  # `middlewares:` must be `- hsts-base`.
+  for prof in headers-standard headers-application-owned headers-none; do
+    first="$(awk -v p="    ${prof}:" '$0 == p { f = 1; next } f && /^[[:space:]]*- / { print; exit }' "${ROOT_DIR}/config/dynamic/model.yml" | tr -d ' ')"
+    if [ "${first}" != "-hsts-base" ]; then
+      echo "ERROR: config/dynamic/model.yml: ${prof} does not start with hsts-base (found '${first}') — run render.sh; a profile without the HSTS base is not a valid profile."
+      exit 1
+    fi
+  done
+  grep -qE '^[[:space:]]*default: \*tls_(compatible|standard|strict)$' "${ROOT_DIR}/config/dynamic/tls-profiles.yml" \
+    || { echo "ERROR: config/dynamic/tls-profiles.yml carries no default TLS option built from TLS_DEFAULT_OPTION — run render.sh."; exit 1; }
   if [ -n "${ACME_WILDCARD_DOMAIN:-}" ]; then
     test -f "${ROOT_DIR}/config/dynamic/acme-wildcard.yml" \
       || { echo "Missing config/dynamic/acme-wildcard.yml although ACME_WILDCARD_DOMAIN is set (run render.sh)"; exit 1; }
