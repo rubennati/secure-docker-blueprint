@@ -64,6 +64,28 @@ export ACME_RESOLVER_DNS="${ACME_RESOLVER_DNS:-cloudflare-dns}"
 export ACME_RESOLVER_HTTP="${ACME_RESOLVER_HTTP:-httpResolver}"
 export ACME_RESOLVER_TLS="${ACME_RESOLVER_TLS:-tlsResolver}"
 
+# The HSTS base every header profile of the model carries (dynamic/model.yml).
+# Two years, as every chain sent before; digits only.
+export HSTS_MAX_AGE="${HSTS_MAX_AGE:-63072000}"
+if ! printf '%s' "${HSTS_MAX_AGE}" | grep -qE '^[0-9]+$'; then
+  echo "ERROR: HSTS_MAX_AGE must be a number of seconds (got '${HSTS_MAX_AGE}')."
+  exit 1
+fi
+
+# The TLS profile `default` is built from (dynamic/tls-profiles.yml). The
+# model's names and the names before it are both accepted during the
+# transition; the anchor selects the profile's content inside the template.
+case "${TLS_DEFAULT_OPTION:-}" in
+  tls-compatible|tls-basic)  TLS_DEFAULT_ANCHOR=tls_compatible ;;
+  tls-standard|tls-aplus)    TLS_DEFAULT_ANCHOR=tls_standard ;;
+  tls-strict|tls-modern)     TLS_DEFAULT_ANCHOR=tls_strict ;;
+  *)
+    echo "ERROR: TLS_DEFAULT_OPTION must be tls-compatible, tls-standard or tls-strict (got '${TLS_DEFAULT_OPTION:-}')."
+    exit 1
+    ;;
+esac
+export TLS_DEFAULT_ANCHOR
+
 # Entrypoint timeouts. The defaults are Traefik's own, so an .env written
 # before the variables existed renders the behaviour it had.
 export TRAEFIK_READ_TIMEOUT="${TRAEFIK_READ_TIMEOUT:-60s}"
