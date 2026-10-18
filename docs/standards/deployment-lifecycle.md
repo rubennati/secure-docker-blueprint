@@ -112,7 +112,12 @@ Anything else can start in any order.
 ## 5 — Validate
 
 `./scripts/overview.sh` states which release the deployment is on, whether the working
-tree has drifted from it, and which stacks are configured and running.
+tree has drifted from it, and which stacks are configured and running. Below the service
+table it reports the Traefik routers: those still on the names the middleware model
+replaces (`scripts/migrate-traefik-env.sh` prints the changes, as a dry run), the
+positions a `.env` leaves empty (Traefik disables such a router), and the routers naming
+a TLS option other than the deployment standard; `--routers` lists every router with its
+four positions.
 
 Per-stack verification is the stack's own `README.md`. Stacks carrying `ops/scripts/` have
 their own checks — `core/traefik` renders and validates its configuration that way.
