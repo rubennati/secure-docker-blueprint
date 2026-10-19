@@ -36,6 +36,7 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 - **`strip-xfo` stood after the chain in two stacks** (`apps/vaultwarden`, `business/matomo`). The per-app middleware that removes the proxy's `X-Frame-Options` was listed after the security chain, the order measured ineffective on 2026-09-07 — Traefik applies the response changes of the first middleware last, so the chain set the header again. It stands before the chain now, with the `@docker` suffix the label standard requires on all three references (`core/keycloak` gains the suffix only). What passes now is the application's own frame header; not verified on a host.
 - **Seven advisories against `devalue`, published on 2026-10-01, are closed by a lock-file update** (`site/`, `development/static-site/recipes/astro/`). `devalue` goes from 5.9.2 to 5.9.4 in both lock files; Astro 7.3.5 brings the package in and accepts the newer version, so nothing else moves. One advisory stays: `http-cache-semantics` 4.2.0, GHSA-ch52-4w7c-c8xp, has no fixed release. The lock files were written with npm 11 on Node 24, the version the site workflow uses, and both builds ran with them — the site's four workflow steps and the recipe's image.
+- **The local overlay mounts its files relative to the stack directory** (`apps/dify`). `docker-compose.local.yml` named its 49 bind mounts by absolute path, so it started only in the directory it was written in. Every mount is `./` now, as in `docker-compose.yml`; not verified on a host.
 
 ### Migration
 

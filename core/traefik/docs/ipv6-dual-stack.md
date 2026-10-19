@@ -91,8 +91,8 @@ Traefik's `acc-tailscale` middleware, while the same clients worked fine
 over IPv4.
 
 ```bash
-curl -4 https://auth.example.com/   # → 100.116.181.16  → HTTP/2 302 (ok)
-curl -6 https://auth.example.com/   # → fd7a:115c:a1e0::9e32:b510 → HTTP/2 403 (blocked)
+curl -4 https://auth.example.com/   # → 100.64.0.10  → HTTP/2 302 (ok)
+curl -6 https://auth.example.com/   # → fd7a:115c:a1e0::10 → HTTP/2 403 (blocked)
 ```
 
 **Root cause — in order:**
@@ -142,15 +142,15 @@ sufficient:
 After the fix:
 
 ```bash
-curl -6 https://auth.example.com/   # → fd7a:115c:a1e0::9e32:b510 → HTTP/2 302 (ok)
+curl -6 https://auth.example.com/   # → fd7a:115c:a1e0::10 → HTTP/2 302 (ok)
 ```
 
 And `whoami` (see [apps/whoami](../../../apps/whoami/)) shows the real address in
 both the proxy headers and its own view of the connection:
 
 ```text
-X-Forwarded-For: fd7a:115c:a1e0::9e32:b510
-X-Real-Ip: fd7a:115c:a1e0::9e32:b510
+X-Forwarded-For: fd7a:115c:a1e0::10
+X-Real-Ip: fd7a:115c:a1e0::10
 ```
 
 ---

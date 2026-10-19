@@ -180,10 +180,10 @@ render.sh    -> " -> trusted proxy ranges: none (TRAEFIK_FORWARDED_PROXY=none)" 
 The first cut's key — `grep -F '"173.245.48.0/20"'` — matches that file (1 hit). So
 `2b1cda2` replaced a guard that was blind to a *future* insertion at the top of the
 ranges file (F6) by one that is blind to every *past* rendering: the installations the
-guard exists for (`render.sh:127-130`; CHANGELOG, the migration target; the
-maintainer's hosts predate `v0.9.2`). An installation behind Cloudflare that pulls this
-branch and renders without first editing `.env` loses the trust silently and CrowdSec
-bans the edge — the exact outcome the guard describes. The test
+guard exists for (`render.sh:127-130`; CHANGELOG, the migration target). An
+installation behind Cloudflare that pulls this branch and renders without first
+editing `.env` loses the trust silently and CrowdSec bans the edge — the exact
+outcome the guard describes. The test
 `test_rendered_trust_with_switch_absent_is_refused` renders the trusting configuration
 with the branch's own template, which has no comment line, so it cannot see this.
 
