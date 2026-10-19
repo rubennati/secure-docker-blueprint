@@ -11,7 +11,7 @@
 - **Origin:** UK · Alicia Sykes (Lissy93) · non-EU
 - **Domain:** Dashboards
 - **Role:** One page linking everything you run, configured in a single YAML file
-- **Based on version:** `4.6.0`
+- **Based on version:** `4.8.7`
 - **Last verified:** 2026-05-02 (v4.0.4)
 
 ## What we use
