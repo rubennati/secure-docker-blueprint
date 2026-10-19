@@ -100,18 +100,23 @@ the AllowList is the mechanism that covers that.** A parser whitelist remains th
 tool for suppressing detections the engine would otherwise derive from your own traffic —
 a monitoring probe or a known crawler hitting your logs.
 
-The engine-level control is a native LAPI AllowList:
+The engine-level control is a native LAPI AllowList. The shipped step is
+`ops/allowlist.sh` with `CROWDSEC_ALLOWLIST_ADMIN` in `.env` — README, step 5 — and its
+recommendation is the administrator's devices, each by its own address, rather than the
+VPN range: an exempted address is never banned, a compromised device included. Behind
+the script:
 
 ```bash
-docker exec crowdsec cscli allowlists create tailnet \
-  -d "Trusted VPN management plane"
-docker exec crowdsec cscli allowlists add tailnet 100.64.0.0/10 fd7a:115c:a1e0::/48
-docker exec crowdsec cscli allowlists check <an-address-in-range>
+docker exec crowdsec cscli allowlists create admin-devices -d "Administrative devices"
+docker exec crowdsec cscli allowlists add admin-devices 100.64.0.7 fd7a:115c:a1e0::1
+docker exec crowdsec cscli allowlists check 100.64.0.7
 ```
 
-Substitute your own VPN ranges. Adding an allowlist also removes decisions already
-covered by it — verified on CrowdSec v1.7.8, which reported `2 decisions deleted by
-allowlists` on creation.
+Adding an allowlist also removes decisions already covered by it — verified on CrowdSec
+v1.7.8, which reported `2 decisions deleted by allowlists` on creation of a list that
+covered the whole VPN range. Not verified yet: whether a decision added by hand is
+withheld, whether `--bypass-allowlist` overrides the list, and that the host-firewall
+bouncer follows both.
 
 ---
 

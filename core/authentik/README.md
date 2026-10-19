@@ -97,11 +97,14 @@ Forward-Auth lets Traefik delegate authentication to Authentik without touching 
 Every request hits Authentik first — if the user is authenticated the request passes through,
 otherwise they are redirected to the Authentik login page.
 
-The Traefik middleware (`sec-authentik`) is already defined in
-`core/traefik/ops/templates/dynamic/integrations.yml.tmpl` — commented out.
+The Traefik middleware is `auth-authentik` (also reachable under its older
+name `sec-authentik`), rendered from
+`core/traefik/ops/templates/dynamic/authentik.yml.tmpl` by one switch in
+`core/traefik/.env`. Until the switch is on, the middleware does not exist and
+no router may name it.
 
 > **Multi-host note:** `forwardAuth` is not limited to the same Docker host.
-> The `address` in `sec-authentik` can point to any reachable endpoint —
+> `AUTHENTIK_FORWARD_AUTH_ADDRESS` can point to any reachable outpost —
 > another machine in the LAN, a remote server, or a public URL. Traefik only
 > needs network access to that address. This means one central Authentik
 > instance can protect apps running on multiple hosts.
@@ -112,16 +115,23 @@ The Traefik middleware (`sec-authentik`) is already defined in
 
 #### 0a. Activate the Traefik middleware
 
-In `core/traefik/ops/templates/dynamic/integrations.yml.tmpl`, uncomment the `http:` /
-`middlewares:` block and the `sec-authentik` section. Then re-render and redeploy Traefik:
+In `core/traefik/.env` set the switch, keep the address unless the outpost is
+on another host, then render — the file is dynamic configuration and needs no
+restart:
 
 ```bash
 cd core/traefik
-./ops/scripts/render.sh
-docker compose up -d
+# AUTHENTIK_FORWARD_AUTH_ENABLED=true
+# AUTHENTIK_FORWARD_AUTH_ADDRESS=http://authentik-server:9000/outpost.goauthentik.io/auth/traefik
+bash ops/scripts/validate.sh && bash ops/scripts/render.sh && bash ops/scripts/validate.sh
 ```
 
-The middleware is now available as `sec-authentik@file` for any router.
+The middleware is now available as `auth-authentik@file` for any router. No
+template is edited: a checkout cannot undo the switch, and `render.sh` refuses
+to render over a `config/` that carries the middleware while `.env` does not
+declare it. To switch it off, remove `auth-authentik@file` from every router
+first — a router naming a middleware that no longer exists is disabled by
+Traefik — then set `false` and render again.
 
 #### 0b. Verify the embedded outpost
 
@@ -169,11 +179,11 @@ add the new application to its list → Save.
 
 #### 1c. Add the middleware to the app's Compose file
 
-Add `sec-authentik@file` to the router's existing middleware list:
+Add `auth-authentik@file` to the router's existing middleware list:
 
 ```yaml
 labels:
-  - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file,sec-authentik@file"
+  - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file,auth-authentik@file"
 ```
 
 Redeploy the app:
@@ -240,7 +250,7 @@ labels:
   - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.tls=true"
   - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
   - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.priority=100"
-  - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file,sec-authentik@file"
+  - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file,auth-authentik@file"
   - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.service=${COMPOSE_PROJECT_NAME}"
 ```
 

@@ -1,0 +1,9 @@
+# Host files of core/traefik — format: docs/standards/host-files.md
+# source (relative to this stack)              target on the host                                mode  owner      compare  required
+config/logrotate/traefik                       /etc/logrotate.d/traefik                          0644  root:root  exact    required
+ops/scripts/traefik-watchdog.sh                /usr/local/bin/traefik-watchdog.sh                0755  root:root  exact    optional
+ops/scripts/traefik-watchdog.env.example       /etc/traefik-watchdog.env                         0600  root:root  derived  optional
+ops/scripts/traefik-watchdog.service.example   /etc/systemd/system/traefik-watchdog.service      0644  root:root  exact    optional
+ops/scripts/traefik-watchdog.timer.example     /etc/systemd/system/traefik-watchdog.timer        0644  root:root  exact    optional
+# Rendered by ops/scripts/render.sh with TRAEFIK_FORWARDED_PROXY=cloudflare; absent otherwise.
+config/host/cloudflare-ranges.nft              /etc/nftables.d/cloudflare-ranges.nft             0644  root:root  exact    optional

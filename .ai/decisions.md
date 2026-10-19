@@ -6,6 +6,247 @@ this file is the index and covers decisions that have no other home.
 
 ---
 
+## 2026-10-16 · Dual-stack is the default for new installations; IPv4-only and IPv6-only are supported variants
+
+D12 of the core audit (`docs/audits/core-v1-readiness-2026-10-15.md`). IPv6 is not an
+optional extra.
+
+**Decision.** Three operating modes under one configuration concept that covers the
+host network, the Docker networks, Traefik and the firewall: `dual-stack`, the default
+for new installations; `ipv4-only`, a deliberate alternative; `ipv6-only`, a deliberate
+alternative that also serves a host without a public IPv4 address.
+
+**Conditions.** An existing installation is never switched automatically — it gets a
+separate, controlled migration path. The dual-stack default reduces no security: access
+policies and firewall rules work over both protocols. IPv6-only is checked for outbound
+connections, DNS, Docker images and external services. Public host addresses and
+internal Docker networks stay apart. The effects on the Docker daemon configuration,
+the restarts it needs and existing containers are documented before implementation.
+The bridge trust set of issue #129 is handled correctly in every mode.
+
+**Consequence.** A feasibility, limitation and migration-effort assessment of the three
+modes comes first; the implementation is released after it. Until then `proxy-public`
+stays IPv4-only by default (2026-06, below).
+
+---
+
+## 2026-10-15 · The Traefik middleware model: six functions, one variable each
+
+D1 of the core audit; the design is `docs/traefik-middleware-proposal.md`.
+
+**Decision.** The `sec-*` chains are replaced by six independently chosen functions per
+router — threat, access, limit, auth, headers, compress — each a middleware named
+`<function>-<variant>` and each set by its own variable. Names decided: `access-public`
+and `access-blocked`; `access-vpn`; `threat-crowdsec-appsec`; `headers-hsts-only`;
+compression fixed in the label; `HSTS_INCLUDE_SUBDOMAINS` off by default.
+
+**Conditions.** Every protection is kept or exceeded, established against the real
+response headers of each affected application before and after — no header is removed
+without that pair on record. An existing installation never receives a different
+profile without an explicit step: no Compose defaults in the label, a migration script,
+an alias check with identical headers and identical `429` behaviour. Names are
+understandable and unabbreviated; the default case asks for few decisions.
+
+**Open.** The name of today's bucket of 1000 (`limit-extra-large` proposed), and whether
+`headers-standard-frame-self` is created at all — the listmonk measurement decides.
+
+---
+
+## 2026-10-15 · The rate limits are renamed, not changed
+
+D2 of the core audit.
+
+**Decision.** The counters keep the interim values of 2026-10-03 under the new `limit-*`
+names. No bound on requests in flight is introduced before Phase 4 has measured each
+application's needs — synchronisation, large file transfers, APIs, long-lived
+connections; afterwards, per router, whether such a bound is added.
+
+**Why.** The goal is a traceable, robust configuration that does not restrict legitimate
+applications — not the largest number of mechanisms.
+
+---
+
+## 2026-10-15 · Cloudflare is a supported operating variant, switched in `.env`
+
+D3 of the core audit; the mechanism is verified against the Traefik v3.7 source in
+`docs/traefik-middleware-proposal.md`, section "Behind Cloudflare — D3".
+
+**Decision.** `TRAEFIK_FORWARDED_PROXY=none|cloudflare` in `core/traefik/.env`, default
+`none`; without Cloudflare nothing changes. Closed access policies keep the connecting
+address; the limits use `requestHeaderName: X-Real-Ip` together with a Cloudflare
+Transform Rule that overwrites `X-Real-Ip` with the connecting client; the CrowdSec
+middlewares get `forwardedHeadersTrustedIPs` from the same maintained list as the
+entrypoint; the `none` mode trusts no sender. `ipStrategy.depth` is rejected: it yields
+an empty address for every direct client.
+
+**Conditions.** One traceable derivation of the client address. Trusted proxies only
+from a defined, maintained source — a CI-checked list. No client-supplied address
+header taken on trust. Consistent evaluation by access, limits, CrowdSec and logging.
+Origin protection documented, so Cloudflare cannot be bypassed. Proof with and without
+Cloudflare, over IPv4 and IPv6, on real request paths, before the implementation counts
+as done.
+
+**Addendum 2026-10-17 — as shipped (Phase 3, branch `feature/cloudflare-mode`).** The
+proposal document lives on branch `feature/traefik-middleware-proposal`, which is not
+merged. Two parts of the decision above did not survive implementation. The limits do
+not use `requestHeaderName: X-Real-Ip`: Cloudflare's Transform Rules cannot modify
+`x-real-ip` (or `x-forwarded-for`, `true-client-ip`, `cf-connecting-ip`), and a
+header-reading strategy leaves a direct client without an address — `ipAllowList`
+refuses it, `rateLimit` shares one bucket. The limits therefore stay on the connecting
+address, per edge at the origin, and the per-client limit of a public route is a
+Cloudflare rate-limiting rule at the edge. And the CrowdSec middlewares keep the
+plugin's default header `X-Forwarded-For` with `forwardedHeadersTrustedIPs`: the first
+cut set `forwardedHeadersCustomName: CF-Connecting-IP`, which the independent review
+(`docs/reviews/phase-3-cloudflare-mode-review-2026-10-17.md`, F1) showed the plugin
+reads from any sender, since Traefik deletes only `X-Forwarded-*`. The condition "no
+client-supplied address header taken on trust" is met by the entrypoint deleting
+`X-Forwarded-For` from every sender outside the ranges. Trust is bounded by
+Cloudflare's network, not by this zone (Workers, other zones, WARP clients); binding it
+to the zone — Authenticated Origin Pulls or a Tunnel — is a follow-up. The proof over
+IPv4 and IPv6 on a host is open.
+
+---
+
+## 2026-10-15 · Authentik is the maintained forward-auth reference; Authelia and Keycloak are available applications
+
+D4 of the core audit, and the decision record `core/keycloak` (2026-09-07) and
+`core/authelia` (2026-09-26) had been missing.
+
+**Decision.** `auth-authentik` is the one integration `core/traefik` renders, under a
+switch, and tests. Three states are kept apart: the maintained reference implementation
+(Authentik); a prepared integration (none today — `auth-authelia` would be the shape);
+an available application (Authelia, Keycloak — each a stack with its own documentation
+and no forward-auth template). A second variant is added on a concrete need, fully
+tested and maintained for good; the model allows it without requiring it.
+
+---
+
+## 2026-10-15 · Host-side files are rendered and compared, never installed by the blueprint
+
+D5 of the core audit.
+
+**Decision.** `render.sh` — and the equivalent per stack — writes every host-side file
+with the real paths into `<stack>/config/host/`. One uniform check, `overview.sh --host`,
+compares each installed file with the rendered one and reports one of four states —
+identical, differs, not installed, not checkable — naming the source file and the real
+host path, with the diff available before any manual take-over. Installation and
+updates stay a separate, controlled manual step.
+
+**Conditions.** No automatic installation or overwrite. File permissions, sensitive
+contents and local adaptations are taken into account. Nothing is written outside the
+blueprint directory without explicit approval. One procedure for all stacks, no
+per-stack special cases.
+
+---
+
+## 2026-10-15 · Renovate detects upstream releases; nothing is adopted automatically
+
+D6 of the core audit; it answers the questions of `docs/renovate-proposal.md` and
+D5 of the stabilization audit.
+
+**Decision.** Renovate is the central detection of new upstream versions. Every image
+pin carries an unambiguous marker; proposals arrive as pull requests and are never
+auto-merged; patch and minor updates are grouped, majors come one by one with manual
+review; security-relevant updates are recognisable and can be prioritised; Renovate and
+the Trivy and security checks complement each other; existing versioning schemes and
+deliberately fixed pins are never changed uncontrolled; a proof that every intended pin
+is covered, with the list of unsupported exceptions. The configuration is validated and
+a test run performed before the automation is switched on. No automatic deployments or
+production updates.
+
+---
+
+## 2026-10-15 · Cloudflare is the DNS-01 reference for v1.0
+
+D7 of the core audit.
+
+**Decision.** The documentation describes the implemented scope: Cloudflare is the one
+wired DNS-01 provider; HTTP-01 and TLS-ALPN-01 stand independently of it. No general
+promise that every DNS provider Traefik supports works here. DNS provider, DNS-01
+challenge and Cloudflare as a CDN are kept apart in the text. The architecture allows
+further providers later, each marked supported only after configuration, credentials
+and issuance were tested. No provider selection is needed for v1.0.
+
+---
+
+## 2026-10-15 · The VPN exemption from CrowdSec decisions is a shipped option, not a default
+
+D8 of the core audit.
+
+**Decision.** The LAPI AllowList for VPN addresses is provided as a supported,
+documented step that the operator switches on deliberately.
+
+**Conditions.** The reason for an exemption and its security consequence are stated. No
+blanket trust for every VPN device — targeted exemptions for administrative devices
+rather than the whole tailnet where possible. IPv4 and IPv6 are both handled. A check
+that CrowdSec sees the VPN client addresses at all. A documented way to restore
+administrative access after an accidental ban. The setup instructions and the runbook
+describe the same procedure; the parser-whitelist procedure is dropped.
+
+---
+
+## 2026-10-15 · The four open decisions of `state.md` are settled
+
+D9 of the core audit.
+
+**Decision.** Commit message format (1) and commit procedure (4) are struck: practice
+converged on the `scope: subject` form `commit-rules.md` prescribes — every subject
+since 2026-09-19 except Dependabot's — and the rule to ask before every commit stands
+as written. Backup repository isolation (2) changes at the owner: `docs/architecture.md`
+adopts the trade-off `backup/README.md` states — one host-level configuration first, a
+separate repository where an app's retention or size demands one. The host-installed
+backup agent (3) is recorded in `docs/architecture.md` as an explicitly justified
+exception to the portability goal: a containerised agent reaches other stacks' data only
+through `/:/host:ro` or `--privileged`, a container able to read every secret in the
+deployment.
+
+**Condition.** `commit-rules.md` is not changed silently — contradictions are resolved,
+the rules stay.
+
+---
+
+## 2026-10-15 · The public-content violations in `.ai/` are fixed in the files; history stays
+
+D10 of the core audit.
+
+**Decision.** The files are cleaned — the real domain, the vault path, the attribution,
+the session context and the wording that judged earlier work. History is not rewritten:
+the vault path was a reference, not a secret, and rewriting a public repository's
+history breaks every fork.
+
+---
+
+## 2026-10-15 · `tasks.md` is restored from git, and every item's status is re-established from evidence
+
+D11 of the core audit.
+
+**Decision.** The three sections lost in merge `9b7a171` (2026-09-23) are restored in
+full from `9b7a171^1`, with their original reasons and notes, and reconciled with the
+current state so that no task is duplicated and no progress is overwritten. Each item's
+status follows from evidence: demonstrably done — closed, with the evidence named;
+still open — open, with its owner; not clearly determinable — marked for review. No
+item is closed on the strength of an earlier status alone.
+
+---
+
+## 2026-10-15 · `.env.example` section headers use the reference's long form
+
+Two dialects existed: 52 files with the reference's long-dash headers carrying a layer
+tag (`# --- Images ------- [image] --`), 70 with the short form the standard showed
+(`# --- Images ---`). The long form is the standard now, written into
+`docs/standards/env-structure.md`, including the `Project` header over
+`COMPOSE_PROJECT_NAME` that the reference and `check-structure.py` already carried.
+
+**Why the long form.** The layer tag states which layer a variable configures —
+Compose, Traefik, image, application, secrets — which is the question a reader of a
+long file asks; `apps/_reference/.env.example`, the canonical template, carries it.
+
+**What does not change now.** `check-structure.py` reads the section name and ignores
+the tag and the padding, so the 70 files in the short form pass. Converting them is
+Phase 6 of the core audit, by script.
+
+---
+
 ## 2026-10-03 · Mail ports are published by the stack, not routed by Traefik
 
 The mail evaluation left two questions for before the first stack: how SMTP and
@@ -59,8 +300,9 @@ breaks the application.
 and 50: the bucket refills during a load, and on 2026-09-22 a bucket of 200
 answered all 291 requests of the heaviest interface below the `-xl` pair.
 `rl-spa` keeps the rate and widens the burst from 200 to 500. `rl-spa-xl` keeps
-its bucket of 1000 and its restriction to a closed access policy. `rl-hard`, 20
-and 40, is unchanged — it is chosen where each request is worth slowing down.
+its bucket of 1000 and its restriction to a closed access policy, and its average
+moves from 100 to 125 like the others. `rl-hard`, 20 and 40, is unchanged — it is
+chosen where each request is worth slowing down.
 
 **A sync is bounded by the rate, not by the bucket.** The Nextcloud desktop
 client runs up to 20 requests in parallel over HTTP/2, the Seafile client three
@@ -255,8 +497,10 @@ candidates.
 
 **obot is added with its Docker API access documented as a deviation**, as Hawser's
 direct socket mount is: creating the containers obot runs is root-equivalent on the
-host, and the stack says so. A read-only socket proxy is tried first; whether the
-current release starts behind one is established on its first run.
+host, and the stack says so. A socket proxy sits in front of it: a read-only
+allow-list was tried first and does not work — obot calls `ContainerCreate`,
+`ContainerRemove`, `ImagePull` and `VolumeCreate` — so the proxy allows those and
+denies `exec`, `swarm`, `configs` and `secrets` (`CHANGELOG.md`, v0.9.3).
 
 **Two products proposed the same day were checked the same way.** paperless-gpt is
 added. paperless-ai stays a candidate: its README states that the repository is not
@@ -324,7 +568,43 @@ it was forked from a project that had been compromised and is hardened in phases
 (`apps/caldiy/docs/hardening-plan.md`). The list of steps to build this is in
 [`tasks.md`](tasks.md#1-image-findings-as-facts--closes-audit-finding-c1).
 
-## 2026-09 · Personal data on the public site
+**Built and not built, as of 2026-10-15.** The gate exists: `scripts/ci/trivy-gate.py`
+fails the scan on a CRITICAL finding absent from `.trivy-baseline.json`, which records
+the accepted findings per image repository. The per-image facts file, the `Exposure`
+field in `UPSTREAM.md`, the checker that refuses `acc-public` for a restricted stack
+and the catalogue page do not exist; `tasks.md` §1 lists them open.
+
+---
+
+## 2026-09-20 · No approving-review gate while there is one maintainer
+
+**Decided.** While this repository has a single maintainer:
+
+- `required_approving_review_count` stays **0** on both protected branches;
+- the required CI checks stay enforced — ten on `dev` and ten on `main`;
+- the rulesets keep **no bypass actor**, so a red check blocks the owner too;
+- no approval rule is introduced that the sole author cannot satisfy;
+- the requirement is revisited when a second maintainer exists.
+
+Both branches are governed by rulesets rather than classic branch protection, and
+both also require the branch to be up to date before merging.
+
+With a single maintainer a required review has only two shapes, and neither is worth
+having. GitHub does not let an author approve their own pull request, so a required
+review plus no bypass means nothing can ever merge; a required review with a bypass
+means the rule is bypassed on every single merge. The second is what would raise the
+OpenSSF Scorecard Branch-Protection check from 3 to 6 — a score describing a rule
+nobody honours.
+
+The ceiling is not reachable anyway: Scorecard's tier 4 requires **two** reviewers,
+so 10/10 is out of reach for a single-maintainer repository regardless of
+configuration. Recorded so the question is not reopened expecting a different answer.
+Revisit when a second maintainer exists — that is the condition that changes it, not
+the score.
+
+---
+
+## 2026-09-19 · Personal data on the public site
 
 **Status: direction, not yet a decision.** Summary in [`../ROADMAP.md`](../ROADMAP.md#a-public-repository-should-not-carry-personal-data); the full reasoning is here.
 
@@ -334,9 +614,9 @@ with every copy.
 
 The case to prevent is not someone taking them deliberately. It is the fork
 that builds and goes live without anyone looking — and then a stranger's site
-carries this author's imprint, and the people who read it write to **him** about
-a site he has nothing to do with. Nobody had to act in bad faith for that to
-happen.
+carries the original author's legal notice, and the people who read it write to
+that author about a site they have nothing to do with. Nobody had to act in bad
+faith for that to happen.
 
 Beyond the nuisance, a template that anyone can fork and build ought to be free
 of its author's identity by construction. Keeping personal data out of a
@@ -400,7 +680,7 @@ only thing standing between the repository and a permanent mistake.
 Locally the key never reaches the filesystem, because process substitution
 hands `age` a descriptor instead of a path:
 
-    age -d -i <(op read "op://Private/age-signing-key/notesPlain") \
+    age -d -i <(op read "op://<vault>/<item>/<field>") \
         -o site/src/data/site.local.ts secrets/site.age
 
 The runner needs the same care for the opposite reason: writing the key to a
@@ -413,7 +693,7 @@ offered to an operator as a way to hold their own credentials.
 
 ---
 
-## 2026-09 · Optional watchdogs for the Docker daemon and Traefik, bounded and opt-in
+## 2026-09-19 · Optional watchdogs for the Docker daemon and Traefik, bounded and opt-in
 
 A read-only host-resilience evaluation found that `restart: unless-stopped` and
 container healthchecks already cover a crashed process, but nothing acts on a
@@ -472,6 +752,8 @@ loops at start, and both Node services bind to the container's hostname address,
 loopback, so their healthchecks call `$(hostname)`. Dify's licence and Open WebUI's
 are classed source-available in the sovereignty report.
 
+---
+
 ## 2026-09-19 · The AI gateways and chat UI are independent stacks
 
 `apps/litellm`, `apps/open-webui` and `apps/agentgateway` were added without a
@@ -491,6 +773,8 @@ binds metrics to all interfaces; the template pins them to loopback.
 
 Open WebUI's licence is BSD-3-Clause with a branding-preservation clause, so the
 sovereignty report classes it as source-available rather than OSI.
+
+---
 
 ## 2026-09-18 · The AI foundation exists; vLLM is documented as unverified on GPU
 
@@ -516,6 +800,8 @@ hide: Ollama has none, vLLM's key covers `/v1` only (`/invocations` runs
 inference without it), so vLLM's router forwards `/v1/` only and both READMEs
 state that peers on `proxy-public` reach everything.
 
+---
+
 ## 2026-09-18 · Windmill runs without job sandboxing rather than with privileged workers
 
 Upstream's default Windmill worker is `privileged: true`, for PID-namespace
@@ -535,6 +821,8 @@ runtime and dependency downloads fail on `app-internal` alone. And a fresh
 Windmill carries a published superadmin password, so the router defaults to
 `acc-deny` until `ops/bootstrap-admin.sh` has replaced it. The first
 reproducible retest is on a bare-metal host, where NSJAIL may work.
+
+---
 
 ## 2026-09-18 · A blueprint entry needs an independently operated service, not just a container
 
@@ -561,6 +849,8 @@ correction that sharpened the criterion above — an earlier plan had scoped
 standalone Tika and Gotenberg stacks into this batch alongside `docling-serve`,
 before that plan was implemented. They remain embedded in Paperless-ngx /
 optional in Seafile-Pro, unchanged, pending a later evaluation.
+
+---
 
 ## 2026-09-18 · `development/` becomes a Supporting-tier domain
 
@@ -603,7 +893,9 @@ Windmill) is unaffected — it stays in `apps/` under the ordinary
 categorisation test and is linked from `development/README.md`, which does not
 become a stack listing.
 
-## 2026-09 · v1.0.0 requires both the repository and the operator site
+---
+
+## 2026-09-18 · v1.0.0 requires both the repository and the operator site
 
 `v1.0.0` is not tagged until this repository *and* the SecDockBlue site meet
 their criteria. The site being live is not sufficient — it has been live since
@@ -629,7 +921,9 @@ enforces the gate instead of leaving it as prose. Repository and site stay
 separate products with separate structures; v1.0 is the one checkpoint they
 share.
 
-## 2026-09 · AI & Local AI stays latent; Document Processing has capabilities but no pipeline
+---
+
+## 2026-09-18 · AI & Local AI stays latent; Document Processing has capabilities but no pipeline
 
 Both were conceptual domains carried in `docs/architecture.md` with one bullet
 each, and neither absence had a reason attached. AI & Local AI said only that no
@@ -661,7 +955,9 @@ whether it works.
 
 Neither gets a directory, a stack, or a placeholder.
 
-## 2026-09 · The custom-application path is named from the two builds that already exist
+---
+
+## 2026-09-18 · The custom-application path is named from the two builds that already exist
 
 `README.md` promised patterns for "applications you build yourself" while the
 same paragraph said no reference pattern existed, and
@@ -697,8 +993,7 @@ reviewable and traceable is.
 Gaps are documented rather than closed: locally built images are not CVE
 scanned (Trivy cannot pull them), no checker reads a Dockerfile, Renovate
 cannot see a base pin behind a build arg, and `business/vikunja`'s tag and
-digest have **already drifted apart** unnoticed — which is the concrete reason
-the pin rule exists. The drift itself is left as found; correcting it needs a
+digest have drifted apart — the case the pin rule exists for. The drift itself is left as found; correcting it needs a
 registry lookup and is a pin decision, not an architecture one.
 
 No ROADMAP item was created, consistent with the mission-scope decision below:
@@ -710,7 +1005,9 @@ What remains absent is a **first-party** application: source with no upstream at
 all. Both real cases wrap third-party software, so that shape is unproven, and
 the mission's residual now sits in a reasoned absence rather than a false claim.
 
-## 2026-09 · `core/` is defined by scope, not dependency; `whoami` moves to `apps/`
+---
+
+## 2026-09-18 · `core/` is defined by scope, not dependency; `whoami` moves to `apps/`
 
 `core/` held five different definitions across two canonical files, three of
 which were false of real membership: "Infrastructure every other service
@@ -761,7 +1058,9 @@ Known and deliberate imprecision: no directory test asks about lifecycle, so
 The `apps/` test was not widened to describe throwaway fixtures; a lifecycle
 claim belongs to `docs/standards/status-model.md` if it ever earns one.
 
-## 2026-09 · Swap-policy coverage completed; `no-swap-policy` is a FAIL
+---
+
+## 2026-09-16 · Swap-policy coverage completed; `no-swap-policy` is a FAIL
 
 Every production service (150/150, 61 stacks) now states `memswap_limit`,
 mechanically set equal to its own `memory` value — the documented default from
@@ -789,7 +1088,9 @@ second) already carried one before this change, and setting one costs nothing.
 Corrected: one-shot containers get sized limits like everything else, not an
 exemption.
 
-## 2026-09 · The document editors move from `core/` to `apps/`
+---
+
+## 2026-09-16 · The document editors move from `core/` to `apps/`
 
 `core/onlyoffice`, `core/euro-office` and `core/collabora` are now
 `apps/onlyoffice`, `apps/euro-office` and `apps/collabora`. This resolves the
@@ -804,7 +1105,9 @@ Compose, security configuration and every consuming stack's integration
 directory and the paths that name it moved. The website already treated
 these as applications before this move; the repository now matches.
 
-## 2026-09 · The mission covers custom applications; physical layout, conceptual domain and navigation stay three separate questions
+---
+
+## 2026-09-16 · The mission covers custom applications; physical layout, conceptual domain and navigation stay three separate questions
 
 The mission now covers two kinds of software: existing self-hosted open-source
 projects, and applications someone builds themselves, both through the same
@@ -813,234 +1116,13 @@ distinction and what stays out of scope: `docs/architecture.md` →
 "Physical layout, conceptual domains and navigation are three different
 layers."
 
-**Why now.** Two review passes in a row conflated "how does a reader group
-this" with "which directory does this belong in" — the same mistake the
-2026-04 access-pattern decision (below) already corrected once for
-`business/`.
+**Why now.** Two review passes answered "how does a reader group this" where
+the question was "which directory does this belong in"; the 2026-04
+access-pattern decision (below) separates the two for `business/`.
 
-## 2026-08 · Host CrowdSec enforcement is scoped to the public interface
+---
 
-The firewall bouncer runs in nftables `set-only` mode and maintains only the IPv4 and
-IPv6 blacklist sets. This repository owns the DROP rule, attached to `hook forward` with
-an explicit ingress-interface match on the public interface. There is no generic INPUT
-chain, and no rule can match the management interface.
-
-The alternative — the package's default managed mode — installs a source-address chain at
-`hook input` with no interface restriction. That shape removed administrative access when
-a legitimate detection banned an administrator's own VPN address, and it filtered no
-proxy traffic at all, because published container ports are DNAT'd and traverse `FORWARD`
-rather than `INPUT`. It carried the failure mode without the benefit.
-
-Rejected: relying on an allowlist for the management plane. An allowlist is data and can
-be wrong — the previous design trusted `safe_range`, which is not a configuration key in
-the installed package and was silently ignored while validation reported success. A LAPI
-AllowList for the VPN ranges is kept as defence in depth; the interface match is the
-guarantee, because it is topology rather than data.
-
-Rejected: `nft flush ruleset` or whole-snapshot restore as a rollback. Docker and the VPN
-daemon rewrite host netfilter state continuously, so recovery names only CrowdSec's own
-units and tables.
-
-Deferred: the scoped enforcement is designed, not runtime-accepted. The acceptance
-sequence and what is verified today live in `core/crowdsec/docs/firewall-bouncer.md`; the
-incident evidence is in `docs/bugfixes/crowdsec-firewall-bouncer-2026-08-28.md`.
-
-## 2026-08 · CrowdSec gets a dedicated core-to-core network
-
-The engine joins `crowdsec-security` and no longer joins `proxy-public`. The network
-is an ordinary IPv4 bridge, declared by `core/traefik` and joined by `core/crowdsec`
-with `external: true`. Traefik and the engine are the intended members; application
-stacks stay on `proxy-public` and never attach.
-
-`proxy-public` is the network every routed application joins, and the CrowdSec LAPI,
-AppSec and Prometheus ports answered all of them. Authentication already bounded what
-that reach was good for — a bouncer key reads decisions and can neither create nor
-delete one, and AppSec returns 401 without a valid remediation key — so this is
-control-plane segmentation rather than the closing of an exploit. It also returns the
-deployment to the upstream expectation that the AppSec component answers the reverse
-proxy and nothing else.
-
-Rejected: leaving the engine on `proxy-public`, which keeps the unauthenticated
-metrics and pprof endpoints on port 6060 reachable from every application container.
-Rejected: `internal: true` plus a separate egress network — it denies a route neither
-member uses, and closed membership already bounds reachability.
-
-Deferred: extending the shared-external-network identity check to this network. It
-carries two members named in this repository, so the ambiguity that rule prevents
-cannot arise. Revisit if an independent participant is ever added. Deferred also: what
-becomes of the Prometheus endpoint on 6060, since the v0.8.0 monitoring milestone
-wants to scrape it and that decision belongs there.
-
-AppSec keeps `listen_addr: 0.0.0.0:7422` and the LAPI keeps its `127.0.0.1` host
-publication for the host-firewall remediation bouncer. Neither is an oversight: the bind cannot
-be loopback across containers, and the host publication is a mechanism no container
-reaches.
-
-## 2026-08 · Binary controls and values have separate owners
-
-`security-baseline.md` owns the controls that are on or off: `no-new-privileges`,
-`cap_drop`, secrets through Docker Secrets or `_FILE`, socket access, network
-isolation. `compose-structure.md` owns every rule that carries a number, together
-with the derivation that produces it.
-
-Resource limits were defined in both. `security-baseline.md` held a profile table
-with fixed `memory`, `cpus` and `pids` values and called the block optional;
-`compose-structure.md` held a role table with the same limits, their basis, and
-called it required. Neither file appeared in the File Map for this fact, so the two
-versions had no defined relationship and drifted apart on whether a CPU limit is set
-by default.
-
-The split follows what each file can answer. A binary control is met or it is not,
-and a checker decides it. A value has a derivation behind it and a failure mode when
-it is set too low, which is the treatment the deriving text already carries.
-
-This applies beyond the resource block: a rule that carries a number belongs in
-`compose-structure.md`.
-
-## 2026-08 · Memory and pids bound the host, CPU does not
-
-An unbounded memory leak runs until the kernel OOM-killer fires, and the process it
-selects is not necessarily the one that allocated. A fork bomb exhausts the global
-pid space, after which the host starts no further process, including a login shell.
-`memory` and `pids` are set on every service for that reason.
-
-A CPU limit addresses a different failure. Under contention the scheduler distributes
-cycles, so a container spinning on the CPU makes other containers slow rather than
-unavailable. `cpus` is therefore not part of the baseline.
-
-Two dozen services carry one anyway, with the values of the profile table that was
-removed — a derivation, not a measurement. `compose-structure.md` admits that state
-explicitly and requires the compose file to declare it beside the value, so a reader
-can tell a derived ceiling from a measured one. v0.10.0 resolves it per service.
-
-`security-baseline.md` stated that `deploy.resources` "caps memory and CPU so a
-single container cannot exhaust the host under load or during a memory leak". That
-holds for memory and not for CPU, and it was the reasoning behind the `cpus` column
-in its profile table. Both were removed with the section.
-
-## 2026-08 · The Traefik service port stays a literal
-
-`traefik-labels.md` states that the container-internal port is hardcoded per app,
-because it is a property of the image rather than of the deployment. 39 of 51 label
-lines used `${APP_INTERNAL_PORT}` instead, including `apps/_reference`, and the
-variable was defined in no standard.
-
-The tree was brought to the standard rather than the reverse. `APP_INTERNAL_PORT` is
-removed from every compose file, from the four healthchecks that read it, and from
-every `.env.example`. Changing the value moves the label away from the port the image
-listens on, so it breaks routing instead of relocating it.
-
-## 2026-09-20 · No approving-review gate while there is one maintainer
-
-**Decided.** While this repository has a single maintainer:
-
-- `required_approving_review_count` stays **0** on both protected branches;
-- the required CI checks stay enforced — ten on `dev` and ten on `main`;
-- the rulesets keep **no bypass actor**, so a red check blocks the owner too;
-- no approval rule is introduced that the sole author cannot satisfy;
-- the requirement is revisited when a second maintainer exists.
-
-Both branches are governed by rulesets rather than classic branch protection, and
-both also require the branch to be up to date before merging.
-
-With a single maintainer a required review has only two shapes, and neither is worth
-having. GitHub does not let an author approve their own pull request, so a required
-review plus no bypass means nothing can ever merge; a required review with a bypass
-means the rule is bypassed on every single merge. The second is what would raise the
-OpenSSF Scorecard Branch-Protection check from 3 to 6 — a score describing a rule
-nobody honours.
-
-The ceiling is not reachable anyway: Scorecard's tier 4 requires **two** reviewers,
-so 10/10 is out of reach for a single-maintainer repository regardless of
-configuration. Recorded so the question is not reopened expecting a different answer.
-Revisit when a second maintainer exists — that is the condition that changes it, not
-the score.
-
-`CHANGELOG.md` once recorded five checks and one approving review, and an earlier
-version of this entry recorded seven checks. Neither was the live configuration.
-
-## 2026-07 · Two troubleshooting documents, one entry point
-
-`TROUBLESHOOTING.md` is the symptom index and the place to start: what you
-observe, its cause, its fix, including app-specific traps. `docs/standards/troubleshooting.md`
-is the method — which layer is broken, and the commands that interrogate each one.
-Both were catalogues without a stated relationship; neither is merged, because the
-deep links from Traefik, CrowdSec and the IPv6 documentation already follow that
-split. Owners are in the File Map.
-
-## 2026-07 · Register follows the section purpose, not the repository
-
-The neutral-language rule was written for German drafts and its scope over the
-English documentation was never stated. Resolved at `writing-style.md`: imperative
-and direct address where the reader performs steps, declarative and neutral where
-they establish what is true. No repository-wide language rule overrides a section
-contract.
-
-## 2026-07 · Backup agent runs on the host
-
-A containerised backup agent needs `/:/host:ro` or `--privileged` to reach other
-stacks' data — which makes it a container able to read every secret in the
-deployment. The security baseline already treats the Portainer Agent's host mount as
-its one documented deviation of that kind.
-
-Database consistency still reaches into containers: Borgmatic's `container:` option
-(2.0.8+) resolves the address through Docker and dumps without published ports.
-
-**Open:** this conflicts with the portability design goal in `architecture.md`
-("no host-specific assumptions beyond Debian + Docker"). Needs to be recorded there
-as an explicit exception, or revisited — carried in `state.md` as the open decision
-on the host-installed agent.
-
-## 2026-07 · Backup covers two directions
-
-`backup/` covers the host outward (Borgmatic) and the operator's own devices inward
-(UrBackup). They solve different problems; neither replaces the other. Kopia stays
-a named alternative for operators wanting a UI or object storage.
-
-## 2026-07 · One status model, two axes
-
-Public status (what an operator can rely on) and internal status (what the
-maintainer has established) are separate axes with a defined mapping. The ten
-baseline-aligned criteria are the single gate between them. Full definition in
-[`../docs/standards/status-model.md`](../docs/standards/status-model.md).
-
-**Reason:** three status systems previously ran in parallel with no derivation
-between them, so drift was structural rather than accidental.
-
-## 2026-07 · LIFECYCLE.md is generated
-
-Derived from the owning files by `scripts/ci/lifecycle-report.py`, never hand-edited.
-The previous hand-maintained version covered 6 of 54 stacks, was three months stale,
-and claimed backup documentation that no stack had.
-
-## 2026-07 · One canonical app template
-
-`apps/_reference/` is the only template — runnable, not a paper skeleton. The former
-`docs/templates/` was folded into it.
-
-## 2026-06 · IPv6 dual-stack is opt-in
-
-`proxy-public` stays IPv4-only by default so existing installations are unaffected;
-`network-dual-stack.yml` enables IPv4+IPv6. Tailscale ingress needs it to preserve
-real client IPs. See `core/traefik/docs/ipv6-dual-stack.md`.
-
-## 2026-04 · Five top-level categories, split by access pattern
-
-Not by audience. `monitoring/` and `backup/` are top-level rather than under `apps/`
-because they reach across service boundaries and need broader permissions.
-Established in v0.2.0 as the Structure Stable Baseline — forks can rely on it.
-
-## 2026-04 · Choice-matrix instead of defaults
-
-Where several tools compete, multiple options are included and the operator picks by
-preference. Applies to dashboards, photo galleries, wikis, form builders, uptime
-monitoring. Documented per category README.
-
-**Narrow exception:** for deduplicating backup tools one is recommended, because two
-repositories mean two retention policies and two restore rehearsals — a real
-operational cost that does not exist for monitoring tools covering different axes.
-
-## 2026-09 · The CrowdSec reverse-proxy integration is switched in `.env`, never by editing a template
+## 2026-09-14 · The CrowdSec reverse-proxy integration is switched in `.env`, never by editing a template
 
 **Decision.** `CROWDSEC_BOUNCER_ENABLED` in `core/traefik/.env` is the only way the
 bouncer plugin and the `crowdsec-basic` / `crowdsec-appsec` middlewares reach a
@@ -1068,7 +1150,9 @@ with the shipped `.env.example`, then with the switch on and off, and judges eac
 result. Switching off while routers still name the middleware disables those
 routers; the README says to detach first.
 
-## 2026-09 · Swap is bounded per service, and the host reserve is an invariant without a mechanism
+---
+
+## 2026-09-13 · Swap is bounded per service, and the host reserve is an invariant without a mechanism
 
 A memory limit does not bound what a container takes from the host. With
 `memswap_limit` unset Docker grants as much swap again as the memory limit —
@@ -1097,12 +1181,16 @@ protection on the slice holding management services — is documented, not insta
 it has never been rehearsed under real pressure, and an untested protection is an
 assumption. `docs/architecture.md` carries what a rehearsal has to establish.
 
-`live-restore` joins the reference daemon configuration. It removes one avoidable
+`live-restore` joins the daemon configuration the operator site documents
+(`site/src/content/docs/getting-started/server-setup.mdx`); no file in this
+repository's stacks carries it. It removes one avoidable
 restart storm — the one a Docker package update causes — and it is documented for
 what it is: no help across a reboot, none across a major daemon version, and no
 substitute for per-service limits.
 
-## 2026-09 · Capabilities, with one reference implementation each
+---
+
+## 2026-09-07 · Capabilities, with one reference implementation each
 
 The blueprint is a set of capabilities — Foundation, Reverse Proxy, Identity & Access,
 Threat Detection & Remediation, Web Application Security, Network Security — and each has
@@ -1130,7 +1218,9 @@ no proxy at all. The concrete integration vocabulary stays Traefik-specific
 (`APP_TRAEFIK_*`, `acc-tailscale`) because the implementation genuinely is — renaming
 waits for a second implementation that creates the need.
 
-## 2026-09 · CrowdSec has a Core and two independent remediation points
+---
+
+## 2026-09-07 · CrowdSec has a Core and two independent remediation points
 
 "Phase 1 / 2 / 3" is retired from current documentation. It implied an order that the
 repository's own text contradicted: the two enforcement components are peers, and neither
@@ -1155,7 +1245,9 @@ lifecycle, the readiness gate, fail-open, the range limitation and the rollback 
 models all stand unchanged under Host-Firewall Remediation. Historical records keep the
 old numbering — it is accurate for the architecture of their time.
 
-## 2026-09 · The dashboard follows the certificate strategy, like every router
+---
+
+## 2026-09-07 · The dashboard follows the certificate strategy, like every router
 
 The Traefik dashboard router carried `tls.certResolver` unconditionally, so a
 wildcard deployment issued a second certificate for its dashboard hostname and
@@ -1188,6 +1280,130 @@ wildcard path work. Investigating the claim is what surfaced the real defect,
 one the report never mentioned — in the dashboard, not the applications.
 Evidence to investigate, not a specification to implement.
 
+---
+
+## 2026-08 · Host CrowdSec enforcement is scoped to the public interface
+
+The firewall bouncer runs in nftables `set-only` mode and maintains only the IPv4 and
+IPv6 blacklist sets. This repository owns the DROP rule, attached to `hook forward` with
+an explicit ingress-interface match on the public interface. There is no generic INPUT
+chain, and no rule can match the management interface.
+
+The alternative — the package's default managed mode — installs a source-address chain at
+`hook input` with no interface restriction. That shape removed administrative access when
+a legitimate detection banned an administrator's own VPN address, and it filtered no
+proxy traffic at all, because published container ports are DNAT'd and traverse `FORWARD`
+rather than `INPUT`. It carried the failure mode without the benefit.
+
+Rejected: relying on an allowlist for the management plane. An allowlist is data and can
+be wrong — the previous design trusted `safe_range`, which is not a configuration key in
+the installed package and was silently ignored while validation reported success. A LAPI
+AllowList for the VPN ranges is kept as defence in depth; the interface match is the
+guarantee, because it is topology rather than data.
+
+Rejected: `nft flush ruleset` or whole-snapshot restore as a rollback. Docker and the VPN
+daemon rewrite host netfilter state continuously, so recovery names only CrowdSec's own
+units and tables.
+
+Deferred: the scoped enforcement is designed, not runtime-accepted. The acceptance
+sequence and what is verified today live in `core/crowdsec/docs/firewall-bouncer.md`; the
+incident evidence is in `docs/bugfixes/crowdsec-firewall-bouncer-2026-08-28.md`.
+
+---
+
+## 2026-08 · CrowdSec gets a dedicated core-to-core network
+
+The engine joins `crowdsec-security` and no longer joins `proxy-public`. The network
+is an ordinary IPv4 bridge, declared by `core/traefik` and joined by `core/crowdsec`
+with `external: true`. Traefik and the engine are the intended members; application
+stacks stay on `proxy-public` and never attach.
+
+`proxy-public` is the network every routed application joins, and the CrowdSec LAPI,
+AppSec and Prometheus ports answered all of them. Authentication already bounded what
+that reach was good for — a bouncer key reads decisions and can neither create nor
+delete one, and AppSec returns 401 without a valid remediation key — so this is
+control-plane segmentation rather than the closing of an exploit. It also returns the
+deployment to the upstream expectation that the AppSec component answers the reverse
+proxy and nothing else.
+
+Rejected: leaving the engine on `proxy-public`, which keeps the unauthenticated
+metrics and pprof endpoints on port 6060 reachable from every application container.
+Rejected: `internal: true` plus a separate egress network — it denies a route neither
+member uses, and closed membership already bounds reachability.
+
+Deferred: extending the shared-external-network identity check to this network. It
+carries two members named in this repository, so the ambiguity that rule prevents
+cannot arise. Revisit if an independent participant is ever added. Deferred also: what
+becomes of the Prometheus endpoint on 6060, since the v0.8.0 monitoring milestone
+wants to scrape it and that decision belongs there.
+
+AppSec keeps `listen_addr: 0.0.0.0:7422` and the LAPI keeps its `127.0.0.1` host
+publication for the host-firewall remediation bouncer. Neither is an oversight: the bind cannot
+be loopback across containers, and the host publication is a mechanism no container
+reaches.
+
+---
+
+## 2026-08 · Binary controls and values have separate owners
+
+`security-baseline.md` owns the controls that are on or off: `no-new-privileges`,
+`cap_drop`, secrets through Docker Secrets or `_FILE`, socket access, network
+isolation. `compose-structure.md` owns every rule that carries a number, together
+with the derivation that produces it.
+
+Resource limits were defined in both. `security-baseline.md` held a profile table
+with fixed `memory`, `cpus` and `pids` values and called the block optional;
+`compose-structure.md` held a role table with the same limits, their basis, and
+called it required. Neither file appeared in the File Map for this fact, so the two
+versions had no defined relationship and drifted apart on whether a CPU limit is set
+by default.
+
+The split follows what each file can answer. A binary control is met or it is not,
+and a checker decides it. A value has a derivation behind it and a failure mode when
+it is set too low, which is the treatment the deriving text already carries.
+
+This applies beyond the resource block: a rule that carries a number belongs in
+`compose-structure.md`.
+
+---
+
+## 2026-08 · Memory and pids bound the host, CPU does not
+
+An unbounded memory leak runs until the kernel OOM-killer fires, and the process it
+selects is not necessarily the one that allocated. A fork bomb exhausts the global
+pid space, after which the host starts no further process, including a login shell.
+`memory` and `pids` are set on every service for that reason.
+
+A CPU limit addresses a different failure. Under contention the scheduler distributes
+cycles, so a container spinning on the CPU makes other containers slow rather than
+unavailable. `cpus` is therefore not part of the baseline.
+
+Two dozen services carry one anyway, with the values of the profile table that was
+removed — a derivation, not a measurement. `compose-structure.md` admits that state
+explicitly and requires the compose file to declare it beside the value, so a reader
+can tell a derived ceiling from a measured one. v0.10.0 resolves it per service.
+
+`security-baseline.md` stated that `deploy.resources` "caps memory and CPU so a
+single container cannot exhaust the host under load or during a memory leak". That
+holds for memory and not for CPU, and it was the reasoning behind the `cpus` column
+in its profile table. Both were removed with the section.
+
+---
+
+## 2026-08 · The Traefik service port stays a literal
+
+`traefik-labels.md` states that the container-internal port is hardcoded per app,
+because it is a property of the image rather than of the deployment. 39 of 51 label
+lines used `${APP_INTERNAL_PORT}` instead, including `apps/_reference`, and the
+variable was defined in no standard.
+
+The tree was brought to the standard rather than the reverse. `APP_INTERNAL_PORT` is
+removed from every compose file, from the four healthchecks that read it, and from
+every `.env.example`. Changing the value moves the label away from the port the image
+listens on, so it breaks routing instead of relocating it.
+
+---
+
 ## 2026-08 · Host-firewall remediation stays scoped, and ships without range enforcement
 
 Host CrowdSec enforcement keeps its shape: `hook forward`, priority `filter - 10`,
@@ -1213,6 +1429,8 @@ risk — it blocks less than intended, never more, and cannot reach the manageme
 plane. Proceeding on individual-IP enforcement does not wait for range support,
 and no unverified future package is planned around.
 
+---
+
 ## 2026-08 · Artefacts stand alone; the test environment is evidence, not specification
 
 Every file is written for whoever opens it, and states the final result and the
@@ -1228,6 +1446,8 @@ test host runs every stack behind one proxy; a reader takes one stack. The
 working unit for repository-facing docs: an instruction has to be true for
 someone running exactly one stack.
 
+---
+
 ## 2026-08 · A local test stack per stack, where one means anything
 
 `docker-compose.local.yml` beside the production file, publishing on
@@ -1240,15 +1460,125 @@ Stacks that show nothing run alone have none — a reverse proxy, an agent
 reporting to a central instance, something needing host networking, a client for
 another stack's data. A reasoned absence is the outcome, not a gap.
 
+---
+
+## 2026-07 · Two troubleshooting documents, one entry point
+
+`TROUBLESHOOTING.md` is the symptom index and the place to start: what you
+observe, its cause, its fix, including app-specific traps. `docs/standards/troubleshooting.md`
+is the method — which layer is broken, and the commands that interrogate each one.
+Both were catalogues without a stated relationship; neither is merged, because the
+deep links from Traefik, CrowdSec and the IPv6 documentation already follow that
+split. Owners are in the File Map.
+
+---
+
+## 2026-07 · Register follows the section purpose, not the repository
+
+The neutral-language rule was written for German drafts and its scope over the
+English documentation was never stated. Resolved at `writing-style.md`: imperative
+and direct address where the reader performs steps, declarative and neutral where
+they establish what is true. No repository-wide language rule overrides a section
+contract.
+
+---
+
+## 2026-07 · Backup agent runs on the host
+
+A containerised backup agent needs `/:/host:ro` or `--privileged` to reach other
+stacks' data — which makes it a container able to read every secret in the
+deployment. The security baseline already treats the Portainer Agent's host mount as
+its one documented deviation of that kind.
+
+Database consistency still reaches into containers: Borgmatic's `container:` option
+(2.0.8+) resolves the address through Docker and dumps without published ports.
+
+**Resolved 2026-10-15** (D9 of the core audit): `docs/architecture.md` records the
+host-installed agent as a named exception to the portability goal, with the reason
+above.
+
+---
+
+## 2026-07 · Backup covers two directions
+
+`backup/` covers the host outward (Borgmatic) and the operator's own devices inward
+(UrBackup). They solve different problems; neither replaces the other. Kopia stays
+a named alternative for operators wanting a UI or object storage.
+
+---
+
+## 2026-07 · One status model, two axes
+
+Public status (what an operator can rely on) and internal status (what the
+maintainer has established) are separate axes with a defined mapping. The ten
+baseline-aligned criteria are the single gate between them. Full definition in
+[`../docs/standards/status-model.md`](../docs/standards/status-model.md).
+
+**Reason:** three status systems previously ran in parallel with no derivation
+between them, so drift was structural rather than accidental.
+
+---
+
+## 2026-07 · LIFECYCLE.md is generated
+
+Derived from the owning files by `scripts/ci/lifecycle-report.py`, never hand-edited.
+The hand-maintained version it replaced covered 6 of 54 stacks and was three months
+behind the tree; a generated view cannot lag.
+
+---
+
+## 2026-07 · One canonical app template
+
+`apps/_reference/` is the only template — runnable, not a paper skeleton. The former
+`docs/templates/` was folded into it.
+
+---
+
+## 2026-06 · IPv6 dual-stack is opt-in
+
+`proxy-public` stays IPv4-only by default so existing installations are unaffected;
+`network-dual-stack.yml` enables IPv4+IPv6. Tailscale ingress needs it to preserve
+real client IPs. See `core/traefik/docs/ipv6-dual-stack.md`.
+
+**Superseded 2026-10-16** by D12 (above): dual-stack becomes the default for new
+installations once the feasibility assessment of the three modes is done; existing
+installations keep their mode until they take the migration path.
+
+---
+
+## 2026-04 · Five top-level categories, split by access pattern
+
+Not by audience. `monitoring/` and `backup/` are top-level rather than under `apps/`
+because they reach across service boundaries and need broader permissions.
+Established in v0.2.0 as the Structure Stable Baseline — forks can rely on it.
+
+---
+
+## 2026-04 · Choice-matrix instead of defaults
+
+Where several tools compete, multiple options are included and the operator picks by
+preference. Applies to dashboards, photo galleries, wikis, form builders, uptime
+monitoring. Documented per category README.
+
+**Narrow exception:** for deduplicating backup tools one is recommended, because two
+repositories mean two retention policies and two restore rehearsals — a real
+operational cost that does not exist for monitoring tools covering different axes.
+
+---
+
 ## 2026-04 · Hub-and-spoke networking per app
 
 `proxy-public` shared and external; `app-internal` per app with `internal: true`.
 Databases never join the public network and never publish a host port.
 
+---
+
 ## 2026-04 · Config in git, secrets and data never
 
 The compose file and `.env.example` are the portable artifact. `.env`, `.secrets/`
 and `volumes/` stay on the host.
+
+---
 
 ## 2026-04 · Security-first with documented exceptions
 

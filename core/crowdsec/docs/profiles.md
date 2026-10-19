@@ -6,9 +6,10 @@ applied everywhere.
 
 This document is the architecture and the roadmap. It defines the profile names,
 what each one does, what the underlying tooling can and cannot do per app, and the
-whoami-first path to turning any of it on. **Nothing here is enabled yet** — the
-Traefik plugin and every profile middleware remain commented out in the templates.
-See [§ Implemented vs deferred](#implemented-vs-deferred) for the exact status.
+whoami-first path to turning any of it on. **Nothing here is enabled by default** —
+the Traefik plugin and the two middlewares exist only with
+`CROWDSEC_BOUNCER_ENABLED=true` in `core/traefik/.env`, and no shipped router carries
+one. See [§ Implemented vs deferred](#implemented-vs-deferred) for the exact status.
 
 ---
 
@@ -55,7 +56,7 @@ per-app behaviour from a global control).
 | # | Concern | Lives in | Scope |
 |---|---------|----------|-------|
 | 1 | Traefik **static plugin** load (`experimental.plugins.bouncer`) | `core/traefik/ops/templates/traefik.yml.tmpl` | Loaded once per Traefik process. Requires a **restart** to change. |
-| 2 | Traefik **dynamic middleware profiles** (`crowdsec-*`) | `core/traefik/ops/templates/dynamic/integrations.yml.tmpl` | Per-router. **Hot-reloaded**. This is where profiles are defined. |
+| 2 | Traefik **dynamic middleware profiles** (`crowdsec-*`) | `core/traefik/ops/templates/dynamic/crowdsec.yml.tmpl`, rendered only with `CROWDSEC_BOUNCER_ENABLED=true` | Per-router. **Hot-reloaded**. This is where profiles are defined. |
 | 3 | CrowdSec **LAPI / decisions** (bans) | `core/crowdsec/` engine | **Global** to the source IP. Every bouncer that polls LAPI enforces the same list. |
 | 4 | **Parsers / scenarios / collections** | `core/crowdsec/` engine + Hub | Global. Detection logic; not per app. |
 | 5 | **AppSec / WAF** engine + rules | `core/crowdsec/` (port `7422`) | Engine + rule sets are **global**; *invocation* is per-middleware (axis 2). |
@@ -236,7 +237,7 @@ Recorded so the eventual attachment is unambiguous — **not implemented; do not
 |------|-------|
 | Traefik plugin block | Rendered into `config/traefik.yml` by `render.sh` when `CROWDSEC_BOUNCER_ENABLED=true` in `core/traefik/.env`; absent otherwise |
 | `crowdsec-*` profile middlewares | `crowdsec-basic` and `crowdsec-appsec` are defined in `crowdsec.yml.tmpl` and rendered by the same switch into `config/dynamic/crowdsec.yml`; the file is removed when the switch is off |
-| `crowdsec-basic` | Validated on whoami (2026-07-29, public and restricted paths) and carried by ntfy's public router in the v0.8.0 host session; the `APP_TRAEFIK_THREAT` slot is how an application opts in |
+| `crowdsec-basic` | Validated on whoami (2026-07-29, public and restricted paths). No shipped stack carries it — every `APP_TRAEFIK_THREAT` value in the tree is empty; that slot is how an application opts in |
 | `crowdsec-appsec`, `crowdsec-strict` | Designed here; deferred behind AppSec testing / recovery-path gates |
 | `geo-*` family | Deferred; mechanism undecided (edge vs Traefik geo plugin) |
 | Any app attachment (incl. Cal.diy) | None — whoami-first, then per-app opt-in |
@@ -268,7 +269,7 @@ roadmap only.
 
 ## See also
 
-- [README.md](../README.md) — CrowdSec engine + the three-phase model
+- [README.md](../README.md) — CrowdSec engine: Core and the two remediation points
 - [appsec.md](appsec.md) — WAF mechanics, per-app false positives, fail-open/closed
 - [geoblocking.md](geoblocking.md) — why geo is global blocklist, not per-app allowlist
 - [firewall-bouncer.md](firewall-bouncer.md) — host-firewall remediation, global rather than per app

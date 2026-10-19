@@ -17,9 +17,9 @@ FAIL (blocks CI — dangerous or leak-prone):
   no-swap-policy    service with a memory limit and no explicit memswap_limit —
                     coverage completed 2026-09-16 (every production service);
                     this guards the property, it does not report a migration
-  burst-exposure    a security chain whose rate-limit bucket holds a whole first
-                    load (sec-*-xl) on a router open to more than a closed set
-                    of clients
+  burst-exposure    a router whose rate-limit bucket holds a whole first load
+                    (limit-extra-large, or a sec-*-xl chain) while its access
+                    policy admits more than a closed set of clients
 
 WARN (reported — structural drift):
   missing-file      .env.example / README.md / UPSTREAM.md absent
@@ -30,6 +30,20 @@ WARN (reported — structural drift):
   no-healthcheck    service without a healthcheck
   tls-options       Traefik tls.options without the @file suffix
   real-domain       a hostname that is not *.example.com
+  router-positions  a router that does not carry the four positions of the
+                    middleware model — access, limit, headers, auth — once
+                    each and in that order (Phase 4, D2/D6; headers is the
+                    mandatory position, HSTS lives there). WARN while the
+                    routers still carry the sec-* chains; FAIL from Phase 4.3
+  block-order       a per-app block on the wrong side of the four: a response
+                    header block (hsts-include-subdomains, frame-self,
+                    csp-self-only, header-*) after the headers profile loses
+                    to it; forwarded-proto-https before the four is a request
+                    header the gate never sees
+  tls-conflict      two routers of one stack serve the same host name with
+                    different tls.options — Traefik logs the conflict and
+                    serves `default` to both. WARN while the routers still
+                    name a per-router option; FAIL from Phase 4.3
 
 Known limits (deliberate, to keep the report actionable):
   - `16-alpine` style tags (bare major + variant) are accepted, though the spec
@@ -79,11 +93,33 @@ DATASTORE_NAMES = {"db", "redis", "database", "mariadb", "postgres", "mysql", "m
 # NEXT_PUBLIC_VAPID_PUBLIC_KEY and friends are public by design.
 SECRET_VAR = re.compile(r"^[A-Z0-9_]*(PASSWORD|SECRET|TOKEN|PASSWD|PWD)$")
 
-# The -xl chains trade a wide first-load burst for a closed set of clients:
-# rl-spa-xl lets one address issue a thousand requests before the sustained
-# rate applies. These access policies keep that set closed — acc-deny closes
-# the router altogether.
-CLOSED_ACCESS = {"acc-private", "acc-tailscale", "acc-deny"}
+# The whole-first-load bucket (limit-extra-large; before the model, the -xl
+# chains) lets one address issue a thousand requests before the sustained rate
+# applies. These access policies keep the set of such addresses closed —
+# access-blocked / acc-deny closes the router altogether. Both vocabularies are
+# listed while the routers move from one to the other (Phase 4.1 → 4.3).
+CLOSED_ACCESS = {"access-lan", "access-vpn", "access-lan-vpn", "access-blocked",
+                 "acc-private", "acc-tailscale", "acc-deny"}
+
+# The middleware model (core/traefik/config/dynamic/model.yml, decided
+# 2026-10-18): four positions on every router, in this order. A router names
+# each through its stack's variable — ${X_TRAEFIK_ACCESS}@file and so on — and
+# the auth position carries its provider in the value (auth-none@file,
+# <stack>-auth@docker), so it is recognised by the variable as well as by name.
+POSITIONS = ("access", "limit", "headers", "auth")
+POSITION_VAR = re.compile(r"TRAEFIK_[A-Z0-9_]*?(ACCESS|LIMIT|HEADERS|AUTH)$")
+# The names the model replaces; a router still carrying one has not moved.
+OLD_NAME = re.compile(r"^(sec-|acc-|hdr-|rl-|crowdsec-)")
+# Per-app blocks and the side of the four they belong on (model.yml).
+BEFORE_PROFILE = re.compile(r"^(hsts-include-subdomains|frame-self|csp-self-only|header-[a-z0-9-]+)$")
+AFTER_FOUR = {"forwarded-proto-https"}
+# Severity of the two rules that describe the model's shape. Every router
+# still carries a sec-* chain until Phase 4.3 moves them all in one step, so
+# the rules report until then and block from then on.
+MODEL_LEVEL = "WARN"
+# Substitution of ${VAR} and ${VAR:-default} in a label, with the stack's
+# .env.example values standing in for a deployment's .env.
+LABEL_VAR = re.compile(r"\$\{([A-Za-z0-9_]+)(?::?-([^}]*))?\}")
 
 # Accepted placeholders in a committed example file.
 PLACEHOLDER = re.compile(r"^(__REPLACE_ME__|<.*>|changeme|CHANGEME|\$\{.*\}|)$")
@@ -549,8 +585,25 @@ def check_local_pins(app: Path, findings: list[dict]) -> None:
                                        "— the local stack must evaluate the shipped version"})
 
 
-def pinned_tag(key: str, value: str) -> str | None:
-    """The tag a variable pins, for both pinning styles in this repository.
+IMAGE_LINE = re.compile(r"^\s*image:\s*(.+)$")
+IMAGE_VARIABLE = re.compile(r"\$\{([A-Z][A-Z0-9_]*)")
+
+
+def image_variables(app: Path) -> frozenset[str]:
+    """Every variable an `image:` line of the stack's production compose files
+    reads — the set that decides whether a `<NAME>_VERSION` variable is a pin.
+    """
+    names: set[str] = set()
+    for path in compose_files(app):
+        for line in path.read_text(encoding="utf-8").splitlines():
+            m = IMAGE_LINE.match(line)
+            if m:
+                names.update(IMAGE_VARIABLE.findall(m.group(1)))
+    return frozenset(names)
+
+
+def pinned_tag(key: str, value: str, image_vars: frozenset[str] = frozenset()) -> str | None:
+    """The tag a variable pins, for the pinning styles in this repository.
 
     Most stacks split the reference, naming the image in the compose file and
     the version in `<NAME>_TAG`. A few carry the whole reference in
@@ -558,11 +611,16 @@ def pinned_tag(key: str, value: str) -> str | None:
     Traefik for one each. The rule is about reproducibility, which does not
     depend on which half of the reference the variable holds.
 
+    A `<NAME>_VERSION` variable counts only when an `image:` line reads it —
+    `core/shellhub` pins three images through `SHELLHUB_VERSION`, while
+    `CROWDSEC_BOUNCER_PLUGIN_VERSION` names a Traefik plugin release and no
+    image. The name alone cannot tell the two apart; the compose file can.
+
     Returns None for a variable that pins nothing. Any digest is stripped
     first: `2.5.x@sha256:…` is reproducible through the digest, and it is the
     tag that has to be judged on its own.
     """
-    if key.endswith("_TAG"):
+    if key.endswith("_TAG") or (key.endswith("_VERSION") and key in image_vars):
         tag = value
     elif key.endswith("_IMAGE"):
         tag = split_image_ref(value)[1]
@@ -588,9 +646,10 @@ def check_env_pins(app: Path, findings: list[dict]) -> None:
     and none violated the rule. That is what makes this enforcement of a
     property the repository already has rather than a migration.
     """
+    image_vars = image_variables(app)
     for path in sorted(app.glob("*.env*.example")):
         for key, value in parse_env(path)[0]:
-            tag = pinned_tag(key, value)
+            tag = pinned_tag(key, value, image_vars)
             if tag and BAD_TAG.match(tag):
                 findings.append({"level": "FAIL", "rule": "latest-tag",
                                  "detail": f"{path.name}: {key}={value} is not "
@@ -644,15 +703,7 @@ def check_env(app: Path, findings: list[dict]) -> None:
                 findings.append({"level": "WARN", "rule": "real-domain",
                                  "detail": f"{key}={value} — use *.example.com in a committed file"})
 
-    # -- wide first-load burst outside a VPN (FAIL) ---------------------------
-    settings = dict(variables)
-    chain = settings.get("APP_TRAEFIK_SECURITY", "")
-    access = settings.get("APP_TRAEFIK_ACCESS", "")
-    if chain.endswith("-xl") and access not in CLOSED_ACCESS:
-        findings.append({"level": "FAIL", "rule": "burst-exposure",
-                         "detail": f"{chain} holds a whole first load in one burst — "
-                                   f"pair it with {' or '.join(sorted(CLOSED_ACCESS))}, "
-                                   f"found '{access or 'unset'}'"})
+    # -- the wide first-load burst is judged per router: check_routers --------
 
 
 
@@ -774,6 +825,147 @@ def check_one_compose(app: Path, path: Path, findings: list[dict]) -> None:
                                    f"({', '.join(sorted(swapless))})"})
 
 
+def resolve_label(value: str, env: dict) -> str:
+    """Substitute ${VAR} and ${VAR:-default} from the stack's variables.
+
+    A variable the file does not set resolves to its default, else to the
+    empty string — which is what Compose passes to Docker, and what makes an
+    empty position disable a router rather than merely leave it bare.
+    """
+    seen = 0
+    while LABEL_VAR.search(value) and seen < 10:
+        value = LABEL_VAR.sub(lambda m: env.get(m.group(1), m.group(2) or ""), value)
+        seen += 1
+    return value
+
+
+def router_labels(path: Path) -> dict[str, dict[str, str]]:
+    """Every `traefik.http.routers.<name>.<key>=<value>` label in a compose
+    file, keyed by the raw router name, with the service it is declared on."""
+    try:
+        data = compose_load(path)
+    except yaml.YAMLError:
+        return {}
+    routers: dict[str, dict[str, str]] = {}
+    for svc_name, svc in (data.get("services") or {}).items():
+        if not isinstance(svc, dict):
+            continue
+        labels = svc.get("labels") or []
+        label_list = labels if isinstance(labels, list) else [f"{k}={v}" for k, v in labels.items()]
+        for label in label_list:
+            key, sep, value = str(label).partition("=")
+            m = re.match(r"^traefik\.http\.routers\.([^.]+)\.(.+)$", key.strip())
+            if not sep or not m:
+                continue
+            r = routers.setdefault(m.group(1), {"_service": svc_name, "_file": path.name})
+            r[m.group(2)] = value.strip()
+    return routers
+
+
+def classify(entry: str, family_by_value: dict[str, str]) -> str | None:
+    """The position an entry of a middlewares list fills, or None for a block."""
+    name = entry.split("@", 1)[0]
+    for family in POSITIONS:
+        if name.startswith(family + "-"):
+            return family
+    if name.startswith("acc-"):
+        return "access"
+    if name.startswith("rl-"):
+        return "limit"
+    if name.startswith(("sec-", "hdr-")):
+        return "headers"
+    # A credential gate the stack owns (<stack>-auth@docker) carries no
+    # family prefix; the variable it came from names its position.
+    return family_by_value.get(entry) or family_by_value.get(name)
+
+
+def check_routers(app: Path, findings: list[dict]) -> None:
+    """The middleware model on every router of the stack (Phase 4, D2/D6):
+    the four positions once each and in order, a per-app block on its side of
+    them, the whole-first-load bucket only behind a closed access policy, and
+    one TLS option per host name across the stack's routers."""
+    env_file = app / ".env.example"
+    env = dict(parse_env(env_file)[0]) if env_file.exists() else {}
+    family_by_value: dict[str, str] = {}
+    for key, value in env.items():
+        m = POSITION_VAR.search(key)
+        if m and value:
+            family_by_value[value] = m.group(1).lower()
+            family_by_value.setdefault(value + "@file", m.group(1).lower())
+
+    tls_by_host: dict[str, dict[str, list[str]]] = {}
+    for path in compose_files(app):
+        for raw_name, labels in router_labels(path).items():
+            if "rule" not in labels:
+                continue
+            name = resolve_label(raw_name, env)
+            hosts = re.findall(r"Host\(`([^`]+)`\)", resolve_label(labels["rule"], env))
+            option = resolve_label(labels.get("tls.options", ""), env).strip() or "default"
+            for host in hosts:
+                tls_by_host.setdefault(host, {}).setdefault(option, []).append(name)
+
+            raw = labels.get("middlewares", "")
+            entries = [e.strip() for e in resolve_label(raw, env).split(",") if e.strip()]
+            empty = [m.group(1) for m in LABEL_VAR.finditer(raw)
+                     if POSITION_VAR.search(m.group(1)) and not env.get(m.group(1), m.group(2) or "")]
+            families = [classify(e, family_by_value) for e in entries]
+            old = sorted({e.split("@", 1)[0] for e in entries if OLD_NAME.match(e)})
+
+            # -- the four positions, once each, in order (MODEL_LEVEL) -------
+            problems: list[str] = []
+            missing = [p for p in POSITIONS if p not in families]
+            if missing:
+                problems.append("missing " + ", ".join(missing))
+            twice = [p for p in POSITIONS if families.count(p) > 1]
+            if twice:
+                problems.append("twice: " + ", ".join(twice))
+            present = [f for f in families if f in POSITIONS]
+            if present != sorted(present, key=POSITIONS.index):
+                problems.append("out of order: " + " → ".join(present))
+            if empty:
+                problems.append("empty variable " + ", ".join(sorted(set(empty))) + " disables the router")
+            if old:
+                problems.append("names the model replaces: " + ", ".join(old))
+            if problems:
+                findings.append({"level": MODEL_LEVEL, "rule": "router-positions", "service": name,
+                                 "detail": "; ".join(problems)})
+
+            # -- a per-app block on its side of the four (WARN) --------------
+            headers_at = families.index("headers") if "headers" in families else None
+            auth_at = families.index("auth") if "auth" in families else None
+            for i, entry in enumerate(entries):
+                block = entry.split("@", 1)[0]
+                if BEFORE_PROFILE.match(block) and headers_at is not None and i > headers_at:
+                    findings.append({"level": "WARN", "rule": "block-order", "service": name,
+                                     "detail": f"{block} stands after the headers profile and loses "
+                                               "to it on the response — place it before"})
+                if block in AFTER_FOUR and auth_at is not None and i < auth_at:
+                    findings.append({"level": "WARN", "rule": "block-order", "service": name,
+                                     "detail": f"{block} stands before the auth position — "
+                                               "place it after the four"})
+
+            # -- the whole-first-load bucket behind a closed policy (FAIL) ----
+            wide = [e.split("@", 1)[0] for e in entries
+                    if e.split("@", 1)[0] == "limit-extra-large" or
+                    (e.split("@", 1)[0].startswith("sec-") and e.split("@", 1)[0].endswith("-xl"))]
+            if wide:
+                access = [e.split("@", 1)[0] for e, f in zip(entries, families) if f == "access"]
+                if not access or any(a not in CLOSED_ACCESS for a in access):
+                    findings.append({"level": "FAIL", "rule": "burst-exposure", "service": name,
+                                     "detail": f"{wide[0]} holds a whole first load in one burst — "
+                                               f"pair it with a closed access policy "
+                                               f"({', '.join(sorted(CLOSED_ACCESS))}), "
+                                               f"found '{', '.join(access) or 'none'}'"})
+
+    # -- one TLS option per host name across the stack (MODEL_LEVEL) ----------
+    for host, by_option in sorted(tls_by_host.items()):
+        if len(by_option) > 1:
+            shape = "; ".join(f"{opt}: {', '.join(names)}" for opt, names in sorted(by_option.items()))
+            findings.append({"level": MODEL_LEVEL, "rule": "tls-conflict",
+                             "detail": f"{host} is served with different tls.options — "
+                                       f"Traefik falls back to `default` for all of them ({shape})"})
+
+
 def root_gitignore() -> str:
     p = Path(".gitignore")
     return p.read_text(encoding="utf-8", errors="replace") if p.exists() else ""
@@ -858,6 +1050,7 @@ def main() -> int:
         check_env_pins(app, findings)
         check_local_pins(app, findings)
         check_compose(app, findings)
+        check_routers(app, findings)
         if findings:
             by_app.setdefault(app, []).extend(findings)
 

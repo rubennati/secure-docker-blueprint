@@ -23,7 +23,7 @@ generated from the repository.
 
 | Service | Description |
 |---|---|
-| [Traefik](traefik/) | Reverse proxy with socket proxy, 5 security levels, 3 TLS profiles, access policies |
+| [Traefik](traefik/) | Reverse proxy with socket proxy, access policies, security chains, 3 TLS profiles |
 | [CrowdSec](crowdsec/) | Threat detection engine — log analysis, scenarios, decisions. Enforcement is a separate choice: reverse-proxy or host-firewall remediation |
 
 Planned: **Suricata** (network IDS) and **Coraza** (web application firewall), two

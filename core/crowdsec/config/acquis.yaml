@@ -15,9 +15,9 @@ labels:
 ---
 # SSH authentication logs (opt-in)
 #
-# Enables SSH brute-force detection — the primary use case for Phase 3
-# (Firewall Bouncer). Without this, Phase 3 only enforces bans that
-# Phase 2 already covers via Traefik logs.
+# Enables SSH brute-force detection — the case host-firewall remediation
+# exists for. Without it, the host firewall enforces only decisions derived
+# from Traefik's logs, the same ones reverse-proxy remediation covers.
 #
 # Prerequisites before uncommenting:
 #   1. Uncomment the volume mount in docker-compose.yml:

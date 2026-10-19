@@ -191,6 +191,16 @@ trusted from those senders and from nobody else. What is left for the review is
 narrower than the question suggested: the list is Cloudflare's alone and is
 maintained by hand, and an installation behind another CDN has no equivalent.
 
+> **Note, 2026-10-15.** The paragraph above answers which senders' `X-Forwarded-*`
+> headers are kept. It does not answer where the middlewares take the client
+> address from: `ipAllowList` and `rateLimit` evaluate the request's remote
+> address unless an `ipStrategy` or `sourceCriterion` is set, and the templates
+> set neither. Behind Cloudflare's proxy the access policies and rate limits
+> therefore key on the edge address, not on the client. The owning text is
+> [`../standards/traefik-security.md`](../standards/traefik-security.md#trusted-proxy-headers-traefikyml--forwardedheaders);
+> the mechanism that changes it is decision D3 in
+> [`core-v1-readiness-2026-10-15.md`](core-v1-readiness-2026-10-15.md#j-decisions-required).
+
 **Question 8, what threat enforcement already covers.** The CrowdSec instance
 this repository ships runs 8 collections and 55 scenarios against Traefik's
 access log, plus the AppSec rules. Among them: `http-generic-bf` — password
