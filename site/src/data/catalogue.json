@@ -201,7 +201,7 @@
     "upstream": "https://hub.docker.com/r/lissy93/dashy",
     "verified": "2026-05-02",
     "verified_version": "v4.0.4",
-    "version": "4.6.0"
+    "version": "4.8.7"
   },
   "apps/defectdojo": {
     "decision_facts": {},
@@ -1739,7 +1739,7 @@
     "upstream": "https://github.com/documenso/documenso",
     "verified": null,
     "verified_version": null,
-    "version": "2.18.0"
+    "version": "2.20.0"
   },
   "business/dolibarr": {
     "decision_facts": {},
@@ -3129,11 +3129,11 @@
     "name": "Uptime Kuma",
     "path": "monitoring/uptime-kuma",
     "role": "Uptime monitoring with a status page and many notification channels",
-    "state": "baseline-aligned",
+    "state": "scaffolded",
     "upstream": "https://uptime.kuma.pet",
     "verified": "2026-09-13",
     "verified_version": "2.5.4",
-    "version": "2.5.4"
+    "version": "2.5.6"
   },
   "monitoring/zabbix": {
     "decision_facts": {
