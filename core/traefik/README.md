@@ -341,7 +341,7 @@ which resolver is named on the router; if the wildcard already covers the
 hostname, that match wins and no request ever reaches `tlsResolver`'s ACME
 provider. Verified on a live host on 2026-09-15: the resolver loaded without
 error and the router carried it correctly, and `acme.json` still held nothing
-under `tlsResolver` after the restart, because `*.dob.qode.at` already covered
+under `tlsResolver` after the restart, because `*.example.com` already covered
 the test hostname. To actually see this resolver issue something, point it at
 a hostname the wildcard does not cover.
 
