@@ -8,7 +8,7 @@ Single-container deployment with n8n's built-in SQLite database:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `docker.n8n.io/n8nio/n8n:latest` | Web UI + workflow executor + webhook endpoint |
+| `app` | `n8nio/n8n:2.38.7`, pinned by digest | Web UI + workflow executor + webhook endpoint |
 
 Data lives in `./volumes/data/` (SQLite DB, credentials, workflow exports).
 

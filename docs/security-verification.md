@@ -397,10 +397,11 @@ document restates their coverage, severity or exit behavior — it points here.
   base-image or distro package rather than many independent problems.
 - An image that fails to scan is named explicitly under "not scanned," with
   the reason Trivy itself reported — never silently dropped or counted as
-  clean. `docker.n8n.io/n8nio/n8n` currently fails here: its registry answers
-  `429 TOOMANYREQUESTS` on an anonymous pull (reproduced directly, outside
-  CI, against the same registry). No Docker Hub credentials are configured
-  anywhere in this repository's CI — every pull in this job is anonymous.
+  clean. No Docker Hub credentials are configured anywhere in this
+  repository's CI — every pull in this job is anonymous. A registry address
+  that is a gateway in front of Docker Hub is limited by the gateway's shared
+  quota rather than the runner's; `apps/n8n` pulls from Docker Hub directly
+  for that reason (`apps/n8n/UPSTREAM.md`).
 - The Trivy vulnerability database is cached across workflow runs
   (`actions/cache`, one entry per UTC day) so same-day runs do not each
   re-download it. Trivy's own staleness check still decides whether a

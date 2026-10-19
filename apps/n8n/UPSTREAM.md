@@ -18,7 +18,13 @@
 
 ## What we use
 
-- Upstream `docker.n8n.io/n8nio/n8n`
+- Upstream `n8nio/n8n` from Docker Hub, the repository n8n's release workflow
+  pushes to, pinned by the digest of the multi-arch index. `docker.n8n.io`, the
+  address n8n's documentation also names, is a download-counting gateway in
+  front of the same Docker Hub repository: it authenticates against Docker Hub,
+  and Docker Hub counts its anonymous pulls against the gateway's shared
+  addresses. That quota was exhausted on every image scan from 2026-10-05 to
+  2026-10-19, so the image was never scanned through it.
 - Built-in SQLite database (in `./volumes/data/`)
 - Docker Secret for `N8N_ENCRYPTION_KEY`
 - Bind-mount `./volumes/data` (n8n state) and `./volumes/files` (workflow scratch space)
