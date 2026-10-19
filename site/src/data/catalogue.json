@@ -832,7 +832,7 @@
     "upstream": "https://n8n.io/",
     "verified": "2026-05-02",
     "verified_version": "v2.19.2",
-    "version": "a8c95f75c6fd…"
+    "version": "bcef56dd4401…"
   },
   "apps/nextcloud": {
     "decision_facts": {},

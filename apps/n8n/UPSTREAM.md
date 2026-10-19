@@ -13,7 +13,7 @@
 - **Origin:** Germany · n8n GmbH · EU
 - **Domain:** Automation and data
 - **Role:** Visual workflow automation
-- **Based on version:** `2.38.7`
+- **Based on version:** `2.41.7`
 - **Last verified:** 2026-05-02 (v2.19.2)
 
 ## What we use
