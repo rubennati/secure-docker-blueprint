@@ -332,7 +332,7 @@
   "apps/n8n": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "pinned": "APP_TAG=2.38.7",
+    "pinned": "APP_TAG=2.41.7@sha256:bcef56dd4401…",
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-05-02",

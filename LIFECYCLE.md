@@ -78,7 +78,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/mailpit`](apps/mailpit/) | `baseline-aligned` | `APP_TAG=v1.31.1` | 2026-09-07 | ✅ | documented | missing |
 | [`apps/mailserver-jeboehm`](apps/mailserver-jeboehm/) | `scaffolded` | `APP_TAG=8.0.8` | — | ✅ | documented | missing |
 | [`apps/monicahq`](apps/monicahq/) | `scaffolded` | `APP_TAG=4.1.2-apache` | 2026-04-17 ⚠️ | ✅ | documented | missing |
-| [`apps/n8n`](apps/n8n/) | `scaffolded` | `APP_TAG=2.38.7` | 2026-05-02 | ✅ | documented | missing |
+| [`apps/n8n`](apps/n8n/) | `scaffolded` | `APP_TAG=2.41.7@sha256:bcef56dd4401…` | 2026-05-02 | ✅ | documented | missing |
 | [`apps/nextcloud`](apps/nextcloud/) | `ops-proven` | `APP_TAG=34.0.4-fpm-alpine` | 2026-09-13 | ✅ | documented | documented |
 | [`apps/nocodb`](apps/nocodb/) | `scaffolded` | `APP_TAG=2026.09.0` | 2026-05-02 | ✅ | documented | missing |
 | [`apps/obot`](apps/obot/) | `scaffolded` | `APP_TAG=v0.26.0` | — | ✅ | documented | missing |
