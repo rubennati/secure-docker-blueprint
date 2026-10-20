@@ -26,10 +26,9 @@ at the end and stays open; nothing here is production-verified.
 
 ## Scope and method
 
-Environment: macOS, GNU bash 3.2.57 as `/usr/bin/env bash` resolves it, BSD `awk`
-version 20200816, GNU `envsubst` (gettext-runtime 1.0) from Homebrew, Python 3.12.15
-with PyYAML 6.0.3 in the review venv. The worktree is
-`claude/laughing-rubin-b87881`, HEAD `880e921`, which contains `63ce76d`.
+Environment: GNU bash 3.2.57, BSD `awk` 20200816, GNU `envsubst` (gettext-runtime
+1.0), Python 3.12.15 with PyYAML 6.0.3. Reviewed at `880e921`, which contains
+`63ce76d`.
 
 1. **Per tag, the release's own render.** For each of v0.8.4, v0.9.0, v0.9.1, v0.9.2,
    v0.9.3 and v0.9.4, `git archive <tag> core/traefik` was unpacked into a scratch
