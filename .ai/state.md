@@ -94,8 +94,8 @@
   `docs/standards/compose-structure.md`, coverage in the generated Local column.
 - Trivy scans every image the checkers discover rather than a hand-kept list, and
   reports images it could not pull instead of passing over them — currently
-  `docker.n8n.io/n8nio/n8n` and Langfuse's two images, each acknowledged in
-  `.trivy-baseline.json` for Docker Hub's anonymous pull rate limit.
+  Langfuse's two images, each acknowledged in `.trivy-baseline.json` for Docker
+  Hub's anonymous pull rate limit, and MinIO, whose images are withdrawn.
   Each image's full findings go to a per-run artifact; the job summary carries
   the count-level index (`scripts/ci/trivy-summarize.py`) instead of a raw
   per-image table in the log. The vulnerability database is cached across runs,
