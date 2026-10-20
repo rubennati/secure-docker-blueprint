@@ -87,7 +87,7 @@ Conventional-style, English, scope-first:
 
 <optional footer for breaking changes / refs>
 
-Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+Co-Authored-By: <AI model and version> <noreply@anthropic.com>
 ```
 
 ### Scope examples

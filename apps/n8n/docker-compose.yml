@@ -9,7 +9,7 @@ services:
   # `db` service + queue worker can be copied from Paperless-ngx.
   n8n-app:
     # --- Identity ---
-    image: docker.n8n.io/n8nio/n8n:${APP_TAG}
+    image: n8nio/n8n:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}
     restart: unless-stopped
 

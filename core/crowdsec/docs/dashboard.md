@@ -38,7 +38,7 @@ with no service limits that affect a single-server deployment.
 
 - Operational commands (unban, whitelist, emergency disable) — use the runbook
 - Real-time log stream — `docker compose logs -f crowdsec`
-- nftables enforcement state — `sudo nft list chain ip crowdsec crowdsec-chain`
+- nftables enforcement state — `sudo nft list set ip crowdsec crowdsec-blacklists` (the bouncer fills the set; the blueprint owns the rule)
 
 ### Opt-in — nothing is enabled by default
 
@@ -132,7 +132,7 @@ coverage via CLI. Every piece of information the Console shows is also available
 | Alert history | `docker exec crowdsec cscli alerts list` |
 | Scenario activity | `docker exec crowdsec cscli metrics show scenarios` |
 | Blocked IP detail | `docker exec crowdsec cscli alerts inspect <ALERT_ID>` |
-| nftables enforcement | `sudo nft list chain ip crowdsec crowdsec-chain` |
+| nftables enforcement | `sudo nft list set ip crowdsec crowdsec-blacklists` |
 
 Full reference: [`docs/runbook.md`](runbook.md) → §2 Monitoring & Inspection.
 

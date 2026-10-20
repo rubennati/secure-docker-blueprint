@@ -21,9 +21,41 @@ both at once, which is why the procedure below pins a release.
 
 ## 1 — Prepare the host
 
-Docker 24.0+ with Compose v2, a Linux host, `envsubst` from `gettext-base`, and a domain
-on a [DNS provider Traefik supports](https://doc.traefik.io/traefik/https/acme/#providers).
+Docker 24.0+ with Compose v2, a Linux host, `envsubst` from `gettext-base`, and a domain —
+at Cloudflare for DNS-01 certificates, the one provider `core/traefik` wires; at any
+provider for HTTP-01 or TLS-ALPN-01.
 The root [`README.md`](../../README.md#getting-started) states these as the requirements.
+
+**The Docker daemon bounds container logs — the stacks do not.** No service in this
+repository sets a `logging:` block, and Docker's default driver, `json-file`, rotates
+nothing: a container's log grows until the disk is full. The bound is a daemon default
+in `/etc/docker/daemon.json`, set once for every container on the host:
+
+```json
+{
+  "log-driver": "local",
+  "log-opts": { "max-size": "10m", "max-file": "3" }
+}
+```
+
+`local` is the driver to prefer: it compresses, it rotates by default (20 MB × 5
+files when no option is given), and its files are read by the daemon alone — `docker
+compose logs` and the Docker API work as before, which is how every tool in this
+repository reads container output. `json-file` with the same `max-size` and `max-file`
+is the alternative for a host where a tool tails the files under
+`/var/lib/docker/containers/` directly; nothing in this repository does. Traefik's own
+access and error logs are files it writes itself and are rotated by `logrotate`
+([`logrotate.md`](logrotate.md)), not by the daemon.
+
+A changed daemon default applies to containers created after it. A container that
+already runs keeps the driver and options it was created with until it is recreated —
+`docker compose up -d --force-recreate` in the stack directory — so on an existing host
+the limit arrives stack by stack, not at the daemon restart.
+
+`live-restore` is a separate decision about the daemon, not about logging: with it,
+containers keep running while the daemon itself restarts or is upgraded. The operator
+site's server setup recommends it; it is recorded in `.ai/decisions.md` and belongs in
+the same file, as its own line.
 
 **Not yet standardised here:** host firewall policy, unattended upgrades, the account the
 stacks run under, and kernel or `sysctl` expectations. A deployment works without them
@@ -80,7 +112,12 @@ Anything else can start in any order.
 ## 5 — Validate
 
 `./scripts/overview.sh` states which release the deployment is on, whether the working
-tree has drifted from it, and which stacks are configured and running.
+tree has drifted from it, and which stacks are configured and running. Below the service
+table it reports the Traefik routers: those still on the names the middleware model
+replaces (`scripts/migrate-traefik-env.sh` prints the changes, as a dry run), the
+positions a `.env` leaves empty (Traefik disables such a router), and the routers naming
+a TLS option other than the deployment standard; `--routers` lists every router with its
+four positions.
 
 Per-stack verification is the stack's own `README.md`. Stacks carrying `ops/scripts/` have
 their own checks — `core/traefik` renders and validates its configuration that way.
@@ -108,6 +145,21 @@ the `CHANGELOG.md` entries between the two tags first: an entry saying an upgrad
 
 Then recreate the stacks the release touched. `docker compose up -d` applies a changed
 compose file; a stack whose service names changed also needs `--remove-orphans`.
+`core/traefik` renders its configuration from templates, so a release that changes
+a template takes effect only after `bash ops/scripts/render.sh` in that directory
+and a `--force-recreate` of the proxy where the static configuration changed.
+
+A checkout carries the stack files; it does not carry what a stack installed
+outside it — a logrotate stanza, systemd units, a backup agent's configuration.
+After the checkout, compare those with what the release ships:
+
+```bash
+./scripts/overview.sh --host
+```
+
+`differs` names the file in the checkout and the file on the host; the commands
+that bring the host file up to date are printed, never run
+([`host-files.md`](host-files.md)).
 
 ## 8 — Update an upstream image
 

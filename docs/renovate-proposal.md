@@ -94,7 +94,8 @@ useful comment.
 `.github/dependabot.yml` exists and has since the OpenSSF Scorecard work: the
 `github-actions` ecosystem, weekly, all actions grouped into one pull request,
 limited to five open at a time. Since 2026-09-13 it also carries an `npm` entry
-for `site/`, grouped the same way, and both entries target `dev` — before that,
+for `site/`, grouped the same way, and since 2026-10-04 one for the three
+examples under `development/`. Every entry targets `dev` — before that,
 its pull requests opened against `main` and had to be re-targeted by hand. Dependabot updates a SHA pin *and* the version
 comment beside it, so it maintains exactly what `check-workflows.py` enforces.
 

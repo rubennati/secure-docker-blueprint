@@ -11,9 +11,12 @@ banning a single IP, a decision targets every IP that resolves to a given countr
 Reverse-proxy remediation and host-firewall remediation both understand country-scope decisions
 and enforce them the same way they enforce IP-scope bans.
 
-**GeoIP enrichment is already active.** The `crowdsecurity/traefik` collection installed by
-default includes the `crowdsecurity/geoip-enrich` parser. Every detected event is tagged with
-country metadata automatically — no additional configuration is needed for enrichment to work.
+**GeoIP enrichment comes with the image.** The `crowdsecurity/geoip-enrich` parser arrives
+with `crowdsecurity/linux`, which the image installs at build time
+(`build/docker/Dockerfile` at v1.7.8); the `crowdsecurity/traefik` collection does not
+carry it. Every event the engine derives is tagged with country metadata — confirm on a
+host with `docker exec crowdsec cscli parsers list | grep geoip-enrich`. The enrichment
+has not been measured on a host from this repository.
 
 **Country-based blocking is not enabled by default.** GeoIP enrichment and geoblocking are
 separate things. The enrichment adds country tags to events; no decision is created unless you
@@ -341,9 +344,11 @@ docker exec crowdsec cscli decisions list --scope Country
 # Expected: empty output
 
 # 3. Reverse-proxy remediation clears within ~60 s.
-#    Host-firewall remediation clears within ~10 s.
-#    If it is not clearing, flush the chain directly:
-sudo nft flush chain ip crowdsec crowdsec-chain
+#    Host-firewall remediation clears within ~10 s — the bouncer removes the
+#    elements from its sets. If it is not clearing, flush both sets directly;
+#    the bouncer repopulates them from the LAPI on its next sync:
+sudo nft flush set ip  crowdsec  crowdsec-blacklists
+sudo nft flush set ip6 crowdsec6 crowdsec6-blacklists
 
 # 4. If Mechanism B (automated scenario) is active, the scenario will continue
 #    generating new decisions. Remove it:
