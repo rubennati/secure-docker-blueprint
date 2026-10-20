@@ -6,8 +6,8 @@ response actually retrieved.
 ## The chain that actually serves the site
 
 `dig @1.1.1.1 secdockblue.rubennati.at A` returns `172.67.162.216`,
-`104.21.82.199` — Cloudflare's anycast range. The local resolver answers with a
-tailnet address instead, so anything checked without pinning the public address
+`104.21.82.199` — Cloudflare's anycast range. A resolver inside a tailnet can answer
+with an internal address instead, so anything checked without pinning the public address
 checks a different server entirely. Everything below was retrieved with
 `curl --resolve "secdockblue.rubennati.at:443:172.67.162.216"`.
 
