@@ -1,0 +1,29 @@
+# Findings excluded by fingerprint (commit:file:rule:line). Each one is a single
+# finding, never a whole commit or file, and carries its reason.
+#
+# core/traefik/README.md, line 162 at cdb795e (2026-04-15): possibly a real
+# CrowdSec bouncer key from a test environment that has since been
+# decommissioned. No active use is known, so it was not rotated. Removed from
+# the file in 3a53526 (2026-05-20); the history is kept.
+cdb795e777a80be2dc606a9efa34047384491e9c:core/traefik/README.md:generic-api-key:162
+
+# business/plane/UPSTREAM.md, line 33 at a128ff0: false positive — an image
+# reference (`valkey/valkey:<tag>`); "key" inside "valkey" triggers the rule.
+a128ff027b5efa9171d9e0bc96993b131d6a3cf8:business/plane/UPSTREAM.md:generic-api-key:33
+
+# core/zot, two lines at 8890002: the example password of the local test stack
+# (docker-compose.local.yml), never a deployment credential. The current files
+# use a placeholder; these entries cover the history.
+8890002a59cf90a3b14d5d4ef153698687396138:core/zot/docker-compose.local.yml:curl-auth-user:8
+8890002a59cf90a3b14d5d4ef153698687396138:core/zot/README.md:curl-auth-user:130
+
+# site/scripts/check-content.mjs, line 145 at 7854432: a synthetic value in the
+# self-test of the site's own secret rule, which must look like a real secret.
+7854432bf62d2447da5c9d945e2f0abef6e8de31:site/scripts/check-content.mjs:generic-api-key:145
+
+# docs/research/egress-apps-business-2026-07-31.json, lines 46 and 50 at
+# 2abdaa3: the PostHog telemetry key Documenso builds into its public image,
+# quoted as evidence of the telemetry endpoint — a third party's public value,
+# not a credential of this project.
+2abdaa3f6404367ed1d76089a7c4063f2b1d4cdb:docs/research/egress-apps-business-2026-07-31.json:generic-api-key:46
+2abdaa3f6404367ed1d76089a7c4063f2b1d4cdb:docs/research/egress-apps-business-2026-07-31.json:generic-api-key:50

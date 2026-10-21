@@ -18,10 +18,12 @@ run is what decides whether a change can land on either branch.
 That is why `dev` has no post-merge run: the branch had to be current, so the
 pull-request run already tested the integration that lands, and a second run
 would repeat it. `main` keeps its push run anyway: it checks the actual commit
-that lands rather than a pull-request merge preview, which matters for job 1 —
-gitleaks scans that commit's own message, and a squash or rebase merge creates
-one that was never itself scanned. The extra cost is accepted on the branch
-that is published, tagged and released from.
+that lands rather than a pull-request merge preview, which matters for job 1
+when a pull request is squashed or rebased: the commit that lands is new and
+was never itself scanned. A merge commit is left out of that scan
+(`--no-merges`); its content is what the pull request's own commits brought,
+which the pull-request run already scanned. The extra cost is accepted on the
+branch that is published, tagged and released from.
 
 There is no nightly (or any other) schedule on this workflow. All ten jobs are
 deterministic checks of the current git tree — none makes a network call or
@@ -47,12 +49,24 @@ deliberately **not** a required check and does not block a merge.
 
 ### 1 — Secret scan (`gitleaks`)
 
-Runs [gitleaks](https://github.com/gitleaks/gitleaks) across the full commit
-history (`fetch-depth: 0`) to detect accidentally committed credentials —
-API keys, passwords, tokens, private keys.
+Runs [gitleaks](https://github.com/gitleaks/gitleaks) with its default rules
+(`.gitleaks.toml` extends them) to detect accidentally committed credentials —
+API keys, passwords, tokens, private keys. It scans the added lines of commit
+diffs, not commit messages.
+
+What a run covers depends on the event:
+
+| Event | Commits scanned |
+|---|---|
+| Pull request | the pull request's own commits on its first-parent line, merges excluded |
+| Push to `main` | the pushed commits on the first-parent line, merges excluded |
+| `workflow_dispatch` | the whole history of every fetched ref (`git log --all`, `fetch-depth: 0`) |
+
+A full-history scan therefore runs only on a manual dispatch. Single findings
+excluded by design are listed by fingerprint in `.gitleaksignore`.
 
 **Blocks merge:** yes  
-**Tool:** `gitleaks/gitleaks-action@v2`
+**Tool:** `gitleaks/gitleaks-action@v3`, gitleaks 8.24.3
 
 ---
 
