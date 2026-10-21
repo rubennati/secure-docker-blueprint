@@ -1,0 +1,29 @@
+name: Cloudflare ranges
+
+# The entrypoints trust forwarded headers from the ranges in
+# core/traefik/ops/cloudflare-ips.txt. Cloudflare adds a range now and then; a
+# list that falls behind leaves traffic from the new edge without a trusted
+# client address. This compares the file with the published lists once a week
+# and on every change to the file. It makes a network call, which is why it is
+# not one of the ten deterministic jobs in ci.yml and not a required check.
+on:
+  schedule:
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - core/traefik/ops/cloudflare-ips.txt
+      - scripts/ci/check-cloudflare-ips.py
+      - .github/workflows/cloudflare-ips.yml
+
+permissions: read-all
+
+jobs:
+  compare:
+    name: Compare with cloudflare.com
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Compare the trusted ranges with the published lists
+        run: python3 scripts/ci/check-cloudflare-ips.py --online "$GITHUB_STEP_SUMMARY"

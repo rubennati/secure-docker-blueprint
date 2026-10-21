@@ -59,8 +59,11 @@ REQUIRED=(
   TZ
   TRAEFIK_IMAGE
   SOCKET_PROXY_IMAGE
+  TRAEFIK_CONTAINER_NAME
+  SOCKET_PROXY_CONTAINER_NAME
   PUBLIC_NETWORK
   SOCKET_PROXY_NETWORK
+  CROWDSEC_SECURITY_NETWORK
   TRAEFIK_HTTP_PORT
   TRAEFIK_HTTPS_PORT
   DOCKER_SOCKET_PROXY_ENDPOINT
@@ -94,11 +97,112 @@ for v in "${REQUIRED[@]}"; do
     missing=1
   fi
 done
-[ "$missing" -eq 0 ] || exit 1
+if [ "$missing" -ne 0 ]; then
+  echo ""
+  echo "An .env written before a variable existed lacks it; .env.example carries each"
+  echo "one with its default. CROWDSEC_SECURITY_NETWORK has no Compose default — unset,"
+  echo "docker-compose.yml would create a network with an empty name."
+  exit 1
+fi
 
 # Same defaults render.sh applies, so an .env written before a resolver
 # existed validates against what will actually be rendered.
 ACME_RESOLVER_TLS="${ACME_RESOLVER_TLS:-tlsResolver}"
+
+# Entrypoint timeouts: Go durations (60s, 2m, 1h30m) or a bare number of
+# seconds; 0 means no timeout. render.sh defaults each to Traefik's own value.
+for v in TRAEFIK_READ_TIMEOUT TRAEFIK_WRITE_TIMEOUT TRAEFIK_IDLE_TIMEOUT; do
+  val="${!v:-}"
+  [ -n "${val}" ] || continue
+  if ! printf '%s' "${val}" | grep -qE '^([0-9]+(ns|us|ms|s|m|h))+$|^[0-9]+$'; then
+    echo "ERROR: ${v} must be a duration such as 60s, 2m or 0 (got '${val}')."
+    exit 1
+  fi
+done
+
+# Memory ceiling, when set: Docker's byte value with an optional unit.
+if [ -n "${TRAEFIK_MEMORY:-}" ] && ! printf '%s' "${TRAEFIK_MEMORY}" | grep -qE '^[0-9]+[bkmgBKMG]?$'; then
+  echo "ERROR: TRAEFIK_MEMORY must be a size such as 256m or 1g (got '${TRAEFIK_MEMORY}')."
+  exit 1
+fi
+
+# The trusted proxy ranges render.sh reads: every line must be a range.
+CF_LIST="${ROOT_DIR}/ops/cloudflare-ips.txt"
+if [ ! -f "${CF_LIST}" ]; then
+  echo "ERROR: ${CF_LIST} not found — render.sh needs it for forwardedHeaders.trustedIPs."
+  exit 1
+fi
+cf_ranges=0
+while IFS= read -r range; do
+  range="${range%%#*}"
+  range="$(printf '%s' "${range}" | tr -d '[:space:]')"
+  [ -n "${range}" ] || continue
+  if ! printf '%s' "${range}" | grep -qE '^[0-9A-Fa-f:.]+/[0-9]{1,3}$'; then
+    echo "ERROR: ${CF_LIST}: '${range}' is not an IPv4 or IPv6 range."
+    exit 1
+  fi
+  cf_ranges=$((cf_ranges + 1))
+done < "${CF_LIST}"
+if [ "${cf_ranges}" -eq 0 ]; then
+  echo "ERROR: ${CF_LIST} carries no range."
+  exit 1
+fi
+
+# Who may set the client address. render.sh applies it; this refuses a value
+# it does not know and, after a render, a config/ that disagrees with .env or
+# with the ranges file. The shape of the rendered list decides whether it
+# trusts anyone (render.sh carries the same function); comment lines inside
+# the list, as every release up to v0.9.4 rendered them, are skipped; only the
+# key directly under forwardedHeaders: counts; a flow list on the key line is
+# read too. rendered_ranges prints the entries by value — quotes, a trailing
+# comment and a carriage return from a hand edit stripped — so the comparison
+# with the ranges file speaks of the list, not of the editor.
+rendered_trusts_ranges() {  # <traefik.yml>
+  [ -f "$1" ] || return 1
+  awk '/^[[:space:]]*(#|$)/ { next }
+       /^[[:space:]]*trustedIPs:[^*]*$/ && prev ~ /^[[:space:]]*forwardedHeaders:[[:space:]]*$/ {
+         rest = $0; sub(/^[[:space:]]*trustedIPs:[[:space:]]*/, "", rest); sub(/^&[^[:space:]]+[[:space:]]*/, "", rest)
+         if (rest ~ /^\[/) { d = 1; exit (rest ~ /^\[[[:space:]]*\]/) ? 1 : 0 }
+         t = 1; next
+       }
+       t { d = 1; exit ($0 ~ /^[[:space:]]*-[[:space:]]/) ? 0 : 1 }
+       { prev = $0 }
+       END { if (!d && !t) exit 1 }' "$1"
+}
+rendered_ranges() {  # <traefik.yml>: the entries of that list, one per line
+  awk -v q="'" '/^[[:space:]]*(#|$)/ { next }
+       /^[[:space:]]*trustedIPs:[^*]*$/ && prev ~ /^[[:space:]]*forwardedHeaders:[[:space:]]*$/ {
+         rest = $0; sub(/^[[:space:]]*trustedIPs:[[:space:]]*/, "", rest); sub(/^&[^[:space:]]+[[:space:]]*/, "", rest)
+         if (rest ~ /^\[/) {
+           sub(/[[:space:]]*#.*$/, "", rest); gsub(/[][" \t\r]/, "", rest); gsub(q, "", rest)
+           n = split(rest, a, ","); for (i = 1; i <= n; i++) if (a[i] != "") print a[i]
+           exit
+         }
+         t = 1; next
+       }
+       t { if ($0 !~ /^[[:space:]]*-[[:space:]]/) exit
+           sub(/^[[:space:]]*-[[:space:]]*/, ""); sub(/[[:space:]]*#.*$/, ""); gsub(/["\r[:space:]]/, ""); gsub(q, "")
+           if ($0 != "") print; next }
+       { prev = $0 }' "$1"
+}
+proxy_declared=""
+[ -n "${TRAEFIK_FORWARDED_PROXY:-}" ] && proxy_declared=yes
+
+# HSTS_MAX_AGE is optional (render.sh defaults it to two years) but, when set,
+# a number of seconds; TLS_DEFAULT_OPTION one of the three profiles, old or new name.
+if [ -n "${HSTS_MAX_AGE:-}" ] && ! printf '%s' "${HSTS_MAX_AGE}" | grep -qE '^[0-9]+$'; then
+  echo "ERROR: HSTS_MAX_AGE must be a number of seconds (got '${HSTS_MAX_AGE}')."
+  exit 1
+fi
+case "${TLS_DEFAULT_OPTION:-}" in
+  tls-compatible|tls-basic|tls-standard|tls-aplus|tls-strict|tls-modern) ;;
+  *) echo "ERROR: TLS_DEFAULT_OPTION must be tls-compatible, tls-standard or tls-strict (got '${TLS_DEFAULT_OPTION:-}')."; exit 1 ;;
+esac
+TRAEFIK_FORWARDED_PROXY="$(printf '%s' "${TRAEFIK_FORWARDED_PROXY:-none}" | tr '[:upper:]' '[:lower:]')"
+case "${TRAEFIK_FORWARDED_PROXY}" in
+  none|cloudflare) ;;
+  *) echo "ERROR: TRAEFIK_FORWARDED_PROXY must be none or cloudflare (got '${TRAEFIK_FORWARDED_PROXY}')."; exit 1 ;;
+esac
 
 # CrowdSec reverse-proxy remediation switch. render.sh applies it; this checks
 # that what .env says is complete and that config/ agrees with it.
@@ -118,6 +222,24 @@ if [ "${CROWDSEC_BOUNCER_ENABLED}" = true ]; then
   if ! printf '%s' "${version}" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
     echo "ERROR: CROWDSEC_BOUNCER_PLUGIN_VERSION must be a release tag like v1.7.1 (got '${version}')."
     echo "       Releases: https://github.com/maxlerebourg/crowdsec-bouncer-traefik-plugin/releases"
+    exit 1
+  fi
+fi
+
+# Authentik forward-auth switch: same checks as CrowdSec's — a value other than
+# true/false is refused, and with the switch on the address has to be a URL.
+auth_switch_declared="${AUTHENTIK_FORWARD_AUTH_ENABLED+yes}"
+AUTHENTIK_FORWARD_AUTH_ENABLED="$(printf '%s' "${AUTHENTIK_FORWARD_AUTH_ENABLED:-false}" | tr '[:upper:]' '[:lower:]')"
+case "${AUTHENTIK_FORWARD_AUTH_ENABLED}" in
+  true|false) ;;
+  *) echo "ERROR: AUTHENTIK_FORWARD_AUTH_ENABLED must be true or false (got '${AUTHENTIK_FORWARD_AUTH_ENABLED}')."; exit 1 ;;
+esac
+if [ "${AUTHENTIK_FORWARD_AUTH_ENABLED}" = true ]; then
+  auth_address="${AUTHENTIK_FORWARD_AUTH_ADDRESS:-http://authentik-server:9000/outpost.goauthentik.io/auth/traefik}"
+  if ! printf '%s' "${auth_address}" | grep -qE '^https?://[^[:space:]]+$'; then
+    echo "ERROR: AUTHENTIK_FORWARD_AUTH_ADDRESS must be an http:// or https:// URL (got '${auth_address}')."
+    echo "       The default is the embedded outpost of core/authentik on this host:"
+    echo "       http://authentik-server:9000/outpost.goauthentik.io/auth/traefik"
     exit 1
   fi
 fi
@@ -176,10 +298,46 @@ if [ -f "${ROOT_DIR}/config/traefik.yml" ]; then
     exit 1
   fi
 
-  # check expected dynamic files exist
-  for f in access.yml security-blocks.yml security-chains.yml integrations.yml tls-profiles.yml routers-system.yml; do
+  # Before any file is named: a configuration that trusts a list while .env
+  # does not say who may set the client address is the migration case, and
+  # its message has to be the first thing the operator reads — not a missing
+  # dynamic file from a later release (render.sh refuses for the same reason).
+  if [ -z "${proxy_declared}" ] && rendered_trusts_ranges "${ROOT_DIR}/config/traefik.yml"; then
+    echo "ERROR: config/traefik.yml trusts Cloudflare's ranges but TRAEFIK_FORWARDED_PROXY is not set in .env."
+    echo "       Set it to cloudflare if Cloudflare proxies this host's records, to none if not, then run render.sh."
+    exit 1
+  fi
+
+  # Every file render.sh writes unconditionally has to exist; the two
+  # conditional ones have to exist exactly when their switch is set.
+  test -f "${ROOT_DIR}/config/haproxy.cfg.template" \
+    || { echo "Missing config/haproxy.cfg.template (run render.sh) — docker-compose.yml mounts it"; exit 1; }
+  for f in access.yml security-blocks.yml security-chains.yml integrations.yml tls-profiles.yml \
+           routers-system.yml redirects.yml servers-transports.yml model.yml; do
     test -f "${ROOT_DIR}/config/dynamic/${f}" || { echo "Missing config/dynamic/${f} (run render.sh)"; exit 1; }
   done
+
+  # The model's header profiles each begin with the HSTS base — a router with
+  # headers-none still commits its host name to HTTPS. Checked on the
+  # rendered file: the line after `headers-<profile>:` + `chain:` +
+  # `middlewares:` must be `- hsts-base`.
+  for prof in headers-standard headers-application-owned headers-none; do
+    first="$(awk -v p="    ${prof}:" '$0 == p { f = 1; next } f && /^[[:space:]]*- / { print; exit }' "${ROOT_DIR}/config/dynamic/model.yml" | tr -d ' ')"
+    if [ "${first}" != "-hsts-base" ]; then
+      echo "ERROR: config/dynamic/model.yml: ${prof} does not start with hsts-base (found '${first}') — run render.sh; a profile without the HSTS base is not a valid profile."
+      exit 1
+    fi
+  done
+  grep -qE '^[[:space:]]*default: \*tls_(compatible|standard|strict)$' "${ROOT_DIR}/config/dynamic/tls-profiles.yml" \
+    || { echo "ERROR: config/dynamic/tls-profiles.yml carries no default TLS option built from TLS_DEFAULT_OPTION — run render.sh."; exit 1; }
+  if [ -n "${ACME_WILDCARD_DOMAIN:-}" ]; then
+    test -f "${ROOT_DIR}/config/dynamic/acme-wildcard.yml" \
+      || { echo "Missing config/dynamic/acme-wildcard.yml although ACME_WILDCARD_DOMAIN is set (run render.sh)"; exit 1; }
+  elif [ -f "${ROOT_DIR}/config/dynamic/acme-wildcard.yml" ]; then
+    echo "WARNING: config/dynamic/acme-wildcard.yml exists but ACME_WILDCARD_DOMAIN is empty —"
+    echo "         a wildcard router from an earlier render is still in place. Remove the file"
+    echo "         (bash ops/scripts/reset-templates.sh, then render.sh) if the wildcard is no longer wanted."
+  fi
 
   # The rendered state has to match the switch. Both directions are errors: the
   # integration present while the switch is off is the drift render.sh refuses
@@ -203,6 +361,62 @@ if [ -f "${ROOT_DIR}/config/traefik.yml" ]; then
       fi
       exit 1
     fi
+  fi
+
+  # The trusted senders, both directions: the rendered entrypoints carry a
+  # list exactly when the switch says cloudflare, that list is the ranges file
+  # as it is now, the CrowdSec middlewares carry the same list exactly then,
+  # and no middleware names a header the bouncer would read from any sender.
+  rendered_trusts_cf=false
+  rendered_trusts_ranges "${ROOT_DIR}/config/traefik.yml" && rendered_trusts_cf=true
+  if grep -qsE '^[[:space:]]*forwardedHeadersCustomName:' "${ROOT_DIR}/config/dynamic/crowdsec.yml" 2>/dev/null; then
+    echo "ERROR: config/dynamic/crowdsec.yml sets forwardedHeadersCustomName — the bouncer would read that header"
+    echo "       from any sender, Traefik deletes only X-Forwarded-*. The templates never set it; run render.sh."
+    exit 1
+  fi
+  if [ "${TRAEFIK_FORWARDED_PROXY}" = cloudflare ]; then
+    if [ "${rendered_trusts_cf}" != true ]; then
+      echo "ERROR: TRAEFIK_FORWARDED_PROXY=cloudflare but config/traefik.yml trusts no Cloudflare range — run render.sh."
+      exit 1
+    fi
+    if [ "$(rendered_ranges "${ROOT_DIR}/config/traefik.yml" | sort)" != "$(grep -vE '^[[:space:]]*(#|$)' "${CF_LIST}" | sed 's/#.*//; s/[[:space:]]//g' | sort)" ]; then
+      echo "ERROR: the list in config/traefik.yml differs from ops/cloudflare-ips.txt — the ranges file changed"
+      echo "       since the last render, or the block was edited by hand — run render.sh, then recreate the traefik container."
+      exit 1
+    fi
+    if [ -f "${ROOT_DIR}/config/dynamic/crowdsec.yml" ] && ! grep -qsE '^[[:space:]]*forwardedHeadersTrustedIPs:' "${ROOT_DIR}/config/dynamic/crowdsec.yml"; then
+      echo "ERROR: TRAEFIK_FORWARDED_PROXY=cloudflare but config/dynamic/crowdsec.yml carries no trusted-proxy list — run render.sh."
+      exit 1
+    fi
+    test -f "${ROOT_DIR}/config/host/cloudflare-ranges.nft" || { echo "Missing config/host/cloudflare-ranges.nft (run render.sh)"; exit 1; }
+  elif [ "${rendered_trusts_cf}" = true ]; then
+    # the undeclared case was refused above, before the file checks
+    echo "ERROR: TRAEFIK_FORWARDED_PROXY=none but config/traefik.yml still trusts Cloudflare's ranges — run render.sh."
+    exit 1
+  elif grep -qsE '^[[:space:]]*forwardedHeadersTrustedIPs:' "${ROOT_DIR}/config/dynamic/crowdsec.yml" 2>/dev/null; then
+    echo "ERROR: TRAEFIK_FORWARDED_PROXY=none but config/dynamic/crowdsec.yml carries a trusted-proxy list — run render.sh."
+    exit 1
+  elif [ -f "${ROOT_DIR}/config/host/cloudflare-ranges.nft" ]; then
+    echo "ERROR: TRAEFIK_FORWARDED_PROXY=none but config/host/cloudflare-ranges.nft exists — run render.sh, and remove the installed copy from the host firewall."
+    exit 1
+  fi
+
+  # The Authentik middleware, both directions, like the CrowdSec integration.
+  rendered_auth=false
+  grep -qsE '^[[:space:]]*(auth-authentik|sec-authentik):' "${ROOT_DIR}"/config/dynamic/*.yml 2>/dev/null && rendered_auth=true
+  if [ "${AUTHENTIK_FORWARD_AUTH_ENABLED}" = true ]; then
+    if [ "${rendered_auth}" != true ] || [ ! -f "${ROOT_DIR}/config/dynamic/authentik.yml" ]; then
+      echo "ERROR: AUTHENTIK_FORWARD_AUTH_ENABLED=true but config/dynamic carries no forward-auth middleware — run render.sh."
+      exit 1
+    fi
+  elif [ "${rendered_auth}" = true ]; then
+    if [ -z "${auth_switch_declared}" ]; then
+      echo "ERROR: config/dynamic carries the Authentik forward-auth middleware but AUTHENTIK_FORWARD_AUTH_ENABLED is not set in .env."
+      echo "       Set it to true to keep the middleware (plus AUTHENTIK_FORWARD_AUTH_ADDRESS), or to false to remove it, then run render.sh."
+    else
+      echo "ERROR: AUTHENTIK_FORWARD_AUTH_ENABLED=false but config/dynamic still carries the forward-auth middleware — run render.sh."
+    fi
+    exit 1
   fi
 
   # CrowdSec bouncer key. envsubst turns an unset CROWDSEC_BOUNCER_KEY into an

@@ -165,7 +165,7 @@ These controls are enforced by Traefik configuration rendered from templates in 
 | **Implemented?** | Yes |
 | **Location** | `core/traefik/ops/templates/dynamic/access.yml.tmpl` |
 | **Policies** | `acc-public`, `acc-local` (RFC1918 + ULA hardcoded), `acc-tailscale` (CIDR from .env), `acc-private` (LAN + VPN), `acc-deny` (nobody) |
-| **Gaps** | `forwardedHeaders.trustedIPs` (Cloudflare's published IP ranges) is now configured in `traefik.yml.tmpl`, closing the X-Forwarded-For spoofing gap for the Cloudflare path. Not CI-verified per deployment — a custom edit could still misconfigure it, and nothing checks that the hardcoded ranges stay in sync with Cloudflare's published list over time. Separately, the Tailscale path recovers the real client IP at the network layer (direct connection, no header involved) — this only works end to end if `proxy-public` is dual-stack, which is opt-in (`core/traefik/network-dual-stack.yml`), not the default. An IPv4-only deployment with Tailscale IPv6 clients loses the real client IP for `ipAllowList` purposes (`ClientHost` shows the Docker gateway address) until the operator opts in. See `core/traefik/docs/ipv6-dual-stack.md` and `docs/bugfixes/traefik-ipv6-dualstack-2026-06-19.md`. |
+| **Gaps** | `forwardedHeaders.trustedIPs` is rendered from `core/traefik/ops/cloudflare-ips.txt` (Cloudflare's published ranges), closing the X-Forwarded-For spoofing gap for the Cloudflare path; CI checks that every entry parses, and the `Cloudflare ranges` workflow compares the file with the published lists weekly. Not verified per deployment — an edited `.env` or file on a host is outside CI. Separately, the Tailscale path recovers the real client IP at the network layer (direct connection, no header involved) — this only works end to end if `proxy-public` is dual-stack, which is opt-in (`core/traefik/network-dual-stack.yml`), not the default. An IPv4-only deployment with Tailscale IPv6 clients loses the real client IP for `ipAllowList` purposes (`ClientHost` shows the Docker gateway address) until the operator opts in. See `core/traefik/docs/ipv6-dual-stack.md` and `docs/bugfixes/traefik-ipv6-dualstack-2026-06-19.md`. |
 
 #### 13. `exposedByDefault: false`
 
@@ -397,10 +397,11 @@ document restates their coverage, severity or exit behavior — it points here.
   base-image or distro package rather than many independent problems.
 - An image that fails to scan is named explicitly under "not scanned," with
   the reason Trivy itself reported — never silently dropped or counted as
-  clean. `docker.n8n.io/n8nio/n8n` currently fails here: its registry answers
-  `429 TOOMANYREQUESTS` on an anonymous pull (reproduced directly, outside
-  CI, against the same registry). No Docker Hub credentials are configured
-  anywhere in this repository's CI — every pull in this job is anonymous.
+  clean. No Docker Hub credentials are configured anywhere in this
+  repository's CI — every pull in this job is anonymous. A registry address
+  that is a gateway in front of Docker Hub is limited by the gateway's shared
+  quota rather than the runner's; `apps/n8n` pulls from Docker Hub directly
+  for that reason (`apps/n8n/UPSTREAM.md`).
 - The Trivy vulnerability database is cached across workflow runs
   (`actions/cache`, one entry per UTC day) so same-day runs do not each
   re-download it. Trivy's own staleness check still decides whether a

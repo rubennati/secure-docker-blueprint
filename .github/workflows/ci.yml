@@ -175,6 +175,13 @@ jobs:
       - name: CrowdSec remediation ships default-off
         run: python3 scripts/ci/check-crowdsec-config.py --templates
 
+      # The trusted proxy ranges are a hand-kept file. This is the offline half:
+      # every entry parses and both families are present. Whether the entries
+      # are Cloudflare's current ones is a network question, answered weekly by
+      # cloudflare-ips.yml.
+      - name: Trusted proxy ranges parse
+        run: python3 scripts/ci/check-cloudflare-ips.py
+
   # ─────────────────────────────────────────────
   # 6. CANONICAL STRUCTURE (docs/standards/*-structure.md)
   # Fails on the dangerous rules — :latest tags, plaintext secrets,
