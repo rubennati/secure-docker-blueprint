@@ -6,10 +6,11 @@ name: CI
 # non-bypassable ruleset requiring these exact checks before merge, a run
 # against a tree that already passed them cannot produce new evidence — so
 # there is no nightly schedule here. `push: main` stays: it checks the actual
-# commit that lands (gitleaks scans that commit's own message; a squash/merge
-# commit is new content a pull_request run's merge-preview ref never was),
-# where the pull_request run on `dev` already covers the merge preview and a
-# second run would repeat it. See docs/standards/ci.md for the full model.
+# commit that lands (a squashed or rebased commit is new content the
+# pull_request run never scanned; gitleaks leaves merge commits out), where the
+# pull_request run on `dev` already covers the merge preview and a second run
+# would repeat it. gitleaks scans the whole history only on workflow_dispatch.
+# See docs/standards/ci.md for the full model.
 on:
   push:
     branches: [main]

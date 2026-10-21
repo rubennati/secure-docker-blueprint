@@ -89,9 +89,9 @@ These controls block merges if violated. Evidence is the CI output from `.github
 | Field | Value |
 |-------|-------|
 | **Implemented?** | Yes |
-| **Enforcement** | CI FAIL — `gitleaks/gitleaks-action@v2` |
-| **Scope** | Full git history (`fetch-depth: 0`) on every push to `main` and every pull request to `dev`/`main` |
-| **Configuration** | `.gitleaks.toml` — one allowlisted historical commit (`cdb795e`, documented example key in Traefik README, not a real credential) |
+| **Enforcement** | CI FAIL — `gitleaks/gitleaks-action@v3` (gitleaks 8.24.3) |
+| **Scope** | The commits a pull request to `dev`/`main` or a push to `main` adds (first-parent, merges excluded); the whole history of every fetched ref on `workflow_dispatch` — see [`ci.md`](standards/ci.md#1--secret-scan-gitleaks) |
+| **Configuration** | `.gitleaks.toml` extends the default rules; `.gitleaksignore` excludes seven reviewed historical findings, each by its own fingerprint and with its reason — one possibly real CrowdSec bouncer key of a decommissioned test environment with no known active use, the others a false positive, test values and a third party's public key |
 | **Gaps** | No custom rules for project-specific secret patterns (e.g. Cloudflare tokens, Tailscale auth keys) beyond gitleaks defaults |
 
 #### 6. Compose syntax validation
@@ -303,9 +303,9 @@ Based on **OWASP Docker Security Cheat Sheet**.
 
 **Job 1: Secret scan (`gitleaks`)**
 
-- Full git history scan with `fetch-depth: 0`
-- Catches committed credentials, API keys, tokens
-- Configured via `.gitleaks.toml` with one documented historical allowlist entry
+- Scans the commits a pull request or a push to `main` adds; the whole history on `workflow_dispatch`
+- Catches committed credentials, API keys, tokens with gitleaks' default rules
+- `.gitleaks.toml` extends the default rules; `.gitleaksignore` excludes seven reviewed historical findings by fingerprint
 
 **Job 2: Compose syntax validation**
 

@@ -56,7 +56,7 @@ docker compose config --quiet          # in the stack directory
 
 | Job | Blocks on |
 |---|---|
-| Secret scan (gitleaks) | credentials anywhere in history |
+| Secret scan (gitleaks) | credentials in the commits a pull request adds; the whole history on `workflow_dispatch` |
 | Compose validation | a compose file that does not parse or resolve; an opt-in overlay whose merged variant Compose refuses, adds an unbaselined service, or weakens an existing one |
 | Required files | a stack without `README.md` or `.env.example` |
 | Sentinel value check | `__REPLACE_ME__` in a committed `.env` |
