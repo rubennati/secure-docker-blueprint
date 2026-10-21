@@ -370,6 +370,25 @@ Three rules:
 
 ---
 
+## Outside the ten — `Cloudflare ranges`
+
+`.github/workflows/cloudflare-ips.yml` runs `scripts/ci/check-cloudflare-ips.py
+--online`: it fetches Cloudflare's published IPv4 and IPv6 lists and compares them
+with `core/traefik/ops/cloudflare-ips.txt`, the senders whose forwarded headers
+the Traefik entrypoints trust. A range Cloudflare added and the file lacks leaves
+traffic from that edge without a trusted client address; a range the file carries
+and Cloudflare dropped trusts a stranger. It runs weekly, on manual dispatch, and
+on a pull request that touches the file or the script.
+
+It makes a network call, which is why it is a workflow of its own and not one of
+the ten: a scheduled run can fail for a reason unrelated to any commit. The
+offline half — every entry parses, none is repeated, both families present —
+runs inside job 4 on every pull request.
+
+**Blocks merge:** no.
+
+---
+
 ## Running locally
 
 ```bash
@@ -378,6 +397,7 @@ pip install pyyaml
 
 # Run from the repo root
 python3 scripts/ci/check-baseline.py
+python3 scripts/ci/check-cloudflare-ips.py          # add --online to compare with cloudflare.com
 python3 scripts/ci/check-structure.py
 python3 scripts/ci/lifecycle-report.py --check
 python3 scripts/ci/security-coverage.py --check

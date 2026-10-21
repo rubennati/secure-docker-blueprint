@@ -15,7 +15,7 @@
 - **Origin:** France · Traefik Labs · EU
 - **Domain:** Infrastructure
 - **Role:** Reverse proxy: TLS, access policies and security headers in front of every other service
-- **Based on versions:** Traefik `v3.7`, docker-socket-proxy `v0.4.2`
+- **Based on versions:** Traefik `v3.7`, docker-socket-proxy `v0.5.0`
 - **Last verified:** 2026-09-13 (v3.7.13, socket-proxy v0.5.0) — moved from 3.6.10 on a live host with the dual-stack overlay: 13 routed hosts plus one external consumer answered with the same status codes before and after, HTTP/3 answered a `--http3-only` request, the CrowdSec bouncer plugin loaded and polled the LAPI within one second of start, and the socket proxy served the Docker API on the unchanged template. Nothing in the rendered configuration changed for the move.
 - **Support window:** upstream policy since 3.6 is six months of support from a minor's GA date, with the last minor of a major supported for two years after the next major — https://doc.traefik.io/traefik/deprecation/releases/. 3.7 went GA 2026-05-05 and is the current line. **3.6 left security support on 2026-08-16** and 2.11 on 2026-09-07; neither is a pin target. Check this date before the next bump, not the version number alone.
 
@@ -47,7 +47,8 @@
 | Dual-stack `proxy-public` as an opt-in Compose overlay (`network-dual-stack.yml`) rather than baked into `docker-compose.yml` | Docker cannot mix "IPv6 subnet present" with "IPv6 disabled" in one static network block, and an unconditional IPv6 default would risk existing deployments whose `proxy-public` was auto-assigned an IPv4 subnet. The overlay pattern (same mechanism as `apps/paperless-ngx/sso.yml`) keeps IPv4-only the default with dual-stack fully opt-in. See `docs/ipv6-dual-stack.md`. |
 | `render.sh` places every output by rename (temporary file + `mv`) | Traefik re-reads `config/dynamic/` on any change; a truncate-then-fill write can be read as an empty file, which drops every middleware that file defines and disables every router naming one for a reload cycle. Seen on a host on 2026-09-14 (18 routers, one cycle). A rename is atomic, so the watcher only sees complete files. |
 | Logrotate: one stanza per log, `copytruncate` for `traefik.log` | Traefik 3 reopens only the access log on `USR1`; the main log descriptor stays on the renamed file, the visible `traefik.log` stays empty, and the next rotation compresses what Traefik is writing to. Measured on v3.7.13, 2026-09-14. The main log is opened `O_APPEND`, so truncating in place is safe. |
-| `forwardedHeaders.trustedIPs` (Cloudflare ranges) added to `traefik.yml.tmpl` | Without this, Traefik has no way to distinguish a real client IP forwarded by Cloudflare from one a client could spoof in its own request headers — `docs/security-verification.md` (control #12) flagged this as an open gap. Hardcoded directly in the template (not `.env`) for the same reason `acc-local`'s RFC1918 ranges are hardcoded: `envsubst` can't render a multi-entry YAML list from one variable. |
+| `forwardedHeaders.trustedIPs` rendered from `ops/cloudflare-ips.txt` | Without a trusted-sender list, Traefik cannot distinguish a client address forwarded by Cloudflare from one a client writes into its own request headers — `docs/security-verification.md` (control #12). The ranges live in one file rather than in the template so that a script can compare them with Cloudflare's published lists (`scripts/ci/check-cloudflare-ips.py`, weekly in `cloudflare-ips.yml`); `render.sh` builds the YAML list from the file, which `envsubst` alone could not. |
+| Entrypoint timeouts from `.env` (`TRAEFIK_READ_TIMEOUT`, `TRAEFIK_WRITE_TIMEOUT`, `TRAEFIK_IDLE_TIMEOUT`) | Traefik 3.7 defaults to 60 s read, no write timeout and 180 s idle, and the template used to set none, so a held connection was unbounded on the write side. The variables ship at those defaults — behaviour unchanged — and a value is set only after the longest legitimate response has been read from the access log, because a write timeout ends a large download at that point. |
 
 ## Version / tag notes
 
@@ -87,15 +88,15 @@
   Traefik started with no error against the resolver itself, `whoami@docker`'s router
   carried `certificateResolver: tlsResolver` with no complaint, every other route answered
   identically before and after, and the bouncer kept polling. **No certificate was actually
-  requested.** This host runs wildcard mode (`ACME_WILDCARD_DOMAIN=dob.qode.at`), and
-  `whoami.dob.qode.at` is already covered by the stored wildcard certificate — Traefik
+  requested.** This host runs wildcard mode (`ACME_WILDCARD_DOMAIN=example.com`), and
+  `whoami.example.com` is already covered by the stored wildcard certificate — Traefik
   matches an incoming SNI against every certificate in its store regardless of which
-  resolver owns it, finds the wildcard already satisfies `whoami.dob.qode.at`, and never
+  resolver owns it, finds the wildcard already satisfies `whoami.example.com`, and never
   proceeds to ask `tlsResolver`'s ACME provider for a new one. `acme.json` confirms it:
   two minutes after the restart, `tlsResolver`'s bucket was still empty. **A resolver
   cannot be proven to actually issue on a wildcard-mode host** for any hostname the
   wildcard already covers — only for one it does not, which on this host meant no
-  hostname could be tested without either using a domain outside `*.dob.qode.at` or
+  hostname could be tested without either using a domain outside `*.example.com` or
   disabling wildcard coverage, neither of which this verification did. The change was
   reverted afterward: `whoami` back to `cloudflare-dns`, template unaffected.
 - `tecnativa/docker-socket-proxy:v0.5.0` is pinned, moved from `v0.4.2` on 2026-09-13. Minor releases change the set of default-enabled endpoints — re-confirm `CONTAINERS`/`NETWORKS`/`ALLOW_*` flags after each bump. v0.5.0 updates the HAProxy base and adds `ALLOW_PAUSE` / `ALLOW_UNPAUSE`, both in upstream's revoked-by-default group, so the permitted surface is unchanged.
@@ -105,7 +106,7 @@
 
 ## Upgrade checklist
 
-### Minor bump (`v3.6` → `v3.x`)
+### Minor bump within v3
 
 A minor bump inside v3 still changes request handling. Read the per-version migration
 notes, not only the release notes — https://doc.traefik.io/traefik/migrate/v3/ carries a
@@ -119,7 +120,7 @@ section per patch release. Between 3.6 and 3.7.13 these apply to this blueprint:
 | 3.7.9 | HTTP/1 `CONNECT` rejected with 501 | no router here uses CONNECT |
 | 3.7.7 | bare `` Host(`*`) `` becomes a catch-all | no rule here uses a bare `*` |
 | 3.7.3 | `StripPrefix` / `StripPrefixRegex` reject with 400 when stripping yields a non-normalized path; `BasicAuth` with no users returns 404 | `apps/seafile` and `apps/seafile-pro` strip `/sdoc-server` |
-| 3.6.14 | `trustForwardHeader` on ForwardAuth deprecated in favour of entrypoint-level `forwardedHeaders.trustedIPs` | the commented Authentik block in `integrations.yml.tmpl` sets it; the entrypoint list is already present, so drop the option when uncommenting |
+| 3.6.14 | `trustForwardHeader` on ForwardAuth deprecated in favour of entrypoint-level `forwardedHeaders.trustedIPs` | the commented Authentik block in `integrations.yml.tmpl` does not set it, and `traefik.yml.tmpl` carries the entrypoint list on both entrypoints — nothing to change when uncommenting |
 
 1. Read the Traefik release notes: https://github.com/traefik/traefik/releases
 2. Bump `TRAEFIK_IMAGE` in `.env`
@@ -202,7 +203,7 @@ curl -s https://<TRAEFIK_DASHBOARD_HOST>/api/rawdata | jq '.routers, .middleware
 # Check what the socket-proxy actually exposes
 docker compose exec docker-socket-proxy env | grep -E "^(CONTAINERS|SERVICES|NETWORKS|VOLUMES|IMAGES|SYSTEM|EXEC|POST|DELETE|ALLOW_)"
 
-# Tail access log (if enabled in .env)
+# Tail the access log (written through a buffer of TRAEFIK_ACCESSLOG_BUFFER lines)
 tail -f volumes/logs/access.log
 
 # Inspect current ACME cert store

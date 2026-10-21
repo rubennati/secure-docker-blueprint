@@ -5,8 +5,8 @@ version: 2
 # against `main` has to be re-targeted by hand and then falls behind `dev` the
 # moment anything else merges there, because the `dev` ruleset requires an
 # up-to-date branch. Security updates follow the target-branch of the matching
-# version-updates entry, so the npm entry below is what keeps the site's
-# dependency pull requests off `main` as well.
+# version-updates entry, so the npm entries below are what keep the site's and
+# the examples' dependency pull requests off `main` as well.
 
 updates:
   - package-ecosystem: github-actions
@@ -42,5 +42,27 @@ updates:
     # branches each fall behind `dev` as soon as the first one merges.
     groups:
       site:
+        patterns:
+          - "*"
+
+  - package-ecosystem: npm
+    directories:
+      - /development/static-site/recipes/astro
+      - /development/static-site/recipes/vite-react
+      - /development/web-api/fixture
+    target-branch: dev
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: UTC
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - javascript
+    # One pull request per week for the three examples, like the site. No CI
+    # job builds them: build an example's image before merging its update.
+    groups:
+      development:
         patterns:
           - "*"

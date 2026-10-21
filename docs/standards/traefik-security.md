@@ -9,14 +9,15 @@ For general container security, see [Security Baseline](security-baseline.md).
 
 ## Overview
 
-Security is split into four independent config files in `core/traefik/ops/templates/dynamic/`:
+Security is split into independent config files in `core/traefik/ops/templates/dynamic/`:
 
 | File | What it contains |
 |------|-----------------|
 | `access.yml` | Access policies — who can reach a service |
 | `security-blocks.yml` | Building blocks — headers, rate limits, compression, CSP |
-| `security-chains.yml` | Policy presets — sec-0 to sec-5 + embed variants |
-| `integrations.yml` | CrowdSec + Authentik — optional, external services |
+| `security-chains.yml` | Policy presets — sec-0 to sec-5 + embed, `-spa` and `-sync` variants |
+| `crowdsec.yml` | The two CrowdSec middlewares — rendered only with `CROWDSEC_BOUNCER_ENABLED=true` |
+| `integrations.yml` | Authentik forward-auth — optional, commented out |
 
 All files are rendered from `.tmpl` templates via `render.sh`. Traefik watches the `config/dynamic/` directory and hot-reloads changes (no restart needed for dynamic config).
 
@@ -47,27 +48,81 @@ Local network ranges (RFC1918 for IPv4, ULA `fc00::/7` for IPv6) are hardcoded i
 
 ## Trusted Proxy Headers (`traefik.yml` — `forwardedHeaders`)
 
-`ipAllowList` (above) only works if the IP it evaluates is actually the
-real client IP. Whether that holds depends on which ingress path the
-request took — Cloudflare and Tailscale recover the real client IP
-through two unrelated mechanisms:
+`forwardedHeaders.trustedIPs` decides whose `X-Forwarded-*` headers survive the
+entrypoint. Traefik's reference: *"Set the IPs or CIDR from where Traefik trusts
+the forwarded headers information (`X-Forwarded-*`)."* From any other sender the
+`X-Forwarded-*` headers and `X-Real-Ip` are deleted before a middleware or the
+application sees them, and `X-Real-Ip` is set from the connecting address.
 
-| Path | Mechanism | Configured where |
-|------|-----------|-------------------|
-| Cloudflare | Cloudflare proxies the connection and sets `X-Forwarded-For` to the real client IP. Traefik only trusts that header from Cloudflare's own edge IPs. | `entryPoints.web/websecure.forwardedHeaders.trustedIPs` in `traefik.yml.tmpl` — hardcoded list of Cloudflare's published ranges (same reasoning as `acc-local`'s hardcoded RFC1918 ranges: `envsubst` can't render a multi-entry list from one `.env` variable) |
-| Tailscale | The client connects to Traefik directly — no proxy hop, no header to trust. The TCP source IP **is** the real client IP, provided the network can carry it (see IPv6 note below). | Nothing to configure — this is a network-layer property, not a Traefik setting |
+The setting changes which headers the application receives. It does not change
+what the access policies and rate limits evaluate:
 
-**Never set `forwardedHeaders.insecure=true`.** That trusts forwarded
-headers from *any* source, which lets a client set its own
-`X-Forwarded-For` and spoof an IP that passes `ipAllowList` — it defeats
-every access policy in this document. Always scope `trustedIPs` to the
-specific proxy's real address ranges.
+- `ipAllowList` — *"If no strategy is set, the default behavior is to match
+  `sourceRange` against the Remote address found in the request."*
+- `rateLimit`, `sourceCriterion` — *"If none are set, the default is to use the
+  request's remote address field (as an `ipStrategy`)."*
+
+`access.yml.tmpl` sets no `ipStrategy` and `security-blocks.yml.tmpl` no
+`sourceCriterion`, so every `acc-*` policy and every `rl-*` block evaluates the
+address of the TCP connection. Which address that is depends on the path:
+
+| Path | Connecting address | `acc-local` / `acc-tailscale` / `acc-private` | `rl-*` | The application receives |
+|---|---|---|---|---|
+| Direct — Tailscale, LAN, a public client with no CDN in front | the client | evaluate the client | one bucket per client | `X-Forwarded-For` and `X-Real-Ip` carry the client; a header the client sent is deleted |
+| Cloudflare's proxy | Cloudflare's edge address | evaluate the edge, which is in none of their ranges — every request is refused | one bucket per edge address, shared by every visitor behind it | `X-Forwarded-For` = `client, edge`; `X-Real-Ip` = the edge |
+
+Which senders are trusted is `TRAEFIK_FORWARDED_PROXY` in `core/traefik/.env`:
+
+| Mode | Entrypoints trust | CrowdSec bouncer compares | Rendered besides |
+|---|---|---|---|
+| `none` (default) | nobody — the list renders empty | the connecting address | — |
+| `cloudflare` | the ranges of `ops/cloudflare-ips.txt`, compared with cloudflare.com weekly | the last `X-Forwarded-For` entry outside those ranges (`forwardedHeadersTrustedIPs`): the client Cloudflare appended; a direct client by its connection, because the entrypoint deleted its header | `config/host/cloudflare-ranges.nft`, the same ranges as nftables defines for a rule on the forward hook |
+
+The bouncer plugin never checks who sent its header: it takes the configured
+header from any request, walks it from the right past the trusted ranges and
+falls back to the connection only when nothing is left. What makes the result
+trustworthy is the entrypoint, which deletes `X-Forwarded-For` from every
+sender outside `trustedIPs` — so the plugin's default header is the only one
+that can be used, and `forwardedHeadersCustomName` (`CF-Connecting-IP`,
+`True-Client-IP`) must never be set: Traefik deletes only its own
+`X-Forwarded-*` set and `X-Real-Ip`, and any other header reaches the
+middleware from any client. `validate.sh` refuses a rendered middleware that
+names one. The same holds for an application: one that reads
+`CF-Connecting-IP`, `True-Client-IP` or `Forwarded` is on its own in both
+modes, since nothing deletes those from a direct client.
+
+The closed access policies evaluate the connecting address in both modes —
+their clients connect directly, and a proxied request to such a host is refused
+over IPv4; over IPv6 on an IPv4-only `proxy-public` the edge arrives as the
+Docker gateway and `acc-local` admits it (README, "IPv6 between Cloudflare and
+the origin"). The rate limits count per edge address at the origin behind
+Cloudflare: a `sourceCriterion` that reads a header puts every direct client
+into one shared bucket, so the per-client limit of a public route is a
+Cloudflare rate-limiting rule by IP at the edge. What Cloudflare has to be set
+to, the origin firewall on the forward hook, where the mode's trust ends
+(Workers, other zones, WARP clients) and the per-application consequences
+(`X-Forwarded-For` carries two hops, `X-Real-Ip` is the edge) are in
+`core/traefik/README.md`, "Behind Cloudflare". `render.sh` refuses to render
+over a configuration whose list trusts anyone while `.env` does not declare
+the mode — absent or empty — so an installation from before the switch decides
+rather than loses its addresses; `validate.sh` refuses a rendered list that
+differs from the ranges file.
+
+**Never set `forwardedHeaders.insecure=true`.** It keeps the forwarded headers
+from every sender — the reference: *"We recommend to use this option only for
+tests purposes, not in production."* A client then chooses what the application
+reads as its address, and any middleware that evaluates the header through an
+`ipStrategy` passes a forged one.
 
 **IPv6 note:** Tailscale always gives a client an IPv6 address. If
 `proxy-public` is IPv4-only, that address is lost before Traefik ever
-sees it (no header-based fallback exists for this path, unlike
-Cloudflare) — Traefik sees the Docker gateway address instead, and
-`acc-tailscale` blocks it. See
+sees it — no header carries it on this path, so Traefik sees the Docker
+gateway address instead, and `acc-tailscale` blocks it. The same loss
+hits Cloudflare's proxy connecting over IPv6 (when only an `AAAA` record
+exists, possibly when both do): the gateway is not a trusted sender, so
+the headers are deleted, and `acc-local` admits the gateway. A direct
+IPv6 client takes the same path, past a forward-hook firewall (README,
+"Protect the origin"). See
 [`core/traefik/docs/ipv6-dual-stack.md`](../../core/traefik/docs/ipv6-dual-stack.md)
 for the full explanation, the dual-stack network setup, and the
 migration path for existing IPv4-only installs. Allowlisting the gateway
@@ -110,7 +165,7 @@ half the interval between two refills — 4 ms at 125 per second — and no long
 | Block | What it does |
 |-------|-------------|
 | `compress` | gzip compression |
-| `permissions-policy` | Blocks camera, mic, geolocation, payment, USB, gyroscope |
+| `permissions-policy` | Blocks camera, microphone, geolocation, payment, USB, magnetometer, gyroscope, accelerometer |
 | `csp-enforce` | Enforcing Content Security Policy (may break apps with external scripts) |
 
 ### Design Decisions
@@ -253,38 +308,10 @@ before.
 requests are few and each one is worth slowing an attacker down. It is the wrong
 choice for anything a browser loads assets from.
 
-Record the answer where the value lives. A level with no stated reason is a level
-the next person cannot safely change.
-
-### Changes vs. Previous System
-
-| What | Before | After |
-|------|--------|-------|
-| Compression | From sec-2 | From sec-1 (performance belongs everywhere) |
-| Permissions-Policy | Separate opt-in | Included from sec-3 |
-| CSP enforce | Separate opt-in | sec-5 |
-| Embed variants | Not available | sec-1e through sec-3e |
-| browserXssFilter | In all headers | Removed (deprecated) |
-| File structure | Single security.yml | Split into blocks + chains + integrations |
-
-### App Assignment
-
-| App | Level | Why |
-|-----|-------|-----|
-| Whoami | `sec-5` | Static page, no external resources → perfect for CSP enforce |
-| Traefik Dashboard | `sec-4` + `acc-tailscale` | Sensitive admin UI, VPN-only |
-| Dockhand | `sec-4` + `acc-tailscale` | Admin tool, VPN-only |
-| Portainer | `sec-4` + `acc-tailscale` | Admin tool, VPN-only |
-| Vaultwarden | `sec-3e` + `acc-tailscale` | Password manager: strict + SAMEORIGIN (iframe-friendly for browser extension) |
-| OnlyOffice | `sec-2e` | Must be embeddable in iframes |
-| Nextcloud | `sec-3e-sync` + `acc-private` | Needs SAMEORIGIN for its own framing, and its sync clients need the higher sustained rate; reachable from LAN and VPN |
-| Paperless | `sec-3` + `acc-tailscale` | Hardened, VPN-only |
-| Seafile, Seafile Pro | `sec-2-sync` + `acc-private` | Desktop and mobile sync clients; reachable from LAN and VPN |
-| Authentik | `sec-3` | Auth provider, should be hardened |
-| Keycloak | `sec-2-spa` + `acc-tailscale`, `strip-xfo` ahead of the chain | Sets its own frame headers per page and frames its cookie check; the per-app middleware removes the proxy's header |
-| Invoice Ninja | `sec-2` | Standard web app |
-| WordPress / Ghost | `sec-2` | CMS with inline scripts |
-| Cal.diy | `sec-3` | Public-facing scheduling tool, hardened default |
+Record the answer where the value lives: the stack's `.env.example` carries
+`APP_TRAEFIK_SECURITY`, with the reason beside it. A level with no stated reason
+is a level the next person cannot safely change. This document keeps no per-stack
+list — a second copy of a value drifts from the one the stack ships.
 
 ---
 
@@ -306,30 +333,37 @@ All building blocks are standalone middlewares — use them individually or with
 
 ---
 
-## Integrations (`integrations.yml`)
+## Integrations (`crowdsec.yml`, `authentik.yml`)
 
-External services that plug into Traefik as middleware. Each is independent and optional.
+External services that plug into Traefik as middleware. Each is independent and
+optional, and each is rendered by its own switch in `core/traefik/.env` — no
+template is edited to enable one, and `integrations.yml` renders empty.
 
-| Integration | Type | What it does |
-|-------------|------|-------------|
-| `crowdsec-basic` | Traefik plugin | CrowdSec decision remediation: blocks IPs the LAPI has a decision for (stream mode, fail-open, no request inspection) |
-| `crowdsec-appsec` | Traefik plugin | The same decision remediation, plus AppSec request inspection against the installed rule sets (fail-open) |
-| `sec-authentik` | Forward auth | SSO authentication via Authentik |
+| Integration | Type | What it does | Switch |
+|-------------|------|-------------|--------|
+| `crowdsec-basic` | Traefik plugin | CrowdSec decision remediation: blocks IPs the LAPI has a decision for (stream mode, fail-open, no request inspection) | `CROWDSEC_BOUNCER_ENABLED` |
+| `crowdsec-appsec` | Traefik plugin | The same decision remediation, plus AppSec request inspection against the installed rule sets (fail-open) | `CROWDSEC_BOUNCER_ENABLED` |
+| `auth-authentik` (older name `sec-authentik`, the same middleware) | Forward auth | A login in front of an application that has none: the Authentik outpost is asked for every request; no session, no pass; outpost unreachable, no pass | `AUTHENTIK_FORWARD_AUTH_ENABLED` |
 
-All three are commented out by default and no router attaches one. An application opts
-in deliberately, per stack, by prepending the middleware to its router chain — see
-`APP_TRAEFIK_THREAT` in [`traefik-labels.md`](traefik-labels.md).
+With a switch off, its middlewares do not exist and no router attaches one. An
+application opts in deliberately, per stack: the CrowdSec middleware through
+`APP_TRAEFIK_THREAT` in [`traefik-labels.md`](traefik-labels.md), the
+forward-auth gate by naming `auth-authentik@file` on the router that needs it
+([`core/authentik/README.md`](../../core/authentik/README.md#integrating-other-apps-via-forward-auth)).
+Access policies, rate limits and headers do not depend on either switch.
+
+One switch renders both CrowdSec halves: the plugin into Traefik's **static**
+configuration, which takes effect only after a Traefik restart, and the two
+middleware definitions into `config/dynamic/crowdsec.yml`, which is hot-reloaded;
+with the switch off, `render.sh` removes the middleware file. The forward-auth
+gate is dynamic configuration only — `config/dynamic/authentik.yml`, hot-reloaded,
+removed the same way.
 
 `crowdsec-appsec` additionally requires the CrowdSec AppSec listener on port 7422 and a
 remediation plugin version that supports it. AppSec is CrowdSec's request-inspection
 (WAF) component; what it blocks depends on which rule sets are installed, so treat its
 coverage as the rule sets' coverage rather than as general request filtering. See
 [`core/crowdsec/docs/appsec.md`](../../core/crowdsec/docs/appsec.md) before enabling it.
-
-Both are rendered by one switch, `CROWDSEC_BOUNCER_ENABLED=true` in `core/traefik/.env`:
-the plugin into Traefik's **static** configuration, which takes effect only after a
-Traefik restart, and the two middleware definitions into `config/dynamic/crowdsec.yml`,
-which is hot-reloaded. No template is edited to enable them.
 
 `crowdsec-basic` is the first profile in the `crowdsec-*` family — see
 [`core/crowdsec/docs/profiles.md`](../../core/crowdsec/docs/profiles.md) for the full
@@ -380,12 +414,16 @@ v3.7 on 2026-09-23. `backup/kopia` is the stack that uses it.
 
 ## Incident Response
 
+An application router's middlewares are labels that read the application's `.env`,
+so each move below is an `.env` change in that stack, applied with
+`docker compose up -d`. `config/dynamic/*.yml` is rendered output and is overwritten
+by the next `render.sh`; the dashboard's values live in `core/traefik/.env` and reach
+`config/dynamic/` through the render, which the file provider hot-reloads.
+
 | Action | How |
 |--------|-----|
-| Block a service immediately | Change `acc-*` to `acc-deny@file` in the router |
-| Lock to VPN only | Change `acc-public` to `acc-tailscale@file` |
-| Escalate rate limiting | Change `sec-2@file` to `sec-4@file` |
-| Block an IP via CrowdSec | `docker exec crowdsec cscli decisions add --ip X.X.X.X --duration 24h --reason "incident"` |
-| Switch certificate resolver | Change `certResolver` between `cloudflare-dns` (DNS-01), `httpResolver` (HTTP-01) and `tlsResolver` (TLS-ALPN-01) |
-
-All changes in `config/dynamic/*.yml` are hot-reloaded by Traefik — no restart needed.
+| Block a service immediately | `APP_TRAEFIK_ACCESS=acc-deny` |
+| Lock to VPN only | `APP_TRAEFIK_ACCESS=acc-tailscale` |
+| Escalate rate limiting | `APP_TRAEFIK_SECURITY=sec-4` — `rl-hard`, 20 requests per second and burst 40, answers `429` to a browser's asset load as well |
+| Block an IP via CrowdSec | `docker exec crowdsec cscli decisions add --ip X.X.X.X --duration 24h --reason "incident"` — enforced on routers carrying a `crowdsec-*` middleware |
+| Switch certificate resolver | `APP_TRAEFIK_CERT_RESOLVER` between `cloudflare-dns` (DNS-01), `httpResolver` (HTTP-01) and `tlsResolver` (TLS-ALPN-01), with the `certresolver` label uncommented; `TRAEFIK_DASHBOARD_CERT_RESOLVER` for the dashboard, then `render.sh` |

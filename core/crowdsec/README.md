@@ -109,10 +109,21 @@ remediation for everything inside it, and the deployment keeps reporting healthy
 while doing so. Upstream's own note suggests it for a LAN or VPN range, which is
 the shape most likely to be pasted in without the consequence being obvious.
 
-This blueprint sets neither option in the middleware it ships. If a source has to
-be exempt, prefer a CrowdSec AllowList, which is evaluated by the engine and is
-visible in `cscli` output, over an exemption that exists only in proxy
-configuration.
+This blueprint never sets `clientTrustedIPs` and never
+`forwardedHeadersCustomName`. It sets `forwardedHeadersTrustedIPs` in one case:
+with `TRAEFIK_FORWARDED_PROXY=cloudflare` in `core/traefik/.env`, `render.sh`
+writes Cloudflare's published ranges into both middlewares. The plugin then
+compares the last `X-Forwarded-For` entry outside those ranges — the client
+Cloudflare appended — and a direct client by its connection, because Traefik's
+entrypoint deleted that header from a sender outside the ranges. The plugin
+itself never checks who sent the header; a custom header such as
+`CF-Connecting-IP` would be read from any client, since Traefik deletes only
+`X-Forwarded-*`. A sender whose own address lies inside the ranges (Cloudflare's
+egress space `172.64.0.0/13` is; WARP clients are not documented either way) is
+compared as the edge (`core/traefik/README.md`, "Behind Cloudflare").
+If a source has to be exempt, prefer a CrowdSec AllowList, which is evaluated by
+the engine and is visible in `cscli` output, over an exemption that exists only
+in proxy configuration — README step 5 is that AllowList.
 
 ### Choosing
 
@@ -184,6 +195,53 @@ start and never joins `proxy-public`. Remediation and AppSec stay off until you 
 them — step 4 finishing means the path exists, not that anything is enforced.
 
 No secrets needed — the engine generates its own internal credentials on first start.
+
+**5. Decide the administrative exemption** — optional, and a decision rather than a
+default.
+
+The default whitelist covers RFC1918 and loopback and nothing else. A VPN address is
+neither: an administrator's browser producing `403` and `404` responses is what
+`http-probing` measures, and on 2026-08-28 that banned the administrator's own address
+on both families and closed the management path
+([`docs/bugfixes/crowdsec-firewall-bouncer-2026-08-28.md`](../../docs/bugfixes/crowdsec-firewall-bouncer-2026-08-28.md)).
+Once remediation is on, the same detection closes the same path again.
+
+The exemption that holds against every decision — local scenarios and community
+blocklists alike — is a LAPI AllowList. What it costs: an exempted device is never
+banned, a compromised one included. An AllowList is not evidence that a device is
+trustworthy; it is the decision to keep that device reachable whatever the engine
+concludes about it. That is why the entry is the administrator's devices, each by its
+own VPN address, IPv4 and IPv6 where both exist — not the VPN range. The range is
+accepted and named for what it is when it appears.
+
+```bash
+# .env — the devices, comma-separated; empty means no exemption, by decision
+CROWDSEC_ALLOWLIST_ADMIN=100.64.0.7,fd7a:115c:a1e0::1
+ops/allowlist.sh apply       # creates the list `admin-devices`, adds what is missing
+ops/allowlist.sh status
+```
+
+`apply` adds and never removes: an entry taken out of `.env` stays in the engine until
+`ops/allowlist.sh remove <value>` — a mistake in `.env` cannot lift an exemption. A value
+that is not an address or range stops `apply` before anything is applied.
+
+Verify from the device's side, each family on its own:
+
+```bash
+ops/allowlist.sh check 100.64.0.7           # "allowlisted by admin-devices"
+ops/allowlist.sh check fd7a:115c:a1e0::1
+docker exec crowdsec cscli metrics show acquisition   # the device's requests are still read and parsed:
+                                                        # the engine sees it; it only serves no decision against it
+```
+
+What a host test still has to establish, and this repository has not: that a manual
+decision against an exempted address (`cscli decisions add --ip …`) is not served, that
+one added with `--bypass-allowlist` is, and that the host-firewall bouncer follows both.
+Until then the exemption is a documented mechanism with one measurement behind it —
+`firewall-bouncer.md`, "A parser whitelist is not a universal exclusion".
+
+If the engine ever bans the device anyway, the way back is in
+[`docs/runbook.md`](docs/runbook.md#locked-out-over-the-vpn), and it does not need the VPN.
 
 ### Verify
 
@@ -307,15 +365,17 @@ Add more collections from the [CrowdSec Hub](https://hub.crowdsec.net/).
 
 ### Detected Scenarios
 
-Scenarios that trigger on Traefik traffic:
+The scenarios come from the installed collections, and the list on a host is the
+authoritative one:
 
-| Scenario | What it detects |
-|----------|-----------------|
-| `crowdsecurity/http-probing` | Scanning for open ports and services |
-| `crowdsecurity/http-sensitive-files` | Access attempts to `.env`, `.git`, `wp-config`, etc. |
-| `crowdsecurity/http-admin-interface-probing` | Scanning for admin panels (`/admin`, `/wp-admin`) |
-| `crowdsecurity/http-crawl-non_statics` | Aggressive crawling of dynamic pages |
-| `crowdsecurity/http-path-traversal-probing` | `../` path traversal attempts |
+```bash
+docker exec crowdsec cscli scenarios list
+```
+
+`crowdsecurity/traefik` pulls in `crowdsecurity/base-http-scenarios`, whose scenarios
+cover crawling, probing, bad user agents, path traversal, sensitive-file access, SQL
+injection and XSS probing, backdoor and admin-interface probing, generic HTTP brute
+force and open-proxy abuse; `crowdsecurity/http-cve` adds probing for known CVEs.
 
 ---
 
@@ -402,13 +462,15 @@ template, because the rendered file is what Traefik loaded:
 
 ```bash
 grep -iE "appsec(Failure|Unreachable)Block" \
-  ../traefik/config/dynamic/integrations.yml
+  ../traefik/config/dynamic/crowdsec.yml
 ```
 
 Both must read `false`. A missing line is not `false`: the plugin defaults both to
-`true`, so a middleware that omits them is fail-closed. If either is effectively `true`,
-set both to `false` in `../traefik/ops/templates/dynamic/integrations.yml.tmpl`, run
-`../traefik/ops/scripts/render.sh`, and restore your setting after step 3.
+`true`, so a middleware that omits them is fail-closed. The shipped
+`crowdsec.yml.tmpl` carries both as `false`, so a rendered file where either is
+effectively `true` comes from a locally edited template: restore it
+(`git -C ../traefik checkout -- ops/templates`), run `../traefik/ops/scripts/render.sh`,
+and reapply your setting after step 3.
 
 ### Step 1 — Traefik joins the new network
 
@@ -638,6 +700,13 @@ bounded rollback, the known limitations and the verification status.
 ### Log Acquisition (`config/acquis.yaml`)
 
 Defines which log files CrowdSec monitors. Default: Traefik access logs in JSON format.
+
+Traefik writes that log through a buffer of `TRAEFIK_ACCESSLOG_BUFFER` lines
+(`core/traefik/.env`, default 100). A line reaches the file, and this engine, when the
+buffer flushes — on a quiet host that is a delay, not a loss. The measurement that a
+request refused by an `acc-*` policy writes no line at all was taken with a buffer of 0
+(`docs/host-session-findings.md` §2), so a missing line is the policy's doing, not the
+buffer's.
 
 The file ships with a commented-out SSH block. Uncomment it to enable SSH brute-force
 detection alongside host-firewall remediation — see [`docs/firewall-bouncer.md`](docs/firewall-bouncer.md)
