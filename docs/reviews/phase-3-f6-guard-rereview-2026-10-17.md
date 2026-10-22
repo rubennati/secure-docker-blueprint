@@ -403,7 +403,7 @@ repository ever wrote has that shape.
 None of these is marked passed here, and nothing in this document is
 production-verified.
 
-## Corrections — added by the maintainer's session after the review, 2026-10-17
+## Corrections after the review, 2026-10-17
 
 The review above is kept as written. One commit on `feature/cloudflare-mode` answers
 the findings below; the host items stay open.

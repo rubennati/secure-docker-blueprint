@@ -6,7 +6,7 @@ document was applied; every correction is a proposal. Host verifications stay op
 
 ## 1. Scope and method
 
-Reviewed in the order the brief gave: the trust boundaries of the client address in both
+Reviewed in this order: the trust boundaries of the client address in both
 modes; `render.sh` and `validate.sh`; `scripts/host-files.sh` and the manifest; the tests;
 the documentation claims. Each claim was checked against one of these sources, all read
 at the versions the blueprint pins or names:
@@ -408,7 +408,7 @@ CF-Connecting-IP" (`:115-116`) carries F1.
 
 Nothing in this review was run against a host, committed or pushed.
 
-## 6. Corrections — added by the maintainer's session after the review, 2026-10-17
+## 6. Corrections after the review, 2026-10-17
 
 The review above is kept as written. Every finding below names the commit on
 `feature/cloudflare-mode` that answers it, or why it is left; the host checks of
@@ -453,7 +453,7 @@ So, in one sentence each: **F1 is corrected and tested for the rendered
 configuration, and its security effect is derived from source, not measured on a
 host. The origin firewall of F3 is documented and parsed, and has not been run
 anywhere.** Neither may be called production-verified until the host checks of
-section 5 are run with the maintainer's release. The second review
+section 5 are run against a release. The second review
 (`phase-3-cloudflare-mode-review-2-2026-10-17.md`) confirmed F1 against both
 sources, found the first shape guard blind to every release's rendering, and
 added items 8–10 to the host list.
