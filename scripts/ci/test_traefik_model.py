@@ -7,18 +7,22 @@ profiles render beside the names they replace, and nothing old changes.
   chains (*-none, access-public, headers-application-owned) are valid YAML
 - HSTS_MAX_AGE renders into hsts-base and hsts-include-subdomains, defaults
   to two years, and is refused when it is not a number
-- tls-profiles.yml carries tls-compatible/standard/strict, Traefik's reserved
-  `default` built from TLS_DEFAULT_OPTION (old and new names accepted, any
-  other refused), and the transition names tls-basic/aplus/modern
+- tls-profiles.yml carries tls-compatible/standard/strict and Traefik's
+  reserved `default` built from TLS_DEFAULT_OPTION; a name from before the
+  model is refused with the migration script named
 - compress is defined once, in model.yml, with exact exclusions, and the
-  websecure entrypoint carries it (Phase 4.3, commit 1); the old names
-  are otherwise untouched: sec-* chains, hdr-*, rl-*, acc-* render as before
+  websecure entrypoint carries it
+- the names the model retired are gone: no access.yml, security-blocks.yml
+  or security-chains.yml is rendered, no rendered file defines them, a file
+  left from an earlier render is removed by render.sh and refused by
+  validate.sh, and the dashboard router carries the four positions
 
 Run:
     python3 scripts/ci/test_traefik_model.py
     python3 -m unittest discover -s scripts/ci -p 'test_*.py'
 """
 
+import re
 import shutil
 import subprocess
 import tempfile
@@ -41,6 +45,7 @@ PROFILES = {"headers-standard": ["hsts-base", "header-nosniff", "header-frame-de
 BLOCKS = {"frame-self", "hsts-include-subdomains", "csp-self-only", "forwarded-proto-https"}
 TLS_NEW = {"tls-compatible", "tls-standard", "tls-strict"}
 TLS_OLD = {"tls-basic", "tls-aplus", "tls-modern"}
+RETIRED = re.compile(r"^    (acc-[a-z-]+|sec-[a-z0-9-]+|hdr-[a-z-]+|rl-[a-z-]+|permissions-policy|csp-enforce|crowdsec-(basic|appsec)|tls-(basic|aplus|modern)):", re.M)
 
 
 class Model(unittest.TestCase):
@@ -109,44 +114,68 @@ class Model(unittest.TestCase):
         self.assertNotEqual(v.returncode, 0)
         self.assertIn("headers-none does not start with hsts-base", v.stdout + v.stderr)
 
-    def test_tls_profiles_carry_both_name_sets_and_a_default_from_the_env(self):
-        self.render(VALID_ENV)  # BASE_ENV: TLS_DEFAULT_OPTION as the shipped example sets it
+    def test_tls_profiles_carry_the_models_names_and_a_default_from_the_env(self):
+        self.render(VALID_ENV)
         opts = self.dyn("tls-profiles.yml")["tls"]["options"]
-        self.assertTrue((TLS_NEW | TLS_OLD | {"default"}) <= set(opts), set(opts))
-        self.assertEqual(opts["tls-basic"], opts["tls-compatible"])
-        self.assertEqual(opts["tls-aplus"], opts["tls-standard"])
-        self.assertEqual(opts["tls-modern"], opts["tls-strict"])
+        self.assertEqual(set(opts), TLS_NEW | {"default"}, "three profiles and the reserved default, no alias")
         self.assertEqual(opts["tls-strict"]["minVersion"], "VersionTLS13")
         self.assertIn("cipherSuites", opts["tls-standard"])
-        for value, expect in (("tls-standard", "tls-standard"), ("tls-aplus", "tls-standard"),
-                              ("tls-basic", "tls-compatible"), ("tls-strict", "tls-strict"), ("tls-modern", "tls-strict")):
+        for value in sorted(TLS_NEW):
             r = self.render(dict(VALID_ENV, TLS_DEFAULT_OPTION=value))
             self.assertEqual(r.returncode, 0, value + r.stdout + r.stderr)
             opts = self.dyn("tls-profiles.yml")["tls"]["options"]
-            self.assertEqual(opts["default"], opts[expect], value)
+            self.assertEqual(opts["default"], opts[value], value)
+            v = self.validate()
+            self.assertEqual(v.returncode, 0, value + v.stdout + v.stderr)
+        for value in sorted(TLS_OLD):
+            r = self.render(dict(VALID_ENV, TLS_DEFAULT_OPTION=value))
+            self.assertNotEqual(r.returncode, 0, value)
+            self.assertIn("before the middleware model", r.stdout + r.stderr, value)
+            self.assertIn("migrate-traefik-env.sh", r.stdout + r.stderr, value)
         r = self.render(dict(VALID_ENV, TLS_DEFAULT_OPTION="tls-aaa"))
         self.assertNotEqual(r.returncode, 0)
         self.assertIn("TLS_DEFAULT_OPTION", r.stdout + r.stderr)
 
-    def test_the_old_names_render_unchanged(self):
-        """The transition keeps sec-*, hdr-*, rl-* and acc-* exactly as before
-        the model: compared with the templates of origin/dev at 4a192d9, the
-        rendered chains and blocks are the same definitions."""
-        self.render(VALID_ENV)
-        chains = self.dyn("security-chains.yml")["http"]["middlewares"]
-        blocks = self.dyn("security-blocks.yml")["http"]["middlewares"]
-        access = self.dyn("access.yml")["http"]["middlewares"]
-        self.assertEqual(chains["sec-2"]["chain"]["middlewares"], ["hdr-basic", "rl-soft", "compress"])
-        self.assertEqual(chains["sec-3"]["chain"]["middlewares"], ["hdr-strict", "rl-soft", "compress", "permissions-policy"])
-        self.assertEqual(blocks["rl-soft"]["rateLimit"], {"average": 125, "burst": 200})
-        self.assertEqual(blocks["hdr-basic"]["headers"]["stsSeconds"], 63072000)
-        self.assertTrue(blocks["hdr-strict"]["headers"]["stsIncludeSubdomains"])
-        self.assertNotIn("compress", blocks, "compress is defined once, in model.yml")
-        self.assertEqual(set(access), {"acc-public", "acc-local", "acc-tailscale", "acc-private", "acc-deny"})
+    def test_the_retired_names_are_gone(self):
+        """Nothing of the vocabulary before the model is rendered: not the
+        three files, not a definition in any file, not an alias."""
+        r = self.render(VALID_ENV)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        dynamic = self.root / "config" / "dynamic"
+        for retired in ("access.yml", "security-blocks.yml", "security-chains.yml"):
+            self.assertFalse((dynamic / retired).exists(), retired)
+        for f in sorted(dynamic.glob("*.yml")):
+            self.assertIsNone(RETIRED.search(f.read_text(encoding="utf-8")), f.name)
         static = yaml.safe_load((self.root / "config" / "traefik.yml").read_text(encoding="utf-8"))
         ep = static["entryPoints"]["websecure"]
         self.assertEqual(ep["http"]["middlewares"], ["compress@file"], "compression at the entrypoint; the threat position only by switch")
         self.assertNotIn("tls", ep["http"], "no entrypoint TLS option — every router takes the file provider's default")
+        v = self.validate()
+        self.assertEqual(v.returncode, 0, v.stdout + v.stderr)
+
+    def test_the_dashboard_router_carries_the_four_positions(self):
+        self.render(VALID_ENV)
+        router = self.dyn("routers-system.yml")["http"]["routers"]["traefik-dashboard"]
+        self.assertEqual(router["middlewares"], ["access-vpn@file", "limit-strict@file", "headers-standard@file", "auth-none@file"])
+        self.assertEqual(router["tls"]["options"], BASE_ENV["TRAEFIK_DASHBOARD_TLS_OPTION"])
+
+    def test_a_file_from_before_the_model_is_removed_by_render_and_refused_by_validate(self):
+        self.render(VALID_ENV)
+        dynamic = self.root / "config" / "dynamic"
+        leftover = dynamic / "security-chains.yml"
+        leftover.write_text("http:\n  middlewares:\n    sec-2:\n      chain:\n        middlewares:\n          - compress\n", encoding="utf-8")
+        v = self.validate()
+        self.assertNotEqual(v.returncode, 0)
+        self.assertIn("security-chains.yml is from before the middleware model", v.stdout + v.stderr)
+        r = self.render(VALID_ENV)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("security-chains.yml (retired by the middleware model — removed)", r.stdout)
+        self.assertFalse(leftover.exists())
+        # a retired name in a file that stays — a hand edit — is refused by name
+        (dynamic / "redirects.yml").write_text("http:\n  middlewares:\n    acc-public:\n      chain:\n        middlewares: []\n", encoding="utf-8")
+        v = self.validate()
+        self.assertNotEqual(v.returncode, 0)
+        self.assertIn("names the middleware model retired: acc-public", v.stdout + v.stderr)
 
     def test_compress_is_defined_once_with_exact_exclusions(self):
         self.render(VALID_ENV)
@@ -160,8 +189,6 @@ class Model(unittest.TestCase):
         defined_in = [f.name for f in (self.root / "config" / "dynamic").glob("*.yml")
                       if "compress" in (yaml.safe_load(f.read_text(encoding="utf-8")) or {}).get("http", {}).get("middlewares", {})]
         self.assertEqual(defined_in, ["model.yml"])
-        chains = self.dyn("security-chains.yml")["http"]["middlewares"]
-        self.assertIn("compress", chains["sec-2"]["chain"]["middlewares"], "the chains still name it until 4.3 removes them")
 
 
 if __name__ == "__main__":

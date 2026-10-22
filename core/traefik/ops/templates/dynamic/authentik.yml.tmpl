@@ -5,12 +5,11 @@
 # AUTHENTIK_FORWARD_AUTH_ENABLED=true in .env; with the switch off, render.sh
 # removes the rendered file. Dynamic configuration: hot-reloaded, no restart.
 #
-# Defining the middleware attaches it to nothing. A router carries it by naming
-# auth-authentik@file (or the older name sec-authentik@file, the same
-# middleware) in its middleware list — see core/authentik/README.md,
-# "Integrating other apps via Forward-Auth". Detach it from every router before
-# switching this off: a router that names a middleware that no longer exists is
-# disabled by Traefik, not left open.
+# Defining the middleware attaches it to nothing. A router carries it in its
+# auth position — APP_TRAEFIK_AUTH=auth-authentik@file in the stack's .env —
+# see core/authentik/README.md, "Integrating other apps via Forward-Auth".
+# Detach it from every router before switching this off: a router that names
+# a middleware that no longer exists is disabled by Traefik, not left open.
 #
 # Traefik asks the address below for every request. No session: the outpost
 # answers with a redirect to the login page and the request stops here. The
@@ -45,10 +44,3 @@ http:
           - X-authentik-meta-provider
           - X-authentik-meta-app
           - X-authentik-meta-version
-
-    # The name this middleware carried while it lived commented out in
-    # integrations.yml.tmpl. A router that still names it keeps working.
-    sec-authentik:
-      chain:
-        middlewares:
-          - auth-authentik

@@ -102,13 +102,19 @@ if ! printf '%s' "${HSTS_MAX_AGE}" | grep -qE '^[0-9]+$'; then
   exit 1
 fi
 
-# The TLS profile `default` is built from (dynamic/tls-profiles.yml). The
-# model's names and the names before it are both accepted during the
-# transition; the anchor selects the profile's content inside the template.
+# The TLS profile `default` is built from (dynamic/tls-profiles.yml); the
+# anchor selects the profile's content inside the template. An .env from before
+# the model names tls-basic / tls-aplus / tls-modern — scripts/migrate-traefik-env.sh
+# rewrites it.
 case "${TLS_DEFAULT_OPTION:-}" in
-  tls-compatible|tls-basic)  TLS_DEFAULT_ANCHOR=tls_compatible ;;
-  tls-standard|tls-aplus)    TLS_DEFAULT_ANCHOR=tls_standard ;;
-  tls-strict|tls-modern)     TLS_DEFAULT_ANCHOR=tls_strict ;;
+  tls-compatible)  TLS_DEFAULT_ANCHOR=tls_compatible ;;
+  tls-standard)    TLS_DEFAULT_ANCHOR=tls_standard ;;
+  tls-strict)      TLS_DEFAULT_ANCHOR=tls_strict ;;
+  tls-basic|tls-aplus|tls-modern)
+    echo "ERROR: TLS_DEFAULT_OPTION=${TLS_DEFAULT_OPTION} is a name from before the middleware model —"
+    echo "       scripts/migrate-traefik-env.sh core/traefik rewrites .env (tls-compatible / tls-standard / tls-strict)."
+    exit 1
+    ;;
   *)
     echo "ERROR: TLS_DEFAULT_OPTION must be tls-compatible, tls-standard or tls-strict (got '${TLS_DEFAULT_OPTION:-}')."
     exit 1
@@ -289,15 +295,15 @@ if rendered_has_forward_auth; then
     echo ""
     echo "       Keep it:   AUTHENTIK_FORWARD_AUTH_ENABLED=true"
     echo "                  AUTHENTIK_FORWARD_AUTH_ADDRESS=<the address config/dynamic names>"
-    echo "       Remove it: AUTHENTIK_FORWARD_AUTH_ENABLED=false — after removing auth-authentik@file"
-    echo "                  and sec-authentik@file from every router."
+    echo "       Remove it: AUTHENTIK_FORWARD_AUTH_ENABLED=false — after moving every router's"
+    echo "                  APP_TRAEFIK_AUTH away from auth-authentik@file."
     echo "       Then run render.sh again. See core/traefik/README.md, 'Authentik forward-auth'."
     exit 1
   fi
   if [ "${AUTHENTIK_FORWARD_AUTH_ENABLED}" = false ]; then
     echo "NOTICE: AUTHENTIK_FORWARD_AUTH_ENABLED=false — the forward-auth middleware is removed"
-    echo "        from config/. A router still listing auth-authentik@file or sec-authentik@file"
-    echo "        is disabled by Traefik until it is relabelled."
+    echo "        from config/. A router whose APP_TRAEFIK_AUTH still names auth-authentik@file"
+    echo "        is disabled by Traefik until it is changed."
   fi
 fi
 
@@ -341,6 +347,16 @@ else
 fi
 
 echo "Rendering dynamic configs..."
+# The files of the templates the middleware model retired (acc-*, sec-*,
+# hdr-*, rl-*). A render from before the model left them in config/dynamic;
+# they would define names nothing references and, for compress, a second
+# definition Traefik refuses.
+for retired in access.yml security-blocks.yml security-chains.yml; do
+  if [ -f "${CFG_DIR}/dynamic/${retired}" ]; then
+    rm -f "${CFG_DIR}/dynamic/${retired}"
+    echo " -> ${retired} (retired by the middleware model — removed)"
+  fi
+done
 for f in "${TPL_DIR}/dynamic/"*.yml.tmpl; do
   base="$(basename "${f%.tmpl}")"
 

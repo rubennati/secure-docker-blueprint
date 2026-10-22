@@ -4,14 +4,13 @@ tls:
     # ==========================================================
     # TLS PROFILES
     # ==========================================================
-    # Three profiles, under the names of the middleware model and, during
-    # the transition (Phase 4.1 → 4.3), under the names they had before:
+    # Three profiles:
     #
-    # Profile          Was          Min TLS   Use case
-    # ---------------  -----------  --------  ------------------------------
-    # tls-compatible   tls-basic    1.2       older clients must connect
-    # tls-standard     tls-aplus    1.2       strict ciphers + curves — the standard
-    # tls-strict       tls-modern   1.3       current clients only
+    # Profile          Min TLS   Use case
+    # ---------------  --------  ------------------------------------------
+    # tls-compatible   1.2       older clients must connect
+    # tls-standard     1.2       strict ciphers + curves — the standard
+    # tls-strict       1.3       current clients only
     #
     # `default` is Traefik's reserved name: it is the option every router
     # takes that carries `tls=true` (or a certResolver) without naming an
@@ -49,8 +48,3 @@ tls:
 
     # The deployment standard, from TLS_DEFAULT_OPTION.
     default: *${TLS_DEFAULT_ANCHOR}
-
-    # ---- transition names, removed in Phase 4.3 ----
-    tls-basic: *tls_compatible
-    tls-aplus: *tls_standard
-    tls-modern: *tls_strict

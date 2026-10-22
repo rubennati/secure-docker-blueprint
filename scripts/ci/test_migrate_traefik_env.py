@@ -29,7 +29,6 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
 TOOL = REPO / "scripts" / "migrate-traefik-env.sh"
-TEMPLATES = REPO / "core" / "traefik" / "ops" / "templates" / "dynamic"
 
 STACK_ENV = """# --- Project ---
 COMPOSE_PROJECT_NAME=demo
@@ -48,10 +47,17 @@ APP_TAG=1.0.0
 """
 
 
+# The names the templates defined before the middleware model (v0.9.4:
+# security-chains.yml.tmpl, access.yml.tmpl, tls-profiles.yml.tmpl) — every one
+# an .env of that release may carry, and every one the script has to map.
+OLD_CHAINS = ["sec-0", "sec-1", "sec-1e", "sec-2", "sec-2e", "sec-2-spa", "sec-2-spa-xl", "sec-2-sync",
+              "sec-3", "sec-3e", "sec-3-spa", "sec-3e-spa", "sec-3e-sync", "sec-4", "sec-5"]
+OLD_POLICIES = ["acc-public", "acc-local", "acc-tailscale", "acc-private", "acc-deny"]
+OLD_TLS = ["tls-basic", "tls-aplus", "tls-modern"]
+
+
 def old_names():
-    chains = re.findall(r"^    (sec-[a-z0-9-]+):", (TEMPLATES / "security-chains.yml.tmpl").read_text(encoding="utf-8"), re.M)
-    policies = re.findall(r"^    (acc-[a-z0-9-]+):", (TEMPLATES / "access.yml.tmpl").read_text(encoding="utf-8"), re.M)
-    return sorted(set(chains)), sorted(set(policies)), ["tls-basic", "tls-aplus", "tls-modern"]
+    return sorted(OLD_CHAINS), sorted(OLD_POLICIES), OLD_TLS
 
 
 class Scratch(unittest.TestCase):

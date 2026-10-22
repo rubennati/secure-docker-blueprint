@@ -195,7 +195,11 @@ if [ -n "${HSTS_MAX_AGE:-}" ] && ! printf '%s' "${HSTS_MAX_AGE}" | grep -qE '^[0
   exit 1
 fi
 case "${TLS_DEFAULT_OPTION:-}" in
-  tls-compatible|tls-basic|tls-standard|tls-aplus|tls-strict|tls-modern) ;;
+  tls-compatible|tls-standard|tls-strict) ;;
+  tls-basic|tls-aplus|tls-modern)
+    echo "ERROR: TLS_DEFAULT_OPTION=${TLS_DEFAULT_OPTION} is a name from before the middleware model —"
+    echo "       scripts/migrate-traefik-env.sh core/traefik rewrites .env (tls-compatible / tls-standard / tls-strict)."
+    exit 1 ;;
   *) echo "ERROR: TLS_DEFAULT_OPTION must be tls-compatible, tls-standard or tls-strict (got '${TLS_DEFAULT_OPTION:-}')."; exit 1 ;;
 esac
 TRAEFIK_FORWARDED_PROXY="$(printf '%s' "${TRAEFIK_FORWARDED_PROXY:-none}" | tr '[:upper:]' '[:lower:]')"
@@ -321,10 +325,24 @@ if [ -f "${ROOT_DIR}/config/traefik.yml" ]; then
   # conditional ones have to exist exactly when their switch is set.
   test -f "${ROOT_DIR}/config/haproxy.cfg.template" \
     || { echo "Missing config/haproxy.cfg.template (run render.sh) — docker-compose.yml mounts it"; exit 1; }
-  for f in access.yml security-blocks.yml security-chains.yml integrations.yml tls-profiles.yml \
-           routers-system.yml redirects.yml servers-transports.yml model.yml; do
+  for f in integrations.yml tls-profiles.yml routers-system.yml redirects.yml servers-transports.yml model.yml; do
     test -f "${ROOT_DIR}/config/dynamic/${f}" || { echo "Missing config/dynamic/${f} (run render.sh)"; exit 1; }
   done
+  # The names the middleware model retired must be gone from config/dynamic:
+  # a file from a render before the model, or a hand-kept copy, defines
+  # middlewares no router may name and, for compress, a second definition.
+  for f in access.yml security-blocks.yml security-chains.yml; do
+    if [ -f "${ROOT_DIR}/config/dynamic/${f}" ]; then
+      echo "ERROR: config/dynamic/${f} is from before the middleware model — run render.sh, which removes it."
+      exit 1
+    fi
+  done
+  retired_names="$(grep -hoE '^    (acc-[a-z-]+|sec-[a-z0-9-]+|hdr-[a-z-]+|rl-[a-z-]+|permissions-policy|csp-enforce|crowdsec-(basic|appsec)|tls-(basic|aplus|modern)):' "${ROOT_DIR}"/config/dynamic/*.yml 2>/dev/null | sed 's/[[:space:]:]//g' | sort -u | tr '\n' ' ' || true)"
+  if [ -n "${retired_names% }" ]; then
+    echo "ERROR: config/dynamic defines names the middleware model retired: ${retired_names}"
+    echo "       The templates no longer render them — bash ops/scripts/reset-templates.sh, then render.sh."
+    exit 1
+  fi
 
   # The model's header profiles each begin with the HSTS base — a router with
   # headers-none still commits its host name to HTTPS. Checked on the

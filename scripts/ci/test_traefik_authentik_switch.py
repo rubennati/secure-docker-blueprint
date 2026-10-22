@@ -3,7 +3,7 @@
 
 AUTHENTIK_FORWARD_AUTH_ENABLED decides whether render.sh writes
 config/dynamic/authentik.yml, which defines the middleware auth-authentik and
-its older name sec-authentik. Same contract as the CrowdSec switch:
+the one name a router's auth position carries. Same contract as the CrowdSec switch:
 
 - absent or false: no file, no middleware — the blueprint's default
 - true: the file, both names, the address from .env or its default
@@ -62,14 +62,14 @@ class AuthentikSwitch(unittest.TestCase):
         v = self.validate()
         self.assertEqual(v.returncode, 0, v.stdout + v.stderr)
 
-    def test_true_renders_both_names_with_the_default_address(self):
+    def test_true_renders_the_middleware_with_the_default_address(self):
         r = self.render(dict(VALID_ENV, AUTHENTIK_FORWARD_AUTH_ENABLED="true"))
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         mw = self.middlewares()
         self.assertEqual(mw["auth-authentik"]["forwardAuth"]["address"], DEFAULT_ADDRESS)
         self.assertIn("X-authentik-username", mw["auth-authentik"]["forwardAuth"]["authResponseHeaders"])
         self.assertNotIn("trustForwardHeader", mw["auth-authentik"]["forwardAuth"])
-        self.assertEqual(mw["sec-authentik"]["chain"]["middlewares"], ["auth-authentik"])
+        self.assertNotIn("sec-authentik", mw, "no alias — the model carries one name per function")
         v = self.validate()
         self.assertEqual(v.returncode, 0, v.stdout + v.stderr)
 
@@ -123,9 +123,10 @@ class AuthentikSwitch(unittest.TestCase):
         self.render(dict(VALID_ENV, AUTHENTIK_FORWARD_AUTH_ENABLED="true", CROWDSEC_BOUNCER_ENABLED="false"))
         self.assertTrue(self.authentik_file().exists())
         self.assertFalse((self.root / "config" / "dynamic" / "crowdsec.yml").exists())
-        access = (self.root / "config" / "dynamic" / "access.yml").read_text(encoding="utf-8")
-        chains = (self.root / "config" / "dynamic" / "security-chains.yml").read_text(encoding="utf-8")
-        self.assertNotIn("authentik", access + chains, "no access policy or chain depends on the gate")
+        model = yaml.safe_load((self.root / "config" / "dynamic" / "model.yml").read_text(encoding="utf-8"))["http"]["middlewares"]
+        for name, body in model.items():
+            self.assertNotIn("authentik", name, "the gate is defined by its own switch, not in the model")
+            self.assertNotIn("authentik", str(body.get("chain", "")), f"no access policy, limit or header profile depends on the gate ({name})")
 
 
 if __name__ == "__main__":
