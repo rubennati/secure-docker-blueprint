@@ -12,8 +12,8 @@ repository was changed. Host verifications stay open and are never marked passed
 The first review (`docs/reviews/phase-3-cloudflare-mode-review-2026-10-17.md`, sections
 1–5) is taken as read. Its section 6 and 6.1 are the claims under review here: for
 every row, does the named commit do what the row says, and is the three-way split
-(corrected / held by a test / open on a host) accurate. The order of work was the
-brief's: the security-relevant commit `2b1cda2` against the Traefik and plugin sources;
+(corrected / held by a test / open on a host) accurate. The order of work: the
+security-relevant commit `2b1cda2` against the Traefik and plugin sources;
 the drift guard and `validate.sh`; `fdcbab1` and the tests; the documentation commit
 `a2a2432` against nftables, Docker and Cloudflare's documentation; the review document
 itself.
@@ -26,7 +26,7 @@ itself.
 | nftables | 1.1.3 (Alpine 3.22 in a throwaway local container with `NET_ADMIN`, no host) | `nft -c -f` and `nft -f` of the README's table together with the rendered define file |
 | This repository | branch tip `fbdff64`; `origin/dev`; tags `v0.9.0`–`v0.9.4` | the five diffs, `render.sh`, `validate.sh`, `scripts/host-files.sh`, the templates, `core/traefik/README.md`, `docs/standards/traefik-security.md`, `core/traefik/docs/ipv6-dual-stack.md`, `core/crowdsec/docs/firewall-bouncer.md`, the tests |
 
-Executed, in the scratchpad outside the repository, never on a host:
+Executed, in a scratch directory outside the repository, never on a host:
 
 - `python3 -m unittest discover -s scripts/ci -p 'test_traefik_*.py'` with Python
   3.12.15, PyYAML 6.0.3 and GNU envsubst: **55 tests, OK**. `test_host_files.py`:
@@ -166,7 +166,7 @@ all carry it — renders this:
 ```
 
 The first non-blank line is a comment, so the function answers "trusting nobody".
-Reproduced in the scratchpad: `config/traefik.yml` rendered from the `v0.9.4`
+Reproduced in a scratch directory: `config/traefik.yml` rendered from the `v0.9.4`
 template, `config/dynamic/crowdsec.yml` as `v0.9.4` wrote it (no
 `forwardedHeadersTrustedIPs`; the key did not exist before this branch), `.env`
 without `TRAEFIK_FORWARDED_PROXY`:
@@ -346,10 +346,10 @@ stays as section 6 records it.
 
 Nothing in this review was run against a host, committed or pushed.
 
-## 6. Corrections — added by the maintainer's session after the review, 2026-10-17
+## 6. Corrections after the review, 2026-10-17
 
 The review above is kept as written, with one exception: three Markdown-lint
-corrections by the maintainer's session before the first commit of this file (two code
+corrections before the first commit of this file (two code
 spans that carried leading or trailing spaces, written as words instead; the host-list
 items 8–10 as bullets, since an ordered list cannot start at 8) — formatting only, no
 statement, finding or test result changed. The first review's section 6.1 is corrected
