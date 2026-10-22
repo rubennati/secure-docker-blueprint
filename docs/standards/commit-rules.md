@@ -6,66 +6,105 @@ Rules for every commit in this repository. These rules are binding.
 
 - **Commit only on user request** — never auto-commit after file changes
 - **Ask before committing** — two-part question: "Commit X? With message Y?"
-- **English everywhere in main** — code, comments, commit messages, README, standards
-- **German drafts go to `docs` branch** — never into `main`
-- **No personal or private data** — ever
+- **English in every committed file and commit message** — German only in the
+  exchange with the maintainer ([writing-style.md](writing-style.md#address-and-mood))
+- **Public content only** — the rule is [Public content](#public-content) below;
+  other documents point here instead of restating it
 - **No leaks** — API keys, tokens, credentials never committed
 - **Scope-first commits** — one logical change per commit
 
-## Pre-Commit Checks (mandatory)
+## Public content
 
-Before every commit the AI runs these checks. If any fails, the commit is aborted and reported.
+The repository is public, and so are its pull requests, issues and releases.
+The rule protects private systems and people, not technical content.
 
-### 1. No real domains
+**Not committed** — in files, commit messages or those texts:
+
+- **domains, hostnames and addresses of private systems** — a deployment's own
+  domain, a server's or workstation's name, an address a real host or tailnet
+  node holds
+- **local paths of a workstation** (`/Users/<name>/…`) and **password-manager
+  references** (`op://…`)
+- **credentials, tokens and keys**, including example values that were
+  generated for real
+- **personal data**, and anything addressed to or from an assistant session —
+  instructions, approvals, session notes
+
+**Fine, and expected:**
+
+- the project's own site and repository, and the public domains and published
+  address ranges of upstream projects, registries and vendors — documentation
+  links, image registries, telemetry endpoints, a provider's IP ranges
+- placeholders and clearly marked examples: `example.com`, `example.org`,
+  `example.net` (RFC 2606); loopback, RFC 1918 and RFC 5737 addresses; a tailnet
+  example inside `100.64.0.0/10` or `fd7a:115c:a1e0::/48` that no real node holds
+  (`100.64.0.10`, `fd7a:115c:a1e0::10`); `/Users/<name>/` and `op://<vault>/…`
+- a synthetic value that has to look real, such as a checker's self-test
+  fixture — marked as synthetic where it stands, and listed by fingerprint in
+  `.gitleaksignore` if gitleaks reports it
+- the legal notice and contact address of the operator site (`site/`), which
+  the law requires
+
+Records of test runs and host sessions (`docs/maintenance-log.md`,
+`docs/host-session-*.md`, `docs/bugfixes/`, `docs/reviews/`) are kept and stay
+technical: they describe what a test environment showed, by its role ("the test
+host"), not by its name, address or owner. A test environment is not a
+statement about production systems.
+
+## Checks
+
+### What CI enforces
+
+| Check | CI job | Covers |
+|---|---|---|
+| gitleaks with its default rules | Secret scan (gitleaks) | credentials, tokens and keys in the lines a pull request or a push to `main` adds; the whole history on `workflow_dispatch` — see [`ci.md`](ci.md#1--secret-scan-gitleaks) |
+| Public-content patterns | Secret scan (gitleaks) | workstation paths (`/Users/<name>/`) and password-manager references (`op://`) in tracked files |
+| `__REPLACE_ME__` in a committed `.env` | Sentinel value check | an environment file committed with its placeholder |
+| Plaintext secrets in compose | Canonical structure | a secret written into a compose file instead of a Docker secret |
+
+Private domains, hostnames and addresses and personal data have no automatic
+check: which names are private is known only to the maintainer. The checks
+below cover them by hand.
+
+### Before a commit (manual)
+
+These run locally. No hook enforces them.
+
+#### 1. Private names
 
 ```bash
-# Private / company domains must not appear in the repo.
-# Only example.com / example.org / example.net (RFC 2606) allowed.
-grep -rE "<privat-domain-pattern>" --include="*.yml" --include="*.yaml" \
-  --include="*.md" --include="*.env*" --include="*.sh" --include="*.conf"
+# Keep your own domains, hostnames and user names outside the repository, one
+# regular expression per line, and run the list against the staged diff.
+git diff --cached -U0 | grep -nE -f ~/.config/<your-private-patterns>
 # Must return zero lines
 ```
 
-### 2. No real IPs
+#### 2. Addresses
 
 ```bash
-# Only RFC ranges allowed:
-# - 0.0.0.0, 127.0.0.0/8 (loopback)
-# - 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16 (RFC1918)
-# - 100.64.0.0/10 (CGNAT/Tailscale)
-# - 192.0.2.0/24, 198.51.100.0/24, 203.0.113.0/24 (RFC 5737 documentation)
-# - fc00::/7 (IPv6 ULA)
-# - fd7a:115c:a1e0::/48 (Tailscale IPv6)
-
-grep -rE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b" --include="*.yml" --include="*.md" \
-  | grep -vE "0\.0\.0\.0|127\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.|100\.64\.|192\.0\.2\.|198\.51\.100\.|203\.0\.113\."
-# Must return zero lines
+# Lists every IPv4 address in the staged diff outside loopback, RFC 1918 and
+# RFC 5737. An address in 100.64.0.0/10 is listed as well: a placeholder is
+# fine, a real node's address is not.
+git diff --cached -U0 | grep -oE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b" \
+  | grep -vE "^(0\.0\.0\.0|127\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.|192\.0\.2\.|198\.51\.100\.|203\.0\.113\.)"
 ```
 
-### 3. No secrets
+#### 3. Secrets
 
 ```bash
-# Common patterns for credentials
-grep -rE "(api[_-]?key|secret[_-]?key|access[_-]?token|password)\s*[=:]\s*['\"]?[A-Za-z0-9+/=_-]{16,}" \
-  --include="*.yml" --include="*.md" --include="*.sh"
-# Any match → abort + manual review
+# A quick hint before CI runs gitleaks with its full rule set
+git diff --cached -U0 | grep -nE "(api[_-]?key|secret[_-]?key|access[_-]?token|password)\s*[=:]\s*['\"]?[A-Za-z0-9+/=_-]{16,}"
+# Any match → stop and review
 ```
 
-### 4. No personal or company names
-
-```bash
-# Avoid leaking identifiers that tie the repo to a specific person/company.
-# List of disallowed tokens kept private — maintained by user.
-```
-
-### 5. No .env / .secrets staged
+#### 4. No .env / .secrets staged
 
 ```bash
 # These must never be committed
 git diff --cached --name-only | grep -E "\.env$|\.secrets/" && echo "ABORT: secrets staged"
 ```
 
-### 6. English in commit message
+#### 5. English in commit message
 
 ```bash
 # Commit message should be English in main branch
@@ -306,7 +345,7 @@ After first push, configure on the GitHub repo:
    - Require status checks
    - Do not allow force pushes
    - Do not allow deletions
-3. Optionally protect `dev` similarly
+3. Protect `dev` the same way — this repository protects both branches with rulesets ([Branch Model](#branch-model))
 
 ### Pre-push hook (optional)
 
@@ -380,7 +419,7 @@ Always ask. "Wollen wir das jetzt committen?" is better than an unwanted commit.
 
 - **Accidentally committed something** → `git revert` (safest)
 - **Committed to wrong branch, want to move** → `git reset --soft` + re-commit on right branch
-- **Committed secret that's already pushed** → `git filter-repo` + force push + rotate secret
+- **Committed secret that's already pushed** → rotate or revoke it first; that is what removes the risk. A history rewrite (`git filter-repo` + force push) is a separate, deliberate decision: it breaks every fork, clone and tag, and GitHub keeps pull-request refs regardless. If the value stays in history, list its finding in `.gitleaksignore` with the reason
 - **Want file gone going forward but keep history** → `git rm` + commit
 
 ### Workflow example: undo last commit on main
@@ -399,8 +438,8 @@ git reset --hard HEAD~1  # DESTROYS changes — use with care
 
 - [ ] User explicitly asked for commit
 - [ ] Scope and message clear
-- [ ] English in message (unless `docs` branch and explicitly German)
-- [ ] Pre-commit checks passed (no domains, IPs, secrets, personal data)
+- [ ] English in message
+- [ ] [Public content](#public-content) checked (no private domains, hostnames or addresses, secrets, personal data)
 - [ ] Correct branch (not accidentally committing to main)
 - [ ] `git status` and `git diff --cached` reviewed
 - [ ] Test-Script run (if applicable)
