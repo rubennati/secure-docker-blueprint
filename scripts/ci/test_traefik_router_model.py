@@ -238,12 +238,11 @@ class TlsConflict(Scratch):
 
 
 class Repository(unittest.TestCase):
-    """What the rules say about the tree as it is, so the transition stays
-    visible: the routers still carry the old names (reported, not failing),
-    no stack serves a host name with two TLS options, and nothing exposes
-    the wide bucket."""
+    """What the rules say about the tree as it is: every router carries the
+    four positions (Phase 4.3), no block is out of place, no stack serves a
+    host name with two TLS options, and nothing exposes the wide bucket."""
 
-    def test_the_tree_reports_the_transition_and_fails_nothing(self):
+    def test_the_tree_carries_the_model_on_every_router(self):
         cwd = os.getcwd()
         os.chdir(cs.Path(__file__).resolve().parents[2])
         try:
@@ -257,10 +256,7 @@ class Repository(unittest.TestCase):
                     levels.setdefault(f["rule"], set()).add(f["level"])
         finally:
             os.chdir(cwd)
-        self.assertNotIn("burst-exposure", levels, levels)
-        self.assertNotIn("tls-conflict", levels, levels)
-        self.assertNotIn("block-order", levels, levels)
-        self.assertEqual(levels.get("router-positions"), {cs.MODEL_LEVEL}, levels)
+        self.assertEqual(levels, {}, levels)
 
 
 if __name__ == "__main__":

@@ -268,13 +268,12 @@ services:
       # TLS
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
-      # Middlewares (custom proxy headers + access + security)
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${COMPOSE_PROJECT_NAME}-headers@docker,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      # Middlewares — the four positions, then the proto header
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH},forwarded-proto-https@file"
       # Paperless generates absolute URLs from the incoming request headers.
-      # Without X-Forwarded-Proto=https it produces http:// links → Mixed Content.
-      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
-      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-headers.headers.customrequestheaders.X-Forwarded-Host=${APP_TRAEFIK_HOST}"
+      # Without X-Forwarded-Proto=https it produces http:// links → Mixed Content:
+      # forwarded-proto-https@file (core/traefik) sets it after the four; Traefik
+      # sets X-Forwarded-Host from the request on its own.
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8000"
       # Optional: protect /admin with Authentik Forward-Auth (Pattern 2 — path-scoped).
@@ -288,9 +287,8 @@ services:
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/admin`)"
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.entrypoints=websecure"
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.tls=true"
-      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.priority=100"
-      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.middlewares=${COMPOSE_PROJECT_NAME}-headers@docker,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file,auth-authentik@file"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${ADMIN_TRAEFIK_AUTH},forwarded-proto-https@file"
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.service=${COMPOSE_PROJECT_NAME}"
 
     # --- Health & Observability ---

@@ -890,8 +890,11 @@ def check_routers(app: Path, findings: list[dict]) -> None:
     for key, value in env.items():
         m = POSITION_VAR.search(key)
         if m and value:
-            family_by_value[value] = m.group(1).lower()
-            family_by_value.setdefault(value + "@file", m.group(1).lower())
+            # the value as written and as Compose resolves it: a stack's own
+            # gate is ${COMPOSE_PROJECT_NAME}-auth@docker in the file
+            for v in {value, resolve_label(value, env)}:
+                family_by_value[v] = m.group(1).lower()
+                family_by_value.setdefault(v + "@file", m.group(1).lower())
 
     tls_by_host: dict[str, dict[str, list[str]]] = {}
     for path in compose_files(app):

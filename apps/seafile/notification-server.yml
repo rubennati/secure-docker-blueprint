@@ -69,14 +69,13 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-notification.entrypoints=websecure"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-notification.priority=100"
       # Access policy repeated: this router runs at priority=100 and outranks the
-      # main one, so it decides the request. Without this, acc-tailscale on the
+      # main one, so it decides the request. Without this, access-vpn on the
       # stack leaves this path answering wherever the host answers.
-      # WebSocket endpoint. The access policy applies; the sec-* chain is left off —
-      # rl-soft would meter a long-lived connection's reconnects and nobody has run it.
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-notification.middlewares=${APP_TRAEFIK_ACCESS}@file"
+      # WebSocket endpoint. The four positions, with SIDE_TRAEFIK_LIMIT (.env): no
+      # counter — a long-lived connection's reconnects have not been measured against one.
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-notification.middlewares=${APP_TRAEFIK_ACCESS}@file,${SIDE_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-notification.tls=true"
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-notification.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-notification.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}-notification.loadbalancer.server.port=8083"
       - "traefik.docker.network=${TRAEFIK_NETWORK}"
 
