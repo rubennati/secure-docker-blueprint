@@ -2,14 +2,19 @@
 """The middleware model on every router (Phase 4.2): the rules in
 check-structure.py that describe the four positions.
 
-- router-positions: a router missing a position, carrying one twice, out of
-  order, with an empty variable, or still naming what the model replaces
+- router-positions (FAIL): a router missing a position, carrying one twice,
+  out of order, with an empty variable, or still naming what the model
+  replaced
+- retired-name (FAIL): a stack's .env.example with *_TRAEFIK_SECURITY or
+  *_TRAEFIK_THREAT, with an acc-* / sec-* / tls-basic|aplus|modern value, or
+  a router naming such a TLS profile — one fixture per name the model
+  replaced, so none can come back unnoticed
 - block-order: a response-header block after the headers profile, a request
   block before the auth position
 - burst-exposure: limit-extra-large (or a sec-*-xl chain) only behind a
   closed access policy — judged per router, on the router's own variable
-- tls-conflict: two routers of one stack naming different tls.options for
-  one host name
+- tls-conflict (FAIL): two routers of one stack naming different tls.options
+  for one host name
 - a stack's own gate (<stack>-auth@docker) is the auth position when the
   stack's *_TRAEFIK_AUTH variable carries it
 
@@ -23,6 +28,8 @@ import os
 import tempfile
 import unittest
 from pathlib import Path
+
+from test_migrate_traefik_env import OLD_CHAINS, OLD_POLICIES, OLD_TLS
 
 HERE = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location("check_structure", HERE / "check-structure.py")
@@ -77,12 +84,14 @@ class Scratch(unittest.TestCase):
         cs.canonical_shared_network.cache_clear()
         self.tmp.cleanup()
 
-    def findings(self, env, routers):
+    def findings(self, env, routers, with_env=False):
         app = self.root / "apps" / "demo"
         app.mkdir(parents=True, exist_ok=True)
         (app / ".env.example").write_text(env, encoding="utf-8")
         (app / "docker-compose.yml").write_text(compose(routers), encoding="utf-8")
         out = []
+        if with_env:
+            cs.check_env(Path("apps/demo"), out)
         cs.check_routers(Path("apps/demo"), out)
         return out
 
@@ -95,12 +104,15 @@ class RouterPositions(Scratch):
         f = self.findings(MODEL_ENV, [("demo", "Host(`${APP_TRAEFIK_HOST}`)", MODEL_LABEL, None)])
         self.assertEqual(f, [], f)
 
-    def test_the_old_shape_is_reported_with_its_names_at_the_transition_level(self):
+    def test_the_rules_of_the_model_block(self):
+        self.assertEqual(cs.MODEL_LEVEL, "FAIL", "decided with the cut (Phase 4.3): a router without the four positions is a regression")
+
+    def test_the_old_shape_fails_with_its_names(self):
         f = self.rule(self.findings(OLD_ENV, [("demo", "Host(`${APP_TRAEFIK_HOST}`)",
                                                 "${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file",
                                                 "${APP_TRAEFIK_TLS_OPTION}@file")]), "router-positions")
         self.assertEqual(len(f), 1, f)
-        self.assertEqual(f[0]["level"], cs.MODEL_LEVEL)
+        self.assertEqual(f[0]["level"], "FAIL")
         self.assertEqual(f[0]["service"], "demo")
         self.assertIn("missing limit, auth", f[0]["detail"])
         self.assertIn("names the model replaces: acc-public, sec-2", f[0]["detail"])
@@ -215,7 +227,7 @@ class TlsConflict(Scratch):
             ("demo-api", "Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/api`)", MODEL_LABEL, None),
         ]), "tls-conflict")
         self.assertEqual(len(f), 1, f)
-        self.assertEqual(f[0]["level"], cs.MODEL_LEVEL)
+        self.assertEqual(f[0]["level"], "FAIL")
         self.assertIn("demo.example.com is served with different tls.options", f[0]["detail"])
         self.assertIn("default: demo-api", f[0]["detail"])
         self.assertIn("tls-strict@file: demo", f[0]["detail"])
@@ -237,6 +249,79 @@ class TlsConflict(Scratch):
         self.assertEqual(f, [])
 
 
+class RetiredNames(Scratch):
+    """One fixture per name the model replaced — the chains, policies and
+    TLS profiles of v0.9.4, the threat slot and a literal chain in a label —
+    each of them refused, so that none can come back unnoticed."""
+
+    OLD_LABEL = "${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+
+    def test_every_chain_of_the_old_model_is_refused(self):
+        for chain in OLD_CHAINS:
+            env = OLD_ENV.replace("sec-2", chain)
+            f = self.findings(env, [("demo", "Host(`${APP_TRAEFIK_HOST}`)", self.OLD_LABEL, None)], with_env=True)
+            retired = [x for x in f if x["rule"] == "retired-name"]
+            self.assertTrue(any(x["detail"].startswith("APP_TRAEFIK_SECURITY is a variable") for x in retired), (chain, f))
+            self.assertTrue(all(x["level"] == "FAIL" for x in retired), chain)
+            positions = self.rule(f, "router-positions")
+            self.assertEqual(len(positions), 1, (chain, f))
+            self.assertIn(chain, positions[0]["detail"], chain)
+
+    def test_every_policy_of_the_old_model_is_refused(self):
+        for policy in OLD_POLICIES:
+            env = MODEL_ENV.replace("access-public", policy)
+            f = self.findings(env, [("demo", "Host(`${APP_TRAEFIK_HOST}`)", MODEL_LABEL, None)], with_env=True)
+            retired = [x for x in f if x["rule"] == "retired-name"]
+            self.assertEqual([x["level"] for x in retired], ["FAIL"], (policy, f))
+            self.assertIn(f"APP_TRAEFIK_ACCESS={policy} names what the middleware model replaced", retired[0]["detail"])
+            positions = self.rule(f, "router-positions")
+            self.assertEqual(len(positions), 1, (policy, f))
+            self.assertIn(f"names the model replaces: {policy}", positions[0]["detail"])
+
+    def test_every_tls_profile_of_the_old_model_is_refused_in_env_and_label(self):
+        for name in OLD_TLS:
+            env = MODEL_ENV + f"APP_TRAEFIK_TLS_OPTION={name}\n"
+            f = self.findings(env, [("demo", "Host(`${APP_TRAEFIK_HOST}`)", MODEL_LABEL, "${APP_TRAEFIK_TLS_OPTION}@file")], with_env=True)
+            retired = self.rule(f, "retired-name")
+            self.assertEqual(len(retired), 2, (name, f))
+            self.assertTrue(all(x["level"] == "FAIL" for x in retired), name)
+            self.assertIn(f"APP_TRAEFIK_TLS_OPTION={name} names what the middleware model replaced", retired[0]["detail"])
+            self.assertIn(f"tls.options names {name}@file, a profile the middleware model replaced", retired[1]["detail"])
+            self.assertEqual(self.rule(f, "router-positions"), [], "the positions themselves are fine")
+            f = self.findings(MODEL_ENV, [("demo", "Host(`${APP_TRAEFIK_HOST}`)", MODEL_LABEL, f"{name}@file")], with_env=True)
+            self.assertEqual(len(self.rule(f, "retired-name")), 1, (name, "a literal in the label"))
+
+    def test_the_threat_slot_is_refused_empty_and_filled(self):
+        env = MODEL_ENV + "APP_TRAEFIK_THREAT=\n"
+        f = self.findings(env, [("demo", "Host(`${APP_TRAEFIK_HOST}`)", MODEL_LABEL, None)], with_env=True)
+        retired = self.rule(f, "retired-name")
+        self.assertEqual(len(retired), 1, f)
+        self.assertIn("APP_TRAEFIK_THREAT is a variable from before the middleware model", retired[0]["detail"])
+        self.assertEqual(self.rule(f, "router-positions"), [])
+        for threat in ("crowdsec-basic", "crowdsec-appsec"):
+            env = MODEL_ENV + f"APP_TRAEFIK_THREAT={threat}@file,\n"
+            f = self.findings(env, [("demo", "Host(`${APP_TRAEFIK_HOST}`)", "${APP_TRAEFIK_THREAT}" + MODEL_LABEL, None)], with_env=True)
+            positions = self.rule(f, "router-positions")
+            self.assertEqual(len(positions), 1, (threat, f))
+            self.assertEqual(positions[0]["level"], "FAIL")
+            self.assertIn(f"names the model replaces: {threat}", positions[0]["detail"])
+
+    def test_a_literal_chain_in_a_label_is_refused(self):
+        label = "${APP_TRAEFIK_ACCESS}@file,sec-3e@file"
+        f = self.findings(MODEL_ENV, [("demo", "Host(`${APP_TRAEFIK_HOST}`)", label, None)], with_env=True)
+        positions = self.rule(f, "router-positions")
+        self.assertEqual(len(positions), 1, f)
+        self.assertEqual(positions[0]["level"], "FAIL")
+        self.assertIn("missing limit, auth", positions[0]["detail"])
+        self.assertIn("names the model replaces: sec-3e", positions[0]["detail"])
+
+    def test_the_model_shape_carries_no_retired_name(self):
+        env = MODEL_ENV + "APP_TRAEFIK_TLS_OPTION=tls-strict\nTRAEFIK_NETWORK=proxy-public\nAPP_TRAEFIK_CERT_RESOLVER=cloudflare-dns\n"
+        f = self.findings(env, [("demo", "Host(`${APP_TRAEFIK_HOST}`)", MODEL_LABEL, "${APP_TRAEFIK_TLS_OPTION}@file")], with_env=True)
+        self.assertEqual(self.rule(f, "retired-name"), [], f)
+        self.assertEqual(self.rule(f, "router-positions"), [], f)
+
+
 class Repository(unittest.TestCase):
     """What the rules say about the tree as it is: every router carries the
     four positions (Phase 4.3), no block is out of place, no stack serves a
@@ -250,10 +335,14 @@ class Repository(unittest.TestCase):
             cs.canonical_shared_network.cache_clear()
             levels = {}
             for app in cs.find_apps():
+                if str(app) in cs.EXCEPT_DIRS:
+                    continue
                 out = []
+                cs.check_env(app, out)
                 cs.check_routers(app, out)
                 for f in out:
-                    levels.setdefault(f["rule"], set()).add(f["level"])
+                    if f["rule"] in ("router-positions", "block-order", "tls-conflict", "burst-exposure", "retired-name"):
+                        levels.setdefault(f["rule"], set()).add(f["level"])
         finally:
             os.chdir(cwd)
         self.assertEqual(levels, {}, levels)
