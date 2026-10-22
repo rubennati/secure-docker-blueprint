@@ -238,7 +238,10 @@ None of that material is discarded. Each part has an owner:
 The lower half of that table is narrative by purpose: a findings log records how
 something was established, including what failed on the way. The exclusion of
 development narration governs current-state documentation and does not reach
-these.
+these. The [public-content rule](commit-rules.md#public-content) does: a session
+or findings log names a test environment by its role, not by its private
+domain, address, local path or owner, and carries no instructions to or from
+an assistant session. Its technical content stays.
 
 A reason belongs in current-state documentation when it changes what the reader
 does:

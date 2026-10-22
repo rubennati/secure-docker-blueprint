@@ -65,6 +65,20 @@ What a run covers depends on the event:
 A full-history scan therefore runs only on a manual dispatch. Single findings
 excluded by design are listed by fingerprint in `.gitleaksignore`.
 
+There is no scheduled full scan, on purpose. Every commit that lands passes the
+pull-request scan, the history does not change afterwards, and the rules change
+only when the action's pinned gitleaks version does — a scan on a timer would
+repeat the same rules over the same history. A full scan answers a new question
+in two cases, and runs then (`workflow_dispatch` on `dev`): after a
+`gitleaks-action` update, and before a release ([Release Chain](../maintenance.md#release-chain)).
+Content that exists only in a merge commit — a conflict resolution — is outside
+both scans, because `git log -p` shows no diff for a merge.
+
+A second step in the same job fails on the two kinds of private detail a
+pattern can find in the tracked files: a workstation path (`/Users/<name>/`)
+and a password-manager reference (`op://`). Real domains and addresses have no
+pattern; [`commit-rules.md`](commit-rules.md#public-content) covers them.
+
 **Blocks merge:** yes  
 **Tool:** `gitleaks/gitleaks-action@v3`, gitleaks 8.24.3
 

@@ -45,6 +45,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # The two kinds of private detail a pattern can find in the tracked files:
+      # a workstation path and a password-manager reference. Real domains and
+      # addresses have no pattern — docs/standards/commit-rules.md#public-content.
+      - name: Public content — workstation paths and password-manager references
+        run: |
+          if git grep -nIE "(^|[^[:alnum:]/])/Users/[A-Za-z][A-Za-z0-9._-]*/|(^|[^[:alnum:]])op://[[:alnum:]]" -- .; then
+            echo "::error::A workstation path or a password-manager reference is committed (docs/standards/commit-rules.md#public-content)."
+            exit 1
+          fi
+
   # ─────────────────────────────────────────────
   # 2. COMPOSE SYNTAX VALIDATION
   # ─────────────────────────────────────────────
