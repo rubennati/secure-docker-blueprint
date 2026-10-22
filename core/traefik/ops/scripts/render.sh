@@ -43,6 +43,36 @@ case "${CROWDSEC_BOUNCER_ENABLED}" in
 esac
 export CROWDSEC_BOUNCER_PLUGIN_VERSION="${CROWDSEC_BOUNCER_PLUGIN_VERSION:-v1.7.1}"
 
+# AppSec inspection is a second switch inside the same plugin: true places
+# threat-crowdsec-appsec at the entrypoint instead of threat-crowdsec. It needs
+# the engine's AppSec component answering on crowdsec:7422 (see
+# dynamic/crowdsec.yml.tmpl) and the bouncer switch on.
+CROWDSEC_APPSEC_ENABLED="$(printf '%s' "${CROWDSEC_APPSEC_ENABLED:-false}" | tr '[:upper:]' '[:lower:]')"
+case "${CROWDSEC_APPSEC_ENABLED}" in
+  true|false) ;;
+  *)
+    echo "ERROR: CROWDSEC_APPSEC_ENABLED must be true or false (got '${CROWDSEC_APPSEC_ENABLED}')."
+    exit 1
+    ;;
+esac
+if [ "${CROWDSEC_APPSEC_ENABLED}" = true ] && [ "${CROWDSEC_BOUNCER_ENABLED}" != true ]; then
+  echo "ERROR: CROWDSEC_APPSEC_ENABLED=true needs CROWDSEC_BOUNCER_ENABLED=true — AppSec inspection runs inside the bouncer plugin."
+  exit 1
+fi
+
+# The entrypoint middlewares (traefik.yml.tmpl, entryPoints.websecure.http):
+# the threat position when the bouncer is on, then compression — in that
+# order, so a banned address is refused before any work is done on its
+# request. Every router on the entrypoint gets them in front of its own list.
+ENTRYPOINT_MIDDLEWARES_YAML="        - compress@file"
+ENTRYPOINT_THREAT=""
+if [ "${CROWDSEC_BOUNCER_ENABLED}" = true ]; then
+  ENTRYPOINT_THREAT="threat-crowdsec"
+  [ "${CROWDSEC_APPSEC_ENABLED}" = true ] && ENTRYPOINT_THREAT="threat-crowdsec-appsec"
+  ENTRYPOINT_MIDDLEWARES_YAML="        - ${ENTRYPOINT_THREAT}@file"$'\n'"${ENTRYPOINT_MIDDLEWARES_YAML}"
+fi
+export ENTRYPOINT_MIDDLEWARES_YAML
+
 # Authentik forward-auth: the same shape. AUTHENTIK_FORWARD_AUTH_ENABLED decides
 # whether dynamic/authentik.yml.tmpl is rendered; the address defaults to the
 # embedded outpost of a core/authentik on this host.
@@ -217,7 +247,10 @@ render_nft_ranges() {
 
 rendered_has_bouncer() {
   grep -qsE '^experimental:' "${CFG_DIR}/traefik.yml" && return 0
-  grep -qsE '^[[:space:]]*crowdsec-(basic|appsec):' "${CFG_DIR}"/dynamic/*.yml 2>/dev/null
+  grep -qsE '^[[:space:]]*- threat-crowdsec(-appsec)?@file' "${CFG_DIR}/traefik.yml" && return 0
+  # both name sets: a configuration rendered before the middleware model
+  # carries crowdsec-basic / crowdsec-appsec
+  grep -qsE '^[[:space:]]*(crowdsec-(basic|appsec)|threat-crowdsec(-appsec)?):' "${CFG_DIR}"/dynamic/*.yml 2>/dev/null
 }
 
 if rendered_has_bouncer; then
@@ -229,16 +262,18 @@ if rendered_has_bouncer; then
     echo "       Keep it:   CROWDSEC_BOUNCER_ENABLED=true"
     echo "                  CROWDSEC_BOUNCER_PLUGIN_VERSION=<the version config/traefik.yml names>"
     echo "                  CROWDSEC_BOUNCER_KEY=<the key config/dynamic names>"
-    echo "       Remove it: CROWDSEC_BOUNCER_ENABLED=false — after removing crowdsec-*@file from"
-    echo "                  every router, or those routers go dark."
+    echo "       Remove it: CROWDSEC_BOUNCER_ENABLED=false — then recreate the traefik container"
+    echo "                  at once: the running entrypoint list names the threat middleware"
+    echo "                  until the recreate, and every router on websecure is disabled in between."
     echo "       Then run render.sh again. See core/traefik/README.md, 'Migrating an installation"
     echo "       that enabled the integration before the switch'."
     exit 1
   fi
   if [ "${CROWDSEC_BOUNCER_ENABLED}" = false ]; then
-    echo "NOTICE: CROWDSEC_BOUNCER_ENABLED=false — the CrowdSec plugin and middlewares are removed"
-    echo "        from config/. A router still listing crowdsec-*@file is disabled by Traefik"
-    echo "        until it is relabelled. The plugin block is static configuration: restart Traefik."
+    echo "NOTICE: CROWDSEC_BOUNCER_ENABLED=false — the CrowdSec plugin and the threat middleware are"
+    echo "        removed from config/. Recreate the traefik container NOW: the running entrypoint"
+    echo "        list (static configuration) still names threat-crowdsec@file, which the dynamic"
+    echo "        configuration no longer defines — every router on websecure is disabled until then."
   fi
 fi
 
@@ -288,12 +323,12 @@ place() {  # place <destination>: stdin -> destination, atomically
 echo "Rendering static config..."
 if [ "${CROWDSEC_BOUNCER_ENABLED}" = true ]; then
   envsubst < "${TPL_DIR}/traefik.yml.tmpl" | place "${CFG_DIR}/traefik.yml"
-  echo " -> traefik.yml (CrowdSec bouncer plugin ${CROWDSEC_BOUNCER_PLUGIN_VERSION} declared)"
+  echo " -> traefik.yml (CrowdSec bouncer plugin ${CROWDSEC_BOUNCER_PLUGIN_VERSION} declared; entrypoint: ${ENTRYPOINT_THREAT}@file, compress@file)"
 else
   # Drop the marker-delimited plugin block; the markers are comments and go with it.
   envsubst < "${TPL_DIR}/traefik.yml.tmpl" \
     | sed '/^# >>> crowdsec-bouncer/,/^# <<< crowdsec-bouncer/d' | place "${CFG_DIR}/traefik.yml"
-  echo " -> traefik.yml (no plugin — CROWDSEC_BOUNCER_ENABLED=false)"
+  echo " -> traefik.yml (no plugin — CROWDSEC_BOUNCER_ENABLED=false; entrypoint: compress@file)"
 fi
 envsubst < "${TPL_DIR}/haproxy.cfg.template.tmpl" | place "${CFG_DIR}/haproxy.cfg.template"
 if [ "${TRAEFIK_FORWARDED_PROXY}" = cloudflare ]; then

@@ -79,7 +79,7 @@ class ForwardedProxySwitch(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         for ep in ("web", "websecure"):
             self.assertEqual(self.static()["entryPoints"][ep]["forwardedHeaders"]["trustedIPs"], [], ep)
-        for mw in ("crowdsec-basic", "crowdsec-appsec"):
+        for mw in ("threat-crowdsec", "threat-crowdsec-appsec"):
             self.assertNotIn("forwardedHeadersTrustedIPs", self.crowdsec()[mw]["plugin"]["bouncer"], mw)
         self.assertFalse(self.nft().exists())
         v = self.validate()
@@ -90,7 +90,7 @@ class ForwardedProxySwitch(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         for ep in ("web", "websecure"):
             self.assertEqual(self.static()["entryPoints"][ep]["forwardedHeaders"]["trustedIPs"], RANGES, ep)
-        for mw in ("crowdsec-basic", "crowdsec-appsec"):
+        for mw in ("threat-crowdsec", "threat-crowdsec-appsec"):
             b = self.crowdsec()[mw]["plugin"]["bouncer"]
             self.assertEqual(b["forwardedHeadersTrustedIPs"], RANGES, mw)
             self.assertNotIn("forwardedHeadersCustomName", b, f"{mw}: the plugin reads a custom header from any sender")

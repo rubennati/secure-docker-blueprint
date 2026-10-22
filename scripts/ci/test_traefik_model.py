@@ -10,8 +10,9 @@ profiles render beside the names they replace, and nothing old changes.
 - tls-profiles.yml carries tls-compatible/standard/strict, Traefik's reserved
   `default` built from TLS_DEFAULT_OPTION (old and new names accepted, any
   other refused), and the transition names tls-basic/aplus/modern
-- the old names are untouched: sec-* chains, hdr-*, rl-*, acc-* render as
-  before, byte for byte
+- compress is defined once, in model.yml, with exact exclusions, and the
+  websecure entrypoint carries it (Phase 4.3, commit 1); the old names
+  are otherwise untouched: sec-* chains, hdr-*, rl-*, acc-* render as before
 
 Run:
     python3 scripts/ci/test_traefik_model.py
@@ -140,11 +141,27 @@ class Model(unittest.TestCase):
         self.assertEqual(blocks["rl-soft"]["rateLimit"], {"average": 125, "burst": 200})
         self.assertEqual(blocks["hdr-basic"]["headers"]["stsSeconds"], 63072000)
         self.assertTrue(blocks["hdr-strict"]["headers"]["stsIncludeSubdomains"])
-        self.assertEqual(blocks["compress"], {"compress": {}}, "the old compress block carries no exclusions until it moves to the entrypoint")
+        self.assertNotIn("compress", blocks, "compress is defined once, in model.yml")
         self.assertEqual(set(access), {"acc-public", "acc-local", "acc-tailscale", "acc-private", "acc-deny"})
         static = yaml.safe_load((self.root / "config" / "traefik.yml").read_text(encoding="utf-8"))
         ep = static["entryPoints"]["websecure"]
-        self.assertNotIn("middlewares", ep.get("http", {}), "no entrypoint middleware list before the routers move (4.3)")
+        self.assertEqual(ep["http"]["middlewares"], ["compress@file"], "compression at the entrypoint; the threat position only by switch")
+        self.assertNotIn("tls", ep["http"], "no entrypoint TLS option — every router takes the file provider's default")
+
+    def test_compress_is_defined_once_with_exact_exclusions(self):
+        self.render(VALID_ENV)
+        mw = self.dyn("model.yml")["http"]["middlewares"]
+        excluded = mw["compress"]["compress"]["excludedContentTypes"]
+        for measured in ("application/octet-stream", "image/png"):
+            self.assertIn(measured, excluded, measured)
+        self.assertNotIn("text/event-stream", excluded, "SSE stays compressible (decided 2026-10-18)")
+        self.assertFalse(any("*" in e for e in excluded), "Traefik matches exclusions exactly — no wildcards")
+        self.assertNotIn("includedContentTypes", mw["compress"]["compress"])
+        defined_in = [f.name for f in (self.root / "config" / "dynamic").glob("*.yml")
+                      if "compress" in (yaml.safe_load(f.read_text(encoding="utf-8")) or {}).get("http", {}).get("middlewares", {})]
+        self.assertEqual(defined_in, ["model.yml"])
+        chains = self.dyn("security-chains.yml")["http"]["middlewares"]
+        self.assertIn("compress", chains["sec-2"]["chain"]["middlewares"], "the chains still name it until 4.3 removes them")
 
 
 if __name__ == "__main__":

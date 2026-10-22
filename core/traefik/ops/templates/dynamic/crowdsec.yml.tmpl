@@ -4,14 +4,19 @@
 # Rendered to config/dynamic/crowdsec.yml only when CROWDSEC_BOUNCER_ENABLED=true
 # in .env; with the switch off, render.sh removes the rendered file. The plugin
 # these middlewares use is declared in traefik.yml by the same switch — that
-# half is static configuration and needs a Traefik restart, this half is
-# hot-reloaded.
+# half is static configuration and needs a recreate of the container, this
+# half is hot-reloaded.
 #
-# Defining a middleware attaches it to nothing. A router carries it through
-# APP_TRAEFIK_THREAT (see docs/standards/traefik-labels.md), and the plugin's
-# polling loop starts only once a router does. Detach from every router before
-# switching this off: a router that names a middleware that no longer exists is
-# disabled by Traefik, not left unprotected.
+# Threat enforcement is a deployment decision (D1, 2026-10-18): render.sh
+# places one of the two middlewares below on entryPoints.websecure.http
+# .middlewares — threat-crowdsec, or threat-crowdsec-appsec when
+# CROWDSEC_APPSEC_ENABLED=true — in front of every router's own list, so a
+# banned address is refused before any work is done on its request. No router
+# names them. Exemptions are CrowdSec AllowLists (core/crowdsec), never a
+# label. The entrypoint list is static: after a render that switches the
+# bouncer off, recreate the traefik container at once — until then the running
+# list names a middleware this file no longer defines, and every router on
+# websecure is disabled.
 # ==========================================================
 
 http:
@@ -27,7 +32,8 @@ http:
     #   3. Bouncer key: docker exec crowdsec cscli bouncers add traefik-bouncer
     #   4. CROWDSEC_BOUNCER_KEY=<key> in .env
     #
-    # Mode: stream (polls LAPI every 60s, caches decisions).
+    # Mode: stream (polls LAPI every 60s, caches decisions). The polling loop
+    # starts once the entrypoint names the middleware — on the recreate.
     #
     # Which address the bouncer compares with the decisions follows
     # TRAEFIK_FORWARDED_PROXY in .env. The plugin reads X-Forwarded-For, takes
@@ -60,7 +66,7 @@ http:
     # bouncers — not per-app middleware). See core/crowdsec/docs/profiles.md
     # "The profile family" for the geo-* deferred mechanism and its trade-offs.
     # ------------------------------------------------------
-    crowdsec-basic:
+    threat-crowdsec:
       plugin:
         bouncer:
           enabled: true
@@ -78,25 +84,26 @@ ${CROWDSEC_BOUNCER_FORWARDED_YAML}
     # ------------------------------------------------------
     # CrowdSec Bouncer + AppSec (WAF)
     # ------------------------------------------------------
-    # Same decisions as crowdsec-basic, plus synchronous inspection of each
+    # Same decisions as threat-crowdsec, plus synchronous inspection of each
     # request against the WAF rule sets. Blocks the individual request; it does
     # not create an IP ban, so a false positive affects one call rather than
-    # locking someone out.
+    # locking someone out. CROWDSEC_APPSEC_ENABLED=true places this one at the
+    # entrypoint instead of threat-crowdsec — for every router at once.
     #
     # Prerequisite: the AppSec engine must answer on 7422. Confirm before
-    # attaching this anywhere — from the Traefik container:
+    # switching it on — from the Traefik container:
     #   wget -S -O /dev/null http://crowdsec:7422
     # A 401 is the correct answer (no bouncer key). "Connection refused" means
     # the engine is not listening and this profile will do nothing, or worse if
     # you also set the *Block options below to true.
     #
     # Both failure modes stay fail-open here on purpose: an AppSec outage must
-    # not take the application down with it. Setting either to true is the
-    # crowdsec-strict profile, and it belongs only on an app whose traffic has
-    # been tested against the rules — see core/crowdsec/docs/appsec.md for the
+    # not take every application down with it. Setting either to true is a
+    # deployment decision for a host whose traffic has been tested against
+    # the rules — see core/crowdsec/docs/appsec.md for the
     # per-application false positives already known.
     # ------------------------------------------------------
-    crowdsec-appsec:
+    threat-crowdsec-appsec:
       plugin:
         bouncer:
           enabled: true

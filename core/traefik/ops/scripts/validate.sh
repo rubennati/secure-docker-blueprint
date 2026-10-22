@@ -212,6 +212,15 @@ case "${CROWDSEC_BOUNCER_ENABLED}" in
   true|false) ;;
   *) echo "ERROR: CROWDSEC_BOUNCER_ENABLED must be true or false (got '${CROWDSEC_BOUNCER_ENABLED}')."; exit 1 ;;
 esac
+CROWDSEC_APPSEC_ENABLED="$(printf '%s' "${CROWDSEC_APPSEC_ENABLED:-false}" | tr '[:upper:]' '[:lower:]')"
+case "${CROWDSEC_APPSEC_ENABLED}" in
+  true|false) ;;
+  *) echo "ERROR: CROWDSEC_APPSEC_ENABLED must be true or false (got '${CROWDSEC_APPSEC_ENABLED}')."; exit 1 ;;
+esac
+if [ "${CROWDSEC_APPSEC_ENABLED}" = true ] && [ "${CROWDSEC_BOUNCER_ENABLED}" != true ]; then
+  echo "ERROR: CROWDSEC_APPSEC_ENABLED=true needs CROWDSEC_BOUNCER_ENABLED=true — AppSec inspection runs inside the bouncer plugin."
+  exit 1
+fi
 if [ "${CROWDSEC_BOUNCER_ENABLED}" = true ]; then
   if [ -z "${CROWDSEC_BOUNCER_KEY:-}" ]; then
     echo "ERROR: CROWDSEC_BOUNCER_ENABLED=true but CROWDSEC_BOUNCER_KEY is empty."
@@ -344,7 +353,7 @@ if [ -f "${ROOT_DIR}/config/traefik.yml" ]; then
   # to paper over, and the switch on without the rendered halves means render.sh
   # has not run since the switch was set.
   rendered_plugin=false; grep -qsE '^experimental:' "${ROOT_DIR}/config/traefik.yml" && rendered_plugin=true
-  rendered_mw=false; grep -qsE '^[[:space:]]*crowdsec-(basic|appsec):' "${ROOT_DIR}"/config/dynamic/*.yml 2>/dev/null && rendered_mw=true
+  rendered_mw=false; grep -qsE '^[[:space:]]*(crowdsec-(basic|appsec)|threat-crowdsec(-appsec)?):' "${ROOT_DIR}"/config/dynamic/*.yml 2>/dev/null && rendered_mw=true
   if [ "${CROWDSEC_BOUNCER_ENABLED}" = true ]; then
     if [ "${rendered_plugin}" != true ] || [ ! -f "${ROOT_DIR}/config/dynamic/crowdsec.yml" ]; then
       echo "ERROR: CROWDSEC_BOUNCER_ENABLED=true but config/ does not carry the integration — run render.sh."
@@ -361,6 +370,36 @@ if [ -f "${ROOT_DIR}/config/traefik.yml" ]; then
       fi
       exit 1
     fi
+  fi
+
+  # The entrypoint list has to match the switches as well: the threat
+  # position exactly when the bouncer is on, its AppSec variant exactly when
+  # that switch is on, compression always — in that order. A configuration
+  # rendered before the middleware model carries no list and is refused the
+  # same way: render.sh, then recreate the container.
+  ep_list="$(sed -n '/^      middlewares:/,/^[^ ]/p' "${ROOT_DIR}/config/traefik.yml" | grep -E '^        - ' | sed 's/^        - //' || true)"
+  expected_list="compress@file"
+  if [ "${CROWDSEC_BOUNCER_ENABLED}" = true ]; then
+    expected_list="$(printf 'threat-crowdsec%s@file\ncompress@file' "$([ "${CROWDSEC_APPSEC_ENABLED}" = true ] && echo -appsec)")"
+  fi
+  if [ "${ep_list}" != "${expected_list}" ]; then
+    echo "ERROR: the entrypoint middlewares in config/traefik.yml (websecure) are:"
+    printf '%s\n' "${ep_list:-(none)}" | sed 's/^/         /'
+    echo "       expected from CROWDSEC_BOUNCER_ENABLED=${CROWDSEC_BOUNCER_ENABLED}, CROWDSEC_APPSEC_ENABLED=${CROWDSEC_APPSEC_ENABLED}:"
+    printf '%s\n' "${expected_list}" | sed 's/^/         /'
+    echo "       Run render.sh, then recreate the traefik container — the list is static configuration."
+    exit 1
+  fi
+
+  # One definition per name across config/dynamic: the file provider merges
+  # every file into one namespace, and a second definition of a name — a file
+  # rendered by an earlier template set and left behind, say — makes Traefik
+  # refuse both and disable every router that names it.
+  dupes="$(grep -hE '^    [A-Za-z0-9_-]+:[[:space:]]*$' "${ROOT_DIR}"/config/dynamic/*.yml 2>/dev/null | sed 's/[[:space:]]//g; s/:$//' | sort | uniq -d | tr '\n' ' ' || true)"
+  if [ -n "${dupes% }" ]; then
+    echo "ERROR: defined in more than one file under config/dynamic: ${dupes}"
+    echo "       A file from an earlier render is still there — bash ops/scripts/reset-templates.sh, then render.sh."
+    exit 1
   fi
 
   # The trusted senders, both directions: the rendered entrypoints carry a
@@ -427,7 +466,7 @@ if [ -f "${ROOT_DIR}/config/traefik.yml" ]; then
   # The grep is a pre-filter, not the decision: it keeps a default-off install
   # free of any Python dependency. When it matches, the rendered YAML is parsed
   # and that parse decides.
-  if grep -rqE '^[[:space:]]*crowdsec-(basic|appsec):' "${ROOT_DIR}/config/dynamic" 2>/dev/null; then
+  if grep -rqE '^[[:space:]]*(crowdsec-(basic|appsec)|threat-crowdsec(-appsec)?):' "${ROOT_DIR}/config/dynamic" 2>/dev/null; then
     CROWDSEC_CHECK="${ROOT_DIR}/../../scripts/ci/check-crowdsec-config.py"
     if [ -f "${CROWDSEC_CHECK}" ] && command -v python3 >/dev/null 2>&1; then
       python3 "${CROWDSEC_CHECK}" --rendered "${ROOT_DIR}/config" || exit 1

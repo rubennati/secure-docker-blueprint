@@ -89,8 +89,23 @@ ${CLOUDFLARE_TRUSTED_IPS_YAML}
     http3:
       advertisedPort: 443
     http:
-      tls:
-        options: ${TLS_DEFAULT_OPTION}
+      # Prepended to every router on this entrypoint — first on the request,
+      # last on the response (measured 2026-10-18). Threat enforcement and
+      # compression are deployment decisions, not per-router ones (D1):
+      # render.sh fills the list from CROWDSEC_BOUNCER_ENABLED and
+      # CROWDSEC_APPSEC_ENABLED; compress@file (dynamic/model.yml) is always
+      # there. This list is static configuration and changes on a recreate of
+      # the container; the bouncer's definition, config/dynamic/crowdsec.yml,
+      # changes on the render. After a render that switches the bouncer off,
+      # recreate the container at once: in between, the running list names a
+      # middleware that no longer exists, and every router on this entrypoint
+      # is disabled.
+      # No tls.options here: every blueprint router carries tls=true and takes
+      # the file provider's `default` option (dynamic/tls-profiles.yml, built
+      # from TLS_DEFAULT_OPTION) — an entrypoint option reaches none of them
+      # (measured 2026-10-18).
+      middlewares:
+${ENTRYPOINT_MIDDLEWARES_YAML}
 
   ping:
     address: "127.0.0.1:8082"
