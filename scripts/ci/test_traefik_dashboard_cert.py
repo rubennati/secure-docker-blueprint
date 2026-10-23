@@ -42,8 +42,8 @@ BASE_ENV = {
     "ACME_DNS_RESOLVER_2": "1.0.0.1:53",
     "CF_DNS_API_TOKEN": "token",
     "TRAEFIK_DASHBOARD_HOST": "traefik.example.com",
-    "TLS_DEFAULT_OPTION": "tls-basic",
-    "TRAEFIK_DASHBOARD_TLS_OPTION": "tls-modern",
+    "TLS_DEFAULT_OPTION": "tls-compatible",
+    "TRAEFIK_DASHBOARD_TLS_OPTION": "tls-strict",
     "TRAEFIK_LOG_LEVEL": "INFO",
     "TRAEFIK_LOG_FORMAT": "json",
     "TRAEFIK_LOG_FILE": "/var/log/traefik/traefik.log",
@@ -101,7 +101,7 @@ class DashboardCertificateStrategy(unittest.TestCase):
         self.assertEqual(r["render_rc"], 0)
         self.assertEqual(r["validate_rc"], 0, r["validate_out"])
         self.assertIn("tls:", r["dashboard"])
-        self.assertIn("options: tls-modern", r["dashboard"])
+        self.assertIn("options: tls-strict", r["dashboard"])
         self.assertNotIn("certResolver", r["dashboard"])
         self.assertTrue(r["wildcard_rendered"])
 

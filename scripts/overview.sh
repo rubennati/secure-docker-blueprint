@@ -245,7 +245,7 @@ classify_router() {
   # The auth position may carry a stack's own gate (<stack>-auth@docker): the
   # variable it comes from names the position.
   for var in $(printf '%s' "$mw" | grep -oE '\$\{[A-Z0-9_]*TRAEFIK[A-Z0-9_]*_AUTH[^}]*\}' | sed -E 's/^\$\{([A-Z0-9_]+).*/\1/' || true); do
-    val="$(envval "$env" "$var")"; [ -n "$val" ] && authvals="${authvals} ${val} ${val}@file"
+    val="$(resolve "$(envval "$env" "$var")" "$env")"; [ -n "$val" ] && authvals="${authvals} ${val} ${val}@file"
   done
   # A position whose variable is empty: Compose passes nothing, Traefik
   # disables the router.

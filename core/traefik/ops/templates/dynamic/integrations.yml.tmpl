@@ -5,10 +5,10 @@
 # integration with another service is rendered by a switch in .env:
 #
 #   CROWDSEC_BOUNCER_ENABLED=true        -> config/dynamic/crowdsec.yml
-#                                            (threat-crowdsec / crowdsec-basic,
-#                                            threat-crowdsec-appsec / crowdsec-appsec)
+#                                            (threat-crowdsec, threat-crowdsec-appsec —
+#                                            placed on the websecure entrypoint)
 #   AUTHENTIK_FORWARD_AUTH_ENABLED=true  -> config/dynamic/authentik.yml
-#                                            (auth-authentik, alias sec-authentik)
+#                                            (auth-authentik — a router's auth position)
 #
 # Their templates are crowdsec.yml.tmpl and authentik.yml.tmpl beside this
 # file. This file renders to an empty integrations.yml and stays so that a

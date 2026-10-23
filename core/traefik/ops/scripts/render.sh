@@ -43,6 +43,36 @@ case "${CROWDSEC_BOUNCER_ENABLED}" in
 esac
 export CROWDSEC_BOUNCER_PLUGIN_VERSION="${CROWDSEC_BOUNCER_PLUGIN_VERSION:-v1.7.1}"
 
+# AppSec inspection is a second switch inside the same plugin: true places
+# threat-crowdsec-appsec at the entrypoint instead of threat-crowdsec. It needs
+# the engine's AppSec component answering on crowdsec:7422 (see
+# dynamic/crowdsec.yml.tmpl) and the bouncer switch on.
+CROWDSEC_APPSEC_ENABLED="$(printf '%s' "${CROWDSEC_APPSEC_ENABLED:-false}" | tr '[:upper:]' '[:lower:]')"
+case "${CROWDSEC_APPSEC_ENABLED}" in
+  true|false) ;;
+  *)
+    echo "ERROR: CROWDSEC_APPSEC_ENABLED must be true or false (got '${CROWDSEC_APPSEC_ENABLED}')."
+    exit 1
+    ;;
+esac
+if [ "${CROWDSEC_APPSEC_ENABLED}" = true ] && [ "${CROWDSEC_BOUNCER_ENABLED}" != true ]; then
+  echo "ERROR: CROWDSEC_APPSEC_ENABLED=true needs CROWDSEC_BOUNCER_ENABLED=true — AppSec inspection runs inside the bouncer plugin."
+  exit 1
+fi
+
+# The entrypoint middlewares (traefik.yml.tmpl, entryPoints.websecure.http):
+# the threat position when the bouncer is on, then compression — in that
+# order, so a banned address is refused before any work is done on its
+# request. Every router on the entrypoint gets them in front of its own list.
+ENTRYPOINT_MIDDLEWARES_YAML="        - compress@file"
+ENTRYPOINT_THREAT=""
+if [ "${CROWDSEC_BOUNCER_ENABLED}" = true ]; then
+  ENTRYPOINT_THREAT="threat-crowdsec"
+  [ "${CROWDSEC_APPSEC_ENABLED}" = true ] && ENTRYPOINT_THREAT="threat-crowdsec-appsec"
+  ENTRYPOINT_MIDDLEWARES_YAML="        - ${ENTRYPOINT_THREAT}@file"$'\n'"${ENTRYPOINT_MIDDLEWARES_YAML}"
+fi
+export ENTRYPOINT_MIDDLEWARES_YAML
+
 # Authentik forward-auth: the same shape. AUTHENTIK_FORWARD_AUTH_ENABLED decides
 # whether dynamic/authentik.yml.tmpl is rendered; the address defaults to the
 # embedded outpost of a core/authentik on this host.
@@ -72,13 +102,19 @@ if ! printf '%s' "${HSTS_MAX_AGE}" | grep -qE '^[0-9]+$'; then
   exit 1
 fi
 
-# The TLS profile `default` is built from (dynamic/tls-profiles.yml). The
-# model's names and the names before it are both accepted during the
-# transition; the anchor selects the profile's content inside the template.
+# The TLS profile `default` is built from (dynamic/tls-profiles.yml); the
+# anchor selects the profile's content inside the template. An .env from before
+# the model names tls-basic / tls-aplus / tls-modern — scripts/migrate-traefik-env.sh
+# rewrites it.
 case "${TLS_DEFAULT_OPTION:-}" in
-  tls-compatible|tls-basic)  TLS_DEFAULT_ANCHOR=tls_compatible ;;
-  tls-standard|tls-aplus)    TLS_DEFAULT_ANCHOR=tls_standard ;;
-  tls-strict|tls-modern)     TLS_DEFAULT_ANCHOR=tls_strict ;;
+  tls-compatible)  TLS_DEFAULT_ANCHOR=tls_compatible ;;
+  tls-standard)    TLS_DEFAULT_ANCHOR=tls_standard ;;
+  tls-strict)      TLS_DEFAULT_ANCHOR=tls_strict ;;
+  tls-basic|tls-aplus|tls-modern)
+    echo "ERROR: TLS_DEFAULT_OPTION=${TLS_DEFAULT_OPTION} is a name from before the middleware model —"
+    echo "       scripts/migrate-traefik-env.sh core/traefik rewrites .env (tls-compatible / tls-standard / tls-strict)."
+    exit 1
+    ;;
   *)
     echo "ERROR: TLS_DEFAULT_OPTION must be tls-compatible, tls-standard or tls-strict (got '${TLS_DEFAULT_OPTION:-}')."
     exit 1
@@ -217,7 +253,10 @@ render_nft_ranges() {
 
 rendered_has_bouncer() {
   grep -qsE '^experimental:' "${CFG_DIR}/traefik.yml" && return 0
-  grep -qsE '^[[:space:]]*crowdsec-(basic|appsec):' "${CFG_DIR}"/dynamic/*.yml 2>/dev/null
+  grep -qsE '^[[:space:]]*- threat-crowdsec(-appsec)?@file' "${CFG_DIR}/traefik.yml" && return 0
+  # both name sets: a configuration rendered before the middleware model
+  # carries crowdsec-basic / crowdsec-appsec
+  grep -qsE '^[[:space:]]*(crowdsec-(basic|appsec)|threat-crowdsec(-appsec)?):' "${CFG_DIR}"/dynamic/*.yml 2>/dev/null
 }
 
 if rendered_has_bouncer; then
@@ -229,16 +268,18 @@ if rendered_has_bouncer; then
     echo "       Keep it:   CROWDSEC_BOUNCER_ENABLED=true"
     echo "                  CROWDSEC_BOUNCER_PLUGIN_VERSION=<the version config/traefik.yml names>"
     echo "                  CROWDSEC_BOUNCER_KEY=<the key config/dynamic names>"
-    echo "       Remove it: CROWDSEC_BOUNCER_ENABLED=false — after removing crowdsec-*@file from"
-    echo "                  every router, or those routers go dark."
+    echo "       Remove it: CROWDSEC_BOUNCER_ENABLED=false — then recreate the traefik container"
+    echo "                  at once: the running entrypoint list names the threat middleware"
+    echo "                  until the recreate, and every router on websecure is disabled in between."
     echo "       Then run render.sh again. See core/traefik/README.md, 'Migrating an installation"
     echo "       that enabled the integration before the switch'."
     exit 1
   fi
   if [ "${CROWDSEC_BOUNCER_ENABLED}" = false ]; then
-    echo "NOTICE: CROWDSEC_BOUNCER_ENABLED=false — the CrowdSec plugin and middlewares are removed"
-    echo "        from config/. A router still listing crowdsec-*@file is disabled by Traefik"
-    echo "        until it is relabelled. The plugin block is static configuration: restart Traefik."
+    echo "NOTICE: CROWDSEC_BOUNCER_ENABLED=false — the CrowdSec plugin and the threat middleware are"
+    echo "        removed from config/. Recreate the traefik container NOW: the running entrypoint"
+    echo "        list (static configuration) still names threat-crowdsec@file, which the dynamic"
+    echo "        configuration no longer defines — every router on websecure is disabled until then."
   fi
 fi
 
@@ -254,15 +295,15 @@ if rendered_has_forward_auth; then
     echo ""
     echo "       Keep it:   AUTHENTIK_FORWARD_AUTH_ENABLED=true"
     echo "                  AUTHENTIK_FORWARD_AUTH_ADDRESS=<the address config/dynamic names>"
-    echo "       Remove it: AUTHENTIK_FORWARD_AUTH_ENABLED=false — after removing auth-authentik@file"
-    echo "                  and sec-authentik@file from every router."
+    echo "       Remove it: AUTHENTIK_FORWARD_AUTH_ENABLED=false — after moving every router's"
+    echo "                  APP_TRAEFIK_AUTH away from auth-authentik@file."
     echo "       Then run render.sh again. See core/traefik/README.md, 'Authentik forward-auth'."
     exit 1
   fi
   if [ "${AUTHENTIK_FORWARD_AUTH_ENABLED}" = false ]; then
     echo "NOTICE: AUTHENTIK_FORWARD_AUTH_ENABLED=false — the forward-auth middleware is removed"
-    echo "        from config/. A router still listing auth-authentik@file or sec-authentik@file"
-    echo "        is disabled by Traefik until it is relabelled."
+    echo "        from config/. A router whose APP_TRAEFIK_AUTH still names auth-authentik@file"
+    echo "        is disabled by Traefik until it is changed."
   fi
 fi
 
@@ -288,12 +329,12 @@ place() {  # place <destination>: stdin -> destination, atomically
 echo "Rendering static config..."
 if [ "${CROWDSEC_BOUNCER_ENABLED}" = true ]; then
   envsubst < "${TPL_DIR}/traefik.yml.tmpl" | place "${CFG_DIR}/traefik.yml"
-  echo " -> traefik.yml (CrowdSec bouncer plugin ${CROWDSEC_BOUNCER_PLUGIN_VERSION} declared)"
+  echo " -> traefik.yml (CrowdSec bouncer plugin ${CROWDSEC_BOUNCER_PLUGIN_VERSION} declared; entrypoint: ${ENTRYPOINT_THREAT}@file, compress@file)"
 else
   # Drop the marker-delimited plugin block; the markers are comments and go with it.
   envsubst < "${TPL_DIR}/traefik.yml.tmpl" \
     | sed '/^# >>> crowdsec-bouncer/,/^# <<< crowdsec-bouncer/d' | place "${CFG_DIR}/traefik.yml"
-  echo " -> traefik.yml (no plugin — CROWDSEC_BOUNCER_ENABLED=false)"
+  echo " -> traefik.yml (no plugin — CROWDSEC_BOUNCER_ENABLED=false; entrypoint: compress@file)"
 fi
 envsubst < "${TPL_DIR}/haproxy.cfg.template.tmpl" | place "${CFG_DIR}/haproxy.cfg.template"
 if [ "${TRAEFIK_FORWARDED_PROXY}" = cloudflare ]; then
@@ -306,6 +347,16 @@ else
 fi
 
 echo "Rendering dynamic configs..."
+# The files of the templates the middleware model retired (acc-*, sec-*,
+# hdr-*, rl-*). A render from before the model left them in config/dynamic;
+# they would define names nothing references and, for compress, a second
+# definition Traefik refuses.
+for retired in access.yml security-blocks.yml security-chains.yml; do
+  if [ -f "${CFG_DIR}/dynamic/${retired}" ]; then
+    rm -f "${CFG_DIR}/dynamic/${retired}"
+    echo " -> ${retired} (retired by the middleware model — removed)"
+  fi
+done
 for f in "${TPL_DIR}/dynamic/"*.yml.tmpl; do
   base="$(basename "${f%.tmpl}")"
 

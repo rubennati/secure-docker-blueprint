@@ -156,15 +156,14 @@ services:
       # Uncomment ONLY for per-domain certificates; leave off when a wildcard
       # certificate already covers this host.
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
       # The application has no login of its own, so the proxy carries one. Same
       # shape as apps/paperless-gpt: the access policy says who may reach it,
       # the basic-auth middleware asks them who they are.
       - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-auth.basicauth.users=${APP_BASIC_AUTH_USERS}"
       - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-auth.basicauth.realm=Scrutiny"
-      # Middlewares — who may reach it, then who they are, then what headers
-      # apply.
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${COMPOSE_PROJECT_NAME}-auth,${APP_TRAEFIK_SECURITY}@file"
+      # Middlewares — the four positions; APP_TRAEFIK_AUTH (.env) names the
+      # basic-auth gate above, provider-qualified.
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8080"
 

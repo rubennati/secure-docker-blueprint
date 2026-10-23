@@ -224,21 +224,20 @@ services:
       # TLS
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
       # Middlewares
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=9000"
       # Router (static assets — bypasses rate limit)
       # Authentik is a code-split SPA: /_static/ delivers 100+ JS/CSS chunks in
       # parallel on first visit. Without a dedicated router these requests hit the
-      # main rate-limiter and return 429. sec-1 (no rate limit) is safe here
-      # because the files are public static assets, not authentication endpoints.
+      # main counter and return 429. STATIC_TRAEFIK_LIMIT=limit-none (.env) is
+      # safe here because the files are public static assets, not authentication
+      # endpoints; the other three positions are the portal's.
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-static.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/_static/`)"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-static.entrypoints=websecure"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-static.tls=true"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-static.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-static.middlewares=${APP_TRAEFIK_ACCESS}@file,sec-1@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-static.middlewares=${APP_TRAEFIK_ACCESS}@file,${STATIC_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-static.service=${COMPOSE_PROJECT_NAME}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-static.priority=100"
 

@@ -11,7 +11,7 @@
 # is IPv4-only, Docker's userland-proxy bridges the IPv6 host port into
 # the IPv4-only bridge — Traefik then sees the Docker gateway address
 # (e.g. 172.19.0.1) as the client, not the real Tailscale IPv6 address.
-# ipAllowList (acc-tailscale) then blocks it: HTTP 403.
+# ipAllowList (access-vpn) then blocks it: HTTP 403.
 #
 # Cloudflare-fronted public traffic is unaffected either way — real
 # client IPs there come from forwardedHeaders.trustedIPs (traefik.yml),

@@ -10,7 +10,10 @@ deployment is never touched. The cases pin down the contract:
 
 - default (switch absent) renders neither half and validates;
 - true renders both halves, the plugin at the version .env names, the
-  middlewares keyed, and validates;
+  middlewares keyed, threat-crowdsec@file first on the websecure entrypoint,
+  and validates; CROWDSEC_APPSEC_ENABLED=true puts the AppSec variant there
+  instead, and is refused without the bouncer switch;
+- false and absent leave compress@file alone on the entrypoint;
 - true without a key is refused by validate.sh with the variable named;
 - a value other than true/false is refused by render.sh;
 - a rendered configuration that carries the integration while .env does not
@@ -33,6 +36,11 @@ from test_traefik_dashboard_cert import BASE_ENV, TRAEFIK
 # switch cases want validate.sh to reach the CrowdSec checks, so they cover the
 # dashboard with a wildcard.
 VALID_ENV = dict(BASE_ENV, ACME_WILDCARD_DOMAIN="example.com")
+
+
+def yaml_static(text: str) -> dict:
+    import yaml
+    return yaml.safe_load(text)
 
 
 def write_env(root: Path, env: dict) -> None:
@@ -70,6 +78,11 @@ class CrowdSecSwitch(unittest.TestCase):
     def integrations(self) -> str:
         return (self.root / "config" / "dynamic" / "integrations.yml").read_text(encoding="utf-8")
 
+    def entrypoint_middlewares(self) -> list:
+        import yaml
+        static = yaml.safe_load(self.static())
+        return static["entryPoints"]["websecure"].get("http", {}).get("middlewares", [])
+
     def render(self, env: dict) -> subprocess.CompletedProcess:
         write_env(self.root, env)
         return run(self.root, "render.sh")
@@ -85,7 +98,10 @@ class CrowdSecSwitch(unittest.TestCase):
         self.assertNotIn("experimental:", self.static())
         self.assertNotIn("# >>> crowdsec-bouncer", self.static(), "markers must go with the block")
         self.assertFalse(self.crowdsec_file().exists())
-        self.assertNotRegex(self.integrations(), r"(?m)^\s*crowdsec-basic:")
+        self.assertNotRegex(self.integrations(), r"(?m)^\s*threat-crowdsec:")
+        self.assertEqual(self.entrypoint_middlewares(), ["compress@file"], "compression alone at the entrypoint")
+        self.assertNotIn("options", yaml_static(self.static())["entryPoints"]["websecure"].get("http", {}).get("tls", {}),
+                         "no entrypoint TLS option — the routers take the file provider's default")
         v = self.validate()
         self.assertEqual(v.returncode, 0, v.stdout + v.stderr)
 
@@ -100,13 +116,63 @@ class CrowdSecSwitch(unittest.TestCase):
         self.assertIn('version: "v1.7.1"', static)
         self.assertTrue(self.crowdsec_file().exists())
         mw = self.crowdsec_file().read_text(encoding="utf-8")
-        self.assertRegex(mw, r"(?m)^    crowdsec-basic:", "crowdsec-basic defined")
-        self.assertRegex(mw, r"(?m)^    crowdsec-appsec:", "crowdsec-appsec defined")
+        self.assertRegex(mw, r"(?m)^    threat-crowdsec:", "threat-crowdsec defined")
+        self.assertRegex(mw, r"(?m)^    threat-crowdsec-appsec:", "threat-crowdsec-appsec defined")
         self.assertEqual(mw.count('crowdsecLapiKey: "test-key-not-a-secret"'), 2)
-        self.assertNotRegex(self.integrations(), r"(?m)^\s*crowdsec-basic:", "the middlewares live in crowdsec.yml only")
+        self.assertNotRegex(self.integrations(), r"(?m)^\s*threat-crowdsec:", "the middlewares live in crowdsec.yml only")
+        self.assertEqual(self.entrypoint_middlewares(), ["threat-crowdsec@file", "compress@file"],
+                         "the threat position in front of every router, then compression")
         v = self.validate()
         self.assertEqual(v.returncode, 0, v.stdout + v.stderr)
         self.assertIn("with a key present", v.stdout)
+
+    def test_appsec_switch_selects_the_inspecting_variant_at_the_entrypoint(self):
+        env = dict(VALID_ENV, CROWDSEC_BOUNCER_ENABLED="true", CROWDSEC_BOUNCER_KEY="k", CROWDSEC_APPSEC_ENABLED="true")
+        r = self.render(env)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.entrypoint_middlewares(), ["threat-crowdsec-appsec@file", "compress@file"])
+        v = self.validate()
+        self.assertEqual(v.returncode, 0, v.stdout + v.stderr)
+
+    def test_appsec_without_the_bouncer_is_refused(self):
+        r = self.render(dict(VALID_ENV, CROWDSEC_APPSEC_ENABLED="true"))
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("needs CROWDSEC_BOUNCER_ENABLED=true", r.stdout + r.stderr)
+        r = self.render(dict(VALID_ENV, CROWDSEC_BOUNCER_ENABLED="true", CROWDSEC_BOUNCER_KEY="k", CROWDSEC_APPSEC_ENABLED="maybe"))
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("CROWDSEC_APPSEC_ENABLED must be true or false", r.stdout + r.stderr)
+
+    def test_validate_refuses_an_entrypoint_list_that_disagrees_with_the_switches(self):
+        """The static half rendered under one switch state, .env now says another —
+        the state between an edit of .env and the next render."""
+        self.assertEqual(self.render(dict(VALID_ENV, CROWDSEC_BOUNCER_ENABLED="true", CROWDSEC_BOUNCER_KEY="k")).returncode, 0)
+        write_env(self.root, dict(VALID_ENV, CROWDSEC_BOUNCER_ENABLED="true", CROWDSEC_BOUNCER_KEY="k", CROWDSEC_APPSEC_ENABLED="true"))
+        v = self.validate()
+        self.assertNotEqual(v.returncode, 0)
+        self.assertIn("entrypoint middlewares", v.stdout + v.stderr)
+        self.assertIn("threat-crowdsec-appsec@file", v.stdout + v.stderr)
+
+    def test_validate_refuses_a_static_configuration_without_the_list(self):
+        """A traefik.yml rendered before the middleware model — the state of a
+        host after the update and before its render."""
+        self.assertEqual(self.render(VALID_ENV).returncode, 0)
+        static_path = self.root / "config" / "traefik.yml"
+        text = static_path.read_text(encoding="utf-8")
+        text = text.replace("      middlewares:\n        - compress@file\n", "      tls:\n        options: tls-basic\n")
+        static_path.write_text(text, encoding="utf-8")
+        v = self.validate()
+        self.assertNotEqual(v.returncode, 0)
+        self.assertIn("(none)", v.stdout + v.stderr)
+        self.assertIn("run render.sh", (v.stdout + v.stderr).lower().replace("run render.sh,", "run render.sh"))
+
+    def test_validate_refuses_a_name_defined_in_two_dynamic_files(self):
+        self.assertEqual(self.render(VALID_ENV).returncode, 0)
+        (self.root / "config" / "dynamic" / "leftover.yml").write_text(
+            "http:\n  middlewares:\n    compress:\n      compress: {}\n", encoding="utf-8")
+        v = self.validate()
+        self.assertNotEqual(v.returncode, 0)
+        self.assertIn("more than one file", v.stdout + v.stderr)
+        self.assertIn("compress", v.stdout + v.stderr)
 
     def test_plugin_version_defaults_when_unset(self):
         env = dict(VALID_ENV, CROWDSEC_BOUNCER_ENABLED="true", CROWDSEC_BOUNCER_KEY="k")

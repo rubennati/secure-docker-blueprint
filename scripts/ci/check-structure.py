@@ -18,8 +18,21 @@ FAIL (blocks CI — dangerous or leak-prone):
                     coverage completed 2026-09-16 (every production service);
                     this guards the property, it does not report a migration
   burst-exposure    a router whose rate-limit bucket holds a whole first load
-                    (limit-extra-large, or a sec-*-xl chain) while its access
-                    policy admits more than a closed set of clients
+                    (limit-extra-large) while its access policy admits more
+                    than a closed set of clients
+  router-positions  a router that does not carry the four positions of the
+                    middleware model — access, limit, headers, auth — once
+                    each and in that order, or carries a name the model
+                    replaced (D2/D6, 2026-10-18; headers is the mandatory
+                    position, HSTS lives there)
+  tls-conflict      two routers of one stack serve the same host name with
+                    different tls.options — Traefik logs the conflict and
+                    serves `default` to both
+  retired-name      a stack still carries the vocabulary from before the
+                    model: *_TRAEFIK_SECURITY or *_TRAEFIK_THREAT, an
+                    acc-* / sec-* / tls-basic|aplus|modern value, a router
+                    naming such a TLS profile — scripts/migrate-traefik-env.sh
+                    maps every one of them
 
 WARN (reported — structural drift):
   missing-file      .env.example / README.md / UPSTREAM.md absent
@@ -30,20 +43,11 @@ WARN (reported — structural drift):
   no-healthcheck    service without a healthcheck
   tls-options       Traefik tls.options without the @file suffix
   real-domain       a hostname that is not *.example.com
-  router-positions  a router that does not carry the four positions of the
-                    middleware model — access, limit, headers, auth — once
-                    each and in that order (Phase 4, D2/D6; headers is the
-                    mandatory position, HSTS lives there). WARN while the
-                    routers still carry the sec-* chains; FAIL from Phase 4.3
   block-order       a per-app block on the wrong side of the four: a response
                     header block (hsts-include-subdomains, frame-self,
                     csp-self-only, header-*) after the headers profile loses
                     to it; forwarded-proto-https before the four is a request
                     header the gate never sees
-  tls-conflict      two routers of one stack serve the same host name with
-                    different tls.options — Traefik logs the conflict and
-                    serves `default` to both. WARN while the routers still
-                    name a per-router option; FAIL from Phase 4.3
 
 Known limits (deliberate, to keep the report actionable):
   - `16-alpine` style tags (bare major + variant) are accepted, though the spec
@@ -93,11 +97,11 @@ DATASTORE_NAMES = {"db", "redis", "database", "mariadb", "postgres", "mysql", "m
 # NEXT_PUBLIC_VAPID_PUBLIC_KEY and friends are public by design.
 SECRET_VAR = re.compile(r"^[A-Z0-9_]*(PASSWORD|SECRET|TOKEN|PASSWD|PWD)$")
 
-# The whole-first-load bucket (limit-extra-large; before the model, the -xl
-# chains) lets one address issue a thousand requests before the sustained rate
-# applies. These access policies keep the set of such addresses closed —
-# access-blocked / acc-deny closes the router altogether. Both vocabularies are
-# listed while the routers move from one to the other (Phase 4.1 → 4.3).
+# The whole-first-load bucket (limit-extra-large) lets one address issue a
+# thousand requests before the sustained rate applies. These access policies
+# keep the set of such addresses closed — access-blocked closes the router
+# altogether. The names before the model are kept so that a stack carrying
+# them is still judged (and fails for the name, see retired-name).
 CLOSED_ACCESS = {"access-lan", "access-vpn", "access-lan-vpn", "access-blocked",
                  "acc-private", "acc-tailscale", "acc-deny"}
 
@@ -108,15 +112,20 @@ CLOSED_ACCESS = {"access-lan", "access-vpn", "access-lan-vpn", "access-blocked",
 # <stack>-auth@docker), so it is recognised by the variable as well as by name.
 POSITIONS = ("access", "limit", "headers", "auth")
 POSITION_VAR = re.compile(r"TRAEFIK_[A-Z0-9_]*?(ACCESS|LIMIT|HEADERS|AUTH)$")
-# The names the model replaces; a router still carrying one has not moved.
-OLD_NAME = re.compile(r"^(sec-|acc-|hdr-|rl-|crowdsec-)")
+# The names the model replaced (v0.9.4: access.yml, security-blocks.yml,
+# security-chains.yml, crowdsec.yml, tls-profiles.yml). A stack carrying one
+# has not been migrated — scripts/migrate-traefik-env.sh maps every one.
+OLD_NAME = re.compile(r"^(sec-|acc-|hdr-|rl-|crowdsec-(basic|appsec))")
+RETIRED_VALUE = re.compile(r"^(sec-|acc-|hdr-|rl-|crowdsec-(basic|appsec)|tls-(basic|aplus|modern))")
+RETIRED_KEY = re.compile(r"TRAEFIK_[A-Z0-9_]*(SECURITY|THREAT)$")
+TLS_RETIRED = {"tls-basic", "tls-aplus", "tls-modern"}
 # Per-app blocks and the side of the four they belong on (model.yml).
 BEFORE_PROFILE = re.compile(r"^(hsts-include-subdomains|frame-self|csp-self-only|header-[a-z0-9-]+)$")
 AFTER_FOUR = {"forwarded-proto-https"}
 # Severity of the two rules that describe the model's shape. Every router
-# still carries a sec-* chain until Phase 4.3 moves them all in one step, so
-# the rules report until then and block from then on.
-MODEL_LEVEL = "WARN"
+# carries the four positions since the cut (Phase 4.3); a router that does
+# not is a regression, and blocks.
+MODEL_LEVEL = "FAIL"
 # Substitution of ${VAR} and ${VAR:-default} in a label, with the stack's
 # .env.example values standing in for a deployment's .env.
 LABEL_VAR = re.compile(r"\$\{([A-Za-z0-9_]+)(?::?-([^}]*))?\}")
@@ -694,6 +703,18 @@ def check_env(app: Path, findings: list[dict]) -> None:
             findings.append({"level": "WARN", "rule": "container-name",
                              "detail": f"{key}={value} should derive from ${{COMPOSE_PROJECT_NAME}}"})
 
+        # -- the vocabulary before the middleware model (FAIL) ----------------
+        if "TRAEFIK" in key:
+            if RETIRED_KEY.search(key):
+                findings.append({"level": "FAIL", "rule": "retired-name",
+                                 "detail": f"{key} is a variable from before the middleware model — the four "
+                                           "positions are *_TRAEFIK_ACCESS, _LIMIT, _HEADERS and _AUTH; threat "
+                                           "enforcement is core/traefik's switch. scripts/migrate-traefik-env.sh maps it"})
+            elif RETIRED_VALUE.match(value):
+                findings.append({"level": "FAIL", "rule": "retired-name",
+                                 "detail": f"{key}={value} names what the middleware model replaced — "
+                                           "scripts/migrate-traefik-env.sh maps it"})
+
         # -- real domains (WARN) ----------------------------------------------
         if key.endswith("_HOST") and value and "TRAEFIK" in key:
             # endswith alone accepts any host whose name merely ends in those
@@ -890,8 +911,11 @@ def check_routers(app: Path, findings: list[dict]) -> None:
     for key, value in env.items():
         m = POSITION_VAR.search(key)
         if m and value:
-            family_by_value[value] = m.group(1).lower()
-            family_by_value.setdefault(value + "@file", m.group(1).lower())
+            # the value as written and as Compose resolves it: a stack's own
+            # gate is ${COMPOSE_PROJECT_NAME}-auth@docker in the file
+            for v in {value, resolve_label(value, env)}:
+                family_by_value[v] = m.group(1).lower()
+                family_by_value.setdefault(v + "@file", m.group(1).lower())
 
     tls_by_host: dict[str, dict[str, list[str]]] = {}
     for path in compose_files(app):
@@ -903,6 +927,11 @@ def check_routers(app: Path, findings: list[dict]) -> None:
             option = resolve_label(labels.get("tls.options", ""), env).strip() or "default"
             for host in hosts:
                 tls_by_host.setdefault(host, {}).setdefault(option, []).append(name)
+            if option.split("@", 1)[0] in TLS_RETIRED:
+                findings.append({"level": "FAIL", "rule": "retired-name", "service": name,
+                                 "detail": f"tls.options names {option}, a profile the middleware model replaced "
+                                           "(tls-compatible / tls-standard / tls-strict) — and the deployment "
+                                           "standard needs no label at all"})
 
             raw = labels.get("middlewares", "")
             entries = [e.strip() for e in resolve_label(raw, env).split(",") if e.strip()]

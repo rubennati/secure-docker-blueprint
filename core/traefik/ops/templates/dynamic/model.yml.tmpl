@@ -16,12 +16,34 @@ http:
     # placed BEFORE the headers profile (a response header that must
     # win over it) or AFTER the four (backend compatibility).
     #
-    # Transition (Phase 4.1): these definitions sit beside the sec-*,
-    # acc-*, hdr-* and rl-* names, which stay unchanged until every
-    # router has moved (Phase 4.3). Nothing here is referenced yet.
-    # Threat enforcement and compression move to the entrypoint in
-    # the same step as the routers — not before.
+    # Threat enforcement and compression are not router positions:
+    # traefik.yml places them on the websecure entrypoint, in front
+    # of every router's list — threat-crowdsec (dynamic/crowdsec.yml,
+    # by switch) first, then compress (below).
     # ==========================================================
+
+    # -------- entrypoint: compression --------
+    # One definition for every router. Traefik compresses a response
+    # above minResponseBodyBytes (its default, 1024) whose type is not
+    # excluded; the exclusions are exact, case-insensitive strings —
+    # no wildcards (measured 2026-10-18). Streams are not buffered:
+    # text/event-stream stays compressible and events arrive as sent;
+    # a websocket upgrade is untouched. Measured as wasted work:
+    # application/octet-stream and image/png; the rest by type.
+    compress:
+      compress:
+        excludedContentTypes:
+          - application/octet-stream
+          - image/png
+          - image/jpeg
+          - image/webp
+          - image/avif
+          - image/gif
+          - application/zip
+          - application/gzip
+          - video/mp4
+          - audio/mpeg
+          - font/woff2
 
     # -------- 1  access --------
     # Evaluated on the connecting address in every TRAEFIK_FORWARDED_PROXY

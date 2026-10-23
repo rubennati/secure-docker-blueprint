@@ -99,10 +99,9 @@ services:
       # Uncomment ONLY for per-domain certificates; leave off when a wildcard
       # certificate already covers this host.
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
       # Middlewares — who may reach it, then what headers apply. Kopia carries
       # its own login on top of this.
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
       # Service — over TLS, because Kopia's clients speak gRPC and that needs
       # HTTP/2 with TLS the whole way. `backend-selfsigned@file` comes from
       # core/traefik's dynamic configuration; without it Traefik answers

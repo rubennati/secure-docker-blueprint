@@ -79,7 +79,7 @@ class ForwardedProxySwitch(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         for ep in ("web", "websecure"):
             self.assertEqual(self.static()["entryPoints"][ep]["forwardedHeaders"]["trustedIPs"], [], ep)
-        for mw in ("crowdsec-basic", "crowdsec-appsec"):
+        for mw in ("threat-crowdsec", "threat-crowdsec-appsec"):
             self.assertNotIn("forwardedHeadersTrustedIPs", self.crowdsec()[mw]["plugin"]["bouncer"], mw)
         self.assertFalse(self.nft().exists())
         v = self.validate()
@@ -90,7 +90,7 @@ class ForwardedProxySwitch(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         for ep in ("web", "websecure"):
             self.assertEqual(self.static()["entryPoints"][ep]["forwardedHeaders"]["trustedIPs"], RANGES, ep)
-        for mw in ("crowdsec-basic", "crowdsec-appsec"):
+        for mw in ("threat-crowdsec", "threat-crowdsec-appsec"):
             b = self.crowdsec()[mw]["plugin"]["bouncer"]
             self.assertEqual(b["forwardedHeadersTrustedIPs"], RANGES, mw)
             self.assertNotIn("forwardedHeadersCustomName", b, f"{mw}: the plugin reads a custom header from any sender")
@@ -106,11 +106,10 @@ class ForwardedProxySwitch(unittest.TestCase):
     def test_closed_policies_keep_the_connecting_address_in_both_modes(self):
         for mode in ("none", "cloudflare"):
             self.render(dict(VALID_ENV, TRAEFIK_FORWARDED_PROXY=mode))
-            access = yaml.safe_load((self.root / "config" / "dynamic" / "access.yml").read_text(encoding="utf-8"))
-            for name in ("acc-local", "acc-tailscale", "acc-private"):
-                self.assertNotIn("ipStrategy", access["http"]["middlewares"][name]["ipAllowList"], f"{mode} {name}")
-            blocks = (self.root / "config" / "dynamic" / "security-blocks.yml").read_text(encoding="utf-8")
-            self.assertNotIn("sourceCriterion", blocks, mode)
+            model = yaml.safe_load((self.root / "config" / "dynamic" / "model.yml").read_text(encoding="utf-8"))
+            for name in ("access-lan", "access-vpn", "access-lan-vpn", "access-blocked"):
+                self.assertNotIn("ipStrategy", model["http"]["middlewares"][name]["ipAllowList"], f"{mode} {name}")
+            self.assertNotIn("sourceCriterion", (self.root / "config" / "dynamic" / "model.yml").read_text(encoding="utf-8"), mode)
 
     def test_no_mode_names_a_custom_header_for_the_bouncer(self):
         for mode in ("none", "cloudflare"):
