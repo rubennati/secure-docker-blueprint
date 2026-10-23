@@ -89,7 +89,7 @@ stays IPv4-only by default (2026-06, below).
 
 ## 2026-10-15 · The Traefik middleware model: six functions, one variable each
 
-D1 of the core audit; the design is `docs/traefik-middleware-proposal.md`.
+D1 of the core audit; the design is [`../docs/research/traefik-middleware-proposal-2026-10-15.md`](../docs/research/traefik-middleware-proposal-2026-10-15.md).
 
 **Decision.** The `sec-*` chains are replaced by six independently chosen functions per
 router — threat, access, limit, auth, headers, compress — each a middleware named
@@ -126,7 +126,7 @@ applications — not the largest number of mechanisms.
 ## 2026-10-15 · Cloudflare is a supported operating variant, switched in `.env`
 
 D3 of the core audit; the mechanism is verified against the Traefik v3.7 source in
-`docs/traefik-middleware-proposal.md`, section "Behind Cloudflare — D3".
+[`../docs/research/traefik-middleware-proposal-2026-10-15.md`](../docs/research/traefik-middleware-proposal-2026-10-15.md), section "Behind Cloudflare — D3".
 
 **Decision.** `TRAEFIK_FORWARDED_PROXY=none|cloudflare` in `core/traefik/.env`, default
 `none`; without Cloudflare nothing changes. Closed access policies keep the connecting
@@ -144,8 +144,8 @@ Cloudflare, over IPv4 and IPv6, on real request paths, before the implementation
 as done.
 
 **Addendum 2026-10-17 — as shipped (Phase 3, branch `feature/cloudflare-mode`).** The
-proposal document lives on branch `feature/traefik-middleware-proposal`, which is not
-merged. Two parts of the decision above did not survive implementation. The limits do
+proposal document is `docs/research/traefik-middleware-proposal-2026-10-15.md` (kept as
+record since 2026-10-23). Two parts of the decision above did not survive implementation. The limits do
 not use `requestHeaderName: X-Real-Ip`: Cloudflare's Transform Rules cannot modify
 `x-real-ip` (or `x-forwarded-for`, `true-client-ip`, `cf-connecting-ip`), and a
 header-reading strategy leaves a direct client without an address — `ipAllowList`

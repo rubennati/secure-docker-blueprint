@@ -269,7 +269,7 @@ and `:433` (D3 row), and `.ai/decisions.md:74-80`, say "the limits use
 against Cloudflare's documentation, section 2) and ships the limits on the connecting
 address. The diff updates RP1 and RP2 (`:130-131`) but not these three places. All three
 also cite `docs/traefik-middleware-proposal.md`, "verified against the Traefik source",
-which is not in the tree.
+which was not in the tree at the time (since 2026-10-23: `docs/research/traefik-middleware-proposal-2026-10-15.md`).
 
 **Proposed correction.** A dated addendum under D3 in `decisions.md` (the mechanism as
 shipped, why the Transform Rule was dropped, where the per-client limit now lives) and
