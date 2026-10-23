@@ -49,8 +49,13 @@
   [`../docs/audits/core-v1-readiness-2026-10-15.md`](../docs/audits/core-v1-readiness-2026-10-15.md):
   66 findings with evidence, a programme in phases 0–6, and twelve decisions, all
   taken on 2026-10-15 and 2026-10-16 and recorded in [`decisions.md`](decisions.md).
-  Phase 1 — documentation and memory brought to the state of the tree — is done;
-  phases 2–6 have not started.
+  Phases 1–3 are merged (#231–#239). Phase 4, the middleware model, is in its
+  fourth step: 4.1 and 4.2 merged (#241, #242); 4.3, the cut, prepared on
+  `feature/traefik-hard-cut` as five commits awaiting review; 4.4, the
+  documentation, next. Phases 5–6 have not started. Decisions D1–D8 of
+  2026-10-18 are in [`decisions.md`](decisions.md); every router's before and
+  after is
+  [`../core/traefik/docs/middleware-model-migration.md`](../core/traefik/docs/middleware-model-migration.md).
 - **Current milestone:** v0.10.0 — Measured resource limits. Whether it stays a
   release is open (D4 in the audit): the measurement needs the same host session
   as the verification backlog.
@@ -408,10 +413,12 @@ router of every deployment that names it. Open, besides the two points above:
 
 ## Active constraints
 
-- **A host to experiment on, not a host at all.** The blueprint's stacks run in
-  production; what the open milestones need is a machine that may be broken,
-  filled with throwaway data and restored into. That is the single precondition
-  behind v0.8.0 and v0.10.0, and it is what v0.7.0 needed before it could close.
+- **A host to experiment on, not a host at all.** What the open milestones need
+  is a machine that may be broken, filled with throwaway data and restored into.
+  Every verification this repository records came from such a throwaway
+  installation; none of its stacks is a production system this repository
+  operates. That is the single precondition behind v0.8.0 and v0.10.0, and it
+  is what v0.7.0 needed before it could close.
 - **Real values never enter the repository.** On the host, `.env` carries the real
   domain and real secrets and is gitignored. Committed files use `example.com`
   and documentation IP ranges only. This matters more during a host session than
@@ -419,10 +426,13 @@ router of every deployment that names it. Open, besides the two points above:
 - Nine major version bumps are pinned but never started, and the stacks still
   carrying the pre-v0.5.1 `Last checked:` field are marked ⚠️ in `LIFECYCLE.md`.
   Both ride along with the host session.
-- Public repository: no real domains, IPs, hostnames or personal data; no session
-  context or personal attribution in committed content. `.ai/` is committed and
-  therefore public — it holds working context, never internal process detail.
-  This is the rule, not a description of the tree. `site/` is the named exception
+- Public repository: the rule is
+  [`../docs/standards/commit-rules.md`](../docs/standards/commit-rules.md#public-content)
+  — no real domains, IPs, hostnames or personal data; no session context or
+  personal attribution in committed content; what CI enforces of it is listed
+  there. `.ai/` is committed and therefore public — it holds working context,
+  never internal process detail. This is the rule, not a description of the
+  tree. `site/` is the named exception
   and still carries the domain, the legal notice and a contact address; the
   direction that removes them is in [`../ROADMAP.md`](../ROADMAP.md), and the
   inventory there is not yet complete.

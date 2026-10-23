@@ -6,6 +6,63 @@ this file is the index and covers decisions that have no other home.
 
 ---
 
+## 2026-10-18 · The middleware model as cut: eight decisions (D1–D8)
+
+Phase 4 of the core audit, applied 2026-10-22 on `feature/traefik-hard-cut`. The
+measurements of 2026-10-18 (a throwaway Traefik v3.7.15 with a file provider only) and
+every router's before and after are in
+[`../core/traefik/docs/middleware-model-migration.md`](../core/traefik/docs/middleware-model-migration.md).
+This supersedes the two entries of 2026-10-15 below where they differ: four positions
+on the router instead of six functions, threat and compression on the entrypoint,
+`headers-none` as "HSTS only" instead of `headers-hsts-only`.
+
+**D1 — Threat and compression on the entrypoint.** `render.sh` places `threat-crowdsec`
+(or `threat-crowdsec-appsec` by its own switch) and `compress` on `websecure`, in front
+of every router. HSTS is not placed there: an entrypoint `headers` middleware overwrites
+every router header of the same name (measured), and a per-domain extension would be
+impossible.
+
+**D2 — Four positions on every router, equal in rank:** access, limit, headers, auth —
+each a variable of the stack, no Compose default; an empty variable disables the
+router, loudly.
+
+**D3 — `limit-standard` is 125 requests per second with a burst of 500.** The bucket of
+200 is retired; `limit-extra-large` is accepted by CI only behind a closed access
+policy.
+
+**D4 — Three header profiles and per-header blocks.** `headers-standard`,
+`headers-application-owned`, `headers-none`, every one starting with the HSTS base;
+`includeSubDomains` and `preload` by the block `hsts-include-subdomains` per host name,
+never a default, never `preload` automatically (H2). An application measured to send its
+own headers takes `application-owned` plus the single blocks it lacks.
+
+**D5 — One central TLS standard.** The file provider's reserved `default` option, built
+from `TLS_DEFAULT_OPTION` (variant A: the routers keep `tls=true`, the entrypoint option
+is not used — it reaches no such router, measured). A router names an option only as a
+documented exception; two routers of one host name with different options are a CI
+error; `core.strictTLSOptions` stays off until the validator has run on every host.
+
+**D6 — Every router, primary or secondary, carries the four positions explicitly.** A
+secondary router gets a variable of its own only where its answer differs.
+
+**D7 — Whole-word names.** `access-public|lan|vpn|lan-vpn|blocked`,
+`limit-none|standard|extra-large|sync|strict`, `headers-standard|application-owned|none`,
+`auth-none|authentik`, `tls-compatible|standard|strict`, `threat-crowdsec[-appsec]`.
+The rename of `TAILSCALE_CIDR_*` to `VPN_CIDR_*` is deferred to a change of its own.
+
+**D8 — A hard cut.** The repository replaces the model completely, without aliases;
+running servers are migrated one at a time under their own plan; the previous version
+stays reproducible by its tag; no production change without its own release.
+
+**Precisions.** Compression exclusions are exact types (octet-stream and png measured as
+wasted work); SSE stays compressible. What a migration preserves is the existing proxied
+behaviour, not the backend's direct header (Keycloak's HSTS). The office servers keep
+the header set their own middleware set, minus the obsolete XSS filter, until measured.
+A secondary router keeps the effective value it had wherever the review's value was an
+assumption.
+
+---
+
 ## 2026-10-16 · Dual-stack is the default for new installations; IPv4-only and IPv6-only are supported variants
 
 D12 of the core audit (`docs/audits/core-v1-readiness-2026-10-15.md`). IPv6 is not an
