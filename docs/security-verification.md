@@ -349,11 +349,19 @@ document restates their coverage, severity or exit behavior — it points here.
 
 **Job 2: Image CVE scan**
 
-- Runs in full on every trigger. The pull request to `main` is where it
-  decides: both jobs are required checks there, so a red gate blocks the merge
-  rather than appearing on the published branch afterwards. The merge itself
-  starts no second scan — an up-to-date branch is required before merging, so
-  the push carries the tree the pull request already scanned.
+- Runs in full on the weekly schedule and on manual dispatch. On a pull
+  request it runs in full only when a file of the pull request can change what
+  it sees — a YAML file outside `.github/` and `site/` (every compose file and
+  overlay), an `.env.example`, `.trivy-baseline.json`, the discovery, gate or
+  summary script, or the workflow itself; otherwise the job ends green in
+  seconds and its summary says that nothing was scanned and why (since
+  2026-10-23 — a lock-file pull request to `main` used to run the 200-image
+  scan for 38 minutes and fail on the baseline). The pull request to `main`
+  is where it decides: both jobs are required checks there, so a red gate
+  blocks the merge rather than appearing on the published branch afterwards.
+  The merge itself starts no second scan — an up-to-date branch is required
+  before merging, so the push carries the tree the pull request already
+  scanned.
 - Image references come from `scripts/ci/list-images.sh`, which reads the same
   discovery `check-structure.py --list` uses — every compose file in the
   repository, not a curated subset. A new stack is scanned the day it lands.
