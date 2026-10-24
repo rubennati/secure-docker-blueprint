@@ -8,3 +8,6 @@ volumes/
 
 # Environment (contains secrets)
 .env
+
+# Rendered host files (scripts/host-files.sh render)
+config/host/

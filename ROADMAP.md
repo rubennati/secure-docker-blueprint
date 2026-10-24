@@ -101,7 +101,8 @@ verified today must meet the current baseline-aligned criteria in
 - Verified before the standards moved and worth a second run: Vaultwarden,
   WordPress, Nextcloud, Seafile / Seafile Pro, Invoice Ninja.
 - Pinned to a new major in a dependency sweep and not yet run anywhere —
-  [`LIFECYCLE.md`](LIFECYCLE.md) marks each `pin-drifted` and carries the pin.
+  [`LIFECYCLE.md`](LIFECYCLE.md) carries the pin beside the version last verified,
+  and `lifecycle-report.py --check` warns `pin-drifted` where the two differ.
 - Never started on a host: UrBackup, `apps/vllm`, and the security-tooling,
   PAM/bastion and secret-sharing stacks added in v0.9.1.
 

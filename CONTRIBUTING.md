@@ -21,7 +21,7 @@ Thanks for considering a contribution. This is an opinionated blueprint for secu
 
 - Apps that don't fit self-hosted / homelab / small-team use-cases
 - Workarounds that break the standards in `docs/standards/`
-- Changes that require real domain names, real IPs, or personal data in committed files
+- Changes that require a deployment's real domain names, IPs or personal data in committed files — see [Public content](docs/standards/commit-rules.md#public-content)
 
 For larger changes, please open an issue first to discuss direction before writing code.
 
@@ -54,11 +54,11 @@ See [`docs/standards/commit-rules.md`](docs/standards/commit-rules.md) for the d
 
 ## CI and testing
 
-The CI pipeline is the automated test suite for this configuration project. It runs on every pull request targeting `dev` or `main`, on every push to `main`, and nightly. **All checks must pass before merge.**
+The CI pipeline is the automated test suite for this configuration project. It runs on every pull request targeting `dev` or `main` and on every push to `main`; a manual run (`workflow_dispatch`) also scans the whole history for secrets. **All checks must pass before merge.**
 
 | Area | What it validates |
 |---|---|
-| Secrets | No credentials in the commit history, no `__REPLACE_ME__` left in a committed `.env` |
+| Secrets and public content | No credentials in the commits a pull request adds (gitleaks, default rules), no workstation paths or password-manager references in tracked files, no `__REPLACE_ME__` left in a committed `.env` |
 | Compose | Every compose file parses and resolves; every stack has a `README.md` and a `.env.example` |
 | Security baseline | `no-new-privileges:true` present, no `privileged: true`, socket proxy pattern enforced |
 | Canonical structure | No `:latest` or major-only image tags, no plaintext secrets, no datastore on the public network |

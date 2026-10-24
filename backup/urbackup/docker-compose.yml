@@ -85,7 +85,7 @@ services:
     # --- Traefik ---
     # The web interface has its own login, but it is an administrative surface
     # holding every client's file index — put an access policy in front of it.
-    # acc-tailscale (VPN-only) is the recommended default; acc-public only if
+    # access-vpn (VPN-only) is the recommended default; access-public only if
     # you genuinely need to reach it from anywhere.
     labels:
       - "traefik.enable=true"
@@ -94,8 +94,7 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=55414"
 
     # --- Health & Observability ---

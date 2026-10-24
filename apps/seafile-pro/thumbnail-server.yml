@@ -78,14 +78,13 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.entrypoints=websecure"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.priority=100"
       # Access policy repeated: this router runs at priority=100 and outranks the
-      # main one, so it decides the request. Without this, acc-tailscale on the
+      # main one, so it decides the request. Without this, access-vpn on the
       # stack leaves this path answering wherever the host answers.
-      # Thumbnail service. Access policy only: a gallery view issues many parallel
-      # requests and rl-soft has not been measured against it.
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.middlewares=${APP_TRAEFIK_ACCESS}@file"
+      # Thumbnail service. The four positions, with SIDE_TRAEFIK_LIMIT (.env): a
+      # gallery view issues many parallel requests, not measured against a counter.
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.middlewares=${APP_TRAEFIK_ACCESS}@file,${SIDE_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
       # TLS
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.tls=true"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}-thumbnail.loadbalancer.server.port=80"
 

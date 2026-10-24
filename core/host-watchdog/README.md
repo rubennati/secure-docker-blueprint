@@ -78,26 +78,28 @@ Runs as root on the host, because a containerised watcher cannot restart the
 daemon it depends on — the same reasoning [`backup/README.md`](../../backup/README.md#where-the-backup-agent-belongs)
 already gives for why Borgmatic runs on the host rather than in a container.
 
-**Install:**
+**Install:** the four files are host files listed in `ops/host-files.manifest`
+([`docs/standards/host-files.md`](../../docs/standards/host-files.md)).
 
 ```bash
-sudo cp docker-daemon-watchdog.env.example /etc/docker-daemon-watchdog.env
+# from the repository root
+scripts/host-files.sh render core/host-watchdog
+scripts/host-files.sh install-commands core/host-watchdog   # prints the sudo install lines; run them
+
 sudo nano /etc/docker-daemon-watchdog.env
 # Set HEALTHCHECKS_PING_URL to a check created for this purpose in
 # monitoring/healthchecks — do not reuse a check another job already pings.
 
-sudo cp docker-daemon-watchdog.sh /usr/local/bin/docker-daemon-watchdog.sh
-sudo chmod 755 /usr/local/bin/docker-daemon-watchdog.sh
-
-sudo cp docker-daemon-watchdog.service.example /etc/systemd/system/docker-daemon-watchdog.service
-sudo cp docker-daemon-watchdog.timer.example /etc/systemd/system/docker-daemon-watchdog.timer
-sudo systemctl daemon-reload
 sudo systemctl enable --now docker-daemon-watchdog.timer
 
 # Prove it once before trusting the timer:
 sudo systemctl start docker-daemon-watchdog.service
 journalctl -u docker-daemon-watchdog.service -n 20
 ```
+
+After a blueprint update, `./scripts/overview.sh --host` reports whether the
+installed script and units still match the ones the checkout ships; the env file
+is compared by its settings, not its values.
 
 **Configuration** (`docker-daemon-watchdog.env.example`): `HEALTHCHECKS_PING_URL`
 (required), `CONFIRM_AFTER` (consecutive failed checks before acting, default

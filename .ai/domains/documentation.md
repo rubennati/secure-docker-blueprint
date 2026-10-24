@@ -46,9 +46,10 @@ python3 scripts/ci/lifecycle-report.py --write
   establishing what is true. No global language rule overrides a
   [section contract](../../docs/standards/documentation-workflow.md#section-contracts).
 - Never name another product or vendor negatively. State what this project does.
-- No real domains, IPs, hostnames or personal data — `example.com` and documentation
-  ranges only.
-- No session context, personal attribution or self-critical wording in public files.
+- Public content: [`commit-rules.md` → Public content](../../docs/standards/commit-rules.md#public-content)
+  — no domains, hostnames or addresses of private systems, no local paths or
+  personal data, nothing addressed to or from an assistant session.
+- No personal attribution or self-critical wording in public files.
 - No links from public files to material a normal clone does not contain — a dead
   end for the reader.
 

@@ -54,9 +54,9 @@ Cloudflare edge                               Tailscale / MagicDNS / Split-DNS
    ▼                                              ▼
 ┌───────────────────────────────────────────────────────────────────────┐
 │ Traefik (core/traefik) — proxy-public network                         │
-│  · Cloudflare path: forwardedHeaders.trustedIPs (traefik.yml) recovers│
-│    the real client IP from X-Forwarded-For — works regardless of      │
-│    whether proxy-public is IPv4-only or dual-stack.                   │
+│  · Cloudflare path: forwardedHeaders.trustedIPs (traefik.yml) keeps   │
+│    the client address in X-Forwarded-For whatever the IP family;      │
+│    acc-* and rl-* evaluate the connecting address — the edge.         │
 │  · Tailscale path: ClientHost IS the real Tailscale IP already — IF   │
 │    the network can carry it end to end. IPv6 clients need IPv6 on     │
 │    proxy-public, or the source IP is lost before Traefik sees it.     │
@@ -87,12 +87,12 @@ This is the production issue that motivated this document, debugged on a
 Linux host running Traefik v3.6 in Docker. The behaviour is unchanged in v3.7.
 
 **Symptom:** Tailscale clients connecting over IPv6 got `HTTP 403` from
-Traefik's `acc-tailscale` middleware, while the same clients worked fine
+Traefik's `access-vpn` middleware, while the same clients worked fine
 over IPv4.
 
 ```bash
-curl -4 https://auth.example.com/   # → 100.116.181.16  → HTTP/2 302 (ok)
-curl -6 https://auth.example.com/   # → fd7a:115c:a1e0::9e32:b510 → HTTP/2 403 (blocked)
+curl -4 https://auth.example.com/   # → 100.64.0.10  → HTTP/2 302 (ok)
+curl -6 https://auth.example.com/   # → fd7a:115c:a1e0::10 → HTTP/2 403 (blocked)
 ```
 
 **Root cause — in order:**
@@ -110,7 +110,7 @@ curl -6 https://auth.example.com/   # → fd7a:115c:a1e0::9e32:b510 → HTTP/2 4
    address**, not the original client.
 4. Traefik therefore sees `ClientHost=172.19.0.1` (the gateway) for every
    IPv6 client, instead of the real Tailscale IPv6 address.
-5. `acc-tailscale`'s `ipAllowList` only allows `100.64.0.0/10` and
+5. `access-vpn`'s `ipAllowList` only allows `100.64.0.0/10` and
    `fd7a:115c:a1e0::/48` — `172.19.0.1` matches neither → `403`.
 
 ```text
@@ -119,7 +119,7 @@ Tailscale IPv6 client
   → Docker published port → docker-proxy (userland relay)
   → IPv4-only Docker bridge (source IP rewritten to the gateway)
   → Traefik sees ClientHost=172.19.0.1
-  → acc-tailscale ipAllowList: no match
+  → access-vpn ipAllowList: no match
   → HTTP 403
 ```
 
@@ -142,15 +142,15 @@ sufficient:
 After the fix:
 
 ```bash
-curl -6 https://auth.example.com/   # → fd7a:115c:a1e0::9e32:b510 → HTTP/2 302 (ok)
+curl -6 https://auth.example.com/   # → fd7a:115c:a1e0::10 → HTTP/2 302 (ok)
 ```
 
 And `whoami` (see [apps/whoami](../../../apps/whoami/)) shows the real address in
 both the proxy headers and its own view of the connection:
 
 ```text
-X-Forwarded-For: fd7a:115c:a1e0::9e32:b510
-X-Real-Ip: fd7a:115c:a1e0::9e32:b510
+X-Forwarded-For: fd7a:115c:a1e0::10
+X-Real-Ip: fd7a:115c:a1e0::10
 ```
 
 ---
@@ -209,7 +209,7 @@ exactly as it is today — IPv4-only, `internal: true` where appropriate.
 ## Why `172.19.0.1/32` in `ipAllowList` is a workaround, not a fix
 
 A tempting quick patch when you first see `ClientHost=172.19.0.1` getting
-blocked is to add `172.19.0.1/32` to `acc-tailscale`'s `ipAllowList` and
+blocked is to add `172.19.0.1/32` to `access-vpn`'s `ipAllowList` and
 move on. Resist this — it does not fix anything, it just stops the
 specific symptom from showing up as a 403:
 
@@ -330,7 +330,7 @@ network (see [Rollback](#8-rollback) in the migration guide).
 Dual-stack `proxy-public` needs an explicit IPv6 subnet — Docker has no
 default IPv6 address pool to auto-assign from the way it does for IPv4.
 Use a **Unique Local Address (ULA)** prefix (`fc00::/7`, same family as
-the `fc00::/7` range already used by `acc-local`/`acc-private` in
+the `fc00::/7` range already used by `access-lan`/`access-lan-vpn` in
 `access.yml`), not a public/global IPv6 allocation you don't own.
 
 `fd00:dead:beef:30::/64` (used as the example throughout this repo) is a
@@ -563,25 +563,32 @@ docker network rm proxy-public-v6
 
 ## CrowdSec and real client IPs
 
-CrowdSec's Traefik bouncer and its scenario engine both work from the
-client IP Traefik records — bans, rate-based scenarios, and geo-blocking
-decisions are all keyed on it. If Traefik sees `172.19.0.1` instead of
-the real Tailscale IPv6 address:
+CrowdSec's scenario engine works from the client address Traefik writes to
+the access log (`ClientHost`), and the Traefik bouncer compares the
+connecting address of each request. If Traefik sees `172.19.0.1` instead
+of the real Tailscale IPv6 address:
 
-- A ban decision for one abusive client bans the shared gateway identity
-  — either over-blocking (every Tailscale IPv6 user behind that address)
-  or under-blocking (the real source rotates behind the same logged IP,
-  so per-client thresholds never trigger correctly).
-- Geo-blocking and reputation scenarios become meaningless for that
-  traffic — `172.19.0.1` has no real-world geography or reputation.
+- The engine derives no decision from that traffic at all. `172.19.0.1`
+  is inside the default `crowdsecurity/whitelists` parser (RFC1918 and
+  loopback), so every event from a masked client is whitelisted before a
+  scenario sees it — probing from an IPv6 client behind the gateway is
+  invisible to detection.
+- With that whitelist removed, a decision on `172.19.0.1` — derived or
+  added by hand — is enforced against every client the gateway masks, by
+  both remediation points.
+- Geo and reputation scenarios see no usable event for that traffic
+  either way: `172.19.0.1` has no geography and no reputation.
 
 After the fix in this document, `X-Forwarded-For` and Traefik's access
 log (`type: traefik` source in
 [`core/crowdsec/config/acquis.yaml`](../../crowdsec/config/acquis.yaml))
-contain the real client IP again, and CrowdSec decisions apply to the
+carry the real client address again, and CrowdSec decisions apply to the
 actual source. No CrowdSec-side configuration changes are needed — it
-already reads whatever IP Traefik logs. See
-[CrowdSec Operations Runbook](../../crowdsec/docs/runbook.md) for
+reads whatever address Traefik logs. Which address the bouncer and the
+access policies compare when a CDN proxy sits in front is a separate
+question:
+[Trusted Proxy Headers](../../../docs/standards/traefik-security.md#trusted-proxy-headers-traefikyml--forwardedheaders).
+See [CrowdSec Operations Runbook](../../crowdsec/docs/runbook.md) for
 day-to-day bouncer operations.
 
 ---

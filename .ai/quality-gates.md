@@ -56,7 +56,7 @@ docker compose config --quiet          # in the stack directory
 
 | Job | Blocks on |
 |---|---|
-| Secret scan (gitleaks) | credentials anywhere in history |
+| Secret scan (gitleaks) | credentials in the commits a pull request adds; the whole history on `workflow_dispatch` |
 | Compose validation | a compose file that does not parse or resolve; an opt-in overlay whose merged variant Compose refuses, adds an unbaselined service, or weakens an existing one |
 | Required files | a stack without `README.md` or `.env.example` |
 | Sentinel value check | `__REPLACE_ME__` in a committed `.env` |
@@ -130,8 +130,9 @@ What neither mode covers:
 
 - **Trivy** is not a required check. It runs weekly and on pull requests into
   `main`, and fails on a CRITICAL finding not recorded in `.trivy-baseline.json`.
-- **Structure warnings** (missing resource limits, missing healthchecks) are
-  reported, not enforced. They need values measured on a real host — v0.10.0.
+- **Structure warnings.** A missing memory, PID or swap ceiling is a FAIL
+  (`no-resources`, `no-swap-policy`); what stays a warning is a missing healthcheck
+  without a waiver. The ceilings' values are derived by rule, not measured — v0.10.0.
 - **`legacy-stamp`** — a stack carrying the pre-v0.5.1 `Last checked:` field.
   Converting it asserts the evidence is real, which is a judgement per app.
 

@@ -14,7 +14,7 @@ it up.
 ## Design Goals
 
 - **Fork-ready**: Clone, copy `.env.example` to `.env`, fill secrets, `docker compose up -d`. No undocumented prerequisites.
-- **Portable**: No host-specific assumptions beyond "Debian + Docker". Runs on a VM, a VPS, or bare metal.
+- **Portable**: No host-specific assumptions beyond "Debian + Docker". Runs on a VM, a VPS, or bare metal. **One named exception:** the backup agent (`backup/borgmatic/`) is installed on the host, because a containerised agent reaches other stacks' data only through `/:/host:ro` or `--privileged` — a container able to read every secret in the deployment. The reasoning is in [`backup/README.md`](../backup/README.md) → *Layout*; the decision record is `.ai/decisions.md` (2026-07, resolved 2026-10-15).
 - **Security-first**: Hardening is the default. Relaxing a control requires a documented exception.
 - **Standards-consistent**: Every service follows the same compose structure, env layout, secrets pattern, and naming convention. A new app that follows the standards fits in without friction.
 
@@ -508,9 +508,9 @@ The compose file and `.env.example` are the portable artifact. The `.env`, `.sec
 
 Backup is cross-cutting by nature — it reads from every data-producing service. The blueprint's approach:
 
-- Each app gets its **own isolated backup repository** (Borgmatic or Kopia), not a shared monorepo.
-- Retention policies are set **per app** — a database may need daily backups with 90-day retention, a static site weekly with 30 days.
-- Restore is **surgical** — recovering one app does not touch another app's backup chain.
-- A compromised backup target for one app does not expose all apps.
+- **One host-level configuration covering everything is the starting point.** Separate repositories per app give independent retention, surgical restore and independent failure — and they multiply the configurations, schedules and restore rehearsals. A rehearsal that is never run protects less than a shared repository that has been restored from. The procedure and the split rule are owned by [`backup/README.md`](../backup/README.md) → *Per-app separation — an option, not a rule*.
+- **An app is split out when its data demands it** — a retention requirement that differs from the rest (a database with daily backups and 90-day retention beside a static site backed up weekly), or data large enough that the shared schedule stops working. Borgmatic supports several configuration files for exactly this.
+- **Restoring one app does not touch another's data** in either layout: a restore extracts that app's source directories and database dump from an archive.
+- **A shared repository shares its exposure.** A compromised target or key reaches every app in it; the controls are the key kept off the backed-up host and the append-only remote described in `backup/README.md`.
 
 See [`backup/README.md`](../backup/README.md) for tool choices and the picking matrix.

@@ -48,7 +48,7 @@ over time; AppSec catches known attack signatures in individual requests.
 | AppSec port | Listening on `crowdsec:7422`, reachable only on the `crowdsec-security` network |
 | AppSec rule sets | Installed via `CROWDSEC_COLLECTIONS` in `.env` |
 | AppSec enforcement | **Disabled by default** (`crowdsecAppsecEnabled: false` in the Traefik bouncer config) |
-| Applications using AppSec | None — no application router currently includes `crowdsec-appsec@file` as middleware |
+| AppSec on the proxy | Off — `CROWDSEC_APPSEC_ENABLED=false` in `core/traefik/.env`; the entrypoint carries `threat-crowdsec`, not `threat-crowdsec-appsec` |
 
 The AppSec engine is ready to receive requests but the Traefik bouncer is not sending any.
 No change to `config/appsec.yaml` or any app configuration is needed to keep AppSec in
@@ -149,9 +149,14 @@ and this section should be revisited.
 
 ## Enabling AppSec safely
 
-AppSec is enabled in one place: `crowdsecAppsecEnabled` in the `crowdsec-appsec` middleware
-block in `core/traefik/ops/templates/dynamic/integrations.yml.tmpl`. `crowdsec-basic`
-leaves it off; the two profiles differ in exactly this flag.
+AppSec is enabled for the deployment: `CROWDSEC_APPSEC_ENABLED=true` in
+`core/traefik/.env` places `threat-crowdsec-appsec@file` on the `websecure`
+entrypoint instead of `threat-crowdsec@file`, so every router's requests go to
+AppSec — there is no per-router choice. The two middlewares in
+`core/traefik/ops/templates/dynamic/crowdsec.yml.tmpl` differ in exactly
+`crowdsecAppsecEnabled`, and both ship with the failure flags `false`. The file is
+rendered only with `CROWDSEC_BOUNCER_ENABLED=true`; the entrypoint list is static
+configuration, applied on a recreate of the Traefik container.
 
 **Do not flip this switch directly to fail-closed.** If AppSec is unreachable at the
 moment Traefik evaluates a request and `crowdsecAppsecUnreachableBlock` is `true`, every
@@ -183,8 +188,22 @@ absence there is the intended state and not the fault.
 
 #### Step 2 — Enable AppSec with fail-open
 
-In `core/traefik/ops/templates/dynamic/integrations.yml.tmpl`, set only
-`crowdsecAppsecEnabled: true`. Leave the failure flags as `false`:
+AppSec is a deployment switch, so this step covers every router at once; read the
+false-positive table below for every public application first, and prove the
+path on `apps/whoami` as [profiles.md](profiles.md) describes:
+
+```ini
+# core/traefik/.env
+CROWDSEC_APPSEC_ENABLED=true
+```
+
+```bash
+# in core/traefik
+./ops/scripts/render.sh && ./ops/scripts/validate.sh
+docker compose up -d --force-recreate traefik   # the entrypoint list is static configuration
+```
+
+The middleware as rendered already carries the fail-open flags:
 
 ```yaml
 crowdsecAppsecEnabled: true
@@ -193,13 +212,8 @@ crowdsecAppsecFailureBlock: false        # fail-open on AppSec errors
 crowdsecAppsecUnreachableBlock: false    # fail-open if AppSec unreachable
 ```
 
-Re-render and hot-reload (no Traefik restart needed for dynamic config changes):
-
-```bash
-cd core/traefik
-./ops/scripts/render.sh
-# Traefik hot-reloads the dynamic config automatically.
-```
+No template is edited and Traefik is not restarted: the changed label recreates the
+application container, and Traefik picks the router up within seconds.
 
 #### Step 3 — Observe behavior
 
@@ -387,12 +401,12 @@ XSS exclusions there require more justification.
 If AppSec is causing widespread blocking and you need to restore access immediately:
 
 ```bash
-# 1. In core/traefik/ops/templates/dynamic/integrations.yml.tmpl,
-#    set crowdsecAppsecEnabled: false
+# 1. In core/traefik/.env, fall back to decision-only remediation for every router:
+#      CROWDSEC_APPSEC_ENABLED=false
+#    then render and recreate Traefik — the entrypoint list is static:
+cd core/traefik && ./ops/scripts/render.sh && docker compose up -d --force-recreate traefik
 
-# 2. Re-render (hot-reloads without Traefik restart):
-cd core/traefik
-./ops/scripts/render.sh
+# 2. There is no per-router state to repeat for: the switch covered every router.
 
 # 3. Confirm AppSec is no longer being called:
 docker exec crowdsec cscli metrics show appsec   # verify subcommand exists on your version

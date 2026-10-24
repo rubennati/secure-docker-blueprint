@@ -84,13 +84,21 @@ Move that file **off this host** and store it with the passphrase. See [Keys](#k
 
 **6. Configure**
 
+The configuration and the two units are host files listed in
+`ops/host-files.manifest` ([`docs/standards/host-files.md`](../../docs/standards/host-files.md)):
+
 ```bash
-sudo mkdir -p /etc/borgmatic
-sudo cp config.yaml.example /etc/borgmatic/config.yaml
-sudo chmod 600 /etc/borgmatic/config.yaml
+# from the repository root
+scripts/host-files.sh render backup/borgmatic
+scripts/host-files.sh install-commands backup/borgmatic   # prints the sudo install lines; run them
 sudo nano /etc/borgmatic/config.yaml
 sudo borgmatic config validate
 ```
+
+The passphrase (step 3) and the SSH key (step 2) are listed too, as secrets:
+`./scripts/overview.sh --host` checks that they exist with mode `0600` and never
+reads them. The configuration is compared by its settings — a value you changed
+is yours; a setting the example names and the file lacks is reported.
 
 **7. First run**
 
