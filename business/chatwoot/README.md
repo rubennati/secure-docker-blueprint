@@ -39,7 +39,7 @@ which are not part of this stack's defaults.
 ## The open window, and why the router starts closed
 
 Until the onboarding form has been submitted, whoever reaches the site creates the
-administrator. `.env.example` therefore ships `APP_TRAEFIK_ACCESS=acc-tailscale`.
+administrator. `.env.example` therefore ships `APP_TRAEFIK_ACCESS=access-vpn`.
 
 Public sign-up is off (`ENABLE_ACCOUNT_SIGNUP=false`, upstream's default); agents
 are invited by the administrator. That is also the tension in this stack: a

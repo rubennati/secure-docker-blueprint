@@ -71,7 +71,7 @@ Then, before anyone else can reach the host name:
    variable for it — it is an instance setting, so this is the only place to
    change it.
 
-`acc-tailscale` is what makes steps 1 to 3 survivable rather than a race.
+`access-vpn` is what makes steps 1 to 3 survivable rather than a race.
 
 ## Security model
 
@@ -97,11 +97,11 @@ Then, before anyone else can reach the host name:
 
 ## Known limits
 
-- **`sec-2` is not measured against this interface.** Plane is a code-split
-  single-page application, and the two comparable stacks that *were* measured —
-  Twenty and Windmill — both exceeded the standard rate limit on their first
-  load. If the interface half-renders, the chain is the first thing to look at;
-  `sec-2-spa-xl` exists for exactly this shape.
+- **`limit-standard` is not measured against this interface.** Plane is a
+  code-split single-page application, and the two comparable stacks that *were*
+  measured — Twenty and Windmill — both exceeded the standard bucket on their
+  first load. If the interface half-renders, the rate limit is the first thing
+  to look at; `limit-extra-large` exists for exactly this shape.
 - **Nothing has been used.** No workspace, no project, no upload through MinIO,
   no second browser in the live editor. The routes answer and the schema is
   built; that is not the same as working.

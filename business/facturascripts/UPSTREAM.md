@@ -44,7 +44,7 @@ and apply Spanish law.
 | `ops/install.sh` instead of the web wizard | Upstream's installer in its unattended mode (`unattended=1`), run as `www-data`, with both passwords read from the secrets inside the container. It sends `mysql_socket` empty, as the web form does: without the field the 2026.5 installer stops with a `TypeError` halfway through `config.php` — measured. Fixed upstream in [NeoRazorX/facturascripts#2041](https://github.com/NeoRazorX/facturascripts/pull/2041), merged 2026-09-25; no released image carries it yet — the newest is `2026.65`, published 2026-08-27 — so the empty field stays until `APP_TAG` points to a release that contains it |
 | `FS_DB_PASS` reads the Docker Secret | The installer writes the password into `config.php` in plain text; `ops/install.sh` replaces the line with `file_get_contents('/run/secrets/DB_PWD')` |
 | `FS_INITIAL_USER` and `FS_INITIAL_PASS` removed after the install | The installer writes the administrator's password into `config.php`. It is read once, when the `users` table is created |
-| `APP_TRAEFIK_ACCESS=acc-tailscale` | The web installer is open until the install has run |
+| `APP_TRAEFIK_ACCESS=access-vpn` | The web installer is open until the install has run |
 
 ## Verification performed (2026-09-22)
 

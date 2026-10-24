@@ -102,14 +102,16 @@ What each one needs from the network:
 ## Security model
 
 - **Access policy is the deployment decision.** A booking page exists for
-  guests, so a production instance serves `acc-public`. The stack ships
-  `acc-tailscale` and leaves that decision to you; on a public router, put
-  `crowdsec-basic@file,` in `APP_TRAEFIK_THREAT` and keep registration closed.
-- **`sec-3`.** A first load is about ten requests, far below the soft burst of
-  200. The application sends its own nonce-based CSP with
-  `frame-ancestors 'none'`, `nosniff`, a referrer policy and
-  `Secure; HttpOnly; SameSite=Lax` cookies; the chain adds HSTS and
-  `X-Frame-Options: DENY`, and the two agree.
+  guests, so a production instance serves `access-public`. The stack ships
+  `access-vpn` and leaves that decision to you; on a public router, keep
+  registration closed, and consider enabling CrowdSec for the deployment
+  (`CROWDSEC_BOUNCER_ENABLED` in `core/traefik`), which then stands in front
+  of every router.
+- **`limit-standard` and `headers-standard`.** A first load is about ten
+  requests, far below the burst of 500. The application sends its own
+  nonce-based CSP with `frame-ancestors 'none'`, `nosniff`, a referrer policy
+  and `Secure; HttpOnly; SameSite=Lax` cookies; the proxy sets HSTS,
+  `X-Frame-Options: DENY` and the rest of the profile, and the two agree.
 - **Embedding is blocked as shipped.** Booking pages can be embedded in other
   sites (`embed.js`), and `DENY` refuses that. If you want it, name the parent
   origins with a per-app `frame-ancestors` middleware on the embed routes

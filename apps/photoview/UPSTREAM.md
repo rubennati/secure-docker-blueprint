@@ -37,7 +37,7 @@
 | **Container / hostnames standardized** | `photoview-app / photoview-db` instead of bare `photoview / photoview-mariadb` |
 | **DSN-safe password requirement documented** | Photoview's `PHOTOVIEW_MYSQL_URL` parses special characters (`@`, `:`, `/`, `?`, `#`). Inbox called this out in a comment; setup script now uses `openssl rand -hex` which is safe |
 | **`HOST_PHOTOVIEW_LOCATION` / `HOST_PHOTOVIEW_MEDIA_ROOT` / `HOST_PHOTOVIEW_BACKUP` renamed** to `MEDIA_ROOT` and `./volumes/` bind paths | Blueprint convention + drops unused backup variable |
-| **Access `acc-public` + security `sec-2` defaults** | Typical for public galleries |
+| **`access-public`, `limit-standard` and `headers-standard` as shipped** | Typical for public galleries |
 
 ## Upgrade checklist
 

@@ -35,7 +35,7 @@
 | **`security_opt: no-new-privileges`** + MariaDB `cap_drop: ALL` | Baseline hardening |
 | **Container names standardized** — `monica-app/db` instead of bare `app/db` | Project-scoped naming avoids collision with other stacks |
 | **Named volumes `data`, `mysql` → bind mounts** | Blueprint uses `./volumes/` for predictable backup paths; global `name: data`/`name: mysql` was a collision hazard |
-| **Access `acc-tailscale` + security `sec-3` defaults** | Monica stores highly personal data (health notes, relationship details, journal) — VPN-only default; switch to `acc-public + sec-2` only if you deliberately want public access with password auth |
+| **Access `access-vpn`, `limit-standard` and `headers-standard` defaults** | Monica stores highly personal data (health notes, relationship details, journal) — VPN-only default; switch to `access-public` only if you deliberately want public access with password auth |
 
 ## Upgrade checklist
 

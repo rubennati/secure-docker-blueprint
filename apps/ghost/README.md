@@ -66,7 +66,7 @@ docker compose up -d
 # https://<APP_TRAEFIK_HOST>/ghost/
 ```
 
-Default access policy is `acc-public` + `sec-2` — a public blog with standard headers and soft rate limiting.
+Default access is `access-public`, with `limit-standard` and `headers-standard` — a public blog with the standard headers and rate limit.
 
 ### Enabling ActivityPub on an existing deployment
 

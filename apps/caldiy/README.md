@@ -81,44 +81,45 @@ Secrets are plain env in `.env.local` (gitignored) — **local only**, never pro
 | Redis | `app-internal` (`internal: true`), `read_only: true`, `cap_drop: ALL`, `pids_limit: 50` |
 | Host header injection | `ALLOWED_HOSTNAMES` set to deployment hostname |
 | Public self-registration | Disabled — `NEXT_PUBLIC_DISABLE_SIGNUP=true` (no open account creation) |
-| HTTP security headers | Traefik `sec-3` chain (`APP_TRAEFIK_SECURITY`) — strict HSTS, Referrer-Policy, Permissions-Policy, CSP report-only. See [Security chain (sec-3)](#security-chain-sec-3) below. |
+| HTTP security headers | Traefik `headers-standard` (`APP_TRAEFIK_HEADERS`) — HSTS, `nosniff`, `X-Frame-Options: DENY`, Referrer-Policy, Permissions-Policy. See [Traefik middlewares](#traefik-middlewares) below. |
 | Privilege escalation | `no-new-privileges:true` on all services |
 | Capability restriction | `cap_drop: ALL` on all services |
 | Process count | `pids_limit` on all services (app: 200, db: 100, redis: 50) |
 | Resource limits | Interim caps set — `deploy.resources` (memory/cpus/pids) on all three services; retune after measuring under load |
-| CrowdSec enforcement | Not yet attached — roadmap in [docs/hardening-plan.md](docs/hardening-plan.md) Phase 2; steps in [ops-runbook.md](docs/ops-runbook.md) §6 |
+| CrowdSec enforcement | Off as shipped — a deployment decision (`CROWDSEC_BOUNCER_ENABLED` in `core/traefik/.env`) that puts the bouncer in front of every router, this one included; roadmap in [docs/hardening-plan.md](docs/hardening-plan.md) Phase 2; steps in [ops-runbook.md](docs/ops-runbook.md) §6 |
 | Community-maintained security | No Cal.com, Inc. incident response — watch upstream releases manually |
 
-### Security chain (sec-3)
+### Traefik middlewares
 
-Cal.diy defaults to the **`sec-3`** Traefik middleware chain (`APP_TRAEFIK_SECURITY=sec-3`), one level stricter than the blueprint's standard `sec-2`. The difference is **header hardening only — no request is blocked at the proxy, and the rate limit is unchanged** (125 req/s average, 200 burst, same as sec-2):
+Cal.diy's router carries the four positions of the middleware model ([`docs/standards/traefik-labels.md`](../../docs/standards/traefik-labels.md)): `access-public`, `limit-standard`, `headers-standard`, `auth-none@file`. No request is blocked at the proxy beyond the counter (125 req/s average, burst 500, per client address); the headers profile sets what a **public-facing scheduling app that stores PII** (names, emails, meeting topics) should send:
 
-| Header | sec-2 | sec-3 |
-|--------|-------|-------|
-| `Strict-Transport-Security` | `max-age=63072000` | `max-age=63072000; includeSubDomains; preload` |
-| `Referrer-Policy` | — | `strict-origin-when-cross-origin` |
-| `Permissions-Policy` | — | camera / microphone / geolocation / payment / usb / … all denied |
-| `Content-Security-Policy` | — | `…-Report-Only` (reports violations, does **not** block) |
-| `X-Content-Type-Options` / `X-Frame-Options: DENY` | yes | yes (unchanged) |
+| Header | `headers-standard` |
+|--------|--------------------|
+| `Strict-Transport-Security` | `max-age=63072000` (`HSTS_MAX_AGE` in `core/traefik/.env`) |
+| `X-Content-Type-Options` | `nosniff` |
+| `X-Frame-Options` | `DENY` |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` |
+| `Permissions-Policy` | camera / microphone / geolocation / payment / usb / … all denied |
 
-`sec-3` is the right default for a **public-facing scheduling app that stores PII** (names, emails, meeting topics): it tells browsers to enforce HTTPS, limit referrer leakage, and disable device APIs the app never uses. The CSP ships **report-only**, so it surfaces violations without breaking the page — a later phase can promote it to enforcing once the report stream is clean.
+They tell browsers to enforce HTTPS, limit referrer leakage, and disable device APIs the app never uses. The proxy sets no `Content-Security-Policy`.
 
-> **⚠️ HSTS `includeSubDomains` + `preload` is browser-sticky.** The header applies to **the exact host that served it** (`APP_TRAEFIK_HOST`) and, with `includeSubDomains`, to **any subdomain below that host** — it does **not** affect sibling hosts or the parent domain unless those serve the header themselves. Scope examples: `calendar.example.com` covers `*.calendar.example.com` but **not** `www.example.com` or `example.com`; an apex host `example.com` covers `*.example.com` (the whole zone). Rolling back to `sec-2` stops *sending* the header, but browsers that already received `max-age=63072000` keep enforcing HTTPS for the in-scope hosts until it expires (~2 years) or the user clears HSTS state. **Before enabling in production, confirm every subdomain *below the Cal.diy hostname* is HTTPS-capable**, and treat `preload` as a deliberate, hard-to-reverse choice. A dedicated leaf host with no child subdomains carries much lower practical scope; an apex host carries the most.
+> **⚠️ HSTS `includeSubDomains` + `preload` is a per-host decision, not shipped.** The profile sends `max-age` only. The extension is the block `hsts-include-subdomains@file`, placed before `${APP_TRAEFIK_HEADERS}@file` in `docker-compose.yml`, and it is browser-sticky: the header applies to **the exact host that served it** (`APP_TRAEFIK_HOST`) and, with `includeSubDomains`, to **any subdomain below that host** — it does **not** affect sibling hosts or the parent domain unless those serve the header themselves. Scope examples: `calendar.example.com` covers `*.calendar.example.com` but **not** `www.example.com` or `example.com`; an apex host `example.com` covers `*.example.com` (the whole zone). Removing the block stops *sending* the directives, but browsers that already received them keep enforcing HTTPS for the in-scope hosts until `max-age` expires (~2 years) or the user clears HSTS state. **Before placing it in production, confirm every subdomain *below the Cal.diy hostname* is HTTPS-capable**, and treat `preload` as a deliberate, hard-to-reverse choice. A dedicated leaf host with no child subdomains carries much lower practical scope; an apex host carries the most. The procedure: [docs/ops-runbook.md](docs/ops-runbook.md) §9.
 
 **`X-Frame-Options: DENY` blocks the booking embed.** Cal.com's inline, pop-up and
 button widgets put a booking page in an iframe on another site, and they work
 against a self-hosted instance — but not against this stack as shipped, because
-`sec-2` and `sec-3` both send `DENY`. Upstream controls framing through its own
+`headers-standard` sends `DENY`. Upstream controls framing through its own
 `frame-ancestors` policy, which the proxy header overrides.
 
 That default is kept on purpose. This is a fork hardened after a compromise, the
 embed is opt-in, and a booking page any site may frame is a booking page any site
 can overlay. If you do want embeds, name the parent origins rather than dropping
-the header: `sec-3e` for same-origin, or a per-app middleware replacing
-`X-Frame-Options` with a `frame-ancestors` allowlist — `business/matomo` shows the
+the header: `frame-self@file` placed before `${APP_TRAEFIK_HEADERS}@file` for
+same-origin, or a per-app middleware replacing `X-Frame-Options` with a
+`frame-ancestors` allowlist — `apps/collabora` and `apps/onlyoffice` show the
 shape. Neither has been run against the embed here.
 
-**Rollback:** set `APP_TRAEFIK_SECURITY=sec-2` in `.env` and recreate the app container — `docker compose up -d --force-recreate app`. Traefik hot-reloads the middleware reference; no Traefik restart needed. See [docs/ops-runbook.md](docs/ops-runbook.md) → "Traefik security chain rollout" for the full procedure and the HSTS caveat.
+**Changing a position:** set the new value in `.env` and recreate the app container — `docker compose up -d --force-recreate app`. Container labels are read at create time; Traefik hot-reloads the middleware reference, no Traefik restart needed.
 
 ## Backup
 

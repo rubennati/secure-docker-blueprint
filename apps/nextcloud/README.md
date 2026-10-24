@@ -78,14 +78,15 @@ docker compose logs -f app
 Expect `Initializing nextcloud` followed by `Nextcloud was successfully
 installed`.
 
-Default access policy is `acc-private` + `sec-3e-sync` — reachable from LAN and
-VPN, hardened headers with `SAMEORIGIN` framing, and the rate limit the sync
-clients need. `acc-private` also covers the Docker gateway, which the instance
-needs to run its own setup checks against itself.
+Default access policy is `access-lan-vpn`, with `limit-sync` and
+`headers-standard` behind `frame-self` — reachable from LAN and VPN, the
+standard headers with `SAMEORIGIN` framing, and the rate limit the sync
+clients need. `access-lan-vpn` also covers the Docker gateway, which the
+instance needs to run its own setup checks against itself.
 
-Switch to `acc-public` once the instance is configured and verified.
+Switch to `access-public` once the instance is configured and verified.
 
-> **If you plan to integrate OnlyOffice:** `APP_TRAEFIK_ACCESS=acc-public` is
+> **If you plan to integrate OnlyOffice:** `APP_TRAEFIK_ACCESS=access-public` is
 > required. OnlyOffice makes server-to-server callbacks to Nextcloud over the
 > public domain, and every restricted policy blocks them.
 
@@ -203,10 +204,10 @@ The database and the cache hold everything worth stealing and reach `app-interna
 
 ### Traefik middlewares
 
-`nextcloud-nginx` carries the access and security chains and nothing else:
+`nextcloud-nginx` carries the four positions, with `frame-self` before the headers profile, and nothing else:
 
 ```text
-${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file
+${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,frame-self@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}
 ```
 
 `/.well-known/caldav` and `/.well-known/carddav` are handled by `nginx/nginx.conf`, which issues the `301` the project documents. An earlier Traefik middleware rewrote the path before nginx saw it, so the redirect never fired; adding one back reintroduces that.
@@ -258,12 +259,12 @@ mail. It is not the default because most deployments need at least password rese
 
 ### Setup checks while access is restricted
 
-With `APP_TRAEFIK_ACCESS=acc-tailscale`, several checks report failures —
+With `APP_TRAEFIK_ACCESS=access-vpn`, several checks report failures —
 `WebdavEndpoint`, `SecurityHeaders`, `WellKnownUrls`, `OcxProviders`. The instance
 calls itself through the proxy and the access policy denies it, which is the
 policy working.
 
-This is why the shipped default is `acc-private` rather than `acc-tailscale`: it
+This is why the shipped default is `access-lan-vpn` rather than `access-vpn`: it
 covers the Docker gateway as well as LAN and VPN, so the instance can reach
 itself and the checks pass while the instance is still closed to the internet.
 
@@ -586,11 +587,11 @@ allocation — raise the variable if that appears, rather than pre-emptively.
 
 **AOF / append-only persistence** is not enabled. RDB persistence (default) is sufficient here. If Redis restarts, active PHP sessions are lost (users are logged out) and in-progress file locks expire. This is acceptable for a small team setup. Enabling AOF adds continuous fsync I/O overhead without a proportionate benefit for this use case.
 
-### Traefik security profile
+### Traefik rate limit and framing
 
-`APP_TRAEFIK_SECURITY=sec-3e-sync`, not the generic `sec-3`. Two properties differ, and Nextcloud needs both.
+`APP_TRAEFIK_LIMIT=limit-sync`, not the standard `limit-standard`, and `frame-self@file` before `${APP_TRAEFIK_HEADERS}@file` in `docker-compose.yml`. Two properties differ from the plain pattern, and Nextcloud needs both.
 
-**Framing.** `sec-3` sets `X-Frame-Options: DENY`. Nextcloud's own setup checks require `SAMEORIGIN`, and several of its apps render in an iframe against the same origin. The `e` variants use `hdr-strict-embed`, identical to the strict headers apart from that one value.
+**Framing.** `headers-standard` sets `X-Frame-Options: DENY`. Nextcloud's own setup checks require `SAMEORIGIN`, and several of its apps render in an iframe against the same origin. The `frame-self` block, placed before the profile, sets that one value; the other headers are the standard ones.
 
 **Rate limit.** Nextcloud's clients issue traffic that a limit sized for page views does not fit:
 
@@ -599,7 +600,7 @@ allocation — raise the variable if that appears, rather than pre-emptively.
 - Sync clients poll OCS API endpoints continuously
 - Activity, notifications, and dashboard widgets poll at regular intervals
 
-`rl-soft` refills at 125 requests per second. A sync of many small files runs above that: it empties the bucket within seconds, every further request above the rate is answered `429`, and the client reports those files as failed. `sec-3e-sync` carries `rl-sync`, 1000 requests per second, with the same headers as `sec-3e`.
+`limit-standard` refills at 125 requests per second. A sync of many small files runs above that: it empties the bucket within seconds, every further request above the rate is answered `429`, and the client reports those files as failed. `limit-sync` refills at 1000 requests per second, with a bucket of 1000.
 
 ## Recommended application set
 

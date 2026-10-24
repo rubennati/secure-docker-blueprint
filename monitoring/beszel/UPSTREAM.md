@@ -37,7 +37,7 @@ Agents connect to the hub over an SSH key pair — no inbound ports needed on ag
 |---|---|
 | **Traefik labels instead of `-p 8090:8090`** | Blueprint routing standard |
 | **`security_opt: no-new-privileges:true`** | Baseline hardening |
-| **`acc-tailscale` default access** | Monitoring UI should not be public |
+| **`access-vpn` default access** | Monitoring UI should not be public |
 | **SSH key stored in `.secrets/`** | Blueprint secret management pattern |
 | **Socket proxy instead of a direct socket mount on the local agent** | The agent's Docker client only calls `/containers/json`, `/containers/{id}/json`, `/containers/{id}/stats` and `/containers/{id}/logs` (`agent/docker.go` upstream) — `tecnativa/docker-socket-proxy` with `CONTAINERS=1` covers exactly that, `POST=0` blocks everything else. Same image and discovery-only shape as `core/traefik`; not the lifecycle-control shape `core/portainer` needs. The agent reaches it by service name on the stack's `internal: true` network — no published port, no fixed address. Verified against a live daemon: that permission set is exactly sufficient for discovery, per-container CPU, memory and network; `/version` and `/info` answer `403` and the agent treats both as non-fatal. |
 

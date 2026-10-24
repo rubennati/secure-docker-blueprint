@@ -37,7 +37,7 @@ distinction `core/orion-belt` records.
 | `command` restated in the compose file | Overriding `entrypoint` clears the image's `CMD`; without it the container has nothing to run |
 | Healthcheck over bash's `/dev/tcp` | The image carries no HTTP client. `CMD`, not `CMD-SHELL`: `/dev/tcp` is a bash feature and the default shell is dash |
 | `read_only: true`, `cap_drop: ALL` | Verified; only `/tmp` and the data volume are written |
-| `APP_TRAEFIK_ACCESS=acc-tailscale` | Registration is open until `ops/bootstrap-admin.sh` has run, and there is no setup password |
+| `APP_TRAEFIK_ACCESS=access-vpn` | Registration is open until `ops/bootstrap-admin.sh` has run, and there is no setup password |
 | `ops/bootstrap-admin.sh` is interactive | The password prompt uses the terminal directly (`rpassword`), so it cannot be piped |
 | `ops/bootstrap-admin.sh` runs the CLI through `config/entrypoint.sh` | `docker compose exec` bypasses the entrypoint. A bare `calrs` started without `CALRS_SECRET_KEY` and wrote `volumes/data/secret.key` — upstream's `src/crypto.rs` takes the environment variable first, then that file, and otherwise generates the file. Measured on the first bootstrap; none written once the calls went through the entrypoint |
 

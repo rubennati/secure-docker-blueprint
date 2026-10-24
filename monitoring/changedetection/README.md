@@ -41,7 +41,7 @@ docker compose logs changedetection-app --follow
 ## Security Model
 
 - **No first-user wizard** — the app is open by default. Set a password in Settings → General immediately, or put Authentik forward-auth in front.
-- **Default access `acc-tailscale` + `sec-3`** — watched URLs + selectors + scraping credentials live in the UI. VPN-only default.
+- **Default access `access-vpn`, with `limit-standard` and `headers-standard`** — watched URLs + selectors + scraping credentials live in the UI. VPN-only default.
 - **Data volume** (`volumes/data/`) holds every snapshot of every watched page. Can grow large — set retention per-watch in Settings.
 - **`no-new-privileges:true`** on the container. The image runs as root (measured on 0.60.3) and owns everything under `volumes/data/`.
 - **Private addresses are refused by default.** Since 0.60 a watch on an address in a private or reserved range fails with `Fetch blocked: … resolves to a private/reserved IP address` — the fetcher's guard against being used to probe the inside from the outside. `CD_ALLOW_PRIVATE_ADDRESSES=true` in `.env` lifts it, for watching pages on the Docker network or the LAN; the compose file says what that opens. Notifications are not affected — the Apprise path to `ntfy-app` works with the guard in place.

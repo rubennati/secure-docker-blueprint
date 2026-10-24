@@ -73,7 +73,7 @@ docker compose logs opensign-api --follow
 - **DSN-safe Mongo password** — `@`, `:`, `/`, `?`, `#` break parsing. `openssl rand -hex` is safe.
 - **Signature audit log** lives in MongoDB — back up regularly.
 - **Signed PDFs** land in `volumes/api-files/` — legally binding artefacts, treat backup with care.
-- **Default access `acc-public` + `sec-3`** — signers receive a signing URL and need to reach it from outside. Admin UI sits on the same host — gate with a second router if agents are internal-only.
+- **Default access `access-public`, with `limit-standard` and `headers-standard`** — signers receive a signing URL and need to reach it from outside. Admin UI sits on the same host — gate with a second router if agents are internal-only.
 
 ## Backup
 

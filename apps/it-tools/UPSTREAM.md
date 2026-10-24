@@ -26,8 +26,8 @@
 | Traefik labels instead of port mapping | Inbox source used `ports: "8007:80"`; blueprint uses Traefik for all HTTP routing |
 | `read_only: true` + `tmpfs` for Nginx runtime dirs | Defence in depth — the static SPA doesn't need a writable filesystem at all |
 | `security_opt: no-new-privileges` | Blueprint baseline |
-| Access policy defaults to `acc-tailscale` | Personal toolbox pattern; flip to public only when you want to share |
-| Security chain defaults to `sec-3` | Strict headers, soft rate limit — fits a static SPA |
+| Access policy defaults to `access-vpn` | Personal toolbox pattern; flip to public only when you want to share |
+| `limit-standard` and `headers-standard` | The standard counter and headers fit a static SPA |
 | Pinned image tag instead of `:latest` | Reproducible; inbox used `:latest` |
 
 ## Upgrade checklist

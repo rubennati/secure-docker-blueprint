@@ -56,8 +56,8 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 ## Security Model
 
 - **`HOMEPAGE_ALLOWED_HOSTS` derived from `APP_TRAEFIK_HOST`** — inbox source had a hardcoded real-IP value (192.168.x.x:port). Now consistent with the blueprint TLS hostname.
-- **Default access `acc-tailscale`** — personal dashboard, VPN-only.
-- **Default security `sec-3`**.
+- **Default access `access-vpn`** — personal dashboard, VPN-only.
+- **`limit-standard` and `headers-standard`**.
 - **Docker socket integration disabled by default** — see below.
 - **`no-new-privileges:true`**.
 

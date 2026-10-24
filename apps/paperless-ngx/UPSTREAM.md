@@ -36,7 +36,7 @@
 | `app-internal` network with `internal: true` | DB/Redis/Gotenberg/Tika have no outbound routing |
 | `no-new-privileges:true` on every service | Blueprint baseline |
 | `USERMAP_UID` + `USERMAP_GID` instead of `user:` | Paperless uses s6-overlay which needs root for early init; it drops to the mapped UID internally |
-| Default access `acc-tailscale` + `sec-3` | Personal document store — VPN-only is the right default. Override to `acc-public` consciously if publishing externally. |
+| `APP_TRAEFIK_ACCESS=access-vpn` | Personal document store — VPN-only is the right default. Override to `access-public` consciously if publishing externally. |
 
 ## Upgrade checklist
 

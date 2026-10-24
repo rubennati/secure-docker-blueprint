@@ -57,7 +57,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 
 - **LinuxServer.io image with s6-overlay** — container starts as root to set up `/run`, drops to `PUID:PGID` internally. Do **not** set `user:` in compose (breaks s6-overlay).
 - **`ALLOW_INTERNAL_REQUESTS=false`** by default — Heimdall's status-check widgets cannot probe RFC1918 addresses. Flip to `true` if you want widgets to monitor internal app status (e.g. Uptime status of `wordpress-app:80`).
-- **Default access `acc-tailscale`** — VPN-only.
+- **Default access `access-vpn`** — VPN-only.
 - **Optional authentication** — Heimdall supports user accounts in its UI. Not enabled by default; add via the UI if you share the instance.
 
 ## Backup

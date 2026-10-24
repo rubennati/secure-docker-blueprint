@@ -56,7 +56,7 @@ passwords set from the command line that way cannot be read by it.
 
 Before the bootstrap has run, whoever reaches the instance first can register and
 becomes the administrator. There is no setup password to protect that window, so
-`.env.example` ships `APP_TRAEFIK_ACCESS=acc-tailscale`: the VPN only.
+`.env.example` ships `APP_TRAEFIK_ACCESS=access-vpn`: the VPN only.
 
 That is also the tension in this stack. Guests cannot book through a closed
 router, so a real booking page eventually needs a wider policy — and the

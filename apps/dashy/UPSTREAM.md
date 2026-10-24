@@ -28,7 +28,7 @@
 | `security_opt: no-new-privileges` | Blueprint baseline |
 | `TZ` env var | Consistent with blueprint |
 | `./config/conf.example.yml` preserved from inbox as starter | Gives new users a working starting point |
-| Access default `acc-tailscale` + security `sec-3` | Personal dashboard pattern |
+| Access default `access-vpn`, `limit-standard` and `headers-standard` | Personal dashboard pattern |
 
 ## Upgrade checklist
 

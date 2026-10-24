@@ -43,7 +43,7 @@ Client → Traefik (TLS, 443) → keycloak-app :8080  (admin console, realms, OI
 | No `read_only` | `start` writes the rebuilt application to `/opt/keycloak/lib/quarkus` at every boot; a tmpfs there shadows the files it builds from and fails the same way. The official image cannot run read-only |
 | `KC_HOSTNAME` as a full URL, `KC_PROXY_HEADERS=xforwarded`, `KC_HTTP_ENABLED=true` | Traefik terminates TLS; the issuer and every redirect derive from the public URL |
 | `KC_HEALTH_ENABLED=true`, healthcheck through `bash /dev/tcp` | The image ships neither curl nor wget; the management port answers `/health/ready` |
-| Traefik labels, `acc-tailscale`, `sec-2-spa` | Blueprint standard; the admin console is a single-page application |
+| Traefik labels, `access-vpn`, `limit-standard`, `headers-application-owned` with `header-permissions@file` before it | Blueprint standard; the admin console is a single-page application and sets its own headers, lacking only the `Permissions-Policy` |
 
 ## Upgrade checklist
 

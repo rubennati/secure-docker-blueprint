@@ -105,7 +105,7 @@ you own, and a decision rather than a default.
   update checks and the news feed — all on by default, all to grafana.com.
 - **`read_only`, `cap_drop: ALL`, `no-new-privileges`, non-root** on both base
   services.
-- **`acc-tailscale`.** A metrics dashboard describes the installation it
+- **`access-vpn`.** A metrics dashboard describes the installation it
   watches: which hosts exist, what runs on them, when they are busy and when
   they fail.
 
@@ -125,7 +125,7 @@ you own, and a decision rather than a default.
   that costs in disk depends entirely on how many series you scrape.
 - **SAML is Enterprise.** Generic OAuth and LDAP are in the AGPL build; SAML,
   team sync, enhanced LDAP and protected roles are not.
-- **`sec-2` is not measured** against Grafana, which loads its interface in one
+- **`limit-standard` is not measured** against Grafana, which loads its interface in one
   burst and then polls.
 - **Nothing here has run behind this repository's Traefik yet.** The stack is
   `scaffolded`.

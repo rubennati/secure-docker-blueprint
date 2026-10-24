@@ -56,8 +56,8 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 ## Security Model
 
 - **`SECRET_ENCRYPTION_KEY` encrypts stored integration credentials** (API tokens for torrent clients, media servers, etc.). Losing or rotating the key invalidates all stored integrations — they have to be re-entered in the UI.
-- **Default access `acc-tailscale`** — personal dashboard.
-- **Default security `sec-3`**.
+- **Default access `access-vpn`** — personal dashboard.
+- **`limit-standard` and `headers-standard`**.
 - **Docker integration is disabled by default** — see below.
 - **`no-new-privileges:true`**.
 

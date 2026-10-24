@@ -51,7 +51,7 @@ the design rather than neglect.
 | `read_only: true`, `cap_drop: ALL`, `no-new-privileges` | Upstream's compose sets none of them. The image already runs as uid 999 and writes only to its data volume and `/tmp` |
 | No `ports:` | Upstream publishes `HTTP_PORT` to the host. Traefik reaches the container over the proxy network instead |
 | ClickHouse and PostgreSQL on `internal: true` | Upstream puts all three on one bridge network |
-| `APP_TRAEFIK_ACCESS=acc-tailscale` | The safe start. It also means no measurement from outside the VPN — the README says what to change for a public website, and why it is a second router rather than a different value here |
+| `APP_TRAEFIK_ACCESS=access-vpn` | The safe start. It also means no measurement from outside the VPN — the README says what to change for a public website, and why it is a second router rather than a different value here |
 
 ## Verified on the images (2026-09-23)
 
@@ -97,8 +97,8 @@ network and no Traefik router.
   ClickHouse 165 MiB plus 5 MiB, PostgreSQL 29 MiB plus 92 MiB.
 - A restart of the application came back healthy with no read-only errors.
 
-What a host run still has to establish: the route through `core/traefik`, the
-`sec-2` chain against the dashboard, a browser completing the LiveView sign-in,
+What a host run still has to establish: the route through `core/traefik`,
+`limit-standard` against the dashboard, a browser completing the LiveView sign-in,
 the two-router split for a public website, a mail path for invitations and
 password resets, and a restore from the volumes.
 

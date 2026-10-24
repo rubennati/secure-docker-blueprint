@@ -44,7 +44,7 @@ Key design choices:
 | **Mail driver defaults to `log`** | Safe default — user sets SMTP explicitly |
 | **`app-internal` network (`internal: true`)** | Isolate Postgres + Redis |
 | **`security_opt: no-new-privileges`** on all services | Baseline |
-| **Access `acc-public` + security `sec-2` defaults** | Forms are meant to be filled by external users; sec-3 would be OK if your forms are internal-only |
+| **Access `access-public`, `limit-standard` and `headers-standard` defaults** | Forms are meant to be filled by external users; `access-vpn` would be OK if your forms are internal-only |
 
 ## Upgrade checklist
 

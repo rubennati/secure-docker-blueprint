@@ -30,7 +30,7 @@ Note: this setup uses Portainer **CE** (Community Edition). Portainer Business E
 | Socket proxy (LinuxServer.io variant) instead of direct socket mount | Standard hardening pattern — Portainer never touches `/var/run/docker.sock` |
 | `command: --host tcp://socket-proxy:2375` | Tells Portainer to use the proxy; it otherwise auto-detects the local socket |
 | `read_only: true` + `tmpfs` on socket proxy | Defense in depth; the proxy container has no writable root filesystem |
-| TLS profile `tls-modern` + `acc-tailscale` + `sec-4` | Admin tool, VPN-only, strict rate limiting |
+| `tls-strict` named on the router, `access-vpn`, `limit-strict` | Admin tool, VPN-only, strict rate limiting; TLS 1.3 only, as a documented exception |
 
 ## Why `linuxserver/socket-proxy` not `tecnativa/docker-socket-proxy`
 

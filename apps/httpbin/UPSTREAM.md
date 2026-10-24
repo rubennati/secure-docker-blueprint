@@ -31,7 +31,7 @@ only `latest` and `test`, both from 2018.
 | Gunicorn with the `gthread` worker instead of the image's start script | The script starts the `gevent` worker. In 0.10.3 and 0.10.4 that exits at start — Gunicorn 26.0.0 requires gevent 24.10.1, the image carries 24.2.1 — measured with a plain `docker run`, no hardening involved. Reported upstream in psf/httpbin#69, fix proposed in psf/httpbin#70. 0.10.2 starts, with Gunicorn 21.2.0 |
 | `--no-control-socket` | Gunicorn 26 writes a control socket under `/opt/httpbin/.gunicorn`; on a read-only root that logs an error at start |
 | `read_only`, `cap_drop: ALL` | The image already runs unprivileged |
-| `APP_TRAEFIK_ACCESS=acc-tailscale` | No login on any endpoint, and `/redirect-to` redirects to any URL |
+| `APP_TRAEFIK_ACCESS=access-vpn` | No login on any endpoint, and `/redirect-to` redirects to any URL |
 
 ## Verification performed (2026-09-22)
 

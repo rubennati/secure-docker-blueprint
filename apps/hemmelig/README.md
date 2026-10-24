@@ -115,7 +115,7 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 - [x] `docker compose config` clean; `docker compose up -d` — healthy — **verified locally, 2026-09-19**
 - [x] Migrations apply cleanly and `GET /api/health/ready` reports `"status":"healthy"` across database, storage and memory checks — **verified locally, 2026-09-19**
 - [ ] A full secret-request round trip (request created, secret submitted, key sent back out of band, secret viewed) through the actual web UI
-- [ ] TLS and the chosen `APP_TRAEFIK_SECURITY` chain confirmed against a real domain
+- [ ] TLS and the router's four middleware positions (`APP_TRAEFIK_ACCESS`, `APP_TRAEFIK_LIMIT`, `APP_TRAEFIK_HEADERS`, `APP_TRAEFIK_AUTH`) confirmed against a real domain
 - [ ] Restart the container and confirm SQLite state and uploaded files survive
 
 ## Details

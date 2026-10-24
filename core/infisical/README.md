@@ -4,9 +4,9 @@ Self-hosted central secret manager. Instead of distributing and re-filling `.env
 per server, manage every secret in one place; servers and apps pull what they need over the
 network (CLI / machine identity). An optional, central alternative to per-server Docker Secrets.
 
-> **⚠️ This holds every other app's secrets.** Default access is **VPN-only** (`acc-tailscale`) —
+> **⚠️ This holds every other app's secrets.** Default access is **VPN-only** (`access-vpn`) —
 > a central secret store must not sit on the public internet. Other servers reach it over
-> Tailscale. Exposing it publicly (`acc-public`) is a deliberate, high-risk decision.
+> Tailscale. Exposing it publicly (`access-public`) is a deliberate, high-risk decision.
 
 ## Architecture
 
@@ -41,7 +41,7 @@ docker compose logs app --follow    # watch for migrations + server start
 
 | Concern | How handled |
 |---------|-------------|
-| Access | **VPN-only** (`acc-tailscale`) by default — not public |
+| Access | **VPN-only** (`access-vpn`) by default — not public |
 | DB password | Docker Secret (`db_pwd.txt`) — injected via entrypoint, never in `.env` |
 | `ENCRYPTION_KEY` / `AUTH_SECRET` | Docker Secrets — injected via entrypoint, never in `.env` |
 | SMTP password | Docker Secret (`smtp_password.txt`) |

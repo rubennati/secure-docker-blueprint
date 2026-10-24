@@ -95,7 +95,7 @@ Common three-letter codes (ISO 639-2):
 
 Full list: [Tesseract language data](https://github.com/tesseract-ocr/tessdata)
 
-Default access is `acc-tailscale` + `sec-3` — Paperless typically holds personal documents, so VPN-only with strict headers is the right baseline. Switch to `acc-public` only if you intentionally want it on the open internet (and then consider adding SSO via `sso.yml`).
+The stack ships `access-vpn`, `limit-standard` and `headers-standard` — Paperless typically holds personal documents, so VPN-only is the right baseline. Switch to `access-public` only if you intentionally want it on the open internet (and then consider adding SSO via `sso.yml`).
 
 ### SMTP (optional)
 
@@ -164,7 +164,7 @@ Drop a PDF into `./volumes/consume/` and watch the logs — it should be consume
 - Gotenberg runs with JavaScript disabled (`--chromium-disable-javascript`) and only allowed to read from `/tmp` — defence against malicious uploaded HTML
 - Redis runs `read_only: true` with tmpfs — no writable root filesystem
 - `no-new-privileges:true` on every service
-- Default access is VPN-only (`acc-tailscale`)
+- Default access is VPN-only (`access-vpn`)
 
 ## Backup
 

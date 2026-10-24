@@ -70,7 +70,7 @@ public router, with `upstream-base-url` set.
 | | |
 |---|---|
 | **Identity** | runs as `APP_UID:APP_GID`, the owner of `./config` and `./volumes`; every capability dropped |
-| **Access** | two routers — public and read-only on the subscribed topics (`acc-public` + `sec-4`), everything else on the operator's side (`acc-tailscale`) — see below |
+| **Access** | two routers — public and read-only on the subscribed topics (`access-public` + `limit-strict`), everything else on the operator's side (`access-vpn`) — see below |
 | **Authentication** | `auth-default-access: deny-all`; users and per-topic grants created with the CLI |
 | **Secrets** | None in `.env`. Credentials live in the user database at `./volumes/lib/user.db`. |
 | **Filesystem** | `read_only: true`, config mounted `:ro` |
@@ -84,8 +84,8 @@ puts two routers on one server:
 
 | Router | Rule | Policy | Serves |
 |---|---|---|---|
-| `ntfy` | `GET` on the topics in `NTFY_PUBLIC_TOPICS`, and `/v1/account` | `APP_TRAEFIK_ACCESS` (`acc-public`) | subscribing, polling, the WebSocket, the apps' auth check and account lookup |
-| `ntfy-ui` | everything else | `APP_TRAEFIK_UI_ACCESS` (`acc-tailscale`) | the web app, login, account management, publishing |
+| `ntfy` | `GET` on the topics in `NTFY_PUBLIC_TOPICS`, and `/v1/account` | `APP_TRAEFIK_ACCESS` (`access-public`) | subscribing, polling, the WebSocket, the apps' auth check and account lookup |
+| `ntfy-ui` | everything else | `APP_TRAEFIK_UI_ACCESS` (`access-vpn`) | the web app, login, account management, publishing |
 
 Traefik takes the longer rule first, so a `POST`, an unlisted topic or any other
 path from the internet lands on the operator router and is refused there.
@@ -96,14 +96,15 @@ subscribe is a 403 from ntfy, not a topic listing. Leaving that at the upstream
 default while exposing the server publicly makes every topic on it
 world-readable and world-writable to anyone who guesses the name. Behind that
 stand ntfy's own per-client limit (60 requests, then one every 5 s), the
-chain's rate limit, and the threat slot for CrowdSec.
+router's `limit-strict`, and — where the deployment enables it — CrowdSec on
+the entrypoint, in front of every router.
 
 Measured from the internet on 2026-09-08 (v2.28.0): subscribe with credentials
 200, anonymous 403, `POST`, `/`, `/v1/health` and an unlisted topic 403 on the
 operator router, TLS 1.3.
 
 Where every receiving device is on the tailnet anyway, set `APP_TRAEFIK_ACCESS`
-to `acc-tailscale` as well — then nothing is public, and nothing else changes.
+to `access-vpn` as well — then nothing is public, and nothing else changes.
 
 ## Integration patterns
 
@@ -146,8 +147,9 @@ Verified on a host on 2026-09-08 (v2.28.0). What the session found:
   the directories before the first start; Docker would create them as root.
 - **`read_only: true` holds.** The cache and the auth database live on the two
   mounted volumes, `/tmp` is a tmpfs, nothing else is written.
-- **The rate limit is the first suspect if notifications go missing.** `sec-4`
-  carries `rl-hard`; a subscription is one long-lived request and an alert is
+- **The rate limit is the first suspect if notifications go missing.**
+  `limit-strict` allows 20 requests per second with a burst of 40; a
+  subscription is one long-lived request and an alert is
   one request, so the phone side has headroom. A publisher bursting during an
   incident is exactly when the limit bites — measure before switching.
 - **iOS needs `upstream-base-url`.** Apple restricts background processing, so a

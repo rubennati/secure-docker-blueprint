@@ -27,7 +27,7 @@
 | **Traefik labels instead of `-p 3001:3001`** | Blueprint routing standard |
 | **`security_opt: no-new-privileges:true`** | Baseline hardening |
 | **Healthcheck on `/api/entry-page`** | Proper readiness gate |
-| **`acc-tailscale` default access** | Monitoring dashboards should not be public |
+| **`access-vpn` default access** | Monitoring dashboards should not be public |
 
 ## Version notes
 

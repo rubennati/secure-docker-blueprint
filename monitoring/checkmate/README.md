@@ -47,7 +47,7 @@ There is a second reason not to leave the window open:
 or `false`. It is how the dashboard decides which screen to show — and it tells
 anyone who can reach the port whether the instance is still unclaimed.
 
-`acc-tailscale` is what makes that window survivable. See below before opening
+`access-vpn` is what makes that window survivable. See below before opening
 it.
 
 ## Publishing a status page
@@ -60,8 +60,7 @@ second router rather than a change of `APP_TRAEFIK_ACCESS`:
 - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-status.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/status/public`)"
 - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-status.entrypoints=websecure"
 - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-status.tls=true"
-- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-status.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
-- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-status.middlewares=acc-public@file,${APP_TRAEFIK_SECURITY}@file"
+- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-status.middlewares=access-public@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
 ```
 
 Traefik matches the longest rule first, so the status router wins for that path
@@ -88,7 +87,7 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 
 - **Claim the instance immediately.** See Setup. This is the one step that
   cannot be postponed.
-- **`acc-tailscale` by default.** Beyond the registration window, the dashboard
+- **`access-vpn` by default.** Beyond the registration window, the dashboard
   is a list of every host this installation watches — which is a map of the
   estate, useful to exactly the wrong reader.
 - **MongoDB requires a password**, which upstream's compose does not do at all:
@@ -127,9 +126,11 @@ anywhere.
 
 ## Known limits
 
-- **`sec-2` is not measured against this dashboard**, a React application that
-  pulls its assets in one burst. If the first load is rate-limited, the chain
-  is the thing to look at — `sec-2-spa` exists for that shape.
+- **`limit-standard` is not measured against this dashboard**, a React
+  application that pulls its assets in one burst. If the first load is
+  rate-limited, the counter is the thing to look at — `limit-extra-large`
+  exists for a first load that exceeds the burst of 500, behind a closed
+  access policy.
 - **No notification channel has been exercised.** Twelve are supported; none
   was configured or delivered here.
 - **Hardware monitoring needs an agent** (Capture) on each machine, which this
