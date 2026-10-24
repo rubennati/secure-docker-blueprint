@@ -37,7 +37,7 @@
 | **Container names standardized** — `immich-app/db/redis/ml` instead of `immich_server/immich_postgres/…` | Blueprint naming convention |
 | **`DB_TAG` / `APP_TAG` / `REDIS_TAG` as variables** | Blueprint pinning convention |
 | **Digest pinning dropped for the Postgres + Valkey images** | Inbox pinned by digest; blueprint pins by tag. Upgrade discipline handled via `APP_TAG` bump + documented in Upgrade checklist |
-| **Access `acc-public` + security `sec-2` defaults** | Typical for photo-sharing; consider `acc-tailscale + sec-3` for family-only |
+| **Access `access-public`, `limit-standard` and `headers-standard` defaults** | Typical for photo-sharing; consider `access-vpn` for family-only |
 
 ## Upgrade checklist
 

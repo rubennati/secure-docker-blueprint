@@ -64,7 +64,7 @@ Plausible serves two different audiences on one host name:
 | `/js/script.js`, `/api/event` | every visitor's browser, from anywhere |
 | everything else | you |
 
-`APP_TRAEFIK_ACCESS=acc-tailscale` closes both, which is right while the first
+`APP_TRAEFIK_ACCESS=access-vpn` closes both, which is right while the first
 account is created, and right for measuring an intranet site. For a public
 website the tracker has to be reachable while the dashboard stays closed — and
 that is a second router, not a different value here:
@@ -74,8 +74,7 @@ that is a second router, not a different value here:
 - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-tracker.rule=Host(`${APP_TRAEFIK_HOST}`) && (PathPrefix(`/js/`) || Path(`/api/event`))"
 - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-tracker.entrypoints=websecure"
 - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-tracker.tls=true"
-- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-tracker.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
-- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-tracker.middlewares=acc-public@file,${APP_TRAEFIK_SECURITY}@file"
+- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-tracker.middlewares=access-public@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
 ```
 
 Traefik matches the longest rule first, so the tracker router wins for those two
@@ -102,7 +101,7 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 
 - **The sign-up window is closed from the command line**, before anyone else
   can reach the host name. See Setup.
-- **`acc-tailscale` by default.** Read "Splitting the dashboard from the
+- **`access-vpn` by default.** Read "Splitting the dashboard from the
   tracker" before changing it: opening this value opens the dashboard too.
 - **Four settings are Docker Secrets, read natively.** Plausible looks in
   `/run/secrets/<NAME>` before the environment, so `SECRET_KEY_BASE`,
@@ -135,7 +134,7 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 
 ## Known limits
 
-- **`sec-2` is not measured against the dashboard**, which is a LiveView
+- **`limit-standard` is not measured against the dashboard**, which is a LiveView
   application and therefore holds a WebSocket open. Nor has a rate limit been
   measured on `/api/event`, where one request per visitor is the normal case
   and a shared limit is the wrong shape.

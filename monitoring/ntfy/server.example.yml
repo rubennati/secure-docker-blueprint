@@ -25,7 +25,7 @@ attachment-cache-dir: /var/cache/ntfy/attachments
 auth-file: /var/lib/ntfy/user.db
 
 # --- Access control ---
-# deny-all is what makes acc-public defensible: no topic is readable or
+# deny-all is what makes access-public defensible: no topic is readable or
 # writable without an explicit grant. Create users and grants after first start:
 #
 #   docker compose exec app ntfy user add --role=admin admin

@@ -11,7 +11,7 @@
 - **Origin:** UK · Alicia Sykes (Lissy93) · non-EU
 - **Domain:** Dashboards
 - **Role:** One page linking everything you run, configured in a single YAML file
-- **Based on version:** `4.6.0`
+- **Based on version:** `4.8.7`
 - **Last verified:** 2026-05-02 (v4.0.4)
 
 ## What we use
@@ -28,7 +28,7 @@
 | `security_opt: no-new-privileges` | Blueprint baseline |
 | `TZ` env var | Consistent with blueprint |
 | `./config/conf.example.yml` preserved from inbox as starter | Gives new users a working starting point |
-| Access default `acc-tailscale` + security `sec-3` | Personal dashboard pattern |
+| Access default `access-vpn`, `limit-standard` and `headers-standard` | Personal dashboard pattern |
 
 ## Upgrade checklist
 

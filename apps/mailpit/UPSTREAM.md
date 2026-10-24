@@ -35,7 +35,7 @@ any stack on proxy-public ────────→ mailpit :1025  (SMTP)
 | `MP_SMTP_DISABLE_RDNS` | Reverse lookups on Docker-internal addresses only add latency |
 | `MP_DISABLE_VERSION_CHECK` | Upstream asks the GitHub API for newer releases; version tracking is the operator's job here — `docs/sovereignty/data-egress.md` |
 | `MP_ALLOWED_HOSTS` = the Traefik hostname | The API and UI refuse requests from other containers by Host header; Traefik and the localhost healthcheck pass |
-| Traefik labels, `acc-tailscale`, `sec-3` | The UI shows every message the stacks send, including password-reset links; a first load is about ten requests |
+| Traefik labels, `access-vpn`, `limit-standard` | The UI shows every message the stacks send, including password-reset links; a first load is about ten requests |
 | Healthcheck repeated in the compose file | The image declares `/mailpit readyz` itself; repeating it makes "healthy" visible |
 | `memory: 128m` | Idles at 13 MB with a thousand messages stored; the store is on disk |
 

@@ -18,10 +18,12 @@ run is what decides whether a change can land on either branch.
 That is why `dev` has no post-merge run: the branch had to be current, so the
 pull-request run already tested the integration that lands, and a second run
 would repeat it. `main` keeps its push run anyway: it checks the actual commit
-that lands rather than a pull-request merge preview, which matters for job 1 —
-gitleaks scans that commit's own message, and a squash or rebase merge creates
-one that was never itself scanned. The extra cost is accepted on the branch
-that is published, tagged and released from.
+that lands rather than a pull-request merge preview, which matters for job 1
+when a pull request is squashed or rebased: the commit that lands is new and
+was never itself scanned. A merge commit is left out of that scan
+(`--no-merges`); its content is what the pull request's own commits brought,
+which the pull-request run already scanned. The extra cost is accepted on the
+branch that is published, tagged and released from.
 
 There is no nightly (or any other) schedule on this workflow. All ten jobs are
 deterministic checks of the current git tree — none makes a network call or
@@ -47,12 +49,38 @@ deliberately **not** a required check and does not block a merge.
 
 ### 1 — Secret scan (`gitleaks`)
 
-Runs [gitleaks](https://github.com/gitleaks/gitleaks) across the full commit
-history (`fetch-depth: 0`) to detect accidentally committed credentials —
-API keys, passwords, tokens, private keys.
+Runs [gitleaks](https://github.com/gitleaks/gitleaks) with its default rules
+(`.gitleaks.toml` extends them) to detect accidentally committed credentials —
+API keys, passwords, tokens, private keys. It scans the added lines of commit
+diffs, not commit messages.
+
+What a run covers depends on the event:
+
+| Event | Commits scanned |
+|---|---|
+| Pull request | the pull request's own commits on its first-parent line, merges excluded |
+| Push to `main` | the pushed commits on the first-parent line, merges excluded |
+| `workflow_dispatch` | the whole history of every fetched ref (`git log --all`, `fetch-depth: 0`) |
+
+A full-history scan therefore runs only on a manual dispatch. Single findings
+excluded by design are listed by fingerprint in `.gitleaksignore`.
+
+There is no scheduled full scan, on purpose. Every commit that lands passes the
+pull-request scan, the history does not change afterwards, and the rules change
+only when the action's pinned gitleaks version does — a scan on a timer would
+repeat the same rules over the same history. A full scan answers a new question
+in two cases, and runs then (`workflow_dispatch` on `dev`): after a
+`gitleaks-action` update, and before a release ([Release Chain](../maintenance.md#release-chain)).
+Content that exists only in a merge commit — a conflict resolution — is outside
+both scans, because `git log -p` shows no diff for a merge.
+
+A second step in the same job fails on the two kinds of private detail a
+pattern can find in the tracked files: a workstation path (`/Users/<name>/`)
+and a password-manager reference (`op://`). Real domains and addresses have no
+pattern; [`commit-rules.md`](commit-rules.md#public-content) covers them.
 
 **Blocks merge:** yes  
-**Tool:** `gitleaks/gitleaks-action@v2`
+**Tool:** `gitleaks/gitleaks-action@v3`, gitleaks 8.24.3
 
 ---
 
@@ -370,6 +398,25 @@ Three rules:
 
 ---
 
+## Outside the ten — `Cloudflare ranges`
+
+`.github/workflows/cloudflare-ips.yml` runs `scripts/ci/check-cloudflare-ips.py
+--online`: it fetches Cloudflare's published IPv4 and IPv6 lists and compares them
+with `core/traefik/ops/cloudflare-ips.txt`, the senders whose forwarded headers
+the Traefik entrypoints trust. A range Cloudflare added and the file lacks leaves
+traffic from that edge without a trusted client address; a range the file carries
+and Cloudflare dropped trusts a stranger. It runs weekly, on manual dispatch, and
+on a pull request that touches the file or the script.
+
+It makes a network call, which is why it is a workflow of its own and not one of
+the ten: a scheduled run can fail for a reason unrelated to any commit. The
+offline half — every entry parses, none is repeated, both families present —
+runs inside job 4 on every pull request.
+
+**Blocks merge:** no.
+
+---
+
 ## Running locally
 
 ```bash
@@ -378,6 +425,7 @@ pip install pyyaml
 
 # Run from the repo root
 python3 scripts/ci/check-baseline.py
+python3 scripts/ci/check-cloudflare-ips.py          # add --online to compare with cloudflare.com
 python3 scripts/ci/check-structure.py
 python3 scripts/ci/lifecycle-report.py --check
 python3 scripts/ci/security-coverage.py --check

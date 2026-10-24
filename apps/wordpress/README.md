@@ -58,9 +58,9 @@ Three realistic scenarios. Pick the one that fits the site:
 
 | Scenario | Frontend | wp-admin | Security Plugins | Infra |
 |----------|----------|----------|-----------------|-------|
-| **A: Public site, public admin** | Public | Public (employees, clients) | WPS Hide Login, WPS Limit Login, Turnstile, Two Factor | sec-2, acc-public |
-| **B: Public site, admin VPN-only** | Public | Tailscale only (single admin) | Two Factor only (rest redundant) | Two Traefik routers: public + acc-tailscale on `/wp-admin` |
-| **C: Fully internal** | Tailscale | Tailscale (e.g. MainWP Dashboard) | Two Factor only | acc-tailscale on entire site |
+| **A: Public site, public admin** | Public | Public (employees, clients) | WPS Hide Login, WPS Limit Login, Turnstile, Two Factor | `access-public` (as shipped, with `limit-standard` and `headers-standard`) |
+| **B: Public site, admin VPN-only** | Public | Tailscale only (single admin) | Two Factor only (rest redundant) | Two Traefik routers: `access-public` + `access-vpn` on `/wp-admin` |
+| **C: Fully internal** | Tailscale | Tailscale (e.g. MainWP Dashboard) | Two Factor only | `access-vpn` on entire site |
 
 **Scenario A is the most common** — use this when multiple people need wp-admin access from different locations.
 
@@ -199,9 +199,9 @@ bash ops/scripts/test-security.sh <domain>
 
 ## Known Issues
 
-### Site Health warnings with `acc-tailscale`
+### Site Health warnings with `access-vpn`
 
-When `APP_TRAEFIK_ACCESS=acc-tailscale` is set, WordPress Site Health shows several warnings:
+When `APP_TRAEFIK_ACCESS=access-vpn` is set, WordPress Site Health shows several warnings:
 
 | Warning | Cause |
 |---------|-------|
@@ -225,7 +225,7 @@ Then disable WP-Cron's built-in loopback in `wp-config.php`:
 docker compose exec app bash -c "echo \"define('DISABLE_WP_CRON', true);\" >> /var/www/html/wp-config.php"
 ```
 
-These warnings do **not** appear with `acc-public` (Scenario A).
+These warnings do **not** appear with `access-public` (Scenario A).
 
 ### wp-cli not included
 

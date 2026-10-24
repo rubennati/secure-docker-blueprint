@@ -44,7 +44,7 @@ docker compose logs app --follow
 
 ## Access split (recommended for production)
 
-Default is `acc-public + sec-2` so subscriber endpoints (`/subscription/*`, `/link/*`, `/campaign/*`) work for external users. The admin UI at `/admin` is then *also* public.
+Default is `access-public` so subscriber endpoints (`/subscription/*`, `/link/*`, `/campaign/*`) work for external users. The admin UI at `/admin` is then *also* public.
 
 For "admin VPN-only + subscriber endpoints public", add a second Traefik router:
 
@@ -54,8 +54,7 @@ For "admin VPN-only + subscriber endpoints public", add a second Traefik router:
 - "traefik.http.routers.listmonk-admin.priority=100"
 - "traefik.http.routers.listmonk-admin.entrypoints=websecure"
 - "traefik.http.routers.listmonk-admin.tls=true"
-- "traefik.http.routers.listmonk-admin.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
-- "traefik.http.routers.listmonk-admin.middlewares=acc-tailscale@file,sec-3@file"
+- "traefik.http.routers.listmonk-admin.middlewares=access-vpn@file,${APP_TRAEFIK_LIMIT}@file,frame-self@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
 - "traefik.http.routers.listmonk-admin.service=${COMPOSE_PROJECT_NAME}"
 # The existing router (priority 1 implicit) catches subscriber paths publicly.
 ```
@@ -105,7 +104,7 @@ against the unsubscribe log before the first send following a restore.
 ## Known Issues
 
 - **UI warning about admin credentials** — after first login, Listmonk shows a banner asking to remove `admin_username`/`admin_password` from config. These fields are already absent from this blueprint's setup; the banner can be dismissed.
-- **Campaign/template preview uses an iframe** — the preview panel renders `GET /api/campaigns/:id/preview` in an `<iframe>`. `X-Frame-Options: deny` blocks this. The default is therefore `sec-2e` (`SAMEORIGIN`) instead of `sec-2` (`deny`).
+- **Campaign/template preview uses an iframe** — the preview panel renders `GET /api/campaigns/:id/preview` in an `<iframe>`. `X-Frame-Options: deny` blocks this. The router therefore carries `frame-self@file` (`SAMEORIGIN`) before `${APP_TRAEFIK_HEADERS}@file`, whose `headers-standard` would send `deny`.
 - **Bounce processing** requires either IMAP config to your sender mailbox or an SMTP relay with bounce-webhook support (AWS SES, Mailgun, Postmark).
 - **Media uploads** (logo, campaign images) land in `volumes/uploads/`. Back up together with the Postgres dump.
 

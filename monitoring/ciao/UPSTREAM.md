@@ -44,7 +44,7 @@ published on Docker Hub only; there is no copy on another registry.
 | `PROMETHEUS_ENABLED=false` | Upstream's default, restated because `/metrics` is served outside the application's basic auth and carries its own pair |
 | `RAILS_LOG_TO_STDOUT=true` | One place to read the log, and nothing written into the read-only filesystem |
 | No `user:` line | The image already runs as uid 1000 (`rails`); `./volumes/db` has to belong to that uid |
-| `APP_TRAEFIK_ACCESS=acc-tailscale` | The dashboard lists every URL being watched and its history |
+| `APP_TRAEFIK_ACCESS=access-vpn` | The dashboard lists every URL being watched and its history |
 
 ## Verified on the image (2026-09-23)
 

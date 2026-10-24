@@ -27,7 +27,7 @@
 | **Traefik labels instead of `-p 8080:8080`** | Blueprint routing standard |
 | **`security_opt: no-new-privileges:true`** | Baseline hardening |
 | **Config mounted as read-only (`:ro`)** | Container should not modify its own config |
-| **`acc-tailscale` default access** | Status page may expose internal service topology |
+| **`access-vpn` default access** | Status page may expose internal service topology |
 
 ## Configuration
 

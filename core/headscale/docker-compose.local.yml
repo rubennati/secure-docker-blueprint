@@ -21,7 +21,7 @@ services:
   #
   # It belongs in core/ by the test in docs/architecture.md: it provides a
   # shared network capability for the installation rather than for users of its
-  # own — the same axis `acc-tailscale` already sits on.
+  # own — the same axis `access-vpn` already sits on.
   # --------------------------------------------------------
   headscale:
     # --- Identity ---

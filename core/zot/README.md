@@ -125,9 +125,10 @@ but nobody able to authenticate against them.
 cp .env.local.example .env.local
 mkdir -p volumes/local/registry
 sudo chown 1000:1000 volumes/local/registry
-docker run --rm httpd:2.4-alpine htpasswd -Bbn admin localtest123 > htpasswd.local
+ZOT_LOCAL_PASSWORD='<choose-a-local-password>'
+docker run --rm httpd:2.4-alpine htpasswd -Bbn admin "$ZOT_LOCAL_PASSWORD" > htpasswd.local
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
-curl -u admin:localtest123 http://localhost:8080/v2/
+curl -u "admin:$ZOT_LOCAL_PASSWORD" http://localhost:8080/v2/
 docker compose -f docker-compose.local.yml --env-file .env.local down
 ```
 
@@ -137,7 +138,7 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 - [x] Unauthenticated request to `/v2/` returns 401, admin credentials return 200 — **verified locally, 2026-09-19**
 - [ ] An actual `docker push`/`docker pull` round trip through Traefik on a real host
 - [ ] The embedded CVE scan actually flags a known-vulnerable test image
-- [ ] TLS and the chosen `APP_TRAEFIK_SECURITY` chain confirmed against the real domain
+- [ ] TLS and the router's four middleware positions confirmed against the real domain
 
 ## Details
 

@@ -8,8 +8,8 @@ go out over Tailscale's IPv6 address, while the same client worked
 normally over IPv4.
 
 ```bash
-curl -4 https://auth.example.com/   # → 100.116.181.16            → HTTP/2 302 (ok)
-curl -6 https://auth.example.com/   # → fd7a:115c:a1e0::9e32:b510 → HTTP/2 403 (blocked)
+curl -4 https://auth.example.com/   # → 100.64.0.10        → HTTP/2 302 (ok)
+curl -6 https://auth.example.com/   # → fd7a:115c:a1e0::10 → HTTP/2 403 (blocked)
 ```
 
 **Affected blueprint:** `core/traefik/` (any app behind `acc-tailscale`
@@ -60,7 +60,7 @@ Tailscale IPv6 client
 This is specific to the **Tailscale path**, which has no proxy in front
 of it to recover a lost client IP from a header. The **Cloudflare path**
 recovers the real client IP from `X-Forwarded-For` regardless of the
-network's IP family — see "Cloudflare vs. Tailscale" in the doc linked
+network's IP family — see "The three traffic paths" in the doc linked
 below. Cloudflare ingress was not affected by this bug.
 
 ---
@@ -159,7 +159,7 @@ for a quick check:
 ```bash
 curl -6 https://whoami.example.com/ | grep -iE "x-forwarded-for|x-real-ip"
 # Before the fix: 172.19.0.1
-# After the fix:  fd7a:115c:a1e0::9e32:b510
+# After the fix:  fd7a:115c:a1e0::10
 ```
 
 Full troubleshooting command set (network inspection, port bindings,

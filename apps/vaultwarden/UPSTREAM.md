@@ -20,8 +20,8 @@
 | Passwords in .env (not Secrets) | Phase 2 open. **Vaultwarden does support `_FILE`** — confirmed against the upstream configuration wiki on 2026-07-27; this entry previously claimed it does not, and whether that was wrong when written or went stale could not be established from the release notes. The genuine obstacle is narrower: the password sits inside `DATABASE_URL`, a connection string, so the secret has to carry the whole URL (`DATABASE_URL_FILE`) or an entrypoint has to assemble it — the pattern this repository already uses elsewhere. A real option, not a blocked path |
 | ADMIN_TOKEN as Argon2 hash | Official recommendation — never store plain text |
 | `read_only: true` + `no-new-privileges` | Security hardening |
-| `tls-modern` (TLS 1.3 only) | Password manager deserves strictest TLS |
-| `sec-3e` + `strip-xfo` middleware | Strict headers + rate limiting; X-Frame-Options stripped so Vaultwarden controls it per-route (required by admin diagnostics) |
+| `tls-strict` (TLS 1.3 only) | Password manager deserves strictest TLS — named by the router's `tls.options` label as a documented exception |
+| `headers-application-owned` + `limit-standard` | Vaultwarden sends its own headers (`nosniff`, a frame header per route, a referrer policy, a Permissions-Policy, an enforcing CSP — measured 2026-10-18); the proxy sets only the HSTS base, so Vaultwarden controls `X-Frame-Options` per-route (required by admin diagnostics) |
 | `PASSWORD_HINTS_ALLOWED=false` | Prevent hint-based guessing |
 | `SIGNUPS_VERIFY=true` | Require email verification |
 | Rate limiting configured | Login + Admin panel rate limiting |
@@ -33,7 +33,7 @@ After deployment, verify:
 
 - [ ] `SIGNUPS_ALLOWED=false` (set after creating your accounts)
 - [ ] `ADMIN_TOKEN` is Argon2 hash (not plain text)
-- [ ] TLS 1.3 only (`tls-modern`)
+- [ ] TLS 1.3 only (`tls-strict`)
 - [ ] SMTP configured (needed for 2FA recovery)
 - [ ] Admin panel accessible and rate-limited
 - [ ] Push notifications working (if mobile sync needed)

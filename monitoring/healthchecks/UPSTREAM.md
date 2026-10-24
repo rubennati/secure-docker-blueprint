@@ -33,8 +33,8 @@
 | `REGISTRATION_OPEN` defaults to `False` | Inbox didn't set it — self-service signup should be explicit opt-in, not default |
 | `DEBUG=False` explicit | Inbox had it; kept as safety |
 | SMTP password via env (no `_FILE`) | Upstream does not support `_FILE` for `EMAIL_HOST_PASSWORD`. Stays in `.env`. |
-| Access policy default `acc-tailscale` | Personal monitoring pattern; ping URLs only need to be reachable from the monitored hosts, which for most home/small-team setups means VPN |
-| Security chain default `sec-3` | Strict headers, soft rate limit — appropriate for a Django app with forms |
+| Access policy default `access-vpn` | Personal monitoring pattern; ping URLs only need to be reachable from the monitored hosts, which for most home/small-team setups means VPN |
+| `limit-standard` and `headers-standard` | The standard counter and headers — appropriate for a Django app with forms |
 
 ## Upgrade checklist
 

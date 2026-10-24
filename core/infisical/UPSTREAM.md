@@ -32,7 +32,7 @@
 | `read_only` + `tmpfs` on Redis | Baseline |
 | `deploy.resources` (memory/cpus/pids) on all services | Bound a compromised container |
 | Healthcheck via `node` hitting `/api/status` | Image ships node but not curl/wget |
-| Traefik `acc-tailscale` + `sec-3-spa` default | A central secret manager must not be public; UI is an SPA |
+| Traefik `access-vpn` + `limit-standard` default | A central secret manager must not be public; UI is an SPA |
 | Postgres pinned to `16-alpine` | Upstream sample uses `postgres:14-alpine`; blueprint prefers a current supported line |
 | DB password generated as hex | URL-safe in `DB_CONNECTION_URI` (avoids `/ + =` breaking the URI) |
 

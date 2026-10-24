@@ -51,7 +51,7 @@ Tailscale client → Traefik (TLS, 443) → tymeslot-app :4000 (Bandit, LiveView
 | Bind mounts instead of named volumes | Blueprint convention. Upstream's warning against a host path concerns the bundled PostgreSQL's `initdb`, which the slim image does not run |
 | `bash /dev/tcp` healthcheck | The image ships neither curl nor wget; `/healthcheck` verifies database and job queue |
 | Social login off, `WEBHOOK_BASE_URL` unset | Attack surface; the host is not reachable from the public internet, so push channels cannot be registered |
-| Traefik labels, `acc-tailscale`, `sec-3` | Blueprint standard. A first load is about ten requests, far below the soft burst; the access policy is the deployment decision the README describes |
+| Traefik labels, `access-vpn`, `limit-standard`, `headers-standard` | Blueprint standard. A first load is about ten requests, far below the burst of 500; the access policy is the deployment decision the README describes |
 
 ## Upgrade checklist
 

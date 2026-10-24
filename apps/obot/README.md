@@ -24,7 +24,7 @@ radius, not a boundary.
 
 What follows from it:
 
-- **`acc-tailscale` is the floor, not a default to relax.** Anyone who reaches
+- **`access-vpn` is the floor, not a default to relax.** Anyone who reaches
   this interface and gets past the login is one bug away from the host.
 - **Do not put this on a host that runs anything you would not hand over.**
   On this blueprint's shape — one Docker host, every stack beside every other —
@@ -136,7 +136,7 @@ servers you configured — that is the work, not a side effect.
   question.
 - **Nothing limits the containers obot creates.** No quota, no cap on how many,
   no limits inherited from this file.
-- **`sec-2` is not measured against the interface.**
+- **`limit-standard` is not measured against the interface.**
 - **The release cadence is fast** — 0.7 to 0.26 in the life of this repository.
   Read the release notes before every upgrade.
 - **Nothing here has run behind this repository's Traefik yet.** The stack is

@@ -34,7 +34,7 @@ project's longevity.
 | `user: 1000:1000` | The image runs as root. It works unprivileged when the data directory belongs to that uid — verified |
 | `read_only: true` with `tmpfs: /tmp` | Verified: migrations, first-run setup, API calls and a restart |
 | `BASE_URL` built from `APP_TRAEFIK_HOST` with `https://` | The scheme is what switches the application into production mode |
-| `APP_TRAEFIK_ACCESS=acc-tailscale` | `POST /v1/setup` is public until it has run once |
+| `APP_TRAEFIK_ACCESS=access-vpn` | `POST /v1/setup` is public until it has run once |
 | `ops/setup.sh` calls the route from inside the container | No port is published, and the route is reached over loopback |
 | Litestream left unconfigured | It is built into the image's entrypoint and inert without `LITESTREAM_REPLICA_URL` |
 

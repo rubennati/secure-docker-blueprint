@@ -27,7 +27,7 @@
 | `unattended-setup` instead of the interactive `setup` wizard | Non-interactive, scriptable, and takes the admin password as an env var consumed once — no plaintext password ever lands in a file this repository writes |
 | `cap_drop: ALL` + `read_only: true` + `tmpfs: /tmp` | Verified directly against a live container (see below) |
 | SSH and MySQL ports published directly, not through Traefik | Raw TCP protocols; only the admin UI is HTTP(S) — see README.md#network-exposure |
-| `acc-tailscale` + `sec-3` + `tls-modern` default on the admin UI | An admin console that can create SSO/local users and reach every configured target is not public-default material |
+| `access-vpn` + `limit-standard` + `headers-standard`, `tls-strict` named on the admin UI router | An admin console that can create SSO/local users and reach every configured target is not public-default material |
 | No Docker Secrets section | Verified: the image has no `_FILE`-style secret input at all — the admin password is consumed once by `unattended-setup`, not by the long-running service |
 
 ## What was actually verified, and how

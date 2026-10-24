@@ -58,7 +58,7 @@ To give rclone other host directories, mount them beside `/data`, owned by
 
 - **The API is the whole of rclone.** Whoever logs in can read and change every
   remote, including its credentials, and read, write and delete files on them.
-  `.env.example` ships `APP_TRAEFIK_ACCESS=acc-tailscale`, the VPN only.
+  `.env.example` ships `APP_TRAEFIK_ACCESS=access-vpn`, the VPN only.
 - **The login is a htpasswd file.** rclone checks the password against an APR1
   hash in the Docker Secret and never receives the password itself. rclone does
   not accept SHA-512 crypt (`$6$`) hashes.

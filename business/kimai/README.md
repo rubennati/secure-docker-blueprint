@@ -58,7 +58,7 @@ docker compose logs app --follow
 - **DSN-safe password** — `@`, `:`, `/`, `?`, `#` break parsing. `openssl rand -hex` is safe.
 - **`cap_drop: ALL`** on MariaDB with minimal `cap_add`.
 - **`no-new-privileges:true`** on both services.
-- **Default access `acc-tailscale` + `sec-3`** — Kimai holds customer, project, and billing data. VPN-only default.
+- **Default access `access-vpn`, with `limit-standard` and `headers-standard`** — Kimai holds customer, project, and billing data. VPN-only default.
 
 ## Backup
 

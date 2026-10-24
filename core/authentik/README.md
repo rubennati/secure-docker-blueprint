@@ -75,7 +75,7 @@ docker compose logs server --follow
 # This URL is ONLY available before an admin exists. Set up akadmin here.
 ```
 
-Default access policy is `acc-public` + `sec-3` — publicly reachable (users must be able to log in from anywhere), strict headers, soft rate limit.
+Default values are `access-public`, `limit-standard`, `headers-standard`, `auth-none` — publicly reachable (users must be able to log in from anywhere), the standard headers and counter; the `/_static/` router carries `STATIC_TRAEFIK_LIMIT=limit-none`, because a first load of the portal fetches 100+ public chunks.
 
 ## Verify
 
@@ -97,11 +97,14 @@ Forward-Auth lets Traefik delegate authentication to Authentik without touching 
 Every request hits Authentik first — if the user is authenticated the request passes through,
 otherwise they are redirected to the Authentik login page.
 
-The Traefik middleware (`sec-authentik`) is already defined in
-`core/traefik/ops/templates/dynamic/integrations.yml.tmpl` — commented out.
+The Traefik middleware is `auth-authentik`, rendered from
+`core/traefik/ops/templates/dynamic/authentik.yml.tmpl` by one switch in
+`core/traefik/.env`. Until the switch is on, the middleware does not exist and
+no router may name it. A router names it in its auth position — the fourth of
+the model's four — through the stack's `APP_TRAEFIK_AUTH`.
 
 > **Multi-host note:** `forwardAuth` is not limited to the same Docker host.
-> The `address` in `sec-authentik` can point to any reachable endpoint —
+> `AUTHENTIK_FORWARD_AUTH_ADDRESS` can point to any reachable outpost —
 > another machine in the LAN, a remote server, or a public URL. Traefik only
 > needs network access to that address. This means one central Authentik
 > instance can protect apps running on multiple hosts.
@@ -112,16 +115,23 @@ The Traefik middleware (`sec-authentik`) is already defined in
 
 #### 0a. Activate the Traefik middleware
 
-In `core/traefik/ops/templates/dynamic/integrations.yml.tmpl`, uncomment the `http:` /
-`middlewares:` block and the `sec-authentik` section. Then re-render and redeploy Traefik:
+In `core/traefik/.env` set the switch, keep the address unless the outpost is
+on another host, then render — the file is dynamic configuration and needs no
+restart:
 
 ```bash
 cd core/traefik
-./ops/scripts/render.sh
-docker compose up -d
+# AUTHENTIK_FORWARD_AUTH_ENABLED=true
+# AUTHENTIK_FORWARD_AUTH_ADDRESS=http://authentik-server:9000/outpost.goauthentik.io/auth/traefik
+bash ops/scripts/validate.sh && bash ops/scripts/render.sh && bash ops/scripts/validate.sh
 ```
 
-The middleware is now available as `sec-authentik@file` for any router.
+The middleware is now available as `auth-authentik@file` for any router. No
+template is edited: a checkout cannot undo the switch, and `render.sh` refuses
+to render over a `config/` that carries the middleware while `.env` does not
+declare it. To switch it off, remove `auth-authentik@file` from every router
+first — a router naming a middleware that no longer exists is disabled by
+Traefik — then set `false` and render again.
 
 #### 0b. Verify the embedded outpost
 
@@ -167,13 +177,18 @@ Save. Note the provider name.
 Save. Then: **Admin Interface → Applications → Outposts** → edit the Embedded Outpost →
 add the new application to its list → Save.
 
-#### 1c. Add the middleware to the app's Compose file
+#### 1c. Put the middleware in the app's auth position
 
-Add `sec-authentik@file` to the router's existing middleware list:
+The router's label already ends in `${APP_TRAEFIK_AUTH}` — the fourth position
+of the model. Set the variable in the app's `.env`:
+
+```ini
+APP_TRAEFIK_AUTH=auth-authentik@file
+```
 
 ```yaml
 labels:
-  - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file,sec-authentik@file"
+  - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
 ```
 
 Redeploy the app:
@@ -230,22 +245,26 @@ labels:
   - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
   - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
   - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
-  - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
-  - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+  - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
   - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=9000"
 
-  # --- Second router: /admin only, with Forward-Auth ---
+  # --- Second router: /admin only, with Forward-Auth in its auth position ---
   - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/admin`)"
   - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.entrypoints=websecure"
   - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.tls=true"
-  - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
   - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.priority=100"
-  - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file,sec-authentik@file"
+  - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${ADMIN_TRAEFIK_AUTH}"
   - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.service=${COMPOSE_PROJECT_NAME}"
 ```
 
+```ini
+# the app's .env: the main router stays open, the admin path takes the gate
+APP_TRAEFIK_AUTH=auth-none@file
+ADMIN_TRAEFIK_AUTH=auth-authentik@file
+```
+
 > **Note:** The `-admin` router reuses the same Traefik service (same `loadbalancer.server.port`)
-> — no separate container is needed. Only the middleware chain differs.
+> — no separate container is needed. Only the auth position differs.
 
 Redeploy the app:
 
@@ -275,7 +294,7 @@ Similar pattern — create a `SAML Provider`, download the metadata XML from Aut
 ## Security Model
 
 - Database, Redis, and the worker are only on `app-internal` (which is `internal: true`) — none of them can reach or be reached from the outside directly
-- Only `server` is on `proxy-public`; Traefik terminates TLS and applies `sec-3` (strict headers + rate limit + permissions-policy)
+- Only `server` is on `proxy-public`; Traefik terminates TLS and applies the standard headers and counter (`headers-standard`, `limit-standard`)
 - `AUTHENTIK_SECRET_KEY` signs every token Authentik issues — treat rotation with care (existing sessions invalidate)
 - `AUTHENTIK_ERROR_REPORTING__ENABLED: "false"` — no telemetry to external endpoints
 - Redis runs `read_only: true` with a `tmpfs` for `/tmp`; no writable root filesystem

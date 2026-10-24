@@ -4,29 +4,30 @@ tls:
     # ==========================================================
     # TLS PROFILES
     # ==========================================================
-    # Pick one per router via APP_TRAEFIK_TLS_OPTION in .env.
-    # Set the global default via TLS_DEFAULT_OPTION in .env.
+    # Three profiles:
     #
-    # Profile     Min TLS   Use case
-    # ----------  --------  ----------------------------------
-    # tls-basic   1.2       Maximum compatibility (older clients)
-    # tls-aplus   1.2       SSL Labs A+ (strict ciphers + curves)
-    # tls-modern  1.3       Current browsers only (strictest)
+    # Profile          Min TLS   Use case
+    # ---------------  --------  ------------------------------------------
+    # tls-compatible   1.2       older clients must connect
+    # tls-standard     1.2       strict ciphers + curves — the standard
+    # tls-strict       1.3       current clients only
     #
-    # Recommendation: tls-aplus for most services.
-    # Use tls-modern for password managers, admin panels.
-    # Use tls-basic only when older clients must connect.
+    # `default` is Traefik's reserved name: it is the option every router
+    # takes that carries `tls=true` (or a certResolver) without naming an
+    # option of its own — measured 2026-10-18, the entrypoint-level option
+    # does not reach such routers. TLS_DEFAULT_OPTION in .env names the
+    # profile `default` is built from; a change needs a Traefik restart
+    # (the file provider's watch does not apply it). A router overrides
+    # with tls.options=<profile>@file only with a documented reason, and
+    # every router on one host name must name the same option — a conflict
+    # falls back to `default` (Traefik logs an error).
     # ==========================================================
 
-    # Compatible — TLS 1.2+, no cipher restriction
-    # Traefik excludes insecure ciphers by default.
-    tls-basic:
+    tls-compatible: &tls_compatible
       minVersion: VersionTLS12
       sniStrict: true
 
-    # SSL Labs A+ — TLS 1.2+ with strict cipher suite + curves
-    # Forward secrecy only (ECDHE), X25519 preferred.
-    tls-aplus:
+    tls-standard: &tls_standard
       minVersion: VersionTLS12
       sniStrict: true
       curvePreferences:
@@ -41,8 +42,9 @@ tls:
         - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
         - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
 
-    # Strictest — TLS 1.3 only
-    # Current browsers and clients only. No TLS 1.2 fallback.
-    tls-modern:
+    tls-strict: &tls_strict
       minVersion: VersionTLS13
       sniStrict: true
+
+    # The deployment standard, from TLS_DEFAULT_OPTION.
+    default: *${TLS_DEFAULT_ANCHOR}

@@ -45,7 +45,7 @@ the repository.
 | No `fetchmail` service | It collects mail from mailboxes elsewhere and is not needed to run a mail server |
 | Mail ports in an overlay: 25, 587 and 993 | Upstream's production file also publishes 110, 143 and 995 |
 | `TRUSTED_PROXIES` set to the proxy network's range | The administration interface reads the client address Traefik forwards |
-| `APP_TRAEFIK_ACCESS=acc-tailscale` | A blueprint ships closed |
+| `APP_TRAEFIK_ACCESS=access-vpn` | A blueprint ships closed |
 
 ## Verified on the images (2026-10-03)
 

@@ -58,7 +58,7 @@ Not mandatory in our definition, but largest ROI in the security bucket:
 | A | Document Consumption | `WEBHOOKS_ALLOW_INTERNAL_REQUESTS=false` | SSRF protection — prevents workflow webhooks from hitting Redis / internal APIs |
 | B | Document Consumption | `WEBHOOKS_ALLOWED_SCHEMES=https` | No cleartext webhook payloads |
 | C | Authentication | `PAPERLESS_SESSION_COOKIE_AGE=172800` (2 days instead of 2 weeks) | Shorter exposure window on cookie theft |
-| D | Hosting (use-case) | `/admin/` router with `acc-tailscale` | Django admin bypasses MFA and SSO — brute-forceable if public |
+| D | Hosting (use-case) | `/admin/` router with `auth-authentik@file` in its auth position (`ADMIN_TRAEFIK_AUTH`) | Django admin bypasses MFA and SSO — brute-forceable if public |
 
 ## Noted inconsistencies (aufräum candidates, not CONFIG decisions)
 
@@ -147,7 +147,7 @@ Builds on Hosting & Security. In particular: `PAPERLESS_DISABLE_REGULAR_LOGIN` d
 | **SSO active** | `PAPERLESS_SOCIALACCOUNT_ALLOW_SIGNUPS` | `true` = SSO users may create new accounts; `false` = only existing users may link | Default `true`. With `AUTO_SIGNUP=false`, `ALLOW_SIGNUPS=true` enables manual account linking in profile. |
 | **SSO + group sync** | `PAPERLESS_SOCIAL_ACCOUNT_SYNC_GROUPS` = `true` | Only if IdP groups map 1:1 onto Paperless groups (same names) | Groups must pre-exist in Paperless. IdP provider config needs `"SCOPES": ["openid","profile","email","groups"]`. |
 | **SSO + default groups for new users** | `PAPERLESS_SOCIAL_ACCOUNT_DEFAULT_GROUPS` | Comma list of existing Paperless groups | Users are added to these on first SSO login |
-| **SSO exclusive (no regular login)** | `PAPERLESS_DISABLE_REGULAR_LOGIN` = `true` | Only with functional SSO chain + `/admin/` protection via Traefik | **Important**: does not protect `/admin/` or API token auth. `/admin/` router with `acc-tailscale` is the complement, otherwise Django-admin login bypass. |
+| **SSO exclusive (no regular login)** | `PAPERLESS_DISABLE_REGULAR_LOGIN` = `true` | Only with functional SSO chain + `/admin/` protection via Traefik | **Important**: does not protect `/admin/` or API token auth. `/admin/` router with `auth-authentik@file` (`ADMIN_TRAEFIK_AUTH`) is the complement, otherwise Django-admin login bypass. |
 | **SSO + auto-redirect** | `PAPERLESS_REDIRECT_LOGIN_TO_SSO` = `true` | Combine with `DISABLE_REGULAR_LOGIN` | Users land at SSO provider instead of Paperless login page |
 | **Signups allowed (internal)** | `PAPERLESS_ACCOUNT_DEFAULT_GROUPS` | Comma list; groups must exist | Only relevant when `ACCOUNT_ALLOW_SIGNUPS=true` — not our case |
 | **Privacy / UX** | `PAPERLESS_ACCOUNT_EMAIL_UNKNOWN_ACCOUNTS` | Default `true` | Controls whether password-reset to unknown email sends a mail (`true`) or not (`false`). `false` prevents user enumeration. For internal Paperless default is fine. |
@@ -492,7 +492,7 @@ When things break — quick moves that fit this section:
 
 | Situation | Quick move |
 |---|---|
-| Suspected compromised account | Keep Paperless reachable but switch access to `acc-deny` chain (Traefik hot-reload, no container restart) → only shell-access users can still enter, admin kill-switch |
+| Suspected compromised account | Keep Paperless reachable but switch `APP_TRAEFIK_ACCESS` to `access-blocked` (an `.env` change, applied with `docker compose up -d`) → only shell-access users can still enter, admin kill-switch |
 | Suspected data corruption | Don't stop the container → immediately `document_sanity_checker` + `document_exporter`, then diagnose |
 | Pre/post-consume script out of control | Set `PAPERLESS_PRE_CONSUME_SCRIPT` / `POST_CONSUME_SCRIPT` to empty + `docker compose up -d` (faster than script debug) |
 | OOM from large doc | Set `PAPERLESS_CONVERT_MEMORY_LIMIT` temporarily → restart |
@@ -660,7 +660,7 @@ Only relevant when Paperless does **not** run in our Docker image — there `con
 
 | ENV var | What | Our default | Effort | Bucket | Rationale / note |
 |---|---|---|---|---|---|
-| `PAPERLESS_ENABLE_FLOWER` | Start Celery monitoring UI | unset (= off) | medium | **Use-case-dependent** | Use-case: production instance with many background jobs, Prometheus integration wanted, debug for hanging queues. **Security-relevant**: Flower listens on port 5555 — must be secured separately (Traefik router with `acc-tailscale` + Basic Auth when active). Never expose directly via host port mapping. Config file via volume mount `flowerconfig.py`. |
+| `PAPERLESS_ENABLE_FLOWER` | Start Celery monitoring UI | unset (= off) | medium | **Use-case-dependent** | Use-case: production instance with many background jobs, Prometheus integration wanted, debug for hanging queues. **Security-relevant**: Flower listens on port 5555 — must be secured separately (Traefik router with `access-vpn` and a gate in its auth position when active). Never expose directly via host port mapping. Config file via volume mount `flowerconfig.py`. |
 
 ### 8.6 Custom container init
 
@@ -760,7 +760,7 @@ Instead of IMAP password: OAuth flow against Google/Microsoft. Only relevant for
 | `PAPERLESS_OUTLOOK_OAUTH_CLIENT_ID` | Microsoft Azure app registration client ID | unset | high | **Use-case-dependent** | Setup: Azure portal → app registrations → new. Redirect URI analogous. Watch tenant config (single vs multi). |
 | `PAPERLESS_OUTLOOK_OAUTH_CLIENT_SECRET` | Azure client secret | unset | low | **Use-case-dependent** | Stays in `.env`. Azure secrets expire after 24 months by default — calendar reminder. |
 
-**Important**: OAuth callback happens via the **public** domain (`PAPERLESS_URL`). If Paperless is on `acc-tailscale`, OAuth flow works only from inside the VPN — OAuth providers redirect there, but the user's browser must be able to reach it too. Do initial setup from inside VPN, then token refresh runs in the background.
+**Important**: OAuth callback happens via the **public** domain (`PAPERLESS_URL`). If Paperless is on `access-vpn`, OAuth flow works only from inside the VPN — OAuth providers redirect there, but the user's browser must be able to reach it too. Do initial setup from inside VPN, then token refresh runs in the background.
 
 ### 9.5 Encrypted emails (GPG decryption)
 
@@ -845,7 +845,7 @@ When one or more are activated:
 - **Purpose**: MCP server so Claude Code / Desktop can use Paperless documents, tags, correspondents as context
 - **Source**: community project (template in repo at `inbox/Archiv/paperless-mcp/`)
 - **Data flow**: MCP protocol (Claude) ↔ paperless-mcp ↔ Paperless REST API
-- **Security note**: the MCP endpoint gives **read full access** to all Paperless documents the API-token user can see. Access policy `acc-tailscale` is mandatory when active — template already sets that.
+- **Security note**: the MCP endpoint gives **read full access** to all Paperless documents the API-token user can see. Access policy `access-vpn` is mandatory when active — template already sets that.
 - **Bucket**: **Use-case-dependent** (AI-assisted document search / analysis without copy-paste into chat)
 
 ### 10.6 TODO note

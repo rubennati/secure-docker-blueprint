@@ -53,7 +53,7 @@ use.
 
 Before `ops/install.sh` has run, the web installer is reachable and accepts
 whatever database it is given. `.env.example` therefore ships
-`APP_TRAEFIK_ACCESS=acc-tailscale`, the VPN only. The installer closes once
+`APP_TRAEFIK_ACCESS=access-vpn`, the VPN only. The installer closes once
 `config.php` exists.
 
 ## What is mounted

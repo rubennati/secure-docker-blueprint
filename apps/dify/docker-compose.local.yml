@@ -46,9 +46,9 @@ services:
     security_opt:
     - no-new-privileges:true
     volumes:
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/config/init-plugin-db.sh:/docker-entrypoint-initdb.d/10-plugin-db.sh:ro
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/volumes/db:/var/lib/postgresql/data
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/.secrets/db_password.txt:/run/secrets/DB_PASSWORD:ro
+    - ./config/init-plugin-db.sh:/docker-entrypoint-initdb.d/10-plugin-db.sh:ro
+    - ./volumes/db:/var/lib/postgresql/data
+    - ./.secrets/db_password.txt:/run/secrets/DB_PASSWORD:ro
   dify-api:
     cap_drop:
     - ALL
@@ -133,17 +133,17 @@ services:
     tmpfs:
     - /tmp
     volumes:
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/config/entrypoint.sh:/secrets-entrypoint.sh:ro
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/volumes/storage:/app/api/storage
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/.secrets/init_password.txt:/run/secrets/INIT_PASSWORD:ro
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/.secrets/secret_key.txt:/run/secrets/SECRET_KEY:ro
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/.secrets/db_password.txt:/run/secrets/DB_PASSWORD:ro
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/.secrets/redis_password.txt:/run/secrets/REDIS_PASSWORD:ro
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/.secrets/celery_broker_url.txt:/run/secrets/CELERY_BROKER_URL:ro
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/.secrets/pgvector_password.txt:/run/secrets/PGVECTOR_PASSWORD:ro
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/.secrets/sandbox_api_key.txt:/run/secrets/SANDBOX_API_KEY:ro
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/.secrets/plugin_daemon_key.txt:/run/secrets/PLUGIN_DAEMON_KEY:ro
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/.secrets/plugin_inner_api_key.txt:/run/secrets/PLUGIN_INNER_API_KEY:ro
+    - ./config/entrypoint.sh:/secrets-entrypoint.sh:ro
+    - ./volumes/storage:/app/api/storage
+    - ./.secrets/init_password.txt:/run/secrets/INIT_PASSWORD:ro
+    - ./.secrets/secret_key.txt:/run/secrets/SECRET_KEY:ro
+    - ./.secrets/db_password.txt:/run/secrets/DB_PASSWORD:ro
+    - ./.secrets/redis_password.txt:/run/secrets/REDIS_PASSWORD:ro
+    - ./.secrets/celery_broker_url.txt:/run/secrets/CELERY_BROKER_URL:ro
+    - ./.secrets/pgvector_password.txt:/run/secrets/PGVECTOR_PASSWORD:ro
+    - ./.secrets/sandbox_api_key.txt:/run/secrets/SANDBOX_API_KEY:ro
+    - ./.secrets/plugin_daemon_key.txt:/run/secrets/PLUGIN_DAEMON_KEY:ro
+    - ./.secrets/plugin_inner_api_key.txt:/run/secrets/PLUGIN_INNER_API_KEY:ro
     ports:
     - 127.0.0.1:5001:5001
   dify-web:
@@ -206,8 +206,8 @@ services:
     security_opt:
     - no-new-privileges:true
     volumes:
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/volumes/pgvector:/var/lib/postgresql/data
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/.secrets/pgvector_password.txt:/run/secrets/PGVECTOR_PASSWORD:ro
+    - ./volumes/pgvector:/var/lib/postgresql/data
+    - ./.secrets/pgvector_password.txt:/run/secrets/PGVECTOR_PASSWORD:ro
   plugin-daemon:
     cap_drop:
     - ALL
@@ -267,12 +267,12 @@ services:
     - /tmp
     user: 1001:1001
     volumes:
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/config/entrypoint.sh:/secrets-entrypoint.sh:ro
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/volumes/plugin_daemon:/app/storage
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/.secrets/db_password.txt:/run/secrets/DB_PASSWORD:ro
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/.secrets/redis_password.txt:/run/secrets/REDIS_PASSWORD:ro
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/.secrets/plugin_daemon_key.txt:/run/secrets/PLUGIN_DAEMON_KEY:ro
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/.secrets/plugin_inner_api_key.txt:/run/secrets/PLUGIN_INNER_API_KEY:ro
+    - ./config/entrypoint.sh:/secrets-entrypoint.sh:ro
+    - ./volumes/plugin_daemon:/app/storage
+    - ./.secrets/db_password.txt:/run/secrets/DB_PASSWORD:ro
+    - ./.secrets/redis_password.txt:/run/secrets/REDIS_PASSWORD:ro
+    - ./.secrets/plugin_daemon_key.txt:/run/secrets/PLUGIN_DAEMON_KEY:ro
+    - ./.secrets/plugin_inner_api_key.txt:/run/secrets/PLUGIN_INNER_API_KEY:ro
   redis:
     cap_drop:
     - ALL
@@ -299,9 +299,9 @@ services:
     - /tmp
     user: 999:999
     volumes:
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/config/redis-entrypoint.sh:/redis-entrypoint.sh:ro
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/volumes/redis:/data
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/.secrets/redis_password.txt:/run/secrets/REDIS_PASSWORD:ro
+    - ./config/redis-entrypoint.sh:/redis-entrypoint.sh:ro
+    - ./volumes/redis:/data
+    - ./.secrets/redis_password.txt:/run/secrets/REDIS_PASSWORD:ro
     environment: {}
   sandbox:
     cap_add:
@@ -343,8 +343,8 @@ services:
     security_opt:
     - no-new-privileges:true
     volumes:
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/config/entrypoint.sh:/secrets-entrypoint.sh:ro
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/.secrets/sandbox_api_key.txt:/run/secrets/SANDBOX_API_KEY:ro
+    - ./config/entrypoint.sh:/secrets-entrypoint.sh:ro
+    - ./.secrets/sandbox_api_key.txt:/run/secrets/SANDBOX_API_KEY:ro
   ssrf-proxy:
     cap_add:
     - CHOWN
@@ -369,9 +369,9 @@ services:
     security_opt:
     - no-new-privileges:true
     volumes:
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/config/ssrf_proxy/docker-entrypoint.sh:/entrypoint-dify.sh:ro
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/config/ssrf_proxy/squid.conf.template:/etc/squid/squid.conf.template:ro
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/config/ssrf_proxy/squid-common.conf.template:/etc/squid/dify_common.conf.template:ro
+    - ./config/ssrf_proxy/docker-entrypoint.sh:/entrypoint-dify.sh:ro
+    - ./config/ssrf_proxy/squid.conf.template:/etc/squid/squid.conf.template:ro
+    - ./config/ssrf_proxy/squid-common.conf.template:/etc/squid/dify_common.conf.template:ro
   worker:
     cap_drop:
     - ALL
@@ -442,16 +442,16 @@ services:
     tmpfs:
     - /tmp
     volumes:
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/config/entrypoint.sh:/secrets-entrypoint.sh:ro
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/volumes/storage:/app/api/storage
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/.secrets/secret_key.txt:/run/secrets/SECRET_KEY:ro
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/.secrets/db_password.txt:/run/secrets/DB_PASSWORD:ro
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/.secrets/redis_password.txt:/run/secrets/REDIS_PASSWORD:ro
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/.secrets/celery_broker_url.txt:/run/secrets/CELERY_BROKER_URL:ro
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/.secrets/pgvector_password.txt:/run/secrets/PGVECTOR_PASSWORD:ro
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/.secrets/sandbox_api_key.txt:/run/secrets/SANDBOX_API_KEY:ro
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/.secrets/plugin_daemon_key.txt:/run/secrets/PLUGIN_DAEMON_KEY:ro
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/.secrets/plugin_inner_api_key.txt:/run/secrets/PLUGIN_INNER_API_KEY:ro
+    - ./config/entrypoint.sh:/secrets-entrypoint.sh:ro
+    - ./volumes/storage:/app/api/storage
+    - ./.secrets/secret_key.txt:/run/secrets/SECRET_KEY:ro
+    - ./.secrets/db_password.txt:/run/secrets/DB_PASSWORD:ro
+    - ./.secrets/redis_password.txt:/run/secrets/REDIS_PASSWORD:ro
+    - ./.secrets/celery_broker_url.txt:/run/secrets/CELERY_BROKER_URL:ro
+    - ./.secrets/pgvector_password.txt:/run/secrets/PGVECTOR_PASSWORD:ro
+    - ./.secrets/sandbox_api_key.txt:/run/secrets/SANDBOX_API_KEY:ro
+    - ./.secrets/plugin_daemon_key.txt:/run/secrets/PLUGIN_DAEMON_KEY:ro
+    - ./.secrets/plugin_inner_api_key.txt:/run/secrets/PLUGIN_INNER_API_KEY:ro
   worker-beat:
     cap_drop:
     - ALL
@@ -521,15 +521,15 @@ services:
     tmpfs:
     - /tmp
     volumes:
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/config/entrypoint.sh:/secrets-entrypoint.sh:ro
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/.secrets/secret_key.txt:/run/secrets/SECRET_KEY:ro
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/.secrets/db_password.txt:/run/secrets/DB_PASSWORD:ro
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/.secrets/redis_password.txt:/run/secrets/REDIS_PASSWORD:ro
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/.secrets/celery_broker_url.txt:/run/secrets/CELERY_BROKER_URL:ro
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/.secrets/pgvector_password.txt:/run/secrets/PGVECTOR_PASSWORD:ro
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/.secrets/sandbox_api_key.txt:/run/secrets/SANDBOX_API_KEY:ro
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/.secrets/plugin_daemon_key.txt:/run/secrets/PLUGIN_DAEMON_KEY:ro
-    - /Users/rb3nt/Code/sdb-ai/apps/dify/.secrets/plugin_inner_api_key.txt:/run/secrets/PLUGIN_INNER_API_KEY:ro
+    - ./config/entrypoint.sh:/secrets-entrypoint.sh:ro
+    - ./.secrets/secret_key.txt:/run/secrets/SECRET_KEY:ro
+    - ./.secrets/db_password.txt:/run/secrets/DB_PASSWORD:ro
+    - ./.secrets/redis_password.txt:/run/secrets/REDIS_PASSWORD:ro
+    - ./.secrets/celery_broker_url.txt:/run/secrets/CELERY_BROKER_URL:ro
+    - ./.secrets/pgvector_password.txt:/run/secrets/PGVECTOR_PASSWORD:ro
+    - ./.secrets/sandbox_api_key.txt:/run/secrets/SANDBOX_API_KEY:ro
+    - ./.secrets/plugin_daemon_key.txt:/run/secrets/PLUGIN_DAEMON_KEY:ro
+    - ./.secrets/plugin_inner_api_key.txt:/run/secrets/PLUGIN_INNER_API_KEY:ro
 networks:
   dify-local:
     name: dify-local

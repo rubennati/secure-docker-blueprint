@@ -57,10 +57,11 @@ setup page and no open window.
   the frontend as 1000 with no shell in its image. No port is published.
 - **Network.** Huey and PostgreSQL are on `app-internal` and have no route out.
 - **Exposure.** A register of an organisation's risks and control gaps is a map of
-  where it is weak. `.env.example` ships `acc-tailscale`.
+  where it is weak. `.env.example` ships `access-vpn`.
 - **Rate limit.** The interface's first load requests about 80 script chunks and
-  assets. Under `sec-2` fourteen of them were answered with `429` and the page did
-  not load, so `.env.example` ships `sec-2-spa`.
+  assets. Under the burst of 50 the former `sec-2` chain had, fourteen of them
+  were answered with `429` and the page did not load; `limit-standard`'s bucket
+  of 500 holds them, and that is what `.env.example` ships.
 
 ## What is not included
 

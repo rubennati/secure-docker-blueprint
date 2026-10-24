@@ -37,7 +37,7 @@ The origin comes from intuitem's legal notice (RCS Versailles, France).
 | First administrator from `DJANGO_SUPERUSER_EMAIL` and the secret | The image's `startup.sh` creates it unattended when the email is set; upstream's templates leave the variable out |
 | Healthcheck against `localhost`, not `127.0.0.1` | Django answers 400 to a Host outside `ALLOWED_HOSTS`, measured |
 | `start_period: 900s` on the backend | The first start took about ten minutes: every migration plus 326 framework libraries. Later starts took two to three and a half minutes until every service was up |
-| `APP_TRAEFIK_SECURITY=sec-2-spa` | The interface's first load requests 77 files; under `sec-2` fourteen got `429` — script chunks, page nodes and an SVG — and the page did not load. Under `sec-2-spa` all 84 requests were answered — measured |
+| `APP_TRAEFIK_LIMIT=limit-standard` | The interface's first load requests 77 files; under the former `sec-2` chain's burst of 50 fourteen got `429` — script chunks, page nodes and an SVG — and the page did not load. Under `sec-2-spa`, whose bucket of 500 `limit-standard` carries, all 84 requests were answered — measured |
 | Frontend healthcheck in Node | The image has no shell |
 | No Qdrant, no MCP server | Both are absent from upstream's PostgreSQL + Traefik template; Qdrant serves the AI features, MCP is an optional profile |
 

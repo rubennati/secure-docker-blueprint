@@ -37,7 +37,7 @@
 | **`app-internal` network (`internal: true`)** | Isolate DB from host |
 | **`cap_drop: ALL` + minimal `cap_add` on MariaDB** + `no-new-privileges` on both services | Baseline hardening |
 | **`TZ` env var added** on both services | Blueprint convention; inbox relied on UTC |
-| **Access `acc-public` + security `sec-3` defaults** | Tracking pixel must be reachable by any browser that visits your sites, so public access is required; `sec-3` adds strict headers for the admin UI |
+| **Access `access-public`; `limit-standard`; `headers-application-owned` with `header-nosniff` and `header-permissions` before it** | Tracking pixel must be reachable by any browser that visits your sites, so public access is required; Matomo sends its own frame and referrer headers, which the proxy leaves alone, and the two blocks add what it lacks |
 
 ## Upgrade checklist
 

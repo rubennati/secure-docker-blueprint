@@ -8,7 +8,7 @@ Single service:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `lissy93/dashy:4.6.0` | Vue-based SPA + embedded build server |
+| `app` | `lissy93/dashy:4.8.7` | Vue-based SPA + embedded build server |
 
 No database. Config lives in `config/conf.yml`.
 
@@ -49,8 +49,8 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 ## Security Model
 
 - `no-new-privileges:true`
-- Default access `acc-tailscale` — personal dashboard, VPN-only
-- Default security `sec-3`
+- Default access `access-vpn` — personal dashboard, VPN-only
+- `limit-standard` and `headers-standard`
 - No data persistence beyond config file — container can be recreated freely
 
 ## Backup

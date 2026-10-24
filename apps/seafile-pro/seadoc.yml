@@ -73,21 +73,19 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc-ws.entrypoints=websecure"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc-ws.priority=100"
       # Access policy repeated: this router runs at priority=100 and outranks the
-      # main one, so it decides the request. Without this, acc-tailscale on the
+      # main one, so it decides the request. Without this, access-vpn on the
       # stack leaves this path answering wherever the host answers.
-      # WebSocket endpoint (/socket.io, required by SeaDoc). Access policy only —
-      # see the sibling router for why the sec-* chain is not applied here either.
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc-ws.middlewares=${APP_TRAEFIK_ACCESS}@file"
+      # WebSocket endpoint (/socket.io, required by SeaDoc). The four positions,
+      # with SIDE_TRAEFIK_LIMIT (.env): no counter, as the sibling routers.
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc-ws.middlewares=${APP_TRAEFIK_ACCESS}@file,${SIDE_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc-ws.tls=true"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc-ws.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc-ws.service=${COMPOSE_PROJECT_NAME}-seadoc"
       # Router: sdoc-server API (strip /sdoc-server prefix)
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/sdoc-server`)"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.entrypoints=websecure"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.priority=100"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.tls=true"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.middlewares=${APP_TRAEFIK_ACCESS}@file,seadoc-strip@docker"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.middlewares=${APP_TRAEFIK_ACCESS}@file,${SIDE_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH},seadoc-strip@docker"
       - "traefik.http.middlewares.seadoc-strip.stripprefix.prefixes=/sdoc-server"
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}-seadoc.loadbalancer.server.port=80"

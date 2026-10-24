@@ -196,9 +196,12 @@ services:
       # Uncomment ONLY for per-domain certificates; leave off when a wildcard
       # certificate already covers this host.
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
-      # Middlewares — order matters: WHO may reach it, then WHAT headers apply.
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      # Middlewares — the four positions, in this order: WHO may reach it (access),
+      # HOW FAST one address may ask (limit), WHICH headers the proxy sets
+      # (headers), WHO must be identified (auth). A per-app block from
+      # core/traefik's model.yml goes before the headers profile (a response
+      # header that must win over it) or after the four (a request header).
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
       # Service — the container-internal port, not a host port.
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8080"
 

@@ -159,9 +159,8 @@ services:
       # Uncomment ONLY for per-domain certificates; leave off when a wildcard
       # certificate already covers this host.
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
       # Middlewares — who may reach it, then what headers apply.
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
       # Service — 52345 only. 52346 is the worker's own health port and has no
       # authentication in front of it, so it stays off the router.
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=52345"

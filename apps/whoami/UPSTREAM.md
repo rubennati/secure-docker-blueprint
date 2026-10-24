@@ -24,7 +24,7 @@
 |--------|--------|
 | `read_only: true` + `tmpfs /tmp` | Whoami is a minimal Go binary — it doesn't write anywhere at runtime |
 | `cap_drop: ALL` | No capabilities needed; extra defense in depth |
-| `sec-5` chain | Static text response, fully CSP-compatible — good test target for the strictest middleware |
+| `csp-self-only@file` before the headers profile, `limit-strict` | Static text response, fully CSP-compatible — good test target for the enforcing CSP and the strict counter |
 | No healthcheck | The image has no `curl` or `wget`. Writing a custom healthcheck for a debug service is over-engineering |
 
 ## Upgrade checklist

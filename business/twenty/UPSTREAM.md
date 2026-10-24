@@ -35,7 +35,7 @@ public benefit corporation incorporated in Delaware.
 | Redis with a password | Upstream runs it without one; here it is set from a secret, through a tmpfs config file rather than the command line |
 | `read_only: true` on server and worker | Verified: migrations, sign-up, workspace activation, records and a restart |
 | Worker on `app-internal` only | It needs no route out for the CRM itself; mail and calendar sync would, see README |
-| `APP_TRAEFIK_ACCESS=acc-tailscale` | The first account creates the workspace |
+| `APP_TRAEFIK_ACCESS=access-vpn` | The first account creates the workspace |
 
 ## The interface and the rate limit
 
@@ -56,8 +56,8 @@ interface stays blank under both.
 
 Measured again on 2026-09-23 under `sec-2-spa-xl`, whose bucket holds one whole
 first load: 516 requests cold, 505 on a reload, and three further cold loads of
-516 each — every one answered, no `429`. That is the chain `.env.example` now
-ships.
+516 each — every one answered, no `429`. `.env.example` ships `limit-extra-large`,
+the same 125/1000.
 
 The bursts in the table are the ones those chains carried when it was measured.
 `sec-2` and `sec-2-spa` carry 200 and 500 since 2026-10-03, and the load has not

@@ -37,7 +37,7 @@ them.
 
 Until the first workspace exists, whoever reaches the sign-up page creates it and
 becomes the administrator. `.env.example` therefore ships
-`APP_TRAEFIK_ACCESS=acc-tailscale`, the VPN only.
+`APP_TRAEFIK_ACCESS=access-vpn`, the VPN only.
 
 After that, upstream's default closes the door: a second person who signs up
 without an invitation is refused with "New workspace setup is disabled" —
@@ -75,10 +75,10 @@ Not configured here, and not exercised.
 
 Twenty's first load issues over 500 requests — script chunks, styles, icons —
 and its assets are served with `max-age=0`, so every later load repeats them
-instead of using the browser's cache. A load that does not fit its chain's burst
-comes back partly `429` and the interface stays blank. `.env.example` therefore
-ships `sec-2-spa-xl`, whose bucket of 1000 holds one whole first load, and which
-belongs behind a closed access policy for that reason.
+instead of using the browser's cache. A load that does not fit the counter's
+burst comes back partly `429` and the interface stays blank. `.env.example`
+therefore ships `limit-extra-large`, whose bucket of 1000 holds one whole first
+load, and which belongs behind a closed access policy for that reason.
 
 The interface also requests company logos from `twenty-icons.com` in the
 visitor's browser.
@@ -87,8 +87,9 @@ visitor's browser.
 
 Run behind Traefik with TLS on 2026-09-23 (v2.41.0): the first sign-up and
 workspace, a company created in the interface and read over REST, the interface
-under the shipped `sec-2-spa-xl` without a single `429`, a restart, and the
-restore below. Full log in
+under `sec-2-spa-xl` — the name of its time for what `limit-extra-large` ships
+today, 125 per second and a bucket of 1000 — without a single `429`, a restart,
+and the restore below. Full log in
 [`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-23).
 
 ## Try it locally

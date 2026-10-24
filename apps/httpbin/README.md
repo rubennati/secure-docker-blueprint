@@ -26,7 +26,7 @@ The host name's root lists every endpoint.
 
 - **No login, and an open redirect.** Every endpoint answers whoever reaches it,
   and `/redirect-to` sends a visitor on to any URL it is given. `.env.example`
-  ships `APP_TRAEFIK_ACCESS=acc-tailscale`, the VPN only.
+  ships `APP_TRAEFIK_ACCESS=access-vpn`, the VPN only.
 - **It echoes what it receives.** `/get` and `/headers` return the request's
   headers and put the client's address in `origin`; the proxy headers
   `X-Forwarded-For`, `X-Forwarded-Proto`, `X-Forwarded-Port` and `X-Real-Ip`

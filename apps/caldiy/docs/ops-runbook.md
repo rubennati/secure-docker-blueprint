@@ -83,7 +83,7 @@ After the first successful deployment:
 - [ ] Set `deploy.resources` memory limits after 24–48 hours of normal usage (measure with
   `docker stats caldiy-app caldiy-db caldiy-redis` — add limits at 2× peak memory)
 - [ ] **Phase 2** — Expand Traefik access log filter to `200-599` (see `core/traefik/`)
-- [ ] **Phase 2** — Attach CrowdSec bouncer to the Cal.diy router (see §6)
+- [ ] **Phase 2** — Enable the CrowdSec bouncer for the deployment and verify it on Cal.diy (see §6)
 
 ---
 
@@ -231,8 +231,11 @@ full upgrade and rollback procedure.
 > - `core/crowdsec/` engine healthy: `docker exec crowdsec cscli lapi status`
 > - Traefik access log filter expanded to `200-599` in `core/traefik/ops/templates/traefik.yml.tmpl`
 >   (re-render required: `./ops/scripts/render.sh && docker compose restart traefik`)
-> - `crowdsec-basic` bouncer profile verified on `apps/whoami` per `core/crowdsec/docs/profiles.md`
-> - `crowdsec-basic@file` added as the first middleware on the Cal.diy Traefik router
+> - `CROWDSEC_BOUNCER_ENABLED=true` in `core/traefik/.env`, rendered, validated and Traefik
+>   recreated — `threat-crowdsec` then stands on the `websecure` entrypoint in front of every
+>   router, Cal.diy's included; nothing is added to the Cal.diy router
+> - `threat-crowdsec` verified on `apps/whoami` per `core/crowdsec/docs/profiles.md`
+>   ("whoami-first validation")
 
 **Phase 2 verification checklist:**
 
@@ -291,13 +294,13 @@ change within seconds.
 In `apps/caldiy/.env`, change:
 
 ```env
-APP_TRAEFIK_ACCESS=acc-public
+APP_TRAEFIK_ACCESS=access-public
 ```
 
 to:
 
 ```env
-APP_TRAEFIK_ACCESS=acc-deny
+APP_TRAEFIK_ACCESS=access-blocked
 ```
 
 Then force Traefik to read the updated container labels:
@@ -337,7 +340,7 @@ After root-cause is understood and all affected secrets rotated:
 
 ```bash
 # Revert .env
-APP_TRAEFIK_ACCESS=acc-public
+APP_TRAEFIK_ACCESS=access-public
 docker compose up -d --force-recreate app
 ```
 
@@ -358,14 +361,17 @@ Key points:
 
 ---
 
-## 9. Traefik security chain rollout
+## 9. Traefik headers — the HSTS extension
 
-Cal.diy ships with `APP_TRAEFIK_SECURITY=sec-3` in `.env.example`. `sec-3` adds strict
-headers (HSTS `includeSubDomains`+`preload`, `Referrer-Policy`, `Permissions-Policy`,
-CSP report-only) over the standard `sec-2`. It blocks no requests and does not change the
-rate limit — but the HSTS directive is **browser-sticky**, so roll it out deliberately.
+Cal.diy ships `APP_TRAEFIK_HEADERS=headers-standard` and `APP_TRAEFIK_LIMIT=limit-standard` in
+`.env.example`: the proxy sets HSTS `max-age` (two years, `HSTS_MAX_AGE` in `core/traefik/.env`),
+`X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy` and
+`Permissions-Policy`, and counts 125 req/s with a burst of 500 per client address. HSTS
+`includeSubDomains` and `preload` are not part of the profile: they are the block
+`hsts-include-subdomains@file`, a decision per host name. It blocks no requests and does not
+change the rate limit — but the directive is **browser-sticky**, so place it deliberately.
 
-### 9.1 Pre-check — before enabling in production
+### 9.1 Pre-check — before placing the block in production
 
 **HSTS scope:** the header applies to the **exact host that serves it** (`APP_TRAEFIK_HOST`)
 and, with `includeSubDomains`, to **subdomains below that host** — never to sibling hosts or
@@ -381,8 +387,9 @@ covers `*.calendar.example.com` but **not** `www.example.com` or `example.com`; 
 - [ ] Confirm **no** required plain-HTTP host sits **below the Cal.diy hostname** (only relevant
       if Cal.diy is an apex/parent host — e.g. if Cal.diy is `example.com`, check
       `http://nas.example.com`, `http://print.example.com`). Sibling hosts are unaffected
-- [ ] If a required plain-HTTP host sits below the Cal.diy hostname: **do not enable `sec-3`** —
-      stay on `sec-2`, or move Cal.diy to a dedicated leaf host with no plain-HTTP children
+- [ ] If a required plain-HTTP host sits below the Cal.diy hostname: **do not place the block** —
+      stay on the profile's `max-age`, or move Cal.diy to a dedicated leaf host with no plain-HTTP
+      children
 - [ ] Decide on `preload` intentionally: the `preload` directive signals eligibility for the
       browser HSTS preload list. Do **not** submit the host to hstspreload.org unless every
       current and future in-scope host will always be HTTPS — preload-list removal takes months
@@ -390,21 +397,22 @@ covers `*.calendar.example.com` but **not** `www.example.com` or `example.com`; 
 ### 9.2 Apply
 
 ```bash
-# In the REAL apps/caldiy/.env (never commit it):
-#   APP_TRAEFIK_SECURITY=sec-3
+# In apps/caldiy/docker-compose.yml, place the block before the headers profile:
+#   ...middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,hsts-include-subdomains@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}
 docker compose -f apps/caldiy/docker-compose.yml up -d --force-recreate app
 ```
 
 Container labels are read at create time, so the app must be recreated. Traefik hot-reloads
-the middleware reference — no Traefik restart, and the `sec-3` chain already exists in the
-rendered dynamic config.
+the middleware reference — no Traefik restart, and the block already exists in the rendered
+dynamic config (`model.yml`). It stands before the profile so that it is applied after it on
+the response and wins (`docs/standards/traefik-security.md`, "Per-app blocks").
 
 ### 9.3 Test
 
 ```bash
 # 1. Header check
 curl -skI https://<APP_TRAEFIK_HOST>/ | grep -iE \
-  'strict-transport-security|referrer-policy|permissions-policy|content-security-policy'
+  'strict-transport-security|referrer-policy|permissions-policy|x-content-type-options|x-frame-options'
 ```
 
 - [ ] Browser smoke test — load `https://<APP_TRAEFIK_HOST>/`, no console/security errors
@@ -412,33 +420,31 @@ curl -skI https://<APP_TRAEFIK_HOST>/ | grep -iE \
 - [ ] Login / admin smoke test — sign in, confirm the dashboard loads (sessions unaffected by
       a header-only change)
 
-### 9.4 Expected headers (sec-3)
+### 9.4 Expected headers
 
 | Header | Expected value |
 |--------|----------------|
-| `Strict-Transport-Security` | `max-age=63072000; includeSubDomains; preload` |
+| `Strict-Transport-Security` | `max-age=63072000` — with the block: `max-age=63072000; includeSubDomains; preload` |
 | `Referrer-Policy` | `strict-origin-when-cross-origin` |
 | `Permissions-Policy` | `camera=(), microphone=(), geolocation=(), payment=(), usb=(), …` |
-| `Content-Security-Policy-Report-Only` | `default-src 'self'; script-src 'self' 'unsafe-inline'; …` |
 | `X-Content-Type-Options` | `nosniff` |
 | `X-Frame-Options` | `DENY` |
 
-If `Content-Security-Policy-Report-Only` is **absent**, that is fine — it means the app set its
-own CSP; the report-only variant never blocks regardless.
+The proxy sets no `Content-Security-Policy`; one in the response is the app's own.
 
 ### 9.5 Rollback
 
 ```bash
-# In the REAL apps/caldiy/.env:
-#   APP_TRAEFIK_SECURITY=sec-2
+# Remove hsts-include-subdomains@file from the router label in apps/caldiy/docker-compose.yml
 docker compose -f apps/caldiy/docker-compose.yml up -d --force-recreate app
 ```
 
-> **HSTS browser-cache caveat:** rollback stops *sending* the strict HSTS header, but any
-> browser that already received `max-age=63072000` keeps forcing HTTPS for this host (and the
-> subdomains below it) until that max-age expires (~2 years) or the user manually clears HSTS state
-> (`chrome://net-internals/#hsts` → "Delete domain security policies"). Rolling back does not
-> un-stick already-served clients — which is exactly why §9.1 must be cleared first.
+> **HSTS browser-cache caveat:** rollback stops *sending* `includeSubDomains` and `preload` (the
+> profile's `max-age` stays), but any browser that already received them keeps forcing HTTPS for
+> this host (and the subdomains below it) until that max-age expires (~2 years) or the user
+> manually clears HSTS state (`chrome://net-internals/#hsts` → "Delete domain security policies").
+> Rolling back does not un-stick already-served clients — which is exactly why §9.1 must be
+> cleared first.
 
 ### 9.6 Monitoring after rollout
 
@@ -450,27 +456,31 @@ docker compose -f apps/caldiy/docker-compose.yml up -d --force-recreate app
 
 ---
 
-## 10. Next step — CrowdSec bouncer profile (not yet enabled)
+## 10. Next step — CrowdSec (a deployment decision, off as shipped)
 
-Cal.diy's likely profile is **`crowdsec-basic`** (IP/decision bouncer, no AppSec, fail-open),
-composed as `crowdsec-basic@file, acc-public@file, sec-3@file`. The profile model, the
-per-app vs global capability analysis, and Cal.diy's placement are defined in
-[`core/crowdsec/docs/profiles.md`](../../../core/crowdsec/docs/profiles.md). **It is not
-implemented yet** — this note records the guardrails so it is done safely when the time comes.
+CrowdSec is not a Cal.diy setting: `CROWDSEC_BOUNCER_ENABLED=true` in `core/traefik/.env` puts
+`threat-crowdsec` (IP/decision bouncer, no AppSec, fail-open) on the `websecure` entrypoint, in
+front of every router — Cal.diy's `access-public@file, limit-standard@file, headers-standard@file,
+auth-none@file` included. The middleware family, the per-app vs global capability analysis, and
+Cal.diy's placement are defined in
+[`core/crowdsec/docs/profiles.md`](../../../core/crowdsec/docs/profiles.md). **It is off as
+shipped** — this note records the guardrails so it is done safely if the deployment turns it on.
 
-- **Prove `crowdsec-basic` on `apps/whoami` first.** Enable the Traefik bouncer plugin, attach
-  `crowdsec-basic@file` to the throwaway `whoami` router, and run the end-to-end ban test
-  (§6 / `core/crowdsec/docs/profiles.md` → "whoami-first validation") before touching the
-  Cal.diy router.
-- **No AppSec initially.** `crowdsec-basic` keeps `crowdsecAppsecEnabled: false`. An unreachable
+- **Prove `threat-crowdsec` on `apps/whoami` first.** Switch the bouncer on and run the
+  end-to-end ban test against the throwaway `whoami` router (§6 /
+  `core/crowdsec/docs/profiles.md` → "whoami-first validation"). Nothing is attached by hand:
+  the recreate puts the bouncer in front of whoami — and of Cal.diy — at the same moment.
+- **No AppSec initially.** `threat-crowdsec` keeps `crowdsecAppsecEnabled: false`. An unreachable
   AppSec with unreachable-block on fails closed — HTTP 403 on every request — which is why AppSec
-  is a separate, later profile (`crowdsec-appsec`), not part of the first attachment.
+  is a separate, later switch (`CROWDSEC_APPSEC_ENABLED`, `threat-crowdsec-appsec`): one decision
+  for every application of the deployment at once, not part of the first enable.
 - **Never ban the operator/admin IP.** The bouncer also blocks the Traefik dashboard and any
-  admin tooling on the same path. Use a test IP for verification.
+  admin tooling on the same path. Use a test IP for verification; the operator's own address is
+  a CrowdSec AllowList (`CROWDSEC_ALLOWLIST_ADMIN` in `core/crowdsec`), never a label.
 - **Keep a Tailscale/LAN recovery path** that does not depend on the Cal.diy public router, so
   a bad decision can be undone.
-- **Do not add `crowdsec-basic@file` to Cal.diy's router until the profile is proven on whoami.**
-  Once attached it must be the **first** middleware in the chain.
 
-Rollback is clearing `APP_TRAEFIK_THREAT` in `apps/caldiy/.env` and recreating the app —
-Traefik hot-reloads within seconds.
+Rollback is the deployment's switch, not the stack's: `CROWDSEC_BOUNCER_ENABLED=false` in
+`core/traefik/.env`, `./ops/scripts/render.sh`, then recreate Traefik at once — until the
+recreate, the running entrypoint list names a middleware the render removed, and every router
+is disabled in between.

@@ -397,27 +397,27 @@ older database means files exist that no library references.
 
 **Restore order:** databases first, then the block store, then the app.
 
-## Access policy — OnlyOffice + SeaDoc require `acc-private`
+## Access policy — OnlyOffice + SeaDoc require `access-lan-vpn`
 
-`acc-tailscale` blocks server-to-server callbacks from Docker containers (their IPs are RFC1918, not Tailscale). This breaks both OnlyOffice document editing and SeaDoc collaborative editing:
+`access-vpn` blocks server-to-server callbacks from Docker containers (their IPs are RFC1918, not Tailscale). This breaks both OnlyOffice document editing and SeaDoc collaborative editing:
 
 - **OnlyOffice**: fetches and saves files via callback to Seafile's URL. The OnlyOffice container IP is not a Tailscale IP → Traefik blocks it → documents fail to open/save.
 - **SeaDoc**: makes internal API calls back to Seafile for token validation and file content. Same issue.
 
-**`acc-private` is the shipped default for exactly this reason:**
+**`access-lan-vpn` is the shipped default for exactly this reason:**
 
 ```env
-APP_TRAEFIK_ACCESS=acc-private
+APP_TRAEFIK_ACCESS=access-lan-vpn
 ```
 
 This section used to describe it as a fix to apply, which read as though the
-stack shipped `acc-tailscale`. It shipped `acc-public` — under which the callbacks
-work because nothing is filtered at all, and the file store answers the open
-internet from first boot. Opening it is now the deliberate step, not closing it.
+stack shipped `acc-tailscale` (today's `access-vpn`). It shipped `acc-public`,
+today's `access-public` — under which the callbacks work because nothing is
+filtered at all, and the file store answers the open internet from first boot. Opening it is now the deliberate step, not closing it.
 
-`acc-private` = Tailscale/VPN + LAN (RFC1918). Docker container IPs (172.x.x.x) fall into the LAN range and pass. External internet still blocked.
+`access-lan-vpn` = Tailscale/VPN + LAN (RFC1918). Docker container IPs (172.x.x.x) fall into the LAN range and pass. External internet still blocked.
 
-> If you run Seafile without OnlyOffice and without SeaDoc, `acc-tailscale` works fine.
+> If you run Seafile without OnlyOffice and without SeaDoc, `access-vpn` works fine.
 
 ## Thumbnail server
 

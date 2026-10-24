@@ -8,7 +8,7 @@ Modern successor to Statping — more active (weekly releases), better UI, wider
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `louislam/uptime-kuma:2.5.4` | Web UI + probe scheduler + SQLite store |
+| `app` | `louislam/uptime-kuma:2.5.6` | Web UI + probe scheduler + SQLite store |
 
 Data lives in `./volumes/data/` (SQLite DB, monitor state, uploaded icons).
 
@@ -46,13 +46,13 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/        # 200 OK
 ## Security Model
 
 - **First-user-wins owner** — open the UI yourself immediately after `docker compose up -d`.
-- **Default access `acc-tailscale` + `sec-3`** — the admin UI exposes all your probe URLs, response bodies, and notification webhook URLs. VPN-only is the right default.
+- **Default access `access-vpn`, with `limit-standard` and `headers-standard`** — the admin UI exposes all your probe URLs, response bodies, and notification webhook URLs. VPN-only is the right default.
 - **Public status pages** — Kuma serves these at `/status/<slug>`. If you want them externally reachable while keeping the admin UI private, add a second Traefik router:
 
   ```yaml
   - "traefik.http.routers.kuma-public.rule=Host(`status.example.com`)"
   - "traefik.http.routers.kuma-public.service=uptime-kuma"
-  # + public-friendly middleware chain
+  # + the four middleware positions, access-public@file in the first
   ```
 
 - **`no-new-privileges:true`**.

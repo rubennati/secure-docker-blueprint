@@ -89,3 +89,7 @@ where an operator changes those values.
 chain, since 2026-08-17, and both are `scaffolded` — neither has been verified
 on a host, which is how the order went unnoticed. Moving the middleware ahead
 of the chain is the same one-line change; it is not part of this fix.
+
+2026-10-16: both moved ahead of the chain, with the `@docker` suffix on all
+three references. The headers they now pass through are the applications' own
+and are not yet verified on a host.

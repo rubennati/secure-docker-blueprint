@@ -44,7 +44,7 @@ AGPL-3.0. The Frappe framework underneath is MIT.
 | Egress only for the backend and the queue workers | Nothing else calls out |
 | Healthchecks: TCP for nginx, Gunicorn and Socket.IO; the process for workers and scheduler | The image ships no `healthcheck.sh`, although upstream's operations page refers to one |
 | No backup-cron override | Upstream's runs Ofelia with the Docker socket |
-| `APP_TRAEFIK_ACCESS=acc-tailscale` | A company's books in one place |
+| `APP_TRAEFIK_ACCESS=access-vpn` | A company's books in one place |
 | `config/nginx-socketio.conf`: a second listener on 8081 for `/socket.io`, with `Origin http://$host:8080`, and the site name as a network alias of the frontend on `app-internal` | The realtime service authenticates a socket by fetching `<Origin>/api/method/frappe.realtime.get_user_info`. The image's nginx puts the public URL in `Origin`, which a container on `app-internal` cannot reach — every socket was refused with `Unauthorized: TypeError: fetch failed`. Upstream's own compose leaves that container on a network with a way out; this keeps the isolation and gives it an address that exists |
 
 ## The realtime service's session check (2026-09-23)

@@ -30,7 +30,7 @@ Whoever reaches it can rewrite documents in the connected Paperless-ngx, start
 model and OCR jobs against the configured keys, and change its settings. This
 stack therefore ships **two** gates, and neither is optional:
 
-1. `APP_TRAEFIK_ACCESS=acc-tailscale` — the router answers the VPN only.
+1. `APP_TRAEFIK_ACCESS=access-vpn` — the router answers the VPN only.
 2. A basic-auth middleware in front of the router, with the hash in the
    gitignored `.env`.
 
@@ -96,8 +96,9 @@ the pages to that vendor.
 
 - **Its own API is unauthenticated**, which is why the two gates above are not
   optional.
-- **The rate limit is not measured.** The chain ships `sec-2` and the interface
-  is a React application; no first-load count has been taken behind Traefik.
+- **The rate limit is not measured.** `.env.example` ships `limit-standard` and
+  the interface is a React application; no first-load count has been taken
+  behind Traefik.
 - **The basic-auth hash sits in `.env`**, not in a Docker Secret: a Traefik
   middleware reads its users from the label. `docs/standards/secrets.md` calls
   that Pattern 3, a documented deviation.
