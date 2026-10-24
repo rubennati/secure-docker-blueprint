@@ -304,10 +304,28 @@ fi
 
 # Runtime files (after render)
 if [ -f "${ROOT_DIR}/config/traefik.yml" ]; then
-  # ensure no unsubstituted vars remain
-  if grep -R '\${[A-Za-z_][A-Za-z0-9_]*}' -n "${ROOT_DIR}/config" >/dev/null 2>&1; then
-    echo "ERROR: Unresolved variables found in generated config/."
-    grep -R '\${[A-Za-z_][A-Za-z0-9_]*}' -n "${ROOT_DIR}/config" || true
+  # Ensure no unsubstituted variable remains — in the files render.sh writes,
+  # and only those: config/traefik.yml, config/haproxy.cfg.template,
+  # config/dynamic/*.yml and, in cloudflare mode, config/host/cloudflare-ranges.nft.
+  # config/host/ also holds the copies scripts/host-files.sh renders — the
+  # watchdog script and its env file carry shell variables on purpose — and
+  # config/logrotate/ is tracked, not rendered; neither is envsubst output, so a
+  # `${…}` there is not a render error (a whole-directory search failed on a
+  # host with rendered host files, 2026-10-23).
+  rendered_files() {
+    printf '%s\n' "${ROOT_DIR}/config/traefik.yml" "${ROOT_DIR}/config/haproxy.cfg.template"
+    if [ -f "${ROOT_DIR}/config/host/cloudflare-ranges.nft" ]; then
+      printf '%s\n' "${ROOT_DIR}/config/host/cloudflare-ranges.nft"
+    fi
+    find "${ROOT_DIR}/config/dynamic" -maxdepth 1 -name '*.yml' 2>/dev/null | sort
+  }
+  unresolved="$(rendered_files | while IFS= read -r f; do
+    [ -f "${f}" ] || continue
+    grep -n '\${[A-Za-z_][A-Za-z0-9_]*}' "${f}" /dev/null || true
+  done)"
+  if [ -n "${unresolved}" ]; then
+    echo "ERROR: Unresolved variables found in the files render.sh wrote:"
+    echo "${unresolved}"
     exit 1
   fi
 
