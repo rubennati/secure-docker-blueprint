@@ -87,7 +87,7 @@ This is the production issue that motivated this document, debugged on a
 Linux host running Traefik v3.6 in Docker. The behaviour is unchanged in v3.7.
 
 **Symptom:** Tailscale clients connecting over IPv6 got `HTTP 403` from
-Traefik's `acc-tailscale` middleware, while the same clients worked fine
+Traefik's `access-vpn` middleware, while the same clients worked fine
 over IPv4.
 
 ```bash
@@ -110,7 +110,7 @@ curl -6 https://auth.example.com/   # → fd7a:115c:a1e0::10 → HTTP/2 403 (blo
    address**, not the original client.
 4. Traefik therefore sees `ClientHost=172.19.0.1` (the gateway) for every
    IPv6 client, instead of the real Tailscale IPv6 address.
-5. `acc-tailscale`'s `ipAllowList` only allows `100.64.0.0/10` and
+5. `access-vpn`'s `ipAllowList` only allows `100.64.0.0/10` and
    `fd7a:115c:a1e0::/48` — `172.19.0.1` matches neither → `403`.
 
 ```text
@@ -119,7 +119,7 @@ Tailscale IPv6 client
   → Docker published port → docker-proxy (userland relay)
   → IPv4-only Docker bridge (source IP rewritten to the gateway)
   → Traefik sees ClientHost=172.19.0.1
-  → acc-tailscale ipAllowList: no match
+  → access-vpn ipAllowList: no match
   → HTTP 403
 ```
 
@@ -209,7 +209,7 @@ exactly as it is today — IPv4-only, `internal: true` where appropriate.
 ## Why `172.19.0.1/32` in `ipAllowList` is a workaround, not a fix
 
 A tempting quick patch when you first see `ClientHost=172.19.0.1` getting
-blocked is to add `172.19.0.1/32` to `acc-tailscale`'s `ipAllowList` and
+blocked is to add `172.19.0.1/32` to `access-vpn`'s `ipAllowList` and
 move on. Resist this — it does not fix anything, it just stops the
 specific symptom from showing up as a 403:
 
@@ -330,7 +330,7 @@ network (see [Rollback](#8-rollback) in the migration guide).
 Dual-stack `proxy-public` needs an explicit IPv6 subnet — Docker has no
 default IPv6 address pool to auto-assign from the way it does for IPv4.
 Use a **Unique Local Address (ULA)** prefix (`fc00::/7`, same family as
-the `fc00::/7` range already used by `acc-local`/`acc-private` in
+the `fc00::/7` range already used by `access-lan`/`access-lan-vpn` in
 `access.yml`), not a public/global IPv6 allocation you don't own.
 
 `fd00:dead:beef:30::/64` (used as the example throughout this repo) is a

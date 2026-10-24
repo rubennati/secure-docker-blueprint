@@ -265,7 +265,7 @@ If both green, Core is running. The `cscli metrics show acquisition` form is pre
 1. **CrowdSec tails from the end of the file, not the beginning** (`Starting tail (offset: 0, whence: 2)` in the engine log). Any Traefik traffic that happened *before* the CrowdSec container started is invisible to it — only new lines written after that point count.
 2. **`TRAEFIK_ACCESSLOG_BUFFER`** (default `100` in `core/traefik/.env`) batches access-log writes — on a quiet server, a handful of requests may not be enough to trigger a flush to disk yet.
 
-To force a flush and confirm ingestion actually works, generate enough local traffic directly against Traefik (no DNS needed, works even if the only reachable app uses `acc-tailscale` and blocks self-curls with 403 — the access-log line is written either way):
+To force a flush and confirm ingestion actually works, generate enough local traffic directly against Traefik (no DNS needed, works even if the only reachable app uses `access-vpn` and blocks self-curls with 403 — the access-log line is written either way):
 
 ```bash
 for i in $(seq 1 110); do
@@ -524,7 +524,7 @@ docker exec crowdsec cscli bouncers list
 
 With AppSec enabled, also run the reachability check in
 [docs/appsec.md](docs/appsec.md) "Step 1", then send one request through a route that
-carries `crowdsec-appsec@file` and confirm it answers as before.
+while `CROWDSEC_APPSEC_ENABLED=true` and confirm it answers as before.
 
 ### Step 3 — remove `proxy-public` from the engine
 
@@ -575,11 +575,11 @@ the dedicated path failed before retrying step 2.
 HTTP-layer enforcement. Configuration spans two directories: the bouncer API key is generated here, and the plugin itself is declared in `core/traefik/`.
 
 > **Before attaching the bouncer to anything, read [docs/profiles.md](docs/profiles.md).**
-> HTTP enforcement is modelled as a small family of named, per-app profiles
-> (`crowdsec-basic` → `crowdsec-appsec` → `crowdsec-strict`), chosen independently of
-> the `acc-*` access and `sec-N` header axes — not one generic `sec-crowdsec` applied
-> everywhere. That document also defines the whoami-first validation path, what is
-> per-app vs global, and why geo is a deferred, separate mechanism. The steps below are
+> HTTP enforcement is one decision per deployment, placed on the reverse proxy's
+> entrypoint in front of every router, in two strengths (`threat-crowdsec` →
+> `threat-crowdsec-appsec`, a third deferred) — not a per-app label. That document
+> also defines the whoami-first validation path, what is per-app vs global, and why
+> geo is a deferred, separate mechanism. The steps below are
 > the raw plugin enablement those profiles build on.
 
 ### Generate the bouncer key
@@ -601,8 +601,9 @@ The command prints the key once — save it immediately.
    ```
 
    Nothing in the templates is edited. `render.sh` reads the switch and emits the
-   plugin block into `config/traefik.yml` and the `crowdsec-basic` and
-   `crowdsec-appsec` middlewares into `config/dynamic/crowdsec.yml`.
+   plugin block and the entrypoint list into `config/traefik.yml` and the
+   `threat-crowdsec` and `threat-crowdsec-appsec` middlewares into
+   `config/dynamic/crowdsec.yml`.
 2. Render, validate, and recreate Traefik — the plugin block is static configuration:
 
    ```bash
@@ -611,10 +612,10 @@ The command prints the key once — save it immediately.
    docker compose up -d --force-recreate traefik
    ```
 
-3. **Required, not optional — do this before verifying.** Add `crowdsec-basic@file` as the **first** middleware on the router. The plugin loading successfully (steps 1–4) does not make the bouncer do anything by itself: its polling loop only starts once the middleware is actually attached to a router's request path. Skip this step and `cscli bouncers list` will never show a `Last API pull` — no error anywhere, it just silently never starts. See [`docs/bugfixes/traefik-crowdsec-plugin-2026-04-20.md`](../../docs/bugfixes/traefik-crowdsec-plugin-2026-04-20.md) "Bug #3" if this happens. Start with `apps/whoami` — see [docs/profiles.md](docs/profiles.md) "whoami-first validation". Example label:
+3. **Confirm the entrypoint carries it.** The recreate placed `threat-crowdsec@file` on the `websecure` entrypoint, in front of every router — nothing is attached by hand. The plugin loading (steps 1–2) does not make the bouncer do anything by itself: its polling loop only starts once the middleware is in a request path, which the entrypoint list is after the recreate. If `cscli bouncers list` never shows a `Last API pull`, the recreate did not happen or `validate.sh` would have refused the list — see [`docs/bugfixes/traefik-crowdsec-plugin-2026-04-20.md`](../../docs/bugfixes/traefik-crowdsec-plugin-2026-04-20.md) "Bug #3" for the symptom's history. Prove it on `apps/whoami` — see [docs/profiles.md](docs/profiles.md) "whoami-first validation":
 
-   ```yaml
-   - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=crowdsec-basic@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+   ```bash
+   grep -A2 '      middlewares:' ../traefik/config/traefik.yml   # threat-crowdsec@file, compress@file
    ```
 
    ```bash
@@ -644,7 +645,7 @@ docker exec crowdsec cscli bouncers list
 
 # 3. Middleware visible in Traefik dashboard?
 # https://<traefik-host>/dashboard/#/http/middlewares
-# Find crowdsec-basic@file — Status must be green "Success".
+# Find threat-crowdsec@file — Status must be green "Success".
 # If "invalid middleware type or middleware does not exist":
 # plugin did not load (check 1).
 

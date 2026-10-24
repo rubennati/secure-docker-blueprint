@@ -52,7 +52,7 @@ Pick one; [`authelia/README.md`](authelia/README.md) compares the three.
 
 | Service | Description |
 |---|---|
-| [headscale](headscale/) | Control server for Tailscale clients — the node registry, keys and policy of a tailnet you run yourself. `acc-tailscale` means this tailnet where it is deployed. Ships closed on `acc-local`; the embedded relay is an opt-in overlay because it needs a published UDP port |
+| [headscale](headscale/) | Control server for Tailscale clients — the node registry, keys and policy of a tailnet you run yourself. `access-vpn` means this tailnet where it is deployed. Ships closed on `access-lan`; the embedded relay is an opt-in overlay because it needs a published UDP port |
 
 ### Shared secrets
 

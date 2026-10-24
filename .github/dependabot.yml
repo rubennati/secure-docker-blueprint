@@ -1,12 +1,16 @@
 version: 2
 
-# Every pull request Dependabot opens targets `dev`. The branch model in
-# docs/standards/commit-rules.md routes all change through `dev`; a pull request
-# against `main` has to be re-targeted by hand and then falls behind `dev` the
-# moment anything else merges there, because the `dev` ruleset requires an
-# up-to-date branch. Security updates follow the target-branch of the matching
-# version-updates entry, so the npm entries below are what keep the site's and
-# the examples' dependency pull requests off `main` as well.
+# Every version-update pull request Dependabot opens targets `dev`. The branch
+# model in docs/standards/commit-rules.md routes all change through `dev`; a
+# pull request against `main` has to be re-targeted by hand and then falls
+# behind `dev` the moment anything else merges there, because the `dev`
+# ruleset requires an up-to-date branch.
+#
+# Security updates are different: GitHub raises them against the default
+# branch (`main`) only, whatever `target-branch` says — `target-branch`
+# applies to version updates. A re-targeted security pull request is set back
+# to `main` by the next `@dependabot rebase`. They stay on, by decision; what
+# `main` lacks reaches it with the next release from `dev`.
 
 updates:
   - package-ecosystem: github-actions

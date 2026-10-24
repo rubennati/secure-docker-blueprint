@@ -134,8 +134,8 @@ These controls are enforced by Traefik configuration rendered from templates in 
 |-------|-------|
 | **Implemented?** | Yes |
 | **Location** | `core/traefik/ops/templates/dynamic/tls-profiles.yml.tmpl` |
-| **Profiles** | `tls-basic` (TLS 1.2+, sniStrict), `tls-aplus` (TLS 1.2+, forward-secrecy-only ciphers, X25519 preferred), `tls-modern` (TLS 1.3 only, sniStrict) |
-| **Default** | Set via `TLS_DEFAULT_OPTION` in `.env`, applied globally via `websecure.http.tls.options` |
+| **Profiles** | `tls-compatible` (TLS 1.2+, sniStrict), `tls-standard` (TLS 1.2+, forward-secrecy-only ciphers, X25519 preferred), `tls-strict` (TLS 1.3 only, sniStrict) |
+| **Default** | `TLS_DEFAULT_OPTION` in `.env` builds the file provider's reserved `default` option, which every `tls=true` router takes; a router names another profile only as a documented exception (`tls-conflict` in CI refuses two options on one host name) |
 | **Gaps** | TLS profile is documentation-recommended per app but not machine-verified. No CI check confirms a given app uses an appropriate profile. |
 
 #### 10. Security headers
@@ -143,19 +143,19 @@ These controls are enforced by Traefik configuration rendered from templates in 
 | Field | Value |
 |-------|-------|
 | **Implemented?** | Yes |
-| **Location** | `core/traefik/ops/templates/dynamic/security-blocks.yml.tmpl` |
-| **Headers enforced** | HSTS (63072000s = 2yr), `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY` (or SAMEORIGIN in embed variants), Referrer-Policy, Permissions-Policy (camera, mic, geolocation, payment, USB, gyroscope disabled), CSP (report-only in sec-3, enforcing in sec-5), `Vary` |
+| **Location** | `core/traefik/ops/templates/dynamic/model.yml.tmpl` — the header profiles and blocks |
+| **Headers enforced** | HSTS (63072000s = 2yr), `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY` (or SAMEORIGIN through the `frame-self` block), Referrer-Policy, Permissions-Policy (camera, mic, geolocation, payment, USB, gyroscope disabled), CSP (report-only in sec-3, enforcing in sec-5), `Vary` |
 | **Removed** | `X-XSS-Protection` — removed intentionally, documented rationale: deprecated, Chrome removed XSS Auditor in 2019 |
-| **Gaps** | CSP is `report-only` in sec-3 (the most common level). Enforcing CSP is only in sec-5 (`Whoami` is the only app at this level). Most apps run with a permissive CSP. |
+| **Gaps** | The proxy sets no CSP by default; `csp-self-only` is an enforcing policy for an application tested against it (whoami only). An application on `headers-application-owned` sends its own set, measured for Keycloak, Vaultwarden and Matomo and not yet for the three office servers. |
 
 #### 11. Rate limiting
 
 | Field | Value |
 |-------|-------|
 | **Implemented?** | Yes |
-| **Location** | `core/traefik/ops/templates/dynamic/security-blocks.yml.tmpl` |
-| **Limits** | `rl-soft`: 125 avg / 200 burst. `rl-hard`: 20 avg / 40 burst. `rl-spa`: 125 avg / 500 burst (first load beyond `rl-soft`'s). `rl-sync`: 1000 avg / 1000 burst (file-sync clients) |
-| **Applied from** | sec-2 (soft) / sec-4 (hard) |
+| **Location** | `core/traefik/ops/templates/dynamic/model.yml.tmpl` — position 2 of the model |
+| **Limits** | `limit-standard`: 125 avg / 500 burst. `limit-strict`: 20 avg / 40 burst. `limit-sync`: 1000 avg / 1000 burst (file-sync clients). `limit-extra-large`: 125 avg / 1000 burst (closed access only, CI-enforced). `limit-none`: no counter |
+| **Applied from** | every router's `APP_TRAEFIK_LIMIT` — a mandatory position |
 | **Gaps** | Rate limits are per-IP at the Traefik level. No distributed rate limiting. Behind a CDN or NAT, all users share one bucket. |
 
 #### 12. Network access policies
@@ -163,8 +163,8 @@ These controls are enforced by Traefik configuration rendered from templates in 
 | Field | Value |
 |-------|-------|
 | **Implemented?** | Yes |
-| **Location** | `core/traefik/ops/templates/dynamic/access.yml.tmpl` |
-| **Policies** | `acc-public`, `acc-local` (RFC1918 + ULA hardcoded), `acc-tailscale` (CIDR from .env), `acc-private` (LAN + VPN), `acc-deny` (nobody) |
+| **Location** | `core/traefik/ops/templates/dynamic/model.yml.tmpl` — position 1 of the model |
+| **Policies** | `access-public`, `access-lan` (RFC1918 + ULA hardcoded), `access-vpn` (CIDR from .env), `access-lan-vpn` (LAN + VPN), `access-blocked` (nobody) |
 | **Gaps** | `forwardedHeaders.trustedIPs` is rendered from `core/traefik/ops/cloudflare-ips.txt` (Cloudflare's published ranges), closing the X-Forwarded-For spoofing gap for the Cloudflare path; CI checks that every entry parses, and the `Cloudflare ranges` workflow compares the file with the published lists weekly. Not verified per deployment — an edited `.env` or file on a host is outside CI. Separately, the Tailscale path recovers the real client IP at the network layer (direct connection, no header involved) — this only works end to end if `proxy-public` is dual-stack, which is opt-in (`core/traefik/network-dual-stack.yml`), not the default. An IPv4-only deployment with Tailscale IPv6 clients loses the real client IP for `ipAllowList` purposes (`ClientHost` shows the Docker gateway address) until the operator opts in. See `core/traefik/docs/ipv6-dual-stack.md` and `docs/bugfixes/traefik-ipv6-dualstack-2026-06-19.md`. |
 
 #### 13. `exposedByDefault: false`
@@ -180,7 +180,7 @@ These controls are enforced by Traefik configuration rendered from templates in 
 | Field | Value |
 |-------|-------|
 | **Implemented?** | Yes |
-| **Evidence** | `api.insecure: false` in `traefik.yml.tmpl`. Dashboard is routed via `acc-tailscale + sec-4` per `docs/standards/traefik-security.md` |
+| **Evidence** | `api.insecure: false` in `traefik.yml.tmpl`. Dashboard is routed via `access-vpn`, `limit-strict`, `headers-standard`, `auth-none` (`routers-system.yml.tmpl`) |
 | **Gaps** | Not CI-verified that the dashboard router is actually configured with the correct middleware. A misconfigured `.env` could expose the dashboard publicly. |
 
 ---

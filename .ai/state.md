@@ -209,9 +209,12 @@ documents no way to retire one.
 
 ### Names kept as they are
 
-`APP_TRAEFIK_*` and `acc-tailscale` keep their names — they honestly describe the
-current reference implementation, and no maintained second implementation justifies
-a migration. A future architectural consideration, not debt.
+`APP_TRAEFIK_*` and `TAILSCALE_CIDR_*` keep their names — the variables honestly
+describe the current reference implementation, and no maintained second
+implementation justifies a migration; the policy itself is `access-vpn` since the
+middleware model, and the rename of the CIDR variables to `VPN_CIDR_*` is deferred
+to a change of its own (D7, 2026-10-18). A future architectural consideration, not
+debt.
 
 Suricata and Coraza were decided on 2026-09-24 ([`decisions.md`](decisions.md)):
 neither becomes a stack — CrowdSec's AppSec engine is Coraza, and Suricata waits for
@@ -311,105 +314,30 @@ outlying comments · Renovate App vs. self-hosted Action · whether `site/`'s
 unwatched `package-lock.json` rides along. Now D6 of the core audit, with its
 recommendation there.
 
-**The security chains replace what an application sets.** Measured on 2026-09-07 (Traefik v3.6): every value in an `hdr-*` block replaces
-the application's own header — Keycloak's and Nextcloud's `no-referrer` become
-the weaker browser default under level 3, HSTS loses `includeSubDomains` under
-level 2 — and a `customResponseHeaders` removal only takes effect ahead of the
-chain, so `business/matomo` and `apps/vaultwarden` still carry an ineffective
-one. The presets assume a bare application; the ones shipped set their own.
-→ *Recommendation:* a chain family without a header block (`sec-own`,
-`sec-own-spa`) plus single-purpose blocks an application appends (`hsts`,
-`permissions-policy`, a per-app CSP where upstream names one); the numbered
-presets stay for applications that set nothing. Keycloak, Authentik,
-Nextcloud, Vaultwarden and Matomo move after a measurement each, and Keycloak
-also needs an access policy for the stacks that call it and a router for its
-admin paths.
+**The Traefik middleware model — settled.** The review this section announced ran
+on 2026-10-17/18 ([`../docs/audits/traefik-architecture-review-2026-10-17.md`](../docs/audits/traefik-architecture-review-2026-10-17.md))
+and its eight decisions ([`decisions.md`](decisions.md), 2026-10-18) were applied
+as Phase 4.3 of the core audit (#258, 2026-10-23): four positions on every router
+— access, limit, headers, auth — threat enforcement and compression on the
+entrypoint, three header profiles that every one start with the HSTS base, one
+TLS standard, no alias. What the measurements led to, router by router, is
+[`../core/traefik/docs/middleware-model-migration.md`](../core/traefik/docs/middleware-model-migration.md).
 
-**The rate limits break code-split interfaces as well.** Measured on the test host
-on 2026-09-22, with a browser engine and with a replay of each first page load
-over one HTTP/2 connection. Open WebUI requests 173 files: under `sec-2` (burst
-50) 65 came back `429` and the interface showed an error, under `sec-2-spa` (burst
-200) none. Dify's workflow editor requests 291, of them 164 static files: 64 × `429`
-under `sec-2`, none under `sec-2-spa`. Windmill requests about 850 and fails under
-both — 412 × `429` under `sec-2-spa`. Langfuse (152) and LiteLLM (160) stayed
-under the limit. Of the twelve candidate stacks, CISO Assistant (77 files, 14 ×
-`429` under `sec-2`) moved to `sec-2-spa`; Twenty requests 412 and serves its
-assets with `max-age=0`, so a warm browser revalidates every one — `429` under
-both chains, as Windmill; the other interfaces stayed under `sec-2`
-(DefectDojo 42 on its dashboard, ERPNext 67 on its desk, calnode's admin
-interface 54).
-→ *Decided 2026-09-22:* no stack drops to `sec-1` to get past a limit. The
-measurements go into the review below.
-→ *2026-09-23:* the questions behind this — what the proxy owns, what its limits
-are measured against, where the client address comes from with a CDN proxy in
-front, and what threat enforcement already covers — are collected in
-[`../docs/audits/reverse-proxy-limits-2026-09-23.md`](../docs/audits/reverse-proxy-limits-2026-09-23.md).
-→ *2026-09-23:* `rl-spa-xl` (average 100, burst 1000) and `sec-2-spa-xl` exist for
-the two interfaces whose first load does not fit 200. The bucket holds one whole
-first load; `check-structure.py` fails an `-xl` chain outside `acc-private` or
-`acc-tailscale`. Measured 2026-09-23 behind Traefik with TLS with the shipped
-`acc-tailscale`: Twenty's interface (412 requests) and Windmill's (about 850)
-load under `sec-2-spa-xl` without a single `429`, five loads each. Both ship the
-chain now; no other stack uses it.
-→ *2026-10-03:* the limits are widened as an interim, so the bucket sizes named
-above are the ones in force when each measurement was taken. Now: `rl-soft` 125
-requests per second, burst 200 · `rl-spa` 125, burst 500 · `rl-spa-xl` 125, burst
-1000 · `rl-hard` 20, burst 40. Sync clients met the sustained rate rather than the
-burst — the Nextcloud client runs up to 20 requests in parallel, the Seafile
-client three threads in each direction — so `rl-sync` (1000 per second) exists,
-in `sec-2-sync` and `sec-3e-sync`, shipped by `apps/seafile`, `apps/seafile-pro`
-and `apps/nextcloud`. Not counted on a host yet. Reasoning in
-[`decisions.md`](decisions.md), 2026-10-03; the review still decides what each
-chain is for.
-
-**Traefik labels and middlewares are reviewed as a whole before v1.0.0** — see
-[`../ROADMAP.md`](../ROADMAP.md). They grew stack by stack; 108 stacks route
-through Traefik, 105 of them take their chain from `.env` (counted 2026-10-15 —
-`traefik.enable=true` over the production compose files, `APP_TRAEFIK_SECURITY=`
-over the `.env.example` files). After v1.0.0 a renamed middleware disables the
-router of every deployment that names it. Open, besides the two points above:
-
-- **Names.** Fifteen chains put headers, framing and rate limit into one name.
-  49 stacks default to `sec-2` and 36 to `sec-3`; `sec-0`, `sec-1`, `sec-1e`,
-  `sec-3e` and `sec-3e-spa` are selected by no `.env.example`. `e` reads as
-  "embeddable" and permits only the application's own
-  origin. `spa` names a kind of application rather than what the chain changes, a
-  burst of 200 — the chain file calls the `-spa` chains VPN-only, the block they
-  use is described as fit for public applications. `sec-authentik` carries the
-  chains' prefix but is an authentication gate, and the label pattern has no slot
-  for it.
-- **Fit per application**, Nextcloud for one: what an application needs to start
-  without errors and stay responsive under a working day's load, and whether
-  presets or per-application settings answer that. Every rate-limit figure above
-  is a first page load; no stack has a measurement under sustained use.
-- **CrowdSec.** 43 of those 101 stacks have no `APP_TRAEFIK_THREAT` slot, so a
-  bouncer middleware cannot be attached from `.env`. The profile ladder is in
-  [`../core/crowdsec/docs/profiles.md`](../core/crowdsec/docs/profiles.md).
-- **Authentik.** Forward auth exists only as a commented-out block in
-  `core/traefik/ops/templates/dynamic/integrations.yml.tmpl`.
-- **Client address.** Confirmed against Traefik's reference on 2026-10-15: the
-  access policies and rate limits evaluate the connecting address, because the
-  templates set no `ipStrategy` and no `sourceCriterion`. An office behind one
-  NAT address shares one bucket on every path; behind Cloudflare's proxy the
-  closed policies refuse every request and one bucket serves every visitor
-  behind an edge address, while the access log and the application see the
-  client. Owner: `docs/standards/traefik-security.md` → Trusted Proxy Headers;
-  the render switch that changes it is D3 in the core audit. Not measured on a
-  host.
-- **Mail protocols.** Decided 2026-10-03 ([`decisions.md`](decisions.md)): a mail
-  stack publishes its SMTP and IMAP ports through an opt-in overlay, and
-  `core/traefik` gets no TCP entrypoints. No access policy, chain or bouncer
-  middleware applies to those ports; the mail server's own protections do. The
-  review does not have to answer it. What each option would have changed:
-  [`../docs/audits/candidate-evaluation-2026-10-03.md`](../docs/audits/candidate-evaluation-2026-10-03.md#across-the-list).
-- **Already tracked.** First-load counts for the four photo galleries and
-  `apps/it-tools` ([`tasks.md`](tasks.md), *Blocked on a host*), the chain for
-  Seafile's four path-scoped routers (issue #39), and `acc-private` admitting the
-  Docker bridge and host-local sources, which its own description does not say
-  (issue #129). `core/portainer`'s first load fits `sec-4` (issue #37). Both open
-  issues close through this review rather than beside it.
-
-→ The review may change names and structure, or confirm them.
+The measurements that shaped it, in the order taken, with the values before the
+model: 2026-09-07 (Traefik v3.6) — a header block replaces the application's own
+header, and a header removal placed after the chain has no effect; 2026-09-22 —
+the first loads of Open WebUI (173 requests), Windmill (about 850), Twenty (412),
+Langfuse (152) and LiteLLM (160) against buckets of 50, 200 and 500, with the
+`429` counts per bucket; 2026-09-23 — Twenty and Windmill load under a bucket of
+1000 without a `429`, five loads each; 2026-10-03 — the interim counters
+(125/200, 125/500, 125/1000, 20/40, and 1000/1000 for sync clients, after the
+Nextcloud client's 20 parallel requests and the Seafile client's three threads per
+direction); 2026-10-15 — 108 stacks route through Traefik, 105 take their values
+from `.env`; 2026-10-18 — the lab proofs of the model (entrypoint order, TLS
+inheritance, compression on streams, HSTS placement, four applications' own
+headers, the forged-header test). Still open, owned by the migration document's
+last section: the `429` count per public stack under the bucket of 500, the
+office servers' and Nextcloud's own headers, and every host proof.
 
 ## Active constraints
 

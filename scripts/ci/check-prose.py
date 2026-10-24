@@ -9,6 +9,12 @@ Reader-facing files fail. Maintainer files warn, because a findings log has a
 different job and its cleanup is not urgent — the register rules still apply
 there, they are just not a merge gate.
 
+A second rule, independent of the phrase list, reports the vocabulary the
+Traefik middleware model retired (sec-*, acc-*, hdr-*, rl-*, the threat slot,
+the old TLS and CrowdSec names) wherever current documentation still uses it
+— see RETIRED below for what is current, what is a record, and what an
+old-to-new example is allowed to say.
+
 `--changed-only` reports the same findings for the lines a diff touches, and
 nothing else. That is what CI gates on: a file may carry older findings without
 blocking a change, but a line this change writes has to meet the standard.
@@ -87,6 +93,102 @@ add("evaluation in place of a value",
     "genuinely better", "the interesting case", "is milder", "the weakest of",
     "worth knowing", "worth being precise", "worth stating", "is harmless,",
     "worth it, and not")
+
+# ── the vocabulary before the middleware model ───────────────────────────────
+# Phase 4.3 of the core audit (2026-10-22) replaced the sec-* chains, the acc-*
+# policies, the hdr-*/rl-* blocks, the threat slot and the old TLS and CrowdSec
+# names. Current documentation must not describe them as current. Three kinds
+# of text may still carry them:
+#   - a record: a bugfix, audit, review or research document, a host-session
+#     record, the maintenance log, the decision register (dated entries, each
+#     superseded by a later one rather than rewritten), the released sections
+#     of the CHANGELOG, the migration document itself, and the verification
+#     lines of an UPSTREAM.md (what was verified, on which date, with which
+#     values);
+#   - an old-to-new example: a unit that names the old value beside the
+#     model's — a migration note, a "before the model" aside;
+#   - the checker's own fixtures (scripts/).
+# RETIRED_GATE decides whether a finding blocks: False while the documentation
+# moves (Phase 4.4a–c), True from then on.
+RETIRED_GATE = False
+RETIRED = re.compile(
+    r"\b(sec-[0-9][a-z0-9-]*|acc-(?:public|local|tailscale|private|deny)|"
+    r"hdr-(?:basic|strict)(?:-embed)?|rl-(?:soft|spa|spa-xl|sync|hard)|"
+    r"APP_TRAEFIK_(?:SECURITY|THREAT)|sec-authentik|strip-xfo|"
+    r"tls-(?:basic|aplus|modern))\b|(?<![\w-])crowdsec-(?:basic|appsec|strict)\b"
+)
+# What makes a unit an old-to-new example: the model's own names, or the words
+# a migration note uses.
+MODEL_CONTEXT = re.compile(
+    r"\b(access-(?:public|lan|vpn|lan-vpn|blocked)|limit-(?:none|standard|extra-large|sync|strict)|"
+    r"headers-(?:standard|application-owned|none)|auth-none|auth-authentik|threat-crowdsec|"
+    r"tls-(?:compatible|standard|strict)|hsts-base|frame-self|csp-self-only|forwarded-proto-https|"
+    r"middleware model|before the model|replaced|retired|migrat\w*|names of their time|historical)\b",
+    re.IGNORECASE,
+)
+RECORD_PATHS = re.compile(
+    r"^(docs/(?:bugfixes|audits|reviews|research)/|docs/host-session-|docs/host-verification-|"
+    r"docs/maintenance-log\.md$|docs/v1-readiness-audit\.md$|\.ai/decisions\.md$|"
+    r"core/traefik/docs/middleware-model-migration\.md$|scripts/)"
+)
+UPSTREAM = re.compile(r"^(core|apps|business|monitoring|backup|development)/[^/]+/UPSTREAM\.md$")
+# A verification line in an UPSTREAM.md: what was checked, with a date or the
+# word that says so. An instruction in the same file ("set ... before
+# upgrading") carries neither and is checked like current documentation.
+RECORD_LINE = re.compile(r"\b(verified|verification|checked|measured|tested|ran on|run on)\b|\b20\d\d-\d\d-\d\d\b", re.IGNORECASE)
+RETIRED_HINT = ("the middleware model's name — docs/standards/traefik-labels.md; what each old "
+                "value became: core/traefik/docs/middleware-model-migration.md")
+
+
+def changelog_released_from(lines: list[str]) -> int:
+    """The first line of the first released section of CHANGELOG.md, or len(lines)."""
+    for n, line in enumerate(lines):
+        if re.match(r"^## \[\d", line):
+            return n
+    return len(lines)
+
+
+def retired_rows(path: Path, rel: str) -> list[tuple]:
+    """Occurrences of the retired vocabulary in current documentation.
+
+    Same row shape as the phrase rules, category "retired name". Code spans and
+    quotation marks do not exempt a match: documentation names a value in a
+    code span whether it is current or not.
+    """
+    if RECORD_PATHS.match(rel):
+        return []
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeDecodeError):
+        return []
+    limit = changelog_released_from(lines) if rel == "CHANGELOG.md" else len(lines)
+    upstream = bool(UPSTREAM.match(rel))
+
+    rows = []
+    for unit in prose_units(lines):
+        if unit[0][0] > limit:
+            break
+        spans, parts, cursor = [], [], 0
+        for n, line in enumerate([t[1] for t in unit], 0):
+            text = line.strip()
+            spans.append((cursor, cursor + len(text), unit[n][0]))
+            parts.append(text)
+            cursor += len(text) + 1
+        joined = " ".join(parts)
+        if MODEL_CONTEXT.search(joined):
+            continue                      # an old-to-new example
+        if upstream and RECORD_LINE.search(joined):
+            continue                      # a verification record
+        for m in RETIRED.finditer(joined):
+            start, end = m.start(), m.end()
+            touched = [ln for a, b, ln in spans if a < end and b > start]
+            first = touched[0] if touched else unit[0][0]
+            excerpt = joined[max(0, start - 40):end + 40].strip()
+            rows.append((rel, first, m.group(0), "retired name", RETIRED_HINT, excerpt,
+                         frozenset(touched)))
+    rows.sort(key=lambda r: (r[1], r[2]))
+    return rows
+
 
 PUBLIC_ROOT = {
     "README.md", "CHANGELOG.md", "ROADMAP.md", "CONTRIBUTING.md", "SECURITY.md",
@@ -238,9 +340,14 @@ def scan_file(path: Path, rel: str) -> list[tuple]:
 
 
 def split_by_audience(rows: list[tuple]) -> tuple[list[tuple], list[tuple]]:
+    """A phrase in a reader-facing file blocks; a retired name blocks in any
+    current file once RETIRED_GATE is on, and warns until then."""
     fails, warns = [], []
     for row in rows:
-        (fails if audience(row[0]) == "reader-facing" else warns).append(row)
+        if row[3] == "retired name":
+            (fails if RETIRED_GATE else warns).append(row)
+        else:
+            (fails if audience(row[0]) == "reader-facing" else warns).append(row)
     return fails, warns
 
 
@@ -251,6 +358,7 @@ def scan() -> tuple[list[tuple], list[tuple]]:
         if not is_documentation(path) or rel in SKIP_FILES:
             continue
         rows.extend(scan_file(path, rel))
+        rows.extend(retired_rows(path, rel))
     return split_by_audience(rows)
 
 
@@ -331,7 +439,7 @@ def scan_changed(base_sha: str) -> tuple[list[tuple], list[tuple], list[tuple]]:
         if not touched:
             continue
         checked.append((rel, len(touched)))
-        rows.extend(row for row in scan_file(path, rel) if row[6] & touched)
+        rows.extend(row for row in scan_file(path, rel) + retired_rows(path, rel) if row[6] & touched)
     fails, warns = split_by_audience(rows)
     return fails, warns, checked
 

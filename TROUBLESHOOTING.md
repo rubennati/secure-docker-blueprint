@@ -228,13 +228,13 @@ at `chrome://net-internals/#dns`.
 
 ---
 
-### 4.4 `acc-tailscale` rejects requests that are actually routed via Tailscale
+### 4.4 `access-vpn` rejects requests that are actually routed via Tailscale
 
 **Symptom:** A service is reachable, DNS resolves the hostname to a Tailscale
 address, both peers are online in the same tailnet, and traffic provably routes
-through `tailscale0` — but Traefik's `acc-tailscale` middleware answers 403.
+through `tailscale0` — but Traefik's `access-vpn` middleware answers 403.
 
-**Cause.** `acc-tailscale` allows `100.64.0.0/10` and `fd7a:115c:a1e0::/48`, and
+**Cause.** `access-vpn` allows `100.64.0.0/10` and `fd7a:115c:a1e0::/48`, and
 it matches on the source address of the connection. Tailscale gives every client
 an IPv6 address and prefers it, and a tailnet client connects **directly** — there
 is no proxy in front to record the original address in a header. If the Docker
@@ -246,7 +246,7 @@ never in the allowed ranges.
 The full reasoning is in
 [`core/traefik/docs/ipv6-dual-stack.md`](core/traefik/docs/ipv6-dual-stack.md).
 
-**Fix — enable dual-stack. Do not switch to `acc-public`.**
+**Fix — enable dual-stack. Do not switch to `access-public`.**
 
 1. `/etc/docker/daemon.json` — `"ipv6": true`, `"ip6tables": true`,
    `"userland-proxy": false`, then `sudo systemctl restart docker`.
@@ -278,14 +278,14 @@ remaining 403 has another cause.
 **Rule out the browser first.** A stale DNS answer produces an identical 403 from
 a different host entirely — see 4.3.
 
-**Why not `acc-public`:** it removes the Traefik-level IP check for everyone, not
+**Why not `access-public`:** it removes the Traefik-level IP check for everyone, not
 just for your tailnet. It is only defensible when an upstream firewall blocks
 public inbound 80/443 independently, and it silently stops being defensible the
 day that firewall changes. Earlier revisions of this document recommended it as a
 workaround; dual-stack replaces it.
 
 **Related:** `apps/seafile-pro/UPSTREAM.md` carries a note from the 2026-06-24
-Seafile Pro case, which was resolved with the `acc-public` workaround before the
+Seafile Pro case, which was resolved with the `access-public` workaround before the
 cause was understood — it should be revisited.
 
 ---
@@ -422,8 +422,8 @@ the integration before the switch".
 error, or a web interface stays blank or half-rendered on its first load. The
 application's own log shows nothing, because the requests never reached it.
 
-**Cause:** the router's rate limit. Every chain from `sec-2` upward counts requests
-per client address: `burst` requests pass at once, `average` per second refill the
+**Cause:** the router's rate limit. Every router with a counter (`APP_TRAEFIK_LIMIT`
+other than `limit-none`) counts requests per client address: `burst` requests pass at once, `average` per second refill the
 bucket, and Traefik answers the rest with `429`. A first load of several hundred
 files exceeds the burst; a sync of many small files exceeds the sustained rate.
 
@@ -435,11 +435,12 @@ docker exec traefik-core cat /var/log/traefik/access.log \
   | sort | uniq -c | sort -rn | head
 ```
 
-**Fix:** set the chain that fits the traffic in the stack's `.env` and run
-`docker compose up -d`, which recreates the container with the new label. A first
-load beyond 200 requests takes a `-spa` chain, an application with sync clients a
-`-sync` chain; the values are in
-[`docs/standards/traefik-security.md`](docs/standards/traefik-security.md#choosing-the-level-for-an-app).
+**Fix:** set the counter that fits the traffic as `APP_TRAEFIK_LIMIT` in the
+stack's `.env` and run `docker compose up -d`, which recreates the container with
+the new label. A first load beyond 500 requests takes `limit-extra-large`, behind
+a closed access policy only; an application with sync clients takes `limit-sync`;
+the values are in
+[`docs/standards/traefik-security.md`](docs/standards/traefik-security.md#rate-limits-position-2).
 
 If every line carries the same client address, all clients share one bucket: they
 arrive through a NAT, a CDN, or a Docker network that does not carry their address

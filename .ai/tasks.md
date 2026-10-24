@@ -25,7 +25,7 @@ Paperless-ngx 23, OpenProject 22, Seafile 20.
 - [ ] Add an `Exposure` field to `UPSTREAM.md` with a reason, first for the five images
       above; the rest get the rule-derived value.
 - [ ] Checker: a stack whose findings mark it private-only or lab-only cannot ship
-      `APP_TRAEFIK_ACCESS=acc-public`.
+      `APP_TRAEFIK_ACCESS=access-public`.
 - [x] Trivy gate: block only on CRITICAL findings absent from the recorded facts.
       Done — `scripts/ci/trivy-gate.py` against `.trivy-baseline.json`, which records
       513 findings across 76 image repositories as of the 2026-09-21 scan of `dev`.
@@ -120,7 +120,8 @@ was verified by running it. Three of the fifteen already ship.
       recorded without it — its sign-in takes the password only from a URL. Fixed
       on the way: calrs, Akaunting, SolidInvoice, CISO Assistant.
 - [x] Closed on 2026-09-23: Twenty's and Windmill's interfaces — `sec-2-spa-xl`
-      holds one whole first load and both ship it, measured without a `429` ·
+      (`limit-extra-large` since the middleware model) holds one whole first load
+      and both ship it, measured without a `429` ·
       ERPNext's realtime service — a second nginx listener for `/socket.io` gives
       its session check an address it can reach from `app-internal` · Akaunting —
       the stack stays, and the runtime gate is a decision fact in its
@@ -339,17 +340,19 @@ session left open is in
 - [ ] Boot `apps/_reference/` once to confirm the template actually runs
 - [ ] Count the first-load requests for the four photo galleries —
       `apps/photoprism`, `apps/librephotos`, `apps/lycheeorg`, `apps/photoview` —
-      and for `apps/it-tools`, a Vue single-page app at `sec-3`. All five sit
-      behind `rl-soft`, whose burst is 200 per client address (50 when this was
-      written; widened 2026-10-03), and a thumbnail
-      grid is the shape that exceeds it; `apps/immich` already needed
-      `sec-2-spa` for the same reason. Method in
-      `docs/standards/traefik-security.md` under Choosing the level for an app.
-      `core/portainer` was measured on 2026-09-20 and fits `sec-4` (issue #37)
-- [ ] Decide `APP_TRAEFIK_SECURITY` for Seafile's four path-scoped routers —
-      issue #39 carries the per-endpoint acceptance test. On 2026-10-15 the four
-      routers (`notification`, `seadoc`, `seadoc-ws`, `thumbnail`) in both Seafile
-      stacks carry the access policy alone
+      and for `apps/it-tools`, a Vue single-page app. All five sit behind
+      `limit-standard`, whose burst is 500 per client address since the middleware
+      model (200 before it, 50 when this was written), and a thumbnail grid is the
+      shape that exceeds it; `apps/immich` needed the bucket of 500 before it became
+      the standard. Method in `docs/standards/traefik-security.md` under Rate
+      Limits. `core/portainer` was measured on 2026-09-20 and fits `limit-strict`
+      (issue #37)
+- [x] Seafile's four path-scoped routers — closed 2026-10-22 with the middleware
+      model (Phase 4.3): `notification`, `seadoc`, `seadoc-ws` and `thumbnail` in
+      both Seafile stacks carry the four positions with `SIDE_TRAEFIK_LIMIT=limit-none`,
+      the effective value they had, and the stack's headers profile. Issue #39's
+      per-endpoint acceptance test stays the host check for the headers on those
+      paths (`core/traefik/docs/middleware-model-migration.md`, section 1.3)
 - [ ] `business/openproject` after `internal: true` — whether mail leaves `worker`
       and whether first-run seeding completes without an outbound path. If either
       fails, `worker` and `cron` get a second network, not a removed flag.

@@ -76,9 +76,9 @@ docker compose -f ../traefik/docker-compose.yml logs traefik 2>&1 \
   | grep -iE "plugin|bouncer" | tail -5
 # Healthy: "Plugin bouncer loaded" with no "Plugins are disabled" lines
 
-# crowdsec-basic middleware status: Traefik dashboard
+# threat-crowdsec middleware status: Traefik dashboard
 # https://<traefik-host>/dashboard/#/http/middlewares
-# crowdsec-basic@file must show green "Success"
+# threat-crowdsec@file must show green "Success"
 ```
 
 ### Host-Firewall Remediation — nftables bouncer
@@ -509,9 +509,11 @@ docker exec crowdsec cscli decisions delete --all
 
 **Option C — Disable the Traefik bouncer plugin entirely (config change required):**
 
-Remove `crowdsec-basic@file` (or `crowdsec-appsec@file`) from the router middleware
-lists in Traefik config, then reload Traefik. The host-firewall nftables rules remain active. See `core/traefik/README.md`
-for the configuration location. This is the only approach that truly isolates reverse-proxy remediation.
+Set `CROWDSEC_BOUNCER_ENABLED=false` in `core/traefik/.env`, render, and recreate the
+Traefik container at once — the entrypoint list is static configuration, and until the
+recreate every router is disabled because the running list names a middleware the render
+removed. The host-firewall nftables rules remain active. See `core/traefik/README.md`,
+"How to disable". This is the only approach that truly isolates reverse-proxy remediation.
 
 ### Disable CrowdSec entirely — engine + all enforcement
 
@@ -701,8 +703,8 @@ docker compose -f ../traefik/docker-compose.yml logs traefik 2>&1 \
   | grep -iE "plugin|bouncer" | tail -5
 # Must show "Plugin bouncer loaded"
 
-# Is crowdsec-basic@file attached to the router?
-# Check the router's middleware list in the Traefik dashboard or compose file
+# Is threat-crowdsec@file on the websecure entrypoint?
+# grep -A2 'middlewares:' core/traefik/config/traefik.yml — and the dashboard's entrypoint view
 ```
 
 **Host-firewall remediation not enforcing:**
@@ -769,7 +771,7 @@ docker compose logs crowdsec | grep -i "database\|db\|sqlite" | tail -20
 ### Traefik bouncer unhealthy
 
 Symptoms: `cscli bouncers list` shows no recent pull, or the Traefik dashboard shows
-`crowdsec-basic@file` as red / missing.
+`threat-crowdsec@file` as red / missing.
 
 ```bash
 # 1. Is the plugin loaded?

@@ -74,9 +74,10 @@ This is the single source for container names, network names, and Traefik router
 # --- Domain & Traefik ------------------------------------------- [traefik] --
 APP_TRAEFIK_HOST=app.example.com
 APP_TRAEFIK_CERT_RESOLVER=cloudflare-dns
-APP_TRAEFIK_TLS_OPTION=tls-basic
-APP_TRAEFIK_ACCESS=acc-tailscale
-APP_TRAEFIK_SECURITY=sec-3
+APP_TRAEFIK_ACCESS=access-vpn
+APP_TRAEFIK_LIMIT=limit-standard
+APP_TRAEFIK_HEADERS=headers-standard
+APP_TRAEFIK_AUTH=auth-none@file
 TRAEFIK_NETWORK=proxy-public
 ```
 
