@@ -91,11 +91,15 @@ The specific plugin choices and the three approaches to restricting `/wp-admin`
 are in
 [`apps/wordpress/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/wordpress/README.md).
 
-### Why `tls-basic` rather than `tls-aplus`
+### Why `tls-compatible`
 
-The stack ships `APP_TRAEFIK_TLS_OPTION=tls-basic`. A public site is visited by
-whatever the visitor happens to run, and the stricter profile turns away older
-clients that a blog usually still wants to serve.
+The stack names `tls-compatible` on the router's `tls.options` label
+(`APP_TRAEFIK_TLS_OPTION=tls-compatible` in `.env`) — a documented exception
+kept from before the model, with no reason recorded. The profile exists for
+older clients that must still connect, and a public site is visited by whatever
+the visitor happens to run. Verify on a host whether `tls-standard`, the
+deployment default, serves the visitors a blog still wants, then remove the
+variable and the label.
 
 ## Backup
 

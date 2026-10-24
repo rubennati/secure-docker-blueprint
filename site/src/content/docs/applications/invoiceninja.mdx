@@ -178,10 +178,10 @@ and a failed migration with no dump behind it is not recoverable.
 
 ### Opening it to clients
 
-The stack ships `APP_TRAEFIK_ACCESS=acc-tailscale` — reachable over your VPN
+The stack ships `APP_TRAEFIK_ACCESS=access-vpn` — reachable over your VPN
 only. That is deliberate for setting up, and it is also a decision you have to
 revisit: **a client portal nobody outside can reach cannot serve clients.**
-Switch to `acc-public` once the instance is configured and you have sent
+Switch to `access-public` once the instance is configured and you have sent
 yourself a test invoice.
 
 ### Framing

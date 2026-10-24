@@ -153,7 +153,7 @@ Open `https://your-domain` — the login page should load over TLS.
 
 ### Public access instead of Tailscale-only
 
-The installation above uses the default, `APP_TRAEFIK_ACCESS=acc-tailscale` — the vault is reachable only over Tailscale/VPN. Setting `APP_TRAEFIK_ACCESS=acc-public` makes it reachable from the open internet instead. That's a deliberate change to your attack surface, not a default — decide it before exposing real credentials.
+The installation above uses the default, `APP_TRAEFIK_ACCESS=access-vpn` — the vault is reachable only over Tailscale/VPN. Setting `APP_TRAEFIK_ACCESS=access-public` makes it reachable from the open internet instead. That's a deliberate change to your attack surface, not a default — decide it before exposing real credentials.
 
 ## Backup before real use
 

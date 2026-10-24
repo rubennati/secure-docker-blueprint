@@ -138,12 +138,17 @@ of the edge protection applies to it:
 dig +short cal.example.com     # a Cloudflare address, not your origin
 ```
 
-### Stricter headers than the rest of the blueprint
+### The HSTS extension is a per-host decision
 
-The stack ships `sec-3` rather than `sec-2`: HSTS with `includeSubDomains` and
-`preload`, a referrer policy, a permissions policy denying device APIs the
-application never uses, and a report-only content security policy. No request is
-blocked at the proxy and the rate limit is unchanged — the difference is headers.
+The stack ships `access-public` with `limit-standard` and `headers-standard`:
+HSTS `max-age`, `nosniff`, `X-Frame-Options: DENY`, a referrer policy, and a
+permissions policy denying device APIs the application never uses. No request is
+blocked at the proxy beyond the rate limit, and the proxy sets no content
+security policy.
+
+`includeSubDomains` and `preload` are not part of that profile. They are the
+block `hsts-include-subdomains@file`, placed before `${APP_TRAEFIK_HEADERS}@file`
+on the router in `docker-compose.yml`, and no stack ships it.
 
 **HSTS with `preload` is hard to reverse.** Browsers that received it keep
 enforcing HTTPS for the host and everything below it for about two years, whether
@@ -151,24 +156,24 @@ or not you stop sending the header. Confirm every subdomain below the Cal.diY
 hostname is HTTPS-capable first. A dedicated leaf host carries much less scope
 than an apex.
 
-Rolling back:
+Adding or removing the block is a label change, so the container is recreated:
 
 ```bash
-# APP_TRAEFIK_SECURITY=sec-2 in .env, then
 docker compose up -d --force-recreate app
 ```
 
 ### The booking embed does not work as shipped
 
 Cal.com's inline, pop-up and button widgets put a booking page in an iframe on
-another site. Both `sec-2` and `sec-3` send `X-Frame-Options: DENY`, which
-overrides the application's own framing policy and blocks it.
+another site. `headers-standard` sends `X-Frame-Options: DENY`, which overrides
+the application's own framing policy and blocks it.
 
 That default is deliberate: a booking page any site may frame is a booking page
 any site can overlay. If you want embeds, name the parent origins rather than
-dropping the header — `sec-3e` for same-origin, or a per-app middleware replacing
-`X-Frame-Options` with a `frame-ancestors` allowlist. Neither option is part of
-the currently verified path.
+dropping the header — `frame-self@file` placed before `${APP_TRAEFIK_HEADERS}@file`
+for same-origin, or a per-app middleware replacing `X-Frame-Options` with a
+`frame-ancestors` allowlist. Neither option is part of the currently verified
+path.
 
 ### Redeploying after a compromise
 

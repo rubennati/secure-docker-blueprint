@@ -37,7 +37,7 @@ public benefit corporation incorporated in Delaware.
 | Worker on `app-internal` only | It needs no route out for the CRM itself; mail and calendar sync would, see README |
 | `APP_TRAEFIK_ACCESS=access-vpn` | The first account creates the workspace |
 
-## The interface and the rate limit
+## The interface and the rate limit (measured 2026-09-22 and 2026-09-23)
 
 The first load issues 412 requests. Assets are served with
 `cache-control: public, max-age=0`, so a returning browser revalidates every one

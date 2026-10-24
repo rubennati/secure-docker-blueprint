@@ -87,8 +87,10 @@ the one that enforces it does nothing at all.
 **A decision with no enforcer attached does nothing.** This is the most common
 misconfiguration: the engine is running, the list is filling up, and nothing is
 acting on it. Loading a plugin is not enough either — in the blueprint's case
-the proxy component only begins polling once its middleware is attached to an
-actual route, and there is no error message for the gap.
+the proxy component only begins polling once the deployment's switch is on
+(`CROWDSEC_BOUNCER_ENABLED` in `core/traefik/.env`) and the proxy has been
+recreated with the middleware on its entrypoint, in front of every router; there
+is no error message for the gap.
 
 Two consequences worth carrying:
 

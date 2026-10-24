@@ -109,8 +109,8 @@ add("evaluation in place of a value",
 #     model's — a migration note, a "before the model" aside;
 #   - the checker's own fixtures (scripts/).
 # RETIRED_GATE decides whether a finding blocks: False while the documentation
-# moves (Phase 4.4a–c), True from then on.
-RETIRED_GATE = False
+# moved (Phase 4.4a–c), True since the site followed (Phase 4.4c).
+RETIRED_GATE = True
 RETIRED = re.compile(
     r"\b(sec-[0-9][a-z0-9-]*|acc-(?:public|local|tailscale|private|deny)|"
     r"hdr-(?:basic|strict)(?:-embed)?|rl-(?:soft|spa|spa-xl|sync|hard)|"
