@@ -209,13 +209,14 @@ Run these once. Each is `occ config:system:set`, so re-running is harmless.
 
 ### Opening it up
 
-The stack ships `APP_TRAEFIK_ACCESS=acc-private` — reachable from your LAN and
-VPN, and from the Docker gateway, which the instance needs to run its own setup
-checks. Switch to `acc-public` once it is configured, verified, and you have
-logged in successfully. That is a deliberate change to your attack surface.
+The stack ships `APP_TRAEFIK_ACCESS=access-lan-vpn` — reachable from your LAN
+and VPN, and from the Docker gateway, which the instance needs to run its own
+setup checks. Switch to `access-public` once it is configured, verified, and
+you have logged in successfully. That is a deliberate change to your attack
+surface.
 
 An office server such as OnlyOffice calls back over the public domain and
-requires `acc-public`.
+requires `access-public`.
 
 ### Rotating a key
 
@@ -378,8 +379,8 @@ docker compose up -d --force-recreate app cron
 incomplete, so every request appears to come from the proxy. Add the missing
 subnet, including the IPv6 one.
 
-**Setup checks fail to reach the instance itself** — with `acc-tailscale` the
-Docker gateway is not permitted. `acc-private` covers it.
+**Setup checks fail to reach the instance itself** — with `access-vpn` the
+Docker gateway is not permitted. `access-lan-vpn` covers it.
 
 ## Repository files
 

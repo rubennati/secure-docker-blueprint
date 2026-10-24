@@ -99,18 +99,19 @@ while the application runs normally.
 ### Embedding is blocked by default
 
 Documenso ships embedding SDKs that put the signing flow in an iframe on another
-site. The stack sends `X-Frame-Options: DENY` through `sec-3`, so none of them
-work as shipped.
+site. The stack sends `X-Frame-Options: DENY` through `headers-standard`, so none
+of them work as shipped.
 
 Signing is the moment a signature acquires legal weight. A page any site may
 frame is a page any site can overlay — the person clicks what looks like your
 button and signs whatever was placed underneath. The header is what prevents
 that.
 
-To use the SDKs, name the parent origins rather than removing the header: `sec-3e`
-for same-origin framing, or a per-app middleware replacing `X-Frame-Options` with
-a `frame-ancestors` allowlist. Neither has been run against Documenso's embed
-flow here.
+To use the SDKs, name the parent origins rather than removing the header:
+`frame-self@file` placed before `${APP_TRAEFIK_HEADERS}@file` for same-origin
+framing, or a per-app middleware replacing `X-Frame-Options` with a
+`frame-ancestors` allowlist. Neither has been run against Documenso's embed flow
+here.
 
 ## Backup
 
@@ -169,8 +170,8 @@ passphrase is wrong. `cert.p12` is mounted read-only at
 `.secrets/signing_passphrase.txt` — the two have to match the pair created in
 step 3.
 
-**The embed shows a blank frame.** `X-Frame-Options: DENY` from `sec-3`. See
-[Embedding](#embedding-is-blocked-by-default).
+**The embed shows a blank frame.** `X-Frame-Options: DENY` from `headers-standard`.
+See [Embedding](#embedding-is-blocked-by-default).
 
 **Signature request mail never arrives.** The `SMTP_*` block or
 `.secrets/smtp_password.txt`. Nothing else in the stack depends on mail, so the

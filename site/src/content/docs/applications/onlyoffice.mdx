@@ -101,7 +101,7 @@ A plain `docker compose restart` leaves the old CSP in place and the browser wil
 
 OnlyOffice needs a server-to-server network route to each consuming application to fetch documents and save edits. The path can be a public internet connection or a private route such as Tailscale — what matters is that the OnlyOffice server can reach the consuming application's configured hostname.
 
-**Traefik access middleware and actual network reachability are independent.** The access mode (`acc-public`, `acc-tailscale`) on the consuming application is a Traefik middleware setting — it does not determine whether a network path from the OnlyOffice server exists. Actual reachability depends on DNS, routing, and upstream firewall rules.
+**Traefik access middleware and actual network reachability are independent.** The access policy (`access-public`, `access-vpn`) on the consuming application is a Traefik middleware setting — it does not determine whether a network path from the OnlyOffice server exists. Actual reachability depends on DNS, routing, and upstream firewall rules.
 
 If the consuming application's hostname resolves to a Tailscale address on the OnlyOffice host, OnlyOffice will route via Tailscale automatically.
 
@@ -125,7 +125,7 @@ docker compose up -d --force-recreate
 
 ### Tailscale-only or private access
 
-Set `APP_TRAEFIK_ACCESS=acc-tailscale` in `.env` to restrict the OnlyOffice server to Tailscale clients. Consuming applications must also be reachable from the OnlyOffice server via Tailscale — otherwise the server-to-server document fetch will fail regardless of whether the browser half of the integration works.
+Set `APP_TRAEFIK_ACCESS=access-vpn` in `.env` to restrict the OnlyOffice server to Tailscale clients. Consuming applications must also be reachable from the OnlyOffice server via Tailscale — otherwise the server-to-server document fetch will fail regardless of whether the browser half of the integration works.
 
 ### JWT secret rotation
 
@@ -149,7 +149,7 @@ Active editing sessions will break when the secret changes.
 
 **Allowed-origins change has no effect:** `ONLYOFFICE_ALLOWED_ORIGINS` is baked into a Traefik label at container creation time, so `docker compose restart` does not update it. Run `docker compose up -d --force-recreate` on the OnlyOffice server.
 
-**A request is rejected although the consuming application uses `acc-tailscale`:** the source IP Traefik sees may not match the expected Tailscale address — see [Traefik troubleshooting](/infrastructure/traefik/#troubleshooting) for the Docker bridge source-IP caveat.
+**A request is rejected although the consuming application uses `access-vpn`:** the source IP Traefik sees may not match the expected Tailscale address — see [Traefik troubleshooting](/infrastructure/traefik/#troubleshooting) for the Docker bridge source-IP caveat.
 
 **Private or Tailscale path: document does not load:** verify that DNS for the consuming application's hostname resolves to an address reachable from the OnlyOffice host. If it resolves to a public IP blocked by a firewall, the server-to-server fetch fails, and the browser console shows no clear error.
 
