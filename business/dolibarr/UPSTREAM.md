@@ -35,7 +35,7 @@
 | **`security_opt: no-new-privileges` + `cap_drop: ALL` + minimal `cap_add`** on MariaDB | Baseline hardening |
 | **Healthcheck added on MariaDB + `depends_on.condition: service_healthy`** | Prevents Dolibarr from trying to install before DB is ready |
 | **`TZ` env var on both services** | Replaces a hardcoded non-UTC `PHP_INI_DATE_TIMEZONE` |
-| **Access `acc-tailscale` + security `sec-3` defaults** | ERP = business data; VPN-only is safer than public |
+| **Access `access-vpn` by default, with `limit-standard` and `headers-standard`** | ERP = business data; VPN-only is safer than public |
 
 ## Version / tag notes
 

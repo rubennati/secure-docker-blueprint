@@ -224,6 +224,26 @@ class RetiredNames(unittest.TestCase):
                 "Before upgrading, set `APP_TRAEFIK_SECURITY=sec-3` in `.env`.\n")
         self.assertEqual(retired(text, "apps/x/UPSTREAM.md"), {"APP_TRAEFIK_SECURITY", "sec-3"})
 
+    def test_an_upstream_verification_section_is_kept_whole_and_the_sections_around_it_are_not(self):
+        text = ("## What we changed and why\n\n"
+                "| `APP_TRAEFIK_ACCESS=acc-tailscale` | The setup route is open until it has run |\n\n"
+                "## Verification performed (2026-09-22)\n\n"
+                "Behind Traefik with TLS, with the shipped `acc-tailscale` and `sec-2`:\n\n"
+                "- First loads under `sec-2`: admin interface 54 requests, login 28\n"
+                "- Peak 149 MiB (limit 512 MiB)\n\n"
+                "### Not yet exercised\n\n"
+                "- The `sec-2-spa` variant on a cold browser\n\n"
+                "## Known issues\n\n"
+                "- Move the router to `sec-3e` before embedding.\n")
+        self.assertEqual(retired(text, "apps/x/UPSTREAM.md"), {"acc-tailscale", "sec-3e"})
+
+    def test_a_label_example_in_a_fenced_block_is_reported_and_an_old_to_new_line_in_it_is_not(self):
+        text = ("```yaml\n"
+                "- \"traefik.http.routers.app.middlewares=acc-public@file,${APP_TRAEFIK_SECURITY}@file\"\n"
+                "# sec-3 before the model, headers-standard now\n"
+                "```\n")
+        self.assertEqual(retired(text, "apps/x/README.md"), {"acc-public", "APP_TRAEFIK_SECURITY"})
+
     def test_a_code_span_does_not_exempt_a_current_file(self):
         self.assertEqual(retired("Use `rl-soft` here.\n", "docs/standards/x.md"), {"rl-soft"})
 

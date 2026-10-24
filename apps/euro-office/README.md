@@ -18,8 +18,8 @@ other, not both, per consuming app.
 | `app` | `ghcr.io/euro-office/documentserver:v9.3.4-hotfix.1` | Document editing server (port 80, bundles its own DB/queue) |
 
 No `_FILE` support (OnlyOffice lineage) → `config/entrypoint.sh` injects `JWT_SECRET` from a Docker
-Secret, then execs the DS start script. Embedded in iframes → an iframe-friendly middleware chain
-(CSP `frame-ancestors`) replaces the standard `sec-*` chains (which set `X-Frame-Options: DENY`).
+Secret, then execs the DS start script. Embedded in iframes → `headers-application-owned` with the stack's own CSP
+(`frame-ancestors`) instead of `headers-standard`, which sets `X-Frame-Options: DENY`.
 
 ## Setup
 

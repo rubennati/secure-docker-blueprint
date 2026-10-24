@@ -39,7 +39,7 @@ The origin comes from the governing-law clause of Chatwoot's terms of service
 | Worker healthcheck on port 7433 | The image runs sidekiq-alive, which answers there while the worker is registered |
 | Redis password from a secret, via a tmpfs config file | Upstream passes it on the command line |
 | `FORCE_SSL=false` | TLS terminates at Traefik |
-| `APP_TRAEFIK_ACCESS=acc-tailscale` | The first visit creates the administrator |
+| `APP_TRAEFIK_ACCESS=access-vpn` | The first visit creates the administrator |
 
 ## Verification performed (2026-09-22)
 

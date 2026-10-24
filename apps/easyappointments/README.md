@@ -71,7 +71,7 @@ After install, log in at `/index.php/user/login` (backend) or `/index.php/backen
 - **`cap_drop: ALL`** + minimal `cap_add` on MariaDB.
 - **`no-new-privileges:true`** on both services.
 - **MariaDB on `app-internal` (`internal: true`)** — DB not reachable from outside.
-- **Default access `acc-public` + `sec-2`** — booking URLs must be reachable by external visitors.
+- **Default access `access-public`, `limit-standard` and `headers-standard`** — booking URLs must be reachable by external visitors.
 
 ## Backup
 

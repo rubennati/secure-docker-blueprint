@@ -41,7 +41,7 @@ docker buildx imagetools inspect uroni/urbackup-server:2.5.x --format '{{.Manife
 | Change | Reason |
 |--------|--------|
 | Bridge networking instead of `network_mode: host` | Upstream's compose example uses host networking. That removes network isolation and rules out Traefik. Manual client addition works without it, because the server initiates the connection to the client — only broadcast discovery needs the host namespace. Available as `network-host.yml` for those who want it. |
-| Web interface behind Traefik with `acc-tailscale` | The interface indexes every client's files and can trigger restores. It is an administrative surface and does not belong on the public internet by default. |
+| Web interface behind Traefik with `access-vpn` | The interface indexes every client's files and can trigger restores. It is an administrative surface and does not belong on the public internet by default. |
 | `no-new-privileges:true` + `cap_drop: ALL` | Blueprint baseline. |
 | `SYS_ADMIN` commented out | Upstream enables it for btrfs storage. Off unless the backup volume is btrfs and that mode is in use. |
 | Port 55415 not published | Only needed for clients reaching the server over the internet. Publish deliberately, not by default. |

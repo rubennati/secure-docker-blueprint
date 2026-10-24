@@ -28,7 +28,7 @@
 | `HOMEPAGE_ALLOWED_HOSTS` derived from `${APP_TRAEFIK_HOST}` | **Inbox source had a hardcoded RFC1918 IP address** pointing to the author's private lab. Rebased on the TLS hostname so this file is safe to share. |
 | Docker socket mount commented out + socket-proxy pattern documented | Default socket mount gives read/write Docker access to a web-facing app — risk too high for default-on |
 | `security_opt: no-new-privileges` | Blueprint baseline |
-| Access `acc-tailscale` + security `sec-3` defaults | Personal dashboard pattern |
+| Access `access-vpn`, `limit-standard` and `headers-standard` defaults | Personal dashboard pattern |
 | Config files renamed to `*.example.yaml`, Setup step bootstraps actual files from examples | `.gitignore` excludes non-example YAMLs so user state never ends up in commits |
 
 ## Version / tag notes

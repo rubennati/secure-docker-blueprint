@@ -72,7 +72,7 @@ when none is set. Here it is set, so nothing is printed.
 - **Network.** Only the Celery worker has a route out, for notifications and
   ticketing integrations; uWSGI, PostgreSQL and Valkey have none.
 - **Exposure.** A database of unfixed vulnerabilities is a list of ways in.
-  `.env.example` ships `acc-tailscale`; scanners that push results over the API must
+  `.env.example` ships `access-vpn`; scanners that push results over the API must
   be able to reach it.
 
 ## Status

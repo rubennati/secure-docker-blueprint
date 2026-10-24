@@ -30,7 +30,7 @@
 | Socket proxy instead of direct socket mount | Dockhand requires Docker API access but must not get the raw socket; the proxy filters to only the required endpoints |
 | `POSTGRES_INITDB_ARGS: --data-checksums` | Extra integrity checks on the PostgreSQL data files |
 | `read_only: true` + `tmpfs` on socket proxy | Defense in depth — the proxy container has no writable root filesystem |
-| TLS profile `tls-modern` + `acc-tailscale` + `sec-4` | Admin tool, VPN-only, strict rate limiting |
+| `tls-strict` named on the router, `access-vpn`, `limit-standard` | Admin tool, VPN-only; TLS 1.3 only, as a documented exception |
 
 ## Version / tag notes
 

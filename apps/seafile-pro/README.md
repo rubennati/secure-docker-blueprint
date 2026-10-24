@@ -76,7 +76,7 @@ curl -s https://your-domain/notification/ping              # {"ret": "pong"}
 
 OnlyOffice needs a server-to-server network path to Seafile's configured hostname (`APP_TRAEFIK_HOST`). This path can be public internet, Tailscale, or any direct route. If DNS for `APP_TRAEFIK_HOST` resolves to a Tailscale address on the OnlyOffice server, traffic routes via Tailscale automatically — no public internet exposure required.
 
-**`APP_TRAEFIK_ACCESS` is a Traefik middleware setting, not a network exposure setting.** `acc-public` removes Traefik's source-IP allowlist; it does not bypass upstream firewalls. `acc-tailscale` enforces a source-IP allowlist but may reject Tailscale-routed traffic if Docker bridge masquerades the source IP before Traefik sees it — see `UPSTREAM.md` and `TROUBLESHOOTING.md §4.4` for the known caveat and investigation steps.
+**`APP_TRAEFIK_ACCESS` is a Traefik middleware setting, not a network exposure setting.** `access-public` removes Traefik's source-IP allowlist; it does not bypass upstream firewalls. `access-vpn` enforces a source-IP allowlist but may reject Tailscale-routed traffic if Docker bridge masquerades the source IP before Traefik sees it — see `UPSTREAM.md` and `TROUBLESHOOTING.md §4.4` for the known caveat and investigation steps.
 
 On the OnlyOffice server, add the Seafile domain to `ONLYOFFICE_ALLOWED_ORIGINS` so browsers can embed the editor in an iframe — see `apps/onlyoffice/.env.example`. **Changes to `ONLYOFFICE_ALLOWED_ORIGINS` require container recreation** (`docker compose up -d --force-recreate` on the OnlyOffice server), not just restart — the value is baked into a Traefik label at container creation time.
 

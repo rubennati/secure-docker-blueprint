@@ -138,7 +138,7 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 - [x] Unauthenticated request to `/v2/` returns 401, admin credentials return 200 — **verified locally, 2026-09-19**
 - [ ] An actual `docker push`/`docker pull` round trip through Traefik on a real host
 - [ ] The embedded CVE scan actually flags a known-vulnerable test image
-- [ ] TLS and the chosen `APP_TRAEFIK_SECURITY` chain confirmed against the real domain
+- [ ] TLS and the router's four middleware positions confirmed against the real domain
 
 ## Details
 

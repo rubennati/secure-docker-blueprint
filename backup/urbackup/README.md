@@ -63,7 +63,7 @@ Read [`network-host.yml`](network-host.yml) before you do — it drops Traefik r
 
 ## Security notes
 
-The web interface indexes every file on every client and can trigger restores. It is an administrative surface, so `APP_TRAEFIK_ACCESS` defaults to `acc-tailscale` (VPN-only). Changing it to `acc-public` should be a deliberate decision, not a convenience.
+The web interface indexes every file on every client and can trigger restores. It is an administrative surface, so `APP_TRAEFIK_ACCESS` defaults to `access-vpn` (VPN-only). Changing it to `access-public` should be a deliberate decision, not a convenience.
 
 Two baseline deviations are inherent to a backup server and documented in [`UPSTREAM.md`](UPSTREAM.md): no `user:` directive and no `read_only`, because the server must write client files with their original ownership and maintain a large writable tree. `cap_drop: ALL` and `no-new-privileges` still apply.
 

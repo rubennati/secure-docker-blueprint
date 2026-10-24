@@ -40,7 +40,7 @@ a refresh.
 | `OBOT_SERVER_DISABLE_UPDATE_CHECK=true` | Upstream checks for new releases on its own |
 | `APP_TAG=v0.26.0` | Upstream's documented command uses `:latest` |
 | PostgreSQL on `internal: true` | Upstream has no second service to isolate |
-| `APP_TRAEFIK_ACCESS=acc-tailscale` | This stack can start containers on the host |
+| `APP_TRAEFIK_ACCESS=access-vpn` | This stack can start containers on the host |
 
 ## Verified on the images (2026-09-23)
 

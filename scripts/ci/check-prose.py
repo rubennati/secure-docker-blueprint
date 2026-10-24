@@ -132,10 +132,11 @@ RECORD_PATHS = re.compile(
     r"core/traefik/docs/middleware-model-migration\.md$|scripts/)"
 )
 UPSTREAM = re.compile(r"^(core|apps|business|monitoring|backup|development)/[^/]+/UPSTREAM\.md$")
-# A verification line in an UPSTREAM.md: what was checked, with a date or the
-# word that says so. An instruction in the same file ("set ... before
+# A verification record in an UPSTREAM.md: what was checked, with a date or the
+# word that says so — a line, or a whole section under such a heading
+# (record_sections). An instruction in the same file ("set ... before
 # upgrading") carries neither and is checked like current documentation.
-RECORD_LINE = re.compile(r"\b(verified|verification|checked|measured|tested|ran on|run on)\b|\b20\d\d-\d\d-\d\d\b", re.IGNORECASE)
+RECORD_LINE = re.compile(r"\b(verified|verification|checked|measured|tested|exercised|ran on|run on|what that date covers)\b|\b20\d\d-\d\d-\d\d\b", re.IGNORECASE)
 RETIRED_HINT = ("the middleware model's name — docs/standards/traefik-labels.md; what each old "
                 "value became: core/traefik/docs/middleware-model-migration.md")
 
@@ -148,12 +149,53 @@ def changelog_released_from(lines: list[str]) -> int:
     return len(lines)
 
 
+def fenced_units(lines: list[str]) -> list[list[tuple[int, str]]]:
+    """Each line inside a fenced code block as a unit of its own.
+
+    The phrase rules read prose only, but a retired name in a label or `.env`
+    example is exactly what a reader copies. A line is a unit so that the
+    old-to-new and record exemptions apply to it alone."""
+    units: list[list[tuple[int, str]]] = []
+    in_code = False
+    for n, line in enumerate(lines, 1):
+        if line.lstrip().startswith("```"):
+            in_code = not in_code
+            continue
+        if in_code and line.strip():
+            units.append([(n, line)])
+    return units
+
+
+def record_sections(lines: list[str]) -> set[int]:
+    """Line numbers inside a verification section: from a heading that matches
+    RECORD_LINE — "Verification performed (2026-09-22)", "Verified on the image
+    (2026-10-03)" — to the next heading of the same or a higher level."""
+    inside: set[int] = set()
+    level = None
+    for n, line in enumerate(lines, 1):
+        m = re.match(r"^(#{1,6})\s", line)
+        if m:
+            depth = len(m.group(1))
+            if level is not None and depth <= level:
+                level = None
+            if level is None and RECORD_LINE.search(line):
+                level = depth
+        if level is not None:
+            inside.add(n)
+    return inside
+
+
 def retired_rows(path: Path, rel: str) -> list[tuple]:
     """Occurrences of the retired vocabulary in current documentation.
 
-    Same row shape as the phrase rules, category "retired name". Code spans and
-    quotation marks do not exempt a match: documentation names a value in a
-    code span whether it is current or not.
+    Same row shape as the phrase rules, category "retired name". Code spans,
+    quotation marks and fenced blocks do not exempt a match: documentation names
+    a value in a code span or a label example whether it is current or not.
+
+    An UPSTREAM.md keeps its verification records: a section whose heading
+    carries a date or says it verified or measured something is one record,
+    and a single line that says so is another. Its design rows and instructions
+    are current documentation like any other.
     """
     if RECORD_PATHS.match(rel):
         return []
@@ -163,9 +205,12 @@ def retired_rows(path: Path, rel: str) -> list[tuple]:
         return []
     limit = changelog_released_from(lines) if rel == "CHANGELOG.md" else len(lines)
     upstream = bool(UPSTREAM.match(rel))
+    records = record_sections(lines) if upstream else set()
 
     rows = []
-    for unit in prose_units(lines):
+    units = prose_units(lines) + fenced_units(lines)
+    units.sort(key=lambda u: u[0][0])
+    for unit in units:
         if unit[0][0] > limit:
             break
         spans, parts, cursor = [], [], 0
@@ -177,7 +222,7 @@ def retired_rows(path: Path, rel: str) -> list[tuple]:
         joined = " ".join(parts)
         if MODEL_CONTEXT.search(joined):
             continue                      # an old-to-new example
-        if upstream and RECORD_LINE.search(joined):
+        if upstream and (unit[0][0] in records or RECORD_LINE.search(joined)):
             continue                      # a verification record
         for m in RETIRED.finditer(joined):
             start, end = m.start(), m.end()

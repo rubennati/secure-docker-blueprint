@@ -33,7 +33,7 @@ The inbox directory was empty — no inbox compose to diff against. This is buil
 | **`NC_INVITE_ONLY_SIGNUP=true`** | Safer default for self-hosted deployments |
 | **`security_opt: no-new-privileges:true`** | Baseline hardening |
 | **Healthcheck on `/api/v1/health`** | Proper readiness gate |
-| **Access `acc-tailscale` + security `sec-3` defaults** | NocoDB cells commonly contain API keys, tokens, credentials → VPN-only makes sense |
+| **Access `access-vpn`, `limit-standard` and `headers-standard` defaults** | NocoDB cells commonly contain API keys, tokens, credentials → VPN-only makes sense |
 
 ## Upgrading SQLite → Postgres
 

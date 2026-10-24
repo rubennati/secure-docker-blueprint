@@ -120,7 +120,7 @@ directory is the whole blast radius.
 can log in, and full audit-log tampering ability, until the compromise is
 found and every credential/key in `volumes/data` is rotated. Treat this host
 like a domain controller, not like a normal application server: same
-patch cadence, same access restriction (`acc-tailscale`, not `acc-public`),
+patch cadence, same access restriction (`access-vpn`, not `access-public`),
 same "who has shell on this box" discipline.
 
 **What session recordings contain.** Everything the recorded protocol

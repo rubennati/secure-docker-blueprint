@@ -20,9 +20,9 @@ Three routers on two host names, and that split is the point:
 
 | Router | Serves | Ships as |
 |---|---|---|
-| `<project>` | the short links themselves | `acc-private` — **the one to open**, see below |
-| `<project>-api` | `/rest`, which creates, edits and deletes links and reads visits | `acc-tailscale` |
-| `<project>-client` | the browser interface on its own host name | `acc-tailscale` |
+| `<project>` | the short links themselves | `access-lan-vpn` — **the one to open**, see below |
+| `<project>-api` | `/rest`, which creates, edits and deletes links and reads visits | `access-vpn` (`APP_TRAEFIK_API_ACCESS`) |
+| `<project>-client` | the browser interface on its own host name | `access-vpn` (`CLIENT_TRAEFIK_ACCESS`) |
 
 Traefik matches the longer rule first, so `/rest` lands on the API router even
 when the redirect router is opened to everyone.
@@ -79,7 +79,7 @@ curl -I https://s.example.com/abc      # 302, Location: the long URL
 ## Deciding what is public
 
 A short link nobody outside can follow is a link that does not work, so this is
-a decision rather than a default. The stack ships `acc-private` on the redirect
+a decision rather than a default. The stack ships `access-lan-vpn` on the redirect
 router, and opening it means accepting three things:
 
 - **A redirect is unauthenticated by design.** Anyone holding the URL follows
@@ -112,9 +112,9 @@ serves, and upstream warns it can then be read by anyone who loads the page.
 
 ## Known limits
 
-- **The rate limit is not measured.** The chain ships `sec-2` for all three
-  routers. A redirect is one request; the client is a small bundle. Neither has
-  been measured behind Traefik.
+- **The rate limit is not measured.** `.env.example` ships `limit-standard` for
+  all three routers. A redirect is one request; the client is a small bundle.
+  Neither has been measured behind Traefik.
 - **The initial key cannot be rotated in place.** Generate a new key with the
   CLI and disable the old one (`bin/cli api-key:disable`).
 - **Nothing here has run behind Traefik yet.** The stack is `scaffolded`: the

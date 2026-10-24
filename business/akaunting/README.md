@@ -61,7 +61,7 @@ which is ordinary first use.
 
 Before `ops/install.sh` has run, the web installer is reachable and accepts
 whatever database it is given. `.env.example` therefore ships
-`APP_TRAEFIK_ACCESS=acc-tailscale`, the VPN only. After the install, the
+`APP_TRAEFIK_ACCESS=access-vpn`, the VPN only. After the install, the
 installer redirects to the login page.
 
 ## What is mounted, and what is not

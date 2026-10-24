@@ -39,7 +39,7 @@ release; see [UPSTREAM.md](UPSTREAM.md#installation-in-301).
 
 Until the installer has run, every page redirects to `/install`, and whoever
 reaches it sets up the instance and its administrator. `.env.example` therefore
-ships `APP_TRAEFIK_ACCESS=acc-tailscale`, the VPN only.
+ships `APP_TRAEFIK_ACCESS=access-vpn`, the VPN only.
 
 Self-registration is off by default (`SOLIDINVOICE_ALLOW_REGISTRATION` defaults
 to `0`), so after the install, further users are invited by the administrator.

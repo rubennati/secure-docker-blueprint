@@ -18,13 +18,13 @@
 - Official `listmonk/listmonk` image
 - PostgreSQL as backing database
 - Docker Secrets for database password
-- Two-router Traefik pattern: admin UI VPN-only (`/` via `acc-tailscale`), subscriber paths public (`/subscription`, `/link`, `/campaign`)
+- One Traefik router on `access-public` as shipped, with `frame-self@file` before `headers-standard`; the split — admin UI VPN-only, subscriber paths (`/subscription`, `/link`, `/campaign`) public — is a second router the README describes
 
 ## What we changed vs. upstream examples
 
 | Change from upstream | Reason |
 |---|---|
-| **Traefik two-router pattern** | Admin UI must not be public; subscription/unsubscribe must be |
+| **Traefik router with `frame-self` before the headers profile** | The campaign preview renders in an iframe; `headers-standard` alone would deny it |
 | **Docker Secrets for `LISTMONK_db__password`** | Security baseline |
 | **`security_opt: no-new-privileges:true`** | Baseline hardening |
 | **`LISTMONK_app__admin_username` via env** | Blueprint: no hardcoded credentials |
@@ -32,15 +32,13 @@
 ## Router pattern
 
 ```yaml
-# Private router — admin UI (VPN only)
+# The one router as shipped — public, with frame-self before the headers profile
 - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
-- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
-
-# Public router — subscriber paths
-- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-public.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/subscription`, `/link`, `/campaign`)"
-- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-public.middlewares=acc-public@file,sec-2@file"
-- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-public.priority=10"
+- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,frame-self@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
 ```
+
+The admin-VPN-only split is a second, path-scoped router on `access-vpn`; the
+README carries it under "Access split".
 
 ## Upgrade checklist
 

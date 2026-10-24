@@ -96,7 +96,7 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 - [x] `_FILE` secrets picked up correctly (no missing-required-property errors) and the app answers with a real HTTP response — **verified locally, 2026-09-19**
 - [ ] A threat model actually created, diagrammed and saved through the web UI in local-storage mode
 - [ ] Git-backed storage (GitHub/GitLab/Bitbucket OAuth) exercised end to end, if you enable it
-- [ ] TLS and the chosen `APP_TRAEFIK_SECURITY` chain confirmed against the real domain
+- [ ] TLS and the router's four middleware positions confirmed against the real domain
 
 ## Details
 

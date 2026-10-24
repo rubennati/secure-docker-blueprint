@@ -44,7 +44,7 @@ docker compose up -d
 
 # 4. Open in browser
 # https://<APP_TRAEFIK_HOST>
-# Reachable through Tailscale/VPN only by default (acc-tailscale).
+# Reachable through Tailscale/VPN only by default (access-vpn).
 ```
 
 No secrets, no accounts, no setup page.
@@ -83,7 +83,7 @@ Restart the stack, trigger a password reset, and read it in the UI.
 
 - **Everything in the inbox is readable by whoever reaches the UI.** Password
   resets, verification links, invitations. The UI has no login of its own, so
-  the router ships `acc-tailscale`; opening it further needs `MP_UI_AUTH_FILE`
+  the router ships `access-vpn`; opening it further needs `MP_UI_AUTH_FILE`
   (an htpasswd file, which then also protects the API).
 - **Every container on `proxy-public` reaches port 1025.** A sink has to be
   reachable by every stack that sends, which is also why it is for trying

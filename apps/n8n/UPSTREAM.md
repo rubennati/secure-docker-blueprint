@@ -34,7 +34,7 @@
 | Change | Reason |
 |--------|--------|
 | **`${SUBDOMAIN}.${DOMAIN_NAME}` → single `APP_TRAEFIK_HOST`** | Blueprint uses one variable for the full hostname |
-| **Inline Traefik header middlewares removed** — inbox defined HSTS/XSS/nosniff/etc. inline | Replaced with shared `sec-3@file` chain (same headers, centralized) |
+| **Inline Traefik header middlewares removed** — inbox defined HSTS/XSS/nosniff/etc. inline | Replaced with the shared `headers-standard@file` profile (same headers, centralized) |
 | **Traefik router entrypoints pared down** — inbox used `web,websecure` + `SSLRedirect: true` | Now just `websecure`; blueprint handles HTTP→HTTPS redirect at the entrypoint level |
 | **`certresolver=dnsResolver` replaced with `APP_TRAEFIK_CERT_RESOLVER`** | Blueprint variable |
 | **Port `8015:5678` exposure removed** | Blueprint routes via Traefik |
@@ -43,7 +43,7 @@
 | **`security_opt: no-new-privileges:true`** | Baseline hardening |
 | **`traefik` external network → `proxy-public`** | Blueprint standard network name |
 | **Unused `traefik_data` volume removed** | Stray leftover from a full Traefik+n8n bundle |
-| **Access `acc-tailscale` + security `sec-3` defaults** | n8n hosts API tokens for many third-party services — VPN-only is safer than public |
+| **Access `access-vpn`, `limit-standard` and `headers-standard` defaults** | n8n hosts API tokens for many third-party services — VPN-only is safer than public |
 
 ## Upgrade checklist
 
