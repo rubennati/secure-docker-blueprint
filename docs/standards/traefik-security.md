@@ -1,48 +1,67 @@
 # Traefik Security Architecture
 
-Defines the security middleware system: building blocks, policy chains, access control, TLS profiles, and integrations.
+Defines the middleware model of the reverse proxy: what the entrypoint does for every router, the four positions every router carries, the per-app blocks, TLS, and the integrations.
 
 For Traefik label patterns, see [Traefik Labels](traefik-labels.md).
 For general container security, see [Security Baseline](security-baseline.md).
+What the model replaced, router by router, and how an installation moves: [`core/traefik/docs/middleware-model-migration.md`](../../core/traefik/docs/middleware-model-migration.md).
 
 ---
 
 ## Overview
 
-Security is split into independent config files in `core/traefik/ops/templates/dynamic/`:
+Every router on the `websecure` entrypoint passes the same two steps and then its own four:
+
+```text
+entrypoint websecure
+  threat-crowdsec        when CROWDSEC_BOUNCER_ENABLED — a banned address is refused before any work
+  compress               always — the response is compressed, exact exclusions for binary types
+router
+  1  access-*            who may reach it, by connecting address        (operator)
+  2  limit-*             how fast one address may ask                   (repository, from a measurement)
+     [block before the profile: frame-self · csp-self-only · hsts-include-subdomains · header-*]
+  3  headers-*           which browser-security headers the proxy sets  (repository, from a measurement)
+  4  auth-*              who must be identified                         (operator)
+     [block after the four: forwarded-proto-https · a path strip · a redirect]
+service
+```
+
+The definitions live in `core/traefik/ops/templates/dynamic/`:
 
 | File | What it contains |
 |------|-----------------|
-| `access.yml` | Access policies — who can reach a service |
-| `security-blocks.yml` | Building blocks — headers, rate limits, compression, CSP |
-| `security-chains.yml` | Policy presets — sec-0 to sec-5 + embed, `-spa` and `-sync` variants |
-| `crowdsec.yml` | The two CrowdSec middlewares — rendered only with `CROWDSEC_BOUNCER_ENABLED=true` |
-| `integrations.yml` | Authentik forward-auth — optional, commented out |
+| `model.yml` | Every value of the four positions, the per-app blocks, and `compress` |
+| `tls-profiles.yml` | The three TLS profiles and Traefik's reserved `default` option, built from `TLS_DEFAULT_OPTION` |
+| `crowdsec.yml` | `threat-crowdsec` and `threat-crowdsec-appsec` — rendered only with `CROWDSEC_BOUNCER_ENABLED=true` |
+| `authentik.yml` | `auth-authentik` — rendered only with `AUTHENTIK_FORWARD_AUTH_ENABLED=true` |
+| `routers-system.yml` | The dashboard router, on the four positions |
 
-All files are rendered from `.tmpl` templates via `render.sh`. Traefik watches the `config/dynamic/` directory and hot-reloads changes (no restart needed for dynamic config).
+All files are rendered from `.tmpl` templates via `render.sh`. Traefik watches `config/dynamic/` and hot-reloads changes; the entrypoint list in `config/traefik.yml` is static and changes on a recreate of the container.
+
+The decisions behind the model (D1–D8, 2026-10-18) are in [`.ai/decisions.md`](../../.ai/decisions.md); the measurements they rest on are in [`docs/audits/traefik-architecture-review-2026-10-17.md`](../audits/traefik-architecture-review-2026-10-17.md).
 
 ---
 
-## Access Policies (`access.yml`)
+## Access Policies (position 1)
 
-Controls WHO can reach a service. Pick one per router.
+Controls WHO can reach a router. Pick one per router; the operator's choice.
 
 | Policy | Who gets through |
 |--------|-----------------|
-| `acc-public` | Everyone (no restriction) |
-| `acc-local` | LAN only (RFC1918 + IPv6 ULA) |
-| `acc-tailscale` | Tailscale/VPN only (IPv4 + IPv6) |
-| `acc-private` | LAN + Tailscale combined |
-| `acc-deny` | Nobody (emergency kill switch) |
+| `access-public` | Everyone (no restriction) |
+| `access-lan` | LAN only (RFC1918 + IPv6 ULA) |
+| `access-vpn` | VPN only (IPv4 + IPv6) |
+| `access-lan-vpn` | LAN + VPN combined |
+| `access-blocked` | Nobody (emergency kill switch) |
 
-All policies support IPv4 + IPv6. Tailscale CIDRs are operator-configurable via `.env`:
+All policies support IPv4 + IPv6. The VPN ranges are operator-configurable via `core/traefik/.env`:
 
 ```env
 TAILSCALE_CIDR_V4=100.64.0.0/10
 TAILSCALE_CIDR_V6=fd7a:115c:a1e0::/48
 ```
 
-Local network ranges (RFC1918 for IPv4, ULA `fc00::/7` for IPv6) are hardcoded in `access.yml.tmpl` and are not operator-configurable env variables.
+Local network ranges (RFC1918 for IPv4, ULA `fc00::/7` for IPv6) are hardcoded in `model.yml.tmpl` and are not operator-configurable env variables. `access-lan` and `access-lan-vpn` admit `172.16.0.0/12`, which includes the Docker bridge gateway — an instance can reach itself through the proxy, and a request whose source address was lost on an IPv4-only `proxy-public` arrives as the gateway (see the IPv6 note below).
 
 ---
 
@@ -62,13 +81,13 @@ what the access policies and rate limits evaluate:
 - `rateLimit`, `sourceCriterion` — *"If none are set, the default is to use the
   request's remote address field (as an `ipStrategy`)."*
 
-`access.yml.tmpl` sets no `ipStrategy` and `security-blocks.yml.tmpl` no
-`sourceCriterion`, so every `acc-*` policy and every `rl-*` block evaluates the
-address of the TCP connection. Which address that is depends on the path:
+`model.yml.tmpl` sets no `ipStrategy` and no `sourceCriterion`, so every
+`access-*` policy and every `limit-*` counter evaluates the address of the TCP
+connection. Which address that is depends on the path:
 
-| Path | Connecting address | `acc-local` / `acc-tailscale` / `acc-private` | `rl-*` | The application receives |
+| Path | Connecting address | `access-lan` / `access-vpn` / `access-lan-vpn` | `limit-*` | The application receives |
 |---|---|---|---|---|
-| Direct — Tailscale, LAN, a public client with no CDN in front | the client | evaluate the client | one bucket per client | `X-Forwarded-For` and `X-Real-Ip` carry the client; a header the client sent is deleted |
+| Direct — VPN, LAN, a public client with no CDN in front | the client | evaluate the client | one bucket per client | `X-Forwarded-For` and `X-Real-Ip` carry the client; a header the client sent is deleted |
 | Cloudflare's proxy | Cloudflare's edge address | evaluate the edge, which is in none of their ranges — every request is refused | one bucket per edge address, shared by every visitor behind it | `X-Forwarded-For` = `client, edge`; `X-Real-Ip` = the edge |
 
 Which senders are trusted is `TRAEFIK_FORWARDED_PROXY` in `core/traefik/.env`:
@@ -94,7 +113,7 @@ modes, since nothing deletes those from a direct client.
 The closed access policies evaluate the connecting address in both modes —
 their clients connect directly, and a proxied request to such a host is refused
 over IPv4; over IPv6 on an IPv4-only `proxy-public` the edge arrives as the
-Docker gateway and `acc-local` admits it (README, "IPv6 between Cloudflare and
+Docker gateway and `access-lan` admits it (README, "IPv6 between Cloudflare and
 the origin"). The rate limits count per edge address at the origin behind
 Cloudflare: a `sourceCriterion` that reads a header puts every direct client
 into one shared bucket, so the per-client limit of a public route is a
@@ -117,10 +136,10 @@ reads as its address, and any middleware that evaluates the header through an
 **IPv6 note:** Tailscale always gives a client an IPv6 address. If
 `proxy-public` is IPv4-only, that address is lost before Traefik ever
 sees it — no header carries it on this path, so Traefik sees the Docker
-gateway address instead, and `acc-tailscale` blocks it. The same loss
+gateway address instead, and `access-vpn` blocks it. The same loss
 hits Cloudflare's proxy connecting over IPv6 (when only an `AAAA` record
 exists, possibly when both do): the gateway is not a trusted sender, so
-the headers are deleted, and `acc-local` admits the gateway. A direct
+the headers are deleted, and `access-lan` admits the gateway. A direct
 IPv6 client takes the same path, past a forward-hook firewall (README,
 "Protect the origin"). See
 [`core/traefik/docs/ipv6-dual-stack.md`](../../core/traefik/docs/ipv6-dual-stack.md)
@@ -132,126 +151,29 @@ document.
 
 ---
 
-## Security Building Blocks (`security-blocks.yml`)
+## Rate Limits (position 2)
 
-Modular middleware components. Used by the sec-* chains, or individually for custom combinations.
+Each counter counts per client address and per router. `burst` is the size of
+the bucket: that many requests pass at once. `average` is what refills it per
+second. A request the bucket cannot cover is answered `429`: Traefik holds it
+for at most half the interval between two refills — 4 ms at 125 per second —
+and no longer.
 
-### Headers
+| Limit | Average / burst | For |
+|---|---|---|
+| `limit-standard` | 125 per second, 500 | the default. Every first load measured in this repository fits, except Twenty's and Windmill's |
+| `limit-strict` | 20 per second, 40 | administration surfaces and login-only routes — requests are few and each is worth slowing an attacker down. The wrong choice for anything a browser loads assets from |
+| `limit-sync` | 1000 per second, 1000 | applications whose desktop or mobile clients synchronise files (Nextcloud, Seafile): a sync is bounded by the sustained rate, not by the bucket |
+| `limit-extra-large` | 125 per second, 1000 | a whole first load in one bucket (Twenty 516 requests, Windmill 857, measured). CI accepts it only behind `access-lan`, `access-vpn`, `access-lan-vpn` or `access-blocked` (`burst-exposure`) |
+| `limit-none` | no counter | a websocket or long-poll endpoint, a static-asset router, a server called by another server — each a documented choice, not a type rule |
 
-| Block | What it sets |
-|-------|-------------|
-| `hdr-basic` | HSTS (2 years), nosniff, frameDeny |
-| `hdr-basic-embed` | Like hdr-basic, SAMEORIGIN instead of frameDeny |
-| `hdr-strict` | + HSTS preload, subdomains, referrer-policy, CSP report-only, Vary |
-| `hdr-strict-embed` | Like hdr-strict, SAMEORIGIN + same-origin referrer |
-
-### Rate Limiting
-
-| Block | Limits |
-|-------|--------|
-| `rl-soft` | 125 requests/s average, 200 burst |
-| `rl-spa` | 125 requests/s average, 500 burst — same sustained rate as `rl-soft`, wider bucket for an application start |
-| `rl-spa-xl` | 125 requests/s average, 1000 burst — the same sustained rate again, with a bucket that holds one whole first load. Behind a closed access policy only, enforced by CI |
-| `rl-sync` | 1000 requests/s average, 1000 burst — for applications whose sync clients transfer files in bulk |
-| `rl-hard` | 20 requests/s average, 40 burst |
-
-Each limit counts per client address and per router. `burst` is the size of the
-bucket: that many requests pass at once. `average` is what refills it per second.
-A request the bucket cannot cover is answered `429`: Traefik holds it for at most
-half the interval between two refills — 4 ms at 125 per second — and no longer.
-
-### Extras
-
-| Block | What it does |
-|-------|-------------|
-| `compress` | gzip compression |
-| `permissions-policy` | Blocks camera, microphone, geolocation, payment, USB, magnetometer, gyroscope, accelerometer |
-| `csp-enforce` | Enforcing Content Security Policy (may break apps with external scripts) |
-
-### Design Decisions
-
-**browserXssFilter removed from all blocks.** `X-XSS-Protection: 1; mode=block` is deprecated — Chrome removed the XSS Auditor in 2019, Firefox and Safari ignore it. OWASP recommends not setting it. Removing it also resolved the Vaultwarden conflict (needed `browserXssFilter: false`).
-
-**Embed variants use SAMEORIGIN + same-origin referrer.** The `e` variants replace `frameDeny: true` (X-Frame-Options: DENY) with `customFrameOptionsValue: SAMEORIGIN`. Embed variants also use `referrerPolicy: same-origin` (stricter) — embedded apps should not leak referrer to the parent frame.
-
----
-
-## Policy Chains (`security-chains.yml`)
-
-Presets that combine building blocks. Each level builds on the previous — higher = stricter. `e` suffix = `SAMEORIGIN` instead of `DENY`, which permits an app to frame **its own** pages and nothing else — a different subdomain is a different origin. See [Choosing the level for an app](#choosing-the-level-for-an-app).
-
-| Level | Building Blocks | Recommended for |
-|-------|----------------|-----------------|
-| `sec-0` | — | Debug, naked proxy |
-| `sec-1` | hdr-basic, compress | Internal tools, monitoring |
-| `sec-1e` | hdr-basic-embed, compress | Internal tools embedded in other apps |
-| **`sec-2`** | **hdr-basic, rl-soft, compress** | **Standard for most apps (recommended default)** |
-| `sec-2e` | hdr-basic-embed, rl-soft, compress | Standard + iframe-friendly |
-| `sec-3` | hdr-strict, rl-soft, compress, permissions-policy | Public-facing, hardened |
-| `sec-3e` | hdr-strict-embed, rl-soft, compress, permissions-policy | Public-facing + iframe-friendly |
-| `sec-2-spa` | hdr-basic, rl-spa, compress | Standard, first load exceeds a burst of 200 |
-| `sec-2-spa-xl` | hdr-basic, rl-spa-xl, compress | Standard, first load exceeds a burst of 500 — only with `acc-private`, `acc-tailscale` or `acc-deny` |
-| `sec-2-sync` | hdr-basic, rl-sync, compress | Standard, file-sync clients |
-| `sec-3-spa` | hdr-strict, rl-spa, compress, permissions-policy | Hardened, first load exceeds a burst of 200 |
-| `sec-3e-spa` | hdr-strict-embed, rl-spa, compress, permissions-policy | Hardened, needs SAMEORIGIN and the wider burst |
-| `sec-3e-sync` | hdr-strict-embed, rl-sync, compress, permissions-policy | Hardened, needs SAMEORIGIN, file-sync clients |
-| `sec-4` | hdr-strict, rl-hard, compress, permissions-policy | Sensitive apps, login pages, admin panels |
-| `sec-5` | hdr-strict, rl-hard, compress, permissions-policy, csp-enforce | Maximum — only for CSP-tested apps |
-
-### Choosing the level for an app
-
-The level is not a judgement about how important the app is. It follows from four
-properties of the application, answered in this order. Answer them against the
-running app, not from the category it belongs to.
-
-**1. Does the app set `X-Frame-Options` or `frame-ancestors` itself?**
-
-```bash
-curl -sI https://app.example.com/ | grep -iE 'x-frame-options|content-security-policy'
-```
-
-If it does, the chain must not add a second one. Two `X-Frame-Options` values on
-one response is not stricter — it is undefined, and the endpoints the app meant to
-be embeddable stop loading. Apply the level in the compose file and put a per-app
-middleware that clears the header **in front of it**, as `core/keycloak` does. The
-order is not cosmetic: Traefik applies the response changes of the first middleware
-in the list last, so a clearing middleware placed after the chain is overwritten by
-the chain and the header stays — measured on v3.6 with a throwaway backend, see
-[`docs/bugfixes/keycloak-admin-console-iframe-2026-09-07.md`](../bugfixes/keycloak-admin-console-iframe-2026-09-07.md).
-
-**2. Is the app embedded in another site, or does it embed itself?**
-
-Being framed is the app's own attack surface: a page any site may frame is a page
-any site can overlay, and the user acts on what they think they see. Keep the
-denying default unless embedding is a feature the operator uses, and when it is,
-name the parent origins with `frame-ancestors` rather than removing the header.
-
-**`sec-*e` is narrower than "iframe-friendly" suggests.** It sends
-`X-Frame-Options: SAMEORIGIN`, and same origin means the same scheme, host and
-port. `dash.example.com` embedding `paperless.example.com` is a different origin,
-so the frame is refused exactly as it would be under `DENY`. The `e` variants
-cover an app framing *its own* pages — `business/listmonk`'s campaign preview is
-that case. They do nothing for one stack embedding another.
-
-That matters here, because this blueprint ships four dashboards — `apps/dashy`,
-`apps/heimdall`, `apps/homarr`, `apps/homepage` — and the iframe widgets in them
-point at the other stacks. Every stack denies framing, so those widgets stay
-blank, and moving the target to an `e` variant does not change it. The working
-answer is a per-app middleware on the **target**, naming the dashboard's origin:
-
-```yaml
-- "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-frame-dash.headers.customResponseHeaders.X-Frame-Options="
-- "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-frame-dash.headers.contentSecurityPolicy=frame-ancestors 'self' https://dash.example.com;"
-```
-
-Applied to the one stack that needs to appear in the dashboard, not to all of
-them. A dashboard tile that opens the app in a new tab costs nothing and needs
-none of this.
-
-**3. How many requests does one first load issue?**
-
-`rl-soft` allows a burst of 200 per client address. Measure rather than assume — a
-single-page app, a gallery grid and a dashboard all look alike from outside:
+The sustained rate — 125 per second — bounds abuse; the burst is a first-load
+allowance. Behaviour over time (crawling, password guessing, probing) is
+CrowdSec's layer, which already draws the static/dynamic line the counter
+cannot. What a wider bucket costs is more requests from one address before the
+first `429`; what it buys is an interface that loads. **Measure rather than
+assume** — a single-page app, a gallery grid and a dashboard all look alike
+from outside:
 
 ```bash
 # Load the app in a private window with the network tab open, then read the
@@ -260,76 +182,160 @@ docker compose -f core/traefik/docker-compose.yml logs --since 1m app \
   | grep -c "$(date +%Y-%m-%d)"
 ```
 
-The bucket refills while a load is under way, so a first load of somewhat more
-than 200 requests still passes: on 2026-09-22 a bucket of 200 answered all 291
-requests of Dify's editor. Above that, use the `-spa` variant. It keeps
-`average: 125` unchanged and only widens the bucket to 500, so the sustained rate
-is identical. A 429 on first load presents as a blank page or a half-rendered
-interface, which nobody attributes to the proxy.
-
-Above 500, use `sec-2-spa-xl`. Windmill's first load issues about 850 requests,
-measured on 2026-09-22. `rl-spa-xl` keeps `average: 125` and holds one whole first
-load in its bucket.
-
-What that bucket costs is the first thousand requests from one address, so the
-`-xl` chains are for a closed set of clients: `scripts/ci/check-structure.py`
-fails (`burst-exposure`) when a stack pairs an `-xl` chain with anything but
-`acc-private`, `acc-tailscale` or `acc-deny`. A public interface that needs more than 500
-needs its assets cached or served beside the rate limit, not a wider bucket.
-
-**Does the application have sync clients?** A desktop or mobile client that
-synchronises files is bounded by the sustained rate, not by the bucket: it keeps
-sending for as long as it has files to move. The Nextcloud desktop client runs
-up to 20 requests in parallel over HTTP/2, and the Seafile client three upload
-and three download threads with one request per block, so the rate is the
-parallelism divided by the time one request takes — 400 requests per second at
-20 in parallel and 50 ms each. Under `average: 125` such a run empties any bucket
-within seconds and every request above the rate is answered `429`, which the
-client reports as a failed sync. The `-sync` chains carry `rl-sync`, 1000 requests
-per second: `apps/nextcloud`, `apps/seafile` and `apps/seafile-pro` ship them.
-
-**4. Is the surface a login, an admin panel, or an API holding credentials?**
-
-**No chain combines a hard rate limit with a large first-load burst.** `sec-4` uses
-`rl-hard`: 20 requests per second, burst 40. The `-spa` variants use `rl-spa`: 125
-per second, burst 500. There is nothing between the two.
-
-This shows up on admin interfaces that are single-page apps. `core/dockhand` and
-`core/infisical` run `sec-3-spa`, so their first load fits and their sustained
-limit is 125/s instead of 20/s. `core/portainer` runs `sec-4`, so its sustained
-limit is 20/s and its first load has to fit into 40 requests — which nobody has
-counted.
-
-If an app turns out to need both, add one rate-limit block with `average: 20` and
-`burst: 200` and a chain that uses it. Add it at the point an app needs it, not
-before.
-
-`sec-4` swaps `rl-soft` for `rl-hard` (average 20, burst 40). Appropriate where
-requests are few and each one is worth slowing an attacker down. It is the wrong
-choice for anything a browser loads assets from.
+A `429` on first load presents as a blank page or a half-rendered interface,
+which nobody attributes to the proxy. A sync client under `limit-standard`
+empties the bucket within seconds and reports every `429` as a failed file.
 
 Record the answer where the value lives: the stack's `.env.example` carries
-`APP_TRAEFIK_SECURITY`, with the reason beside it. A level with no stated reason
-is a level the next person cannot safely change. This document keeps no per-stack
-list — a second copy of a value drifts from the one the stack ships.
+`APP_TRAEFIK_LIMIT`, with the measurement beside it. A value with no stated
+reason is a value the next person cannot safely change. This document keeps no
+per-stack list — a second copy of a value drifts from the one the stack ships.
 
 ---
 
-## Pro Mode: Custom Combinations
+## Header Profiles (position 3)
 
-For apps that don't fit any preset, combine building blocks directly:
+Traefik's `headers` middleware **sets** a header; it never adds only what is
+missing (measured 2026-10-18). A profile therefore says "the proxy sets
+these", and an application that sends its own takes
+`headers-application-owned` plus the single blocks for what it lacks. Every
+profile starts with the HSTS base: HTTPS is the only operating mode, and a
+router on `headers-none` still commits its host name to it. The position is
+mandatory on every router.
+
+| Profile | The proxy sets | For |
+|---|---|---|
+| `headers-standard` | `hsts-base`, `header-nosniff`, `header-frame-deny`, `header-referrer`, `header-permissions` | an application that sends none of these — the conservative default |
+| `headers-application-owned` | `hsts-base` | an application measured to send its own; the compose file appends the `header-*` blocks it lacks (Keycloak: `header-permissions`; Matomo: `header-nosniff`, `header-permissions`; Vaultwarden: none) |
+| `headers-none` | `hsts-base` | debugging a route |
+
+| Block | Header |
+|---|---|
+| `hsts-base` | `Strict-Transport-Security: max-age=<HSTS_MAX_AGE>` — two years as shipped, from `core/traefik/.env` |
+| `header-nosniff` | `X-Content-Type-Options: nosniff` |
+| `header-frame-deny` | `X-Frame-Options: DENY` |
+| `header-referrer` | `Referrer-Policy: strict-origin-when-cross-origin` |
+| `header-permissions` | `Permissions-Policy` — camera, microphone, geolocation, payment, USB, magnetometer, gyroscope, accelerometer off |
+
+### HSTS — the HTTPS policy
+
+HTTPS is mandatory for every web service Traefik serves; the `web` entrypoint
+only redirects. HSTS with a two-year `max-age` is on for every router.
+`includeSubDomains` and `preload` are decided **per host name**, never
+deployment-wide: the block `hsts-include-subdomains`, placed before the
+profile in the router's list, sends both. `preload` commits a domain to the
+browsers' preload list once submitted and is hard to reverse; `includeSubDomains`
+on an apex host covers the whole zone. Neither is ever set by a default. An
+application's own `Strict-Transport-Security` is overwritten by the profile's
+value — what a migration preserves is the behaviour clients already receive
+through the proxy, not the backend's direct header.
+
+### Per-app blocks
+
+A block corrects one thing for one application, with its reason in that
+stack's `.env.example` or `README.md`. Its side of the four is what makes it
+work:
+
+| Block | Placed | What it does |
+|---|---|---|
+| `frame-self` | before the profile | `X-Frame-Options: SAMEORIGIN` — the application frames its own pages (listmonk's campaign preview, Nextcloud) |
+| `csp-self-only` | before the profile | an enforcing `Content-Security-Policy` for an application tested against it (whoami) |
+| `hsts-include-subdomains` | before the profile | the per-domain HSTS extension, see above |
+| `header-*` | before the profile | one header an `application-owned` stack lacks |
+| `forwarded-proto-https` | after the four | `X-Forwarded-Proto: https` to the backend — an application that derives its URLs from it (Paperless-ngx, Matomo, the office servers, Ghost's ActivityPub) |
+
+Traefik applies the response changes of the first middleware in the list
+last, so a response-header block placed **before** the profile overrides it,
+and one placed after it loses (measured 2026-10-18; first seen on v3.6,
+[`docs/bugfixes/keycloak-admin-console-iframe-2026-09-07.md`](../bugfixes/keycloak-admin-console-iframe-2026-09-07.md)).
+CI reports a block on the wrong side (`block-order`).
+
+### Framing — what `frame-self` is, and what it is not
+
+Being framed is the application's own attack surface: a page any site may
+frame is a page any site can overlay, and the user acts on what they think
+they see. Keep the denying default unless embedding is a feature the operator
+uses.
+
+`frame-self` sends `SAMEORIGIN`, and same origin means the same scheme, host
+and port. `dash.example.com` embedding `paperless.example.com` is a different
+origin, so the frame is refused exactly as it would be under `DENY`. The block
+covers an application framing *its own* pages. It does nothing for one stack
+embedding another — the four dashboards this blueprint ships (`apps/dashy`,
+`apps/heimdall`, `apps/homarr`, `apps/homepage`) frame nothing by default, and
+a dashboard tile that opens the app in a new tab needs none of this. Where
+embedding is wanted, the **target** names the parent origin with a
+`frame-ancestors` CSP of its own, as the office servers do for the file host
+that embeds the editor:
 
 ```yaml
-# Example: strict headers with embed + hard rate limit + CrowdSec
-middlewares:
-  - crowdsec-basic@file
-  - acc-tailscale@file
-  - hdr-strict-embed@file
-  - rl-hard@file
-  - compress@file
+- "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-csp.headers.contentSecurityPolicy=frame-ancestors 'self' https://dash.example.com;"
 ```
 
-All building blocks are standalone middlewares — use them individually or with sec-* chains.
+placed before the profile. An application that sets its own frame header per
+page or per endpoint — Keycloak, Vaultwarden, Matomo, measured — is
+`headers-application-owned`, so the proxy sets none and the application's
+value reaches the browser.
+
+### Which profile for an application
+
+Answer against the running application, not from its category:
+
+```bash
+curl -sI https://app.example.com/ | grep -iE 'strict-transport|x-content-type|x-frame|referrer-policy|permissions-policy|content-security-policy'
+```
+
+Sends none of them → `headers-standard`. Sends some → `headers-application-owned`
+plus one `header-*` block per header it lacks, and the measurement in the
+stack's `README.md`. Sends a frame header that varies per page → never
+`headers-standard`, whose `DENY` would overwrite it on every page.
+
+---
+
+## The Auth Position (position 4)
+
+Who must be identified before the request reaches the application. The value
+carries its provider:
+
+| Value | Meaning |
+|---|---|
+| `auth-none@file` | the application has its own login, or none is wanted — the explicit "no gate" |
+| `auth-authentik@file` | forward-auth through `core/authentik`: the outpost is asked for every request; no session, no pass; outpost unreachable, no pass. Exists only with `AUTHENTIK_FORWARD_AUTH_ENABLED=true` |
+| `${COMPOSE_PROJECT_NAME}-auth@docker` | a basicAuth the stack defines itself from its own user list (`apps/paperless-gpt`, `monitoring/scrutiny`) |
+
+A gate on one path of a host — `apps/paperless-ngx`'s `/admin` — is a second
+router with `auth-authentik@file` in its auth position and `auth-none@file`
+on the main one ([`core/authentik/README.md`](../../core/authentik/README.md#integrating-other-apps-via-forward-auth)).
+
+---
+
+## Threat Enforcement and Compression (the entrypoint)
+
+Both are deployment decisions, made once in `core/traefik/.env` and placed by
+`render.sh` on `entryPoints.websecure.http.middlewares`, in front of every
+router — first on the request, last on the response (measured 2026-10-18).
+
+| Entrypoint middleware | Switch | What it does |
+|---|---|---|
+| `threat-crowdsec` | `CROWDSEC_BOUNCER_ENABLED=true` | refuses a request from an address the CrowdSec LAPI has a decision for, before any other work; stream mode, fail-open |
+| `threat-crowdsec-appsec` | `CROWDSEC_APPSEC_ENABLED=true` as well | the same, plus synchronous inspection of each request against the AppSec rule sets, fail-open — placed instead of `threat-crowdsec` |
+| `compress` | always | compresses responses above 1024 bytes whose type is not excluded; the exclusions are exact types (`application/octet-stream`, `image/png` measured; jpeg, webp, avif, gif, zip, gzip, mp4, mpeg, woff2 by type). Streams are not buffered: `text/event-stream` stays compressible, a websocket upgrade is untouched |
+
+CrowdSec and AppSec are optional parts of the blueprint and off as shipped;
+each installation decides whether to enable them. Once enabled they hold for
+every router on the entrypoint — a router cannot opt out, and an address that
+must never be refused is a CrowdSec AllowList (`core/crowdsec`,
+`CROWDSEC_ALLOWLIST_ADMIN`), never a label. AppSec in particular is one
+decision for every application at once: an application with known WAF false
+positives (`core/crowdsec/docs/appsec.md` lists them) keeps the whole
+installation at `threat-crowdsec` until a path-scoped exclusion exists. The
+entrypoint list is static configuration: after a render that switches the
+bouncer off, the Traefik container has to be recreated at once — until then
+the running list names a middleware the dynamic configuration no longer
+defines, and every router on the entrypoint is disabled. Switching it on has
+no such window. The bouncer's settings, AppSec's progression and what each
+blocks: [`core/crowdsec/docs/profiles.md`](../../core/crowdsec/docs/profiles.md),
+[`core/crowdsec/docs/appsec.md`](../../core/crowdsec/docs/appsec.md).
 
 ---
 
@@ -339,36 +345,28 @@ External services that plug into Traefik as middleware. Each is independent and
 optional, and each is rendered by its own switch in `core/traefik/.env` — no
 template is edited to enable one, and `integrations.yml` renders empty.
 
-| Integration | Type | What it does | Switch |
+| Integration | Type | Where it acts | Switch |
 |-------------|------|-------------|--------|
-| `crowdsec-basic` | Traefik plugin | CrowdSec decision remediation: blocks IPs the LAPI has a decision for (stream mode, fail-open, no request inspection) | `CROWDSEC_BOUNCER_ENABLED` |
-| `crowdsec-appsec` | Traefik plugin | The same decision remediation, plus AppSec request inspection against the installed rule sets (fail-open) | `CROWDSEC_BOUNCER_ENABLED` |
-| `auth-authentik` (older name `sec-authentik`, the same middleware) | Forward auth | A login in front of an application that has none: the Authentik outpost is asked for every request; no session, no pass; outpost unreachable, no pass | `AUTHENTIK_FORWARD_AUTH_ENABLED` |
-
-With a switch off, its middlewares do not exist and no router attaches one. An
-application opts in deliberately, per stack: the CrowdSec middleware through
-`APP_TRAEFIK_THREAT` in [`traefik-labels.md`](traefik-labels.md), the
-forward-auth gate by naming `auth-authentik@file` on the router that needs it
-([`core/authentik/README.md`](../../core/authentik/README.md#integrating-other-apps-via-forward-auth)).
-Access policies, rate limits and headers do not depend on either switch.
+| `threat-crowdsec`, `threat-crowdsec-appsec` | Traefik plugin | the `websecure` entrypoint, every router | `CROWDSEC_BOUNCER_ENABLED`, `CROWDSEC_APPSEC_ENABLED` |
+| `auth-authentik` | Forward auth | the auth position of the routers whose `APP_TRAEFIK_AUTH` names it | `AUTHENTIK_FORWARD_AUTH_ENABLED` |
 
 One switch renders both CrowdSec halves: the plugin into Traefik's **static**
-configuration, which takes effect only after a Traefik restart, and the two
-middleware definitions into `config/dynamic/crowdsec.yml`, which is hot-reloaded;
-with the switch off, `render.sh` removes the middleware file. The forward-auth
-gate is dynamic configuration only — `config/dynamic/authentik.yml`, hot-reloaded,
-removed the same way.
+configuration and the entrypoint list, which take effect on a recreate of the
+container, and the two middleware definitions into `config/dynamic/crowdsec.yml`,
+which is hot-reloaded; with the switch off, `render.sh` removes the middleware
+file. The forward-auth gate is dynamic configuration only —
+`config/dynamic/authentik.yml`, hot-reloaded, removed the same way; a router
+whose auth position still names it is then disabled by Traefik, not left open.
+`validate.sh` refuses a `config/` that disagrees with either switch, and
+`render.sh` refuses to render over a configuration that carries an
+integration `.env` does not declare.
 
-`crowdsec-appsec` additionally requires the CrowdSec AppSec listener on port 7422 and a
-remediation plugin version that supports it. AppSec is CrowdSec's request-inspection
-(WAF) component; what it blocks depends on which rule sets are installed, so treat its
-coverage as the rule sets' coverage rather than as general request filtering. See
-[`core/crowdsec/docs/appsec.md`](../../core/crowdsec/docs/appsec.md) before enabling it.
-
-`crowdsec-basic` is the first profile in the `crowdsec-*` family — see
-[`core/crowdsec/docs/profiles.md`](../../core/crowdsec/docs/profiles.md) for the full
-profile model (AppSec, strict, geo) and the whoami-first validation procedure.
-See the [Traefik README](../../core/traefik/README.md) for step-by-step enable/disable instructions.
+AppSec is CrowdSec's request-inspection (WAF) component; what it blocks
+depends on which rule sets are installed, so treat its coverage as the rule
+sets' coverage rather than as general request filtering. It needs the AppSec
+listener on port 7422. See [`core/crowdsec/docs/appsec.md`](../../core/crowdsec/docs/appsec.md)
+before switching it on, and the [Traefik README](../../core/traefik/README.md)
+for the step-by-step enable and disable procedure.
 
 ---
 
@@ -376,11 +374,27 @@ See the [Traefik README](../../core/traefik/README.md) for step-by-step enable/d
 
 | Profile | Min TLS | Use case |
 |---------|---------|----------|
-| `tls-basic` | 1.2 | Maximum compatibility (older clients) |
-| `tls-aplus` | 1.2 | SSL Labs A+ (strict ciphers, X25519 preferred) |
-| `tls-modern` | 1.3 | Current browsers only (strictest) |
+| `tls-compatible` | 1.2 | older clients must connect |
+| `tls-standard` | 1.2 | strict ciphers and curves, X25519 preferred — the deployment standard |
+| `tls-strict` | 1.3 | current browsers and clients only |
 
-Recommendation: `tls-aplus` for most services. Use `tls-modern` for password managers and admin panels. Use `tls-basic` only when older clients must connect.
+A router with `tls=true` — every blueprint router — takes the file provider's
+reserved `default` option, never the entrypoint's (measured 2026-10-18: an
+entrypoint-level option reaches no such router, so the template sets none).
+`render.sh` builds `default` from `TLS_DEFAULT_OPTION` in `core/traefik/.env`,
+`tls-standard` as shipped. Changing it takes effect on a recreate of the
+container, not on a reload.
+
+A router names an option of its own only as a documented exception —
+`tls.options=${APP_TRAEFIK_TLS_OPTION}@file`, with the reason above the variable
+in the stack's `.env.example`: `tls-strict` for a password manager or a
+privileged-access console, `tls-compatible` where a client that is not current
+has to connect. Two routers of one stack serving the same host name with
+different options are a conflict Traefik resolves by serving `default` to both
+and logging it; CI refuses it (`tls-conflict`) and `overview.sh --host` repeats
+the check across stacks with the live `.env` files. `core.strictTLSOptions`,
+which would fail such a conflict closed instead, stays off until the check has
+run on every host.
 
 ---
 
@@ -422,8 +436,8 @@ by the next `render.sh`; the dashboard's values live in `core/traefik/.env` and 
 
 | Action | How |
 |--------|-----|
-| Block a service immediately | `APP_TRAEFIK_ACCESS=acc-deny` |
-| Lock to VPN only | `APP_TRAEFIK_ACCESS=acc-tailscale` |
-| Escalate rate limiting | `APP_TRAEFIK_SECURITY=sec-4` — `rl-hard`, 20 requests per second and burst 40, answers `429` to a browser's asset load as well |
-| Block an IP via CrowdSec | `docker exec crowdsec cscli decisions add --ip X.X.X.X --duration 24h --reason "incident"` — enforced on routers carrying a `crowdsec-*` middleware |
+| Block a service immediately | `APP_TRAEFIK_ACCESS=access-blocked` |
+| Lock to VPN only | `APP_TRAEFIK_ACCESS=access-vpn` |
+| Escalate rate limiting | `APP_TRAEFIK_LIMIT=limit-strict` — 20 requests per second and burst 40, answers `429` to a browser's asset load as well |
+| Block an IP via CrowdSec | `docker exec crowdsec cscli decisions add --ip X.X.X.X --duration 24h --reason "incident"` — enforced on every router after the next poll (60 s) while `CROWDSEC_BOUNCER_ENABLED` is on; on none otherwise |
 | Switch certificate resolver | `APP_TRAEFIK_CERT_RESOLVER` between `cloudflare-dns` (DNS-01), `httpResolver` (HTTP-01) and `tlsResolver` (TLS-ALPN-01), with the `certresolver` label uncommented; `TRAEFIK_DASHBOARD_CERT_RESOLVER` for the dashboard, then `render.sh` |
