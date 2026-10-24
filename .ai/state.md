@@ -2,7 +2,7 @@
 
 > If this file conflicts with git (branch, commits, tags), trust git.
 
-**Last updated:** 2026-10-15
+**Last updated:** 2026-10-25
 
 - **Phase:** pre-1.0. Latest tag `v0.9.4` (2026-10-04), which is where `main`
   stands; what `dev` carries beyond it is `git rev-list --count v0.9.4..dev`, and
@@ -49,16 +49,28 @@
   [`../docs/audits/core-v1-readiness-2026-10-15.md`](../docs/audits/core-v1-readiness-2026-10-15.md):
   66 findings with evidence, a programme in phases 0–6, and twelve decisions, all
   taken on 2026-10-15 and 2026-10-16 and recorded in [`decisions.md`](decisions.md).
-  Phases 1–3 are merged (#231–#239). Phase 4, the middleware model, is in its
-  fourth step: 4.1 and 4.2 merged (#241, #242); 4.3, the cut, prepared on
-  `feature/traefik-hard-cut` as five commits awaiting review; 4.4, the
-  documentation, next. Phases 5–6 have not started. Decisions D1–D8 of
-  2026-10-18 are in [`decisions.md`](decisions.md); every router's before and
-  after is
+  Phases 1–4 are merged: 1–3 as #231–#239; Phase 4, the middleware model, as
+  4.1 and 4.2 (#241, #242), 4.3, the cut (#258, 2026-10-23), and 4.4, the
+  documentation (#262–#264, 2026-10-24). Phases 5–6 have not started. Decisions
+  D1–D8 of 2026-10-18 are in [`decisions.md`](decisions.md); every router's
+  before and after is
   [`../core/traefik/docs/middleware-model-migration.md`](../core/traefik/docs/middleware-model-migration.md).
-- **Current milestone:** v0.10.0 — Measured resource limits. Whether it stays a
-  release is open (D4 in the audit): the measurement needs the same host session
-  as the verification backlog.
+- **Next release: v0.9.5** — the middleware model and its documentation, a
+  breaking change with a migration (decided 2026-10-23,
+  [`decisions.md`](decisions.md)). Between `dev` and the tag: the `validate.sh`
+  correction ([`tasks.md`](tasks.md) §10); the dev→main pull request's image CVE
+  scan against the baseline of 2026-10-19; the Release Chain's steps
+  ([`domains/release.md`](domains/release.md)) — the Consistency Chain, the
+  changelog heading and comparison link, `ROADMAP.md`'s *Latest tag* paragraph
+  and its Traefik item under v1.0, a row in [`progress.md`](progress.md). Before
+  the tag, one targeted test (decided 2026-10-25): the migration from v0.9.4 to
+  the model on a disposable installation, by the procedure in
+  [`../core/traefik/docs/middleware-model-migration.md`](../core/traefik/docs/middleware-model-migration.md)
+  §4 — no production server, no wider campaign. The proofs its §5 lists stay
+  open for a later host session, and the release says so.
+- **Current milestone after that:** v0.10.0 — Measured resource limits. Whether
+  it stays a release is open (D4 in the audit): the measurement needs the same
+  host session as the verification backlog.
 - **Definition of done for v0.10.0:** every `✅` stack's limits come from a
   measurement on a real install rather than from the derivation rule
   (`docs/resource-measurement.md`).
@@ -290,8 +302,10 @@ order:
    [`../docs/resource-measurement.md`](../docs/resource-measurement.md). Every
    container started is a measurement opportunity, and v0.10.0 cannot be
    prepared any other way. Five monitoring stacks are already running.
-4. **The security chains** — the open decision below; one Traefik pull request
-   plus one per moved stack.
+4. **The middleware model on a host** — after the migration test that precedes
+   v0.9.5, the proofs
+   [`../core/traefik/docs/middleware-model-migration.md`](../core/traefik/docs/middleware-model-migration.md)
+   §5 lists.
 
 ## Open decisions
 
@@ -319,8 +333,11 @@ on 2026-10-17/18 ([`../docs/audits/traefik-architecture-review-2026-10-17.md`](.
 and its eight decisions ([`decisions.md`](decisions.md), 2026-10-18) were applied
 as Phase 4.3 of the core audit (#258, 2026-10-23): four positions on every router
 — access, limit, headers, auth — threat enforcement and compression on the
-entrypoint, three header profiles that every one start with the HSTS base, one
-TLS standard, no alias. What the measurements led to, router by router, is
+entrypoint, three header profiles, each starting with the HSTS base, one TLS
+standard, no alias. Phase 4.4 (#262–#264, 2026-10-24) brought the standards, the
+core and stack documentation and the site to the model; `check-prose.py` fails
+on a retired name in current documentation since then, records excepted. What
+the measurements led to, router by router, is
 [`../core/traefik/docs/middleware-model-migration.md`](../core/traefik/docs/middleware-model-migration.md).
 
 The measurements that shaped it, in the order taken, with the values before the

@@ -6,6 +6,36 @@ this file is the index and covers decisions that have no other home.
 
 ---
 
+## 2026-10-23 · The cut ships as v0.9.5 without a reference tag; the documentation follows in four pull requests
+
+Decided by the maintainer after Phase 4.3 was accepted, and applied through Phase 4.4
+(#262–#264, 2026-10-24).
+
+- **The next version is v0.9.5**, covering the cut and its documentation. The release
+  gets a GitHub Release page that names the breaking change and the migration steps;
+  the number does not jump to v0.10.0, which stays the measured-resource-limits
+  milestone.
+- **No pre-cut tag.** `1041a02`, `dev` before the cut, is the reference commit; an
+  installation that has not migrated runs v0.9.4, the last release and the rollback
+  target.
+- **Records stay as written.** A verification record — a dated section or a measured
+  line in an `UPSTREAM.md`, the audits, the reviews, the migration document — keeps the
+  names of its time; a measurement in current documentation keeps its numbers and names
+  the old value as an old-to-new reference. Current instructions say what the files
+  ship, and a document that disagreed with a stack's files was corrected to the files.
+- **The guard against the retired names warns while the documentation moves and fails
+  afterwards** (`RETIRED_GATE` in `scripts/ci/check-prose.py`): WARN from Phase 4.4a,
+  FAIL since 4.4c. The exemptions are the record paths, old-to-new context and the
+  records above — a dated or verification-headed section of an `UPSTREAM.md` as a
+  whole, a measured line on its own — and there is no blanket exemption for
+  `UPSTREAM.md`.
+- **`validate.sh`'s search of `config/host/`** is corrected before the release and is
+  not part of Phase 4 (`tasks.md` §10).
+- **One targeted migration test precedes the tag** (added 2026-10-25): the migration from
+  v0.9.4 to the model on a disposable installation, by the procedure of the migration
+  document's §4 — no production server, no wider test campaign. The proofs its §5 lists
+  stay open for a later host session.
+
 ## 2026-10-18 · The middleware model as cut: eight decisions (D1–D8)
 
 Phase 4 of the core audit, applied 2026-10-22 on `feature/traefik-hard-cut`. The
