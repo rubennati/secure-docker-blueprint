@@ -191,5 +191,80 @@ class RequiredVariables(unittest.TestCase):
         self.assertIn("acme-wildcard.yml", v.stdout + v.stderr)
 
 
+class UnresolvedVariables(unittest.TestCase):
+    """validate.sh refuses a `${…}` left in a file render.sh wrote, and only there:
+    the host files scripts/host-files.sh renders into config/host/ carry shell
+    variables on purpose."""
+
+    PATTERN = "${LEFTOVER_VARIABLE}"
+
+    def _cleanup(self, r):
+        shutil.rmtree(r["tmp"], ignore_errors=True)
+
+    def _validate(self, r):
+        v = subprocess.run(["bash", str(r["tmp"] / "ops/scripts/validate.sh")], capture_output=True, text=True)
+        return v.returncode, v.stdout + v.stderr
+
+    def _render_host_files(self, tmp):
+        # What `scripts/host-files.sh render core/traefik` writes: the manifest's
+        # sources under their installed names, the watchdog script and env among them.
+        host = tmp / "config" / "host"
+        host.mkdir(parents=True, exist_ok=True)
+        scripts = tmp / "ops" / "scripts"
+        for src, name in (("traefik-watchdog.sh", "traefik-watchdog.sh"),
+                          ("traefik-watchdog.env.example", "traefik-watchdog.env"),
+                          ("traefik-watchdog.service.example", "traefik-watchdog.service"),
+                          ("traefik-watchdog.timer.example", "traefik-watchdog.timer")):
+            shutil.copy(scripts / src, host / name)
+        self.assertIn("${", (host / "traefik-watchdog.sh").read_text(encoding="utf-8"))
+
+    def test_rendered_host_files_beside_the_configuration_pass(self):
+        r = render(VALID_ENV)
+        self.addCleanup(self._cleanup, r)
+        self.assertEqual(r["validate_rc"], 0, r["validate_out"])
+        self._render_host_files(r["tmp"])
+        rc, out = self._validate(r)
+        self.assertEqual(rc, 0, out)
+
+    def test_a_file_under_config_host_that_render_did_not_write_is_not_searched(self):
+        r = render(VALID_ENV)
+        self.addCleanup(self._cleanup, r)
+        (r["tmp"] / "config" / "host").mkdir(parents=True, exist_ok=True)
+        (r["tmp"] / "config" / "host" / "notes.sh").write_text(f'echo "{self.PATTERN}"\n', encoding="utf-8")
+        rc, out = self._validate(r)
+        self.assertEqual(rc, 0, out)
+
+    def test_a_leftover_in_a_dynamic_file_is_refused_and_named(self):
+        r = render(VALID_ENV)
+        self.addCleanup(self._cleanup, r)
+        target = r["tmp"] / "config" / "dynamic" / "model.yml"
+        target.write_text(target.read_text(encoding="utf-8") + f"# {self.PATTERN}\n", encoding="utf-8")
+        rc, out = self._validate(r)
+        self.assertNotEqual(rc, 0)
+        self.assertIn("Unresolved variables", out)
+        self.assertIn("model.yml", out)
+        self.assertIn("LEFTOVER_VARIABLE", out)
+
+    def test_a_leftover_in_the_static_file_is_refused(self):
+        r = render(VALID_ENV)
+        self.addCleanup(self._cleanup, r)
+        target = r["tmp"] / "config" / "traefik.yml"
+        target.write_text(target.read_text(encoding="utf-8") + f"# {self.PATTERN}\n", encoding="utf-8")
+        rc, out = self._validate(r)
+        self.assertNotEqual(rc, 0)
+        self.assertIn("traefik.yml", out)
+
+    def test_a_leftover_in_the_rendered_firewall_file_is_refused(self):
+        r = render(dict(VALID_ENV, TRAEFIK_FORWARDED_PROXY="cloudflare"))
+        self.addCleanup(self._cleanup, r)
+        self.assertEqual(r["validate_rc"], 0, r["validate_out"])
+        target = r["tmp"] / "config" / "host" / "cloudflare-ranges.nft"
+        self.assertTrue(target.exists())
+        target.write_text(target.read_text(encoding="utf-8") + f"# {self.PATTERN}\n", encoding="utf-8")
+        rc, out = self._validate(r)
+        self.assertNotEqual(rc, 0)
+        self.assertIn("cloudflare-ranges.nft", out)
+
+
 if __name__ == "__main__":
     unittest.main()

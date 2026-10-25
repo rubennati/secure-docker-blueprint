@@ -241,13 +241,13 @@ milestone.
   has; `ops-proven` records a rehearsal.
 - The Trivy scan does not cover images built locally (Cal.diY, the vikunja layer);
   recorded in `decisions.md`, 2026-09-18, the custom-application path.
-- `core/traefik/ops/scripts/validate.sh` searches the whole of `config/` for
+- `core/traefik/ops/scripts/validate.sh` searched the whole of `config/` for
   unresolved `${…}`, `config/host/` included; the watchdog files
   `scripts/host-files.sh render` writes there carry shell variables on purpose, so
-  validate fails on a host that rendered them (found 2026-10-23 in a scratch run
-  of the middleware-model migration). Restrict the search to `config/traefik.yml`
-  and `config/dynamic/`, with a test. Before the next release; not part of
-  Phase 4.3.
+  validate failed on a host that rendered them (found 2026-10-23 in a scratch run
+  of the middleware-model migration). Done 2026-10-25: the search covers the files
+  `render.sh` writes — `config/traefik.yml`, `config/haproxy.cfg.template`,
+  `config/dynamic/*.yml`, `config/host/cloudflare-ranges.nft` — with five tests.
 
 ---
 
