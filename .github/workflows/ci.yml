@@ -227,6 +227,12 @@ jobs:
       - name: Check status consistency and LIFECYCLE.md freshness
         run: python3 scripts/ci/lifecycle-report.py --check "$GITHUB_STEP_SUMMARY"
 
+      # The decision log's register is generated from the ID heading and the
+      # field lines under each entry. A block edited by hand, a field outside
+      # the vocabulary or a relation to a decision no entry carries fails here.
+      - name: Check the decision register is complete and current
+        run: python3 scripts/ci/decision-register.py --check "$GITHUB_STEP_SUMMARY"
+
       # A stack that loses its licence or origin loses it silently — the field
       # is prose in a file nothing reads. Twelve stacks had already drifted
       # before anyone looked. This is what stops it happening again.

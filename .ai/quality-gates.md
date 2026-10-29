@@ -11,6 +11,7 @@ python3 scripts/ci/check-crowdsec-config.py --templates   # CrowdSec ships defau
 python3 scripts/ci/check-structure.py        # canonical structure, tags, secrets
 python3 scripts/ci/check-overlays.py         # opt-in overlay variants (needs Docker)
 python3 scripts/ci/lifecycle-report.py --check   # status consistency + LIFECYCLE freshness
+python3 scripts/ci/decision-register.py --check  # the decision register matches its entries' field lines
 python3 scripts/ci/sovereignty-report.py --check # licence and origin complete and current
 python3 scripts/ci/site-catalogue.py --check  # every stack has a catalogue entry
 python3 scripts/ci/security-coverage.py --check # hardening figures match the compose files

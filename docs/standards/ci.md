@@ -286,7 +286,7 @@ host, which is v0.10.0; whether a policy is stated at all is settled.
 
 ### 7 — Status model
 
-Four generated views, each checked against the files that own it.
+Five generated views, each checked against the files that own it.
 
 `scripts/ci/lifecycle-report.py --check` fails on a status claim that is not
 backed: an owner and its mirror disagreeing, a ✅ without `Last verified`, or a
@@ -313,6 +313,15 @@ model outside the recorded vocabulary — those facts are read from upstream's t
 an unsourced one would be a claim this repository cannot stand behind. This is what keeps the operator site
 from falling behind the repository: a stack cannot land in `dev` while being
 absent from the site's catalogue.
+
+`scripts/ci/decision-register.py --check` fails when the register at the top of
+`.ai/decisions.md` no longer matches the ID headings and field lines of its
+entries, when a field line uses a word outside the vocabulary the script's
+docstring states, or when a relation names a decision no entry carries. The
+register keeps three questions apart per decision — decided, implemented,
+verified — and is a presentation of the entries, never a second owner. While
+entries are still being classified, an entry without field lines is a warning
+and is listed as not yet classified; the register says nothing about its state.
 
 **Blocks merge:** yes
 
