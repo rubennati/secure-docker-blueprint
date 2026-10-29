@@ -19,6 +19,8 @@ where the client address survives the way to the container.
   container published differently from the model is PENDING, exit 3, so the
   update that recreates it is not blocked and nothing reads as a security OK
 - a docker-proxy listening on IPv6 for one of Traefik's ports is PENDING
+- only Docker's own "not found" means the network or the container is absent;
+  a refused or unanswered inspect is NOT VERIFIED, never "nothing there"
 - without docker-compose.yml in the directory nothing is checked, which is
   NOT VERIFIED, exit 3
 - validate.sh: exit 3 from the checker never ends in a plain "OK."; it exits 0
@@ -231,6 +233,61 @@ class Checker(unittest.TestCase):
         r = self.run_checker(model(IPV4), runtime=("false", new))
         self.assertEqual(r.returncode, 3, r.stdout)
         self.assertIn("PENDING: docker-proxy relays IPv6", r.stdout)
+
+    # --- review finding 2: access errors are not "absent" -------------------
+
+    def fake_docker(self, network_err=None, container_err=None):
+        """A docker CLI on PATH that answers inspect with the given stderr."""
+        bindir = self.tmp / "bin"
+        bindir.mkdir(exist_ok=True)
+        script = bindir / "docker"
+        script.write_text(
+            "#!/bin/sh\n"
+            'if [ "$1" = network ]; then echo "$NET_ERR" >&2; exit 1; fi\n'
+            'if [ "$1" = inspect ]; then echo "$CTR_ERR" >&2; exit 1; fi\n'
+            "exit 0\n", encoding="utf-8")
+        script.chmod(0o755)
+        return {"PATH": f"{bindir}:{os.environ['PATH']}", "NET_ERR": network_err or "", "CTR_ERR": container_err or ""}
+
+    def run_with_fake_docker(self, m, env, *extra):
+        mj = self.tmp / "model.json"
+        mj.write_text(json.dumps(m), encoding="utf-8")
+        full_env = {k: v for k, v in os.environ.items() if k != "DOCKER_HOST"}
+        full_env.update(env)
+        return subprocess.run(["python3", str(CHECKER), "--compose-json", str(mj), "--proc", str(self.proc), *extra],
+                              capture_output=True, text=True, env=full_env)
+
+    def test_refused_container_inspect_is_not_verified(self):
+        env = self.fake_docker(network_err="Error response from daemon: network proxy-public not found",
+                               container_err="permission denied while trying to connect to the docker API "
+                                             "at unix:///var/run/docker.sock")
+        r = self.run_with_fake_docker(model(IPV4), env)
+        self.assertEqual(r.returncode, 3, r.stdout)
+        self.assertIn("NOT VERIFIED: the container traefik-core could not be inspected: permission denied", r.stdout)
+
+    def test_missing_container_and_network_are_absent_not_unverified(self):
+        env = self.fake_docker(network_err="Error response from daemon: network proxy-public not found",
+                               container_err="Error: No such object: traefik-core")
+        r = self.run_with_fake_docker(model(IPV4), env)
+        self.assertEqual(r.returncode, 0, r.stdout)
+        self.assertEqual(r.stdout.strip(), "")
+
+    def test_refused_network_inspect_under_dual_stack_is_not_verified(self):
+        env = self.fake_docker(network_err="Cannot connect to the Docker daemon at unix:///var/run/docker.sock. "
+                                           "Is the docker daemon running?",
+                               container_err="Error: No such object: traefik-core")
+        r = self.run_with_fake_docker(model(IPV4 + IPV6, dual_stack=True), env, "--daemon-check", "manual")
+        self.assertEqual(r.returncode, 3, r.stdout)
+        self.assertIn("NOT VERIFIED: the network proxy-public could not be inspected: Cannot connect", r.stdout)
+        self.assertNotIn("is IPv4-only", r.stdout)
+
+    def test_seam_error_states_are_not_verified(self):
+        self.dockerd("--userland-proxy=false")
+        r = self.run_checker(model(IPV4 + IPV6, dual_stack=True),
+                             runtime=("error", {"__error__": "permission denied"}))
+        self.assertEqual(r.returncode, 3, r.stdout)
+        self.assertIn("network proxy-public could not be inspected", r.stdout)
+        self.assertIn("container traefik-core could not be inspected: permission denied", r.stdout)
 
     def test_without_compose_file_nothing_is_checked(self):
         r = subprocess.run(["python3", str(CHECKER), "--project-dir", str(self.tmp)], capture_output=True, text=True)

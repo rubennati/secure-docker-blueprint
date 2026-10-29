@@ -22,7 +22,9 @@ included) and, when Traefik exists, against the running state:
            `docker compose up -d` recreates it
   PENDING  a docker-proxy process relays an IPv6 port of Traefik
   NOT VERIFIED  a check that could not run — no docker-compose.yml in the
-           directory, no docker CLI
+           directory, no docker CLI, or Docker refused or did not answer when
+           the network or the container was inspected (only Docker's own
+           "not found" means absent)
 
 Exit 0 when every check ran and found nothing, 1 on any ERROR, 3 when there is
 no ERROR but something is PENDING or NOT VERIFIED. validate.sh reports 3 as a
@@ -169,24 +171,51 @@ def daemon_settings(proc, env):
 
 # --- the running state ------------------------------------------------------
 
-def network_ipv6(args):
+NOT_FOUND = ("no such network", "no such object", "no such container", "not found")
+
+
+def docker_query(cmd):
+    """('ok', stdout) | ('absent', None) | ('unknown', reason).
+
+    Only Docker's own "does not exist" answer counts as absent. Any other
+    failure — no permission on the socket, a daemon that does not answer — is
+    unknown, never read as "nothing there".
+    """
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return "unknown", str(exc)
+    if r.returncode == 0:
+        return "ok", r.stdout
+    detail = (r.stderr or r.stdout).strip()
+    if any(marker in detail.lower() for marker in NOT_FOUND):
+        return "absent", None
+    return "unknown", (detail.splitlines() or [f"exit {r.returncode}"])[-1]
+
+
+def network_state(args):
+    """('ok', enable_ipv6) | ('absent', None) | ('unknown', reason)."""
     if args.network_ipv6 is not None:
-        return None if args.network_ipv6 == "absent" else args.network_ipv6 == "true"
-    r = subprocess.run(["docker", "network", "inspect", "-f", "{{.EnableIPv6}}", args.public_network],
-                       capture_output=True, text=True)
-    return None if r.returncode != 0 else r.stdout.strip() == "true"
+        if args.network_ipv6 in ("true", "false"):
+            return "ok", args.network_ipv6 == "true"
+        return ("absent", None) if args.network_ipv6 == "absent" else ("unknown", "test: network inspect failed")
+    state, out = docker_query(["docker", "network", "inspect", "-f", "{{.EnableIPv6}}", args.public_network])
+    return (state, out.strip() == "true") if state == "ok" else (state, out)
 
 
-def running_ports(args):
-    """The container's NetworkSettings.Ports, or None when it is not running."""
+def container_state(args):
+    """('ok', ports) | ('absent', None) | ('unknown', reason); a stopped container is absent."""
     if args.running_ports:
-        return json.loads(Path(args.running_ports).read_text(encoding="utf-8"))
-    r = subprocess.run(["docker", "inspect", "-f", "{{json .State.Running}} {{json .NetworkSettings.Ports}}",
-                        args.container], capture_output=True, text=True)
-    if r.returncode != 0:
-        return None
-    running, ports = r.stdout.strip().split(" ", 1)
-    return json.loads(ports) if running == "true" else None
+        data = json.loads(Path(args.running_ports).read_text(encoding="utf-8"))
+        if isinstance(data, dict) and "__error__" in data:
+            return "unknown", data["__error__"]
+        return ("absent", None) if data is None else ("ok", data)
+    state, out = docker_query(["docker", "inspect", "-f", "{{json .State.Running}} {{json .NetworkSettings.Ports}}",
+                               args.container])
+    if state != "ok":
+        return state, out
+    running, ports = out.strip().split(" ", 1)
+    return ("ok", json.loads(ports)) if running == "true" else ("absent", None)
 
 
 def running_bindings(ports):
@@ -233,8 +262,9 @@ def main():
     ap.add_argument("--daemon-check", default="", help="'manual' when the daemon settings were checked by hand")
     ap.add_argument("--compose-json", help="read the Compose model from this file (tests)")
     ap.add_argument("--proc", default="/proc", help="proc filesystem root (tests)")
-    ap.add_argument("--network-ipv6", choices=["true", "false", "absent"], help="network state (tests)")
-    ap.add_argument("--running-ports", help="NetworkSettings.Ports as JSON, or 'null' when not running (tests)")
+    ap.add_argument("--network-ipv6", choices=["true", "false", "absent", "error"], help="network state (tests)")
+    ap.add_argument("--running-ports", help="NetworkSettings.Ports as JSON, 'null' when not running, "
+                                            "or {\"__error__\": reason} (tests)")
     ap.add_argument("--no-runtime", action="store_true", help="skip the running-state checks")
     args = ap.parse_args()
 
@@ -270,12 +300,18 @@ def main():
                 "       DOCKER_DAEMON_CHECK=manual in .env to record it.")
 
     if not args.no_runtime:
-        net = network_ipv6(args)
-        if dual_stack and net is False:
+        net_state, net = network_state(args)
+        if dual_stack and net_state == "ok" and net is False:
             errors.append(f"network-dual-stack.yml is applied, but the existing network {args.public_network} "
                           "is IPv4-only.\n       Docker cannot add IPv6 to it — docs/ipv6-dual-stack.md, migration guide.")
-        ports = running_ports(args)
-        if ports is not None:
+        elif dual_stack and net_state == "unknown":
+            unverified.append(f"the network {args.public_network} could not be inspected: {net}. "
+                              "Whether it carries IPv6 is not confirmed.")
+        ctr_state, ports = container_state(args)
+        if ctr_state == "unknown":
+            unverified.append(f"the container {args.container} could not be inspected: {ports}. "
+                              "What it is published on is not confirmed.")
+        if ctr_state == "ok":
             want, have = expand(configured), expand(running_bindings(ports))
             if want != have:
                 extra = sorted(f"{ip}:{pub}/{proto}" for ip, pub, _, proto in have - want)
