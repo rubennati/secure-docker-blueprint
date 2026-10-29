@@ -555,4 +555,22 @@ if [ -f "${ROOT_DIR}/config/traefik.yml" ]; then
   fi
 fi
 
+# Published address families: IPv6 only where the client address survives the
+# way to the container — the effective Compose model, the Docker daemon's
+# settings under dual-stack, and the running container. The checker explains
+# each finding; see its header for the rules.
+case "${DOCKER_DAEMON_CHECK:-}" in
+  ''|manual) ;;
+  *) echo "ERROR: DOCKER_DAEMON_CHECK must be empty or manual (got '${DOCKER_DAEMON_CHECK}')."; exit 1 ;;
+esac
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "ERROR: python3 is needed to check which addresses Traefik is published on."
+  exit 1
+fi
+python3 "${ROOT_DIR}/ops/scripts/check-published-family.py" \
+  --project-dir "${ROOT_DIR}" \
+  --public-network "${PUBLIC_NETWORK}" \
+  --container "${TRAEFIK_CONTAINER_NAME}" \
+  --daemon-check "${DOCKER_DAEMON_CHECK:-}" || exit 1
+
 echo "OK."
