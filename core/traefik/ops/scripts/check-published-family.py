@@ -15,7 +15,11 @@ when Traefik exists, against the running state:
 
   ERROR    a port accepts IPv6 while the public network has no IPv6
   ERROR    dual-stack, and the daemon's effective settings keep docker-proxy
-           (userland-proxy not false) or disable ip6tables
+           (userland-proxy not false) or disable ip6tables. The daemon is the
+           one behind the endpoint Compose uses: `docker info` in the same
+           environment (DOCKER_HOST, DOCKER_CONTEXT, current context) names the
+           host and the data root, and the local dockerd with that data root is
+           the one whose arguments and config file are read
   ERROR    dual-stack, and the daemon's settings cannot be read — unless
            DOCKER_DAEMON_CHECK=manual records that they were checked by hand
   ERROR    dual-stack, and the existing public network is IPv4-only
@@ -39,6 +43,7 @@ import argparse
 import json
 import os
 import shutil
+import socket
 import subprocess
 import sys
 from pathlib import Path
@@ -107,7 +112,9 @@ def configured_bindings(model):
 
 # --- the Docker daemon's effective settings ---------------------------------
 
-def find_dockerd(proc):
+def find_dockerds(proc):
+    """Every dockerd process visible here: (pid directory, argv)."""
+    found = []
     for entry in sorted(proc.iterdir(), key=lambda p: p.name):
         if not entry.name.isdigit():
             continue
@@ -117,16 +124,21 @@ def find_dockerd(proc):
             argv = (entry / "cmdline").read_bytes().split(b"\0")
         except OSError:
             continue
-        return entry, [a.decode("utf-8", "replace") for a in argv if a]
-    return None, None
+        found.append((entry, [a.decode("utf-8", "replace") for a in argv if a]))
+    return found
+
+
+VALUE_FLAGS = ("config-file", "data-root")
 
 
 def flag_value(argv, name):
-    """--name=value, --name value, or a bare boolean --name."""
+    """--name=value, --name value (for options that take a value), or a bare boolean --name."""
     for i, a in enumerate(argv):
         if a == f"--{name}":
             nxt = argv[i + 1] if i + 1 < len(argv) else ""
-            return nxt if nxt and not nxt.startswith("-") and name == "config-file" else "true"
+            if name in VALUE_FLAGS:
+                return nxt if nxt and not nxt.startswith("-") else None
+            return "true"
         if a.startswith(f"--{name}="):
             return a.split("=", 1)[1]
     return None
@@ -155,39 +167,114 @@ def started_after(pid_dir, proc, path):
     return Path(path).stat().st_mtime > started
 
 
-def daemon_settings(proc, env):
-    """('safe'|'unsafe'|'unknown', reason)."""
+def docker_info(args):
+    """The /info of the endpoint Compose uses — DOCKER_HOST, DOCKER_CONTEXT and
+    the current context apply to `docker info` exactly as to `docker compose`.
+    ('ok', dict) | ('unknown', reason)."""
+    if args.docker_info:
+        data = json.loads(Path(args.docker_info).read_text(encoding="utf-8"))
+        return ("unknown", data["__error__"]) if "__error__" in data else ("ok", data)
+    state, out = docker_query(["docker", "info", "--format", "{{json .}}"])
+    if state != "ok":
+        return "unknown", f"docker info failed: {out}"
+    try:
+        return "ok", json.loads(out)
+    except ValueError:
+        return "unknown", "docker info returned no JSON"
+
+
+def config_location(pid_dir, argv):
+    """The daemon.json this dockerd reads, or None when it cannot be located (rootless)."""
+    path = flag_value(argv, "config-file")
+    if path is not None:
+        return path
+    try:
+        uid = process_uid(pid_dir)
+    except OSError:
+        uid = None
+    return DEFAULT_DAEMON_JSON if uid == 0 else None
+
+
+def read_config(path):
+    """(dict, None) | (None, reason); a file that does not exist is an empty config."""
+    p = Path(path)
+    if not p.exists():
+        return {}, None
+    try:
+        return json.loads(p.read_text(encoding="utf-8")), None
+    except OSError:
+        return None, f"{path} is not readable"
+    except ValueError:
+        return None, f"{path} is not valid JSON"
+
+
+def data_root(pid_dir, argv):
+    """Where this dockerd keeps its data — unique per daemon on a host — or None."""
+    root = flag_value(argv, "data-root")
+    if root:
+        return root
+    path = config_location(pid_dir, argv)
+    if path is not None:
+        config, _ = read_config(path)
+        if config and config.get("data-root"):
+            return config["data-root"]
+    try:
+        uid = process_uid(pid_dir)
+    except OSError:
+        uid = None
+    # Docker's default for a daemon running as root; a rootless daemon's
+    # default lies in its user's home and is not derived here.
+    return "/var/lib/docker" if uid == 0 else None
+
+
+def serving_dockerd(proc, info):
+    """The local dockerd behind the endpoint, matched by host name and data root.
+    ((pid_dir, argv), None) | (None, reason)."""
+    name, root = info.get("Name", ""), info.get("DockerRootDir", "")
+    if name != socket.gethostname():
+        return None, (f"the endpoint Compose uses is the daemon on {name or 'an unnamed host'}, not this host "
+                      f"({socket.gethostname()}) — a remote context, DOCKER_HOST or a VM")
+    daemons = find_dockerds(proc)
+    if not daemons:
+        return None, "no dockerd process is visible here (/proc with hidepid, or the daemon runs elsewhere)"
+    unresolved = [d for d in daemons if data_root(*d) is None]
+    matches = [d for d in daemons if data_root(*d) and os.path.realpath(data_root(*d)) == os.path.realpath(root)]
+    if len(matches) == 1:
+        return matches[0], None
+    if len(matches) > 1:
+        return None, f"{len(matches)} dockerd processes name the data root {root}"
+    if unresolved:
+        return None, ("a dockerd runs without root and without --config-file or --data-root (rootless); "
+                      "which daemon serves the endpoint is not determined")
+    return None, f"no dockerd on this host has the endpoint's data root {root}"
+
+
+def daemon_settings(proc, env, args):
+    """('safe'|'unsafe'|'unknown', reason) for the daemon Compose talks to."""
     host = env.get("DOCKER_HOST", "")
     if host and not host.startswith("unix://"):
         return "unknown", f"DOCKER_HOST={host} points to a daemon whose process is not on this host"
-    pid_dir, argv = find_dockerd(proc)
-    if pid_dir is None:
-        return "unknown", "no dockerd process is visible here (remote context, Docker Desktop, or /proc with hidepid)"
+    state, info = docker_info(args)
+    if state != "ok":
+        return "unknown", info
+    found, reason = serving_dockerd(proc, info)
+    if found is None:
+        return "unknown", reason
+    pid_dir, argv = found
 
     userland = flag_value(argv, "userland-proxy")
     ip6tables = flag_value(argv, "ip6tables")
-    config_path = flag_value(argv, "config-file")
+    config_path = config_location(pid_dir, argv)
     source = "dockerd arguments"
-    if config_path is None:
-        try:
-            uid = process_uid(pid_dir)
-        except OSError:
-            uid = None
-        if uid != 0:
-            return "unknown", "dockerd runs without root and without --config-file (rootless); its daemon.json is not located"
-        config_path = DEFAULT_DAEMON_JSON
-
     config = {}
     if userland is None or ip6tables is None:
-        path = Path(config_path)
-        if path.exists():
-            try:
-                config = json.loads(path.read_text(encoding="utf-8"))
-            except OSError:
-                return "unknown", f"{config_path} is not readable"
-            except ValueError:
-                return "unknown", f"{config_path} is not valid JSON"
-            if started_after(pid_dir, proc, path):
+        if config_path is None:
+            return "unknown", "dockerd runs without root and without --config-file (rootless); its daemon.json is not located"
+        config, problem = read_config(config_path)
+        if problem:
+            return "unknown", problem
+        if Path(config_path).exists():
+            if started_after(pid_dir, proc, config_path):
                 return "unknown", f"{config_path} changed after the daemon started — restart Docker to apply it"
             source = config_path if userland is None and ip6tables is None else f"{config_path} and dockerd arguments"
         else:
@@ -299,6 +386,7 @@ def main():
     ap.add_argument("--daemon-check", default="", help="'manual' when the daemon settings were checked by hand")
     ap.add_argument("--compose-json", help="read the Compose model from this file (tests)")
     ap.add_argument("--proc", default="/proc", help="proc filesystem root (tests)")
+    ap.add_argument("--docker-info", help="the endpoint's docker info as JSON, or {\"__error__\": reason} (tests)")
     ap.add_argument("--network-ipv6", choices=["true", "false", "absent", "error"], help="network state (tests)")
     ap.add_argument("--running-ports", help="NetworkSettings.Ports as JSON, 'null' when not running, "
                                             "or {\"__error__\": reason} (tests)")
@@ -324,7 +412,7 @@ def main():
             "       Bind to IPv4 (TRAEFIK_BIND_V4) or apply network-dual-stack.yml with its prerequisites.")
 
     if dual_stack:
-        state, reason = daemon_settings(proc, os.environ)
+        state, reason = daemon_settings(proc, os.environ, args)
         if state == "unsafe":
             errors.append(f"dual-stack needs userland-proxy false and ip6tables enabled: {reason}.\n"
                           "       Set both in the daemon configuration and restart Docker (docs/ipv6-dual-stack.md).")

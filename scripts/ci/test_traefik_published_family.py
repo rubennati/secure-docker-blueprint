@@ -7,8 +7,11 @@ where the client address survives the way to the container.
   Docker; skipped without it)
 - IPv4-only: a binding without a host address, or on an IPv6 address, is an
   error — from the base file or from any override
-- dual-stack: the daemon's effective settings decide, read from the running
-  dockerd's arguments and the config file they name or the default one:
+- dual-stack: the daemon's effective settings decide, for the daemon behind
+  the endpoint Compose uses — `docker info` in the same environment
+  (DOCKER_HOST, DOCKER_CONTEXT) names its host and data root, and the local
+  dockerd with that data root is read, not simply the first one found;
+  its arguments and the config file they name or the default one:
   userland-proxy false and ip6tables enabled pass; userland-proxy on (also by
   default, with no daemon.json) or ip6tables off is an error
 - settings that cannot be read — no dockerd visible, a remote DOCKER_HOST, a
@@ -35,6 +38,7 @@ Run:
 """
 
 import json
+import socket
 import os
 import shutil
 import subprocess
@@ -82,6 +86,10 @@ class Checker(unittest.TestCase):
         (d / "status").write_text(f"Name:\tdockerd\nUid:\t{uid}\t{uid}\t{uid}\t{uid}\n", encoding="utf-8")
         (d / "stat").write_text(f"{pid} (dockerd) S 1 1 1 0 -1 0 0 0 0 0 0 0 0 0 20 0 1 0 0 0 0\n", encoding="utf-8")
 
+    @staticmethod
+    def local_info(root="/var/lib/docker"):
+        return {"Name": socket.gethostname(), "DockerRootDir": root, "SecurityOptions": ["name=seccomp,profile=builtin"]}
+
     def docker_proxy(self, host_ip, host_port, pid="200"):
         d = self.proc / pid
         d.mkdir()
@@ -97,10 +105,12 @@ class Checker(unittest.TestCase):
         os.utime(path, (then, then))
         return str(path)
 
-    def run_checker(self, m, *extra, env=None, runtime=None):
+    def run_checker(self, m, *extra, env=None, runtime=None, info=None):
         mj = self.tmp / "model.json"
         mj.write_text(json.dumps(m), encoding="utf-8")
-        args = ["python3", str(CHECKER), "--compose-json", str(mj), "--proc", str(self.proc)]
+        ij = self.tmp / "info.json"
+        ij.write_text(json.dumps(info if info is not None else self.local_info()), encoding="utf-8")
+        args = ["python3", str(CHECKER), "--compose-json", str(mj), "--proc", str(self.proc), "--docker-info", str(ij)]
         if runtime is None:
             args.append("--no-runtime")
         else:
@@ -203,6 +213,70 @@ class Checker(unittest.TestCase):
         self.dockerd("--config-file", self.daemon_json({"userland-proxy": True}))
         r = self.run_checker(model(IPV4 + IPV6, dual_stack=True), "--daemon-check", "manual")
         self.assertEqual(r.returncode, 1, r.stdout)
+
+    # --- review finding 1: the daemon behind the endpoint Compose uses -------
+
+    def two_daemons(self, first_safe):
+        # pid 100: the system daemon, default data root; pid 101: a second
+        # daemon with its own data root. Only one of them is safe.
+        then = time.time() - 1000
+        paths = {}
+        for name, userland in (("safe", False), ("unsafe", True)):
+            path = self.tmp / f"{name}.json"
+            path.write_text(json.dumps({"userland-proxy": userland}), encoding="utf-8")
+            os.utime(path, (then, then))
+            paths[name] = str(path)
+        first, second = ("safe", "unsafe") if first_safe else ("unsafe", "safe")
+        self.dockerd("--config-file", paths[first], pid="100")
+        self.dockerd("--config-file", paths[second], "--data-root", "/srv/docker-second", pid="101")
+
+    def test_the_daemon_with_the_endpoints_data_root_is_read_not_the_first(self):
+        self.two_daemons(first_safe=False)
+        r = self.run_checker(model(IPV4 + IPV6, dual_stack=True), info=self.local_info("/srv/docker-second"))
+        self.assertEqual(r.returncode, 0, r.stdout)
+        r = self.run_checker(model(IPV4 + IPV6, dual_stack=True), info=self.local_info("/var/lib/docker"))
+        self.assertEqual(r.returncode, 1, r.stdout)
+        self.assertIn("userland-proxy is enabled", r.stdout)
+
+    def test_endpoint_on_another_host_is_uncheckable(self):
+        self.dockerd("--userland-proxy=false")
+        info = dict(self.local_info(), Name="docker-desktop")
+        self.assert_uncheckable(self.run_checker(model(IPV4 + IPV6, dual_stack=True), info=info), "not this host")
+
+    def test_failed_docker_info_is_uncheckable(self):
+        self.dockerd("--userland-proxy=false")
+        r = self.run_checker(model(IPV4 + IPV6, dual_stack=True),
+                             info={"__error__": "docker info failed: permission denied"})
+        self.assert_uncheckable(r, "docker info failed")
+
+    def test_no_daemon_with_the_endpoints_data_root_is_uncheckable(self):
+        self.dockerd("--userland-proxy=false")
+        r = self.run_checker(model(IPV4 + IPV6, dual_stack=True), info=self.local_info("/srv/elsewhere"))
+        self.assert_uncheckable(r, "no dockerd on this host has the endpoint's data root")
+
+    def test_docker_context_reaches_docker_info(self):
+        # The checker asks `docker info` in the caller's environment, so
+        # DOCKER_CONTEXT selects the endpoint exactly as it does for Compose.
+        self.dockerd("--userland-proxy=false")
+        bindir = self.tmp / "bin"
+        bindir.mkdir()
+        local = json.dumps(self.local_info())
+        remote = json.dumps(dict(self.local_info(), Name="remote-host"))
+        (bindir / "docker").write_text(
+            "#!/bin/sh\n"
+            'if [ "$1" = info ]; then\n'
+            f'  if [ "$DOCKER_CONTEXT" = remote ]; then echo \'{remote}\'; else echo \'{local}\'; fi\n'
+            "  exit 0\nfi\nexit 1\n", encoding="utf-8")
+        (bindir / "docker").chmod(0o755)
+        mj = self.tmp / "model.json"
+        mj.write_text(json.dumps(model(IPV4 + IPV6, dual_stack=True)), encoding="utf-8")
+        base_env = {k: v for k, v in os.environ.items() if k not in ("DOCKER_HOST", "DOCKER_CONTEXT")}
+        base_env["PATH"] = f"{bindir}:{os.environ['PATH']}"
+        cmd = ["python3", str(CHECKER), "--compose-json", str(mj), "--proc", str(self.proc), "--no-runtime"]
+        r = subprocess.run(cmd, capture_output=True, text=True, env=base_env)
+        self.assertEqual(r.returncode, 0, r.stdout)
+        r = subprocess.run(cmd, capture_output=True, text=True, env=dict(base_env, DOCKER_CONTEXT="remote"))
+        self.assert_uncheckable(r, "remote-host")
 
     # --- running state -----------------------------------------------------
 
