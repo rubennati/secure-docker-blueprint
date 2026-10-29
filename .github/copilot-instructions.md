@@ -7,6 +7,6 @@ Before non-trivial work, read `.ai/index.md`, `.ai/state.md` and `.ai/routing.md
 Rules that apply to every change:
 
 - Standards in `docs/standards/` are binding; `AGENTS.md` defines their precedence.
-- Never commit real domains, IPs, credentials or personal data. Only `example.com` and documentation IP ranges.
+- Public content follows `docs/standards/commit-rules.md` → Public content: no domains, hostnames or addresses of private systems, no credentials or personal data; examples use `example.com` and documentation ranges.
 - Update documentation in the same change set, not afterwards.
 - Propose, do not decide: offer options with trade-offs and let a human choose.

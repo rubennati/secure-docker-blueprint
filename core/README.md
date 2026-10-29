@@ -23,7 +23,7 @@ generated from the repository.
 
 | Service | Description |
 |---|---|
-| [Traefik](traefik/) | Reverse proxy with socket proxy, 5 security levels, 3 TLS profiles, access policies |
+| [Traefik](traefik/) | Reverse proxy with socket proxy, the middleware model (access, rate limit, headers, auth per router), 3 TLS profiles |
 | [CrowdSec](crowdsec/) | Threat detection engine — log analysis, scenarios, decisions. Enforcement is a separate choice: reverse-proxy or host-firewall remediation |
 
 Planned: **Suricata** (network IDS) and **Coraza** (web application firewall), two
@@ -52,7 +52,7 @@ Pick one; [`authelia/README.md`](authelia/README.md) compares the three.
 
 | Service | Description |
 |---|---|
-| [headscale](headscale/) | Control server for Tailscale clients — the node registry, keys and policy of a tailnet you run yourself. `acc-tailscale` means this tailnet where it is deployed. Ships closed on `acc-local`; the embedded relay is an opt-in overlay because it needs a published UDP port |
+| [headscale](headscale/) | Control server for Tailscale clients — the node registry, keys and policy of a tailnet you run yourself. `access-vpn` means this tailnet where it is deployed. Ships closed on `access-lan`; the embedded relay is an opt-in overlay because it needs a published UDP port |
 
 ### Shared secrets
 

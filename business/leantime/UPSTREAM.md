@@ -48,7 +48,7 @@ regular patch cadence.
 | `read_only: true`, `cap_drop: ALL`, `no-new-privileges` | Upstream's compose example adds CHOWN, SETGID and SETUID and mounts nothing read-only. None of it is needed: the image already runs as www-data and four bind mounts plus four tmpfs cover every path it writes |
 | tmpfs on `/var/www/html/bootstrap/cache` | Laravel's package manifest. Without it the framework refuses to boot at all — measured, in both the web process and `bin/leantime` |
 | No `ports:` | Upstream publishes 8080 to the host. Traefik reaches the container over the proxy network instead |
-| `APP_TRAEFIK_ACCESS=acc-tailscale` | A project management instance holds the customer names, rates and deadlines of everything the company runs |
+| `APP_TRAEFIK_ACCESS=access-vpn` | A project management instance holds the customer names, rates and deadlines of everything the company runs |
 
 ## Verified on the image (2026-09-23)
 
@@ -88,8 +88,8 @@ network and no Traefik router.
 - Idle memory: application 131 MiB, database 478 MiB anonymous plus 214 MiB
   reclaimable page cache.
 
-What a host run still has to establish: the route through `core/traefik`, the
-`sec-2` chain against the application's own pages, a mail path for the
+What a host run still has to establish: the route through `core/traefik`,
+`limit-standard` against the application's own pages, a mail path for the
 notifications the scheduler sends, and a restore from the volumes below.
 
 ## Upgrade checklist

@@ -48,7 +48,7 @@ doesn't require an elevated session", is fixed there.
 | `GOTIFY_SERVER_TRUSTEDPROXIES` | Without it the access log records Traefik's address for every request |
 | Healthcheck reads the `/health` payload | The endpoint answers without a token and reports the database separately, so a green status code alone would not say the database is reachable |
 | `read_only: true`, `cap_drop: ALL`, `tmpfs: /tmp` | Verified against 3.1.1; only `/tmp` and the data volume are written |
-| `APP_TRAEFIK_ACCESS=acc-tailscale` | The monitoring default. A receiver has to be reachable by the devices that carry it, which is a topology decision — `monitoring/README.md`, "Where the receiver runs" |
+| `APP_TRAEFIK_ACCESS=access-vpn` | The monitoring default. A receiver has to be reachable by the devices that carry it, which is a topology decision — `monitoring/README.md`, "Where the receiver runs" |
 
 ## Verified on the image (2026-09-23)
 

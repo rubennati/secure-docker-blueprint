@@ -28,7 +28,7 @@
 | `SECRET_ENCRYPTION_KEY` moved to `.env` variable (placeholder `__REPLACE_ME__`) | Inbox source had a hardcoded key value — that would have been a backdoor if copied verbatim. Every instance needs its own key. |
 | Docker socket mount commented out | Direct `/var/run/docker.sock` mount gives Homarr full Docker control, a risk unreasonable for a dashboard. Socket-proxy pattern recommended; documented in README. |
 | `security_opt: no-new-privileges` | Blueprint baseline |
-| Access default `acc-tailscale` + security `sec-3` | Personal dashboard pattern |
+| Access default `access-vpn`, `limit-standard` and `headers-standard` | Personal dashboard pattern |
 
 ## Upgrade checklist
 

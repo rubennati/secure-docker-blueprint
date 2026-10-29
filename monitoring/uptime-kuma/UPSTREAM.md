@@ -10,7 +10,7 @@
 - **Origin:** Hong Kong · Louis Lam · non-EU
 - **Domain:** Monitoring
 - **Role:** Uptime monitoring with a status page and many notification channels
-- **Based on version:** `2.5.4`
+- **Based on version:** `2.5.6`
 - **Last verified:** 2026-09-13 (2.5.4) — patch recreated on a live host, healthy, route unchanged. 2026-09-08 (2.5.3) — v0.8.0 host session: clean start on SQLite, owner account from the setup page, ntfy notification with an access token, a TCP monitor on a container on `proxy-public`; stopping that container produced the down alert on an iPhone within twenty seconds, starting it the up alert.
 
 ## What we use
@@ -27,7 +27,7 @@
 | **Traefik labels instead of `-p 3001:3001`** | Blueprint routing standard |
 | **`security_opt: no-new-privileges:true`** | Baseline hardening |
 | **Healthcheck on `/api/entry-page`** | Proper readiness gate |
-| **`acc-tailscale` default access** | Monitoring dashboards should not be public |
+| **`access-vpn` default access** | Monitoring dashboards should not be public |
 
 ## Version notes
 

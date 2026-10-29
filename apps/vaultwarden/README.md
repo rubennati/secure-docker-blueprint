@@ -11,7 +11,7 @@ Self-hosted Bitwarden-compatible password manager.
 
 ## Security Features
 
-- TLS 1.3 only (`tls-modern`)
+- TLS 1.3 only (`tls-strict`)
 - Admin token as Argon2 hash (never plain text)
 - Rate limiting on login (10/min) + admin panel (3/5min)
 - `read_only` container + `no-new-privileges`
@@ -246,7 +246,7 @@ If **Admin → Diagnostics** shows:
 2FA Connector calls: Header 'x-frame-options' is present while it should not
 ```
 
-This means a proxy (Traefik) is injecting `X-Frame-Options`. Vaultwarden must control this header per-route. The `strip-xfo` middleware in `docker-compose.yml` removes it — verify it is present in the Traefik labels.
+This means a proxy (Traefik) is injecting `X-Frame-Options`. Vaultwarden must control this header per-route. The stack ships `APP_TRAEFIK_HEADERS=headers-application-owned`, under which the proxy sets only the HSTS base and no frame header — verify `.env` still says so.
 
 ### HTTP Response validation error
 

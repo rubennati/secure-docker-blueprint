@@ -87,6 +87,6 @@ See [`docs/standards/security-baseline.md`](docs/standards/security-baseline.md)
 ## Known Accepted Risks
 
 - **Git author identity** — commits are signed with the maintainer's GitHub account; this is intentional for a public Open Source project
-- **`acc-tailscale` and self-loopback requests** — some applications (WordPress, Paperless-ngx) may log self-request failures when behind IP allowlist; this is documented and does not affect user-facing security
+- **`access-vpn` and self-loopback requests** — some applications (WordPress, Paperless-ngx) may log self-request failures when behind IP allowlist; this is documented and does not affect user-facing security
 
 See per-service `Known Issues` sections in each app's `README.md`.

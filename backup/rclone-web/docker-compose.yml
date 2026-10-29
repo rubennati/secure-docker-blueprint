@@ -87,8 +87,7 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.priority=1"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.service=${COMPOSE_PROJECT_NAME}"
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=5522"
       # Remote control API
@@ -96,8 +95,7 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.priority=100"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.entrypoints=websecure"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.tls=true"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-api.service=${COMPOSE_PROJECT_NAME}-api"
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}-api.loadbalancer.server.port=5533"
 

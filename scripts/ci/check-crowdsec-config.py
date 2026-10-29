@@ -49,8 +49,11 @@ except ModuleNotFoundError:  # operator host, not a CI runner
     )
 
 # Middlewares that carry CrowdSec remediation. Both are defined by the same
-# Traefik plugin and differ only in whether AppSec inspection is switched on.
-CROWDSEC_MIDDLEWARES = ("crowdsec-basic", "crowdsec-appsec")
+# Traefik plugin and differ only in whether AppSec inspection is switched on;
+# render.sh places one of them on the websecure entrypoint. (A configuration
+# rendered before the middleware model named them crowdsec-basic and
+# crowdsec-appsec; the rendered check keys on the plugin block, not the name.)
+CROWDSEC_MIDDLEWARES = ("threat-crowdsec", "threat-crowdsec-appsec")
 
 TRAEFIK = Path("core/traefik")
 SWITCH = "CROWDSEC_BOUNCER_ENABLED"

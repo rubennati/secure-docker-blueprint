@@ -47,7 +47,7 @@ Two consequences this stack takes now:
 | `read_only: true`, `cap_drop: ALL`, `tmpfs: /tmp` | Verified against 2.5.315; only `/tmp` and the data volume are written |
 | No `user:` line | The image already runs as uid 1000 (`node`); `./volumes/data` has to belong to that uid |
 | Healthcheck on `/healthz` | The endpoint answers without a session, and `curl` is in the image. The image ships no healthcheck of its own |
-| `APP_TRAEFIK_ACCESS=acc-tailscale` | The first request opens a setup wizard with no password in front of it, and whoever completes it becomes the administrator |
+| `APP_TRAEFIK_ACCESS=access-vpn` | The first request opens a setup wizard with no password in front of it, and whoever completes it becomes the administrator |
 | Database on `app-internal` (`internal: true`) | The baseline's network rule: a datastore has no route out and none in from other stacks |
 
 ## Verified on the image (2026-09-23)

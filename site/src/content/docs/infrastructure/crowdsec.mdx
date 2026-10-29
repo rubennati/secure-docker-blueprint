@@ -103,10 +103,10 @@ firewall layer existed, that ban applied only to HTTP through the proxy.
 ## What it can and cannot see
 
 The two protective layers in this Blueprint do not add up — they take turns, and
-that determines where it is worth attaching.
+that determines when it earns its keep.
 
 Measured here: **120 requests against a VPN-only host moved CrowdSec's counter by
-3.** Behind `acc-tailscale` or `acc-private`, the engine sees close to nothing —
+3.** Behind `access-vpn` or `access-lan-vpn`, the engine sees close to nothing —
 which is not a problem, because nothing got through either. It becomes worth its
 keep the moment an application is public.
 
@@ -138,8 +138,11 @@ host within minutes of a certificate being issued, which is most of what arrives
 uninvited. It will not stop an attack crafted against your application's own
 parameters, and it is no reason to relax anything about input handling.
 
-The upside of that narrowness: far fewer false positives than a full WAF, which
-makes it a reasonable default for a public app.
+The upside of that narrowness: far fewer false positives than a full WAF. That
+matters, because inspection is one decision for the deployment —
+`CROWDSEC_APPSEC_ENABLED=true` in `core/traefik/.env` puts it in front of every
+application at once, and one application with known false positives holds the
+whole deployment at decisions only.
 
 ## Going further
 
@@ -165,7 +168,7 @@ The engine above is detection only. Two enforcement layers add blocking. They ar
        CROWDSEC_BOUNCER_KEY=<key>
        ```
 
-    3. Render, validate and **recreate** Traefik. `render.sh` emits the plugin block into `config/traefik.yml` and the `crowdsec-basic` / `crowdsec-appsec` middlewares into `config/dynamic/crowdsec.yml` — no template is edited. The plugin is static configuration and needs the restart; the middlewares are hot-reloaded.
+    3. Render, validate and **recreate** Traefik. `render.sh` emits the plugin block and the entrypoint list into `config/traefik.yml` and the `threat-crowdsec` / `threat-crowdsec-appsec` middlewares into `config/dynamic/crowdsec.yml` — no template is edited. The plugin block and the entrypoint list are static configuration and need the recreate; the middlewares are hot-reloaded.
 
        ```bash
        bash ops/scripts/render.sh
@@ -173,16 +176,18 @@ The engine above is detection only. Two enforcement layers add blocking. They ar
        docker compose up -d --force-recreate traefik
        ```
 
-    4. Add `crowdsec-basic@file` to at least one router's middleware list, then recreate that app:
+    4. Confirm the entrypoint carries it. Nothing is attached by hand: the recreate placed `threat-crowdsec@file` on the `websecure` entrypoint, in front of every router — the VPN-only ones included.
 
-       ```yaml
-       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=crowdsec-basic@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+       ```bash
+       grep -A2 '      middlewares:' config/traefik.yml   # threat-crowdsec@file, compress@file
        ```
+
+       A router cannot opt out; an address that must never be refused is a CrowdSec allowlist (`CROWDSEC_ALLOWLIST_ADMIN` in `core/crowdsec`), never a label. `CROWDSEC_APPSEC_ENABLED=true` puts `threat-crowdsec-appsec@file` there instead — request inspection for every application at once; read [`core/crowdsec/docs/appsec.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/crowdsec/docs/appsec.md) first.
 
     </Steps>
 
     :::caution
-    Step 4 is required, not optional. The plugin loading successfully does **not** make the bouncer do anything — its polling loop only starts once the middleware is attached to a router. Skip this and `cscli bouncers list` will show the bouncer as registered but never pulling, with no error anywhere to explain why.
+    The recreate in step 3 is required, not optional. The plugin loading successfully does **not** make the bouncer do anything — its polling loop only starts once the middleware is in a request path, which the entrypoint list is after the recreate. Skip it and `cscli bouncers list` will show the bouncer as registered but never pulling, with no error anywhere to explain why.
     :::
 
     Verify:
@@ -302,9 +307,11 @@ and it also means a shared CGNAT address, a VPN exit or a compromised neighbour
 can take a legitimate visitor with it.
 
 **The bouncer never polls** — `cscli bouncers list` shows no `Last API pull`.
-Loading the plugin is not enough: the polling loop starts only once a router
-actually uses the middleware. Attach it to one, then check again. There is no
-error message for this.
+Loading the plugin is not enough: the polling loop starts only once the
+middleware is in a request path, which the entrypoint list is after Traefik has
+been recreated. Recreate the container (`docker compose up -d --force-recreate
+traefik` in `core/traefik/`), then check again. There is no error message for
+this.
 
 **A ban you set does not seem to work when you test it from the server itself** —
 it is the test that is wrong. A request made on the host arrives through the
@@ -312,8 +319,9 @@ Docker bridge, so the proxy records the gateway as the client and the address yo
 banned never appears as a sender. Read the address out of the access log, ban
 that one, and have the real client retry.
 
-**AppSec refuses every request** — the engine is unreachable and the profile is
-fail-closed. Check that something answers on 7422 from the proxy container; a
+**AppSec refuses every request** — the engine is unreachable and the middleware
+was set to fail closed by hand; the shipped `threat-crowdsec-appsec` is
+fail-open. Check that something answers on 7422 from the proxy container; a
 `401` is correct there, `connection refused` is not.
 
 A legitimate IP got banned. Start narrow, and check the result rather than

@@ -13,35 +13,48 @@ manage these files — they grow indefinitely without logrotate.
 | Traefik | `core/traefik/volumes/logs/*.log` | Access + error logs written to file via `accessLog.filePath` |
 
 Services that log only to stdout/stderr (most apps) are managed by Docker's log driver
-and do **not** need logrotate.
+and do **not** need logrotate — provided the daemon bounds them. Docker's default
+driver rotates nothing on its own; the bound is the `log-driver` and `log-opts`
+default in `/etc/docker/daemon.json`, a host prerequisite in
+[`deployment-lifecycle.md`](deployment-lifecycle.md#1--prepare-the-host).
 
 ## Setup
 
-### 1. Copy config to host
+### 1. Render and install
+
+The shipped stanza carries the placeholder `/path/to/secure-docker-blueprint`;
+rendering replaces it with the checkout's path, and the printed command installs
+the result ([`host-files.md`](host-files.md)):
 
 ```bash
-sudo cp /path/to/secure-docker-blueprint/core/traefik/config/logrotate/traefik /etc/logrotate.d/traefik
+# from the repository root
+scripts/host-files.sh render core/traefik
+scripts/host-files.sh install-commands core/traefik   # prints the sudo install line; run it
 ```
+
+A copy made by hand without the substitution names a path that matches no file,
+and logrotate says nothing about it (`missingok`): the logs keep growing. After a
+blueprint update, `./scripts/overview.sh --host` reports whether the installed
+stanza still matches the shipped one.
 
 ### 2. Verify the path
 
-The path inside the logrotate config must match the **host-side** of the volume mount.
-Check `docker-compose.yml`:
+The path inside the installed stanza must be the **host-side** of the volume
+mount in `docker-compose.yml`:
 
 ```yaml
 volumes:
   - ./volumes/logs:/var/log/traefik
 ```
 
-If your deploy path is `/path/to/secure-docker-blueprint/core/traefik`, the host path is:
+If your deploy path is `/srv/docker/core/traefik`, the two stanzas name:
 
 ```text
-/path/to/secure-docker-blueprint/core/traefik/volumes/logs/*.log
+/srv/docker/core/traefik/volumes/logs/access.log
+/srv/docker/core/traefik/volumes/logs/traefik.log
 ```
 
-### 3. Prove it matches
-
-A pattern that matches nothing fails silently — the logs simply keep growing.
+A path that matches nothing fails silently — the logs simply keep growing.
 The dry run says which files it found:
 
 ```bash
@@ -52,7 +65,7 @@ Expect each log listed under `considering log …`, and the size threshold echoe
 back as `log files >= 104857600 are rotated earlier`. `Handling 0 logs` means the
 path is wrong.
 
-### 4. Know when it actually runs
+### 3. Know when it actually runs
 
 `daily` and `maxsize` describe *conditions*, not a schedule. Nothing rotates
 until logrotate itself runs, which on Debian is a systemd timer:
@@ -77,14 +90,6 @@ From `man logrotate`: *"Log files are rotated when they grow bigger than size
 bytes even before the additionally specified time interval"* — early, yes; but
 only ever at a run.
 
-### 3. Test (dry run)
-
-```bash
-sudo logrotate -d /etc/logrotate.d/traefik
-```
-
-This shows what **would** happen without actually rotating. Check for errors.
-
 ### 4. Force a rotation (optional, to verify)
 
 ```bash
@@ -99,8 +104,11 @@ sudo cat /var/lib/logrotate/status | grep traefik
 
 ## How it works
 
+The shipped file carries one stanza per log — `access.log` and `traefik.log` — with
+the same options in each; the reasons for each choice are comments in the file:
+
 ```text
-/path/to/secure-docker-blueprint/core/traefik/volumes/logs/*.log {
+/path/to/secure-docker-blueprint/core/traefik/volumes/logs/access.log {
     daily              # Rotate once per day
     rotate 7           # Keep 7 rotated files (1 week)
     compress           # gzip old logs
@@ -111,8 +119,6 @@ sudo cat /var/lib/logrotate/status | grep traefik
     copytruncate       # Copy out, truncate in place — no signal to the container
 }
 ```
-
-The shipped file has one stanza per log, with the reasons as comments.
 
 ### Why no signal
 

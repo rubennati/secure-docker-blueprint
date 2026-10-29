@@ -132,29 +132,38 @@ later step, out of scope for this phase.
 ## Phase 2 — Turn CrowdSec on (follow `profiles.md` exactly)
 
 This is lever A + C. Nothing here deviates from the existing architecture — it just switches it
-on. Full steps: [`core/crowdsec/docs/profiles.md`](../../../core/crowdsec/docs/profiles.md)
+on. CrowdSec is optional and off as shipped; enabling it is one decision for the deployment, made
+in `core/traefik/.env`, and the bouncer then stands on the `websecure` entrypoint in front of
+**every** router — Cal.diY's included; nothing is attached per router. Full steps:
+[`core/crowdsec/docs/profiles.md`](../../../core/crowdsec/docs/profiles.md)
 "whoami-first validation".
 
-### 2.1 `crowdsec-basic` (IP/decision bouncer, fail-open)
+### 2.1 `threat-crowdsec` (IP/decision bouncer, fail-open)
 
 1. Switch the integration on: in `core/traefik/.env` set `CROWDSEC_BOUNCER_ENABLED=true`,
    `CROWDSEC_BOUNCER_PLUGIN_VERSION` and `CROWDSEC_BOUNCER_KEY`, then
    `./ops/scripts/render.sh && ./ops/scripts/validate.sh && docker compose up -d --force-recreate traefik`
-   — no template is edited.
-2. Define the `crowdsec-basic` middleware in
-   `core/traefik/ops/templates/dynamic/integrations.yml.tmpl` (block already scaffolded).
-3. **Validate on `apps/whoami` first** — ban a test IP (never your admin IP), confirm 403, roll
-   back. Do not touch the Cal.diY router until this passes.
-4. Attach to the Cal.diY router as the **first** middleware by setting
-   `APP_TRAEFIK_THREAT=crowdsec-basic@file,` in `apps/caldiy/.env` — note the trailing
-   comma — and recreating the app. The rendered chain becomes
-   `crowdsec-basic@file, acc-public@file, sec-3@file`.
+   — no template is edited. The render defines `threat-crowdsec` from
+   `core/traefik/ops/templates/dynamic/crowdsec.yml.tmpl` and places it on the entrypoint.
+2. **Validate on `apps/whoami`** — ban a test IP (never your admin IP), confirm 403, delete the
+   decision. The recreate put the bouncer in front of Cal.diY at the same moment, so run this
+   right away, from a recovery path (Tailscale/LAN) that does not depend on the public router.
+3. Nothing to attach on Cal.diY: its router keeps
+   `access-public@file, limit-standard@file, headers-standard@file, auth-none@file`; the
+   entrypoint in front of it carries `threat-crowdsec@file, compress@file`. An address that must
+   never be refused — the operator's own — is a CrowdSec AllowList (`CROWDSEC_ALLOWLIST_ADMIN`
+   in `core/crowdsec`), never a label.
 
-### 2.2 `crowdsec-appsec` (WAF, fail-open) — the layer that most directly addresses the incident
+### 2.2 `threat-crowdsec-appsec` (WAF, fail-open) — the layer that most directly addresses the incident
 
-`crowdsec-basic` blocks known-bad **IPs**; it does not inspect request bodies. The WAF
-(`crowdsec-appsec`) inspects each request for SQLi / XSS / path traversal / virtual-patched CVEs —
-i.e. exactly the RCE/SSRF class (vectors 1–3) that most plausibly caused the incident.
+`threat-crowdsec` blocks known-bad **IPs**; it does not inspect request bodies. The WAF
+(`threat-crowdsec-appsec`, `CROWDSEC_APPSEC_ENABLED=true` in `core/traefik/.env`) inspects each
+request for SQLi / XSS / path traversal / virtual-patched CVEs — i.e. exactly the RCE/SSRF class
+(vectors 1–3) that most plausibly caused the incident. It replaces `threat-crowdsec` on the
+entrypoint for every application of the deployment at once, so its false positives are
+everyone's: one application with a known false positive and no path-scoped exclusion (the table
+in [`appsec.md`](../../../core/crowdsec/docs/appsec.md)) keeps the whole deployment at
+`threat-crowdsec`.
 
 Deferred behind its gates (per `profiles.md` / `appsec.md`): AppSec engine confirmed reachable
 from Traefik, then per-path false-positive testing, **fail-open** (`crowdsecAppsecFailureBlock:
@@ -164,8 +173,8 @@ recovery path.
 **Acceptance:**
 
 - [ ] `cscli bouncers list` shows a recent pull; whoami ban test passes and rolls back cleanly
-- [ ] `crowdsec-basic` attached to Cal.diY; end-to-end ban test returns 403 from a test IP, admin path unaffected
-- [ ] (later) AppSec reachable, false-positive-tested on Cal.diY traffic, fail-open confirmed
+- [ ] Bouncer in front of Cal.diY: end-to-end ban test returns 403 from a test IP on Cal.diY's host, admin path unaffected
+- [ ] (later) AppSec reachable, false-positive-tested on the traffic of every public application of the deployment, Cal.diY's included, fail-open confirmed
 
 ---
 
@@ -229,10 +238,10 @@ independently reversible:
 |-------|----------|
 | 0 | Docs/tag only — revert the commit |
 | 1 | Remove env flags / `deploy.resources`, `docker compose up -d --force-recreate app` |
-| 2 | Remove `crowdsec-*@file` from the router label, recreate app — Traefik hot-reloads; plugin stays loaded |
+| 2 | `CROWDSEC_BOUNCER_ENABLED=false` in `core/traefik/.env`, render, recreate Traefik at once — for the whole deployment; there is no per-router detach |
 | 3 | Path A: disable the CF rule. Path B: remove the `geo-*@file` token / merge routers back |
 
-Emergency kill-switch for the whole app remains `APP_TRAEFIK_ACCESS=acc-deny` (runbook §7).
+Emergency kill-switch for the whole app remains `APP_TRAEFIK_ACCESS=access-blocked` (runbook §7).
 
 ---
 

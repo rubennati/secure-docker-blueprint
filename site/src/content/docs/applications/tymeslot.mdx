@@ -94,10 +94,11 @@ book a slot. If mail is configured, the confirmation arrives; with
 ### Who may reach the booking page
 
 A booking page exists for people you have not met, so a production instance
-carries `acc-public`. The stack ships `acc-tailscale` — VPN only — and leaves
-that step to you. When you open it, put `crowdsec-basic@file,` in
-`APP_TRAEFIK_THREAT` so a banned address is refused before the application does
-any work, and keep registration closed: guests book without an account.
+carries `access-public`. The stack ships `access-vpn` — VPN only — and leaves
+that step to you. When you open it, keep registration closed — guests book
+without an account — and consider enabling CrowdSec for the deployment
+(`CROWDSEC_BOUNCER_ENABLED` in `core/traefik`), which then stands in front of
+every router.
 
 ### What works over a VPN alone
 
@@ -122,19 +123,18 @@ port opportunistic TLS.
 
 ### The booking embed does not work as shipped
 
-Booking pages can be embedded in another site (`embed.js`). Both `sec-2` and
-`sec-3` send `X-Frame-Options: DENY`, which refuses that. If you want embeds,
+Booking pages can be embedded in another site (`embed.js`). `headers-standard`
+sends `X-Frame-Options: DENY`, which refuses that. If you want embeds,
 name the parent origins with a per-app `frame-ancestors` middleware on the
 embed routes rather than dropping the header.
 
-### Stricter headers than most of the blueprint
+### Headers the proxy sets
 
-The stack ships `sec-3`: HSTS with `includeSubDomains` and `preload`, a
-referrer policy, a permissions policy and a report-only content security
-policy beside the application's own enforcing one. HSTS with `preload` is hard
-to reverse — browsers keep enforcing HTTPS for the host and everything below
-it for about two years. A dedicated leaf host carries little scope; an apex
-carries the whole zone.
+The stack ships `limit-standard` and `headers-standard`. A first load is about
+ten requests, far below the burst of 500. The application sends its own
+nonce-based CSP with `frame-ancestors 'none'`, `nosniff`, a referrer policy
+and `Secure; HttpOnly; SameSite=Lax` cookies; the proxy sets HSTS,
+`X-Frame-Options: DENY` and the rest of the profile, and the two agree.
 
 ## Backup
 

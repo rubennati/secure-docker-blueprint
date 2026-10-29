@@ -39,7 +39,7 @@
 | **Device ports `3478/udp`, `10001/udp`, `8080/tcp` kept on host** | Required for L2 discovery and inform — Traefik cannot proxy these |
 | **Optional ports commented out** — inbox had `1900`, `8843`, `8880`, `6789`, `5514` as inactive | Kept as comments; uncomment if using guest portal / mobile speedtest / syslog |
 | **`MEM_LIMIT` / `MEM_STARTUP` exposed as `.env`** | Blueprint pattern; includes sizing guidance in comments |
-| **Access `acc-tailscale` + security `sec-3` defaults** | UniFi manages your network; VPN-only for the admin UI is standard practice |
+| **`access-vpn`, `limit-standard` and `headers-standard` as shipped** | UniFi manages your network; VPN-only for the admin UI is standard practice |
 
 ## Upgrade checklist
 

@@ -26,8 +26,8 @@
 | No bundled MariaDB in the compose | Adminer's canonical use-case is managing existing app databases (wordpress-db, ghost-db, etc.). Bundling a MariaDB makes it a development-only fixture. Dropped; the README describes how to add one back for local work. |
 | Traefik labels instead of host port mapping | Consistent with the rest of the blueprint. Original inbox used `ports: "8014:8080"`. |
 | `security_opt: no-new-privileges` | Blueprint baseline. |
-| Access policy defaults to `acc-tailscale` | Admin-access tools must never be publicly reachable by default. |
-| Security chain defaults to `sec-4` | Hard rate limiting against credential-stuffing on the DB-login form. |
+| Access defaults to `access-vpn` | Admin-access tools must never be publicly reachable by default. |
+| Rate limit defaults to `limit-strict` | 20 per second, burst 40, against credential-stuffing on the DB-login form; headers `headers-standard`. |
 | `4-standalone` tag instead of `latest` | Reproducible; other variants (`fastcgi`, `4-fastcgi`) are less useful behind Traefik. |
 
 ## Upgrade checklist

@@ -175,11 +175,11 @@ docker compose up -d --force-recreate
   </TabItem>
 
   <TabItem label="Access">
-    The default `APP_TRAEFIK_ACCESS=acc-public` removes Traefik's source-IP allowlist. Whether the service is actually reachable from the public internet depends on your DNS records, routing, and upstream firewall — the `acc-public` middleware setting does not control any of that.
+    The stack ships `APP_TRAEFIK_ACCESS=access-lan-vpn` — LAN and VPN, which also admits the Docker containers that OnlyOffice and SeaDoc call back from. `access-public` removes Traefik's source-IP allowlist. Whether the service is actually reachable from the public internet depends on your DNS records, routing, and upstream firewall — the `access-public` middleware setting does not control any of that.
 
-    Setting `APP_TRAEFIK_ACCESS=acc-tailscale` enforces a source-IP allowlist for Tailscale addresses, restricting access to clients connected to the same Tailnet. Server-to-server integrations (OnlyOffice, notifications) must also reach Seafile via Tailscale for this to apply to them.
+    Setting `APP_TRAEFIK_ACCESS=access-vpn` enforces a source-IP allowlist for Tailscale addresses, restricting access to clients connected to the same Tailnet. Server-to-server integrations (OnlyOffice, notifications) must also reach Seafile via Tailscale for this to apply to them.
 
-    Where traffic arrives through Docker published ports, `acc-tailscale` can reject a legitimate client because Traefik sees the Docker bridge gateway address instead — `acc-public` is the working alternative in that case. See [Troubleshooting](#troubleshooting).
+    Where traffic arrives through Docker published ports, `access-vpn` can reject a legitimate client because Traefik sees the Docker bridge gateway address instead. The fix is a dual-stack `proxy-public`, so the client's IPv6 source address survives to the allowlist (`TROUBLESHOOTING.md` §4.4 in the repository); widening the policy instead admits every caller that arrives through the bridge. See [Troubleshooting](#troubleshooting).
   </TabItem>
 
   <TabItem label="Antivirus">
@@ -263,7 +263,7 @@ a restore has been exercised for this stack.
 
 **MariaDB `io_uring` warning or Redis memory overcommit warning:** both are host-level configuration notices, not application errors. To silence the Redis warning, set `vm.overcommit_memory = 1` in `/etc/sysctl.conf` on the host and apply it with `sysctl -p`. The MariaDB notice needs no action — it falls back to libaio on its own.
 
-**`acc-tailscale` returning 403 for a Tailscale client:** see [Traefik troubleshooting](/infrastructure/traefik/#troubleshooting) for the source-IP caveat when traffic arrives through Docker published ports.
+**`access-vpn` returning 403 for a Tailscale client:** see [Traefik troubleshooting](/infrastructure/traefik/#troubleshooting) for the source-IP caveat when traffic arrives through Docker published ports.
 
 ## Repository files
 

@@ -39,7 +39,7 @@ hold references to and copies of that evidence as case attachments).
 potentially personal data (names, systems, timelines involving specific
 people) once in use.** Treat it accordingly:
 
-- **Access**: `acc-tailscale` by default (this `.env.example`) — a case
+- **Access**: `access-vpn` by default (this `.env.example`) — a case
   management tool holding active-incident detail has no reason to be
   publicly reachable.
 - **No non-root user in the upstream image** (verified: no dedicated
@@ -176,7 +176,7 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 - [ ] A large evidence-file upload through Traefik, to confirm the timeout behavior nginx specially handled — see Architecture above
 - [ ] OIDC or LDAP sign-in against Authentik or Keycloak
 - [ ] A real case created, an IOC added, and a restore rehearsal from a backup
-- [ ] TLS and the chosen `APP_TRAEFIK_SECURITY` chain confirmed against the real domain
+- [ ] TLS and the router's four middleware positions (`APP_TRAEFIK_ACCESS`, `APP_TRAEFIK_LIMIT`, `APP_TRAEFIK_HEADERS`, `APP_TRAEFIK_AUTH`) confirmed against the real domain
 
 ## Details
 

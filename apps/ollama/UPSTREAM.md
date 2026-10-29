@@ -39,7 +39,7 @@ Internet → Traefik (TLS, port 443) → ollama :11434
 | `OLLAMA_NO_CLOUD=1` | Turns off Ollama's cloud features (remote inference, web search), which are outbound calls this stack has no use for. The server logs `Ollama cloud disabled: true` |
 | GPU access is a separate overlay file | A device reservation fails on a host with no NVIDIA runtime, so it cannot live in the base file |
 | No `app-internal` network | There is no database or internal service to isolate |
-| Traefik router defaults to `acc-private` | Ollama has no authentication; the route's access policy is the only control |
+| Traefik router defaults to `access-lan-vpn` | Ollama has no authentication; the route's access policy is the only control |
 
 ## Authentication
 

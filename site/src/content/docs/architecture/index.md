@@ -55,23 +55,25 @@ reaches the container. In practice this is one variable in that service's `.env`
 
 | Policy | Reachable by |
 |---|---|
-| `acc-public` | anyone on the internet |
-| `acc-local` | the local network |
-| `acc-tailscale` | clients on your VPN only |
-| `acc-private` | a defined address range |
-| `acc-deny` | nothing — the route exists but answers no one |
+| `access-public` | anyone on the internet |
+| `access-lan` | the local network |
+| `access-vpn` | clients on your VPN only |
+| `access-lan-vpn` | the local network and your VPN |
+| `access-blocked` | nothing — the route exists but answers no one |
 
 **The defaults differ per service, and are not all restrictive.** Of the five
 services with a guide here, Vaultwarden and Invoice Ninja ship
-`acc-tailscale`, Nextcloud ships `acc-private`, and Seafile Pro and OnlyOffice
-ship `acc-public` — the last two because they are built around sharing with
-people who are not on your VPN. Check the value in that service's `.env.example`
-rather than assuming; it is one line, and it decides who can reach the thing.
+`access-vpn`, Nextcloud and Seafile Pro ship `access-lan-vpn`, and OnlyOffice
+ships `access-public` — the file hosts because the office servers call back
+into them from the Docker network, the office server because it is built to be
+reached by people who are not on your VPN. Check the value in that service's
+`.env.example` rather than assuming; it is one line, and it decides who can
+reach the thing.
 
 :::caution
-An access policy is a proxy setting, not a firewall. `acc-public` removes the
+An access policy is a proxy setting, not a firewall. `access-public` removes the
 proxy's own address check; it does not open a port that something upstream is
-blocking, and `acc-tailscale` does not stop packets that never reach Traefik.
+blocking, and `access-vpn` does not stop packets that never reach Traefik.
 Network reachability and access policy are separate questions, and a service can
 fail either one independently.
 :::

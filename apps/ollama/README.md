@@ -44,7 +44,7 @@ non-empty API key string — the server ignores it.
 Ollama does not authenticate anyone. Two things follow:
 
 - **The Traefik access policy is the only gate on the route.**
-  `APP_TRAEFIK_ACCESS` defaults to `acc-private` (LAN plus VPN). Whoever it
+  `APP_TRAEFIK_ACCESS` defaults to `access-lan-vpn` (LAN plus VPN). Whoever it
   admits can run inference on your hardware, pull arbitrary models from the
   internet onto your disk, and delete the ones you have.
 - **Every container on `proxy-public` reaches the API directly**, past Traefik

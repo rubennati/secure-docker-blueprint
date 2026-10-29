@@ -70,8 +70,9 @@ authentication is available for local accounts.
 - **Update and locale checks** go to `graph.requarks.io` every 24 hours. There
   is no environment variable for it; the telemetry switch is in the
   administration area.
-- **The rate limit is not measured.** The chain ships `sec-2` and the editor is
-  a Vue application; no first-load count has been taken behind Traefik.
+- **The rate limit is not measured.** `.env.example` ships `limit-standard` and
+  the editor is a Vue application; no first-load count has been taken behind
+  Traefik.
 - **Nothing here has run behind Traefik yet.** The stack is `scaffolded`: the
   hardening, the setup and a login were verified on the image, the route was
   not.

@@ -52,7 +52,7 @@ The tool list loads immediately — no login, no setup page.
 
 - **Read-only root filesystem** with minimal `tmpfs` mounts for Nginx's runtime dirs (`/tmp`, `/var/cache/nginx`, `/var/run`). Container can't write anywhere else.
 - **`no-new-privileges:true`** — prevents capability escalation.
-- **Default access `acc-tailscale`** — personal toolbox, VPN-only by default. Flip to `acc-public` if you want to share the tools publicly (the app is a benign static SPA, no confidentiality concerns; but personal use doesn't need public exposure).
+- **Default access `access-vpn`** — personal toolbox, VPN-only by default. Flip to `access-public` if you want to share the tools publicly (the app is a benign static SPA, no confidentiality concerns; but personal use doesn't need public exposure).
 - **No backend** — no API endpoints, no data submission anywhere. All computation happens in the user's browser.
 
 ## Backup

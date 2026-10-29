@@ -87,7 +87,7 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
   is reachable for as long as the router is. It cannot take over an instance
   that already has a schema (the re-run aborts on the first `CREATE TABLE`,
   measured), but on an empty one it hands out ownership to whoever asks first.
-- **`acc-tailscale` by default**, because a project management instance holds
+- **`access-vpn` by default**, because a project management instance holds
   the customer names, rates and deadlines of everything the company runs.
 - **Both outbound calls are off.** Telemetry posts to `telemetry.leantime.io`
   once a day from the scheduler; the news panel pulls an RSS feed from
@@ -106,8 +106,8 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 
 ## Known limits
 
-- **`sec-2` is not measured against this application.** The chain ships as the
-  default for a new app; no page of Leantime's has been loaded through it.
+- **`limit-standard` is not measured against this application.** It ships as
+  the default for a new app; no page of Leantime's has been loaded through it.
 - **Mail is not configured.** The scheduler sends notifications and a daily
   digest, and without `LEAN_EMAIL_*` they go nowhere. The image reads
   `LEAN_EMAIL_SMTP_PASSWORD_FILE`, so an SMTP password can be a Docker Secret

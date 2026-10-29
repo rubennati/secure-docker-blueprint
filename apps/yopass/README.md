@@ -72,8 +72,9 @@ requires the `'wasm-unsafe-eval'` Content-Security-Policy directive, which
 means any Traefik middleware in front of this app that replaces the CSP
 header (rather than only adding to it) would break it. Enabling it means
 adding `ARGON2: "true"` to the `environment:` block and confirming the
-active `APP_TRAEFIK_SECURITY` chain does not strip that directive — not
-verified against this repository's own `sec-*` chains.
+router's headers profile does not replace that directive — `headers-standard`,
+as shipped, sets no `Content-Security-Policy`, and the `csp-self-only` block is
+not on this router; not verified against this repository.
 
 ## Backup
 
@@ -101,7 +102,7 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 - [x] `docker compose config` clean; `docker compose up -d` — both healthy — **verified locally, 2026-09-19**
 - [x] `GET /` returns 200 — **verified locally, 2026-09-19**
 - [ ] A secret created and retrieved once through the actual web UI (not just the API) behind Traefik on a real host
-- [ ] TLS and the chosen `APP_TRAEFIK_SECURITY` chain confirmed against the real domain
+- [ ] TLS and the router's four middleware positions confirmed against the real domain
 
 ## Details
 

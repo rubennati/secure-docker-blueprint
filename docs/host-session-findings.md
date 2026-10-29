@@ -49,15 +49,15 @@ Traefik setup ask the question up front: *are any clients reaching this through
 Tailscale?* → if yes, the overlay is not optional. A `📋` note in the README is
 not enough; this one silently produces 403s.
 
-**Independently confirmed — and with one caveat.** Operating notes for an
-unrelated server, written months earlier, record the same symptom: Traefik seeing
-a Docker bridge address instead of the client's, only for VPN traffic, carried as
-*"known — not finally solved"* with the workaround of widening the allowlist to
-the whole VPN subnet. Two machines, the same failure, open since. That the cause
+**Independently confirmed — and with one caveat.** Earlier operating experience
+outside this repository records the same symptom: Traefik seeing a Docker bridge
+address instead of the client's, only for VPN traffic, carried as *"known — not
+finally solved"* with the workaround of widening the allowlist to the whole VPN
+subnet. The same failure, on a second machine, open since. That the cause
 now has a fix is worth more than the fix itself.
 
-The caveat: those same notes observe the problem on a home server and **not** on a
-hosted one, which the author attributed to differing NAT behaviour. The host used
+The caveat: that experience shows the problem on a machine in a local network and
+**not** on a hosted one, attributed there to differing NAT behaviour. The host used
 here is a hosted machine. The likelier explanation is `userland-proxy: false` and
 `ip6tables: true` rather than the platform — but that was not isolated, so a
 second test on a machine with a different network stack is what would turn this
@@ -461,14 +461,15 @@ independently. Expect this to recur with PostgreSQL.
 
 ## 21. The example configuration collides with a second deployment
 
-**Observed.** This host carries two Docker deployments: the blueprint under
-`/srv/secure-docker-blueprint` with containers named `nextcloud-bp-*`, and an
-unrelated one under `/srv/docker` with containers named `nextcloud-*`.
+**Observed.** A host can carry a second, independent Docker deployment next to
+the blueprint, including an application the blueprint also ships, with
+container names that differ only by a suffix.
 
 `config.yaml.example` ships `source_directories: /srv/docker` plus
 `/var/lib/docker/volumes` wholesale, and `container: myapp-db`. Copied as
-written, it would have captured the unrelated deployment's data — and its
-quiescing hook would have put someone else's Nextcloud into maintenance mode.
+written onto such a host, it captures the other deployment's data — and its
+quiescing hook can put the other deployment's application into maintenance
+mode.
 
 **Cause.** The example assumes one deployment per host, which is the common case
 but not a safe default: the failure is silent and it acts on a system the
@@ -482,8 +483,8 @@ finished archive for something that must *not* be in it:
 sudo borgmatic list --archive latest --find '*other-deployment*' | grep -v '^local:'
 ```
 
-Empty output is the evidence. Run for `/srv/docker`, the other deployment's
-volumes and its containers, all three returned nothing.
+Empty output is the evidence. Run it for each of the other deployment's paths,
+volumes and containers.
 
 Quiescing hooks deserve the same care: `docker exec <exact-container>` cannot
 resolve to the wrong project, `docker compose` can.
@@ -790,8 +791,8 @@ is producing them.
 
 ## From existing operating documentation
 
-Four items carried over from operating notes for two unrelated servers, both run
-by the maintainer over months. They are recorded here because they were **already
+Four items carried over from operating experience gathered outside this
+repository. They are recorded here because they were **already
 proven in practice**, not discovered in this session — the review pass should
 weigh them differently to the findings above.
 

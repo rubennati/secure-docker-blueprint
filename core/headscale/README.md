@@ -8,7 +8,7 @@ theirs, the control server is not.
 
 It sits in `core/` for the reason the category test gives: it provides a shared
 network capability for the installation rather than for users of its own. That
-is the same axis [`acc-tailscale`](../traefik/) already sits on — and if you run
+is the same axis [`access-vpn`](../traefik/) already sits on — and if you run
 this, it is the tailnet that policy means.
 
 ## Architecture
@@ -51,21 +51,21 @@ off this host — without it every node has to be registered again.
 
 ## Letting clients in
 
-This ships with `acc-local`: reachable from your LAN and nowhere else. That is
+This ships with `access-lan`: reachable from your LAN and nowhere else. That is
 the blueprint's position, not the product's — a control server no client can
 reach is a control server no client can join.
 
-Opening it is a deliberate step, and `acc-public` is not the only way to take
+Opening it is a deliberate step, and `access-public` is not the only way to take
 it:
 
 | Approach | When it fits |
 |---|---|
-| Stay on `acc-local` | Every node joins from your network. They keep working anywhere afterwards — only the *join* needs the server |
+| Stay on `access-lan` | Every node joins from your network. They keep working anywhere afterwards — only the *join* needs the server |
 | An IP allow-list in front | You know the addresses nodes register from |
 | An SSH tunnel for the join | One node, once, without changing the policy |
-| `acc-public` | Nodes join from anywhere. headscale's own authentication carries it: a node needs a pre-auth key or an OIDC sign-in, and the endpoint is not a user interface |
+| `access-public` | Nodes join from anywhere. headscale's own authentication carries it: a node needs a pre-auth key or an OIDC sign-in, and the endpoint is not a user interface |
 
-`acc-tailscale` is the one value that cannot work here: this server would be
+`access-vpn` is the one value that cannot work here: this server would be
 that tailnet's control plane.
 
 Whichever you pick, the host name in `APP_TRAEFIK_HOST` is what every node is
@@ -99,7 +99,7 @@ can see it at all — has not been worked through here.
 
 ## Security model
 
-- **Closed by default.** `acc-local`; see above.
+- **Closed by default.** `access-lan`; see above.
 - **Non-root**, `read_only`, `cap_drop: ALL`, `no-new-privileges`. The image
   declares uid 0 and does not need it.
 - **No credential of its own to leak.** Nodes authenticate with pre-auth keys
@@ -129,7 +129,7 @@ can see it at all — has not been worked through here.
 - **Configuration changes between minor releases.** Two keys in upstream's own
   example are already deprecated or fatal on this version. Run `configtest`
   before every upgrade — the checklist in `UPSTREAM.md` puts it before `up -d`.
-- **`sec-2` is not measured.** Clients poll and hold long connections.
+- **`limit-standard` is not measured.** Clients poll and hold long connections.
 - **Nothing here has run behind this repository's Traefik yet.** The stack is
   `scaffolded`.
 

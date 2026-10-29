@@ -36,7 +36,7 @@ curl -X POST "https://$(grep APP_TRAEFIK_HOST .env | cut -d= -f2)/v1/convert/sou
 
 The full API reference is at `/docs` on the running instance; the interactive
 `/ui` playground is off by default (`DOCLING_ENABLE_UI=0`) and gated by
-`APP_TRAEFIK_ACCESS`, which defaults to `acc-private`.
+`APP_TRAEFIK_ACCESS`, which defaults to `access-lan-vpn`.
 
 ## Status
 

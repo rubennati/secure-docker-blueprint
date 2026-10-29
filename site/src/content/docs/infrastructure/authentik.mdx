@@ -99,22 +99,24 @@ modified and does not need to support any of this.
 
 <Steps>
 
-1. In `core/traefik/ops/templates/dynamic/integrations.yml.tmpl`, uncomment the
-   `sec-authentik` middleware, then re-render and redeploy:
+1. In `core/traefik/.env`, set `AUTHENTIK_FORWARD_AUTH_ENABLED=true`, then
+   render — the file it produces is dynamic configuration and needs no restart:
 
    ```bash
    cd core/traefik
-   ./ops/scripts/render.sh
-   docker compose up -d
+   bash ops/scripts/validate.sh && bash ops/scripts/render.sh && bash ops/scripts/validate.sh
    ```
 
-   The middleware is then available to any router as `sec-authentik@file`.
+   The middleware is then available to any router as `auth-authentik@file`.
+   No template is edited.
 
 2. In the Authentik interface under **Applications → Outposts**, confirm the
    embedded outpost exists and is healthy. No extra container is required.
 
 3. Create a provider and an application in Authentik for the service you are
-   protecting, then add `sec-authentik@file` to that service's middleware chain.
+   protecting, then set `APP_TRAEFIK_AUTH=auth-authentik@file` in that
+   service's `.env` — the router's auth position, the fourth of its four — and
+   redeploy it with `docker compose up -d`.
 
 </Steps>
 

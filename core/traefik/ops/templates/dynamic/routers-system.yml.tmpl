@@ -8,6 +8,13 @@ http:
       tls:
         certResolver: ${TRAEFIK_DASHBOARD_CERT_RESOLVER}
         options: ${TRAEFIK_DASHBOARD_TLS_OPTION}
+      # The four positions of the model (dynamic/model.yml): VPN only, the
+      # strict counter of an administration surface, the standard headers,
+      # no gate — the dashboard has Traefik's own API behind it and nothing
+      # that logs in. The TLS option is named here on purpose: a system
+      # route may be stricter than the deployment standard.
       middlewares:
-        - acc-tailscale@file
-        - sec-4@file
+        - access-vpn@file
+        - limit-strict@file
+        - headers-standard@file
+        - auth-none@file

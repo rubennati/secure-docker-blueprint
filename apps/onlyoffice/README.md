@@ -29,14 +29,15 @@ Every editing request carries a signed JWT. Both sides — OnlyOffice and the co
 
 Mismatched secrets → documents open read-only with "Token is invalid" in the browser console.
 
-### Why iframe embedding needs a custom Traefik chain
+### Why iframe embedding needs its own headers
 
-OnlyOffice has to be embedded in an `<iframe>` inside Seafile / Nextcloud. Every `sec-*` middleware chain in this repo sets `X-Frame-Options: DENY`, which browsers honour strictly and block the iframe.
+OnlyOffice has to be embedded in an `<iframe>` inside Seafile / Nextcloud. `headers-standard` sets `X-Frame-Options: DENY`, which browsers honour strictly and block the iframe.
 
-The `docker-compose.yml` therefore defines two dedicated middlewares:
+The router therefore runs `headers-application-owned` — the HSTS base — and the `docker-compose.yml` places two blocks before the profile and one after the four positions:
 
-- `${COMPOSE_PROJECT_NAME}-proto` — sets `X-Forwarded-Proto: https` and `X-Forwarded-Host` so OnlyOffice generates HTTPS URLs (otherwise Mixed Content errors in the editor)
-- `${COMPOSE_PROJECT_NAME}-headers` — HSTS + nosniff + `Content-Security-Policy: frame-ancestors <allowed-origins>` instead of a blanket frame-deny
+- `header-nosniff@file` — `X-Content-Type-Options: nosniff`
+- `${COMPOSE_PROJECT_NAME}-csp` — `Content-Security-Policy: frame-ancestors 'self' <allowed-origins>` instead of a blanket frame-deny
+- `forwarded-proto-https@file`, after the four — sets `X-Forwarded-Proto: https` so OnlyOffice generates HTTPS URLs (otherwise Mixed Content errors in the editor)
 
 The allowed origins come from `ONLYOFFICE_ALLOWED_ORIGINS` in `.env`.
 
@@ -104,7 +105,7 @@ Open an office doc from a connected app and confirm the editor loads in an ifram
 ## Security Model
 
 - Only the JWT secret is Docker Secret; OnlyOffice reads it via the entrypoint wrapper (`config/entrypoint.sh`) because the upstream image doesn't support `_FILE` env vars.
-- The custom `-headers` middleware keeps HSTS, nosniff, and `referrer-policy`-equivalent protections while permitting controlled iframe embedding.
+- `headers-application-owned` with the `header-nosniff` block and the stack's `-csp` middleware keeps HSTS and nosniff while permitting controlled iframe embedding.
 - `ONLYOFFICE_ALLOWED_ORIGINS` is a CSP allowlist. Any domain not listed here is rejected by the browser, even if it holds a valid JWT.
 - `no-new-privileges:true` on the container.
 
@@ -156,7 +157,7 @@ manager does. See `docs/standards/compose-structure.md` → Resources.
 
 - **Image size is large (~1.5 GB)** — this is upstream; the document server bundles LibreOffice, Node.js, Nginx, PostgreSQL, RabbitMQ, and Redis. No slim variant is available.
 - **Log volume grows quickly.** `./volumes/logs` is mounted so logs persist; rotate or truncate it periodically if disk usage matters.
-- **`APP_TRAEFIK_SECURITY` is not used.** Setting it in `.env` has no effect — the compose file wires the custom middleware chain unconditionally. Left in the `.env.example` with a comment so nobody is surprised.
+- **`APP_TRAEFIK_HEADERS` is `headers-application-owned`, not `headers-standard`.** The standard profile would set `X-Frame-Options: DENY` and block the editor's iframe; the compose file names `header-nosniff@file` and the stack's `frame-ancestors` CSP before the profile instead. Which headers the document server sends itself is not measured.
 - **JWT secret rotation is not automatic.** Rotating means updating the secret file in OnlyOffice _and_ every consuming app, then restarting each.
 - **`ONLYOFFICE_ALLOWED_ORIGINS` changes require container recreation.** The value is embedded in a Traefik label at container startup time — `docker compose restart` does not update it. Run `docker compose up -d --force-recreate` to apply a new or updated allowed origin.
 

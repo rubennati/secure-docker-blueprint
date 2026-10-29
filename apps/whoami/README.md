@@ -52,7 +52,7 @@ docker compose up -d
 curl https://<APP_TRAEFIK_HOST>
 ```
 
-Default access policy is `acc-tailscale` + `sec-5` (strictest, because Whoami is static and CSP-compatible).
+The stack ships `access-vpn`, `limit-strict` and `headers-standard` with the `csp-self-only` block in front of the profile — an enforcing CSP, because Whoami is static and CSP-compatible.
 
 ## Common tests
 
@@ -89,7 +89,7 @@ Whoami runs with the full hardening set:
 - No network access beyond `proxy-public`
 - No database, no secrets, no persistent state
 
-Ideal candidate for `sec-5` (maximum chain including CSP enforce) because it serves only a static text response.
+Ideal candidate for the `csp-self-only` block (an enforcing CSP) and `limit-strict` because it serves only a static text response.
 
 ## Backup
 

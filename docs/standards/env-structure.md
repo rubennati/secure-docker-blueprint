@@ -11,31 +11,58 @@ points at, see [Secrets](secrets.md).
 ## Section Order
 
 ```env
-# =============================================
+# =============================================================================
 # {App Name} – Environment
-# =============================================
+# =============================================================================
 # Copy this file to .env and adjust all values.
 # NEVER commit the .env file.
-# =============================================
+# =============================================================================
 
+# --- Project ---------------------------------------------------- [compose] --
 COMPOSE_PROJECT_NAME=appname
 
-# --- Domain & Traefik ---
-# --- Images ---
-# --- Containers ---
-# --- Network ---              (only if app-specific)
-# --- Database ---             (only if app has a database)
-# --- App Configuration ---
-# --- SMTP ---                 (only if app sends mail)
-# --- Timezone ---
-# --- Secrets ---
+# --- Domain & Traefik ------------------------------------------- [traefik] --
+# --- Images -------------------------------------------------------- [image] --
+# --- Containers -------------------------------------------------- [compose] --
+# --- Network ----------------------------------------------------- [compose] --
+# --- Database -------------------------------------------------------- [app] --
+# --- App Configuration ----------------------------------------------- [app] --
+# --- SMTP ------------------------------------------------------------ [app] --
+# --- Timezone -------------------------------------------------------- [app] --
+# --- Secrets ------------------------------------------------------ [secrets] --
 ```
+
+Network appears only when the app defines its own, Database only when it has one, SMTP
+only when it sends mail. A file may omit any section; the ones present keep this order.
+
+### Section header form
+
+A section header is one line: `# ---`, a space, the section name, a run of `-` as
+padding to about 80 characters, and the layer tag closed by `--`. The tag names the layer the
+variables under it configure:
+
+| Tag | Layer | Sections |
+|---|---|---|
+| `[compose]` | Docker Compose itself — project, container and network names | Project, Containers, Network |
+| `[traefik]` | the reverse proxy — hostname, TLS, access, security chain | Domain & Traefik |
+| `[image]` | which image versions are pulled | Images |
+| `[app]` | the application's own settings | Database, App Configuration, SMTP, Timezone |
+| `[secrets]` | documented here; the values live in `.secrets/` | Secrets |
+
+[`apps/_reference/.env.example`](../../apps/_reference/.env.example) is the worked
+example, with a comment block per section. `scripts/ci/check-structure.py` reads the
+section name and ignores the tag and the padding, so a file in the earlier short form
+(`# --- Images ---`) still passes `section-order`; the files in that form are converted
+by script in Phase 6 of the core audit
+([`../audits/core-v1-readiness-2026-10-15.md`](../audits/core-v1-readiness-2026-10-15.md)),
+not one by one.
 
 ## Section Rules
 
-**COMPOSE_PROJECT_NAME** — always first, no section header:
+**Project** — `COMPOSE_PROJECT_NAME`, first, under the `Project` header:
 
 ```env
+# --- Project ---------------------------------------------------- [compose] --
 COMPOSE_PROJECT_NAME=wordpress
 ```
 
@@ -44,12 +71,13 @@ This is the single source for container names, network names, and Traefik router
 **Domain & Traefik** — how the app is exposed:
 
 ```env
-# --- Domain & Traefik ---
+# --- Domain & Traefik ------------------------------------------- [traefik] --
 APP_TRAEFIK_HOST=app.example.com
 APP_TRAEFIK_CERT_RESOLVER=cloudflare-dns
-APP_TRAEFIK_TLS_OPTION=tls-basic
-APP_TRAEFIK_ACCESS=acc-tailscale
-APP_TRAEFIK_SECURITY=sec-3
+APP_TRAEFIK_ACCESS=access-vpn
+APP_TRAEFIK_LIMIT=limit-standard
+APP_TRAEFIK_HEADERS=headers-standard
+APP_TRAEFIK_AUTH=auth-none@file
 TRAEFIK_NETWORK=proxy-public
 ```
 
@@ -58,7 +86,7 @@ This section is second because it's what you change most often per deployment.
 **Images** — one tag variable per image, with image name + Docker Hub link as comment:
 
 ```env
-# --- Images ---
+# --- Images -------------------------------------------------------- [image] --
 # wordpress (https://hub.docker.com/_/wordpress)
 APP_TAG=6.7-php8.3-fpm-alpine
 # mariadb (https://hub.docker.com/_/mariadb)
@@ -111,7 +139,7 @@ and the date it should be revisited, like every other documented deviation.
 **Containers** — derived from COMPOSE_PROJECT_NAME:
 
 ```env
-# --- Containers ---
+# --- Containers -------------------------------------------------- [compose] --
 CONTAINER_NAME_APP=${COMPOSE_PROJECT_NAME}-app
 CONTAINER_NAME_DB=${COMPOSE_PROJECT_NAME}-db
 ```
@@ -119,14 +147,14 @@ CONTAINER_NAME_DB=${COMPOSE_PROJECT_NAME}-db
 **Network** — internal network name, derived from COMPOSE_PROJECT_NAME:
 
 ```env
-# --- Network ---
+# --- Network ----------------------------------------------------- [compose] --
 NETWORK_INTERNAL=${COMPOSE_PROJECT_NAME}-internal
 ```
 
 **Database** — non-sensitive database config:
 
 ```env
-# --- Database ---
+# --- Database -------------------------------------------------------- [app] --
 DB_NAME=wordpress
 DB_USER=wp_user
 ```
@@ -136,7 +164,7 @@ Passwords are never here — they go in `.secrets/`.
 **App Configuration** — app-specific settings:
 
 ```env
-# --- App Configuration ---
+# --- App Configuration ----------------------------------------------- [app] --
 VW_SIGNUPS_ALLOWED=false
 VW_LOG_LEVEL=warn
 ```
@@ -144,7 +172,7 @@ VW_LOG_LEVEL=warn
 **SMTP** — mail relay configuration:
 
 ```env
-# --- SMTP ---
+# --- SMTP ------------------------------------------------------------ [app] --
 VW_SMTP_HOST=smtp.example.com
 VW_SMTP_FROM=vaultwarden@example.com
 VW_SMTP_PORT=587
@@ -157,7 +185,7 @@ SMTP passwords go in `.secrets/`, not here.
 **Timezone** — near the end, rarely changes:
 
 ```env
-# --- Timezone ---
+# --- Timezone -------------------------------------------------------- [app] --
 # Examples: UTC, Europe/Berlin, Europe/Vienna, America/New_York
 TZ=UTC
 ```
@@ -165,7 +193,7 @@ TZ=UTC
 **Secrets** — generation instructions as comments:
 
 ```env
-# --- Secrets ---
+# --- Secrets ------------------------------------------------------ [secrets] --
 # Create the secrets directory and files:
 #   mkdir -p .secrets
 #   openssl rand -base64 32 | tr -d '\n' > .secrets/db_pwd.txt
@@ -187,8 +215,9 @@ For which generation command to use per secret type, how to store the result, an
 
 ## Checklist
 
-- [ ] Header with app name, copy instruction, and "NEVER commit" warning
-- [ ] `COMPOSE_PROJECT_NAME` at the top, before all sections
+- [ ] Header banner as in the reference, with app name, copy instruction, and "NEVER commit" warning
+- [ ] `COMPOSE_PROJECT_NAME` first, under the `Project` header
+- [ ] Section headers in the long form — `# --- Name ---… [layer] --`, as in the reference
 - [ ] Section order matches the standard above
 - [ ] App images pinned to `major.minor.patch` (never `:latest`, never major-only)
 - [ ] Infra images (redis, mariadb, postgres, nginx, clamav) pinned to `major.minor`

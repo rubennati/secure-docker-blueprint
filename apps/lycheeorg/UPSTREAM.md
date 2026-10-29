@@ -41,7 +41,7 @@
 | **`TRUSTED_PROXIES: "*"`** added | Required so Laravel honours `X-Forwarded-Proto=https` from Traefik (otherwise Lychee generates `http://` absolute URLs → Mixed Content warnings) |
 | **Container names standardized** — `lychee-app/db/redis` instead of `lychee/lychee_db/lychee_redis` | Project-scoped naming |
 | **100+ lines of commented env-var examples trimmed** | Moved to upstream docs reference; `.env.example` is lean. Every dropped option remains available via standard env vars if needed |
-| **Access `acc-public` + security `sec-2` defaults** | Typical for a public gallery |
+| **Access `access-public`, `limit-standard` and `headers-standard` defaults** | Typical for a public gallery |
 
 ## Upgrade checklist
 

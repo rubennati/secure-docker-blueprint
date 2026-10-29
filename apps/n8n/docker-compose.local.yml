@@ -10,7 +10,7 @@
 services:
 
   app:
-    image: docker.n8n.io/n8nio/n8n:${APP_TAG}
+    image: n8nio/n8n:${APP_TAG}
     container_name: n8n-local-app
     restart: unless-stopped
     security_opt: [no-new-privileges:true]

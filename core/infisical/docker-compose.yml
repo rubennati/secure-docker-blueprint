@@ -8,7 +8,7 @@
 # Source: https://github.com/Infisical/infisical
 #
 # ⚠ This is INFRASTRUCTURE that holds every other app's secrets — treat it as the
-# crown jewel. Default access is VPN-only (acc-tailscale); do not expose it public
+# crown jewel. Default access is VPN-only (access-vpn); do not expose it public
 # without a deliberate decision.
 # =============================================================================
 
@@ -210,9 +210,8 @@ services:
       # TLS
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
       # Middlewares
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8080"
 

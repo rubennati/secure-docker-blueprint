@@ -136,7 +136,7 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 - [x] Frontend served the SPA with `API_BASE_URL` correctly baked into `static/config.json` — **verified locally, 2026-09-19**
 - [ ] A real BOM upload and vulnerability-analysis pass through the actual UI
 - [ ] OIDC sign-in against Authentik or Keycloak
-- [ ] TLS and the chosen `APP_TRAEFIK_SECURITY` chain confirmed against the real domain, on both subdomains
+- [ ] TLS and the router's four middleware positions (`APP_TRAEFIK_ACCESS`, `APP_TRAEFIK_LIMIT`, `APP_TRAEFIK_HEADERS`, `APP_TRAEFIK_AUTH`) confirmed against the real domain, on both subdomains
 
 ## Details
 
