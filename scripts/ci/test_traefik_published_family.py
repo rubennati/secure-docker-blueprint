@@ -21,6 +21,9 @@ where the client address survives the way to the container.
 - a docker-proxy listening on IPv6 for one of Traefik's ports is PENDING
 - only Docker's own "not found" means the network or the container is absent;
   a refused or unanswered inspect is NOT VERIFIED, never "nothing there"
+- the checks evaluate the files the deployment uses: validate.sh passes its
+  -f files on, and a running container created from other files than the
+  evaluated ones — or with no record of them — is NOT VERIFIED
 - without docker-compose.yml in the directory nothing is checked, which is
   NOT VERIFIED, exit 3
 - validate.sh: exit 3 from the checker never ends in a plain "OK."; it exits 0
@@ -101,10 +104,14 @@ class Checker(unittest.TestCase):
         if runtime is None:
             args.append("--no-runtime")
         else:
-            net, ports = runtime
+            net, ports, *labels = runtime
             pj = self.tmp / "ports.json"
             pj.write_text(json.dumps(ports), encoding="utf-8")
             args += ["--network-ipv6", net, "--running-ports", str(pj)]
+            if labels:
+                lj = self.tmp / "labels.json"
+                lj.write_text(json.dumps(labels[0]), encoding="utf-8")
+                args += ["--running-labels", str(lj)]
         full_env = {k: v for k, v in os.environ.items() if k != "DOCKER_HOST"}
         full_env.update(env or {})
         return subprocess.run(args + list(extra), capture_output=True, text=True, env=full_env)
@@ -289,6 +296,58 @@ class Checker(unittest.TestCase):
         self.assertIn("network proxy-public could not be inspected", r.stdout)
         self.assertIn("container traefik-core could not be inspected: permission denied", r.stdout)
 
+    # --- review finding 3: the same compose files as the deployment ---------
+
+    NEW = staticmethod(lambda: Checker.inspect_ports(("0.0.0.0", 80, 80, "tcp"), ("0.0.0.0", 443, 443, "tcp"),
+                                                     ("0.0.0.0", 443, 443, "udp")))
+
+    def deployed(self, *names):
+        return {"com.docker.compose.project.config_files": ",".join(str(self.tmp / n) for n in names)}
+
+    def test_container_from_the_evaluated_files_is_silent(self):
+        r = self.run_checker(model(IPV4), "--project-dir", str(self.tmp),
+                             runtime=("false", self.NEW(), self.deployed("docker-compose.yml")))
+        self.assertEqual(r.returncode, 0, r.stdout)
+        self.assertEqual(r.stdout.strip(), "")
+
+    def test_container_deployed_with_an_extra_f_file_is_not_verified(self):
+        r = self.run_checker(model(IPV4), "--project-dir", str(self.tmp),
+                             runtime=("false", self.NEW(), self.deployed("docker-compose.yml", "network-dual-stack.yml")))
+        self.assertEqual(r.returncode, 3, r.stdout)
+        self.assertIn("NOT VERIFIED: traefik-core was created from", r.stdout)
+        self.assertIn("-f", r.stdout)
+
+    def test_compose_file_from_env_is_what_is_compared(self):
+        r = self.run_checker(model(IPV4 + IPV6, dual_stack=True), "--project-dir", str(self.tmp),
+                             "--daemon-check", "manual",
+                             env={"COMPOSE_FILE": "docker-compose.yml:network-dual-stack.yml"},
+                             runtime=("true", None))
+        self.assertNotIn("was created from", r.stdout)
+        labels = self.deployed("docker-compose.yml", "network-dual-stack.yml")
+        dual = self.inspect_ports(*[(ip, p, p, proto) for ip in ("0.0.0.0", "::")
+                                    for p, proto in ((80, "tcp"), (443, "tcp"), (443, "udp"))])
+        r = self.run_checker(model(IPV4 + IPV6, dual_stack=True), "--project-dir", str(self.tmp),
+                             "--daemon-check", "manual",
+                             env={"COMPOSE_FILE": "docker-compose.yml:network-dual-stack.yml"},
+                             runtime=("true", dual, labels))
+        self.assertNotIn("was created from", r.stdout)
+        self.assertNotIn("PENDING", r.stdout)
+
+    def test_explicit_files_are_what_is_compared(self):
+        base, overlay = str(self.tmp / "docker-compose.yml"), str(self.tmp / "network-dual-stack.yml")
+        r = self.run_checker(model(IPV4), "--project-dir", str(self.tmp), "--compose-file", base,
+                             runtime=("false", self.NEW(), self.deployed("docker-compose.yml", "network-dual-stack.yml")))
+        self.assertEqual(r.returncode, 3, r.stdout)
+        self.assertIn("was created from", r.stdout)
+        r = self.run_checker(model(IPV4), "--project-dir", str(self.tmp), "--compose-file", base, "--compose-file", overlay,
+                             runtime=("false", self.NEW(), self.deployed("docker-compose.yml", "network-dual-stack.yml")))
+        self.assertNotIn("was created from", r.stdout)
+
+    def test_container_without_a_record_of_its_files_is_not_verified(self):
+        r = self.run_checker(model(IPV4), "--project-dir", str(self.tmp), runtime=("false", self.NEW(), {}))
+        self.assertEqual(r.returncode, 3, r.stdout)
+        self.assertIn("carries no record of the compose files", r.stdout)
+
     def test_without_compose_file_nothing_is_checked(self):
         r = subprocess.run(["python3", str(CHECKER), "--project-dir", str(self.tmp)], capture_output=True, text=True)
         self.assertEqual(r.returncode, 3, r.stdout)
@@ -328,6 +387,24 @@ class ValidateOutcome(unittest.TestCase):
         self.assertEqual(r.returncode, 1, r.stdout)
         self.assertIn("SECURITY NOT CONFIRMED", r.stdout)
 
+    def test_f_file_must_exist(self):
+        r = self.validate("-f", str(self.root / "missing.yml"))
+        self.assertEqual(r.returncode, 1, r.stdout)
+        self.assertIn("compose file not found", r.stdout)
+        r = self.validate("-f")
+        self.assertEqual(r.returncode, 1, r.stdout)
+        self.assertIn("needs a compose file", r.stdout)
+
+    def test_f_files_reach_the_checker(self):
+        for name in ("docker-compose.yml", "network-dual-stack.yml"):
+            shutil.copy(TRAEFIK / name, self.root / name)
+        r = self.validate("-f", str(self.root / "docker-compose.yml"))
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertNotIn("unknown argument", r.stdout)
+        if shutil.which("docker") is None:
+            # without Docker the checker names the files it would have evaluated
+            self.assertIn(str(self.root / "docker-compose.yml"), r.stdout)
+
     def test_unknown_argument_is_refused(self):
         r = self.validate("--fast")
         self.assertEqual(r.returncode, 1, r.stdout)
@@ -357,6 +434,21 @@ class ShippedComposeFiles(unittest.TestCase):
         m = self.config()
         self.assertEqual(self.bindings(m), [("0.0.0.0", "443", "tcp"), ("0.0.0.0", "443", "udp"), ("0.0.0.0", "80", "tcp")])
         self.assertFalse(m["networks"]["public"].get("enable_ipv6"))
+
+    def test_checker_evaluates_explicit_f_files(self):
+        tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        for name in ("docker-compose.yml", "network-dual-stack.yml"):
+            shutil.copy(TRAEFIK / name, tmp / name)
+        env = dict(BASE_ENV, PUBLIC_NETWORK_SUBNET_V4="172.30.0.0/16", PUBLIC_NETWORK_SUBNET_V6="fd00:db8:30::/64")
+        (tmp / ".env").write_text("".join(f'{k}="{v}"\n' for k, v in env.items()), encoding="utf-8")
+        run = lambda *files: subprocess.run(
+            ["python3", str(CHECKER), "--project-dir", str(tmp), "--no-runtime", "--daemon-check", "manual",
+             *[x for f in files for x in ("--compose-file", str(tmp / f))]], capture_output=True, text=True)
+        base = run("docker-compose.yml")
+        self.assertEqual(base.returncode, 0, base.stdout + base.stderr)
+        both = run("docker-compose.yml", "network-dual-stack.yml")
+        self.assertNotIn("IPv4-only", both.stdout)  # the overlay was evaluated: dual-stack, no P2 error
 
     def test_overlay_adds_ipv6_bindings_and_the_ipv6_subnet(self):
         m = self.config(("COMPOSE_FILE", "docker-compose.yml:network-dual-stack.yml"),

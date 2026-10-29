@@ -9,8 +9,9 @@ and CrowdSec decision then sees the gateway instead of the client. IPv6 is
 therefore published only by network-dual-stack.yml, and only where the Docker
 daemon forwards IPv6 by NAT rather than through docker-proxy.
 
-Checks, against the effective Compose model (overrides and COMPOSE_FILE
-included) and, when Traefik exists, against the running state:
+Checks, against the effective Compose model — the -f files validate.sh was
+given, else COMPOSE_FILE, else docker-compose.yml with its override — and,
+when Traefik exists, against the running state:
 
   ERROR    a port accepts IPv6 while the public network has no IPv6
   ERROR    dual-stack, and the daemon's effective settings keep docker-proxy
@@ -21,6 +22,8 @@ included) and, when Traefik exists, against the running state:
   PENDING  the running container is published differently from the model —
            `docker compose up -d` recreates it
   PENDING  a docker-proxy process relays an IPv6 port of Traefik
+  NOT VERIFIED  the running container was created from other compose files
+           than the ones checked, or carries no record of them
   NOT VERIFIED  a check that could not run — no docker-compose.yml in the
            directory, no docker CLI, or Docker refused or did not answer when
            the network or the container was inspected (only Docker's own
@@ -49,16 +52,46 @@ def accepts_ipv6(host_ip):
     return not host_ip or ":" in host_ip
 
 
+def evaluated_files(args):
+    """The compose files the model comes from, as Compose resolves them:
+    explicit -f files, else COMPOSE_FILE, else docker-compose.yml and its
+    override file. Compared with the files the running container was created
+    from."""
+    project = Path(args.project_dir)
+    if args.compose_file:
+        return [Path(f) for f in args.compose_file]
+    listed = os.environ.get("COMPOSE_FILE", "")
+    if listed:
+        sep = os.environ.get("COMPOSE_PATH_SEPARATOR", ":")
+        return [project / f for f in listed.split(sep) if f]
+    files = [project / "docker-compose.yml"]
+    if (project / "docker-compose.override.yml").is_file():
+        files.append(project / "docker-compose.override.yml")
+    return files
+
+
+def same_files(a, b):
+    return {os.path.realpath(str(x)) for x in a} == {os.path.realpath(str(x)) for x in b}
+
+
 def load_model(args):
     if args.compose_json:
         return json.loads(Path(args.compose_json).read_text(encoding="utf-8")), None
     project = Path(args.project_dir)
-    if not (project / "docker-compose.yml").is_file():
+    files = evaluated_files(args)
+    if not args.compose_file and not (project / "docker-compose.yml").is_file():
         return None, f"NOT VERIFIED: no docker-compose.yml in {project} — the published-address checks did not run."
+    missing = [str(f) for f in files if not Path(f).is_file()]
+    if missing:
+        raise SystemExit(f"ERROR: compose file not found: {', '.join(missing)}")
     if shutil.which("docker") is None:
-        return None, "NOT VERIFIED: docker not found — the published-address checks did not run."
-    r = subprocess.run(["docker", "compose", "config", "--format", "json"],
-                       cwd=project, capture_output=True, text=True)
+        return None, ("NOT VERIFIED: docker not found — the published-address checks did not run "
+                      f"(files: {', '.join(str(f) for f in files)}).")
+    cmd = ["docker", "compose"]
+    if args.compose_file:
+        for f in files:
+            cmd += ["-f", str(f)]
+    r = subprocess.run(cmd + ["config", "--format", "json"], cwd=project, capture_output=True, text=True)
     if r.returncode != 0:
         detail = (r.stderr or r.stdout).strip().splitlines()[-1:] or [""]
         raise SystemExit(f"ERROR: docker compose config failed in {project}: {detail[0]}")
@@ -204,18 +237,20 @@ def network_state(args):
 
 
 def container_state(args):
-    """('ok', ports) | ('absent', None) | ('unknown', reason); a stopped container is absent."""
+    """('ok', (ports, labels)) | ('absent', None) | ('unknown', reason); a stopped container is absent."""
     if args.running_ports:
         data = json.loads(Path(args.running_ports).read_text(encoding="utf-8"))
         if isinstance(data, dict) and "__error__" in data:
             return "unknown", data["__error__"]
-        return ("absent", None) if data is None else ("ok", data)
-    state, out = docker_query(["docker", "inspect", "-f", "{{json .State.Running}} {{json .NetworkSettings.Ports}}",
-                               args.container])
+        labels = json.loads(Path(args.running_labels).read_text(encoding="utf-8")) if args.running_labels else None
+        return ("absent", None) if data is None else ("ok", (data, labels))
+    state, out = docker_query(["docker", "inspect", args.container])
     if state != "ok":
         return state, out
-    running, ports = out.strip().split(" ", 1)
-    return ("ok", json.loads(ports)) if running == "true" else ("absent", None)
+    obj = json.loads(out)[0]
+    if not (obj.get("State") or {}).get("Running"):
+        return "absent", None
+    return "ok", ((obj.get("NetworkSettings") or {}).get("Ports") or {}, (obj.get("Config") or {}).get("Labels") or {})
 
 
 def running_bindings(ports):
@@ -257,6 +292,8 @@ def ipv6_relays(proc, published):
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--project-dir", default=".")
+    ap.add_argument("--compose-file", action="append", default=[],
+                    help="a compose file as passed to docker compose -f; repeatable")
     ap.add_argument("--public-network", default="proxy-public")
     ap.add_argument("--container", default="traefik-core")
     ap.add_argument("--daemon-check", default="", help="'manual' when the daemon settings were checked by hand")
@@ -265,6 +302,7 @@ def main():
     ap.add_argument("--network-ipv6", choices=["true", "false", "absent", "error"], help="network state (tests)")
     ap.add_argument("--running-ports", help="NetworkSettings.Ports as JSON, 'null' when not running, "
                                             "or {\"__error__\": reason} (tests)")
+    ap.add_argument("--running-labels", help="Config.Labels of the running container as JSON (tests)")
     ap.add_argument("--no-runtime", action="store_true", help="skip the running-state checks")
     args = ap.parse_args()
 
@@ -312,6 +350,18 @@ def main():
             unverified.append(f"the container {args.container} could not be inspected: {ports}. "
                               "What it is published on is not confirmed.")
         if ctr_state == "ok":
+            ports, labels = ports
+            deployed = (labels or {}).get("com.docker.compose.project.config_files", "")
+            files = evaluated_files(args)
+            if labels is not None and not deployed:
+                unverified.append(f"{args.container} carries no record of the compose files it was created from; "
+                                  "the deployed configuration is not the one checked here.")
+            elif labels is not None and not same_files(deployed.split(","), files):
+                unverified.append(
+                    f"{args.container} was created from {deployed}, but validate.sh evaluated "
+                    f"{','.join(str(f) for f in files)}.\n"
+                    "         Run validate.sh with the deployment's files (-f ...), or set COMPOSE_FILE in .env\n"
+                    "         so that deployment and validation use the same files.")
             want, have = expand(configured), expand(running_bindings(ports))
             if want != have:
                 extra = sorted(f"{ip}:{pub}/{proto}" for ip, pub, _, proto in have - want)

@@ -5,12 +5,23 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 # --strict: the final acceptance after `docker compose up -d` — anything the
 # published-address checks could not confirm fails instead of being reported.
+# -f FILE: the compose files exactly as passed to `docker compose -f`, so the
+# checks evaluate the configuration that is deployed. Without -f, Compose's own
+# resolution applies: COMPOSE_FILE from .env, else docker-compose.yml.
 STRICT=0
-for arg in "$@"; do
-  case "${arg}" in
+COMPOSE_ARGS=()
+while [ $# -gt 0 ]; do
+  case "$1" in
     --strict) STRICT=1 ;;
-    *) echo "ERROR: unknown argument '${arg}'. Usage: validate.sh [--strict]"; exit 1 ;;
+    -f|--file)
+      [ $# -ge 2 ] || { echo "ERROR: $1 needs a compose file."; exit 1; }
+      case "$2" in /*) f="$2" ;; *) f="${PWD}/$2" ;; esac
+      [ -f "${f}" ] || { echo "ERROR: compose file not found: $2"; exit 1; }
+      COMPOSE_ARGS+=(--compose-file "${f}")
+      shift ;;
+    *) echo "ERROR: unknown argument '$1'. Usage: validate.sh [--strict] [-f compose-file]..."; exit 1 ;;
   esac
+  shift
 done
 
 if [ ! -f "${ROOT_DIR}/.env" ]; then
@@ -580,6 +591,7 @@ fi
 family_rc=0
 python3 "${ROOT_DIR}/ops/scripts/check-published-family.py" \
   --project-dir "${ROOT_DIR}" \
+  ${COMPOSE_ARGS[@]+"${COMPOSE_ARGS[@]}"} \
   --public-network "${PUBLIC_NETWORK}" \
   --container "${TRAEFIK_CONTAINER_NAME}" \
   --daemon-check "${DOCKER_DAEMON_CHECK:-}" || family_rc=$?
@@ -590,7 +602,8 @@ case "${family_rc}" in
     # resolves it must not be blocked — but this is not a security OK.
     echo ""
     echo "VALID, SECURITY NOT CONFIRMED: the items above are open. After"
-    echo "'docker compose up -d', run validate.sh --strict to confirm them."
+    echo "'docker compose up -d', run validate.sh --strict, with the same -f files"
+    echo "as the deployment, to confirm them."
     [ "${STRICT}" -eq 1 ] && exit 1
     exit 0 ;;
   *) exit 1 ;;
