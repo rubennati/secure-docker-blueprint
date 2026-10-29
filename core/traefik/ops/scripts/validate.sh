@@ -3,6 +3,16 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
+# --strict: the final acceptance after `docker compose up -d` — anything the
+# published-address checks could not confirm fails instead of being reported.
+STRICT=0
+for arg in "$@"; do
+  case "${arg}" in
+    --strict) STRICT=1 ;;
+    *) echo "ERROR: unknown argument '${arg}'. Usage: validate.sh [--strict]"; exit 1 ;;
+  esac
+done
+
 if [ ! -f "${ROOT_DIR}/.env" ]; then
   echo "ERROR: .env not found. Copy .env.example -> .env"
   exit 1
@@ -567,10 +577,23 @@ if ! command -v python3 >/dev/null 2>&1; then
   echo "ERROR: python3 is needed to check which addresses Traefik is published on."
   exit 1
 fi
+family_rc=0
 python3 "${ROOT_DIR}/ops/scripts/check-published-family.py" \
   --project-dir "${ROOT_DIR}" \
   --public-network "${PUBLIC_NETWORK}" \
   --container "${TRAEFIK_CONTAINER_NAME}" \
-  --daemon-check "${DOCKER_DAEMON_CHECK:-}" || exit 1
+  --daemon-check "${DOCKER_DAEMON_CHECK:-}" || family_rc=$?
+case "${family_rc}" in
+  0) ;;
+  3)
+    # PENDING or NOT VERIFIED: the configuration is valid and the update that
+    # resolves it must not be blocked — but this is not a security OK.
+    echo ""
+    echo "VALID, SECURITY NOT CONFIRMED: the items above are open. After"
+    echo "'docker compose up -d', run validate.sh --strict to confirm them."
+    [ "${STRICT}" -eq 1 ] && exit 1
+    exit 0 ;;
+  *) exit 1 ;;
+esac
 
 echo "OK."

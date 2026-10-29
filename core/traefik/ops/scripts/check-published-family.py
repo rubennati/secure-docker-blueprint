@@ -18,14 +18,16 @@ included) and, when Traefik exists, against the running state:
   ERROR    dual-stack, and the daemon's settings cannot be read — unless
            DOCKER_DAEMON_CHECK=manual records that they were checked by hand
   ERROR    dual-stack, and the existing public network is IPv4-only
-  WARNING  the running container is published differently from the model —
+  PENDING  the running container is published differently from the model —
            `docker compose up -d` recreates it
-  WARNING  a docker-proxy process relays an IPv6 port of Traefik
+  PENDING  a docker-proxy process relays an IPv6 port of Traefik
+  NOT VERIFIED  a check that could not run — no docker-compose.yml in the
+           directory, no docker CLI
 
-Without docker-compose.yml in the directory, or without the docker CLI, it
-says so and checks nothing: no deployment can start there either.
-
-Exit 0 when nothing is an ERROR, 1 otherwise. Standard library only.
+Exit 0 when every check ran and found nothing, 1 on any ERROR, 3 when there is
+no ERROR but something is PENDING or NOT VERIFIED. validate.sh reports 3 as a
+valid configuration whose security state is not confirmed, and does not block
+the update that resolves it. Standard library only.
 """
 
 import argparse
@@ -37,6 +39,7 @@ import sys
 from pathlib import Path
 
 DEFAULT_DAEMON_JSON = "/etc/docker/daemon.json"
+EXIT_OPEN = 3  # no ERROR, but something PENDING or NOT VERIFIED
 
 
 def accepts_ipv6(host_ip):
@@ -49,9 +52,9 @@ def load_model(args):
         return json.loads(Path(args.compose_json).read_text(encoding="utf-8")), None
     project = Path(args.project_dir)
     if not (project / "docker-compose.yml").is_file():
-        return None, f"NOTE: no docker-compose.yml in {project} — published-address checks skipped."
+        return None, f"NOT VERIFIED: no docker-compose.yml in {project} — the published-address checks did not run."
     if shutil.which("docker") is None:
-        return None, "WARNING: docker not found — the published-address checks did not run."
+        return None, "NOT VERIFIED: docker not found — the published-address checks did not run."
     r = subprocess.run(["docker", "compose", "config", "--format", "json"],
                        cwd=project, capture_output=True, text=True)
     if r.returncode != 0:
@@ -238,9 +241,9 @@ def main():
     model, note = load_model(args)
     if model is None:
         print(note)
-        return 0
+        return EXIT_OPEN
 
-    errors, warnings = [], []
+    errors, warnings, pending, unverified = [], [], [], []
     proc = Path(args.proc)
     configured = configured_bindings(model)
     dual_stack = bool(model.get("networks", {}).get("public", {}).get("enable_ipv6"))
@@ -277,21 +280,27 @@ def main():
             if want != have:
                 extra = sorted(f"{ip}:{pub}/{proto}" for ip, pub, _, proto in have - want)
                 missing = sorted(f"{ip}:{pub}/{proto}" for ip, pub, _, proto in want - have)
-                warnings.append(
+                pending.append(
                     f"{args.container} runs with a different publication than configured"
                     f"{' — not in the configuration: ' + ', '.join(extra) if extra else ''}"
                     f"{' — not yet published: ' + ', '.join(missing) if missing else ''}.\n"
                     "         Recreate it: docker compose up -d")
             relays = ipv6_relays(proc, {pub for _, pub, _, _ in configured})
             if relays:
-                warnings.append(f"docker-proxy relays IPv6 for Traefik ({', '.join(relays)}); "
-                                "the client address of those connections is replaced.")
+                pending.append(f"docker-proxy relays IPv6 for Traefik ({', '.join(relays)}); "
+                               "the client address of those connections is replaced.")
 
     for w in warnings:
         print(f"WARNING: {w}")
+    for p in pending:
+        print(f"PENDING: {p}")
+    for u in unverified:
+        print(f"NOT VERIFIED: {u}")
     for e in errors:
         print(f"ERROR: {e}")
-    return 1 if errors else 0
+    if errors:
+        return 1
+    return EXIT_OPEN if pending or unverified else 0
 
 
 if __name__ == "__main__":

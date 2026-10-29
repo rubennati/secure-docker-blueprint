@@ -16,10 +16,13 @@ where the client address survives the way to the container.
   started — are an error of their own, which DOCKER_DAEMON_CHECK=manual turns
   into a warning
 - an existing IPv4-only network under the overlay is an error; a running
-  container published differently from the model is a warning only, so the
-  update that recreates it is not blocked
-- a docker-proxy listening on IPv6 for one of Traefik's ports is a warning
-- without docker-compose.yml in the directory nothing is checked
+  container published differently from the model is PENDING, exit 3, so the
+  update that recreates it is not blocked and nothing reads as a security OK
+- a docker-proxy listening on IPv6 for one of Traefik's ports is PENDING
+- without docker-compose.yml in the directory nothing is checked, which is
+  NOT VERIFIED, exit 3
+- validate.sh: exit 3 from the checker never ends in a plain "OK."; it exits 0
+  so the repair can proceed, and --strict turns it into a failure
 
 Run:
     python3 scripts/ci/test_traefik_published_family.py
@@ -207,13 +210,13 @@ class Checker(unittest.TestCase):
         self.assertEqual(r.returncode, 1, r.stdout)
         self.assertIn("existing network proxy-public is IPv4-only", r.stdout)
 
-    def test_old_container_is_a_warning_and_does_not_block_the_update(self):
+    def test_old_container_is_pending_and_does_not_block_the_update(self):
         old = self.inspect_ports(("0.0.0.0", 80, 80, "tcp"), ("::", 80, 80, "tcp"),
                                  ("0.0.0.0", 443, 443, "tcp"), ("::", 443, 443, "tcp"),
                                  ("0.0.0.0", 443, 443, "udp"), ("::", 443, 443, "udp"))
         r = self.run_checker(model(IPV4), runtime=("false", old))
-        self.assertEqual(r.returncode, 0, r.stdout)
-        self.assertIn("WARNING: traefik-core runs with a different publication", r.stdout)
+        self.assertEqual(r.returncode, 3, r.stdout)
+        self.assertIn("PENDING: traefik-core runs with a different publication", r.stdout)
         self.assertIn("docker compose up -d", r.stdout)
 
     def test_recreated_container_matching_the_model_is_silent(self):
@@ -222,17 +225,56 @@ class Checker(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stdout)
         self.assertEqual(r.stdout.strip(), "")
 
-    def test_docker_proxy_on_ipv6_is_a_warning(self):
+    def test_docker_proxy_on_ipv6_is_pending(self):
         self.docker_proxy("::", 443)
         new = self.inspect_ports(("0.0.0.0", 80, 80, "tcp"), ("0.0.0.0", 443, 443, "tcp"), ("0.0.0.0", 443, 443, "udp"))
         r = self.run_checker(model(IPV4), runtime=("false", new))
-        self.assertEqual(r.returncode, 0, r.stdout)
-        self.assertIn("docker-proxy relays IPv6", r.stdout)
+        self.assertEqual(r.returncode, 3, r.stdout)
+        self.assertIn("PENDING: docker-proxy relays IPv6", r.stdout)
 
     def test_without_compose_file_nothing_is_checked(self):
         r = subprocess.run(["python3", str(CHECKER), "--project-dir", str(self.tmp)], capture_output=True, text=True)
+        self.assertEqual(r.returncode, 3, r.stdout)
+        self.assertIn("NOT VERIFIED: no docker-compose.yml", r.stdout)
+
+
+class ValidateOutcome(unittest.TestCase):
+    """validate.sh never reads as a security OK while a check is open (review finding 4)."""
+
+    def setUp(self):
+        tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        self.root = tmp / "core" / "traefik"
+        shutil.copytree(TRAEFIK / "ops", self.root / "ops")
+        (tmp / "scripts" / "ci").mkdir(parents=True)
+        shutil.copy(TRAEFIK.parents[1] / "scripts" / "ci" / "check-crowdsec-config.py",
+                    tmp / "scripts" / "ci" / "check-crowdsec-config.py")
+        env = dict(BASE_ENV, ACME_WILDCARD_DOMAIN="example.com")
+        (self.root / ".env").write_text("".join(f'{k}="{v}"\n' for k, v in env.items()), encoding="utf-8")
+        r = subprocess.run(["bash", str(self.root / "ops/scripts/render.sh")], capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+    def validate(self, *args):
+        return subprocess.run(["bash", str(self.root / "ops/scripts/validate.sh"), *args], capture_output=True, text=True)
+
+    def test_open_items_exit_0_without_a_plain_ok(self):
+        # The copy has no docker-compose.yml, so the checks are NOT VERIFIED.
+        r = self.validate()
         self.assertEqual(r.returncode, 0, r.stdout)
-        self.assertIn("no docker-compose.yml", r.stdout)
+        self.assertIn("NOT VERIFIED", r.stdout)
+        self.assertIn("SECURITY NOT CONFIRMED", r.stdout)
+        self.assertNotEqual(r.stdout.strip().splitlines()[-1], "OK.")
+        self.assertNotIn("\nOK.\n", "\n" + r.stdout)
+
+    def test_strict_fails_while_items_are_open(self):
+        r = self.validate("--strict")
+        self.assertEqual(r.returncode, 1, r.stdout)
+        self.assertIn("SECURITY NOT CONFIRMED", r.stdout)
+
+    def test_unknown_argument_is_refused(self):
+        r = self.validate("--fast")
+        self.assertEqual(r.returncode, 1, r.stdout)
+        self.assertIn("unknown argument", r.stdout)
 
 
 @unittest.skipUnless(shutil.which("docker"), "needs the docker CLI for docker compose config")
