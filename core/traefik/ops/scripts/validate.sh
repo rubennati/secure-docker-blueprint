@@ -126,6 +126,45 @@ if [ -n "${TRAEFIK_MEMORY:-}" ] && ! printf '%s' "${TRAEFIK_MEMORY}" | grep -qE 
   exit 1
 fi
 
+# Published ports: the port variables hold a number, the host address is
+# TRAEFIK_BIND_V4, and IPv6 is bound by network-dual-stack.yml alone
+# (TRAEFIK_BIND_V6). An .env from before the bind variables may carry
+# address:port; the message names the lines that keep the same binding.
+port_error=0
+port_v4_addrs=""
+for v in TRAEFIK_HTTP_PORT TRAEFIK_HTTPS_PORT; do
+  val="${!v}"
+  if printf '%s' "${val}" | grep -qE '^[0-9]{1,5}$' && [ "${val}" -ge 1 ] && [ "${val}" -le 65535 ]; then
+    continue
+  fi
+  port_error=1
+  if printf '%s' "${val}" | grep -qE '^\[[0-9A-Fa-f:.]+\]:[0-9]{1,5}$'; then
+    echo "ERROR: ${v}=${val} — an IPv6 host address belongs to network-dual-stack.yml."
+    echo "       Keep the binding with:  ${v}=${val##*:}  and  TRAEFIK_BIND_V6=${val%:*}"
+    echo "       and apply the overlay with its prerequisites (docs/ipv6-dual-stack.md)."
+  elif printf '%s' "${val}" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}:[0-9]{1,5}$'; then
+    echo "ERROR: ${v}=${val} — the port variable holds the port number only."
+    echo "       Keep the binding with:  ${v}=${val##*:}  and  TRAEFIK_BIND_V4=${val%:*}"
+    case " ${port_v4_addrs} " in *" ${val%:*} "*) ;; *) port_v4_addrs="${port_v4_addrs} ${val%:*}" ;; esac
+  else
+    echo "ERROR: ${v} must be a port number from 1 to 65535 (got '${val}')."
+  fi
+done
+if [ "$(printf '%s' "${port_v4_addrs}" | wc -w)" -gt 1 ]; then
+  echo "       The two ports name different addresses; TRAEFIK_BIND_V4 holds one for both."
+fi
+[ "${port_error}" -eq 0 ] || exit 1
+
+if [ -n "${TRAEFIK_BIND_V4:-}" ] && ! printf '%s' "${TRAEFIK_BIND_V4}" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
+  echo "ERROR: TRAEFIK_BIND_V4 must be an IPv4 address such as 0.0.0.0 (got '${TRAEFIK_BIND_V4}')."
+  echo "       IPv6 is bound by network-dual-stack.yml on TRAEFIK_BIND_V6."
+  exit 1
+fi
+if [ -n "${TRAEFIK_BIND_V6:-}" ] && ! printf '%s' "${TRAEFIK_BIND_V6}" | grep -qE '^\[[0-9A-Fa-f:.]+\]$'; then
+  echo "ERROR: TRAEFIK_BIND_V6 must be a bracketed IPv6 address such as [::] (got '${TRAEFIK_BIND_V6}')."
+  exit 1
+fi
+
 # The trusted proxy ranges render.sh reads: every line must be a range.
 CF_LIST="${ROOT_DIR}/ops/cloudflare-ips.txt"
 if [ ! -f "${CF_LIST}" ]; then
