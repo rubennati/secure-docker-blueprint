@@ -4,8 +4,8 @@
 
 **Last updated:** 2026-10-30
 
-- **Phase:** pre-1.0. Latest tag `v0.9.4` (2026-10-04), which is where `main`
-  stands; what `dev` carries beyond it is `git rev-list --count v0.9.4..dev`, and
+- **Phase:** pre-1.0. Latest tag `v0.9.5` (2026-10-30), which is where `main`
+  stands; what `dev` carries beyond it is `git rev-list --count v0.9.5..dev`, and
   it is not repeated here. Work happens on a
   short-lived branch and reaches `dev` through a pull request; `dev` reaches
   `main` the same way. Both branches reject a direct push.
@@ -55,20 +55,16 @@
   D1–D8 of 2026-10-18 are in [`decisions.md`](decisions.md); every router's
   before and after is
   [`../core/traefik/docs/middleware-model-migration.md`](../core/traefik/docs/middleware-model-migration.md).
-- **Next release: v0.9.5** — the middleware model and its documentation, a
+- **Released: v0.9.5** — the middleware model and its documentation, a
   breaking change with a migration (decided 2026-10-23,
-  [`decisions.md`](decisions.md)). Between `dev` and the tag: the `validate.sh`
-  correction ([`tasks.md`](tasks.md) §10); the dev→main pull request's image CVE
-  scan against the baseline of 2026-10-19; the Release Chain's steps
-  ([`domains/release.md`](domains/release.md)) — the Consistency Chain, the
-  changelog heading and comparison link, `ROADMAP.md`'s *Latest tag* paragraph
-  and its Traefik item under v1.0, a row in [`progress.md`](progress.md). Before
-  the tag, one targeted test (decided 2026-10-25): the migration from v0.9.4 to
-  the model on a disposable installation, by the procedure in
+  [`decisions.md`](decisions.md)). The targeted test decided on 2026-10-25 ran
+  on 2026-10-30: the migration from v0.9.4 on a disposable installation, by
   [`../core/traefik/docs/middleware-model-migration.md`](../core/traefik/docs/middleware-model-migration.md)
-  §4 — no production server, no wider campaign. The proofs its §5 lists stay
-  open for a later host session, and the release says so.
-- **Current milestone after that:** v0.10.0 — Measured resource limits. Whether
+  §4, with no abort condition met. The proofs its §5 lists stay open for a
+  later host session, and so does a host with a global IPv6 address
+  (`core/traefik/README.md`, *Not verified on a host*, item 8); the release
+  says so.
+- **Current milestone:** v0.10.0 — Measured resource limits. Whether
   it stays a release is open (D4 in the audit): the measurement needs the same
   host session as the verification backlog.
 - **Definition of done for v0.10.0:** every `✅` stack's limits come from a
