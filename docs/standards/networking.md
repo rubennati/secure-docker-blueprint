@@ -35,7 +35,8 @@ networks:
 
 **IP family — IPv4-only by default, dual-stack opt-in.** `proxy-public` is
 created IPv4-only unless the `core/traefik/network-dual-stack.yml` overlay
-is applied. Dual-stack matters specifically for Tailscale ingress:
+is applied, and Traefik is published on IPv4 only until then — the overlay
+adds the IPv6 ports with the IPv6 subnet. Dual-stack matters specifically for Tailscale ingress:
 Tailscale always hands a client an IPv6 address, and that address only
 reaches Traefik intact if `proxy-public` itself can carry IPv6 — there is
 no header-based fallback the way there is for Cloudflare

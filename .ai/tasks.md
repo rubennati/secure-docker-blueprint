@@ -563,3 +563,10 @@ The core audit of 2026-10-15 proposes an answer to each as its decision D9.
       concurrent-connection and document limit, but the upstream page that would state it is
       behind bot protection and the product page does not mention one. Nothing was recorded
       rather than record it from memory.
+- [ ] Keep the Tailscale range out of `access-lan`. `fd7a:115c:a1e0::/48` lies inside
+      `fc00::/7`, so on a dual-stack install `access-lan` admits a tailnet client over
+      IPv6 — recorded as a known limitation in
+      [`../docs/standards/traefik-security.md`](../docs/standards/traefik-security.md),
+      "Access Policies". `ipAllowList` has no exclusion; the ULA range would have to be
+      listed in parts around the Tailscale range, which `TAILSCALE_CIDR_V6` can change.
+      Decide the shape, then a test that `access-lan` refuses a tailnet address

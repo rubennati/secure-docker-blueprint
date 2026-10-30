@@ -153,6 +153,20 @@ X-Forwarded-For: fd7a:115c:a1e0::10
 X-Real-Ip: fd7a:115c:a1e0::10
 ```
 
+### What Traefik is published on
+
+The failure above needs a port that accepts IPv6 on a network that does not
+carry it. Beyond the `403`, the gateway it produces is inside `172.16.0.0/12`,
+so `access-lan` and `access-lan-vpn` admit every client hidden behind it, and
+CrowdSec sees nothing of them ([CrowdSec and real client IPs](#crowdsec-and-real-client-ips)).
+`docker-compose.yml` therefore publishes Traefik on `TRAEFIK_BIND_V4` only, and
+`network-dual-stack.yml` adds the IPv6 bindings on `TRAEFIK_BIND_V6` together
+with the IPv6 subnet. `validate.sh` refuses a configuration that publishes IPv6
+without it, refuses the overlay unless the daemon has `userland-proxy: false`
+and `ip6tables: true`, and reports a running container that still listens on
+`[::]` until `docker compose up -d` recreates it. The variables and results:
+[README, "Published addresses"](../README.md#published-addresses).
+
 ---
 
 ## Why not `network_mode: host`
@@ -280,6 +294,11 @@ What each setting does:
 | `ip6tables: true` | Docker manages `ip6tables` NAT/filter rules for IPv6, the same way `iptables: true` already does for IPv4 by default. Without this, published IPv6 ports are not actually forwarded even on a dual-stack network. |
 | `userland-proxy: false` | Disables the `docker-proxy` userland relay for **all** published ports (IPv4 and IPv6). Docker uses kernel-level `iptables`/`ip6tables` DNAT instead, which preserves the real source IP. This is the setting that directly fixes the `ClientHost=172.19.0.1` symptom — but only once `proxy-public` actually has an IPv6 subnet to DNAT into (see below). |
 
+What `userland-proxy: false` costs: Docker's NAT rules forward neither the
+IPv6 loopback address nor link-local sources (`fe80::/10`) to a container, so
+`https://[::1]` and a client on a link-local address do not reach Traefik.
+`127.0.0.1` and routed addresses do.
+
 Validate the JSON before restarting (a syntax error here can prevent the
 daemon from starting at all):
 
@@ -317,7 +336,8 @@ dual-stack — containers keep their IPv6 addresses — but **this
 reintroduces the original symptom**: the userland relay loses the real
 source IP for published-port connections regardless of whether the
 target network is dual-stack, so `ClientHost` goes back to showing a
-Docker-internal address instead of the real Tailscale IP. Reverting
+Docker-internal address instead of the real Tailscale IP. `validate.sh`
+refuses the overlay in that state. Reverting
 `userland-proxy` is therefore not a partial/safe middle ground — treat
 the three daemon settings as applied together or not at all. To fully
 roll back to the original IPv4-only state, also remove the dual-stack
@@ -381,8 +401,10 @@ cp .env.example .env
 
 # Complete the Docker daemon prerequisites above FIRST.
 
+bash ops/scripts/validate.sh
 bash ops/scripts/render.sh
 docker compose up -d
+bash ops/scripts/validate.sh --strict   # daemon, network and container confirmed
 
 # Verify it actually applied — EnableIPv6 must be true, and IPAM.Config
 # must list both subnets. This overlay only CREATES a dual-stack network;
@@ -498,9 +520,11 @@ more than one — see `providers.docker.network`.)
 
 ### 6. Test before touching anything else
 
+Traefik is published on IPv6 only by the overlay, which step 7 applies — until
+then `curl -6` is refused. Test IPv4 here, IPv6 after step 7.
+
 ```bash
 curl -4 -v https://whoami.example.com/
-curl -6 -v https://whoami.example.com/
 
 # Tail Traefik's access log while testing — look at ClientHost
 # (see the troubleshooting access-log table for what "good" looks like)
@@ -508,7 +532,7 @@ docker exec "$(grep ^TRAEFIK_CONTAINER_NAME= .env | cut -d= -f2)" \
   tail -f /var/log/traefik/access.log
 ```
 
-Confirm `whoami`'s response shows the real Tailscale IPv6 address in
+Confirm `whoami`'s response shows the real client address in
 `X-Forwarded-For` / `X-Real-Ip`, not a `172.x` Docker gateway address.
 
 ### 7. Cut over
@@ -519,9 +543,15 @@ Only after step 6 passes for every test target:
 # Point the deployment at the new network as the primary public network
 cd core/traefik
 # Edit .env: PUBLIC_NETWORK=proxy-public-v6 (or rename at the Docker
-# level if you'd rather keep using the name "proxy-public")
+# level if you'd rather keep using the name "proxy-public"),
+# PUBLIC_NETWORK_SUBNET_V4 / _V6 as created in step 3, and
+#   COMPOSE_FILE=docker-compose.yml:network-dual-stack.yml
+# validate.sh refuses the overlay while PUBLIC_NETWORK names an IPv4-only network.
+bash ops/scripts/validate.sh
 bash ops/scripts/render.sh
 docker compose up -d --force-recreate
+bash ops/scripts/validate.sh --strict
+curl -6 -v https://whoami.example.com/   # the real IPv6 address, as in step 6
 
 # Re-point every app's .env (TRAEFIK_NETWORK / network name it joins)
 # and recreate each one:
@@ -548,9 +578,11 @@ completed cutover:
 cd core/traefik
 docker network connect proxy-public "$(grep ^TRAEFIK_CONTAINER_NAME= .env | cut -d= -f2)"
 
-# Edit .env back to PUBLIC_NETWORK=proxy-public, re-render, recreate
+# Edit .env back to PUBLIC_NETWORK=proxy-public and remove COMPOSE_FILE —
+# without the overlay Traefik is published on IPv4 only again
 bash ops/scripts/render.sh
 docker compose up -d --force-recreate
+bash ops/scripts/validate.sh --strict
 
 # Remove the dual-stack network once nothing references it
 docker network rm proxy-public-v6
