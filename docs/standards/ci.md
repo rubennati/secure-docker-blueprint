@@ -319,9 +319,9 @@ absent from the site's catalogue.
 entries, when a field line uses a word outside the vocabulary the script's
 docstring states, or when a relation names a decision no entry carries. The
 register keeps three questions apart per decision — decided, implemented,
-verified — and is a presentation of the entries, never a second owner. While
-entries are still being classified, an entry without field lines is a warning
-and is listed as not yet classified; the register says nothing about its state.
+verified — and is a presentation of the entries, never a second owner. Every
+entry carries an ID heading and the three field lines; one without them fails
+the check.
 
 **Blocks merge:** yes
 

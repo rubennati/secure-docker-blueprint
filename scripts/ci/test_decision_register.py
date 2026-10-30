@@ -80,6 +80,19 @@ The entry has no id heading yet.
 
 VALID = INTRO + NEW + OLD + BASE + UNCLASSIFIED
 
+# one Decision line, two parts that speak for themselves on Implementation only
+PARTS = INTRO + """## 2026-10-23 · Two parts, one decision line
+
+### DEC-001
+
+- **Decision:** decided 2026-10-23 (amended 2026-10-25) · area: release
+- **Parts:** .1 the tag · .2 the guard
+- **Implementation:** .1 not started (the tag) · .2 implemented
+- **Verification:** .2 mechanical — scripts/ci/test_check_prose.py
+
+---
+"""
+
 
 def rules(problems):
     return sorted({p["rule"] for p in problems})
@@ -93,9 +106,9 @@ class ValidFixture(unittest.TestCase):
         self.assertEqual([e["id"] for e in sorted(self.entries, key=dr.sort_key)],
                          ["DEC-001", "DEC-002", "DEC-003"])
         self.assertEqual(len(self.unclassified), 1)
-        # the only problem is the transition warning for the unclassified entry
+        # the only problem is the unclassified entry — a failure since the transition ended
         self.assertEqual(rules(self.problems), ["unclassified"])
-        self.assertEqual(dr.level("unclassified"), "WARN")
+        self.assertEqual(dr.level("unclassified"), "FAIL")
 
     def test_states_and_relations(self):
         new = next(e for e in self.entries if e["id"] == "DEC-003")
@@ -157,6 +170,16 @@ class ValidFixture(unittest.TestCase):
         self.assertEqual(rules(problems), ["unclassified"])
 
 
+class PartsWithoutOwnDecisionToken(unittest.TestCase):
+    def test_not_implemented_part_shows_the_entry_decision(self):
+        entries, unclassified, problems = dr.parse(PARTS)
+        self.assertEqual(problems, [])
+        block = dr.render(entries, unclassified)
+        self.assertIn("- **DEC-001.1** [Two parts, one decision line](#dec-001) · "
+                      "decided 2026-10-23 (amended 2026-10-25) · not started (the tag)", block)
+        self.assertNotIn("·  ·", block)
+
+
 class Problems(unittest.TestCase):
     def test_missing_field(self):
         text = INTRO + NEW.replace("- **Verification:** mechanical — scripts/ci/test_traefik_model.py · open — host: migration §5 · .2 open — the `429` count per public stack\n", "") + OLD + BASE
@@ -179,12 +202,15 @@ class Problems(unittest.TestCase):
         text = INTRO + NEW.replace("depends on DEC-001", "depends on DEC-009") + OLD + BASE
         _, _, problems = dr.parse(text)
         self.assertIn("dangling-relation", rules(problems))
-        self.assertEqual(dr.level("dangling-relation"), "WARN" if dr.TRANSITION == "warn" else "FAIL")
+        # the transition is over: both rules fail, and the switch still reads the other way
+        self.assertEqual(dr.TRANSITION, "fail")
+        self.assertEqual(dr.level("dangling-relation"), "FAIL")
+        self.assertEqual(dr.level("unclassified"), "FAIL")
         saved = dr.TRANSITION
         try:
-            dr.TRANSITION = "fail"
-            self.assertEqual(dr.level("dangling-relation"), "FAIL")
-            self.assertEqual(dr.level("unclassified"), "FAIL")
+            dr.TRANSITION = "warn"
+            self.assertEqual(dr.level("dangling-relation"), "WARN")
+            self.assertEqual(dr.level("unclassified"), "WARN")
         finally:
             dr.TRANSITION = saved
 
