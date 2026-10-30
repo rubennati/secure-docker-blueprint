@@ -16,10 +16,11 @@ when Traefik exists, against the running state:
   ERROR    a port accepts IPv6 while the public network has no IPv6
   ERROR    dual-stack, and the daemon's effective settings keep docker-proxy
            (userland-proxy not false) or disable ip6tables. The daemon is the
-           one behind the endpoint Compose uses: `docker info` in the same
-           environment (DOCKER_HOST, DOCKER_CONTEXT, current context) names the
-           host and the data root, and the local dockerd with that data root is
-           the one whose arguments and config file are read
+           one behind the endpoint Compose uses — DOCKER_HOST, else the endpoint
+           of DOCKER_CONTEXT or the current context. It must be a Unix socket on
+           which exactly one local dockerd listens, and that dockerd's host name
+           and data root must be the ones `docker info` reports for the
+           endpoint; only then are its arguments and config file read
   ERROR    dual-stack, and the daemon's settings cannot be read — unless
            DOCKER_DAEMON_CHECK=manual records that they were checked by hand
   ERROR    dual-stack, and the existing public network is IPv4-only
@@ -228,9 +229,64 @@ def data_root(pid_dir, argv):
     return "/var/lib/docker" if uid == 0 else None
 
 
-def serving_dockerd(proc, info):
-    """The local dockerd behind the endpoint, matched by host name and data root.
-    ((pid_dir, argv), None) | (None, reason)."""
+DEFAULT_SOCKETS = ("/var/run/docker.sock", "/run/docker.sock")
+
+
+def docker_endpoint(args, env):
+    """The endpoint Compose uses: DOCKER_HOST, else the endpoint of the context
+    named by DOCKER_CONTEXT or `docker context show`. ('ok', url) | ('unknown', reason)."""
+    if args.docker_endpoint:
+        return "ok", args.docker_endpoint
+    if env.get("DOCKER_HOST"):
+        return "ok", env["DOCKER_HOST"]
+    name = env.get("DOCKER_CONTEXT", "")
+    if not name:
+        state, out = docker_query(["docker", "context", "show"])
+        if state != "ok":
+            return "unknown", f"docker context show failed: {out}"
+        name = out.strip()
+    state, out = docker_query(["docker", "context", "inspect", name])
+    if state != "ok":
+        return "unknown", f"docker context inspect {name} failed: {out}"
+    try:
+        return "ok", json.loads(out)[0]["Endpoints"]["docker"]["Host"]
+    except (ValueError, LookupError, TypeError):
+        return "unknown", f"the context {name} names no Docker endpoint"
+
+
+def host_values(argv):
+    """Every -H/--host value in a dockerd command line."""
+    out = []
+    for i, a in enumerate(argv):
+        if a in ("-H", "--host") and i + 1 < len(argv):
+            out.append(argv[i + 1])
+        elif a.startswith(("-H=", "--host=")):
+            out.append(a.split("=", 1)[1])
+    return out
+
+
+def dockerd_sockets(pid_dir, argv):
+    """The Unix sockets this dockerd listens on: its -H values, else "hosts" in
+    its config file, else Docker's default. fd:// is systemd's docker.socket,
+    whose default is /run/docker.sock."""
+    hosts = host_values(argv)
+    if not hosts:
+        path = config_location(pid_dir, argv)
+        config = read_config(path)[0] if path else None
+        hosts = (config or {}).get("hosts") or ["unix:///var/run/docker.sock"]
+    paths = []
+    for h in hosts:
+        if h.startswith("fd://"):
+            paths.extend(DEFAULT_SOCKETS)
+        elif h.startswith("unix://"):
+            paths.append(h[len("unix://"):])
+    return {os.path.realpath(p) for p in paths}
+
+
+def serving_dockerd(proc, info, endpoint_path):
+    """The local dockerd behind the endpoint: the one process that listens on
+    the endpoint's socket, on this host, with the data root the endpoint
+    reports. ((pid_dir, argv), None) | (None, reason)."""
     name, root = info.get("Name", ""), info.get("DockerRootDir", "")
     if name != socket.gethostname():
         return None, (f"the endpoint Compose uses is the daemon on {name or 'an unnamed host'}, not this host "
@@ -238,16 +294,22 @@ def serving_dockerd(proc, info):
     daemons = find_dockerds(proc)
     if not daemons:
         return None, "no dockerd process is visible here (/proc with hidepid, or the daemon runs elsewhere)"
-    unresolved = [d for d in daemons if data_root(*d) is None]
-    matches = [d for d in daemons if data_root(*d) and os.path.realpath(data_root(*d)) == os.path.realpath(root)]
-    if len(matches) == 1:
-        return matches[0], None
-    if len(matches) > 1:
-        return None, f"{len(matches)} dockerd processes name the data root {root}"
-    if unresolved:
-        return None, ("a dockerd runs without root and without --config-file or --data-root (rootless); "
-                      "which daemon serves the endpoint is not determined")
-    return None, f"no dockerd on this host has the endpoint's data root {root}"
+    want = os.path.realpath(endpoint_path)
+    listening = [d for d in daemons if want in dockerd_sockets(*d)]
+    if not listening:
+        return None, (f"no dockerd on this host listens on {endpoint_path} — a forwarded or foreign socket, "
+                      "or a daemon started differently than its command line shows")
+    if len(listening) > 1:
+        return None, f"{len(listening)} dockerd processes claim the socket {endpoint_path}"
+    found = listening[0]
+    own_root = data_root(*found)
+    if own_root is None:
+        return None, ("the dockerd on that socket runs without root and without --config-file or --data-root "
+                      "(rootless); its data root is not determined")
+    if os.path.realpath(own_root) != os.path.realpath(root):
+        return None, (f"the dockerd listening on {endpoint_path} keeps its data in {own_root}, "
+                      f"but the endpoint reports {root} — they are not the same daemon")
+    return found, None
 
 
 def daemon_settings(proc, env, args):
@@ -255,10 +317,15 @@ def daemon_settings(proc, env, args):
     host = env.get("DOCKER_HOST", "")
     if host and not host.startswith("unix://"):
         return "unknown", f"DOCKER_HOST={host} points to a daemon whose process is not on this host"
+    state, endpoint = docker_endpoint(args, env)
+    if state != "ok":
+        return "unknown", endpoint
+    if not endpoint.startswith("unix://"):
+        return "unknown", f"the endpoint Compose uses is {endpoint}, not the socket of a daemon on this host"
     state, info = docker_info(args)
     if state != "ok":
         return "unknown", info
-    found, reason = serving_dockerd(proc, info)
+    found, reason = serving_dockerd(proc, info, endpoint[len("unix://"):])
     if found is None:
         return "unknown", reason
     pid_dir, argv = found
@@ -399,6 +466,7 @@ def main():
     ap.add_argument("--daemon-check", default="", help="'manual' when the daemon settings were checked by hand")
     ap.add_argument("--compose-json", help="read the Compose model from this file (tests)")
     ap.add_argument("--proc", default="/proc", help="proc filesystem root (tests)")
+    ap.add_argument("--docker-endpoint", help="the endpoint Compose uses, such as unix:///var/run/docker.sock (tests)")
     ap.add_argument("--docker-info", help="the endpoint's docker info as JSON, or {\"__error__\": reason} (tests)")
     ap.add_argument("--network-ipv6", choices=["true", "false", "absent", "error"], help="network state (tests)")
     ap.add_argument("--running-ports", help="NetworkSettings.Ports as JSON, 'null' when not running, "

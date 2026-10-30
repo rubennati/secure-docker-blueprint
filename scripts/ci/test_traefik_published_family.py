@@ -8,9 +8,10 @@ where the client address survives the way to the container.
 - IPv4-only: a binding without a host address, or on an IPv6 address, is an
   error — from the base file or from any override
 - dual-stack: the daemon's effective settings decide, for the daemon behind
-  the endpoint Compose uses — `docker info` in the same environment
-  (DOCKER_HOST, DOCKER_CONTEXT) names its host and data root, and the local
-  dockerd with that data root is read, not simply the first one found;
+  the endpoint Compose uses — DOCKER_HOST or the context's endpoint must be a
+  Unix socket on which exactly one local dockerd listens, with the host name
+  and data root `docker info` reports; a host name and data root that merely
+  match, a forwarded socket, or an ssh/tcp context are NOT VERIFIED. Read are
   its arguments and the config file they name or the default one:
   userland-proxy false and ip6tables enabled pass; userland-proxy on (also by
   default, with no daemon.json) or ip6tables off is an error
@@ -80,11 +81,11 @@ class Checker(unittest.TestCase):
         self.proc.mkdir()
         (self.proc / "stat").write_text(f"cpu 0\nbtime {int(time.time())}\n", encoding="utf-8")
 
-    def dockerd(self, *args, uid=0, pid="100"):
+    def dockerd(self, *args, uid=0, pid="100", host="fd://"):
         d = self.proc / pid
         d.mkdir()
         (d / "comm").write_text("dockerd\n", encoding="utf-8")
-        (d / "cmdline").write_bytes(b"\0".join(a.encode() for a in ("/usr/bin/dockerd", "-H", "fd://") + args) + b"\0")
+        (d / "cmdline").write_bytes(b"\0".join(a.encode() for a in ("/usr/bin/dockerd", "-H", host) + args) + b"\0")
         (d / "status").write_text(f"Name:\tdockerd\nUid:\t{uid}\t{uid}\t{uid}\t{uid}\n", encoding="utf-8")
         (d / "stat").write_text(f"{pid} (dockerd) S 1 1 1 0 -1 0 0 0 0 0 0 0 0 0 20 0 1 0 0 0 0\n", encoding="utf-8")
 
@@ -107,12 +108,13 @@ class Checker(unittest.TestCase):
         os.utime(path, (then, then))
         return str(path)
 
-    def run_checker(self, m, *extra, env=None, runtime=None, info=None):
+    def run_checker(self, m, *extra, env=None, runtime=None, info=None, endpoint="unix:///var/run/docker.sock"):
         mj = self.tmp / "model.json"
         mj.write_text(json.dumps(m), encoding="utf-8")
         ij = self.tmp / "info.json"
         ij.write_text(json.dumps(info if info is not None else self.local_info()), encoding="utf-8")
-        args = ["python3", str(CHECKER), "--compose-json", str(mj), "--proc", str(self.proc), "--docker-info", str(ij)]
+        args = ["python3", str(CHECKER), "--compose-json", str(mj), "--proc", str(self.proc), "--docker-info", str(ij),
+                "--docker-endpoint", endpoint]
         if runtime is None:
             args.append("--no-runtime")
         else:
@@ -230,15 +232,36 @@ class Checker(unittest.TestCase):
             paths[name] = str(path)
         first, second = ("safe", "unsafe") if first_safe else ("unsafe", "safe")
         self.dockerd("--config-file", paths[first], pid="100")
-        self.dockerd("--config-file", paths[second], "--data-root", "/srv/docker-second", pid="101")
+        self.dockerd("--config-file", paths[second], "--data-root", "/srv/docker-second",
+                     pid="101", host="unix:///run/docker-second.sock")
 
-    def test_the_daemon_with_the_endpoints_data_root_is_read_not_the_first(self):
+    def test_the_daemon_on_the_endpoints_socket_is_read_not_the_first(self):
         self.two_daemons(first_safe=False)
-        r = self.run_checker(model(IPV4 + IPV6, dual_stack=True), info=self.local_info("/srv/docker-second"))
+        r = self.run_checker(model(IPV4 + IPV6, dual_stack=True), info=self.local_info("/srv/docker-second"),
+                             endpoint="unix:///run/docker-second.sock")
         self.assertEqual(r.returncode, 0, r.stdout)
         r = self.run_checker(model(IPV4 + IPV6, dual_stack=True), info=self.local_info("/var/lib/docker"))
         self.assertEqual(r.returncode, 1, r.stdout)
         self.assertIn("userland-proxy is enabled", r.stdout)
+
+    def test_matching_name_and_data_root_on_a_foreign_socket_is_uncheckable(self):
+        # Review 2, finding 2: a context whose socket is forwarded from another
+        # daemon reports the same host name and data root as the local one.
+        # That daemon is unsafe; the local one is safe; nothing may pass.
+        self.dockerd("--userland-proxy=false")
+        r = self.run_checker(model(IPV4 + IPV6, dual_stack=True), endpoint="unix:///tmp/forwarded-docker.sock")
+        self.assert_uncheckable(r, "no dockerd on this host listens on /tmp/forwarded-docker.sock")
+
+    def test_ssh_context_endpoint_is_uncheckable(self):
+        self.dockerd("--userland-proxy=false")
+        r = self.run_checker(model(IPV4 + IPV6, dual_stack=True), endpoint="ssh://admin@docker-host")
+        self.assert_uncheckable(r, "not the socket of a daemon on this host")
+
+    def test_socket_daemon_with_another_data_root_is_uncheckable(self):
+        self.two_daemons(first_safe=True)
+        r = self.run_checker(model(IPV4 + IPV6, dual_stack=True), info=self.local_info("/var/lib/docker"),
+                             endpoint="unix:///run/docker-second.sock")
+        self.assert_uncheckable(r, "they are not the same daemon")
 
     def test_endpoint_on_another_host_is_uncheckable(self):
         self.dockerd("--userland-proxy=false")
@@ -254,21 +277,24 @@ class Checker(unittest.TestCase):
     def test_no_daemon_with_the_endpoints_data_root_is_uncheckable(self):
         self.dockerd("--userland-proxy=false")
         r = self.run_checker(model(IPV4 + IPV6, dual_stack=True), info=self.local_info("/srv/elsewhere"))
-        self.assert_uncheckable(r, "no dockerd on this host has the endpoint's data root")
+        self.assert_uncheckable(r, "keeps its data in /var/lib/docker, but the endpoint reports /srv/elsewhere")
 
-    def test_docker_context_reaches_docker_info(self):
-        # The checker asks `docker info` in the caller's environment, so
-        # DOCKER_CONTEXT selects the endpoint exactly as it does for Compose.
+    def test_docker_context_selects_the_endpoint(self):
+        # The checker resolves the endpoint as the docker CLI does: DOCKER_CONTEXT,
+        # else `docker context show`. The remote context reports this host's name
+        # and data root — only its endpoint gives it away.
         self.dockerd("--userland-proxy=false")
         bindir = self.tmp / "bin"
         bindir.mkdir()
         local = json.dumps(self.local_info())
-        remote = json.dumps(dict(self.local_info(), Name="remote-host"))
+        ctx = lambda host: json.dumps([{"Name": "x", "Endpoints": {"docker": {"Host": host}}}])
         (bindir / "docker").write_text(
             "#!/bin/sh\n"
-            'if [ "$1" = info ]; then\n'
-            f'  if [ "$DOCKER_CONTEXT" = remote ]; then echo \'{remote}\'; else echo \'{local}\'; fi\n'
-            "  exit 0\nfi\nexit 1\n", encoding="utf-8")
+            'if [ "$1" = info ]; then echo \'' + local + '\'; exit 0; fi\n'
+            'if [ "$1 $2" = "context show" ]; then echo default; exit 0; fi\n'
+            'if [ "$1 $2 $3" = "context inspect default" ]; then echo \'' + ctx("unix:///var/run/docker.sock") + '\'; exit 0; fi\n'
+            'if [ "$1 $2 $3" = "context inspect remote" ]; then echo \'' + ctx("ssh://admin@docker-host") + '\'; exit 0; fi\n'
+            "exit 1\n", encoding="utf-8")
         (bindir / "docker").chmod(0o755)
         mj = self.tmp / "model.json"
         mj.write_text(json.dumps(model(IPV4 + IPV6, dual_stack=True)), encoding="utf-8")
@@ -278,7 +304,7 @@ class Checker(unittest.TestCase):
         r = subprocess.run(cmd, capture_output=True, text=True, env=base_env)
         self.assertEqual(r.returncode, 0, r.stdout)
         r = subprocess.run(cmd, capture_output=True, text=True, env=dict(base_env, DOCKER_CONTEXT="remote"))
-        self.assert_uncheckable(r, "remote-host")
+        self.assert_uncheckable(r, "ssh://admin@docker-host")
 
     # --- running state -----------------------------------------------------
 
