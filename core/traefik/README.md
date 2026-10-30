@@ -41,6 +41,7 @@ docker compose up -d
 
 # 6. Verify
 docker compose ps
+bash ops/scripts/validate.sh --strict   # published addresses, against the running container
 # Dashboard should be reachable at https://<TRAEFIK_DASHBOARD_HOST>
 # (only from Tailscale/VPN by default)
 ```
@@ -92,9 +93,7 @@ entrypoint list is static configuration.
 
 ## IPv4-only vs. Dual-Stack Networking
 
-`proxy-public` (the network Traefik and every routed app share) is **IPv4-only by default** — zero change for existing installs. Tailscale always hands out an IPv6 address to every client; if a Tailscale client connects over IPv6 while `proxy-public` is IPv4-only, Traefik loses the real client IP (access logs show `ClientHost=172.x.x.x`, the Docker gateway, instead of the real Tailscale address) and `access-vpn`'s `ipAllowList` blocks it. See [`docs/bugfixes/traefik-ipv6-dualstack-2026-06-19.md`](../../docs/bugfixes/traefik-ipv6-dualstack-2026-06-19.md) for the original incident.
-
-Cloudflare-fronted public traffic is affected too, in `cloudflare` mode: Cloudflare connects over IPv6 to an `AAAA` origin record, and on an IPv4-only `proxy-public` that connection arrives from the Docker gateway, which the entrypoint does not trust — see "Behind Cloudflare", "IPv6 between Cloudflare and the origin". The access policies and rate limits evaluate the connecting address on every path — behind Cloudflare that is the edge address; see [Trusted Proxy Headers](../../docs/standards/traefik-security.md#trusted-proxy-headers-traefikyml--forwardedheaders).
+`proxy-public` (the network Traefik and every routed app share) is **IPv4-only by default**, and Traefik is then published on IPv4 only. A port on `[::]` while `proxy-public` cannot carry IPv6 hands every IPv6 connection to Traefik from the Docker gateway — an address inside `172.16.0.0/12`, which `access-lan` and `access-lan-vpn` admit and CrowdSec's default whitelist skips. IPv6 is therefore published by `network-dual-stack.yml` alone, together with the IPv6 subnet. On an IPv4-only install an IPv6 connection is refused: a Tailscale client, which prefers its IPv6 address, needs IPv4 or dual-stack, and behind Cloudflare the origin needs `A` records — see "Behind Cloudflare", "IPv6 between Cloudflare and the origin". The access policies and rate limits evaluate the connecting address on every path — behind Cloudflare that is the edge address; see [Trusted Proxy Headers](../../docs/standards/traefik-security.md#trusted-proxy-headers-traefikyml--forwardedheaders).
 
 **Recommended for new deployments — dual-stack from day one:**
 
@@ -115,11 +114,41 @@ docker compose up -d
 # succeeded silently:
 docker network inspect "$(grep ^PUBLIC_NETWORK= .env | cut -d= -f2)" \
   --format 'EnableIPv6={{.EnableIPv6}}'
+bash ops/scripts/validate.sh --strict
 ```
 
 **This command only works for a fresh `proxy-public` that doesn't exist yet.** Migrating an existing IPv4-only install needs a parallel network + tested cutover, not an in-place edit — Docker cannot add IPv6 to a network that already exists without recreating it, and Compose will not warn you if you try. Full explanation (why the public network needs IPv6 but `app-internal` doesn't, why this isn't solved with `network_mode: host`), Docker daemon prerequisites with backup/rollback, the migration guide, and troubleshooting commands: **[`docs/ipv6-dual-stack.md`](docs/ipv6-dual-stack.md)**.
 
 **Setting `COMPOSE_FILE` in `.env` (above) is not optional convenience — set it.** Once the dual-stack network exists, any later `docker compose` command run *without* the overlay (e.g. someone runs `docker compose up -d --force-recreate traefik` and forgets the `-f` flag) makes Compose see only the IPv4-only network definition from `docker-compose.yml`. Compose then tries to remove and recreate the network to match — which fails loudly if other containers are still attached to it (`network proxy-public has active endpoints`, and Traefik ends up stopped until you redo the command correctly), or can silently revert the network to IPv4-only if nothing else happens to be attached. `COMPOSE_FILE` in `.env` means every future command in this directory includes the overlay automatically, with no flag to forget.
+
+### Published addresses
+
+| Variable | Holds | Default |
+|---|---|---|
+| `TRAEFIK_HTTP_PORT`, `TRAEFIK_HTTPS_PORT` | the host port, a number only | `80`, `443` |
+| `TRAEFIK_BIND_V4` | the IPv4 host address of both ports | `0.0.0.0` |
+| `TRAEFIK_BIND_V6` | the IPv6 host address, bracketed — read by `network-dual-stack.yml` only | `[::]` |
+
+`validate.sh` refuses `address:port` in a port variable and prints the lines that keep the binding — `TRAEFIK_HTTPS_PORT=0.0.0.0:443` becomes `TRAEFIK_HTTPS_PORT=443` and `TRAEFIK_BIND_V4=0.0.0.0`. It then compares the published address families with the network, the Docker daemon and the running container:
+
+| Result | Meaning | What to do |
+|---|---|---|
+| `ERROR` | IPv6 published while `proxy-public` has none; the overlay while the daemon keeps `docker-proxy` (`userland-proxy` not `false`), has `ip6tables` off or cannot be read; the overlay while the existing network is IPv4-only | correct `.env`, the daemon or the network — [`docs/ipv6-dual-stack.md`](docs/ipv6-dual-stack.md) |
+| `PENDING` | the running container is published differently from the configuration, or `docker-proxy` relays one of its IPv6 ports | `docker compose up -d` recreates Traefik |
+| `NOT VERIFIED` | a check could not run — no Docker CLI, Docker refused an inspect — or the running container was created from other compose files than the ones checked | run where Docker answers, with the deployment's compose files |
+
+With no `ERROR` but something pending or not verified, `validate.sh` prints `VALID, SECURITY NOT CONFIRMED` and exits 0, so it does not block the update that resolves it. After `docker compose up -d`, confirm the deployment:
+
+```bash
+bash ops/scripts/validate.sh --strict      # fails on anything open; reads COMPOSE_FILE from .env
+bash ops/scripts/validate.sh --strict -f docker-compose.yml -f network-dual-stack.yml   # files passed by hand
+```
+
+A Docker daemon on another host or in a VM cannot be read from here. Confirm `userland-proxy: false` and `ip6tables: true` there, then set `DOCKER_DAEMON_CHECK=manual` in `.env`.
+
+Under dual-stack, `https://[::1]` and IPv6 link-local addresses (`fe80::/10`) do not reach Traefik: with `userland-proxy: false` Docker forwards neither to a container. Check from the host over `127.0.0.1`, from elsewhere over a routed address.
+
+Not exercised on a host: a global IPv6 address reached from the Internet, and Cloudflare connecting to an `AAAA` origin.
 
 ## The Middleware Model
 
@@ -329,8 +358,8 @@ a hostname the wildcard does not cover.
 **Port 80 becomes optional on this path.** Publishing it is still the default,
 because the `web` entrypoint redirects HTTP to HTTPS and a visitor who types a
 bare hostname lands on `http://`. Dropping the forward at the firewall keeps that
-redirect working for anyone already inside; removing `"${TRAEFIK_HTTP_PORT}:80/tcp"`
-from `docker-compose.yml` removes it entirely, and those visitors get a connection
+redirect working for anyone already inside; removing the `:80/tcp` port line
+from `docker-compose.yml` (and from `network-dual-stack.yml` where it is used) removes it entirely, and those visitors get a connection
 refused instead of a redirect.
 
 ### Migrating an existing wildcard deployment
@@ -613,7 +642,7 @@ client. `cloudflare` is for a host whose public records Cloudflare proxies
 | Entrypoints | trust nobody | trust Cloudflare's published ranges — `ops/cloudflare-ips.txt`, compared with cloudflare.com weekly |
 | Access log, CrowdSec detection | `ClientHost` = connecting address | `ClientHost` = the whole `X-Forwarded-For` value Cloudflare sent: `client`, or `forged, client` when the client sent a header first, because Cloudflare appends the real one behind it. CrowdSec's Traefik parser takes the last element; anything else that reads the log sees the list |
 | CrowdSec bouncer | compares the connecting address — no header reaches it | compares the last `X-Forwarded-For` entry outside the ranges, the client Cloudflare appended. A direct client is compared by its connection, because the entrypoint deleted its header. The plugin keeps its default header: `CF-Connecting-IP` is not used, because the plugin reads whatever header it is given from any sender, and Traefik deletes only `X-Forwarded-*` and `X-Real-Ip` |
-| `access-lan`, `access-vpn`, `access-lan-vpn` | connecting address | connecting address, unchanged — their clients connect directly; a request to such a host through Cloudflare arrives from an edge address and is refused. Over IPv6 on an IPv4-only `proxy-public` it is not — "IPv6 between Cloudflare and the origin" below |
+| `access-lan`, `access-vpn`, `access-lan-vpn` | connecting address | connecting address, unchanged — their clients connect directly; a request to such a host through Cloudflare arrives from an edge address and is refused. Over IPv6 as well; an IPv4-only `proxy-public` accepts no IPv6 connection — "IPv6 between Cloudflare and the origin" below |
 | Rate limits (`limit-*`) | per client | **per edge address** at the origin; per client at the edge, through a Cloudflare rate-limiting rule by IP on the public host names (one rule on the Free plan, two on Pro) |
 | The application | `X-Forwarded-For` and `X-Real-Ip` = client | from Cloudflare: `X-Forwarded-For` = `client, edge` (two hops), `X-Real-Ip` = edge, `CF-Connecting-IP` = client. From a direct client: `X-Forwarded-For` and `X-Real-Ip` = that client, `CF-Connecting-IP` = whatever it sent |
 
@@ -645,16 +674,11 @@ a measurement, not settled here (D2 in the core audit).
 **IPv6 between Cloudflare and the origin.** Cloudflare connects to the origin
 over IPv6 when only an `AAAA` record exists, and possibly when both exist —
 Cloudflare documents a preference for IPv4 there, not a guarantee. On an
-IPv4-only `proxy-public` such a connection reaches Traefik from the Docker
-gateway ("IPv4-only vs. Dual-Stack Networking" above). The gateway is in none of the
-trusted ranges, so the entrypoint deletes Cloudflare's headers; `ClientHost`,
-`X-Real-Ip` and the bouncer's address become the gateway; every rate limit
-shares one bucket; and `access-lan` and `access-lan-vpn` **admit** the gateway,
-which lies in `172.16.0.0/12` — a public visitor reaches a LAN-only route. So
-in `cloudflare` mode one of two must hold: `proxy-public` is dual-stack (the
-overlay above), or the origin has `A` records only. `A`-only bounds
-Cloudflare's path and nothing else — a direct IPv6 client takes the same
-gateway path, next section. Neither shape is verified on a host yet.
+IPv4-only `proxy-public` Traefik is published on IPv4 only ("IPv4-only vs.
+Dual-Stack Networking" above), and such a connection is refused. So in
+`cloudflare` mode one of two must hold: `proxy-public` is dual-stack (the
+overlay above), or the origin has `A` records only. Neither shape is verified
+with Cloudflare yet.
 
 **Protect the origin.** Without this a client that connects to the host
 directly bypasses everything Cloudflare does — the edge rule, Cloudflare's own
@@ -706,25 +730,15 @@ is enough — the flush there runs before Docker starts; on a running host never
 parses and loads (checked with `nft -c` and `nft -f` in a container during the
 second review); it has not been run on a host.
 
-The table filters the DNAT path, and only that. A published port reached over
-a family the container network does not carry is not forwarded: the daemon
-listens on `[::]:443` regardless, and with the default `userland-proxy: true`
-`docker-proxy` terminates the connection on the host and opens a new IPv4 one
-to the container, sourced from the bridge gateway
-([`docs/ipv6-dual-stack.md`](docs/ipv6-dual-stack.md), "The three traffic
-paths"). That connection arrives on the host's **input** path, where the table
-above does nothing, and Traefik sees the gateway. So on a host with a global
-IPv6 address and an IPv4-only `proxy-public` a direct IPv6 client passes the
-firewall, bypasses Cloudflare, and arrives as `172.x` — inside `172.16.0.0/12`,
-which `access-lan` and `access-lan-vpn` admit; the bouncer compares the gateway and
-every rate limit shares one bucket. `A`-only records do nothing against this.
-One of two closes it: the dual-stack overlay with `userland-proxy: false` and
-`ip6tables: true` (the fix the IPv6 document describes), after which the forward
-table covers both families; or a second chain in the same table on the `input`
-hook, same priority, admitting TCP 80 and 443 on the public interface from
-`$cloudflare_v4` / `$cloudflare_v6` and dropping the rest — on that path
-`ip6 saddr` is still the real client, the relay has not run yet. Neither is
-verified on a host.
+The table filters the DNAT path, and only that. A connection that
+`docker-proxy` relays never takes it: the relay terminates the connection on the
+host's **input** path, where the table does nothing, and hands it to Traefik
+from the bridge gateway ([`docs/ipv6-dual-stack.md`](docs/ipv6-dual-stack.md),
+"The failure mode this prevents"). Traefik's ports are published so that no
+external connection takes that path: IPv4 only on an IPv4-only `proxy-public`,
+and IPv6 only with the dual-stack overlay, which `validate.sh` accepts only with
+`userland-proxy: false` and `ip6tables: true` — both families are then DNAT'd,
+and the table covers both ("Published addresses" above).
 
 **What the mode cannot promise.** The trusted ranges are Cloudflare's network,
 not this zone. Anything that leaves Cloudflare's edge arrives from them and
@@ -793,9 +807,10 @@ render again.
    host.
 7. The parser version on the host carries the last-element split
    (`traefik-logs` from the hub).
-8. A direct IPv6 client to the published 443 on an IPv4-only `proxy-public`
-   with the table installed — what reaches Traefik, as which address, what
-   `access-lan` answers; the same after the dual-stack overlay.
+8. A direct IPv6 client from the Internet, on a host with a global IPv6
+   address and the table installed — refused on an IPv4-only `proxy-public`,
+   evaluated as its own address after the dual-stack overlay. Both were measured
+   without the table, with a client in a network namespace on a test host.
 9. The address a WARP client arrives from, inside or outside the published
    ranges, and what the bouncer compares for it.
 10. The migration guard on a real pre-switch host: `render.sh` with the switch

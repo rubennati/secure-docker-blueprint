@@ -241,7 +241,10 @@ is no proxy in front to record the original address in a header. If the Docker
 network Traefik sits on cannot carry an IPv6 source address end to end, that
 address is gone before Traefik evaluates the allowlist, and no header exists to
 recover it from. The request is then judged on whatever address survived, which is
-never in the allowed ranges.
+never in the allowed ranges. Traefik is published on IPv6 only together with an
+IPv6 `proxy-public`, so with the shipped compose files the symptom is a refused
+IPv6 connection instead; a 403 points to a container still running with `[::]`,
+which `bash ops/scripts/validate.sh --strict` in `core/traefik` reports.
 
 The full reasoning is in
 [`core/traefik/docs/ipv6-dual-stack.md`](core/traefik/docs/ipv6-dual-stack.md).
@@ -252,11 +255,15 @@ The full reasoning is in
    `"userland-proxy": false`, then `sudo systemctl restart docker`.
 2. Set `PUBLIC_NETWORK_SUBNET_V4` and `PUBLIC_NETWORK_SUBNET_V6` in
    `core/traefik/.env`. Generate your own ULA prefix — do not copy the example.
-3. Bring Traefik up with the overlay:
+3. Bring Traefik up with the overlay and confirm it:
 
    ```bash
    docker compose -f docker-compose.yml -f network-dual-stack.yml up -d
+   bash ops/scripts/validate.sh --strict -f docker-compose.yml -f network-dual-stack.yml
    ```
+
+   An existing `proxy-public` without IPv6 is reported as an error — it has to be
+   recreated first, following the migration guide in the document above.
 
 **Verified on a Debian 13 host, 2026-07-28.** With the above in place, `whoami`
 reported the client's real tailnet address in `X-Real-Ip` for a browser request
