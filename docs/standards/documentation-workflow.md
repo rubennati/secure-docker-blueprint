@@ -200,7 +200,7 @@ one that is prohibited:
 | **Use** | The value appears in a step, because the reader needs it to act | a command, a path, a required version |
 | **Summary** | One purpose-specific sentence, shorter than the owner's treatment | the reader needs the shape, not the detail |
 | **Reference** | A link to the owner, naming what the reader will find there | the detail may be needed, later |
-| **Generated** | A representation written from the canonical sources by a script, never by hand | `LIFECYCLE.md` |
+| **Generated** | A representation written from the canonical sources by a script, never by hand | `LIFECYCLE.md`, `docs/security-coverage.md`, the register in `.ai/decisions.md` |
 | **Duplication** | A second independent version that can drift | prohibited |
 
 `Generated` is a presentation mode, not a competing owner: the generated file
@@ -300,7 +300,7 @@ Every document has a type. The type determines when it must be updated.
 | **Reference** | Standard evolves | Same commit | `docs/standards/*.md` |
 | **Snapshot** | Event occurred | At event | `docs/bugfixes/<app>-<date>.md` |
 | **Plan** | A listed item ships or becomes irrelevant | Same commit | `ROADMAP.md` |
-| **Generated** | Its sources change | Same commit, by script | `LIFECYCLE.md` |
+| **Generated** | Its sources change | Same commit, by script | `LIFECYCLE.md`, `docs/security-coverage.md`, the register in `.ai/decisions.md` |
 | **Draft** | Ongoing iteration | Flexible | Private drafts, work-in-progress docs |
 
 `ROADMAP.md` is a **Plan**, not a Live document: an item that ships leaves the

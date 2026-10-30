@@ -58,6 +58,7 @@ limitation that still applies are kept — each at the place that owns it:
 | What | Where |
 |---|---|
 | Architecture decisions | `docs/architecture.md`, summarised in `decisions.md` |
+| A decision's state — decided, applied, verified | `decisions.md`, the entry's field lines; the register at its top is generated |
 | Standards | `docs/standards/` |
 | App-specific choices | the app's `README.md` and `UPSTREAM.md` |
 | Failures | `docs/bugfixes/<app>-<date>.md`, patterns in `errors.md` |

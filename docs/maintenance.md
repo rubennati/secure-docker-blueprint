@@ -55,7 +55,7 @@ Four models describe documentation in this repository, each answering one questi
 python3 scripts/ci/lifecycle-report.py --write
 ```
 
-**Generated is a presentation mode, not a second owner.** `LIFECYCLE.md` holds no fact of its own: every column is read from the canonical source named above, the file is written only by `scripts/ci/lifecycle-report.py --write`, and it is never edited by hand. A wrong value in it is corrected at that source and the file regenerated — editing the generated file changes nothing that survives the next run.
+**Generated is a presentation mode, not a second owner.** `LIFECYCLE.md`, `docs/security-coverage.md` and the register at the top of `.ai/decisions.md` hold no fact of their own: every value is read from the canonical source named above, each is written only by its script — `scripts/ci/lifecycle-report.py --write`, `scripts/ci/security-coverage.py --write`, `scripts/ci/decision-register.py --write` — and none is edited by hand. A wrong value in one is corrected at that source and the file regenerated — editing the generated file changes nothing that survives the next run.
 
 ---
 

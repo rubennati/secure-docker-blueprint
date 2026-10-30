@@ -118,12 +118,14 @@
   per-image table in the log. The vulnerability database is cached across runs,
   one entry per UTC day; Trivy's own staleness check still governs refreshes.
   CLI pinned to `v0.74.0`. Trivy's own exit code stays 0; `scripts/ci/trivy-gate.py`
-  fails the job on a CRITICAL finding not recorded in `.trivy-baseline.json`. It
-  is not a required check.
+  fails the job on a CRITICAL finding not recorded in `.trivy-baseline.json`. Both
+  scan jobs are required checks on `main` since 2026-09-25
+  ([`decisions.md`](decisions.md#dec-070)).
 - CI jobs and what each one blocks on: [`quality-gates.md`](quality-gates.md),
   documented per job in `docs/standards/ci.md`. All ten are required on a pull
-  request into `dev` and into `main`, and both rulesets require the branch to be
-  up to date before merging. CodeQL reports on the same pull requests and is not
+  request into `dev` and into `main`, which requires the two image-scan jobs as
+  well — twelve in all; both rulesets require the branch to be up to date before
+  merging. CodeQL reports on the same pull requests and is not
   a required check.
 
 ## Priority 1 functional expansion — complete 2026-09-19
@@ -325,13 +327,16 @@ host-installed backup agent (a named exception beside the portability goal in
 `docs/architecture.md`), and the commit procedure (the standing rule to ask before
 every commit).
 
-**1. Dependency automation** — see
-[`../docs/renovate-proposal.md`](../docs/renovate-proposal.md)
-`renovate.json` is committed (2026-09-17) and the App is not installed, so nothing
-runs. Three sub-questions: explicit `# renovate:` markers vs. normalising 28
-outlying comments · Renovate App vs. self-hosted Action · whether `site/`'s
-unwatched `package-lock.json` rides along. Now D6 of the core audit, with its
-recommendation there.
+**1. Dependency automation** — decided 2026-10-15 as
+[DEC-057](decisions.md#dec-057), D6 of the core audit: Renovate detects upstream
+releases, every pin carries a marker, proposals arrive as pull requests and
+nothing is adopted automatically. Not started — `renovate.json` is committed
+(2026-09-17), no pin carries a `# renovate:` marker and the App is not installed,
+so nothing runs. Of the three sub-questions this item held, the entry settles the
+first (explicit markers rather than normalising the 28 outlying comments);
+Renovate App vs. self-hosted Action and whether `site/`'s unwatched
+`package-lock.json` rides along are implementation questions it leaves open.
+[`../docs/renovate-proposal.md`](../docs/renovate-proposal.md) remains the design.
 
 **The Traefik middleware model — settled.** The review this section announced ran
 on 2026-10-17/18 ([`../docs/audits/traefik-architecture-review-2026-10-17.md`](../docs/audits/traefik-architecture-review-2026-10-17.md))
