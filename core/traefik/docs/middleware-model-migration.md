@@ -8,8 +8,8 @@ Nothing of the vocabulary before it remains: there is no alias, and CI refuses
 a stack that still carries a name from before (`retired-name`,
 `router-positions`). This document records what the cut changes for every
 router of the repository, measured against the tree before it, and what an
-existing installation does to move. Nothing here has run on a host yet; the
-section at the end says what only a host can show.
+existing installation does to move. Section 4 has run once, on a disposable
+test installation; the section at the end says what only a host can show.
 
 **This is a breaking change for every existing installation.** A checkout
 updated to this release without the migration serves nothing: every router's
@@ -391,7 +391,10 @@ be run from its own migration plan:
 4. **Write.** `scripts/migrate-traefik-env.sh --write --all`; then in
    `core/traefik`: `bash ops/scripts/render.sh` — which removes the three
    retired files from `config/dynamic` and says when the container has to be
-   recreated — and `bash ops/scripts/validate.sh`.
+   recreated — and `bash ops/scripts/validate.sh`. The script does not set
+   `TRAEFIK_FORWARDED_PROXY` in `core/traefik/.env`, and `render.sh` refuses an
+   installation from before the model until it is set: `cloudflare` where
+   Cloudflare proxies the public records, `none` otherwise.
 5. **Recreate.** `docker compose up -d --force-recreate` in `core/traefik`,
    then `docker compose up -d` in every stack. Routers answer nothing between
    the Traefik recreate and the last stack recreate.
@@ -406,6 +409,12 @@ certificate not served; the bouncer refusing the operator's own address.
 Rollback is the reverse order from the backup — stacks, Traefik, `config/`,
 `.env` — to the tagged release before the model, which stays installable for
 a host that is not migrated yet.
+
+Run once on 2026-10-30, from v0.9.4 on a disposable installation behind a
+Cloudflare Tunnel with Traefik, CrowdSec and one application: no abort
+condition was met; the application's headers changed as sections 1.2 and 1.3
+name; routes, access policies, the redirect to HTTPS, the certificate, the
+tunnel and a CrowdSec decision behaved as before. It does not cover section 5.
 
 ## 5. Not verified on a host
 

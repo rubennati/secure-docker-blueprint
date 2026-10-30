@@ -8,6 +8,10 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
+## [0.9.5] — 2026-10-30 — The middleware model
+
+Every Traefik router carries four positions — access, rate limit, headers, authentication — defined once in `config/dynamic/model.yml`, and nothing of the vocabulary before it remains: **a breaking change for every existing installation**, which moves by the steps under [Migration](#migration). Traefik is published on IPv4 only unless `proxy-public` carries IPv6, and who may set the client address is a switch in `.env`. The migration from v0.9.4 was run once, on 2026-10-30, on a disposable test installation behind a Cloudflare Tunnel with Traefik, CrowdSec and one application, by section 4 of [`middleware-model-migration.md`](core/traefik/docs/middleware-model-migration.md): no abort condition was met, the headers changed as its section 1 names, and routes, access policies, redirects, the certificate, the tunnel and CrowdSec's decisions behaved as before. The proofs its section 5 lists and a host with a global IPv6 address are not verified.
+
 ### Added
 
 - **The decision log has a generated register** (`.ai/decisions.md`, `scripts/ci/decision-register.py`). An entry carries a stable ID heading (`### DEC-nnn`, the anchor `#dec-nnn`, never reused) and field lines that keep three questions apart — `Decision`: decided, superseded, open or a direction, with what it supersedes, refines, depends on or answers; `Implementation`: whether the tree has it and which owner; `Verification`: mechanical, on a host, by review, or open — plus the area it belongs to and, where an entry holds several decisions, its parts. The register between the markers at the top of the file is written by `--write` from those lines and compared by `--check` in the Status model job: the decisions that need the maintainer, the decided and not implemented, the implemented and not verified on a host, the chains of what replaced what, and one line per decision by area with the inverse relations derived. Every entry carries the lines — 74 entries, 76 decisions — and one without them fails the check. Nine entries were written on 2026-10-30 for decisions that had none, each dated to the day it was taken and naming its source: the measured lifecycle that replaced the two-axis status model (2026-07-30), the site's content licence, the two names of site and repository, the local pin that tracks its production pin, the twelve required checks on `main`, the application-specific service keys on shared networks and the roadmap reconciliation of 2026-09-19 — and for the two questions the stabilization audit left open, the verification gate for v1.0 and v0.10.0 as a release or continuous measurement, as entries that say so. `.ai/routing.md` routes *Is something already decided?* to the register, the File Map in `docs/maintenance.md` names the entry as the owner of a decision's state, and `docs/standards/documentation-workflow.md` says how an audit question is cited outside its audit — `core D6`, `stab D1`, `review D3`. The D-tables of the three audits carry a last column, *→ decision*, naming the entry that answered, rejected or still holds each question — 27 cells, two of them a dash where no entry exists; the audits' text is unchanged.
@@ -907,7 +911,8 @@ Initial public release.
 - No CI workflows yet (compose validate, markdown lint, secret scan) — planned for 0.2.0
 - No automatic backup orchestration — planned in Evaluating section of ROADMAP
 
-[Unreleased]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.9.4...HEAD
+[Unreleased]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.9.5...HEAD
+[0.9.5]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.9.4...v0.9.5
 [0.9.4]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.9.3...v0.9.4
 [0.9.3]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.9.2...v0.9.3
 [0.9.2]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.9.1...v0.9.2

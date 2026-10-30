@@ -24,6 +24,7 @@ session-level detail is in
 | v0.9.2 | 2026-09-22 | Stabilization and release readiness — the programme the v1-readiness audit ordered; log rotation without a signal; the proxy's memory ceiling measured |
 | v0.9.3 | 2026-09-24 | Sixteen stacks, and a baseline for capabilities — Coraza named as the AppSec engine, Suricata held |
 | v0.9.4 | 2026-10-04 | Mail servers, wider rate limits, Authelia |
+| v0.9.5 | 2026-10-30 | The middleware model — four positions on every router, the migration from v0.9.4 run once on a test installation; Traefik published on IPv4 unless the network carries IPv6 |
 
 **The through line:** every release since v0.2.0 is defined by something *proven on a
 fresh install*, not by something written. That is why status carries verification
