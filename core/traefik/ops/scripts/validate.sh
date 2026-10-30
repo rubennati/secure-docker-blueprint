@@ -3,6 +3,27 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
+# --strict: the final acceptance after `docker compose up -d` — anything the
+# published-address checks could not confirm fails instead of being reported.
+# -f FILE: the compose files exactly as passed to `docker compose -f`, so the
+# checks evaluate the configuration that is deployed. Without -f, Compose's own
+# resolution applies: COMPOSE_FILE from .env, else docker-compose.yml.
+STRICT=0
+COMPOSE_ARGS=()
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --strict) STRICT=1 ;;
+    -f|--file)
+      [ $# -ge 2 ] || { echo "ERROR: $1 needs a compose file."; exit 1; }
+      case "$2" in /*) f="$2" ;; *) f="${PWD}/$2" ;; esac
+      [ -f "${f}" ] || { echo "ERROR: compose file not found: $2"; exit 1; }
+      COMPOSE_ARGS+=(--compose-file "${f}")
+      shift ;;
+    *) echo "ERROR: unknown argument '$1'. Usage: validate.sh [--strict] [-f compose-file]..."; exit 1 ;;
+  esac
+  shift
+done
+
 if [ ! -f "${ROOT_DIR}/.env" ]; then
   echo "ERROR: .env not found. Copy .env.example -> .env"
   exit 1
@@ -123,6 +144,45 @@ done
 # Memory ceiling, when set: Docker's byte value with an optional unit.
 if [ -n "${TRAEFIK_MEMORY:-}" ] && ! printf '%s' "${TRAEFIK_MEMORY}" | grep -qE '^[0-9]+[bkmgBKMG]?$'; then
   echo "ERROR: TRAEFIK_MEMORY must be a size such as 256m or 1g (got '${TRAEFIK_MEMORY}')."
+  exit 1
+fi
+
+# Published ports: the port variables hold a number, the host address is
+# TRAEFIK_BIND_V4, and IPv6 is bound by network-dual-stack.yml alone
+# (TRAEFIK_BIND_V6). An .env from before the bind variables may carry
+# address:port; the message names the lines that keep the same binding.
+port_error=0
+port_v4_addrs=""
+for v in TRAEFIK_HTTP_PORT TRAEFIK_HTTPS_PORT; do
+  val="${!v}"
+  if printf '%s' "${val}" | grep -qE '^[0-9]{1,5}$' && [ "${val}" -ge 1 ] && [ "${val}" -le 65535 ]; then
+    continue
+  fi
+  port_error=1
+  if printf '%s' "${val}" | grep -qE '^\[[0-9A-Fa-f:.]+\]:[0-9]{1,5}$'; then
+    echo "ERROR: ${v}=${val} — an IPv6 host address belongs to network-dual-stack.yml."
+    echo "       Keep the binding with:  ${v}=${val##*:}  and  TRAEFIK_BIND_V6=${val%:*}"
+    echo "       and apply the overlay with its prerequisites (docs/ipv6-dual-stack.md)."
+  elif printf '%s' "${val}" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}:[0-9]{1,5}$'; then
+    echo "ERROR: ${v}=${val} — the port variable holds the port number only."
+    echo "       Keep the binding with:  ${v}=${val##*:}  and  TRAEFIK_BIND_V4=${val%:*}"
+    case " ${port_v4_addrs} " in *" ${val%:*} "*) ;; *) port_v4_addrs="${port_v4_addrs} ${val%:*}" ;; esac
+  else
+    echo "ERROR: ${v} must be a port number from 1 to 65535 (got '${val}')."
+  fi
+done
+if [ "$(printf '%s' "${port_v4_addrs}" | wc -w)" -gt 1 ]; then
+  echo "       The two ports name different addresses; TRAEFIK_BIND_V4 holds one for both."
+fi
+[ "${port_error}" -eq 0 ] || exit 1
+
+if [ -n "${TRAEFIK_BIND_V4:-}" ] && ! printf '%s' "${TRAEFIK_BIND_V4}" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
+  echo "ERROR: TRAEFIK_BIND_V4 must be an IPv4 address such as 0.0.0.0 (got '${TRAEFIK_BIND_V4}')."
+  echo "       IPv6 is bound by network-dual-stack.yml on TRAEFIK_BIND_V6."
+  exit 1
+fi
+if [ -n "${TRAEFIK_BIND_V6:-}" ] && ! printf '%s' "${TRAEFIK_BIND_V6}" | grep -qE '^\[[0-9A-Fa-f:.]+\]$'; then
+  echo "ERROR: TRAEFIK_BIND_V6 must be a bracketed IPv6 address such as [::] (got '${TRAEFIK_BIND_V6}')."
   exit 1
 fi
 
@@ -515,5 +575,38 @@ if [ -f "${ROOT_DIR}/config/traefik.yml" ]; then
     fi
   fi
 fi
+
+# Published address families: IPv6 only where the client address survives the
+# way to the container — the effective Compose model, the Docker daemon's
+# settings under dual-stack, and the running container. The checker explains
+# each finding; see its header for the rules.
+case "${DOCKER_DAEMON_CHECK:-}" in
+  ''|manual) ;;
+  *) echo "ERROR: DOCKER_DAEMON_CHECK must be empty or manual (got '${DOCKER_DAEMON_CHECK}')."; exit 1 ;;
+esac
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "ERROR: python3 is needed to check which addresses Traefik is published on."
+  exit 1
+fi
+family_rc=0
+python3 "${ROOT_DIR}/ops/scripts/check-published-family.py" \
+  --project-dir "${ROOT_DIR}" \
+  ${COMPOSE_ARGS[@]+"${COMPOSE_ARGS[@]}"} \
+  --public-network "${PUBLIC_NETWORK}" \
+  --container "${TRAEFIK_CONTAINER_NAME}" \
+  --daemon-check "${DOCKER_DAEMON_CHECK:-}" || family_rc=$?
+case "${family_rc}" in
+  0) ;;
+  3)
+    # PENDING or NOT VERIFIED: the configuration is valid and the update that
+    # resolves it must not be blocked — but this is not a security OK.
+    echo ""
+    echo "VALID, SECURITY NOT CONFIRMED: the items above are open. After"
+    echo "'docker compose up -d', run validate.sh --strict, with the same -f files"
+    echo "as the deployment, to confirm them."
+    [ "${STRICT}" -eq 1 ] && exit 1
+    exit 0 ;;
+  *) exit 1 ;;
+esac
 
 echo "OK."

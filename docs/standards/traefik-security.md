@@ -61,7 +61,9 @@ TAILSCALE_CIDR_V4=100.64.0.0/10
 TAILSCALE_CIDR_V6=fd7a:115c:a1e0::/48
 ```
 
-Local network ranges (RFC1918 for IPv4, ULA `fc00::/7` for IPv6) are hardcoded in `model.yml.tmpl` and are not operator-configurable env variables. `access-lan` and `access-lan-vpn` admit `172.16.0.0/12`, which includes the Docker bridge gateway — an instance can reach itself through the proxy, and a request whose source address was lost on an IPv4-only `proxy-public` arrives as the gateway (see the IPv6 note below).
+Local network ranges (RFC1918 for IPv4, ULA `fc00::/7` for IPv6) are hardcoded in `model.yml.tmpl` and are not operator-configurable env variables. `access-lan` and `access-lan-vpn` admit `172.16.0.0/12`, which includes the Docker bridge gateway — an instance can reach itself through the proxy. No external client arrives as the gateway as long as Traefik is published only on the address families `proxy-public` carries, which `validate.sh` checks (see the IPv6 note below).
+
+**Known limitation — the ULA range contains the Tailscale range.** `fd7a:115c:a1e0::/48`, Tailscale's IPv6 range, lies inside `fc00::/7`. On a dual-stack install `access-lan` therefore admits a tailnet client that connects over IPv6, although the policy is meant for the LAN alone; `access-lan-vpn` admits it by design. Over IPv4 it does not — `100.64.0.0/10` is not RFC1918. Open; not changed by the published-address check.
 
 ---
 
@@ -112,9 +114,8 @@ modes, since nothing deletes those from a direct client.
 
 The closed access policies evaluate the connecting address in both modes —
 their clients connect directly, and a proxied request to such a host is refused
-over IPv4; over IPv6 on an IPv4-only `proxy-public` the edge arrives as the
-Docker gateway and `access-lan` admits it (README, "IPv6 between Cloudflare and
-the origin"). The rate limits count per edge address at the origin behind
+over IPv4 and IPv6; an IPv4-only `proxy-public` accepts no IPv6 connection at all
+(README, "IPv6 between Cloudflare and the origin"). The rate limits count per edge address at the origin behind
 Cloudflare: a `sourceCriterion` that reads a header puts every direct client
 into one shared bucket, so the per-client limit of a public route is a
 Cloudflare rate-limiting rule by IP at the edge. What Cloudflare has to be set
@@ -133,15 +134,15 @@ tests purposes, not in production."* A client then chooses what the application
 reads as its address, and any middleware that evaluates the header through an
 `ipStrategy` passes a forged one.
 
-**IPv6 note:** Tailscale always gives a client an IPv6 address. If
-`proxy-public` is IPv4-only, that address is lost before Traefik ever
-sees it — no header carries it on this path, so Traefik sees the Docker
-gateway address instead, and `access-vpn` blocks it. The same loss
-hits Cloudflare's proxy connecting over IPv6 (when only an `AAAA` record
-exists, possibly when both do): the gateway is not a trusted sender, so
-the headers are deleted, and `access-lan` admits the gateway. A direct
-IPv6 client takes the same path, past a forward-hook firewall (README,
-"Protect the origin"). See
+**IPv6 note:** Tailscale always gives a client an IPv6 address, and no
+header carries it on this path: Traefik sees it only if `proxy-public`
+carries IPv6. On an IPv4-only `proxy-public` Traefik is published on IPv4
+only, so an IPv6 connection — a tailnet client's, Cloudflare's to an
+`AAAA`-only origin, a direct client's — is refused rather than handed to
+Traefik from the Docker gateway, which `access-lan` would admit. The
+dual-stack overlay publishes IPv6 together with the IPv6 subnet, and
+`validate.sh` checks that the Docker daemon forwards it by NAT (README,
+"Published addresses"). See
 [`core/traefik/docs/ipv6-dual-stack.md`](../../core/traefik/docs/ipv6-dual-stack.md)
 for the full explanation, the dual-stack network setup, and the
 migration path for existing IPv4-only installs. Allowlisting the gateway
