@@ -23,7 +23,9 @@ where the client address survives the way to the container.
   update that recreates it is not blocked and nothing reads as a security OK
 - a docker-proxy listening on IPv6 for one of Traefik's ports is PENDING
 - only Docker's own "not found" means the network or the container is absent;
-  a refused or unanswered inspect is NOT VERIFIED, never "nothing there"
+  a refused or unanswered inspect is NOT VERIFIED, never "nothing there" —
+  and so is any "not found" that does not name the object asked about, such
+  as a Docker context that does not resolve
 - the checks evaluate the files the deployment uses: validate.sh passes its
   -f files on, and a running container created from other files than the
   evaluated ones — or with no record of them — is NOT VERIFIED
@@ -361,6 +363,23 @@ class Checker(unittest.TestCase):
         self.assertEqual(r.returncode, 3, r.stdout)
         self.assertIn("NOT VERIFIED: the network proxy-public could not be inspected: Cannot connect", r.stdout)
         self.assertNotIn("is IPv4-only", r.stdout)
+
+    def test_context_error_saying_not_found_is_not_verified(self):
+        # Review 2, finding 1: a context that does not resolve also says "not
+        # found", and must not read as "no container".
+        ctx = 'Failed to initialize: unable to resolve docker endpoint: context "remote": context not found'
+        env = self.fake_docker(network_err=ctx, container_err=ctx)
+        r = self.run_with_fake_docker(model(IPV4), env)
+        self.assertEqual(r.returncode, 3, r.stdout)
+        self.assertIn("NOT VERIFIED: the container traefik-core could not be inspected: Failed to initialize", r.stdout)
+
+    def test_not_found_naming_another_object_is_not_verified(self):
+        env = self.fake_docker(network_err="Error response from daemon: network proxy-public-old not found",
+                               container_err="Error: No such object: traefik-core-old")
+        r = self.run_with_fake_docker(model(IPV4 + IPV6, dual_stack=True), env, "--daemon-check", "manual")
+        self.assertEqual(r.returncode, 3, r.stdout)
+        self.assertIn("network proxy-public could not be inspected", r.stdout)
+        self.assertIn("container traefik-core could not be inspected", r.stdout)
 
     def test_seam_error_states_are_not_verified(self):
         self.dockerd("--userland-proxy=false")

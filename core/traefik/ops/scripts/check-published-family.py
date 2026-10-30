@@ -41,6 +41,7 @@ the update that resolves it. Standard library only.
 
 import argparse
 import json
+import re
 import os
 import shutil
 import socket
@@ -291,15 +292,25 @@ def daemon_settings(proc, env, args):
 
 # --- the running state ------------------------------------------------------
 
-NOT_FOUND = ("no such network", "no such object", "no such container", "not found")
+def network_absent(name):
+    """Docker's answers that this network does not exist, and nothing else."""
+    n = re.escape(name)
+    return [rf"(error response from daemon: )?network {n} not found", rf"error: no such network: {n}"]
 
 
-def docker_query(cmd):
+def container_absent(name):
+    """Docker's answers that this container does not exist, and nothing else."""
+    n = re.escape(name)
+    return [rf"error: no such object: {n}", rf"(error response from daemon: )?no such container: {n}"]
+
+
+def docker_query(cmd, absent=()):
     """('ok', stdout) | ('absent', None) | ('unknown', reason).
 
-    Only Docker's own "does not exist" answer counts as absent. Any other
-    failure — no permission on the socket, a daemon that does not answer — is
-    unknown, never read as "nothing there".
+    Absent only when every line of the error is one of the given answers for
+    the object asked about. Any other failure — a context or endpoint error
+    that also says "not found", no permission on the socket, a daemon that
+    does not answer — is unknown, never read as "nothing there".
     """
     try:
         r = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
@@ -308,9 +319,10 @@ def docker_query(cmd):
     if r.returncode == 0:
         return "ok", r.stdout
     detail = (r.stderr or r.stdout).strip()
-    if any(marker in detail.lower() for marker in NOT_FOUND):
+    lines = [l.strip() for l in detail.splitlines() if l.strip()]
+    if absent and lines and all(any(re.fullmatch(p, l, re.IGNORECASE) for p in absent) for l in lines):
         return "absent", None
-    return "unknown", (detail.splitlines() or [f"exit {r.returncode}"])[-1]
+    return "unknown", (lines or [f"exit {r.returncode}"])[-1]
 
 
 def network_state(args):
@@ -319,7 +331,8 @@ def network_state(args):
         if args.network_ipv6 in ("true", "false"):
             return "ok", args.network_ipv6 == "true"
         return ("absent", None) if args.network_ipv6 == "absent" else ("unknown", "test: network inspect failed")
-    state, out = docker_query(["docker", "network", "inspect", "-f", "{{.EnableIPv6}}", args.public_network])
+    state, out = docker_query(["docker", "network", "inspect", "-f", "{{.EnableIPv6}}", args.public_network],
+                              network_absent(args.public_network))
     return (state, out.strip() == "true") if state == "ok" else (state, out)
 
 
@@ -331,7 +344,7 @@ def container_state(args):
             return "unknown", data["__error__"]
         labels = json.loads(Path(args.running_labels).read_text(encoding="utf-8")) if args.running_labels else None
         return ("absent", None) if data is None else ("ok", (data, labels))
-    state, out = docker_query(["docker", "inspect", args.container])
+    state, out = docker_query(["docker", "inspect", args.container], container_absent(args.container))
     if state != "ok":
         return state, out
     obj = json.loads(out)[0]
