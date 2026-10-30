@@ -16,11 +16,13 @@ when Traefik exists, against the running state:
   ERROR    a port accepts IPv6 while the public network has no IPv6
   ERROR    dual-stack, and the daemon's effective settings keep docker-proxy
            (userland-proxy not false) or disable ip6tables. The daemon is the
-           one behind the endpoint Compose uses — DOCKER_HOST, else the endpoint
-           of DOCKER_CONTEXT or the current context. It must be a Unix socket on
-           which exactly one local dockerd listens, and that dockerd's host name
-           and data root must be the ones `docker info` reports for the
-           endpoint; only then are its arguments and config file read
+           one behind the endpoint Compose uses — resolved as the Docker CLI
+           does: the context DOCKER_CONTEXT names, else DOCKER_HOST, else the
+           current context; the context "default" is DOCKER_HOST when it is
+           set. The endpoint must be a Unix socket on which exactly one local
+           dockerd listens, and that dockerd's host name and data root must be
+           the ones `docker info` reports for the endpoint; only then are its
+           arguments and config file read
   ERROR    dual-stack, and the daemon's settings cannot be read — unless
            DOCKER_DAEMON_CHECK=manual records that they were checked by hand
   ERROR    dual-stack, and the existing public network is IPv4-only
@@ -235,13 +237,15 @@ DEFAULT_SOCKETS = ("/var/run/docker.sock", "/run/docker.sock")
 
 
 def docker_endpoint(args, env):
-    """The endpoint Compose uses: DOCKER_HOST, else the endpoint of the context
-    named by DOCKER_CONTEXT or `docker context show`. ('ok', url) | ('unknown', reason)."""
+    """The endpoint Compose uses, in the Docker CLI's order: the context named by
+    DOCKER_CONTEXT, else DOCKER_HOST, else the context `docker context show`
+    names. The context "default" is DOCKER_HOST when that is set.
+    ('ok', url) | ('unknown', reason)."""
     if args.docker_endpoint:
         return "ok", args.docker_endpoint
-    if env.get("DOCKER_HOST"):
-        return "ok", env["DOCKER_HOST"]
     name = env.get("DOCKER_CONTEXT", "")
+    if (not name or name == "default") and env.get("DOCKER_HOST"):
+        return "ok", env["DOCKER_HOST"]
     if not name:
         state, out = docker_query(["docker", "context", "show"])
         if state != "ok":
@@ -316,9 +320,6 @@ def serving_dockerd(proc, info, endpoint_path):
 
 def daemon_settings(proc, env, args):
     """('safe'|'unsafe'|'unknown', reason) for the daemon Compose talks to."""
-    host = env.get("DOCKER_HOST", "")
-    if host and not host.startswith("unix://"):
-        return "unknown", f"DOCKER_HOST={host} points to a daemon whose process is not on this host"
     state, endpoint = docker_endpoint(args, env)
     if state != "ok":
         return "unknown", endpoint

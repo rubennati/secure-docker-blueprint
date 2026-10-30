@@ -8,9 +8,10 @@ where the client address survives the way to the container.
 - IPv4-only: a binding without a host address, or on an IPv6 address, is an
   error — from the base file or from any override
 - dual-stack: the daemon's effective settings decide, for the daemon behind
-  the endpoint Compose uses — DOCKER_HOST or the context's endpoint must be a
-  Unix socket on which exactly one local dockerd listens, with the host name
-  and data root `docker info` reports; a host name and data root that merely
+  the endpoint Compose uses — resolved in the Docker CLI's order, DOCKER_CONTEXT
+  before DOCKER_HOST before the current context — must be a Unix socket on
+  which exactly one local dockerd listens, with the host name and data root
+  `docker info` reports; a host name and data root that merely
   match, a forwarded socket, or an ssh/tcp context are NOT VERIFIED. Read are
   its arguments and the config file they name or the default one:
   userland-proxy false and ip6tables enabled pass; userland-proxy on (also by
@@ -197,8 +198,8 @@ class Checker(unittest.TestCase):
 
     def test_remote_docker_host_is_uncheckable(self):
         self.dockerd("--userland-proxy=false")
-        r = self.run_checker(model(IPV4 + IPV6, dual_stack=True), env={"DOCKER_HOST": "tcp://192.0.2.20:2376"})
-        self.assert_uncheckable(r, "DOCKER_HOST")
+        r = self.run_with_context_cli(DOCKER_HOST="tcp://192.0.2.20:2376")
+        self.assert_uncheckable(r, "tcp://192.0.2.20:2376")
 
     def test_rootless_daemon_without_config_file_is_uncheckable(self):
         self.dockerd(uid=1000)
@@ -280,13 +281,13 @@ class Checker(unittest.TestCase):
         r = self.run_checker(model(IPV4 + IPV6, dual_stack=True), info=self.local_info("/srv/elsewhere"))
         self.assert_uncheckable(r, "keeps its data in /var/lib/docker, but the endpoint reports /srv/elsewhere")
 
-    def test_docker_context_selects_the_endpoint(self):
-        # The checker resolves the endpoint as the docker CLI does: DOCKER_CONTEXT,
-        # else `docker context show`. The remote context reports this host's name
-        # and data root — only its endpoint gives it away.
-        self.dockerd("--userland-proxy=false")
+    def run_with_context_cli(self, **env):
+        # A docker CLI with three contexts: "default" (the local socket, as with
+        # no DOCKER_HOST), "local" (the same socket) and "remote" (ssh). The
+        # remote context reports this host's name and data root — only its
+        # endpoint gives it away. No endpoint seam: the checker resolves it.
         bindir = self.tmp / "bin"
-        bindir.mkdir()
+        bindir.mkdir(exist_ok=True)
         local = json.dumps(self.local_info())
         ctx = lambda host: json.dumps([{"Name": "x", "Endpoints": {"docker": {"Host": host}}}])
         (bindir / "docker").write_text(
@@ -294,6 +295,7 @@ class Checker(unittest.TestCase):
             'if [ "$1" = info ]; then echo \'' + local + '\'; exit 0; fi\n'
             'if [ "$1 $2" = "context show" ]; then echo default; exit 0; fi\n'
             'if [ "$1 $2 $3" = "context inspect default" ]; then echo \'' + ctx("unix:///var/run/docker.sock") + '\'; exit 0; fi\n'
+            'if [ "$1 $2 $3" = "context inspect local" ]; then echo \'' + ctx("unix:///var/run/docker.sock") + '\'; exit 0; fi\n'
             'if [ "$1 $2 $3" = "context inspect remote" ]; then echo \'' + ctx("ssh://admin@docker-host") + '\'; exit 0; fi\n'
             "exit 1\n", encoding="utf-8")
         (bindir / "docker").chmod(0o755)
@@ -302,10 +304,37 @@ class Checker(unittest.TestCase):
         base_env = {k: v for k, v in os.environ.items() if k not in ("DOCKER_HOST", "DOCKER_CONTEXT")}
         base_env["PATH"] = f"{bindir}:{os.environ['PATH']}"
         cmd = ["python3", str(CHECKER), "--compose-json", str(mj), "--proc", str(self.proc), "--no-runtime"]
-        r = subprocess.run(cmd, capture_output=True, text=True, env=base_env)
+        return subprocess.run(cmd, capture_output=True, text=True, env=dict(base_env, **env))
+
+    def test_docker_context_selects_the_endpoint(self):
+        self.dockerd("--userland-proxy=false")
+        r = self.run_with_context_cli()
         self.assertEqual(r.returncode, 0, r.stdout)
-        r = subprocess.run(cmd, capture_output=True, text=True, env=dict(base_env, DOCKER_CONTEXT="remote"))
+        self.assert_uncheckable(self.run_with_context_cli(DOCKER_CONTEXT="remote"), "ssh://admin@docker-host")
+
+    # --- review 3: DOCKER_CONTEXT takes precedence over DOCKER_HOST ----------
+
+    def test_local_context_wins_over_a_remote_docker_host(self):
+        # Compose talks to the local socket of the context; the remote
+        # DOCKER_HOST is not used and must not decide the result.
+        self.dockerd("--userland-proxy=false")
+        r = self.run_with_context_cli(DOCKER_CONTEXT="local", DOCKER_HOST="tcp://192.0.2.20:2376")
+        self.assertEqual(r.returncode, 0, r.stdout)
+        self.assertNotIn("192.0.2.20", r.stdout)
+
+    def test_remote_context_wins_over_a_local_docker_host(self):
+        # Compose talks to the remote daemon of the context. The local daemon
+        # behind DOCKER_HOST is safe, and reading it would be a false pass.
+        self.dockerd("--userland-proxy=false")
+        r = self.run_with_context_cli(DOCKER_CONTEXT="remote", DOCKER_HOST="unix:///var/run/docker.sock")
         self.assert_uncheckable(r, "ssh://admin@docker-host")
+
+    def test_default_context_is_docker_host(self):
+        # DOCKER_CONTEXT=default selects the default context, whose endpoint is
+        # DOCKER_HOST when that is set.
+        self.dockerd("--userland-proxy=false")
+        r = self.run_with_context_cli(DOCKER_CONTEXT="default", DOCKER_HOST="tcp://192.0.2.20:2376")
+        self.assert_uncheckable(r, "tcp://192.0.2.20:2376")
 
     # --- running state -----------------------------------------------------
 
