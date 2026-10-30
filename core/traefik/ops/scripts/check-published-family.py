@@ -78,7 +78,9 @@ def evaluated_files(args):
 
 
 def same_files(a, b):
-    return {os.path.realpath(str(x)) for x in a} == {os.path.realpath(str(x)) for x in b}
+    """Same files in the same order — a later file overrides an earlier one, so
+    the same set in another order is another configuration."""
+    return [os.path.realpath(str(x)) for x in a] == [os.path.realpath(str(x)) for x in b]
 
 
 def load_model(args):

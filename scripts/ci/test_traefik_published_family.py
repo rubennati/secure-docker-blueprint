@@ -29,7 +29,8 @@ where the client address survives the way to the container.
   as a Docker context that does not resolve
 - the checks evaluate the files the deployment uses: validate.sh passes its
   -f files on, and a running container created from other files than the
-  evaluated ones — or with no record of them — is NOT VERIFIED
+  evaluated ones, the same files in another order, or with no record of
+  them is NOT VERIFIED
 - without docker-compose.yml in the directory nothing is checked, which is
   NOT VERIFIED, exit 3
 - validate.sh: exit 3 from the checker never ends in a plain "OK."; it exits 0
@@ -461,6 +462,14 @@ class Checker(unittest.TestCase):
         r = self.run_checker(model(IPV4), "--project-dir", str(self.tmp), "--compose-file", base, "--compose-file", overlay,
                              runtime=("false", self.NEW(), self.deployed("docker-compose.yml", "network-dual-stack.yml")))
         self.assertNotIn("was created from", r.stdout)
+
+    def test_same_files_in_another_order_are_not_the_same_configuration(self):
+        # Review 2, finding 3: a later compose file overrides an earlier one.
+        base, overlay = str(self.tmp / "docker-compose.yml"), str(self.tmp / "network-dual-stack.yml")
+        r = self.run_checker(model(IPV4), "--project-dir", str(self.tmp), "--compose-file", base, "--compose-file", overlay,
+                             runtime=("false", self.NEW(), self.deployed("network-dual-stack.yml", "docker-compose.yml")))
+        self.assertEqual(r.returncode, 3, r.stdout)
+        self.assertIn("NOT VERIFIED: traefik-core was created from", r.stdout)
 
     def test_container_without_a_record_of_its_files_is_not_verified(self):
         r = self.run_checker(model(IPV4), "--project-dir", str(self.tmp), runtime=("false", self.NEW(), {}))
