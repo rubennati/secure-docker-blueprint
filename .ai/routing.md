@@ -13,6 +13,7 @@ Every entry below is **in addition to** `state.md`, which is always read first.
 | **Documentation change** | `domains/documentation.md` · `docs/standards/documentation-workflow.md` · `docs/standards/writing-style.md` · `docs/maintenance.md` File Map — roles below |
 | **Status or lifecycle** | `docs/standards/status-model.md` · `docs/maintenance.md` baseline-aligned criteria · `LIFECYCLE.md` for the current per-stack figures (generated — never hand-edited) |
 | **Architecture question** | `domains/architecture.md` · `docs/architecture.md` · `decisions.md` |
+| **Is something already decided?** | `decisions.md` — the register at its top first, then the entry it links, then the owner the entry's Implementation line names |
 | **Release** | `domains/release.md` · `docs/maintenance.md` Release Chain · `ROADMAP.md` |
 | **Operating a deployment** | `docs/standards/deployment-lifecycle.md` · `secrets.md` · `restore.md` · `scripts/overview.sh` |
 | **Commit, branch, push** | `docs/standards/commit-rules.md` — binding, read before every commit |
