@@ -27,7 +27,7 @@ accesses the system:
 
 | Directory | Mandate |
 |---|---|
-| `core/` | Infrastructure every other service depends on — privileged |
+| `core/` | Capabilities whose scope is the installation rather than one stack — control of Docker, the host or other containers, and shared network, TLS, identity, DNS, security or secrets — privileged |
 | `apps/` | General-purpose self-hosted applications |
 | `business/` | Applications that only make sense in a company context |
 | `monitoring/` | Observability across the stack |

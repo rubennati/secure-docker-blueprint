@@ -248,7 +248,7 @@ Based on **CIS Docker Benchmark v1.6.0**.
 | **4.1** Create user for container | ⚠ Partial | `user:` and `no-new-privileges` coverage in [`security-coverage.md`](security-coverage.md) | Most containers run as image-defined users. No systematic non-root enforcement. |
 | **4.2** Use trusted base images | ⚠ Partial | Well-known registries (ghcr.io, docker.io). No image signing or digest pinning. | Tags pinned but not digests. No provenance verification. |
 | **4.3** Do not install unnecessary packages | ℹ N/A | Not applicable to compose blueprint — image content is upstream responsibility | |
-| **4.4** Scan images for vulnerabilities | ⚠ Partial | `trivy.yml` § Job 2 (Automated Verification, below) has the current coverage, severity filter and exit behavior | Enforcement is absent — every finding is reported, none fails the job. Coverage is complete for registry images only: locally built images are skipped because Trivy cannot pull them, so `business/vikunja`'s `vikunja-local` is unscanned — see `docs/standards/custom-application.md` |
+| **4.4** Scan images for vulnerabilities | ⚠ Partial | `trivy.yml` § Job 2 (Automated Verification, below) has the current coverage, severity filter and exit behavior | A CRITICAL finding not recorded in `.trivy-baseline.json` fails the job (`scripts/ci/trivy-gate.py`), and the job is a required check on `main`. Coverage is complete for registry images only: locally built images are skipped because Trivy cannot pull them, so `business/vikunja`'s `vikunja-local` is unscanned — see `docs/standards/custom-application.md` |
 | **4.5** Enable Content Trust | ❌ Not implemented | No `DOCKER_CONTENT_TRUST=1`, no cosign verification | |
 | **4.6** Add HEALTHCHECK | ✅ Partial | Most compose files include healthchecks. Some scratch images correctly use `disable: true` | |
 | **4.7** Do not use update in Dockerfile | ✅ | One Dockerfile exists (`business/vikunja`); it runs no package manager — the build copies binaries from a pinned busybox stage | Not CI-enforced; no checker reads a Dockerfile |
@@ -447,7 +447,7 @@ The following controls are absent from CI. Ordered by security value.
 
 | Gap | Status | Remaining limitation |
 |-----|--------|----------------------|
-| **CVE / vulnerability scanning** | ⚠ Partial — see `trivy.yml` § Job 2 above for current coverage | Coverage is no longer the gap. The job fails on a CRITICAL finding not recorded in `.trivy-baseline.json`, but it is not a required check, so a failing scan does not block a merge on its own — see the same section |
+| **CVE / vulnerability scanning** | ⚠ Partial — see `trivy.yml` § Job 2 above for current coverage | Coverage is no longer the gap. The job fails on a CRITICAL finding not recorded in `.trivy-baseline.json` and is a required check on `main`, so a red scan blocks the merge there; `dev` does not run it — see the same section |
 | **IaC static analysis** | ⚠ Partial — `trivy.yml` config scan runs but is non-blocking | Overlaps with `check-baseline.py`; Trivy config scan exit-code is 0 |
 | **Resource limits coverage** | ✅ Addressed — every service carries a `memory` and a `pids` limit, and `check-structure.py`'s `no-resources` rule names which of the two is missing | A failure in CI. The values are derived rather than measured — v0.10.0 |
 | **`__REPLACE_ME__` sentinel check** | ✅ Addressed — `ci.yml` sentinel job | Only covers committed `.env` files; runtime `.env` files are gitignored and unchecked |

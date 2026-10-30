@@ -28,10 +28,12 @@ in order rather than guessing from the name.
 
 [`docs/architecture.md`](../../docs/architecture.md#physical-layout-conceptual-domains-and-navigation-are-three-different-layers)
 is binding here. Development / Custom Applications, AI & Local AI and Document
-Processing are conceptual domains, not categories — none of them gets a
-directory, and do not create a stack for one because it has a name. A domain
-earns a directory by failing the categorisation test above, the same as anything
-else. `docker-compose.local.yml` is a deployment mode of an existing app, not
+Processing are conceptual domains, not categories — none of them is a sixth
+category, and do not create a stack for one because it has a name. `development/`
+exists as a Supporting-tier directory for the build patterns, beside `docs/` and
+`scripts/ci/`, not as a category; the reasoning is
+[`docs/architecture.md`](../../docs/architecture.md#development-is-a-supporting-tier-domain-not-a-sixth-category).
+`docker-compose.local.yml` is a deployment mode of an existing app, not
 Development — the two are not the same problem.
 
 The three are not in the same state, so do not treat them alike:
@@ -55,9 +57,12 @@ join the public network and never publish a host port.
 
 ## Security layers
 
-Four independent, additive layers: Traefik (TLS, header chains, rate limits, access
-policies) → CrowdSec (reputation, L7 WAF) → Authentik (Forward-Auth, optional per
-router) → container hardening. Each works without the others.
+Four independent, additive layers: Traefik (TLS, and the four router positions —
+access, limit, headers, auth) → CrowdSec (reputation, enforced at the entrypoint;
+AppSec, the web application firewall, opt-in) → Authentik (Forward-Auth, optional
+per router) → container hardening. Each works without the others; why the layers
+are not redundant is
+[`docs/architecture.md`](../../docs/architecture.md#defence-in-depth-where-the-layers-differ).
 
 ## Choice-matrix
 

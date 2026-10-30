@@ -73,8 +73,10 @@ The required-check names must match the job `name:` fields in
 protection leaves every pull request waiting on a check that can never report.
 
 All ten jobs above are required on a pull request into **either** protected
-branch, `Checker coverage`, `Docs QA` and `Workflow supply chain` included. Both
-rulesets also require the branch to be up to date before merging, so the run that
+branch, `Checker coverage`, `Docs QA` and `Workflow supply chain` included; `main`
+requires two more, the IaC config scan and the image CVE scan of `trivy.yml` —
+twelve in all ([`decisions.md`](decisions.md#dec-070)). Both rulesets also require
+the branch to be up to date before merging, so the run that
 gates a merge is the run against the integration that lands. Neither has a
 standing bypass actor.
 
@@ -129,8 +131,9 @@ What neither mode covers:
 
 ## Not blocking, deliberately
 
-- **Trivy** is not a required check. It runs weekly and on pull requests into
-  `main`, and fails on a CRITICAL finding not recorded in `.trivy-baseline.json`.
+- **Trivy** is not a check on `dev`. It runs weekly and on pull requests into
+  `main`, where both scan jobs are required ([`decisions.md`](decisions.md#dec-070)),
+  and fails on a CRITICAL finding not recorded in `.trivy-baseline.json`.
 - **Structure warnings.** A missing memory, PID or swap ceiling is a FAIL
   (`no-resources`, `no-swap-policy`); what stays a warning is a missing healthcheck
   without a waiver. The ceilings' values are derived by rule, not measured — v0.10.0.
