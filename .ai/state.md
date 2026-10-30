@@ -2,7 +2,7 @@
 
 > If this file conflicts with git (branch, commits, tags), trust git.
 
-**Last updated:** 2026-10-25
+**Last updated:** 2026-10-30
 
 - **Phase:** pre-1.0. Latest tag `v0.9.4` (2026-10-04), which is where `main`
   stands; what `dev` carries beyond it is `git rev-list --count v0.9.4..dev`, and
@@ -308,6 +308,11 @@ order:
    §5 lists.
 
 ## Open decisions
+
+What still needs a decision, and since when, is read from the register at the
+top of [`decisions.md`](decisions.md): *Needs the maintainer* lists each such
+entry and links it. This section keeps the context behind those questions and
+the measurements that shaped the settled ones.
 
 Each is written to be answerable from this file alone: the conflict, the
 options, and a recommendation. None blocks the host session.

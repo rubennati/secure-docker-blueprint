@@ -40,6 +40,7 @@ Four models describe documentation in this repository, each answering one questi
 | A symptom and its fix — a failure seen in this blueprint | `TROUBLESHOOTING.md` | Stack READMEs and `UPSTREAM.md` reference a numbered entry |
 | The layer-by-layer debugging method and command reference | `docs/standards/troubleshooting.md` | — |
 | Architecture decisions | `docs/architecture.md` | Category READMEs may summarise |
+| A decision — its state, where it was applied and how it was verified | `.ai/decisions.md` — the entry's ID heading and field lines | the register at the top of the same file, *generated* by `scripts/ci/decision-register.py --write` and never hand-edited; `.ai/state.md` and the audits point to an entry |
 | Per-app setup | `<app>/README.md` | Category README one-liner only |
 | Per-app config options | `<app>/CONFIG.md` (where it exists) | No duplication |
 | Per-app upstream info | `<app>/UPSTREAM.md` | — |

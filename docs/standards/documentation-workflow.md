@@ -231,6 +231,7 @@ None of that material is discarded. Each part has an owner:
 | Current implementation | the stack's `README.md`, `docs/standards/`, `docs/architecture.md` |
 | Deviation from upstream, upgrade rationale | the stack's `UPSTREAM.md` |
 | Dated inspection of a state | `docs/audits/` |
+| A decision — its state, where it was applied and how it was verified | `.ai/decisions.md`, one entry per decision under its ID heading |
 | One incident — symptom, cause, fix, lesson | `docs/bugfixes/` |
 | What a session established, in sequence | `docs/maintenance-log.md`, `docs/host-session-*.md` |
 | Active working state | `.ai/state.md`, `.ai/tasks.md`, `.ai/progress.md` |
@@ -242,6 +243,19 @@ these. The [public-content rule](commit-rules.md#public-content) does: a session
 or findings log names a test environment by its role, not by its private
 domain, address, local path or owner, and carries no instructions to or from
 an assistant session. Its technical content stays.
+
+An audit or review numbers what it puts to the maintainer from D1, and more
+than one does. Outside its own document a number carries the audit's short
+name — `core D6`, `stab D1`, `review D3` — unless the heading or line it
+stands under has already named the audit; a bare `D3` names nothing. The
+entry in `.ai/decisions.md` that answers or rejects a question carries the
+same form in its `Decision` line.
+
+| Short name | Document |
+|---|---|
+| `core` | `docs/audits/core-v1-readiness-2026-10-15.md` — the core audit |
+| `stab` | `docs/v1-readiness-audit.md` — the stabilization audit |
+| `review` | `docs/audits/traefik-architecture-review-2026-10-17.md` — the Traefik review |
 
 A reason belongs in current-state documentation when it changes what the reader
 does:
