@@ -932,16 +932,16 @@ they concern the host's shape; none is marked passed by this document:
 
 ## 9. What is decided (D1–D8, with their precisions)
 
-| Decision | Content | Status |
-|---|---|---|
-| D1 | threat bouncer and compression as entrypoint standards (proven in the lab, Part A); HSTS a separate HTTPS/domain policy, carried by every mandatory header profile (H2, decided 2026-10-18) | decided |
-| D2 | four equal router functions: access, limit, headers, authentication | decided |
-| D3 | `limit-standard` 125/500; five limit names; a behaviour change, documented in 3.5 and 6 | decided |
-| D4 | three header profiles plus targeted blocks, each profile carrying `hsts-base`; per-header ownership (overwrite semantics proven); no `headers-hybrid`, no combination profiles; granularity from the stacks; `forwarded-proto-https` is compatibility, not security | decided in direction, granularity open (10.4) |
-| D5 | one central TLS standard — the file provider's `default` option from `TLS_DEFAULT_OPTION` (variant A, measured: the entrypoint option does not reach `tls=true` routers); router exceptions with reasons, visible in `overview.sh`; same-host conflicts a validator error; `core.strictTLSOptions` assessed, off until the validator and a host check exist | decided |
-| D6 | four explicit positions on every router, position 3 mandatory and validated; shared variables where answers are identical; values from behaviour, not type; disabled versus missing distinguishable | decided |
-| D7 | the names of section 4; Authelia a possible integration without a maintenance or test promise | decided |
-| D8 | hard cut in the repository, servers migrated one at a time under a separate plan, previous version reproducible by tag, no production change without release | decided |
+| Decision | Content | Status | → decision |
+|---|---|---|---|
+| D1 | threat bouncer and compression as entrypoint standards (proven in the lab, Part A); HSTS a separate HTTPS/domain policy, carried by every mandatory header profile (H2, decided 2026-10-18) | decided | [DEC-064.1](../../.ai/decisions.md#dec-064) |
+| D2 | four equal router functions: access, limit, headers, authentication | decided | [DEC-064.2](../../.ai/decisions.md#dec-064) |
+| D3 | `limit-standard` 125/500; five limit names; a behaviour change, documented in 3.5 and 6 | decided | [DEC-064.3](../../.ai/decisions.md#dec-064) |
+| D4 | three header profiles plus targeted blocks, each profile carrying `hsts-base`; per-header ownership (overwrite semantics proven); no `headers-hybrid`, no combination profiles; granularity from the stacks; `forwarded-proto-https` is compatibility, not security | decided in direction, granularity open (10.4) | [DEC-064.4](../../.ai/decisions.md#dec-064) |
+| D5 | one central TLS standard — the file provider's `default` option from `TLS_DEFAULT_OPTION` (variant A, measured: the entrypoint option does not reach `tls=true` routers); router exceptions with reasons, visible in `overview.sh`; same-host conflicts a validator error; `core.strictTLSOptions` assessed, off until the validator and a host check exist | decided | [DEC-064.5](../../.ai/decisions.md#dec-064) |
+| D6 | four explicit positions on every router, position 3 mandatory and validated; shared variables where answers are identical; values from behaviour, not type; disabled versus missing distinguishable | decided | [DEC-064.6](../../.ai/decisions.md#dec-064) |
+| D7 | the names of section 4; Authelia a possible integration without a maintenance or test promise | decided | [DEC-064.7](../../.ai/decisions.md#dec-064) |
+| D8 | hard cut in the repository, servers migrated one at a time under a separate plan, previous version reproducible by tag, no production change without release | decided | [DEC-064.8](../../.ai/decisions.md#dec-064) |
 
 ## 10. What is open — proofs and measurements still required
 
