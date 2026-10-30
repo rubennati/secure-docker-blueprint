@@ -115,8 +115,12 @@ jobs:
         # unchanged tree — a lock-file pull request used to cost 38 minutes
         # and fail on main's baseline — so the job ends here, green, and the
         # summary says that nothing was scanned and why. The list of files
-        # comes from the pull request itself, not from a diff of the shallow
-        # checkout.
+        # comes from the pull request itself, through the paginated files
+        # API, not from a diff of the shallow checkout — `gh pr diff` is
+        # refused above 300 files (HTTP 406), which a release pull request
+        # exceeds. A list that cannot be read, or that is shorter than the
+        # event's file count, means a full scan: the job never ends green
+        # on a list it has not seen in full.
         id: decide
         env:
           GH_TOKEN: ${{ github.token }}
@@ -126,7 +130,18 @@ jobs:
             echo "${{ github.event_name }} — full scan"
             exit 0
           fi
-          gh pr diff "${{ github.event.pull_request.number }}" --repo "${{ github.repository }}" --name-only > /tmp/changed.txt
+          if ! gh api --paginate "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files" --jq '.[].filename' > /tmp/changed.txt; then
+            echo "scan=true" >> "$GITHUB_OUTPUT"
+            echo "the pull request's file list could not be read — full scan"
+            exit 0
+          fi
+          listed=$(wc -l < /tmp/changed.txt | tr -d ' ')
+          expected="${{ github.event.pull_request.changed_files }}"
+          if [ -z "$expected" ] || [ "$listed" -ne "$expected" ]; then
+            echo "scan=true" >> "$GITHUB_OUTPUT"
+            echo "the file list is not complete ($listed of ${expected:-?} files) — full scan"
+            exit 0
+          fi
           relevant=$({ grep -E '(^|/)[^/]+\.ya?ml$|(^|/)\.env\.example$|^\.trivy-baseline\.json$|^scripts/ci/(list-images\.sh|check-structure\.py|trivy-gate\.py|trivy-summarize\.py|requirements\.txt)$' /tmp/changed.txt \
             | grep -vE '^(\.github/|site/)'; grep -x '.github/workflows/trivy.yml' /tmp/changed.txt; } 2>/dev/null; true)
           if [ -n "$relevant" ]; then
