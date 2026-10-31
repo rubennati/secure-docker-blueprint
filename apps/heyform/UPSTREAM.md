@@ -13,7 +13,7 @@
 - **Origin:** United States · HeyForm · non-EU
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Form builder and response collector, with conversational forms, logic, file uploads and submission export
-- **Based on version:** `v3.0.3`
+- **Based on version:** `v3.0.5`
 
 ## Project maturity
 
@@ -126,6 +126,15 @@ An outside respondent cannot reach it: filling in a published form does not
 render the builder. So the exposure is between members of a workspace, which
 is the other reason registration ships closed here — with it open, anyone who
 can reach the host name can become such a member.
+
+## Version notes
+
+- Moved to `v3.0.5` on 2026-10-31, not run at this tag. `v3.0.4` (2026-10-15)
+  honours `VERIFY_USER_EMAIL` for password sign-ups; `v3.0.5` (2026-10-24)
+  redirects an expired GraphQL session to the login, makes the legal-terms block
+  enforce acceptance, and lets a self-hoster stop storing submitter IP addresses.
+  No breaking change, variable, MongoDB or cache requirement change is labelled,
+  and no advisory.
 
 ## Upgrade checklist
 
