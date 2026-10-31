@@ -9,7 +9,7 @@
 - **Origin:** Community · unofficial Bitwarden reimplementation · no single jurisdiction
 - **Domain:** Identity, access and secrets
 - **Role:** Password manager: logins, TOTP and shared collections
-- **Based on version:** `1.37.3`
+- **Based on version:** `1.37.4`
 - **Last checked:** 2026-06-14
 
 ## What we changed and why
@@ -119,6 +119,20 @@ registration at https://bitwarden.com/host/:
 Only works with official Bitwarden apps (App Store / Google Play, not F-Droid).
 Upstream reference:
 [Enabling Mobile Client Push Notification](https://github.com/dani-garcia/vaultwarden/wiki/Enabling-Mobile-Client-push-notification).
+
+## Version notes
+
+- Moved to `1.37.4` on 2026-10-31 (released 2026-10-05), not run at this tag. A
+  security release: GHSA-69q9-v8p6-xvx3 (high, 8.1), GHSA-7jg8-8m5x-6j9r,
+  GHSA-v576-3wvq-xh3c, GHSA-q5x6-grh5-fqgc, GHSA-64mc-4p6f-r7x9,
+  GHSA-7ccc-c43j-4p36 and GHSA-qwx4-wcv4-mpcv; upstream advises rotating an
+  organisation's API key. Behaviour changes: with `IP_HEADER=X-Forwarded-For` the
+  client address is the rightmost one outside `IP_HEADER_TRUSTED_PROXIES` — this
+  stack sets `IP_HEADER: X-Real-IP`, which Traefik writes, so the change does not
+  reach it; the legacy `POST /identity/accounts/register` and
+  `POST /api/accounts/prelogin` are removed; the feature flags are removed and
+  `EXPERIMENTAL_CLIENT_FEATURE_FLAGS` only warns (not set here); `DUO_USE_IFRAME`
+  is ignored (not set here); `MARIADB_TLS_DISABLE_PEER_VERIFICATION` is new.
 
 ## Upgrade checklist
 
