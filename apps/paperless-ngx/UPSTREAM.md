@@ -38,6 +38,16 @@
 | `USERMAP_UID` + `USERMAP_GID` instead of `user:` | Paperless uses s6-overlay which needs root for early init; it drops to the mapped UID internally |
 | `APP_TRAEFIK_ACCESS=access-vpn` | Personal document store — VPN-only is the right default. Override to `access-public` consciously if publishing externally. |
 
+## Version notes
+
+- Apache Tika moved to `3.3.3.0` on 2026-10-31, not run at this tag. Docker Hub
+  carries the tag (pushed about 2026-10-21); the 3.3.2 and 3.3.3 change notes
+  were not readable from the session that moved the pin — `CHANGES.txt` on
+  Tika's main branch stops the 3.x line at 3.3.0, and tika.apache.org was not
+  reachable — so breaking changes and advisories in the range are not checked;
+  read https://tika.apache.org/ before a host run. The Java requirement of the
+  3.x line is unchanged.
+
 ## Upgrade checklist
 
 Paperless does schema migrations on every minor bump. The classifier model may also need rebuilding.
