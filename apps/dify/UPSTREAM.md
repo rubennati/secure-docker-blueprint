@@ -150,6 +150,22 @@ the model backend:
 - Two further plugins installed while the plugin daemon ran as uid 1001 with a
   read-only root
 
+## Version notes
+
+- pgvector moved to `0.8.7-pg16` on 2026-10-31, not run at this tag; `Last verified`
+  stays at the previous pin, so the stack is `scaffolded` (`pin-drifted`) until a
+  host run. 0.8.2 to 0.8.7 list no breaking change and no advisory; HNSW vacuuming
+  and buffer-overflow fixes. After the image moves, upstream's upgrade note applies
+  per database: `ALTER EXTENSION vector UPDATE;`.
+- `PLUGIN_TAG` stays at `0.6.10-local` on 2026-10-31, although `0.6.13-local`
+  exists: Dify 1.17.1 ships with 0.6.10, and the daemon has not been run ahead of
+  the release it ships with. What waits in 0.6.11 to 0.6.13 is worth the move with
+  the next Dify release or after a host run: 0.6.11 fixes CVE-2026-71556
+  (go-git), CVE-2026-56854 (x/crypto) and rejects zip entries that escape the
+  extraction directory, and stops plugin subprocesses inheriting the daemon's
+  environment; 0.6.12 redacts errors and aborts failed endpoint streams (marked
+  breaking) and moves to Go 1.26.10 for CVE-2026-111943; 0.6.13 raises go-jose.
+
 ## Upgrade checklist
 
 1. Read the release notes: https://github.com/langgenius/dify/releases
