@@ -25,6 +25,7 @@ session-level detail is in
 | v0.9.3 | 2026-09-24 | Sixteen stacks, and a baseline for capabilities — Coraza named as the AppSec engine, Suricata held |
 | v0.9.4 | 2026-10-04 | Mail servers, wider rate limits, Authelia |
 | v0.9.5 | 2026-10-30 | The middleware model — four positions on every router, the migration from v0.9.4 run once on a test installation; Traefik published on IPv4 unless the network carries IPv6 |
+| v0.9.6 | 2026-10-31 | Current pins, a recorded baseline, the update programme — npm advisories closed, seven pins at the newest patch release (111 recorded CRITICAL pairs removed), the inventory of all 201 pins with seven batches; no host run |
 
 **The through line:** every release since v0.2.0 is defined by something *proven on a
 fresh install*, not by something written. That is why status carries verification
