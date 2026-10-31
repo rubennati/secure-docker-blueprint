@@ -8,6 +8,10 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
+## [0.9.6] — 2026-10-31 — Current pins, a recorded baseline, the update programme
+
+The two npm advisories the lock files still carried are closed; the image CVE baseline records the scans of 2026-10-31 with an assessment per pair and the scan runs on every push to `main`; seven image pins moved to the newest patch release of their line, measured at 111 recorded CRITICAL pairs removed and 4 brought; and an inventory of all 201 pins with a seven-batch programme to bring every stack to its current upstream release. No stack ran on a host at a new tag in this release: `monitoring/changedetection` and `business/invoiceninja` stand at `scaffolded` until one does.
+
 ### Fixed
 
 - **The seven pin moves of batch 1 removed 111 recorded CRITICAL pairs and brought 4; the baseline records the scan of the pull request from `dev` to `main`** (`.trivy-baseline.json`). Measured by the image scan of that pull request on 2026-10-31, 197 of 201 images, against the baseline of the same day: `louislam/uptime-kuma` 92 → 5 pairs (`2.5.6` → `2.5.8`), `ghcr.io/dgtlmoon/changedetection.io` 10 → 1 (`0.60.4` → `0.60.10`), `alextselegidis/easyappointments` 8 → 1 (`1.6.0` → `1.6.1`), `invoiceninja/invoiceninja-debian` 5 → 0 (`5.13.40` → `5.13.52`), `ghcr.io/requarks/wiki` 7 → 6 (`2.5.315` → `2.5.317`), `thinkst/opencanary` 9 → 8 (`0.9.9` → `0.9.10`), `heyform/community-edition` 10 → 13 (`v3.0.3` → `v3.0.5`). The scan found 877 CRITICAL pairs; the baseline holds 882 across 133 repositories, the five more being the two Langfuse images' pairs, kept because those images did not scan (Docker Hub rate limit). **Not assessed, open (4 pairs):** CVE-2026-115905 in changedetection.io — the Rust `zip` crate before 9.0.5, a parser differential that allows an arbitrary file overwrite on extraction; which binary in the image carries the crate is not read from the report — and in HeyForm CVE-2026-104848 and CVE-2026-104849 (`tinypool`, each needing a separate prototype-pollution primitive, the reasoning of issue #249) and CVE-2026-47429 (Vitest's UI/API server reading files outside the project, on Windows, when that server is exposed; the image does not run it as far as the stack is concerned, not checked). A baseline entry records that a finding is known; it is neither an acceptance nor a fix (DEC-043).
@@ -925,7 +929,8 @@ Initial public release.
 - No CI workflows yet (compose validate, markdown lint, secret scan) — planned for 0.2.0
 - No automatic backup orchestration — planned in Evaluating section of ROADMAP
 
-[Unreleased]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.9.5...HEAD
+[Unreleased]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.9.6...HEAD
+[0.9.6]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.9.5...v0.9.6
 [0.9.5]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.9.4...v0.9.5
 [0.9.4]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.9.3...v0.9.4
 [0.9.3]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.9.2...v0.9.3
