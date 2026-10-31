@@ -262,8 +262,10 @@ be marked *for review*; none needed it.
 Inventory and batches:
 [`../docs/audits/upstream-version-inventory-2026-10-31.md`](../docs/audits/upstream-version-inventory-2026-10-31.md).
 One pull request per batch, one commit per stack, the move recorded in the
-stack's `UPSTREAM.md`; the scan of the pull request from `dev` to `main`
-measures it.
+stack's `UPSTREAM.md`; a full image scan of the tree with the new pins measures
+it (today a run started by hand on `dev`; the trigger is an open CI decision),
+the baseline record follows, and `dev` reaches `main` when the maintainer
+decides, not per batch.
 
 - [x] Batch 1 — seven patch releases with the most recorded CRITICAL pairs (#292, 2026-10-31; none run on a host)
 - [x] Batch 2 — 26 of the 28 patch releases moved on 2026-10-31, none run on a host; `apps/greenmail` fell to `scaffolded`, the three other `baseline-aligned` stacks moved a side image only and keep their state. Held, with the reason in `UPSTREAM.md`: Dify's plugin daemon (moves with the next Dify release) and SeaSearch (no notes past 1.0.4, pairing stated only in the Seafile manual)
