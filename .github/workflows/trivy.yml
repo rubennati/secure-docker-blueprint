@@ -10,15 +10,24 @@ name: Trivy
 #      .trivy-baseline.json — see docs/security-verification.md for the current
 #      control description.
 #
-# Triggers: PR to main, push to main, weekly Monday 04:00 UTC, manual
-# dispatch. The push, the weekly and the manual run scan in full. A pull
+# Triggers: PR to dev or main, push to main, weekly on Monday (main) and on
+# Thursday (dev), manual dispatch. The push, the weekly and the manual run
+# scan in full. A schedule always fires on the default branch; the Thursday
+# run checks out dev instead, chosen by the cron expression in
+# github.event.schedule, so the pins dev carries ahead of main meet the CVEs
+# published since they merged. That run uploads no SARIF: the upload would
+# attach dev's findings to main's commit. A pull
 # request scans in full only when it can change what the scan sees — a
 # compose file, an .env.example, the baseline, the image discovery, the gate,
 # the summary or this workflow; any other pull request (a lock file, a
 # document) ends the image job green in seconds, saying so, because a
 # 200-image scan of an unchanged tree would only repeat the weekly run's
-# work. The pull request to main is where this decides something: both jobs
-# are required checks there, so the merge cannot land while one is red. The
+# work. A pull request to dev that moves a pin is therefore measured by its
+# own run, on the branch where pins change, and the baseline record can
+# follow on the same branch before it merges; whether the jobs block a merge
+# there is the dev ruleset's setting. The pull request to main is where this
+# decides for the published branch: both jobs are required checks there, so
+# the merge cannot land while one is red. The
 # push that follows the merge scans the tree that landed, so the workflow's
 # latest run on main — what the README badge shows — is a run of that tree
 # rather than the weekly run against the tree before it; the weekly run
@@ -37,11 +46,12 @@ name: Trivy
 
 on:
   pull_request:
-    branches: [main]
+    branches: [dev, main]
   push:
     branches: [main]
   schedule:
-    - cron: '0 4 * * 1'  # Weekly Monday 04:00 UTC
+    - cron: '0 4 * * 1'  # Monday 04:00 UTC — main, the published branch
+    - cron: '0 4 * * 4'  # Thursday 04:00 UTC — dev, the integration branch
   workflow_dispatch:
 
 permissions: read-all
@@ -66,6 +76,9 @@ jobs:
   # is the authoritative control for compose security. This scan is informational.
   config-scan:
     name: IaC config scan
+    # Not on the Thursday run: it would scan dev's tree and attach the SARIF to
+    # main's commit. The pull request into dev covers dev's IaC.
+    if: ${{ !(github.event_name == 'schedule' && github.event.schedule == '0 4 * * 4') }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -107,6 +120,9 @@ jobs:
       TRIVY_CACHE_DIR: ${{ github.workspace }}/.cache/trivy
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The Thursday schedule scans dev; every other trigger scans its own ref.
+          ref: ${{ (github.event_name == 'schedule' && github.event.schedule == '0 4 * * 4') && 'dev' || '' }}
 
       - name: Decide whether this run can change what the scan sees
         # Every trigger but a pull request scans in full. A pull request scans
@@ -241,6 +257,13 @@ jobs:
             fi
             rm -f "$errfile"
           done < /tmp/images.txt
+
+      - name: Name the scanned ref on a scheduled run
+        if: ${{ github.event_name == 'schedule' }}
+        run: |
+          if [ "${{ github.event.schedule }}" = "0 4 * * 4" ]; then ref=dev; else ref=main; fi
+          echo "## Scheduled scan of \`$ref\` ($(git rev-parse --short HEAD))" >> "$GITHUB_STEP_SUMMARY"
+          echo "scanned ref: $ref"
 
       - name: Summarize results
         if: always() && steps.decide.outputs.scan == 'true'
