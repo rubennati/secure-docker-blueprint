@@ -358,6 +358,21 @@ session left open is in
       fails, `worker` and `cron` get a second network, not a removed flag.
       `business/vikunja` carries the same change with only `db` behind it
 
+- [ ] Cloudflare Tunnel with a connector outside Traefik's network — not a shipped
+      mode, measured on v0.9.4 in a lab on 2026-10-29. `access-lan` and
+      `access-lan-vpn` check the connecting address (`ipAllowList` without
+      `ipStrategy`), so a connector with a private address makes every request it
+      relays "LAN", including requests from the Internet to a private hostname the
+      tunnel routes. The connector is not in `forwardedHeaders.trustedIPs`, so
+      CrowdSec sees only the connector and its decisions do not reach the client.
+      Open: whether the blueprint names the connector as a trusted proxy, and a
+      network rule that keeps the connector off routes it must not reach. Until then
+      a tunnel routes only public hostnames
+- [ ] After a Docker restart the CrowdSec plugin refused every request for about
+      75 seconds, and CrowdSec registered a second bouncer because the bouncer's
+      address changed (lab, v0.9.4, 2026-10-29). Whether this is known upstream was
+      not checked; document it in `core/crowdsec` or pin the address
+
 ## Open decisions for the maintainer
 
 Listed with context in [`state.md`](state.md). Nothing proceeds on these until decided.
