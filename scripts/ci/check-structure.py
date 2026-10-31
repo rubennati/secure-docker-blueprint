@@ -33,6 +33,20 @@ FAIL (blocks CI — dangerous or leak-prone):
                     acc-* / sec-* / tls-basic|aplus|modern value, a router
                     naming such a TLS profile — scripts/migrate-traefik-env.sh
                     maps every one of them
+  missing-network-label
+                    a service with traefik.enable=true and no
+                    traefik.docker.network label — without it Traefik takes
+                    the first network of the container in map order, which
+                    is random, and a route lands on the internal network in
+                    some of its reloads (measured 2026-10-31: two of six)
+  port-no-host-address
+                    a published port without a host address: it listens on
+                    every address of the host, IPv4 and IPv6, and on an
+                    IPv4-only network Docker relays the IPv6 side from the
+                    bridge gateway (docs/bugfixes/traefik-ipv6-dualstack-2026-06-19.md).
+                    The stacks that did so before the rule are listed in
+                    KNOWN_UNBOUND_PORTS and reported as WARN until each is
+                    bound; a new one fails
 
 WARN (reported — structural drift):
   missing-file      .env.example / README.md / UPSTREAM.md absent
@@ -137,6 +151,23 @@ PLACEHOLDER = re.compile(r"^(__REPLACE_ME__|<.*>|changeme|CHANGEME|\$\{.*\}|)$")
 # Bounded to 3 digits so date-based CalVer tags (photoprism 260601) are not
 # mistaken for a major — those pin an exact build and are reproducible.
 BAD_TAG = re.compile(r"^(latest|v?\d{1,3})$")
+
+# Stacks that publish a port without a host address today. Each is a known
+# finding of the ingress audit (docs/audits/ingress-architecture-2026-10-31.md),
+# reported as WARN so it stays visible without blocking, until the stack binds
+# the port to a *_BIND variable. Nothing is added here without the same audit
+# trail; a stack not listed fails.
+KNOWN_UNBOUND_PORTS = {
+    "apps/unifi": "device-facing STUN, discovery and inform ports — devices on every interface",
+    "apps/opencanary": "honeypot — every published port is meant to be reached",
+    "core/teleport": "proxy and auth ports of the bastion",
+    "core/shellhub": "SSH gateway on 2222",
+    "core/warpgate": "SSH gateway on 2222",
+    "core/jumpserver": "SSH gateway on 2222",
+    "core/orion-belt": "SSH gateway on 2222",
+    "core/step-ca": "the CA's API port",
+    "core/headscale": "the DERP relay's STUN port, in the opt-in derp.yml overlay",
+}
 
 # Directories that are structural exceptions, with the reason.
 EXCEPT_DIRS = {
@@ -995,6 +1026,75 @@ def check_routers(app: Path, findings: list[dict]) -> None:
                                        f"Traefik falls back to `default` for all of them ({shape})"})
 
 
+IPV4_LITERAL = re.compile(r"^(\d{1,3}\.){3}\d{1,3}$")
+
+
+def _port_has_host_address(entry, env: dict) -> bool:
+    """True when a `ports:` entry names the host address it binds to.
+
+    Short syntax: `host:published:target[/proto]`, where `host` is an IPv4
+    literal or a bracketed IPv6 literal after the stack's example values are
+    substituted — `${APP_MAIL_BIND}:25:25` with `APP_MAIL_BIND=0.0.0.0`,
+    `${APP_TRAPPER_BIND}:10051` with `APP_TRAPPER_BIND=0.0.0.0:10051`. Long
+    syntax: a non-empty `host_ip`. A variable the example does not set, or sets
+    to nothing, leaves the host empty, and Compose then binds every address of
+    the host — so it does not count, whatever the variable is called.
+    """
+    if isinstance(entry, dict):
+        host = str(entry.get("host_ip") or "").strip()
+        return bool(host) and "${" not in host
+    raw = str(entry).strip().strip("'\"")
+    value = resolve_label(raw, env).split("/", 1)[0]
+    if "${" in value:
+        return False
+    if value.startswith("["):
+        return "]:" in value and value.count(":") >= 2
+    parts = value.split(":")
+    return len(parts) >= 3 and bool(IPV4_LITERAL.fullmatch(parts[0]))
+
+
+def check_ports_and_labels(app: Path, findings: list[dict]) -> None:
+    """Two guards of the ingress programme (DEC-075, step 1).
+
+    A published port binds to a host address, or the host listens on every
+    address it has — IPv4 and IPv6 alike, which is how an IPv6 client reached
+    Traefik as the bridge gateway before v0.9.5. A routed service names the
+    network Traefik reaches it on, or Traefik picks one at random.
+    """
+    env_file = app / ".env.example"
+    env = dict(parse_env(env_file)[0]) if env_file.exists() else {}
+    labels_by_service: dict[str, list[str]] = {}
+    routed: set[str] = set()
+    for path in compose_files(app) + overlay_files(app):
+        try:
+            data = compose_load(path)
+        except yaml.YAMLError:
+            continue
+        for name, svc in (data.get("services") or {}).items():
+            if not isinstance(svc, dict):
+                continue
+            labels = svc.get("labels") or []
+            label_list = labels if isinstance(labels, list) else [f"{k}={v}" for k, v in labels.items()]
+            labels_by_service.setdefault(name, []).extend(str(l) for l in label_list)
+            for entry in svc.get("ports") or []:
+                if _port_has_host_address(entry, env):
+                    continue
+                known = KNOWN_UNBOUND_PORTS.get(str(app))
+                findings.append({"level": "WARN" if known else "FAIL", "rule": "port-no-host-address",
+                                 "service": name,
+                                 "detail": f"{path.name}: '{entry}' binds to every host address, IPv4 and IPv6 — "
+                                           "publish on a *_BIND variable"
+                                           + (f" (known: {known})" if known else "")})
+    for name, labels in labels_by_service.items():
+        enabled = any(re.fullmatch(r"traefik\.enable\s*=\s*['\"]?true['\"]?", l.strip()) for l in labels)
+        named = any(l.strip().startswith("traefik.docker.network=") for l in labels)
+        if enabled and not named:
+            findings.append({"level": "FAIL", "rule": "missing-network-label", "service": name,
+                             "detail": "traefik.enable=true without traefik.docker.network — Traefik then "
+                                       "takes a random network of the container; name the one it reaches "
+                                       "the service on (traefik.docker.network=${TRAEFIK_NETWORK})"})
+
+
 def root_gitignore() -> str:
     p = Path(".gitignore")
     return p.read_text(encoding="utf-8", errors="replace") if p.exists() else ""
@@ -1080,6 +1180,7 @@ def main() -> int:
         check_local_pins(app, findings)
         check_compose(app, findings)
         check_routers(app, findings)
+        check_ports_and_labels(app, findings)
         if findings:
             by_app.setdefault(app, []).extend(findings)
 

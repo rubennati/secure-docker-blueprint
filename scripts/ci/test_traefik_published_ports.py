@@ -104,3 +104,49 @@ class PublishedPorts(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SubnetVariables(unittest.TestCase):
+    """PUBLIC_NETWORK_SUBNET_V4/_V6, judged only when set: the example IPv6
+    prefix is refused with the generating command, a global prefix is refused,
+    a generated ULA and a private IPv4 network pass."""
+
+    def setUp(self):
+        tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        self.root = tmp / "core" / "traefik"
+        shutil.copytree(TRAEFIK / "ops", self.root / "ops")
+        (tmp / "scripts" / "ci").mkdir(parents=True)
+        shutil.copy(REPO / "scripts" / "ci" / "check-crowdsec-config.py",
+                    tmp / "scripts" / "ci" / "check-crowdsec-config.py")
+
+    def validate_with(self, **overrides):
+        env = dict(VALID_ENV, **overrides)
+        (self.root / ".env").write_text("".join(f'{k}="{v}"\n' for k, v in env.items()), encoding="utf-8")
+        render = subprocess.run(["bash", str(self.root / "ops/scripts/render.sh")], capture_output=True, text=True)
+        self.assertEqual(render.returncode, 0, render.stdout + render.stderr)
+        return subprocess.run(["bash", str(self.root / "ops/scripts/validate.sh")], capture_output=True, text=True)
+
+    def test_the_example_prefix_is_refused_with_the_generating_command(self):
+        r = self.validate_with(PUBLIC_NETWORK_SUBNET_V4="172.30.0.0/16", PUBLIC_NETWORK_SUBNET_V6="fd00:dead:beef:30::/64")
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("example prefix", r.stdout)
+        self.assertIn("openssl rand -hex 5", r.stdout)
+
+    def test_a_global_prefix_is_refused(self):
+        r = self.validate_with(PUBLIC_NETWORK_SUBNET_V6="2001:db8:1::/64")
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("unique local IPv6 network", r.stdout)
+
+    def test_a_public_ipv4_network_is_refused(self):
+        r = self.validate_with(PUBLIC_NETWORK_SUBNET_V4="203.0.113.0/24")
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("private IPv4 network", r.stdout)
+
+    def test_generated_values_pass(self):
+        r = self.validate_with(PUBLIC_NETWORK_SUBNET_V4="172.30.0.0/16", PUBLIC_NETWORK_SUBNET_V6="fd3a:91c2:7e04::/64")
+        self.assertNotIn("PUBLIC_NETWORK_SUBNET", r.stdout + r.stderr)
+
+    def test_unset_variables_are_not_judged(self):
+        r = self.validate_with()
+        self.assertNotIn("PUBLIC_NETWORK_SUBNET", r.stdout + r.stderr)
