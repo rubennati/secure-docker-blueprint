@@ -13,7 +13,7 @@
 - **Origin:** Community · Jason Kulatunga (AnalogJ) · no single jurisdiction
 - **Domain:** Monitoring
 - **Role:** S.M.A.R.T. disk health — collects the counters, keeps their history and warns before a drive fails
-- **Based on version:** `v0.9.4`
+- **Based on version:** `v0.9.5`
 
 ## Project maturity
 
@@ -86,6 +86,15 @@ the volumes.
 Nothing. Scrutiny talks to its own InfluxDB and to whatever notification
 endpoint you configure. Upstream's device-failure prediction runs on data
 already collected; it sends nothing away.
+
+## Version notes
+
+- Moved to `v0.9.5` on 2026-10-31 (released 2026-09-30), web and collector
+  together, not run at this tag. The release body is empty; the commits fix the
+  smartctl `when_failed` string, flag a non-zero NVMe `critical_warning` as a
+  SMART failure, evaluate SCSI thresholds against SCSI metadata and fix the
+  notification repeat check. No breaking change, InfluxDB requirement change or
+  advisory.
 
 ## Upgrade checklist
 
