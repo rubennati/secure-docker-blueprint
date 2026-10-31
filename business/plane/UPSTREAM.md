@@ -13,7 +13,7 @@
 - **Origin:** US · Plane Software, Inc. · non-EU
 - **Domain:** Business operations
 - **Role:** Project management — issues, cycles, modules and pages, with a collaborative editor and public project pages
-- **Based on version:** `v1.4.2`
+- **Based on version:** `v1.4.3`
 
 ## Project maturity
 
@@ -122,6 +122,18 @@ running; it is not something this repository can pin.
 
 A versioned, S3-compatible replacement — SeaweedFS and Garage both publish one —
 is the real fix, and it changes the configuration rather than a tag.
+
+## Version notes
+
+- Moved to `v1.4.3` on 2026-10-31 (released 2026-10-28), all six images together,
+  not run at this tag. No breaking change, variable, migration or image order is
+  labelled; the REST API now answers a validation error for assignees or labels
+  outside the project instead of dropping them. The release fixes access-control
+  issues (project publish, published boards, sub-work-items, invitations, sign-in
+  rate limiting) and raises sanitize-html, djangorestframework, sharp, js-yaml,
+  fast-uri, qs, morgan and postcss-selector-parser; npm is removed from the
+  runtime images. Upstream's bundled object store is now `pgsty/silo` pinned to a
+  release tag — relevant to the MinIO item in `.ai/tasks.md`, not changed here.
 
 ## Upgrade checklist
 
