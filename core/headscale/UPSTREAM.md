@@ -13,7 +13,7 @@
 - **Origin:** Community · juanfont, Kristoffer Dalby and contributors · no single jurisdiction
 - **Domain:** Infrastructure
 - **Role:** Self-hosted control server for Tailscale clients — node registry, keys and access policy for a tailnet you run
-- **Based on version:** `v0.29.4`
+- **Based on version:** `v0.29.7`
 
 Upstream states plainly that the project is **not associated with Tailscale
 Inc.** The clients are Tailscale's; the control server is not.
@@ -105,6 +105,19 @@ Removing it without enabling the embedded relay leaves them with no fallback at
 all, so the base file keeps it and the README says what it costs. `derp.yml`
 sets `HEADSCALE_DERP_AUTO_UPDATE_ENABLED=false`, because with your own relay in
 the map the fetch is no longer what clients depend on.
+
+## Version notes
+
+- Moved to `v0.29.7` on 2026-10-31 (released 2026-10-30), not run at this tag.
+  No breaking change, config key change or database migration in 0.29.5 to
+  0.29.7. 0.29.6 moves to Go 1.27.3, which rejects chains with the compromised
+  eMudhra keys (CVE-2026-111943), and raises x/net, x/text and gRPC. 0.29.7 is a
+  security release for the oss-scanner and Tailworm findings (twelve ANT-2026
+  identifiers, no CVE) and recommends Tailscale 1.104.4 or later on the nodes
+  (TS-2026-014); metrics are no longer served over the Noise connection, and an
+  empty `metrics_listen_addr` disables that listener — this stack keeps it on
+  loopback, unchanged. The unreleased 0.30.0 carries breaking database changes;
+  not in this line.
 
 ## Upgrade checklist
 

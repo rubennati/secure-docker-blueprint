@@ -9,7 +9,7 @@
 - **Origin:** Finsys · **no country or legal entity stated** — no imprint on fnsys.pro
 - **Domain:** Infrastructure
 - **Role:** Remote Docker agent for Dockhand, connecting outbound so the managed host publishes no port
-- **Based on version:** `0.2.47`
+- **Based on version:** `0.2.53`
 - **Last checked:** 2026-04-14
 
 ## What we changed and why
@@ -63,6 +63,18 @@ docker exec hawser-app wget -qO- http://127.0.0.1:2376/_hawser/health
   `HAWSER_TOKEN`, so the bump from `0.2.39` to `0.2.47` does not lock it out — a
   deployment that relied on the old default would be locked out.
 - `0.2.47` restricts `/etc/hawser/config` to mode 0600. Moved on 2026-09-13.
+
+## Version notes
+
+- Moved to `0.2.53` on 2026-10-31 (released 2026-10-30), together with Dockhand
+  v1.0.56, not run at this tag. 0.2.53 takes its settings from environment
+  variables only, without `--port`, `--server` or `--token` flags — this stack
+  configures the container through the environment already, so nothing changes;
+  0.2.50 sets the `REQUEST_TIMEOUT` default to 30 s; 0.2.48 adds `TOKEN_FILE`, a
+  way to hand the token over as a file instead of `HAWSER_TOKEN`, not adopted
+  here yet; 0.2.49 adds `MAX_MESSAGE_SIZE_MB`; 0.2.52 passes `DOCKER_CONFIG` and
+  `TMPDIR` through to compose and changes the systemd unit of the host install,
+  which does not apply to the container. No advisory.
 
 ## Upgrade checklist
 

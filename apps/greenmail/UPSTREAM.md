@@ -10,7 +10,7 @@
 - **Origin:** Community · Marcel May · Germany · EU
 - **Domain:** Developer tools
 - **Role:** SMTP, IMAP and POP3 test server with a mailbox per recipient, for automated tests
-- **Based on version:** `2.1.13`
+- **Based on version:** `2.1.15`
 - **Last verified:** 2026-09-22 (2.1.13) — behind Traefik with TLS: the REST API through the route, SMTPS and POP3S with a TLS client, and a restart
 
 ## What we use
@@ -89,6 +89,14 @@ on a throwaway `proxy-public` network without Traefik:
 
 Only the Swagger UI at `:8080/` was confirmed for the REST API; its endpoints
 were not exercised.
+
+## Version notes
+
+- Moved to `2.1.15` on 2026-10-31 (released 2026-10-25), not run at this tag;
+  `Last verified` stays at `2.1.13`, so the stack is `scaffolded` (`pin-drifted`)
+  until a host run. 2.1.14 and 2.1.15 are dependency bumps — Bouncy Castle to
+  1.86.2, Jackson to 2.22.4, the Zulu JDK 21 image — with no breaking change,
+  property change or advisory.
 
 ## Upgrade checklist
 

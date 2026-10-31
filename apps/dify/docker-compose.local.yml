@@ -199,7 +199,7 @@ services:
       interval: 30s
       retries: 5
       start_period: 30s
-    image: pgvector/pgvector:0.8.1-pg16
+    image: pgvector/pgvector:0.8.7-pg16
     networks:
     - dify-local
     restart: unless-stopped

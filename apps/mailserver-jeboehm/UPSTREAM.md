@@ -13,7 +13,7 @@
 - **Origin:** Germany · Jeffrey Boehm (individual maintainer) · EU
 - **Domain:** Files, wiki and collaboration
 - **Role:** Mail server — Postfix, Dovecot and Rspamd as separate containers, with an administration interface and webmail
-- **Based on version:** `8.0.8`
+- **Based on version:** `8.0.18`
 
 ## Project maturity
 
@@ -84,6 +84,13 @@ address Postfix and Dovecot see on a published port.
 
 - **Rspamd's maps**, from `maps.rspamd.com`, read from its log.
 - **DNS**, through the stack's own Unbound.
+
+## Version notes
+
+- Moved to `8.0.18` on 2026-10-31 (released the same day), all five images
+  together, not run at this tag. 8.0.9 to 8.0.18 are dependency and bug-fix
+  releases with no breaking change, variable change or migration; 8.0.15
+  (2026-10-21) fixes CVE-2026-109618 and CVE-2026-109619 in the web image.
 
 ## Upgrade checklist
 

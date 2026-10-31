@@ -4,7 +4,7 @@
 
 Generated 2026-10-31 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-121 stacks: 1 ops-proven · 28 baseline-aligned · 92 scaffolded. 111 carry a local test stack.
+121 stacks: 1 ops-proven · 27 baseline-aligned · 93 scaffolded. 111 carry a local test stack.
 
 This is the maintainer's view: what has been established about each stack. It makes no statement about whether a stack suits a given deployment.
 
@@ -24,9 +24,9 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`core/authentik`](core/authentik/) | `scaffolded` | `APP_TAG=2026.5.7` | 2026-07-26 | ✅ | documented | missing |
 | [`core/crowdsec`](core/crowdsec/) | `baseline-aligned` | `APP_TAG=v1.7.8` | 2026-07-29 | — | documented | missing |
 | [`core/dnsmasq`](core/dnsmasq/) | `scaffolded` | `APP_TAG=2.93` | 2026-04-14 ⚠️ | — | documented | missing |
-| [`core/dockhand`](core/dockhand/) | `scaffolded` | `APP_TAG=v1.0.47` | 2026-04-16 ⚠️ | ✅ | documented | missing |
-| [`core/hawser`](core/hawser/) | `scaffolded` | `APP_TAG=0.2.47` | 2026-04-14 ⚠️ | — | documented | missing |
-| [`core/headscale`](core/headscale/) | `scaffolded` | `APP_TAG=v0.29.4` | — | ✅ | documented | missing |
+| [`core/dockhand`](core/dockhand/) | `scaffolded` | `APP_TAG=v1.0.56` | 2026-04-16 ⚠️ | ✅ | documented | missing |
+| [`core/hawser`](core/hawser/) | `scaffolded` | `APP_TAG=0.2.53` | 2026-04-14 ⚠️ | — | documented | missing |
+| [`core/headscale`](core/headscale/) | `scaffolded` | `APP_TAG=v0.29.7` | — | ✅ | documented | missing |
 | [`core/host-watchdog`](core/host-watchdog/) | `scaffolded` | *host-installed* | — | — | missing | missing |
 | [`core/infisical`](core/infisical/) | `scaffolded` | `APP_TAG=v0.165.10` | — | ✅ | documented | missing |
 | [`core/jumpserver`](core/jumpserver/) | `scaffolded` | `APP_TAG=v4.10.19` | — | ✅ | documented | missing |
@@ -39,7 +39,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`core/teleport`](core/teleport/) | `scaffolded` | `APP_TAG=18.11.0` | — | ✅ | documented | missing |
 | [`core/traefik`](core/traefik/) | `scaffolded` | `TRAEFIK_IMAGE=traefik:v3.7` | 2026-09-13 | — | documented | missing |
 | [`core/warpgate`](core/warpgate/) | `scaffolded` | `APP_TAG=0.29.0` | — | ✅ | documented | missing |
-| [`core/zot`](core/zot/) | `scaffolded` | `APP_TAG=v2.1.21` | — | ✅ | documented | missing |
+| [`core/zot`](core/zot/) | `scaffolded` | `APP_TAG=v2.1.22` | — | ✅ | documented | missing |
 
 ## `apps/`
 
@@ -52,7 +52,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/calnode`](apps/calnode/) | `baseline-aligned` | `APP_TAG=0.9.0` | 2026-09-22 | ✅ | documented | missing |
 | [`apps/calrs`](apps/calrs/) | `baseline-aligned` | `APP_TAG=1.17.1` | 2026-09-22 | ✅ | documented | missing |
 | [`apps/ciso-assistant`](apps/ciso-assistant/) | `scaffolded` | `APP_TAG=v4.0.9` | 2026-09-22 | ✅ | documented | missing |
-| [`apps/collabora`](apps/collabora/) | `scaffolded` | `APP_TAG=26.04.3.2.1` | — | ✅ | documented | missing |
+| [`apps/collabora`](apps/collabora/) | `scaffolded` | `APP_TAG=26.04.5.2.1` | — | ✅ | documented | missing |
 | [`apps/dashy`](apps/dashy/) | `scaffolded` | `APP_TAG=4.8.7` | 2026-05-02 | ✅ | documented | missing |
 | [`apps/defectdojo`](apps/defectdojo/) | `baseline-aligned` | `APP_TAG=3.3.100` | 2026-09-22 | ✅ | documented | missing |
 | [`apps/dependency-track`](apps/dependency-track/) | `scaffolded` | `APP_TAG=5.1.0` | — | ✅ | documented | missing |
@@ -63,7 +63,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/easyappointments`](apps/easyappointments/) | `scaffolded` | `APP_TAG=1.6.1` | 2026-05-03 | ✅ | documented | missing |
 | [`apps/euro-office`](apps/euro-office/) | `scaffolded` | `APP_TAG=v9.3.4-hotfix.1` | — | ✅ | documented | missing |
 | [`apps/ghost`](apps/ghost/) | `scaffolded` | `APP_TAG=6.63.0-alpine` | 2026-07-26 | ✅ | documented | missing |
-| [`apps/greenmail`](apps/greenmail/) | `baseline-aligned` | `APP_TAG=2.1.13` | 2026-09-22 | ✅ | documented | missing |
+| [`apps/greenmail`](apps/greenmail/) | `scaffolded` | `APP_TAG=2.1.15` | 2026-09-22 | ✅ | documented | missing |
 | [`apps/heimdall`](apps/heimdall/) | `scaffolded` | `APP_TAG=2.8.3` | 2026-05-02 | ✅ | documented | missing |
 | [`apps/hemmelig`](apps/hemmelig/) | `scaffolded` | `APP_TAG=v7.4.8` | — | ✅ | documented | missing |
 | [`apps/heyform`](apps/heyform/) | `scaffolded` | `APP_TAG=v3.0.5` | — | ✅ | documented | missing |
@@ -76,7 +76,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/litellm`](apps/litellm/) | `scaffolded` | `APP_TAG=v1.101.4` | 2026-09-21 | ✅ | documented | missing |
 | [`apps/lycheeorg`](apps/lycheeorg/) | `scaffolded` | `APP_TAG=v7.8.3` | 2026-04-17 ⚠️ | ✅ | documented | missing |
 | [`apps/mailpit`](apps/mailpit/) | `baseline-aligned` | `APP_TAG=v1.31.1` | 2026-09-07 | ✅ | documented | missing |
-| [`apps/mailserver-jeboehm`](apps/mailserver-jeboehm/) | `scaffolded` | `APP_TAG=8.0.8` | — | ✅ | documented | missing |
+| [`apps/mailserver-jeboehm`](apps/mailserver-jeboehm/) | `scaffolded` | `APP_TAG=8.0.18` | — | ✅ | documented | missing |
 | [`apps/monicahq`](apps/monicahq/) | `scaffolded` | `APP_TAG=4.1.2-apache` | 2026-04-17 ⚠️ | ✅ | documented | missing |
 | [`apps/n8n`](apps/n8n/) | `scaffolded` | `APP_TAG=2.41.7@sha256:bcef56dd4401…` | 2026-05-02 | ✅ | documented | missing |
 | [`apps/nextcloud`](apps/nextcloud/) | `ops-proven` | `APP_TAG=34.0.4-fpm-alpine` | 2026-09-13 | ✅ | documented | documented |
@@ -95,13 +95,13 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/qdrant`](apps/qdrant/) | `baseline-aligned` | `APP_TAG=v1.19.1-unprivileged` | 2026-09-21 | ✅ | documented | missing |
 | [`apps/seafile`](apps/seafile/) | `scaffolded` | `APP_IMAGE=seafileltd/seafile-mc:13.0.20` | 2026-04-16 ⚠️ | ✅ | documented | missing |
 | [`apps/seafile-pro`](apps/seafile-pro/) | `scaffolded` | `APP_TAG=13.0.21` | 2026-04-13 ⚠️ | ✅ | documented | missing |
-| [`apps/shlink`](apps/shlink/) | `scaffolded` | `APP_TAG=5.1.7` | — | ✅ | documented | missing |
+| [`apps/shlink`](apps/shlink/) | `scaffolded` | `APP_TAG=5.1.8` | — | ✅ | documented | missing |
 | [`apps/stalwart`](apps/stalwart/) | `scaffolded` | `APP_TAG=v0.16.24` | — | ✅ | documented | missing |
 | [`apps/threat-dragon`](apps/threat-dragon/) | `scaffolded` | `APP_TAG=v2.6.2` | — | ✅ | documented | missing |
 | [`apps/tymeslot`](apps/tymeslot/) | `baseline-aligned` | `APP_TAG=1.15.1-slim@sha256:4bde62fd9bb1…` | 2026-09-07 | ✅ | documented | missing |
 | [`apps/unifi`](apps/unifi/) | `scaffolded` | `APP_TAG=10.6.101` | 2026-04-17 ⚠️ | ✅ | documented | missing |
-| [`apps/vaultwarden`](apps/vaultwarden/) | `scaffolded` | `APP_TAG=1.37.3` | 2026-06-14 ⚠️ | ✅ | documented | missing |
-| [`apps/velociraptor`](apps/velociraptor/) | `scaffolded` | `APP_TAG=0.77.2` | — | ✅ | documented | missing |
+| [`apps/vaultwarden`](apps/vaultwarden/) | `scaffolded` | `APP_TAG=1.37.4` | 2026-06-14 ⚠️ | ✅ | documented | missing |
+| [`apps/velociraptor`](apps/velociraptor/) | `scaffolded` | `APP_TAG=0.77.3` | — | ✅ | documented | missing |
 | [`apps/vllm`](apps/vllm/) | `scaffolded` | `APP_TAG=v0.30.0` | — | ✅ | documented | missing |
 | [`apps/whoami`](apps/whoami/) | `baseline-aligned` | `APP_TAG=v1.12.0` | 2026-09-13 | ✅ | documented | missing |
 | [`apps/wikijs`](apps/wikijs/) | `scaffolded` | `APP_TAG=2.5.317` | — | ✅ | documented | missing |
@@ -126,7 +126,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`business/matomo`](business/matomo/) | `scaffolded` | `APP_TAG=5.13.0-apache` | 2026-04-17 ⚠️ | ✅ | documented | missing |
 | [`business/openproject`](business/openproject/) | `scaffolded` | `APP_TAG=17.8.0-slim` | 2026-05-06 | ✅ | documented | missing |
 | [`business/opensign`](business/opensign/) | `scaffolded` | `APP_TAG=main@sha256:817654a3f804…` | 2026-05-11 ⚠️ | ✅ | documented | missing |
-| [`business/plane`](business/plane/) | `scaffolded` | `APP_TAG=v1.4.2` | — | ✅ | documented | missing |
+| [`business/plane`](business/plane/) | `scaffolded` | `APP_TAG=v1.4.3` | — | ✅ | documented | missing |
 | [`business/plausible`](business/plausible/) | `scaffolded` | `APP_TAG=v3.2.1` | — | ✅ | documented | missing |
 | [`business/solidinvoice`](business/solidinvoice/) | `baseline-aligned` | `APP_TAG=3.0.1` | 2026-09-22 | ✅ | documented | missing |
 | [`business/twenty`](business/twenty/) | `baseline-aligned` | `APP_TAG=v2.41.0` | 2026-09-23 | ✅ | documented | missing |
@@ -148,7 +148,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`monitoring/healthchecks`](monitoring/healthchecks/) | `baseline-aligned` | `APP_TAG=v4.4` | 2026-09-08 | ✅ | documented | missing |
 | [`monitoring/langfuse`](monitoring/langfuse/) | `scaffolded` | `APP_TAG=4.50.0` | 2026-09-22 | ✅ | documented | missing |
 | [`monitoring/ntfy`](monitoring/ntfy/) | `baseline-aligned` | `APP_TAG=v2.28.0` | 2026-09-08 | ✅ | documented | missing |
-| [`monitoring/scrutiny`](monitoring/scrutiny/) | `scaffolded` | `APP_TAG=v0.9.4-web` | — | ✅ | documented | missing |
+| [`monitoring/scrutiny`](monitoring/scrutiny/) | `scaffolded` | `APP_TAG=v0.9.5-web` | — | ✅ | documented | missing |
 | [`monitoring/uptime-kuma`](monitoring/uptime-kuma/) | `scaffolded` | `APP_TAG=2.5.8` | 2026-09-13 | ✅ | documented | missing |
 | [`monitoring/zabbix`](monitoring/zabbix/) | `scaffolded` | `APP_TAG=alpine-7.0.31` | — | ✅ | documented | missing |
 
@@ -158,7 +158,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 |---|---|---|---|---|---|---|
 | [`backup/borgmatic`](backup/borgmatic/) | `baseline-aligned` | *host-installed* | 2026-07-29 | — | n/a | documented |
 | [`backup/kopia`](backup/kopia/) | `scaffolded` | `APP_TAG=0.23.1` | — | ✅ | documented | missing |
-| [`backup/rclone-web`](backup/rclone-web/) | `scaffolded` | `APP_TAG=1.75.1` | — | ✅ | documented | missing |
+| [`backup/rclone-web`](backup/rclone-web/) | `scaffolded` | `APP_TAG=1.75.2` | — | ✅ | documented | missing |
 | [`backup/urbackup`](backup/urbackup/) | `scaffolded` | `APP_TAG=2.5.x@sha256:fd218c45192f…` | — | ✅ | documented | documented |
 
 ## Source of truth
