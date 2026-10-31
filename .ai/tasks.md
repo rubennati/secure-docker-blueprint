@@ -257,6 +257,23 @@ Every box was checked against the tree and git on 2026-10-16: a closed item name
 evidence, an open item its owner. An item whose state could not be established would
 be marked *for review*; none needed it.
 
+### 11. Upstream versions — the programme of 2026-10-31
+
+Inventory and batches:
+[`../docs/audits/upstream-version-inventory-2026-10-31.md`](../docs/audits/upstream-version-inventory-2026-10-31.md).
+One pull request per batch, one commit per stack, the move recorded in the
+stack's `UPSTREAM.md`; the scan of the pull request from `dev` to `main`
+measures it.
+
+- [x] Batch 1 — seven patch releases with the most recorded CRITICAL pairs (#292, 2026-10-31; none run on a host)
+- [ ] Batch 2 — the remaining 28 patch releases; `apps/defectdojo`, `apps/dify`, `apps/greenmail` and `business/chatwoot` are `baseline-aligned` and fall to `scaffolded` without a host run
+- [ ] Batch 3 — 60 minor releases of applications, release notes per stack
+- [ ] Batch 4 — 9 minor releases of database and infrastructure images, one pull request per family
+- [ ] Batch 5 — 20 major releases of applications, a decision per stack
+- [ ] Batch 6 — 23 major releases of databases: PostgreSQL 18 across 12 stacks with one procedure, then Valkey 9, MariaDB 11.8, nginx 1.31
+- [ ] Batch 7 — floating, release-candidate, date and distribution tags, and the six registries the inventory could not reach
+- [ ] The inventory is retaken before each batch until the Renovate decision (`docs/renovate-proposal.md`) is made
+
 ## Blocked on a host
 
 v0.8.0 closed on 2026-09-08 — the record is
