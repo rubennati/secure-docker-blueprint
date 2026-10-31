@@ -43,6 +43,9 @@
       "CVE-2026-27820",
       "CVE-2026-42257"
     ],
+    "collabora/code": [
+      "GHSA-cg2g-xh64-v4q7"
+    ],
     "cr.agentgateway.dev/agentgateway": [
       "CVE-2026-91403"
     ],
@@ -106,11 +109,6 @@
       "CVE-2026-8376",
       "CVE-2026-98432"
     ],
-    "fnsys/dockhand": [
-      "CVE-2026-111497",
-      "CVE-2026-91403",
-      "GHSA-cg2g-xh64-v4q7"
-    ],
     "frappe/erpnext": [
       "CVE-2022-37601",
       "CVE-2023-24538",
@@ -135,10 +133,7 @@
     ],
     "ghcr.io/analogj/scrutiny": [
       "CVE-2025-68121",
-      "CVE-2026-111497",
-      "CVE-2026-13221",
-      "CVE-2026-42496",
-      "CVE-2026-8376"
+      "CVE-2026-111497"
     ],
     "ghcr.io/berriai/litellm-non_root": [
       "CVE-2026-111497",
@@ -217,10 +212,6 @@
       "CVE-2026-112900",
       "CVE-2026-96639",
       "GHSA-6q48-6c7w-9gw2"
-    ],
-    "ghcr.io/finsys/hawser": [
-      "CVE-2026-111497",
-      "CVE-2026-91403"
     ],
     "ghcr.io/gethomepage/homepage": [
       "CVE-2026-59873",
@@ -304,12 +295,6 @@
     ],
     "ghcr.io/intuitem/ciso-assistant-community/frontend": [
       "GHSA-cg2g-xh64-v4q7"
-    ],
-    "ghcr.io/jeboehm/mailserver-mda": [
-      "CVE-2026-111497"
-    ],
-    "ghcr.io/jeboehm/mailserver-web": [
-      "CVE-2026-111497"
     ],
     "ghcr.io/obot-platform/obot": [
       "CVE-2026-111497",
@@ -411,9 +396,7 @@
       "CVE-2026-56123"
     ],
     "ghcr.io/shlinkio/shlink": [
-      "CVE-2026-77405",
-      "CVE-2026-77408",
-      "CVE-2026-77411"
+      "CVE-2026-111497"
     ],
     "ghcr.io/shlinkio/shlink-web-client": [
       "CVE-2026-111497"
@@ -454,10 +437,7 @@
       "CVE-2026-111497"
     ],
     "greenmail/standalone": [
-      "CVE-2026-111497",
-      "CVE-2026-13221",
-      "CVE-2026-42496",
-      "CVE-2026-8376"
+      "CVE-2026-111497"
     ],
     "healthchecks/healthchecks": [
       "CVE-2026-102268",
@@ -652,21 +632,13 @@
       "CVE-2026-98432",
       "GHSA-r277-6w6q-xmqw"
     ],
-    "makeplane/plane-admin": [
-      "CVE-2026-111497"
-    ],
     "makeplane/plane-backend": [
-      "CVE-2026-102268",
-      "GHSA-6q48-6c7w-9gw2"
-    ],
-    "makeplane/plane-frontend": [
-      "CVE-2026-111497"
+      "CVE-2026-102268"
     ],
     "makeplane/plane-live": [
       "CVE-2026-104848",
       "CVE-2026-104849",
       "CVE-2026-114125",
-      "CVE-2026-59873",
       "CVE-2026-90711"
     ],
     "makeplane/plane-proxy": [
@@ -675,9 +647,7 @@
     "makeplane/plane-space": [
       "CVE-2026-104848",
       "CVE-2026-104849",
-      "CVE-2026-111497",
       "CVE-2026-114125",
-      "CVE-2026-59873",
       "CVE-2026-90711"
     ],
     "mariadb": [
@@ -686,11 +656,6 @@
     "matomo": [
       "CVE-2026-111497",
       "CVE-2026-98432"
-    ],
-    "memcached": [
-      "CVE-2026-13221",
-      "CVE-2026-42496",
-      "CVE-2026-8376"
     ],
     "mongo": [
       "CVE-2025-68121"
@@ -830,13 +795,7 @@
       "CVE-2026-8376"
     ],
     "pgvector/pgvector": [
-      "CVE-2025-68121",
-      "CVE-2026-13221",
-      "CVE-2026-31789",
-      "CVE-2026-33845",
-      "CVE-2026-42010",
-      "CVE-2026-42496",
-      "CVE-2026-8376"
+      "CVE-2025-68121"
     ],
     "photoprism/photoprism": [
       "CVE-2026-64535",
@@ -1109,10 +1068,7 @@
       "CVE-2026-8376"
     ],
     "vaultwarden/server": [
-      "CVE-2026-111497",
-      "CVE-2026-13221",
-      "CVE-2026-42496",
-      "CVE-2026-8376"
+      "CVE-2026-111497"
     ],
     "vllm/vllm-openai": [
       "CVE-2026-105192",

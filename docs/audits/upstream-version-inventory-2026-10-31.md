@@ -41,11 +41,16 @@ The state in the last column is the stack's state in `LIFECYCLE.md` on
    *Version notes* in the stack's `UPSTREAM.md`: date, from and to, what
    upstream's release notes say about breaking changes, migrations, variables
    and advisories, and whether the stack ran at the new tag.
-2. **The measurement is the image scan of the pull request from `dev` to
-   `main`**, which runs in full when an `.env.example` changed. The baseline
-   record that follows it states which recorded pairs the new tags removed and
-   which they did not (DEC-043). A batch is not judged by how many pairs it
-   removes; it is judged by whether every move is recorded.
+2. **The measurement is a full image scan of the tree with the new pins** —
+   today a Trivy run started by hand on `dev` after the merge, as runs 173 and
+   182 were on 2026-10-31; which trigger carries it in future is an open
+   decision on the CI's own design, not this programme's. The baseline record
+   that follows states which recorded pairs the new tags removed and which
+   they brought (DEC-043). `dev` reaches `main` when the maintainer decides,
+   not per batch — [`../../.ai/domains/release.md`](../../.ai/domains/release.md)
+   says `main` staying behind is not by itself a problem. A batch is not judged
+   by how many pairs it removes; it is judged by whether every move is
+   recorded.
 3. **A `baseline-aligned` stack keeps its state only with a host run at the new
    tag** in the same batch, because `Last verified` names a version and the
    lifecycle report marks a newer pin as `pin-drifted`. A batch that moves such a
