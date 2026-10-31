@@ -215,6 +215,69 @@ sys.exit(0 if ok else 1)
 PYEOF
 fi
 
+# TRUSTED_RANGES (DEC-076): the client networks access-trusted admits — set and
+# empty admits nobody, unset is an .env from before the variable and is refused
+# (render.sh says the same). Each entry is a network; none may contain or lie
+# inside the VPN range (that is access-trusted-vpn's job, and a LAN that
+# contains the VPN would admit every tailnet node as a LAN client) or a Docker
+# network of this daemon (every container on it would pass). The daemon's
+# networks are read when Docker answers; otherwise that part is reported as not
+# checked.
+if [ -z "${TRUSTED_RANGES+set}" ]; then
+  echo "ERROR: TRUSTED_RANGES is not set in .env — the client networks access-trusted admits, quoted"
+  echo "       and space-separated; empty admits nobody. scripts/migrate-traefik-env.sh --all adds the"
+  echo "       line and renames access-lan/access-lan-vpn in every stack (CHANGELOG, Migration)."
+  exit 1
+fi
+{
+  command -v python3 >/dev/null 2>&1 || { echo "ERROR: python3 is needed to check TRUSTED_RANGES."; exit 1; }
+  docker_nets="[]"
+  if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+    docker_nets="$(docker network ls -q | xargs -r docker network inspect -f '{{json .IPAM.Config}} {{.Name}}' 2>/dev/null \
+      | python3 -c '
+import json, sys
+out = []
+for line in sys.stdin:
+    line = line.strip()
+    if not line: continue
+    cfg, _, name = line.partition(" ")
+    for c in (json.loads(cfg) or []):
+        if c.get("Subnet"): out.append([c["Subnet"], name])
+print(json.dumps(out))' 2>/dev/null || echo "[]")"
+    docker_checked=yes
+  else
+    docker_checked=""
+  fi
+  python3 - "${TRUSTED_RANGES}" "${TAILSCALE_CIDR_V4:-}" "${TAILSCALE_CIDR_V6:-}" "${PUBLIC_NETWORK_SUBNET_V4:-}" "${PUBLIC_NETWORK_SUBNET_V6:-}" "${docker_nets}" <<'PYEOF2' || exit 1
+import ipaddress, json, sys
+ranges, ts4, ts6, pub4, pub6, docker_nets = sys.argv[1:7]
+ok = True
+def net(v):
+    return ipaddress.ip_network(v, strict=True)
+vpn = [net(x) for x in (ts4, ts6) if x]
+public = [(net(x), "PUBLIC_NETWORK_SUBNET") for x in (pub4, pub6) if x]
+docker = [(net(s), n) for s, n in json.loads(docker_nets)]
+for token in ranges.split():
+    try:
+        r = net(token)
+    except ValueError:
+        print(f"ERROR: TRUSTED_RANGES: '{token}' is not a network in CIDR form (192.168.10.0/24, 2001:db8:10::/64).")
+        ok = False; continue
+    for v in vpn:
+        if r.version == v.version and r.overlaps(v):
+            print(f"ERROR: TRUSTED_RANGES: '{token}' overlaps the VPN range {v} — a LAN range never contains the VPN;")
+            print("       the policy that admits both is access-trusted-vpn.")
+            ok = False
+    for d, name in public + docker:
+        if r.version == d.version and r.overlaps(d):
+            print(f"ERROR: TRUSTED_RANGES: '{token}' overlaps the Docker network {d} ({name}) — every container on it")
+            print("       would pass access-trusted. A trusted range is a network of clients, never one of containers.")
+            ok = False
+sys.exit(0 if ok else 1)
+PYEOF2
+  [ -n "${docker_checked}" ] || echo "NOTICE: TRUSTED_RANGES was not compared with the Docker daemon's networks (Docker did not answer here)."
+}
+
 if [ -n "${TRAEFIK_BIND_V4:-}" ] && ! printf '%s' "${TRAEFIK_BIND_V4}" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
   echo "ERROR: TRAEFIK_BIND_V4 must be an IPv4 address such as 0.0.0.0 (got '${TRAEFIK_BIND_V4}')."
   echo "       IPv6 is bound by network-dual-stack.yml on TRAEFIK_BIND_V6."
@@ -454,7 +517,7 @@ if [ -f "${ROOT_DIR}/config/traefik.yml" ]; then
       exit 1
     fi
   done
-  retired_names="$(grep -hoE '^    (acc-[a-z-]+|sec-[a-z0-9-]+|hdr-[a-z-]+|rl-[a-z-]+|permissions-policy|csp-enforce|crowdsec-(basic|appsec)|tls-(basic|aplus|modern)):' "${ROOT_DIR}"/config/dynamic/*.yml 2>/dev/null | sed 's/[[:space:]:]//g' | sort -u | tr '\n' ' ' || true)"
+  retired_names="$(grep -hoE '^    (acc-[a-z-]+|access-lan(-vpn)?|sec-[a-z0-9-]+|hdr-[a-z-]+|rl-[a-z-]+|permissions-policy|csp-enforce|crowdsec-(basic|appsec)|tls-(basic|aplus|modern)):' "${ROOT_DIR}"/config/dynamic/*.yml 2>/dev/null | sed 's/[[:space:]:]//g' | sort -u | tr '\n' ' ' || true)"
   if [ -n "${retired_names% }" ]; then
     echo "ERROR: config/dynamic defines names the middleware model retired: ${retired_names}"
     echo "       The templates no longer render them — bash ops/scripts/reset-templates.sh, then render.sh."

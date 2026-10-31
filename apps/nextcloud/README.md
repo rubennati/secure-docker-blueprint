@@ -78,17 +78,40 @@ docker compose logs -f app
 Expect `Initializing nextcloud` followed by `Nextcloud was successfully
 installed`.
 
-Default access policy is `access-lan-vpn`, with `limit-sync` and
-`headers-standard` behind `frame-self` — reachable from LAN and VPN, the
+Default access policy is `access-trusted-vpn`, with `limit-sync` and
+`headers-standard` behind `frame-self` — reachable from the ranges
+`TRUSTED_RANGES` declares in `core/traefik/.env` and from the VPN, the
 standard headers with `SAMEORIGIN` framing, and the rate limit the sync
-clients need. `access-lan-vpn` also covers the Docker gateway, which the
-instance needs to run its own setup checks against itself.
+clients need. No closed policy admits a Docker network, so the instance
+cannot reach itself through the proxy while it is closed: the setup checks
+that call its own public name report failures until it is opened, and an office
+server is pointed at Nextcloud's internal address (below).
 
 Switch to `access-public` once the instance is configured and verified.
 
-> **If you plan to integrate OnlyOffice:** `APP_TRAEFIK_ACCESS=access-public` is
-> required. OnlyOffice makes server-to-server callbacks to Nextcloud over the
-> public domain, and every restricted policy blocks them.
+> **Office servers behind a closed route.** OnlyOffice, Euro-Office and Collabora
+> call Nextcloud back; a closed access policy refuses a call from a container
+> (DEC-076). Point the callback at Nextcloud's address on the Docker network the
+> two stacks share — `proxy-public` today — with the connector's own settings, run
+> as `www-data` after the app is installed (`<nginx>` is `CONTAINER_NAME_NGINX`,
+> `nextcloud-nginx` as shipped; `<office>` the office container's name):
+>
+> ```bash
+> # Nextcloud has to accept the internal name as a host it serves
+> docker compose exec -u www-data app php occ config:system:set trusted_domains 2 --value="<nginx>"
+> # OnlyOffice and Euro-Office (the onlyoffice connector): Nextcloud as the document server reaches it,
+> # and the document server as Nextcloud reaches it
+> docker compose exec -u www-data app php occ config:app:set onlyoffice StorageUrl --value="http://<nginx>/"
+> docker compose exec -u www-data app php occ config:app:set onlyoffice DocumentServerInternalUrl --value="http://<office>/"
+> # Collabora (the richdocuments app): the server Nextcloud calls, the one the browser calls, the callback it hands out
+> docker compose exec -u www-data app php occ config:app:set richdocuments wopi_url --value="http://<office>:9980"
+> docker compose exec -u www-data app php occ config:app:set richdocuments public_wopi_url --value="https://office.example.com"
+> docker compose exec -u www-data app php occ config:app:set richdocuments wopi_callback_url --value="http://<nginx>"
+> ```
+>
+> The route stays closed; the office traffic never passes it. Not verified on a
+> host with this stack yet — the settings are the connectors' own
+> (ONLYOFFICE/onlyoffice-nextcloud README, nextcloud/richdocuments `AppConfig`).
 
 ### Post-install
 
@@ -264,9 +287,11 @@ With `APP_TRAEFIK_ACCESS=access-vpn`, several checks report failures —
 calls itself through the proxy and the access policy denies it, which is the
 policy working.
 
-This is why the shipped default is `access-lan-vpn` rather than `access-vpn`: it
-covers the Docker gateway as well as LAN and VPN, so the instance can reach
-itself and the checks pass while the instance is still closed to the internet.
+The shipped default `access-trusted-vpn` behaves the same way: no closed policy
+admits a Docker network (DEC-076), so these checks pass only once the route is
+`access-public`. Until then they are the policy working, not a defect — nothing
+of the instance's function depends on them; an office server reaches Nextcloud
+by its internal address (above, "Office servers behind a closed route").
 
 ## Backup
 

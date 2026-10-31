@@ -72,8 +72,8 @@
   in place of `access-lan`, a stated auth posture per stack, exposure derived and
   shown — DEC-075 to DEC-078 and an addendum to DEC-063 in
   [`decisions.md`](decisions.md). An eight-step programme follows
-  ([`tasks.md`](tasks.md) §12); step 1, the guards, is this branch. No existing
-  installation changes until it declares something.
+  ([`tasks.md`](tasks.md) §12). Before v1.0 a breaking change with a migration is
+  preferred to a compatibility gate (DEC-076, amended 2026-10-31).
 
 - **Released: v0.9.6** — a patch release without a host run: the two npm
   advisories closed, the image CVE baseline recording the scans of 2026-10-31

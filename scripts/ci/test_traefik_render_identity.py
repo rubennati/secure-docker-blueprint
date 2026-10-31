@@ -1,19 +1,16 @@
 #!/usr/bin/env python3
-"""An installation that declares nothing new renders exactly what v0.9.5 rendered.
-
-The ingress programme (DEC-075 to DEC-078) changes what core/traefik renders for
-an installation that declares the new variables. An existing installation does
-not declare them, and its rendered configuration — traefik.yml, every file under
-dynamic/, the HAProxy template — must stay byte-identical to the release it runs,
-in both shapes a deployment has today:
-
-  A  IPv4-only: docker-compose.yml alone, no subnets, no overlay
-  B  dual-stack: COMPOSE_FILE with network-dual-stack.yml, both subnets, TRAEFIK_BIND_V6
+"""What core/traefik renders for an unchanged .env is what v0.9.5 rendered —
+except where a step of the ingress programme changed the model by decision.
 
 The reference is the tagged release in the checkout: `git archive v0.9.5` of
-core/traefik is rendered with the same .env, and the two config/ trees are
-compared file by file. A shallow checkout without the tag skips, as the other
-tag-dependent tests do; CI fetches tags.
+core/traefik is rendered with the same .env, for the two shapes a deployment has
+— IPv4-only and dual-stack — and the config/ trees are compared file by file.
+Position 1 of model.yml is the one decided difference so far (DEC-076, step 3:
+access-trusted and access-trusted-vpn in place of access-lan and access-lan-vpn);
+that region is cut out of both renders before the comparison and checked on its
+own, and comment-only lines of model.yml are not compared; a step that changes
+anything else, anywhere, fails here. A shallow
+checkout without the tag skips, as the other tag-dependent tests do.
 
 Run:
     python3 scripts/ci/test_traefik_render_identity.py
@@ -21,6 +18,7 @@ Run:
 """
 
 import filecmp
+import re
 import shutil
 import subprocess
 import tarfile
@@ -55,6 +53,26 @@ def _tree(path: Path) -> list[str]:
     return sorted(str(p.relative_to(path)) for p in path.rglob("*") if p.is_file())
 
 
+POSITION_1 = re.compile(r"    # -------- 1  access --------\n.*?(?=    # -------- 2  limit --------\n)", re.S)
+
+
+COMMENT_LINE = re.compile(r"^[ \t]*#.*\n", re.M)
+
+
+def _without_position_1(text: str) -> tuple[str, str]:
+    """(the file without its access section and without comment-only lines, the access section).
+
+    Comments carry no configuration; a step that renames a policy corrects the
+    comments that name it wherever they stand, and that is not a change of what
+    Traefik loads.
+    """
+    m = POSITION_1.search(text)
+    if m is None:
+        raise AssertionError("model.yml has no access section between the position markers")
+    rest = text[:m.start()] + text[m.end():]
+    return COMMENT_LINE.sub("", rest), m.group(0)
+
+
 class RenderIdentity(unittest.TestCase):
     def setUp(self):
         r = subprocess.run(["git", "-C", str(REPO), "archive", "--format=tar", REFERENCE_TAG, "core/traefik"],
@@ -73,8 +91,16 @@ class RenderIdentity(unittest.TestCase):
         a, b = _render(self.release, env), _render(self.head, env)
         self.assertEqual(_tree(a), _tree(b), "the set of rendered files changed")
         for rel in _tree(a):
+            if rel == "dynamic/model.yml":
+                rest_a, access_a = _without_position_1((a / rel).read_text(encoding="utf-8"))
+                rest_b, access_b = _without_position_1((b / rel).read_text(encoding="utf-8"))
+                self.assertEqual(rest_a, rest_b, f"{rel} differs from {REFERENCE_TAG} outside position 1")
+                self.assertIn("    access-lan:", access_a)
+                self.assertIn("    access-trusted:", access_b)
+                self.assertNotIn("access-lan", access_b, "the LAN class is gone (DEC-076)")
+                continue
             self.assertTrue(filecmp.cmp(a / rel, b / rel, shallow=False),
-                            f"{rel} renders differently from {REFERENCE_TAG} for an .env that declares nothing new")
+                            f"{rel} renders differently from {REFERENCE_TAG} for an unchanged .env")
 
     def test_shape_a_ipv4_only_renders_as_the_release(self):
         self._assert_identical(SHAPE_A)

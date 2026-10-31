@@ -175,7 +175,7 @@ docker compose up -d --force-recreate
   </TabItem>
 
   <TabItem label="Access">
-    The stack ships `APP_TRAEFIK_ACCESS=access-lan-vpn` — LAN and VPN, which also admits the Docker containers that OnlyOffice and SeaDoc call back from. `access-public` removes Traefik's source-IP allowlist. Whether the service is actually reachable from the public internet depends on your DNS records, routing, and upstream firewall — the `access-public` middleware setting does not control any of that.
+    The stack ships `APP_TRAEFIK_ACCESS=access-trusted-vpn` — the ranges declared in `core/traefik/.env` and the VPN; no closed policy admits a Docker container; SeaDoc calls Seafile over the internal network, and the two paths OnlyOffice uses — the document fetch and the save callback — have their own routes in `onlyoffice-callback.yml` (the stack README, "Access policy"). `access-public` removes Traefik's source-IP allowlist. Whether the service is actually reachable from the public internet depends on your DNS records, routing, and upstream firewall — the `access-public` middleware setting does not control any of that.
 
     Setting `APP_TRAEFIK_ACCESS=access-vpn` enforces a source-IP allowlist for Tailscale addresses, restricting access to clients connected to the same Tailnet. Server-to-server integrations (OnlyOffice, notifications) must also reach Seafile via Tailscale for this to apply to them.
 

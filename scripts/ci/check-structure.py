@@ -31,8 +31,9 @@ FAIL (blocks CI — dangerous or leak-prone):
   retired-name      a stack still carries the vocabulary from before the
                     model: *_TRAEFIK_SECURITY or *_TRAEFIK_THREAT, an
                     acc-* / sec-* / tls-basic|aplus|modern value, a router
-                    naming such a TLS profile — scripts/migrate-traefik-env.sh
-                    maps every one of them
+                    naming such a TLS profile — or the LAN class access-lan /
+                    access-lan-vpn that access-trusted(-vpn) replaced
+                    (DEC-076) — scripts/migrate-traefik-env.sh maps every one
   missing-network-label
                     a service with traefik.enable=true and no
                     traefik.docker.network label — without it Traefik takes
@@ -116,8 +117,8 @@ SECRET_VAR = re.compile(r"^[A-Z0-9_]*(PASSWORD|SECRET|TOKEN|PASSWD|PWD)$")
 # keep the set of such addresses closed — access-blocked closes the router
 # altogether. The names before the model are kept so that a stack carrying
 # them is still judged (and fails for the name, see retired-name).
-CLOSED_ACCESS = {"access-lan", "access-vpn", "access-lan-vpn", "access-blocked",
-                 "acc-private", "acc-tailscale", "acc-deny"}
+CLOSED_ACCESS = {"access-trusted", "access-vpn", "access-trusted-vpn", "access-blocked",
+                 "access-lan", "access-lan-vpn", "acc-private", "acc-tailscale", "acc-deny"}
 
 # The middleware model (core/traefik/config/dynamic/model.yml, decided
 # 2026-10-18): four positions on every router, in this order. A router names
@@ -129,8 +130,8 @@ POSITION_VAR = re.compile(r"TRAEFIK_[A-Z0-9_]*?(ACCESS|LIMIT|HEADERS|AUTH)$")
 # The names the model replaced (v0.9.4: access.yml, security-blocks.yml,
 # security-chains.yml, crowdsec.yml, tls-profiles.yml). A stack carrying one
 # has not been migrated — scripts/migrate-traefik-env.sh maps every one.
-OLD_NAME = re.compile(r"^(sec-|acc-|hdr-|rl-|crowdsec-(basic|appsec))")
-RETIRED_VALUE = re.compile(r"^(sec-|acc-|hdr-|rl-|crowdsec-(basic|appsec)|tls-(basic|aplus|modern))")
+OLD_NAME = re.compile(r"^(sec-|acc-|hdr-|rl-|crowdsec-(basic|appsec)|access-lan(-vpn)?(@|$))")
+RETIRED_VALUE = re.compile(r"^(sec-|acc-|hdr-|rl-|crowdsec-(basic|appsec)|tls-(basic|aplus|modern)|access-lan(-vpn)?$)")
 RETIRED_KEY = re.compile(r"TRAEFIK_[A-Z0-9_]*(SECURITY|THREAT)$")
 TLS_RETIRED = {"tls-basic", "tls-aplus", "tls-modern"}
 # Per-app blocks and the side of the four they belong on (model.yml).
@@ -297,9 +298,22 @@ def compose_files(app: Path) -> list[Path]:
     if main.exists() and in_repository(main):
         return [main]
     # For a split stack the glob decides what counts as production, so the
-    # local test stack must be excluded from it.
+    # local test stack must be excluded from it, and so must a file that only
+    # adds to a service another file defines — `onlyoffice-callback.yml` carries
+    # labels for the seafile service and no image; it is an overlay of the stack,
+    # checked as one by overlay_files(), not a part of it.
     return sorted(p for p in app.glob("*.yml")
-                  if in_repository(p) and is_compose(p) and not p.name.endswith(".local.yml"))
+                  if in_repository(p) and is_compose(p) and not p.name.endswith(".local.yml")
+                  and _defines_a_service(p))
+
+
+def _defines_a_service(path: Path) -> bool:
+    """True when at least one service of the file has an image or a build."""
+    try:
+        services = compose_load(path).get("services") or {}
+    except yaml.YAMLError:
+        return False
+    return any(isinstance(s, dict) and ("image" in s or "build" in s) for s in services.values())
 
 
 def overlay_files(app: Path) -> list[Path]:

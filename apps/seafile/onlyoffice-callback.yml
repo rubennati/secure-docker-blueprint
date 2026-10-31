@@ -1,0 +1,46 @@
+# --------------------------------------------------------
+# ONLYOFFICE ROUTES — opt-in, with OnlyOffice only
+# --------------------------------------------------------
+# A closed access policy refuses a request from a Docker container or from
+# another host, and OnlyOffice Docs talks to Seafile on two paths, both at
+# Seafile's public name — the only address Seafile hands it (seahub,
+# onlyoffice/utils.py: doc_url from FILE_SERVER_ROOT, callback_url from
+# SERVICE_URL; there is no internal variant of either):
+#
+#   /seafhttp/files/<token>/<name>  the document, fetched when the editor opens
+#                                   and when a format is converted. The token is
+#                                   a fileserver access token Seafile issued for
+#                                   that file and user, valid for one hour.
+#   /onlyoffice/editor-callback/    the save. Seafile acts on it only for a
+#                                   document key it issued and still holds;
+#                                   seahub does not verify the JWT on this path
+#                                   (onlyoffice/views.py, 13.0 and master).
+#
+# This file opens those two paths with access-public and nothing else: the
+# rest of the instance keeps APP_TRAEFIK_ACCESS. Alternatively, a Document
+# Server on another host reaches a closed instance when its address is in
+# TRUSTED_RANGES (core/traefik/.env) or on the VPN — then leave this file out.
+# SeaDoc needs none of this; it calls Seafile over the internal network
+# (SEAHUB_SERVICE_URL in seadoc.yml).
+#
+#   COMPOSE_FILE=seafile-server.yml,…,onlyoffice-callback.yml
+#
+# The four positions: public, the side routers' limit, the stack's headers,
+# no gate at the proxy — the token and the document key are the application's.
+services:
+  seafile:
+    labels:
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-onlyoffice-files.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/seafhttp/files/`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-onlyoffice-files.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-onlyoffice-files.priority=100"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-onlyoffice-files.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-onlyoffice-files.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-onlyoffice-files.middlewares=access-public@file,${SIDE_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,auth-none@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-onlyoffice-files.service=${COMPOSE_PROJECT_NAME}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-onlyoffice-callback.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/onlyoffice/editor-callback`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-onlyoffice-callback.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-onlyoffice-callback.priority=100"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-onlyoffice-callback.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-onlyoffice-callback.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-onlyoffice-callback.middlewares=access-public@file,${SIDE_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,auth-none@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-onlyoffice-callback.service=${COMPOSE_PROJECT_NAME}"

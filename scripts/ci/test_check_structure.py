@@ -550,9 +550,18 @@ class LocalPinDrift(unittest.TestCase):
         return app
 
     def _findings(self, app):
-        out: list[dict] = []
-        cs.check_local_pins(app, out)
-        return out
+        # Judged from inside the temporary tree, like the other classes: the
+        # checker's file list is Git's, and a temp stack is in no repository.
+        cwd = os.getcwd()
+        try:
+            os.chdir(app)
+            _reset_caches()
+            out: list[dict] = []
+            cs.check_local_pins(Path("."), out)
+            return out
+        finally:
+            os.chdir(cwd)
+            _reset_caches()
 
     def test_same_image_different_version_fails(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -816,4 +825,38 @@ class PortsAndNetworkLabel(unittest.TestCase):
                 fails.extend((str(app), f["service"], f["detail"]) for f in findings if f["level"] == "FAIL")
         finally:
             os.chdir(cwd)
+            _reset_caches()  # the repository's file list must not leak into later temp-tree tests
         self.assertEqual(fails, [])
+
+
+class RetiredLanClass(unittest.TestCase):
+    """access-lan and access-lan-vpn are retired names since DEC-076: an example
+    that still sets one fails like any name from before the model."""
+
+    def _findings_for(self, root: Path, env_text: str) -> list[dict]:
+        app = root / "apps" / "widget"
+        app.mkdir(parents=True, exist_ok=True)
+        (app / "docker-compose.yml").write_text("services:\n  app:\n    image: example/image:1.0\n")
+        (app / ".env.example").write_text(env_text)
+        cwd = os.getcwd()
+        try:
+            os.chdir(root)
+            _reset_caches()
+            findings: list[dict] = []
+            cs.check_env(Path("apps/widget"), findings)
+            return [f for f in findings if f["rule"] == "retired-name"]
+        finally:
+            os.chdir(cwd)
+            _reset_caches()
+
+    def test_the_lan_class_in_an_example_is_a_retired_name(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            found = self._findings_for(Path(tmp), "COMPOSE_PROJECT_NAME=widget\nAPP_TRAEFIK_ACCESS=access-lan-vpn\nAGW_UI_TRAEFIK_ACCESS=access-lan\n")
+        self.assertEqual(len(found), 2, found)
+        self.assertTrue(all(f["level"] == "FAIL" for f in found))
+        self.assertIn("migrate-traefik-env.sh", found[0]["detail"])
+
+    def test_the_trusted_and_vpn_policies_pass(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            found = self._findings_for(Path(tmp), "COMPOSE_PROJECT_NAME=widget\nAPP_TRAEFIK_ACCESS=access-trusted-vpn\nAPP_API_TRAEFIK_ACCESS=access-vpn\n")
+        self.assertEqual(found, [])

@@ -61,7 +61,7 @@ The middleware list answers four independent questions, in this order:
 
 | Position | Variable | Question | Values |
 |---|---|---|---|
-| 1 | `APP_TRAEFIK_ACCESS` | Who may reach this router, by connecting address? | `access-public` · `access-lan` · `access-vpn` · `access-lan-vpn` · `access-blocked` |
+| 1 | `APP_TRAEFIK_ACCESS` | Who may reach this router, by connecting address? | `access-public` · `access-trusted` · `access-vpn` · `access-trusted-vpn` · `access-blocked` |
 | 2 | `APP_TRAEFIK_LIMIT` | How fast may one address ask? | `limit-standard` · `limit-strict` · `limit-sync` · `limit-extra-large` · `limit-none` |
 | 3 | `APP_TRAEFIK_HEADERS` | Which browser-security headers does the proxy set? | `headers-standard` · `headers-application-owned` · `headers-none` — every profile starts with the HSTS base |
 | 4 | `APP_TRAEFIK_AUTH` | Who must be identified before the request reaches the app? | `auth-none@file` · `auth-authentik@file` · `${COMPOSE_PROJECT_NAME}-auth@docker` |
@@ -101,7 +101,7 @@ never a label.
 |----------|----------------|
 | `APP_TRAEFIK_HOST` | `app.example.com` |
 | `APP_TRAEFIK_CERT_RESOLVER` | `cloudflare-dns`, `httpResolver`, `tlsResolver` |
-| `APP_TRAEFIK_ACCESS` | `access-public`, `access-lan`, `access-vpn`, `access-lan-vpn`, `access-blocked` |
+| `APP_TRAEFIK_ACCESS` | `access-public`, `access-trusted`, `access-vpn`, `access-trusted-vpn`, `access-blocked` |
 | `APP_TRAEFIK_LIMIT` | `limit-standard`, `limit-strict`, `limit-sync`, `limit-extra-large`, `limit-none` |
 | `APP_TRAEFIK_HEADERS` | `headers-standard`, `headers-application-owned`, `headers-none` |
 | `APP_TRAEFIK_AUTH` | `auth-none@file`, `auth-authentik@file`, `${COMPOSE_PROJECT_NAME}-auth@docker` |
@@ -121,9 +121,9 @@ answer is the same, the router reads the stack's variable.
 | Policy | Who gets through |
 |--------|-----------------|
 | `access-public` | Everyone (no restriction) |
-| `access-lan` | LAN only (RFC1918 + IPv6 ULA) |
+| `access-trusted` | the ranges `TRUSTED_RANGES` declares in `core/traefik/.env`; empty admits nobody |
 | `access-vpn` | VPN only (`TAILSCALE_CIDR_V4` + `TAILSCALE_CIDR_V6` from `core/traefik/.env`) |
-| `access-lan-vpn` | LAN + VPN combined |
+| `access-trusted-vpn` | the declared ranges + VPN |
 | `access-blocked` | Nobody (emergency kill switch) |
 
 Which address a policy evaluates: [`traefik-security.md`](traefik-security.md#trusted-proxy-headers-traefikyml--forwardedheaders).
@@ -135,7 +135,7 @@ Which address a policy evaluates: [`traefik-security.md`](traefik-security.md#tr
 | `limit-standard` | 125 per second, 500 | the default — every first load measured so far but two fits |
 | `limit-strict` | 20 per second, 40 | administration surfaces, login-only routes |
 | `limit-sync` | 1000 per second, 1000 | applications with file-sync clients |
-| `limit-extra-large` | 125 per second, 1000 | a whole first load in one bucket; CI accepts it only behind `access-lan`, `access-vpn`, `access-lan-vpn` or `access-blocked` (`burst-exposure`) |
+| `limit-extra-large` | 125 per second, 1000 | a whole first load in one bucket; CI accepts it only behind `access-trusted`, `access-vpn`, `access-trusted-vpn` or `access-blocked` (`burst-exposure`) |
 | `limit-none` | no counter | a websocket or long-poll endpoint, a server called by another server |
 
 ## Header Profiles

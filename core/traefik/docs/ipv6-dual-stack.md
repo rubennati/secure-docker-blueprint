@@ -157,7 +157,7 @@ X-Real-Ip: fd7a:115c:a1e0::10
 
 The failure above needs a port that accepts IPv6 on a network that does not
 carry it. Beyond the `403`, the gateway it produces is inside `172.16.0.0/12`,
-so `access-lan` and `access-lan-vpn` admit every client hidden behind it, and
+so the retired LAN policies (RFC 1918, before `TRUSTED_RANGES`) admitted every client hidden behind it, and
 CrowdSec sees nothing of them ([CrowdSec and real client IPs](#crowdsec-and-real-client-ips)).
 `docker-compose.yml` therefore publishes Traefik on `TRAEFIK_BIND_V4` only, and
 `network-dual-stack.yml` adds the IPv6 bindings on `TRAEFIK_BIND_V6` together
@@ -350,8 +350,8 @@ network (see [Rollback](#8-rollback) in the migration guide).
 Dual-stack `proxy-public` needs an explicit IPv6 subnet — Docker has no
 default IPv6 address pool to auto-assign from the way it does for IPv4.
 Use a **Unique Local Address (ULA)** prefix (`fc00::/7`, same family as
-the `fc00::/7` range already used by `access-lan`/`access-lan-vpn` in
-`access.yml`), not a public/global IPv6 allocation you don't own.
+the `fc00::/7` range the retired LAN class once admitted wholesale), not a
+public/global IPv6 allocation you don't own.
 
 `fd00:dead:beef:30::/64` (used as the example throughout this repo) is a
 **placeholder** — every production deployment should generate and

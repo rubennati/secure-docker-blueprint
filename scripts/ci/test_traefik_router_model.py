@@ -196,7 +196,7 @@ class BurstExposure(Scratch):
         self.assertIn("found 'access-public'", f[0]["detail"])
 
     def test_the_wide_bucket_behind_each_closed_policy_passes(self):
-        for access in ("access-lan", "access-vpn", "access-lan-vpn", "access-blocked"):
+        for access in ("access-trusted", "access-vpn", "access-trusted-vpn", "access-blocked"):
             env = MODEL_ENV.replace("limit-standard", "limit-extra-large").replace("access-public", access)
             f = self.rule(self.findings(env, [("demo", "Host(`${APP_TRAEFIK_HOST}`)", MODEL_LABEL, None)]), "burst-exposure")
             self.assertEqual(f, [], access)

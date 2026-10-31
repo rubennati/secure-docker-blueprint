@@ -85,7 +85,7 @@ What this stack does about it:
   `/v1/..%2fmetrics` reaches vLLM as a `/v1/…` path and gets `401` — tested with
   a Traefik running the same rule in front of a real server. `/health` is not
   reachable from outside on purpose; the container healthcheck uses it.
-- **`APP_TRAEFIK_ACCESS` defaults to `access-lan-vpn`** (LAN plus VPN), on top of the
+- **`APP_TRAEFIK_ACCESS` defaults to `access-trusted-vpn`** (the declared ranges plus VPN), on top of the
   key.
 
 What it cannot do: **every container on `proxy-public` reaches all of vLLM's

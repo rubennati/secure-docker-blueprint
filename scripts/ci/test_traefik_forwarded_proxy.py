@@ -107,7 +107,7 @@ class ForwardedProxySwitch(unittest.TestCase):
         for mode in ("none", "cloudflare"):
             self.render(dict(VALID_ENV, TRAEFIK_FORWARDED_PROXY=mode))
             model = yaml.safe_load((self.root / "config" / "dynamic" / "model.yml").read_text(encoding="utf-8"))
-            for name in ("access-lan", "access-vpn", "access-lan-vpn", "access-blocked"):
+            for name in ("access-trusted", "access-vpn", "access-trusted-vpn", "access-blocked"):
                 self.assertNotIn("ipStrategy", model["http"]["middlewares"][name]["ipAllowList"], f"{mode} {name}")
             self.assertNotIn("sourceCriterion", (self.root / "config" / "dynamic" / "model.yml").read_text(encoding="utf-8"), mode)
 

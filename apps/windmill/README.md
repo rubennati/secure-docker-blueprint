@@ -56,7 +56,7 @@ and:
 
 Running it again is safe — it reports "already bootstrapped" and changes
 nothing. Then set `APP_TRAEFIK_ACCESS` in `.env` to the audience you want
-(`access-lan-vpn` for LAN plus VPN) and run `docker compose up -d`. Keep the
+(`access-trusted-vpn` for the declared ranges plus VPN) and run `docker compose up -d`. Keep the
 password file with the other secrets and back it up with them.
 
 ## Job isolation

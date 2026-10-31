@@ -397,27 +397,39 @@ older database means files exist that no library references.
 
 **Restore order:** databases first, then the block store, then the app.
 
-## Access policy — OnlyOffice + SeaDoc require `access-lan-vpn`
+## Access policy — how OnlyOffice and SeaDoc call back into a closed instance
 
-`access-vpn` blocks server-to-server callbacks from Docker containers (their IPs are RFC1918, not Tailscale). This breaks both OnlyOffice document editing and SeaDoc collaborative editing:
+Every closed policy — `access-vpn`, `access-trusted`, `access-trusted-vpn` — refuses a request from a Docker container: no closed policy admits a Docker network (DEC-076). The two integrations that call Seafile back are therefore wired past the policy, each by the mechanism the application offers:
+
+- **SeaDoc** calls Seafile over the internal network: `SEAHUB_SERVICE_URL=http://seafile` in `seadoc.yml`. Nothing of it passes Traefik; only the browser's own requests to `/sdoc-server` and `/socket.io` do, under the stack's access policy.
+- **OnlyOffice** talks to Seafile on two paths, both at Seafile's public name — the only address Seafile hands it (seahub builds the document URL from `FILE_SERVER_ROOT` and the callback URL from `SERVICE_URL`; neither has an internal variant). It fetches the document from `/seafhttp/files/<token>/<name>` when the editor opens and when a format is converted — the token is a fileserver access token Seafile issued for that file and user, valid for one hour — and it saves by calling `/onlyoffice/editor-callback/`, which Seafile acts on only for a document key it issued and still holds. seahub does not verify the JWT on the callback (`onlyoffice/views.py`, 13.0 and master); the JWT secret protects the browser's editor session and the convert API, not this path. `onlyoffice-callback.yml` opens exactly those two paths with `access-public`. Add it to `COMPOSE_FILE` when you run OnlyOffice:
+
+```env
+COMPOSE_FILE=seafile-server.yml,seadoc.yml,thumbnail-server.yml,onlyoffice-callback.yml
+```
+
+The rest of the instance stays closed. The three ways the pieces talk, and what carries each:
+
+| Way | Carried by |
+|---|---|
+| Browser → OnlyOffice (editor, scripts, websocket) | the OnlyOffice stack's own route, `access-public` as shipped |
+| OnlyOffice → Seafile (document fetch, save callback) | the two routes above; or, for a Document Server on another host, its address in `TRUSTED_RANGES` or on the VPN, with this file left out |
+| Seafile → OnlyOffice (convert API, fetching the saved file) | the OnlyOffice stack's public route, with the shared JWT secret on the convert API |
+
+One Document Server serves several Seafile or Nextcloud instances this way, on the same host or on others; each instance decides for itself whether to open the two paths or to trust the server's address. Until v0.9.6 the shipped default admitted every RFC 1918 address, Docker containers included, which is how the callbacks passed a closed route; that admission was the bypass the ingress audit measured (`docs/audits/ingress-architecture-2026-10-31.md`) and is gone.
+
+What used to stand here, for the record:
 
 - **OnlyOffice**: fetches and saves files via callback to Seafile's URL. The OnlyOffice container IP is not a Tailscale IP → Traefik blocks it → documents fail to open/save.
 - **SeaDoc**: makes internal API calls back to Seafile for token validation and file content. Same issue.
 
-**`access-lan-vpn` is the shipped default for exactly this reason:**
+**The stack ships closed, `access-trusted-vpn`:**
 
 ```env
-APP_TRAEFIK_ACCESS=access-lan-vpn
+APP_TRAEFIK_ACCESS=access-trusted-vpn
 ```
 
-This section used to describe it as a fix to apply, which read as though the
-stack shipped `acc-tailscale` (today's `access-vpn`). It shipped `acc-public`,
-today's `access-public` — under which the callbacks work because nothing is
-filtered at all, and the file store answers the open internet from first boot. Opening it is now the deliberate step, not closing it.
-
-`access-lan-vpn` = Tailscale/VPN + LAN (RFC1918). Docker container IPs (172.x.x.x) fall into the LAN range and pass. External internet still blocked.
-
-> If you run Seafile without OnlyOffice and without SeaDoc, `access-vpn` works fine.
+> Without OnlyOffice, leave `onlyoffice-callback.yml` out: nothing of the instance answers an unknown client.
 
 ## Thumbnail server
 

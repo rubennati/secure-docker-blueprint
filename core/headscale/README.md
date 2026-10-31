@@ -51,7 +51,7 @@ off this host — without it every node has to be registered again.
 
 ## Letting clients in
 
-This ships with `access-lan`: reachable from your LAN and nowhere else. That is
+This ships with `access-trusted`: reachable from the ranges `TRUSTED_RANGES` declares in `core/traefik/.env` and nowhere else. That is
 the blueprint's position, not the product's — a control server no client can
 reach is a control server no client can join.
 
@@ -60,7 +60,7 @@ it:
 
 | Approach | When it fits |
 |---|---|
-| Stay on `access-lan` | Every node joins from your network. They keep working anywhere afterwards — only the *join* needs the server |
+| Stay on `access-trusted` | Every node joins from a declared range. They keep working anywhere afterwards — only the *join* needs the server |
 | An IP allow-list in front | You know the addresses nodes register from |
 | An SSH tunnel for the join | One node, once, without changing the policy |
 | `access-public` | Nodes join from anywhere. headscale's own authentication carries it: a node needs a pre-auth key or an OIDC sign-in, and the endpoint is not a user interface |
@@ -99,7 +99,7 @@ can see it at all — has not been worked through here.
 
 ## Security model
 
-- **Closed by default.** `access-lan`; see above.
+- **Closed by default.** `access-trusted`; see above.
 - **Non-root**, `read_only`, `cap_drop: ALL`, `no-new-privileges`. The image
   declares uid 0 and does not need it.
 - **No credential of its own to leak.** Nodes authenticate with pre-auth keys

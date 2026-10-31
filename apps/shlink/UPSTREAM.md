@@ -26,7 +26,7 @@
 | Change | Reason |
 |--------|--------|
 | Three routers instead of one published port | The short links, the REST API and the browser interface have different audiences. Traefik matches the longer rule first, so `/rest` keeps its own access policy even when the redirects are opened |
-| `APP_TRAEFIK_ACCESS=access-lan-vpn` on the redirects | Every stack here ships restricted. A short link is meant to be followed, so this is the one value an operator decides deliberately — the README says what opening it accepts |
+| `APP_TRAEFIK_ACCESS=access-trusted-vpn` on the redirects | Every stack here ships restricted. A short link is meant to be followed, so this is the one value an operator decides deliberately — the README says what opening it accepts |
 | `AUTO_RESOLVE_TITLES: "false"` | Upstream's default is `true`, which makes the server fetch every long URL that is shortened to read its `<title>` — an outbound request to an address the caller chose |
 | `SKIP_INITIAL_GEOLITE_DOWNLOAD: "true"` | Without a MaxMind licence key the download cannot succeed; skipping it keeps the start clean. Set a key and remove this to geolocate visits |
 | `ANONYMIZE_REMOTE_ADDR: "true"`, `TRUSTED_PROXIES` | Upstream's default restated, and the proxy named so a visit records the visitor rather than Traefik |

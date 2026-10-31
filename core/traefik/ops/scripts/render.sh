@@ -233,6 +233,31 @@ else
 fi
 export CLOUDFLARE_TRUSTED_IPS_YAML CROWDSEC_BOUNCER_FORWARDED_YAML
 
+# ---------------------------------------------------------------------------
+# Position 1's trusted class (DEC-076). TRUSTED_RANGES, quoted and
+# space-separated, names the client networks access-trusted admits and
+# access-trusted-vpn adds the VPN to; set and empty admits nobody. Unset stops
+# the render: an .env from before the variable has to say what it trusts —
+# scripts/migrate-traefik-env.sh adds the line and renames access-lan* in every
+# stack. What a range may contain is validate.sh's check; the list is built
+# here because envsubst renders a template once and knows no lists.
+# ---------------------------------------------------------------------------
+if [ -z "${TRUSTED_RANGES+set}" ]; then
+  echo "ERROR: TRUSTED_RANGES is not set in .env. It names the client networks access-trusted"
+  echo "       admits, quoted and space-separated; empty admits nobody:  TRUSTED_RANGES=\"\""
+  echo "       access-lan and access-lan-vpn no longer exist: scripts/migrate-traefik-env.sh --all"
+  echo "       adds the line and renames the policy in every stack's .env (CHANGELOG, Migration)."
+  exit 1
+fi
+nl=$'\n'
+ACCESS_TRUSTED_RANGES_YAML=""
+for range in ${TRUSTED_RANGES}; do
+  ACCESS_TRUSTED_RANGES_YAML="${ACCESS_TRUSTED_RANGES_YAML}${ACCESS_TRUSTED_RANGES_YAML:+${nl}}          - \"${range}\""
+done
+[ -n "${ACCESS_TRUSTED_RANGES_YAML}" ] || ACCESS_TRUSTED_RANGES_YAML="          - \"127.0.0.1/32\"  # TRUSTED_RANGES is empty: nobody"
+n_ranges=$(printf '%s\n' ${TRUSTED_RANGES} | grep -c . || true)
+export ACCESS_TRUSTED_RANGES_YAML
+
 # The same ranges for the host firewall, as nftables defines, rendered only in
 # cloudflare mode and installed by the operator (ops/host-files.manifest).
 render_nft_ranges() {
@@ -402,7 +427,11 @@ for f in "${TPL_DIR}/dynamic/"*.yml.tmpl; do
   esac
 
   envsubst < "$f" | place "$out"
-  echo " -> ${base}"
+  if [ "$base" = model.yml ]; then
+    echo " -> ${base} (access-trusted: ${n_ranges} declared range(s))"
+  else
+    echo " -> ${base}"
+  fi
 done
 
 echo "Done. Generated files are in: config/ and config/dynamic/"
