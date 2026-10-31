@@ -257,6 +257,34 @@ Every box was checked against the tree and git on 2026-10-16: a closed item name
 evidence, an open item its owner. An item whose state could not be established would
 be marked *for review*; none needed it.
 
+### 11. The ingress programme — decided 2026-10-31
+
+DEC-075 to DEC-078 ([`decisions.md`](decisions.md)); the audit is
+[`../docs/audits/ingress-architecture-2026-10-31.md`](../docs/audits/ingress-architecture-2026-10-31.md).
+One pull request per step, each without a behaviour change for an installation that
+declares nothing — the render-identity test holds that.
+
+- [x] 1. The guards: `missing-network-label`, `port-no-host-address`, the subnet check,
+      the render-identity test; the records and the register.
+- [ ] 2. The published ports on one named network: `gw_priority` on `proxy-public`;
+      `check-published-family.py` reads the gateway endpoint of the container rather
+      than assuming `public`; the Compose minimum for `gw_priority` written down. Changes
+      the hairpin source address on the next `up -d` — CHANGELOG Migration.
+- [ ] 3. `access-trusted*` from `TRUSTED_RANGES`, the declaration gate, the overlap
+      check, `migrate-traefik-env.sh` for `access-lan*` (DEC-076).
+- [ ] 4. The auth posture in every `.env.example`, its rule, the nine stacks without a
+      login decided one by one (DEC-077).
+- [ ] 5. Edge networks: `render.sh` derives them from the installed stacks — a stack
+      counts as installed by a signal more reliable than the presence of `.env`, to be
+      chosen in the step (a running project, or an explicit list) — the stack template
+      carries `name: ${TRAEFIK_NETWORK}`, the migration guide shared → isolated.
+- [ ] 6. Exposure shown: the derived profile and the layer list in `validate.sh`, the
+      external test script and its marker, the rendered `ingress.nft`, the management
+      requirement (DEC-078).
+- [ ] 7. IPv6 as bind overlays per family; `TRAEFIK_BIND_V6` without a default; the
+      nine known unbound ports bound; the operator site corrected.
+- [ ] 8. Host evidence and release; `ipv6-only` stays "not verified" until its own run.
+
 ## Blocked on a host
 
 v0.8.0 closed on 2026-09-08 — the record is

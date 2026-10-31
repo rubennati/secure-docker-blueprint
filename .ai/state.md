@@ -2,7 +2,7 @@
 
 > If this file conflicts with git (branch, commits, tags), trust git.
 
-**Last updated:** 2026-10-30
+**Last updated:** 2026-10-31
 
 - **Phase:** pre-1.0. Latest tag `v0.9.5` (2026-10-30), which is where `main`
   stands; what `dev` carries beyond it is `git rev-list --count v0.9.5..dev`, and
@@ -64,6 +64,16 @@
   later host session, and so does a host with a global IPv6 address
   (`core/traefik/README.md`, *Not verified on a host*, item 8); the release
   says so.
+- **Decided (2026-10-31): the ingress target architecture**, after an audit of the
+  whole ingress path and a lab run with three stacks
+  ([`../docs/audits/ingress-architecture-2026-10-31.md`](../docs/audits/ingress-architecture-2026-10-31.md)):
+  an edge network per installed stack as the default for new installations, the
+  shared network as a documented choice, `access-trusted` with declared ranges
+  in place of `access-lan`, a stated auth posture per stack, exposure derived and
+  shown — DEC-075 to DEC-078 and an addendum to DEC-063 in
+  [`decisions.md`](decisions.md). An eight-step programme follows
+  ([`tasks.md`](tasks.md) §11); step 1, the guards, is this branch. No existing
+  installation changes until it declares something.
 - **Current milestone:** v0.10.0 — Measured resource limits. Whether
   it stays a release is open (D4 in the audit): the measurement needs the same
   host session as the verification backlog.
