@@ -71,7 +71,7 @@ docker compose logs railsserver --follow
 - **`DB_PWD_INLINE` duplicates the DB password** — Zammad reads `POSTGRESQL_PASS` from env only.
 - **Elasticsearch has no auth here** — it's on `app-internal` only, not reachable from outside. If you move it off-host, add xpack.security.
 - **`no-new-privileges:true`** on all services.
-- **Default access `acc-public` + `sec-3`** — customers submit tickets via public web form `/customer_ticket_new`; agents log in at `/#login`. For agent-only VPN access, see the two-router split pattern (see `business/listmonk/README.md` for the pattern).
+- **Default access `access-public`, with `limit-standard` and `headers-standard`** — customers submit tickets via public web form `/customer_ticket_new`; agents log in at `/#login`. For agent-only VPN access, see the two-router split pattern (see `business/listmonk/README.md` for the pattern).
 
 ## What it sends outward
 

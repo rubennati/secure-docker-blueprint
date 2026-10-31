@@ -41,7 +41,7 @@ across the 0.2x line.
 | `user: "${APP_UID}:${APP_GID}"`, `read_only: true`, `cap_drop: ALL` | The image runs as root and needs nothing root can do here. Verified: the server starts and serves clients with all of it |
 | Traefik service over `https` with `backend-selfsigned@file` | gRPC needs HTTP/2 with TLS end to end, so the container terminates TLS itself. `core/traefik` gains that transport in this change — a serversTransport comes from the file provider only |
 | `--no-check-for-updates` | Upstream's default polls GitHub for new releases |
-| `APP_TRAEFIK_ACCESS=acc-tailscale` | Every machine that backs up here has to reach this host |
+| `APP_TRAEFIK_ACCESS=access-vpn` | Every machine that backs up here has to reach this host |
 | Healthcheck accepts 401 | Every path needs the server login, so an unauthenticated 401 is the proof that the server is answering |
 
 ## Verified on the image (2026-09-23)

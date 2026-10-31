@@ -102,11 +102,12 @@ http:
           - Remote-Name
 ```
 
-Then add `authelia@file` to the middleware list of the router to protect, after
-the access policy and the security chain:
+Then put `authelia@file` in the auth position — the fourth — of the router to
+protect: `APP_TRAEFIK_AUTH=authelia@file` in that stack's `.env`, so the
+standard label resolves to:
 
 ```yaml
-- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_THREAT}${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file,authelia@file"
+- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,authelia@file"
 ```
 
 The protected stack must share a network with `authelia-app` — `proxy-public`
@@ -147,10 +148,11 @@ access_control:
   The healthcheck asks `/api/health` directly instead of going through the image's
   script, which reports healthy whenever that file lacks its marker line.
 - **The portal's first load is 43 requests** (measured 2026-09-26, headless
-  Chrome) — under the burst of 200 in `sec-3`, the shipped chain.
+  Chrome) — under the burst of 200 of the former `sec-3` chain, and well under
+  the burst of 500 of `limit-standard`, which `.env.example` ships.
 - **The portal's access policy follows the apps it protects.** It ships
-  `acc-public`, because a public app needs a public login page. When every
-  protected app is VPN-only, set `acc-tailscale` here as well.
+  `access-public`, because a public app needs a public login page. When every
+  protected app is VPN-only, set `access-vpn` here as well.
 
 ## Choosing between Authelia, Authentik and Keycloak
 

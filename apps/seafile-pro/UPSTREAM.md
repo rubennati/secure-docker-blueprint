@@ -35,7 +35,7 @@
 |--------|--------|
 | Caddy → Traefik labels | Blueprint uses Traefik, not Caddy |
 | Traefik priority=1 on main router, priority=100 on sub-services | Prevents main router from catching /thumbnail, /notification, /sdoc-server paths |
-| `APP_TRAEFIK_SECURITY=sec-2-sync` | The sync client runs three upload and three download threads and issues one request per block, through the main router. Above the 125 requests per second of `sec-2` a sync of many small files is answered `429` and fails; `rl-sync` allows 1000 |
+| `APP_TRAEFIK_LIMIT=limit-sync` | The sync client runs three upload and three download threads and issues one request per block, through the main router. Above the 125 requests per second of `limit-standard` a sync of many small files is answered `429` and fails; `limit-sync` allows 1000 |
 | `seafile-net` → `app-internal` + `proxy-public` | Blueprint network schema |
 | Passwords in .env (not Docker Secrets) | Phusion's my_init clears exported env vars; Secrets wrapper failed |
 | Container names → variables | Blueprint standard |
@@ -127,18 +127,18 @@ If DNS for `APP_TRAEFIK_HOST` resolves to a Tailscale address on the OnlyOffice 
 required on the Seafile side.
 
 **`APP_TRAEFIK_ACCESS` is a Traefik middleware mode, not a network reachability setting.**
-`acc-public` removes Traefik's source-IP allowlist; it does not bypass upstream firewalls.
-`acc-tailscale` enforces a source-IP allowlist for requests from the Tailscale CGNAT range
+`access-public` removes Traefik's source-IP allowlist; it does not bypass upstream firewalls.
+`access-vpn` enforces a source-IP allowlist for requests from the Tailscale CGNAT range
 (`100.64.0.0/10`) and ULA range (`fd7a::/16`).
 
-**Known caveat — `acc-tailscale` source-IP recognition:**
+**Known caveat — `access-vpn` source-IP recognition:**
 When Traefik receives a connection through Docker published ports, `docker-proxy` may
 replace the original source IP with the Docker bridge gateway (`172.17.0.1`) before
 Traefik sees the packet. Traefik then cannot match the Tailscale IP range, and
-`acc-tailscale` rejects the request even though the traffic arrived via Tailscale.
+`access-vpn` rejects the request even though the traffic arrived via Tailscale.
 The fix is to make `proxy-public` dual-stack so the client's IPv6 source address
 survives to the allowlist — `TROUBLESHOOTING.md` §4.4 carries the daemon
-prerequisites, the overlay and how to verify it. `acc-public` was the earlier
+prerequisites, the overlay and how to verify it. `access-public` was the earlier
 workaround here; it removes Traefik's IP check for every caller and is only
 defensible while an upstream firewall independently blocks public inbound 80/443.
 
@@ -291,7 +291,7 @@ docker inspect --format='{{json .Config.Entrypoint}} {{json .Config.Cmd}}' <imag
 | ClamAV connection refused | Missing clamd-remote.conf mount | Mount config with TCPAddr clamav |
 | OnlyOffice not loading | seahub_custom.py not injected | `docker compose restart seafile-pro-app` (auto-injects) |
 | ClamAV not scanning | virus_scan not in seafile.conf | `docker compose restart seafile-pro-app` (auto-injects), or check manually with `grep virus_scan seafile.conf` |
-| `acc-tailscale` rejects Tailscale-routed requests | A tailnet client connects over IPv6 and an IPv4-only `proxy-public` loses that source address before the allowlist is evaluated | Enable dual-stack — `TROUBLESHOOTING.md` §4.4 carries the daemon prerequisites and the overlay. `acc-public` was the earlier workaround and removes the IP check for everyone |
+| `access-vpn` rejects Tailscale-routed requests | A tailnet client connects over IPv6 and an IPv4-only `proxy-public` loses that source address before the allowlist is evaluated | Enable dual-stack — `TROUBLESHOOTING.md` §4.4 carries the daemon prerequisites and the overlay. `access-public` was the earlier workaround and removes the IP check for everyone |
 | Redis `WARNING Memory overcommit must be enabled` in logs | Host sysctl not tuned | Add `vm.overcommit_memory = 1` to `/etc/sysctl.conf`, then `sysctl -p`; non-blocking until then |
 | MariaDB `io_uring_queue_init() failed with EPERM` in logs | Kernel restricts io_uring (`io_uring_disabled=2`) | Non-blocking — MariaDB falls back to libaio automatically; no action needed |
 

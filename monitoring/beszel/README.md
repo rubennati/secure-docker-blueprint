@@ -146,7 +146,7 @@ and can be deleted once the new one shows up. Details in
 |---|---|
 | **Hub ↔ Agent auth** | Registration token plus the hub's Ed25519 public key. The agent opens the connection; the hub never dials in. |
 | **No inbound port** | The agent opens no listener and publishes nothing. There is no host port to restrict, so no firewall rule or VPN ACL is needed to make this stack safe. |
-| **Hub web UI** | `acc-tailscale` + `sec-3` via Traefik — VPN-only access. |
+| **Hub web UI** | `access-vpn`, `limit-standard` and `headers-standard` via Traefik — VPN-only access. |
 | **Docker socket** | The agent never touches `/var/run/docker.sock`. `socket-proxy` holds it read-only and is the only container that does; the agent reaches it by service name on `app-internal`, which is `internal: true` and has no route out. Permissions are `CONTAINERS=1` and `PING=1` — nothing else, `POST=0`. Verified against a live daemon: that set is exactly sufficient for discovery, per-container CPU, memory and network. The proxy answers `403` to `/version` and `/info`, which the agent treats as non-fatal. A compromise of the agent gets that same narrow read-only API, not root on the host. |
 | **Hub data** | SQLite + SSH private key in `volumes/hub-data/`. Back this up — losing it means re-keying all agents. |
 

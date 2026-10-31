@@ -140,10 +140,12 @@ they are always present; through anything else, set the same headers.
 iframe message".** The browser console adds that the page refused to load in
 a frame because `X-Frame-Options` is `deny`. The console frames its cookie
 check from its own origin, and Keycloak sets the frame headers itself. The
-compose file removes the proxy's header with a `strip-xfo` middleware placed
-before the security chain; if the message appears, that middleware is missing
-from the router or has moved behind the chain, where Traefik lets the chain
-set the header again.
+stack therefore ships `headers-application-owned`: the proxy sets the HSTS
+base only, and Keycloak's own headers reach the browser; the one it lacks,
+`Permissions-Policy`, is the `header-permissions@file` block the compose file
+places before the profile. If the message appears, the router's
+`APP_TRAEFIK_HEADERS` has been set to `headers-standard`, whose `DENY`
+overwrites Keycloak's header on every page.
 
 **`/health/ready` is DOWN for a minute after start.** The rebuild at every
 boot takes that long. The healthcheck allows 90 seconds.

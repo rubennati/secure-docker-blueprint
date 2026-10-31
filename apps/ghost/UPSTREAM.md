@@ -55,7 +55,7 @@ The official ghost-docker setup uses Caddy as an internal webserver. This bluepr
 | `mysqladmin ping -p"$(cat secret)" -h 127.0.0.1` healthcheck | `healthcheck.sh` is MariaDB-specific and not in the MySQL image. `-h 127.0.0.1` forces TCP (localhost uses a Unix socket, ready before TCP). Password read from secret file because `MYSQL_ROOT_PASSWORD_FILE` is not resolved outside the init phase. |
 | `utf8mb4` character set | Correct Unicode storage for post content and member names; Ghost requires it. |
 | SMTP via external relay | The Alpine image has no local MTA — an external SMTP service is required. |
-| TLS profile `tls-aplus` + `acc-public` + `sec-2` | Public blog, standard web-app security posture, A+ on SSL Labs. |
+| `access-public` + `limit-standard` + `headers-standard`, no TLS option of its own | Public blog, standard web-app security posture. TLS is the deployment default (`TLS_DEFAULT_OPTION` in `core/traefik/.env`). |
 | ActivityPub as optional overlay | Adds 2 services + one-shot migration runner. Separated into `activitypub.yml` so the base stack works independently. |
 | ActivityPub shares Ghost content volume | Official pattern — images written by ActivityPub land in `./volumes/content/images/activitypub/` and are served by Ghost at `/content/images/activitypub`. No separate volume or Traefik route needed for image delivery. |
 | `MYSQL_MULTIPLE_DATABASES: activitypub` + `mysql-init/` | Official pattern — the activitypub database is created by an init script on first MySQL startup instead of a separate compose service. |

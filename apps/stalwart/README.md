@@ -139,7 +139,7 @@ Measured on the image on 2026-10-03:
   `no-new-privileges`. The image runs as uid 2000.
 - **The one-time setup administrator exists for one start.** `ops/setup.sh`
   generates it, uses it and starts the container again without it.
-- **The web interface ships closed**, `acc-tailscale`. Autoconfig and MTA-STS
+- **The web interface ships closed**, `access-vpn`. Autoconfig and MTA-STS
   are fetched by mail clients and other servers over HTTPS; they work once the
   interface is reachable for them.
 

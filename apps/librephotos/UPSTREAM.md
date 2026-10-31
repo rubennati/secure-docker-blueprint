@@ -35,7 +35,7 @@
 | **`DB_TAG` / `APP_TAG` as variables** | Blueprint pinning convention |
 | **`DEBUG=0` explicit** | Inbox had it inline; kept for clarity |
 | **`data=` path renamed to individual bind mounts** (`./volumes/protected_media`, `./volumes/logs`, `./volumes/cache`, `./volumes/db`) | Inbox used a single `${data}` root variable that mixed DB and media; separating them makes backups and permissions cleaner |
-| **Access `acc-public` + security `sec-2` defaults** | Wiki-style access; consider `acc-tailscale` for family-only galleries |
+| **Access `access-public`, `limit-standard` and `headers-standard` defaults** | Wiki-style access; consider `access-vpn` for family-only galleries |
 
 ## Version / tag notes
 

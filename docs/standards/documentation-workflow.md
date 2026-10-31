@@ -200,7 +200,7 @@ one that is prohibited:
 | **Use** | The value appears in a step, because the reader needs it to act | a command, a path, a required version |
 | **Summary** | One purpose-specific sentence, shorter than the owner's treatment | the reader needs the shape, not the detail |
 | **Reference** | A link to the owner, naming what the reader will find there | the detail may be needed, later |
-| **Generated** | A representation written from the canonical sources by a script, never by hand | `LIFECYCLE.md` |
+| **Generated** | A representation written from the canonical sources by a script, never by hand | `LIFECYCLE.md`, `docs/security-coverage.md`, the register in `.ai/decisions.md` |
 | **Duplication** | A second independent version that can drift | prohibited |
 
 `Generated` is a presentation mode, not a competing owner: the generated file
@@ -231,6 +231,7 @@ None of that material is discarded. Each part has an owner:
 | Current implementation | the stack's `README.md`, `docs/standards/`, `docs/architecture.md` |
 | Deviation from upstream, upgrade rationale | the stack's `UPSTREAM.md` |
 | Dated inspection of a state | `docs/audits/` |
+| A decision — its state, where it was applied and how it was verified | `.ai/decisions.md`, one entry per decision under its ID heading |
 | One incident — symptom, cause, fix, lesson | `docs/bugfixes/` |
 | What a session established, in sequence | `docs/maintenance-log.md`, `docs/host-session-*.md` |
 | Active working state | `.ai/state.md`, `.ai/tasks.md`, `.ai/progress.md` |
@@ -238,7 +239,23 @@ None of that material is discarded. Each part has an owner:
 The lower half of that table is narrative by purpose: a findings log records how
 something was established, including what failed on the way. The exclusion of
 development narration governs current-state documentation and does not reach
-these.
+these. The [public-content rule](commit-rules.md#public-content) does: a session
+or findings log names a test environment by its role, not by its private
+domain, address, local path or owner, and carries no instructions to or from
+an assistant session. Its technical content stays.
+
+An audit or review numbers what it puts to the maintainer from D1, and more
+than one does. Outside its own document a number carries the audit's short
+name — `core D6`, `stab D1`, `review D3` — unless the heading or line it
+stands under has already named the audit; a bare `D3` names nothing. The
+entry in `.ai/decisions.md` that answers or rejects a question carries the
+same form in its `Decision` line.
+
+| Short name | Document |
+|---|---|
+| `core` | `docs/audits/core-v1-readiness-2026-10-15.md` — the core audit |
+| `stab` | `docs/v1-readiness-audit.md` — the stabilization audit |
+| `review` | `docs/audits/traefik-architecture-review-2026-10-17.md` — the Traefik review |
 
 A reason belongs in current-state documentation when it changes what the reader
 does:
@@ -283,7 +300,7 @@ Every document has a type. The type determines when it must be updated.
 | **Reference** | Standard evolves | Same commit | `docs/standards/*.md` |
 | **Snapshot** | Event occurred | At event | `docs/bugfixes/<app>-<date>.md` |
 | **Plan** | A listed item ships or becomes irrelevant | Same commit | `ROADMAP.md` |
-| **Generated** | Its sources change | Same commit, by script | `LIFECYCLE.md` |
+| **Generated** | Its sources change | Same commit, by script | `LIFECYCLE.md`, `docs/security-coverage.md`, the register in `.ai/decisions.md` |
 | **Draft** | Ongoing iteration | Flexible | Private drafts, work-in-progress docs |
 
 `ROADMAP.md` is a **Plan**, not a Live document: an item that ships leaves the

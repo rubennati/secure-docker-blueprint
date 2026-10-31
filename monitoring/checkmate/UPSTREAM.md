@@ -41,7 +41,7 @@ the `bluewave-labs` organisation name do not match the product name.
 | No `ports:` | Upstream publishes 52345 to the host |
 | MongoDB on `internal: true` | Upstream puts both services on one bridge network |
 | Port 52346 is not routed | The worker health port answers `/livez` without authentication |
-| `APP_TRAEFIK_ACCESS=acc-tailscale` | A fresh instance hands ownership to whoever registers first, and the dashboard lists every host this installation watches |
+| `APP_TRAEFIK_ACCESS=access-vpn` | A fresh instance hands ownership to whoever registers first, and the dashboard lists every host this installation watches |
 
 `stop_grace_period: 60s` is upstream's, kept: the worker finishes the checks in
 flight rather than leaving a gap on every restart.

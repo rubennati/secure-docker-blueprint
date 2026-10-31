@@ -43,7 +43,7 @@ The origin comes from the governing-law clause of Akaunting's terms of service
 | `ops/install.sh` instead of the web wizard | Upstream's own `php artisan install`, run as `www-data`, with both passwords read from the secrets inside the container |
 | `config/entrypoint.sh` creates `storage/`'s directories as `www-data` (`setpriv`) | The script runs as root without `CAP_DAC_OVERRIDE`, and `volumes/storage` belongs to `www-data` with mode `700`: as root, `mkdir -p` could not enter it and the container restarted in a loop on a fresh install — measured |
 | `ops/install.sh` reads and edits `.env` inside the container | `volumes/app.env` belongs to `www-data` with mode `600`. Read from the host, the "already installed" check could not see the file and let a second run through — and the installer writes a new `APP_KEY` on every run (measured: the key changed); the database password also stayed in the file. Both now run as `www-data` in the container, and the script stops if the password line is still there |
-| `APP_TRAEFIK_ACCESS=acc-tailscale` | The web installer is open until the install has run |
+| `APP_TRAEFIK_ACCESS=access-vpn` | The web installer is open until the install has run |
 
 ## Verification performed (2026-09-22)
 

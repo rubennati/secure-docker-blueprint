@@ -71,7 +71,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 - **`cap_drop: ALL`** on MariaDB with minimal `cap_add`.
 - **`no-new-privileges:true`** on both services.
 - **MariaDB on `app-internal` (`internal: true`)** — not reachable from outside.
-- **Default access `acc-tailscale` + `sec-3`** — Monica holds very personal data (contacts, health, journal). VPN-only is a safer default than public.
+- **Default access `access-vpn`, with `limit-standard` and `headers-standard`** — Monica holds very personal data (contacts, health, journal). VPN-only is a safer default than public.
 
 ## Backup
 

@@ -94,9 +94,10 @@ depends on the ownership from step 4.
 
 ### Public by default
 
-The stack ships `acc-public` with `sec-2`. A wiki people are meant to read has to
-be readable; BookStack's own permissions decide who sees what. If the content is
-internal, `acc-tailscale` in `.env` is the change.
+The stack ships `access-public` with `limit-standard` and `headers-standard`. A
+wiki people are meant to read has to be readable; BookStack's own permissions
+decide who sees what. If the content is internal, `access-vpn` in `.env` is the
+change.
 
 ## Backup
 

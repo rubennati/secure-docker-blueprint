@@ -65,7 +65,7 @@ Internet → Traefik (TLS, port 443) → windmill-server :8000
 | `read_only: true` on the server and both workers | Verified with real jobs on read-only workers. The only writable paths are `/tmp` and `/tmp/windmill` (tmpfs) and the worker's cache bind mount |
 | `windmill-server` memory 1 GiB | Measured: 470–535 MiB idle and under UI load, 558 MiB peak at start; at 512 MiB the kernel killed it every 30 s |
 | Workers join `app-egress`, a per-stack outbound network | On `app-internal` alone a Python job cannot download its interpreter (`dns error … failed to lookup address information`) and dependency installs fail; the native TypeScript job, which downloads nothing, passed. The database stays on `app-internal` only — `getent hosts github.com` from it fails. Same pattern as `apps/nextcloud` and `business/invoiceninja` |
-| `APP_TRAEFIK_ACCESS=acc-deny` in `.env.example` | A fresh instance carries a published superadmin password; the router stays closed until `ops/bootstrap-admin.sh` has replaced it |
+| `APP_TRAEFIK_ACCESS=access-blocked` in `.env.example` | A fresh instance carries a published superadmin password; the router stays closed until `ops/bootstrap-admin.sh` has replaced it |
 | `ops/bootstrap-admin.sh` | Replaces `admin@windmill.dev` with an operator account and proves the built-in one no longer authenticates — see below |
 | Server healthcheck on `/api/health/status` | Upstream's own unauthenticated status endpoint; it reports database reachability and live workers, which `/api/version` does not |
 
@@ -89,7 +89,7 @@ returned `200`; a second run reported "already bootstrapped" and changed
 nothing; both survived a server restart, so the built-in account is not
 re-seeded. With the server stopped the script fails with a non-zero exit
 instead of reporting success. Until it has run, the default credential is
-valid — which is why the router starts at `acc-deny`.
+valid — which is why the router starts at `access-blocked`.
 
 ### NSJAIL was tried and did not work
 
@@ -152,9 +152,9 @@ place to record it once a host run has captured the full picture.
 The UI's first load issues about 850 requests. Measured 2026-09-23, five loads in
 a row: with a burst of 50 and with a burst of 200 part of them got `429` and the
 page showed `500 Internal Error`; under `sec-2-spa-xl`, whose bucket of 1000
-holds one whole first load, every request was answered. `.env.example` ships that
-chain, and it belongs behind a closed access policy for the same reason the
-bucket is that wide. `sec-2` and `sec-2-spa` carry bursts of 200 and 500 since
+holds one whole first load, every request was answered. `.env.example` ships
+`limit-extra-large`, the same 125/1000, and it belongs behind a closed access
+policy for the same reason the bucket is that wide. `sec-2` and `sec-2-spa` carry bursts of 200 and 500 since
 2026-10-03, both below the load.
 
 ## Verification performed (2026-09-23)

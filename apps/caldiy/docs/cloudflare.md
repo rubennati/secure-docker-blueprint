@@ -83,9 +83,10 @@ CrowdSec host-firewall remediation — see [`core/crowdsec/docs/firewall-bouncer
 | Automatic HTTPS Rewrites | On | Fixes mixed-content |
 | Authenticated Origin Pulls | On *(if using §1 option C)* | Origin rejects non-Cloudflare TLS |
 
-**HSTS:** the origin already sends HSTS via the `sec-3` chain (`APP_TRAEFIK_SECURITY=sec-3`). If
-you *also* enable Cloudflare HSTS, keep the `max-age` aligned and re-read the browser-sticky
-caveat in the [README](../README.md#security-chain-sec-3) — HSTS is hard to undo. Don't set two
+**HSTS:** the origin already sends HSTS — `max-age` only, from the `headers-standard` profile
+(`APP_TRAEFIK_HEADERS=headers-standard`). If you *also* enable Cloudflare HSTS, keep the `max-age`
+aligned, and re-read the browser-sticky caveat in the [README](../README.md#traefik-middlewares)
+before adding `includeSubDomains` or `preload` at the edge — HSTS is hard to undo. Don't set two
 conflicting max-ages.
 
 ---
@@ -121,7 +122,7 @@ don't have to hand-type the expression field name). Equivalent expression:
   this list.
 - **Keep yourself in:** optionally add a higher-priority *Skip* rule for your own admin IP/ASN so
   a geo rule can never lock you out from the edge. Also keep the VPN/Tailscale origin path
-  (`acc-*`), which does not depend on Cloudflare at all.
+  (`access-*`), which does not depend on Cloudflare at all.
 
 ---
 
@@ -146,8 +147,8 @@ Protect the credential and booking surfaces (Free plan = one rate-limit rule; Pr
 | Booking POST endpoints | sane per-IP cap | Managed Challenge |
 
 If you only get one rule on your plan, spend it on `/api/auth/*` (login brute-force is the
-highest-value target). The origin `sec-3` chain also rate-limits (125 req/s), but the edge stops
-it before it ever reaches your server.
+highest-value target). The origin's `limit-standard` counter also rate-limits (125 req/s, burst
+500), but the edge stops it before it ever reaches your server.
 
 ---
 
@@ -172,7 +173,7 @@ it before it ever reaches your server.
 
 ## 8. Emergency — "Under Attack" mode
 
-A second kill-switch alongside the origin `acc-deny` (see [ops-runbook.md](ops-runbook.md) §7):
+A second kill-switch alongside the origin `access-blocked` (see [ops-runbook.md](ops-runbook.md) §7):
 set the zone (or a scoped rule on `cal.<domain>`) to **"I'm Under Attack Mode"** → JavaScript
 challenge for every visitor. Use it to ride out an active attack, then turn it back off.
 
@@ -191,9 +192,9 @@ this host — it can serve one user's authenticated page to another. Default Clo
 Cloudflare is the outer layer, not the whole defense. If it is bypassed via an origin-IP leak,
 **§1 (origin lock) is your backstop.** These stay mandatory regardless of Cloudflare:
 
-- CrowdSec `crowdsec-basic` + AppSec at the origin (hardening-plan Phase 2)
+- CrowdSec at the origin once the deployment enables it — `threat-crowdsec`, AppSec later (hardening-plan Phase 2)
 - `NEXT_PUBLIC_DISABLE_SIGNUP=true`, Docker Secrets, `deploy.resources` caps (Phase 1)
-- Origin TLS + `sec-3` headers (Traefik)
+- Origin TLS + `headers-standard` and `limit-standard` (Traefik)
 
 ---
 
@@ -213,7 +214,7 @@ Cloudflare is the outer layer, not the whole defense. If it is bypassed via an o
 ## See also
 
 - [hardening-plan.md](hardening-plan.md) — where Cloudflare sits in the phased roadmap (Phase 3)
-- [ops-runbook.md](ops-runbook.md) — origin kill-switch (`acc-deny`), incident procedure
+- [ops-runbook.md](ops-runbook.md) — origin kill-switch (`access-blocked`), incident procedure
 - [`core/crowdsec/docs/firewall-bouncer.md`](../../../core/crowdsec/docs/firewall-bouncer.md) — host firewall / origin lock (§1 option B)
 - [`core/crowdsec/docs/profiles.md`](../../../core/crowdsec/docs/profiles.md) — why geo is edge/allowlist, not a CrowdSec profile
 - Cloudflare IP ranges — https://www.cloudflare.com/ips/ (mirrored in `traefik.yml.tmpl`)

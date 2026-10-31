@@ -228,35 +228,42 @@ at `chrome://net-internals/#dns`.
 
 ---
 
-### 4.4 `acc-tailscale` rejects requests that are actually routed via Tailscale
+### 4.4 `access-vpn` rejects requests that are actually routed via Tailscale
 
 **Symptom:** A service is reachable, DNS resolves the hostname to a Tailscale
 address, both peers are online in the same tailnet, and traffic provably routes
-through `tailscale0` — but Traefik's `acc-tailscale` middleware answers 403.
+through `tailscale0` — but Traefik's `access-vpn` middleware answers 403.
 
-**Cause.** `acc-tailscale` allows `100.64.0.0/10` and `fd7a:115c:a1e0::/48`, and
+**Cause.** `access-vpn` allows `100.64.0.0/10` and `fd7a:115c:a1e0::/48`, and
 it matches on the source address of the connection. Tailscale gives every client
 an IPv6 address and prefers it, and a tailnet client connects **directly** — there
 is no proxy in front to record the original address in a header. If the Docker
 network Traefik sits on cannot carry an IPv6 source address end to end, that
 address is gone before Traefik evaluates the allowlist, and no header exists to
 recover it from. The request is then judged on whatever address survived, which is
-never in the allowed ranges.
+never in the allowed ranges. Traefik is published on IPv6 only together with an
+IPv6 `proxy-public`, so with the shipped compose files the symptom is a refused
+IPv6 connection instead; a 403 points to a container still running with `[::]`,
+which `bash ops/scripts/validate.sh --strict` in `core/traefik` reports.
 
 The full reasoning is in
 [`core/traefik/docs/ipv6-dual-stack.md`](core/traefik/docs/ipv6-dual-stack.md).
 
-**Fix — enable dual-stack. Do not switch to `acc-public`.**
+**Fix — enable dual-stack. Do not switch to `access-public`.**
 
 1. `/etc/docker/daemon.json` — `"ipv6": true`, `"ip6tables": true`,
    `"userland-proxy": false`, then `sudo systemctl restart docker`.
 2. Set `PUBLIC_NETWORK_SUBNET_V4` and `PUBLIC_NETWORK_SUBNET_V6` in
    `core/traefik/.env`. Generate your own ULA prefix — do not copy the example.
-3. Bring Traefik up with the overlay:
+3. Bring Traefik up with the overlay and confirm it:
 
    ```bash
    docker compose -f docker-compose.yml -f network-dual-stack.yml up -d
+   bash ops/scripts/validate.sh --strict -f docker-compose.yml -f network-dual-stack.yml
    ```
+
+   An existing `proxy-public` without IPv6 is reported as an error — it has to be
+   recreated first, following the migration guide in the document above.
 
 **Verified on a Debian 13 host, 2026-07-28.** With the above in place, `whoami`
 reported the client's real tailnet address in `X-Real-Ip` for a browser request
@@ -278,14 +285,14 @@ remaining 403 has another cause.
 **Rule out the browser first.** A stale DNS answer produces an identical 403 from
 a different host entirely — see 4.3.
 
-**Why not `acc-public`:** it removes the Traefik-level IP check for everyone, not
+**Why not `access-public`:** it removes the Traefik-level IP check for everyone, not
 just for your tailnet. It is only defensible when an upstream firewall blocks
 public inbound 80/443 independently, and it silently stops being defensible the
 day that firewall changes. Earlier revisions of this document recommended it as a
 workaround; dual-stack replaces it.
 
 **Related:** `apps/seafile-pro/UPSTREAM.md` carries a note from the 2026-06-24
-Seafile Pro case, which was resolved with the `acc-public` workaround before the
+Seafile Pro case, which was resolved with the `access-public` workaround before the
 cause was understood — it should be revisited.
 
 ---
@@ -422,8 +429,8 @@ the integration before the switch".
 error, or a web interface stays blank or half-rendered on its first load. The
 application's own log shows nothing, because the requests never reached it.
 
-**Cause:** the router's rate limit. Every chain from `sec-2` upward counts requests
-per client address: `burst` requests pass at once, `average` per second refill the
+**Cause:** the router's rate limit. Every router with a counter (`APP_TRAEFIK_LIMIT`
+other than `limit-none`) counts requests per client address: `burst` requests pass at once, `average` per second refill the
 bucket, and Traefik answers the rest with `429`. A first load of several hundred
 files exceeds the burst; a sync of many small files exceeds the sustained rate.
 
@@ -435,36 +442,57 @@ docker exec traefik-core cat /var/log/traefik/access.log \
   | sort | uniq -c | sort -rn | head
 ```
 
-**Fix:** set the chain that fits the traffic in the stack's `.env` and run
-`docker compose up -d`, which recreates the container with the new label. A first
-load beyond 200 requests takes a `-spa` chain, an application with sync clients a
-`-sync` chain; the values are in
-[`docs/standards/traefik-security.md`](docs/standards/traefik-security.md#choosing-the-level-for-an-app).
+**Fix:** set the counter that fits the traffic as `APP_TRAEFIK_LIMIT` in the
+stack's `.env` and run `docker compose up -d`, which recreates the container with
+the new label. A first load beyond 500 requests takes `limit-extra-large`, behind
+a closed access policy only; an application with sync clients takes `limit-sync`;
+the values are in
+[`docs/standards/traefik-security.md`](docs/standards/traefik-security.md#rate-limits-position-2).
 
 If every line carries the same client address, all clients share one bucket: they
 arrive through a NAT, a CDN, or a Docker network that does not carry their address
 (4.4). A wider chain then treats the symptom, and the address is the cause.
 
+### 4.10 SSH or HTTPS over the VPN stops answering after CrowdSec banned your own address
+
+**Symptom:** the host no longer answers over its VPN address on one or both families;
+other clients and public routes are fine. `docker exec crowdsec cscli decisions list
+--ip <your address>` names a decision, typically from `http-probing` or
+`http-crawl-non_statics` — the patterns an administrator's browser produces, and the
+scenario cannot know the source is trusted.
+
+**Cause:** a VPN address is outside CrowdSec's default whitelist (RFC1918 and loopback
+only), and the host-firewall bouncer or the Traefik bouncer enforces the decision.
+
+**Fix:** reach the host another way — the other family, the LAN, the hoster's console —
+stop the enforcement that closed the path, lift that one decision, exempt the device,
+start enforcement again. Step by step, without the VPN:
+[`core/crowdsec/docs/runbook.md`](core/crowdsec/docs/runbook.md#locked-out-over-the-vpn).
+The exemption that prevents the repeat is README step 5 of `core/crowdsec`.
+
 ---
 
 ## 5. Git & Deployment Issues
 
-### 5.1 Server running old code after local commits
+### 5.1 Server running old code after a fix landed in the repository
 
-**Symptom:** Config fix committed locally, `docker compose up -d` on server, still broken. `printenv` shows old value. `git log` on server shows old commit hash.
+**Symptom:** A fix is merged, `docker compose up -d` on the server, still broken. `printenv` shows the old value; `./scripts/overview.sh` or `git describe --tags` on the server names the earlier release.
 
-**Root cause:** Commits exist locally but were never pushed. Server's `git pull` has nothing to fetch.
+**Root cause:** A deployment is a checkout of a release tag and moves only when a newer tag is checked out. A change that is on `dev` and in no release is on no server; a release that is out does not arrive until the server checks it out.
 
 **Fix:**
 
 ```bash
-# On local machine:
-git push origin dev
-
-# On server:
-git pull
+# On the server, in the checkout:
+git fetch --tags
+git checkout <newer-tag>
+# core/traefik only, when the release changed a template:
+bash ops/scripts/render.sh && bash ops/scripts/validate.sh
 docker compose up -d --force-recreate <service>
 ```
+
+What to read between two tags, and the order in which stacks are recreated:
+[`docs/standards/deployment-lifecycle.md`](docs/standards/deployment-lifecycle.md#7--update-the-blueprint).
 
 **Important:** `docker compose restart` does NOT pick up new env vars or label changes from an updated compose file. You need `up -d` (or `up -d --force-recreate`) to recreate the container with the new config.
 
@@ -757,9 +785,9 @@ When something doesn't work after deployment, run through this in order:
    docker compose logs <service> --tail=30
    docker compose exec <service> wget -qO- http://127.0.0.1:<port>/
 
-5. Is the server on the latest commit?
-   git log --oneline -3
-   # If behind: git push origin dev (local), git pull (server)
+5. Is the server on the release it should be?
+   git describe --tags
+   # If behind: git fetch --tags && git checkout <tag> — docs/standards/deployment-lifecycle.md §7
 
 6. Are the env vars actually set correctly?
    docker compose exec <service> printenv | sort

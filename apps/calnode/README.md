@@ -50,7 +50,7 @@ unavailable until working hours are set in the admin interface.
 
 `POST /v1/setup` is public and unauthenticated until it has run. Whoever calls it
 first becomes the owner of the workspace. There is no setup password in front of
-it, so `.env.example` ships `APP_TRAEFIK_ACCESS=acc-tailscale`: the VPN only.
+it, so `.env.example` ships `APP_TRAEFIK_ACCESS=access-vpn`: the VPN only.
 
 That is also the tension in this stack. Guests cannot book through a closed
 router, so a real booking page eventually needs a wider policy — and the admin

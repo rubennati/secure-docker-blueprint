@@ -77,7 +77,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/login    # 200 OK
 - **`cap_drop: ALL`** on MariaDB with minimal `cap_add` (CHOWN, SETUID, SETGID, DAC_OVERRIDE).
 - **`no-new-privileges:true`** on both services.
 - **LSIO s6-overlay** — container starts as root for init, drops to PUID/PGID. Do **not** set `user:` (would break s6).
-- **`sec-2` sends `X-Frame-Options: DENY`, which is stricter than BookStack's own policy.** BookStack sets `frame-ancestors 'self'` and widens it through [`ALLOWED_IFRAME_HOSTS`](https://www.bookstackapp.com/docs/admin/security/). The proxy header is not affected by that setting, so an operator who allows another host to embed BookStack has to move to `sec-2e` in the same step, or the frame stays blocked with nothing in BookStack's configuration to explain it. Embedding *into* BookStack — diagrams.net, YouTube, Vimeo — is `frame-src` and unaffected either way.
+- **`headers-standard` sends `X-Frame-Options: DENY`, which is stricter than BookStack's own policy.** BookStack sets `frame-ancestors 'self'` and widens it through [`ALLOWED_IFRAME_HOSTS`](https://www.bookstackapp.com/docs/admin/security/). The proxy header is not affected by that setting, so an operator who allows another host to embed BookStack has to change what the proxy sends in the same step — a block before `${APP_TRAEFIK_HEADERS}@file` on the router, see "Framing" in [`docs/standards/traefik-security.md`](../../docs/standards/traefik-security.md#framing--what-frame-self-is-and-what-it-is-not) — or the frame stays blocked with nothing in BookStack's configuration to explain it. Embedding *into* BookStack — diagrams.net, YouTube, Vimeo — is `frame-src` and unaffected either way.
 
 ## Backup
 

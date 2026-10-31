@@ -79,7 +79,7 @@ its discovery document tells it everything else.
 
 Keycloak has no proxy of its own. An application without OIDC or SAML cannot
 be put behind Keycloak with what this stack ships — that is what Authentik's
-embedded outpost and the `sec-authentik` Traefik middleware do.
+embedded outpost and the `auth-authentik@file` Traefik middleware do.
 
 ## Security model
 
@@ -89,26 +89,28 @@ embedded outpost and the `sec-authentik` Traefik middleware do.
   server trust from any peer — safe only because no listener is reachable
   except through Traefik. Never publish 8080.
 - **Access policy follows the applications.** An identity provider is
-  reachable by whatever it protects. The stack ships `acc-tailscale`; a
-  Keycloak in front of public applications is public, with CrowdSec ahead of
-  it.
+  reachable by whatever it protects. The stack ships `access-vpn`; a
+  Keycloak in front of public applications is public — and, where the
+  deployment has enabled CrowdSec (`CROWDSEC_BOUNCER_ENABLED` in
+  `core/traefik`), it stands in front of this router as of every other.
 - **The proxy sends no `X-Frame-Options`; Keycloak sets it itself.** The
   admin console answers with `SAMEORIGIN` and a CSP `frame-ancestors 'self'`,
   and loads its third-party-cookie check in an iframe from its own origin.
   The two pages built to be framed — that check, and
   `login-status-iframe.html`, which `keycloak-js` embeds from the
-  application's origin — carry no frame header at all. A `DENY` added by the
-  security chain reaches them, and the console stops at "Timeout when waiting
-  for 3rd party check iframe message". The compose file therefore puts a
-  `strip-xfo` middleware between the access policy and the security chain;
-  it removes the header the chain sets. It has to stand *before* the chain:
-  Traefik applies the response changes of the first middleware last, so a
-  strip placed after the chain is overwritten by it (measured on v3.6). The
-  console stays protected by its own CSP `frame-ancestors 'self'`, and the
-  realm's *Security Defenses* tab owns the values. An `e` variant of the
-  chain is not the answer: it sets `SAMEORIGIN` on every response, including
-  `login-status-iframe.html`, which an application on another origin is
-  meant to frame.
+  application's origin — carry no frame header at all. A `DENY` set by
+  `headers-standard` would reach them, and the console would stop at
+  "Timeout when waiting for 3rd party check iframe message". The stack
+  therefore ships `headers-application-owned`: the proxy sets the HSTS base
+  only, and Keycloak's own headers reach the browser. The one it lacks,
+  `Permissions-Policy`, is the `header-permissions@file` block the compose
+  file places *before* the profile: Traefik applies the response changes of
+  the first middleware last, so a block placed after the profile would be
+  overwritten by it (measured on v3.6). The console stays protected by its
+  own CSP `frame-ancestors 'self'`, and the realm's *Security Defenses* tab
+  owns the values. `frame-self@file` is not the answer: it sets `SAMEORIGIN`
+  on every response, including `login-status-iframe.html`, which an
+  application on another origin is meant to frame.
 - **Secrets through the entrypoint.** `KC_*_FILE` variables are accepted into
   the configuration without a warning and do nothing — `KC_DB_PASSWORD_FILE`
   leaves the driver reporting that no password was provided. The wrapper in
@@ -137,7 +139,7 @@ embedded outpost and the `sec-authentik` Traefik middleware do.
 | Runtime | Python | Java |
 | Licence · origin | MIT · Netherlands, EU | Apache-2.0 · US, CNCF |
 | Secrets | native `file://` | entrypoint wrapper |
-| A login in front of an application that has no OIDC | yes — embedded outpost, wired into Traefik as `sec-authentik` | no — needs a separate proxy such as oauth2-proxy, which this repository does not ship |
+| A login in front of an application that has no OIDC | yes — embedded outpost, wired into Traefik as `auth-authentik@file` | no — needs a separate proxy such as oauth2-proxy, which this repository does not ship |
 | Protocols | OIDC, SAML, LDAP and RADIUS through outposts, SCIM | OIDC, SAML, LDAP and Active Directory federation, SCIM |
 | Configuration as code | blueprints, YAML | realm export and import, JSON |
 | Telemetry | error reporting, switched off in the compose file | none found |

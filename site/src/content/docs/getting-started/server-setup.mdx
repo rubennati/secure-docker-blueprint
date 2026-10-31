@@ -175,7 +175,7 @@ diagnostic endpoint:
 ```bash
 cd ../../apps/whoami
 cp .env.example .env
-# set APP_TRAEFIK_HOST, and APP_TRAEFIK_ACCESS=acc-public for the test
+# set APP_TRAEFIK_HOST, and APP_TRAEFIK_ACCESS=access-public for the test
 docker compose up -d
 ```
 
@@ -198,7 +198,7 @@ configuration and the overlay.
 
 ```bash
 # close it again afterwards
-sed -i 's/^APP_TRAEFIK_ACCESS=.*/APP_TRAEFIK_ACCESS=acc-private/' .env
+sed -i 's/^APP_TRAEFIK_ACCESS=.*/APP_TRAEFIK_ACCESS=access-vpn/' .env
 docker compose up -d
 ```
 

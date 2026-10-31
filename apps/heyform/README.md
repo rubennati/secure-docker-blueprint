@@ -67,10 +67,10 @@ unexpired and match the workspace's current code.
 
 ## Publishing forms to the outside
 
-The default is `acc-tailscale`: the instance is reachable over the VPN and
+The default is `access-vpn`: the instance is reachable over the VPN and
 nowhere else. That covers forms whose respondents are on the VPN too.
 
-Forms for people outside it need `APP_TRAEFIK_ACCESS=acc-public`, and that
+Forms for people outside it need `APP_TRAEFIK_ACCESS=access-public`, and that
 publishes the whole instance, not just the forms. HeyForm serves the builder,
 the collected submissions and the pages respondents fill in from one port, and
 routes every one of them through a single `/graphql` endpoint — so there is no
@@ -85,9 +85,10 @@ What that does and does not mean:
   endpoints a respondent uses. Sign-in is rate-limited per account and
   address. Sign-up and the respondent endpoints require a header the browser
   sets, which a script can also set once it is known.
-- So before switching: close registration (above), and consider a CrowdSec
-  profile in `APP_TRAEFIK_THREAT` — the sign-in endpoint is the part worth
-  watching.
+- So before switching: close registration (above), and consider enabling
+  CrowdSec for the deployment (`CROWDSEC_BOUNCER_ENABLED` in `core/traefik`),
+  which then stands in front of every router — the sign-in endpoint is the
+  part worth watching.
 
 ## Without SMTP
 
@@ -172,10 +173,10 @@ from this installation's own database, not fetched.
 
 ## Known limits
 
-- `sec-2` is not measured against this application. It is a React front end
-  that loads its assets in one burst, which is the pattern the `-spa` rate
-  limits exist for. If assets fail to load on first visit, that is the first
-  thing to look at.
+- `limit-standard` is not measured against this application. It is a React
+  front end that loads its assets in one burst; the bucket of 500 is sized for
+  that pattern, but no first load has been counted here. If assets fail to
+  load on first visit, that is the first thing to look at.
 - There is no upstream health endpoint that covers everything: `/health`
   answers as long as the process is up, `/health/ready` checks MongoDB and
   Valkey. The healthcheck uses the second.

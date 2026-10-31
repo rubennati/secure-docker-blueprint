@@ -33,12 +33,14 @@ Four models describe documentation in this repository, each answering one questi
 | Secret generation, handling and rotation | `docs/standards/secrets.md` | `env-structure.md` references it; every stack's setup steps |
 | Application recovery once data is restored | `docs/standards/restore.md` | `backup/borgmatic/RESTORE.md` and the stack READMEs that cross-link it |
 | Taking a deployment into production and keeping it there — release selection, deployment order, blueprint updates as against image updates, rollback, release identity | `docs/standards/deployment-lifecycle.md` | `README.md` Getting started; this file is its maintainer-side counterpart |
+| Files a stack installs outside the checkout — the manifest format, the three ways of comparing, the states `overview.sh --host` reports | `docs/standards/host-files.md` | each stack's `ops/host-files.manifest` and the install step in its README |
 | Local test stack — shape, header, which stacks get one | `docs/standards/compose-structure.md` | Every `docker-compose.local.yml` and `.env.local.example`; `apps/_reference/` is the worked example |
 | Security rules that are on or off — privileges, capabilities, secrets, socket access, network isolation | `docs/standards/security-baseline.md` | Every service in every compose |
 | Naming conventions | `docs/standards/naming-conventions.md` | Every compose, env, container name |
 | A symptom and its fix — a failure seen in this blueprint | `TROUBLESHOOTING.md` | Stack READMEs and `UPSTREAM.md` reference a numbered entry |
 | The layer-by-layer debugging method and command reference | `docs/standards/troubleshooting.md` | — |
 | Architecture decisions | `docs/architecture.md` | Category READMEs may summarise |
+| A decision — its state, where it was applied and how it was verified | `.ai/decisions.md` — the entry's ID heading and field lines | the register at the top of the same file, *generated* by `scripts/ci/decision-register.py --write` and never hand-edited; `.ai/state.md` and the audits point to an entry |
 | Per-app setup | `<app>/README.md` | Category README one-liner only |
 | Per-app config options | `<app>/CONFIG.md` (where it exists) | No duplication |
 | Per-app upstream info | `<app>/UPSTREAM.md` | — |
@@ -53,7 +55,7 @@ Four models describe documentation in this repository, each answering one questi
 python3 scripts/ci/lifecycle-report.py --write
 ```
 
-**Generated is a presentation mode, not a second owner.** `LIFECYCLE.md` holds no fact of its own: every column is read from the canonical source named above, the file is written only by `scripts/ci/lifecycle-report.py --write`, and it is never edited by hand. A wrong value in it is corrected at that source and the file regenerated — editing the generated file changes nothing that survives the next run.
+**Generated is a presentation mode, not a second owner.** `LIFECYCLE.md`, `docs/security-coverage.md` and the register at the top of `.ai/decisions.md` hold no fact of their own: every value is read from the canonical source named above, each is written only by its script — `scripts/ci/lifecycle-report.py --write`, `scripts/ci/security-coverage.py --write`, `scripts/ci/decision-register.py --write` — and none is edited by hand. A wrong value in one is corrected at that source and the file regenerated — editing the generated file changes nothing that survives the next run.
 
 ---
 
@@ -210,8 +212,9 @@ Run the full Consistency Chain first, then:
 | 3 | `README.md` | Bump version badge (`v0.X.Y-blue`) |
 | 4 | All `🚧` entries | Is the preview status still honest? |
 | 5 | All `✅` entries | Were any broken by dependency updates since last test? |
-| 6 | GitHub | Minor versions only (`v0.X.0`): `gh release create vX.Y.0 --draft` — review, then publish. Patch tags (`vX.Y.Z`) are Git tags only — no GitHub Release needed. |
-| 7 | `v1.0.0` only | **Both surfaces ready?** The repository *and* the operator site have to meet the criteria in [`ROADMAP.md`](../ROADMAP.md#v10--complete-and-hand-off-ready). The site being live does not count. If the site is unfinished, the tag waits — there is no partial 1.0. |
+| 6 | Secret scan | Run CI by `workflow_dispatch` on `dev`: gitleaks scans the whole history. A finding is removed, or listed by fingerprint in `.gitleaksignore` with its reason, before the tag |
+| 7 | GitHub | Minor versions only (`v0.X.0`): `gh release create vX.Y.0 --draft` — review, then publish. Patch tags (`vX.Y.Z`) are Git tags only — no GitHub Release needed. |
+| 8 | `v1.0.0` only | **Both surfaces ready?** The repository *and* the operator site have to meet the criteria in [`ROADMAP.md`](../ROADMAP.md#v10--complete-and-hand-off-ready). The site being live does not count. If the site is unfinished, the tag waits — there is no partial 1.0. |
 
 ---
 

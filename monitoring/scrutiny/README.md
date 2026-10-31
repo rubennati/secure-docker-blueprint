@@ -41,7 +41,7 @@ that reaches the label is not the one you generated. Check what arrived with
 `docker inspect`, not `docker compose config`: the latter re-escapes its own
 output.
 
-`acc-tailscale` is the other gate. Neither replaces the other.
+`access-vpn` is the other gate. Neither replaces the other.
 
 ## Setup
 
@@ -116,10 +116,10 @@ The overlay exists because the host is not always yours to install on.
 - **NVMe is untested here**, and needs the capability this stack leaves out.
 - **Notifications are not configured.** Scrutiny supports many channels through
   Shoutrrr; none is set up and none has been delivered.
-- **`sec-2` is not measured** against the interface.
+- **`limit-standard` is not measured** against the interface.
 - **Nothing here has run behind this repository's Traefik yet.** The stack is
   `scaffolded`, and the basic-auth middleware in particular has not been seen
-  in a real chain.
+  in a real router.
 
 ## Backup
 

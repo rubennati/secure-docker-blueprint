@@ -184,6 +184,79 @@ class ChangedOnly(unittest.TestCase):
         self.assertEqual(out.returncode, 0)
 
 
+def retired(text: str, name: str):
+    with tempfile.TemporaryDirectory() as tmp:
+        path = Path(tmp) / "f.md"
+        path.write_text(text, encoding="utf-8")
+        return {r[2] for r in cp.retired_rows(path, name)}
+
+
+class RetiredNames(unittest.TestCase):
+    """The vocabulary before the middleware model is reported in current
+    documentation and left alone in records and in old-to-new examples."""
+
+    def test_a_current_standard_naming_an_old_value_is_reported(self):
+        self.assertEqual(retired("Set `APP_TRAEFIK_SECURITY=sec-3` and `acc-tailscale` on the router.\n", "docs/standards/x.md"),
+                         {"APP_TRAEFIK_SECURITY", "sec-3", "acc-tailscale"})
+
+    def test_a_stack_readme_naming_an_old_value_is_reported(self):
+        self.assertEqual(retired("The stack ships `acc-public` with `sec-2`.\n", "apps/x/README.md"), {"acc-public", "sec-2"})
+
+    def test_the_models_names_produce_nothing(self):
+        self.assertEqual(retired("The stack ships `access-public`, `limit-standard`, `headers-standard` and `auth-none@file`.\n", "apps/x/README.md"), set())
+
+    def test_an_old_to_new_example_is_allowed(self):
+        self.assertEqual(retired("Before the model the router carried `sec-3`; it is `limit-standard` and `headers-standard` now.\n", "docs/standards/x.md"), set())
+        self.assertEqual(retired("`acc-tailscale` was replaced by `access-vpn` on 2026-10-22.\n", "core/traefik/README.md"), set())
+
+    def test_a_record_document_is_exempt(self):
+        for name in ("docs/bugfixes/x.md", "docs/audits/x.md", "docs/reviews/x.md", "docs/research/x.md",
+                     "docs/host-session-findings.md", "docs/maintenance-log.md", ".ai/decisions.md",
+                     "core/traefik/docs/middleware-model-migration.md"):
+            self.assertEqual(retired("The router carried `sec-3` and `acc-tailscale`.\n", name), set(), name)
+
+    def test_changelog_released_sections_are_exempt_and_unreleased_is_not(self):
+        text = "## [Unreleased]\n\n- Set `sec-3` on it.\n\n## [0.9.4] — 2026-10-04\n\n- The chain `sec-2` was widened.\n"
+        self.assertEqual(retired(text, "CHANGELOG.md"), {"sec-3"})
+
+    def test_upstream_verification_line_is_kept_and_an_instruction_is_not(self):
+        text = ("Last verified: 2026-10-03 (v0.9.4) — behind Traefik with the shipped `acc-tailscale` and `sec-2`.\n\n"
+                "Before upgrading, set `APP_TRAEFIK_SECURITY=sec-3` in `.env`.\n")
+        self.assertEqual(retired(text, "apps/x/UPSTREAM.md"), {"APP_TRAEFIK_SECURITY", "sec-3"})
+
+    def test_an_upstream_verification_section_is_kept_whole_and_the_sections_around_it_are_not(self):
+        text = ("## What we changed and why\n\n"
+                "| `APP_TRAEFIK_ACCESS=acc-tailscale` | The setup route is open until it has run |\n\n"
+                "## Verification performed (2026-09-22)\n\n"
+                "Behind Traefik with TLS, with the shipped `acc-tailscale` and `sec-2`:\n\n"
+                "- First loads under `sec-2`: admin interface 54 requests, login 28\n"
+                "- Peak 149 MiB (limit 512 MiB)\n\n"
+                "### Not yet exercised\n\n"
+                "- The `sec-2-spa` variant on a cold browser\n\n"
+                "## Known issues\n\n"
+                "- Move the router to `sec-3e` before embedding.\n")
+        self.assertEqual(retired(text, "apps/x/UPSTREAM.md"), {"acc-tailscale", "sec-3e"})
+
+    def test_a_label_example_in_a_fenced_block_is_reported_and_an_old_to_new_line_in_it_is_not(self):
+        text = ("```yaml\n"
+                "- \"traefik.http.routers.app.middlewares=acc-public@file,${APP_TRAEFIK_SECURITY}@file\"\n"
+                "# sec-3 before the model, headers-standard now\n"
+                "```\n")
+        self.assertEqual(retired(text, "apps/x/README.md"), {"acc-public", "APP_TRAEFIK_SECURITY"})
+
+    def test_a_code_span_does_not_exempt_a_current_file(self):
+        self.assertEqual(retired("Use `rl-soft` here.\n", "docs/standards/x.md"), {"rl-soft"})
+
+    def test_the_threat_names_match_whole_and_not_inside_the_models_name(self):
+        self.assertEqual(retired("Attach `crowdsec-basic@file` to the router.\n", "docs/standards/x.md"), {"crowdsec-basic"})
+        self.assertEqual(retired("The entrypoint carries `threat-crowdsec-appsec@file`.\n", "docs/standards/x.md"), set())
+
+    def test_retired_names_warn_until_the_gate_is_on(self):
+        rows = [("apps/x/README.md", 1, "sec-2", "retired name", "", "", frozenset({1}))]
+        fails, warns = cp.split_by_audience(rows)
+        self.assertEqual((len(fails), len(warns)), (1, 0) if cp.RETIRED_GATE else (0, 1))
+
+
 class Repository(unittest.TestCase):
     """The tracked repository state the gate now depends on."""
 

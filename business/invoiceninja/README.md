@@ -170,7 +170,7 @@ Supervisor inside the `app` container manages the Laravel scheduler and queue wo
 - MySQL and Redis are not exposed on the host
 - `REQUIRE_HTTPS=true` enforced via env
 - `APP_DEBUG=false` in production
-- Access restricted to VPN (`acc-tailscale`) by default
+- Access restricted to VPN (`access-vpn`) by default
 - All six credentials in Docker Secrets, injected by `ops/entrypoint.sh`
 - `app-internal` is `internal: true`; only the app container has an outbound path
 

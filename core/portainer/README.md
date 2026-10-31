@@ -53,7 +53,7 @@ has the detail. `--no-setup-token` turns the requirement off and this stack does
 it: the token is what keeps whoever reaches the port during those five minutes from
 claiming the instance.
 
-Default access policy is `acc-tailscale` + `sec-4` + `tls-modern` (admin tool, VPN-only, hardened).
+As shipped: `access-vpn`, `limit-strict`, `headers-standard`, and `tls-strict` named on the router as a documented exception (admin tool, VPN-only, hardened).
 
 ## Verify
 

@@ -138,10 +138,10 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file,${COMPOSE_PROJECT_NAME}-sso-redirect"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH},${COMPOSE_PROJECT_NAME}-sso-redirect@docker"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.service=${COMPOSE_PROJECT_NAME}"
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=3456"
-      # Auto-redirect /login → /login?redirectToProvider=authentik (SSO-only mode)
+      # After the four: auto-redirect /login → /login?redirectToProvider=authentik (SSO-only mode)
       # Regex matches /login without query string to avoid redirect loop.
       - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-sso-redirect.redirectregex.regex=^(https?://[^/]+)/login$$"
       - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-sso-redirect.redirectregex.replacement=$${1}/login?redirectToProvider=authentik"

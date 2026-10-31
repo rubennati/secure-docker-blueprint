@@ -68,7 +68,7 @@ curl -fsSIk https://<APP_TRAEFIK_HOST>/manage/account/login    # 200 OK
 - **`DB_APP_PWD_INLINE` duplicates the app-user password** — see Known Issues.
 - **`no-new-privileges:true`** on both services.
 - **MongoDB on `app-internal` (`internal: true`)** — not reachable from outside.
-- **Default access `acc-tailscale` + `sec-3`** — the UniFi controller manages your network infrastructure; VPN-only is the right default. The device ports (3478/udp, 8080/tcp, 10001/udp) are still exposed to the LAN so devices can adopt.
+- **`access-vpn`, `limit-standard` and `headers-standard` as shipped** — the UniFi controller manages your network infrastructure; VPN-only is the right default. The device ports (3478/udp, 8080/tcp, 10001/udp) are still exposed to the LAN so devices can adopt.
 - **Self-signed internal TLS → Traefik skip-verify** — UniFi uses a self-signed cert on its internal 8443. Traefik reverse-proxies HTTPS → HTTPS using the `skip-verify@file` server transport.
 
 ## Backup

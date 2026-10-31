@@ -45,7 +45,7 @@ makes need one.
 - **The API key is the control.** Without one Qdrant is fully open, which is why
   the stack refuses to start without the secret file.
 - **The Traefik policy narrows who can try.** `APP_TRAEFIK_ACCESS` defaults to
-  `acc-private` (LAN plus VPN).
+  `access-lan-vpn` (LAN plus VPN).
 - **Other stacks reach it directly on `proxy-public`**, by service name, on both
   ports, past Traefik — still with the key. gRPC (`6334`) is enabled by default
   and is not routed through Traefik; it is reachable from any container on the

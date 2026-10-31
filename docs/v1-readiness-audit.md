@@ -367,7 +367,7 @@ deliberately deferred.
 
 | | Owner |
 |---|---|
-| 75 of 89 stacks `scaffolded` (S1) — the largest item | this file, D1 |
+| The `scaffolded` stacks (S1) — the largest item; the count is in `LIFECYCLE.md` | this file, D1 |
 | Beszel per-container metrics through the socket proxy | [#36](https://github.com/rubennati/secure-docker-blueprint/issues/36) |
 | Portainer first load against `rl-hard`'s burst of 40 | [#37](https://github.com/rubennati/secure-docker-blueprint/issues/37) |
 | Seafile's four path-scoped routers | [#39](https://github.com/rubennati/secure-docker-blueprint/issues/39) |
@@ -406,12 +406,12 @@ deliberately deferred.
 
 ## Decisions required
 
-| ID | Question | Recommendation |
-|---|---|---|
-| D1 | Is "every stack verified or carrying a reason" the v1.0 gate for all 89, or for a defined subset? | Keep the gate; make the reason mandatory and short, per stack, in `UPSTREAM.md`, so a `scaffolded` stack at v1.0 is a stated fact rather than an omission |
-| D2 | Must each stack README link the restore standard, or is the standard plus the Backup section enough? | Link it — one line per README, mechanical |
-| D3 | Adopt the encrypted-personal-data design for the site, and does an unresolved D3 block v1.0? | Adopt it; if it is not implemented, v1.0 should say so rather than ship a template that publishes its author's imprint |
-| D4 | Does v0.10.0 remain a release, or does measurement become continuous, applied when a stack is verified? | Continuous — the measurement needs the same host session as S1 |
-| D5 | Install Renovate or delete `renovate.json` and its proposal? | Delete — Dependabot already covers Actions and npm, no pin carries a `# renovate:` marker, and no Renovate pull request has ever been opened |
-| D6 | Resolve the three project-name mismatches by editing `.env.example` or the directory? | Neither before v1.0 — a rename breaks live deployments; record it as an exception |
-| D7 | Should a local pin track its production pin by default? | **Decided — yes, enforced.** No exception list was needed: joining on the image repository rather than the variable name makes the legitimate cases fall out. `apps/vllm` runs the CPU build locally and is never compared; a service the local stack does not run is simply absent. 41 pins synchronised, Version Chain step 4 added |
+| ID | Question | Recommendation | → decision |
+|---|---|---|---|
+| D1 | Is "every stack verified or carrying a reason" the v1.0 gate for all 89, or for a defined subset? | Keep the gate; make the reason mandatory and short, per stack, in `UPSTREAM.md`, so a `scaffolded` stack at v1.0 is a stated fact rather than an omission | [DEC-073](../.ai/decisions.md#dec-073), open |
+| D2 | Must each stack README link the restore standard, or is the standard plus the Backup section enough? | Link it — one line per README, mechanical | — |
+| D3 | Adopt the encrypted-personal-data design for the site, and does an unresolved D3 block v1.0? | Adopt it; if it is not implemented, v1.0 should say so rather than ship a template that publishes its author's imprint | [DEC-041](../.ai/decisions.md#dec-041), a direction |
+| D4 | Does v0.10.0 remain a release, or does measurement become continuous, applied when a stack is verified? | Continuous — the measurement needs the same host session as S1 | [DEC-074](../.ai/decisions.md#dec-074), open |
+| D5 | Install Renovate or delete `renovate.json` and its proposal? | Delete — Dependabot already covers Actions and npm, no pin carries a `# renovate:` marker, and no Renovate pull request has ever been opened | [DEC-057](../.ai/decisions.md#dec-057), which rejects the recommendation |
+| D6 | Resolve the three project-name mismatches by editing `.env.example` or the directory? | Neither before v1.0 — a rename breaks live deployments; record it as an exception | — |
+| D7 | Should a local pin track its production pin by default? | **Decided — yes, enforced.** No exception list was needed: joining on the image repository rather than the variable name makes the legitimate cases fall out. `apps/vllm` runs the CPU build locally and is never compared; a service the local stack does not run is simply absent. 41 pins synchronised, Version Chain step 4 added | [DEC-069](../.ai/decisions.md#dec-069) |

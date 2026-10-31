@@ -43,7 +43,7 @@ Five advisories are published, each with a fixed release; the newest fix is
 | Ban periods of 24 hours | Upstream's default leaves `authBanPeriod`, `abuseBanPeriod`, `loiterBanPeriod` and `scanBanPeriod` unset, which keeps a ban until it is removed by hand |
 | No certificate requested during setup | The default requests one from Let's Encrypt with the TLS-ALPN challenge on port 443, which Traefik holds. README, "Certificate" |
 | Mail ports in an overlay, three of them | Upstream's command publishes ten ports. 587, 143 and 110 are not listened on after setup; 995 and 4190 stay unpublished |
-| `APP_TRAEFIK_ACCESS=acc-tailscale` | A blueprint ships closed |
+| `APP_TRAEFIK_ACCESS=access-vpn` | A blueprint ships closed |
 
 Upstream's image is used as published. One built here without the `enterprise`
 cargo feature would be AGPL-3.0 in full; that route is

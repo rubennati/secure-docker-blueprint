@@ -40,7 +40,7 @@ is embedded in a connection URL, where base64's `+ / =` break parsing.
 A fresh Windmill contains the superadmin `admin@windmill.dev` with the
 password `changeme`. That is upstream's documented starting point, and it is
 valid from the moment the server first starts. This stack therefore ships with
-`APP_TRAEFIK_ACCESS=acc-deny`: nothing can reach the UI until you have run
+`APP_TRAEFIK_ACCESS=access-blocked`: nothing can reach the UI until you have run
 
 ```bash
 ./ops/bootstrap-admin.sh you@example.com
@@ -56,7 +56,7 @@ and:
 
 Running it again is safe — it reports "already bootstrapped" and changes
 nothing. Then set `APP_TRAEFIK_ACCESS` in `.env` to the audience you want
-(`acc-private` for LAN plus VPN) and run `docker compose up -d`. Keep the
+(`access-lan-vpn` for LAN plus VPN) and run `docker compose up -d`. Keep the
 password file with the other secrets and back it up with them.
 
 ## Job isolation
@@ -87,19 +87,20 @@ scripts accordingly. The same exception exists in
 
 ## The UI's first load
 
-The UI's first load issues about 850 requests. That is more than the bursts of
-`sec-2` (200) and `sec-2-spa` (500) hold, and a load that does not fit comes back
-partly `429` and shows `500 Internal Error`. `.env.example` therefore ships
-`sec-2-spa-xl`, whose bucket of 1000 holds one whole first load, and which
-belongs behind a closed access policy for that reason. The API and jobs are not
-affected.
+The UI's first load issues about 850 requests. That is more than the burst of
+500 that `limit-standard` holds (and the 200 of the former `sec-2`), and a load
+that does not fit comes back partly `429` and shows `500 Internal Error`.
+`.env.example` therefore ships `limit-extra-large`, whose bucket of 1000 holds
+one whole first load, and which belongs behind a closed access policy for that
+reason (CI: `burst-exposure`). The API and jobs are not affected.
 
 ## Status
 
 Run behind Traefik with TLS on 2026-09-23 (1.814.0): the bootstrap behind
-`acc-deny`, jobs on both workers with outbound calls, the UI under the shipped
-`sec-2-spa-xl` without a single `429`, a restart, and the restore below. Nothing
-has run with job isolation. Full log in
+`acc-deny` (today's `access-blocked`), jobs on both workers with outbound calls,
+the UI under the then-shipped `sec-2-spa-xl` — the same 125/1000 as
+`limit-extra-large` — without a single `429`, a restart, and the restore below.
+Nothing has run with job isolation. Full log in
 [`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-23).
 
 ## Try it locally

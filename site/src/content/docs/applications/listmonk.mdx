@@ -81,20 +81,22 @@ container says nothing about.
 
 ### Admin behind the VPN, subscribers on the internet
 
-The stack ships `acc-public` with `sec-2e`, because subscriber endpoints —
-`/subscription/*`, `/link/*`, `/campaign/*` — have to work for people who are not
-on your VPN. That leaves `/admin` public too.
+The stack ships `access-public` with `limit-standard` and `headers-standard`,
+because subscriber endpoints — `/subscription/*`, `/link/*`, `/campaign/*` — have
+to work for people who are not on your VPN. That leaves `/admin` public too.
 
 Splitting the two means a second Traefik router with a higher priority, scoped to
-`/admin` and carrying `acc-tailscale@file` with `sec-3@file`; the existing router
-keeps the subscriber paths. The label block is in
+`/admin` and carrying `access-vpn@file` in its access position, the other three
+positions as on the main router; the existing router keeps the subscriber paths.
+The label block is in
 [`business/listmonk/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/business/listmonk/README.md).
 
-### Why `sec-2e` rather than `sec-2`
+### Why `frame-self` is on the router
 
 The campaign and template preview renders inside an iframe from the same origin.
-`sec-2` sends `X-Frame-Options: deny`, which blocks it; `sec-2e` sends
-`SAMEORIGIN` instead.
+`headers-standard` sends `X-Frame-Options: DENY`, which blocks it; the router
+therefore carries `frame-self@file` before `${APP_TRAEFIK_HEADERS}@file`, which
+sends `SAMEORIGIN` instead.
 
 ### Bounce handling
 
@@ -166,7 +168,7 @@ ignored.
 fields are already absent here. The banner can be dismissed.
 
 **The campaign preview is blank.** The iframe is being blocked. Confirm
-`APP_TRAEFIK_SECURITY=sec-2e` rather than `sec-2`.
+`frame-self@file` stands before `${APP_TRAEFIK_HEADERS}@file` on the router.
 
 ## Repository files
 

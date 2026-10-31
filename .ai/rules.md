@@ -58,6 +58,7 @@ limitation that still applies are kept — each at the place that owns it:
 | What | Where |
 |---|---|
 | Architecture decisions | `docs/architecture.md`, summarised in `decisions.md` |
+| A decision's state — decided, applied, verified | `decisions.md`, the entry's field lines; the register at its top is generated |
 | Standards | `docs/standards/` |
 | App-specific choices | the app's `README.md` and `UPSTREAM.md` |
 | Failures | `docs/bugfixes/<app>-<date>.md`, patterns in `errors.md` |
@@ -100,7 +101,8 @@ Owner: [`writing-style.md`](../docs/standards/writing-style.md#address-and-mood)
   purpose.
 - Never name other products or vendors negatively. State what this project does, not
   what others do badly.
-- No real domains, IPs, hostnames, credentials or personal data. `example.com` and
-  documentation IP ranges only.
-- Public repository content carries no session context, no personal attributions and
-  no self-critical wording.
+- Public content follows [`commit-rules.md` → Public content](../docs/standards/commit-rules.md#public-content):
+  no domains, hostnames or addresses of private systems, no local paths,
+  credentials or personal data, and nothing addressed to or from an assistant
+  session. Test runs are recorded by what they showed, not by where they ran.
+- No personal attributions and no self-critical wording.

@@ -119,14 +119,15 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
   [`traefik-security.md`](../../docs/standards/traefik-security.md). That entry
   has to exist in `core/traefik`: without it the router answers nothing and
   Traefik logs "servers transport not found".
-- **`acc-tailscale` by default**, because every machine that backs up here has
+- **`access-vpn` by default**, because every machine that backs up here has
   to reach this host and the VPN is where those machines are.
 
 ## Known limits
 
-- **The rate limit is not measured.** The chain ships `sec-2`. A client's
-  traffic is a handful of long-lived gRPC requests rather than many short ones,
-  so it is unlikely to bite — but no backup window has been measured through it.
+- **The rate limit is not measured.** `.env.example` ships `limit-standard`. A
+  client's traffic is a handful of long-lived gRPC requests rather than many
+  short ones, so it is unlikely to bite — but no backup window has been measured
+  through it.
 - **The certificate is generated once** by `ops/init.sh`, with ten years of
   validity. Kopia's own `--tls-generate-cert` cannot do it on every start: it
   refuses when the file exists, which is why the command in the compose file

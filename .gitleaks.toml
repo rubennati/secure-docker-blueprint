@@ -1,10 +1,13 @@
 # Gitleaks configuration
 # https://github.com/gitleaks/gitleaks#configuration
+#
+# A .gitleaks.toml in the repository root is read instead of gitleaks' default
+# configuration. Without [extend], it replaces the default rules entirely — a
+# file that only allowlists leaves no rule to detect anything. This file only
+# extends: every default rule applies.
+#
+# Single findings that are excluded by design are listed by fingerprint in
+# .gitleaksignore, never by commit or path here.
 
-[allowlist]
-  description = "Historical example values in documentation"
-  commits = [
-    # core/traefik/README.md — CrowdSec bouncer key used as a documentation
-    # example in the CrowdSec setup section. Not a real secret.
-    "cdb795e",
-  ]
+[extend]
+useDefault = true

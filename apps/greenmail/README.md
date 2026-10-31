@@ -31,7 +31,7 @@ docker compose up -d
 ```
 
 Set `APP_TRAEFIK_HOST` in `.env` for the API and Swagger UI; access defaults to
-`acc-private`. From any container on `proxy-public`, point SMTP at
+`access-lan-vpn`. From any container on `proxy-public`, point SMTP at
 `greenmail:3025` and IMAP or POP3 at `greenmail:3143` / `greenmail:3110`,
 logging in with the recipient's address and any password.
 

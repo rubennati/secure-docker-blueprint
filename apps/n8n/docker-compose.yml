@@ -9,7 +9,7 @@ services:
   # `db` service + queue worker can be copied from Paperless-ngx.
   n8n-app:
     # --- Identity ---
-    image: docker.n8n.io/n8nio/n8n:${APP_TAG}
+    image: n8nio/n8n:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}
     restart: unless-stopped
 
@@ -73,9 +73,8 @@ services:
       # TLS
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
       # Middlewares
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=5678"
 

@@ -70,8 +70,8 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 - **`no-new-privileges:true`** on both services.
 - **MariaDB on `app-internal` (`internal: true`)** — not reachable from outside.
 - **`X-Forwarded-Proto=https`** header injected by Traefik middleware so Matomo generates `https://` tracking URLs (avoids Mixed Content on tracked pages).
-- **Default access `acc-public` + `sec-3`** — tracking endpoint must be reachable from every page you track, but the admin UI benefits from the stricter header policy.
-- **The proxy sends no `X-Frame-Options`; Matomo sets it itself.** `sec-3` is applied in the compose file and a per-app `strip-xfo` middleware removes the header afterwards. Matomo varies it per endpoint — `deny` on the reporting UI, absent on the [Widgetize](https://matomo.org/guide/reporting-tools/embedding-matomo/) endpoints, which exist to be embedded in another page. A header from the proxy reaches the widget responses as a second, conflicting value and the embedded reports stop loading. `APP_TRAEFIK_SECURITY` is therefore unused here: the chain needs a middleware after the security level, which one variable cannot express.
+- **Default access `access-public`, with `limit-standard` and `headers-application-owned`** — the tracking endpoint must be reachable from every page you track.
+- **The proxy sends no `X-Frame-Options`; Matomo sets it itself.** `headers-application-owned` sets the HSTS base only, and the compose file places `header-nosniff@file` and `header-permissions@file` before it for the two headers Matomo lacks. Matomo varies the frame header per endpoint — `deny` on the reporting UI, absent on the [Widgetize](https://matomo.org/guide/reporting-tools/embedding-matomo/) endpoints, which exist to be embedded in another page. A header from the proxy would reach the widget responses as a second, conflicting value, and the embedded reports would stop loading.
 
 ## Backup
 

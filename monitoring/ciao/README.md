@@ -90,7 +90,7 @@ password secret; leave `SMTP_HOST` empty to keep it off.
   `CIAO_BASIC_AUTH_USER` is set: with an empty user name the interface and the
   REST API answer anyone who reaches the port. Verified against 1.10.1 — 401
   without credentials, 200 with them.
-- **`acc-tailscale` by default.** The dashboard lists every URL being watched,
+- **`access-vpn` by default.** The dashboard lists every URL being watched,
   which is a map of what runs where.
 - **`/metrics` sits outside that basic auth.** It is off
   (`PROMETHEUS_ENABLED=false`, verified: 404). Switching it on without
@@ -107,8 +107,8 @@ password secret; leave `SMTP_HOST` empty to keep it off.
 
 ## Known limits
 
-- **The rate limit is not measured.** The chain ships `sec-2`; no first-load
-  count has been taken behind Traefik.
+- **The rate limit is not measured.** The router ships `limit-standard`; no
+  first-load count has been taken behind Traefik.
 - **One maintainer.** 263 of the commits are theirs, the next contributor has 7.
   Releases through 2026-07.
 - **Images come from Docker Hub only**, and the repository publishes no image

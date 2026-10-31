@@ -54,7 +54,7 @@ cp .env.example .env
 docker compose up -d --build
 ```
 
-Traefik routing, TLS and the access/security chain follow the same
+Traefik routing, TLS and the four middleware positions follow the same
 `.env.example` variables as every other stack — see
 [`docs/standards/traefik-security.md`](../../docs/standards/traefik-security.md).
 

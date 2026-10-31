@@ -43,7 +43,7 @@ immediately — measured: a `user.login` call against `/api_jsonrpc.php` with
 those credentials returns a session token on a fresh instance. Until you change
 it, anyone who reaches the interface has the API too.
 
-`acc-tailscale` is what makes that survivable.
+`access-vpn` is what makes that survivable.
 
 ## Monitoring anything but this host
 
@@ -85,7 +85,7 @@ it:
 ## Security model
 
 - **Change `Admin` / `zabbix` at the first sign-in.** See Setup.
-- **`acc-tailscale`.** The interface describes every host, service and
+- **`access-vpn`.** The interface describes every host, service and
   credential the installation monitors.
 - **Only the web interface is routed.** The server and the database are on an
   internal network with no published port.
@@ -117,7 +117,7 @@ it:
   is one of each.
 - **History growth is yours to manage.** Housekeeping settings live in the
   interface, not in this compose file, and a busy installation can fill a disk.
-- **`sec-2` is not measured** against the interface.
+- **`limit-standard` is not measured** against the interface.
 - **Nothing here has run behind this repository's Traefik yet.** The stack is
   `scaffolded`.
 

@@ -26,7 +26,7 @@
 |---|---|
 | **Traefik labels instead of `-p 5000:5000`** | Blueprint routing standard |
 | **`security_opt: no-new-privileges:true`** | Baseline hardening |
-| **`acc-tailscale` default access** | Change tracking targets may include internal services |
+| **`access-vpn` default access** | Change tracking targets may include internal services |
 | **Browser service commented out** | Optional — only needed for JS-heavy sites; adds ~1 GB RAM |
 
 ## Browser / Playwright support

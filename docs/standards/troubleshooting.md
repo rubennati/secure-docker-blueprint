@@ -184,14 +184,14 @@ Middlewares defined in **file config** (e.g. `security.yml`, `access.yml`) need
 `@file`. Middlewares defined in **Docker labels** need `@docker`.
 
 ```yaml
-# File-provider middleware — needs @file
-- "traefik.http.routers.app.middlewares=acc-tailscale@file,sec-2@file"
+# File-provider middlewares — need @file
+- "traefik.http.routers.app.middlewares=access-vpn@file,limit-standard@file,headers-standard@file,auth-none@file"
 
-# Docker-provider middleware (defined in same compose labels) — needs @docker
-- "traefik.http.routers.app.middlewares=app-headers@docker,acc-tailscale@file"
+# Docker-provider middleware (defined in the same compose labels) — needs @docker
+- "traefik.http.routers.app.middlewares=access-vpn@file,limit-standard@file,app-csp@docker,headers-standard@file,auth-none@file"
 
-# WRONG — missing suffix, Traefik can't find it → 403
-- "traefik.http.routers.app.middlewares=app-headers,acc-tailscale@file"
+# WRONG — missing suffix, Traefik can't find it → the router is disabled
+- "traefik.http.routers.app.middlewares=access-vpn@file,limit-standard@file,app-csp,headers-standard@file,auth-none@file"
 ```
 
 **Rule:** If a middleware in the chain can't be found, the **entire chain fails**
@@ -233,13 +233,13 @@ docker exec <traefik-container> cat /var/log/traefik/access.log | grep <app> | t
 
 **If `OriginStatus` is 0 and `DownstreamStatus` is 403:** Traefik blocked the
 request before it reached the container. This is a middleware issue (usually
-`acc-tailscale` IP allowlist).
+`access-vpn` IP allowlist).
 
 ### Tailscale IP ranges
 
 ```yaml
-# /path/to/secure-docker-blueprint/core/traefik/config/dynamic/access.yml
-acc-tailscale:
+# /path/to/secure-docker-blueprint/core/traefik/config/dynamic/model.yml
+access-vpn:
   ipAllowList:
     sourceRange:
       - "100.64.0.0/10"       # Tailscale IPv4 (CGNAT range)
@@ -250,10 +250,10 @@ acc-tailscale:
 
 | You see | Meaning | Fix |
 |---|---|---|
-| `ClientHost: 100.x.x.x` | Tailscale IPv4 — should pass `acc-tailscale` | Check IP range in access.yml |
-| `ClientHost: fd7a:...` | Tailscale IPv6 — should pass `acc-tailscale` (default range already covers it) | If still blocked, check `TAILSCALE_CIDR_V6` wasn't overridden to something narrower in `.env` |
+| `ClientHost: 100.x.x.x` | Tailscale IPv4 — should pass `access-vpn` | Check IP range in model.yml |
+| `ClientHost: fd7a:...` | Tailscale IPv6 — should pass `access-vpn` (default range already covers it) | If still blocked, check `TAILSCALE_CIDR_V6` wasn't overridden to something narrower in `.env` |
 | `ClientHost: 178.x.x.x` (public IP) | Traffic goes over internet, not VPN | DNS resolves to public IP, not Tailscale IP |
-| `ClientHost: 172.x.x.x` (Docker bridge gateway) — request from a **remote** client | The real client IP was lost before Traefik saw it — almost always a Tailscale **IPv6** client hitting an **IPv4-only** `proxy-public` network. Docker's userland-proxy bridged the IPv6 host connection into the IPv4-only bridge and re-sourced it from the gateway address. | Not a `forwardedHeaders` issue (that's for the Cloudflare path only). Fix is network-level: dual-stack `proxy-public` + Docker daemon prerequisites. See [`core/traefik/docs/ipv6-dual-stack.md`](../../core/traefik/docs/ipv6-dual-stack.md) and [`docs/bugfixes/traefik-ipv6-dualstack-2026-06-19.md`](../bugfixes/traefik-ipv6-dualstack-2026-06-19.md). Do **not** "fix" this by allowlisting `172.x.x.x/32` — see "why this is a workaround, not a fix" in that doc. |
+| `ClientHost: 172.x.x.x` (Docker bridge gateway) — request from a **remote** client | The real client IP was lost before Traefik saw it — an **IPv6** client reaching a port that `docker-proxy` relays into the bridge, re-sourced from the gateway address. The shipped compose files publish no such port; it remains on a container not yet recreated, or under the overlay with `userland-proxy` on. `validate.sh --strict` in `core/traefik` names which. | Not a `forwardedHeaders` issue (that's for the Cloudflare path only). Fix is network-level: dual-stack `proxy-public` + Docker daemon prerequisites. See [`core/traefik/docs/ipv6-dual-stack.md`](../../core/traefik/docs/ipv6-dual-stack.md) and [`docs/bugfixes/traefik-ipv6-dualstack-2026-06-19.md`](../bugfixes/traefik-ipv6-dualstack-2026-06-19.md). Do **not** "fix" this by allowlisting `172.x.x.x/32` — see "why this is a workaround, not a fix" in that doc. |
 | `ClientHost: 172.x.x.x` (Docker bridge gateway) — request run **on the Traefik host itself** (e.g. `curl` over SSH on the same server) | **Not the bug above — a different, unrelated Docker behavior.** A process on the Docker host connecting to the host's own published port (loopback/hairpin) gets NAT'd through the bridge gateway address, regardless of whether `proxy-public` is dual-stack and regardless of IPv4/IPv6. This happens even on a fully-fixed, correctly dual-stack network. | Nothing to fix. Don't test client-IP preservation by curling from the Traefik host itself — test from a genuinely remote client (another machine on the tailnet, or a real browser/Cloudflare request). A 403 here with `ClientHost: 172.x.x.x` from a self-curl is expected and does not indicate the dual-stack fix failed. |
 | Cloudflare edge IP in `ClientAddr`, real client IP in `ClientHost` | Cloudflare path working correctly | Nothing to fix — this is the expected good state. If `ClientHost` instead shows the Cloudflare edge IP too, `forwardedHeaders.trustedIPs` is missing or doesn't cover the connecting edge IP — see [Trusted Proxy Headers](traefik-security.md#trusted-proxy-headers-traefikyml--forwardedheaders) |
 
@@ -302,19 +302,19 @@ values — `traefik-core` / `proxy-public` are this blueprint's defaults
 
 If your domain `app.example.com` resolves to the server's **public IP**, your
 browser connects over the internet — even if Tailscale is running. The
-`acc-tailscale` middleware then blocks you because your source IP is public,
+`access-vpn` middleware then blocks you because your source IP is public,
 not Tailscale.
 
 **Solutions:**
 
 - Use Tailscale MagicDNS or Split-DNS to resolve domains to Tailscale IPs
 - Access via Tailscale IP directly (e.g. `https://100.x.x.x`)
-- Use `acc-public` only where the service is *meant* to be reachable from the
+- Use `access-public` only where the service is *meant* to be reachable from the
   internet
 
-`acc-public` is not the answer when the traffic genuinely arrives over the
+`access-public` is not the answer when the traffic genuinely arrives over the
 tailnet and is still refused — that is the IPv6 source-address case, and it is
-fixed at the network level. `acc-public` there removes the IP check for
+fixed at the network level. `access-public` there removes the IP check for
 everyone. See [`TROUBLESHOOTING.md`](../../TROUBLESHOOTING.md) §4.4.
 
 ---
@@ -464,7 +464,7 @@ Browser shows error
 ├─ "403 Forbidden"
 │  └─ Check Traefik access log → ClientHost field
 │     ├─ Public IP (not Tailscale) → DNS routes over internet, not VPN
-│     ├─ Tailscale IP but still 403 → Check acc-tailscale IP ranges
+│     ├─ Tailscale IP but still 403 → Check access-vpn IP ranges
 │     └─ OriginStatus: 0 → Middleware blocking before reaching app
 │        └─ Check middleware chain for broken @file/@docker references
 │

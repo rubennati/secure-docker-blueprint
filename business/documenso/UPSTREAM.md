@@ -13,12 +13,12 @@
 - **Origin:** US · Documenso Inc · non-EU (development largely from Hamburg, Germany)
 - **Domain:** Documents and e-signature
 - **Role:** Document signing with your own certificate
-- **Based on version:** `v2.18.0`
+- **Based on version:** `v2.20.0`
 - **Last verified:** — (config authored 2026-07-26; not yet run on a live server)
 
 ## What we use
 
-- `documenso/documenso:v2.18.0` (Remix app; CMD `sh start.sh` runs Prisma migrations on boot)
+- `documenso/documenso:v2.20.0` (Remix app; CMD `sh start.sh` runs Prisma migrations on boot)
 - `postgres:16-alpine`
 - Custom `config/entrypoint.sh` to inject secrets from Docker Secret files (no `_FILE` support)
 

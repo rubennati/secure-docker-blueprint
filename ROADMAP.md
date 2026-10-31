@@ -1,6 +1,6 @@
 # Roadmap
 
-Direction reviewed 2026-10-03.
+Direction reviewed 2026-10-30.
 
 What remains to be built, what blocks it, and what proves it finished. Shipped
 work belongs to [`CHANGELOG.md`](CHANGELOG.md), per-stack status to the generated
@@ -18,12 +18,12 @@ Pre-1.0 tags are set when a natural milestone is reached, not on a fixed cadence
 The single criterion for v1.0 is: **could someone fork this and run it without
 needing my mental model?**
 
-**Latest tag: v0.9.4 — Mail servers, wider rate limits, Authelia
-(2026-10-04).** Three mail servers and a second login portal are in, each
-`scaffolded`. Mail ports are published by the stack through an opt-in overlay
-and do not pass through Traefik. The proxy's rate limits are wider, as an
-interim until the review below settles what each chain is for. What has and has
-not been established per stack is in [`LIFECYCLE.md`](LIFECYCLE.md).
+**Latest tag: v0.9.5 — The middleware model (2026-10-30).** Every Traefik
+router carries four positions — access, rate limit, headers, authentication —
+defined once, and the names before them are gone; an existing installation
+migrates, and that migration has run once on a test installation. Traefik is
+published on IPv4 unless its network carries IPv6. What has and has not been
+established per stack is in [`LIFECYCLE.md`](LIFECYCLE.md).
 
 ### v0.10.0 — Measured resource limits
 
@@ -55,17 +55,14 @@ Open in this repository:
   no stack left at `scaffolded` without a documented reason. Most stacks are
   `scaffolded` today — [`LIFECYCLE.md`](LIFECYCLE.md) has the count. A state rises
   only on evidence, so this is measured in host sessions, not in editing.
-- **Traefik labels and middlewares, checked against the applications.** The label
-  pattern, the security chains and their names, the header and rate-limit blocks,
-  and the CrowdSec and Authentik middlewares grew stack by stack; 106 stacks now
-  route through Traefik. The review asks what each application needs to start
-  without errors, keep the headers it sets itself and stay responsive under a
-  working day's load. It may change names and structure or confirm them — before
-  v1.0.0, because afterwards a renamed middleware disables the router of every
-  deployment that names it. Inputs in [`.ai/state.md`](.ai/state.md) under *Open
-  decisions*; what the proxy owns, what its limits are for and which questions
-  the review has to answer are collected in
-  [`docs/audits/reverse-proxy-limits-2026-09-23.md`](docs/audits/reverse-proxy-limits-2026-09-23.md).
+- **Traefik middlewares, checked against the applications on a host.** The
+  names and the structure are settled by the middleware model of v0.9.5: four
+  positions on every router, defined once. What is not established is how the
+  applications behave under it — the headers the office servers and Nextcloud
+  set themselves, the `429` count of a first load under the bucket of 500, the
+  TLS exceptions without a recorded reason. The list is section 5 of
+  [`core/traefik/docs/middleware-model-migration.md`](core/traefik/docs/middleware-model-migration.md#5-not-verified-on-a-host);
+  it is measured in host sessions, not in editing.
 
 Decision pending, with a possible impact on v1.0 — the site's personal data:
 see [A public repository should not carry personal data](#a-public-repository-should-not-carry-personal-data).
@@ -101,7 +98,8 @@ verified today must meet the current baseline-aligned criteria in
 - Verified before the standards moved and worth a second run: Vaultwarden,
   WordPress, Nextcloud, Seafile / Seafile Pro, Invoice Ninja.
 - Pinned to a new major in a dependency sweep and not yet run anywhere —
-  [`LIFECYCLE.md`](LIFECYCLE.md) marks each `pin-drifted` and carries the pin.
+  [`LIFECYCLE.md`](LIFECYCLE.md) carries the pin beside the version last verified,
+  and `lifecycle-report.py --check` warns `pin-drifted` where the two differ.
 - Never started on a host: UrBackup, `apps/vllm`, and the security-tooling,
   PAM/bastion and secret-sharing stacks added in v0.9.1.
 

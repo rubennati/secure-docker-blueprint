@@ -44,7 +44,7 @@ component images (`v4.10.19` vs. `v5.0.0-ce`) — see "Known limitations".
 |--------|--------|
 | No `no-new-privileges`, `cap_drop`, or `read_only` | Verified to break the container — see the Security block in `docker-compose.yml` for exactly what fails and why |
 | SSH gateway (koko) published directly, not through Traefik | Raw SSH; only the web console is HTTP(S) |
-| `acc-tailscale` + `sec-3` + `tls-modern` on the console | A traditional PAM platform holding every credential and recording is not public-default material |
+| `access-vpn` + `limit-standard` + `headers-standard`, `tls-strict` named on the console router | A traditional PAM platform holding every credential and recording is not public-default material |
 | Resources set to the vendor's stated minimum (4 CPU / 8 GB), not a derived starting value | Upstream states this as a floor for the whole bundle, not a per-service guess |
 | No Docker Secrets for `SECRET_KEY` / `BOOTSTRAP_TOKEN` | Verified: no `_FILE`-suffixed alternative exists in the vendor's documented interface |
 

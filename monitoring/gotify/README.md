@@ -68,7 +68,7 @@ token itself.
 
 The clients that receive it are the browser interface and the Android app, which
 keeps its own connection open — upstream's README lists no iOS client. Every
-client needs a path to this host; with the shipped `acc-tailscale` that means
+client needs a path to this host; with the shipped `access-vpn` that means
 the VPN.
 
 ## Security model
@@ -84,7 +84,7 @@ the VPN.
   inside the server.
 - **The session cookie carries `Secure`** (`GOTIFY_SERVER_SECURECOOKIE=true`),
   which holds because Traefik terminates TLS in front of it.
-- **`acc-tailscale` by default.** Everything except `/health` and `/version`
+- **`access-vpn` by default.** Everything except `/health` and `/version`
   needs a token or a session, but the access policy is what keeps the interface
   off the open internet.
 - **Tokens are bearer credentials.** An application token may post messages; a
@@ -96,7 +96,7 @@ the VPN.
 
 ## Known limits
 
-- **The rate limit is not measured.** The chain ships `sec-2`. The interface is a
+- **The rate limit is not measured.** The router ships `limit-standard`. The interface is a
   single bundle and a client's stream is one long-lived request, so neither is
   expected to burst, but no first-load count has been taken behind Traefik.
 - **The base image is Debian `sid`**, upstream's choice for the published image.

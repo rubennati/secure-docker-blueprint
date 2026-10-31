@@ -36,7 +36,7 @@ Guildford, UK. rclone and Rclone Web are both MIT.
 | `user: 1000:1000`, `read_only`, `cap_drop: ALL` | The image runs as root; rclone works unprivileged when its directories belong to the uid |
 | No published ports | Traefik reaches both over `proxy-public` |
 | No FUSE | Mounts need `/dev/fuse` and `CAP_SYS_ADMIN` |
-| `APP_TRAEFIK_ACCESS=acc-tailscale` | The API reads and changes every remote, credentials included |
+| `APP_TRAEFIK_ACCESS=access-vpn` | The API reads and changes every remote, credentials included |
 
 ## Known limitation: the interface's sign-in
 

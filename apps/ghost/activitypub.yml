@@ -141,13 +141,11 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-ap.priority=100"
       # TLS
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-ap.tls=true"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-ap.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
-      # Middlewares
-      # ap-proto: injects X-Forwarded-Proto: https so ActivityPub reconstructs HTTPS URLs.
-      # Traefik sets this automatically for HTTP entrypoints but does not guarantee it
-      # reaches the backend unchanged. The explicit middleware ensures it.
-      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-ap-proto.headers.customrequestheaders.X-Forwarded-Proto=https"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-ap.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_SECURITY}@file,${COMPOSE_PROJECT_NAME}-ap-proto"
+      # Middlewares — the four positions, then forwarded-proto-https@file
+      # (core/traefik): X-Forwarded-Proto: https so ActivityPub reconstructs HTTPS
+      # URLs. Traefik sets the header on its own, but does not guarantee it reaches
+      # the backend unchanged; the explicit block does (bugfix 2026-05-02).
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-ap.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH},forwarded-proto-https@file"
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}-ap.loadbalancer.server.port=8080"
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}-ap.loadbalancer.passhostheader=true"

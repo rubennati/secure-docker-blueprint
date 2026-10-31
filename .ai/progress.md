@@ -15,6 +15,16 @@ session-level detail is in
 | v0.6.0 | 2026-06-04 | CrowdSec complete — firewall bouncer, runbook, AppSec and geoblocking guidance |
 | v0.7.0 | 2026-07-31 | Backup — one archive created and one restore performed against a live stack, checked by query; first `ops-proven` stack |
 | v0.8.0 | 2026-09-08 | Monitoring — one verified service per axis, every alert delivered to a phone outside the tailnet; the receiver public and read-only, the rest behind the VPN |
+| v0.8.1 | 2026-09-13 | Traefik off the 3.6 line, dnsmasq on a maintained image, 46 pins moved against published advisories; nothing deployed |
+| v0.8.2 | 2026-09-13 | v0.8.1 verified on a host, seven stacks; Dependabot targets `dev` |
+| v0.8.3 | 2026-09-14 | The CrowdSec integration switched in `.env`; `render.sh` writes atomically; `traefik.log` survives rotation |
+| v0.8.4 | 2026-09-15 | A third ACME resolver — TLS-ALPN-01 on port 443 alone |
+| v0.9.0 | 2026-09-18 | Secure Operations Baseline |
+| v0.9.1 | 2026-09-20 | Priority 1 stacks — custom development, AI, document processing, PAM, secret sharing, security tooling |
+| v0.9.2 | 2026-09-22 | Stabilization and release readiness — the programme the v1-readiness audit ordered; log rotation without a signal; the proxy's memory ceiling measured |
+| v0.9.3 | 2026-09-24 | Sixteen stacks, and a baseline for capabilities — Coraza named as the AppSec engine, Suricata held |
+| v0.9.4 | 2026-10-04 | Mail servers, wider rate limits, Authelia |
+| v0.9.5 | 2026-10-30 | The middleware model — four positions on every router, the migration from v0.9.4 run once on a test installation; Traefik published on IPv4 unless the network carries IPv6 |
 
 **The through line:** every release since v0.2.0 is defined by something *proven on a
 fresh install*, not by something written. That is why status carries verification
@@ -32,8 +42,7 @@ model with a generated lifecycle view. None of it changed the milestone order.
 
 The site became a product of its own rather than a mirror of the repository. It
 is named **SecDockBlue**; `secure-docker-blueprint` stays the repository name and
-the technical source of truth. Domain is `secdockblue.rubennati.at`, still one
-line in `site/astro.config.mjs`. 37 pages, **live since 2026-07-31** — the
+the technical source of truth. The domain is one line in `site/astro.config.mjs`. 37 pages, **live since 2026-07-31** — the
 launch was brought forward past both dates that had been named for it.
 
 **What changed structurally**
@@ -88,7 +97,7 @@ on it, and check what the site currently says before believing a quotation of it
 
 1. Guide content pass — Nextcloud, Invoice Ninja, Seafile Pro and the backup
    page have never been read end to end. Both pages that were read carried stale
-   claims, so assume the others do too.
+   claims; the others have not been read.
 2. Walked-through guides for catalogued stacks. **BookStack is the assessed first
    candidate**: its MariaDB already carries the capabilities its entrypoint needs,
    and it has a real trap worth documenting — `DB_PWD_INLINE` must match

@@ -26,7 +26,7 @@ docker compose up -d
 
 # 3. Access via browser
 # https://<APP_TRAEFIK_HOST>
-# Only reachable through Tailscale/VPN by default (acc-tailscale).
+# Only reachable through Tailscale/VPN by default (access-vpn).
 ```
 
 No secrets or initial setup — you log in via the Adminer UI each time with DB credentials.
@@ -73,8 +73,8 @@ For DBs on other machines, enter the hostname/IP directly in the Adminer login f
 
 ## Security model
 
-- **Access policy default `acc-tailscale`** — Adminer exposes full database access including schema changes and `DROP TABLE`. It must never be publicly reachable without additional authentication.
-- **Security chain default `sec-4`** — hard rate limit (20 avg / 40 burst) to mitigate credential-stuffing against the DB-login form.
+- **Access default `access-vpn`** — Adminer exposes full database access including schema changes and `DROP TABLE`. It must never be publicly reachable without additional authentication.
+- **Rate limit default `limit-strict`, headers `headers-standard`** — 20 per second, burst 40, to mitigate credential-stuffing against the DB-login form.
 - **Stateless** — Adminer keeps no persistent state; sessions die with the browser. No volumes, no secrets files.
 - **Single-file PHP** — smaller attack surface than phpMyAdmin. Upstream has historically been careful with security patches.
 - **No credentials stored** — you type DB password at every login. This is a feature, not a limitation.

@@ -36,7 +36,7 @@
 | `ENABLE_OLLAMA_API=false`, `OPENAI_API_BASE_URL` | One configurable OpenAI-compatible backend |
 | `ENABLE_VERSION_UPDATE_CHECK`, `SCARF_NO_ANALYTICS`, `DO_NOT_TRACK`, `ANONYMIZED_TELEMETRY` off | Upstream's update check and telemetry |
 | `HF_HUB_OFFLINE` variable | The embedding model downloads from Hugging Face at first start; `1` afterwards is verified to stop all requests to it |
-| `APP_TRAEFIK_SECURITY=sec-2-spa` | The first load requests 224 files at once over one HTTP/2 connection, more than `sec-2`'s burst of 200. With a burst of 50, 103 of them were answered `429` and the web app showed `500: Internal Error`. `sec-2-spa` has the same average rate with a burst of 500 |
+| `APP_TRAEFIK_LIMIT=limit-standard` | The first load requests 224 files at once over one HTTP/2 connection, more than the burst of 200 of the former `sec-2` chain. With a burst of 50, 103 of them were answered `429` and the web app showed `500: Internal Error`. `limit-standard` has the same average rate with a burst of 500 |
 
 ## Verification performed (2026-09-21)
 

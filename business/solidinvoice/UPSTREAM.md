@@ -54,7 +54,7 @@ below).
 | Memory limit 3 GiB | Measured: 2.2 GiB peak on start, 1.8 GiB running, of which 0.6 GiB is the tmpfs. At 1 GiB the container was killed for memory 25 times in a row |
 | `run --disable-https` | TLS terminates at Traefik |
 | `SOLIDINVOICE_ENABLE_TELEMETRY=0` | Already the default; set so the installer cannot change it |
-| `APP_TRAEFIK_ACCESS=acc-tailscale` | The web installer is the setup and is open until it has run |
+| `APP_TRAEFIK_ACCESS=access-vpn` | The web installer is the setup and is open until it has run |
 | `volumes/config/db` created by `ops/init.sh` | The default SQLite path is `/etc/solidinvoice/db/solidinvoice.db`, and the application does not create the directory |
 
 ## Verification performed (2026-09-22)

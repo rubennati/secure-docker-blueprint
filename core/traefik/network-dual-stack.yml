@@ -11,7 +11,7 @@
 # is IPv4-only, Docker's userland-proxy bridges the IPv6 host port into
 # the IPv4-only bridge — Traefik then sees the Docker gateway address
 # (e.g. 172.19.0.1) as the client, not the real Tailscale IPv6 address.
-# ipAllowList (acc-tailscale) then blocks it: HTTP 403.
+# ipAllowList (access-vpn) then blocks it: HTTP 403.
 #
 # Cloudflare-fronted public traffic is unaffected either way — real
 # client IPs there come from forwardedHeaders.trustedIPs (traefik.yml),
@@ -73,6 +73,17 @@
 # a new dual-stack network under a new name, prove it with whoami +
 # curl -4/-6, then cut over.
 # --------------------------------------------------------
+services:
+  traefik:
+    # The IPv6 bindings. Compose appends them to the IPv4 bindings of
+    # docker-compose.yml, so the host listens on IPv6 only where the public
+    # network carries IPv6 to the container. validate.sh checks the daemon
+    # prerequisites above before this is used.
+    ports:
+      - "${TRAEFIK_BIND_V6:-[::]}:${TRAEFIK_HTTP_PORT}:80/tcp"
+      - "${TRAEFIK_BIND_V6:-[::]}:${TRAEFIK_HTTPS_PORT}:443/tcp"
+      - "${TRAEFIK_BIND_V6:-[::]}:${TRAEFIK_HTTPS_PORT}:443/udp"
+
 networks:
   public:
     enable_ipv6: true
