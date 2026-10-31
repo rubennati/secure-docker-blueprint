@@ -13,14 +13,14 @@
 - **Domain:** Business operations
 - **Role:** Invoicing, quotes and payments
 - **Note:** Elastic License 2.0 is not OSI-approved — source-available, not open source. Self-hosting permitted; providing it as a managed service to others is restricted.
-- **Based on version:** `5.13.40`
+- **Based on version:** `5.13.52`
 - **Last verified:** 2026-09-13 (5.13.40) — in-place upgrade from 5.13.26 on a live host: migrations ran, php-fpm ready, route unchanged. The first `up -d` failed on a container-name conflict left by the earlier service rename and left the application container created but not started — see `TROUBLESHOOTING.md` §5.3. 2026-07-29 (5.13.26) — on a live host: install, secrets through the wrapper entrypoint, routing under `acc-tailscale`, and an invoice created, sent by mail and opened in the client portal
 
 ## Pinned Versions
 
 | Component | Tag | Notes |
 |---|---|---|
-| Invoice Ninja | `5.13.26` | Latest release 2026-07-26 |
+| Invoice Ninja | `5.13.52` | Latest release 2026-10-30 |
 | MySQL | `8.4` | LTS — upstream target DB |
 | Redis | `8.6-alpine` | |
 | Nginx | `1.29-alpine` | |
@@ -152,6 +152,15 @@ docker run --rm \
 # 5. Bring back up on the previous image
 docker compose up -d
 ```
+
+## Version notes
+
+- Moved to `5.13.52` on 2026-10-31 (released 2026-10-30), not run at this tag;
+  `Last verified` stays at `5.13.40`, so the stack is `scaffolded`
+  (`pin-drifted`) until a host run. `5.13.45` replaces `OIDC_WELL_KNOWN` with
+  `OIDC_ISSUER`; this stack sets neither, an installation that configured OIDC
+  renames it. No breaking change, no migration beyond `php artisan migrate`, no
+  advisory in the range.
 
 ## Upgrade Checklist
 
