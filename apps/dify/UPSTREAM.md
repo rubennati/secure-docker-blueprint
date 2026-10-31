@@ -152,9 +152,8 @@ the model backend:
 
 ## Version notes
 
-- pgvector moved to `0.8.7-pg16` on 2026-10-31, not run at this tag; `Last verified`
-  stays at the previous pin, so the stack is `scaffolded` (`pin-drifted`) until a
-  host run. 0.8.2 to 0.8.7 list no breaking change and no advisory; HNSW vacuuming
+- pgvector moved to `0.8.7-pg16` on 2026-10-31, not run at this tag; the stack's
+  state is anchored on the application pin, which did not move. 0.8.2 to 0.8.7 list no breaking change and no advisory; HNSW vacuuming
   and buffer-overflow fixes. After the image moves, upstream's upgrade note applies
   per database: `ALTER EXTENSION vector UPDATE;`.
 - `PLUGIN_TAG` stays at `0.6.10-local` on 2026-10-31, although `0.6.13-local`

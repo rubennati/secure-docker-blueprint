@@ -101,8 +101,8 @@ firing; backup and restore; an upgrade across versions.
 ## Version notes
 
 - Valkey moved to `9.1.3-alpine` on 2026-10-31 (released 2026-10-26), not run at
-  this tag; `Last verified` stays at the previous pin, so the stack is
-  `scaffolded` (`pin-drifted`) until a host run. Upstream marks the release
+  this tag; the stack's state is anchored on the application pin, which did not
+  move. Upstream marks the release
   SECURITY: GHSA-f4q9-j22m-xqq9, a heap buffer overflow in cluster Pub/Sub
   message construction that an authenticated client could turn into code
   execution. No breaking change; expired hash fields no longer propagate on
