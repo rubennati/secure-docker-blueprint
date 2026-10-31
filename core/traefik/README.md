@@ -94,7 +94,7 @@ entrypoint list is static configuration.
 
 ## IPv4-only vs. Dual-Stack Networking
 
-`proxy-public` (the network Traefik and every routed app share) is **IPv4-only by default**, and Traefik is then published on IPv4 only. A port on `[::]` while `proxy-public` cannot carry IPv6 hands every IPv6 connection to Traefik from the Docker gateway — an address inside `172.16.0.0/12`, which `access-lan` and `access-lan-vpn` admit and CrowdSec's default whitelist skips. IPv6 is therefore published by `network-dual-stack.yml` alone, together with the IPv6 subnet. On an IPv4-only install an IPv6 connection is refused: a Tailscale client, which prefers its IPv6 address, needs IPv4 or dual-stack, and behind Cloudflare the origin needs `A` records — see "Behind Cloudflare", "IPv6 between Cloudflare and the origin". The access policies and rate limits evaluate the connecting address on every path — behind Cloudflare that is the edge address; see [Trusted Proxy Headers](../../docs/standards/traefik-security.md#trusted-proxy-headers-traefikyml--forwardedheaders).
+`proxy-public` (the network Traefik and every routed app share) is **IPv4-only by default**, and Traefik is then published on IPv4 only. A port on `[::]` while `proxy-public` cannot carry IPv6 hands every IPv6 connection to Traefik from the Docker gateway — an address inside `172.16.0.0/12`, which the retired LAN policies admitted and CrowdSec's default whitelist skips. IPv6 is therefore published by `network-dual-stack.yml` alone, together with the IPv6 subnet. On an IPv4-only install an IPv6 connection is refused: a Tailscale client, which prefers its IPv6 address, needs IPv4 or dual-stack, and behind Cloudflare the origin needs `A` records — see "Behind Cloudflare", "IPv6 between Cloudflare and the origin". The access policies and rate limits evaluate the connecting address on every path — behind Cloudflare that is the edge address; see [Trusted Proxy Headers](../../docs/standards/traefik-security.md#trusted-proxy-headers-traefikyml--forwardedheaders).
 
 **Recommended for new deployments — dual-stack from day one:**
 
@@ -147,6 +147,8 @@ bash ops/scripts/validate.sh --strict -f docker-compose.yml -f network-dual-stac
 
 A Docker daemon on another host or in a VM cannot be read from here. Confirm `userland-proxy: false` and `ip6tables: true` there, then set `DOCKER_DAEMON_CHECK=manual` in `.env`.
 
+**Which network the ports arrive on.** Docker maps a container's published ports to its address on one network — the one that provides its default gateway. Without a priority Docker takes the first in Compose order, which is `crowdsec-security`, not `proxy-public` (measured 2026-10-31). `docker-compose.yml` therefore gives `proxy-public` `gw_priority: 100`: the ports are DNAT'd to Traefik's address there, where the address family is checked, and a connection from the host itself or from another container reaches Traefik as that network's gateway. `validate.sh` refuses a model in which `proxy-public` does not carry the highest priority, reports a running container created before the pin as `PENDING` until `docker compose up -d` recreates it, and reports `NOT VERIFIED` on a daemon that knows no gateway priority. Needs Docker Engine 28.0 and Compose 2.33.1; `validate.sh` refuses an older Compose by name. From Engine 29.4.1 a single-stack network with a higher priority would take its own family; with the priority on the dual-stack `proxy-public`, both families stay there.
+
 Under dual-stack, `https://[::1]` and IPv6 link-local addresses (`fe80::/10`) do not reach Traefik: with `userland-proxy: false` Docker forwards neither to a container. Check from the host over `127.0.0.1`, from elsewhere over a routed address.
 
 Not exercised on a host: a global IPv6 address reached from the Internet, and Cloudflare connecting to an `AAAA` origin.
@@ -174,7 +176,7 @@ middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_H
 
 | Position | Variable | Values | Decided by |
 |---|---|---|---|
-| 1 access | `APP_TRAEFIK_ACCESS` | `access-public` · `access-lan` · `access-vpn` · `access-lan-vpn` · `access-blocked` | the operator |
+| 1 access | `APP_TRAEFIK_ACCESS` | `access-public` · `access-trusted` · `access-vpn` · `access-trusted-vpn` · `access-blocked` | the operator |
 | 2 limit | `APP_TRAEFIK_LIMIT` | `limit-standard` (125/s, burst 500) · `limit-strict` (20/s, 40) · `limit-sync` (1000/s, 1000) · `limit-extra-large` (125/s, 1000 — closed access only) · `limit-none` | the repository, from a measurement |
 | 3 headers | `APP_TRAEFIK_HEADERS` | `headers-standard` · `headers-application-owned` · `headers-none` — every profile starts with the HSTS base | the repository, from a measurement |
 | 4 auth | `APP_TRAEFIK_AUTH` | `auth-none@file` · `auth-authentik@file` · `${COMPOSE_PROJECT_NAME}-auth@docker` | the operator |
@@ -184,12 +186,12 @@ middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_H
 | Middleware | Who gets through |
 |-----------|-----------------|
 | `access-public` | Everyone (no restriction) |
-| `access-lan` | LAN only — `192.168.0.0/16`, `10.0.0.0/8`, `172.16.0.0/12`, `fc00::/7` (hardcoded RFC1918 + ULA) |
+| `access-trusted` | the networks `TRUSTED_RANGES` declares in `.env` — nothing for being private; empty admits nobody |
 | `access-vpn` | VPN only — `TAILSCALE_CIDR_V4` + `TAILSCALE_CIDR_V6` from `.env` |
-| `access-lan-vpn` | LAN + VPN combined |
+| `access-trusted-vpn` | the declared networks + VPN |
 | `access-blocked` | Nobody (emergency kill switch) |
 
-> **Note:** `access-lan` and `access-lan-vpn` use hardcoded RFC1918 ranges (`192.168.0.0/16`, `10.0.0.0/8`, `172.16.0.0/12`) + IPv6 ULA (`fc00::/7`). These are universal constants and cannot be set via `.env` — `envsubst` would render a comma-separated string as a single YAML entry, which Traefik cannot parse. Only the VPN CIDRs are configurable via `.env`.
+> **Note:** `TRUSTED_RANGES` is quoted and space-separated (`.env` is read by the shell). `validate.sh` refuses a range that is not a network, overlaps the VPN range or overlaps a Docker network of this host; no closed policy admits a container, so a route a container has to reach is `access-public`. `access-lan` and `access-lan-vpn` are retired: `scripts/migrate-traefik-env.sh --all` adds the line to `.env` and renames every stack's value ([`docs/standards/traefik-security.md`](../../docs/standards/traefik-security.md), "Access Policies").
 
 ### Headers
 
@@ -226,7 +228,7 @@ changes last), a request header **after** `${APP_TRAEFIK_AUTH}`.
 | Traefik dashboard | `access-vpn`, `limit-strict`, `headers-standard`, `auth-none` | administration surface, VPN-only, strict counter (`dynamic/routers-system.yml`) |
 | Vaultwarden | `access-vpn`, `limit-standard`, `headers-application-owned` | sends its own `nosniff`, frame header per route, referrer policy, Permissions-Policy and CSP (measured 2026-10-18) |
 | Keycloak | `access-vpn`, `limit-standard`, `headers-application-owned` + `header-permissions` | sends everything but the Permissions-Policy; its frame headers vary per page |
-| Nextcloud | `access-lan-vpn`, `limit-sync`, `headers-standard` + `frame-self` | sync clients need the sustained rate; it frames its own pages |
+| Nextcloud | `access-trusted-vpn`, `limit-sync`, `headers-standard` + `frame-self` | sync clients need the sustained rate; it frames its own pages |
 | WordPress, Ghost | `access-public`, `limit-standard`, `headers-standard` | a CMS with inline scripts, the standard set |
 | listmonk | `access-public`, `limit-standard`, `headers-standard` + `frame-self` | frames its campaign preview; a different subdomain stays refused |
 | Paperless-ngx | `access-vpn`, `limit-standard`, `headers-standard`, then `forwarded-proto-https` | builds absolute URLs from the forwarded protocol; its `/admin` path can take `auth-authentik@file` on a second router |
@@ -653,7 +655,7 @@ client. `cloudflare` is for a host whose public records Cloudflare proxies
 | Entrypoints | trust nobody | trust Cloudflare's published ranges — `ops/cloudflare-ips.txt`, compared with cloudflare.com weekly |
 | Access log, CrowdSec detection | `ClientHost` = connecting address | `ClientHost` = the whole `X-Forwarded-For` value Cloudflare sent: `client`, or `forged, client` when the client sent a header first, because Cloudflare appends the real one behind it. CrowdSec's Traefik parser takes the last element; anything else that reads the log sees the list |
 | CrowdSec bouncer | compares the connecting address — no header reaches it | compares the last `X-Forwarded-For` entry outside the ranges, the client Cloudflare appended. A direct client is compared by its connection, because the entrypoint deleted its header. The plugin keeps its default header: `CF-Connecting-IP` is not used, because the plugin reads whatever header it is given from any sender, and Traefik deletes only `X-Forwarded-*` and `X-Real-Ip` |
-| `access-lan`, `access-vpn`, `access-lan-vpn` | connecting address | connecting address, unchanged — their clients connect directly; a request to such a host through Cloudflare arrives from an edge address and is refused. Over IPv6 as well; an IPv4-only `proxy-public` accepts no IPv6 connection — "IPv6 between Cloudflare and the origin" below |
+| `access-trusted`, `access-vpn`, `access-trusted-vpn` | connecting address | connecting address, unchanged — their clients connect directly; a request to such a host through Cloudflare arrives from an edge address and is refused. Over IPv6 as well; an IPv4-only `proxy-public` accepts no IPv6 connection — "IPv6 between Cloudflare and the origin" below |
 | Rate limits (`limit-*`) | per client | **per edge address** at the origin; per client at the edge, through a Cloudflare rate-limiting rule by IP on the public host names (one rule on the Free plan, two on Pro) |
 | The application | `X-Forwarded-For` and `X-Real-Ip` = client | from Cloudflare: `X-Forwarded-For` = `client, edge` (two hops), `X-Real-Ip` = edge, `CF-Connecting-IP` = client. From a direct client: `X-Forwarded-For` and `X-Real-Ip` = that client, `CF-Connecting-IP` = whatever it sent |
 

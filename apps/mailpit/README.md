@@ -82,9 +82,10 @@ Restart the stack, trigger a password reset, and read it in the UI.
 ## Security model
 
 - **Everything in the inbox is readable by whoever reaches the UI.** Password
-  resets, verification links, invitations. The UI has no login of its own, so
-  the router ships `access-vpn`; opening it further needs `MP_UI_AUTH_FILE`
-  (an htpasswd file, which then also protects the API).
+  resets, verification links, invitations. The router ships `access-vpn`, and
+  Mailpit's own `MP_UI_AUTH_FILE` — the htpasswd in `.secrets/mailpit_htpasswd.txt`,
+  bcrypt, one user per line — asks for a user on the UI and the API, which also
+  holds against a container that reaches port 8025 directly (DEC-077).
 - **Every container on `proxy-public` reaches port 1025.** A sink has to be
   reachable by every stack that sends, which is also why it is for trying
   things out: a stack whose users are real people sends real reset links, and

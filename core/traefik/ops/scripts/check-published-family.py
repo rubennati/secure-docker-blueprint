@@ -14,6 +14,11 @@ given, else COMPOSE_FILE, else docker-compose.yml with its override — and,
 when Traefik exists, against the running state:
 
   ERROR    a port accepts IPv6 while the public network has no IPv6
+  ERROR    the model gives the public network no gw_priority above every
+           other network of the service — the published ports are then mapped
+           to Traefik's address on whichever network Docker picks (Compose
+           order, alphabetical: crowdsec-security), not to the one whose
+           address family is checked here
   ERROR    dual-stack, and the daemon's effective settings keep docker-proxy
            (userland-proxy not false) or disable ip6tables. The daemon is the
            one behind the endpoint Compose uses — resolved as the Docker CLI
@@ -28,6 +33,11 @@ when Traefik exists, against the running state:
   ERROR    dual-stack, and the existing public network is IPv4-only
   PENDING  the running container is published differently from the model —
            `docker compose up -d` recreates it
+  PENDING  the running container's public endpoint does not carry the highest
+           gateway priority — created before gw_priority; `docker compose up -d`
+           recreates it
+  NOT VERIFIED  the running container reports no gateway priority per endpoint
+           (Docker Engine before 28.0)
   PENDING  a docker-proxy process relays an IPv6 port of Traefik
   NOT VERIFIED  the running container was created from other compose files
            than the ones checked, or carries no record of them
@@ -107,6 +117,31 @@ def load_model(args):
         detail = (r.stderr or r.stdout).strip().splitlines()[-1:] or [""]
         raise SystemExit(f"ERROR: docker compose config failed in {project}: {detail[0]}")
     return json.loads(r.stdout), None
+
+
+def gateway_priorities(model):
+    """The gw_priority of every network of the traefik service, 0 where none
+    is given; None when the service lists no networks (a fixture without
+    them, or a model Compose could not normalise)."""
+    nets = model.get("services", {}).get("traefik", {}).get("networks")
+    if nets is None:
+        return None
+    if isinstance(nets, list):
+        return {str(n): 0 for n in nets}
+    return {name: int((cfg or {}).get("gw_priority") or 0) for name, cfg in nets.items()}
+
+
+def gateway_endpoint_problem(priorities, public_key="public"):
+    """None when `public_key` carries a priority strictly above every other
+    network, else the reason."""
+    if public_key not in priorities:
+        return f"the traefik service does not join the network '{public_key}'"
+    own = priorities[public_key]
+    higher = sorted(n for n, p in priorities.items() if n != public_key and p >= own)
+    if higher:
+        return (f"'{public_key}' has gw_priority {own}, not above "
+                + ", ".join(f"'{n}' ({priorities[n]})" for n in higher))
+    return None
 
 
 def configured_bindings(model):
@@ -407,20 +442,26 @@ def network_state(args):
 
 
 def container_state(args):
-    """('ok', (ports, labels)) | ('absent', None) | ('unknown', reason); a stopped container is absent."""
+    """('ok', (ports, labels, networks)) | ('absent', None) | ('unknown', reason);
+    a stopped container is absent. `networks` maps each endpoint's network name
+    to its GwPriority (None where the daemon reports none — Engine before
+    28.0), or is None when a fixture gives no networks."""
     if args.running_ports:
         data = json.loads(Path(args.running_ports).read_text(encoding="utf-8"))
         if isinstance(data, dict) and "__error__" in data:
             return "unknown", data["__error__"]
         labels = json.loads(Path(args.running_labels).read_text(encoding="utf-8")) if args.running_labels else None
-        return ("absent", None) if data is None else ("ok", (data, labels))
+        networks = json.loads(Path(args.running_networks).read_text(encoding="utf-8")) if args.running_networks else None
+        return ("absent", None) if data is None else ("ok", (data, labels, networks))
     state, out = docker_query(["docker", "inspect", args.container], container_absent(args.container))
     if state != "ok":
         return state, out
     obj = json.loads(out)[0]
     if not (obj.get("State") or {}).get("Running"):
         return "absent", None
-    return "ok", ((obj.get("NetworkSettings") or {}).get("Ports") or {}, (obj.get("Config") or {}).get("Labels") or {})
+    settings = obj.get("NetworkSettings") or {}
+    networks = {name: ep.get("GwPriority") for name, ep in (settings.get("Networks") or {}).items()}
+    return "ok", (settings.get("Ports") or {}, (obj.get("Config") or {}).get("Labels") or {}, networks)
 
 
 def running_bindings(ports):
@@ -475,6 +516,7 @@ def main():
     ap.add_argument("--running-ports", help="NetworkSettings.Ports as JSON, 'null' when not running, "
                                             "or {\"__error__\": reason} (tests)")
     ap.add_argument("--running-labels", help="Config.Labels of the running container as JSON (tests)")
+    ap.add_argument("--running-networks", help="network name -> GwPriority of the running container as JSON (tests)")
     ap.add_argument("--no-runtime", action="store_true", help="skip the running-state checks")
     args = ap.parse_args()
 
@@ -494,6 +536,16 @@ def main():
             f"Traefik is published on IPv6 ({', '.join(v6)}), but the public network is IPv4-only.\n"
             "       IPv6 clients would reach it as the Docker bridge gateway, a private address.\n"
             "       Bind to IPv4 (TRAEFIK_BIND_V4) or apply network-dual-stack.yml with its prerequisites.")
+
+    priorities = gateway_priorities(model)
+    if priorities is not None:
+        problem = gateway_endpoint_problem(priorities)
+        if problem:
+            errors.append(
+                f"the published ports are not pinned to the public network: {problem}.\n"
+                "       Docker maps them to Traefik's address on the network with the highest gw_priority,\n"
+                "       and without one to the first in Compose order (crowdsec-security). Give 'public' a\n"
+                "       gw_priority above every other network of the service (docker-compose.yml).")
 
     if dual_stack:
         state, reason = daemon_settings(proc, os.environ, args)
@@ -522,7 +574,18 @@ def main():
             unverified.append(f"the container {args.container} could not be inspected: {ports}. "
                               "What it is published on is not confirmed.")
         if ctr_state == "ok":
-            ports, labels = ports
+            ports, labels, networks = ports
+            if networks is not None and priorities is not None and not gateway_endpoint_problem(priorities):
+                if any(p is None for p in networks.values()):
+                    unverified.append(f"{args.container} reports no gateway priority for its networks — "
+                                      "Docker Engine 28.0 or later is needed to pin the published ports to "
+                                      f"{args.public_network}.")
+                else:
+                    problem = gateway_endpoint_problem({n: int(p) for n, p in networks.items()},
+                                                       public_key=args.public_network)
+                    if problem:
+                        pending.append(f"{args.container} runs with its published ports on another network than "
+                                       f"{args.public_network}: {problem}.\n         Recreate it: docker compose up -d")
             deployed = (labels or {}).get("com.docker.compose.project.config_files", "")
             files = evaluated_files(args)
             if labels is not None and not deployed:

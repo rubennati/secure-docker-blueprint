@@ -52,7 +52,7 @@ older planned list in `apps/README.md` predates that sharpened rule.
 | `trusted_proxies` set to the Docker bridge range | Without it headscale logs Traefik's address as every client's |
 | `metrics_listen_addr` and `grpc_listen_addr` on loopback | Neither is routed, and the metrics endpoint has no authentication |
 | `logtail.enabled: false` stated rather than omitted | Upstream ships the key pointing at Tailscale's logging service |
-| `APP_TRAEFIK_ACCESS=access-lan` | A blueprint ships closed. See README, "Letting clients in" |
+| `APP_TRAEFIK_ACCESS=access-trusted` | A blueprint ships closed. See README, "Letting clients in" |
 | The embedded relay is an overlay, not a default | It needs a published UDP port, which is the one thing the base file avoids |
 
 ## Verified on the image (2026-09-23)

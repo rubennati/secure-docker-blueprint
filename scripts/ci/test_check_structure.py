@@ -550,9 +550,18 @@ class LocalPinDrift(unittest.TestCase):
         return app
 
     def _findings(self, app):
-        out: list[dict] = []
-        cs.check_local_pins(app, out)
-        return out
+        # Judged from inside the temporary tree, like the other classes: the
+        # checker's file list is Git's, and a temp stack is in no repository.
+        cwd = os.getcwd()
+        try:
+            os.chdir(app)
+            _reset_caches()
+            out: list[dict] = []
+            cs.check_local_pins(Path("."), out)
+            return out
+        finally:
+            os.chdir(cwd)
+            _reset_caches()
 
     def test_same_image_different_version_fails(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -816,4 +825,117 @@ class PortsAndNetworkLabel(unittest.TestCase):
                 fails.extend((str(app), f["service"], f["detail"]) for f in findings if f["level"] == "FAIL")
         finally:
             os.chdir(cwd)
+            _reset_caches()  # the repository's file list must not leak into later temp-tree tests
         self.assertEqual(fails, [])
+
+
+class AuthPosture(unittest.TestCase):
+    """DEC-077: the line above every auth variable states the posture; it has to
+    fit the value, and `none` needs a reason and a closed access policy."""
+
+    def _findings_for(self, root: Path, env_text: str) -> list[dict]:
+        app = root / "apps" / "widget"
+        app.mkdir(parents=True, exist_ok=True)
+        (app / "docker-compose.yml").write_text("services:\n  app:\n    image: example/image:1.0\n")
+        (app / ".env.example").write_text(env_text)
+        cwd = os.getcwd()
+        try:
+            os.chdir(root)
+            _reset_caches()
+            findings: list[dict] = []
+            cs.check_env(Path("apps/widget"), findings)
+            return [f["detail"] for f in findings if f["rule"] == "auth-posture"]
+        finally:
+            os.chdir(cwd)
+            _reset_caches()
+
+    def _run(self, text: str) -> list[str]:
+        with tempfile.TemporaryDirectory() as tmp:
+            return self._findings_for(Path(tmp), "COMPOSE_PROJECT_NAME=widget\n" + text)
+
+    def test_the_postures_that_fit_their_values_pass(self):
+        for value, posture in (("auth-none@file", "app-login — the application's own login"),
+                               ("auth-none@file", "public — a website"),
+                               ("auth-authentik@file", "forward-auth — through core/authentik"),
+                               ("${COMPOSE_PROJECT_NAME}-auth@docker", "basic — the gate from APP_BASIC_AUTH_USERS")):
+            found = self._run(f"APP_TRAEFIK_ACCESS=access-public\n# a comment above\n# auth posture: {posture}\nAPP_TRAEFIK_AUTH={value}\n")
+            self.assertEqual(found, [], (value, posture))
+
+    def test_a_variable_without_the_line_fails(self):
+        found = self._run("APP_TRAEFIK_ACCESS=access-vpn\n# WHO must be identified\nAPP_TRAEFIK_AUTH=auth-none@file\n")
+        self.assertEqual(len(found), 1)
+        self.assertIn("no `# auth posture:` line", found[0])
+
+    def test_the_line_has_to_be_in_the_block_directly_above(self):
+        found = self._run("# auth posture: app-login — x\nAPP_TRAEFIK_ACCESS=access-vpn\nAPP_TRAEFIK_AUTH=auth-none@file\n")
+        self.assertEqual(len(found), 1, found)
+
+    def test_a_posture_that_does_not_fit_the_value_fails(self):
+        found = self._run("APP_TRAEFIK_ACCESS=access-vpn\n# auth posture: basic — x\nAPP_TRAEFIK_AUTH=auth-none@file\n")
+        self.assertEqual(len(found), 1)
+        self.assertIn("that value means app-login or public or none", found[0])
+        found = self._run("APP_TRAEFIK_ACCESS=access-vpn\n# auth posture: app-login — x\nAPP_TRAEFIK_AUTH=${COMPOSE_PROJECT_NAME}-auth@docker\n")
+        self.assertIn("that value means basic", found[0])
+
+    def test_an_unknown_posture_fails(self):
+        found = self._run("APP_TRAEFIK_ACCESS=access-vpn\n# auth posture: sso — x\nAPP_TRAEFIK_AUTH=auth-none@file\n")
+        self.assertEqual(len(found), 1)
+        self.assertIn("not one of", found[0])
+
+    def test_none_needs_a_reason_and_a_closed_policy(self):
+        found = self._run("APP_TRAEFIK_ACCESS=access-vpn\n# auth posture: none\nAPP_TRAEFIK_AUTH=auth-none@file\n")
+        self.assertEqual(len(found), 1)
+        self.assertIn("needs its reason", found[0])
+        found = self._run("APP_TRAEFIK_ACCESS=access-public\n# auth posture: none — a stateless echo\nAPP_TRAEFIK_AUTH=auth-none@file\n")
+        self.assertEqual(len(found), 1)
+        self.assertIn("needs a closed access policy", found[0])
+        found = self._run("APP_TRAEFIK_ACCESS=access-vpn\n# auth posture: none — a stateless echo\nAPP_TRAEFIK_AUTH=auth-none@file\n")
+        self.assertEqual(found, [])
+
+    def test_the_sibling_access_variable_is_matched_by_prefix(self):
+        found = self._run("APP_TRAEFIK_ACCESS=access-public\n# auth posture: app-login — x\nAPP_TRAEFIK_AUTH=auth-none@file\n"
+                          "ADMIN_TRAEFIK_ACCESS=access-vpn\n# auth posture: none — a stateless path\nADMIN_TRAEFIK_AUTH=auth-none@file\n")
+        self.assertEqual(found, [])
+
+    def test_every_catalogue_example_states_a_posture(self):
+        posture_of = {}
+        for env in sorted(Path(p) for root in cs.ROOTS for p in Path(root).rglob(".env.example")):
+            for key, value, posture, reason in cs.auth_postures(env):
+                self.assertIsNotNone(posture, f"{env}: {key}")
+                posture_of.setdefault(posture, []).append(str(env.parent))
+        self.assertEqual(set(posture_of) <= set(cs.POSTURES), True, posture_of.keys())
+        self.assertIn("apps/paperless-gpt", posture_of["basic"])
+        self.assertIn("apps/whoami", posture_of["none"])
+
+
+class RetiredLanClass(unittest.TestCase):
+    """access-lan and access-lan-vpn are retired names since DEC-076: an example
+    that still sets one fails like any name from before the model."""
+
+    def _findings_for(self, root: Path, env_text: str) -> list[dict]:
+        app = root / "apps" / "widget"
+        app.mkdir(parents=True, exist_ok=True)
+        (app / "docker-compose.yml").write_text("services:\n  app:\n    image: example/image:1.0\n")
+        (app / ".env.example").write_text(env_text)
+        cwd = os.getcwd()
+        try:
+            os.chdir(root)
+            _reset_caches()
+            findings: list[dict] = []
+            cs.check_env(Path("apps/widget"), findings)
+            return [f for f in findings if f["rule"] == "retired-name"]
+        finally:
+            os.chdir(cwd)
+            _reset_caches()
+
+    def test_the_lan_class_in_an_example_is_a_retired_name(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            found = self._findings_for(Path(tmp), "COMPOSE_PROJECT_NAME=widget\nAPP_TRAEFIK_ACCESS=access-lan-vpn\nAGW_UI_TRAEFIK_ACCESS=access-lan\n")
+        self.assertEqual(len(found), 2, found)
+        self.assertTrue(all(f["level"] == "FAIL" for f in found))
+        self.assertIn("migrate-traefik-env.sh", found[0]["detail"])
+
+    def test_the_trusted_and_vpn_policies_pass(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            found = self._findings_for(Path(tmp), "COMPOSE_PROJECT_NAME=widget\nAPP_TRAEFIK_ACCESS=access-trusted-vpn\nAPP_API_TRAEFIK_ACCESS=access-vpn\n")
+        self.assertEqual(found, [])

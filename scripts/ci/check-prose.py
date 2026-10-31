@@ -112,7 +112,7 @@ add("evaluation in place of a value",
 # moved (Phase 4.4a–c), True since the site followed (Phase 4.4c).
 RETIRED_GATE = True
 RETIRED = re.compile(
-    r"\b(sec-[0-9][a-z0-9-]*|acc-(?:public|local|tailscale|private|deny)|"
+    r"\b(sec-[0-9][a-z0-9-]*|acc-(?:public|local|tailscale|private|deny)|access-lan(?:-vpn)?|"
     r"hdr-(?:basic|strict)(?:-embed)?|rl-(?:soft|spa|spa-xl|sync|hard)|"
     r"APP_TRAEFIK_(?:SECURITY|THREAT)|sec-authentik|strip-xfo|"
     r"tls-(?:basic|aplus|modern))\b|(?<![\w-])crowdsec-(?:basic|appsec|strict)\b"
@@ -120,7 +120,7 @@ RETIRED = re.compile(
 # What makes a unit an old-to-new example: the model's own names, or the words
 # a migration note uses.
 MODEL_CONTEXT = re.compile(
-    r"\b(access-(?:public|lan|vpn|lan-vpn|blocked)|limit-(?:none|standard|extra-large|sync|strict)|"
+    r"\b(access-(?:public|lan|vpn|lan-vpn|blocked|trusted|trusted-vpn)|limit-(?:none|standard|extra-large|sync|strict)|"
     r"headers-(?:standard|application-owned|none)|auth-none|auth-authentik|threat-crowdsec|"
     r"tls-(?:compatible|standard|strict)|hsts-base|frame-self|csp-self-only|forwarded-proto-https|"
     r"middleware model|before the model|replaced|retired|migrat\w*|names of their time|historical)\b",

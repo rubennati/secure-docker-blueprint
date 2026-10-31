@@ -36,7 +36,7 @@ from test_traefik_dashboard_cert import BASE_ENV, TRAEFIK
 REPO = Path(__file__).resolve().parents[2]
 VALID_ENV = dict(BASE_ENV, ACME_WILDCARD_DOMAIN="example.com")
 
-ACCESS = {"access-public", "access-lan", "access-vpn", "access-lan-vpn", "access-blocked"}
+ACCESS = {"access-public", "access-trusted", "access-vpn", "access-trusted-vpn", "access-blocked"}
 LIMITS = {"limit-none": None, "limit-standard": (125, 500), "limit-extra-large": (125, 1000),
           "limit-sync": (1000, 1000), "limit-strict": (20, 40)}
 PROFILES = {"headers-standard": ["hsts-base", "header-nosniff", "header-frame-deny", "header-referrer", "header-permissions"],
@@ -189,6 +189,73 @@ class Model(unittest.TestCase):
         defined_in = [f.name for f in (self.root / "config" / "dynamic").glob("*.yml")
                       if "compress" in (yaml.safe_load(f.read_text(encoding="utf-8")) or {}).get("http", {}).get("middlewares", {})]
         self.assertEqual(defined_in, ["model.yml"])
+
+
+class TrustedRanges(Model):
+    """DEC-076: access-trusted admits the networks TRUSTED_RANGES declares and
+    access-trusted-vpn adds the VPN; empty admits nobody; unset is refused by
+    render.sh and validate.sh; access-lan* no longer exists anywhere."""
+
+    def middlewares(self, env):
+        r = self.render(env)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        return self.dyn("model.yml")["http"]["middlewares"], r.stdout
+
+    def test_declared_ranges_render_both_trusted_policies(self):
+        mw, out = self.middlewares(dict(VALID_ENV, TRUSTED_RANGES="192.168.10.0/24 2001:db8:10::/64"))
+        self.assertEqual(mw["access-trusted"]["ipAllowList"]["sourceRange"], ["192.168.10.0/24", "2001:db8:10::/64"])
+        self.assertEqual(mw["access-trusted-vpn"]["ipAllowList"]["sourceRange"],
+                         ["192.168.10.0/24", "2001:db8:10::/64", BASE_ENV["TAILSCALE_CIDR_V4"], BASE_ENV["TAILSCALE_CIDR_V6"]])
+        self.assertNotIn("access-lan", mw)
+        self.assertNotIn("access-lan-vpn", mw)
+        self.assertIn("2 declared range(s)", out)
+        v = self.validate()
+        self.assertNotIn("ERROR", v.stdout + v.stderr)
+
+    def test_empty_admits_nobody(self):
+        mw, out = self.middlewares(dict(VALID_ENV, TRUSTED_RANGES=""))
+        self.assertEqual(mw["access-trusted"]["ipAllowList"]["sourceRange"], ["127.0.0.1/32"])
+        self.assertEqual(mw["access-trusted-vpn"]["ipAllowList"]["sourceRange"],
+                         ["127.0.0.1/32", BASE_ENV["TAILSCALE_CIDR_V4"], BASE_ENV["TAILSCALE_CIDR_V6"]])
+        self.assertIn("0 declared range(s)", out)
+
+    def test_unset_is_refused_by_render_and_validate_with_the_migration_named(self):
+        env = {k: v for k, v in VALID_ENV.items() if k != "TRUSTED_RANGES"}
+        r = self.render(env)
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("TRUSTED_RANGES is not set", r.stdout + r.stderr)
+        self.assertIn("migrate-traefik-env.sh", r.stdout + r.stderr)
+        v = self.validate()
+        self.assertNotEqual(v.returncode, 0)
+        self.assertIn("TRUSTED_RANGES is not set", v.stdout + v.stderr)
+
+    def test_a_range_overlapping_the_vpn_is_refused(self):
+        self.render(dict(VALID_ENV, TRUSTED_RANGES="100.64.0.0/10"))
+        v = self.validate()
+        self.assertNotEqual(v.returncode, 0)
+        self.assertIn("overlaps the VPN range", v.stdout)
+
+    def test_a_range_overlapping_the_public_network_subnet_is_refused(self):
+        self.render(dict(VALID_ENV, TRUSTED_RANGES="172.30.0.0/16", PUBLIC_NETWORK_SUBNET_V4="172.30.0.0/16",
+                         PUBLIC_NETWORK_SUBNET_V6="fd3a:91c2:7e04::/64"))
+        v = self.validate()
+        self.assertNotEqual(v.returncode, 0)
+        self.assertIn("overlaps the Docker network", v.stdout)
+
+    def test_a_value_that_is_not_a_network_is_refused(self):
+        self.render(dict(VALID_ENV, TRUSTED_RANGES="192.168.10.5/24"))
+        v = self.validate()
+        self.assertNotEqual(v.returncode, 0)
+        self.assertIn("not a network in CIDR form", v.stdout)
+
+    def test_a_rendered_lan_policy_from_before_is_refused_as_retired(self):
+        self.render(dict(VALID_ENV, TRUSTED_RANGES=""))
+        model = self.root / "config" / "dynamic" / "model.yml"
+        model.write_text(model.read_text(encoding="utf-8") + "\n    access-lan:\n      ipAllowList:\n        sourceRange:\n          - \"10.0.0.0/8\"\n", encoding="utf-8")
+        v = self.validate()
+        self.assertNotEqual(v.returncode, 0)
+        self.assertIn("access-lan", v.stdout)
+        self.assertIn("retired", v.stdout)
 
 
 if __name__ == "__main__":

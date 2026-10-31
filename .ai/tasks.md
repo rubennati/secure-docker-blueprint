@@ -285,14 +285,21 @@ declares nothing — the render-identity test holds that.
 
 - [x] 1. The guards: `missing-network-label`, `port-no-host-address`, the subnet check,
       the render-identity test; the records and the register.
-- [ ] 2. The published ports on one named network: `gw_priority` on `proxy-public`;
+- [x] 2. The published ports on one named network: `gw_priority` on `proxy-public`;
       `check-published-family.py` reads the gateway endpoint of the container rather
-      than assuming `public`; the Compose minimum for `gw_priority` written down. Changes
-      the hairpin source address on the next `up -d` — CHANGELOG Migration.
-- [ ] 3. `access-trusted*` from `TRUSTED_RANGES`, the declaration gate, the overlap
-      check, `migrate-traefik-env.sh` for `access-lan*` (DEC-076).
-- [ ] 4. The auth posture in every `.env.example`, its rule, the nine stacks without a
-      login decided one by one (DEC-077).
+      than assuming `public`; the Compose minimum for `gw_priority` written down (2.33.1). Changes
+      the hairpin source address on the next `up -d` — CHANGELOG Migration. Done on
+      `feature/ingress-step-2-gateway`; the IPv6 endpoint stays a host proof.
+- [x] 3. `access-trusted*` from `TRUSTED_RANGES`, the overlap check, `access-lan*`
+      retired, `migrate-traefik-env.sh` renames and adds the line (DEC-076, amended:
+      breaking with a migration, no gate). Done on `feature/ingress-step-3-trusted`.
+      Integrations call back over a Docker network with the application's setting;
+      Seafile's two OnlyOffice paths have opt-in routes (`onlyoffice-callback.yml`).
+- [x] 4. The auth posture in every `.env.example` (`# auth posture:` above the auth
+      variable), the `auth-posture` rule, the stacks without a login decided one by
+      one (DEC-077): basicAuth for Ollama, Homepage, Dashy, Heimdall; Mailpit's own
+      htpasswd; `none` with a reason for whoami, httpbin, it-tools, GreenMail, Gatus.
+      Done on `feature/ingress-step-4-posture`.
 - [ ] 5. Edge networks: `render.sh` derives them from the installed stacks — a stack
       counts as installed by a signal more reliable than the presence of `.env`, to be
       chosen in the step (a running project, or an explicit list) — the stack template

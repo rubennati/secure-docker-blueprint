@@ -28,11 +28,18 @@ FAIL (blocks CI — dangerous or leak-prone):
   tls-conflict      two routers of one stack serve the same host name with
                     different tls.options — Traefik logs the conflict and
                     serves `default` to both
+  auth-posture      an *_TRAEFIK_AUTH variable without a `# auth posture:`
+                    line above it, a posture that does not fit its value
+                    (auth-none@file is app-login, public or none;
+                    auth-authentik@file is forward-auth; *-auth@docker is
+                    basic), or `none` — no login anywhere — without a reason
+                    or behind an open access policy (DEC-077)
   retired-name      a stack still carries the vocabulary from before the
                     model: *_TRAEFIK_SECURITY or *_TRAEFIK_THREAT, an
                     acc-* / sec-* / tls-basic|aplus|modern value, a router
-                    naming such a TLS profile — scripts/migrate-traefik-env.sh
-                    maps every one of them
+                    naming such a TLS profile — or the LAN class access-lan /
+                    access-lan-vpn that access-trusted(-vpn) replaced
+                    (DEC-076) — scripts/migrate-traefik-env.sh maps every one
   missing-network-label
                     a service with traefik.enable=true and no
                     traefik.docker.network label — without it Traefik takes
@@ -116,8 +123,8 @@ SECRET_VAR = re.compile(r"^[A-Z0-9_]*(PASSWORD|SECRET|TOKEN|PASSWD|PWD)$")
 # keep the set of such addresses closed — access-blocked closes the router
 # altogether. The names before the model are kept so that a stack carrying
 # them is still judged (and fails for the name, see retired-name).
-CLOSED_ACCESS = {"access-lan", "access-vpn", "access-lan-vpn", "access-blocked",
-                 "acc-private", "acc-tailscale", "acc-deny"}
+CLOSED_ACCESS = {"access-trusted", "access-vpn", "access-trusted-vpn", "access-blocked",
+                 "access-lan", "access-lan-vpn", "acc-private", "acc-tailscale", "acc-deny"}
 
 # The middleware model (core/traefik/config/dynamic/model.yml, decided
 # 2026-10-18): four positions on every router, in this order. A router names
@@ -126,11 +133,20 @@ CLOSED_ACCESS = {"access-lan", "access-vpn", "access-lan-vpn", "access-blocked",
 # <stack>-auth@docker), so it is recognised by the variable as well as by name.
 POSITIONS = ("access", "limit", "headers", "auth")
 POSITION_VAR = re.compile(r"TRAEFIK_[A-Z0-9_]*?(ACCESS|LIMIT|HEADERS|AUTH)$")
+
+# DEC-077: the line above every auth variable states the stack's posture, so
+# that auth-none@file reads as what it is — the application's own login, a
+# public service by design, or no login anywhere, which needs a closed access
+# policy and a reason. The value decides which postures fit.
+POSTURES = ("app-login", "public", "basic", "forward-auth", "none")
+POSTURE_LINE = re.compile(r"^#\s*auth posture:\s*([a-z-]+)(?:\s+[—–-]+\s*(.*))?\s*$")
+POSTURE_FOR_VALUE = {"auth-none@file": ("app-login", "public", "none"),
+                     "auth-authentik@file": ("forward-auth",)}
 # The names the model replaced (v0.9.4: access.yml, security-blocks.yml,
 # security-chains.yml, crowdsec.yml, tls-profiles.yml). A stack carrying one
 # has not been migrated — scripts/migrate-traefik-env.sh maps every one.
-OLD_NAME = re.compile(r"^(sec-|acc-|hdr-|rl-|crowdsec-(basic|appsec))")
-RETIRED_VALUE = re.compile(r"^(sec-|acc-|hdr-|rl-|crowdsec-(basic|appsec)|tls-(basic|aplus|modern))")
+OLD_NAME = re.compile(r"^(sec-|acc-|hdr-|rl-|crowdsec-(basic|appsec)|access-lan(-vpn)?(@|$))")
+RETIRED_VALUE = re.compile(r"^(sec-|acc-|hdr-|rl-|crowdsec-(basic|appsec)|tls-(basic|aplus|modern)|access-lan(-vpn)?$)")
 RETIRED_KEY = re.compile(r"TRAEFIK_[A-Z0-9_]*(SECURITY|THREAT)$")
 TLS_RETIRED = {"tls-basic", "tls-aplus", "tls-modern"}
 # Per-app blocks and the side of the four they belong on (model.yml).
@@ -297,9 +313,22 @@ def compose_files(app: Path) -> list[Path]:
     if main.exists() and in_repository(main):
         return [main]
     # For a split stack the glob decides what counts as production, so the
-    # local test stack must be excluded from it.
+    # local test stack must be excluded from it, and so must a file that only
+    # adds to a service another file defines — `onlyoffice-callback.yml` carries
+    # labels for the seafile service and no image; it is an overlay of the stack,
+    # checked as one by overlay_files(), not a part of it.
     return sorted(p for p in app.glob("*.yml")
-                  if in_repository(p) and is_compose(p) and not p.name.endswith(".local.yml"))
+                  if in_repository(p) and is_compose(p) and not p.name.endswith(".local.yml")
+                  and _defines_a_service(p))
+
+
+def _defines_a_service(path: Path) -> bool:
+    """True when at least one service of the file has an image or a build."""
+    try:
+        services = compose_load(path).get("services") or {}
+    except yaml.YAMLError:
+        return False
+    return any(isinstance(s, dict) and ("image" in s or "build" in s) for s in services.values())
 
 
 def overlay_files(app: Path) -> list[Path]:
@@ -533,6 +562,36 @@ def parse_env(path: Path) -> tuple[list[tuple[str, str]], list[str]]:
     return variables, sections
 
 
+def auth_postures(path: Path) -> list[tuple[str, str, str | None, str | None]]:
+    """(variable, value, posture, reason) for every *_TRAEFIK_AUTH= line.
+
+    The posture is read from the comment block directly above the variable —
+    the nearest `# auth posture:` line before a non-comment line — and is None
+    when that block has none.
+    """
+    lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    out: list[tuple[str, str, str | None, str | None]] = []
+    for i, raw in enumerate(lines):
+        line = raw.strip()
+        if line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        key = key.strip()
+        m = POSITION_VAR.search(key)
+        if not m or m.group(1) != "AUTH":
+            continue
+        posture = reason = None
+        j = i - 1
+        while j >= 0 and lines[j].strip().startswith("#"):
+            pm = POSTURE_LINE.match(lines[j].strip())
+            if pm:
+                posture, reason = pm.group(1), (pm.group(2) or "").strip() or None
+                break
+            j -= 1
+        out.append((key, value.strip(), posture, reason))
+    return out
+
+
 IMAGE_VAR = re.compile(r"\$\{([A-Za-z0-9_]+)(?::?-([^}]*))?\}")
 
 
@@ -754,6 +813,34 @@ def check_env(app: Path, findings: list[dict]) -> None:
             if not reserved and "${" not in value:
                 findings.append({"level": "WARN", "rule": "real-domain",
                                  "detail": f"{key}={value} — use *.example.com in a committed file"})
+
+    # -- the auth posture beside every auth variable (DEC-077) ----------------
+    access_of = {k[: -len("ACCESS")]: v for k, v in variables
+                 if (pm := POSITION_VAR.search(k)) and pm.group(1) == "ACCESS"}
+    for key, value, posture, reason in auth_postures(env):
+        if posture is None:
+            findings.append({"level": "FAIL", "rule": "auth-posture",
+                             "detail": f"{key} has no `# auth posture:` line above it — app-login, public, "
+                                       "basic, forward-auth or none, with the reason after a dash (DEC-077)"})
+            continue
+        if posture not in POSTURES:
+            findings.append({"level": "FAIL", "rule": "auth-posture",
+                             "detail": f"{key}: posture '{posture}' is not one of {', '.join(POSTURES)}"})
+            continue
+        fits = ("basic",) if value.endswith("-auth@docker") else POSTURE_FOR_VALUE.get(value)
+        if fits and posture not in fits:
+            findings.append({"level": "FAIL", "rule": "auth-posture",
+                             "detail": f"{key}={value} states posture {posture}; that value means "
+                                       + " or ".join(fits)})
+        if posture == "none":
+            if not reason:
+                findings.append({"level": "FAIL", "rule": "auth-posture",
+                                 "detail": f"{key}: posture none — no login anywhere — needs its reason after the dash"})
+            access = access_of.get(key[: -len("AUTH")])
+            if access is not None and access not in CLOSED_ACCESS:
+                findings.append({"level": "FAIL", "rule": "auth-posture",
+                                 "detail": f"{key}: posture none behind {access} — no login anywhere needs a "
+                                           "closed access policy (DEC-077.3)"})
 
     # -- the wide first-load burst is judged per router: check_routers --------
 

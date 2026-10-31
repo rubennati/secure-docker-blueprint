@@ -209,14 +209,17 @@ Run these once. Each is `occ config:system:set`, so re-running is harmless.
 
 ### Opening it up
 
-The stack ships `APP_TRAEFIK_ACCESS=access-lan-vpn` — reachable from your LAN
-and VPN, and from the Docker gateway, which the instance needs to run its own
-setup checks. Switch to `access-public` once it is configured, verified, and
-you have logged in successfully. That is a deliberate change to your attack
-surface.
+The stack ships `APP_TRAEFIK_ACCESS=access-trusted-vpn` — reachable from the ranges you declare
+and the VPN. No closed policy admits a Docker network, so the instance's own
+setup checks, which call its public name, report failures until the route is
+opened; nothing of its function depends on them. Switch to `access-public` once it
+is configured, verified, and you have logged in successfully. That is a deliberate
+change to your attack surface.
 
-An office server such as OnlyOffice calls back over the public domain and
-requires `access-public`.
+An office server — OnlyOffice, Euro-Office, Collabora — calls Nextcloud back over
+the Docker network the two stacks share, not through the route: the connector's
+internal address settings (`StorageUrl`, `wopi_callback_url`) in the stack README,
+"Office servers behind a closed route".
 
 ### Rotating a key
 
@@ -379,8 +382,9 @@ docker compose up -d --force-recreate app cron
 incomplete, so every request appears to come from the proxy. Add the missing
 subnet, including the IPv6 one.
 
-**Setup checks fail to reach the instance itself** — with `access-vpn` the
-Docker gateway is not permitted. `access-lan-vpn` covers it.
+**Setup checks fail to reach the instance itself** — no closed policy admits
+a Docker network. They pass once the route is `access-public`; an office server
+does not depend on them (the stack README, "Office servers behind a closed route").
 
 ## Repository files
 

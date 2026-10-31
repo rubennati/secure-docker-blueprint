@@ -56,16 +56,16 @@ reaches the container. In practice this is one variable in that service's `.env`
 | Policy | Reachable by |
 |---|---|
 | `access-public` | anyone on the internet |
-| `access-lan` | the local network |
+| `access-trusted` | the ranges you declare in `core/traefik/.env` (`TRUSTED_RANGES`) — your LAN, written out |
 | `access-vpn` | clients on your VPN only |
-| `access-lan-vpn` | the local network and your VPN |
+| `access-trusted-vpn` | the declared ranges and your VPN |
 | `access-blocked` | nothing — the route exists but answers no one |
 
 **The defaults differ per service, and are not all restrictive.** Of the five
 services with a guide here, Vaultwarden and Invoice Ninja ship
-`access-vpn`, Nextcloud and Seafile Pro ship `access-lan-vpn`, and OnlyOffice
-ships `access-public` — the file hosts because the office servers call back
-into them from the Docker network, the office server because it is built to be
+`access-vpn`, Nextcloud and Seafile Pro ship `access-trusted-vpn`, and OnlyOffice
+ships `access-public` — the file hosts because their office servers reach them
+over the Docker network, the office server because it is built to be
 reached by people who are not on your VPN. Check the value in that service's
 `.env.example` rather than assuming; it is one line, and it decides who can
 reach the thing.

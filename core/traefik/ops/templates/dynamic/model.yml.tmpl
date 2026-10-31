@@ -53,13 +53,15 @@ http:
       chain:
         middlewares: []
 
-    access-lan:
+    # The networks TRUSTED_RANGES declares (.env) and nothing else: no address is
+    # trusted for being private — validate.sh refuses a Docker network and the
+    # VPN range. Empty admits nobody. The LAN class this replaced admitted
+    # RFC 1918 and fc00::/7, every Docker subnet and Tailscale's IPv6 range with
+    # them (docs/audits/ingress-architecture-2026-10-31.md).
+    access-trusted:
       ipAllowList:
         sourceRange:
-          - "192.168.0.0/16"    # RFC1918
-          - "10.0.0.0/8"        # RFC1918
-          - "172.16.0.0/12"     # RFC1918 — includes the Docker bridge gateway
-          - "fc00::/7"          # IPv6 ULA
+${ACCESS_TRUSTED_RANGES_YAML}
 
     access-vpn:
       ipAllowList:
@@ -67,13 +69,10 @@ http:
           - "${TAILSCALE_CIDR_V4}"
           - "${TAILSCALE_CIDR_V6}"
 
-    access-lan-vpn:
+    access-trusted-vpn:
       ipAllowList:
         sourceRange:
-          - "192.168.0.0/16"
-          - "10.0.0.0/8"
-          - "172.16.0.0/12"
-          - "fc00::/7"
+${ACCESS_TRUSTED_RANGES_YAML}
           - "${TAILSCALE_CIDR_V4}"
           - "${TAILSCALE_CIDR_V6}"
 
@@ -100,7 +99,7 @@ http:
         burst: 500
 
     # A whole first load in one bucket — only behind access-vpn,
-    # access-lan, access-lan-vpn or access-blocked (CI: burst-exposure).
+    # access-trusted, access-trusted-vpn or access-blocked (CI: burst-exposure).
     # Measured: Windmill 857 and Twenty 516 requests on first load.
     limit-extra-large:
       rateLimit:

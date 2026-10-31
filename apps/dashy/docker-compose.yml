@@ -60,6 +60,10 @@ services:
       # AUTHENTIK_FORWARD_AUTH_ENABLED=true rendered in core/traefik.
       # See core/authentik/README.md — Pattern 1.
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+      # Middleware: HTTP basic auth, the stack's own gate (DEC-077). The value is
+      # `user:hash` from the gitignored .env — .env.example says how to make it.
+      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-auth.basicauth.users=${APP_BASIC_AUTH_USERS}"
+      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-auth.basicauth.realm=Dashy"
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8080"
 

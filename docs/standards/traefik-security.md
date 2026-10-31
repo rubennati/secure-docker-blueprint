@@ -49,21 +49,22 @@ Controls WHO can reach a router. Pick one per router; the operator's choice.
 | Policy | Who gets through |
 |--------|-----------------|
 | `access-public` | Everyone (no restriction) |
-| `access-lan` | LAN only (RFC1918 + IPv6 ULA) |
+| `access-trusted` | The networks `TRUSTED_RANGES` declares — and nothing for being private |
 | `access-vpn` | VPN only (IPv4 + IPv6) |
-| `access-lan-vpn` | LAN + VPN combined |
+| `access-trusted-vpn` | The declared networks + VPN |
 | `access-blocked` | Nobody (emergency kill switch) |
 
-All policies support IPv4 + IPv6. The VPN ranges are operator-configurable via `core/traefik/.env`:
+All policies support IPv4 + IPv6. The ranges come from `core/traefik/.env`:
 
 ```env
 TAILSCALE_CIDR_V4=100.64.0.0/10
 TAILSCALE_CIDR_V6=fd7a:115c:a1e0::/48
+TRUSTED_RANGES="192.168.10.0/24 2001:db8:10::/64"
 ```
 
-Local network ranges (RFC1918 for IPv4, ULA `fc00::/7` for IPv6) are hardcoded in `model.yml.tmpl` and are not operator-configurable env variables. `access-lan` and `access-lan-vpn` admit `172.16.0.0/12`, which includes the Docker bridge gateway — an instance can reach itself through the proxy. No external client arrives as the gateway as long as Traefik is published only on the address families `proxy-public` carries, which `validate.sh` checks (see the IPv6 note below).
+**No address class is trusted by default** (DEC-076). `access-trusted` admits exactly the networks `TRUSTED_RANGES` names, quoted and space-separated, IPv4 and IPv6; empty admits nobody. `validate.sh` refuses a value that is not a network in CIDR form, a range that overlaps the VPN range — the policy that admits both is `access-trusted-vpn` — and a range that overlaps a Docker network: `PUBLIC_NETWORK_SUBNET_*`, and every network of the daemon where Docker answers. A trusted range is a network of clients, never one of containers: no closed policy admits the Docker gateway or a container, so an instance cannot reach a closed route of its own or of another stack through the proxy — a route a container has to reach is `access-public`. Which VPN addresses are the host's is a property of its tunnel interface, which is why `access-vpn` needs no declaration.
 
-**Known limitation — the ULA range contains the Tailscale range.** `fd7a:115c:a1e0::/48`, Tailscale's IPv6 range, lies inside `fc00::/7`. On a dual-stack install `access-lan` therefore admits a tailnet client that connects over IPv6, although the policy is meant for the LAN alone; `access-lan-vpn` admits it by design. Over IPv4 it does not — `100.64.0.0/10` is not RFC1918. Open; not changed by the published-address check.
+**What this replaced, and how an installation moves.** Until v0.9.6 the LAN class was `access-lan` and `access-lan-vpn`: RFC 1918 and `fc00::/7`, which admitted every Docker subnet and, through `fc00::/7`, Tailscale's IPv6 range — a tailnet client over IPv6 passed a LAN-only policy, and a compromised container on any network Traefik joins passed it for another stack's host name (measured 2026-10-31, `docs/audits/ingress-architecture-2026-10-31.md`). Both names are retired: `render.sh` and `validate.sh` stop without `TRUSTED_RANGES`, `check-structure.py` and `check-prose.py` refuse the old names, and a router that still names one is disabled by Traefik. The migration is `scripts/migrate-traefik-env.sh --all`: it adds `TRUSTED_RANGES=""` to `core/traefik/.env` where the line is missing and renames the policy in every stack's `.env`; fill the ranges in, render, `docker compose up -d` per stack.
 
 ---
 
@@ -87,7 +88,7 @@ what the access policies and rate limits evaluate:
 `access-*` policy and every `limit-*` counter evaluates the address of the TCP
 connection. Which address that is depends on the path:
 
-| Path | Connecting address | `access-lan` / `access-vpn` / `access-lan-vpn` | `limit-*` | The application receives |
+| Path | Connecting address | `access-trusted` / `access-vpn` / `access-trusted-vpn` | `limit-*` | The application receives |
 |---|---|---|---|---|
 | Direct — VPN, LAN, a public client with no CDN in front | the client | evaluate the client | one bucket per client | `X-Forwarded-For` and `X-Real-Ip` carry the client; a header the client sent is deleted |
 | Cloudflare's proxy | Cloudflare's edge address | evaluate the edge, which is in none of their ranges — every request is refused | one bucket per edge address, shared by every visitor behind it | `X-Forwarded-For` = `client, edge`; `X-Real-Ip` = the edge |
@@ -139,7 +140,7 @@ header carries it on this path: Traefik sees it only if `proxy-public`
 carries IPv6. On an IPv4-only `proxy-public` Traefik is published on IPv4
 only, so an IPv6 connection — a tailnet client's, Cloudflare's to an
 `AAAA`-only origin, a direct client's — is refused rather than handed to
-Traefik from the Docker gateway, which `access-lan` would admit. The
+Traefik from the Docker gateway, which `access-lan` of an undeclared installation would admit. The
 dual-stack overlay publishes IPv6 together with the IPv6 subnet, and
 `validate.sh` checks that the Docker daemon forwards it by NAT (README,
 "Published addresses"). See
@@ -165,7 +166,7 @@ and no longer.
 | `limit-standard` | 125 per second, 500 | the default. Every first load measured in this repository fits, except Twenty's and Windmill's |
 | `limit-strict` | 20 per second, 40 | administration surfaces and login-only routes — requests are few and each is worth slowing an attacker down. The wrong choice for anything a browser loads assets from |
 | `limit-sync` | 1000 per second, 1000 | applications whose desktop or mobile clients synchronise files (Nextcloud, Seafile): a sync is bounded by the sustained rate, not by the bucket |
-| `limit-extra-large` | 125 per second, 1000 | a whole first load in one bucket (Twenty 516 requests, Windmill 857, measured). CI accepts it only behind `access-lan`, `access-vpn`, `access-lan-vpn` or `access-blocked` (`burst-exposure`) |
+| `limit-extra-large` | 125 per second, 1000 | a whole first load in one bucket (Twenty 516 requests, Windmill 857, measured). CI accepts it only behind `access-trusted`, `access-vpn`, `access-trusted-vpn` or `access-blocked` (`burst-exposure`) |
 | `limit-none` | no counter | a websocket or long-poll endpoint, a static-asset router, a server called by another server — each a documented choice, not a type rule |
 
 The sustained rate — 125 per second — bounds abuse; the burst is a first-load
@@ -307,6 +308,35 @@ carries its provider:
 A gate on one path of a host — `apps/paperless-ngx`'s `/admin` — is a second
 router with `auth-authentik@file` in its auth position and `auth-none@file`
 on the main one ([`core/authentik/README.md`](../../core/authentik/README.md#integrating-other-apps-via-forward-auth)).
+
+### The posture beside the value (DEC-077)
+
+`auth-none@file` means no additional authentication at the proxy, and that is
+two different things: an application with its own login, and an application
+with none. So the line directly above every `*_TRAEFIK_AUTH` variable states
+the stack's posture, and `check-structure.py` reads it (`auth-posture`):
+
+```env
+# auth posture: app-login — the application's own login governs every request
+APP_TRAEFIK_AUTH=auth-none@file
+```
+
+| Posture | Fits the value | Meaning |
+|---|---|---|
+| `app-login` | `auth-none@file` | the application identifies its users itself — a login, an API key |
+| `public` | `auth-none@file` | no login by design — a website, a paste service, a document server the embedding application authorises |
+| `basic` | `${COMPOSE_PROJECT_NAME}-auth@docker` | the stack's own basicAuth gate from `APP_BASIC_AUTH_USERS` |
+| `forward-auth` | `auth-authentik@file` | the identity provider through `core/authentik` |
+| `none` | `auth-none@file` | no login anywhere — allowed behind a closed access policy only, with the reason written after the dash |
+
+No login layer is forced. An application with no login that is stateless and
+holds no data stays `none` behind a closed policy (`apps/whoami`, `apps/httpbin`,
+`apps/it-tools`, `apps/greenmail`, `monitoring/gatus`). An application with no
+login that holds data or capability gets a gate — the application's own where it
+has one (`apps/mailpit`, `MP_UI_AUTH_FILE`), Traefik's basicAuth where it has
+none (`apps/ollama`, `apps/homepage`, `apps/dashy`, `apps/heimdall`,
+`apps/paperless-gpt`, `monitoring/scrutiny`) — and forward-auth replaces the
+basicAuth where an identity provider exists.
 
 ---
 

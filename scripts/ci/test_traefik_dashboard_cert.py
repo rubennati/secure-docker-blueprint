@@ -55,6 +55,7 @@ BASE_ENV = {
     "DSP_BIND_CONFIG": "0.0.0.0:2375",
     "DSP_POST": "0",
     "TRAEFIK_NETWORK": "proxy-public",
+    "TRUSTED_RANGES": "",
 }
 
 

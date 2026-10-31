@@ -97,10 +97,20 @@ services:
     tmpfs:
       - /tmp
 
+    # The published ports below are mapped to Traefik's address on ONE of its
+    # networks — the one that provides the container's default gateway. Docker
+    # picks it by gw_priority, and without one by Compose's order, which is
+    # alphabetical: crowdsec-security before public (measured 2026-10-31).
+    # gw_priority names the public network, so the ports arrive where the
+    # client address is preserved and the address family is checked, and a
+    # connection from the host or from another container reaches Traefik
+    # as this network's gateway. Needs Docker Engine 28.0 and Compose 2.33.1;
+    # validate.sh checks the running container (ops/scripts/check-published-family.py).
     networks:
-      - public
-      - socket_proxy_net
-      - crowdsec-security
+      public:
+        gw_priority: 100
+      socket_proxy_net:
+      crowdsec-security:
 
     # IPv4 only. A port published without a host address also listens on
     # [::], and on an IPv4-only public network Docker hands such a

@@ -43,6 +43,8 @@ curl http://localhost:9980/   # → "OK"
       `MKNOD` cap is present; you may also need to drop `no-new-privileges:true` on some hosts
 - [ ] `aliasgroup1` matches your Nextcloud/Seafile host exactly (regex, escaped dots, `:443`)
 - [ ] A document opens and saves from Nextcloud/Seafile through Collabora
+- [ ] Behind a closed access policy, Nextcloud hands Collabora its internal address
+      (`wopi_callback_url`, the Nextcloud README, "Office servers behind a closed route")
 - [ ] Admin console is not publicly reachable (kept off by default)
 
 ## Backup

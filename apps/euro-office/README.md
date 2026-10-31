@@ -51,6 +51,9 @@ Modeled on the proven OnlyOffice config, but the fork image has not been run her
 - [ ] Entrypoint path parity — the image still starts via `/app/ds/run-document-server.sh` (fork of OnlyOffice; verify if boot fails)
 - [ ] `JWT_SECRET` injected — no JWT value in `docker inspect euro-office-app`; JWT enforced (requests without a valid token are rejected)
 - [ ] End-to-end — a document opens and saves from Seafile/Nextcloud using the shared secret
+- [ ] Behind a closed access policy the save callback reaches the app: Nextcloud by its
+      internal `StorageUrl` (its README, "Office servers behind a closed route"), Seafile
+      through `onlyoffice-callback.yml` or the server's address in `TRUSTED_RANGES`
 - [ ] `EXAMPLE_ENABLED` is off — `https://<host>/example/` is not reachable
 
 ## Backup

@@ -20,7 +20,7 @@ Three routers on two host names, and that split is the point:
 
 | Router | Serves | Ships as |
 |---|---|---|
-| `<project>` | the short links themselves | `access-lan-vpn` — **the one to open**, see below |
+| `<project>` | the short links themselves | `access-trusted-vpn` — **the one to open**, see below |
 | `<project>-api` | `/rest`, which creates, edits and deletes links and reads visits | `access-vpn` (`APP_TRAEFIK_API_ACCESS`) |
 | `<project>-client` | the browser interface on its own host name | `access-vpn` (`CLIENT_TRAEFIK_ACCESS`) |
 
@@ -79,7 +79,7 @@ curl -I https://s.example.com/abc      # 302, Location: the long URL
 ## Deciding what is public
 
 A short link nobody outside can follow is a link that does not work, so this is
-a decision rather than a default. The stack ships `access-lan-vpn` on the redirect
+a decision rather than a default. The stack ships `access-trusted-vpn` on the redirect
 router, and opening it means accepting three things:
 
 - **A redirect is unauthenticated by design.** Anyone holding the URL follows
