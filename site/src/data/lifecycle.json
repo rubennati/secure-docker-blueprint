@@ -72,7 +72,7 @@
   "apps/collabora": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "pinned": "APP_TAG=26.04.3.2.1",
+    "pinned": "APP_TAG=26.04.5.2.1",
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "—",
@@ -182,9 +182,9 @@
   "apps/greenmail": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "pinned": "APP_TAG=2.1.13",
+    "pinned": "APP_TAG=2.1.15",
     "restore_docs": "missing",
-    "state": "baseline-aligned",
+    "state": "scaffolded",
     "verified": "2026-09-22",
     "verified_anchored": true,
     "verified_version": "2.1.13"
@@ -312,7 +312,7 @@
   "apps/mailserver-jeboehm": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "pinned": "APP_TAG=8.0.8",
+    "pinned": "APP_TAG=8.0.18",
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "—",
@@ -502,7 +502,7 @@
   "apps/shlink": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "pinned": "APP_TAG=5.1.7",
+    "pinned": "APP_TAG=5.1.8",
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "—",
@@ -552,7 +552,7 @@
   "apps/vaultwarden": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "pinned": "APP_TAG=1.37.3",
+    "pinned": "APP_TAG=1.37.4",
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-06-14",
@@ -562,7 +562,7 @@
   "apps/velociraptor": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "pinned": "APP_TAG=0.77.2",
+    "pinned": "APP_TAG=0.77.3",
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "—",
@@ -652,7 +652,7 @@
   "backup/rclone-web": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "pinned": "APP_TAG=1.75.1",
+    "pinned": "APP_TAG=1.75.2",
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "—",
@@ -802,7 +802,7 @@
   "business/plane": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "pinned": "APP_TAG=v1.4.2",
+    "pinned": "APP_TAG=v1.4.3",
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "—",
@@ -912,7 +912,7 @@
   "core/dockhand": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "pinned": "APP_TAG=v1.0.47",
+    "pinned": "APP_TAG=v1.0.56",
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-04-16",
@@ -922,7 +922,7 @@
   "core/hawser": {
     "backup_docs": "documented",
     "local_stack": "—",
-    "pinned": "APP_TAG=0.2.47",
+    "pinned": "APP_TAG=0.2.53",
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-04-14",
@@ -932,7 +932,7 @@
   "core/headscale": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "pinned": "APP_TAG=v0.29.4",
+    "pinned": "APP_TAG=v0.29.7",
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "—",
@@ -1062,7 +1062,7 @@
   "core/zot": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "pinned": "APP_TAG=v2.1.21",
+    "pinned": "APP_TAG=v2.1.22",
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "—",
@@ -1182,7 +1182,7 @@
   "monitoring/scrutiny": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "pinned": "APP_TAG=v0.9.4-web",
+    "pinned": "APP_TAG=v0.9.5-web",
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "—",

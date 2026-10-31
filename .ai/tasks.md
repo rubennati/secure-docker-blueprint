@@ -266,7 +266,7 @@ stack's `UPSTREAM.md`; the scan of the pull request from `dev` to `main`
 measures it.
 
 - [x] Batch 1 — seven patch releases with the most recorded CRITICAL pairs (#292, 2026-10-31; none run on a host)
-- [ ] Batch 2 — the remaining 28 patch releases; `apps/defectdojo`, `apps/dify`, `apps/greenmail` and `business/chatwoot` are `baseline-aligned` and fall to `scaffolded` without a host run
+- [x] Batch 2 — 26 of the 28 patch releases moved on 2026-10-31, none run on a host; `apps/greenmail` fell to `scaffolded`, the three other `baseline-aligned` stacks moved a side image only and keep their state. Held, with the reason in `UPSTREAM.md`: Dify's plugin daemon (moves with the next Dify release) and SeaSearch (no notes past 1.0.4, pairing stated only in the Seafile manual)
 - [ ] Batch 3 — 60 minor releases of applications, release notes per stack
 - [ ] Batch 4 — 9 minor releases of database and infrastructure images, one pull request per family
 - [ ] Batch 5 — 20 major releases of applications, a decision per stack
