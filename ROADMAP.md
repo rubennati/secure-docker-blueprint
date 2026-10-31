@@ -1,6 +1,6 @@
 # Roadmap
 
-Direction reviewed 2026-10-30.
+Direction reviewed 2026-10-31.
 
 What remains to be built, what blocks it, and what proves it finished. Shipped
 work belongs to [`CHANGELOG.md`](CHANGELOG.md), per-stack status to the generated
@@ -18,11 +18,13 @@ Pre-1.0 tags are set when a natural milestone is reached, not on a fixed cadence
 The single criterion for v1.0 is: **could someone fork this and run it without
 needing my mental model?**
 
-**Latest tag: v0.9.5 — The middleware model (2026-10-30).** Every Traefik
-router carries four positions — access, rate limit, headers, authentication —
-defined once, and the names before them are gone; an existing installation
-migrates, and that migration has run once on a test installation. Traefik is
-published on IPv4 unless its network carries IPv6. What has and has not been
+**Latest tag: v0.9.6 — Current pins, a recorded baseline, the update programme
+(2026-10-31).** The lock files carry no open npm advisory, the image CVE baseline
+records every known CRITICAL pair with its assessment and is checked on every
+push to `main`, and seven image pins stand at the newest patch release of their
+line. The programme that brings every stack to its current upstream release is
+[`docs/audits/upstream-version-inventory-2026-10-31.md`](docs/audits/upstream-version-inventory-2026-10-31.md);
+batch 1 of seven is done, none of it run on a host. What has and has not been
 established per stack is in [`LIFECYCLE.md`](LIFECYCLE.md).
 
 ### v0.10.0 — Measured resource limits
