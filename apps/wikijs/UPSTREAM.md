@@ -11,7 +11,7 @@
 - **Origin:** Canada · Requarks · non-EU
 - **Domain:** Files, wiki and collaboration
 - **Role:** Wiki with Markdown and visual editors, per-page permissions and about twenty authentication modules
-- **Based on version:** `2.5.315`
+- **Based on version:** `2.5.317`
 
 ## Which version line, and why it matters
 
@@ -28,6 +28,12 @@ Two consequences this stack takes now:
 - **`DB_PASS_FILE` stays the only secret from a file.** In the 3.0 beta the
   variable is present but marked in the source as never taking effect, so a
   migration has to re-check how the password reaches the application.
+
+2.x releases are published from https://github.com/requarks/wiki-v2 since
+`2.5.316`; the image stays `ghcr.io/requarks/wiki`. Moved to `2.5.317` on
+2026-10-31, not run at this tag: `2.5.316` (2026-10-02) adds the export utility
+for Wiki.js 3.x, `2.5.317` (2026-10-23) is a rebuild with Node security updates.
+No breaking change, migration or advisory.
 
 ## What we use
 
@@ -72,7 +78,7 @@ the rate limit, a restart, and the restore in the README.
 
 ## Upgrade checklist
 
-1. Read the release notes — https://github.com/requarks/wiki/releases
+1. Read the release notes — https://github.com/requarks/wiki-v2/releases (2.x since `2.5.316`)
 2. Raise `APP_TAG` in `.env` and in `.env.local.example`
 3. `docker compose pull && docker compose up -d`
 4. `docker compose logs wikijs-app` — migrations first, then `HTTP Server: [ RUNNING ]`
