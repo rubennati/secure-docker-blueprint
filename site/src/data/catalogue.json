@@ -181,7 +181,7 @@
     "upstream": "https://github.com/CollaboraOnline/online",
     "verified": null,
     "verified_version": null,
-    "version": "26.04.3.2.1"
+    "version": "26.04.5.2.1"
   },
   "apps/dashy": {
     "decision_facts": {},
@@ -440,11 +440,11 @@
     "name": "GreenMail",
     "path": "apps/greenmail",
     "role": "SMTP, IMAP and POP3 test server with a mailbox per recipient, for automated tests",
-    "state": "baseline-aligned",
+    "state": "scaffolded",
     "upstream": "https://hub.docker.com/r/greenmail/standalone",
     "verified": "2026-09-22",
     "verified_version": "2.1.13",
-    "version": "2.1.13"
+    "version": "2.1.15"
   },
   "apps/heimdall": {
     "decision_facts": {},
@@ -773,7 +773,7 @@
     "upstream": "https://github.com/jeboehm?tab=packages&repo_name=docker-mailserver",
     "verified": null,
     "verified_version": null,
-    "version": "8.0.8"
+    "version": "8.0.18"
   },
   "apps/monicahq": {
     "decision_facts": {},
@@ -1269,7 +1269,7 @@
     "upstream": "https://github.com/shlinkio/shlink/pkgs/container/shlink",
     "verified": null,
     "verified_version": null,
-    "version": "5.1.7"
+    "version": "5.1.8"
   },
   "apps/stalwart": {
     "decision_facts": {
@@ -1392,7 +1392,7 @@
     "upstream": "https://github.com/dani-garcia/vaultwarden",
     "verified": null,
     "verified_version": null,
-    "version": "1.37.3"
+    "version": "1.37.4"
   },
   "apps/velociraptor": {
     "decision_facts": {},
@@ -1412,7 +1412,7 @@
     "upstream": "https://github.com/Velocidex/velociraptor/pkgs/container/velociraptor-server",
     "verified": null,
     "verified_version": null,
-    "version": "0.77.2"
+    "version": "0.77.3"
   },
   "apps/vllm": {
     "decision_facts": {},
@@ -1612,7 +1612,7 @@
     "upstream": "https://hub.docker.com/r/rclone/rclone",
     "verified": null,
     "verified_version": null,
-    "version": "1.75.1"
+    "version": "1.75.2"
   },
   "backup/urbackup": {
     "decision_facts": {},
@@ -2083,7 +2083,7 @@
     "upstream": "https://hub.docker.com/u/makeplane",
     "verified": null,
     "verified_version": null,
-    "version": "1.4.2"
+    "version": "1.4.3"
   },
   "business/plausible": {
     "decision_facts": {
@@ -2393,7 +2393,7 @@
     "upstream": "https://hub.docker.com/r/fnsys/dockhand",
     "verified": null,
     "verified_version": null,
-    "version": "1.0.47"
+    "version": "1.0.56"
   },
   "core/hawser": {
     "decision_facts": {},
@@ -2413,7 +2413,7 @@
     "upstream": "https://github.com/Finsys/hawser",
     "verified": null,
     "verified_version": null,
-    "version": "0.2.47"
+    "version": "0.2.53"
   },
   "core/headscale": {
     "decision_facts": {
@@ -2450,7 +2450,7 @@
     "upstream": "https://github.com/juanfont/headscale/pkgs/container/headscale",
     "verified": null,
     "verified_version": null,
-    "version": "0.29.4"
+    "version": "0.29.7"
   },
   "core/host-watchdog": {
     "decision_facts": {},
@@ -2780,7 +2780,7 @@
     "upstream": "https://github.com/project-zot/zot/pkgs/container/zot",
     "verified": null,
     "verified_version": null,
-    "version": "2.1.21"
+    "version": "2.1.22"
   },
   "monitoring/beszel": {
     "decision_facts": {},
@@ -3113,7 +3113,7 @@
     "upstream": "https://github.com/AnalogJ/scrutiny/pkgs/container/scrutiny",
     "verified": null,
     "verified_version": null,
-    "version": "0.9.4-web"
+    "version": "0.9.5-web"
   },
   "monitoring/uptime-kuma": {
     "decision_facts": {},

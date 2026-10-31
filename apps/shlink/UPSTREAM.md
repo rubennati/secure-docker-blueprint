@@ -11,7 +11,7 @@
 - **Origin:** Spain · Alejandro Celaya · EU
 - **Domain:** Publishing, forms and scheduling
 - **Role:** URL shortener on your own domain with visit statistics and a REST API; no user accounts, API keys instead
-- **Based on version:** `5.1.7`
+- **Based on version:** `5.1.8`
 
 ## What we use
 
@@ -63,6 +63,13 @@ What a host run still has to establish: the three routers behind Traefik with
 TLS, a refused client on the API router while a redirect still works, the
 first-load request count for the web client, a restart, and the restore in the
 README.
+
+## Version notes
+
+- Moved to `5.1.8` on 2026-10-31 (released 2026-10-21), not run at this tag. The
+  one change is the image base, Alpine 3.24, so PHP security updates arrive
+  again, among them CVE-2026-109618 and CVE-2026-109619. Changed, added, removed
+  and deprecated all read "nothing"; no variable or migration.
 
 ## Upgrade checklist
 

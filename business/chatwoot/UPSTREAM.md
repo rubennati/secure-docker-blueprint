@@ -90,6 +90,14 @@ from a peer container:
 widget and its websocket; email in and out; messaging channel integrations; the
 enterprise features; backup and restore; an upgrade across versions.
 
+## Version notes
+
+- pgvector moved to `0.8.7-pg16` on 2026-10-31, not run at this tag; the stack's
+  state is anchored on the application pin, which did not move. 0.8.2 to 0.8.7 list no breaking change and no advisory; 0.8.3 and
+  0.8.4 fix index corruption and a repair error with HNSW vacuuming, 0.8.2, 0.8.6
+  and 0.8.7 fix buffer overflows. After the image moves, upstream's upgrade note
+  applies per database: `ALTER EXTENSION vector UPDATE;`.
+
 ## Upgrade checklist
 
 1. Read the release notes: https://github.com/chatwoot/chatwoot/releases

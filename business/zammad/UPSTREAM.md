@@ -58,6 +58,16 @@
 
 Minimum RAM: ~4 GB (Elasticsearch grabs 512 MB heap alone).
 
+## Version notes
+
+- memcached moved to `1.6.45` on 2026-10-31, not run at this tag. 1.6.42
+  (2026-05-18) is upstream's security release — a timing side channel in SASL
+  password authentication and a crash on an oversized auth token, no CVEs
+  assigned; 1.6.43 tags three more fixes as security (binary-protocol refcount
+  overflows, ascii auth enforcement) and prefixes `lru_crawler metadump` output
+  with `OK`, which touches tooling only; 1.6.44 and 1.6.45 fix crashes and
+  overflows. No changed default.
+
 ## Upgrade checklist
 
 1. Check [Zammad releases](https://github.com/zammad/zammad/releases) — major version upgrades may require sequential stepping (e.g. 6.x → 7.0 before 7.x → 8.0)

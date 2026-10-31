@@ -10,7 +10,7 @@
 - **Decision facts checked:** 2026-09-21
 - **Domain:** Backup
 - **Role:** Browser interface for rclone: storage remotes, copy and sync jobs, serves and transfer statistics
-- **Based on version:** `1.75.1`
+- **Based on version:** `1.75.2`
 
 No `Last verified` line: behind Traefik, the interface can be signed into only with
 the password inside its URL — see
@@ -104,6 +104,14 @@ a throwaway `proxy-public` network without Traefik, with `volumes/config` and
 
 **Not yet exercised:** Traefik routing and TLS; the interface in a browser; a
 remote at a real storage provider; transfers of size; serves; backup and restore.
+
+## Version notes
+
+- Moved to `1.75.2` on 2026-10-31 (released 2026-10-09), not run at this tag. The
+  GitHub release page carries no entries and points to the changelog at
+  rclone.org, which was not reachable from the session that moved the pin;
+  breaking changes and advisories in the point release are therefore not
+  checked — read https://rclone.org/changelog/ before a host run.
 
 ## Upgrade checklist
 

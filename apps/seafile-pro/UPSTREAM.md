@@ -164,6 +164,14 @@ If you need Elasticsearch instead of SeaSearch:
 3. In `seafevents.conf`: remove `[SEASEARCH]` section, set `[INDEX FILES] enabled = true`
 4. See: https://manual.seafile.com/13.0/docker/pro/deploy_seafile_pro_with_docker/
 
+## Version notes
+
+- `SEASEARCH_TAG` stays at `1.0.3` on 2026-10-31, although `1.0.8` is on Docker
+  Hub: upstream publishes no release notes for 1.0.5 to 1.0.8 (the GitHub
+  releases end at 1.0.4, which removed the web UI), and which SeaSearch release
+  Seafile 13 pairs with is stated in the Seafile manual, not reachable from the
+  session. The move follows the Seafile release that names it.
+
 ## Upgrade checklist
 
 When bumping the Seafile Pro version:

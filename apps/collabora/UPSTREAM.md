@@ -11,7 +11,7 @@
 - **Origin:** UK · Collabora Productivity Ltd · non-EU
 - **Domain:** Documents and e-signature
 - **Role:** Office document editing server based on LibreOffice
-- **Based on version:** `26.04.3.2.1`
+- **Based on version:** `26.04.5.2.1`
 - **Last verified:** — (config authored 2026-07-26; not yet run on a live server)
 
 ## What we use
@@ -30,6 +30,16 @@
 | Admin console left OFF | The `/browser/.../admin` console is an attack surface; enable + restrict deliberately |
 | `deploy.resources` (memory/cpus/pids) | Bound the container; ~50–100 MB per open document above idle |
 | TCP healthcheck on 9980 (bash `/dev/tcp`) | No guaranteed curl in the image |
+
+## Version notes
+
+- Moved to `26.04.5.2.1` on 2026-10-31, not run at this tag. The 26.04 line's
+  update notes on collaboraoffice.com were not reachable from the session that
+  moved the pin; what was read is the Helm chart's tag history (26.04.4.2.1 on
+  2026-09-24, 26.04.5.1.1 on 2026-10-09, 26.04.5.2.1 on 2026-10-23) and Docker
+  Hub, which carries the tag. Breaking changes, `coolwsd.xml` changes and
+  advisories in the range are therefore not checked — read
+  https://www.collaboraonline.com/release-notes/ before a host run.
 
 ## Upgrade checklist
 

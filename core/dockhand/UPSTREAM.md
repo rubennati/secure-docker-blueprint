@@ -13,7 +13,7 @@
 - **Origin:** Finsys · **no country or legal entity stated** — no imprint on fnsys.pro or dockhand.pro
 - **Domain:** Infrastructure
 - **Role:** Docker management with Git-based stacks: deploy and update by pushing to Git
-- **Based on version:** `v1.0.47`
+- **Based on version:** `v1.0.56`
 - **Last checked:** 2026-04-16
 
 ## What we use
@@ -35,6 +35,15 @@
 ## Version / tag notes
 
 - `v1.0.39` → `v1.0.47` on 2026-09-13, eight patches. No published advisory against either.
+
+## Version notes
+
+- Moved to `v1.0.56` on 2026-10-31 (released 2026-10-30), together with Hawser
+  0.2.53, not run at this tag. No breaking change or migration labelled; v1.0.55
+  adds `EXPORT_METRICS_PUBLIC` (off by default, keeps `/metrics` private) and
+  raises docker-compose to 5.6.0-r2 for CVE fixes and Node.js to 24.22.1; v1.0.52's
+  PUID change was reverted in v1.0.53. The releases live at
+  https://github.com/finsys/dockhand/releases; Docker Hub shows no notes.
 
 ## Upgrade checklist
 
