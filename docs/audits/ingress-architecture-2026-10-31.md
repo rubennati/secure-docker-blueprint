@@ -3,7 +3,7 @@
 **Status: audit record, decided; nothing in it is implemented.** The decisions it led
 to are DEC-075 to DEC-078 and an addendum to DEC-063 in
 [`.ai/decisions.md`](../../.ai/decisions.md); the programme that implements them is
-`.ai/tasks.md` §11. This record keeps what was examined, what was measured and what
+`.ai/tasks.md` §12. This record keeps what was examined, what was measured and what
 stays open, so that no later step has to measure it again.
 
 Scope: the whole ingress path — host firewall, Docker networking, Traefik, CrowdSec,

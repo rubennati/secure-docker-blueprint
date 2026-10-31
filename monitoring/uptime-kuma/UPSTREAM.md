@@ -10,7 +10,7 @@
 - **Origin:** Hong Kong · Louis Lam · non-EU
 - **Domain:** Monitoring
 - **Role:** Uptime monitoring with a status page and many notification channels
-- **Based on version:** `2.5.6`
+- **Based on version:** `2.5.8`
 - **Last verified:** 2026-09-13 (2.5.4) — patch recreated on a live host, healthy, route unchanged. 2026-09-08 (2.5.3) — v0.8.0 host session: clean start on SQLite, owner account from the setup page, ntfy notification with an access token, a TCP monitor on a container on `proxy-public`; stopping that container produced the down alert on an iPhone within twenty seconds, starting it the up alert.
 
 ## What we use
@@ -34,6 +34,14 @@
 - `2.x` carries breaking changes against `1.x`. Upstream publishes a migration
   guide for an existing v1 instance:
   https://github.com/louislam/uptime-kuma/wiki/Migration-From-v1-To-v2
+- Moved to `2.5.8` on 2026-10-31, not run on a host at this tag. `2.5.8` fixes
+  GHSA-v2p3-6f5h-6hhf (remote code execution, admin only) and drops TLS from the
+  TCP Port monitor: an existing TLS TCP monitor becomes a plain TCP monitor, with
+  no migration step. `2.5.7` moves the image to Node.js 22.23.4, which distrusts
+  the leaked eMudhra CA. Upstream's advisories of October 2026 —
+  GHSA-98hr-q8q8-5j23 (rootless privilege escalation) and GHSA-wf2j-5mc7-5c4w
+  (ping badge denial of service) — name no fixed version on the list page and
+  were not read further.
 
 ## Upgrade checklist
 

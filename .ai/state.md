@@ -4,8 +4,8 @@
 
 **Last updated:** 2026-10-31
 
-- **Phase:** pre-1.0. Latest tag `v0.9.5` (2026-10-30), which is where `main`
-  stands; what `dev` carries beyond it is `git rev-list --count v0.9.5..dev`, and
+- **Phase:** pre-1.0. Latest tag `v0.9.6` (2026-10-31), which is where `main`
+  stands; what `dev` carries beyond it is `git rev-list --count v0.9.6..dev`, and
   it is not repeated here. Work happens on a
   short-lived branch and reaches `dev` through a pull request; `dev` reaches
   `main` the same way. Both branches reject a direct push.
@@ -72,8 +72,19 @@
   in place of `access-lan`, a stated auth posture per stack, exposure derived and
   shown — DEC-075 to DEC-078 and an addendum to DEC-063 in
   [`decisions.md`](decisions.md). An eight-step programme follows
-  ([`tasks.md`](tasks.md) §11); step 1, the guards, is this branch. No existing
+  ([`tasks.md`](tasks.md) §12); step 1, the guards, is this branch. No existing
   installation changes until it declares something.
+
+- **Released: v0.9.6** — a patch release without a host run: the two npm
+  advisories closed, the image CVE baseline recording the scans of 2026-10-31
+  with an assessment per pair, the scan on every push to `main`, seven pins at
+  the newest patch release of their line (111 recorded CRITICAL pairs removed, 4
+  brought, measured by the scan of the pull request to `main`), and the
+  inventory with the seven-batch programme
+  ([`../docs/audits/upstream-version-inventory-2026-10-31.md`](../docs/audits/upstream-version-inventory-2026-10-31.md),
+  [`tasks.md`](tasks.md) §11). `monitoring/changedetection` and
+  `business/invoiceninja` fell to `scaffolded` (`pin-drifted`) and need a host run
+  at the new tag.
 - **Current milestone:** v0.10.0 — Measured resource limits. Whether
   it stays a release is open (D4 in the audit): the measurement needs the same
   host session as the verification backlog.

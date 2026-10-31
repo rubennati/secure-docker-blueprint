@@ -10,7 +10,7 @@
 - **Origin:** Greece · Alex Tselegidis · EU
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Appointment booking in PHP, established since 2013
-- **Based on version:** `1.6.0`
+- **Based on version:** `1.6.1`
 - **Last verified:** 2026-05-03 (1.5.x)
 
 ## What we use
@@ -35,6 +35,18 @@ The upstream Docker compose example is minimal (app + db, linked via env). Bluep
 | Healthcheck-gated `depends_on` | Prevents EA from starting before MariaDB is ready |
 | `TZ` env on both services | Blueprint convention |
 | Default access `access-public`, `limit-standard` and `headers-standard` | Booking URLs must reach external visitors |
+
+## Version notes
+
+- Moved to `1.6.1` on 2026-10-31 (released 2026-10-19), not run at this tag;
+  `Last verified` stays at 1.5.x. The release is largely security fixes: Guzzle
+  and phpseclib raised to patched releases, CalDAV SSRF hardening, login
+  throttling restored, a CAPTCHA bypass, REST API role and protected-settings
+  checks, HTML escaping on the booking page. CORS and cookie `SameSite` settings
+  move from the root `config.php` into `application/config/` — this stack mounts
+  no config file, so nothing carries over. Whether `1.6.1` needs the database
+  wizard is not stated; the release shows a message when the database needs
+  updating, so open the UI after the pull.
 
 ## Upgrade checklist
 
