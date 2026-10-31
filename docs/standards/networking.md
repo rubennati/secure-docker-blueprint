@@ -32,6 +32,11 @@ networks:
 - Created by `core/traefik`
 - Referenced by every app that needs Traefik routing
 - Only the web-facing service of an app belongs here
+- Its members reach one another directly: Docker isolates networks from each
+  other, not containers within one. The access, limit and auth positions of a
+  router act on the path through Traefik alone
+  ([`docs/audits/ingress-architecture-2026-10-31.md`](../audits/ingress-architecture-2026-10-31.md));
+  the decided successor is an edge network per stack ([DEC-075](../../.ai/decisions.md#dec-075))
 
 **IP family — IPv4-only by default, dual-stack opt-in.** `proxy-public` is
 created IPv4-only unless the `core/traefik/network-dual-stack.yml` overlay

@@ -176,6 +176,45 @@ if [ "$(printf '%s' "${port_v4_addrs}" | wc -w)" -gt 1 ]; then
 fi
 [ "${port_error}" -eq 0 ] || exit 1
 
+# The subnets of a dual-stack proxy-public. The IPv6 value in .env.example is
+# a placeholder: a prefix every reader of the file knows is the IPv6 shape of
+# everyone picking 192.168.1.0/24, so it is refused, and so is any prefix
+# outside the private ranges — proxy-public is an internal network and never
+# carries a global address. Only judged when set; an IPv4-only install sets
+# neither.
+if [ -n "${PUBLIC_NETWORK_SUBNET_V4:-}${PUBLIC_NETWORK_SUBNET_V6:-}" ]; then
+  command -v python3 >/dev/null 2>&1 || { echo "ERROR: python3 is needed to check PUBLIC_NETWORK_SUBNET_V4/_V6."; exit 1; }
+  python3 - "${PUBLIC_NETWORK_SUBNET_V4:-}" "${PUBLIC_NETWORK_SUBNET_V6:-}" <<'PYEOF' || exit 1
+import ipaddress, sys
+v4, v6 = sys.argv[1], sys.argv[2]
+EXAMPLE_V6 = ipaddress.ip_network("fd00:dead:beef:30::/64")
+RFC1918 = [ipaddress.ip_network(n) for n in ("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16")]
+ok = True
+if v4:
+    try:
+        n4 = ipaddress.ip_network(v4, strict=True)
+        if n4.version != 4 or not any(n4.subnet_of(p) for p in RFC1918):
+            raise ValueError
+    except ValueError:
+        print(f"ERROR: PUBLIC_NETWORK_SUBNET_V4 must be a private IPv4 network (RFC 1918), got '{v4}'.")
+        ok = False
+if v6:
+    try:
+        n6 = ipaddress.ip_network(v6, strict=True)
+        if n6.version != 6 or not n6.subnet_of(ipaddress.ip_network("fc00::/7")):
+            raise ValueError
+    except ValueError:
+        print(f"ERROR: PUBLIC_NETWORK_SUBNET_V6 must be a unique local IPv6 network (fc00::/7), got '{v6}'.")
+        ok = False
+    else:
+        if n6 == EXAMPLE_V6:
+            print("ERROR: PUBLIC_NETWORK_SUBNET_V6 is the example prefix from .env.example. Generate your own:")
+            print("         h=$(openssl rand -hex 5); printf 'fd%s:%s:%s::/64\\n' \"${h:0:2}\" \"${h:2:4}\" \"${h:6:4}\"")
+            ok = False
+sys.exit(0 if ok else 1)
+PYEOF
+fi
+
 if [ -n "${TRAEFIK_BIND_V4:-}" ] && ! printf '%s' "${TRAEFIK_BIND_V4}" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
   echo "ERROR: TRAEFIK_BIND_V4 must be an IPv4 address such as 0.0.0.0 (got '${TRAEFIK_BIND_V4}')."
   echo "       IPv6 is bound by network-dual-stack.yml on TRAEFIK_BIND_V6."

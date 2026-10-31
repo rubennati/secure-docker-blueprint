@@ -64,6 +64,17 @@
   later host session, and so does a host with a global IPv6 address
   (`core/traefik/README.md`, *Not verified on a host*, item 8); the release
   says so.
+- **Decided (2026-10-31): the ingress target architecture**, after an audit of the
+  whole ingress path and a lab run with three stacks
+  ([`../docs/audits/ingress-architecture-2026-10-31.md`](../docs/audits/ingress-architecture-2026-10-31.md)):
+  an edge network per installed stack as the default for new installations, the
+  shared network as a documented choice, `access-trusted` with declared ranges
+  in place of `access-lan`, a stated auth posture per stack, exposure derived and
+  shown — DEC-075 to DEC-078 and an addendum to DEC-063 in
+  [`decisions.md`](decisions.md). An eight-step programme follows
+  ([`tasks.md`](tasks.md) §12); step 1, the guards, is this branch. No existing
+  installation changes until it declares something.
+
 - **Released: v0.9.6** — a patch release without a host run: the two npm
   advisories closed, the image CVE baseline recording the scans of 2026-10-31
   with an assessment per pair, the scan on every push to `main`, seven pins at

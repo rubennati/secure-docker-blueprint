@@ -21,10 +21,14 @@ both at once, which is why the procedure below pins a release.
 
 ## 1 — Prepare the host
 
-Docker 24.0+ with Compose v2, a Linux host, `envsubst` from `gettext-base`, and a domain —
-at Cloudflare for DNS-01 certificates, the one provider `core/traefik` wires; at any
-provider for HTTP-01 or TLS-ALPN-01.
+Docker Engine 28.0+ with Compose v2, a Linux host, `envsubst` from `gettext-base`, and a
+domain — at Cloudflare for DNS-01 certificates, the one provider `core/traefik` wires; at
+any provider for HTTP-01 or TLS-ALPN-01.
 The root [`README.md`](../../README.md#getting-started) states these as the requirements.
+Engine 28.0 is the first release that accepts `"ipv6": true` without `fixed-cidr-v6`,
+the shape the dual-stack prerequisites document, and the first that keeps a port
+published on a loopback address off the network (moby#49325); on 27.x the documented
+`daemon.json` does not start the daemon.
 
 **The Docker daemon bounds container logs — the stacks do not.** No service in this
 repository sets a `logging:` block, and Docker's default driver, `json-file`, rotates

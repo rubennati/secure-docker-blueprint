@@ -271,6 +271,14 @@ least able to tell which version they ended up running. The structural rules —
 section order, `COMPOSE_PROJECT_NAME` first — still describe `.env.example`
 alone, because they describe that file's shape rather than reproducibility.
 
+`missing-network-label` fails on a service with `traefik.enable=true` and no
+`traefik.docker.network` label: without it Traefik takes a random network of the
+container, and the route lands on the internal network in some reloads (measured
+2026-10-31, two of six). `port-no-host-address` fails on a published port without a
+host address — it listens on every address of the host, IPv4 and IPv6; the stacks
+that did so before the rule are listed in the checker with their reason and warn
+until each binds its port.
+
 `local-pin-drift` fails when a stack's local file pins a different version of an
 image its production file also pins. It joins on the image repository, so a
 local stack that deliberately runs a *different* image is never compared. The
