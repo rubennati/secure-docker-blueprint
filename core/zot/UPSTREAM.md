@@ -10,7 +10,7 @@
 - **Origin:** Community project under the CNCF sandbox umbrella, no single company · no single jurisdiction
 - **Domain:** Developer tools
 - **Role:** OCI registry for your own build output
-- **Based on version:** `v2.1.21`
+- **Based on version:** `v2.1.22`
 - **Verification snapshot:** 2026-09-19 — local Compose stack booted,
   authentication and access-control policy exercised against a live
   container; not yet run behind a real Traefik host
@@ -56,6 +56,14 @@
   Notation signature verification (`imagetrust`, not configured — see
   README.md), OIDC login, garbage collection actually reclaiming a deleted
   tag's blobs, and behavior across a restart or upgrade.
+
+## Version notes
+
+- Moved to `v2.1.22` on 2026-10-31 (released 2026-10-06), not run at this tag.
+  No breaking change, configuration or storage-format change; the release sets
+  `Strict-Transport-Security` on TLS responses, stops proxying local API keys to
+  an upstream token service, tightens input validation, stops storing signature
+  layers in MetaDB and clears three Dependabot alerts. No CVE or GHSA named.
 
 ## Upgrade checklist
 
