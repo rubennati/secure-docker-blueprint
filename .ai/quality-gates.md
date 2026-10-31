@@ -131,9 +131,12 @@ What neither mode covers:
 
 ## Not blocking, deliberately
 
-- **Trivy** is not a check on `dev`. It runs weekly and on pull requests into
-  `main`, where both scan jobs are required ([`decisions.md`](decisions.md#dec-070)),
-  and fails on a CRITICAL finding not recorded in `.trivy-baseline.json`.
+- **Trivy** is not a required check on `dev`. It runs weekly — Monday on `main`,
+  Thursday on `dev` — on pull requests into `dev` and `main` — in full when the pull request can change what the
+  scan sees — and on a push to `main`; on `main` both scan jobs are required
+  ([`decisions.md`](decisions.md#dec-070)). It fails on a CRITICAL finding not
+  recorded in `.trivy-baseline.json`; on `dev` that red is a signal to record
+  or to move the pin before the merge, not a block.
 - **Structure warnings.** A missing memory, PID or swap ceiling is a FAIL
   (`no-resources`, `no-swap-policy`); what stays a warning is a missing healthcheck
   without a waiver. The ceilings' values are derived by rule, not measured — v0.10.0.
