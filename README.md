@@ -43,7 +43,7 @@ Where several tools solve the same problem, more than one is included.
 Traefik goes up first — every stack reachable over the network routes through it.
 Each stack is then installed from its own README.
 
-**Requirements:** Docker Engine 28.0+ with Compose v2, a Linux host (tested on Debian 12/13),
+**Requirements:** Docker Engine 28.0+ with Compose 2.33.1+, a Linux host (tested on Debian 12/13),
 `envsubst` (`gettext-base`), and a domain on a
 [DNS provider Traefik supports](https://doc.traefik.io/traefik/https/acme/#providers).
 

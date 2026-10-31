@@ -283,10 +283,11 @@ declares nothing — the render-identity test holds that.
 
 - [x] 1. The guards: `missing-network-label`, `port-no-host-address`, the subnet check,
       the render-identity test; the records and the register.
-- [ ] 2. The published ports on one named network: `gw_priority` on `proxy-public`;
+- [x] 2. The published ports on one named network: `gw_priority` on `proxy-public`;
       `check-published-family.py` reads the gateway endpoint of the container rather
-      than assuming `public`; the Compose minimum for `gw_priority` written down. Changes
-      the hairpin source address on the next `up -d` — CHANGELOG Migration.
+      than assuming `public`; the Compose minimum for `gw_priority` written down (2.33.1). Changes
+      the hairpin source address on the next `up -d` — CHANGELOG Migration. Done on
+      `feature/ingress-step-2-gateway`; the IPv6 endpoint stays a host proof.
 - [ ] 3. `access-trusted*` from `TRUSTED_RANGES`, the declaration gate, the overlap
       check, `migrate-traefik-env.sh` for `access-lan*` (DEC-076).
 - [ ] 4. The auth posture in every `.env.example`, its rule, the nine stacks without a

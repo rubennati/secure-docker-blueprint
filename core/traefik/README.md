@@ -147,6 +147,8 @@ bash ops/scripts/validate.sh --strict -f docker-compose.yml -f network-dual-stac
 
 A Docker daemon on another host or in a VM cannot be read from here. Confirm `userland-proxy: false` and `ip6tables: true` there, then set `DOCKER_DAEMON_CHECK=manual` in `.env`.
 
+**Which network the ports arrive on.** Docker maps a container's published ports to its address on one network — the one that provides its default gateway. Without a priority Docker takes the first in Compose order, which is `crowdsec-security`, not `proxy-public` (measured 2026-10-31). `docker-compose.yml` therefore gives `proxy-public` `gw_priority: 100`: the ports are DNAT'd to Traefik's address there, where the address family is checked, and a connection from the host itself or from another container reaches Traefik as that network's gateway. `validate.sh` refuses a model in which `proxy-public` does not carry the highest priority, reports a running container created before the pin as `PENDING` until `docker compose up -d` recreates it, and reports `NOT VERIFIED` on a daemon that knows no gateway priority. Needs Docker Engine 28.0 and Compose 2.33.1; `validate.sh` refuses an older Compose by name. From Engine 29.4.1 a single-stack network with a higher priority would take its own family; with the priority on the dual-stack `proxy-public`, both families stay there.
+
 Under dual-stack, `https://[::1]` and IPv6 link-local addresses (`fe80::/10`) do not reach Traefik: with `userland-proxy: false` Docker forwards neither to a container. Check from the host over `127.0.0.1`, from elsewhere over a routed address.
 
 Not exercised on a host: a global IPv6 address reached from the Internet, and Cloudflare connecting to an `AAAA` origin.

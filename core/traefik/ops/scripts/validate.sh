@@ -627,6 +627,19 @@ if ! command -v python3 >/dev/null 2>&1; then
   echo "ERROR: python3 is needed to check which addresses Traefik is published on."
   exit 1
 fi
+# docker-compose.yml pins the published ports to the public network with
+# gw_priority, which Compose knows since 2.33.1 (docs.docker.com, Compose file
+# reference) and the Engine since 28.0. An older Compose refuses the file with
+# "additional properties not allowed"; say so before that happens.
+if command -v docker >/dev/null 2>&1; then
+  compose_version="$(docker compose version --short 2>/dev/null | sed 's/^v//')"
+  if [ -n "${compose_version}" ] && ! printf '%s\n%s\n' "2.33.1" "${compose_version}" | sort -t. -k1,1n -k2,2n -k3,3n -c 2>/dev/null; then
+    echo "ERROR: Docker Compose ${compose_version} is older than 2.33.1, the first release that knows"
+    echo "       gw_priority, which docker-compose.yml uses to pin the published ports to the public"
+    echo "       network. Update Compose (docker-compose-plugin) before starting Traefik."
+    exit 1
+  fi
+fi
 family_rc=0
 python3 "${ROOT_DIR}/ops/scripts/check-published-family.py" \
   --project-dir "${ROOT_DIR}" \
