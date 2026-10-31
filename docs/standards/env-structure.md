@@ -77,6 +77,7 @@ APP_TRAEFIK_CERT_RESOLVER=cloudflare-dns
 APP_TRAEFIK_ACCESS=access-vpn
 APP_TRAEFIK_LIMIT=limit-standard
 APP_TRAEFIK_HEADERS=headers-standard
+# auth posture: app-login — the application's own login governs every request
 APP_TRAEFIK_AUTH=auth-none@file
 TRAEFIK_NETWORK=proxy-public
 ```

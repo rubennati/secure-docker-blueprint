@@ -40,7 +40,7 @@ docker compose up -d
 # 4. First boot takes ~30s while the image builds the SQLite DB
 docker compose logs app --follow
 
-# 5. Open UI — no login initially
+# 5. Open UI — the basicAuth gate asks first; Heimdall itself has no login initially
 # https://<APP_TRAEFIK_HOST>
 ```
 
@@ -58,7 +58,8 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 - **LinuxServer.io image with s6-overlay** — container starts as root to set up `/run`, drops to `PUID:PGID` internally. Do **not** set `user:` in compose (breaks s6-overlay).
 - **`ALLOW_INTERNAL_REQUESTS=false`** by default — Heimdall's status-check widgets cannot probe RFC1918 addresses. Flip to `true` if you want widgets to monitor internal app status (e.g. Uptime status of `wordpress-app:80`).
 - **Default access `access-vpn`** — VPN-only.
-- **Optional authentication** — Heimdall supports user accounts in its UI. Not enabled by default; add via the UI if you share the instance.
+- **A basicAuth gate in front of the route** (`APP_BASIC_AUTH_USERS`, DEC-077) — the UI is open until a Heimdall user with a password exists, and its enhanced apps store API keys; whoever the access policy admits is asked for a password. `.env.example` has the command for the hash.
+- **Optional authentication** — Heimdall supports user accounts in its UI. Not enabled by default; add via the UI if you share the instance, and keep the gate.
 
 ## Backup
 

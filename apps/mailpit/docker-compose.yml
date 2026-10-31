@@ -65,6 +65,10 @@ services:
       # so a forged header still passes; it stops a casual read of the inbox,
       # not a determined one. Verified against v1.31.1 on 2026-09-07.
       MP_ALLOWED_HOSTS: ${APP_TRAEFIK_HOST}
+      # The UI and the API ask for a user from this htpasswd file — Mailpit's
+      # own gate, which also holds against a container that reaches port 8025
+      # directly (DEC-077). /livez and /readyz stay open for the healthcheck.
+      MP_UI_AUTH_FILE: /run/secrets/mailpit_htpasswd
       # Upstream asks the GitHub API whether a newer release exists. Version
       # tracking is the operator's job here — see docs/sovereignty/data-egress.md.
       MP_DISABLE_VERSION_CHECK: "1"
@@ -72,6 +76,9 @@ services:
     # --- Storage ---
     volumes:
       - ./volumes/data:/data
+
+    secrets:
+      - mailpit_htpasswd
 
     # --- Networking ---
     # proxy-public carries the Traefik route to the UI and the SMTP traffic
@@ -108,6 +115,10 @@ services:
 # --------------------------------------------------------
 # NETWORKS
 # --------------------------------------------------------
+secrets:
+  mailpit_htpasswd:
+    file: ./.secrets/mailpit_htpasswd.txt
+
 networks:
   proxy-public:
     external: true

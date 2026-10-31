@@ -309,6 +309,35 @@ A gate on one path of a host — `apps/paperless-ngx`'s `/admin` — is a second
 router with `auth-authentik@file` in its auth position and `auth-none@file`
 on the main one ([`core/authentik/README.md`](../../core/authentik/README.md#integrating-other-apps-via-forward-auth)).
 
+### The posture beside the value (DEC-077)
+
+`auth-none@file` means no additional authentication at the proxy, and that is
+two different things: an application with its own login, and an application
+with none. So the line directly above every `*_TRAEFIK_AUTH` variable states
+the stack's posture, and `check-structure.py` reads it (`auth-posture`):
+
+```env
+# auth posture: app-login — the application's own login governs every request
+APP_TRAEFIK_AUTH=auth-none@file
+```
+
+| Posture | Fits the value | Meaning |
+|---|---|---|
+| `app-login` | `auth-none@file` | the application identifies its users itself — a login, an API key |
+| `public` | `auth-none@file` | no login by design — a website, a paste service, a document server the embedding application authorises |
+| `basic` | `${COMPOSE_PROJECT_NAME}-auth@docker` | the stack's own basicAuth gate from `APP_BASIC_AUTH_USERS` |
+| `forward-auth` | `auth-authentik@file` | the identity provider through `core/authentik` |
+| `none` | `auth-none@file` | no login anywhere — allowed behind a closed access policy only, with the reason written after the dash |
+
+No login layer is forced. An application with no login that is stateless and
+holds no data stays `none` behind a closed policy (`apps/whoami`, `apps/httpbin`,
+`apps/it-tools`, `apps/greenmail`, `monitoring/gatus`). An application with no
+login that holds data or capability gets a gate — the application's own where it
+has one (`apps/mailpit`, `MP_UI_AUTH_FILE`), Traefik's basicAuth where it has
+none (`apps/ollama`, `apps/homepage`, `apps/dashy`, `apps/heimdall`,
+`apps/paperless-gpt`, `monitoring/scrutiny`) — and forward-auth replaces the
+basicAuth where an identity provider exists.
+
 ---
 
 ## Threat Enforcement and Compression (the entrypoint)

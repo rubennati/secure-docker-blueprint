@@ -82,6 +82,12 @@ needs the stack's user list and lives in its compose labels, so its value is
 `${COMPOSE_PROJECT_NAME}-auth@docker`. The label therefore ends in
 `${APP_TRAEFIK_AUTH}` without a suffix of its own.
 
+**The line above the auth variable states the posture.** `# auth posture:
+app-login`, `public`, `basic`, `forward-auth` or `none`, with the reason after a
+dash; CI checks that it is there and fits the value, and that `none` sits behind
+a closed access policy ([`traefik-security.md`](traefik-security.md), "The posture
+beside the value").
+
 **Threat enforcement and compression are not positions.** `compress` sits on
 the `websecure` entrypoint in front of every router. CrowdSec is optional and
 off as shipped: an installation that enables it (`CROWDSEC_BOUNCER_ENABLED`,

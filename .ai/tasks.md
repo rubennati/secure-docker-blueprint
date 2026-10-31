@@ -293,8 +293,11 @@ declares nothing — the render-identity test holds that.
       breaking with a migration, no gate). Done on `feature/ingress-step-3-trusted`.
       Integrations call back over a Docker network with the application's setting;
       Seafile's two OnlyOffice paths have opt-in routes (`onlyoffice-callback.yml`).
-- [ ] 4. The auth posture in every `.env.example`, its rule, the nine stacks without a
-      login decided one by one (DEC-077).
+- [x] 4. The auth posture in every `.env.example` (`# auth posture:` above the auth
+      variable), the `auth-posture` rule, the stacks without a login decided one by
+      one (DEC-077): basicAuth for Ollama, Homepage, Dashy, Heimdall; Mailpit's own
+      htpasswd; `none` with a reason for whoami, httpbin, it-tools, GreenMail, Gatus.
+      Done on `feature/ingress-step-4-posture`.
 - [ ] 5. Edge networks: `render.sh` derives them from the installed stacks — a stack
       counts as installed by a signal more reliable than the presence of `.env`, to be
       chosen in the step (a running project, or an explicit list) — the stack template

@@ -50,6 +50,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 
 - `no-new-privileges:true`
 - Default access `access-vpn` — personal dashboard, VPN-only
+- A basicAuth gate in front of the route (`APP_BASIC_AUTH_USERS`, DEC-077) — Dashy's built-in auth runs in the browser and guards nothing on the server; whoever the access policy admits is asked for a password. `.env.example` has the command for the hash
 - `limit-standard` and `headers-standard`
 - No data persistence beyond config file — container can be recreated freely
 
