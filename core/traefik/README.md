@@ -54,6 +54,7 @@ docker-compose.yml                    # Docker Socket Proxy + Traefik
 network-dual-stack.yml                # Optional overlay: IPv4+IPv6 on proxy-public
 docs/
   ipv6-dual-stack.md                  # IPv4-only vs. dual-stack — concepts, migration, troubleshooting
+  middleware-model-migration.md       # The cut to the middleware model (v0.9.5): every router before and after, the migration, the rollback
 ops/
   cloudflare-ips.txt                  # Senders whose forwarded headers the entrypoints trust (Cloudflare's ranges)
   host-files.manifest                 # Files installed outside the checkout (logrotate, watchdog) — docs/standards/host-files.md
@@ -158,6 +159,14 @@ in front of every router. The definitions are `dynamic/model.yml`
 (`ops/templates/dynamic/model.yml.tmpl`); the standard is
 [`docs/standards/traefik-security.md`](../../docs/standards/traefik-security.md),
 the label pattern [`docs/standards/traefik-labels.md`](../../docs/standards/traefik-labels.md).
+
+**An installation from before v0.9.5 has to migrate** — the model replaced
+every middleware name before it, and a router that still carries one answers
+nothing (a breaking change; [`CHANGELOG.md`](../../CHANGELOG.md) 0.9.5).
+`scripts/migrate-traefik-env.sh` moves the `.env` files;
+[`docs/middleware-model-migration.md`](docs/middleware-model-migration.md)
+§4 is the order, the checks and the rollback, §3 every router's before and
+after.
 
 ```yaml
 middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}
@@ -406,12 +415,14 @@ docker compose exec traefik cat /etc/traefik/acme/acme.json | \
 curl -I https://<TRAEFIK_DASHBOARD_HOST>
 
 # What do the logs say about ACME / cert issuance?
-docker compose logs traefik 2>&1 | grep -iE "acme|cert|challenge" | tail -20
+docker exec traefik-core cat /var/log/traefik/traefik.log | grep -iE "acme|cert|challenge" | tail -20
 ```
 
 If `acme.json` is empty or the dashboard returns 404 before TLS: check
-`docker compose logs traefik | grep -i error` — most issues surface as file-provider
-errors or auth failures against Cloudflare.
+`docker exec traefik-core cat /var/log/traefik/traefik.log | grep -i error` —
+most issues surface as file-provider errors or auth failures against
+Cloudflare. Traefik writes to files, not stdout, so `docker compose logs` shows
+nothing (see [Logging & Logrotate](#logging--logrotate)).
 
 ## CrowdSec Bouncer Plugin (optional)
 
@@ -572,8 +583,8 @@ enrichment comes from, and the lockout risks:
 ### Verify
 
 ```bash
-# Check if plugin is loaded
-docker compose logs traefik | grep -i crowdsec
+# Check if plugin is loaded (Traefik logs to a file, not stdout)
+docker exec traefik-core cat /var/log/traefik/traefik.log | grep -i crowdsec
 
 # Check bouncer connection from CrowdSec side
 docker exec crowdsec cscli bouncers list
@@ -598,7 +609,7 @@ docker exec crowdsec cscli decisions delete --ip <your-address>
 
 | Problem | Check |
 |---------|-------|
-| Plugin not loading | `docker compose logs traefik` — look for plugin errors. Is `CROWDSEC_BOUNCER_ENABLED=true` in `.env`, was `render.sh` run since, and was Traefik recreated afterwards? `grep -n experimental config/traefik.yml` shows whether the block was rendered |
+| Plugin not loading | `docker exec traefik-core cat /var/log/traefik/traefik.log` — look for plugin errors (Traefik logs to a file, not stdout). Is `CROWDSEC_BOUNCER_ENABLED=true` in `.env`, was `render.sh` run since, and was Traefik recreated afterwards? `grep -n experimental config/traefik.yml` shows whether the block was rendered |
 | 403 for legitimate IPs | `docker exec crowdsec cscli decisions list` — check if the IP is banned. Remove with `cscli decisions delete --ip X.X.X.X` |
 | WAF blocking valid requests | Set `crowdsecAppsecEnabled: false` temporarily. Check CrowdSec logs for false positives |
 | Bouncer not connecting | `docker exec crowdsec cscli bouncers list` — check last heartbeat. Verify both containers are on the `crowdsec-security` network |
@@ -946,12 +957,16 @@ the watchdog reports them as `not installed` and nothing else.
 |---|---|
 | **Database** | None. |
 | **State** | `./volumes/letsencrypt` — `acme.json`, holding the ACME account key and every issued certificate |
-| **Reproducible** | `./volumes/logs` · `./volumes/plugins-storage` — plugins are re-downloaded on start |
+| **Reproducible** | `./config` — rendered by `ops/scripts/render.sh` from the tracked templates in `ops/templates/` and `.env` · `./volumes/logs` · `./volumes/plugins-storage` — plugins are re-downloaded on start |
 | **Quiescing** | Not needed. `acme.json` is rewritten atomically on issuance and renewal. |
 
-No database hook. This stack is `source_directories` only, and the static and
-dynamic configuration under `config/` is versioned in git rather than backed up
-from the host.
+No database hook. This stack is `source_directories` only. The static and
+dynamic configuration under `config/` is neither backed up nor in git — it is
+generated output (`.gitignore`), rendered again from the templates and `.env`.
+`.env` is what the render needs and is not in git either: it holds
+`CF_DNS_API_TOKEN` and, with the bouncer switched on, `CROWDSEC_BOUNCER_KEY`,
+so it has to be in place before a restore
+([`docs/standards/restore.md`](../../docs/standards/restore.md), step 3).
 
 **`acme.json` contains private keys.** It is the one file in this repository that
 combines "small enough to overlook" with "grants the ability to impersonate every

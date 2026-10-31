@@ -13,7 +13,7 @@
   the open-source counterpart to Thinkst's commercial Canary product —
   confirmed via upstream's own README; this stack uses only the
   open-source project
-- **Based on version:** `0.9.9`
+- **Based on version:** `0.9.10`
 - **Verification snapshot:** 2026-09-19 — local Compose stack booted and
   every enabled fake service exercised against a live container; the
   production compose's sub-1024 port publishing not confirmed on this test
@@ -76,6 +76,15 @@ enabled module (FTP, HTTP, MySQL, RDP, Telnet) works identically this way.
 - **Not verified:** the production compose's sub-1024 bindings on a real
   Linux host, any webhook/Slack/Teams/hpfeeds handler actually delivering,
   and the SMB module.
+
+## Version notes
+
+- Moved to `0.9.10` on 2026-10-31 (released 2026-09-21), not run at this tag.
+  The release fixes credential decoding in the HTTP proxy's Basic Auth, a ReDoS
+  in the MongoDB SCRAM username extraction, the HTTP proxy's handling of injected
+  HTML, and NTLM proxy-auth logging that exited the service; it adds connection
+  limits to the Telnet and git modules and raises setuptools and idna. No
+  configuration key changes; the README's config-precedence order is corrected.
 
 ## Upgrade checklist
 
