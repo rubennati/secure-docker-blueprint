@@ -334,7 +334,7 @@ Based on **OWASP Docker Security Cheat Sheet**.
 
 ---
 
-#### `trivy.yml` — runs on a pull request to `main`, weekly Monday 04:00 UTC, manual dispatch
+#### `trivy.yml` — runs on a pull request to `main`, push to `main`, weekly Monday 04:00 UTC, manual dispatch
 
 This is the canonical description of both jobs. Nothing elsewhere in this
 document restates their coverage, severity or exit behavior — it points here.
@@ -349,19 +349,21 @@ document restates their coverage, severity or exit behavior — it points here.
 
 **Job 2: Image CVE scan**
 
-- Runs in full on the weekly schedule and on manual dispatch. On a pull
-  request it runs in full only when a file of the pull request can change what
-  it sees — a YAML file outside `.github/` and `site/` (every compose file and
-  overlay), an `.env.example`, `.trivy-baseline.json`, the discovery, gate or
-  summary script, or the workflow itself; otherwise the job ends green in
-  seconds and its summary says that nothing was scanned and why (since
-  2026-10-23 — a lock-file pull request to `main` used to run the 200-image
-  scan for 38 minutes and fail on the baseline). The pull request to `main`
-  is where it decides: both jobs are required checks there, so a red gate
-  blocks the merge rather than appearing on the published branch afterwards.
-  The merge itself starts no second scan — an up-to-date branch is required
-  before merging, so the push carries the tree the pull request already
-  scanned.
+- Runs in full on a push to `main`, on the weekly schedule and on manual
+  dispatch. On a pull request it runs in full only when a file of the pull
+  request can change what it sees — a YAML file outside `.github/` and
+  `site/` (every compose file and overlay), an `.env.example`,
+  `.trivy-baseline.json`, the discovery, gate or summary script, or the
+  workflow itself; otherwise the job ends green in seconds and its summary
+  says that nothing was scanned and why (since 2026-10-23 — a lock-file pull
+  request to `main` used to run the 200-image scan for 38 minutes and fail on
+  the baseline). The pull request to `main` is where it decides: both jobs
+  are required checks there, so a red gate blocks the merge rather than
+  appearing on the published branch afterwards. The push that follows the
+  merge scans the tree that landed (since 2026-10-31): the workflow's latest
+  run on `main`, which the README badge shows, is then a run of that tree
+  rather than the weekly run against the tree before it. That run blocks
+  nothing; the weekly run covers the CVEs published after it.
 - Image references come from `scripts/ci/list-images.sh`, which reads the same
   discovery `check-structure.py --list` uses — every compose file in the
   repository, not a curated subset. A new stack is scanned the day it lands.
