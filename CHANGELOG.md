@@ -8,6 +8,14 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
+### Fixed
+
+- **`core/traefik/README.md` matches v0.9.5** (`core/traefik/README.md`). The README named the migration to the middleware model nowhere: the structure tree lists `docs/middleware-model-migration.md`, and *The Middleware Model* says that an installation from before v0.9.5 has to migrate, by `scripts/migrate-traefik-env.sh` and §4 of that document. Four checks read Traefik's log with `docker compose logs traefik`, which the *Logging & Logrotate* section of the same file says shows nothing — Traefik writes to files (`log.filePath`, `accessLog.filePath`); they now read `/var/log/traefik/traefik.log` from the container. The *Backup* section said the configuration under `config/` is versioned in git; it is generated output and gitignored, rendered from `ops/templates/` and `.env`, so the section says so, and that `.env` — gitignored, holding `CF_DNS_API_TOKEN` and the bouncer key — has to be in place before a restore (`docs/standards/restore.md`, step 3).
+
+### Changed
+
+- **The image scan runs on every push to `main`** (`.github/workflows/trivy.yml`, `docs/security-verification.md`). The push that follows a merge had no run of its own, so the workflow's latest run on `main` — what the README badge shows — was the weekly run against the tree before the merge: after the v0.9.5 release the badge stayed red for the scan of v0.9.4 with the previous baseline while the release pull request's scan was green. The push now scans the tree that landed, in full, like `ci.yml`'s push run; it blocks nothing — the required checks stay the two jobs on the pull request to `main` — and the weekly run still covers the CVEs published after it.
+
 ## [0.9.5] — 2026-10-30 — The middleware model
 
 Every Traefik router carries four positions — access, rate limit, headers, authentication — defined once in `config/dynamic/model.yml`, and nothing of the vocabulary before it remains: **a breaking change for every existing installation**, which moves by the steps under [Migration](#migration). Traefik is published on IPv4 only unless `proxy-public` carries IPv6, and who may set the client address is a switch in `.env`. The migration from v0.9.4 was run once, on 2026-10-30, on a disposable test installation behind a Cloudflare Tunnel with Traefik, CrowdSec and one application, by section 4 of [`middleware-model-migration.md`](core/traefik/docs/middleware-model-migration.md): no abort condition was met, the headers changed as its section 1 names, and routes, access policies, redirects, the certificate, the tunnel and CrowdSec's decisions behaved as before. The proofs its section 5 lists and a host with a global IPv6 address are not verified.

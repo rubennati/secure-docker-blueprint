@@ -10,18 +10,19 @@ name: Trivy
 #      .trivy-baseline.json — see docs/security-verification.md for the current
 #      control description.
 #
-# Triggers: PR to main, weekly Monday 04:00 UTC, manual dispatch. The weekly
-# and the manual run scan in full. A pull request scans in full only when it
-# can change what the scan sees — a compose file, an .env.example, the
-# baseline, the image discovery, the gate, the summary or this workflow; any
-# other pull request (a lock file, a document) ends the image job green in
-# seconds, saying so, because a 200-image scan of an unchanged tree would only
-# repeat the weekly run's work. The pull request to main is where this decides
-# something: both jobs are required checks there, so the merge cannot land
-# while one is red. The push that follows the merge has no run of its own —
-# the branch has to be up to date before merging, so that push carries the
-# tree the pull request already scanned, and the weekly run covers the CVEs
-# published after it.
+# Triggers: PR to main, push to main, weekly Monday 04:00 UTC, manual
+# dispatch. The push, the weekly and the manual run scan in full. A pull
+# request scans in full only when it can change what the scan sees — a
+# compose file, an .env.example, the baseline, the image discovery, the gate,
+# the summary or this workflow; any other pull request (a lock file, a
+# document) ends the image job green in seconds, saying so, because a
+# 200-image scan of an unchanged tree would only repeat the weekly run's
+# work. The pull request to main is where this decides something: both jobs
+# are required checks there, so the merge cannot land while one is red. The
+# push that follows the merge scans the tree that landed, so the workflow's
+# latest run on main — what the README badge shows — is a run of that tree
+# rather than the weekly run against the tree before it; the weekly run
+# covers the CVEs published after it. The push run blocks nothing.
 #
 # Limitations (documented in docs/security-verification.md):
 #   - Image scanning covers every compose file check-structure.py --list reports.
@@ -37,15 +38,17 @@ name: Trivy
 on:
   pull_request:
     branches: [main]
+  push:
+    branches: [main]
   schedule:
     - cron: '0 4 * * 1'  # Weekly Monday 04:00 UTC
   workflow_dispatch:
 
 permissions: read-all
 
-# A superseded run on the same open PR is cancelled. A scheduled or manual run
-# never shares this group with a PR (different ref), so cancellation here can
-# never touch the weekly scan.
+# A superseded run on the same open PR is cancelled. A push, scheduled or
+# manual run never shares this group with a PR (different ref), so
+# cancellation here can never touch the run on main or the weekly scan.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
