@@ -382,7 +382,7 @@
     "upstream": "https://easyappointments.org/",
     "verified": "2026-05-03",
     "verified_version": "1.5.x",
-    "version": "1.6.0"
+    "version": "1.6.1"
   },
   "apps/euro-office": {
     "decision_facts": {},
@@ -524,7 +524,7 @@
     "upstream": "https://hub.docker.com/r/heyform/community-edition",
     "verified": null,
     "verified_version": null,
-    "version": "3.0.3"
+    "version": "3.0.5"
   },
   "apps/homarr": {
     "decision_facts": {},
@@ -1012,7 +1012,7 @@
     "upstream": "https://hub.docker.com/r/thinkst/opencanary",
     "verified": null,
     "verified_version": null,
-    "version": "0.9.9"
+    "version": "0.9.10"
   },
   "apps/opnform": {
     "decision_facts": {},
@@ -1480,7 +1480,7 @@
     "upstream": "https://github.com/requarks/wiki/pkgs/container/wiki",
     "verified": null,
     "verified_version": null,
-    "version": "2.5.315"
+    "version": "2.5.317"
   },
   "apps/windmill": {
     "decision_facts": {
@@ -1850,11 +1850,11 @@
     "name": "Invoice Ninja",
     "path": "business/invoiceninja",
     "role": "Invoicing, quotes and payments",
-    "state": "baseline-aligned",
+    "state": "scaffolded",
     "upstream": "https://github.com/invoiceninja/dockerfiles",
     "verified": "2026-09-13",
     "verified_version": "5.13.40",
-    "version": "5.13.40"
+    "version": "5.13.52"
   },
   "business/kimai": {
     "decision_facts": {
@@ -2836,11 +2836,11 @@
     "name": "changedetection.io",
     "path": "monitoring/changedetection",
     "role": "Watches web pages for changes: restocks, prices, terms",
-    "state": "baseline-aligned",
+    "state": "scaffolded",
     "upstream": "https://changedetection.io",
     "verified": "2026-09-13",
     "verified_version": "0.60.4",
-    "version": "0.60.4"
+    "version": "0.60.10"
   },
   "monitoring/checkmate": {
     "decision_facts": {
@@ -3133,7 +3133,7 @@
     "upstream": "https://uptime.kuma.pet",
     "verified": "2026-09-13",
     "verified_version": "2.5.4",
-    "version": "2.5.6"
+    "version": "2.5.8"
   },
   "monitoring/zabbix": {
     "decision_facts": {

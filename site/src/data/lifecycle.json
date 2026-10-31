@@ -152,7 +152,7 @@
   "apps/easyappointments": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "pinned": "APP_TAG=1.6.0",
+    "pinned": "APP_TAG=1.6.1",
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-05-03",
@@ -212,7 +212,7 @@
   "apps/heyform": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "pinned": "APP_TAG=v3.0.3",
+    "pinned": "APP_TAG=v3.0.5",
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "—",
@@ -402,7 +402,7 @@
   "apps/opencanary": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "pinned": "APP_TAG=0.9.9",
+    "pinned": "APP_TAG=0.9.10",
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "—",
@@ -592,7 +592,7 @@
   "apps/wikijs": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "pinned": "APP_TAG=2.5.315",
+    "pinned": "APP_TAG=2.5.317",
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "—",
@@ -732,9 +732,9 @@
   "business/invoiceninja": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "pinned": "APP_TAG=5.13.40",
+    "pinned": "APP_TAG=5.13.52",
     "restore_docs": "missing",
-    "state": "baseline-aligned",
+    "state": "scaffolded",
     "verified": "2026-09-13",
     "verified_anchored": true,
     "verified_version": "5.13.40"
@@ -1092,9 +1092,9 @@
   "monitoring/changedetection": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "pinned": "APP_TAG=0.60.4",
+    "pinned": "APP_TAG=0.60.10",
     "restore_docs": "missing",
-    "state": "baseline-aligned",
+    "state": "scaffolded",
     "verified": "2026-09-13",
     "verified_anchored": true,
     "verified_version": "0.60.4"
@@ -1192,7 +1192,7 @@
   "monitoring/uptime-kuma": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "pinned": "APP_TAG=2.5.6",
+    "pinned": "APP_TAG=2.5.8",
     "restore_docs": "missing",
     "state": "scaffolded",
     "verified": "2026-09-13",
