@@ -27,10 +27,14 @@ docker --version && docker compose version
 ss -tlnp | grep -E ':80 |:443 ' || echo "ports free"
 ```
 
-## Decide: will anyone connect through a VPN?
+## Enable IPv6 in Docker
 
-If yes — Tailscale, WireGuard, anything where the client reaches the server
-directly — **enable IPv6 in Docker before starting any service.**
+The example configuration is dual-stack — Traefik is published on IPv4 and IPv6 —
+so **enable IPv6 in Docker before starting any service.** It matters most when
+anyone connects through a VPN — Tailscale, WireGuard, anything where the client
+reaches the server directly. Choosing IPv4 only instead: skip this section, and in
+`core/traefik/.env` empty `TRAEFIK_BIND_V6=` and drop `network-dual-stack.yml`
+from `COMPOSE_FILE`.
 
 A VPN client connects with no proxy in between, so nothing records the original
 address in a header. The source address of the connection is the only record there
@@ -140,15 +144,16 @@ traffic over IPv4 and leaves the IPv6 path untested.
    Generate rather than copy an example — these are private ranges, and reusing
    someone else's is the IPv6 equivalent of everyone picking `192.168.1.0/24`.
 
-4. Publish IPv6 and apply the dual-stack overlay. In `core/traefik/.env`, set
-   the IPv6 binding — it has no default — and put the overlay into `COMPOSE_FILE`:
+4. Keep the example's dual-stack shape. `core/traefik/.env.example` already
+   publishes both families and applies the overlay:
 
    ```bash
+   TRAEFIK_BIND_V4=0.0.0.0
    TRAEFIK_BIND_V6=[::]
    COMPOSE_FILE=docker-compose.yml:network-dual-stack.yml:config/published-ports.yml:config/edge-networks.yml
    ```
 
-   A host without public IPv4 also empties `TRAEFIK_BIND_V4=`. Then render and
+   A host without public IPv4 empties `TRAEFIK_BIND_V4=`. Then render and
    start Traefik:
 
    ```bash

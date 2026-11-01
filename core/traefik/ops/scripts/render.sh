@@ -303,6 +303,12 @@ n_edges=$(printf '%s\n' ${EDGE_NETWORKS} | grep -c . || true)
 # in validate.sh holds that for the merged model and the running container.
 # ---------------------------------------------------------------------------
 published_bindings
+if [ -z "${TRAEFIK_BIND_V4+set}" ]; then
+  echo "ERROR: TRAEFIK_BIND_V4 is not set. It has no default any more: TRAEFIK_BIND_V4=0.0.0.0 keeps"
+  echo "       IPv4 ingress on every address, an empty TRAEFIK_BIND_V4= publishes no IPv4."
+  echo "       scripts/migrate-traefik-env.sh --all adds 0.0.0.0 (CHANGELOG, Migration)."
+  exit 1
+fi
 compose_file_named=":${COMPOSE_FILE:-}:"
 if [ -n "${COMPOSE_FILE:-}" ]; then
   case "${compose_file_named}" in

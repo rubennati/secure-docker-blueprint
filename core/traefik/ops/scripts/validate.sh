@@ -287,6 +287,12 @@ PYEOF2
 # .env names. An IPv6 binding without network-dual-stack.yml is the published-
 # family check's ERROR below.
 published_bindings
+if [ -z "${TRAEFIK_BIND_V4+set}" ]; then
+  echo "ERROR: TRAEFIK_BIND_V4 is not set. It has no default any more: TRAEFIK_BIND_V4=0.0.0.0 keeps"
+  echo "       IPv4 ingress on every address, an empty TRAEFIK_BIND_V4= publishes no IPv4."
+  echo "       scripts/migrate-traefik-env.sh --all adds 0.0.0.0 (CHANGELOG, Migration)."
+  exit 1
+fi
 compose_list=":${COMPOSE_FILE:-}:"
 for f in ${COMPOSE_ARGS[@]+"${COMPOSE_ARGS[@]}"}; do [ "${f}" = "--compose-file" ] || compose_list="${compose_list}${f##*/}:"; done
 if [ -n "${COMPOSE_FILE:-}" ] || [ "${#COMPOSE_ARGS[@]}" -gt 0 ]; then

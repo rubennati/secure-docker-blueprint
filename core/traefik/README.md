@@ -101,16 +101,18 @@ entrypoint list is static configuration.
 
 ## IPv4-only vs. Dual-Stack Networking
 
-`proxy-public` (the network Traefik and every routed app share) is **IPv4-only by default**, and Traefik is then published on IPv4 only. A port on `[::]` while `proxy-public` cannot carry IPv6 hands every IPv6 connection to Traefik from the Docker gateway — an address inside `172.16.0.0/12`, which the retired LAN policies admitted and CrowdSec's default whitelist skips. IPv6 is therefore published only when `TRAEFIK_BIND_V6` names an address, and `render.sh` refuses that unless `network-dual-stack.yml` adds the IPv6 subnet. The bindings are one variable per family, rendered into `config/published-ports.yml`; an empty variable publishes nothing for its family, so dual-stack, IPv4 only and IPv6 only are three settings of the same two variables, not modes. On an IPv4-only install an IPv6 connection is refused: a Tailscale client, which prefers its IPv6 address, needs IPv4 or dual-stack, and behind Cloudflare the origin needs `A` records — see "Behind Cloudflare", "IPv6 between Cloudflare and the origin". The access policies and rate limits evaluate the connecting address on every path — behind Cloudflare that is the edge address; see [Trusted Proxy Headers](../../docs/standards/traefik-security.md#trusted-proxy-headers-traefikyml--forwardedheaders).
+A new installation is **dual-stack**: the example `.env` applies `network-dual-stack.yml`, which gives `proxy-public` (the network Traefik and every routed app share) an IPv6 subnet, and publishes Traefik on both families (DEC-063, refined by DEC-075). Without the overlay `proxy-public` is IPv4-only. A port on `[::]` while `proxy-public` cannot carry IPv6 hands every IPv6 connection to Traefik from the Docker gateway — an address inside `172.16.0.0/12`, which the retired LAN policies admitted and CrowdSec's default whitelist skips. IPv6 is therefore published only when `TRAEFIK_BIND_V6` names an address, and `render.sh` refuses that unless `network-dual-stack.yml` adds the IPv6 subnet. The bindings are one variable per family, rendered into `config/published-ports.yml`; an empty variable publishes nothing for its family, so dual-stack, IPv4 only and IPv6 only are three settings of the same two variables, not modes. On an IPv4-only install an IPv6 connection is refused: a Tailscale client, which prefers its IPv6 address, needs IPv4 or dual-stack, and behind Cloudflare the origin needs `A` records — see "Behind Cloudflare", "IPv6 between Cloudflare and the origin". The access policies and rate limits evaluate the connecting address on every path — behind Cloudflare that is the edge address; see [Trusted Proxy Headers](../../docs/standards/traefik-security.md#trusted-proxy-headers-traefikyml--forwardedheaders).
 
-**Recommended for new deployments — dual-stack from day one:**
+**A new installation — dual-stack from day one, as the example ships it:**
 
 ```bash
-# .env: uncomment and set
+# .env as the example ships it — replace the documentation prefix, which
+# validate.sh refuses:
 #   PUBLIC_NETWORK_SUBNET_V4=172.30.0.0/16
 #   PUBLIC_NETWORK_SUBNET_V6=<your own ULA prefix>/64
 #   COMPOSE_FILE=docker-compose.yml:network-dual-stack.yml:config/published-ports.yml:config/edge-networks.yml
-#   TRAEFIK_BIND_V6=[::]          (IPv6 only: also TRAEFIK_BIND_V4= empty)
+#   TRAEFIK_BIND_V4=0.0.0.0 and TRAEFIK_BIND_V6=[::]   (IPv6 only: TRAEFIK_BIND_V4= empty)
+# IPv4 only: drop network-dual-stack.yml from COMPOSE_FILE, TRAEFIK_BIND_V6= empty
 # Docker daemon prerequisites first — see docs/ipv6-dual-stack.md
 
 bash ops/scripts/render.sh
@@ -146,15 +148,15 @@ its marker in `config/exposure-verified` for a public binding
 | Variable | Holds | Default |
 |---|---|---|
 | `TRAEFIK_HTTP_PORT`, `TRAEFIK_HTTPS_PORT` | the host port, a number only | `80`, `443` |
-| `TRAEFIK_BIND_V4` | the IPv4 host address of both ports; empty publishes no IPv4 | `0.0.0.0` (also when unset) |
-| `TRAEFIK_BIND_V6` | the IPv6 host address, bracketed; empty publishes no IPv6. Needs `network-dual-stack.yml` | none — empty |
+| `TRAEFIK_BIND_V4` | the IPv4 host address of both ports; empty publishes no IPv4 | none — the example sets `0.0.0.0`; `render.sh` refuses it unset |
+| `TRAEFIK_BIND_V6` | the IPv6 host address, bracketed; empty publishes no IPv6. Needs `network-dual-stack.yml` | none — the example sets `[::]` |
 
-`render.sh` writes the two into `config/published-ports.yml`, one block per family, and `COMPOSE_FILE` applies it — `docker-compose.yml` publishes no port itself. `render.sh` refuses a `COMPOSE_FILE` without that file, an IPv6 binding without the overlay, and the overlay with `TRAEFIK_BIND_V6` unset; `validate.sh` refuses a rendered file that names other bindings than `.env`.
+`render.sh` writes the two into `config/published-ports.yml`, one block per family, and `COMPOSE_FILE` applies it — `docker-compose.yml` publishes no port itself. `render.sh` refuses `TRAEFIK_BIND_V4` unset, a `COMPOSE_FILE` without that file, an IPv6 binding without the overlay, and the overlay with `TRAEFIK_BIND_V6` unset; `validate.sh` refuses a rendered file that names other bindings than `.env`.
 
 | Shape | `TRAEFIK_BIND_V4` | `TRAEFIK_BIND_V6` | Overlay |
 |---|---|---|---|
-| IPv4 only (shipped) | `0.0.0.0` | empty | no |
-| dual-stack | `0.0.0.0` | `[::]` | `network-dual-stack.yml` |
+| dual-stack (shipped) | `0.0.0.0` | `[::]` | `network-dual-stack.yml` |
+| IPv4 only | `0.0.0.0` | empty | no |
 | IPv6 only — no public IPv4 ingress | empty | `[::]` | `network-dual-stack.yml` |
 
 IPv6 only concerns ingress. The public network still carries IPv4 behind Traefik, and what a host without IPv4 egress needs for its outbound connections is the prerequisite list in the ingress audit (§3.4); that shape is not verified on a host yet.

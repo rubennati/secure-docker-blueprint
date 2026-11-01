@@ -27,9 +27,10 @@
 #   TLS_DEFAULT_OPTION, TRAEFIK_DASHBOARD_TLS_OPTION renamed; HSTS_MAX_AGE and
 #   TRUSTED_RANGES and EDGE_NETWORKS added where missing; COMPOSE_FILE made to
 #   apply config/published-ports.yml and config/edge-networks.yml (step 7: the
-#   base file publishes no port), and TRAEFIK_BIND_V6=[::] added where the
-#   dual-stack overlay is applied and the variable is missing — it has no
-#   default any more, and [::] keeps the IPv6 ingress the overlay gave.
+#   base file publishes no port), TRAEFIK_BIND_V4=0.0.0.0 added where it is
+#   missing, and TRAEFIK_BIND_V6=[::] where the dual-stack overlay is applied
+#   and the variable is missing — neither has a default any more, and the two
+#   values keep the ingress the old defaults gave.
 #
 # What it cannot do: a per-app block (frame-self, hsts-include-subdomains,
 # csp-self-only) is named in the stack's compose file by the release, not in
@@ -261,6 +262,11 @@ migrate_file() {
   if [ "$is_core" = 1 ] && ! grep -qE '^COMPOSE_FILE=' "$file"; then
     printf '  + COMPOSE_FILE=docker-compose.yml:config/published-ports.yml:config/edge-networks.yml\n'; CHANGES=$((CHANGES + 1))
     NEW_CONTENT="${NEW_CONTENT}""COMPOSE_FILE=docker-compose.yml:config/published-ports.yml:config/edge-networks.yml"$'\n'
+  fi
+  if [ "$is_core" = 1 ] && ! grep -qE '^TRAEFIK_BIND_V4=' "$file"; then
+    printf '  + TRAEFIK_BIND_V4=0.0.0.0\n'; CHANGES=$((CHANGES + 1))
+    printf '  note: TRAEFIK_BIND_V4 has no default any more; 0.0.0.0 keeps the IPv4 ingress the old default gave. An empty value publishes no IPv4\n'; NOTES=$((NOTES + 1))
+    NEW_CONTENT="${NEW_CONTENT}"$'\n'"# IPv4 host address of the published ports; empty publishes no IPv4 (step 7)."$'\n'"TRAEFIK_BIND_V4=0.0.0.0"$'\n'
   fi
   if [ "$is_core" = 1 ] && grep -qE '^COMPOSE_FILE=.*network-dual-stack\.yml' "$file" && ! grep -qE '^TRAEFIK_BIND_V6=' "$file"; then
     printf '  + TRAEFIK_BIND_V6=[::]\n'; CHANGES=$((CHANGES + 1))

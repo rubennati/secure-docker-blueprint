@@ -79,20 +79,28 @@ docker exec traefik-core cat /etc/traefik/acme/acme.json | jq '.[] | .Certificat
 
 ## Going further
 
-### Networking: IPv4-only or dual-stack?
+### Networking: dual-stack by default, two bind variables
 
-The installation above is IPv4-only, which works for most setups. The failure dual-stack exists to prevent, in this architecture, is **Tailscale**: it always hands a client both addresses, and if the client connects over IPv6 while Traefik's network is IPv4-only, Traefik loses the real client address and may wrongly refuse a Tailscale-only service.
+Host ingress is two variables in `core/traefik/.env`, one per address family:
+`TRAEFIK_BIND_V4` and `TRAEFIK_BIND_V6`. `render.sh` writes them into
+`config/published-ports.yml`, which `COMPOSE_FILE` applies; `docker-compose.yml`
+publishes nothing itself. An empty variable publishes nothing for its family, and
+neither has a default — `render.sh` refuses `TRAEFIK_BIND_V4` unset, so a missing
+line never binds every address. An IPv6 binding needs `network-dual-stack.yml`,
+which makes the proxy network carry IPv6; `render.sh` refuses one without it.
 
-That is the case this blueprint has hit, not the only one IPv6 matters for — another VPN that assigns IPv6, or a service reached directly over public IPv6 rather than through a proxy, raises the same question. Traffic arriving through a Cloudflare-proxied (orange-cloud) record is unaffected, because the real address is recovered from a trusted forwarded header instead of from the connection.
+The failure dual-stack prevents, in this architecture, is **Tailscale**: it always
+hands a client both addresses, and if the client connects over IPv6 to a proxy
+network without IPv6, Docker hands the connection to Traefik from the bridge
+gateway — the access policy then sees a private address, not the client, and
+answers 403. Traffic arriving through a Cloudflare-proxied (orange-cloud) record is
+unaffected, because the real address is recovered from a trusted forwarded header.
 
 <Tabs>
-  <TabItem label="IPv4-only (default)">
-    No extra setup. Skip this section if you don't use Tailscale, or haven't run into this.
-  </TabItem>
-  <TabItem label="Dual-stack">
+  <TabItem label="Dual-stack (default)">
     <Steps>
 
-    1. Generate your own IPv6 ULA prefix — never reuse a documentation example:
+    1. Generate your own IPv6 ULA prefix — the example in `.env.example` is refused on purpose:
 
        ```bash
        RANDOM_HEX=$(openssl rand -hex 5)
@@ -122,24 +130,44 @@ That is the case this blueprint has hit, not the only one IPv6 matters for — a
        sudo systemctl restart docker
        ```
 
-    4. In `core/traefik/.env`:
+    4. In `core/traefik/.env`, set the prefix; the rest is the example's default:
 
        ```ini
        PUBLIC_NETWORK_SUBNET_V4=172.30.0.0/16
        PUBLIC_NETWORK_SUBNET_V6=<your generated prefix>/64
-       COMPOSE_FILE=docker-compose.yml:network-dual-stack.yml:config/published-ports.yml:config/edge-networks.yml
+       TRAEFIK_BIND_V4=0.0.0.0
        TRAEFIK_BIND_V6=[::]
+       COMPOSE_FILE=docker-compose.yml:network-dual-stack.yml:config/published-ports.yml:config/edge-networks.yml
        ```
 
     </Steps>
+  </TabItem>
+  <TabItem label="IPv4 only">
+    Leave `TRAEFIK_BIND_V6` empty and drop the overlay from the list:
 
-    :::caution
-    Set `COMPOSE_FILE` as shown — don't rely on remembering a `-f network-dual-stack.yml` flag. Once the dual-stack network exists, running `docker compose` without it makes Compose try to recreate the network as IPv4-only — which fails loudly if other containers are attached, or can silently revert it if not.
-    :::
+    ```ini
+    TRAEFIK_BIND_V6=
+    COMPOSE_FILE=docker-compose.yml:config/published-ports.yml:config/edge-networks.yml
+    ```
 
-    Full migration guide for adding this to an already-running deployment: [`core/traefik/docs/ipv6-dual-stack.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/traefik/docs/ipv6-dual-stack.md).
+    A Tailscale client is then served over IPv4 only.
+  </TabItem>
+  <TabItem label="IPv6 only">
+    Leave `TRAEFIK_BIND_V4` empty and keep the overlay: no public IPv4 ingress. What
+    the host needs for IPv6-only outbound connections — registries and sources without
+    `AAAA` records — is a prerequisite list, not a mode; see the ingress audit, §3.4.
+    Not verified on a host yet.
   </TabItem>
 </Tabs>
+
+:::caution
+`COMPOSE_FILE` lives in `.env`, never on the command line. A command run without the
+network overlay would recreate `proxy-public` as IPv4-only, and one run without the
+rendered file would publish nothing. Run `bash ops/scripts/render.sh` after changing a
+binding. Adding dual-stack to an already-running IPv4-only deployment is a parallel
+network and a cutover, not an overlay applied to the live network:
+[`core/traefik/docs/ipv6-dual-stack.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/traefik/docs/ipv6-dual-stack.md).
+:::
 
 ### Certificate strategy
 

@@ -143,8 +143,18 @@ class RenderedBindings(unittest.TestCase):
         return [l.strip()[3:-1] for l in (self.root / "config" / "published-ports.yml").read_text().splitlines()
                 if l.strip().startswith('- "')]
 
-    def test_unset_v4_is_every_ipv4_address_and_ipv6_is_off(self):
-        r = self.render()
+    def test_unset_v4_is_refused_not_every_address(self):
+        r = self.render(TRAEFIK_BIND_V4=None)
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("TRAEFIK_BIND_V4 is not set", r.stdout)
+        self.assertFalse((self.root / "config" / "published-ports.yml").exists())
+        self.write_env({k: v for k, v in VALID_ENV.items() if k != "TRAEFIK_BIND_V4"})
+        v = self.validate()
+        self.assertEqual(v.returncode, 1)
+        self.assertIn("TRAEFIK_BIND_V4 is not set", v.stdout)
+
+    def test_v4_alone_publishes_ipv4_and_ipv6_is_off(self):
+        r = self.render(TRAEFIK_BIND_V4="0.0.0.0")
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertEqual(self.ports(), ["0.0.0.0:80:80/tcp", "0.0.0.0:443:443/tcp", "0.0.0.0:443:443/udp"])
         self.assertIn("IPv6: not published", r.stdout)
@@ -199,11 +209,12 @@ class RenderedBindings(unittest.TestCase):
         self.assertEqual(v.returncode, 1)
         self.assertIn("do not apply config/published-ports.yml", v.stdout)
 
-    def test_the_example_ships_ipv4_and_no_ipv6_default(self):
+    def test_the_example_ships_dual_stack(self):
+        """DEC-063, refined by DEC-075: dual-stack is the default of a new installation."""
         text = (TRAEFIK / ".env.example").read_text(encoding="utf-8")
         self.assertIn("\nTRAEFIK_BIND_V4=0.0.0.0\n", text)
-        self.assertIn("\nTRAEFIK_BIND_V6=\n", text)
-        self.assertIn("\nCOMPOSE_FILE=docker-compose.yml:config/published-ports.yml:config/edge-networks.yml\n", text)
+        self.assertIn("\nTRAEFIK_BIND_V6=[::]\n", text)
+        self.assertIn("\nCOMPOSE_FILE=docker-compose.yml:network-dual-stack.yml:config/published-ports.yml:config/edge-networks.yml\n", text)
         for name in ("docker-compose.yml", "network-dual-stack.yml"):
             self.assertNotIn("ports:", "\n".join(l for l in (TRAEFIK / name).read_text().splitlines()
                                                  if not l.lstrip().startswith("#")), name)

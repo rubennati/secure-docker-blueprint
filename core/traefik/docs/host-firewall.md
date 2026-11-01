@@ -26,8 +26,8 @@ mistaken for the other.
 | `private` | every binding is a loopback, LAN, VPN or link-local address, or nothing is published | closes the host's input path; no rule on the published ports |
 
 The two bindings are the ones `config/published-ports.yml` publishes: an empty
-variable publishes nothing for its family, unset `TRAEFIK_BIND_V4` is `0.0.0.0`,
-and `TRAEFIK_BIND_V6` has no default.
+variable publishes nothing for its family, and neither has a default (`render.sh`
+refuses `TRAEFIK_BIND_V4` unset).
 
 ## The mandatory invariants and the layers
 

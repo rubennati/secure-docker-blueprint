@@ -310,10 +310,21 @@ class TrustedClass(Scratch):
         text = f.read_text(encoding="utf-8")
         self.assertIn('EDGE_NETWORKS=""\nCOMPOSE_FILE=docker-compose.yml:config/published-ports.yml:config/edge-networks.yml\n', text)
         self.assertNotIn("TRAEFIK_BIND_V6", text, "no overlay, no IPv6 binding added")
+        self.assertIn("\nTRAEFIK_BIND_V4=0.0.0.0\n", text, "the old IPv4 default is kept explicitly")
         (core / ".env.pre-model").unlink()
         rc, out = self.run_tool(str(f))
         self.assertNotIn("TRUSTED_RANGES", out.replace("note", ""), "the second run adds nothing")
         self.assertNotIn("+ EDGE_NETWORKS", out)
+        self.assertNotIn("+ TRAEFIK_BIND_V4", out)
+
+    def test_an_empty_ipv4_binding_is_left_empty(self):
+        core = self.root / "core" / "traefik"
+        core.mkdir(parents=True)
+        f = core / ".env"
+        f.write_text("TLS_DEFAULT_OPTION=tls-standard\nHSTS_MAX_AGE=63072000\nTRUSTED_RANGES=\"\"\nTRAEFIK_BIND_V4=\n", encoding="utf-8")
+        rc, out = self.run_tool("--write", str(f))
+        self.assertEqual(rc, 0, out)
+        self.assertNotIn("+ TRAEFIK_BIND_V4", out, "an IPv6-only choice stays IPv6-only")
 
     def test_a_dual_stack_core_env_keeps_its_ipv6_ingress(self):
         core = self.root / "core" / "traefik"
@@ -326,6 +337,7 @@ class TrustedClass(Scratch):
         text = f.read_text(encoding="utf-8")
         self.assertIn("COMPOSE_FILE=docker-compose.yml:network-dual-stack.yml:config/published-ports.yml:config/edge-networks.yml\n", text)
         self.assertIn("\nTRAEFIK_BIND_V6=[::]\n", text)
+        self.assertIn("\nTRAEFIK_BIND_V4=0.0.0.0\n", text)
         (core / ".env.pre-model").unlink()
         rc, out = self.run_tool(str(f))
         self.assertNotIn("+ COMPOSE_FILE", out)

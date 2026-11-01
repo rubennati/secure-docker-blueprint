@@ -36,11 +36,11 @@ exposure_profile() {
 }
 
 # published_bindings: sets BIND_V4_EFFECTIVE and BIND_V6_EFFECTIVE from the two
-# bind variables (DEC-075.3, step 7). TRAEFIK_BIND_V4 unset keeps its default,
-# 0.0.0.0; set and empty publishes nothing on IPv4. TRAEFIK_BIND_V6 has no
-# default: empty or unset publishes nothing on IPv6. render.sh writes exactly
-# these into config/published-ports.yml.
+# bind variables (DEC-075.3, step 7). Neither has a default: empty or unset
+# publishes nothing for its family, and render.sh and validate.sh refuse
+# TRAEFIK_BIND_V4 unset, so that a missing line never becomes 0.0.0.0. render.sh
+# writes exactly these into config/published-ports.yml.
 published_bindings() {
-  BIND_V4_EFFECTIVE="${TRAEFIK_BIND_V4-0.0.0.0}"
+  BIND_V4_EFFECTIVE="${TRAEFIK_BIND_V4:-}"
   BIND_V6_EFFECTIVE="${TRAEFIK_BIND_V6:-}"
 }

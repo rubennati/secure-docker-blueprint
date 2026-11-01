@@ -313,8 +313,8 @@ declares nothing — the render-identity test holds that.
       host and a real exposure test stay step 8.
 - [x] 7. IPv6 as bindings per family: `render.sh` writes `TRAEFIK_BIND_V4` and
       `TRAEFIK_BIND_V6` into `config/published-ports.yml` (empty publishes nothing,
-      `TRAEFIK_BIND_V6` without a default, the base and dual-stack files without
-      ports); the nine known unbound stacks on a required `*_BIND` variable; the
+      neither variable with a default, the base and dual-stack files without
+      ports); dual-stack the example's default (DEC-063); the nine known unbound stacks on a required `*_BIND` variable; the
       operator site, the Traefik README and the IPv6 guide corrected. Done on
       `feature/ingress-step-7-ipv6`. Open for step 8: the IPv6 gateway endpoint on a
       host, an IPv6-only host (ingress and the egress prerequisites), the bound

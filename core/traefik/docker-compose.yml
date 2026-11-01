@@ -154,12 +154,12 @@ services:
     # --------------------------------------------------------
 
 networks:
-  # IPv4-only by default (Docker auto-assigns the subnet — unchanged
+  # IPv4-only in this file (Docker auto-assigns the subnet — unchanged
   # behavior for existing installs). Tailscale clients always have an
   # IPv6 address; without IPv6 on this network, IPv6 ingress loses the
-  # real client IP (see docs/ipv6-dual-stack.md). For dual-stack
-  # IPv4+IPv6 — recommended for new deployments — apply the
-  # network-dual-stack.yml overlay (opt-in, see that file for usage).
+  # real client IP (see docs/ipv6-dual-stack.md). The network-dual-stack.yml
+  # overlay adds IPv6; .env.example applies it, the default for a new
+  # installation (DEC-063), and an existing one keeps its COMPOSE_FILE.
   public:
     name: ${PUBLIC_NETWORK}
     driver: bridge
