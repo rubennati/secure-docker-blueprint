@@ -55,7 +55,14 @@ class Rendered(unittest.TestCase):
                                   f'include "{self.root / "config" / "host" / "cloudflare-ranges.nft"}"')
         path = self.root / "check.nft"
         path.write_text(text, encoding="utf-8")
-        return subprocess.run(["nft", "-c", "-f", str(path)], capture_output=True, text=True)
+        r = subprocess.run(["nft", "-c", "-f", str(path)], capture_output=True, text=True)
+        if r.returncode != 0 and "not permitted" in r.stderr:
+            # nft opens a netlink socket even to check a file, which needs
+            # CAP_NET_ADMIN: as root here, through sudo on a CI runner.
+            if subprocess.run(["sudo", "-n", "true"], capture_output=True).returncode == 0:
+                return subprocess.run(["sudo", "-n", "nft", "-c", "-f", str(path)], capture_output=True, text=True)
+            self.skipTest("nft -c needs CAP_NET_ADMIN, which this environment does not grant")
+        return r
 
 
 class Profile(Rendered):
