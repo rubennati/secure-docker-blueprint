@@ -133,7 +133,7 @@ class LayersAndMarker(Rendered):
         self.assertNotIn("ERROR", v.stdout + v.stderr)
 
     def test_present_layers_are_named_as_present(self):
-        self.render(dict(VALID_ENV, CROWDSEC_BOUNCER_ENABLED="true", CROWDSEC_BOUNCER_KEY="a-key-of-sufficient-length-1234567890",
+        self.render(dict(VALID_ENV, CROWDSEC_BOUNCER_ENABLED="true", CROWDSEC_BOUNCER_KEY="test-key-not-a-secret",
                          AUTHENTIK_FORWARD_AUTH_ENABLED="true", AUTHENTIK_FORWARD_AUTH_ADDRESS="http://authentik-server:9000"))
         v = self.validate()
         self.assertIn("crowdsec           present", v.stdout)
