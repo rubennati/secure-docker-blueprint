@@ -88,6 +88,8 @@ Three different port types, and only one of them is Traefik's business:
 | `WARPGATE_MYSQL_PORT` (33306) | Raw MySQL wire protocol | Anyone with a Warpgate account who needs a MySQL target | No |
 | Admin UI (8888 internally) | HTTPS | `APP_TRAEFIK_ACCESS` policy — VPN-only by default | Yes |
 
+The ports listen on `WARPGATE_BIND` — an IPv4 address, `0.0.0.0` as shipped, required. Narrow it to the VPN address where the whole LAN or internet need not reach the gateway; IPv6 is not published (DEC-075).
+
 Do not attempt to route the SSH or MySQL ports through Traefik — they are
 not HTTP(S), and forcing them through a reverse proxy neither works cleanly
 nor gains anything. Publish them directly, on whatever host interface your

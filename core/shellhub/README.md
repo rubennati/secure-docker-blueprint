@@ -62,6 +62,8 @@ install an agent on a target machine and register it from the UI.
 | `SHELLHUB_SSH_PORT` (2222) | Raw SSH (agent rendezvous + your `ssh` client) | Every device running an agent, and everyone who needs to connect to one | No — not HTTP |
 | Gateway (80 internally) | HTTPS | `APP_TRAEFIK_ACCESS` policy — VPN-only by default | Yes |
 
+The ports listen on `SHELLHUB_BIND` — an IPv4 address, `0.0.0.0` as shipped, required. Narrow it to the VPN address where the whole LAN or internet need not reach the gateway; IPv6 is not published (DEC-075).
+
 The SSH port has to be reachable from both directions this repository
 normally keeps separate: agents on target machines dial *out* to it, and
 your own SSH client dials *in* to reach a device. It cannot be restricted to

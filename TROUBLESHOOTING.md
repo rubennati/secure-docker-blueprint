@@ -255,11 +255,14 @@ The full reasoning is in
    `"userland-proxy": false`, then `sudo systemctl restart docker`.
 2. Set `PUBLIC_NETWORK_SUBNET_V4` and `PUBLIC_NETWORK_SUBNET_V6` in
    `core/traefik/.env`. Generate your own ULA prefix — do not copy the example.
-3. Bring Traefik up with the overlay and confirm it:
+   Set `TRAEFIK_BIND_V6=[::]` and
+   `COMPOSE_FILE=docker-compose.yml:network-dual-stack.yml:config/published-ports.yml:config/edge-networks.yml`.
+3. Render, bring Traefik up and confirm it:
 
    ```bash
-   docker compose -f docker-compose.yml -f network-dual-stack.yml up -d
-   bash ops/scripts/validate.sh --strict -f docker-compose.yml -f network-dual-stack.yml
+   bash ops/scripts/render.sh
+   docker compose up -d
+   bash ops/scripts/validate.sh --strict
    ```
 
    An existing `proxy-public` without IPv6 is reported as an error — it has to be

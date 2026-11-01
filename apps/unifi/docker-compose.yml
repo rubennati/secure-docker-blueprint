@@ -125,15 +125,15 @@ services:
       - proxy-public
       - app-internal
     ports:
-      - "3478:3478/udp"       # STUN
-      - "10001:10001/udp"     # device discovery
-      - "8080:8080/tcp"       # device inform (unifi → controller)
+      - "${UNIFI_BIND:?Set UNIFI_BIND in .env}:3478:3478/udp"       # STUN
+      - "${UNIFI_BIND:?Set UNIFI_BIND in .env}:10001:10001/udp"     # device discovery
+      - "${UNIFI_BIND:?Set UNIFI_BIND in .env}:8080:8080/tcp"       # device inform (unifi → controller)
       # Optional (uncomment if needed):
-      # - "1900:1900/udp"     # L2 mDNS / UDP broadcast
-      # - "8843:8843/tcp"     # guest portal HTTPS
-      # - "8880:8880/tcp"     # guest portal HTTP
-      # - "6789:6789/tcp"     # mobile speedtest
-      # - "5514:5514/udp"     # remote syslog
+      # - "${UNIFI_BIND:?Set UNIFI_BIND in .env}:1900:1900/udp"     # L2 mDNS / UDP broadcast
+      # - "${UNIFI_BIND:?Set UNIFI_BIND in .env}:8843:8843/tcp"     # guest portal HTTPS
+      # - "${UNIFI_BIND:?Set UNIFI_BIND in .env}:8880:8880/tcp"     # guest portal HTTP
+      # - "${UNIFI_BIND:?Set UNIFI_BIND in .env}:6789:6789/tcp"     # mobile speedtest
+      # - "${UNIFI_BIND:?Set UNIFI_BIND in .env}:5514:5514/udp"     # remote syslog
 
     # --- Traefik (web UI only — device ports are direct) ---
     labels:

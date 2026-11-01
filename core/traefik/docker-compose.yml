@@ -112,15 +112,12 @@ services:
       socket_proxy_net:
       crowdsec-security:
 
-    # IPv4 only. A port published without a host address also listens on
-    # [::], and on an IPv4-only public network Docker hands such a
-    # connection to Traefik from the bridge gateway, not from the client.
-    # network-dual-stack.yml adds the IPv6 bindings together with the IPv6
-    # subnet. Transitional: the operating modes of D12 replace this.
-    ports:
-      - "${TRAEFIK_BIND_V4:-0.0.0.0}:${TRAEFIK_HTTP_PORT}:80/tcp"
-      - "${TRAEFIK_BIND_V4:-0.0.0.0}:${TRAEFIK_HTTPS_PORT}:443/tcp"
-      - "${TRAEFIK_BIND_V4:-0.0.0.0}:${TRAEFIK_HTTPS_PORT}:443/udp"
+    # No ports here. render.sh writes them into config/published-ports.yml,
+    # one block per address family, from TRAEFIK_BIND_V4 and TRAEFIK_BIND_V6
+    # — an empty variable leaves its family out, which a fixed line in this
+    # file could not (DEC-075.3). COMPOSE_FILE in .env applies the rendered
+    # file; every port names its host address, so nothing listens on [::]
+    # where the public network cannot carry IPv6 to the container.
 
     environment:
       - TZ=${TZ}
@@ -157,12 +154,12 @@ services:
     # --------------------------------------------------------
 
 networks:
-  # IPv4-only by default (Docker auto-assigns the subnet — unchanged
+  # IPv4-only in this file (Docker auto-assigns the subnet — unchanged
   # behavior for existing installs). Tailscale clients always have an
   # IPv6 address; without IPv6 on this network, IPv6 ingress loses the
-  # real client IP (see docs/ipv6-dual-stack.md). For dual-stack
-  # IPv4+IPv6 — recommended for new deployments — apply the
-  # network-dual-stack.yml overlay (opt-in, see that file for usage).
+  # real client IP (see docs/ipv6-dual-stack.md). The network-dual-stack.yml
+  # overlay adds IPv6; .env.example applies it, the default for a new
+  # installation (DEC-063), and an existing one keeps its COMPOSE_FILE.
   public:
     name: ${PUBLIC_NETWORK}
     driver: bridge

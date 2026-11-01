@@ -187,7 +187,7 @@ services:
     ports:
       # Where agents dial in, and where `ssh <device>@<host>` connects out.
       # A raw TCP listener: Traefik's HTTP router cannot carry SSH.
-      - "${SHELLHUB_SSH_PORT}:2222"
+      - "${SHELLHUB_BIND:?Set SHELLHUB_BIND in .env}:${SHELLHUB_SSH_PORT}:2222"
 
     # --- Health & Observability ---
     # Verified against upstream's own compose file.

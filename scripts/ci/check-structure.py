@@ -56,9 +56,8 @@ FAIL (blocks CI — dangerous or leak-prone):
                     every address of the host, IPv4 and IPv6, and on an
                     IPv4-only network Docker relays the IPv6 side from the
                     bridge gateway (docs/bugfixes/traefik-ipv6-dualstack-2026-06-19.md).
-                    The stacks that did so before the rule are listed in
-                    KNOWN_UNBOUND_PORTS and reported as WARN until each is
-                    bound; a new one fails
+                    The nine stacks that did so when the rule came in are
+                    bound since step 7 (a required *_BIND variable each)
 
 WARN (reported — structural drift):
   missing-file      .env.example / README.md / UPSTREAM.md absent
@@ -163,7 +162,7 @@ AFTER_FOUR = {"forwarded-proto-https"}
 MODEL_LEVEL = "FAIL"
 # Substitution of ${VAR} and ${VAR:-default} in a label, with the stack's
 # .env.example values standing in for a deployment's .env.
-LABEL_VAR = re.compile(r"\$\{([A-Za-z0-9_]+)(?::?-([^}]*))?\}")
+LABEL_VAR = re.compile(r"\$\{([A-Za-z0-9_]+)(?::?-([^}]*)|:?\?[^}]*)?\}")
 
 # Accepted placeholders in a committed example file.
 PLACEHOLDER = re.compile(r"^(__REPLACE_ME__|<.*>|changeme|CHANGEME|\$\{.*\}|)$")
@@ -172,23 +171,6 @@ PLACEHOLDER = re.compile(r"^(__REPLACE_ME__|<.*>|changeme|CHANGEME|\$\{.*\}|)$")
 # Bounded to 3 digits so date-based CalVer tags (photoprism 260601) are not
 # mistaken for a major — those pin an exact build and are reproducible.
 BAD_TAG = re.compile(r"^(latest|v?\d{1,3})$")
-
-# Stacks that publish a port without a host address today. Each is a known
-# finding of the ingress audit (docs/audits/ingress-architecture-2026-10-31.md),
-# reported as WARN so it stays visible without blocking, until the stack binds
-# the port to a *_BIND variable. Nothing is added here without the same audit
-# trail; a stack not listed fails.
-KNOWN_UNBOUND_PORTS = {
-    "apps/unifi": "device-facing STUN, discovery and inform ports — devices on every interface",
-    "apps/opencanary": "honeypot — every published port is meant to be reached",
-    "core/teleport": "proxy and auth ports of the bastion",
-    "core/shellhub": "SSH gateway on 2222",
-    "core/warpgate": "SSH gateway on 2222",
-    "core/jumpserver": "SSH gateway on 2222",
-    "core/orion-belt": "SSH gateway on 2222",
-    "core/step-ca": "the CA's API port",
-    "core/headscale": "the DERP relay's STUN port, in the opt-in derp.yml overlay",
-}
 
 # Directories that are structural exceptions, with the reason.
 EXCEPT_DIRS = {
@@ -1202,12 +1184,10 @@ def check_ports_and_labels(app: Path, findings: list[dict]) -> None:
             for entry in svc.get("ports") or []:
                 if _port_has_host_address(entry, env):
                     continue
-                known = KNOWN_UNBOUND_PORTS.get(str(app))
-                findings.append({"level": "WARN" if known else "FAIL", "rule": "port-no-host-address",
+                findings.append({"level": "FAIL", "rule": "port-no-host-address",
                                  "service": name,
                                  "detail": f"{path.name}: '{entry}' binds to every host address, IPv4 and IPv6 — "
-                                           "publish on a *_BIND variable"
-                                           + (f" (known: {known})" if known else "")})
+                                           "publish on a *_BIND variable"})
     for name, labels in labels_by_service.items():
         enabled = any(re.fullmatch(r"traefik\.enable\s*=\s*['\"]?true['\"]?", l.strip()) for l in labels)
         named = any(l.strip().startswith("traefik.docker.network=") for l in labels)

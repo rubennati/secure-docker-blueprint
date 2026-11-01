@@ -106,7 +106,7 @@ class EdgeNetworks(unittest.TestCase):
     def test_the_example_ships_the_variable_and_applies_the_file(self):
         text = (TRAEFIK / ".env.example").read_text(encoding="utf-8")
         self.assertIn('\nEDGE_NETWORKS=""\n', text)
-        self.assertIn("\nCOMPOSE_FILE=docker-compose.yml:config/edge-networks.yml\n", text)
+        self.assertIn("\nCOMPOSE_FILE=docker-compose.yml:network-dual-stack.yml:config/published-ports.yml:config/edge-networks.yml\n", text)
         self.assertIn("config/edge-networks.yml", (TRAEFIK / ".gitignore").read_text(encoding="utf-8"))
 
 

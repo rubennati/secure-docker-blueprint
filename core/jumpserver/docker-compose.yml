@@ -90,7 +90,7 @@ services:
       # koko, the bundled SSH gateway — every SSH target, reached by anyone
       # with a JumpServer account. A raw TCP listener: Traefik's HTTP router
       # cannot carry this protocol.
-      - "${JUMPSERVER_SSH_PORT}:2222"
+      - "${JUMPSERVER_BIND:?Set JUMPSERVER_BIND in .env}:${JUMPSERVER_SSH_PORT}:2222"
 
     # --- Traefik ---
     labels:

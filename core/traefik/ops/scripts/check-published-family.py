@@ -6,8 +6,9 @@ Called by validate.sh. A port published without a host address, or on an IPv6
 address, accepts IPv6 clients. On an IPv4-only public network Docker relays
 such a connection from the bridge gateway, and every access policy, rate limit
 and CrowdSec decision then sees the gateway instead of the client. IPv6 is
-therefore published only by network-dual-stack.yml, and only where the Docker
-daemon forwards IPv6 by NAT rather than through docker-proxy.
+therefore published only through TRAEFIK_BIND_V6 — rendered into
+config/published-ports.yml — with network-dual-stack.yml applied, and only
+where the Docker daemon forwards IPv6 by NAT rather than through docker-proxy.
 
 Checks, against the effective Compose model — the -f files validate.sh was
 given, else COMPOSE_FILE, else docker-compose.yml with its override — and,
@@ -535,7 +536,7 @@ def main():
         errors.append(
             f"Traefik is published on IPv6 ({', '.join(v6)}), but the public network is IPv4-only.\n"
             "       IPv6 clients would reach it as the Docker bridge gateway, a private address.\n"
-            "       Bind to IPv4 (TRAEFIK_BIND_V4) or apply network-dual-stack.yml with its prerequisites.")
+            "       Leave TRAEFIK_BIND_V6 empty, or apply network-dual-stack.yml with its prerequisites.")
 
     priorities = gateway_priorities(model)
     if priorities is not None:

@@ -35,7 +35,7 @@ REFERENCE_TAG = "v0.9.5"
 
 SHAPE_A = dict(BASE_ENV, ACME_WILDCARD_DOMAIN="example.com")
 SHAPE_B = dict(SHAPE_A,
-               COMPOSE_FILE="docker-compose.yml:network-dual-stack.yml",
+               COMPOSE_FILE="docker-compose.yml:network-dual-stack.yml:config/published-ports.yml:config/edge-networks.yml",
                PUBLIC_NETWORK_SUBNET_V4="172.30.0.0/16",
                PUBLIC_NETWORK_SUBNET_V6="fd3a:91c2:7e04::/64",
                TRAEFIK_BIND_V4="0.0.0.0",
@@ -88,13 +88,14 @@ class RenderIdentity(unittest.TestCase):
         self.head = self.tmp / "head" / "core" / "traefik"
         shutil.copytree(TRAEFIK, self.head, ignore=shutil.ignore_patterns(".env", "volumes"))
 
-    # Files later steps render by decision: the edge networks (DEC-075, step 5)
-    # and the host firewall for the exposure profile (DEC-078, step 6).
-    NEW_FILES = {"edge-networks.yml", "host/ingress.nft"}
+    # Files later steps render by decision: the edge networks (DEC-075, step 5),
+    # the host firewall for the exposure profile (DEC-078, step 6) and the
+    # published ports per family (DEC-075.3, step 7).
+    NEW_FILES = {"edge-networks.yml", "host/ingress.nft", "published-ports.yml"}
 
     def _assert_identical(self, env: dict):
         a, b = _render(self.release, env), _render(self.head, env)
-        self.assertTrue(self.NEW_FILES <= set(_tree(b)), "steps 5 and 6 render their files")
+        self.assertTrue(self.NEW_FILES <= set(_tree(b)), "steps 5 to 7 render their files")
         self.assertEqual(_tree(a), [f for f in _tree(b) if f not in self.NEW_FILES], "the set of rendered files changed")
         for rel in _tree(a):
             if rel == "dynamic/model.yml":

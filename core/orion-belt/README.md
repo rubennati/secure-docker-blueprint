@@ -65,6 +65,8 @@ target host — see that file's header for the exact steps.
 | `ORION_SSH_PORT` (2222) | Raw SSH (agent rendezvous + your `ssh` client) | Every host running an agent, and everyone who needs to reach one | No — not HTTP |
 | API/console (8080 internally) | HTTPS | `APP_TRAEFIK_ACCESS` policy — VPN-only by default | Yes |
 
+The ports listen on `ORION_BIND` — an IPv4 address, `0.0.0.0` as shipped, required. Narrow it to the VPN address where the whole LAN or internet need not reach the gateway; IPv6 is not published (DEC-075).
+
 Like ShellHub, the SSH port has to accept connections from both
 directions: agents dialing out from protected hosts, and your own SSH
 client dialing in.

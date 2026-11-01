@@ -159,9 +159,10 @@ The failure above needs a port that accepts IPv6 on a network that does not
 carry it. Beyond the `403`, the gateway it produces is inside `172.16.0.0/12`,
 so the retired LAN policies (RFC 1918, before `TRUSTED_RANGES`) admitted every client hidden behind it, and
 CrowdSec sees nothing of them ([CrowdSec and real client IPs](#crowdsec-and-real-client-ips)).
-`docker-compose.yml` therefore publishes Traefik on `TRAEFIK_BIND_V4` only, and
-`network-dual-stack.yml` adds the IPv6 bindings on `TRAEFIK_BIND_V6` together
-with the IPv6 subnet. `validate.sh` refuses a configuration that publishes IPv6
+The bindings are therefore one variable per family, `TRAEFIK_BIND_V4` and
+`TRAEFIK_BIND_V6`, rendered into `config/published-ports.yml`, and an IPv6 binding
+needs `network-dual-stack.yml`, which adds the IPv6 subnet; `render.sh` refuses one
+without it. `validate.sh` refuses a configuration that publishes IPv6
 without it, refuses the overlay unless the daemon has `userland-proxy: false`
 and `ip6tables: true`, and reports a running container that still listens on
 `[::]` until `docker compose up -d` recreates it. The variables and results:
@@ -387,17 +388,20 @@ the per-deployment `.env`, which is already gitignored and host-specific).
 
 ## Quick setup — new deployment (dual-stack from day one)
 
-Recommended default for new installs: modern servers increasingly have
-IPv6, and Tailscale always hands out an IPv6 address regardless. Starting
-dual-stack avoids a later migration.
+The default for new installs (DEC-063, refined by DEC-075), and what
+`.env.example` ships: modern servers increasingly have IPv6, and Tailscale
+always hands out an IPv6 address regardless. Starting dual-stack avoids a
+later migration.
 
 ```bash
 cd core/traefik
 cp .env.example .env
-# Edit .env: uncomment and set
+# .env already ships the dual-stack shape — replace the documentation
+# prefix, which validate.sh refuses:
 #   PUBLIC_NETWORK_SUBNET_V4=172.30.0.0/16
 #   PUBLIC_NETWORK_SUBNET_V6=<your own ULA prefix>/64
-#   COMPOSE_FILE=docker-compose.yml:network-dual-stack.yml
+#   COMPOSE_FILE=docker-compose.yml:network-dual-stack.yml:config/published-ports.yml:config/edge-networks.yml
+#   TRAEFIK_BIND_V4=0.0.0.0 and TRAEFIK_BIND_V6=[::]
 
 # Complete the Docker daemon prerequisites above FIRST.
 
@@ -417,7 +421,9 @@ docker network inspect "$(grep ^PUBLIC_NETWORK= .env | cut -d= -f2)" \
 ```
 
 **Set `COMPOSE_FILE` in `.env` as shown above — do not rely on remembering
-a `-f network-dual-stack.yml` flag on every command.** Once the dual-stack
+a `-f network-dual-stack.yml` flag on every command.** The IPv6 bindings come from
+`TRAEFIK_BIND_V6` (no default; empty publishes no IPv6), rendered into
+`config/published-ports.yml` — the overlay carries the network alone. Once the dual-stack
 network exists, any later `docker compose` invocation run without the
 overlay (a restart, a `--force-recreate`, anything) makes Compose see only
 the IPv4-only network definition from `docker-compose.yml`. Compose then
@@ -545,7 +551,8 @@ cd core/traefik
 # Edit .env: PUBLIC_NETWORK=proxy-public-v6 (or rename at the Docker
 # level if you'd rather keep using the name "proxy-public"),
 # PUBLIC_NETWORK_SUBNET_V4 / _V6 as created in step 3, and
-#   COMPOSE_FILE=docker-compose.yml:network-dual-stack.yml
+#   COMPOSE_FILE=docker-compose.yml:network-dual-stack.yml:config/published-ports.yml:config/edge-networks.yml
+#   TRAEFIK_BIND_V6=[::]
 # validate.sh refuses the overlay while PUBLIC_NETWORK names an IPv4-only network.
 bash ops/scripts/validate.sh
 bash ops/scripts/render.sh

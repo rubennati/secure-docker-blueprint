@@ -25,8 +25,9 @@ mistaken for the other.
 | `proxied` | such a binding with `TRAEFIK_FORWARDED_PROXY=cloudflare` | the same, and the published ports answer Cloudflare's ranges, the VPN and `TRUSTED_RANGES` alone |
 | `private` | every binding is a loopback, LAN, VPN or link-local address, or nothing is published | closes the host's input path; no rule on the published ports |
 
-`TRAEFIK_BIND_V6` counts when `network-dual-stack.yml` is applied (`COMPOSE_FILE`
-or `-f`); `docker-compose.yml` alone publishes IPv4 only.
+The two bindings are the ones `config/published-ports.yml` publishes: an empty
+variable publishes nothing for its family, and neither has a default (`render.sh`
+refuses `TRAEFIK_BIND_V4` unset).
 
 ## The mandatory invariants and the layers
 

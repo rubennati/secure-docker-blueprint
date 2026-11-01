@@ -40,7 +40,7 @@ proxy.
 
    ```env
    EDGE_NETWORKS="nextcloud-edge vaultwarden-edge"
-   COMPOSE_FILE=docker-compose.yml:config/edge-networks.yml
+   COMPOSE_FILE=docker-compose.yml:network-dual-stack.yml:config/published-ports.yml:config/edge-networks.yml
    ```
 
 3. `bash ops/scripts/render.sh` writes `config/edge-networks.yml`; `docker compose up -d`

@@ -732,7 +732,7 @@ class PortsAndNetworkLabel(unittest.TestCase):
             os.chdir(root)
             _reset_caches()
             findings: list[dict] = []
-            # relative, as find_apps() yields them — KNOWN_UNBOUND_PORTS is keyed so
+            # relative, as find_apps() yields them
             cs.check_ports_and_labels(Path(path), findings)
             return findings
         finally:
@@ -779,13 +779,22 @@ class PortsAndNetworkLabel(unittest.TestCase):
         self.assertEqual([f["rule"] for f in found], ["port-no-host-address"] * 3)
         self.assertTrue(all(f["level"] == "FAIL" for f in found))
 
-    def test_known_stack_warns_instead_of_failing(self):
+    def test_no_stack_is_excepted_any_more(self):
+        # Step 7 bound the nine stacks the audit listed; the list is gone.
+        self.assertFalse(hasattr(cs, "KNOWN_UNBOUND_PORTS"))
         compose = "services:\n  app:\n    image: example/image:1.0\n    ports:\n      - \"2222:2222\"\n"
-        known = next(iter(cs.KNOWN_UNBOUND_PORTS))
         with tempfile.TemporaryDirectory() as tmp:
-            found = self._findings_for(Path(tmp), known, compose)
-        self.assertEqual(self._rules(found), {("port-no-host-address", "WARN")})
-        self.assertIn("known:", found[0]["detail"])
+            found = self._findings_for(Path(tmp), "apps/unifi", compose)
+        self.assertEqual(self._rules(found), {("port-no-host-address", "FAIL")})
+
+    def test_a_required_bind_variable_counts_as_an_address(self):
+        compose = ("services:\n  app:\n    image: example/image:1.0\n    ports:\n"
+                   "      - \"${APP_BIND:?Set APP_BIND in .env}:2222:2222\"\n")
+        with tempfile.TemporaryDirectory() as tmp:
+            found = self._findings_for(Path(tmp), "apps/widget", compose, "APP_BIND=0.0.0.0\n")
+            self.assertEqual(found, [])
+            found = self._findings_for(Path(tmp), "apps/widget2", compose, "")
+        self.assertEqual(self._rules(found), {("port-no-host-address", "FAIL")})
 
     def test_routed_service_without_network_label_fails(self):
         compose = ("services:\n  app:\n    image: example/image:1.0\n    labels:\n"

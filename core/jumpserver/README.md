@@ -56,6 +56,8 @@ a placeholder this repository invented.
 | `JUMPSERVER_SSH_PORT` (2222) | Raw SSH/RDP (koko gateway) | Anyone with a JumpServer account and an SSH/RDP target | No — not HTTP |
 | Web console (80 internally) | HTTPS | `APP_TRAEFIK_ACCESS` policy — VPN-only by default | Yes |
 
+The ports listen on `JUMPSERVER_BIND` — an IPv4 address, `0.0.0.0` as shipped, required. Narrow it to the VPN address where the whole LAN or internet need not reach the gateway; IPv6 is not published (DEC-075).
+
 Do not route the SSH/RDP gateway through Traefik. Publish it directly and
 bound who can reach it with your host firewall or VPN, the same as every
 other raw-TCP service in this repository.

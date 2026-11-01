@@ -131,7 +131,7 @@ services:
       # Where agents (deployed separately, on the hosts you want to
       # protect) dial in, and where your own SSH client connects out. A
       # raw TCP listener: Traefik's HTTP router cannot carry SSH.
-      - "${ORION_SSH_PORT}:2222"
+      - "${ORION_BIND:?Set ORION_BIND in .env}:${ORION_SSH_PORT}:2222"
 
     # --- Traefik ---
     labels:

@@ -75,12 +75,12 @@ services:
       # SSH protocol proxy — every SSH target, reached by anyone with a
       # Warpgate account. A raw TCP listener: Traefik's HTTP router cannot
       # carry this protocol.
-      - "${WARPGATE_SSH_PORT}:2222"
+      - "${WARPGATE_BIND:?Set WARPGATE_BIND in .env}:${WARPGATE_SSH_PORT}:2222"
       # MySQL protocol proxy. Only meaningful once a MySQL target exists in
       # the admin UI — comment this line out otherwise, it costs nothing to
       # leave open but there is no reason to publish a port for a protocol
       # not in use.
-      - "${WARPGATE_MYSQL_PORT}:33306"
+      - "${WARPGATE_BIND:?Set WARPGATE_BIND in .env}:${WARPGATE_MYSQL_PORT}:33306"
 
     # --- Traefik ---
     # Admin web UI only. Warpgate's own docs (Running behind a reverse proxy)

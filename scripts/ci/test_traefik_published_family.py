@@ -624,7 +624,9 @@ class ValidateOutcome(unittest.TestCase):
     def test_f_files_reach_the_checker(self):
         for name in ("docker-compose.yml", "network-dual-stack.yml"):
             shutil.copy(TRAEFIK / name, self.root / name)
-        r = self.validate("-f", str(self.root / "docker-compose.yml"))
+        # docker-compose.yml publishes nothing itself since step 7; the rendered
+        # file is part of every deployment's file list.
+        r = self.validate("-f", str(self.root / "docker-compose.yml"), "-f", str(self.root / "config" / "published-ports.yml"))
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertNotIn("unknown argument", r.stdout)
         if shutil.which("docker") is None:
@@ -639,14 +641,22 @@ class ValidateOutcome(unittest.TestCase):
 
 @unittest.skipUnless(shutil.which("docker"), "needs the docker CLI for docker compose config")
 class ShippedComposeFiles(unittest.TestCase):
+    V4_ONLY = "docker-compose.yml:config/published-ports.yml:config/edge-networks.yml"
+    DUAL = "docker-compose.yml:network-dual-stack.yml:config/published-ports.yml:config/edge-networks.yml"
+
     def config(self, *overlay_env):
+        # render.sh writes the published ports (step 7), so the model is read
+        # after a render, through COMPOSE_FILE, as on a host.
         tmp = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
         for name in ("docker-compose.yml", "network-dual-stack.yml"):
             shutil.copy(TRAEFIK / name, tmp / name)
-        env = dict(BASE_ENV)
+        shutil.copytree(TRAEFIK / "ops", tmp / "ops")
+        env = dict(BASE_ENV, ACME_WILDCARD_DOMAIN="example.com", COMPOSE_FILE=self.V4_ONLY)
         env.update(dict(overlay_env))
         (tmp / ".env").write_text("".join(f'{k}="{v}"\n' for k, v in env.items()), encoding="utf-8")
+        r = subprocess.run(["bash", str(tmp / "ops/scripts/render.sh")], capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         r = subprocess.run(["docker", "compose", "config", "--format", "json"], cwd=tmp, capture_output=True, text=True)
         self.assertEqual(r.returncode, 0, r.stderr)
         return json.loads(r.stdout)
@@ -685,12 +695,25 @@ class ShippedComposeFiles(unittest.TestCase):
         both = run("docker-compose.yml", "network-dual-stack.yml")
         self.assertNotIn("IPv4-only", both.stdout)  # the overlay was evaluated: dual-stack, no P2 error
 
-    def test_overlay_adds_ipv6_bindings_and_the_ipv6_subnet(self):
-        m = self.config(("COMPOSE_FILE", "docker-compose.yml:network-dual-stack.yml"),
+    def test_overlay_and_bind_v6_add_ipv6_bindings_and_the_ipv6_subnet(self):
+        m = self.config(("COMPOSE_FILE", self.DUAL), ("TRAEFIK_BIND_V6", "[::]"),
                         ("PUBLIC_NETWORK_SUBNET_V4", "172.30.0.0/16"),
                         ("PUBLIC_NETWORK_SUBNET_V6", "fd00:db8:30::/64"))
         self.assertEqual(self.bindings(m), [("0.0.0.0", "443", "tcp"), ("0.0.0.0", "443", "udp"), ("0.0.0.0", "80", "tcp"),
                                             ("::", "443", "tcp"), ("::", "443", "udp"), ("::", "80", "tcp")])
+        self.assertTrue(m["networks"]["public"]["enable_ipv6"])
+
+    def test_ipv6_only_publishes_no_ipv4_binding(self):
+        m = self.config(("COMPOSE_FILE", self.DUAL), ("TRAEFIK_BIND_V4", ""), ("TRAEFIK_BIND_V6", "[::]"),
+                        ("PUBLIC_NETWORK_SUBNET_V4", "172.30.0.0/16"),
+                        ("PUBLIC_NETWORK_SUBNET_V6", "fd00:db8:30::/64"))
+        self.assertEqual(self.bindings(m), [("::", "443", "tcp"), ("::", "443", "udp"), ("::", "80", "tcp")])
+
+    def test_the_overlay_with_an_empty_bind_v6_publishes_ipv4_only(self):
+        m = self.config(("COMPOSE_FILE", self.DUAL), ("TRAEFIK_BIND_V6", ""),
+                        ("PUBLIC_NETWORK_SUBNET_V4", "172.30.0.0/16"),
+                        ("PUBLIC_NETWORK_SUBNET_V6", "fd00:db8:30::/64"))
+        self.assertEqual(self.bindings(m), [("0.0.0.0", "443", "tcp"), ("0.0.0.0", "443", "udp"), ("0.0.0.0", "80", "tcp")])
         self.assertTrue(m["networks"]["public"]["enable_ipv6"])
 
 

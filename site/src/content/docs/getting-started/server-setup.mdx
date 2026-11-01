@@ -27,10 +27,14 @@ docker --version && docker compose version
 ss -tlnp | grep -E ':80 |:443 ' || echo "ports free"
 ```
 
-## Decide: will anyone connect through a VPN?
+## Enable IPv6 in Docker
 
-If yes — Tailscale, WireGuard, anything where the client reaches the server
-directly — **enable IPv6 in Docker before starting any service.**
+The example configuration is dual-stack — Traefik is published on IPv4 and IPv6 —
+so **enable IPv6 in Docker before starting any service.** It matters most when
+anyone connects through a VPN — Tailscale, WireGuard, anything where the client
+reaches the server directly. Choosing IPv4 only instead: skip this section, and in
+`core/traefik/.env` empty `TRAEFIK_BIND_V6=` and drop `network-dual-stack.yml`
+from `COMPOSE_FILE`.
 
 A VPN client connects with no proxy in between, so nothing records the original
 address in a header. The source address of the connection is the only record there
@@ -140,16 +144,28 @@ traffic over IPv4 and leaves the IPv6 path untested.
    Generate rather than copy an example — these are private ranges, and reusing
    someone else's is the IPv6 equivalent of everyone picking `192.168.1.0/24`.
 
-4. Start Traefik with the dual-stack overlay:
+4. Keep the example's dual-stack shape. `core/traefik/.env.example` already
+   publishes both families and applies the overlay:
+
+   ```bash
+   TRAEFIK_BIND_V4=0.0.0.0
+   TRAEFIK_BIND_V6=[::]
+   COMPOSE_FILE=docker-compose.yml:network-dual-stack.yml:config/published-ports.yml:config/edge-networks.yml
+   ```
+
+   A host without public IPv4 empties `TRAEFIK_BIND_V4=`. Then render and
+   start Traefik:
 
    ```bash
    cd core/traefik
-   docker compose -f docker-compose.yml -f network-dual-stack.yml up -d
+   bash ops/scripts/render.sh
+   docker compose up -d
    ```
 
    :::caution
    With IPv6 enabled, that overlay belongs on **every** `docker compose` command
-   for this stack. Leave it off once and the network is rebuilt without IPv6.
+   for this stack — keep it in `COMPOSE_FILE`. Leave it off once and the network
+   is rebuilt without IPv6; `render.sh` refuses an IPv6 binding without it.
    :::
 
 </Steps>
@@ -163,9 +179,10 @@ ss -tlnp | grep -E ':80 |:443 '
 ```
 
 Expected: containers healthy, **two** subnets from the second command, and
-listeners on both `0.0.0.0` and `[::]`.
+listeners on both `0.0.0.0` and `[::]` — on `[::]` alone for an IPv6-only host.
 
-One subnet means the overlay was missed.
+One subnet means the overlay was missed; no `[::]` listener means
+`TRAEFIK_BIND_V6` is empty or `render.sh` was not run.
 
 ### Confirm the server sees who is calling
 

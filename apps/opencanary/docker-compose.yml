@@ -71,11 +71,11 @@ services:
     networks:
       - app-internal
     ports:
-      - "${OPENCANARY_FTP_PORT}:21"
-      - "${OPENCANARY_TELNET_PORT}:23"
-      - "${OPENCANARY_HTTP_PORT}:80"
-      - "${OPENCANARY_MYSQL_PORT}:3306"
-      - "${OPENCANARY_RDP_PORT}:3389"
+      - "${OPENCANARY_BIND:?Set OPENCANARY_BIND in .env}:${OPENCANARY_FTP_PORT}:21"
+      - "${OPENCANARY_BIND:?Set OPENCANARY_BIND in .env}:${OPENCANARY_TELNET_PORT}:23"
+      - "${OPENCANARY_BIND:?Set OPENCANARY_BIND in .env}:${OPENCANARY_HTTP_PORT}:80"
+      - "${OPENCANARY_BIND:?Set OPENCANARY_BIND in .env}:${OPENCANARY_MYSQL_PORT}:3306"
+      - "${OPENCANARY_BIND:?Set OPENCANARY_BIND in .env}:${OPENCANARY_RDP_PORT}:3389"
 
     # --- Health & Observability ---
     # healthcheck: none — the image ships no separate health-check command
