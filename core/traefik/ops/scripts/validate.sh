@@ -879,13 +879,36 @@ if command -v docker >/dev/null 2>&1; then
     exit 1
   fi
 fi
+# Before the first render, the files COMPOSE_FILE names under config/ do not
+# exist yet, and the published-address checks have no model to read. They are
+# reported as not run — never as passed — and run after render.sh. Only in that
+# state: once config/traefik.yml exists, with -f, or when a file outside config/
+# is missing, a missing compose file stays the checker's ERROR.
+not_rendered=""
+if [ "${#COMPOSE_ARGS[@]}" -eq 0 ] && [ ! -f "${ROOT_DIR}/config/traefik.yml" ]; then
+  other_missing=""
+  IFS="${COMPOSE_PATH_SEPARATOR:-:}" read -r -a listed_files <<< "${COMPOSE_FILE:-}"
+  for f in ${listed_files[@]+"${listed_files[@]}"}; do
+    [ -f "${ROOT_DIR}/${f}" ] && continue
+    case "${f}" in
+      config/*) not_rendered="${not_rendered} ${f}" ;;
+      *) other_missing=1 ;;
+    esac
+  done
+  [ -n "${other_missing}" ] && not_rendered=""
+fi
 family_rc=0
-python3 "${ROOT_DIR}/ops/scripts/check-published-family.py" \
-  --project-dir "${ROOT_DIR}" \
-  ${COMPOSE_ARGS[@]+"${COMPOSE_ARGS[@]}"} \
-  --public-network "${PUBLIC_NETWORK}" \
-  --container "${TRAEFIK_CONTAINER_NAME}" \
-  --daemon-check "${DOCKER_DAEMON_CHECK:-}" || family_rc=$?
+if [ -n "${not_rendered}" ]; then
+  echo "NOT VERIFIED: not rendered yet (${not_rendered# }) — the published-address checks run after render.sh."
+  family_rc=3
+else
+  python3 "${ROOT_DIR}/ops/scripts/check-published-family.py" \
+    --project-dir "${ROOT_DIR}" \
+    ${COMPOSE_ARGS[@]+"${COMPOSE_ARGS[@]}"} \
+    --public-network "${PUBLIC_NETWORK}" \
+    --container "${TRAEFIK_CONTAINER_NAME}" \
+    --daemon-check "${DOCKER_DAEMON_CHECK:-}" || family_rc=$?
+fi
 case "${family_rc}" in
   0)
     if [ "${open_items}" -ne 0 ]; then

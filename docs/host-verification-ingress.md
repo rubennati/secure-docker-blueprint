@@ -81,7 +81,7 @@ router per policy is not shipped; create them as test-only labels in a
 | ID | Test | How | Expected | Pass when |
 |---|---|---|---|---|
 | P1 | the checkout under test | read | `./scripts/overview.sh` names the commit; `git status` clean apart from `.env` files | commit recorded |
-| P2 | validate → render → validate | read | in `core/traefik`: `bash ops/scripts/validate.sh`, `bash ops/scripts/render.sh`, `bash ops/scripts/validate.sh --strict` exit 0, except the exposure marker (X3) and pending items `--strict` names | only the marker missing |
+| P2 | validate → render → validate | read | in `core/traefik`: `bash ops/scripts/validate.sh` exits 0 — on a fresh checkout it reports the published-address checks `NOT VERIFIED: not rendered yet`; `bash ops/scripts/render.sh` exits 0; `bash ops/scripts/validate.sh --strict` names only the exposure marker, which X1 stores, and exits 1 until then | only the marker missing |
 | P3 | the derived profile | read | `validate.sh` prints `Exposure profile: direct` for `TRAEFIK_BIND_V4=0.0.0.0`, `TRAEFIK_BIND_V6=[::]`, `TRAEFIK_FORWARDED_PROXY=none`; the layers list names what is absent | profile and layers as stated |
 | P4 | the rendered ruleset parses on the host's own `nft` (syntax covered in CI) | read | `sudo nft -c -f core/traefik/config/host/ingress.nft` exits 0; nothing applied (`sudo nft list tables` unchanged) | 0, no new table |
 
