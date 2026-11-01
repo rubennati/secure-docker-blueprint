@@ -15,6 +15,9 @@ acceptance list it turns into rows is §5 of
 [`docs/audits/ingress-architecture-2026-10-31.md`](audits/ingress-architecture-2026-10-31.md),
 extended by the items step 7 left open (`.ai/tasks.md` §12).
 
+A row that existing evidence already settles is marked **covered** with that
+evidence and is not run again; only the rows left open are host work.
+
 ## Rules
 
 - **A disposable host, never a production one.** Nothing here runs on a host
@@ -26,7 +29,11 @@ extended by the items step 7 left open (`.ai/tasks.md` §12).
   over the VPN is kept open for the whole session, and every ruleset load carries
   the five-minute way back of
   [`core/traefik/docs/host-firewall.md`](../core/traefik/docs/host-firewall.md).
-- **Manual, every row.** There is no verification script for this plan yet; each
+- **Evidence on record is not repeated.** A lab measurement, a CI test or an
+  earlier host run that still holds for the configuration under test settles
+  its row (see "Evidence already on record"). It is run again only when the
+  configuration it measured has changed in the point it measured.
+- **Manual, every open row.** There is no verification script for this plan yet; each
   row names its commands. A row that only reads state says *read*; a row that
   changes the host says *manual*.
 - **A family is verified only by its own probe.** An IPv4 result says nothing
@@ -51,6 +58,19 @@ extended by the items step 7 left open (`.ai/tasks.md` §12).
 | Stacks | `core/traefik`, `core/crowdsec`, `core/authentik` (embedded outpost), `apps/whoami`, `apps/heimdall`, one `app-login` stack (e.g. `apps/vaultwarden`), three more routed stacks for block N; each `.env` from its example with test values, no real secret |
 | Values in the shell | `export H1_V4=… H1_V6=… ZONE=…` — the test hosts are reached as `<name>.$ZONE` |
 
+## Evidence already on record
+
+| Evidence | What it settles | Rows | What it leaves open |
+|---|---|---|---|
+| Lab run of 2026-10-31, audit §4 (throwaway daemon, Engine 29, IPv4 only) | T1–T2: a shared network lets web containers reach each other, an edge network does not; T3d: a host process on the gateway is not trusted; T4a–T4b: forward-auth stops the request on a non-2xx answer and deletes forged identity headers; T5: a forged `X-Forwarded-For` is ignored; T6: Traefik's recreate costs about two seconds; T7b: `gw_priority` moves the IPv4 DNAT to `proxy-public` | N1, N3, G2, A7 and A9 for IPv4, E3 for IPv4 | everything over IPv6; a real outpost; a real LAN or tailnet client; the nftables backend |
+| `scripts/ci/test_traefik_exposure.py` | the derivation of the profile; `nft -c` accepts every rendered ruleset; the exposure script against a stub fails on a port that must never answer; a marker for the profile is accepted, one for another profile refused | X2, X3; the syntax half of P4 | the ruleset loaded on a host; the measurement itself (X1) |
+| `scripts/ci/test_traefik_model.py` | empty `TRUSTED_RANGES` admits nobody; unset is refused by render and validate | A6 | — |
+| `scripts/ci/test_traefik_published_ports.py` | unset `TRAEFIK_BIND_V4` is refused; an empty `TRAEFIK_BIND_V6` publishes IPv4 only; both families render | B6 | the running state of the ports (E2) |
+| `scripts/ci/test_traefik_render_identity.py` | a `v0.9.5` `.env` renders the same files apart from the decided differences, for IPv4-only and dual-stack | the configuration half of B | the published state on a host and the rollback (B1–B5) |
+| `scripts/ci/check-structure.py` `port-no-host-address` | each of the nine stacks names its binding through a required `${*_BIND:?…}`, which Compose refuses unset | S1 | a stack reached over its binding (S2) |
+| Host run of 2026-06-19 ([`docs/bugfixes/traefik-ipv6-dualstack-2026-06-19.md`](bugfixes/traefik-ipv6-dualstack-2026-06-19.md)) | a tailnet client over IPv6 is seen with its own address once `proxy-public` is dual-stack and `userland-proxy` is off | none for the current configuration | the publishing (step 7) and the endpoint selection (step 2) have changed since: E3, E5 and the TS6 columns of A stay open |
+| Host run of 2026-10-30, DEC-065.6 (v0.9.4 behind a Cloudflare Tunnel, `middleware-model-migration.md` §4) | the middleware-model migration and its abort conditions | none | it predates the bindings of step 7 and the edge networks: B and N stay open |
+
 One whoami router per policy carries the access tests. In `apps/whoami` a
 router per policy is not shipped; create them as test-only labels in a
 `docker-compose.override.yml` that is deleted afterwards, named
@@ -63,7 +83,7 @@ router per policy is not shipped; create them as test-only labels in a
 | P1 | the checkout under test | read | `./scripts/overview.sh` names the commit; `git status` clean apart from `.env` files | commit recorded |
 | P2 | validate → render → validate | read | in `core/traefik`: `bash ops/scripts/validate.sh`, `bash ops/scripts/render.sh`, `bash ops/scripts/validate.sh --strict` exit 0, except the exposure marker (X3) and pending items `--strict` names | only the marker missing |
 | P3 | the derived profile | read | `validate.sh` prints `Exposure profile: direct` for `TRAEFIK_BIND_V4=0.0.0.0`, `TRAEFIK_BIND_V6=[::]`, `TRAEFIK_FORWARDED_PROXY=none`; the layers list names what is absent | profile and layers as stated |
-| P4 | the rendered ruleset parses on the host | read | `sudo nft -c -f core/traefik/config/host/ingress.nft` exits 0; nothing applied (`sudo nft list tables` unchanged) | 0, no new table |
+| P4 | the rendered ruleset parses on the host's own `nft` (syntax covered in CI) | read | `sudo nft -c -f core/traefik/config/host/ingress.nft` exits 0; nothing applied (`sudo nft list tables` unchanged) | 0, no new table |
 
 ## E — published ports and the IPv6 endpoint (DEC-063, DEC-075)
 
@@ -71,7 +91,7 @@ router per policy is not shipped; create them as test-only labels in a
 |---|---|---|---|---|
 | E1 | the public network is dual-stack | read | `docker network inspect proxy-public --format '{{.EnableIPv6}} {{json .IPAM.Config}}'` → `true`, both subnets | both families present |
 | E2 | the published ports, per family | read | `docker port traefik` and `sudo ss -ltnp` list 80 and 443 on `0.0.0.0` and `[::]` and nothing else of Traefik; no docker-proxy process for them (`pgrep -a docker-proxy` empty) | as stated |
-| E3 | the endpoint that carries the ports (audit T7 over IPv6) | read | `docker inspect traefik --format '{{json .NetworkSettings.Networks}}'` shows the highest `GwPriority` on `proxy-public`; `sudo nft list ruleset \| grep -A2 'dport 443'` (or `ip6tables -t nat -S DOCKER`) shows the IPv4 **and** IPv6 DNAT to Traefik's address on `proxy-public`, not on `crowdsec-security` | both DNAT targets on `proxy-public` |
+| E3 | the endpoint that carries the IPv6 ports (audit T7 over IPv6; IPv4 covered by lab T7b) | read | `docker inspect traefik --format '{{json .NetworkSettings.Networks}}'` shows the highest `GwPriority` on `proxy-public`; `sudo nft list ruleset \| grep -A2 'dport 443'` (or `ip6tables -t nat -S DOCKER`) shows the IPv6 DNAT to Traefik's address on `proxy-public`, not on `crowdsec-security` | IPv6 DNAT target on `proxy-public` |
 | E4 | the client address survives, IPv4 | manual | from OUT: `curl -4 https://whoami.$ZONE/` against `w-public` → `X-Real-Ip` is `OUT4`; Traefik's access log carries `OUT4` as `ClientHost` | `OUT4`, never a gateway |
 | E5 | the client address survives, IPv6 | manual | the same with `curl -6` → `X-Real-Ip` is `OUT6`, not the bridge gateway of any network | `OUT6`, never a gateway |
 | E6 | the family check agrees with the running state | read | `validate.sh --strict` reports no `PENDING` and no `NOT VERIFIED` from `check-published-family.py` | clean |
@@ -80,10 +100,10 @@ router per policy is not shipped; create them as test-only labels in a
 
 | ID | Test | How | Expected | Pass when |
 |---|---|---|---|---|
-| X1 | profile `direct` holds | manual, from OUT | `bash scripts/exposure-test.sh $H1_V4 direct` and the same with `$H1_V6` (or a name with both records): 80 and 443 answer on both families; 8080, 2375, 2376, 3306, 5432, 6379, 8025, 11434 closed; SSH reported | exit 0, marker printed |
-| X2 | the test fails when it should | manual | publish one extra port by hand for the duration of the row (a throwaway `nc -l` container on `0.0.0.0:6379`), run X1 again → exit 1 naming 6379; remove the container | exit 1, then 0 again |
-| X3 | the marker is accepted | manual | store the marker in `core/traefik/config/exposure-verified`; `validate.sh --strict` prints date and target and exits 0; a marker for `proxied` is refused | accepted, wrong profile refused |
-| X4 | profile `proxied` (optional) | manual | `TRAEFIK_FORWARDED_PROXY=cloudflare`, `cloudflare-ranges.nft` and `ingress.nft` loaded (block F); from OUT `exposure-test.sh <origin address> proxied` → 80/443 do not answer | exit 0 |
+| X1 | profile `direct` holds | manual, from OUT | `bash scripts/exposure-test.sh $H1_V4 direct` and the same with `$H1_V6` (or a name with both records): 80 and 443 answer on both families; 8080, 2375, 2376, 3306, 5432, 6379, 8025, 11434 closed; SSH reported; the marker stored in `core/traefik/config/exposure-verified`, after which `validate.sh --strict` exits 0 | exit 0, marker stored, `--strict` green |
+| X2 | the test fails when it should | **covered** | `test_traefik_exposure.py`: a port that must never answer fails every profile, against a stub | not run again |
+| X3 | the marker is accepted, another profile's refused | **covered** | `test_traefik_exposure.py`: the marker tests | not run again |
+| X4 | profile `proxied` — where the installation uses it | manual | `TRAEFIK_FORWARDED_PROXY=cloudflare`, `cloudflare-ranges.nft` and `ingress.nft` loaded (block F); from OUT `exposure-test.sh <origin address> proxied` → 80/443 do not answer | exit 0 |
 
 ## A — access policies per family (DEC-076)
 
@@ -101,22 +121,22 @@ declared range: set `TRUSTED_RANGES` to the LAN range for this block and render.
 
 | ID | Test | How | Expected | Pass when |
 |---|---|---|---|---|
-| A6 | nothing trusted without a declaration | manual | `TRUSTED_RANGES=""`, render, `up -d`; A2 from LAN4 → 403; `validate.sh` refuses the variable unset | 403; unset refused |
-| A7 | a forged header changes nothing | manual | from OUT: `curl -H 'X-Forwarded-For: <a TS4 address>'` and `-H 'X-Real-Ip: …'` on `w-vpn` → 403; whoami behind `w-public` shows `OUT4`, not the forged value | 403, real address |
+| A6 | nothing trusted without a declaration | **covered** | `test_traefik_model.py`: empty admits nobody, unset refused | not run again |
+| A7 | a forged header changes nothing, over IPv6 (IPv4 covered by lab T5) | manual | from OUT6: `curl -6 -H 'X-Forwarded-For: <a TS6 address>'` and `-H 'X-Real-Ip: …'` on `w-vpn` → 403; whoami behind `w-public` shows `OUT6`, not the forged value | 403, real address |
 | A8 | the tailnet's IPv6 path into `access-trusted` | manual | from TS6 on `w-trusted` → 403: no implicit ULA, and the tailnet range is not trusted by being private | 403 |
-| A9 | a host-local process | manual | on H1: `curl --resolve w-vpn.$ZONE:443:127.0.0.1` and via `[::1]` → 403 (the gateway is not trusted, audit T3d) | 403 on both |
+| A9 | a host-local process over IPv6 (IPv4 covered by lab T3d) | manual | on H1: `curl --resolve 'w-vpn.$ZONE:443:[::1]'` → 403 | 403 |
 
 ## G — the auth posture on a host (DEC-077)
 
 | ID | Posture | How | Expected | Pass when |
 |---|---|---|---|---|
 | G1 | `forward-auth`, real outpost | manual | `AUTHENTIK_FORWARD_AUTH_ENABLED=true`, a provider for whoami, its router on `auth-authentik@file`; `curl -sI` → 302 to the Authentik host; after browser login whoami shows `X-Authentik-Username` | 302, then the header |
-| G2 | forward-auth strips a forged identity | manual | from OUT with a session: send `X-Authentik-Username: admin` → whoami shows the outpost's value, not the forged one; without a session → 302, backend not reached (access log of whoami empty) | outpost value; no backend hit |
+| G2 | forward-auth stops a request and strips a forged identity | **covered** | lab T4a–T4b: Traefik's forwardAuth behaviour, independent of which outpost answers | not run again |
 | G3 | forward-auth fails closed | manual | `docker stop authentik-server` → 5xx or 401/403, never 200; `docker start` → 302 | never 200 |
 | G4 | `basic` on an application without a login | manual | `apps/heimdall` with `APP_BASIC_AUTH_USERS` set: no credentials → 401; wrong → 401; right → 200; the router carries `<project>-auth@docker` | 401, 401, 200 |
-| G5 | `app-login` | manual | the chosen stack on `auth-none@file`: unauthenticated request reaches the application's own login page, no proxy gate in between | the application's login |
-| G6 | `public` | manual | a public stack (`apps/whoami` on `w-public`) answers without any login | 200 |
-| G7 | `none` behind a closed policy | manual | a stack stating `none` (e.g. `monitoring/gatus`) answers TS4/TS6 and refuses OUT4/OUT6 with 403 | as stated |
+| G5 | `app-login` — where a stack uses it | manual | the chosen stack on `auth-none@file`: unauthenticated request reaches the application's own login page, no proxy gate in between | the application's login |
+| G6 | `public` — where a stack uses it | manual | a public stack (`apps/whoami` on `w-public`) answers without any login | 200 |
+| G7 | `none` behind a closed policy — where a stack uses it | manual | a stack stating `none` (e.g. `monitoring/gatus`) answers TS4/TS6 and refuses OUT4/OUT6 with 403 | as stated |
 
 ## F — the host ruleset loaded (DEC-078)
 
@@ -146,11 +166,11 @@ S1, S2, S3 below.
 
 | ID | Test | How | Expected | Pass when |
 |---|---|---|---|---|
-| N1 | the shared state, measured | manual | from S1's web container: `docker exec <S1-web> wget -qO- -T5 http://<S2-web>:<port>/` reaches S2 directly (audit T1/T2) | reachable — the shape that is being left |
+| N1 | the shared state lets web containers reach each other | **covered** | lab T1d, T2a–T2d | not run again |
 | N2 | the move, stack by stack | manual | the four steps of [`edge-networks.md`](../core/traefik/docs/edge-networks.md), "Moving a shared installation", for S1, S2, S3; during each, a probe loop against the other two stacks (`curl` every 0.2 s) | the other stacks keep answering; the moved one returns after its recreate |
-| N3 | isolation afterwards | manual | N1 again → timeout; S1 still served through Traefik from OUT | timeout; 200 |
+| N3 | isolation on edge networks | **covered** | lab T1a–T1c | not run again; N2's probes show each moved stack still served |
 | N4 | the validator follows | read | `validate.sh --strict` exits 0; remove S3's network from `EDGE_NETWORKS` without moving S3 back → error naming the network | 0, then the error |
-| N5 | the way back | manual | the same steps with `TRAEFIK_NETWORK=proxy-public` for all three; N1 reachable again; every stack served | as before N2 |
+| N5 | the way back | manual | the same steps with `TRAEFIK_NETWORK=proxy-public` for all three; every stack served; `validate.sh --strict` exits 0 | as before N2 |
 
 ## B — the existing shapes, migrated and rolled back (step 7, DEC-075.3)
 
@@ -165,13 +185,16 @@ builds them.
 | B3 | the migration, written | manual | `--write`; `.env.pre-model` beside the file; switch the checkout to the commit under test; render, `up -d` | `.pre-model` present, healthy |
 | B4 | the exposure is preserved | read | B1 again: the same addresses and families as before; X1 from OUT unchanged | identical |
 | B5 | the way back | manual | stop Traefik, restore `.env.pre-model` over `.env`, checkout `v0.9.5`, `up -d`; B1 again | identical to B1 |
-| B6 | an unset binding is refused | manual | remove `TRAEFIK_BIND_V4` → `render.sh` and `validate.sh` exit 1 with the "has no default any more" error; empty `TRAEFIK_BIND_V6=` publishes no IPv6 (E2 shows no `[::]`) | refused; no IPv6 port |
+| B6 | an unset binding is refused, an empty one publishes nothing | **covered** | `test_traefik_published_ports.py` | not run again |
 
-**Open before this block runs:** the audit's acceptance item reads "render
-byte-identically without a declaration". After step 7, an unmigrated `.env`
-is refused by design (`TRAEFIK_BIND_V4` unset), so the identity holds for the
-**migrated** `.env`, as the render-identity test compares it. The acceptance
-wording is to be confirmed or adjusted by the maintainer before B is judged.
+**The criterion for this block.** The audit's acceptance item read "render
+byte-identically without a declaration". After step 7 an unmigrated `.env` is
+refused by design, so the item is judged as follows: after the documented
+migration the exposure an installation had is preserved, unless a change of
+behaviour was decided; the parts of the configuration no decision changed show
+no unintended difference (the render-identity test, with its decided regions);
+and the rollback is traceable — the `.pre-model` copy restores the earlier
+state, and B5 shows it does.
 
 ## S — the nine stacks with a required binding (step 7)
 
@@ -183,7 +206,7 @@ wording is to be confirmed or adjusted by the maintainer before B is judged.
 
 | ID | Test | How | Expected | Pass when |
 |---|---|---|---|---|
-| S1 | unset is refused | manual, per stack installed | variable removed → `docker compose config` fails with `Set <VAR> in .env` | refused |
+| S1 | unset is refused | **covered** | `check-structure.py` `port-no-host-address` holds every stack to the required form, which Compose refuses unset | not run again |
 | S2 | bound to the VPN address | manual, per stack installed | variable = H1's TS4 address; `up -d`; `ss -ltnup` shows the port on that address only; from TS the port answers, from OUT it does not | TS yes, OUT no |
 | S3 | coverage | read | the list above with a result per stack; a stack not installed stays `not run` and is named in the release notes | every stack has a row |
 
@@ -202,11 +225,28 @@ and in DEC-063.
 
 ## Release gate
 
-The release that carries step 7's breaking change needs, before it is tagged:
-P, E, X1–X3, A, G1–G4, F1–F7, F9, M, N and B passed on H1, and S for every
-stack that was installed. F8, X4, G5–G7 and O are recorded as run or as
-`not run` with the reason; a `not run` row is named in the release notes and
-leaves the decision's host verification open.
+What the release that carries step 7's breaking change needs depends on the
+configuration it claims. A **covered** row counts as passed.
+
+**Always**, on H1: P, E, X1, A, G1, G3, G4, F1–F7, F9, M, N and B.
+
+**Where the configuration uses it:**
+
+- F8 — required where the IPv6 anti-spoofing protection is to be stated as
+  active and verified. Without F8 the release notes say it is rendered and
+  loaded, not verified.
+- X4 — required only for an installation that uses the `proxied` profile.
+- G5, G6, G7 — required only for the auth postures in use on the host under
+  test.
+- S2 — required for each of the nine stacks that is installed; one not
+  installed is named as not run.
+
+**Not blocking:** O. IPv6-only stays explicitly "not verified" in
+`core/traefik/README.md` and DEC-063 until block O has its own run.
+
+A required row not passed blocks the tag. An optional row not run is named in
+the release notes and leaves that part of the decision's host verification
+open.
 
 ## Results
 
