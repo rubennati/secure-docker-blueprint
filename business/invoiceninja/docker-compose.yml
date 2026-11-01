@@ -323,7 +323,6 @@ networks:
   proxy-public:
     name: ${TRAEFIK_NETWORK}
     external: true
-    name: ${TRAEFIK_NETWORK}
 
   app-internal:
     name: ${COMPOSE_PROJECT_NAME}-internal
