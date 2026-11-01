@@ -51,10 +51,14 @@ networks:
 - Shapes, migration and the address-pool limit:
   [`core/traefik/docs/edge-networks.md`](../../core/traefik/docs/edge-networks.md)
 
-**IP family — IPv4-only by default, dual-stack opt-in.** `proxy-public` is
-created IPv4-only unless the `core/traefik/network-dual-stack.yml` overlay
-is applied, and Traefik is published on IPv4 only until then — the overlay
-adds the IPv6 ports with the IPv6 subnet. Dual-stack matters specifically for Tailscale ingress:
+**IP family — IPv4-only as shipped, dual-stack and IPv6-only as settings.**
+`proxy-public` is created IPv4-only unless the `core/traefik/network-dual-stack.yml`
+overlay is applied. Traefik's published ports are one bind variable per family
+(`TRAEFIK_BIND_V4`, `TRAEFIK_BIND_V6`), rendered into `config/published-ports.yml`;
+an empty variable publishes nothing for its family, and an IPv6 binding needs the
+overlay (DEC-075.3). Every other published port in the catalogue names its host
+address through a required `*_BIND` variable, IPv4 as shipped — a port without an
+address also listens on `[::]`, where Docker relays IPv6 from the bridge gateway. Dual-stack matters specifically for Tailscale ingress:
 Tailscale always hands a client an IPv6 address, and that address only
 reaches Traefik intact if `proxy-public` itself can carry IPv6 — there is
 no header-based fallback the way there is for Cloudflare

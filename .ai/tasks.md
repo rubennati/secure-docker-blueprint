@@ -311,8 +311,14 @@ declares nothing — the render-identity test holds that.
       `config/host/ingress.nft` (`nft -c` on every profile), the management requirement
       (DEC-078). Done on `feature/ingress-step-6-exposure`; loading the ruleset on a
       host and a real exposure test stay step 8.
-- [ ] 7. IPv6 as bind overlays per family; `TRAEFIK_BIND_V6` without a default; the
-      nine known unbound ports bound; the operator site corrected.
+- [x] 7. IPv6 as bindings per family: `render.sh` writes `TRAEFIK_BIND_V4` and
+      `TRAEFIK_BIND_V6` into `config/published-ports.yml` (empty publishes nothing,
+      `TRAEFIK_BIND_V6` without a default, the base and dual-stack files without
+      ports); the nine known unbound stacks on a required `*_BIND` variable; the
+      operator site, the Traefik README and the IPv6 guide corrected. Done on
+      `feature/ingress-step-7-ipv6`. Open for step 8: the IPv6 gateway endpoint on a
+      host, an IPv6-only host (ingress and the egress prerequisites), the bound
+      stacks reached over their binding.
 - [ ] 8. Host evidence and release; `ipv6-only` stays "not verified" until its own run.
 
 ## Blocked on a host

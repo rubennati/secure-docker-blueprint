@@ -55,6 +55,7 @@ bash ops/scripts/validate.sh --strict   # published addresses, against the runni
 docker-compose.yml                    # Docker Socket Proxy + Traefik
 network-dual-stack.yml                # Optional overlay: IPv4+IPv6 on proxy-public
 config/edge-networks.yml              # Rendered from EDGE_NETWORKS: the edge network of every installed stack (gitignored)
+config/published-ports.yml            # Rendered from TRAEFIK_BIND_V4/_V6: the published ports, one block per family (gitignored)
 config/host/ingress.nft               # Rendered host firewall for the derived exposure profile — installed by hand (gitignored)
 docs/
   edge-networks.md                    # One network per stack (default) or the shared network — the choice, the migration
@@ -100,7 +101,7 @@ entrypoint list is static configuration.
 
 ## IPv4-only vs. Dual-Stack Networking
 
-`proxy-public` (the network Traefik and every routed app share) is **IPv4-only by default**, and Traefik is then published on IPv4 only. A port on `[::]` while `proxy-public` cannot carry IPv6 hands every IPv6 connection to Traefik from the Docker gateway — an address inside `172.16.0.0/12`, which the retired LAN policies admitted and CrowdSec's default whitelist skips. IPv6 is therefore published by `network-dual-stack.yml` alone, together with the IPv6 subnet. On an IPv4-only install an IPv6 connection is refused: a Tailscale client, which prefers its IPv6 address, needs IPv4 or dual-stack, and behind Cloudflare the origin needs `A` records — see "Behind Cloudflare", "IPv6 between Cloudflare and the origin". The access policies and rate limits evaluate the connecting address on every path — behind Cloudflare that is the edge address; see [Trusted Proxy Headers](../../docs/standards/traefik-security.md#trusted-proxy-headers-traefikyml--forwardedheaders).
+`proxy-public` (the network Traefik and every routed app share) is **IPv4-only by default**, and Traefik is then published on IPv4 only. A port on `[::]` while `proxy-public` cannot carry IPv6 hands every IPv6 connection to Traefik from the Docker gateway — an address inside `172.16.0.0/12`, which the retired LAN policies admitted and CrowdSec's default whitelist skips. IPv6 is therefore published only when `TRAEFIK_BIND_V6` names an address, and `render.sh` refuses that unless `network-dual-stack.yml` adds the IPv6 subnet. The bindings are one variable per family, rendered into `config/published-ports.yml`; an empty variable publishes nothing for its family, so dual-stack, IPv4 only and IPv6 only are three settings of the same two variables, not modes. On an IPv4-only install an IPv6 connection is refused: a Tailscale client, which prefers its IPv6 address, needs IPv4 or dual-stack, and behind Cloudflare the origin needs `A` records — see "Behind Cloudflare", "IPv6 between Cloudflare and the origin". The access policies and rate limits evaluate the connecting address on every path — behind Cloudflare that is the edge address; see [Trusted Proxy Headers](../../docs/standards/traefik-security.md#trusted-proxy-headers-traefikyml--forwardedheaders).
 
 **Recommended for new deployments — dual-stack from day one:**
 
@@ -108,9 +109,11 @@ entrypoint list is static configuration.
 # .env: uncomment and set
 #   PUBLIC_NETWORK_SUBNET_V4=172.30.0.0/16
 #   PUBLIC_NETWORK_SUBNET_V6=<your own ULA prefix>/64
-#   COMPOSE_FILE=docker-compose.yml:network-dual-stack.yml
+#   COMPOSE_FILE=docker-compose.yml:network-dual-stack.yml:config/published-ports.yml:config/edge-networks.yml
+#   TRAEFIK_BIND_V6=[::]          (IPv6 only: also TRAEFIK_BIND_V4= empty)
 # Docker daemon prerequisites first — see docs/ipv6-dual-stack.md
 
+bash ops/scripts/render.sh
 docker compose up -d
 
 # Verify it actually applied — EnableIPv6 must be true. This command
@@ -143,8 +146,18 @@ its marker in `config/exposure-verified` for a public binding
 | Variable | Holds | Default |
 |---|---|---|
 | `TRAEFIK_HTTP_PORT`, `TRAEFIK_HTTPS_PORT` | the host port, a number only | `80`, `443` |
-| `TRAEFIK_BIND_V4` | the IPv4 host address of both ports | `0.0.0.0` |
-| `TRAEFIK_BIND_V6` | the IPv6 host address, bracketed — read by `network-dual-stack.yml` only | `[::]` |
+| `TRAEFIK_BIND_V4` | the IPv4 host address of both ports; empty publishes no IPv4 | `0.0.0.0` (also when unset) |
+| `TRAEFIK_BIND_V6` | the IPv6 host address, bracketed; empty publishes no IPv6. Needs `network-dual-stack.yml` | none — empty |
+
+`render.sh` writes the two into `config/published-ports.yml`, one block per family, and `COMPOSE_FILE` applies it — `docker-compose.yml` publishes no port itself. `render.sh` refuses a `COMPOSE_FILE` without that file, an IPv6 binding without the overlay, and the overlay with `TRAEFIK_BIND_V6` unset; `validate.sh` refuses a rendered file that names other bindings than `.env`.
+
+| Shape | `TRAEFIK_BIND_V4` | `TRAEFIK_BIND_V6` | Overlay |
+|---|---|---|---|
+| IPv4 only (shipped) | `0.0.0.0` | empty | no |
+| dual-stack | `0.0.0.0` | `[::]` | `network-dual-stack.yml` |
+| IPv6 only — no public IPv4 ingress | empty | `[::]` | `network-dual-stack.yml` |
+
+IPv6 only concerns ingress. The public network still carries IPv4 behind Traefik, and what a host without IPv4 egress needs for its outbound connections is the prerequisite list in the ingress audit (§3.4); that shape is not verified on a host yet.
 
 `validate.sh` refuses `address:port` in a port variable and prints the lines that keep the binding — `TRAEFIK_HTTPS_PORT=0.0.0.0:443` becomes `TRAEFIK_HTTPS_PORT=443` and `TRAEFIK_BIND_V4=0.0.0.0`. It then compares the published address families with the network, the Docker daemon and the running container:
 
@@ -158,7 +171,7 @@ With no `ERROR` but something pending or not verified, `validate.sh` prints `VAL
 
 ```bash
 bash ops/scripts/validate.sh --strict      # fails on anything open; reads COMPOSE_FILE from .env
-bash ops/scripts/validate.sh --strict -f docker-compose.yml -f network-dual-stack.yml   # files passed by hand
+bash ops/scripts/validate.sh --strict -f docker-compose.yml -f network-dual-stack.yml -f config/published-ports.yml -f config/edge-networks.yml   # files passed by hand
 ```
 
 A Docker daemon on another host or in a VM cannot be read from here. Confirm `userland-proxy: false` and `ip6tables: true` there, then set `DOCKER_DAEMON_CHECK=manual` in `.env`.

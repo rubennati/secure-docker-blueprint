@@ -292,6 +292,73 @@ for edge in ${EDGE_NETWORKS}; do
 done
 n_edges=$(printf '%s\n' ${EDGE_NETWORKS} | grep -c . || true)
 
+# ---------------------------------------------------------------------------
+# The published ports, one block per address family (DEC-075.3, step 7).
+# TRAEFIK_BIND_V4 and TRAEFIK_BIND_V6 each hold a host address or nothing;
+# nothing means that family is not published. render.sh writes them into
+# config/published-ports.yml, which COMPOSE_FILE applies next to
+# docker-compose.yml — the base file publishes nothing itself, so that an
+# empty variable can leave its family out. The IPv6 block needs the public
+# network to carry IPv6 (network-dual-stack.yml); the published-family check
+# in validate.sh holds that for the merged model and the running container.
+# ---------------------------------------------------------------------------
+published_bindings
+compose_file_named=":${COMPOSE_FILE:-}:"
+if [ -n "${COMPOSE_FILE:-}" ]; then
+  case "${compose_file_named}" in
+    *:config/published-ports.yml:*) ;;
+    *)
+      echo "ERROR: COMPOSE_FILE does not apply config/published-ports.yml. docker-compose.yml publishes"
+      echo "       no port itself any more; without the rendered file Traefik answers nothing."
+      echo "       COMPOSE_FILE=${COMPOSE_FILE}:config/published-ports.yml"
+      echo "       scripts/migrate-traefik-env.sh --all adds it (CHANGELOG, Migration)."
+      exit 1 ;;
+  esac
+  case "${compose_file_named}" in
+    *:network-dual-stack.yml:*)
+      if [ -z "${TRAEFIK_BIND_V6+set}" ]; then
+        echo "ERROR: COMPOSE_FILE applies network-dual-stack.yml, but TRAEFIK_BIND_V6 is not set. It has no"
+        echo "       default any more: TRAEFIK_BIND_V6=[::] keeps IPv6 ingress on every address, an empty"
+        echo "       TRAEFIK_BIND_V6= publishes IPv4 only. scripts/migrate-traefik-env.sh --all keeps [::]."
+        exit 1
+      fi ;;
+    *)
+      if [ -n "${BIND_V6_EFFECTIVE}" ]; then
+        echo "ERROR: TRAEFIK_BIND_V6=${BIND_V6_EFFECTIVE} publishes IPv6, but COMPOSE_FILE does not apply"
+        echo "       network-dual-stack.yml — on an IPv4-only public network Docker hands every IPv6 client"
+        echo "       to Traefik as the bridge gateway. Apply the overlay with its prerequisites"
+        echo "       (docs/ipv6-dual-stack.md), or leave TRAEFIK_BIND_V6 empty."
+        exit 1
+      fi ;;
+  esac
+fi
+render_published_ports() {
+  printf '%s\n' \
+    "# Rendered by ops/scripts/render.sh from TRAEFIK_BIND_V4 and TRAEFIK_BIND_V6 in .env — edit" \
+    "# .env, never this file. One block per address family; an empty variable publishes nothing" \
+    "# for its family (DEC-075.3). COMPOSE_FILE in .env applies this file with docker-compose.yml." \
+    "services:"
+  if [ -z "${BIND_V4_EFFECTIVE}" ] && [ -z "${BIND_V6_EFFECTIVE}" ]; then
+    printf '%s\n' "  traefik: {}  # both bind variables are empty: nothing is published"
+    return
+  fi
+  printf '%s\n' "  traefik:" "    ports:"
+  if [ -n "${BIND_V4_EFFECTIVE}" ]; then
+    printf '%s\n' \
+      "      # IPv4 — TRAEFIK_BIND_V4" \
+      "      - \"${BIND_V4_EFFECTIVE}:${TRAEFIK_HTTP_PORT}:80/tcp\"" \
+      "      - \"${BIND_V4_EFFECTIVE}:${TRAEFIK_HTTPS_PORT}:443/tcp\"" \
+      "      - \"${BIND_V4_EFFECTIVE}:${TRAEFIK_HTTPS_PORT}:443/udp\""
+  fi
+  if [ -n "${BIND_V6_EFFECTIVE}" ]; then
+    printf '%s\n' \
+      "      # IPv6 — TRAEFIK_BIND_V6, with network-dual-stack.yml" \
+      "      - \"${BIND_V6_EFFECTIVE}:${TRAEFIK_HTTP_PORT}:80/tcp\"" \
+      "      - \"${BIND_V6_EFFECTIVE}:${TRAEFIK_HTTPS_PORT}:443/tcp\"" \
+      "      - \"${BIND_V6_EFFECTIVE}:${TRAEFIK_HTTPS_PORT}:443/udp\""
+  fi
+}
+
 render_edge_networks() {
   printf '%s\n' \
     "# Rendered by ops/scripts/render.sh from EDGE_NETWORKS in .env — edit .env, never this file." \
@@ -507,11 +574,11 @@ else
   rm -f "${CFG_DIR}/host/cloudflare-ranges.nft"
   echo " -> trusted proxy ranges: none (TRAEFIK_FORWARDED_PROXY=none)"
 fi
-# The exposure profile and the host firewall rendered for it (DEC-078). The
-# IPv6 binding counts when COMPOSE_FILE applies the dual-stack overlay.
-bind_v4_effective="${TRAEFIK_BIND_V4:-0.0.0.0}"
-compose_file_named="${COMPOSE_FILE:-}"
-bind_v6_effective="$(effective_bind_v6 ${compose_file_named//:/ })"
+# The exposure profile and the host firewall rendered for it (DEC-078), from
+# the bindings config/published-ports.yml publishes.
+published_bindings
+bind_v4_effective="${BIND_V4_EFFECTIVE}"
+bind_v6_effective="${BIND_V6_EFFECTIVE}"
 EXPOSURE_PROFILE="$(exposure_profile "${bind_v4_effective}" "${bind_v6_effective}" "${TRAEFIK_FORWARDED_PROXY}")"
 mkdir -p "${CFG_DIR}/host"
 render_ingress_nft "${EXPOSURE_PROFILE}" "${bind_v4_effective}" "${bind_v6_effective}" | place "${CFG_DIR}/host/ingress.nft"
@@ -582,5 +649,7 @@ done
 
 render_edge_networks | place "${CFG_DIR}/edge-networks.yml"
 echo " -> edge-networks.yml (${n_edges} edge network(s))"
+render_published_ports | place "${CFG_DIR}/published-ports.yml"
+echo " -> published-ports.yml (IPv4: ${BIND_V4_EFFECTIVE:-not published}, IPv6: ${BIND_V6_EFFECTIVE:-not published})"
 
 echo "Done. Generated files are in: config/ and config/dynamic/"

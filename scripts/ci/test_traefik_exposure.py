@@ -83,7 +83,8 @@ class Profile(Rendered):
             self.assertIn("Exposure profile: private", self.validate().stdout, bind)
 
     def test_a_public_ipv6_binding_under_dual_stack_makes_it_direct(self):
-        env = dict(VALID_ENV, TRAEFIK_BIND_V4="100.64.0.5", COMPOSE_FILE="docker-compose.yml:network-dual-stack.yml",
+        env = dict(VALID_ENV, TRAEFIK_BIND_V4="100.64.0.5", TRAEFIK_BIND_V6="[::]",
+                   COMPOSE_FILE="docker-compose.yml:network-dual-stack.yml:config/published-ports.yml:config/edge-networks.yml",
                    PUBLIC_NETWORK_SUBNET_V4="172.30.0.0/16", PUBLIC_NETWORK_SUBNET_V6="fd3a:91c2:7e04::/64")
         out = self.render(env)
         self.assertIn("exposure profile: direct", out)

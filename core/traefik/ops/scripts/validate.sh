@@ -148,9 +148,10 @@ if [ -n "${TRAEFIK_MEMORY:-}" ] && ! printf '%s' "${TRAEFIK_MEMORY}" | grep -qE 
   exit 1
 fi
 
-# Published ports: the port variables hold a number, the host address is
-# TRAEFIK_BIND_V4, and IPv6 is bound by network-dual-stack.yml alone
-# (TRAEFIK_BIND_V6). An .env from before the bind variables may carry
+# Published ports: the port variables hold a number, the host address is one
+# variable per family — TRAEFIK_BIND_V4, TRAEFIK_BIND_V6 (with
+# network-dual-stack.yml) — rendered into config/published-ports.yml. An .env
+# from before the bind variables may carry
 # address:port; the message names the lines that keep the same binding.
 port_error=0
 port_v4_addrs=""
@@ -161,9 +162,9 @@ for v in TRAEFIK_HTTP_PORT TRAEFIK_HTTPS_PORT; do
   fi
   port_error=1
   if printf '%s' "${val}" | grep -qE '^\[[0-9A-Fa-f:.]+\]:[0-9]{1,5}$'; then
-    echo "ERROR: ${v}=${val} — an IPv6 host address belongs to network-dual-stack.yml."
+    echo "ERROR: ${v}=${val} — an IPv6 host address belongs to TRAEFIK_BIND_V6."
     echo "       Keep the binding with:  ${v}=${val##*:}  and  TRAEFIK_BIND_V6=${val%:*}"
-    echo "       and apply the overlay with its prerequisites (docs/ipv6-dual-stack.md)."
+    echo "       with network-dual-stack.yml and its prerequisites (docs/ipv6-dual-stack.md)."
   elif printf '%s' "${val}" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}:[0-9]{1,5}$'; then
     echo "ERROR: ${v}=${val} — the port variable holds the port number only."
     echo "       Keep the binding with:  ${v}=${val##*:}  and  TRAEFIK_BIND_V4=${val%:*}"
@@ -278,6 +279,37 @@ sys.exit(0 if ok else 1)
 PYEOF2
   [ -n "${docker_checked}" ] || echo "NOTICE: TRUSTED_RANGES was not compared with the Docker daemon's networks (Docker did not answer here)."
 }
+
+# The published ports (DEC-075.3, step 7): render.sh writes them into
+# config/published-ports.yml, one block per family, from TRAEFIK_BIND_V4 and
+# TRAEFIK_BIND_V6. The compose files have to apply that file — docker-compose.yml
+# publishes nothing itself — and the rendered file has to name the bindings
+# .env names. An IPv6 binding without network-dual-stack.yml is the published-
+# family check's ERROR below.
+published_bindings
+compose_list=":${COMPOSE_FILE:-}:"
+for f in ${COMPOSE_ARGS[@]+"${COMPOSE_ARGS[@]}"}; do [ "${f}" = "--compose-file" ] || compose_list="${compose_list}${f##*/}:"; done
+if [ -n "${COMPOSE_FILE:-}" ] || [ "${#COMPOSE_ARGS[@]}" -gt 0 ]; then
+  case "${compose_list}" in
+    *published-ports.yml:*) ;;
+    *)
+      echo "ERROR: the compose files do not apply config/published-ports.yml — docker-compose.yml publishes"
+      echo "       no port itself, so Traefik would answer nothing. Add it to COMPOSE_FILE (or -f);"
+      echo "       scripts/migrate-traefik-env.sh --all does (CHANGELOG, Migration)."
+      exit 1 ;;
+  esac
+fi
+if [ -z "${BIND_V4_EFFECTIVE}" ] && [ -z "${BIND_V6_EFFECTIVE}" ]; then
+  echo "NOTICE: TRAEFIK_BIND_V4 and TRAEFIK_BIND_V6 are both empty — Traefik publishes no port."
+fi
+if [ -f "${ROOT_DIR}/config/published-ports.yml" ]; then
+  rendered_ports="$(grep -E '^      - "' "${ROOT_DIR}/config/published-ports.yml" | sed -E 's/^      - "(.*):[0-9]+:[0-9]+\/(tcp|udp)"$/\1/' | sort -u | tr '\n' ' ' || true)"
+  wanted_ports="$(printf '%s\n' "${BIND_V4_EFFECTIVE}" "${BIND_V6_EFFECTIVE}" | grep . | sort -u | tr '\n' ' ' || true)"
+  if [ "${rendered_ports}" != "${wanted_ports}" ]; then
+    echo "ERROR: config/published-ports.yml binds [${rendered_ports}] but .env says [${wanted_ports}] — run render.sh."
+    exit 1
+  fi
+fi
 
 # Edge networks (DEC-075). EDGE_NETWORKS names the network of every installed
 # stack; render.sh writes config/edge-networks.yml from it. The rendered file has
@@ -750,10 +782,9 @@ fi
 # below is present or named with the risk its absence leaves. Nothing optional
 # is an error by its absence.
 # ---------------------------------------------------------------------------
-compose_files_named="${COMPOSE_FILE:-}"
-for f in ${COMPOSE_ARGS[@]+"${COMPOSE_ARGS[@]}"}; do compose_files_named="${compose_files_named} ${f}"; done
-bind_v4_effective="${TRAEFIK_BIND_V4:-0.0.0.0}"
-bind_v6_effective="$(effective_bind_v6 ${compose_files_named//:/ })"
+published_bindings
+bind_v4_effective="${BIND_V4_EFFECTIVE}"
+bind_v6_effective="${BIND_V6_EFFECTIVE}"
 EXPOSURE_PROFILE="$(exposure_profile "${bind_v4_effective}" "${bind_v6_effective}" "${TRAEFIK_FORWARDED_PROXY}")"
 open_items=0
 echo ""

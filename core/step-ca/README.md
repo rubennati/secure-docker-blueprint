@@ -98,7 +98,7 @@ every host address.
 
 ```bash
 cp .env.example .env
-# Edit: STEPCA_NAME, STEPCA_DNS_NAMES, STEPCA_PORT
+# Edit: STEPCA_NAME, STEPCA_DNS_NAMES, STEPCA_BIND, STEPCA_PORT
 
 mkdir -p .secrets volumes/data
 openssl rand -base64 32 | tr -d '\n' > .secrets/ca_password.txt

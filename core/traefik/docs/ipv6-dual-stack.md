@@ -397,7 +397,8 @@ cp .env.example .env
 # Edit .env: uncomment and set
 #   PUBLIC_NETWORK_SUBNET_V4=172.30.0.0/16
 #   PUBLIC_NETWORK_SUBNET_V6=<your own ULA prefix>/64
-#   COMPOSE_FILE=docker-compose.yml:network-dual-stack.yml
+#   COMPOSE_FILE=docker-compose.yml:network-dual-stack.yml:config/published-ports.yml:config/edge-networks.yml
+#   TRAEFIK_BIND_V6=[::]
 
 # Complete the Docker daemon prerequisites above FIRST.
 
@@ -417,7 +418,9 @@ docker network inspect "$(grep ^PUBLIC_NETWORK= .env | cut -d= -f2)" \
 ```
 
 **Set `COMPOSE_FILE` in `.env` as shown above — do not rely on remembering
-a `-f network-dual-stack.yml` flag on every command.** Once the dual-stack
+a `-f network-dual-stack.yml` flag on every command.** The IPv6 bindings come from
+`TRAEFIK_BIND_V6` (no default; empty publishes no IPv6), rendered into
+`config/published-ports.yml` — the overlay carries the network alone. Once the dual-stack
 network exists, any later `docker compose` invocation run without the
 overlay (a restart, a `--force-recreate`, anything) makes Compose see only
 the IPv4-only network definition from `docker-compose.yml`. Compose then
@@ -545,7 +548,8 @@ cd core/traefik
 # Edit .env: PUBLIC_NETWORK=proxy-public-v6 (or rename at the Docker
 # level if you'd rather keep using the name "proxy-public"),
 # PUBLIC_NETWORK_SUBNET_V4 / _V6 as created in step 3, and
-#   COMPOSE_FILE=docker-compose.yml:network-dual-stack.yml
+#   COMPOSE_FILE=docker-compose.yml:network-dual-stack.yml:config/published-ports.yml:config/edge-networks.yml
+#   TRAEFIK_BIND_V6=[::]
 # validate.sh refuses the overlay while PUBLIC_NETWORK names an IPv4-only network.
 bash ops/scripts/validate.sh
 bash ops/scripts/render.sh

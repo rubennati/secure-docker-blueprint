@@ -127,7 +127,8 @@ That is the case this blueprint has hit, not the only one IPv6 matters for — a
        ```ini
        PUBLIC_NETWORK_SUBNET_V4=172.30.0.0/16
        PUBLIC_NETWORK_SUBNET_V6=<your generated prefix>/64
-       COMPOSE_FILE=docker-compose.yml:network-dual-stack.yml
+       COMPOSE_FILE=docker-compose.yml:network-dual-stack.yml:config/published-ports.yml:config/edge-networks.yml
+       TRAEFIK_BIND_V6=[::]
        ```
 
     </Steps>

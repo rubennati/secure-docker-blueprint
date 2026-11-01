@@ -112,15 +112,12 @@ services:
       socket_proxy_net:
       crowdsec-security:
 
-    # IPv4 only. A port published without a host address also listens on
-    # [::], and on an IPv4-only public network Docker hands such a
-    # connection to Traefik from the bridge gateway, not from the client.
-    # network-dual-stack.yml adds the IPv6 bindings together with the IPv6
-    # subnet. Transitional: the operating modes of D12 replace this.
-    ports:
-      - "${TRAEFIK_BIND_V4:-0.0.0.0}:${TRAEFIK_HTTP_PORT}:80/tcp"
-      - "${TRAEFIK_BIND_V4:-0.0.0.0}:${TRAEFIK_HTTPS_PORT}:443/tcp"
-      - "${TRAEFIK_BIND_V4:-0.0.0.0}:${TRAEFIK_HTTPS_PORT}:443/udp"
+    # No ports here. render.sh writes them into config/published-ports.yml,
+    # one block per address family, from TRAEFIK_BIND_V4 and TRAEFIK_BIND_V6
+    # — an empty variable leaves its family out, which a fixed line in this
+    # file could not (DEC-075.3). COMPOSE_FILE in .env applies the rendered
+    # file; every port names its host address, so nothing listens on [::]
+    # where the public network cannot carry IPv6 to the container.
 
     environment:
       - TZ=${TZ}

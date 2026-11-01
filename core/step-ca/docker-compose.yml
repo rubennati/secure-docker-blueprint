@@ -101,7 +101,7 @@ services:
     # certificate for step-ca's, which breaks the fingerprint-pinned trust
     # model this CA exists to provide. See README.md#traefik-networking.
     ports:
-      - "${STEPCA_PORT}:9000"
+      - "${STEPCA_BIND:?Set STEPCA_BIND in .env}:${STEPCA_PORT}:9000"
 
     # --- Health & Observability ---
     # The image's own real health-check subcommand.

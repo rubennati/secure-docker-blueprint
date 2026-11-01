@@ -12,6 +12,13 @@
 - anything else that is not a port from 1 to 65535 is refused
 - TRAEFIK_BIND_V4 accepts an IPv4 address only, TRAEFIK_BIND_V6 a bracketed
   IPv6 address only
+- render.sh writes config/published-ports.yml, one block per family; an empty
+  variable leaves its family out, TRAEFIK_BIND_V6 has no default, unset
+  TRAEFIK_BIND_V4 is 0.0.0.0 (DEC-075.3, step 7)
+- render.sh refuses a COMPOSE_FILE without the rendered file, an IPv6 binding
+  without network-dual-stack.yml, and the overlay with TRAEFIK_BIND_V6 unset;
+  validate.sh refuses the same missing file and a rendered file that names
+  other bindings than .env
 
 Run:
     python3 scripts/ci/test_traefik_published_ports.py
@@ -104,6 +111,102 @@ class PublishedPorts(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class RenderedBindings(unittest.TestCase):
+    DUAL = "docker-compose.yml:network-dual-stack.yml:config/published-ports.yml:config/edge-networks.yml"
+    V4_ONLY = "docker-compose.yml:config/published-ports.yml:config/edge-networks.yml"
+    SUBNETS = dict(PUBLIC_NETWORK_SUBNET_V4="172.30.0.0/16", PUBLIC_NETWORK_SUBNET_V6="fd3a:91c2:7e04::/64")
+
+    def setUp(self):
+        tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        self.root = tmp / "core" / "traefik"
+        shutil.copytree(TRAEFIK / "ops", self.root / "ops")
+        (tmp / "scripts" / "ci").mkdir(parents=True)
+        shutil.copy(REPO / "scripts" / "ci" / "check-crowdsec-config.py",
+                    tmp / "scripts" / "ci" / "check-crowdsec-config.py")
+
+    def write_env(self, env):
+        (self.root / ".env").write_text("".join(f'{k}="{v}"\n' for k, v in env.items()), encoding="utf-8")
+
+    def render(self, **overrides):
+        env = dict(VALID_ENV, **overrides)
+        env = {k: v for k, v in env.items() if v is not None}
+        self.write_env(env)
+        return subprocess.run(["bash", str(self.root / "ops/scripts/render.sh")], capture_output=True, text=True)
+
+    def validate(self):
+        return subprocess.run(["bash", str(self.root / "ops/scripts/validate.sh")], capture_output=True, text=True)
+
+    def ports(self):
+        return [l.strip()[3:-1] for l in (self.root / "config" / "published-ports.yml").read_text().splitlines()
+                if l.strip().startswith('- "')]
+
+    def test_unset_v4_is_every_ipv4_address_and_ipv6_is_off(self):
+        r = self.render()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.ports(), ["0.0.0.0:80:80/tcp", "0.0.0.0:443:443/tcp", "0.0.0.0:443:443/udp"])
+        self.assertIn("IPv6: not published", r.stdout)
+
+    def test_dual_stack_renders_both_families(self):
+        r = self.render(COMPOSE_FILE=self.DUAL, TRAEFIK_BIND_V4="0.0.0.0", TRAEFIK_BIND_V6="[::]", **self.SUBNETS)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.ports(), ["0.0.0.0:80:80/tcp", "0.0.0.0:443:443/tcp", "0.0.0.0:443:443/udp",
+                                        "[::]:80:80/tcp", "[::]:443:443/tcp", "[::]:443:443/udp"])
+
+    def test_ipv6_only_leaves_ipv4_out(self):
+        r = self.render(COMPOSE_FILE=self.DUAL, TRAEFIK_BIND_V4="", TRAEFIK_BIND_V6="[2001:db8::10]", **self.SUBNETS)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.ports(), ["[2001:db8::10]:80:80/tcp", "[2001:db8::10]:443:443/tcp", "[2001:db8::10]:443:443/udp"])
+        self.assertIn("IPv4: not published", r.stdout)
+
+    def test_both_empty_publishes_nothing_and_says_so(self):
+        r = self.render(TRAEFIK_BIND_V4="", TRAEFIK_BIND_V6="")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.ports(), [])
+        self.assertIn("nothing is published", (self.root / "config" / "published-ports.yml").read_text())
+        self.assertIn("Traefik publishes no port", self.validate().stdout)
+
+    def test_compose_file_without_the_rendered_file_is_refused(self):
+        r = self.render(COMPOSE_FILE="docker-compose.yml:config/edge-networks.yml")
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("does not apply config/published-ports.yml", r.stdout)
+
+    def test_ipv6_binding_without_the_overlay_is_refused(self):
+        r = self.render(COMPOSE_FILE=self.V4_ONLY, TRAEFIK_BIND_V6="[::]")
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("does not apply\n       network-dual-stack.yml", r.stdout)
+
+    def test_the_overlay_with_bind_v6_unset_is_refused(self):
+        r = self.render(COMPOSE_FILE=self.DUAL, **self.SUBNETS)
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("TRAEFIK_BIND_V6 is not set", r.stdout)
+
+    def test_the_overlay_with_bind_v6_empty_publishes_ipv4_only(self):
+        r = self.render(COMPOSE_FILE=self.DUAL, TRAEFIK_BIND_V6="", **self.SUBNETS)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertTrue(all(p.startswith("0.0.0.0:") for p in self.ports()))
+
+    def test_validate_refuses_a_stale_file_and_a_missing_entry(self):
+        self.assertEqual(self.render().returncode, 0)
+        self.write_env(dict(VALID_ENV, TRAEFIK_BIND_V4="192.0.2.10"))
+        v = self.validate()
+        self.assertEqual(v.returncode, 1)
+        self.assertIn("config/published-ports.yml binds [0.0.0.0 ] but .env says [192.0.2.10 ]", v.stdout)
+        self.write_env(dict(VALID_ENV, COMPOSE_FILE="docker-compose.yml:config/edge-networks.yml"))
+        v = self.validate()
+        self.assertEqual(v.returncode, 1)
+        self.assertIn("do not apply config/published-ports.yml", v.stdout)
+
+    def test_the_example_ships_ipv4_and_no_ipv6_default(self):
+        text = (TRAEFIK / ".env.example").read_text(encoding="utf-8")
+        self.assertIn("\nTRAEFIK_BIND_V4=0.0.0.0\n", text)
+        self.assertIn("\nTRAEFIK_BIND_V6=\n", text)
+        self.assertIn("\nCOMPOSE_FILE=docker-compose.yml:config/published-ports.yml:config/edge-networks.yml\n", text)
+        for name in ("docker-compose.yml", "network-dual-stack.yml"):
+            self.assertNotIn("ports:", "\n".join(l for l in (TRAEFIK / name).read_text().splitlines()
+                                                 if not l.lstrip().startswith("#")), name)
 
 
 class SubnetVariables(unittest.TestCase):

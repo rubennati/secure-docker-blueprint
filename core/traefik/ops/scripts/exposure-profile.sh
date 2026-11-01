@@ -35,13 +35,12 @@ exposure_profile() {
   fi
 }
 
-# effective_bind_v6 <compose files...>: the IPv6 binding Compose would publish —
-# TRAEFIK_BIND_V6 or its default when network-dual-stack.yml is applied, empty
-# otherwise (docker-compose.yml alone publishes IPv4 only).
-effective_bind_v6() {
-  local f
-  for f in "$@"; do
-    case "${f}" in *network-dual-stack.yml*) printf '%s' "${TRAEFIK_BIND_V6:-[::]}"; return ;; esac
-  done
-  printf ''
+# published_bindings: sets BIND_V4_EFFECTIVE and BIND_V6_EFFECTIVE from the two
+# bind variables (DEC-075.3, step 7). TRAEFIK_BIND_V4 unset keeps its default,
+# 0.0.0.0; set and empty publishes nothing on IPv4. TRAEFIK_BIND_V6 has no
+# default: empty or unset publishes nothing on IPv6. render.sh writes exactly
+# these into config/published-ports.yml.
+published_bindings() {
+  BIND_V4_EFFECTIVE="${TRAEFIK_BIND_V4-0.0.0.0}"
+  BIND_V6_EFFECTIVE="${TRAEFIK_BIND_V6:-}"
 }
