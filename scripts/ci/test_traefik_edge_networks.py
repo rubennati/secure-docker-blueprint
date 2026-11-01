@@ -103,6 +103,54 @@ class EdgeNetworks(unittest.TestCase):
         self.assertNotEqual(v.returncode, 0)
         self.assertIn("edge-networks.yml lists [nextcloud-edge ] but EDGE_NETWORKS says [other-edge ]", v.stdout)
 
+    def validate_against(self, traefik_nets, routed):
+        """validate.sh with a stub docker: Traefik joins `traefik_nets`, and the
+        routed containers label the networks in `routed` ({name: network})."""
+        (self.root / "docker-compose.yml").unlink()  # the published-address checks stay NOT VERIFIED
+        stub_bin = self.root.parent / "bin"
+        stub_bin.mkdir(exist_ok=True)
+        stub = stub_bin / "docker"
+        lines = "\n".join(f"/{name} {net}" for name, net in routed.items())
+        stub.write_text(f"""#!/usr/bin/env bash
+case "$1" in
+  info) exit 0 ;;
+  ps) echo routed ;;
+  inspect) case "$*" in *traefik-core-fixture*) echo "{traefik_nets} " ;; *) printf '%s\\n' "{lines}" ;; esac ;;
+  compose) [ "$2" = version ] && echo 2.40.0 ;;
+esac
+exit 0
+""", encoding="utf-8")
+        stub.chmod(0o755)
+        env = dict(__import__("os").environ, PATH=f"{stub_bin}:{__import__('os').environ['PATH']}")
+        return subprocess.run(["bash", str(self.root / "ops/scripts/validate.sh")], capture_output=True, text=True, env=env)
+
+    def test_a_network_dropped_from_the_list_while_traefik_still_joins_it_is_an_error(self):
+        # Step 8 host run, N4: the list no longer names a stack's network, Traefik has
+        # not been recreated yet — the next `docker compose up -d` would drop the stack.
+        self.rendered(dict(VALID_ENV, EDGE_NETWORKS="whoami-edge httpbin-edge"))
+        v = self.validate_against("proxy-public whoami-edge httpbin-edge it-tools-edge",
+                                  {"whoami": "whoami-edge", "httpbin-app": "httpbin-edge", "it-tools-app": "it-tools-edge"})
+        self.assertEqual(v.returncode, 1, v.stdout)
+        self.assertIn("it-tools-app labels traefik.docker.network=it-tools-edge, which EDGE_NETWORKS does not list", v.stdout)
+
+    def test_a_listed_network_traefik_has_not_joined_is_pending(self):
+        self.rendered(dict(VALID_ENV, EDGE_NETWORKS="whoami-edge"))
+        v = self.validate_against("proxy-public", {"whoami": "whoami-edge"})
+        self.assertEqual(v.returncode, 0, v.stdout)
+        self.assertIn("PENDING: whoami labels traefik.docker.network=whoami-edge, which Traefik has not joined yet", v.stdout)
+
+    def test_listed_and_joined_networks_and_the_shared_network_pass(self):
+        self.rendered(dict(VALID_ENV, EDGE_NETWORKS="whoami-edge"))
+        v = self.validate_against("proxy-public whoami-edge", {"whoami": "whoami-edge", "mailpit": "proxy-public"})
+        self.assertEqual(v.returncode, 0, v.stdout)
+        self.assertNotIn("traefik.docker.network", v.stdout)
+
+    def test_an_unlisted_network_traefik_does_not_join_is_an_error(self):
+        self.rendered(dict(VALID_ENV, EDGE_NETWORKS=""))
+        v = self.validate_against("proxy-public", {"whoami": "whoami-edge"})
+        self.assertEqual(v.returncode, 1, v.stdout)
+        self.assertIn("a network Traefik does not join and", v.stdout)
+
     def test_the_example_ships_the_variable_and_applies_the_file(self):
         text = (TRAEFIK / ".env.example").read_text(encoding="utf-8")
         self.assertIn('\nEDGE_NETWORKS=""\n', text)

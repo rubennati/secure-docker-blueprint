@@ -354,16 +354,26 @@ edge_pending=0
       while IFS=' ' read -r cname labelled; do
         [ -n "${cname}" ] || continue
         [ "${cname}" = "${TRAEFIK_CONTAINER_NAME}" ] && continue
-        case "${traefik_nets}" in *" ${labelled} "*) continue ;; esac
+        # Listed first: a network Traefik still joins but the list no longer
+        # names leaves it at the next 'docker compose up -d' here.
         case " ${PUBLIC_NETWORK} ${EDGE_NETWORKS} " in
           *" ${labelled} "*)
+            case "${traefik_nets}" in *" ${labelled} "*) continue ;; esac
             echo "PENDING: ${cname} labels traefik.docker.network=${labelled}, which Traefik has not joined yet —"
             echo "         'docker compose up -d' here recreates Traefik with it."
             edge_pending=1 ;;
           *)
-            echo "ERROR: ${cname} labels traefik.docker.network=${labelled}, a network Traefik does not join and"
-            echo "       EDGE_NETWORKS does not list — the stack is unreachable and the log says nothing. Add it to"
-            echo "       EDGE_NETWORKS, render.sh, 'docker compose up -d' here (docs/edge-networks.md)."
+            case "${traefik_nets}" in
+              *" ${labelled} "*)
+                echo "ERROR: ${cname} labels traefik.docker.network=${labelled}, which EDGE_NETWORKS does not list —"
+                echo "       Traefik still joins it, and the next 'docker compose up -d' here removes it: the stack"
+                echo "       becomes unreachable and the log says nothing. List it, or move the stack first" ;;
+              *)
+                echo "ERROR: ${cname} labels traefik.docker.network=${labelled}, a network Traefik does not join and"
+                echo "       EDGE_NETWORKS does not list — the stack is unreachable and the log says nothing. Add it to"
+                echo "       EDGE_NETWORKS, render.sh, 'docker compose up -d' here" ;;
+            esac
+            echo "       (docs/edge-networks.md)."
             exit 1 ;;
         esac
       done < <(docker ps -q --filter label=traefik.enable=true | xargs -r docker inspect -f '{{.Name}} {{index .Config.Labels "traefik.docker.network"}}' 2>/dev/null | sed 's|^/||')

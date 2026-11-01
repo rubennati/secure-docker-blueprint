@@ -23,7 +23,9 @@ BASE_ENV = {
     "TZ": "UTC",
     "TRAEFIK_IMAGE": "traefik:v3.7",
     "SOCKET_PROXY_IMAGE": "tecnativa/docker-socket-proxy:0.3.0",
-    "TRAEFIK_CONTAINER_NAME": "traefik-core",
+    # Not the name a deployment uses: validate.sh inspects the running container of
+    # that name, and a fixture must not read the state of a host it runs on.
+    "TRAEFIK_CONTAINER_NAME": "traefik-core-fixture",
     "SOCKET_PROXY_CONTAINER_NAME": "traefik-socket-proxy",
     "PUBLIC_NETWORK": "proxy-public",
     "SOCKET_PROXY_NETWORK": "socket-proxy",
@@ -211,6 +213,7 @@ class ShippedExampleRequiresAChoice(unittest.TestCase):
         self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
         shutil.copytree(TRAEFIK / "ops", tmp / "ops")
         text = (TRAEFIK / ".env.example").read_text(encoding="utf-8")
+        changes.setdefault("TRAEFIK_CONTAINER_NAME", BASE_ENV["TRAEFIK_CONTAINER_NAME"])  # not the host's container
         for key, value in changes.items():
             text = "".join(f"{key}={value}\n" if line.startswith(f"{key}=") else line for line in text.splitlines(keepends=True))
         (tmp / ".env").write_text(text, encoding="utf-8")
