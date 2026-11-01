@@ -252,4 +252,28 @@ open.
 
 | ID | Date | Host | Result | Evidence |
 |---|---|---|---|---|
-| — | — | — | not run | — |
+| P1 | 2026-11-01 | H1 | pass | commit under test recorded; `git status` clean apart from `.env` files |
+| P2 | 2026-11-01 | H1 | pass, corrected | the first `validate.sh` on a fresh checkout stopped with `compose file not found`; corrected in `5296fc4`, then validate → render → `--strict` with only the marker open |
+| P3 | 2026-11-01 | H1 | pass | `Exposure profile: direct`; host firewall, CrowdSec, forward-auth and management listed with their residual risk |
+| P4 | 2026-11-01 | H1 | pass | `nft -c` exit 0, no output; `nft list tables` and the ruleset hash unchanged |
+| E1 | 2026-11-01 | H1 | pass | `proxy-public`: IPv6 enabled, an IPv4 and a ULA subnet |
+| E2 | 2026-11-01 | H1 | pass | 80, 443/tcp and 443/udp on `0.0.0.0` and `[::]`, held by `dockerd`; no `docker-proxy` |
+| E3 | 2026-11-01 | H1 | pass | highest `GwPriority` (100) on `proxy-public`; the IPv6 DNAT for 80 and 443 targets Traefik's ULA address there |
+| E4 | 2026-11-01 | H1 | pass | from OUT: `X-Real-Ip` and `X-Forwarded-For` = OUT4; access log `ClientHost` = OUT4 |
+| E5 | 2026-11-01 | H1 | pass | from OUT: `X-Real-Ip` and `X-Forwarded-For` = OUT6, no gateway address |
+| E6 | 2026-11-01 | H1 | pass | `validate.sh --strict` names only the exposure marker; nothing PENDING or NOT VERIFIED from the family check |
+| X1 | 2026-11-01 | H1 | pass | with `8f19db3` from OUT, one run per address: 80 and 443 answer on IPv4 and on IPv6, 8080, 2375, 2376, 3306, 5432, 6379, 8025, 11434 closed on both; SSH answers on IPv4 (the operator's address is admitted upstream), not on IPv6. The first run, before `8f19db3`, reported every open port closed (curl exits 28 after a connect) |
+| A1–A5 (OUT4, OUT6) | 2026-11-01 | H1 | pass | `w-public` 200/200; `w-trusted`, `w-vpn`, `w-trusted-vpn`, `w-blocked` 403/403 |
+| A1–A5 (TS, LAN) | 2026-11-01 | H1 | not run | no VPN on the lab host by the operator's decision for this phase; no LAN client |
+| A7 | 2026-11-01 | H1 | pass | from OUT6 with a forged `X-Forwarded-For`/`X-Real-Ip` (tailnet example): `w-vpn` 403; `w-public` shows OUT6 |
+| A8 | 2026-11-01 | H1 | not run | needs a tailnet client |
+| A9 | 2026-11-01 | H1 | deviation | `--resolve …:[::1]` on `w-vpn`: no connection (timeout), not 403 — `userland-proxy: false` does not forward IPv6 loopback (`ipv6-dual-stack.md`); over the host's global IPv6 address and over 127.0.0.1: 403 |
+| G4 | 2026-11-01 | H1 | pass, host-local | Heimdall: no credentials 401, wrong 401, right 200; router carries `heimdall-auth@docker`; reached through a router admitting the host itself only (deviation, see report) |
+| N2 | 2026-11-01 | H1 | fail | each Traefik recreate interrupted every stack for 6.5–7.3 s, not only the one moved; the moved stack returned after its healthcheck |
+| N4 | 2026-11-01 | H1 | pass after correction | `--strict`: only the marker; a network dropped from `EDGE_NETWORKS` while Traefik still joined it passed with exit 0 — corrected in `0d33bad` |
+| N5 | 2026-11-01 | H1 | pass | all three stacks served on `proxy-public` again; the moved-back stack is unreachable between step 1 and step 3 when the list is shortened first |
+| B1–B5 (dual-stack) | 2026-11-01 | H1 | pass | migrated state identical to the v0.9.5 state apart from the decided `gw_priority`; rollback identical to B1 |
+| B1–B5 (IPv4-only) | 2026-11-01 | H1 | pass | addresses and families identical; the DNAT moves from `crowdsec-security` to `proxy-public` (the decided change of step 2); rollback identical to B1 |
+| M1 | 2026-11-01 | H1 | pass | the hoster's console used once with a break-glass account; `sudo` asked for its password |
+
+The run report is [`labs/ingress/2026-11-01-results.md`](labs/ingress/2026-11-01-results.md).
