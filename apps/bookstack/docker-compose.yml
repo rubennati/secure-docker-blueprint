@@ -159,6 +159,7 @@ services:
 # --------------------------------------------------------
 networks:
   proxy-public:
+    name: ${TRAEFIK_NETWORK}
     external: true
 
   app-internal:

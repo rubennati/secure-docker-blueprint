@@ -2,6 +2,7 @@
 config/traefik.yml
 config/haproxy.cfg.template
 config/dynamic/*.yml
+config/edge-networks.yml
 
 # Runtime volumes
 volumes/

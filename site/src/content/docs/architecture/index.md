@@ -39,7 +39,8 @@ another front end without the proxy in between. That is the lateral path the
 architecture leaves open, and it is treated as part of the threat model below.
 
 **Two networks per application, and they do different jobs.**
-`proxy-public` is shared: the proxy and each application's web-facing container
+By default each stack has its own edge network, which the proxy joins (`EDGE_NETWORKS`
+in `core/traefik/.env`); `proxy-public` is the shared choice. On it, the proxy and each application's web-facing container
 sit on it, and that is all. Each application also gets its own internal network
 that has no route to the internet and no route to any other application. The
 database and cache live only there.

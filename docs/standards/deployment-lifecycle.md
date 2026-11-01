@@ -89,8 +89,11 @@ set. Secrets do not belong in `.env` — see [`secrets.md`](secrets.md) for what
 
 ## 4 — Deploy in order
 
-**Traefik first.** It creates `proxy-public`, the external network every stack that
-publishes a domain attaches to; a stack started before it fails on a missing network.
+**Traefik first.** It creates `proxy-public` and the edge networks `EDGE_NETWORKS` in
+its `.env` lists — the external network each stack that publishes a domain attaches to;
+a stack started before it fails on a missing network, and a stack whose edge network is
+not listed is unreachable without a log line
+([`core/traefik/docs/edge-networks.md`](../../core/traefik/docs/edge-networks.md)).
 
 After that the order follows one rule: **a stack starts after whatever creates a network
 it declares as external, or provides a middleware its Traefik labels name.** Those are the
@@ -99,7 +102,7 @@ stack's own compose file rather than remembered here:
 
 | Before | Comes | Why |
 |---|---|---|
-| `core/traefik` | every stack publishing a domain | creates `proxy-public` |
+| `core/traefik` | every stack publishing a domain | creates `proxy-public` and the listed edge networks |
 | `core/authentik` | stacks whose Traefik labels use forward-auth | the middleware answers at its address |
 | `core/crowdsec` | stacks joining `crowdsec-security` | the network is created there |
 

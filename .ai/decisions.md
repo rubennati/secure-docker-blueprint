@@ -282,6 +282,19 @@ safe. The IPv4 address pool of a default daemon holds 32 user networks (measured
 per stack plus the three of `core/traefik`, so fourteen stacks before
 `default-address-pools` is set.
 
+**The installed stacks are an explicit list (step 5, 2026-10-31).** `EDGE_NETWORKS` in
+`core/traefik/.env` names the edge network of every installed stack — the stack's
+`TRAEFIK_NETWORK`, `<project>-edge` as the examples ship it. A list the operator writes
+is the signal: the presence of an `.env` says nothing about a stack being deployed, and
+reading the running projects would make the render depend on what happens to run.
+render.sh writes the list into `config/edge-networks.yml`, a Compose file that
+`COMPOSE_FILE` applies next to docker-compose.yml, as the dual-stack overlay already is;
+Traefik creates each network and joins it, the stack declares it external. Unset stops
+the render like `TRUSTED_RANGES`; `scripts/migrate-traefik-env.sh` adds the line. The
+examples' default moves to the edge network; an installation's `.env` keeps
+`proxy-public` until it chooses. Mailpit and GreenMail ship on the shared network,
+because being reached by every other stack is what they are for.
+
 **Refines DEC-063.** The goals stand — dual-stack for a new installation, IPv4-only and
 IPv6-only supported, no automatic change, no security lost by the default. The three
 operating modes become bind decisions: `ipv4-only` is `TRAEFIK_BIND_V6` empty,

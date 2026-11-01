@@ -258,6 +258,60 @@ done
 n_ranges=$(printf '%s\n' ${TRUSTED_RANGES} | grep -c . || true)
 export ACCESS_TRUSTED_RANGES_YAML
 
+# ---------------------------------------------------------------------------
+# Edge networks (DEC-075). EDGE_NETWORKS, quoted and space-separated, names the
+# network of every installed stack — its TRAEFIK_NETWORK. They are rendered into
+# config/edge-networks.yml, a Compose file COMPOSE_FILE applies: Traefik joins
+# and creates each one, the stack declares it external. Unset stops the render
+# (scripts/migrate-traefik-env.sh adds the line); empty means every stack is on
+# the shared network. The list is checked here because a name Compose refuses
+# would take Traefik down with it.
+# ---------------------------------------------------------------------------
+if [ -z "${EDGE_NETWORKS+set}" ]; then
+  echo "ERROR: EDGE_NETWORKS is not set in .env. It names the edge network of every installed"
+  echo "       stack (each stack's TRAEFIK_NETWORK), quoted and space-separated; empty means"
+  echo "       every stack is on the shared network:  EDGE_NETWORKS=\"\""
+  echo "       scripts/migrate-traefik-env.sh --all adds the line (docs/edge-networks.md)."
+  exit 1
+fi
+seen_edges=" "
+for edge in ${EDGE_NETWORKS}; do
+  if ! printf '%s' "${edge}" | grep -qE '^[A-Za-z0-9][A-Za-z0-9_.-]*$'; then
+    echo "ERROR: EDGE_NETWORKS: '${edge}' is not a Docker network name (letters, digits, _ . - ; starts with a letter or digit)."
+    exit 1
+  fi
+  case "${edge}" in
+    "${PUBLIC_NETWORK}"|"${SOCKET_PROXY_NETWORK}"|"${CROWDSEC_SECURITY_NETWORK}")
+      echo "ERROR: EDGE_NETWORKS: '${edge}' is a network this stack already defines — the shared network"
+      echo "       is not an edge network; a stack on it sets TRAEFIK_NETWORK=${PUBLIC_NETWORK} and is not listed."
+      exit 1 ;;
+  esac
+  case "${seen_edges}" in *" ${edge} "*) echo "ERROR: EDGE_NETWORKS: '${edge}' is listed twice."; exit 1 ;; esac
+  seen_edges="${seen_edges}${edge} "
+done
+n_edges=$(printf '%s\n' ${EDGE_NETWORKS} | grep -c . || true)
+
+render_edge_networks() {
+  printf '%s\n' \
+    "# Rendered by ops/scripts/render.sh from EDGE_NETWORKS in .env — edit .env, never this file." \
+    "# Traefik joins and creates each edge network; the stack whose TRAEFIK_NETWORK names it" \
+    "# declares it external (DEC-075). COMPOSE_FILE in .env applies this file with docker-compose.yml." \
+    "services:" \
+    "  traefik:"
+  if [ -z "${EDGE_NETWORKS}" ]; then
+    printf '%s\n' "    networks: {}  # EDGE_NETWORKS is empty: every stack is on the shared network" "networks: {}"
+    return
+  fi
+  printf '%s\n' "    networks:"
+  for edge in ${EDGE_NETWORKS}; do printf '%s\n' "      ${edge}: {}"; done
+  printf '%s\n' "networks:"
+  for edge in ${EDGE_NETWORKS}; do
+    # IPv4 only, like app-internal: Traefik dials a backend over IPv4 and no
+    # client address is carried on this network.
+    printf '%s\n' "  ${edge}:" "    name: ${edge}" "    driver: bridge"
+  done
+}
+
 # The same ranges for the host firewall, as nftables defines, rendered only in
 # cloudflare mode and installed by the operator (ops/host-files.manifest).
 render_nft_ranges() {
@@ -433,5 +487,8 @@ for f in "${TPL_DIR}/dynamic/"*.yml.tmpl; do
     echo " -> ${base}"
   fi
 done
+
+render_edge_networks | place "${CFG_DIR}/edge-networks.yml"
+echo " -> edge-networks.yml (${n_edges} edge network(s))"
 
 echo "Done. Generated files are in: config/ and config/dynamic/"

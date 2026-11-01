@@ -50,8 +50,9 @@ Ollama does not authenticate anyone. Two things follow:
   clients send it as `-u user:password`). Without the gate, whoever the policy
   admits can run inference on your hardware, pull arbitrary models from the
   internet onto your disk, and delete the ones you have.
-- **Every container on `proxy-public` reaches the API directly**, past Traefik
-  and its policy. Verified: from a second container on that network,
+- **Every container on the network Ollama shares reaches the API directly**, past
+  Traefik and its policy — on its own edge network (the default) that is Traefik
+  alone; on the shared `proxy-public`, every member. Verified: from a second container on that network,
   `DELETE /api/delete` with no credentials returned `200` and the model was
   gone. Do not run stacks you do not trust on the shared network next to it.
 

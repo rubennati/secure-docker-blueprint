@@ -40,6 +40,11 @@ FAIL (blocks CI — dangerous or leak-prone):
                     naming such a TLS profile — or the LAN class access-lan /
                     access-lan-vpn that access-trusted(-vpn) replaced
                     (DEC-076) — scripts/migrate-traefik-env.sh maps every one
+  network-name      a stack's proxy network (the `proxy-public` key) that is not
+                    named through `${TRAEFIK_NETWORK}` — the variable that
+                    decides between the stack's edge network and the shared
+                    network (DEC-075); the label and the declaration have to
+                    name the same network
   missing-network-label
                     a service with traefik.enable=true and no
                     traefik.docker.network label — without it Traefik takes
@@ -401,6 +406,13 @@ def external_networks(app: Path) -> dict:
     """
     env_path = app / ".env.example"
     env = dict(parse_env(env_path)[0]) if env_path.exists() else {}
+    # A network named through TRAEFIK_NETWORK is the shared network whenever
+    # the operator says so, whatever the example's default (DEC-075: the edge
+    # network per stack is the default, the shared network the choice), so the
+    # shared-network rules judge it as the shared network.
+    canonical = canonical_shared_network()
+    if canonical and "TRAEFIK_NETWORK" in env:
+        env = dict(env, TRAEFIK_NETWORK=canonical)
     out: dict = {}
     for path in compose_files(app):
         try:
@@ -411,6 +423,30 @@ def external_networks(app: Path) -> dict:
             if isinstance(net, dict) and net.get("external"):
                 out[key] = _expand(str(net.get("name", key)), env)
     return out
+
+
+def check_network_name(app: Path, findings: list[dict]) -> None:
+    """DEC-075: the stack's proxy network is named through TRAEFIK_NETWORK.
+
+    The `proxy-public` key is a local label; `name: ${TRAEFIK_NETWORK}` is what
+    lets one .env choose the stack's edge network or the shared one, and what
+    keeps the declaration and the `traefik.docker.network` label on the same
+    network. Opt-in overlays are checked too: a fragment that redeclares the
+    network without the name would join a different network than its base.
+    """
+    for path in compose_files(app) + overlay_files(app):
+        try:
+            data = compose_load(path)
+        except yaml.YAMLError:
+            continue
+        net = (data.get("networks") or {}).get("proxy-public")
+        if not isinstance(net, dict) or not net.get("external"):
+            continue
+        if str(net.get("name", "")).strip() != "${TRAEFIK_NETWORK}":
+            findings.append({"level": "FAIL", "rule": "network-name", "service": path.name,
+                             "detail": "the proxy-public network is not named through ${TRAEFIK_NETWORK} — add "
+                                       "`name: ${TRAEFIK_NETWORK}` so that .env decides between the stack's edge "
+                                       "network and the shared network (DEC-075)"})
 
 
 @functools.lru_cache(maxsize=1)
@@ -1268,6 +1304,7 @@ def main() -> int:
         check_compose(app, findings)
         check_routers(app, findings)
         check_ports_and_labels(app, findings)
+        check_network_name(app, findings)
         if findings:
             by_app.setdefault(app, []).extend(findings)
 

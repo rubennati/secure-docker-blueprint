@@ -321,6 +321,7 @@ volumes:
 # --------------------------------------------------------
 networks:
   proxy-public:
+    name: ${TRAEFIK_NETWORK}
     external: true
     name: ${TRAEFIK_NETWORK}
 

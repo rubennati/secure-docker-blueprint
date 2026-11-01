@@ -83,6 +83,11 @@ jobs:
           failed=0
           while IFS= read -r dir; do
             [ -f "$dir/.env.example" ] && cp "$dir/.env.example" "$dir/.env"
+            # core/traefik applies a rendered file through COMPOSE_FILE
+            # (config/edge-networks.yml, DEC-075): render it as the operator does.
+            if [ -x "$dir/ops/scripts/render.sh" ]; then
+              (cd "$dir" && bash ops/scripts/render.sh >/dev/null) || { echo "  render $dir ... FAIL"; (cd "$dir" && bash ops/scripts/render.sh 2>&1 | tail -5); failed=1; }
+            fi
             echo -n "  checking $dir ... "
             if (cd "$dir" && docker compose config --quiet 2>/dev/null); then
               echo "ok"

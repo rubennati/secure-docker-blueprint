@@ -56,6 +56,7 @@ BASE_ENV = {
     "DSP_POST": "0",
     "TRAEFIK_NETWORK": "proxy-public",
     "TRUSTED_RANGES": "",
+    "EDGE_NETWORKS": "",
 }
 
 

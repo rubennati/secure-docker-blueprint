@@ -6,7 +6,7 @@
 # GPU access is an opt-in overlay (docker-compose.gpu.yml).
 #
 # Ollama has NO authentication. Traefik's access policy is the only gate on the
-# route, and any container on proxy-public can call the API directly — see
+# route, and any container on the network it shares can call the API directly — see
 # README, "Access model".
 #
 # Spec: docs/standards/compose-structure.md · security-baseline.md
@@ -105,4 +105,5 @@ services:
 # --------------------------------------------------------
 networks:
   proxy-public:
+    name: ${TRAEFIK_NETWORK}
     external: true

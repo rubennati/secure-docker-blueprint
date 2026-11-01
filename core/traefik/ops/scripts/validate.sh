@@ -278,6 +278,68 @@ PYEOF2
   [ -n "${docker_checked}" ] || echo "NOTICE: TRUSTED_RANGES was not compared with the Docker daemon's networks (Docker did not answer here)."
 }
 
+# Edge networks (DEC-075). EDGE_NETWORKS names the network of every installed
+# stack; render.sh writes config/edge-networks.yml from it. The rendered file has
+# to match the list, and — when Docker answers — every running container that
+# Traefik routes (traefik.enable=true) has to label a network Traefik joined: a
+# stack on a network Traefik is not on is unreachable, and the log says nothing.
+# A listed network Traefik has not joined yet is PENDING until the next
+# `docker compose up -d`; a labelled network that is not listed is an ERROR.
+if [ -z "${EDGE_NETWORKS+set}" ]; then
+  echo "ERROR: EDGE_NETWORKS is not set in .env — the edge network of every installed stack, quoted"
+  echo "       and space-separated; empty means every stack is on the shared network."
+  echo "       scripts/migrate-traefik-env.sh --all adds the line (docs/edge-networks.md)."
+  exit 1
+fi
+edge_pending=0
+{
+  for edge in ${EDGE_NETWORKS}; do
+    printf '%s' "${edge}" | grep -qE '^[A-Za-z0-9][A-Za-z0-9_.-]*$' \
+      || { echo "ERROR: EDGE_NETWORKS: '${edge}' is not a Docker network name."; exit 1; }
+    case "${edge}" in "${PUBLIC_NETWORK}"|"${SOCKET_PROXY_NETWORK}"|"${CROWDSEC_SECURITY_NETWORK}")
+      echo "ERROR: EDGE_NETWORKS: '${edge}' is a network this stack already defines; the shared network is not listed."; exit 1 ;;
+    esac
+  done
+  if [ -f "${ROOT_DIR}/config/edge-networks.yml" ]; then
+    # an empty list renders no network line: grep then exits 1, which set -e must not see
+    rendered_edges="$(grep -E '^  [A-Za-z0-9][A-Za-z0-9_.-]*:$' "${ROOT_DIR}/config/edge-networks.yml" | grep -v '^  traefik:$' | sed 's/^  //; s/:$//' | sort | tr '\n' ' ' || true)"
+    wanted_edges="$(printf '%s\n' ${EDGE_NETWORKS} | grep . | sort | tr '\n' ' ' || true)"
+    if [ "${rendered_edges}" != "${wanted_edges}" ]; then
+      echo "ERROR: config/edge-networks.yml lists [${rendered_edges}] but EDGE_NETWORKS says [${wanted_edges}] — run render.sh."
+      exit 1
+    fi
+  fi
+  if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+    traefik_nets=" $(docker inspect -f '{{range $k, $v := .NetworkSettings.Networks}}{{$k}} {{end}}' "${TRAEFIK_CONTAINER_NAME}" 2>/dev/null || true)"
+    if [ "${traefik_nets}" != " " ]; then
+      while IFS=' ' read -r cname labelled; do
+        [ -n "${cname}" ] || continue
+        [ "${cname}" = "${TRAEFIK_CONTAINER_NAME}" ] && continue
+        case "${traefik_nets}" in *" ${labelled} "*) continue ;; esac
+        case " ${PUBLIC_NETWORK} ${EDGE_NETWORKS} " in
+          *" ${labelled} "*)
+            echo "PENDING: ${cname} labels traefik.docker.network=${labelled}, which Traefik has not joined yet —"
+            echo "         'docker compose up -d' here recreates Traefik with it."
+            edge_pending=1 ;;
+          *)
+            echo "ERROR: ${cname} labels traefik.docker.network=${labelled}, a network Traefik does not join and"
+            echo "       EDGE_NETWORKS does not list — the stack is unreachable and the log says nothing. Add it to"
+            echo "       EDGE_NETWORKS, render.sh, 'docker compose up -d' here (docs/edge-networks.md)."
+            exit 1 ;;
+        esac
+      done < <(docker ps -q --filter label=traefik.enable=true | xargs -r docker inspect -f '{{.Name}} {{index .Config.Labels "traefik.docker.network"}}' 2>/dev/null | sed 's|^/||')
+    else
+      echo "NOTICE: ${TRAEFIK_CONTAINER_NAME} is not running — the routed containers' networks were not compared with Traefik's."
+    fi
+  else
+    echo "NOTICE: the routed containers' networks were not compared with Traefik's (Docker did not answer here)."
+  fi
+}
+if [ "${edge_pending}" -eq 1 ] && [ "${STRICT}" -eq 1 ]; then
+  echo "ERROR (--strict): a routed container labels an edge network Traefik has not joined — recreate Traefik first."
+  exit 1
+fi
+
 if [ -n "${TRAEFIK_BIND_V4:-}" ] && ! printf '%s' "${TRAEFIK_BIND_V4}" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
   echo "ERROR: TRAEFIK_BIND_V4 must be an IPv4 address such as 0.0.0.0 (got '${TRAEFIK_BIND_V4}')."
   echo "       IPv6 is bound by network-dual-stack.yml on TRAEFIK_BIND_V6."

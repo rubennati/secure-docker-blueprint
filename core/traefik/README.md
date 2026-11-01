@@ -25,6 +25,8 @@ Edit `.env` — at minimum change these:
 | `ACME_WILDCARD_DOMAIN` | Uncomment and set if you want a wildcard certificate (optional) |
 | `TAILSCALE_CIDR_V4` | Your Tailscale IPv4 CIDR (default: `100.64.0.0/10`) |
 | `TAILSCALE_CIDR_V6` | Your Tailscale IPv6 CIDR (default: `fd7a:115c:a1e0::/48`) |
+| `TRUSTED_RANGES` | The client networks `access-trusted` admits — your LAN's prefixes; empty admits nobody |
+| `EDGE_NETWORKS` | The edge network of every stack you install (`<project>-edge`, each stack's `TRAEFIK_NETWORK`); `COMPOSE_FILE` applies the rendered file — [`docs/edge-networks.md`](docs/edge-networks.md) |
 
 ```bash
 # 2. Validate environment variables
@@ -52,7 +54,9 @@ bash ops/scripts/validate.sh --strict   # published addresses, against the runni
 .env.example                          # All configurable variables
 docker-compose.yml                    # Docker Socket Proxy + Traefik
 network-dual-stack.yml                # Optional overlay: IPv4+IPv6 on proxy-public
+config/edge-networks.yml              # Rendered from EDGE_NETWORKS: the edge network of every installed stack (gitignored)
 docs/
+  edge-networks.md                    # One network per stack (default) or the shared network — the choice, the migration
   ipv6-dual-stack.md                  # IPv4-only vs. dual-stack — concepts, migration, troubleshooting
   middleware-model-migration.md       # The cut to the middleware model (v0.9.5): every router before and after, the migration, the rollback
 ops/

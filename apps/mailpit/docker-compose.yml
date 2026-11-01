@@ -4,6 +4,9 @@
 # Every message a stack sends here is accepted, kept and shown in a web UI.
 # Nothing is delivered anywhere. Point a stack's SMTP settings at `mailpit:1025`
 # and read what it would have sent — confirmations, password resets, reminders.
+# The sending stack has to share this network: TRAEFIK_NETWORK=proxy-public in
+# its .env (the shared choice, DEC-075). On its own edge network, the examples'
+# default, it does not resolve `mailpit` and does not reach port 1025.
 #
 # Image: axllent/mailpit (https://hub.docker.com/r/axllent/mailpit)
 # Source: https://github.com/axllent/mailpit
@@ -121,4 +124,5 @@ secrets:
 
 networks:
   proxy-public:
+    name: ${TRAEFIK_NETWORK}
     external: true

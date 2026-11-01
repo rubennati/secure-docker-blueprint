@@ -102,7 +102,7 @@ Typical automation pattern:
 For n8n and NocoDB to reach each other on an internal network, either:
 
 - Run both in the same `compose.yml`, or
-- Attach n8n's app service to NocoDB's `proxy-public` network and address it as `http://nocodb-app:8080`.
+- Attach n8n's app service to the network NocoDB's `TRAEFIK_NETWORK` names (both on `proxy-public`, the shared choice) and address it as `http://nocodb-app:8080`.
 
 ## Known Issues
 
