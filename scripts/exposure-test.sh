@@ -27,8 +27,9 @@
 # SSH (22) is reported, never judged: the management plane is the VPN, and a
 # port that answers the internet is a fact for the operator to weigh.
 #
-# On success the last line is the marker. Store it on the host:
-#   printf '%s\n' '<the marker line>' > core/traefik/config/exposure-verified
+# On success the last line is the marker. Append it on the host — one line per run
+# (one run per address keeps both families on record); validate.sh reads the last:
+#   printf '%s\n' '<the marker line>' >> core/traefik/config/exposure-verified
 #
 # Needs curl. Exit 0 when the profile holds, 1 when a probe contradicts it,
 # 2 on usage errors.
@@ -117,5 +118,5 @@ if [ "${failed}" -ne 0 ]; then
 fi
 marker="EXPOSURE_MARKER date=$(date -u +%Y-%m-%dT%H:%M:%SZ) target=${host} profile=${profile} result=ok"
 echo "OK: the host exposes what the profile says. Store the marker on the host, in core/traefik:"
-echo "    printf '%s\\n' '${marker}' > config/exposure-verified"
+echo "    printf '%s\\n' '${marker}' >> config/exposure-verified"
 echo "${marker}"

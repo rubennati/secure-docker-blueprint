@@ -47,29 +47,47 @@ proxy.
    creates the networks and joins Traefik to them; then start the stacks.
 
 Adding a stack later is the same three lines: list its network, render,
-`docker compose up -d` in `core/traefik` — which recreates the Traefik container
-(about two seconds of downtime, measured) — then `up -d` the stack.
+`docker compose up -d` in `core/traefik` — which recreates the Traefik container —
+then `up -d` the stack. **A Traefik recreate interrupts every stack it routes, for
+about seven seconds**: from the stop signal Traefik accepts no new connection, the
+old container takes three to five seconds to exit and the new one about two to
+start (measured on a host, 2026-11-01). The new stack is routed once its
+healthcheck passes; Traefik skips a container that is still starting.
 
 **A stack whose network is not listed is unreachable, and Traefik's log says
 nothing.** `validate.sh` compares the `traefik.docker.network` label of every
-running routed container with the networks Traefik has joined: a labelled network
-that `EDGE_NETWORKS` does not list is an error, a listed one Traefik has not
-joined yet is pending until the next `up -d` (and an error under `--strict`).
+running routed container with `EDGE_NETWORKS` and with the networks Traefik has
+joined: a labelled network that `EDGE_NETWORKS` does not list is an error, also
+while Traefik still joins it (the next `up -d` would remove it); a listed one
+Traefik has not joined yet is pending until the next `up -d` (and an error under
+`--strict`).
 
 ## Moving a shared installation to edge networks
 
-Stack by stack, each a short interruption of that stack:
+Stack by stack. Step 1 recreates Traefik and interrupts every stack for about
+seven seconds; step 3 interrupts the moved stack until its healthcheck passes:
 
 1. `core/traefik/.env`: add the stack's network to `EDGE_NETWORKS`, then
    `bash ops/scripts/render.sh` and `docker compose up -d` in `core/traefik`.
-   Traefik is recreated with the new network; the other stacks stay served.
+   Traefik is recreated with the new network.
 2. The stack's `.env`: `TRAEFIK_NETWORK=<project>-edge`.
 3. `docker compose up -d` in the stack: the web container is recreated on the
    edge network. It leaves `proxy-public`; nothing else changes.
 4. `bash ops/scripts/validate.sh --strict` in `core/traefik`.
 
 `proxy-public` keeps existing — it carries the published ports — and keeps
-every stack that still names it. Moving back is the same steps with the old value.
+every stack that still names it.
+
+**Moving back runs in the other order**, so the stack is never on a network
+Traefik has left: its `.env` to `TRAEFIK_NETWORK=proxy-public` and
+`docker compose up -d` in the stack, then its network out of `EDGE_NETWORKS`,
+`render.sh` and `docker compose up -d` in `core/traefik`, then
+`validate.sh --strict`. With the list shortened first, the stack is unreachable
+from Traefik's recreate until its own has passed its healthcheck — measured at
+about fourteen seconds for a stack with one — and `validate.sh` refuses the state
+in between. Traefik's project no longer names the removed network but does not
+remove it either; `docker network rm <project>-edge` once no container uses it
+returns its address pool.
 
 An installation from before `EDGE_NETWORKS` existed runs
 `scripts/migrate-traefik-env.sh --all` once: it adds `EDGE_NETWORKS=""` and

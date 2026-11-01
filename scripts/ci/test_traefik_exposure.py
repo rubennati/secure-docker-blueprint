@@ -165,6 +165,16 @@ class LayersAndMarker(Rendered):
         self.assertIn("exposure test      recorded 2026-11-01T10:00:00Z against 203.0.113.10 (profile direct)", v.stdout)
         self.assertNotIn("PENDING: exposure test", v.stdout)
 
+    def test_one_marker_per_address_the_last_line_counts(self):
+        # One run per address, appended: both families stay on record, validate.sh reads the last.
+        self.render(VALID_ENV)
+        (self.root / "config" / "exposure-verified").write_text(
+            "EXPOSURE_MARKER date=2026-11-01T10:00:00Z target=203.0.113.10 profile=direct result=ok\n"
+            "EXPOSURE_MARKER date=2026-11-01T10:01:00Z target=2001:db8::10 profile=direct result=ok\n", encoding="utf-8")
+        v = self.validate()
+        self.assertIn("recorded 2026-11-01T10:01:00Z against 2001:db8::10 (profile direct)", v.stdout)
+        self.assertNotIn("PENDING: exposure test", v.stdout)
+
     def test_a_marker_for_another_profile_is_refused(self):
         self.render(dict(VALID_ENV, TRAEFIK_FORWARDED_PROXY="cloudflare"))
         (self.root / "config" / "exposure-verified").write_text(
