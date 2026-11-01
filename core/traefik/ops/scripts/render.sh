@@ -15,6 +15,7 @@ fi
 set -a
 source "${ROOT_DIR}/.env"
 set +a
+. "${ROOT_DIR}/ops/scripts/exposure-profile.sh"
 
 # ---------------------------------------------------------------------------
 # CrowdSec reverse-proxy remediation: one switch in .env
@@ -258,6 +259,60 @@ done
 n_ranges=$(printf '%s\n' ${TRUSTED_RANGES} | grep -c . || true)
 export ACCESS_TRUSTED_RANGES_YAML
 
+# ---------------------------------------------------------------------------
+# Edge networks (DEC-075). EDGE_NETWORKS, quoted and space-separated, names the
+# network of every installed stack — its TRAEFIK_NETWORK. They are rendered into
+# config/edge-networks.yml, a Compose file COMPOSE_FILE applies: Traefik joins
+# and creates each one, the stack declares it external. Unset stops the render
+# (scripts/migrate-traefik-env.sh adds the line); empty means every stack is on
+# the shared network. The list is checked here because a name Compose refuses
+# would take Traefik down with it.
+# ---------------------------------------------------------------------------
+if [ -z "${EDGE_NETWORKS+set}" ]; then
+  echo "ERROR: EDGE_NETWORKS is not set in .env. It names the edge network of every installed"
+  echo "       stack (each stack's TRAEFIK_NETWORK), quoted and space-separated; empty means"
+  echo "       every stack is on the shared network:  EDGE_NETWORKS=\"\""
+  echo "       scripts/migrate-traefik-env.sh --all adds the line (docs/edge-networks.md)."
+  exit 1
+fi
+seen_edges=" "
+for edge in ${EDGE_NETWORKS}; do
+  if ! printf '%s' "${edge}" | grep -qE '^[A-Za-z0-9][A-Za-z0-9_.-]*$'; then
+    echo "ERROR: EDGE_NETWORKS: '${edge}' is not a Docker network name (letters, digits, _ . - ; starts with a letter or digit)."
+    exit 1
+  fi
+  case "${edge}" in
+    "${PUBLIC_NETWORK}"|"${SOCKET_PROXY_NETWORK}"|"${CROWDSEC_SECURITY_NETWORK}")
+      echo "ERROR: EDGE_NETWORKS: '${edge}' is a network this stack already defines — the shared network"
+      echo "       is not an edge network; a stack on it sets TRAEFIK_NETWORK=${PUBLIC_NETWORK} and is not listed."
+      exit 1 ;;
+  esac
+  case "${seen_edges}" in *" ${edge} "*) echo "ERROR: EDGE_NETWORKS: '${edge}' is listed twice."; exit 1 ;; esac
+  seen_edges="${seen_edges}${edge} "
+done
+n_edges=$(printf '%s\n' ${EDGE_NETWORKS} | grep -c . || true)
+
+render_edge_networks() {
+  printf '%s\n' \
+    "# Rendered by ops/scripts/render.sh from EDGE_NETWORKS in .env — edit .env, never this file." \
+    "# Traefik joins and creates each edge network; the stack whose TRAEFIK_NETWORK names it" \
+    "# declares it external (DEC-075). COMPOSE_FILE in .env applies this file with docker-compose.yml." \
+    "services:" \
+    "  traefik:"
+  if [ -z "${EDGE_NETWORKS}" ]; then
+    printf '%s\n' "    networks: {}  # EDGE_NETWORKS is empty: every stack is on the shared network" "networks: {}"
+    return
+  fi
+  printf '%s\n' "    networks:"
+  for edge in ${EDGE_NETWORKS}; do printf '%s\n' "      ${edge}: {}"; done
+  printf '%s\n' "networks:"
+  for edge in ${EDGE_NETWORKS}; do
+    # IPv4 only, like app-internal: Traefik dials a backend over IPv4 and no
+    # client address is carried on this network.
+    printf '%s\n' "  ${edge}:" "    name: ${edge}" "    driver: bridge"
+  done
+}
+
 # The same ranges for the host firewall, as nftables defines, rendered only in
 # cloudflare mode and installed by the operator (ops/host-files.manifest).
 render_nft_ranges() {
@@ -274,6 +329,88 @@ render_nft_ranges() {
     "# interface from these sets and drops the rest: core/traefik/README.md, 'Behind Cloudflare'." \
     "define cloudflare_v4 = { ${v4} }" \
     "define cloudflare_v6 = { ${v6} }"
+}
+
+# ---------------------------------------------------------------------------
+# The host firewall for the derived exposure profile (DEC-078.2): a recommended
+# layer the operator installs (ops/host-files.manifest), never applied here.
+# Input is closed except for what the host itself needs and the VPN brings;
+# the forward path stays open — Docker's own traffic runs there — and carries
+# only the two rules the profile needs: the VPN's IPv6 range is spoof-protected
+# like Tailscale protects IPv4, and behind Cloudflare the published ports answer
+# Cloudflare, the VPN and the trusted ranges alone.
+# ---------------------------------------------------------------------------
+nft_set_elements() {  # nft_set_elements <family 4|6> <ranges...>: "{ a, b }" or ""
+  local fam="$1" out="" r; shift
+  for r in "$@"; do
+    case "${r}" in
+      *:*) [ "${fam}" = 6 ] && out="${out:+${out}, }${r}" ;;
+      *)   [ "${fam}" = 4 ] && out="${out:+${out}, }${r}" ;;
+    esac
+  done
+  [ -n "${out}" ] && printf 'elements = { %s }' "${out}" || printf ''
+}
+render_ingress_nft() {  # render_ingress_nft <profile> <bind v4> <bind v6>
+  local profile="$1" v4="$2" v6="$3" t4 t6 vpn_if="${VPN_INTERFACE:-tailscale0}"
+  t4="$(nft_set_elements 4 ${TRUSTED_RANGES})"; t6="$(nft_set_elements 6 ${TRUSTED_RANGES})"
+  printf '%s\n' \
+    "#!/usr/sbin/nft -f" \
+    "# Rendered by core/traefik/ops/scripts/render.sh for the exposure profile '${profile}'" \
+    "# (TRAEFIK_BIND_V4=${v4:-none}, TRAEFIK_BIND_V6=${v6:-none}, TRAEFIK_FORWARDED_PROXY=${TRAEFIK_FORWARDED_PROXY})." \
+    "# Edit .env and render again, never this file. How to load it with a way back, and" \
+    "# what it closes: core/traefik/docs/host-firewall.md. It admits the management plane" \
+    "# from the VPN ranges only — load it from a session that arrives over the VPN." \
+    ""
+  if [ "${profile}" = proxied ]; then
+    printf '%s\n' '# Cloudflare'"'"'s ranges, rendered next to this file (defines cloudflare_v4, cloudflare_v6).' \
+      'include "/etc/nftables.d/cloudflare-ranges.nft"' ""
+  fi
+  printf '%s\n' \
+    "table inet blueprint_ingress {" \
+    "  set vpn_v4 { type ipv4_addr; flags interval; elements = { ${TAILSCALE_CIDR_V4} } }" \
+    "  set vpn_v6 { type ipv6_addr; flags interval; elements = { ${TAILSCALE_CIDR_V6} } }" \
+    "  # TRUSTED_RANGES — the clients access-trusted admits; empty admits nobody" \
+    "  set trusted_v4 { type ipv4_addr; flags interval; ${t4} }" \
+    "  set trusted_v6 { type ipv6_addr; flags interval; ${t6} }"
+  if [ "${profile}" = proxied ]; then
+    printf '%s\n' \
+      '  set cloudflare_v4 { type ipv4_addr; flags interval; elements = $cloudflare_v4 }' \
+      '  set cloudflare_v6 { type ipv6_addr; flags interval; elements = $cloudflare_v6 }'
+  fi
+  printf '%s\n' \
+    "" \
+    "  # The host's own services: closed to the internet, open to the VPN. Published" \
+    "  # container ports never traverse this hook — Docker translates and forwards them." \
+    "  chain input {" \
+    "    type filter hook input priority filter - 10; policy drop;" \
+    "    iif lo accept" \
+    "    ct state established,related accept" \
+    "    ct state invalid drop" \
+    "    # the VPN's IPv6 range arrives on the VPN interface only (Tailscale installs this for IPv4 alone)" \
+    "    iifname != \"${vpn_if}\" ip6 saddr @vpn_v6 drop" \
+    "    meta l4proto { icmp, ipv6-icmp } accept" \
+    "    udp sport 67 udp dport 68 accept    # DHCPv4 client" \
+    "    udp sport 547 udp dport 546 accept  # DHCPv6 client" \
+    "    udp dport 41641 accept              # Tailscale: direct connections to this node" \
+    "    # the management plane: what the VPN brings — SSH by key, and nothing the internet sees" \
+    "    ip saddr @vpn_v4 accept" \
+    "    ip6 saddr @vpn_v6 accept" \
+    "  }" \
+    "" \
+    "  # The forward path carries Docker's traffic and stays open (docs/standards/networking.md)." \
+    "  chain forward {" \
+    "    type filter hook forward priority filter - 10; policy accept;" \
+    "    iifname != \"${vpn_if}\" ip6 saddr @vpn_v6 drop"
+  if [ "${profile}" = proxied ]; then
+    printf '%s\n' \
+      "    # the published ports (translated to Traefik's 80 and 443) answer Cloudflare, the VPN" \
+      "    # and the trusted ranges; a direct client that knows the origin is refused here" \
+      "    ct status dnat ct state new tcp dport { 80, 443 } ip saddr != @cloudflare_v4 ip saddr != @vpn_v4 ip saddr != @trusted_v4 drop" \
+      "    ct status dnat ct state new udp dport 443 ip saddr != @cloudflare_v4 ip saddr != @vpn_v4 ip saddr != @trusted_v4 drop" \
+      "    ct status dnat ct state new tcp dport { 80, 443 } ip6 saddr != @cloudflare_v6 ip6 saddr != @vpn_v6 ip6 saddr != @trusted_v6 drop" \
+      "    ct status dnat ct state new udp dport 443 ip6 saddr != @cloudflare_v6 ip6 saddr != @vpn_v6 ip6 saddr != @trusted_v6 drop"
+  fi
+  printf '%s\n' "  }" "}"
 }
 
 rendered_has_bouncer() {
@@ -370,6 +507,15 @@ else
   rm -f "${CFG_DIR}/host/cloudflare-ranges.nft"
   echo " -> trusted proxy ranges: none (TRAEFIK_FORWARDED_PROXY=none)"
 fi
+# The exposure profile and the host firewall rendered for it (DEC-078). The
+# IPv6 binding counts when COMPOSE_FILE applies the dual-stack overlay.
+bind_v4_effective="${TRAEFIK_BIND_V4:-0.0.0.0}"
+compose_file_named="${COMPOSE_FILE:-}"
+bind_v6_effective="$(effective_bind_v6 ${compose_file_named//:/ })"
+EXPOSURE_PROFILE="$(exposure_profile "${bind_v4_effective}" "${bind_v6_effective}" "${TRAEFIK_FORWARDED_PROXY}")"
+mkdir -p "${CFG_DIR}/host"
+render_ingress_nft "${EXPOSURE_PROFILE}" "${bind_v4_effective}" "${bind_v6_effective}" | place "${CFG_DIR}/host/ingress.nft"
+echo " -> host/ingress.nft (exposure profile: ${EXPOSURE_PROFILE} — the host firewall for it, to install by hand)"
 
 echo "Rendering dynamic configs..."
 # The files of the templates the middleware model retired (acc-*, sec-*,
@@ -433,5 +579,8 @@ for f in "${TPL_DIR}/dynamic/"*.yml.tmpl; do
     echo " -> ${base}"
   fi
 done
+
+render_edge_networks | place "${CFG_DIR}/edge-networks.yml"
+echo " -> edge-networks.yml (${n_edges} edge network(s))"
 
 echo "Done. Generated files are in: config/ and config/dynamic/"

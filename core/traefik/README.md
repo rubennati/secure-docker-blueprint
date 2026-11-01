@@ -25,6 +25,8 @@ Edit `.env` — at minimum change these:
 | `ACME_WILDCARD_DOMAIN` | Uncomment and set if you want a wildcard certificate (optional) |
 | `TAILSCALE_CIDR_V4` | Your Tailscale IPv4 CIDR (default: `100.64.0.0/10`) |
 | `TAILSCALE_CIDR_V6` | Your Tailscale IPv6 CIDR (default: `fd7a:115c:a1e0::/48`) |
+| `TRUSTED_RANGES` | The client networks `access-trusted` admits — your LAN's prefixes; empty admits nobody |
+| `EDGE_NETWORKS` | The edge network of every stack you install (`<project>-edge`, each stack's `TRAEFIK_NETWORK`); `COMPOSE_FILE` applies the rendered file — [`docs/edge-networks.md`](docs/edge-networks.md) |
 
 ```bash
 # 2. Validate environment variables
@@ -52,7 +54,11 @@ bash ops/scripts/validate.sh --strict   # published addresses, against the runni
 .env.example                          # All configurable variables
 docker-compose.yml                    # Docker Socket Proxy + Traefik
 network-dual-stack.yml                # Optional overlay: IPv4+IPv6 on proxy-public
+config/edge-networks.yml              # Rendered from EDGE_NETWORKS: the edge network of every installed stack (gitignored)
+config/host/ingress.nft               # Rendered host firewall for the derived exposure profile — installed by hand (gitignored)
 docs/
+  edge-networks.md                    # One network per stack (default) or the shared network — the choice, the migration
+  host-firewall.md                    # The exposure profile, the rendered host firewall, the exposure test and its marker
   ipv6-dual-stack.md                  # IPv4-only vs. dual-stack — concepts, migration, troubleshooting
   middleware-model-migration.md       # The cut to the middleware model (v0.9.5): every router before and after, the migration, the rollback
 ops/
@@ -121,6 +127,16 @@ bash ops/scripts/validate.sh --strict
 **This command only works for a fresh `proxy-public` that doesn't exist yet.** Migrating an existing IPv4-only install needs a parallel network + tested cutover, not an in-place edit — Docker cannot add IPv6 to a network that already exists without recreating it, and Compose will not warn you if you try. Full explanation (why the public network needs IPv6 but `app-internal` doesn't, why this isn't solved with `network_mode: host`), Docker daemon prerequisites with backup/rollback, the migration guide, and troubleshooting commands: **[`docs/ipv6-dual-stack.md`](docs/ipv6-dual-stack.md)**.
 
 **Setting `COMPOSE_FILE` in `.env` (above) is not optional convenience — set it.** Once the dual-stack network exists, any later `docker compose` command run *without* the overlay (e.g. someone runs `docker compose up -d --force-recreate traefik` and forgets the `-f` flag) makes Compose see only the IPv4-only network definition from `docker-compose.yml`. Compose then tries to remove and recreate the network to match — which fails loudly if other containers are still attached to it (`network proxy-public has active endpoints`, and Traefik ends up stopped until you redo the command correctly), or can silently revert the network to IPv4-only if nothing else happens to be attached. `COMPOSE_FILE` in `.env` means every future command in this directory includes the overlay automatically, with no flag to forget.
+
+### Exposure profile
+
+`validate.sh` derives what the configuration intends to expose — `direct`,
+`proxied` or `private` — from the two bindings and `TRAEFIK_FORWARDED_PROXY`,
+lists the protection layers present and absent for it, and renders the host
+firewall for it into `config/host/ingress.nft`. What the internet reaches is
+measured by `scripts/exposure-test.sh` from another machine; `--strict` requires
+its marker in `config/exposure-verified` for a public binding
+([`docs/host-firewall.md`](docs/host-firewall.md)).
 
 ### Published addresses
 

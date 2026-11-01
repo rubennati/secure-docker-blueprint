@@ -305,9 +305,25 @@ class TrustedClass(Scratch):
         self.assertEqual(rc, 0, out)
         self.assertIn('+ TRUSTED_RANGES=""', out)
         self.assertIn('TRUSTED_RANGES=""\n', f.read_text(encoding="utf-8"))
+        self.assertIn('+ EDGE_NETWORKS=""', out)
+        self.assertIn('+ COMPOSE_FILE=docker-compose.yml:config/edge-networks.yml', out)
+        text = f.read_text(encoding="utf-8")
+        self.assertIn('EDGE_NETWORKS=""\nCOMPOSE_FILE=docker-compose.yml:config/edge-networks.yml\n', text)
         (core / ".env.pre-model").unlink()
         rc, out = self.run_tool(str(f))
         self.assertNotIn("TRUSTED_RANGES", out.replace("note", ""), "the second run adds nothing")
+        self.assertNotIn("+ EDGE_NETWORKS", out)
+
+    def test_a_core_env_with_compose_file_set_is_told_to_append(self):
+        core = self.root / "core" / "traefik"
+        core.mkdir(parents=True)
+        f = core / ".env"
+        f.write_text("TLS_DEFAULT_OPTION=tls-standard\nHSTS_MAX_AGE=63072000\nTRUSTED_RANGES=\"\"\nCOMPOSE_FILE=docker-compose.yml:network-dual-stack.yml\n", encoding="utf-8")
+        rc, out = self.run_tool("--write", str(f))
+        self.assertEqual(rc, 0, out)
+        self.assertIn('+ EDGE_NETWORKS=""', out)
+        self.assertIn("append :config/edge-networks.yml", out)
+        self.assertIn("COMPOSE_FILE=docker-compose.yml:network-dual-stack.yml\n", f.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

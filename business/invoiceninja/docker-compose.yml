@@ -321,8 +321,8 @@ volumes:
 # --------------------------------------------------------
 networks:
   proxy-public:
-    external: true
     name: ${TRAEFIK_NETWORK}
+    external: true
 
   app-internal:
     name: ${COMPOSE_PROJECT_NAME}-internal

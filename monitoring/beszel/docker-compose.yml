@@ -216,6 +216,7 @@ services:
 # --------------------------------------------------------
 networks:
   proxy-public:
+    name: ${TRAEFIK_NETWORK}
     external: true
 
   # Private to the hub, the agent and the socket proxy. internal: true — no

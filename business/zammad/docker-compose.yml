@@ -337,6 +337,7 @@ services:
 
 networks:
   proxy-public:
+    name: ${TRAEFIK_NETWORK}
     external: true
   # NOT internal: true — railsserver and scheduler need outbound internet
   # access to send email (SMTP) and process webhooks.

@@ -7,3 +7,6 @@ ops/scripts/traefik-watchdog.service.example   /etc/systemd/system/traefik-watch
 ops/scripts/traefik-watchdog.timer.example     /etc/systemd/system/traefik-watchdog.timer        0644  root:root  exact    optional
 # Rendered by ops/scripts/render.sh with TRAEFIK_FORWARDED_PROXY=cloudflare; absent otherwise.
 config/host/cloudflare-ranges.nft              /etc/nftables.d/cloudflare-ranges.nft             0644  root:root  exact    optional
+# Rendered by ops/scripts/render.sh for the derived exposure profile (DEC-078); the recommended
+# host firewall — read docs/host-firewall.md before loading it, it closes the input path.
+config/host/ingress.nft                        /etc/nftables.d/ingress.nft                       0644  root:root  exact    optional

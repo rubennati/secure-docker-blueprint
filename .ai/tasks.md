@@ -300,13 +300,17 @@ declares nothing — the render-identity test holds that.
       one (DEC-077): basicAuth for Ollama, Homepage, Dashy, Heimdall; Mailpit's own
       htpasswd; `none` with a reason for whoami, httpbin, it-tools, GreenMail, Gatus.
       Done on `feature/ingress-step-4-posture`.
-- [ ] 5. Edge networks: `render.sh` derives them from the installed stacks — a stack
-      counts as installed by a signal more reliable than the presence of `.env`, to be
-      chosen in the step (a running project, or an explicit list) — the stack template
-      carries `name: ${TRAEFIK_NETWORK}`, the migration guide shared → isolated.
-- [ ] 6. Exposure shown: the derived profile and the layer list in `validate.sh`, the
-      external test script and its marker, the rendered `ingress.nft`, the management
-      requirement (DEC-078).
+- [x] 5. Edge networks: `EDGE_NETWORKS` in `core/traefik/.env` is the explicit list of
+      installed stacks; `render.sh` writes `config/edge-networks.yml`, `COMPOSE_FILE`
+      applies it; every stack's `networks:` block carries `name: ${TRAEFIK_NETWORK}` and
+      the examples default to `<project>-edge`; `validate.sh` compares the routed
+      containers' labels with Traefik's networks; the migration guide is
+      `core/traefik/docs/edge-networks.md`. Done on `feature/ingress-step-5-edge`.
+- [x] 6. Exposure shown: the derived profile and the layer list in `validate.sh`, the
+      external test script `scripts/exposure-test.sh` and its marker, the rendered
+      `config/host/ingress.nft` (`nft -c` on every profile), the management requirement
+      (DEC-078). Done on `feature/ingress-step-6-exposure`; loading the ruleset on a
+      host and a real exposure test stay step 8.
 - [ ] 7. IPv6 as bind overlays per family; `TRAEFIK_BIND_V6` without a default; the
       nine known unbound ports bound; the operator site corrected.
 - [ ] 8. Host evidence and release; `ipv6-only` stays "not verified" until its own run.

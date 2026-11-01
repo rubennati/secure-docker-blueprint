@@ -21,7 +21,10 @@ Other containers on proxy-public → greenmail :3025 :3110 :3143 :3465 :3993 :39
 One container. Test mail lives in memory and is gone after a restart — no
 database, no volume. The mail ports are not HTTP and are not published to the
 host; other stacks reach them by service name on `proxy-public`, the same way
-they reach Mailpit.
+they reach Mailpit — which means the stack under test sets
+`TRAEFIK_NETWORK=proxy-public` in its `.env`, the shared choice
+([`core/traefik/docs/edge-networks.md`](../../core/traefik/docs/edge-networks.md));
+on its own edge network, the examples' default, `greenmail` does not resolve.
 
 ## Setup
 

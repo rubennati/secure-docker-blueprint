@@ -48,7 +48,8 @@ services:
     entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
     command: ["/app/entrypoint.sh"]
     environment:
-      # Where Paperless-ngx answers. A container alias on proxy-public keeps the
+      # Where Paperless-ngx answers. A container alias on the network both stacks
+      # share (proxy-public, TRAEFIK_NETWORK on both sides) keeps the
       # call off the public route; PAPERLESS_PUBLIC_URL is what the links in the
       # interface point at.
       PAPERLESS_BASE_URL: ${PAPERLESS_BASE_URL}
@@ -131,6 +132,7 @@ services:
 # --------------------------------------------------------
 networks:
   proxy-public:
+    name: ${TRAEFIK_NETWORK}
     external: true
 
 # --------------------------------------------------------

@@ -86,9 +86,12 @@ Restart the stack, trigger a password reset, and read it in the UI.
   Mailpit's own `MP_UI_AUTH_FILE` — the htpasswd in `.secrets/mailpit_htpasswd.txt`,
   bcrypt, one user per line — asks for a user on the UI and the API, which also
   holds against a container that reaches port 8025 directly (DEC-077).
-- **Every container on `proxy-public` reaches port 1025.** A sink has to be
-  reachable by every stack that sends, which is also why it is for trying
-  things out: a stack whose users are real people sends real reset links, and
+- **Every container on `proxy-public` reaches port 1025 — and only those.** A
+  stack that sends here sets `TRAEFIK_NETWORK=proxy-public` in its `.env`, the
+  shared choice ([`core/traefik/docs/edge-networks.md`](../../core/traefik/docs/edge-networks.md));
+  on its own edge network, the examples' default, `mailpit` does not resolve. A
+  sink has to be reachable by every stack that sends, which is also why it is
+  for trying things out: a stack whose users are real people sends real reset links, and
   those belong in a mailbox, not in a store the whole host can read.
 - **The HTTP side is gated by hostname.** `MP_ALLOWED_HOSTS` is set to
   `APP_TRAEFIK_HOST`, so the API and the UI answer requests that arrive through

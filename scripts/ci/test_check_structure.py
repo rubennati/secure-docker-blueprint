@@ -908,6 +908,50 @@ class AuthPosture(unittest.TestCase):
         self.assertIn("apps/whoami", posture_of["none"])
 
 
+class NetworkName(unittest.TestCase):
+    """DEC-075: the proxy-public network of a stack is named through TRAEFIK_NETWORK."""
+
+    def _findings_for(self, root: Path, compose_yaml: str) -> list[dict]:
+        app = root / "apps" / "widget"
+        app.mkdir(parents=True, exist_ok=True)
+        (app / "docker-compose.yml").write_text(compose_yaml)
+        (app / ".env.example").write_text("COMPOSE_PROJECT_NAME=widget\nTRAEFIK_NETWORK=${COMPOSE_PROJECT_NAME}-edge\n")
+        cwd = os.getcwd()
+        try:
+            os.chdir(root)
+            _reset_caches()
+            findings: list[dict] = []
+            cs.check_network_name(Path("apps/widget"), findings)
+            return [f for f in findings if f["rule"] == "network-name"]
+        finally:
+            os.chdir(cwd)
+            _reset_caches()
+
+    def test_a_proxy_network_without_the_name_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            found = self._findings_for(Path(tmp), "services:\n  app:\n    image: example/image:1.0\n    networks: [proxy-public]\n"
+                                                  "networks:\n  proxy-public:\n    external: true\n")
+        self.assertEqual(len(found), 1)
+        self.assertIn("${TRAEFIK_NETWORK}", found[0]["detail"])
+
+    def test_the_named_network_passes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            found = self._findings_for(Path(tmp), "services:\n  app:\n    image: example/image:1.0\n    networks: [proxy-public]\n"
+                                                  "networks:\n  proxy-public:\n    name: ${TRAEFIK_NETWORK}\n    external: true\n")
+        self.assertEqual(found, [])
+
+    def test_a_stack_without_the_proxy_network_is_not_judged(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            found = self._findings_for(Path(tmp), "services:\n  app:\n    image: example/image:1.0\n")
+        self.assertEqual(found, [])
+
+    def test_the_edge_default_is_still_judged_as_the_shared_network(self):
+        # external_networks() resolves TRAEFIK_NETWORK to the repository's shared
+        # network, so the identity rules keep applying to a stack an operator
+        # puts on it.
+        self.assertEqual(cs.external_networks(Path("apps/_reference")).get("proxy-public"), cs.canonical_shared_network())
+
+
 class RetiredLanClass(unittest.TestCase):
     """access-lan and access-lan-vpn are retired names since DEC-076: an example
     that still sets one fails like any name from before the model."""

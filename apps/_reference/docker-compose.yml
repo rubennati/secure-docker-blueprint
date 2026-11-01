@@ -220,8 +220,12 @@ services:
 # NETWORKS
 # --------------------------------------------------------
 networks:
-  # Shared with Traefik and every other app — created by core/traefik.
+  # The network Traefik reaches this stack on, created by core/traefik:
+  # TRAEFIK_NETWORK in .env names it — <project>-edge, the stack's own edge
+  # network, listed in core/traefik's EDGE_NETWORKS (DEC-075); or proxy-public,
+  # the shared network, where every member reaches every other.
   proxy-public:
+    name: ${TRAEFIK_NETWORK}
     external: true
 
   # Private to this stack. internal: true means no route to the internet, and no

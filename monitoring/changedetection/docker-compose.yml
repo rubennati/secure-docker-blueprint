@@ -105,6 +105,7 @@ services:
 # --------------------------------------------------------
 networks:
   proxy-public:
+    name: ${TRAEFIK_NETWORK}
     external: true
   # browser-internal:
   #   name: ${COMPOSE_PROJECT_NAME}-browser

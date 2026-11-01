@@ -11,7 +11,7 @@ Internet
 │  (core/)     │                                │   (core/)    │
 └──────────────┘                                └──────────────┘
    │
-   │ proxy-public (external)
+   │ <project>-edge (one per stack; or proxy-public, shared)
    ▼
 ┌──────────┐  app-internal   ┌──────────┐  ┌──────────┐
 │   App    │◄───────────────►│    DB    │  │  Redis   │
@@ -21,22 +21,35 @@ Internet
 
 ## Network Types
 
-### proxy-public
+### The proxy network — an edge network per stack, or the shared `proxy-public`
 
 ```yaml
 networks:
   proxy-public:
+    name: ${TRAEFIK_NETWORK}
     external: true
 ```
 
-- Created by `core/traefik`
-- Referenced by every app that needs Traefik routing
-- Only the web-facing service of an app belongs here
-- Its members reach one another directly: Docker isolates networks from each
-  other, not containers within one. The access, limit and auth positions of a
-  router act on the path through Traefik alone
-  ([`docs/audits/ingress-architecture-2026-10-31.md`](../audits/ingress-architecture-2026-10-31.md));
-  the decided successor is an edge network per stack ([DEC-075](../../.ai/decisions.md#dec-075))
+- Created by `core/traefik`: the edge networks from `EDGE_NETWORKS` in its `.env`
+  (rendered into `config/edge-networks.yml`), `proxy-public` always
+- Referenced by every app that needs Traefik routing; only the web-facing
+  service of an app belongs on it
+- `TRAEFIK_NETWORK` in the stack's `.env` decides which network that is
+  ([DEC-075](../../.ai/decisions.md#dec-075)): `${COMPOSE_PROJECT_NAME}-edge`, the
+  stack's own edge network, is the default — its web container reaches Traefik
+  and its own `app-internal`, nothing else; `proxy-public`, the shared network,
+  is the choice for stacks that reach each other by service name — its members
+  reach one another directly, because Docker isolates networks from each other,
+  not containers within one, and the router positions act on the path through
+  Traefik alone ([`docs/audits/ingress-architecture-2026-10-31.md`](../audits/ingress-architecture-2026-10-31.md))
+- The label `traefik.docker.network=${TRAEFIK_NETWORK}` names the same network,
+  so Traefik dials the backend on it; a stack whose network Traefik does not
+  join is unreachable without a log line, which `core/traefik/ops/scripts/validate.sh`
+  checks against the running containers
+- The published ports stay on `proxy-public` in both shapes (`gw_priority`);
+  edge networks are IPv4-only, like `app-internal`
+- Shapes, migration and the address-pool limit:
+  [`core/traefik/docs/edge-networks.md`](../../core/traefik/docs/edge-networks.md)
 
 **IP family — IPv4-only by default, dual-stack opt-in.** `proxy-public` is
 created IPv4-only unless the `core/traefik/network-dual-stack.yml` overlay
@@ -98,7 +111,7 @@ placing one of them on `proxy-public`.
 
 ## Which Service in Which Network?
 
-| Service Type | proxy-public | app-internal | crowdsec-security |
+| Service Type | edge / proxy-public | app-internal | crowdsec-security |
 |-------------|:---:|:---:|:---:|
 | Web app (Traefik routing) | ✅ | ✅ | ❌ |
 | Database | ❌ | ✅ | ❌ |
@@ -171,8 +184,13 @@ The one place this repository writes a forward rule is CrowdSec's host
 remediation, and it is deliberately narrow — a single drop matched to one ingress
 interface and one address set, described in
 [`../../core/crowdsec/docs/firewall-bouncer.md`](../../core/crowdsec/docs/firewall-bouncer.md).
-Nothing else here adds a forward rule, and nothing here manages a host firewall on
-the operator's behalf.
+The one other forward rule is in the ruleset `core/traefik` renders for the
+`proxied` exposure profile — new connections to Traefik's translated 80 and 443
+from anyone but Cloudflare, the VPN and the trusted ranges are dropped — and the
+anti-spoofing drop for the VPN's IPv6 range. That ruleset
+([`core/traefik/docs/host-firewall.md`](../../core/traefik/docs/host-firewall.md))
+closes the input path and keeps the forward policy `accept`; the operator installs
+it, nothing here applies a firewall on the operator's behalf.
 
 ### Exposing Ports
 

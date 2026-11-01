@@ -61,9 +61,19 @@ containers keep running while the daemon itself restarts or is upgraded. The ope
 site's server setup recommends it; it is recorded in `.ai/decisions.md` and belongs in
 the same file, as its own line.
 
-**Not yet standardised here:** host firewall policy, unattended upgrades, the account the
-stacks run under, and kernel or `sysctl` expectations. A deployment works without them
-being written down; it is simply not this repository that says what they should be.
+**The host firewall and management access.** `core/traefik` renders a recommended
+`nftables` ruleset for the exposure profile it derives — `config/host/ingress.nft`,
+installed by the operator, never applied by the repository — and the two requirements
+that go with it: administration arrives over the VPN by key, and a second path that does
+not depend on ingress (the hoster's console, a second interface) exists for the day the
+first is gone. No automatically filled rule reaches the management plane. What the
+internet reaches is measured from another machine with `scripts/exposure-test.sh`, and
+`validate.sh --strict` requires that measurement's marker for a public binding
+([`core/traefik/docs/host-firewall.md`](../../core/traefik/docs/host-firewall.md), DEC-078).
+
+**Not yet standardised here:** unattended upgrades, the account the stacks run under,
+and kernel or `sysctl` expectations. A deployment works without them being written
+down; it is simply not this repository that says what they should be.
 
 ## 2 — Choose a release
 
@@ -89,8 +99,11 @@ set. Secrets do not belong in `.env` — see [`secrets.md`](secrets.md) for what
 
 ## 4 — Deploy in order
 
-**Traefik first.** It creates `proxy-public`, the external network every stack that
-publishes a domain attaches to; a stack started before it fails on a missing network.
+**Traefik first.** It creates `proxy-public` and the edge networks `EDGE_NETWORKS` in
+its `.env` lists — the external network each stack that publishes a domain attaches to;
+a stack started before it fails on a missing network, and a stack whose edge network is
+not listed is unreachable without a log line
+([`core/traefik/docs/edge-networks.md`](../../core/traefik/docs/edge-networks.md)).
 
 After that the order follows one rule: **a stack starts after whatever creates a network
 it declares as external, or provides a middleware its Traefik labels name.** Those are the
@@ -99,7 +112,7 @@ stack's own compose file rather than remembered here:
 
 | Before | Comes | Why |
 |---|---|---|
-| `core/traefik` | every stack publishing a domain | creates `proxy-public` |
+| `core/traefik` | every stack publishing a domain | creates `proxy-public` and the listed edge networks |
 | `core/authentik` | stacks whose Traefik labels use forward-auth | the middleware answers at its address |
 | `core/crowdsec` | stacks joining `crowdsec-security` | the network is created there |
 

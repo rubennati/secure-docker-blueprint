@@ -25,7 +25,7 @@
 #   *_TRAEFIK_TLS_OPTION   tls-basic|aplus|modern → tls-compatible|standard|strict
 # and per core/traefik/.env (recognised by TLS_DEFAULT_OPTION):
 #   TLS_DEFAULT_OPTION, TRAEFIK_DASHBOARD_TLS_OPTION renamed; HSTS_MAX_AGE and
-#   TRUSTED_RANGES added where missing.
+#   TRUSTED_RANGES and EDGE_NETWORKS added where missing.
 #
 # What it cannot do: a per-app block (frame-self, hsts-include-subdomains,
 # csp-self-only) is named in the stack's compose file by the release, not in
@@ -234,6 +234,17 @@ migrate_file() {
     printf '  + TRUSTED_RANGES=""\n'; CHANGES=$((CHANGES + 1))
     printf '  note: TRUSTED_RANGES names the client networks access-trusted admits, quoted and space-separated (your LAN prefixes, IPv4 and IPv6); empty admits nobody. Added at the end of the file — fill it in before render.sh\n'; NOTES=$((NOTES + 1))
     NEW_CONTENT="${NEW_CONTENT}"$'\n'"# Client networks access-trusted admits, quoted and space-separated; empty admits nobody."$'\n'"TRUSTED_RANGES=\"\""$'\n'
+  fi
+  if [ "$is_core" = 1 ] && ! grep -qE '^EDGE_NETWORKS=' "$file"; then
+    printf '  + EDGE_NETWORKS=""\n'; CHANGES=$((CHANGES + 1))
+    printf '  note: EDGE_NETWORKS names the edge network of every installed stack (its TRAEFIK_NETWORK), quoted and space-separated; empty keeps every stack on the shared network. Added at the end of the file with COMPOSE_FILE, which applies the rendered config/edge-networks.yml (core/traefik/docs/edge-networks.md)\n'; NOTES=$((NOTES + 1))
+    NEW_CONTENT="${NEW_CONTENT}"$'\n'"# Edge network of every installed stack (its TRAEFIK_NETWORK), quoted and space-separated; empty: the shared network."$'\n'"EDGE_NETWORKS=\"\""$'\n'
+    if ! grep -qE '^COMPOSE_FILE=' "$file"; then
+      printf '  + COMPOSE_FILE=docker-compose.yml:config/edge-networks.yml\n'; CHANGES=$((CHANGES + 1))
+      NEW_CONTENT="${NEW_CONTENT}""COMPOSE_FILE=docker-compose.yml:config/edge-networks.yml"$'\n'
+    else
+      printf '  note: COMPOSE_FILE is set — append :config/edge-networks.yml to it yourself\n'; NOTES=$((NOTES + 1))
+    fi
   fi
   if [ "$is_core" = 1 ] && [ "$has_hsts" = 0 ]; then
     printf '  + HSTS_MAX_AGE=63072000\n'; CHANGES=$((CHANGES + 1))
