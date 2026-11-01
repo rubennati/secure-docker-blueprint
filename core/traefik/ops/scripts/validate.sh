@@ -75,6 +75,7 @@ fi
 set -a
 source "${ROOT_DIR}/.env"
 set +a
+. "${ROOT_DIR}/ops/scripts/exposure-profile.sh"
 
 REQUIRED=(
   TZ
@@ -740,6 +741,82 @@ if [ -f "${ROOT_DIR}/config/traefik.yml" ]; then
   fi
 fi
 
+# ---------------------------------------------------------------------------
+# The exposure profile and its layers (DEC-078). Derived from the bindings and
+# the trusted proxy — what the configuration intends, never what the internet
+# reaches; that is measured by scripts/exposure-test.sh from another machine
+# and recorded in config/exposure-verified, which --strict requires for a
+# public binding. The mandatory invariants are the checks above; every layer
+# below is present or named with the risk its absence leaves. Nothing optional
+# is an error by its absence.
+# ---------------------------------------------------------------------------
+compose_files_named="${COMPOSE_FILE:-}"
+for f in ${COMPOSE_ARGS[@]+"${COMPOSE_ARGS[@]}"}; do compose_files_named="${compose_files_named} ${f}"; done
+bind_v4_effective="${TRAEFIK_BIND_V4:-0.0.0.0}"
+bind_v6_effective="$(effective_bind_v6 ${compose_files_named//:/ })"
+EXPOSURE_PROFILE="$(exposure_profile "${bind_v4_effective}" "${bind_v6_effective}" "${TRAEFIK_FORWARDED_PROXY}")"
+open_items=0
+echo ""
+echo "Exposure profile: ${EXPOSURE_PROFILE} — derived from TRAEFIK_BIND_V4=${bind_v4_effective}, TRAEFIK_BIND_V6=${bind_v6_effective:-not published}, TRAEFIK_FORWARDED_PROXY=${TRAEFIK_FORWARDED_PROXY}."
+echo "  What the internet reaches is measured by scripts/exposure-test.sh from another machine, not here."
+if [ "${EXPOSURE_PROFILE}" = proxied ] && [ "$(address_class "${bind_v4_effective}")" != public ] && [ "$(address_class "${bind_v6_effective}")" != public ]; then
+  : # unreachable: proxied needs a public binding by construction
+fi
+echo "  Layers for this profile (mandatory invariants are the checks above):"
+ingress_nft="${ROOT_DIR}/config/host/ingress.nft"
+if [ -f "${ingress_nft}" ]; then
+  if [ -r /etc/nftables.d/ingress.nft ]; then
+    if cmp -s "${ingress_nft}" /etc/nftables.d/ingress.nft; then
+      echo "    host firewall      installed — /etc/nftables.d/ingress.nft matches the rendered ruleset (loaded? nft list table inet blueprint_ingress)"
+    else
+      echo "    host firewall      differs — /etc/nftables.d/ingress.nft is not the rendered ruleset: scripts/host-files.sh (docs/host-firewall.md)"
+    fi
+  else
+    case "${EXPOSURE_PROFILE}" in
+      direct)  risk="every published port answers the internet unfiltered and the VPN's IPv6 range is not spoof-protected" ;;
+      proxied) risk="a direct client that knows the origin bypasses Cloudflare, and the VPN's IPv6 range is not spoof-protected" ;;
+      *)       risk="no host-level gate in front of the bindings — acceptable where an upstream firewall is the gate" ;;
+    esac
+    echo "    host firewall      not installed (recommended) — config/host/ingress.nft is rendered; residual risk: ${risk}"
+  fi
+else
+  echo "    host firewall      not rendered — run render.sh"
+fi
+if [ "${CROWDSEC_BOUNCER_ENABLED}" = true ]; then
+  echo "    crowdsec           present — the entrypoint bouncer (AppSec: ${CROWDSEC_APPSEC_ENABLED})"
+else
+  echo "    crowdsec           absent (recommended) — residual risk: no detection or remediation at the entrypoint; access policies and logins stand alone"
+fi
+if [ "${AUTHENTIK_FORWARD_AUTH_ENABLED}" = true ]; then
+  echo "    forward-auth       present — auth-authentik@file is rendered; the stacks' posture lines say where it is used"
+else
+  echo "    forward-auth       absent (optional) — residual risk: an application with a weak login has no gate in front; the posture lines name each (auth posture)"
+fi
+if [ "${EXPOSURE_PROFILE}" = proxied ]; then
+  echo "    cloudflare origin  not verifiable here — Authenticated Origin Pulls or a tunnel on Cloudflare's side; without one the host firewall above is what keeps a direct client out"
+fi
+echo "    management         the ruleset admits the host's services from the VPN ranges only, by key; the second, ingress-independent path (console, second interface) is yours to keep — not checkable here"
+marker_file="${ROOT_DIR}/config/exposure-verified"
+if [ "${EXPOSURE_PROFILE}" = private ]; then
+  echo "    exposure test      not required — nothing is published to a public address"
+elif [ -f "${marker_file}" ] && grep -q '^EXPOSURE_MARKER ' "${marker_file}"; then
+  marker_line="$(grep '^EXPOSURE_MARKER ' "${marker_file}" | tail -1)"
+  marker_profile="$(printf '%s' "${marker_line}" | sed -n 's/.* profile=\([a-z]*\).*/\1/p')"
+  marker_date="$(printf '%s' "${marker_line}" | sed -n 's/.* date=\([^ ]*\).*/\1/p')"
+  marker_target="$(printf '%s' "${marker_line}" | sed -n 's/.* target=\([^ ]*\).*/\1/p')"
+  if [ "${marker_profile}" != "${EXPOSURE_PROFILE}" ]; then
+    echo "ERROR: config/exposure-verified records profile '${marker_profile}', the configuration derives '${EXPOSURE_PROFILE}' —"
+    echo "       run scripts/exposure-test.sh ${marker_target:-<host>} ${EXPOSURE_PROFILE} from another machine and store its marker."
+    exit 1
+  fi
+  echo "    exposure test      recorded ${marker_date} against ${marker_target} (profile ${marker_profile}) — repeat it after a change of bindings or firewall"
+else
+  echo "PENDING: exposure test — a public binding needs the measurement from another machine:"
+  echo "         bash scripts/exposure-test.sh <this host's address> ${EXPOSURE_PROFILE}   then store its marker line in config/exposure-verified"
+  open_items=1
+fi
+echo ""
+
 # Published address families: IPv6 only where the client address survives the
 # way to the container — the effective Compose model, the Docker daemon's
 # settings under dual-stack, and the running container. The checker explains
@@ -773,7 +850,14 @@ python3 "${ROOT_DIR}/ops/scripts/check-published-family.py" \
   --container "${TRAEFIK_CONTAINER_NAME}" \
   --daemon-check "${DOCKER_DAEMON_CHECK:-}" || family_rc=$?
 case "${family_rc}" in
-  0) ;;
+  0)
+    if [ "${open_items}" -ne 0 ]; then
+      echo ""
+      echo "VALID, SECURITY NOT CONFIRMED: the exposure test above is open. Run it from another"
+      echo "machine, store the marker, then run validate.sh --strict."
+      [ "${STRICT}" -eq 1 ] && exit 1
+      exit 0
+    fi ;;
   3)
     # PENDING or NOT VERIFIED: the configuration is valid and the update that
     # resolves it must not be blocked — but this is not a security OK.

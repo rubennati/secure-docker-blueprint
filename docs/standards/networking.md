@@ -184,8 +184,13 @@ The one place this repository writes a forward rule is CrowdSec's host
 remediation, and it is deliberately narrow — a single drop matched to one ingress
 interface and one address set, described in
 [`../../core/crowdsec/docs/firewall-bouncer.md`](../../core/crowdsec/docs/firewall-bouncer.md).
-Nothing else here adds a forward rule, and nothing here manages a host firewall on
-the operator's behalf.
+The one other forward rule is in the ruleset `core/traefik` renders for the
+`proxied` exposure profile — new connections to Traefik's translated 80 and 443
+from anyone but Cloudflare, the VPN and the trusted ranges are dropped — and the
+anti-spoofing drop for the VPN's IPv6 range. That ruleset
+([`core/traefik/docs/host-firewall.md`](../../core/traefik/docs/host-firewall.md))
+closes the input path and keeps the forward policy `accept`; the operator installs
+it, nothing here applies a firewall on the operator's behalf.
 
 ### Exposing Ports
 

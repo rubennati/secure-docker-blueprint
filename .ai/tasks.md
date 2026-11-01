@@ -306,9 +306,11 @@ declares nothing — the render-identity test holds that.
       the examples default to `<project>-edge`; `validate.sh` compares the routed
       containers' labels with Traefik's networks; the migration guide is
       `core/traefik/docs/edge-networks.md`. Done on `feature/ingress-step-5-edge`.
-- [ ] 6. Exposure shown: the derived profile and the layer list in `validate.sh`, the
-      external test script and its marker, the rendered `ingress.nft`, the management
-      requirement (DEC-078).
+- [x] 6. Exposure shown: the derived profile and the layer list in `validate.sh`, the
+      external test script `scripts/exposure-test.sh` and its marker, the rendered
+      `config/host/ingress.nft` (`nft -c` on every profile), the management requirement
+      (DEC-078). Done on `feature/ingress-step-6-exposure`; loading the ruleset on a
+      host and a real exposure test stay step 8.
 - [ ] 7. IPv6 as bind overlays per family; `TRAEFIK_BIND_V6` without a default; the
       nine known unbound ports bound; the operator site corrected.
 - [ ] 8. Host evidence and release; `ipv6-only` stays "not verified" until its own run.

@@ -57,6 +57,7 @@ BASE_ENV = {
     "TRAEFIK_NETWORK": "proxy-public",
     "TRUSTED_RANGES": "",
     "EDGE_NETWORKS": "",
+    "VPN_INTERFACE": "tailscale0",
 }
 
 

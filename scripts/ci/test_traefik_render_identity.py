@@ -7,7 +7,8 @@ core/traefik is rendered with the same .env, for the two shapes a deployment has
 — IPv4-only and dual-stack — and the config/ trees are compared file by file.
 Position 1 of model.yml is one decided difference (DEC-076, step 3:
 access-trusted and access-trusted-vpn in place of access-lan and access-lan-vpn)
-and the rendered edge-networks.yml the other (DEC-075, step 5); that region is cut out of both renders before the comparison and checked on its
+and the rendered edge-networks.yml and host/ingress.nft the others (DEC-075, step 5;
+DEC-078, step 6); that region is cut out of both renders before the comparison and checked on its
 own, and comment-only lines of model.yml are not compared; a step that changes
 anything else, anywhere, fails here. A shallow
 checkout without the tag skips, as the other tag-dependent tests do.
@@ -87,12 +88,14 @@ class RenderIdentity(unittest.TestCase):
         self.head = self.tmp / "head" / "core" / "traefik"
         shutil.copytree(TRAEFIK, self.head, ignore=shutil.ignore_patterns(".env", "volumes"))
 
-    STEP_5_FILE = "edge-networks.yml"  # DEC-075: rendered from EDGE_NETWORKS, new since step 5
+    # Files later steps render by decision: the edge networks (DEC-075, step 5)
+    # and the host firewall for the exposure profile (DEC-078, step 6).
+    NEW_FILES = {"edge-networks.yml", "host/ingress.nft"}
 
     def _assert_identical(self, env: dict):
         a, b = _render(self.release, env), _render(self.head, env)
-        self.assertIn(self.STEP_5_FILE, _tree(b), "step 5 renders the edge networks")
-        self.assertEqual(_tree(a), [f for f in _tree(b) if f != self.STEP_5_FILE], "the set of rendered files changed")
+        self.assertTrue(self.NEW_FILES <= set(_tree(b)), "steps 5 and 6 render their files")
+        self.assertEqual(_tree(a), [f for f in _tree(b) if f not in self.NEW_FILES], "the set of rendered files changed")
         for rel in _tree(a):
             if rel == "dynamic/model.yml":
                 rest_a, access_a = _without_position_1((a / rel).read_text(encoding="utf-8"))
