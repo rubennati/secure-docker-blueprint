@@ -21,6 +21,7 @@ from pathlib import Path
 import yaml
 
 from test_traefik_dashboard_cert import BASE_ENV, TRAEFIK
+import no_daemon
 
 REPO = Path(__file__).resolve().parents[2]
 VALID_ENV = dict(BASE_ENV, ACME_WILDCARD_DOMAIN="example.com")
@@ -40,7 +41,7 @@ def render(env, mutate=None):
     if mutate:
         mutate(tmp)
     r = subprocess.run(["bash", str(tmp / "ops/scripts/render.sh")], capture_output=True, text=True)
-    v = subprocess.run(["bash", str(tmp / "ops/scripts/validate.sh")], capture_output=True, text=True)
+    v = subprocess.run(["bash", str(tmp / "ops/scripts/validate.sh")], capture_output=True, text=True, env=no_daemon.env())
     static = tmp / "config" / "traefik.yml"
     return {
         "tmp": tmp,
@@ -178,7 +179,7 @@ class RequiredVariables(unittest.TestCase):
         self.addCleanup(self._cleanup, r)
         self.assertEqual(r["validate_rc"], 0, r["validate_out"])
         (r["tmp"] / "config" / "dynamic" / "servers-transports.yml").unlink()
-        v = subprocess.run(["bash", str(r["tmp"] / "ops/scripts/validate.sh")], capture_output=True, text=True)
+        v = subprocess.run(["bash", str(r["tmp"] / "ops/scripts/validate.sh")], capture_output=True, text=True, env=no_daemon.env())
         self.assertNotEqual(v.returncode, 0)
         self.assertIn("servers-transports.yml", v.stdout + v.stderr)
 
@@ -186,7 +187,7 @@ class RequiredVariables(unittest.TestCase):
         r = render(VALID_ENV)
         self.addCleanup(self._cleanup, r)
         (r["tmp"] / "config" / "dynamic" / "acme-wildcard.yml").unlink()
-        v = subprocess.run(["bash", str(r["tmp"] / "ops/scripts/validate.sh")], capture_output=True, text=True)
+        v = subprocess.run(["bash", str(r["tmp"] / "ops/scripts/validate.sh")], capture_output=True, text=True, env=no_daemon.env())
         self.assertNotEqual(v.returncode, 0)
         self.assertIn("acme-wildcard.yml", v.stdout + v.stderr)
 
@@ -202,7 +203,7 @@ class UnresolvedVariables(unittest.TestCase):
         shutil.rmtree(r["tmp"], ignore_errors=True)
 
     def _validate(self, r):
-        v = subprocess.run(["bash", str(r["tmp"] / "ops/scripts/validate.sh")], capture_output=True, text=True)
+        v = subprocess.run(["bash", str(r["tmp"] / "ops/scripts/validate.sh")], capture_output=True, text=True, env=no_daemon.env())
         return v.returncode, v.stdout + v.stderr
 
     def _render_host_files(self, tmp):

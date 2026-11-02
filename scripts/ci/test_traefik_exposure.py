@@ -21,6 +21,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from test_traefik_dashboard_cert import BASE_ENV, TRAEFIK  # noqa: E402
+import no_daemon
 
 VALID_ENV = dict(BASE_ENV, ACME_WILDCARD_DOMAIN="example.com", TRAEFIK_FORWARDED_PROXY="none")
 EXPOSURE_TEST = TRAEFIK.parents[1] / "scripts" / "exposure-test.sh"
@@ -45,7 +46,7 @@ class Rendered(unittest.TestCase):
         return r.stdout
 
     def validate(self, *args):
-        return subprocess.run(["bash", str(self.root / "ops/scripts/validate.sh"), *args], capture_output=True, text=True)
+        return subprocess.run(["bash", str(self.root / "ops/scripts/validate.sh"), *args], capture_output=True, text=True, env=no_daemon.env())
 
     def nft(self):
         return (self.root / "config" / "host" / "ingress.nft").read_text(encoding="utf-8")
