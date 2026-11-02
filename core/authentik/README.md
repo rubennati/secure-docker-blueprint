@@ -67,12 +67,14 @@ printf '%s' 'YOUR-SMTP-PASSWORD' > .secrets/smtp_password.txt
 docker compose up -d
 
 # 4. Wait for the server healthcheck to pass
-docker compose logs server --follow
+docker compose logs authentik-server --follow
 # Look for: "Startup complete"
 
-# 5. Complete the first-run admin setup in the browser
-# https://<APP_TRAEFIK_HOST>/if/flow/initial-setup/
-# This URL is ONLY available before an admin exists. Set up akadmin here.
+# 5. Complete the first-run admin setup in the browser — open the root URL, which
+#    starts the setup flow (2026.5 refuses /if/flow/initial-setup/ opened directly):
+# https://<APP_TRAEFIK_HOST>/
+# Available only until an admin exists — see "Known Issues" for keeping it closed
+# until then. Set up akadmin here.
 ```
 
 Default values are `access-public`, `limit-standard`, `headers-standard`, `auth-none` — publicly reachable (users must be able to log in from anywhere), the standard headers and counter; the `/_static/` router carries `STATIC_TRAEFIK_LIMIT=limit-none`, because a first load of the portal fetches 100+ public chunks.
@@ -141,6 +143,11 @@ In the Authentik UI: **Admin Interface → Applications → Outposts**
 
 Confirm the `authentik Embedded Outpost` exists and its health is green.
 If it is missing: create it (Type: `Proxy`, leave all defaults, save).
+
+Then edit it and set `authentik_host` in its configuration to `https://<APP_TRAEFIK_HOST>`.
+Left empty, the outpost builds its login redirect on `http://localhost/…`: an
+unauthenticated request is sent to a page no browser reaches (measured on a host,
+2026-11-02).
 
 ---
 
@@ -291,6 +298,25 @@ Exact URLs (authorize, token, userinfo) are shown in Authentik's UI for each pro
 
 Similar pattern — create a `SAML Provider`, download the metadata XML from Authentik, feed it to the target app.
 
+## Network exception — why the worker reaches the internet
+
+The worker sends every e-mail — recovery, invitations, notifications — and runs the
+version check. On `app-internal` alone, which is `internal: true`, the SMTP host does not
+resolve and each `send_mail` task fails (`ak test_email` times out; measured on a host,
+2026-11-02). It therefore also joins `app-egress`, the pattern `apps/nextcloud` uses; the
+database and Redis stay on `app-internal`, and the worker does not join `proxy-public`.
+
+What the worker needs outbound: the SMTP relay (`SMTP_HOST:SMTP_PORT`) and, for the version
+check, `version.goauthentik.io` over HTTPS. Measured on a host (2026-11-02): with this file
+applied the worker reached a public submission port and a relay addressed over the internet,
+and `ak test_email` was delivered. A mail sink on `proxy-public`, such as `apps/mailpit`, is
+not reachable from `app-egress`; Authentik does not send to it.
+
+What it costs: `app-egress` is a plain bridge, so the worker can open any outbound
+connection, not only the two above. A compromised worker — it holds the database password
+and the secret key — can send data out. A host firewall's forward chain that admits only the
+relay and HTTPS from this network narrows that; the blueprint does not render such a rule.
+
 ## Security Model
 
 - Database, Redis, and the worker are only on `app-internal` (which is `internal: true`) — none of them can reach or be reached from the outside directly
@@ -334,7 +360,7 @@ Two files outside the database are required for a working restore:
 
 ## Known Issues
 
-- **Setup URL is public until an admin exists.** `/if/flow/initial-setup/` lets anyone create `akadmin`. Complete it immediately after the first boot; if you forget, anyone hitting that URL first becomes the admin.
+- **Setup URL is public until an admin exists.** The setup flow lets anyone create `akadmin`. Complete it immediately after the first boot; if you forget, anyone reaching it first becomes the admin. To close the window, start with `APP_TRAEFIK_ACCESS=access-vpn`, complete the setup from the VPN, then set `access-public` and `docker compose up -d`.
 - **`AUTHENTIK_SECRET_KEY` rotation invalidates all existing sessions and API tokens.** Plan a maintenance window.
 - **Email flows depend on SMTP.** Password reset, invitation, and event notifications silently fail if SMTP is misconfigured. Test with a real account after setup.
 - **Worker volumes are shared with server.** Both mount `./volumes/data` and `./volumes/custom-templates`. Don't change the mount paths without updating both services.

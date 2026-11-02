@@ -317,8 +317,13 @@ services:
       - ./volumes/custom-templates:/templates
 
     # --- Networking ---
+    # Outbound for the worker only: it sends every e-mail (recovery, invitations,
+    # notifications) and runs the version check. On app-internal alone the SMTP
+    # host does not resolve and every send_mail task fails. The database and Redis
+    # stay on app-internal. See README, "Network exception".
     networks:
       - app-internal
+      - app-egress
 
     # --- Health & Observability ---
     # healthcheck: none — upstream removed the built-in worker healthcheck in
@@ -338,6 +343,10 @@ networks:
   app-internal:
     name: ${COMPOSE_PROJECT_NAME}-internal
     internal: true
+
+  # Outbound for the worker only. See README, "Network exception".
+  app-egress:
+    name: ${COMPOSE_PROJECT_NAME}-egress
 
 # --------------------------------------------------------
 # SECRETS
