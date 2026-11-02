@@ -4,7 +4,7 @@
 
 Generated 2026-11-02 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-121 stacks: 3 ops-proven · 28 baseline-aligned · 90 scaffolded. 111 carry a local test stack.
+121 stacks: 5 ops-proven · 28 baseline-aligned · 88 scaffolded. 111 carry a local test stack.
 
 This is the maintainer's view: what has been established about each stack. It makes no statement about whether a stack suits a given deployment.
 
@@ -93,8 +93,8 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/photoview`](apps/photoview/) | `scaffolded` | `APP_TAG=2.4.0` | 2026-04-17 ⚠️ | ✅ | documented | missing |
 | [`apps/privatebin`](apps/privatebin/) | `scaffolded` | `APP_TAG=2.0.6` | — | ✅ | documented | missing |
 | [`apps/qdrant`](apps/qdrant/) | `baseline-aligned` | `APP_TAG=v1.19.1-unprivileged` | 2026-09-21 | ✅ | documented | missing |
-| [`apps/seafile`](apps/seafile/) | `scaffolded` | `APP_IMAGE=seafileltd/seafile-mc:13.0.20` | 2026-04-16 ⚠️ | ✅ | documented | missing |
-| [`apps/seafile-pro`](apps/seafile-pro/) | `scaffolded` | `APP_TAG=13.0.21` | 2026-04-13 ⚠️ | ✅ | documented | missing |
+| [`apps/seafile`](apps/seafile/) | `ops-proven` | `APP_IMAGE=seafileltd/seafile-mc:13.0.20` | 2026-11-02 | ✅ | documented | missing |
+| [`apps/seafile-pro`](apps/seafile-pro/) | `ops-proven` | `APP_TAG=13.0.21` | 2026-11-02 | ✅ | documented | missing |
 | [`apps/shlink`](apps/shlink/) | `scaffolded` | `APP_TAG=5.1.8` | — | ✅ | documented | missing |
 | [`apps/stalwart`](apps/stalwart/) | `scaffolded` | `APP_TAG=v0.16.24` | — | ✅ | documented | missing |
 | [`apps/threat-dragon`](apps/threat-dragon/) | `scaffolded` | `APP_TAG=v2.6.2` | — | ✅ | documented | missing |

@@ -1201,10 +1201,10 @@
     "name": "Seafile",
     "path": "apps/seafile",
     "role": "File sync and share, community edition",
-    "state": "scaffolded",
+    "state": "ops-proven",
     "upstream": "https://manual.seafile.com/13.0/docker/",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-11-02",
+    "verified_version": "13.0.20",
     "version": "13.0.20"
   },
   "apps/seafile-pro": {
@@ -1237,10 +1237,10 @@
     "name": "Seafile Pro",
     "path": "apps/seafile-pro",
     "role": "File sync and share, professional edition",
-    "state": "scaffolded",
+    "state": "ops-proven",
     "upstream": "https://manual.seafile.com/13.0/docker/pro/deploy_seafile_pro_with_docker/",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-11-02",
+    "verified_version": "13.0.21",
     "version": "13.0.21"
   },
   "apps/shlink": {
