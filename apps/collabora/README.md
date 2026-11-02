@@ -11,7 +11,7 @@ Pick per need: **OnlyOffice / [Euro-Office](../euro-office/)** for MS-Office-nat
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `collabora/code:26.04.3.2.1` | Document editing server (port 9980, stateless) |
+| `collabora-app` | `collabora/code:26.04.3.2.1` | Document editing server (port 9980, stateless) |
 
 No database, no persistent volume. Embedded in iframes → `headers-application-owned` with the stack's own CSP
 (`frame-ancestors`) instead of `headers-standard`, which sets `X-Frame-Options: DENY`. TLS is terminated at Traefik
@@ -44,7 +44,9 @@ curl http://localhost:9980/   # → "OK"
 - [ ] `aliasgroup1` matches your Nextcloud/Seafile host exactly (regex, escaped dots, `:443`)
 - [ ] A document opens and saves from Nextcloud/Seafile through Collabora
 - [ ] Behind a closed access policy, Nextcloud hands Collabora its internal address
-      (`wopi_callback_url`, the Nextcloud README, "Office servers behind a closed route")
+      (`wopi_callback_url`) and joins this stack's edge network with its `office.yml`;
+      `aliasgroup1` admits that callback host as well (the Nextcloud README, "Office
+      servers behind a closed route")
 - [ ] Admin console is not publicly reachable (kept off by default)
 
 ## Backup

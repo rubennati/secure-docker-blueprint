@@ -6,7 +6,7 @@ Self-hosted appointment booking. Established open-source scheduler since 2013. P
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `alextselegidis/easyappointments:latest` | PHP + Apache + scheduling UI |
+| `easyappointments-app` | `alextselegidis/easyappointments:latest` | PHP + Apache + scheduling UI |
 | `db` | `mariadb:11.4` | Customers, providers, services, appointments |
 
 ## When to pick Easy!Appointments
@@ -50,11 +50,15 @@ sed -i "s|^DB_PWD_INLINE=.*|DB_PWD_INLINE=$(cat .secrets/db_pwd.txt)|" .env
 sudo chown -R 33:33 volumes/storage
 
 docker compose up -d
-docker compose logs app --follow
+docker compose logs easyappointments-app --follow
 # Watch for: "apache2 -D FOREGROUND"
 
-# First visit runs the installation wizard
+# First visit runs the installation wizard — over the VPN, the router ships closed (below)
 # https://<APP_TRAEFIK_HOST>/index.php/installation
+
+# Open the booking page once the administrator exists: in .env
+#   APP_TRAEFIK_ACCESS=access-public
+docker compose up -d   # recreates the app with the new label
 ```
 
 The installation wizard asks for:
@@ -66,12 +70,17 @@ After install, log in at `/index.php/user/login` (backend) or `/index.php/backen
 
 ## Security Model
 
-- **First-visit install wizard** — open the URL immediately after `docker compose up` so an attacker cannot register first.
+- **The open window, and why the router starts closed** — until the installation wizard has run,
+  whoever reaches `/index.php/installation` first sets the administrator; there is no setup
+  password, and a new certificate's name is scanned within minutes. `.env.example` ships
+  `APP_TRAEFIK_ACCESS=access-vpn` (or `access-trusted` with your address in `TRUSTED_RANGES`
+  where there is no VPN). Guests cannot book through a closed router, so `access-public` is the
+  step after the wizard; what it then exposes is the login form.
 - **`DB_PWD_INLINE` duplicates DB password** — Easy!Appointments reads `DB_PASSWORD` inline from env, no `_FILE` support.
 - **`cap_drop: ALL`** + minimal `cap_add` on MariaDB.
 - **`no-new-privileges:true`** on both services.
 - **MariaDB on `app-internal` (`internal: true`)** — DB not reachable from outside.
-- **Default access `access-public`, `limit-standard` and `headers-standard`** — booking URLs must be reachable by external visitors.
+- **`access-public` after the wizard, `limit-standard` and `headers-standard`** — booking URLs must be reachable by external visitors; the backend shares the host and the policy.
 
 ## Backup
 
@@ -100,7 +109,7 @@ to be seen. Reconcile against the notification mail before resuming operation.
 ## Known Issues
 
 - **`APP_TAG=latest` is not reproducible** — pin to a specific version for stable deployments.
-- **Login redirects back to login page after install** — Apache runs as `www-data` (uid 33). If `volumes/storage` is owned by root, session writes fail silently and every login POST redirects back. Fix: `sudo chown -R 33:33 volumes/storage && docker compose restart app`. This is now in the Setup steps above.
+- **Login redirects back to login page after install** — Apache runs as `www-data` (uid 33). If `volumes/storage` is owned by root, session writes fail silently and every login POST redirects back. Fix: `sudo chown -R 33:33 volumes/storage && docker compose restart easyappointments-app`. This is now in the Setup steps above.
 - **Google Calendar sync** requires OAuth client ID / secret via Admin → Settings → Integrations. Not configured via env.
 - **Email notifications** configured in UI (Admin → Settings → Business → Email). SMTP host / credentials live in the DB after setup, not in `.env`.
 - **No built-in payment integration** — this is a booking tool, not a payment gateway. If you need "pay at booking", integrate Stripe manually or use Cal.com.

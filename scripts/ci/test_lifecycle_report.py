@@ -109,9 +109,9 @@ class PinMatchesVerified(unittest.TestCase):
         self.assertFalse(lr.pin_matches_verified("1.15.1-edge", "v1.15.1"))
 
     def test_floating_minor_pin_does_not_match_the_exact_patch_verified(self):
-        # core/traefik pins float the patch on purpose (`traefik:v3.7`) and
-        # the stamp names exactly which patch was tested (`v3.7.13`) against
-        # that floating pin at the time. The pin can resolve to a newer patch
+        # A pin that floats the patch (`traefik:v3.7`, core/traefik's pin until
+        # 2026-11-02) with a stamp that names exactly which patch was tested
+        # (`v3.7.13`) against that floating pin at the time. The pin can resolve to a newer patch
         # upstream with no repository change at all, so this must NOT be
         # treated as freshness evidence — it is reported as `pin-drifted`
         # like any other mismatch, with no separate exemption.

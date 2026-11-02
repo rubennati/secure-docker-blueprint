@@ -10,7 +10,7 @@ Single-container deployment with NocoDB's built-in SQLite:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `nocodb/nocodb:latest` | Web UI + REST/GraphQL API |
+| `nocodb-app` | `nocodb/nocodb:latest` | Web UI + REST/GraphQL API |
 
 Data lives in `./volumes/data/` (SQLite DB, attachments, user uploads).
 
@@ -46,7 +46,7 @@ mkdir -p volumes/data
 docker compose up -d
 
 # 5. Wait for first-boot init (~30 seconds)
-docker compose logs app --follow
+docker compose logs nocodb-app --follow
 # Watch for: "Visit: http://localhost:8080/dashboard"
 
 # 6. Open UI and create the first super-admin

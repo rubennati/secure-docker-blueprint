@@ -6,7 +6,7 @@ Self-hosted time-tracking for freelancers and small teams. Project/customer hier
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `kimai/kimai2:2.66.0` | PHP/Symfony + Apache + cron |
+| `kimai-app` | `kimai/kimai2:2.66.0` | PHP/Symfony + Apache + cron |
 | `db` | `mariadb:11.4` | Timesheets, users, customers, projects |
 
 ## Try it locally
@@ -44,7 +44,7 @@ sed -i "s|^ADMIN_PASSWORD=.*|ADMIN_PASSWORD=${ADMIN_PWD}|" .env
 echo "Admin password: ${ADMIN_PWD}"
 
 docker compose up -d
-docker compose logs app --follow
+docker compose logs kimai-app --follow
 # Watch for: "Kimai is ready" then "apache2 -D FOREGROUND"
 
 # https://<APP_TRAEFIK_HOST>

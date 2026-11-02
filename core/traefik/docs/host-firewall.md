@@ -114,10 +114,11 @@ last line is the marker:
 EXPOSURE_MARKER date=2026-11-01T10:00:00Z target=203.0.113.10 profile=direct result=ok
 ```
 
-Store it on the host, in `core/traefik`:
+Append it on the host, in `core/traefik` — one line per run, so a run per address
+keeps both families on record; `validate.sh` reads the last line:
 
 ```bash
-printf '%s\n' 'EXPOSURE_MARKER …' > config/exposure-verified
+printf '%s\n' 'EXPOSURE_MARKER …' >> config/exposure-verified
 ```
 
 `validate.sh` prints when and against what the test ran; `--strict` fails a

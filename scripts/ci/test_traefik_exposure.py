@@ -165,6 +165,16 @@ class LayersAndMarker(Rendered):
         self.assertIn("exposure test      recorded 2026-11-01T10:00:00Z against 203.0.113.10 (profile direct)", v.stdout)
         self.assertNotIn("PENDING: exposure test", v.stdout)
 
+    def test_one_marker_per_address_the_last_line_counts(self):
+        # One run per address, appended: both families stay on record, validate.sh reads the last.
+        self.render(VALID_ENV)
+        (self.root / "config" / "exposure-verified").write_text(
+            "EXPOSURE_MARKER date=2026-11-01T10:00:00Z target=203.0.113.10 profile=direct result=ok\n"
+            "EXPOSURE_MARKER date=2026-11-01T10:01:00Z target=2001:db8::10 profile=direct result=ok\n", encoding="utf-8")
+        v = self.validate()
+        self.assertIn("recorded 2026-11-01T10:01:00Z against 2001:db8::10 (profile direct)", v.stdout)
+        self.assertNotIn("PENDING: exposure test", v.stdout)
+
     def test_a_marker_for_another_profile_is_refused(self):
         self.render(dict(VALID_ENV, TRAEFIK_FORWARDED_PROXY="cloudflare"))
         (self.root / "config" / "exposure-verified").write_text(
@@ -183,27 +193,79 @@ class LayersAndMarker(Rendered):
 class ExposureTestScript(unittest.TestCase):
     """scripts/exposure-test.sh against a stub curl: the port behaviour comes from
     STUB_OPEN, a space-separated list of ports that answer; everything else is
-    closed. STUB_NO_V6=1 makes every IPv6 probe report no address."""
+    closed. STUB_NO_V6=1 makes every IPv6 probe report no address.
+
+    The stub behaves as curl does with telnet:// against real servers (measured
+    on a host running Traefik, 2026-11-01): an open port whose server waits for
+    the client — HTTP, SSH after its banner — is held until --max-time, so curl
+    exits 28 after one connect (STUB_OPEN_RC); a refused port exits 7 without a
+    connect, a filtered one 28 without a connect (STUB_CLOSED_RC). The
+    connection count is what -w '%{num_connects}' prints."""
 
     def setUp(self):
         self.bin = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, self.bin, ignore_errors=True)
         stub = self.bin / "curl"
         stub.write_text('''#!/usr/bin/env bash
-fam=4; url=""
-for a in "$@"; do case "$a" in -6) fam=6 ;; telnet://*) url="$a" ;; esac; done
+fam=4; url=""; wout=""; next_w=""
+for a in "$@"; do
+  if [ -n "$next_w" ]; then wout="$a"; next_w=""; continue; fi
+  case "$a" in -6) fam=6 ;; -w) next_w=1 ;; telnet://*) url="$a" ;; esac
+done
 port="${url##*:}"
+[ -n "${STUB_LOG:-}" ] && echo "-$fam $url" >> "$STUB_LOG"
 if [ "$fam" = 6 ] && [ -n "${STUB_NO_V6:-}" ]; then exit 6; fi
-for p in ${STUB_OPEN:-}; do [ "$p" = "$port" ] && exit 0; done
-exit 7
+for p in ${STUB_OPEN:-}; do
+  if [ "$p" = "$port" ]; then printf '%s' "${wout//%\\{num_connects\\}/1}"; exit "${STUB_OPEN_RC:-28}"; fi
+done
+printf '%s' "${wout//%\\{num_connects\\}/0}"
+exit "${STUB_CLOSED_RC:-7}"
 ''', encoding="utf-8")
         stub.chmod(0o755)
 
-    def run_test(self, profile, open_ports, no_v6=False):
-        env = dict(os.environ, PATH=f"{self.bin}:{os.environ['PATH']}", STUB_OPEN=open_ports, EXPOSURE_TIMEOUT="1")
+    def run_test(self, profile, open_ports, no_v6=False, host="203.0.113.10", **stub_env):
+        env = dict(os.environ, PATH=f"{self.bin}:{os.environ['PATH']}", STUB_OPEN=open_ports, EXPOSURE_TIMEOUT="1", **stub_env)
         if no_v6:
             env["STUB_NO_V6"] = "1"
-        return subprocess.run(["bash", str(EXPOSURE_TEST), "203.0.113.10", profile], capture_output=True, text=True, env=env)
+        return subprocess.run(["bash", str(EXPOSURE_TEST), host, profile], capture_output=True, text=True, env=env)
+
+    def test_a_literal_address_probes_its_own_family_only(self):
+        # The plan runs the test once per address; the other family has no address.
+        log = self.bin / "probes.log"
+        r = self.run_test("direct", "80 443", STUB_LOG=str(log))
+        self.assertEqual(r.returncode, 0, r.stdout)
+        self.assertIn("tcp/80                 v6   no address of this family", r.stdout)
+        self.assertNotIn("-6 ", log.read_text())
+        log.unlink()
+        r = self.run_test("direct", "80 443", host="2001:db8::10", STUB_LOG=str(log))
+        self.assertEqual(r.returncode, 0, r.stdout)
+        self.assertIn("tcp/80                 v4   no address of this family", r.stdout)
+        self.assertIn("-6 telnet://[2001:db8::10]:80", log.read_text())
+        self.assertNotIn("-4 ", log.read_text())
+
+    def test_a_name_probes_both_families(self):
+        r = self.run_test("direct", "80 443", host="host.example.com")
+        self.assertEqual(r.returncode, 0, r.stdout)
+        self.assertNotIn("no address of this family", r.stdout)
+
+    def test_a_silent_open_port_answers(self):
+        # Traefik and sshd wait for the client: curl times out after the connect.
+        r = self.run_test("direct", "80 443 22", no_v6=True, STUB_OPEN_RC="28")
+        self.assertEqual(r.returncode, 0, r.stdout)
+        self.assertIn("answers (expected: a direct profile is published)", r.stdout)
+        self.assertIn("SSH is reachable outside the VPN", r.stdout)
+
+    def test_a_port_the_server_closes_answers(self):
+        r = self.run_test("direct", "80 443", no_v6=True, STUB_OPEN_RC="0")
+        self.assertEqual(r.returncode, 0, r.stdout)
+
+    def test_a_filtered_port_is_closed(self):
+        # A timeout without a connect: the port is filtered, not answering.
+        r = self.run_test("direct", "80", no_v6=True, STUB_CLOSED_RC="28")
+        self.assertEqual(r.returncode, 1, r.stdout)
+        self.assertIn("tcp/443                v4   does not answer", r.stdout)
+        r = self.run_test("proxied", "", no_v6=True, STUB_CLOSED_RC="28")
+        self.assertEqual(r.returncode, 0, r.stdout)
 
     def test_direct_with_the_two_ports_answering_prints_the_marker(self):
         r = self.run_test("direct", "80 443", no_v6=True)

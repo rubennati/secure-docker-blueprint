@@ -6,7 +6,7 @@ Self-hosted photo gallery focused on RAW processing, EXIF-driven organization, a
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `photoview/photoview:2.4.0` | Web UI + GraphQL API + media indexer |
+| `photoview-app` | `photoview/photoview:2.4.0` | Web UI + GraphQL API + media indexer |
 | `db` | `mariadb:11.4` | Index, albums, users, face data |
 
 ## Try it locally
@@ -51,7 +51,7 @@ sudo chown -R 999:999 volumes/media-cache
 docker compose up -d
 
 # 6. Wait for MariaDB init + Photoview bootstrap (~60 seconds)
-docker compose logs app --follow
+docker compose logs photoview-app --follow
 # Watch for: "Photoview API endpoint listening at http://0.0.0.0:80/api"
 
 # 7. Open UI and complete the initial setup wizard

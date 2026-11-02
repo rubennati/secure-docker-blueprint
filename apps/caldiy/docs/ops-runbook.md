@@ -291,7 +291,7 @@ change within seconds.
 
 ### Step 1 — Block all traffic
 
-In `apps/caldiy/.env`, change:
+In `apps/caldiy/.env`, change the policy — `access-public` once the booking pages are open:
 
 ```env
 APP_TRAEFIK_ACCESS=access-public

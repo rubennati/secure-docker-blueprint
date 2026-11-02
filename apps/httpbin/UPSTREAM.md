@@ -11,7 +11,7 @@
 - **Domain:** Developer tools
 - **Role:** HTTP request and response service for testing clients: echoes requests, returns chosen status codes, redirects, delays and payloads
 - **Based on version:** `0.10.4`
-- **Last verified:** 2026-09-22 (0.10.4) — behind Traefik with TLS: the endpoints through the route, `/redirect-to` refused outside the access policy, the per-request bounds, and a restart
+- **Last verified:** 2026-11-02 (0.10.4) — step 8 lab host behind Traefik 3.7.17: healthy; the root's Swagger index from `spec.json` (52 paths), `/get`, `/status/418` and `/redirect-to` through the route, a client's `X-Real-Ip` not passed on; moved from the shared network to its edge network and back (docs/labs/ingress/2026-11-01-results.md)
 
 The fork's README gives its reason: the original's maintainers could not be
 reached, and the `httpbin` package on PyPI is released from the fork. It also

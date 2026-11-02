@@ -6,7 +6,7 @@ Self-hosted photo and video backup with machine-learning–based search, facial 
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `ghcr.io/immich-app/immich-server:v3.2.0` | Web UI + REST API + upload handler |
+| `immich-app` | `ghcr.io/immich-app/immich-server:v3.2.0` | Web UI + REST API + upload handler |
 | `machine-learning` | `ghcr.io/immich-app/immich-machine-learning:v3.2.0` | CLIP embeddings, face detection, object recognition |
 | `db` | `ghcr.io/immich-app/postgres:14-vectorchord…` | Postgres with vector extensions for similarity search |
 | `redis` | `valkey/valkey:8.1.6` | Background job queue (Bull/BullMQ) |
@@ -47,7 +47,7 @@ mkdir -p volumes/postgres volumes/redis volumes/model-cache volumes/library
 docker compose up -d
 
 # 6. Wait for first-run migrations (~2 minutes)
-docker compose logs app --follow
+docker compose logs immich-app --follow
 # Watch for: "Immich Server is listening on..."
 
 # 7. Open UI and create the admin account

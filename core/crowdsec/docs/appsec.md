@@ -212,8 +212,12 @@ crowdsecAppsecFailureBlock: false        # fail-open on AppSec errors
 crowdsecAppsecUnreachableBlock: false    # fail-open if AppSec unreachable
 ```
 
-No template is edited and Traefik is not restarted: the changed label recreates the
-application container, and Traefik picks the router up within seconds.
+No template is edited, and no stack's label changes: the switch moves the entrypoint
+from `threat-crowdsec` to `threat-crowdsec-appsec`, which is static configuration — a
+plain `docker compose up -d` does not recreate Traefik for it, `--force-recreate` does.
+Measured on a host (2026-11-01): the shipped rule sets answered a virtual-patching match
+(`/.env`) with 403 on both address families; with the engine stopped the same request
+passed — the fail-open flags at work.
 
 #### Step 3 — Observe behavior
 

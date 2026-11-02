@@ -10,7 +10,7 @@ Two services:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `portainer/portainer-ce` | Portainer UI and API |
+| `portainer-app` | `portainer/portainer-ce` | Portainer UI and API |
 | `socket-proxy` | `lscr.io/linuxserver/socket-proxy` | Filtered Docker API gateway |
 
 Portainer reaches Docker through `tcp://socket-proxy:2375` (configured via `--host` in the compose `command`). The socket proxy enforces which Docker API endpoints are allowed — Portainer never sees `/var/run/docker.sock`.
@@ -100,7 +100,7 @@ environments are configured.
 Portainer enforces a 5-minute window for initial admin creation after first start. If missed, the instance becomes unreachable and must be restarted:
 
 ```bash
-docker compose restart app
+docker compose restart portainer-app
 ```
 
 After successful admin creation, set a strong password and enable 2FA in the user settings.
@@ -109,7 +109,7 @@ After successful admin creation, set a strong password and enable 2FA in the use
 
 **Multi-host setups need an extra port exposed.** For [Portainer Edge Agents](../portainer-agent/) to reach this central Portainer, TCP 8000 has to be published on the host — separate from the web UI on 9000/9443 which goes through Traefik. Port 8000 has no TLS and only `EDGE_KEY` as auth, so exposure must be limited.
 
-This compose does not publish 8000 by default. To enable Edge Agents, add to the `app` service manually:
+This compose does not publish 8000 by default. To enable Edge Agents, add to the `portainer-app` service manually:
 
 ```yaml
 ports:

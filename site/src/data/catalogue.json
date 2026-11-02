@@ -460,10 +460,10 @@
     "name": "Heimdall",
     "path": "apps/heimdall",
     "role": "Application launcher with widgets",
-    "state": "scaffolded",
+    "state": "ops-proven",
     "upstream": "https://docs.linuxserver.io/images/docker-heimdall/",
-    "verified": "2026-05-02",
-    "verified_version": "v2.6.3",
+    "verified": "2026-11-02",
+    "verified_version": "2.8.3",
     "version": "2.8.3"
   },
   "apps/hemmelig": {
@@ -582,7 +582,7 @@
     "role": "HTTP request and response service for testing clients: echoes requests, returns chosen status codes, redirects, delays and payloads",
     "state": "baseline-aligned",
     "upstream": "https://github.com/psf/httpbin/pkgs/container/httpbin",
-    "verified": "2026-09-22",
+    "verified": "2026-11-02",
     "verified_version": "0.10.4",
     "version": "0.10.4"
   },
@@ -638,7 +638,7 @@
     "role": "Collection of small utilities: converters, generators and formatters",
     "state": "baseline-aligned",
     "upstream": "https://github.com/CorentinTh/it-tools/pkgs/container/it-tools",
-    "verified": "2026-05-02",
+    "verified": "2026-11-02",
     "verified_version": "v2024.10.22-7ca5933",
     "version": "2024.10.22-7ca5933"
   },
@@ -731,7 +731,7 @@
     "role": "SMTP sink that catches every outgoing message and shows it, delivering nothing",
     "state": "baseline-aligned",
     "upstream": "https://hub.docker.com/r/axllent/mailpit",
-    "verified": "2026-09-07",
+    "verified": "2026-11-02",
     "verified_version": "v1.31.1",
     "version": "1.31.1"
   },
@@ -1388,10 +1388,10 @@
     "name": "Vaultwarden",
     "path": "apps/vaultwarden",
     "role": "Password manager: logins, TOTP and shared collections",
-    "state": "scaffolded",
+    "state": "ops-proven",
     "upstream": "https://github.com/dani-garcia/vaultwarden",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-11-02",
+    "verified_version": "1.37.4",
     "version": "1.37.4"
   },
   "apps/velociraptor": {
@@ -1450,7 +1450,7 @@
     "role": "Tiny service that shows what the proxy forwards, to check routing and TLS",
     "state": "baseline-aligned",
     "upstream": "https://hub.docker.com/r/traefik/whoami",
-    "verified": "2026-09-13",
+    "verified": "2026-11-01",
     "verified_version": "v1.12.0",
     "version": "1.12.0"
   },
@@ -2332,7 +2332,7 @@
     "role": "Threat detection from logs, with a choice of where decisions are enforced",
     "state": "baseline-aligned",
     "upstream": "https://github.com/crowdsecurity/crowdsec",
-    "verified": "2026-07-29",
+    "verified": "2026-11-01",
     "verified_version": "v1.7.8",
     "version": "1.7.8"
   },
@@ -2736,11 +2736,11 @@
     "name": "Traefik Reverse Proxy",
     "path": "core/traefik",
     "role": "Reverse proxy: TLS, access policies and security headers in front of every other service",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://hub.docker.com/_/traefik",
-    "verified": "2026-09-13",
-    "verified_version": "v3.7.13, socket-proxy v0.5.0",
-    "version": "3.7"
+    "verified": "2026-11-01",
+    "verified_version": "v3.7.17, socket-proxy v0.5.0",
+    "version": "3.7.17"
   },
   "core/warpgate": {
     "decision_facts": {},

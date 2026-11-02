@@ -15,7 +15,7 @@ other, not both, per consuming app.
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `ghcr.io/euro-office/documentserver:v9.3.4-hotfix.1` | Document editing server (port 80, bundles its own DB/queue) |
+| `euro-office-app` | `ghcr.io/euro-office/documentserver:v9.3.4-hotfix.1` | Document editing server (port 80, bundles its own DB/queue) |
 
 No `_FILE` support (OnlyOffice lineage) → `config/entrypoint.sh` injects `JWT_SECRET` from a Docker
 Secret, then execs the DS start script. Embedded in iframes → `headers-application-owned` with the stack's own CSP
@@ -52,7 +52,8 @@ Modeled on the proven OnlyOffice config, but the fork image has not been run her
 - [ ] `JWT_SECRET` injected — no JWT value in `docker inspect euro-office-app`; JWT enforced (requests without a valid token are rejected)
 - [ ] End-to-end — a document opens and saves from Seafile/Nextcloud using the shared secret
 - [ ] Behind a closed access policy the save callback reaches the app: Nextcloud by its
-      internal `StorageUrl` (its README, "Office servers behind a closed route"), Seafile
+      internal `StorageUrl` over its `office.yml` (its README, "Office servers behind a
+      closed route"), Seafile
       through `onlyoffice-callback.yml` or the server's address in `TRUSTED_RANGES`
 - [ ] `EXAMPLE_ENABLED` is off — `https://<host>/example/` is not reachable
 

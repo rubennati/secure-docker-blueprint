@@ -320,6 +320,8 @@ declares nothing — the render-identity test holds that.
       host, an IPv6-only host (ingress and the egress prerequisites), the bound
       stacks reached over their binding.
 - [ ] 8. Host evidence and release; `ipv6-only` stays "not verified" until its own run.
+      The plan: [`docs/host-verification-ingress.md`](../docs/host-verification-ingress.md)
+      (blocks P–O and the release gate); every row not run.
 
 ## Blocked on a host
 

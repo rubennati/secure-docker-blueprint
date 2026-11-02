@@ -6,7 +6,7 @@ Self-hosted web analytics platform — privacy-respecting, GDPR-compatible alter
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `matomo:5.13.0-apache` | Tracking endpoint + reporting UI |
+| `matomo-app` | `matomo:5.13.0-apache` | Tracking endpoint + reporting UI |
 | `db` | `mariadb:11.4` | Raw visits, aggregated reports, users, settings |
 
 ## Try it locally
@@ -39,7 +39,7 @@ mkdir -p volumes/mysql volumes/config volumes/logs volumes/matomo
 
 # 4. Start
 docker compose up -d
-docker compose logs app --follow
+docker compose logs matomo-app --follow
 # Watch for: "apache2 -D FOREGROUND"
 
 # 5. Open UI and run the 8-step installation wizard

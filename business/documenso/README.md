@@ -7,7 +7,7 @@ option: [`business/opensign/`](../opensign/).
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `documenso/documenso:v2.20.0` | Remix web app + signing API (port 3000) |
+| `documenso-app` | `documenso/documenso:v2.20.0` | Remix web app + signing API (port 3000) |
 | `db` | `postgres:16-alpine` | Documents, signatures, users |
 
 No `_FILE` support → `config/entrypoint.sh` injects secrets from Docker Secret files and execs the
@@ -34,7 +34,7 @@ openssl pkcs12 -export -out .secrets/cert.p12 -inkey /tmp/k.pem -in /tmp/c.pem -
 rm /tmp/k.pem /tmp/c.pem
 
 docker compose up -d
-docker compose logs app --follow   # watch migrations + server start
+docker compose logs documenso-app --follow   # watch migrations + server start
 # https://<APP_TRAEFIK_HOST> — first user becomes the admin
 ```
 

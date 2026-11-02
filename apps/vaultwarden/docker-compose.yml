@@ -169,7 +169,7 @@ services:
       # the HSTS base and no frame header, so Vaultwarden's own X-Frame-Options
       # reaches the browser per route: SAMEORIGIN on the vault UI, absent on the
       # 2FA connector pages its admin diagnostics need (measured 2026-10-18 in
-      # the lab; not verified on a host yet).
+      # the lab; SAMEORIGIN on the vault UI seen on a host, 2026-11-02).
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
