@@ -4,7 +4,7 @@
 
 Generated 2026-11-02 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-121 stacks: 3 ops-proven · 27 baseline-aligned · 91 scaffolded. 111 carry a local test stack.
+121 stacks: 3 ops-proven · 28 baseline-aligned · 90 scaffolded. 111 carry a local test stack.
 
 This is the maintainer's view: what has been established about each stack. It makes no statement about whether a stack suits a given deployment.
 
@@ -21,7 +21,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 |---|---|---|---|---|---|---|
 | [`core/acme-certs`](core/acme-certs/) | `scaffolded` | `APP_TAG=0.2.1` | 2026-04-14 ⚠️ | — | documented | missing |
 | [`core/authelia`](core/authelia/) | `scaffolded` | `APP_TAG=4.39.28` | — | ✅ | documented | missing |
-| [`core/authentik`](core/authentik/) | `scaffolded` | `APP_TAG=2026.5.7` | 2026-07-26 | ✅ | documented | missing |
+| [`core/authentik`](core/authentik/) | `baseline-aligned` | `APP_TAG=2026.5.7` | 2026-11-02 | ✅ | documented | missing |
 | [`core/crowdsec`](core/crowdsec/) | `baseline-aligned` | `APP_TAG=v1.7.8` | 2026-11-01 | — | documented | missing |
 | [`core/dnsmasq`](core/dnsmasq/) | `scaffolded` | `APP_TAG=2.93` | 2026-04-14 ⚠️ | — | documented | missing |
 | [`core/dockhand`](core/dockhand/) | `scaffolded` | `APP_TAG=v1.0.56` | 2026-04-16 ⚠️ | ✅ | documented | missing |

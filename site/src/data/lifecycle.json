@@ -884,10 +884,10 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=2026.5.7",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "2026-07-26",
+    "state": "baseline-aligned",
+    "verified": "2026-11-02",
     "verified_anchored": true,
-    "verified_version": "v2026.5.6"
+    "verified_version": "v2026.5.7"
   },
   "core/crowdsec": {
     "backup_docs": "documented",

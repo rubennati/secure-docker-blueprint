@@ -268,6 +268,8 @@ open.
 | A7 | 2026-11-01 | H1 | pass | from OUT6 with a forged `X-Forwarded-For`/`X-Real-Ip` (tailnet example): `w-vpn` 403; `w-public` shows OUT6 |
 | A8 | 2026-11-01 | H1 | not run | needs a tailnet client |
 | A9 | 2026-11-01 | H1 | deviation | `--resolve …:[::1]` on `w-vpn`: no connection (timeout), not 403 — `userland-proxy: false` does not forward IPv6 loopback (`ipv6-dual-stack.md`); over the host's global IPv6 address and over 127.0.0.1: 403 |
+| G1 | 2026-11-02 | H1 | pass after correction | a proxy provider (forward auth, single application) on the embedded outpost, `w-fa` on `auth-authentik@file`: 302 to the Authentik host, the login (password and TOTP, scripted through the flow executor), the outpost callback; whoami shows `X-Authentik-Username`. Before the outpost's `authentik_host` was set the 302 pointed at `http://localhost/` |
+| G3 | 2026-11-02 | H1 | pass | `authentik-server` stopped: 500 without and with a valid session, never 200; started: 302 again |
 | G4 | 2026-11-01 | H1 | pass, host-local | Heimdall: no credentials 401, wrong 401, right 200; router carries `heimdall-auth@docker`; reached through a router admitting the host itself only (deviation, see report) |
 | N2 | 2026-11-01 | H1 | fail | each Traefik recreate interrupted every stack for 6.5–7.3 s, not only the one moved; the moved stack returned after its healthcheck |
 | N4 | 2026-11-01 | H1 | pass after correction | `--strict`: only the marker; a network dropped from `EDGE_NETWORKS` while Traefik still joined it passed with exit 0 — corrected in `0d33bad` |
