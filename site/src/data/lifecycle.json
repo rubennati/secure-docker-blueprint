@@ -345,7 +345,7 @@
     "pinned": "APP_TAG=34.0.4-fpm-alpine",
     "restore_docs": "documented",
     "state": "ops-proven",
-    "verified": "2026-09-13",
+    "verified": "2026-11-02",
     "verified_anchored": true,
     "verified_version": "34.0.4-fpm-alpine"
   },
