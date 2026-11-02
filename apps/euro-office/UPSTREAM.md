@@ -24,7 +24,8 @@
 | Change | Reason |
 |--------|--------|
 | Modeled 1:1 on `apps/onlyoffice/` | Euro-Office is an OnlyOffice DS fork — drop-in, same integration |
-| Custom entrypoint for JWT secret | No `_FILE` support; wrapper exports `JWT_SECRET`, execs `/app/ds/run-document-server.sh` |
+| Custom entrypoint for JWT secret | No `_FILE` support; wrapper exports `JWT_SECRET`, creates the log directories the log volume hides, execs the image's `/entrypoint.sh` |
+| Data and logs at `/var/www/euro-office/Data` and `/var/log/euro-office` | The fork's own paths — OnlyOffice's `/var/www/onlyoffice/Data` persisted nothing |
 | `no-new-privileges:true` | Security baseline |
 | Iframe-friendly Traefik middleware (CSP `frame-ancestors`) | Standard `sec-*` chains set `X-Frame-Options: DENY`, blocking Seafile/Nextcloud embedding |
 | `X-Forwarded-Proto=https` middleware | DS behind Traefik TLS termination generates `http://` URLs otherwise (Mixed Content) |
@@ -40,6 +41,5 @@
 
 ## Known limitations
 
-- **Not yet live-verified** — see the README "Verify on first deploy" gate before marking ✅
-- **Entrypoint path assumes upstream parity** — `/app/ds/run-document-server.sh` (OnlyOffice path); confirm on the fork image
+- **Not OnlyOffice's file layout** — the image starts with `/entrypoint.sh` and keeps data and logs under `euro-office` paths; the stack copied OnlyOffice's and the container exited 127 in a restart loop until corrected (step 8 lab host, 2026-11-02)
 - **Young project** — smaller release history than OnlyOffice; watch releases closely
