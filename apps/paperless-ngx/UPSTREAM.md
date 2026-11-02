@@ -20,7 +20,7 @@
 - Official `paperless-ngx` image, pinned tag
 - `postgres:16` as primary backend (upstream also supports MariaDB + SQLite; Postgres is the recommended production path)
 - `redis:7.4-alpine` for the Celery broker
-- Official `gotenberg/gotenberg` image and `apache/tika:3.3.1.0` for document conversion + text extraction
+- Official `gotenberg/gotenberg` image and `apache/tika` for document conversion + text extraction
 - Native `_FILE` secret support (`PAPERLESS_DBPASS_FILE`, `PAPERLESS_SECRET_KEY_FILE`)
 
 ## What we changed and why
@@ -47,6 +47,8 @@
   reachable — so breaking changes and advisories in the range are not checked;
   read https://tika.apache.org/ before a host run. The Java requirement of the
   3.x line is unchanged.
+- Run at these tags on the step 8 lab host on 2026-11-02; that run does not
+  replace the change-note check above.
 
 ## Upgrade checklist
 
@@ -57,7 +59,7 @@ Paperless does schema migrations on every minor bump. The classifier model may a
 
    ```bash
    # Use Paperless's own exporter — it knows what to include
-   docker compose exec -u paperless app \
+   docker compose exec paperless-app \
      document_exporter /usr/src/paperless/export --compare-checksums --use-filename-format
    tar czf paperless-export-$(date +%Y%m%d).tgz volumes/export volumes/media
    # Plus raw Postgres dump
@@ -70,14 +72,14 @@ Paperless does schema migrations on every minor bump. The classifier model may a
 5. Watch migrations:
 
    ```bash
-   docker compose logs app --follow
+   docker compose logs paperless-app --follow
    ```
 
-   Expect `Applying migrations...` and `Listening at: http://0.0.0.0:8000`.
+   Expect `Applying migrations...` and `Listening at: http://:::8000`.
 6. Verify:
    - UI loads, document list populated
    - Drop a test PDF in `./volumes/consume/` — it should be consumed within seconds
-   - `docker compose exec app python manage.py check` returns no errors
+   - `docker compose exec paperless-app /command/with-contenv python3 manage.py check` returns no errors
 
 ### Rollback
 
@@ -88,32 +90,38 @@ Paperless's Django migrations are forward-only. Rollback = restore the SQL dump 
 - `postgres:16` — safe to update within 16.x
 - `redis:7.4-alpine` — safe to update within 7.x
 - `gotenberg/gotenberg` — independent; follow its release cadence. Bump conservatively; new majors can change HTTP APIs that Paperless calls.
-- `apache/tika:3.3.1.0` — newest published stable 3.x image tag. Apache's current supported 3.x source release is 3.3.2, but it has no matching official image tag yet; review before the next Tika bump.
+- `apache/tika` — pinned in `.env.example` (`TIKA_TAG`); review its change notes before the next bump.
 
 ## Useful commands
 
+The service is `paperless-app`. `python manage.py` under `exec` does not see the
+secrets the container read at start and stops on `PAPERLESS_SECRET_KEY`; the
+image's wrappers (`createsuperuser`, `document_*`) and `/command/with-contenv`
+carry them (step 8 lab host).
+
 ```bash
 # Shell
-docker compose exec app bash
+docker compose exec paperless-app bash
 
 # Django shell (inspect models)
-docker compose exec app python manage.py shell
+docker compose exec -u paperless paperless-app /command/with-contenv python3 manage.py shell
 
 # Run a specific management command
-docker compose exec app python manage.py <command>
+docker compose exec -u paperless paperless-app /command/with-contenv python3 manage.py <command>
 
 # Common management tasks
-docker compose exec app python manage.py createsuperuser
-docker compose exec app python manage.py document_thumbnails   # regenerate thumbnails
-docker compose exec app python manage.py document_index reindex # rebuild search index
-docker compose exec app python manage.py document_retagger      # rerun tag matching
+docker compose exec paperless-app createsuperuser
+docker compose exec paperless-app document_thumbnails      # regenerate thumbnails
+docker compose exec paperless-app document_index reindex   # rebuild search index
+docker compose exec paperless-app document_retagger        # rerun tag matching
+docker compose exec paperless-app document_sanity_checker  # originals, archives, checksums
 
-# Full export (human-readable, safe to transfer)
-docker compose exec -u paperless app \
+# Full export — mail passwords and other sensitive fields in plain text unless --passphrase
+docker compose exec paperless-app \
   document_exporter /usr/src/paperless/export --compare-checksums --use-filename-format
 
 # Restore from an export
-docker compose exec -u paperless app \
+docker compose exec paperless-app \
   document_importer /usr/src/paperless/export
 
 # Raw DB dump
