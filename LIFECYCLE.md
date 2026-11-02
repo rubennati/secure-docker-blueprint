@@ -4,7 +4,7 @@
 
 Generated 2026-11-02 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-121 stacks: 1 ops-proven · 28 baseline-aligned · 92 scaffolded. 111 carry a local test stack.
+121 stacks: 3 ops-proven · 27 baseline-aligned · 91 scaffolded. 111 carry a local test stack.
 
 This is the maintainer's view: what has been established about each stack. It makes no statement about whether a stack suits a given deployment.
 
@@ -64,7 +64,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/euro-office`](apps/euro-office/) | `scaffolded` | `APP_TAG=v9.3.4-hotfix.1` | — | ✅ | documented | missing |
 | [`apps/ghost`](apps/ghost/) | `scaffolded` | `APP_TAG=6.63.0-alpine` | 2026-07-26 | ✅ | documented | missing |
 | [`apps/greenmail`](apps/greenmail/) | `scaffolded` | `APP_TAG=2.1.15` | 2026-09-22 | ✅ | documented | missing |
-| [`apps/heimdall`](apps/heimdall/) | `baseline-aligned` | `APP_TAG=2.8.3` | 2026-11-02 | ✅ | documented | missing |
+| [`apps/heimdall`](apps/heimdall/) | `ops-proven` | `APP_TAG=2.8.3` | 2026-11-02 | ✅ | documented | missing |
 | [`apps/hemmelig`](apps/hemmelig/) | `scaffolded` | `APP_TAG=v7.4.8` | — | ✅ | documented | missing |
 | [`apps/heyform`](apps/heyform/) | `scaffolded` | `APP_TAG=v3.0.5` | — | ✅ | documented | missing |
 | [`apps/homarr`](apps/homarr/) | `scaffolded` | `APP_TAG=v1.77.1` | 2026-05-02 | ✅ | documented | missing |
@@ -75,7 +75,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/librephotos`](apps/librephotos/) | `scaffolded` | `APP_TAG=1.2.1` | 2026-04-17 ⚠️ | ✅ | documented | missing |
 | [`apps/litellm`](apps/litellm/) | `scaffolded` | `APP_TAG=v1.101.4` | 2026-09-21 | ✅ | documented | missing |
 | [`apps/lycheeorg`](apps/lycheeorg/) | `scaffolded` | `APP_TAG=v7.8.3` | 2026-04-17 ⚠️ | ✅ | documented | missing |
-| [`apps/mailpit`](apps/mailpit/) | `baseline-aligned` | `APP_TAG=v1.31.1` | 2026-09-07 | ✅ | documented | missing |
+| [`apps/mailpit`](apps/mailpit/) | `baseline-aligned` | `APP_TAG=v1.31.1` | 2026-11-02 | ✅ | documented | missing |
 | [`apps/mailserver-jeboehm`](apps/mailserver-jeboehm/) | `scaffolded` | `APP_TAG=8.0.18` | — | ✅ | documented | missing |
 | [`apps/monicahq`](apps/monicahq/) | `scaffolded` | `APP_TAG=4.1.2-apache` | 2026-04-17 ⚠️ | ✅ | documented | missing |
 | [`apps/n8n`](apps/n8n/) | `scaffolded` | `APP_TAG=2.41.7@sha256:bcef56dd4401…` | 2026-05-02 | ✅ | documented | missing |
@@ -100,7 +100,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/threat-dragon`](apps/threat-dragon/) | `scaffolded` | `APP_TAG=v2.6.2` | — | ✅ | documented | missing |
 | [`apps/tymeslot`](apps/tymeslot/) | `baseline-aligned` | `APP_TAG=1.15.1-slim@sha256:4bde62fd9bb1…` | 2026-09-07 | ✅ | documented | missing |
 | [`apps/unifi`](apps/unifi/) | `scaffolded` | `APP_TAG=10.6.101` | 2026-04-17 ⚠️ | ✅ | documented | missing |
-| [`apps/vaultwarden`](apps/vaultwarden/) | `scaffolded` | `APP_TAG=1.37.4` | 2026-06-14 ⚠️ | ✅ | documented | missing |
+| [`apps/vaultwarden`](apps/vaultwarden/) | `ops-proven` | `APP_TAG=1.37.4` | 2026-11-02 | ✅ | documented | missing |
 | [`apps/velociraptor`](apps/velociraptor/) | `scaffolded` | `APP_TAG=0.77.3` | — | ✅ | documented | missing |
 | [`apps/vllm`](apps/vllm/) | `scaffolded` | `APP_TAG=v0.30.0` | — | ✅ | documented | missing |
 | [`apps/whoami`](apps/whoami/) | `baseline-aligned` | `APP_TAG=v1.12.0` | 2026-11-01 | ✅ | documented | missing |
