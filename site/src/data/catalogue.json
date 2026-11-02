@@ -853,7 +853,7 @@
     "role": "File sync and share with calendars, contacts and collaborative editing",
     "state": "ops-proven",
     "upstream": "https://github.com/nextcloud/docker",
-    "verified": "2026-09-13",
+    "verified": "2026-11-02",
     "verified_version": "34.0.4-fpm-alpine",
     "version": "34.0.4-fpm-alpine"
   },
