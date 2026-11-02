@@ -120,11 +120,16 @@ Switch to `access-public` once the instance is configured and verified.
 > # fetches from and saves to is nginx's
 > docker compose exec -u www-data app php occ config:app:set onlyoffice DocumentServerUrl --value="https://office.example.com/"
 > docker compose exec -u www-data app php occ config:app:set onlyoffice StorageUrl --value="http://<nginx>/"
-> # Collabora (the richdocuments app): the server Nextcloud and the browser call, and the
-> # callback it hands out; COLLABORA_ALIASGROUP in the Collabora stack has to admit that
-> # callback host too (http://<nginx>, regex-escaped, with the port)
-> docker compose exec -u www-data app php occ config:app:set richdocuments wopi_url --value="https://office.example.com"
-> docker compose exec -u www-data app php occ config:app:set richdocuments wopi_callback_url --value="http://<nginx>"
+> # and the document server's JWT secret — without it the connector's check answers
+> # "Invalid token"; the connector reads no secret file (the path is the office stack's)
+> docker compose exec -u www-data app php occ config:app:set onlyoffice jwt_secret --value="$(cat ../onlyoffice/.secrets/jwt_secret.txt)"
+> # (Euro-Office: ../euro-office/.secrets/jwt_secret.txt)
+> # Collabora (the richdocuments app, 11.1.2): the server Nextcloud and the browser call,
+> # and the callback it hands out, both through activate-config — a callback set with
+> # config:app:set is reset to "autodetected" when activate-config runs afterwards
+> docker compose exec -u www-data app php occ richdocuments:activate-config --wopi-url="https://office.example.com" --callback-url="http://<nginx>"
+> # COLLABORA_ALIASGROUP in the Collabora stack admits the callback host as an alias of
+> # Nextcloud's group: https://cloud\.example\.com:443,http://nextcloud-nginx:80
 > ```
 >
 > The route stays closed; the office traffic never passes it. OnlyOffice refuses
@@ -135,10 +140,12 @@ Switch to `access-public` once the instance is configured and verified.
 > file: both stacks set `TRAEFIK_NETWORK=proxy-public` and reach each other there,
 > with the consequence `core/traefik/docs/edge-networks.md` names. An office server
 > on another host reaches a closed instance only by its address in
-> `TRUSTED_RANGES`. **Not verified on a host** — the overlay, the settings (the
-> connectors' own: ONLYOFFICE/onlyoffice-nextcloud README, nextcloud/richdocuments
-> `AppConfig`) and the JWT exemption (ONLYOFFICE/server `Common/sources/utils.js`,
-> read 2026-11-02) are open until a document is opened, edited and saved through each server.
+> `TRUSTED_RANGES`. **Measured on the step 8 lab host** (`docs/labs/ingress/2026-11-01-results.md`,
+> "Office servers"): with OnlyOffice and Euro-Office, `office.yml` and these settings, DOCX,
+> XLSX and PPTX opened, saved and reopened behind the closed route, without
+> `ALLOW_PRIVATE_IP_ADDRESS`. **Collabora does not work behind the closed route:** the
+> WOPI calls take nginx, but Collabora then fetches a template preset at Nextcloud's
+> public name, the closed route refuses it, and the document does not open — open.
 
 ### Post-install
 

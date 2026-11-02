@@ -77,12 +77,15 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/healthcheck   # 200 OK
 
 ### Connecting from a consuming app
 
-For each app that will use OnlyOffice, copy the JWT secret into its own secrets directory:
+Each app that uses OnlyOffice needs the same JWT secret. Seafile CE reads it from a file in
+its own secrets directory (Seafile Pro from `ONLYOFFICE_JWT_SECRET` in its `.env`):
 
 ```bash
 cp .secrets/jwt_secret.txt ../../apps/seafile/.secrets/onlyoffice_jwt_secret.txt
-cp .secrets/jwt_secret.txt ../../apps/nextcloud/.secrets/onlyoffice_jwt_secret.txt
 ```
+
+Nextcloud reads no secret file: its connector takes the secret as the setting `jwt_secret`
+(the Nextcloud README, "Office servers behind a closed route").
 
 Then configure that app to point at:
 
