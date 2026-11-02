@@ -29,7 +29,7 @@
 | `X-Forwarded-Proto=https` middleware | Required with `ssl.termination=true` |
 | Admin console left OFF | The `/browser/.../admin` console is an attack surface; enable + restrict deliberately |
 | `deploy.resources` (memory/cpus/pids) | Bound the container; ~50–100 MB per open document above idle |
-| TCP healthcheck on 9980 (bash `/dev/tcp`) | No guaranteed curl in the image |
+| Healthcheck `coolwsd --probe` | The image has no shell and no curl; a shell test never ran, the container stayed unhealthy and Traefik did not route it (step 8 lab host) |
 
 ## Version notes
 
@@ -40,6 +40,8 @@
   Hub, which carries the tag. Breaking changes, `coolwsd.xml` changes and
   advisories in the range are therefore not checked — read
   https://www.collaboraonline.com/release-notes/ before a host run.
+- Run at this tag on the step 8 lab host on 2026-11-02; that run does not replace the
+  release-note check above.
 
 ## Upgrade checklist
 
@@ -50,6 +52,6 @@
 
 ## Known limitations
 
-- **Not yet live-verified** — see the README "Verify on first deploy" gate before marking ✅
-- **Sandbox vs hardening** — `no-new-privileges` may need relaxing depending on host kernel/seccomp
+- **Sandbox under the baseline** — with `cap_drop: ALL`, `MKNOD` and `no-new-privileges` coolwsd builds no chroot jail: no user namespace (seccomp), `coolforkit-caps` not permitted; it runs documents in a Landlock jail and editing works (step 8 lab host, README "Sandbox"). How that compares with the chroot jail was not examined
+- **No proof key** — coolwsd finds none and signs no WOPI request; whether a consumer would check the signature was not examined
 - **LibreOffice format fidelity** — differs from OnlyOffice's MS-native rendering (by design)
