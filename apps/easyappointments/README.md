@@ -6,7 +6,7 @@ Self-hosted appointment booking. Established open-source scheduler since 2013. P
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `alextselegidis/easyappointments:latest` | PHP + Apache + scheduling UI |
+| `easyappointments-app` | `alextselegidis/easyappointments:latest` | PHP + Apache + scheduling UI |
 | `db` | `mariadb:11.4` | Customers, providers, services, appointments |
 
 ## When to pick Easy!Appointments
@@ -50,7 +50,7 @@ sed -i "s|^DB_PWD_INLINE=.*|DB_PWD_INLINE=$(cat .secrets/db_pwd.txt)|" .env
 sudo chown -R 33:33 volumes/storage
 
 docker compose up -d
-docker compose logs app --follow
+docker compose logs easyappointments-app --follow
 # Watch for: "apache2 -D FOREGROUND"
 
 # First visit runs the installation wizard
@@ -100,7 +100,7 @@ to be seen. Reconcile against the notification mail before resuming operation.
 ## Known Issues
 
 - **`APP_TAG=latest` is not reproducible** — pin to a specific version for stable deployments.
-- **Login redirects back to login page after install** — Apache runs as `www-data` (uid 33). If `volumes/storage` is owned by root, session writes fail silently and every login POST redirects back. Fix: `sudo chown -R 33:33 volumes/storage && docker compose restart app`. This is now in the Setup steps above.
+- **Login redirects back to login page after install** — Apache runs as `www-data` (uid 33). If `volumes/storage` is owned by root, session writes fail silently and every login POST redirects back. Fix: `sudo chown -R 33:33 volumes/storage && docker compose restart easyappointments-app`. This is now in the Setup steps above.
 - **Google Calendar sync** requires OAuth client ID / secret via Admin → Settings → Integrations. Not configured via env.
 - **Email notifications** configured in UI (Admin → Settings → Business → Email). SMTP host / credentials live in the DB after setup, not in `.env`.
 - **No built-in payment integration** — this is a booking tool, not a payment gateway. If you need "pay at booking", integrate Stripe manually or use Cal.com.

@@ -8,7 +8,7 @@ Base stack (two services):
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `ghost:6.63.0-alpine` | Ghost CMS (Node.js), serves the blog + admin UI on port `2368` |
+| `ghost-app` | `ghost:6.63.0-alpine` | Ghost CMS (Node.js), serves the blog + admin UI on port `2368` |
 | `db` | `mysql:8.4` | Ghost's content database (posts, members, settings) |
 
 Optional ActivityPub stack (`activitypub.yml`):
@@ -82,7 +82,7 @@ Then set `COMPOSE_FILE=docker-compose.yml:activitypub.yml` in `.env` and run `do
 
 ```bash
 docker compose ps                       # All services healthy
-docker compose logs app --tail 50       # Ghost startup, DB migration messages
+docker compose logs ghost-app --tail 50       # Ghost startup, DB migration messages
 docker compose logs db --tail 20        # MySQL ready-for-connections
 
 # With ActivityPub:

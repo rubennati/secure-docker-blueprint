@@ -10,7 +10,7 @@ Single service:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `onlyoffice/documentserver:9.4.0` | Node.js server + rendering, serves the editor at `/web-apps/apps/api/documents/api.js` |
+| `onlyoffice-app` | `onlyoffice/documentserver:9.4.0` | Node.js server + rendering, serves the editor at `/web-apps/apps/api/documents/api.js` |
 
 There is no DB container in this setup — the image bundles its own PostgreSQL + Redis + RabbitMQ for internal state. This is the upstream-recommended "single container" deployment.
 
@@ -69,7 +69,7 @@ openssl rand -base64 30 | tr -d '\n' > .secrets/jwt_secret.txt
 docker compose up -d
 
 # 4. First boot takes ~90s (PostgreSQL init + document server warm-up)
-docker compose logs app --follow
+docker compose logs onlyoffice-app --follow
 
 # 5. Verify
 curl -fsSI https://<APP_TRAEFIK_HOST>/healthcheck   # 200 OK

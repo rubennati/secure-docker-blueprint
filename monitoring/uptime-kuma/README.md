@@ -8,7 +8,7 @@ Modern successor to Statping — more active (weekly releases), better UI, wider
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `louislam/uptime-kuma:2.5.6` | Web UI + probe scheduler + SQLite store |
+| `uptime-kuma-app` | `louislam/uptime-kuma:2.5.6` | Web UI + probe scheduler + SQLite store |
 
 Data lives in `./volumes/data/` (SQLite DB, monitor state, uploaded icons).
 
@@ -30,7 +30,7 @@ cp .env.example .env
 # Edit: APP_TRAEFIK_HOST, TZ
 mkdir -p volumes/data
 docker compose up -d
-docker compose logs app --follow
+docker compose logs uptime-kuma-app --follow
 # Watch for: "Listening on 3001"
 
 # Open UI and create the owner account on first visit

@@ -10,7 +10,7 @@ Five services:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `ghcr.io/paperless-ngx/paperless-ngx` | Django web app + Celery workers + consumer |
+| `paperless-app` | `ghcr.io/paperless-ngx/paperless-ngx` | Django web app + Celery workers + consumer |
 | `db` | `postgres:16.14` | Primary data store (documents, tags, correspondents, users) |
 | `redis` | `redis:7.4-alpine` | Celery broker + worker heartbeat |
 | `gotenberg` | `gotenberg/gotenberg` | Converts HTML/Office documents to PDF |
@@ -61,11 +61,11 @@ sudo chown -R 1000:1000 volumes/data volumes/media volumes/consume volumes/expor
 docker compose up -d
 
 # 5. Wait for migrations + healthcheck
-docker compose logs app --follow
+docker compose logs paperless-app --follow
 # Look for: "Listening at: http://0.0.0.0:8000"
 
 # 6. Create the first admin user
-docker compose exec app python manage.py createsuperuser
+docker compose exec paperless-app python manage.py createsuperuser
 
 # 7. Open the UI
 # https://<APP_TRAEFIK_HOST>
@@ -122,7 +122,7 @@ Leave `PAPERLESS_EMAIL_HOST` empty to disable outgoing email entirely.
 Then restart:
 
 ```bash
-docker compose up -d --force-recreate app
+docker compose up -d --force-recreate paperless-app
 ```
 
 ### Enabling SSO (optional)
@@ -152,7 +152,7 @@ Authentik must be running with an OAuth2/OIDC provider configured for Paperless.
 
 ```bash
 docker compose ps                                  # All five services healthy
-docker compose exec app python manage.py check    # Django check passes
+docker compose exec paperless-app python manage.py check    # Django check passes
 ```
 
 Drop a PDF into `./volumes/consume/` and watch the logs — it should be consumed, OCR'd, and appear in the UI within a few seconds.

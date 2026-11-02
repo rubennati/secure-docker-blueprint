@@ -6,7 +6,7 @@ Self-hosted newsletter, mailing list manager, and transactional mail. Go single-
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `listmonk/listmonk:v6.2.0` | Admin UI + sender + subscriber endpoints |
+| `listmonk-app` | `listmonk/listmonk:v6.2.0` | Admin UI + sender + subscriber endpoints |
 | `db` | `postgres:16-alpine` | Subscribers, campaigns, templates, analytics |
 
 ## Try it locally
@@ -35,7 +35,7 @@ sed -i "s|^DB_PWD_INLINE=.*|DB_PWD_INLINE=$(cat .secrets/db_pwd.txt)|" .env
 docker compose up -d
 # First boot: --install --idempotent → creates Postgres schema.
 # Admin user is NOT created from env — create it on first login via the web UI.
-docker compose logs app --follow
+docker compose logs listmonk-app --follow
 # Watch for: "http server started on [::]:9000"
 
 # https://<APP_TRAEFIK_HOST>

@@ -10,7 +10,7 @@ For an alternative with an established track record and no build dependency, see
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `ghcr.io/rubennati/cal.diy:v6.2.0-6` | Next.js web app + scheduling engine |
+| `caldiy-app` | `ghcr.io/rubennati/cal.diy:v6.2.0-6` | Next.js web app + scheduling engine |
 | `db` | `postgres:17.11` | Users, event types, bookings, team memberships |
 | `redis` | `redis:7.4-alpine` | Session cache + job queue |
 
@@ -42,7 +42,7 @@ docker run --rm node:lts-alpine npx --yes web-push generate-vapid-keys
 
 # 4. Start
 docker compose up -d
-docker compose logs app --follow
+docker compose logs caldiy-app --follow
 # Watch for: "ready on port 3000"
 
 # https://<APP_TRAEFIK_HOST>
@@ -119,7 +119,7 @@ same-origin, or a per-app middleware replacing `X-Frame-Options` with a
 `frame-ancestors` allowlist — `apps/collabora` and `apps/onlyoffice` show the
 shape. Neither has been run against the embed here.
 
-**Changing a position:** set the new value in `.env` and recreate the app container — `docker compose up -d --force-recreate app`. Container labels are read at create time; Traefik hot-reloads the middleware reference, no Traefik restart needed.
+**Changing a position:** set the new value in `.env` and recreate the app container — `docker compose up -d --force-recreate caldiy-app`. Container labels are read at create time; Traefik hot-reloads the middleware reference, no Traefik restart needed.
 
 ## Backup
 

@@ -6,7 +6,7 @@ Self-hosted photo gallery focused on fast browsing and clean presentation. Three
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `lycheeorg/lychee:v7.8.3` | PHP/Laravel app + Apache |
+| `lychee-app` | `lycheeorg/lychee:v7.8.3` | PHP/Laravel app + Apache |
 | `db` | `mariadb:11.4` | Primary store (albums, photo metadata, users) |
 | `redis` | `redis:7.4-alpine` | Cache + session driver |
 
@@ -48,7 +48,7 @@ sudo chown -R 1000:1000 volumes/conf volumes/uploads volumes/sym volumes/logs vo
 docker compose up -d
 
 # 6. Wait for first-run migrations (~60 seconds — note the STARTUP_DELAY=30)
-docker compose logs app --follow
+docker compose logs lychee-app --follow
 # Watch for: "Started Apache"
 
 # 7. Open UI and create the admin account on first visit
