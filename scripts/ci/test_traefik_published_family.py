@@ -53,6 +53,7 @@ import unittest
 from pathlib import Path
 
 from test_traefik_dashboard_cert import BASE_ENV, TRAEFIK
+import no_daemon
 
 CHECKER = TRAEFIK / "ops" / "scripts" / "check-published-family.py"
 
@@ -597,7 +598,7 @@ class ValidateOutcome(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
 
     def validate(self, *args):
-        return subprocess.run(["bash", str(self.root / "ops/scripts/validate.sh"), *args], capture_output=True, text=True)
+        return subprocess.run(["bash", str(self.root / "ops/scripts/validate.sh"), *args], capture_output=True, text=True, env=no_daemon.env())
 
     def test_open_items_exit_0_without_a_plain_ok(self):
         # The copy has no docker-compose.yml, so the checks are NOT VERIFIED.

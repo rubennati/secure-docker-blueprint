@@ -372,6 +372,13 @@ Three checks over the documentation:
 | Prose register | `scripts/ci/check-prose.py --hints` | every tracked Markdown file |
 | Checker regression tests | `python3 -m unittest discover -s scripts/ci` | the prose checker's own behaviour |
 
+The regression tests do not read the Docker daemon of the machine they run on.
+Every test that runs `core/traefik/ops/scripts/validate.sh` passes it
+`scripts/ci/no_daemon.py`'s environment — no daemon in reach, the client-only
+`docker compose config` still available — and a test about daemon state hands it a
+stub that answers for the daemon. A check against a live daemon is a step of its
+own and says so: `check-overlays.py --require-docker` (§2).
+
 #### What the prose check blocks
 
 A phrase from the [writing-style](writing-style.md) list anywhere in a

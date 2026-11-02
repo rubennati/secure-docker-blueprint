@@ -32,6 +32,7 @@ import unittest
 from pathlib import Path
 
 from test_traefik_dashboard_cert import BASE_ENV, TRAEFIK
+import no_daemon
 
 REPO = Path(__file__).resolve().parents[2]
 VALID_ENV = dict(BASE_ENV, ACME_WILDCARD_DOMAIN="example.com")
@@ -52,7 +53,7 @@ class PublishedPorts(unittest.TestCase):
         (self.root / ".env").write_text("".join(f'{k}="{v}"\n' for k, v in env.items()), encoding="utf-8")
         render = subprocess.run(["bash", str(self.root / "ops/scripts/render.sh")], capture_output=True, text=True)
         self.assertEqual(render.returncode, 0, render.stdout + render.stderr)
-        return subprocess.run(["bash", str(self.root / "ops/scripts/validate.sh")], capture_output=True, text=True)
+        return subprocess.run(["bash", str(self.root / "ops/scripts/validate.sh")], capture_output=True, text=True, env=no_daemon.env())
 
     def test_port_numbers_pass(self):
         r = self.run_with()
@@ -137,7 +138,7 @@ class RenderedBindings(unittest.TestCase):
         return subprocess.run(["bash", str(self.root / "ops/scripts/render.sh")], capture_output=True, text=True)
 
     def validate(self):
-        return subprocess.run(["bash", str(self.root / "ops/scripts/validate.sh")], capture_output=True, text=True)
+        return subprocess.run(["bash", str(self.root / "ops/scripts/validate.sh")], capture_output=True, text=True, env=no_daemon.env())
 
     def ports(self):
         return [l.strip()[3:-1] for l in (self.root / "config" / "published-ports.yml").read_text().splitlines()
@@ -239,7 +240,7 @@ class SubnetVariables(unittest.TestCase):
         (self.root / ".env").write_text("".join(f'{k}="{v}"\n' for k, v in env.items()), encoding="utf-8")
         render = subprocess.run(["bash", str(self.root / "ops/scripts/render.sh")], capture_output=True, text=True)
         self.assertEqual(render.returncode, 0, render.stdout + render.stderr)
-        return subprocess.run(["bash", str(self.root / "ops/scripts/validate.sh")], capture_output=True, text=True)
+        return subprocess.run(["bash", str(self.root / "ops/scripts/validate.sh")], capture_output=True, text=True, env=no_daemon.env())
 
     def test_the_example_prefix_is_refused_with_the_generating_command(self):
         r = self.validate_with(PUBLIC_NETWORK_SUBNET_V4="172.30.0.0/16", PUBLIC_NETWORK_SUBNET_V6="fd00:dead:beef:30::/64")

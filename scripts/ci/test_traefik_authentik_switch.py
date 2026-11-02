@@ -24,6 +24,7 @@ from pathlib import Path
 import yaml
 
 from test_traefik_dashboard_cert import BASE_ENV, TRAEFIK
+import no_daemon
 
 VALID_ENV = dict(BASE_ENV, ACME_WILDCARD_DOMAIN="example.com")
 DEFAULT_ADDRESS = "http://authentik-server:9000/outpost.goauthentik.io/auth/traefik"
@@ -44,7 +45,7 @@ class AuthentikSwitch(unittest.TestCase):
         return subprocess.run(["bash", str(self.root / "ops/scripts/render.sh")], capture_output=True, text=True)
 
     def validate(self):
-        return subprocess.run(["bash", str(self.root / "ops/scripts/validate.sh")], capture_output=True, text=True)
+        return subprocess.run(["bash", str(self.root / "ops/scripts/validate.sh")], capture_output=True, text=True, env=no_daemon.env())
 
     def authentik_file(self):
         return self.root / "config" / "dynamic" / "authentik.yml"
