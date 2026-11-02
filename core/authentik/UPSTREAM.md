@@ -15,7 +15,7 @@
 - **Domain:** Identity, access and secrets
 - **Role:** Identity provider with forward-auth, OAuth2, OpenID Connect and SAML
 - **Based on version:** `2026.5.7`
-- **Last verified:** 2026-07-26 (v2026.5.6)
+- **Last verified:** 2026-11-02 (v2026.5.7) — step 8 lab host behind Traefik 3.7.17 with PostgreSQL 16 and Redis 7.4: first-run setup from the root URL, a login through the flow executor with password and TOTP (a lab script driving the endpoints the browser UI uses, not a browser), forward-auth through the embedded outpost (302 to the login, `X-Authentik-Username` after it, 500 and never 200 with the server stopped), e-mail delivered through a relay over the worker's `app-egress` network with the corrected compose file applied (docs/labs/ingress/2026-11-01-results.md)
 
 ## What we use
 

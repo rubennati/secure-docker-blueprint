@@ -2310,10 +2310,10 @@
     "name": "Authentik",
     "path": "core/authentik",
     "role": "Identity provider with forward-auth, OAuth2, OpenID Connect and SAML",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://github.com/goauthentik/authentik/pkgs/container/server",
-    "verified": "2026-07-26",
-    "verified_version": "v2026.5.6",
+    "verified": "2026-11-02",
+    "verified_version": "v2026.5.7",
     "version": "2026.5.7"
   },
   "core/crowdsec": {
