@@ -272,8 +272,9 @@ network behind them is dual-stack for a new installation. There is no network mo
 `scripts/ci/test_traefik_render_identity.py` holds the rendered configuration of the
 IPv4-only and the dual-stack shape against v0.9.5 outside the regions a decision moved.
 Before v1.0 a breaking change with a migration is preferred to a compatibility gate
-(DEC-076, amended). Adding an edge network costs a recreate of Traefik (about two
-seconds, measured); a stack whose network Traefik does not join is unreachable and the
+(DEC-076, amended). Adding an edge network costs a recreate of Traefik, which
+interrupts every stack it routes for about seven seconds (measured on a host; addendum
+2026-11-02 below); a stack whose network Traefik does not join is unreachable and the
 log says nothing, so the label rule and the derived list are what make the default
 safe. The IPv4 address pool of a default daemon holds 32 user networks (measured) — two
 per stack plus the three of `core/traefik`, so fourteen stacks before
@@ -306,6 +307,18 @@ DEC-063's default for a new installation. `render.sh` refuses an IPv6 binding wi
 overlay. The nine stacks the audit listed bind each
 published port to a required `*_BIND` variable, IPv4 as shipped. The IPv6 endpoint,
 an IPv6-only host and the bound stacks over IPv6 are host proofs of step 8.
+
+**Addendum 2026-11-02 — what a recreate costs, measured on a host.** The step 8 lab run
+(`docs/labs/ingress/2026-11-01-results.md`, N2 and N5) measured a Traefik recreate at
+6.5–7.3 s during which no stack is served: from the stop signal Traefik accepts no new
+connection, the old container takes 3.3–4.8 s to exit and the new one 1.6–2.0 s to
+start. The "about two seconds" of the 2026-10-31 lab run measured the start alone, and
+the plan's expectation that the other stacks keep answering during a move failed
+against the measurement (N2). The interruption is accepted as the operating behaviour
+of the single Traefik instance this architecture runs; a highly available ingress is not
+part of it. `core/traefik/docs/edge-networks.md` and `.env.example` state the measured
+figures, and the way back runs stack first, then the list. Nothing else in this entry
+changes.
 
 **Refines DEC-063.** The goals stand — dual-stack for a new installation, IPv4-only and
 IPv6-only supported, no automatic change, no security lost by the default. The three

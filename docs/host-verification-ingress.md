@@ -124,7 +124,7 @@ declared range: set `TRUSTED_RANGES` to the LAN range for this block and render.
 | A6 | nothing trusted without a declaration | **covered** | `test_traefik_model.py`: empty admits nobody, unset refused | not run again |
 | A7 | a forged header changes nothing, over IPv6 (IPv4 covered by lab T5) | manual | from OUT6: `curl -6 -H 'X-Forwarded-For: <a TS6 address>'` and `-H 'X-Real-Ip: …'` on `w-vpn` → 403; whoami behind `w-public` shows `OUT6`, not the forged value | 403, real address |
 | A8 | the tailnet's IPv6 path into `access-trusted` | manual | from TS6 on `w-trusted` → 403: no implicit ULA, and the tailnet range is not trusted by being private | 403 |
-| A9 | a host-local process over IPv6 (IPv4 covered by lab T3d) | manual | on H1: `curl --resolve 'w-vpn.$ZONE:443:[::1]'` → 403 | 403 |
+| A9 | a host-local process over IPv6 (IPv4 covered by lab T3d) | manual | on H1: `curl --resolve 'w-vpn.$ZONE:443:[<H1's global IPv6 address>]'` → 403; over `[::1]` no connection — with `userland-proxy: false` Docker does not forward the IPv6 loopback address to a container ([`ipv6-dual-stack.md`](../core/traefik/docs/ipv6-dual-stack.md)) | 403 over the global address; no connection over `[::1]` |
 
 ## G — the auth posture on a host (DEC-077)
 
@@ -167,10 +167,10 @@ S1, S2, S3 below.
 | ID | Test | How | Expected | Pass when |
 |---|---|---|---|---|
 | N1 | the shared state lets web containers reach each other | **covered** | lab T1d, T2a–T2d | not run again |
-| N2 | the move, stack by stack | manual | the four steps of [`edge-networks.md`](../core/traefik/docs/edge-networks.md), "Moving a shared installation", for S1, S2, S3; during each, a probe loop against the other two stacks (`curl` every 0.2 s) | the other stacks keep answering; the moved one returns after its recreate |
+| N2 | the move, stack by stack | manual | the four steps of [`edge-networks.md`](../core/traefik/docs/edge-networks.md), "Moving a shared installation", for S1, S2, S3; during each, a probe loop against the other two stacks (`curl` every 0.2 s) | every stack is interrupted for Traefik's recreate, about seven seconds (DEC-075, addendum 2026-11-02); the other stacks answer again once Traefik runs, the moved one once its healthcheck passes |
 | N3 | isolation on edge networks | **covered** | lab T1a–T1c | not run again; N2's probes show each moved stack still served |
 | N4 | the validator follows | read | `validate.sh --strict` exits 0; remove S3's network from `EDGE_NETWORKS` without moving S3 back → error naming the network | 0, then the error |
-| N5 | the way back | manual | the same steps with `TRAEFIK_NETWORK=proxy-public` for all three; every stack served; `validate.sh --strict` exits 0 | as before N2 |
+| N5 | the way back | manual | the way back of [`edge-networks.md`](../core/traefik/docs/edge-networks.md) for all three — the stack to `TRAEFIK_NETWORK=proxy-public` first, then its network out of `EDGE_NETWORKS`; every stack served; `validate.sh --strict` exits 0 | as before N2 |
 
 ## B — the existing shapes, migrated and rolled back (step 7, DEC-075.3)
 
@@ -267,13 +267,17 @@ open.
 | A1–A5 (TS, LAN) | 2026-11-01 | H1 | not run | no VPN on the lab host by the operator's decision for this phase; no LAN client |
 | A7 | 2026-11-01 | H1 | pass | from OUT6 with a forged `X-Forwarded-For`/`X-Real-Ip` (tailnet example): `w-vpn` 403; `w-public` shows OUT6 |
 | A8 | 2026-11-01 | H1 | not run | needs a tailnet client |
-| A9 | 2026-11-01 | H1 | deviation | `--resolve …:[::1]` on `w-vpn`: no connection (timeout), not 403 — `userland-proxy: false` does not forward IPv6 loopback (`ipv6-dual-stack.md`); over the host's global IPv6 address and over 127.0.0.1: 403 |
+| A9 | 2026-11-01 | H1 | deviation; expectation corrected | `--resolve …:[::1]` on `w-vpn`: no connection (timeout), not 403 — `userland-proxy: false` does not forward IPv6 loopback (`ipv6-dual-stack.md`); over the host's global IPv6 address and over 127.0.0.1: 403. The expected 403 over `[::1]` contradicted `ipv6-dual-stack.md`; the row was corrected on 2026-11-02, and this measurement meets it |
 | G4 | 2026-11-01 | H1 | pass, host-local | Heimdall: no credentials 401, wrong 401, right 200; router carries `heimdall-auth@docker`; reached through a router admitting the host itself only (deviation, see report) |
-| N2 | 2026-11-01 | H1 | fail | each Traefik recreate interrupted every stack for 6.5–7.3 s, not only the one moved; the moved stack returned after its healthcheck |
+| N2 | 2026-11-01 | H1 | fail; expectation corrected | each Traefik recreate interrupted every stack for 6.5–7.3 s, not only the one moved; the moved stack returned after its healthcheck. The plan expected the other stacks to keep answering; on 2026-11-02 the maintainer accepted the measured interruption as the operating behaviour of the single Traefik instance (DEC-075, addendum), the row now expects it, and this measurement meets it |
 | N4 | 2026-11-01 | H1 | pass after correction | `--strict`: only the marker; a network dropped from `EDGE_NETWORKS` while Traefik still joined it passed with exit 0 — corrected in `0d33bad` |
-| N5 | 2026-11-01 | H1 | pass | all three stacks served on `proxy-public` again; the moved-back stack is unreachable between step 1 and step 3 when the list is shortened first |
+| N5 | 2026-11-01 | H1 | pass | all three stacks served on `proxy-public` again; the moved-back stack is unreachable between step 1 and step 3 when the list is shortened first; stack first, measured for whoami, keeps the two interruptions apart (report, finding 2) — the method the row names since 2026-11-02 |
 | B1–B5 (dual-stack) | 2026-11-01 | H1 | pass | migrated state identical to the v0.9.5 state apart from the decided `gw_priority`; rollback identical to B1 |
 | B1–B5 (IPv4-only) | 2026-11-01 | H1 | pass | addresses and families identical; the DNAT moves from `crowdsec-security` to `proxy-public` (the decided change of step 2); rollback identical to B1 |
 | M1 | 2026-11-01 | H1 | pass | the hoster's console used once with a break-glass account; `sudo` asked for its password |
 
 The run report is [`labs/ingress/2026-11-01-results.md`](labs/ingress/2026-11-01-results.md).
+
+A row corrected after the run — A9 and N2 their expectation, N5 its method — keeps its
+first result and names the correction; the release gate judges it against the row as it
+now stands.
