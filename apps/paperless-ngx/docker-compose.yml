@@ -108,13 +108,16 @@ services:
     security_opt:
       - no-new-privileges:true
     # --- Resources ---
-    # Document conversion; spikes per document.
+    # Document conversion; spikes per document. Chromium and LibreOffice run
+    # side by side: 149 PIDs at peak converting HTML and DOCX together, 433 MiB
+    # (step 8 lab host). At 100 Chromium could not start — every e-mail and HTML
+    # document failed with 503 while LibreOffice still converted.
     memswap_limit: 1G          # == memory: no swap
     deploy:
       resources:
         limits:
           memory: 1G
-          pids: 100
+          pids: 300
         reservations:
           memory: 128M
 
@@ -130,6 +133,8 @@ services:
     # so a 3xx passes either way. What omitting it really buys is that a
     # broken application still reports healthy. Add `-f` once the response
     # this endpoint gives during startup is known (v0.8.0 / .ai/tasks.md).
+    # Neither / nor /health noticed a Chromium that could not start: both
+    # answered 200, /health with "chromium up" (step 8 lab host).
     healthcheck:
       test: ["CMD-SHELL", "curl -sS -o /dev/null --max-time 5 http://127.0.0.1:3000/"]
       interval: 30s
@@ -240,6 +245,8 @@ services:
       PAPERLESS_EMAIL_HOST_USER: ${PAPERLESS_EMAIL_HOST_USER}
       PAPERLESS_EMAIL_HOST_PASSWORD_FILE: /run/secrets/EMAIL_PWD
       PAPERLESS_EMAIL_USE_TLS: ${PAPERLESS_EMAIL_USE_TLS}
+      # Implicit TLS for port 465 — USE_TLS is STARTTLS on 587; never both.
+      PAPERLESS_EMAIL_USE_SSL: ${PAPERLESS_EMAIL_USE_SSL}
       PAPERLESS_EMAIL_FROM: ${PAPERLESS_EMAIL_FROM}
     secrets:
       - DB_PWD
@@ -292,8 +299,11 @@ services:
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.service=${COMPOSE_PROJECT_NAME}"
 
     # --- Health & Observability ---
+    # The login page, not /: / redirects to it whatever the state and stayed
+    # healthy with the database stopped, while the login page answered 500
+    # (step 8 lab host).
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/ >/dev/null || exit 1"]
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/accounts/login/ >/dev/null || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
