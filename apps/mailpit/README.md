@@ -39,15 +39,22 @@ cp .env.example .env
 # 2. Create the message store, owned by USERMAP_UID (your own account, by default)
 mkdir -p volumes/data
 
-# 3. Start
+# 3. The UI and API login — a bcrypt htpasswd, one user per line (MP_UI_AUTH_FILE)
+mkdir -p .secrets && chmod 700 .secrets
+docker run --rm httpd:2.4-alpine htpasswd -Bbn ops "$(openssl rand -base64 24)" > .secrets/mailpit_htpasswd.txt
+chmod 600 .secrets/mailpit_htpasswd.txt     # keep the password from that line in your password manager
+
+# 4. Start
 docker compose up -d
 
-# 4. Open in browser
+# 5. Open in browser
 # https://<APP_TRAEFIK_HOST>
 # Reachable through Tailscale/VPN only by default (access-vpn).
 ```
 
-No secrets, no accounts, no setup page.
+One secret, the htpasswd; no accounts inside Mailpit, no setup page. Without the file the start stops
+with `bind source path does not exist`. The API answers only under the host name in `MP_ALLOWED_HOSTS`
+— a script that reads it over a Docker network sends that name as `Host`.
 
 ## Verify
 
