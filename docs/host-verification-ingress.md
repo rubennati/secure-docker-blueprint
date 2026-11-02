@@ -262,7 +262,7 @@ open.
 | E4 | 2026-11-01 | H1 | pass | from OUT: `X-Real-Ip` and `X-Forwarded-For` = OUT4; access log `ClientHost` = OUT4 |
 | E5 | 2026-11-01 | H1 | pass | from OUT: `X-Real-Ip` and `X-Forwarded-For` = OUT6, no gateway address |
 | E6 | 2026-11-01 | H1 | pass | `validate.sh --strict` names only the exposure marker; nothing PENDING or NOT VERIFIED from the family check |
-| X1 | 2026-11-01 | H1 | pass | with `8f19db3` from OUT, one run per address: 80 and 443 answer on IPv4 and on IPv6, 8080, 2375, 2376, 3306, 5432, 6379, 8025, 11434 closed on both; SSH answers on IPv4 (the operator's address is admitted upstream), not on IPv6. The first run, before `8f19db3`, reported every open port closed (curl exits 28 after a connect) |
+| X1 | 2026-11-01 | H1 | pass | with `8f19db3` from OUT, one run per address: 80 and 443 answer on IPv4 and on IPv6, 8080, 2375, 2376, 3306, 5432, 6379, 8025, 11434 closed on both; SSH answers on IPv4, not on IPv6 — reported, not judged; the filter in front of H1 decides it. The first run, before `8f19db3`, reported every open port closed (curl exits 28 after a connect) |
 | A1–A5 (OUT4, OUT6) | 2026-11-01 | H1 | pass | `w-public` 200/200; `w-trusted`, `w-vpn`, `w-trusted-vpn`, `w-blocked` 403/403 |
 | A1–A5 (TS, LAN) | 2026-11-01 | H1 | not run | no VPN on the lab host by the operator's decision for this phase; no LAN client |
 | A7 | 2026-11-01 | H1 | pass | from OUT6 with a forged `X-Forwarded-For`/`X-Real-Ip` (tailnet example): `w-vpn` 403; `w-public` shows OUT6 |
