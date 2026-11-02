@@ -94,8 +94,8 @@ Exact configuration UI differs per app — see the consuming app's README.
 
 The document server calls the consuming app back to fetch and save documents, and a
 closed access policy on that app refuses a call from a container (DEC-076). Nextcloud
-takes an internal address for it (`StorageUrl`, its README, "Office servers behind a
-closed route"); Seafile opens the two paths the document server uses — the document fetch and the save
+takes an internal address for it (`StorageUrl`) and reaches this stack's edge network
+through its `office.yml` (its README, "Office servers behind a closed route"); Seafile opens the two paths the document server uses — the document fetch and the save
 callback — with `onlyoffice-callback.yml`, or trusts the server's address in `TRUSTED_RANGES`.
 
 ## Verify

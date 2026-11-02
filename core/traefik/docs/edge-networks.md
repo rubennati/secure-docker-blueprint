@@ -103,10 +103,16 @@ stacks set `TRAEFIK_NETWORK=proxy-public`, and the stack's README names the
 consequence. `apps/mailpit` and `apps/greenmail` ship that way, because being
 reached by every other stack is what they are for — and a stack that points its
 SMTP settings at `mailpit:1025` or `greenmail:3025` sets `proxy-public` too:
-on its own edge network the name does not resolve and the port is not reachable. An office server calling a
-file host back does not need it: it calls the file host's public name through
-Traefik (`apps/seafile/README.md`, "Access policy"; `apps/nextcloud/README.md`,
-"Office servers behind a closed route").
+on its own edge network the name does not resolve and the port is not reachable.
+
+An office server calling a file host back is a pair, not every stack, and needs
+neither stack on the shared network. Seafile hands the office server only its
+public name and opens the two paths it calls (`apps/seafile/README.md`, "Access
+policy"). Nextcloud has internal address settings for the callback: its opt-in
+`office.yml` joins Nextcloud's nginx alone to the office stack's edge network, so
+the office server reaches nginx by name and nothing else gains a path
+(`apps/nextcloud/README.md`, "Office servers behind a closed route"). The PHP
+container stays off that network — its FastCGI port answers whoever reaches it.
 
 ## The address pool
 

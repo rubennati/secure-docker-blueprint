@@ -1,0 +1,33 @@
+# --------------------------------------------------------
+# OFFICE NETWORK — opt-in, with OnlyOffice, Euro-Office or Collabora
+# --------------------------------------------------------
+# An office server calls Nextcloud back — the document fetch and the save
+# (OnlyOffice, Euro-Office), the WOPI callback (Collabora). A closed access
+# policy refuses a call from a container, so the call goes over a Docker
+# network the two share, with the connector's own setting (DEC-076.4). On edge
+# networks (DEC-075) Nextcloud and the office server share none: this file
+# joins Nextcloud's web container — nginx, nothing else — to the office
+# stack's edge network. The office server then reaches nginx by its container
+# name; nginx reaches Traefik and the office server on that network, which it
+# can reach through Traefik anyway. The PHP container is not joined: on the
+# office network its FastCGI port would answer the office server unauthenticated.
+#
+# Nextcloud calls the office server at its public name, as the browser does —
+# the office route is access-public. The connector settings are in the README,
+# "Office servers behind a closed route".
+#
+#   OFFICE_NETWORK=onlyoffice-edge        # the office stack's TRAEFIK_NETWORK
+#   COMPOSE_FILE=docker-compose.yml:office.yml
+#
+# Traefik keeps dialling nginx on TRAEFIK_NETWORK (the label is unchanged).
+# The office stack's network is created by Traefik when EDGE_NETWORKS lists it;
+# start the office stack first.
+services:
+  nextcloud-nginx:
+    networks:
+      - office
+
+networks:
+  office:
+    name: ${OFFICE_NETWORK}
+    external: true

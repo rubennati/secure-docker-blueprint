@@ -44,7 +44,9 @@ curl http://localhost:9980/   # → "OK"
 - [ ] `aliasgroup1` matches your Nextcloud/Seafile host exactly (regex, escaped dots, `:443`)
 - [ ] A document opens and saves from Nextcloud/Seafile through Collabora
 - [ ] Behind a closed access policy, Nextcloud hands Collabora its internal address
-      (`wopi_callback_url`, the Nextcloud README, "Office servers behind a closed route")
+      (`wopi_callback_url`) and joins this stack's edge network with its `office.yml`;
+      `aliasgroup1` admits that callback host as well (the Nextcloud README, "Office
+      servers behind a closed route")
 - [ ] Admin console is not publicly reachable (kept off by default)
 
 ## Backup
