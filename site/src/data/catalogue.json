@@ -460,7 +460,7 @@
     "name": "Heimdall",
     "path": "apps/heimdall",
     "role": "Application launcher with widgets",
-    "state": "baseline-aligned",
+    "state": "ops-proven",
     "upstream": "https://docs.linuxserver.io/images/docker-heimdall/",
     "verified": "2026-11-02",
     "verified_version": "2.8.3",
@@ -731,7 +731,7 @@
     "role": "SMTP sink that catches every outgoing message and shows it, delivering nothing",
     "state": "baseline-aligned",
     "upstream": "https://hub.docker.com/r/axllent/mailpit",
-    "verified": "2026-09-07",
+    "verified": "2026-11-02",
     "verified_version": "v1.31.1",
     "version": "1.31.1"
   },
@@ -1388,10 +1388,10 @@
     "name": "Vaultwarden",
     "path": "apps/vaultwarden",
     "role": "Password manager: logins, TOTP and shared collections",
-    "state": "scaffolded",
+    "state": "ops-proven",
     "upstream": "https://github.com/dani-garcia/vaultwarden",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-11-02",
+    "verified_version": "1.37.4",
     "version": "1.37.4"
   },
   "apps/velociraptor": {

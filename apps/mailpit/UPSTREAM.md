@@ -11,7 +11,7 @@
 - **Domain:** Developer tools
 - **Role:** SMTP sink that catches every outgoing message and shows it, delivering nothing
 - **Based on version:** `v1.31.1`
-- **Last verified:** 2026-09-07 (v1.31.1)
+- **Last verified:** 2026-11-02 (v1.31.1) — step 8 lab host: the SMTP sink for `apps/vaultwarden` on `proxy-public` (its verification mail delivered and read back), the API refused without credentials and answering with them only under the host name in `MP_ALLOWED_HOSTS` (docs/labs/ingress/2026-11-01-results.md)
 
 ## What we use
 

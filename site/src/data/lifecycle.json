@@ -194,7 +194,7 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=2.8.3",
     "restore_docs": "missing",
-    "state": "baseline-aligned",
+    "state": "ops-proven",
     "verified": "2026-11-02",
     "verified_anchored": true,
     "verified_version": "2.8.3"
@@ -305,7 +305,7 @@
     "pinned": "APP_TAG=v1.31.1",
     "restore_docs": "missing",
     "state": "baseline-aligned",
-    "verified": "2026-09-07",
+    "verified": "2026-11-02",
     "verified_anchored": true,
     "verified_version": "v1.31.1"
   },
@@ -554,10 +554,10 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=1.37.4",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "2026-06-14",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "ops-proven",
+    "verified": "2026-11-02",
+    "verified_anchored": true,
+    "verified_version": "1.37.4"
   },
   "apps/velociraptor": {
     "backup_docs": "documented",
