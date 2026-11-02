@@ -74,10 +74,10 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=26.04.5.2.1",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "—",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "baseline-aligned",
+    "verified": "2026-11-02",
+    "verified_anchored": true,
+    "verified_version": "26.04.5.2.1"
   },
   "apps/dashy": {
     "backup_docs": "documented",
@@ -164,10 +164,10 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=v9.3.4-hotfix.1",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "—",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "baseline-aligned",
+    "verified": "2026-11-02",
+    "verified_anchored": true,
+    "verified_version": "v9.3.4-hotfix.1"
   },
   "apps/ghost": {
     "backup_docs": "documented",
@@ -384,10 +384,10 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=9.4.0",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "2026-06-14",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "baseline-aligned",
+    "verified": "2026-11-02",
+    "verified_anchored": true,
+    "verified_version": "9.4.0"
   },
   "apps/open-webui": {
     "backup_docs": "documented",
