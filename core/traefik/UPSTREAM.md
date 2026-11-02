@@ -15,8 +15,8 @@
 - **Origin:** France · Traefik Labs · EU
 - **Domain:** Infrastructure
 - **Role:** Reverse proxy: TLS, access policies and security headers in front of every other service
-- **Based on versions:** Traefik `v3.7`, docker-socket-proxy `v0.5.0`
-- **Last verified:** 2026-11-01 (v3.7.17, socket-proxy v0.5.0) — step 8 lab host, dual-stack `direct` profile: ACME DNS-01 wildcard, the published ports per family with the IPv6 DNAT on `proxy-public`, the access policies from outside over IPv4 and IPv6, edge networks moved and back, the v0.9.5 `.env` migrated and rolled back in both shapes, the CrowdSec bouncer and AppSec at the entrypoint (docs/labs/ingress/2026-11-01-results.md). The pin `v3.7` floats; this names the release that ran
+- **Based on versions:** Traefik `v3.7.17`, docker-socket-proxy `v0.5.0`
+- **Last verified:** 2026-11-01 (v3.7.17, socket-proxy v0.5.0) — step 8 lab host, dual-stack `direct` profile: ACME DNS-01 wildcard, the published ports per family with the IPv6 DNAT on `proxy-public`, the access policies from outside over IPv4 and IPv6, edge networks moved and back, the v0.9.5 `.env` migrated and rolled back in both shapes, the CrowdSec bouncer and AppSec at the entrypoint (docs/labs/ingress/2026-11-01-results.md). The pin names this release since 2026-11-02
 - **Support window:** upstream policy since 3.6 is six months of support from a minor's GA date, with the last minor of a major supported for two years after the next major — https://doc.traefik.io/traefik/deprecation/releases/. 3.7 went GA 2026-05-05 and is the current line. **3.6 left security support on 2026-08-16** and 2.11 on 2026-09-07; neither is a pin target. Check this date before the next bump, not the version number alone.
 
 ## What we use
@@ -52,7 +52,12 @@
 
 ## Version / tag notes
 
-- `traefik:v3.7` is pinned to the 3.7 minor line, which resolves to `3.7.13`. It was
+- **Pinned to the exact release `v3.7.17` since 2026-11-02**, the release the step 8
+  lab host verified. Until then the pin was the 3.7 minor line, `traefik:v3.7`, which
+  can resolve to a newer patch with no change in this repository — the drift
+  `docs/standards/status-model.md` does not count as verified. A patch release is now
+  a bump like any other, with the checklist below.
+- `traefik:v3.7` was pinned to the 3.7 minor line, which then resolved to `3.7.13`. It was
   moved off `v3.6` on 2026-09-13 because 3.6 had left security support on 2026-08-16
   and six advisories published 2026-09-07 and 2026-09-10 have no fix on any 3.6
   release: CVE-2026-88007 (critical, HTTP/3 backend NTLM connection reuse),

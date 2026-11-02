@@ -4,7 +4,7 @@
 
 Generated 2026-11-02 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-121 stacks: 1 ops-proven · 28 baseline-aligned · 92 scaffolded. 111 carry a local test stack.
+121 stacks: 1 ops-proven · 29 baseline-aligned · 91 scaffolded. 111 carry a local test stack.
 
 This is the maintainer's view: what has been established about each stack. It makes no statement about whether a stack suits a given deployment.
 
@@ -37,7 +37,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`core/shellhub`](core/shellhub/) | `scaffolded` | `SHELLHUB_VERSION=v0.27.0-rc.11` | — | ✅ | documented | missing |
 | [`core/step-ca`](core/step-ca/) | `scaffolded` | `APP_TAG=0.30.2` | — | ✅ | documented | missing |
 | [`core/teleport`](core/teleport/) | `scaffolded` | `APP_TAG=18.11.0` | — | ✅ | documented | missing |
-| [`core/traefik`](core/traefik/) | `scaffolded` | `TRAEFIK_IMAGE=traefik:v3.7` | 2026-11-01 | — | documented | missing |
+| [`core/traefik`](core/traefik/) | `baseline-aligned` | `TRAEFIK_IMAGE=traefik:v3.7.17` | 2026-11-01 | — | documented | missing |
 | [`core/warpgate`](core/warpgate/) | `scaffolded` | `APP_TAG=0.29.0` | — | ✅ | documented | missing |
 | [`core/zot`](core/zot/) | `scaffolded` | `APP_TAG=v2.1.22` | — | ✅ | documented | missing |
 
