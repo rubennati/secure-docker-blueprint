@@ -34,7 +34,7 @@ The upstream Docker compose example is minimal (app + db, linked via env). Bluep
 | `no-new-privileges:true` on both services | Baseline hardening |
 | Healthcheck-gated `depends_on` | Prevents EA from starting before MariaDB is ready |
 | `TZ` env on both services | Blueprint convention |
-| Default access `access-public`, `limit-standard` and `headers-standard` | Booking URLs must reach external visitors |
+| Default access `access-vpn`; `access-public` after the installation wizard | The wizard sets the administrator for whoever reaches it first; booking URLs must reach external visitors afterwards |
 
 ## Version notes
 

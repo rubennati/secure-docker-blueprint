@@ -53,8 +53,12 @@ docker compose up -d
 docker compose logs easyappointments-app --follow
 # Watch for: "apache2 -D FOREGROUND"
 
-# First visit runs the installation wizard
+# First visit runs the installation wizard — over the VPN, the router ships closed (below)
 # https://<APP_TRAEFIK_HOST>/index.php/installation
+
+# Open the booking page once the administrator exists: in .env
+#   APP_TRAEFIK_ACCESS=access-public
+docker compose up -d   # recreates the app with the new label
 ```
 
 The installation wizard asks for:
@@ -66,12 +70,17 @@ After install, log in at `/index.php/user/login` (backend) or `/index.php/backen
 
 ## Security Model
 
-- **First-visit install wizard** — open the URL immediately after `docker compose up` so an attacker cannot register first.
+- **The open window, and why the router starts closed** — until the installation wizard has run,
+  whoever reaches `/index.php/installation` first sets the administrator; there is no setup
+  password, and a new certificate's name is scanned within minutes. `.env.example` ships
+  `APP_TRAEFIK_ACCESS=access-vpn` (or `access-trusted` with your address in `TRUSTED_RANGES`
+  where there is no VPN). Guests cannot book through a closed router, so `access-public` is the
+  step after the wizard; what it then exposes is the login form.
 - **`DB_PWD_INLINE` duplicates DB password** — Easy!Appointments reads `DB_PASSWORD` inline from env, no `_FILE` support.
 - **`cap_drop: ALL`** + minimal `cap_add` on MariaDB.
 - **`no-new-privileges:true`** on both services.
 - **MariaDB on `app-internal` (`internal: true`)** — DB not reachable from outside.
-- **Default access `access-public`, `limit-standard` and `headers-standard`** — booking URLs must be reachable by external visitors.
+- **`access-public` after the wizard, `limit-standard` and `headers-standard`** — booking URLs must be reachable by external visitors; the backend shares the host and the policy.
 
 ## Backup
 
