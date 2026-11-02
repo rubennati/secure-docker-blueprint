@@ -919,6 +919,55 @@ else
     --container "${TRAEFIK_CONTAINER_NAME}" \
     --daemon-check "${DOCKER_DAEMON_CHECK:-}" || family_rc=$?
 fi
+
+# The static configuration Traefik runs: config/traefik.yml is read once, at
+# the start of the container. render.sh replaces the file (a new inode) and the
+# running container keeps the one it started with; a plain 'docker compose up -d'
+# does not recreate it for that. Compared inside the container — its content
+# with the rendered file, and its time with the container's start, which catches
+# an edit in place. What cannot be read here is NOT VERIFIED, never passed.
+static_rc=0
+if [ -f "${ROOT_DIR}/config/traefik.yml" ]; then
+  static_file=/etc/traefik/traefik.yml
+  recreate="'docker compose up -d --force-recreate traefik' here loads it; a plain 'up -d' does not."
+  if ! command -v docker >/dev/null 2>&1 || ! docker info >/dev/null 2>&1; then
+    echo "NOT VERIFIED: the static configuration Traefik runs was not compared with config/traefik.yml (Docker did not answer here)."
+    static_rc=3
+  elif ! started="$(docker inspect -f '{{.State.Running}} {{.State.StartedAt}}' "${TRAEFIK_CONTAINER_NAME}" 2>/dev/null)" \
+       || [ "${started%% *}" != true ]; then
+    echo "NOT VERIFIED: ${TRAEFIK_CONTAINER_NAME} is not running — the static configuration it runs was not compared with config/traefik.yml."
+    static_rc=3
+  elif ! running_static="$(docker exec "${TRAEFIK_CONTAINER_NAME}" cat "${static_file}" 2>/dev/null)" \
+       || ! static_mtime="$(docker exec "${TRAEFIK_CONTAINER_NAME}" stat -c %Y "${static_file}" 2>/dev/null)"; then
+    echo "NOT VERIFIED: ${static_file} could not be read in ${TRAEFIK_CONTAINER_NAME} — the static configuration it runs was not compared with config/traefik.yml."
+    static_rc=3
+  elif [ "${running_static}" != "$(cat "${ROOT_DIR}/config/traefik.yml")" ]; then
+    echo "PENDING: config/traefik.yml differs from the static configuration ${TRAEFIK_CONTAINER_NAME} started with —"
+    echo "         ${recreate}"
+    static_rc=3
+  else
+    # newer | older | unknown: the file's time inside the container against the start
+    static_age="$(python3 - "${started#* }" "${static_mtime}" <<'PYEOF_STATIC' 2>/dev/null || echo unknown
+import re, sys
+from datetime import datetime
+started = re.sub(r"\.\d+", "", sys.argv[1]).replace("Z", "+00:00")
+print("newer" if int(sys.argv[2]) > int(datetime.fromisoformat(started).timestamp()) else "older")
+PYEOF_STATIC
+)"
+    case "${static_age}" in
+      older) ;;
+      newer)
+        echo "PENDING: config/traefik.yml was changed after ${TRAEFIK_CONTAINER_NAME} started; Traefik runs the version it read then —"
+        echo "         ${recreate}"
+        static_rc=3 ;;
+      *)
+        echo "NOT VERIFIED: the start of ${TRAEFIK_CONTAINER_NAME} or the time of ${static_file} could not be read — an edit since the start was not ruled out."
+        static_rc=3 ;;
+    esac
+  fi
+fi
+[ "${static_rc}" -eq 3 ] && [ "${family_rc}" -eq 0 ] && family_rc=3
+
 case "${family_rc}" in
   0)
     if [ "${open_items}" -ne 0 ]; then

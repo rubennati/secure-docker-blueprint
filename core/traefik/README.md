@@ -161,13 +161,14 @@ its marker in `config/exposure-verified` for a public binding
 
 IPv6 only concerns ingress. The public network still carries IPv4 behind Traefik, and what a host without IPv4 egress needs for its outbound connections is the prerequisite list in the ingress audit (§3.4); that shape is not verified on a host yet.
 
-`validate.sh` refuses `address:port` in a port variable and prints the lines that keep the binding — `TRAEFIK_HTTPS_PORT=0.0.0.0:443` becomes `TRAEFIK_HTTPS_PORT=443` and `TRAEFIK_BIND_V4=0.0.0.0`. It then compares the published address families with the network, the Docker daemon and the running container:
+`validate.sh` refuses `address:port` in a port variable and prints the lines that keep the binding — `TRAEFIK_HTTPS_PORT=0.0.0.0:443` becomes `TRAEFIK_HTTPS_PORT=443` and `TRAEFIK_BIND_V4=0.0.0.0`. It then compares the published address families with the network, the Docker daemon and the running container, and the static configuration the container started with — `config/traefik.yml` is read once, at the start — with the rendered file:
 
 | Result | Meaning | What to do |
 |---|---|---|
 | `ERROR` | IPv6 published while `proxy-public` has none; the overlay while the daemon keeps `docker-proxy` (`userland-proxy` not `false`), has `ip6tables` off or cannot be read; the overlay while the existing network is IPv4-only | correct `.env`, the daemon or the network — [`docs/ipv6-dual-stack.md`](docs/ipv6-dual-stack.md) |
 | `PENDING` | the running container is published differently from the configuration, or `docker-proxy` relays one of its IPv6 ports | `docker compose up -d` recreates Traefik |
-| `NOT VERIFIED` | a check could not run — no Docker CLI, Docker refused an inspect — or the running container was created from other compose files than the ones checked | run where Docker answers, with the deployment's compose files |
+| `PENDING` | `config/traefik.yml` differs from the file the running container started with, or was changed after its start — the entrypoint bouncer, a timeout, the trusted ranges | `docker compose up -d --force-recreate traefik`; a plain `up -d` does not recreate it for a changed file |
+| `NOT VERIFIED` | a check could not run — no Docker CLI, Docker refused an inspect or an exec, Traefik is not running — or the running container was created from other compose files than the ones checked | run where Docker answers, with the deployment's compose files |
 
 With no `ERROR` but something pending or not verified, `validate.sh` prints `VALID, SECURITY NOT CONFIRMED` and exits 0, so it does not block the update that resolves it. After `docker compose up -d`, confirm the deployment:
 
