@@ -48,9 +48,13 @@ unauthenticated setup form is reachable.
 cp .env.example .env
 # Edit: APP_TRAEFIK_HOST, NC_TRUSTED_PROXIES, TZ, and the SMTP block
 
-# 2. Find the correct NC_TRUSTED_PROXIES value — both families if IPv6 is enabled
-docker network inspect proxy-public \
+# 2. Find the correct NC_TRUSTED_PROXIES value: the network Traefik reaches nginx on —
+#    the stack's TRAEFIK_NETWORK, nextcloud-edge as shipped (it exists once Traefik has
+#    rendered and joined it), proxy-public on the shared network; both families if IPv6
+docker network inspect nextcloud-edge \
   --format '{{range .IPAM.Config}}{{.Subnet}} {{end}}'
+#    Another network's range makes Nextcloud record Traefik as every client: one
+#    brute-force counter for all, and no client address in the log.
 
 # 3. Generate the six secrets
 mkdir -p .secrets
@@ -199,8 +203,13 @@ docker compose ps
 # Nextcloud installed and reachable
 docker compose exec -u www-data app php occ status
 
-# Confirm trusted proxies are set correctly
+# Confirm trusted proxies are set correctly — exactly the subnets of step 2
 docker compose exec -u www-data app php occ config:system:get trusted_proxies
+#    More entries than NC_TRUSTED_PROXIES has: the install wrote the value it started
+#    with into config.php, and the environment replaces that list by position, so an
+#    entry beyond the new list's length stays trusted. Drop the stored list; the
+#    environment value is the one that remains:
+#      docker compose exec -u www-data app php occ config:system:delete trusted_proxies
 
 # Confirm Redis is reachable and the correct policy is active
 docker compose exec redis sh -c \
