@@ -4,7 +4,7 @@
 
 Generated 2026-11-02 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-121 stacks: 5 ops-proven · 31 baseline-aligned · 85 scaffolded. 111 carry a local test stack.
+121 stacks: 6 ops-proven · 32 baseline-aligned · 83 scaffolded. 111 carry a local test stack.
 
 This is the maintainer's view: what has been established about each stack. It makes no statement about whether a stack suits a given deployment.
 
@@ -88,7 +88,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/opencanary`](apps/opencanary/) | `scaffolded` | `APP_TAG=0.9.10` | — | ✅ | documented | missing |
 | [`apps/opnform`](apps/opnform/) | `scaffolded` | `APP_TAG=2.5.0` | 2026-04-17 ⚠️ | ✅ | documented | missing |
 | [`apps/paperless-gpt`](apps/paperless-gpt/) | `scaffolded` | `APP_TAG=v0.28.0` | — | ✅ | documented | missing |
-| [`apps/paperless-ngx`](apps/paperless-ngx/) | `scaffolded` | `APP_TAG=3.1.3` | 2026-05-03 | ✅ | documented | missing |
+| [`apps/paperless-ngx`](apps/paperless-ngx/) | `ops-proven` | `APP_TAG=3.1.3` | 2026-11-02 | ✅ | documented | missing |
 | [`apps/photoprism`](apps/photoprism/) | `scaffolded` | `APP_TAG=260919` | 2026-04-17 ⚠️ | ✅ | documented | missing |
 | [`apps/photoview`](apps/photoview/) | `scaffolded` | `APP_TAG=2.4.0` | 2026-04-17 ⚠️ | ✅ | documented | missing |
 | [`apps/privatebin`](apps/privatebin/) | `scaffolded` | `APP_TAG=2.0.6` | — | ✅ | documented | missing |
