@@ -11,7 +11,7 @@
 - **Domain:** Developer tools
 - **Role:** Collection of small utilities: converters, generators and formatters
 - **Based on version:** `2024.10.22-7ca5933` (upstream uses date + commit hash, not semver)
-- **Last verified:** 2026-05-02 (v2024.10.22-7ca5933)
+- **Last verified:** 2026-11-02 (v2024.10.22-7ca5933) — step 8 lab host behind Traefik 3.7.17: healthy, the tool list's page and its JavaScript and CSS assets through the route; moved from the shared network to its edge network and back (docs/labs/ingress/2026-11-01-results.md)
 
 ## What we use
 

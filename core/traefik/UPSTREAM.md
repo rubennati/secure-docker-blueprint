@@ -16,7 +16,7 @@
 - **Domain:** Infrastructure
 - **Role:** Reverse proxy: TLS, access policies and security headers in front of every other service
 - **Based on versions:** Traefik `v3.7`, docker-socket-proxy `v0.5.0`
-- **Last verified:** 2026-09-13 (v3.7.13, socket-proxy v0.5.0) — moved from 3.6.10 on a live host with the dual-stack overlay: 13 routed hosts plus one external consumer answered with the same status codes before and after, HTTP/3 answered a `--http3-only` request, the CrowdSec bouncer plugin loaded and polled the LAPI within one second of start, and the socket proxy served the Docker API on the unchanged template. Nothing in the rendered configuration changed for the move.
+- **Last verified:** 2026-11-01 (v3.7.17, socket-proxy v0.5.0) — step 8 lab host, dual-stack `direct` profile: ACME DNS-01 wildcard, the published ports per family with the IPv6 DNAT on `proxy-public`, the access policies from outside over IPv4 and IPv6, edge networks moved and back, the v0.9.5 `.env` migrated and rolled back in both shapes, the CrowdSec bouncer and AppSec at the entrypoint (docs/labs/ingress/2026-11-01-results.md). The pin `v3.7` floats; this names the release that ran
 - **Support window:** upstream policy since 3.6 is six months of support from a minor's GA date, with the last minor of a major supported for two years after the next major — https://doc.traefik.io/traefik/deprecation/releases/. 3.7 went GA 2026-05-05 and is the current line. **3.6 left security support on 2026-08-16** and 2.11 on 2026-09-07; neither is a pin target. Check this date before the next bump, not the version number alone.
 
 ## What we use
