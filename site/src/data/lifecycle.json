@@ -484,20 +484,20 @@
     "local_stack": "✅",
     "pinned": "APP_IMAGE=seafileltd/seafile-mc:13.0.20",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "2026-04-16",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "ops-proven",
+    "verified": "2026-11-02",
+    "verified_anchored": true,
+    "verified_version": "13.0.20"
   },
   "apps/seafile-pro": {
     "backup_docs": "documented",
     "local_stack": "✅",
     "pinned": "APP_TAG=13.0.21",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "2026-04-13",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "ops-proven",
+    "verified": "2026-11-02",
+    "verified_anchored": true,
+    "verified_version": "13.0.21"
   },
   "apps/shlink": {
     "backup_docs": "documented",
