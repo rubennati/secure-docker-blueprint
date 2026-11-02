@@ -177,10 +177,10 @@
     "name": "Collabora Online",
     "path": "apps/collabora",
     "role": "Office document editing server based on LibreOffice",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://github.com/CollaboraOnline/online",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-11-02",
+    "verified_version": "26.04.5.2.1",
     "version": "26.04.5.2.1"
   },
   "apps/dashy": {
@@ -398,10 +398,10 @@
     "name": "Euro-Office",
     "path": "apps/euro-office",
     "role": "EU-governed fork of OnlyOffice, a drop-in document editing server",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://github.com/euro-office/DocumentServer",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-11-02",
+    "verified_version": "v9.3.4-hotfix.1",
     "version": "9.3.4-hotfix.1"
   },
   "apps/ghost": {
@@ -956,10 +956,10 @@
     "name": "OnlyOffice Document Server",
     "path": "apps/onlyoffice",
     "role": "Document editing server for Nextcloud, Seafile and similar",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://hub.docker.com/r/onlyoffice/documentserver",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-11-02",
+    "verified_version": "9.4.0",
     "version": "9.4.0"
   },
   "apps/open-webui": {

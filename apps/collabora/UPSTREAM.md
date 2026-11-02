@@ -12,7 +12,7 @@
 - **Domain:** Documents and e-signature
 - **Role:** Office document editing server based on LibreOffice
 - **Based on version:** `26.04.5.2.1`
-- **Last verified:** — (config authored 2026-07-26; not yet run on a live server)
+- **Last verified:** 2026-11-02 (26.04.5.2.1) — step 8 lab host on its edge network, after correcting the healthcheck: DOCX, XLSX and PPTX opened, edited, saved and reopened over WOPI from a lab host and through Nextcloud's `richdocuments` — there only with Nextcloud's public name reachable from the container; behind Nextcloud's closed route the document does not open (the report) — and Seafile CE with settings the blueprint does not ship; a WOPI host outside the alias groups is refused; the admin console answers 401; resources and timings measured — headless Chromium, no official client (docs/labs/ingress/2026-11-01-results.md)
 
 ## What we use
 

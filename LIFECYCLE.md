@@ -4,7 +4,7 @@
 
 Generated 2026-11-02 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-121 stacks: 5 ops-proven · 28 baseline-aligned · 88 scaffolded. 111 carry a local test stack.
+121 stacks: 5 ops-proven · 31 baseline-aligned · 85 scaffolded. 111 carry a local test stack.
 
 This is the maintainer's view: what has been established about each stack. It makes no statement about whether a stack suits a given deployment.
 
@@ -52,7 +52,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/calnode`](apps/calnode/) | `baseline-aligned` | `APP_TAG=0.9.0` | 2026-09-22 | ✅ | documented | missing |
 | [`apps/calrs`](apps/calrs/) | `baseline-aligned` | `APP_TAG=1.17.1` | 2026-09-22 | ✅ | documented | missing |
 | [`apps/ciso-assistant`](apps/ciso-assistant/) | `scaffolded` | `APP_TAG=v4.0.9` | 2026-09-22 | ✅ | documented | missing |
-| [`apps/collabora`](apps/collabora/) | `scaffolded` | `APP_TAG=26.04.5.2.1` | — | ✅ | documented | missing |
+| [`apps/collabora`](apps/collabora/) | `baseline-aligned` | `APP_TAG=26.04.5.2.1` | 2026-11-02 | ✅ | documented | missing |
 | [`apps/dashy`](apps/dashy/) | `scaffolded` | `APP_TAG=4.8.7` | 2026-05-02 | ✅ | documented | missing |
 | [`apps/defectdojo`](apps/defectdojo/) | `baseline-aligned` | `APP_TAG=3.3.100` | 2026-09-22 | ✅ | documented | missing |
 | [`apps/dependency-track`](apps/dependency-track/) | `scaffolded` | `APP_TAG=5.1.0` | — | ✅ | documented | missing |
@@ -61,7 +61,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/docker-mailserver`](apps/docker-mailserver/) | `scaffolded` | `APP_TAG=16.0.1` | — | ✅ | documented | missing |
 | [`apps/docling-serve`](apps/docling-serve/) | `baseline-aligned` | `APP_TAG=v1.34.0` | 2026-09-22 | ✅ | documented | missing |
 | [`apps/easyappointments`](apps/easyappointments/) | `scaffolded` | `APP_TAG=1.6.1` | 2026-05-03 | ✅ | documented | missing |
-| [`apps/euro-office`](apps/euro-office/) | `scaffolded` | `APP_TAG=v9.3.4-hotfix.1` | — | ✅ | documented | missing |
+| [`apps/euro-office`](apps/euro-office/) | `baseline-aligned` | `APP_TAG=v9.3.4-hotfix.1` | 2026-11-02 | ✅ | documented | missing |
 | [`apps/ghost`](apps/ghost/) | `scaffolded` | `APP_TAG=6.63.0-alpine` | 2026-07-26 | ✅ | documented | missing |
 | [`apps/greenmail`](apps/greenmail/) | `scaffolded` | `APP_TAG=2.1.15` | 2026-09-22 | ✅ | documented | missing |
 | [`apps/heimdall`](apps/heimdall/) | `ops-proven` | `APP_TAG=2.8.3` | 2026-11-02 | ✅ | documented | missing |
@@ -83,7 +83,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/nocodb`](apps/nocodb/) | `scaffolded` | `APP_TAG=2026.09.0` | 2026-05-02 | ✅ | documented | missing |
 | [`apps/obot`](apps/obot/) | `scaffolded` | `APP_TAG=v0.26.0` | — | ✅ | documented | missing |
 | [`apps/ollama`](apps/ollama/) | `baseline-aligned` | `APP_TAG=0.34.2` | 2026-09-21 | ✅ | documented | missing |
-| [`apps/onlyoffice`](apps/onlyoffice/) | `scaffolded` | `APP_TAG=9.4.0` | 2026-06-14 ⚠️ | ✅ | documented | missing |
+| [`apps/onlyoffice`](apps/onlyoffice/) | `baseline-aligned` | `APP_TAG=9.4.0` | 2026-11-02 | ✅ | documented | missing |
 | [`apps/open-webui`](apps/open-webui/) | `baseline-aligned` | `APP_TAG=v0.11.3` | 2026-09-21 | ✅ | documented | missing |
 | [`apps/opencanary`](apps/opencanary/) | `scaffolded` | `APP_TAG=0.9.10` | — | ✅ | documented | missing |
 | [`apps/opnform`](apps/opnform/) | `scaffolded` | `APP_TAG=2.5.0` | 2026-04-17 ⚠️ | ✅ | documented | missing |
