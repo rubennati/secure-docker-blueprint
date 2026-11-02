@@ -29,9 +29,11 @@ services:
 
     # --- Configuration ---
     # No _FILE support (OnlyOffice fork) — entrypoint wrapper reads the
-    # Docker Secret and exports JWT_SECRET, then execs the DS start script.
+    # Docker Secret and exports JWT_SECRET, then execs the image's own start script,
+    # /entrypoint.sh. The fork does not ship OnlyOffice's /app/ds/run-document-server.sh:
+    # with that path the container exited 127 in a restart loop (step 8 lab host).
     # EXAMPLE_ENABLED is left OFF — the demo server is an unauthenticated endpoint.
-    entrypoint: ["/bin/bash", "/config/entrypoint.sh", "/app/ds/run-document-server.sh"]
+    entrypoint: ["/bin/bash", "/config/entrypoint.sh", "/entrypoint.sh"]
     environment:
       JWT_ENABLED: "true"
       WOPI_ENABLED: "true"
@@ -42,8 +44,9 @@ services:
     # --- Storage ---
     volumes:
       - ./config/entrypoint.sh:/config/entrypoint.sh:ro
-      - ./volumes/data:/var/www/onlyoffice/Data
-      - ./volumes/logs:/var/log/onlyoffice
+      # The fork's own paths, not OnlyOffice's — /var/www/onlyoffice/Data persisted nothing.
+      - ./volumes/data:/var/www/euro-office/Data
+      - ./volumes/logs:/var/log/euro-office
 
     # --- Networking ---
     networks:
