@@ -110,11 +110,30 @@ Traefik (`apps/seafile/README.md`, "Access policy"; `apps/nextcloud/README.md`,
 
 ## The address pool
 
-A default daemon hands out 32 user networks (measured). Two per stack — edge and
-`app-internal` — plus the three of `core/traefik` is fourteen stacks before the
-pool is spent and `docker network create` fails with "all predefined address
-pools have been fully subnetted". A host with more stacks sets a larger pool once
-in `/etc/docker/daemon.json`:
+Docker gives each new network the next free subnet of its address pools. Without
+`default-address-pools` in `daemon.json`, those are Docker's built-in pools: the `/16`s
+from `172.17` to `172.31`, then `/20`s of `192.168.0.0/16`. A subnet already in use —
+by another network, or by a route the host has — is skipped. How many networks fit,
+and when the daemon reaches `192.168.0.0/16`, therefore depends on the host: its
+routes and the networks it already has. Each stack adds two (edge and
+`app-internal`), `core/traefik` three.
+
+Measured, not a general limit:
+
+- A throwaway daemon in the ingress audit (2026-10-31) created 32 networks before
+  `docker network create` failed with "all predefined address pools have been fully
+  subnetted".
+- On the step 8 lab host (2026-11-02) the provider's gateway route lies in
+  `172.31.0.0/16`. The default bridge and thirteen networks took `172.17` to
+  `172.30`, and the next one — a stack's edge network — was given `192.168.0.0/20`.
+
+A subnet there matters when the networks around the host use the same addresses: a
+LAN, or a range in `TRUSTED_RANGES`, then shares them with a container network, and
+`validate.sh` refuses such a range (DEC-076.3) — on the lab host it refused a test's
+`192.168.10.0/24`. A host that expects many stacks, or sits in a LAN within one of the
+built-in pools, sets a pool once, before the stacks are created, on a base that
+overlaps neither the LAN, the VPN range, `TRUSTED_RANGES` nor the host's routes;
+networks that exist keep their subnets until they are recreated. For example:
 
 ```json
 {
