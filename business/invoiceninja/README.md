@@ -149,7 +149,7 @@ curl -sI https://your-domain/            # 200 or 302
 - [ ] SMTP configured and tested (send a test invoice)
 - [ ] Backup strategy in place (see UPSTREAM.md)
 - [ ] Upgrade check: verify `APP_TAG` against latest stable release (see UPSTREAM.md)
-- [ ] Consider tightening `TRUSTED_PROXIES` from `*` to the Traefik network CIDR
+- [ ] `TRUSTED_PROXIES` covers the network Traefik reaches nginx on — Docker's default address pools as shipped, the edge network's subnet once you pin it (`.env.example`, "TRUSTED_PROXIES")
 
 ## Services
 
