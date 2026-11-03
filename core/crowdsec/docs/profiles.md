@@ -119,7 +119,7 @@ named **`geo-*`** because it is *not* a CrowdSec-plugin mechanism — see below.
 
 ### `threat-crowdsec-appsec`
 
-- **Purpose:** `threat-crowdsec` **plus** synchronous WAF inspection of each request (SQLi, XSS, path traversal, virtual patches) via the AppSec engine.
+- **Purpose:** `threat-crowdsec` **plus** synchronous inspection of each request by the AppSec engine with the shipped rule sets — virtual patches and a small generic set, no Core Rule Set: SQL injection, XSS and traversal probes passed it on a host ([appsec.md](appsec.md)).
 - **Intended for:** a deployment whose public applications' traffic has been tested against the WAF and shown clean — after the engine is confirmed reachable from Traefik. It replaces `threat-crowdsec` on the entrypoint for every router at once (`CROWDSEC_APPSEC_ENABLED=true`).
 - **Blocks:** banned IPs **and** individual requests matching a WAF rule. AppSec blocks the request without creating an IP ban (see [appsec.md](appsec.md)).
 - **AppSec:** yes, **fail-open** (`crowdsecAppsecFailureBlock: false`, `crowdsecAppsecUnreachableBlock: false`).

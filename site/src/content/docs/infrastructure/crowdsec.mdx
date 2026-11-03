@@ -86,9 +86,10 @@ through the ports already open. And neither applies to the VPN you administer
 the host over — that interface is deliberately outside the enforcement path, for
 reasons the firewall section explains.
 
-Running both is not redundancy. Measured here: a decision reaches the kernel in
-about 15 seconds and clears again in about 10, while the proxy plugin acts on
-its own polling cycle in between.
+Running both is not redundancy. Measured on a host: a decision reaches the
+kernel's address set in about 15 seconds and clears again in about 10, while the
+proxy plugin acts on its own polling cycle in between. The rules that drop traffic
+from that set have not been run on a host — see the firewall section.
 
 ### What the firewall layer inherits the moment you enable it
 
@@ -97,8 +98,8 @@ host that had quietly accumulated **roughly 15,800 addresses** — known-bad, wi
 nothing enforcing them, because the engine only decides.
 
 Alongside them sat one the engine had found itself: an address probing this host
-for common exploit paths, eleven events, banned three hours earlier. Until the
-firewall layer existed, that ban applied only to HTTP through the proxy.
+for common exploit paths, eleven events, banned three hours earlier. Without host
+enforcement, that ban applies only to HTTP through the proxy.
 
 ## What it can and cannot see
 
@@ -133,7 +134,10 @@ against a public router:
 | `/vendor/phpunit/…/eval-stdin.php` | **blocked** |
 
 The shipped rules are virtual patches for named CVEs plus a small generic set —
-not a general injection filter. It stops the mass scanning that finds any public
+not a general injection filter. The engine that evaluates them is Coraza, built
+into CrowdSec's AppSec component rather than a separate service; the OWASP Core
+Rule Set could run in it but is not installed here. The shipped middleware is
+fail-open: with the engine stopped, requests pass (measured on a test host). It stops the mass scanning that finds any public
 host within minutes of a certificate being issued, which is most of what arrives
 uninvited. It will not stop an attack crafted against your application's own
 parameters, and it is no reason to relax anything about input handling.
@@ -230,6 +234,7 @@ The engine above is detection only. Two enforcement layers add blocking. They ar
     public interface
        │
        ├── CrowdSec host enforcement    banned source → dropped here
+       │   (designed, optional; blocking rule not yet run on a host)
        │
        ▼
     Docker → Traefik → applications
