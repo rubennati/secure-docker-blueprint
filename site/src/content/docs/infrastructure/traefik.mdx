@@ -39,14 +39,28 @@ Don't use Cloudflare, or don't want a wildcard? See "Certificate strategy" under
    ACME_WILDCARD_DOMAIN=example.com
    ```
 
-3. Render and start:
+   Unless you run IPv4 only, also replace the example IPv6 prefix in
+   `PUBLIC_NETWORK_SUBNET_V6` with one of your own — `validate.sh` refuses the
+   example on purpose ([dual-stack, below](#networking-dual-stack-by-default-two-bind-variables)).
+
+3. List the edge networks of the stacks you will install (see
+   [Edge networks](#edge-networks-one-per-stack) below). It can stay empty until
+   the first stack:
+
+   ```ini
+   EDGE_NETWORKS="whoami-edge nextcloud-edge"
+   ```
+
+4. Check, render, check again and start:
 
    ```bash
+   bash ops/scripts/validate.sh
    bash ops/scripts/render.sh
+   bash ops/scripts/validate.sh
    docker compose up -d
    ```
 
-4. Confirm both containers are healthy:
+5. Confirm both containers are healthy:
 
    ```bash
    docker compose ps
@@ -79,6 +93,33 @@ docker exec traefik-core cat /etc/traefik/acme/acme.json | jq '.[] | .Certificat
 
 ## Going further
 
+### Edge networks: one per stack
+
+Each application stack ships on a Docker network of its own,
+`TRAEFIK_NETWORK=${COMPOSE_PROJECT_NAME}-edge` — `nextcloud-edge`, `whoami-edge`.
+Traefik creates and joins exactly the networks listed in `EDGE_NETWORKS` in
+`core/traefik/.env`: `render.sh` writes them into `config/edge-networks.yml`, which
+`COMPOSE_FILE` applies, and each stack declares its network as external. Nothing
+creates a network automatically when a stack appears.
+
+**A stack whose network is not listed is unreachable, and Traefik's log says
+nothing.** `validate.sh` compares the network label of every running routed
+container with `EDGE_NETWORKS` and with the networks Traefik has joined, and
+reports the one missing.
+
+Adding a stack is: list its network, `bash ops/scripts/render.sh`,
+`docker compose up -d` in `core/traefik`, then start the stack. That `up -d`
+recreates Traefik, which **interrupts every stack it routes for about seven
+seconds** (measured on a test host) — plan it like a short maintenance window.
+
+On its own edge network a stack's web container reaches Traefik and its own
+internal network, nothing else. `proxy-public` stays as the shared choice
+(`TRAEFIK_NETWORK=proxy-public`) for stacks that must reach each other by service
+name, at the cost that every member reaches every other directly. It also carries
+Traefik's published ports in both shapes. Moving an existing shared installation
+and the way back:
+[`core/traefik/docs/edge-networks.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/traefik/docs/edge-networks.md).
+
 ### Networking: dual-stack by default, two bind variables
 
 Host ingress is two variables in `core/traefik/.env`, one per address family:
@@ -95,6 +136,10 @@ network without IPv6, Docker hands the connection to Traefik from the bridge
 gateway — the access policy then sees a private address, not the client, and
 answers 403. Traffic arriving through a Cloudflare-proxied (orange-cloud) record is
 unaffected, because the real address is recovered from a trusted forwarded header.
+That a tailnet client over IPv6 is seen with its own address was measured on a host
+before the current bindings and edge networks; with the current configuration the
+tailnet path is **not verified** yet, while a client off the host over public IPv4
+and IPv6 is.
 
 <Tabs>
   <TabItem label="Dual-stack (default)">
@@ -169,6 +214,27 @@ network and a cutover, not an overlay applied to the live network:
 [`core/traefik/docs/ipv6-dual-stack.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/traefik/docs/ipv6-dual-stack.md).
 :::
 
+### Exposure profile and host firewall
+
+There is no exposure variable. `validate.sh` derives a **profile** from the two
+bindings and `TRAEFIK_FORWARDED_PROXY` — `direct` (published to everyone),
+`proxied` (behind Cloudflare) or `private` (only loopback, LAN or VPN addresses) —
+and prints which protection layers are present and which are absent: host
+firewall, CrowdSec, forward-auth, origin protection.
+
+What the internet actually reaches only a measurement from outside shows:
+`scripts/exposure-test.sh <address> <profile>`, run from a machine that is not on
+the VPN, ends with a marker line you append to `config/exposure-verified`.
+`validate.sh --strict` requires that marker for a public binding.
+
+`render.sh` also writes a host firewall for the profile,
+`config/host/ingress.nft` — an `nftables` table of its own that closes the host's
+input path except for the VPN and keeps Docker's forward path open. It is
+**optional, and nothing in the blueprint loads it**: the operator installs it.
+Its syntax is checked in CI; loaded on a host it has **not been verified** yet.
+How to load it with a way back:
+[`core/traefik/docs/host-firewall.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/traefik/docs/host-firewall.md).
+
 ### Certificate strategy
 
 The path above is one of four. The others work too — the only hard constraint is that wildcard certificates require DNS-01, since Let's Encrypt issues wildcards over no other challenge, whatever the server can reach.
@@ -199,7 +265,9 @@ Cloudflare's proxy status (orange-cloud vs. DNS-only) is a separate, per-record 
 ## Troubleshooting
 
 :::caution
-**A 403 from a Tailscale client that should be allowed** — check the access log's `ClientHost` field. `100.x.x.x` or `fd7a:115c:a1e0::...` is correct. `172.x.x.x` from a remote client is the dual-stack issue above. `172.x.x.x` from a `curl` run *on the Traefik host itself* is a different, harmless Docker behavior (hairpin NAT) — test from a separate client instead.
+**A 403 from a Tailscale client that should be allowed** — check the access log's `ClientHost` field (the tailnet path is not verified with the current configuration; this is the check to run).
+
+**A stack that answers 404 or nothing at all** — its network is probably missing from `EDGE_NETWORKS`, or Traefik has not been recreated since it was added. `bash ops/scripts/validate.sh` names it. `100.x.x.x` or `fd7a:115c:a1e0::...` is correct. `172.x.x.x` from a remote client is the dual-stack issue above. `172.x.x.x` from a `curl` run *on the Traefik host itself* is a different, harmless Docker behavior (hairpin NAT) — test from a separate client instead.
 :::
 
 ```bash
@@ -223,7 +291,7 @@ docker compose config | sed -E 's/(CF_DNS_API_TOKEN: ).*/\1***REDACTED***/'
 # Bump TRAEFIK_IMAGE in .env, then:
 bash ops/scripts/render.sh
 docker compose pull
-docker compose up -d
+docker compose up -d       # recreates Traefik: every routed stack pauses ~7 s
 docker compose logs traefik 2>&1 | grep -i error   # should be empty
 ```
 
@@ -233,6 +301,8 @@ Never jump major versions without reading the migration guide — the configurat
 
 - [`core/traefik/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/traefik/README.md) — full setup, the middleware model, the CrowdSec and Authentik switches
 - [`core/traefik/docs/ipv6-dual-stack.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/traefik/docs/ipv6-dual-stack.md) — dual-stack networking in depth
+- [`core/traefik/docs/edge-networks.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/traefik/docs/edge-networks.md) — edge networks, the shared network, migration and the way back
+- [`core/traefik/docs/host-firewall.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/traefik/docs/host-firewall.md) — exposure profile, host firewall, exposure test
 - [`core/traefik/.env.example`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/traefik/.env.example) — all configurable variables
 - [`docs/standards/traefik-security.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/docs/standards/traefik-security.md) — the four router positions (access, rate limit, headers, auth), the entrypoint pair, TLS profiles
 - [`TROUBLESHOOTING.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/TROUBLESHOOTING.md) — symptoms this blueprint has hit, with their fixes

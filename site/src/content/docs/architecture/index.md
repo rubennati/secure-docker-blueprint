@@ -12,38 +12,52 @@ before *changing* something.
 ## One way in
 
 ```text
-                        internet / VPN
-                              │
-                              ▼
-                    ┌───────────────────┐
-                    │      Traefik      │  TLS, routing, access rules
-                    └─────────┬─────────┘
-                              │  proxy-public   (shared network)
-              ┌───────────────┼───────────────┐
-              ▼               ▼               ▼
-          app A web       app B web       app C web
-              │               │               │
-        app-a-internal   app-b-internal  app-c-internal   (isolated, one per app)
-              │               │               │
-        database, cache  database, cache  database, cache
+                     internet / VPN
+                           │
+   host firewall (optional, operator-installed, not verified on a host)
+                           │  ports 80/443, published on proxy-public
+                           ▼
+   ┌───────────────────────────────────┐
+   │ Traefik   TLS · access policy     │
+   │           rate limit · headers    │   crowdsec-security
+   │           CrowdSec bouncer ───────┼──► CrowdSec engine
+   │           forward-auth (opt.) ────┼──► Authentik     LAPI · AppSec
+   └─────────────────┬─────────────────┘   (optional)      (engine: Coraza)
+                     │  one edge network per stack
+                     │  (default; proxy-public is the shared choice)
+       ┌─────────────┼─────────────┐
+       ▼             ▼             ▼
+   app A web     app B web     app C web
+       │             │             │
+   A-internal    B-internal    C-internal      isolated, one per app
+       │             │             │
+   db, cache     db, cache     db, cache
+                     └─ B-egress: outbound only, where a stack needs one
 ```
 
-The applications publish no ports. **From outside the host**, an application is
+Web applications publish no ports. **From outside the host**, a web application is
 reached through the proxy and nowhere else, which is why there is exactly one
 place where TLS is configured, one place where rate limits live, and one place
-to look when something is unreachable.
+to look when something is unreachable. The exceptions are the stacks whose
+protocol is not HTTP — UniFi, OpenCanary and the access gateways under `core/`
+(Teleport, Warpgate, ShellHub and others): each publishes its ports on a
+host address the operator must set, and their examples ship `0.0.0.0`.
 
-Inside the shared proxy network it is not a guarantee: containers on one Docker
-network address each other directly, so a compromised front end can reach
-another front end without the proxy in between. That is the lateral path the
-architecture leaves open, and it is treated as part of the threat model below.
+Containers on one Docker network address each other directly. On its own edge
+network a front end reaches the proxy and nothing else; a stack placed on the
+shared `proxy-public` network can reach the other front ends there without the
+proxy in between. That is the lateral path the shared choice leaves open, and it
+is treated as part of the threat model below.
 
 **Two networks per application, and they do different jobs.**
 By default each stack has its own edge network, which the proxy joins (`EDGE_NETWORKS`
-in `core/traefik/.env`); `proxy-public` is the shared choice. On it, the proxy and each application's web-facing container
-sit on it, and that is all. Each application also gets its own internal network
+in `core/traefik/.env` — a stack whose network is not listed there is unreachable).
+Only the proxy and the stack's web-facing container sit on it. `proxy-public` is
+the shared choice for stacks that reach each other by name. Each application also gets its own internal network
 that has no route to the internet and no route to any other application. The
-database and cache live only there.
+database and cache live only there. Where a backend service must reach the
+outside — a worker that sends mail, for example — it joins a second, outbound
+network of its own stack as well, and that stack's guide says why.
 
 An application that gets compromised cannot reach another application's
 database, because there is no network path to it. Not a rule someone has to
@@ -62,12 +76,16 @@ reaches the container. In practice this is one variable in that service's `.env`
 | `access-trusted-vpn` | the declared ranges and your VPN |
 | `access-blocked` | nothing — the route exists but answers no one |
 
-**The defaults differ per service, and are not all restrictive.** Of the five
-services with a guide here, Vaultwarden and Invoice Ninja ship
-`access-vpn`, Nextcloud and Seafile Pro ship `access-trusted-vpn`, and OnlyOffice
-ships `access-public` — the file hosts because their office servers reach them
-over the Docker network, the office server because it is built to be
-reached by people who are not on your VPN. Check the value in that service's
+**The defaults differ per service, and are not all restrictive.** Most services
+with a guide here ship `access-vpn` — Vaultwarden, Paperless-ngx and Invoice Ninja
+among them. Nextcloud, Seafile and Seafile Pro ship `access-trusted-vpn`, the file
+hosts because their office servers reach them over the Docker network. OnlyOffice
+and the publishing tools — Ghost, WordPress, BookStack, Immich and others — ship
+`access-public`, because they are built to be reached by people who are not on
+your VPN. **This is an open contradiction:** the project's decided direction is
+private by default — `access-vpn` as the default, `access-public` only as an
+operator's explicit choice — but 26 stack examples still ship `access-public`.
+Bringing them in line is a separate, not yet done piece of work. Check the value in that service's
 `.env.example` rather than assuming; it is one line, and it decides who can
 reach the thing.
 
@@ -105,11 +123,15 @@ each works whether or not the others are there.
 1. **The proxy** terminates TLS and applies security headers, rate limits and the
    access policy above. Always present; everything else is optional.
 2. **[CrowdSec](/infrastructure/crowdsec/)** reads the proxy's access log and
-   decides which addresses to ban. It only sees what the access policy let
-   through, which is why it earns its place on public services and very little
-   behind a VPN.
-3. **Single sign-on** can be attached per route for applications that need it.
-   The repository ships a stack for it; there is no guide here.
+   decides which addresses to ban; a plugin inside the proxy enforces the bans
+   once switched on. It only sees what the access policy let through, which is
+   why it earns its place on public services and very little behind a VPN. Its
+   optional AppSec component inspects requests with Coraza as the rule engine —
+   part of CrowdSec, not a separate service — and ships with virtual-patching
+   rules, not the OWASP Core Rule Set.
+3. **Single sign-on** — [Authentik](/infrastructure/authentik/) — can be attached
+   per route as a forward-auth middleware in the proxy. Optional, and off until
+   switched on; when Authentik does not answer, the route fails closed.
 4. **The container itself** runs without the ability to gain new privileges, with
    Linux capabilities dropped, and with a read-only root filesystem where the
    image tolerates one.

@@ -126,13 +126,13 @@ docker exec <app-container> curl -s telnet://database:5432
 docker inspect <container> --format='{{range $k,$v := .NetworkSettings.Networks}}{{$k}} {{end}}'
 ```
 
-**Why:** If the app is in `proxy-public` but the database is only in
+**Why:** If the app is on its proxy network but the database is only in
 `app-internal`, they can't communicate unless the app is in both networks.
 
 ### List all containers in a network
 
 ```bash
-docker network inspect proxy-public --format='{{range .Containers}}{{.Name}} {{end}}'
+docker network inspect <project>-edge --format='{{range .Containers}}{{.Name}} {{end}}'   # or proxy-public
 ```
 
 ---
@@ -162,7 +162,7 @@ Open `https://<traefik-dashboard>/dashboard/` and look for:
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| Router not listed | `traefik.enable=true` missing or container not in `proxy-public` | Add label, check network |
+| Router not listed | `traefik.enable=true` missing, or the container's `TRAEFIK_NETWORK` is not listed in `EDGE_NETWORKS` / not yet joined by Traefik | Add label; list the network, render, `up -d` Traefik; `ops/scripts/validate.sh` reports it |
 | Router shows error | Middleware reference broken (wrong name or suffix) | Fix `@file` / `@docker` suffix |
 | Router OK but 404 | Wrong `Host()` rule or service port | Check `APP_TRAEFIK_HOST` and port |
 
@@ -458,7 +458,7 @@ Browser shows error
 ├─ "Connection refused" / "Site can't be reached"
 │  └─ Is the container running? → docker compose ps
 │     ├─ No → Check logs: docker compose logs
-│     └─ Yes → Is it in proxy-public network? → docker inspect
+│     └─ Yes → Is it on its TRAEFIK_NETWORK, and is that in EDGE_NETWORKS? → validate.sh
 │        └─ Is the Traefik router listed? → Check dashboard
 │
 ├─ "403 Forbidden"

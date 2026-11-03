@@ -140,7 +140,7 @@ header carries it on this path: Traefik sees it only if `proxy-public`
 carries IPv6. On an IPv4-only `proxy-public` Traefik is published on IPv4
 only, so an IPv6 connection — a tailnet client's, Cloudflare's to an
 `AAAA`-only origin, a direct client's — is refused rather than handed to
-Traefik from the Docker gateway, which `access-lan` of an undeclared installation would admit. The
+Traefik from the Docker gateway, which the retired `access-lan` admitted and an overly broad `TRUSTED_RANGES` would admit. The
 dual-stack overlay publishes IPv6 together with the IPv6 subnet, and
 `validate.sh` checks that the Docker daemon forwards it by NAT (README,
 "Published addresses"). See

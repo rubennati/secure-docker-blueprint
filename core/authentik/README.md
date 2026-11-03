@@ -319,7 +319,7 @@ relay and HTTPS from this network narrows that; the blueprint does not render su
 
 ## Security Model
 
-- Database, Redis, and the worker are only on `app-internal` (which is `internal: true`) — none of them can reach or be reached from the outside directly
+- Database and Redis are only on `app-internal` (which is `internal: true`); the worker is on `app-internal` and `app-egress`, so it can reach the outside but nothing reaches it ([Network exception](#network-exception--why-the-worker-reaches-the-internet))
 - Only `server` is on `proxy-public`; Traefik terminates TLS and applies the standard headers and counter (`headers-standard`, `limit-standard`)
 - `AUTHENTIK_SECRET_KEY` signs every token Authentik issues — treat rotation with care (existing sessions invalidate)
 - `AUTHENTIK_ERROR_REPORTING__ENABLED: "false"` — no telemetry to external endpoints

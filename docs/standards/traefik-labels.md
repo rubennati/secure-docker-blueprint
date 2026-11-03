@@ -112,7 +112,7 @@ never a label.
 | `APP_TRAEFIK_HEADERS` | `headers-standard`, `headers-application-owned`, `headers-none` |
 | `APP_TRAEFIK_AUTH` | `auth-none@file`, `auth-authentik@file`, `${COMPOSE_PROJECT_NAME}-auth@docker` |
 | `APP_TRAEFIK_TLS_OPTION` | only on a stack with a documented exception: `tls-compatible`, `tls-standard`, `tls-strict` |
-| `TRAEFIK_NETWORK` | `proxy-public` |
+| `TRAEFIK_NETWORK` | `${COMPOSE_PROJECT_NAME}-edge` (default, listed in `EDGE_NETWORKS`) or `proxy-public` (shared) |
 
 A secondary router whose answer differs from the stack's gets a variable of
 its own, named for the router: `APP_TRAEFIK_API_ACCESS` and
