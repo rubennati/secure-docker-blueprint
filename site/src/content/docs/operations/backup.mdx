@@ -35,8 +35,17 @@ the client:
 ```
 
 ```bash
-sudo apt install mariadb-client        # or postgresql-client, mongodb-database-tools
+sudo apt install mariadb-client        # or mongodb-database-tools
 ```
+
+PostgreSQL is the exception: install the client of **each server major version**
+you back up, not the distribution's newest, and name its programs in every
+entry. On Debian 13 the distribution's client 17 backed up a `postgres:16`
+database without error, but its dump did not restore into that server; client 16
+restored it completely. Same major for client and server is the blueprint's
+conservative, tested operating rule — not a claim that every other pair fails.
+Packages, paths and the measurement are in
+[borgmatic's README](https://github.com/rubennati/secure-docker-blueprint/blob/main/backup/borgmatic/README.md#postgresql-the-clients-major-version-is-the-servers).
 
 ## Installation
 
@@ -126,7 +135,9 @@ The rest of this page is what those sections assume you understand.
 ## Databases need dumping, not copying
 
 Copying a running database's files captures a torn, mid-transaction state that
-only reveals itself at restore. Add one entry per database:
+only reveals itself at restore. Add one entry per database — a MariaDB one here; a
+PostgreSQL entry also names `pg_dump_command`, `pg_restore_command` and
+`psql_command` from the server's major (see [Before you start](#before-you-start)):
 
 ```yaml
 mariadb_databases:
@@ -220,7 +231,8 @@ throwaway target — never into the live deployment.
 <Steps>
 
 1. Bring up a scratch database and create the target. Borgmatic will not create
-   it for you:
+   it for you. For PostgreSQL, use the same image tag as the live server, so the
+   client named in the entry matches it:
 
    ```bash
    PW=$(openssl rand -hex 16)
