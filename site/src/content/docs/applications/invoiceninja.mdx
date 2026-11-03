@@ -55,7 +55,7 @@ From `business/invoiceninja/`:
    measures the wrong thing:
 
    ```bash
-   docker network inspect proxy-public \
+   docker network inspect invoiceninja-edge \
      --format '{{range .IPAM.Config}}{{.Subnet}} {{end}}'
    ```
 

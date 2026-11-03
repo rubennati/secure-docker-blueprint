@@ -237,7 +237,7 @@ Exception: Hawser — needs direct socket access as its core function. Socket pr
 ## Network Isolation
 
 - Databases, Redis, internal services: **only** in `app-internal` network
-- Web apps: `proxy-public` + `app-internal`
+- Web apps: their proxy network (default the stack's own `<project>-edge`, or the shared `proxy-public`) + `app-internal`
 - Database ports **never** exposed on host
 - A security control plane belongs on a dedicated core-to-core network, not on
   `proxy-public`. `core/crowdsec` is on `crowdsec-security` alone, so its LAPI,

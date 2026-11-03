@@ -199,7 +199,7 @@ Follow [Compose Structure](compose-structure.md) for block order per service:
 - [ ] **Security** — `no-new-privileges:true` (mandatory), `read_only` if supported
 - [ ] **Configuration** — env vars (map format), secrets
 - [ ] **Storage** — bind mounts (`./volumes/`), config mounts with `:ro`
-- [ ] **Networking** — `proxy-public` for web, `app-internal` for databases
+- [ ] **Networking** — `TRAEFIK_NETWORK=${COMPOSE_PROJECT_NAME}-edge` for web (listed in `EDGE_NETWORKS` of `core/traefik`; `proxy-public` only when other stacks reach the service by name), `app-internal` for databases
 - [ ] **Traefik** — labels with `@file` suffixes for file-provider resources
 - [ ] **Health** — healthcheck with appropriate tools and timing
 

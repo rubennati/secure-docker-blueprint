@@ -42,7 +42,7 @@ services:
 
     # --- Networking ---
     networks:                 # Network membership
-    ports:                    # Host ports (only when necessary)
+    ports:                    # Host ports (only when necessary; host address via a required *_BIND)
 
     # --- Traefik ---
     labels:                   # Traefik labels for routing
@@ -213,15 +213,15 @@ Confirming the second is a separate procedure, in
 
 **Networking** (required)
 
-- Web apps: `proxy-public` + `app-internal`.
+- Web apps: the proxy network `TRAEFIK_NETWORK` (default `${COMPOSE_PROJECT_NAME}-edge`, listed in `EDGE_NETWORKS` of `core/traefik`; `proxy-public` only for stacks that reach each other by name) + `app-internal`.
 - Databases, Redis, caches: `app-internal` only.
 - Never expose database ports on the host.
-- `ports:` only for services that need direct host access (rare).
+- `ports:` only for services that need direct host access (rare), and every entry names its host address through a required `${*_BIND:?…}` variable (`port-no-host-address`).
 
 **Traefik** (required for web apps)
 
 - Full label block. See [Traefik Labels](traefik-labels.md) for structure.
-- Always include `traefik.docker.network=${TRAEFIK_NETWORK}` when the service is in multiple networks.
+- Always include `traefik.docker.network=${TRAEFIK_NETWORK}` on every service with `traefik.enable=true` (`missing-network-label`) — with one network as well, since a second one added later would otherwise make Traefik pick at random.
 - Non-web services (databases, socket proxies, workers) have no labels.
 
 **Health & Observability** (strongly recommended)
@@ -292,6 +292,7 @@ After `services:`, the file contains:
 # --------------------------------------------------------
 networks:
   proxy-public:
+    name: ${TRAEFIK_NETWORK}
     external: true
 
   app-internal:
@@ -361,7 +362,7 @@ Most apps follow this pattern:
 - `db` service first (no external dependencies)
 - `app` service depends on db with healthcheck
 - `db` in `app-internal` only
-- `app` in both `proxy-public` and `app-internal`
+- `app` in both the proxy network (`${TRAEFIK_NETWORK}`) and `app-internal`
 - Database passwords via Docker Secrets
 
 ### App Only (no database)
@@ -533,7 +534,7 @@ directory.
 - [ ] Secrets via Docker Secrets in `.secrets/`, never in `environment:`
 - [ ] Config mounts with `:ro`
 - [ ] Database only in `app-internal` network
-- [ ] `traefik.docker.network=${TRAEFIK_NETWORK}` label when service has multiple networks
+- [ ] `traefik.docker.network=${TRAEFIK_NETWORK}` label on every service with `traefik.enable=true`
 - [ ] Healthcheck on every service where possible (app-specific, no forced standard)
 - [ ] Service names: `app`, `db`, `redis`, `nginx`
 - [ ] `docker-compose.local.yml`, where the stack shows something run alone

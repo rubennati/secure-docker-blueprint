@@ -49,7 +49,7 @@ evidence and is not run again; only the rows left open are host work.
 
 | | |
 |---|---|
-| Host H1 (dual-stack) | Debian 12 or 13, Docker Engine 27+ with Compose v2, nftables firewall backend or iptables-nft; `envsubst`, `curl`, `jq`, `nft`, `ss`; a public IPv4 **and a global IPv6** address; the hoster's console tested |
+| Host H1 (dual-stack) | Debian 12 or 13, Docker Engine 28.0+ with Compose 2.33.1+, nftables firewall backend or iptables-nft; `envsubst`, `curl`, `jq`, `nft`, `ss`; a public IPv4 **and a global IPv6** address; the hoster's console tested |
 | Host H2 (IPv6-only, block O only) | the same, without public IPv4 ingress; NAT64/DNS64 or an IPv4 egress path decided beforehand (audit §3.4) |
 | Daemon | `/etc/docker/daemon.json` as in [`ipv6-dual-stack.md`](../core/traefik/docs/ipv6-dual-stack.md), "Docker daemon prerequisites": `ipv6`, `ip6tables`, `userland-proxy: false` |
 | Checkout | `git clone`, `git checkout dev` at the commit under test; `./scripts/overview.sh` states it. A second checkout of the tag `v0.9.5` for block B |

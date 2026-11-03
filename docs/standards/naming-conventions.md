@@ -88,7 +88,8 @@ APP_TAG=6.7-php8.3-fpm-alpine
 
 | Name | Type | Created by |
 |------|------|-----------|
-| `proxy-public` | `external: true` | core/traefik |
+| `{app}-edge` | `name: ${TRAEFIK_NETWORK}`, `external: true` (default `${COMPOSE_PROJECT_NAME}-edge`) | core/traefik, from `EDGE_NETWORKS` |
+| `proxy-public` | `name: ${TRAEFIK_NETWORK}`, `external: true` when a stack chooses it; carries Traefik's published ports | core/traefik |
 | `crowdsec-security` | `external: true` | core/traefik |
 | `{app}-internal` | `name: ${COMPOSE_PROJECT_NAME}-internal` | Each app |
 

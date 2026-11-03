@@ -88,8 +88,8 @@ docker exec <app-container> curl -s telnet://database:5432   # or the real port
 docker inspect <app-container> --format '{{json .NetworkSettings.Networks}}'
 ```
 
-Each application has two networks — a shared one for the proxy and an isolated
-one for its database. A container attached to only one of them fails in a way
+Each application has two networks — its edge network for the proxy (shared only
+when it is set to `proxy-public`) and an isolated one for its database. A container attached to only one of them fails in a way
 that looks like an application bug. See
 [how a server fits together](/architecture/) for what should be attached where.
 
@@ -100,12 +100,14 @@ missing.
 
 ```bash
 docker inspect <container> --format '{{json .Config.Labels}}' | tr ',' '\n' | grep traefik
-docker network inspect proxy-public --format '{{range .Containers}}{{.Name}} {{end}}'
+docker network inspect <project>-edge --format '{{range .Containers}}{{.Name}} {{end}}'
 ```
 
 Three things have to be true, and any one of them missing produces the same
-`404`: the container carries the Traefik labels, it is attached to
-`proxy-public`, and the hostname in the label matches the one you typed.
+`404`: the container carries the Traefik labels, it and Traefik are both on its
+`TRAEFIK_NETWORK` (by default `<project>-edge`, which must be listed in
+`EDGE_NETWORKS` with Traefik recreated since), and the hostname in the label
+matches the one you typed. `core/traefik/ops/scripts/validate.sh` checks the network.
 
 :::note
 Labels are read when the container is created. Changing a value in `.env` and

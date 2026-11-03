@@ -35,9 +35,13 @@ warning.
 
 Three responses, in the order they cost least:
 
-- **Bind published ports to `127.0.0.1`.** `"127.0.0.1:8080:8080"` never reaches
-  a network interface. This is the approach these stacks take, and it is why the
-  reverse proxy is the only thing bound publicly.
+- **Publish on a named address, or not at all.** `"127.0.0.1:8080:8080"` never
+  reaches a network interface. Web applications here publish nothing — they are
+  reached through the reverse proxy. The stacks whose protocol is not HTTP (UniFi,
+  OpenCanary, and under `core/` Teleport, ShellHub, Warpgate, JumpServer,
+  Orion-Belt, step-ca and Headscale's DERP overlay) publish their ports on a host
+  address you must set in a `*_BIND` variable; their examples ship `0.0.0.0`, so
+  narrow it to one interface or filter it upstream.
 - **Put your rules in the `DOCKER-USER` chain**, the documented place for
   filtering that must run before Docker's own.
 - **Have something upstream that does not pass the port at all.**
@@ -110,12 +114,20 @@ additional layer; do not make it the only one.
 ## What this blueprint covers
 
 One internal network per application, with databases and caches never published
-and no route between applications. Published ports bound to loopback except the
-proxy. Access policies enforced at the proxy — public, local network, VPN,
-defined range, or nothing.
+and no route between applications, and one edge network per stack between it and
+the proxy. Every published port names its host address: the proxy's two bindings,
+and the `*_BIND` variable of the nine non-HTTP stacks above. Access policies
+enforced at the proxy — public, trusted (the ranges you declare in
+`TRUSTED_RANGES`; nothing is trusted by default), VPN, trusted or VPN, and
+blocked. The former "local network" policy is retired.
 
-The host firewall is reachable through the intrusion-detection layer's optional
-agent — see [web protection](/security/web-protection/). A network firewall,
+Two host-firewall pieces exist, both optional and both installed by you. The
+proxy stack renders an `nftables` ruleset for its exposure profile
+(`config/host/ingress.nft`) that closes the host's input path except for the VPN;
+nothing in the blueprint loads it, and it has not been verified on a host yet
+([Traefik](/infrastructure/traefik/#exposure-profile-and-host-firewall)). And the
+intrusion-detection layer's optional agent can drop banned addresses — see
+[web protection](/security/web-protection/). A network firewall,
 VLANs and upstream segmentation are outside the Compose files entirely, and
 depend on an environment this project makes no assumptions about.
 
