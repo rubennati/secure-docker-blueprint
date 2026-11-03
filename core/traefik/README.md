@@ -48,6 +48,11 @@ bash ops/scripts/validate.sh --strict   # published addresses, against the runni
 # (only from Tailscale/VPN by default)
 ```
 
+With Tailscale on this host, run `sudo tailscale set --snat-subnet-routes=false`
+unless the host routes subnets for the tailnet: by default `tailscaled` masquerades
+the requests it forwards to Docker, every VPN client reaches Traefik as the Docker
+gateway, and `access-vpn` answers 403 — [host-firewall.md](docs/host-firewall.md#reaching-the-routers-over-tailscale-on-the-host).
+
 ## Structure
 
 ```text

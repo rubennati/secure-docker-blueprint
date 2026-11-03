@@ -267,6 +267,9 @@ open.
 | A1–A5 (TS, LAN) | 2026-11-01 | H1 | not run | no VPN on the lab host by the operator's decision for this phase; no LAN client |
 | A7 | 2026-11-01 | H1 | pass | from OUT6 with a forged `X-Forwarded-For`/`X-Real-Ip` (tailnet example): `w-vpn` 403; `w-public` shows OUT6 |
 | A8 | 2026-11-01 | H1 | not run | needs a tailnet client |
+| A1–A5 (TS4, TS6) | 2026-11-03 | H1 | pass, after correction | from TS with `tailscale set --snat-subnet-routes=false` (before it, every TS request reached Traefik as the Docker gateway — `host-firewall.md`): `w-public` 200/200 with the client's tailnet address as `X-Real-Ip`, `w-trusted` 403/403, `w-vpn` 200/200, `w-trusted-vpn` 200/200, `w-blocked` 403/403; the same through the client's split DNS. In the same run from OUT4/OUT6: `w-public` 200, every other router 403 |
+| A8 | 2026-11-03 | H1 | pass | from TS6 on `w-trusted` (`TRUSTED_RANGES` empty) → 403 |
+| G7 | 2026-11-03 | H1 | pass | `apps/greenmail`, posture `none` behind `access-trusted-vpn`: 200 from TS4 and TS6, 403 from OUT4 and OUT6 and from a second client outside the tailnet (OUT4 only — it had no IPv6) |
 | A9 | 2026-11-01 | H1 | deviation | `--resolve …:[::1]` on `w-vpn`: no connection (timeout), not 403 — `userland-proxy: false` does not forward IPv6 loopback (`ipv6-dual-stack.md`); over the host's global IPv6 address and over 127.0.0.1: 403 |
 | G1 | 2026-11-02 | H1 | pass after correction | a proxy provider (forward auth, single application) on the embedded outpost, `w-fa` on `auth-authentik@file`: 302 to the Authentik host, the login (password and TOTP, scripted through the flow executor), the outpost callback; whoami shows `X-Authentik-Username`. Before the outpost's `authentik_host` was set the 302 pointed at `http://localhost/` |
 | G3 | 2026-11-02 | H1 | pass | `authentik-server` stopped: 500 without and with a valid session, never 200; started: 302 again |

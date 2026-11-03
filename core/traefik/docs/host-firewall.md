@@ -143,3 +143,97 @@ Two independent paths, identity by key, and nothing automatic between them:
 
 `validate.sh` names the requirement; the second path is the operator's to keep
 and cannot be checked from the host.
+
+## Reaching the routers over Tailscale on the host
+
+`access-vpn` and `access-trusted-vpn` admit a request when the address Traefik
+sees lies in `TAILSCALE_CIDR_V4` or `TAILSCALE_CIDR_V6`. With Tailscale installed
+on the Docker host and its defaults left as they are, that address is never the
+client's: every tailnet client reaches Traefik as the Docker gateway of
+`proxy-public`, and every VPN-only router answers 403.
+
+```mermaid
+flowchart LR
+  C["Client on the tailnet<br/>100.x / fd7a:…"] -->|WireGuard| T["tailscale0 on the host"]
+  T --> D["Docker DNAT<br/>published 443 → Traefik"]
+  D --> F{"forward path"}
+  F -->|"tailscaled default:<br/>mark 0x40000 → MASQUERADE"| G["source becomes the<br/>proxy-public gateway"]
+  F -->|"--snat-subnet-routes=false"| K["source stays the<br/>client's tailnet address"]
+  G --> R["Traefik: ClientHost = gateway"]
+  K --> R2["Traefik: ClientHost = 100.x / fd7a:…"]
+  R --> P1["access-vpn → 403"]
+  R2 --> P2["access-vpn → the application"]
+```
+
+**Why.** A connection to Traefik's published port is translated by Docker
+(`DNAT` to the container's address) and then *forwarded* to the bridge, not
+delivered locally. `tailscaled` marks every packet it forwards from `tailscale0`
+(`ts-forward`: `-i tailscale0 -j MARK --set-xmark 0x40000`) and masquerades every
+marked packet on the way out (`ts-postrouting`: `-m mark --mark 0x40000 -j
+MASQUERADE`) — the SNAT it applies to subnet-router traffic, on by default. The
+container then sees the bridge gateway as the source, over IPv4 and over IPv6.
+
+**Why it seems to come and go.** Docker and `tailscaled` each put their jump at the
+top of the `FORWARD` chain when they start, and nothing orders the two services. When
+Docker started last, its chains accept the forwarded connection before `ts-forward`
+marks it, and the client address survives; when `tailscaled` started last, every
+connection is marked and masqueraded. Measured on the step 8 lab host with the
+default: Docker restarted after Tailscale — the tailnet client got 200; `tailscaled`
+restarted after Docker — 403 for every VPN client. A reboot, an update of either
+package or a restart of either service decides it anew. With the fix below the order
+no longer matters — measured in both orders and over a reboot.
+
+**The fix.** On a host that does not route subnets for the tailnet:
+
+```bash
+sudo tailscale set --snat-subnet-routes=false
+sudo iptables -t nat -S ts-postrouting     # no MASQUERADE line left
+sudo ip6tables -t nat -S ts-postrouting    # the same for IPv6
+tailscale debug prefs | grep NoSNAT        # "NoSNAT": true
+```
+
+The setting is a preference of the node: it survives a restart of `tailscaled`
+and needs no new login. SSH and every other service of the host itself are not
+affected — locally delivered traffic never crossed this rule. To check from the
+outside, open a VPN-only router from a tailnet client and read `ClientHost` in
+Traefik's access log: it has to be the client's tailnet address.
+
+**Measured** on the step 8 lab host (2026-11-03: Debian 13, Docker Engine 29.9.2 with
+`userland-proxy: false`, Traefik published on `0.0.0.0` and `[::]`, Tailscale 1.104.5
+from its Debian repository, `tailscale up` with SSH, exit node, routes and DNS off):
+
+| | Before | After `--snat-subnet-routes=false` |
+|---|---|---|
+| `ts-postrouting` | `MASQUERADE` for the mark, IPv4 and IPv6 | empty |
+| `ClientHost` of a tailnet client (IPv6) | the `proxy-public` ULA gateway | the client's `fd7a:…` address |
+| `ClientHost` of a tailnet client (IPv4) | the `proxy-public` gateway (`172.x`) | the client's `100.x` address |
+| a VPN-only router from that client | 403 | 200 over both families — browser and `curl`; the access matrix A1–A5, A8 and G7 as expected; no error in Traefik, CrowdSec or `tailscaled` |
+| SSH to the host's tailnet IPv4 | — | works |
+| the same routers from outside the tailnet | 403 | 403 |
+| after `systemctl restart tailscaled` | — | the preference held, no `MASQUERADE` rule |
+
+**What else it touches** — not measured here, stated from how the rule works:
+
+- **A host that is also a subnet router or exit node** loses the SNAT for that
+  routed traffic: the routed LAN then needs a return route to the tailnet ranges,
+  or the replies go nowhere. Such a host keeps the default and needs another way
+  for the client address, or the role moves to another machine.
+- **Without the fix, every tailnet client shares one address** — the gateway's.
+  `TRUSTED_RANGES` must never contain it (`validate.sh` refuses Docker subnets
+  there), per-client rate limits count all VPN users as one, and CrowdSec sees a
+  private address it whitelists, so nothing a VPN client does is attributed to it.
+- **Headscale clients** run the same `tailscaled` and are assumed to behave the same.
+- **Tailscale inside a container, or on a different machine than Traefik**, does not
+  meet this rule on the Docker host; it is not covered by this note.
+- Testing from the host itself tells nothing: the host's own connection to its
+  published port is re-sourced by Docker regardless (`docs/standards/troubleshooting.md`).
+
+**Names resolve to the public address unless told otherwise.** A record that points
+at the host's public address sends a tailnet client over the internet, not the tunnel,
+and the VPN-only router answers 403 with the client's public address in `ClientHost`.
+The lab zone needed split DNS: a resolver on the tailnet that answers the zone with the
+host's tailnet addresses — **both** `A` and `AAAA`; with only `A`, an IPv6-preferring
+client took the public IPv6 address from upstream and left the tunnel again. On the lab
+host that was [`core/dnsmasq`](../../dnsmasq/) on `tailscale0` (two `address=` lines,
+one per family); a resolver the tailnet already uses works the same way, or Tailscale's
+split DNS pointed at it.
