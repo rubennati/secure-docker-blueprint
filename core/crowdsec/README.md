@@ -745,14 +745,22 @@ No database hook: borgmatic's SQLite support addresses a file, and this one live
 inside the data directory rather than being declared separately. Back the
 directory up as a source directory and quiesce it.
 
-**The bouncer credentials are the operational part.** They live in
-`volumes/config` and are registered against the local API in `volumes/data`. Restoring
+**The bouncer credentials are the operational part.** The Traefik bouncer's key lives in
+`core/traefik/.env` (`CROWDSEC_BOUNCER_KEY`) and is registered against the local API in
+`volumes/data`; the engine's own machine credentials are in `volumes/config`. Restoring
 one without the other leaves bouncers that authenticate against an API that has
 never heard of them — Traefik then fails open or closed depending on its own
 configuration, and neither is what you intended.
 
 Losing the decision list itself is survivable: bans rebuild from live traffic.
 Losing the credentials means re-enrolling every bouncer by hand.
+
+Rehearsed on the step 8 lab host (2026-11-03, v1.7.8): the container stopped, the stack
+directory archived, the container started; restored into a throwaway instance on its own
+network with `DISABLE_ONLINE_API=true`, so the copy did not speak to the central API as the
+same machine. The decisions, all 100 alerts, the eight collections, the machine and the
+bouncer came back; the bouncer key from `core/traefik/.env` authenticated against the
+restored local API (a wrong key 403), and the restored AppSec answered `/.env` with 403.
 
 ## Details
 

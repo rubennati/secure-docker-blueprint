@@ -115,7 +115,7 @@ RETIRED = re.compile(
     r"\b(sec-[0-9][a-z0-9-]*|acc-(?:public|local|tailscale|private|deny)|access-lan(?:-vpn)?|"
     r"hdr-(?:basic|strict)(?:-embed)?|rl-(?:soft|spa|spa-xl|sync|hard)|"
     r"APP_TRAEFIK_(?:SECURITY|THREAT)|sec-authentik|strip-xfo|"
-    r"tls-(?:basic|aplus|modern))\b|(?<![\w-])crowdsec-(?:basic|appsec|strict)\b"
+    r"tls-(?:basic|aplus|modern))\b|(?<![\w/-])crowdsec-(?:basic|appsec|strict)\b(?!-)"
 )
 # What makes a unit an old-to-new example: the model's own names, or the words
 # a migration note uses.

@@ -72,6 +72,11 @@ http:
           enabled: true
           crowdsecMode: stream
           updateIntervalSeconds: 60
+          # The plugin's default, 0, blocks every request from the first failed
+          # decision pull until the next good one: 403 on every router for two
+          # minutes after the engine stopped (step 8 lab host). -1 keeps serving
+          # with the decisions it holds.
+          updateMaxFailure: -1
           crowdsecLapiScheme: http
           crowdsecLapiHost: crowdsec:8080
           crowdsecLapiKey: "${CROWDSEC_BOUNCER_KEY}"
@@ -109,6 +114,11 @@ ${CROWDSEC_BOUNCER_FORWARDED_YAML}
           enabled: true
           crowdsecMode: stream
           updateIntervalSeconds: 60
+          # The plugin's default, 0, blocks every request from the first failed
+          # decision pull until the next good one: 403 on every router for two
+          # minutes after the engine stopped (step 8 lab host). -1 keeps serving
+          # with the decisions it holds.
+          updateMaxFailure: -1
           crowdsecLapiScheme: http
           crowdsecLapiHost: crowdsec:8080
           crowdsecLapiKey: "${CROWDSEC_BOUNCER_KEY}"

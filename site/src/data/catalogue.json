@@ -2330,7 +2330,7 @@
     "name": "CrowdSec",
     "path": "core/crowdsec",
     "role": "Threat detection from logs, with a choice of where decisions are enforced",
-    "state": "baseline-aligned",
+    "state": "ops-proven",
     "upstream": "https://github.com/crowdsecurity/crowdsec",
     "verified": "2026-11-01",
     "verified_version": "v1.7.8",

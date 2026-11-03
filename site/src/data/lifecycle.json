@@ -894,7 +894,7 @@
     "local_stack": "—",
     "pinned": "APP_TAG=v1.7.8",
     "restore_docs": "missing",
-    "state": "baseline-aligned",
+    "state": "ops-proven",
     "verified": "2026-11-01",
     "verified_anchored": true,
     "verified_version": "v1.7.8"
