@@ -62,18 +62,15 @@ Two collections install AppSec rule sets via `CROWDSEC_COLLECTIONS` in `.env`:
 
 ### `crowdsecurity/appsec-generic-rules`
 
-General-purpose WAF signatures covering classes of attack that apply to any HTTP
-application:
-
-| Category | What it detects |
-|---|---|
-| SQL injection | SELECT, UNION, INSERT patterns in query strings, POST bodies, and headers; encoded variants |
-| Cross-site scripting (XSS) | `<script>`, event handlers, JavaScript URIs in input fields and headers |
-| Path traversal | `../`, `..%2F`, and other encoded forms in paths and parameters |
-| Command injection | Shell metacharacters (`;`, `&&`, `\|`) in parameters that reach server-side execution |
-| Local file inclusion | References to `/etc/passwd`, `/proc/self`, and other system file paths in parameters |
-| Remote file inclusion | HTTP/FTP URLs in parameters that could cause server-side fetch |
-| HTTP method anomalies | Unusual or malformed HTTP methods not expected in standard web traffic |
+A small set of general-purpose signatures. Its name suggests broad coverage of SQL
+injection, cross-site scripting and path traversal; what it blocks is much narrower.
+**Measured on the step 8 lab host** with `CROWDSEC_APPSEC_ENABLED=true`: a request
+carrying `' OR '1'='1`, one carrying `<script>` and one asking for `../../etc/passwd`
+each **passed**, while the virtual-patching rule answered `/.env` with 403 on both
+address families (`docs/labs/ingress/2026-11-01-results.md`, "CrowdSec on the
+entrypoint"). Injection classes are covered by the Core Rule Set, which this stack does
+not install ([below](#the-core-rule-set-collections)). Other attack classes were not
+measured; `docker exec crowdsec cscli appsec-rules list` shows what is loaded.
 
 ### `crowdsecurity/appsec-virtual-patching`
 
@@ -92,12 +89,12 @@ instance.
 
 ---
 
-## The engine is Coraza, and the Core Rule Set is available
+## The engine is Coraza, and the Core Rule Set could run in it
 
 CrowdSec's AppSec engine is [Coraza](https://github.com/corazawaf/coraza), the
 open-source successor to ModSecurity. Rules are written in SecLang, the same syntax
 ModSecurity used, which is why `cscli appsec-rules` output looks the way it does and why
-the OWASP Core Rule Set runs here at all.
+the OWASP Core Rule Set could run here without another component.
 
 That answers the question a reader arrives with: **a Coraza WAF with the OWASP Core Rule
 Set does not need a second piece of software.** It is the engine already in this container.

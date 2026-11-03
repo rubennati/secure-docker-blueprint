@@ -129,9 +129,12 @@ sends to it or requires it.
 
 Two properties of these services shape the stacks. Ollama has no authentication, and vLLM's `--api-key` protects only
 its `/v1` paths, so the reverse proxy is the real access control — vLLM's route
-forwards `/v1/` only. And the model servers need outbound access to fetch weights, so they sit on
-`proxy-public` rather than an isolated network; Qdrant sits there too because
-other stacks consume its API. Each
+forwards `/v1/` only. And the model servers need outbound access to fetch weights, so their single
+service sits on the stack's proxy network — the edge network `<project>-edge` by
+default, a plain bridge with outbound access — rather than on an `internal`
+network; Qdrant ships the same way. A stack that consumes one of them by service
+name (no shipped stack does) needs both on the shared `proxy-public` instead;
+otherwise it reaches them through their route. Each
 stack's own README states what was verified; vLLM's CUDA image has not been run
 on a GPU here.
 
@@ -230,30 +233,38 @@ until a real application needs it" (`decisions.md`).
 
 ## Networking Model
 
-Every multi-service app uses a **hub-and-spoke** network layout. Two Docker networks per app, with a strict separation of concerns:
+Every multi-service app uses a **hub-and-spoke** network layout. Two Docker networks per app — the edge network towards Traefik and `app-internal` behind it — plus, in a few stacks, an outbound `app-egress`:
 
 ```text
-Internet
-    │
+Internet / VPN
+    │   host firewall, optional: config/host/ingress.nft — rendered, operator-installed, not verified on a host
+    │   published ports 80/443 on proxy-public (gw_priority)
     ▼
- Traefik ──── proxy-public (shared, external: true) ────► App server (web-facing)
-    │                                                           │
+ Traefik ──── <project>-edge (one per stack, external: true) ──► App server (web-facing)
+    │         (or proxy-public, the shared choice)                      │
     │                                                    app-internal (isolated, internal: true)
-    │                                                           │
-    │                                       DB · Redis · Workers · internal services
+    │  forward-auth middleware (optional)                               │
+    ├──► Authentik (its own stack and route)     DB · Redis · Workers · internal services
+    │                                                                   │
+    │                                    <project>-egress (only where a named backend service needs outbound)
     │
     └─────── crowdsec-security (core-to-core, external: true) ──► CrowdSec engine
+             bouncer plugin: LAPI decisions; AppSec (optional)      (AppSec rule engine: Coraza)
 ```
 
-**`proxy-public`** — shared across all apps. Only Traefik and each app's web-facing service join this network. Traefik routes inbound requests to the right container. Dual-stack IPv4+IPv6 for a new installation (the example `.env` applies `network-dual-stack.yml`; DEC-063), IPv4-only without the overlay — Tailscale ingress needs it to preserve real client IPs over IPv6, where Cloudflare ingress does not (it recovers the real IP from a trusted forwarded header instead). See [`core/traefik/docs/ipv6-dual-stack.md`](../core/traefik/docs/ipv6-dual-stack.md).
+**`<project>-edge`** — one per stack, the default of every `.env.example` (`TRAEFIK_NETWORK=${COMPOSE_PROJECT_NAME}-edge`). `core/traefik` creates each network listed in `EDGE_NETWORKS` and joins it; a stack whose network is not listed is unreachable. Only Traefik and the stack's web-facing service join it, so a web container reaches Traefik and its own `app-internal`, no other front end. Owner: [`core/traefik/docs/edge-networks.md`](../core/traefik/docs/edge-networks.md), [DEC-075](../.ai/decisions.md#dec-075).
 
-Two properties of this shape are measured, not assumed ([`audits/ingress-architecture-2026-10-31.md`](audits/ingress-architecture-2026-10-31.md)). Members of one Docker network reach each other's ports directly, so the four positions of the middleware model protect the path through Traefik and only that path: a compromised web container on `proxy-public` reaches every other web container on it without passing an access policy, a rate limit or a forward-auth gate. And Docker maps Traefik's published ports to its address on the network with the highest `gw_priority`, and without one to the first in Compose order — `crowdsec-security`, not `proxy-public`; since step 2 of the programme `docker-compose.yml` pins them to `proxy-public`, and an installation takes the pin on its next `docker compose up -d`. The decided direction is an edge network per installed stack, with `proxy-public` as the network that carries the published ports ([DEC-075](../.ai/decisions.md#dec-075)); it is not implemented, and an existing installation keeps this shape until it migrates.
+**`proxy-public`** — created by `core/traefik`; carries Traefik's published ports (`gw_priority`) and is the shared choice for stacks that reach each other by service name (Mailpit, for example). Dual-stack IPv4+IPv6 for a new installation (the example `.env` applies `network-dual-stack.yml`; DEC-063), IPv4-only without the overlay — Tailscale ingress needs it to preserve real client IPs over IPv6, where Cloudflare ingress does not (it recovers the real IP from a trusted forwarded header instead). That a tailnet client over IPv6 keeps its address was measured before the current bindings and edge networks; with the current configuration the tailnet path is not verified on a host, and IPv6-only ingress is not verified either ([`host-verification-ingress.md`](host-verification-ingress.md), Results). See [`core/traefik/docs/ipv6-dual-stack.md`](../core/traefik/docs/ipv6-dual-stack.md).
 
-**`app-internal`** — one per app, `internal: true`. DB, Redis, workers. Completely isolated: no route to the internet, no route between apps. A compromised app cannot reach another app's database. Always IPv4-only — nothing outside the Docker host connects to these services directly.
+Two properties of this shape are measured, not assumed ([`audits/ingress-architecture-2026-10-31.md`](audits/ingress-architecture-2026-10-31.md)). Members of one Docker network reach each other's ports directly, so the four positions of the middleware model protect the path through Traefik and only that path: a compromised web container on `proxy-public` reaches every other web container on it without passing an access policy, a rate limit or a forward-auth gate. And Docker maps Traefik's published ports to its address on the network with the highest `gw_priority`, and without one to the first in Compose order — `crowdsec-security`, not `proxy-public`; since step 2 of the programme `docker-compose.yml` pins them to `proxy-public`, and an installation takes the pin on its next `docker compose up -d`. The decided direction is an edge network per installed stack, with `proxy-public` as the network that carries the published ports ([DEC-075](../.ai/decisions.md#dec-075)); it is implemented (`EDGE_NETWORKS`, step 5 of the programme), and an installation on the shared shape keeps it until it migrates ([`edge-networks.md`](../core/traefik/docs/edge-networks.md), "Moving a shared installation to edge networks"). The lateral path above remains for stacks that stay on `proxy-public`.
+
+**`app-internal`** — one per app, `internal: true`. DB, Redis, workers. No route to the internet, no route between apps. A compromised app cannot reach another app's database. Always IPv4-only — nothing outside the Docker host connects to these services directly.
+
+**`app-egress`** — the exception, per stack and only where a backend service must reach the outside: a plain bridge that a named service joins *in addition* to `app-internal`, for example Authentik's worker for SMTP or Nextcloud's app for federation and app updates. The database and cache never join it. A member can open any outbound connection; the stack's README states why it is there and what it needs (`core/authentik/README.md`, "Network exception"). Eleven stacks use it today — `grep -l app-egress */*/docker-compose.yml`.
 
 **`crowdsec-security`** — a dedicated core-to-core network carrying one conversation: Traefik's bouncer plugin to the CrowdSec LAPI and AppSec engine. `core/traefik` declares it, `core/crowdsec` joins it as an external network, and no application stack joins it. The engine is on no other network, so its control-plane ports answer the reverse proxy and nothing else on the host's Docker networks. An ordinary IPv4 bridge rather than `internal: true` — the engine needs outbound access for hub updates, the Central API and blocklists. The network type and the rule for adding another are owned by [`docs/standards/networking.md`](standards/networking.md).
 
-Traefik is the only service on both planes. Databases and caches **never** join `proxy-public`. They have no exposure beyond their own app stack.
+Traefik is the only service on both planes. Databases and caches **never** join `proxy-public` or an edge network. They have no exposure beyond their own app stack.
 
 ---
 
@@ -273,7 +284,7 @@ architectural, the second is replaceable.
 | **Reverse Proxy** | how does a request reach the right service, over TLS, under a policy? | Traefik (`core/traefik/`) | implemented |
 | **Identity & Access** | who is allowed to use this service? | Authentik (`core/authentik/`) | implemented, per app |
 | **Threat Detection & Remediation** | which sources are known bad, and where is that enforced? | CrowdSec (`core/crowdsec/`) | implemented |
-| **Web Application Security** | is *this request* an attack, regardless of who sent it? | CrowdSec AppSec | implemented, opt-in |
+| **Web Application Security** | is *this request* an attack, regardless of who sent it? | CrowdSec AppSec — its rule engine is Coraza, inside CrowdSec; shipped with virtual-patching and generic rules, no OWASP Core Rule Set | implemented, opt-in, fail-open as shipped |
 | **Network Security / IDS** | what is happening on the wire that no log records? | — | candidate, not implemented |
 
 Capabilities are independent. Integrations connect them, and an integration is named,
@@ -318,7 +329,14 @@ owns it. It is not configuration management, and not a hardening distribution.
 
 A service may *implement* a Host invariant through an integration. CrowdSec's host-firewall
 remediation is one: it enforces decisions in the host firewall, within a scope the Host
-policy defines. It does not become the host firewall policy.
+policy defines. It does not become the host firewall policy. Designed and optional; its
+blocking rules have not been run on a host.
+
+`core/traefik` renders a host-firewall ruleset for its exposure profile
+(`config/host/ingress.nft`, [`core/traefik/docs/host-firewall.md`](../core/traefik/docs/host-firewall.md),
+DEC-078): it closes the host's input path except for the VPN and leaves Docker's forward
+path open. The operator installs it; nothing in the repository loads it, and it has not
+been verified on a host.
 
 ### Workload pressure must not consume what recovery needs
 

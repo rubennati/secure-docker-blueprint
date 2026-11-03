@@ -42,7 +42,7 @@ export const faqCategories: FaqCategory[] = [
       {
         question: 'Does this work with Tailscale?',
         answer:
-          'Yes. Any service can be restricted to Tailscale-only access. Traefik is set up for dual-stack IPv6 because Tailscale hands a client both an IPv4 and an IPv6 address — on an IPv4-only proxy the IPv6 connection arrives with the wrong source address and an IP allowlist rejects it.',
+          'Yes. Any service can be restricted to Tailscale-only access. Traefik is set up for dual-stack IPv6 because Tailscale hands a client both an IPv4 and an IPv6 address — on an IPv4-only proxy the IPv6 connection arrives with the wrong source address and an IP allowlist rejects it. That reasoning is the design; tailnet clients have not been measured against the current proxy configuration yet.',
         link: { text: 'Traefik guide', href: '/infrastructure/traefik/' },
       },
       {
@@ -59,7 +59,7 @@ export const faqCategories: FaqCategory[] = [
       {
         question: 'How are services separated from each other?',
         answer:
-          'Each application’s database and backend containers sit on an internal network of their own, with no route to the internet and none to another application. That part is genuine isolation. The web-facing container is different: it also joins the shared proxy network, and containers on a shared Docker network can reach each other directly on any port, so a compromised front end can address the other front ends without going through the proxy. That network is part of the threat model rather than outside it. Traefik reads the Docker socket through a filtering proxy instead of mounting it, and CrowdSec can be added on top. How far a compromise gets still depends on the container and the image it runs.',
+          'Each application’s database and backend containers sit on an internal network of their own, with no route to the internet and none to another application. That part is genuine isolation. Where a backend service has to reach the outside — a worker that sends mail — it joins a second, outbound network of its own stack, and that stack’s guide says why. The web-facing container also joins its stack’s edge network, which only the proxy shares, so by default it reaches no other front end. A stack set to the shared proxy network is different: containers there reach each other directly on any port, without going through the proxy, and that choice is part of the threat model rather than outside it. Traefik reads the Docker socket through a filtering proxy instead of mounting it, and CrowdSec can be added on top. How far a compromise gets still depends on the container and the image it runs.',
         link: { text: 'How a server fits together', href: '/architecture/' },
       },
       {
@@ -81,7 +81,7 @@ export const faqCategories: FaqCategory[] = [
       {
         question: 'Is this safe to run in production today?',
         answer:
-          'Read the two evidence lines on the guide for the service you want, and decide against your own tolerance. Two things apply everywhere regardless: only one application has had a restore performed from a backup, so for the rest recovery is yours to establish before you rely on it, and file paths and variable names can still change before the 1.0 milestone.',
+          'Read the two evidence lines on the guide for the service you want, and decide against your own tolerance. Two things apply everywhere regardless: only the applications marked ops-proven in the catalogue have had a restore performed from a backup, so for the rest recovery is yours to establish before you rely on it, and file paths and variable names can still change before the 1.0 milestone.',
       },
       {
         question: 'What can I actually deploy right now?',

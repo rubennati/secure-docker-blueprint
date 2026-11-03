@@ -11,9 +11,9 @@ Each one has a guide: installation walked through, a *Verify* section, what to
 back up, how to update it, and the failures that service really produces. Each
 guide also states how much of it has been confirmed on a running host — some
 were brought up and checked, some are written from the repository files and have
-never been started here. Nextcloud is the one whose data has been restored from
-a backup on a live host; for the rest, the restore is documented and
-unrehearsed.
+never been started here. Where an application's data has been restored from a
+backup on a live host, its guide and the [catalogue](/catalogue/) say so; for
+the rest, the restore is documented and unrehearsed.
 
 Most also ship a `docker-compose.local.yml`, which runs the service on your own
 machine with no proxy, DNS or certificate — see [what every server

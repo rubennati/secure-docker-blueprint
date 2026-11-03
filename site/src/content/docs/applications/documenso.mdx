@@ -75,7 +75,7 @@ From `business/documenso/`:
 
    ```bash
    docker compose up -d
-   docker compose logs app --follow
+   docker compose logs documenso-app --follow
    ```
 
 5. Open `https://<APP_TRAEFIK_HOST>`. The first account becomes the
@@ -152,7 +152,7 @@ Restore order: database, then the application.
 
    ```bash
    docker compose pull && docker compose up -d
-   docker compose logs app --follow
+   docker compose logs documenso-app --follow
    ```
 
    Migrations run on boot.

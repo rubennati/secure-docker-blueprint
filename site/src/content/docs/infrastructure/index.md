@@ -37,9 +37,9 @@ yourself.
 ## A reverse proxy — for anything you serve
 
 **Without one, nothing here is reachable over the network.** That is what this half
-of the page is about; a stack you only run for yourself needs none of it. The
-applications publish no ports of their own. They attach to a Docker network called
-`proxy-public` and expect something in front to terminate TLS and route requests
+of the page is about; a stack you only run for yourself needs none of it. Web
+applications publish no ports of their own. Each attaches to its own edge network
+(`<project>-edge`, which the proxy joins through `EDGE_NETWORKS`) and expects something in front to terminate TLS and route requests
 by hostname. That job — the reverse proxy — is what every served application needs.
 
 **Traefik is what this blueprint provides for it**, and it also carries the

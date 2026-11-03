@@ -114,7 +114,7 @@ stack's own compose file rather than remembered here:
 |---|---|---|
 | `core/traefik` | every stack publishing a domain | creates `proxy-public` and the listed edge networks |
 | `core/authentik` | stacks whose Traefik labels use forward-auth | the middleware answers at its address |
-| `core/crowdsec` | stacks joining `crowdsec-security` | the network is created there |
+| `core/crowdsec` | stacks joining `crowdsec-security` | `core/traefik` creates the network; `core/crowdsec` joins it as `external: true` |
 
 Which stacks those are is a property of the tree, so read it off rather than trusting a
 number written here:
@@ -164,7 +164,9 @@ Then recreate the stacks the release touched. `docker compose up -d` applies a c
 compose file; a stack whose service names changed also needs `--remove-orphans`.
 `core/traefik` renders its configuration from templates, so a release that changes
 a template takes effect only after `bash ops/scripts/render.sh` in that directory
-and a `--force-recreate` of the proxy where the static configuration changed.
+and a `--force-recreate` of the proxy where the static configuration changed — which
+interrupts every stack it routes for about seven seconds
+([`edge-networks.md`](../../core/traefik/docs/edge-networks.md)).
 
 A checkout carries the stack files; it does not carry what a stack installed
 outside it — a logrotate stanza, systemd units, a backup agent's configuration.

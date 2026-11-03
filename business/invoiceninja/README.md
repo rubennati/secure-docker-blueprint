@@ -149,7 +149,7 @@ curl -sI https://your-domain/            # 200 or 302
 - [ ] SMTP configured and tested (send a test invoice)
 - [ ] Backup strategy in place (see UPSTREAM.md)
 - [ ] Upgrade check: verify `APP_TAG` against latest stable release (see UPSTREAM.md)
-- [ ] Consider tightening `TRUSTED_PROXIES` from `*` to the Traefik network CIDR
+- [ ] `TRUSTED_PROXIES` set to every subnet of `invoiceninja-edge` (`.env.example`, "TRUSTED_PROXIES")
 
 ## Services
 

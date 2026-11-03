@@ -203,8 +203,8 @@ These controls are enforced by Traefik configuration rendered from templates in 
 |-------|-------|
 | **Implemented?** | Yes |
 | **Coverage** | Compose files declaring a network with `internal: true` — figures: [`security-coverage.md`](security-coverage.md) |
-| **Pattern** | Database and internal services on `app-internal` (internal: true). Web services on `proxy-public` + `app-internal`. No database ports exposed on host. |
-| **Gaps** | Not CI-enforced. Nothing prevents a developer from adding a database to `proxy-public`. Several apps intentionally do NOT mark `app-internal` as internal (e.g. Nextcloud — documented in README). |
+| **Pattern** | Database and internal services on `app-internal` (internal: true). Web services on their proxy network (`<project>-edge` by default, or `proxy-public`) + `app-internal`. No database ports exposed on host. |
+| **Gaps** | `check-structure.py` rule `db-exposed` fails a datastore on `proxy-public` or with a host port; it does not inspect edge networks. Several apps intentionally do NOT mark `app-internal` as internal (e.g. Nextcloud — documented in README). |
 
 #### 17. `__REPLACE_ME__` sentinel values
 
@@ -265,7 +265,7 @@ Based on **CIS Docker Benchmark v1.6.0**.
 | **5.10** Memory limits | ✅ | `memory` and `pids` on every service — [`security-coverage.md`](security-coverage.md) | Values are derived rather than measured — v0.10.0 |
 | **5.11** CPU limits | ❌ Partial | Same as memory limits | |
 | **5.12** Read-only root FS | ⚠ Partial | Coverage in [`security-coverage.md`](security-coverage.md) | Not CI-enforced; many images write to their root filesystem |
-| **5.14** Bind only to required interfaces | ✅ Yes | `ping` entryPoint bound to `127.0.0.1:8082` | |
+| **5.14** Bind only to required interfaces | ✅ Yes | `ping` entryPoint bound to `127.0.0.1:8082`; Traefik's published ports one binding per family (`TRAEFIK_BIND_V4`/`V6`); every other published port needs a required `*_BIND` host address (`port-no-host-address`) | |
 | **5.15** `docker.sock` mount | ✅ Enforced | CI FAIL — socket proxy pattern enforced | Documented exceptions with risk acceptance |
 | **5.25** Restart policy | ✅ Yes | All services use `restart: unless-stopped` | |
 | **5.28** PIDs limit | ❌ Partial | Only in 3 files with `deploy.resources` | |

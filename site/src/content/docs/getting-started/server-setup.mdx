@@ -19,8 +19,11 @@ reverse once services are running, so they come first.
 ## Before you start
 
 Needs: a Linux host you may reconfigure (Debian 13 is what this is tested on),
-Docker with the Compose plugin, ports 80 and 443 free, and a domain whose DNS you
-control.
+Docker Engine 28.0 or newer with Compose 2.33.1 or newer, ports 80 and 443 free,
+and a domain whose DNS you control. Engine 28.0 is the first that accepts the IPv6
+daemon settings below without a fixed IPv6 range — on 27.x that configuration does
+not start the daemon — and Compose 2.33.1 is the first that understands
+`gw_priority`, which pins Traefik's published ports to `proxy-public`.
 
 ```bash
 docker --version && docker compose version
@@ -128,11 +131,14 @@ traffic over IPv4 and leaves the IPv6 path untested.
    name and get replaced.
    :::
 
-2. Set up Traefik — it terminates TLS and routes everything that follows. Follow
-   the [Traefik guide](/infrastructure/traefik/), then come back here.
+2. Create Traefik's configuration — it terminates TLS and routes everything that
+   follows. Set the values from the [Traefik guide](/infrastructure/traefik/)'s
+   installation in `core/traefik/.env`, but **do not start it yet**: the network
+   ranges come first.
 
-3. If you enabled IPv6, add the two network ranges to `core/traefik/.env` and
-   generate your own IPv6 prefix:
+3. Unless you chose IPv4 only, set the two network ranges in `core/traefik/.env`,
+   with an IPv6 prefix of your own — the example's prefix is the documentation
+   example, and `validate.sh` refuses it on purpose:
 
    ```bash
    RANDOM_HEX=$(openssl rand -hex 5)
@@ -153,14 +159,25 @@ traffic over IPv4 and leaves the IPv6 path untested.
    COMPOSE_FILE=docker-compose.yml:network-dual-stack.yml:config/published-ports.yml:config/edge-networks.yml
    ```
 
-   A host without public IPv4 empties `TRAEFIK_BIND_V4=`. Then render and
+   A host without public IPv4 empties `TRAEFIK_BIND_V4=` — an IPv6-only shape
+   that has not been verified on a host yet. Then check, render, check again and
    start Traefik:
 
    ```bash
    cd core/traefik
+   bash ops/scripts/validate.sh            # before the first render it reports the
+                                           # published-address checks as not rendered yet
    bash ops/scripts/render.sh
+   bash ops/scripts/validate.sh
    docker compose up -d
    ```
+
+   `validate.sh` also prints the **exposure profile** it derives from the bindings
+   — `direct`, `proxied` or `private` — and which protection layers are present or
+   absent. For a public binding, `validate.sh --strict` additionally wants the
+   marker of an exposure test run from another machine
+   (`scripts/exposure-test.sh`, stored in `config/exposure-verified`); see
+   [Traefik](/infrastructure/traefik/#exposure-profile-and-host-firewall).
 
    :::caution
    With IPv6 enabled, that overlay belongs on **every** `docker compose` command
@@ -179,7 +196,8 @@ ss -tlnp | grep -E ':80 |:443 '
 ```
 
 Expected: containers healthy, **two** subnets from the second command, and
-listeners on both `0.0.0.0` and `[::]` — on `[::]` alone for an IPv6-only host.
+listeners on both `0.0.0.0` and `[::]` — on `[::]` alone for an IPv6-only host
+(not verified on a host yet).
 
 One subnet means the overlay was missed; no `[::]` listener means
 `TRAEFIK_BIND_V6` is empty or `render.sh` was not run.
@@ -187,9 +205,16 @@ One subnet means the overlay was missed; no `[::]` listener means
 ### Confirm the server sees who is calling
 
 Access policies, rate limits and intrusion detection all depend on this. Deploy the
-diagnostic endpoint:
+diagnostic endpoint. Like every stack, whoami ships on its own edge network
+(`TRAEFIK_NETWORK=${COMPOSE_PROJECT_NAME}-edge`, here `whoami-edge`), and Traefik
+reaches it only once that network is listed in `EDGE_NETWORKS` — otherwise the
+stack is unreachable and Traefik's log says nothing:
 
 ```bash
+# still in core/traefik — in .env: EDGE_NETWORKS="whoami-edge"
+bash ops/scripts/render.sh
+docker compose up -d        # recreates Traefik: every routed stack pauses ~7 s
+
 cd ../../apps/whoami
 cp .env.example .env
 # set APP_TRAEFIK_HOST, and APP_TRAEFIK_ACCESS=access-public for the test
@@ -203,7 +228,7 @@ on, so test each one you care about and check it against the right expectation:
 |---|---|
 | public IPv4 | your public IPv4 — what `curl -4 https://api64.ipify.org` reports |
 | public IPv6 | your public IPv6 — `curl -6 https://api64.ipify.org` |
-| Tailscale, directly | a Tailscale address: `100.x.x.x`, or `fd7a:115c:a1e0::…` |
+| Tailscale, directly | a Tailscale address: `100.x.x.x`, or `fd7a:115c:a1e0::…` — not yet verified on a host with the current bindings and edge networks |
 | another VPN | that tunnel's client address |
 | a CDN or upstream proxy | whatever that service forwards — check its own documentation |
 

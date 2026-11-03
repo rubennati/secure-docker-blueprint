@@ -51,7 +51,7 @@ networks:
 - Shapes, migration and the address-pool limit:
   [`core/traefik/docs/edge-networks.md`](../../core/traefik/docs/edge-networks.md)
 
-**IP family — dual-stack as shipped, IPv4-only and IPv6-only as settings.**
+**IP family — dual-stack as shipped, IPv4-only and IPv6-only as settings** (IPv6-only is not verified on a host).
 The example `core/traefik/.env` applies the `network-dual-stack.yml` overlay, which
 creates `proxy-public` with an IPv6 subnet (DEC-063, refined by DEC-075); without
 it the network is IPv4-only. Traefik's published ports are one bind variable per family
@@ -201,17 +201,18 @@ it, nothing here applies a firewall on the operator's behalf.
 
 ```yaml
 ports:
-  - "${APP_PORT}:8080"
+  - "${APP_BIND:?set APP_BIND}:${APP_PORT}:8080"
 ```
 
-**Avoid.** Only when the service cannot be routed through Traefik:
-
-- dnsmasq (DNS, not HTTP)
-- Hawser standard mode (Docker API, not web)
+**Avoid.** Only when the service cannot be routed through Traefik, and always with a
+host address from a required `*_BIND` variable (`port-no-host-address`). The
+catalogue publishes this way in `apps/unifi`, `apps/opencanary` and the access
+gateways under `core/` (Teleport, ShellHub, Warpgate, JumpServer, Orion Belt,
+step-ca, and Headscale with its opt-in `derp.yml`); their examples ship `0.0.0.0`. dnsmasq runs with `network_mode: host`.
 
 Database ports **never** exposed on host.
 
 ### Multiple Web Services
 
 For apps with multiple public endpoints (e.g. Seafile + Thumbnail Server):
-Both in `proxy-public`, each with its own Traefik router.
+Both on the stack's `TRAEFIK_NETWORK`, each with its own Traefik router.
