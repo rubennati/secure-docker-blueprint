@@ -358,7 +358,7 @@ Collections are sets of parsers and scenarios for specific services. Configured 
 |------------|-----------------|
 | `crowdsecurity/traefik` | Traefik log parser + HTTP attack scenarios |
 | `crowdsecurity/http-cve` | Known CVE exploit attempts |
-| `crowdsecurity/appsec-generic-rules` | Generic WAF rules (SQL injection, XSS, etc.) |
+| `crowdsecurity/appsec-generic-rules` | A small generic WAF set — not the Core Rule Set; SQL injection, XSS and traversal probes passed it on a host ([appsec.md](docs/appsec.md)) |
 | `crowdsecurity/appsec-virtual-patching` | Virtual patches for known vulnerabilities |
 
 Add more collections from the [CrowdSec Hub](https://hub.crowdsec.net/).

@@ -478,7 +478,7 @@ CrowdSec detects threats (brute force, CVE probes, crawling), the bouncer enforc
 |---------|-------------|
 | **IP blocking** | Bans IPs flagged by CrowdSec scenarios (probing, brute force, sensitive files) |
 | **Community blocklist** | Shared threat intelligence from the CrowdSec network |
-| **AppSec / WAF** | Inspects request bodies for SQL injection, XSS, path traversal |
+| **AppSec / WAF** | Opt-in (`CROWDSEC_APPSEC_ENABLED`): virtual patches for known exploits and a small generic set; no Core Rule Set, so injection probes pass ([`appsec.md`](../crowdsec/docs/appsec.md)) |
 | **Stream mode** | Polls CrowdSec every 60s, caches decisions locally (no per-request latency) |
 
 ### How to enable
@@ -654,7 +654,7 @@ docker exec crowdsec cscli decisions delete --ip <your-address>
 |---------|-------|
 | Plugin not loading | `docker exec traefik-core cat /var/log/traefik/traefik.log` — look for plugin errors (Traefik logs to a file, not stdout). Is `CROWDSEC_BOUNCER_ENABLED=true` in `.env`, was `render.sh` run since, and was Traefik recreated afterwards? `grep -n experimental config/traefik.yml` shows whether the block was rendered |
 | 403 for legitimate IPs | `docker exec crowdsec cscli decisions list` — check if the IP is banned. Remove with `cscli decisions delete --ip X.X.X.X` |
-| WAF blocking valid requests | Set `crowdsecAppsecEnabled: false` temporarily. Check CrowdSec logs for false positives |
+| WAF blocking valid requests | Set `CROWDSEC_APPSEC_ENABLED=false` in `.env`, run `render.sh` and recreate Traefik (`--force-recreate`). Check CrowdSec logs for false positives |
 | Bouncer not connecting | `docker exec crowdsec cscli bouncers list` — check last heartbeat. Verify both containers are on the `crowdsec-security` network |
 | High latency | Verify `crowdsecMode: stream` (not `live`). Stream mode has no per-request overhead |
 
