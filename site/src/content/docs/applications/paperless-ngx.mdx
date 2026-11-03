@@ -12,7 +12,7 @@ Five containers — the application with its workers and consumer, a database, a
 cache, and two converters it hands other formats to.
 
 <StackEvidence stack="apps/paperless-ngx"
-  gap="a restore. The database and the document archive have to come back from the same point in time, and that has not been performed here." />
+  gap="the mobile app and other official clients, and a real client's address in the log — every check ran from a probe on the host." />
 
 **To try it:** Docker, and the OCR language packs you intend to use. See [Try it locally](#try-it-locally).
 
@@ -61,13 +61,15 @@ From `apps/paperless-ngx/`:
    not installed is not an error: Tesseract falls back to English, and the
    document is archived with the wrong text.
 
-2. Generate the two secrets. `tr -d '\n'` is not optional — a trailing newline is
-   part of the value, and authentication fails with a password that looks right:
+2. Generate the two secrets and create the mail password file. `tr -d '\n'` is
+   not optional — a trailing newline is part of the value, and authentication
+   fails with a password that looks right:
 
    ```bash
    mkdir -p .secrets
    openssl rand -base64 32 | tr -d '\n' > .secrets/db_pwd.txt
    openssl rand -base64 48 | tr -d '\n' > .secrets/secret_key.txt
+   : > .secrets/email_pwd.txt   # compose mounts it; empty while mail is off (see Mail)
    ```
 
 3. Create the volumes and hand them to the user the application drops to:
@@ -89,7 +91,7 @@ From `apps/paperless-ngx/`:
 5. Watch the migrations finish:
 
    ```bash
-   docker compose logs app --follow
+   docker compose logs paperless-app --follow
    ```
 
    Wait for `Listening at: http://0.0.0.0:8000`.
@@ -97,7 +99,7 @@ From `apps/paperless-ngx/`:
 6. Create the first account:
 
    ```bash
-   docker compose exec app python manage.py createsuperuser
+   docker compose exec paperless-app python manage.py createsuperuser
    ```
 
 7. Open `https://<APP_TRAEFIK_HOST>` and log in.
@@ -108,13 +110,13 @@ From `apps/paperless-ngx/`:
 
 ```bash
 docker compose ps                               # five services, all healthy
-docker compose exec app python manage.py check  # Django reports no issues
+docker compose exec paperless-app python manage.py check  # Django reports no issues
 ```
 
 Then put a PDF into `volumes/consume/` and watch it arrive:
 
 ```bash
-docker compose logs app --follow
+docker compose logs paperless-app --follow
 ```
 
 The document is consumed, OCR'd and appears in the interface. Open it and read
@@ -219,7 +221,7 @@ may need rebuilding.
 2. Export, then dump — the exporter knows what belongs together:
 
    ```bash
-   docker compose exec -u paperless app \
+   docker compose exec -u paperless paperless-app \
      document_exporter /usr/src/paperless/export --compare-checksums --use-filename-format
    tar czf paperless-export-$(date +%Y%m%d).tgz volumes/export volumes/media
    docker compose exec db sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' \
@@ -230,7 +232,7 @@ may need rebuilding.
 
    ```bash
    docker compose pull && docker compose up -d
-   docker compose logs app --follow
+   docker compose logs paperless-app --follow
    ```
 
 </Steps>

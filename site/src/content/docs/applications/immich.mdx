@@ -64,7 +64,7 @@ From `apps/immich/`:
 
    ```bash
    docker compose up -d
-   docker compose logs app --follow
+   docker compose logs immich-app --follow
    ```
 
    Wait for `Immich Server is listening on`.
@@ -148,7 +148,7 @@ Restore order: database, then the library, then the application.
 
    ```bash
    docker compose pull && docker compose up -d
-   docker compose logs app --follow
+   docker compose logs immich-app --follow
    ```
 
 4. Open the library and run a search. A migration that touched the embeddings

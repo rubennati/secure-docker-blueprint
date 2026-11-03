@@ -145,7 +145,7 @@ n8n ships breaking changes in minor bumps.
 2. Stop the container and copy the data directory and the key:
 
    ```bash
-   docker compose stop app
+   docker compose stop n8n-app
    tar czf n8n-backup-$(date +%Y%m%d).tgz volumes/ .secrets/n8n_encryption_key.txt
    ```
 
@@ -153,7 +153,7 @@ n8n ships breaking changes in minor bumps.
 
    ```bash
    docker compose pull && docker compose up -d
-   docker compose logs app --follow
+   docker compose logs n8n-app --follow
    ```
 
 4. Open a workflow that uses a stored credential and run it. A migration that
