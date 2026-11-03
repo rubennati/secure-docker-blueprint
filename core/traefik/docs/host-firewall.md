@@ -91,7 +91,10 @@ sudo pkill -f 'sleep 300'
 
 Make it survive a reboot the way the host loads `nftables` (an `include` from
 `/etc/nftables.conf`, or `nftables.service`); `scripts/host-files.sh` compares the
-installed file with the rendered one. Verify the forward path by result:
+installed file with the rendered one. Debian's `/etc/nftables.conf` begins with
+`flush ruleset`: starting or restarting `nftables.service` on a running host removes
+Docker's tables as well, and published ports stop until Docker writes them again.
+Verify the forward path by result:
 a throwaway container on a bridge network still reaches an external address.
 
 Not loaded on a host yet by this repository (DEC-078, verification open). What is

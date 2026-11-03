@@ -184,10 +184,10 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=2.1.15",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "2026-09-22",
+    "state": "baseline-aligned",
+    "verified": "2026-11-03",
     "verified_anchored": true,
-    "verified_version": "2.1.13"
+    "verified_version": "2.1.15"
   },
   "apps/heimdall": {
     "backup_docs": "documented",

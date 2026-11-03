@@ -440,10 +440,10 @@
     "name": "GreenMail",
     "path": "apps/greenmail",
     "role": "SMTP, IMAP and POP3 test server with a mailbox per recipient, for automated tests",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://hub.docker.com/r/greenmail/standalone",
-    "verified": "2026-09-22",
-    "verified_version": "2.1.13",
+    "verified": "2026-11-03",
+    "verified_version": "2.1.15",
     "version": "2.1.15"
   },
   "apps/heimdall": {
