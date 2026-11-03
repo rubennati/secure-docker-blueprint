@@ -590,6 +590,12 @@ docker exec crowdsec cscli bouncers add traefik-bouncer
 
 The command prints the key once — save it immediately.
 
+When Traefik's container comes back with another address on `crowdsec-security` —
+after a restart of the Docker daemon, measured on the step 8 lab host — the local API
+lists the same key a second time as `traefik-bouncer@<address>`, and the first entry
+stops pulling. Both are the one bouncer; the stale line can be removed with
+`cscli bouncers delete`, and nothing has to change in `core/traefik`.
+
 ### Wire the plugin in core/traefik/
 
 1. In `core/traefik/.env`, set the switch and the key:

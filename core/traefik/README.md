@@ -989,6 +989,13 @@ edit `/etc/traefik-watchdog.env` and `sudo systemctl enable --now
 traefik-watchdog.timer`. They are optional in the manifest, so a host without
 the watchdog reports them as `not installed` and nothing else.
 
+Without it a hung Traefik stays hung. Measured on the step 8 lab host: with the
+process frozen for 75 s, Docker reported the container `unhealthy` after 42 s and
+did nothing further; every router was unanswered until the process resumed. A crash
+is different — the restart policy brought a killed process back within 8 s — and so
+is a `docker kill` or `docker stop`, which Docker counts as a manual stop and does
+not restart.
+
 ## Backup
 
 | | |
