@@ -264,7 +264,8 @@ open.
 | E6 | 2026-11-01 | H1 | pass | `validate.sh --strict` names only the exposure marker; nothing PENDING or NOT VERIFIED from the family check |
 | X1 | 2026-11-01 | H1 | pass | with `8f19db3` from OUT, one run per address: 80 and 443 answer on IPv4 and on IPv6, 8080, 2375, 2376, 3306, 5432, 6379, 8025, 11434 closed on both; SSH answers on IPv4, not on IPv6 — reported, not judged; the filter in front of H1 decides it. The first run, before `8f19db3`, reported every open port closed (curl exits 28 after a connect) |
 | A1–A5 (OUT4, OUT6) | 2026-11-01 | H1 | pass | `w-public` 200/200; `w-trusted`, `w-vpn`, `w-trusted-vpn`, `w-blocked` 403/403 |
-| A1–A5 (TS, LAN) | 2026-11-01 | H1 | not run | no VPN on the lab host by the operator's decision for this phase; no LAN client |
+| A1–A5 (TS4, TS6) | 2026-11-01 | H1 | not run | no VPN on the lab host by the operator's decision for this phase; open |
+| A1–A5 (LAN4, LAN6) | 2026-11-03 | H1 | not testable on H1 | H1 has no regular LAN: no private network a client could join and whose range `TRUSTED_RANGES` could declare. The columns need a host with a LAN; not a pass, open (below) |
 | A7 | 2026-11-01 | H1 | pass | from OUT6 with a forged `X-Forwarded-For`/`X-Real-Ip` (tailnet example): `w-vpn` 403; `w-public` shows OUT6 |
 | A8 | 2026-11-01 | H1 | not run | needs a tailnet client |
 | A9 | 2026-11-01 | H1 | deviation; expectation corrected | `--resolve …:[::1]` on `w-vpn`: no connection (timeout), not 403 — `userland-proxy: false` does not forward IPv6 loopback (`ipv6-dual-stack.md`); over the host's global IPv6 address and over 127.0.0.1: 403. The expected 403 over `[::1]` contradicted `ipv6-dual-stack.md`; the row was corrected on 2026-11-02, and this measurement meets it |
@@ -279,6 +280,12 @@ open.
 | M1 | 2026-11-01 | H1 | pass | the hoster's console used once with a break-glass account; `sudo` asked for its password |
 
 The run report is [`labs/ingress/2026-11-01-results.md`](labs/ingress/2026-11-01-results.md).
+
+A cell marked "not testable on H1" was not measured and is not a pass. The LAN
+columns of A stay open for the release gate like any row not passed; with them,
+the admitting half of `access-trusted` and `access-trusted-vpn` from a declared
+range is unmeasured on any host. The tailnet columns of A, A8, F and M2 stay open
+until the VPN block runs.
 
 A row corrected after the run — A9 and N2 their expectation, N5 its method — keeps its
 first result and names the correction; the release gate judges it against the row as it
