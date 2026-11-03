@@ -69,8 +69,9 @@ docker compose up -d
 docker compose logs paperless-gpt-app --follow   # watch for: Server started on interface :8080
 ```
 
-On the first start it creates its three tags in Paperless-ngx —
-`paperless-gpt`, `paperless-gpt-auto` and `paperless-gpt-failed` by default. Tag
+On the first start it creates `paperless-gpt-failed` and
+`paperless-gpt-auto-complete` in Paperless-ngx (step 8 lab host); `paperless-gpt`
+and `paperless-gpt-auto` are created by whoever tags with them first. Tag
 a document with the first one and it appears in the interface for review; the
 second one processes without asking. The third marks what failed, so a document
 does not loop.

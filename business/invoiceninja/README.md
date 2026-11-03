@@ -88,7 +88,7 @@ migration. Let the application generate it: Laravel expects the `base64:` prefix
 its own generator produces, which `openssl rand` alone does not give you.
 
 ```bash
-docker run --rm invoiceninja/invoiceninja-debian:5.13.26 \
+docker run --rm invoiceninja/invoiceninja-debian:"$(grep -m1 '^APP_TAG=' .env | cut -d= -f2)" \
   php artisan key:generate --show | tr -d '\n' > .secrets/app_key.txt
 chmod 600 .secrets/app_key.txt
 ```
@@ -193,7 +193,7 @@ This stack uses **named volumes**, not bind mounts. Their host paths are
 
 ```yaml
 source_directories:
-    - /srv/blueprint
+    - /srv/docker/business/invoiceninja
     - /var/lib/docker/volumes/invoiceninja_app_storage/_data
 ```
 
@@ -206,7 +206,7 @@ mysql_databases:
     - name: ninja
       container: invoiceninja-mysql
       username: ninja
-      password: "{credential file /srv/blueprint/business/invoiceninja/.secrets/db_pwd.txt}"
+      password: "{credential file /srv/docker/business/invoiceninja/.secrets/db_pwd.txt}"
       tls: false
 ```
 

@@ -66,6 +66,11 @@ docker compose up -d
 # https://<APP_TRAEFIK_HOST>/ghost/
 ```
 
+The setup page answers until the owner exists, and with the shipped `access-public`
+whoever reaches it first becomes the owner — finish it before the host is known.
+With mail configured, a staff login from a new browser waits for a six-digit code
+Ghost mails to the staff address (step 8 lab host, 6.63.0).
+
 Default access is `access-public`, with `limit-standard` and `headers-standard` — a public blog with the standard headers and rate limit.
 
 ### Enabling ActivityPub on an existing deployment
@@ -117,6 +122,9 @@ mysql_databases:
       container: ghost-db
       username: ghost_user
       password: "{credential file /srv/docker/apps/ghost/.secrets/db_pwd.txt}"
+      # MySQL's self-signed certificate: the host's client refuses it and the
+      # dump fails (step 8 lab host). The connection stays on the host.
+      tls: false
 ```
 
 `volumes/content` is not just uploads: the active theme lives there too. A

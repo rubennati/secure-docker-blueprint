@@ -154,10 +154,10 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=1.6.1",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "2026-05-03",
+    "state": "ops-proven",
+    "verified": "2026-11-03",
     "verified_anchored": true,
-    "verified_version": "1.5.x"
+    "verified_version": "1.6.1"
   },
   "apps/euro-office": {
     "backup_docs": "documented",
@@ -174,10 +174,10 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=6.63.0-alpine",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "2026-07-26",
+    "state": "ops-proven",
+    "verified": "2026-11-03",
     "verified_anchored": true,
-    "verified_version": "v6.54.0-alpine"
+    "verified_version": "6.63.0-alpine"
   },
   "apps/greenmail": {
     "backup_docs": "documented",
@@ -254,10 +254,10 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=v3.2.0",
     "restore_docs": "documented",
-    "state": "scaffolded",
-    "verified": "2026-04-17",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "baseline-aligned",
+    "verified": "2026-11-03",
+    "verified_anchored": true,
+    "verified_version": "v3.2.0"
   },
   "apps/it-tools": {
     "backup_docs": "documented",
@@ -324,20 +324,20 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=4.1.2-apache",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "2026-04-17",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "ops-proven",
+    "verified": "2026-11-03",
+    "verified_anchored": true,
+    "verified_version": "4.1.2-apache"
   },
   "apps/n8n": {
     "backup_docs": "documented",
     "local_stack": "✅",
     "pinned": "APP_TAG=2.41.7@sha256:bcef56dd4401…",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "2026-05-02",
+    "state": "ops-proven",
+    "verified": "2026-11-03",
     "verified_anchored": true,
-    "verified_version": "v2.19.2"
+    "verified_version": "2.41.7"
   },
   "apps/nextcloud": {
     "backup_docs": "documented",
@@ -534,7 +534,7 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=1.15.1-slim@sha256:4bde62fd9bb1…",
     "restore_docs": "missing",
-    "state": "baseline-aligned",
+    "state": "ops-proven",
     "verified": "2026-09-07",
     "verified_anchored": true,
     "verified_version": "v1.15.1"
@@ -734,20 +734,20 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=5.13.52",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "2026-09-13",
+    "state": "ops-proven",
+    "verified": "2026-11-03",
     "verified_anchored": true,
-    "verified_version": "5.13.40"
+    "verified_version": "5.13.52"
   },
   "business/kimai": {
     "backup_docs": "documented",
     "local_stack": "✅",
     "pinned": "APP_TAG=2.66.0",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "2026-05-03",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "ops-proven",
+    "verified": "2026-11-03",
+    "verified_anchored": true,
+    "verified_version": "2.66.0"
   },
   "business/leantime": {
     "backup_docs": "documented",
@@ -764,10 +764,10 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=v6.2.0",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "2026-05-03",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "baseline-aligned",
+    "verified": "2026-11-03",
+    "verified_anchored": true,
+    "verified_version": "v6.2.0"
   },
   "business/matomo": {
     "backup_docs": "documented",

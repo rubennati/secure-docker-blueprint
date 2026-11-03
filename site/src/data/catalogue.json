@@ -378,10 +378,10 @@
     "name": "Easy!Appointments",
     "path": "apps/easyappointments",
     "role": "Appointment booking in PHP, established since 2013",
-    "state": "scaffolded",
+    "state": "ops-proven",
     "upstream": "https://easyappointments.org/",
-    "verified": "2026-05-03",
-    "verified_version": "1.5.x",
+    "verified": "2026-11-03",
+    "verified_version": "1.6.1",
     "version": "1.6.1"
   },
   "apps/euro-office": {
@@ -420,10 +420,10 @@
     "name": "Ghost",
     "path": "apps/ghost",
     "role": "Publishing platform for blogs and newsletters, with optional Fediverse publishing",
-    "state": "scaffolded",
+    "state": "ops-proven",
     "upstream": "https://hub.docker.com/_/ghost",
-    "verified": "2026-07-26",
-    "verified_version": "v6.54.0-alpine",
+    "verified": "2026-11-03",
+    "verified_version": "6.63.0-alpine",
     "version": "6.63.0-alpine"
   },
   "apps/greenmail": {
@@ -616,10 +616,10 @@
     "name": "Immich",
     "path": "apps/immich",
     "role": "Photo and video backup with mobile apps and machine-learning search",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://immich.app/",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-11-03",
+    "verified_version": "v3.2.0",
     "version": "3.2.0"
   },
   "apps/it-tools": {
@@ -791,10 +791,10 @@
     "name": "Monica",
     "path": "apps/monicahq",
     "role": "Personal CRM for the people in your life",
-    "state": "scaffolded",
+    "state": "ops-proven",
     "upstream": "https://www.monicahq.com/",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-11-03",
+    "verified_version": "4.1.2-apache",
     "version": "4.1.2-apache"
   },
   "apps/n8n": {
@@ -828,10 +828,10 @@
     "name": "n8n",
     "path": "apps/n8n",
     "role": "Visual workflow automation",
-    "state": "scaffolded",
+    "state": "ops-proven",
     "upstream": "https://n8n.io/",
-    "verified": "2026-05-02",
-    "verified_version": "v2.19.2",
+    "verified": "2026-11-03",
+    "verified_version": "2.41.7",
     "version": "bcef56dd4401…"
   },
   "apps/nextcloud": {
@@ -1344,7 +1344,7 @@
     "name": "Tymeslot",
     "path": "apps/tymeslot",
     "role": "Meeting scheduling with booking pages, calendar sync and video links",
-    "state": "baseline-aligned",
+    "state": "ops-proven",
     "upstream": "https://hub.docker.com/r/luka1thb/tymeslot",
     "verified": "2026-09-07",
     "verified_version": "v1.15.1",
@@ -1850,10 +1850,10 @@
     "name": "Invoice Ninja",
     "path": "business/invoiceninja",
     "role": "Invoicing, quotes and payments",
-    "state": "scaffolded",
+    "state": "ops-proven",
     "upstream": "https://github.com/invoiceninja/dockerfiles",
-    "verified": "2026-09-13",
-    "verified_version": "5.13.40",
+    "verified": "2026-11-03",
+    "verified_version": "5.13.52",
     "version": "5.13.52"
   },
   "business/kimai": {
@@ -1884,10 +1884,10 @@
     "name": "Kimai",
     "path": "business/kimai",
     "role": "Time tracking with reports and invoicing hooks",
-    "state": "scaffolded",
+    "state": "ops-proven",
     "upstream": "https://www.kimai.org",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-11-03",
+    "verified_version": "2.66.0",
     "version": "2.66.0"
   },
   "business/leantime": {
@@ -1945,10 +1945,10 @@
     "name": "Listmonk",
     "path": "business/listmonk",
     "role": "Newsletter and mailing-list manager",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://listmonk.app",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-11-03",
+    "verified_version": "v6.2.0",
     "version": "6.2.0"
   },
   "business/matomo": {

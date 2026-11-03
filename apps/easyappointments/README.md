@@ -73,6 +73,11 @@ After install, log in at `/index.php/user/login` (backend) or `/index.php/backen
 - **MariaDB on `app-internal` (`internal: true`)** — DB not reachable from outside.
 - **Default access `access-public`, `limit-standard` and `headers-standard`** — booking URLs must be reachable by external visitors.
 
+## Mail
+
+The stack passes no mail settings: notifications for bookings are not configured
+by this compose file, and none were sent on the step 8 lab host.
+
 ## Backup
 
 | | |

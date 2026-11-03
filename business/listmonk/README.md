@@ -42,6 +42,16 @@ docker compose logs listmonk-app --follow
 # → First visit prompts you to create the super admin account.
 ```
 
+**Before the route opens to anyone else**, as measured on the step 8 lab host (v6.2.0):
+
+- The first visit to `/admin` creates the super admin. With the shipped
+  `access-public` that is whoever arrives first — create it before anyone else can reach the host.
+- The SMTP settings ship with upstream's placeholder `smtp.yoursite.com`, a real
+  domain that resolves to a third party's address. The opt-in mail for a public
+  subscription was sent there on port 25 (it timed out, and the form answered `500`).
+  Set the SMTP server under **Settings → SMTP** before the subscription form is reachable.
+- The session cookie is set `HttpOnly` without `Secure`, although `root_url` is `https://`.
+
 ## Access split (recommended for production)
 
 Default is `access-public` so subscriber endpoints (`/subscription/*`, `/link/*`, `/campaign/*`) work for external users. The admin UI at `/admin` is then *also* public.

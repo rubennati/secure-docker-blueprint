@@ -4,7 +4,7 @@
 
 Generated 2026-11-03 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-121 stacks: 6 ops-proven · 32 baseline-aligned · 83 scaffolded. 111 carry a local test stack.
+121 stacks: 13 ops-proven · 33 baseline-aligned · 75 scaffolded. 111 carry a local test stack.
 
 This is the maintainer's view: what has been established about each stack. It makes no statement about whether a stack suits a given deployment.
 
@@ -60,9 +60,9 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/dify`](apps/dify/) | `baseline-aligned` | `APP_TAG=1.17.1` | 2026-09-22 | ✅ | documented | missing |
 | [`apps/docker-mailserver`](apps/docker-mailserver/) | `scaffolded` | `APP_TAG=16.0.1` | — | ✅ | documented | missing |
 | [`apps/docling-serve`](apps/docling-serve/) | `baseline-aligned` | `APP_TAG=v1.34.0` | 2026-09-22 | ✅ | documented | missing |
-| [`apps/easyappointments`](apps/easyappointments/) | `scaffolded` | `APP_TAG=1.6.1` | 2026-05-03 | ✅ | documented | missing |
+| [`apps/easyappointments`](apps/easyappointments/) | `ops-proven` | `APP_TAG=1.6.1` | 2026-11-03 | ✅ | documented | missing |
 | [`apps/euro-office`](apps/euro-office/) | `baseline-aligned` | `APP_TAG=v9.3.4-hotfix.1` | 2026-11-02 | ✅ | documented | missing |
-| [`apps/ghost`](apps/ghost/) | `scaffolded` | `APP_TAG=6.63.0-alpine` | 2026-07-26 | ✅ | documented | missing |
+| [`apps/ghost`](apps/ghost/) | `ops-proven` | `APP_TAG=6.63.0-alpine` | 2026-11-03 | ✅ | documented | missing |
 | [`apps/greenmail`](apps/greenmail/) | `baseline-aligned` | `APP_TAG=2.1.15` | 2026-11-03 | ✅ | documented | missing |
 | [`apps/heimdall`](apps/heimdall/) | `ops-proven` | `APP_TAG=2.8.3` | 2026-11-02 | ✅ | documented | missing |
 | [`apps/hemmelig`](apps/hemmelig/) | `scaffolded` | `APP_TAG=v7.4.8` | — | ✅ | documented | missing |
@@ -70,15 +70,15 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/homarr`](apps/homarr/) | `scaffolded` | `APP_TAG=v1.77.1` | 2026-05-02 | ✅ | documented | missing |
 | [`apps/homepage`](apps/homepage/) | `scaffolded` | `APP_TAG=v2.3.0` | 2026-05-03 | ✅ | documented | missing |
 | [`apps/httpbin`](apps/httpbin/) | `baseline-aligned` | `APP_TAG=0.10.4` | 2026-11-02 | ✅ | documented | missing |
-| [`apps/immich`](apps/immich/) | `scaffolded` | `APP_TAG=v3.2.0` | 2026-04-17 ⚠️ | ✅ | documented | documented |
+| [`apps/immich`](apps/immich/) | `baseline-aligned` | `APP_TAG=v3.2.0` | 2026-11-03 | ✅ | documented | documented |
 | [`apps/it-tools`](apps/it-tools/) | `baseline-aligned` | `APP_TAG=2024.10.22-7ca5933` | 2026-11-02 | ✅ | documented | missing |
 | [`apps/librephotos`](apps/librephotos/) | `scaffolded` | `APP_TAG=1.2.1` | 2026-04-17 ⚠️ | ✅ | documented | missing |
 | [`apps/litellm`](apps/litellm/) | `scaffolded` | `APP_TAG=v1.101.4` | 2026-09-21 | ✅ | documented | missing |
 | [`apps/lycheeorg`](apps/lycheeorg/) | `scaffolded` | `APP_TAG=v7.8.3` | 2026-04-17 ⚠️ | ✅ | documented | missing |
 | [`apps/mailpit`](apps/mailpit/) | `baseline-aligned` | `APP_TAG=v1.31.1` | 2026-11-02 | ✅ | documented | missing |
 | [`apps/mailserver-jeboehm`](apps/mailserver-jeboehm/) | `scaffolded` | `APP_TAG=8.0.18` | — | ✅ | documented | missing |
-| [`apps/monicahq`](apps/monicahq/) | `scaffolded` | `APP_TAG=4.1.2-apache` | 2026-04-17 ⚠️ | ✅ | documented | missing |
-| [`apps/n8n`](apps/n8n/) | `scaffolded` | `APP_TAG=2.41.7@sha256:bcef56dd4401…` | 2026-05-02 | ✅ | documented | missing |
+| [`apps/monicahq`](apps/monicahq/) | `ops-proven` | `APP_TAG=4.1.2-apache` | 2026-11-03 | ✅ | documented | missing |
+| [`apps/n8n`](apps/n8n/) | `ops-proven` | `APP_TAG=2.41.7@sha256:bcef56dd4401…` | 2026-11-03 | ✅ | documented | missing |
 | [`apps/nextcloud`](apps/nextcloud/) | `ops-proven` | `APP_TAG=34.0.4-fpm-alpine` | 2026-11-02 | ✅ | documented | documented |
 | [`apps/nocodb`](apps/nocodb/) | `scaffolded` | `APP_TAG=2026.09.0` | 2026-05-02 | ✅ | documented | missing |
 | [`apps/obot`](apps/obot/) | `scaffolded` | `APP_TAG=v0.26.0` | — | ✅ | documented | missing |
@@ -98,7 +98,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/shlink`](apps/shlink/) | `scaffolded` | `APP_TAG=5.1.8` | — | ✅ | documented | missing |
 | [`apps/stalwart`](apps/stalwart/) | `scaffolded` | `APP_TAG=v0.16.24` | — | ✅ | documented | missing |
 | [`apps/threat-dragon`](apps/threat-dragon/) | `scaffolded` | `APP_TAG=v2.6.2` | — | ✅ | documented | missing |
-| [`apps/tymeslot`](apps/tymeslot/) | `baseline-aligned` | `APP_TAG=1.15.1-slim@sha256:4bde62fd9bb1…` | 2026-09-07 | ✅ | documented | missing |
+| [`apps/tymeslot`](apps/tymeslot/) | `ops-proven` | `APP_TAG=1.15.1-slim@sha256:4bde62fd9bb1…` | 2026-09-07 | ✅ | documented | missing |
 | [`apps/unifi`](apps/unifi/) | `scaffolded` | `APP_TAG=10.6.101` | 2026-04-17 ⚠️ | ✅ | documented | missing |
 | [`apps/vaultwarden`](apps/vaultwarden/) | `ops-proven` | `APP_TAG=1.37.4` | 2026-11-02 | ✅ | documented | missing |
 | [`apps/velociraptor`](apps/velociraptor/) | `scaffolded` | `APP_TAG=0.77.3` | — | ✅ | documented | missing |
@@ -119,10 +119,10 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`business/dolibarr`](business/dolibarr/) | `scaffolded` | `APP_TAG=23.0.4` | 2026-04-17 ⚠️ | ✅ | documented | missing |
 | [`business/erpnext`](business/erpnext/) | `baseline-aligned` | `APP_TAG=v16.35.0` | 2026-09-23 | ✅ | documented | missing |
 | [`business/facturascripts`](business/facturascripts/) | `baseline-aligned` | `APP_TAG=2026.5` | 2026-09-22 | ✅ | documented | missing |
-| [`business/invoiceninja`](business/invoiceninja/) | `scaffolded` | `APP_TAG=5.13.52` | 2026-09-13 | ✅ | documented | missing |
-| [`business/kimai`](business/kimai/) | `scaffolded` | `APP_TAG=2.66.0` | 2026-05-03 ⚠️ | ✅ | documented | missing |
+| [`business/invoiceninja`](business/invoiceninja/) | `ops-proven` | `APP_TAG=5.13.52` | 2026-11-03 | ✅ | documented | missing |
+| [`business/kimai`](business/kimai/) | `ops-proven` | `APP_TAG=2.66.0` | 2026-11-03 | ✅ | documented | missing |
 | [`business/leantime`](business/leantime/) | `scaffolded` | `APP_TAG=3.9.8` | — | ✅ | documented | missing |
-| [`business/listmonk`](business/listmonk/) | `scaffolded` | `APP_TAG=v6.2.0` | 2026-05-03 ⚠️ | ✅ | documented | missing |
+| [`business/listmonk`](business/listmonk/) | `baseline-aligned` | `APP_TAG=v6.2.0` | 2026-11-03 | ✅ | documented | missing |
 | [`business/matomo`](business/matomo/) | `scaffolded` | `APP_TAG=5.13.0-apache` | 2026-04-17 ⚠️ | ✅ | documented | missing |
 | [`business/openproject`](business/openproject/) | `scaffolded` | `APP_TAG=17.8.0-slim` | 2026-05-06 | ✅ | documented | missing |
 | [`business/opensign`](business/opensign/) | `scaffolded` | `APP_TAG=main@sha256:817654a3f804…` | 2026-05-11 ⚠️ | ✅ | documented | missing |
