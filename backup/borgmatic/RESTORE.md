@@ -53,15 +53,27 @@ A difference is not automatically a failure — see [what a quiesced backup look
 
 Restore into a throwaway database, not the live one. `--container` is the safest override: it names the target explicitly, so there is no chance of the configured one being used.
 
-PostgreSQL:
+PostgreSQL — the throwaway server runs the **same major version** as the live one,
+and the restore runs the `pg_restore_command` and `psql_command` of the database's
+entry, so the client that wrote the dump restores it ([README](README.md#postgresql-the-clients-major-version-is-the-servers)).
+Check the entry first; an entry without them uses the newest client on the `PATH`:
 
 ```bash
-docker run -d --name restore-test -e POSTGRES_PASSWORD=test -p 15432:5432 postgres:17
+sudo grep -A12 'name: myapp' /etc/borgmatic/config.yaml | grep -E '_command|container'
+docker exec myapp-db postgres --version     # the live server's major, e.g. 16
+
+PW=$(openssl rand -hex 16)
+docker run -d --name restore-test -e POSTGRES_PASSWORD="$PW" postgres:16
 docker exec restore-test createdb -U postgres myapp
 
 sudo borgmatic restore --archive latest --database myapp \
-  --hostname 127.0.0.1 --port 15432 --username postgres
+  --container restore-test --username postgres --password "$PW"
 ```
+
+With a client of another major the restore can stop on a statement the server does
+not know — measured with client 17 against server 16 (`SET transaction_timeout = 0`,
+the Paperless entries in the [rehearsal log](#rehearsal-log)). A rehearsal that fails
+there is the finding: the backup it tested would fail the same way on the day.
 
 MariaDB — no published port needed, and the database has to exist first:
 
@@ -174,7 +186,7 @@ docker exec myapp-db pg_dump -U myapp myapp > /root/pre-restore-$(date +%Y%m%d-%
 # 2 · Stop the application, leave the database running
 cd /srv/docker/apps/myapp && docker compose stop app
 
-# 3 · Restore
+# 3 · Restore — PostgreSQL with the programs the entry names, of the server's major
 sudo borgmatic restore --archive latest --database myapp
 
 # 4 · Start and verify
