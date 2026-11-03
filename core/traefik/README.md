@@ -718,7 +718,21 @@ a measurement, not settled here (D2 in the core audit).
   level").
 - Origin records: `A` only, or `proxy-public` dual-stack — next paragraph.
 - Certificates: DNS-01 or HTTP-01. TLS-ALPN-01 cannot work behind the proxy
-  (above, Path C).
+  (above, Path C). DNS-01 sets a TXT record and never contacts the host, so a
+  proxied record does not hinder it: on the step 8 lab host a router with
+  `tls.certresolver=cloudflare-dns` for a proxied name had its certificate 20 s
+  after it appeared. Every name Cloudflare forwards needs a
+  certificate here — the TLS options set `sniStrict`, so a name the stored
+  certificates do not cover fails the handshake and Cloudflare answers **525**
+  (measured: a proxied name beside a wildcard for another name). A valid
+  certificate for the exact name is what *Full (strict)* checks.
+- Edge certificate: Cloudflare's free Universal certificate covers the zone and
+  one level below it (`example.com`, `*.example.com`), so a proxied name can sit
+  one level deep. A proxied wildcard one level further (`*.lab.example.com`)
+  fails at the edge before the origin is asked — measured, a TLS handshake
+  failure for such a name — unless the zone has a certificate for that level
+  (Cloudflare's Advanced Certificate Manager). The origin side is no obstacle:
+  DNS-01 issues such a wildcard.
 
 **IPv6 between Cloudflare and the origin.** Cloudflare connects to the origin
 over IPv6 when only an `AAAA` record exists, and possibly when both exist —
@@ -726,8 +740,11 @@ Cloudflare documents a preference for IPv4 there, not a guarantee. On an
 IPv4-only `proxy-public` Traefik is published on IPv4 only ("IPv4-only vs.
 Dual-Stack Networking" above), and such a connection is refused. So in
 `cloudflare` mode one of two must hold: `proxy-public` is dual-stack (the
-overlay above), or the origin has `A` records only. Neither shape is verified
-with Cloudflare yet.
+overlay above), or the origin has `A` records only. Measured on the step 8 lab
+host in `none` mode, origin with `A` and `AAAA`, `proxy-public` dual-stack: for
+clients over IPv4 and over IPv6 Cloudflare connected to the origin over IPv4
+(`X-Real-Ip` an edge IPv4 address, the client in `CF-Connecting-IP`). An origin
+with `AAAA` only is not verified.
 
 **Protect the origin.** Without this a client that connects to the host
 directly bypasses everything Cloudflare does — the edge rule, Cloudflare's own
@@ -842,7 +859,10 @@ render again.
 1. The address at every hop through Cloudflare, IPv4 and IPv6: `whoami` behind
    `access-public`, the access log's `ClientHost` (last element), the bouncer's
    compared address (a manual decision answered `403`), Vaultwarden's lockout
-   address.
+   address. In `none` mode measured on the step 8 lab host: `whoami` behind
+   `access-public` through Cloudflare over IPv4 and IPv6 answered 200 with
+   `X-Real-Ip` the edge and `CF-Connecting-IP` the client; the `cloudflare` mode
+   is not.
 2. A closed route refusing a proxied request over IPv4 and over IPv6, with
    `proxy-public` dual-stack and with it IPv4-only.
 3. Forged `CF-Connecting-IP` and `X-Forwarded-For` from a direct client in both
