@@ -88,13 +88,16 @@ hostname pointing at the host.
 
    ```bash
    docker compose up -d
-   docker compose logs app --follow
+   docker compose logs caldiy-app --follow
    ```
 
    Wait for `ready on port 3000`.
 
-5. Open `https://<APP_TRAEFIK_HOST>`. The setup wizard runs on first visit and
-   the first account becomes the owner. Public self-registration stays disabled —
+5. Open `https://<APP_TRAEFIK_HOST>` from the VPN — the route ships `access-vpn`
+   until the wizard has run, because the wizard hands the owner account to whoever
+   reaches it first. The wizard runs on first visit and the first account becomes
+   the owner. Then set `APP_TRAEFIK_ACCESS=access-public` in `.env` and
+   `docker compose up -d`, if bookings are to be public. Public self-registration stays disabled —
    `NEXT_PUBLIC_DISABLE_SIGNUP=true`.
 
 </Steps>
@@ -140,7 +143,8 @@ dig +short cal.example.com     # a Cloudflare address, not your origin
 
 ### The HSTS extension is a per-host decision
 
-The stack ships `access-public` with `limit-standard` and `headers-standard`:
+The stack ships `access-vpn` until the setup wizard has run, then `access-public` is
+the documented next step; the route carries `limit-standard` and `headers-standard`:
 HSTS `max-age`, `nosniff`, `X-Frame-Options: DENY`, a referrer policy, and a
 permissions policy denying device APIs the application never uses. No request is
 blocked at the proxy beyond the rate limit, and the proxy sets no content
@@ -159,7 +163,7 @@ than an apex.
 Adding or removing the block is a label change, so the container is recreated:
 
 ```bash
-docker compose up -d --force-recreate app
+docker compose up -d --force-recreate caldiy-app
 ```
 
 ### The booking embed does not work as shipped
@@ -239,7 +243,7 @@ digest.
 
    ```bash
    docker compose pull && docker compose up -d
-   docker compose logs app --follow
+   docker compose logs caldiy-app --follow
    ```
 
 4. Log in and open one event type. A migration that touched the encrypted

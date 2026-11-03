@@ -11,7 +11,7 @@ optional per-service status. One container, and a SQLite database inside its
 configuration directory.
 
 <StackEvidence stack="apps/heimdall"
-  gap="a restore. The configuration directory holds the whole dashboard and has not been restored from a backup here." />
+  gap="a request from a client off the host — the basic-auth gate was checked through a route that admits the host only." />
 
 **To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
 
@@ -41,6 +41,14 @@ From `apps/heimdall/`:
    cp .env.example .env
    ```
 
+   Then set `APP_BASIC_AUTH_USERS`. The route ships with a basic-auth gate,
+   because Heimdall's user accounts are off until you create them; the placeholder is not a valid hash. Every `$` in the hash is
+   doubled for Compose — the command does it, paste the whole line:
+
+   ```bash
+   htpasswd -nbB ops 'the-password' | sed -e 's/\$/\$\$/g'
+   ```
+
 2. Create the configuration directory and hand it to that user:
 
    ```bash
@@ -53,7 +61,7 @@ From `apps/heimdall/`:
 
    ```bash
    docker compose up -d
-   docker compose logs app --follow
+   docker compose logs heimdall-app --follow
    ```
 
 4. Open `https://<APP_TRAEFIK_HOST>`. There is no login at first — everything

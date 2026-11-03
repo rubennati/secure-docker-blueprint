@@ -40,6 +40,14 @@ From `apps/dashy/`:
    cp .env.example .env
    ```
 
+   Then set `APP_BASIC_AUTH_USERS`. The route ships with a basic-auth gate,
+   because Dashy's own login runs in the browser only and protects nothing on the server; the placeholder is not a valid hash. Every `$` in the hash is
+   doubled for Compose — the command does it, paste the whole line:
+
+   ```bash
+   htpasswd -nbB ops 'the-password' | sed -e 's/\$/\$\$/g'
+   ```
+
 2. Create the dashboard configuration from the starter file:
 
    ```bash
@@ -76,7 +84,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/  # 200
 Edit the file and restart:
 
 ```bash
-docker compose restart app
+docker compose restart dashy-app
 ```
 
 The file is the source of truth and belongs in version control, which is also

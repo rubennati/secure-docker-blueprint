@@ -58,7 +58,7 @@ From `apps/nocodb/`:
 
    ```bash
    docker compose up -d
-   docker compose logs app --follow
+   docker compose logs nocodb-app --follow
    ```
 
    Wait for the dashboard line.
@@ -125,7 +125,7 @@ the matching hook. `volumes/data` then holds configuration rather than the data.
 
    ```bash
    docker compose pull && docker compose up -d
-   docker compose logs app --follow
+   docker compose logs nocodb-app --follow
    ```
 
 4. Open a base and call the API with an existing token. A migration that touched

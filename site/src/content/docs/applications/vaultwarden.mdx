@@ -9,7 +9,7 @@ import StackEvidence from '../../../components/StackEvidence.astro';
 Vaultwarden is a self-hosted password manager compatible with Bitwarden clients — browser extensions, mobile apps, and the desktop client. It can hold access credentials to everything else you run; treat setup and backup accordingly.
 
 <StackEvidence stack="apps/vaultwarden"
-  gap="a restore. The database, the RSA signing keys and the attachments have to come back from the same point in time, and that has not been performed here." />
+  gap="the official Bitwarden clients — desktop, mobile, browser and CLI. The client paths were driven through the API they use." />
 
 **To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
 
@@ -67,7 +67,7 @@ From `apps/vaultwarden/`:
    by anything that can read the file or inspect the container:
 
    ```bash
-   docker compose run --rm --no-deps app /vaultwarden hash
+   docker compose run --rm --no-deps vaultwarden-app /vaultwarden hash
    ```
 
    Copy the full `$argon2id$...` output, then paste it into `.env` with every `$` doubled (Compose escaping):
@@ -125,13 +125,13 @@ Open `https://your-domain` — the login page should load over TLS.
    Recreate the app container so it loads the changed environment:
 
    ```bash
-   docker compose up -d --force-recreate app
+   docker compose up -d --force-recreate vaultwarden-app
    ```
 
    Confirm it took effect against the container rather than against the page:
 
    ```bash
-   docker compose exec app env | grep SIGNUPS_ALLOWED   # expect false
+   docker compose exec vaultwarden-app env | grep SIGNUPS_ALLOWED   # expect false
    ```
 
    Then reload the login page — "Create Account" should be gone.
@@ -196,7 +196,7 @@ entries lose their files.
 
 ## Troubleshooting
 
-**Container not starting:** check `docker compose logs app` and `docker compose logs db`. Common causes: MariaDB not yet healthy (the app waits for it), or incorrect `$$` escaping in `VW_ADMIN_TOKEN`.
+**Container not starting:** check `docker compose logs vaultwarden-app` and `docker compose logs db`. Common causes: MariaDB not yet healthy (the app waits for it), or incorrect `$$` escaping in `VW_ADMIN_TOKEN`.
 
 **Login page not loading but the container is healthy:** check Traefik logs and confirm `APP_TRAEFIK_HOST` matches your DNS record exactly.
 

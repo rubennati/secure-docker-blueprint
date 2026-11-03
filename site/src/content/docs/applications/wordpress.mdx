@@ -60,7 +60,7 @@ From `apps/wordpress/`:
    writes `.htaccess` itself and would overwrite the additions:
 
    ```bash
-   docker compose exec app bash -c \
+   docker compose exec wordpress-app bash -c \
      'cat /config/.htaccess-security >> /var/www/html/.htaccess'
    ```
 

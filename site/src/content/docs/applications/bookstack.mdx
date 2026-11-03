@@ -72,7 +72,7 @@ From `apps/bookstack/`:
 
    ```bash
    docker compose up -d
-   docker compose logs app --follow
+   docker compose logs bookstack-app --follow
    ```
 
 6. Open `https://<APP_TRAEFIK_HOST>` and log in with the default account —
@@ -136,7 +136,7 @@ Restore order: database, then the application.
 
    ```bash
    docker compose pull && docker compose up -d
-   docker compose logs app --follow
+   docker compose logs bookstack-app --follow
    ```
 
 4. Open a page with an image. A migration that touched the attachment tables
