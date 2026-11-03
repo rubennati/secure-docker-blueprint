@@ -619,6 +619,16 @@ if [ -f "${ROOT_DIR}/config/traefik.yml" ]; then
   for f in integrations.yml tls-profiles.yml routers-system.yml redirects.yml servers-transports.yml model.yml; do
     test -f "${ROOT_DIR}/config/dynamic/${f}" || { echo "Missing config/dynamic/${f} (run render.sh)"; exit 1; }
   done
+  # Every rendered file has to parse, without a key twice in one mapping:
+  # Traefik's file provider rejects the directory for one bad file and starts
+  # without every @file middleware (ops/scripts/check-yaml.py).
+  if command -v python3 >/dev/null 2>&1; then
+    yaml_rc=0
+    python3 "${ROOT_DIR}/ops/scripts/check-yaml.py" "${ROOT_DIR}/config/traefik.yml" "${ROOT_DIR}"/config/dynamic/*.yml || yaml_rc=$?
+    case ${yaml_rc} in 0) ;; 2) echo "NOT VERIFIED: the rendered YAML was not parsed (python3-yaml missing)" ;; *) exit 1 ;; esac
+  else
+    echo "NOT VERIFIED: the rendered YAML was not parsed (python3 missing)"
+  fi
   # The names the middleware model retired must be gone from config/dynamic:
   # a file from a render before the model, or a hand-kept copy, defines
   # middlewares no router may name and, for compress, a second definition.

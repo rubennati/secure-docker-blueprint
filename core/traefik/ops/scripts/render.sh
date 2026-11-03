@@ -658,4 +658,10 @@ echo " -> edge-networks.yml (${n_edges} edge network(s))"
 render_published_ports | place "${CFG_DIR}/published-ports.yml"
 echo " -> published-ports.yml (IPv4: ${BIND_V4_EFFECTIVE:-not published}, IPv6: ${BIND_V6_EFFECTIVE:-not published})"
 
+# A file Traefik cannot parse takes every @file middleware with it at the next
+# start; say so now rather than then.
+if command -v python3 >/dev/null 2>&1; then
+  python3 "${ROOT_DIR}/ops/scripts/check-yaml.py" "${CFG_DIR}/traefik.yml" "${CFG_DIR}"/dynamic/*.yml || {
+    echo "ERROR: a rendered file does not parse — fix the template before Traefik reloads or restarts."; exit 1; }
+fi
 echo "Done. Generated files are in: config/ and config/dynamic/"
