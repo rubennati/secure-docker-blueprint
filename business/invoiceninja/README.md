@@ -249,6 +249,21 @@ failed migration against a database with no dump behind it is not recoverable.
 
 ## Troubleshooting
 
+### The browser loops on `/`, the API answers
+
+`/` redirects to the same URL again and again: the application does not
+believe Traefik's `X-Forwarded-Proto`, so `REQUIRE_HTTPS` sends every request
+back to `https://`. `TRUSTED_PROXIES` does not cover the subnet Traefik
+reaches nginx from — see the comment in `.env.example`. Measured on the step 8
+lab host with the value naming `proxy-public` while the stack sat on its edge
+network.
+
+### 502 after the app container was recreated
+
+nginx resolves `app` once, when it starts. After `docker compose up -d`
+recreated only the app container, nginx kept the old address and answered
+`502` until `docker compose restart invoiceninja-nginx` (step 8 lab host).
+
 ### PDF and preview rendering times out
 
 **Symptom.** The design preview returns 500, `POST /api/v1/live_design` fails,
