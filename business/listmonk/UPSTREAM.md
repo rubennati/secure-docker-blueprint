@@ -18,7 +18,7 @@
 - Official `listmonk/listmonk` image
 - PostgreSQL as backing database
 - Docker Secrets for database password
-- One Traefik router on `access-public` as shipped, with `frame-self@file` before `headers-standard`; the split — admin UI VPN-only, subscriber paths (`/subscription`, `/link`, `/campaign`) public — is a second router the README describes
+- One Traefik router on `access-vpn` as shipped (closed until the owner exists and SMTP is set — final audit FA-01), with `frame-self@file` before `headers-standard`; the split — admin UI VPN-only, subscriber paths (`/subscription`, `/link`, `/campaign`) public — is a second router the README describes
 
 ## What we changed vs. upstream examples
 
