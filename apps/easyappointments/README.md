@@ -72,6 +72,16 @@ After install, log in at `/index.php/user/login` (backend) or `/index.php/backen
 - **`no-new-privileges:true`** on both services.
 - **MariaDB on `app-internal` (`internal: true`)** — DB not reachable from outside.
 - **Default access `access-public`, `limit-standard` and `headers-standard`** — booking URLs must be reachable by external visitors.
+- **The image's build files are refused at the proxy.** The upstream image serves its web root
+  as built: `vendor/composer/installed.json` (every dependency with its exact version, 77 kB),
+  `composer.json`, `README.md`, `CHANGELOG.md` and `LICENSE` answered `200` (final audit,
+  FA-34). A second router, `<project>-files`, of priority 1000 matches `/vendor/` and those
+  files and answers `404` through a deny list nobody is on; it keeps the four positions, so the
+  refusal carries the security headers. Measured on the step 8 lab host (1.6.1): those paths
+  `404` — also `/./vendor/…` and `/assets/../vendor/…`; case and encoding variants reach
+  Apache's own `404` — while `/`, the booking page, the login page, `/assets/…` and the REST
+  API (customer, appointment, availability) work unchanged. `config-sample.php` executes as
+  PHP and returns nothing.
 
 ## Mail
 
