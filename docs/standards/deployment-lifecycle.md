@@ -61,6 +61,10 @@ containers keep running while the daemon itself restarts or is upgraded. The ope
 site's server setup recommends it; it is recorded in `.ai/decisions.md` and belongs in
 the same file, as its own line.
 
+**The host itself** — updates, accounts, SSH, the provider filter, the second way in, the
+VPN — is outside the blueprint; [`docs/host-baseline.md`](../host-baseline.md) is the
+baseline it assumes, with what was tested on a host and what is open.
+
 **The host firewall and management access.** `core/traefik` renders a recommended
 `nftables` ruleset for the exposure profile it derives — `config/host/ingress.nft`,
 installed by the operator, never applied by the repository — and the two requirements

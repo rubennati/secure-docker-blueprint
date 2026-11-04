@@ -78,7 +78,22 @@ What it does:
   its own on the forward hook
   ([`core/crowdsec/docs/firewall-bouncer.md`](../../crowdsec/docs/firewall-bouncer.md)).
 
-Loading it — from a session that arrives over the VPN, with a way back:
+Loading it — from a session that arrives over the VPN, with a way back. The step 8 lab
+host used a timer instead of the backgrounded `sleep` below, because `pkill -f` also
+matches the shell that runs it (`docs/host-baseline.md`, MUST 7):
+
+```bash
+sudo systemd-run --unit=fw-rollback --on-active=300 /usr/sbin/nft delete table inet blueprint_ingress
+sudo nft -f /etc/nftables.d/ingress.nft
+# a NEW session over the VPN works? then:
+sudo systemctl stop fw-rollback.timer
+```
+
+For persistence, `/etc/nftables.conf` must not begin with Debian's `flush ruleset`; the lab
+host's file held `destroy table inet blueprint_ingress` and `include
+"/etc/nftables.d/ingress.nft"` alone, and `nftables.service` enabled.
+
+The original form:
 
 ```bash
 sudo nft -c -f core/traefik/config/host/ingress.nft          # syntax, nothing applied

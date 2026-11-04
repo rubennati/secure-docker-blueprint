@@ -389,6 +389,128 @@ see different things. Running both is a choice, not a requirement.
 
 ---
 
+## Ingress paths, profiles and trust boundaries
+
+Every request to an application crosses the same layers; which of them decide depends on
+the path it takes. The diagram is the one installation shape the blueprint implements:
+one Traefik per host, its ports published by Docker, Tailscale on the host itself.
+
+```mermaid
+flowchart LR
+  subgraph clients["Clients (untrusted)"]
+    OUT["Internet client"]
+    TS["Tailnet client"]
+  end
+  subgraph dns["Names"]
+    PUB["Public DNS<br/>DNS-only or proxied records"]
+    SPLIT["Split DNS on the tailnet<br/>A and AAAA → tailnet addresses"]
+  end
+  CF["Optional proxy<br/>Cloudflare — the only one implemented"]
+  subgraph host["Docker host — trust boundary: the host"]
+    PF["Provider filter<br/>(outside the host)"]
+    NFT["Host ruleset inet blueprint_ingress<br/>input: VPN only · forward: anti-spoofing<br/>proxied: 80/443 from the proxy, VPN, trusted"]
+    TSD["tailscale0<br/>--snat-subnet-routes=false"]
+    DNAT["Docker DNAT<br/>published 80/443"]
+    subgraph traefik["Traefik — trust boundary: the connecting address"]
+      EP["Entrypoint: forwardedHeaders,<br/>CrowdSec bouncer + AppSec"]
+      RT["Router: access policy,<br/>rate limit, headers, auth posture"]
+    end
+    CS["CrowdSec engine<br/>crowdsec-security network"]
+    APP["Application on its edge network"]
+    SSH["sshd — management"]
+  end
+  CON["Provider console<br/>(break-glass, independent)"]
+  OUT --> PUB --> PF
+  OUT -. proxied names .-> CF --> PF
+  TS --> SPLIT --> TSD
+  PF --> NFT --> DNAT --> EP --> RT --> APP
+  TSD --> DNAT
+  TSD --> SSH
+  EP <--> CS
+  CON -.-> SSH
+```
+
+Trust boundaries, from the outside in: the provider filter and the host ruleset decide
+which connections reach the host; Traefik decides on the address it sees — the
+connection's, or, with the proxy profile, the address the proxy reports; the access
+policy, the rate limit and the auth posture are positions of each router; the
+application decides on its own login. Management never crosses Traefik: SSH answers the
+VPN alone once the ruleset is loaded, and the console reaches the host without either.
+
+### The profiles are global
+
+The exposure profile is derived, not set: `validate.sh` and `render.sh` read
+`TRAEFIK_BIND_V4`, `TRAEFIK_BIND_V6` and `TRAEFIK_FORWARDED_PROXY` from `core/traefik/.env`
+([`core/traefik/docs/host-firewall.md`](../core/traefik/docs/host-firewall.md), "The
+profile"). Each of the three is one value per Traefik installation, and so is what
+follows from them:
+
+| Layer | Scope | `direct` | `proxied` |
+|---|---|---|---|
+| Host ruleset (`config/host/ingress.nft`) | the host | input closed but for the VPN; published ports open to everyone | the same, and new connections to the published 80/443 dropped unless from Cloudflare's ranges, the VPN or `TRUSTED_RANGES` |
+| Traefik entrypoints (`forwardedHeaders.trustedIPs`) | both entrypoints, every router | nobody trusted: the connecting address is the client | Cloudflare's ranges trusted: the client is the address Cloudflare appends |
+| CrowdSec bouncer (entrypoint middleware) | every router | compares the connecting address | compares the last forwarded address outside the trusted ranges |
+| AppSec | every router, on or off (`CROWDSEC_APPSEC_ENABLED`) | — | — |
+| Access policy, rate limit, auth posture | per router | the connecting address | the connecting address — a request through the proxy arrives from an edge address, so VPN-only routers refuse it |
+
+**A mixed operation per application is not provided.** One installation is `direct` or
+`proxied` for every router at once. With `proxied`, the forward rule refuses direct
+clients for every router on the published ports — a DNS-only application stays reachable
+over the VPN or a trusted range only. With `direct`, a proxied name still works (measured
+on the step 8 lab host), but Traefik sees Cloudflare's edge as the client, the client's
+address is only in `CF-Connecting-IP`, which nothing here trusts, and the origin is
+reachable around the proxy. Per-application AppSec on and off is the same: one switch for
+the entrypoint.
+
+**Only Cloudflare is implemented as a proxy.** `TRAEFIK_FORWARDED_PROXY` accepts `none` and
+`cloudflare`, and `render.sh` refuses any other value. Another proxy or CDN needs its own
+ranges, its own header model and its own tests before it can be named here.
+
+### What is in place, and how far it is proven
+
+| | State |
+|---|---|
+| Edge network per stack, access policies, auth postures | implemented; tested on a host (step 8) |
+| `direct` profile, dual-stack publishing, client address over IPv4 and IPv6 | implemented; tested on a host |
+| Host ruleset for `direct`: input VPN-only, IPv6 anti-spoofing, persistence | implemented (rendered, installed by the operator); tested on a host — F1–F9, M1, M2 |
+| Tailscale on the host with `--snat-subnet-routes=false`, split DNS | documented operator steps; tested on a host, both start orders and a reboot |
+| CrowdSec engine, Traefik bouncer, AppSec with the shipped rule sets | implemented, optional; tested on a host, including an engine outage |
+| CrowdSec's Core Rule Set | optional; measured, not recommended globally (`core/crowdsec/docs/appsec.md`) |
+| A Cloudflare-proxied name beside the DNS-only zone, `direct` profile | possible; tested — edge address as client, origin not protected |
+| `proxied` profile with origin protection (X4) | implemented (rendered); **not tested** |
+| Firewall bouncer on the host | implemented, optional; not installed on the step 8 host |
+| Direct and proxied applications on one host, each with its own trust | **planned, not implemented** — below |
+| Per-application or per-path AppSec | **planned** (decision of 2026-11-03), not implemented |
+
+### X4 — the `proxied` profile, still open
+
+What it needs: the proxied records in place; `TRAEFIK_FORWARDED_PROXY=cloudflare`; a
+render (writes `config/host/cloudflare-ranges.nft` and the `proxied` ruleset); a recreate
+of Traefik (about seven seconds of interruption for every router); the new ruleset loaded
+with a timed way back; Pseudo IPv4 off at Cloudflare.
+
+What it checks: a request through Cloudflare over IPv4 and IPv6 answers, with the client's
+address in the access log and at the bouncer; a direct connection to the origin's 80/443
+over both families is refused; the tailnet path and SSH over the VPN still work; a
+CrowdSec decision for the client's address answers 403 through Cloudflare; a forged
+`X-Forwarded-For` or `CF-Connecting-IP` from a direct client changes nothing.
+
+Risks: every DNS-only router becomes unreachable from outside the VPN for as long as the
+profile is set; an error in the forward rule takes the published ports with it; the
+trusted ranges are Cloudflare's whole network (`core/traefik/README.md`, "What the mode
+cannot promise"). Way back: `nft delete table inet blueprint_ingress` through the timer or
+the console, `TRAEFIK_FORWARDED_PROXY=none`, render, recreate.
+
+### Direct and proxied side by side — a later extension
+
+A host that serves some applications through a proxy and others directly would need the
+trust to follow the path rather than the installation: a second entrypoint, or a second
+address, whose `forwardedHeaders` and forward rule apply to the proxied names alone, and
+routers bound to the entrypoint their names arrive on. Nothing of this is implemented; it
+is recorded so that the current global behaviour is not mistaken for a per-application one.
+
+---
+
 ## Defence in depth, where the layers differ
 
 Layering is worth it when the layers do genuinely different jobs. For each one, four
