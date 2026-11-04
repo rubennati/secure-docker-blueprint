@@ -42,7 +42,7 @@ Everything beyond that is a layer, and `validate.sh` lists each for the profile:
 
 | Layer | Class | When absent |
 |---|---|---|
-| host firewall (`config/host/ingress.nft`) | recommended | `direct`: every published port answers the internet unfiltered, and the VPN's IPv6 range is not spoof-protected · `proxied`: a direct client that knows the origin bypasses Cloudflare · `private`: no host-level gate, acceptable where an upstream firewall is the gate |
+| host firewall (`config/host/ingress.nft`) | recommended | `direct`: every published port answers the internet unfiltered, and the VPN's ranges are not spoof-protected (IPv4 only by `tailscaled`, on input, while it runs) · `proxied`: a direct client that knows the origin bypasses Cloudflare · `private`: no host-level gate, acceptable where an upstream firewall is the gate |
 | CrowdSec entrypoint bouncer | recommended | no detection or remediation at the entrypoint |
 | forward-auth | optional | an application with a weak login has no gate in front — the posture lines name each |
 | Cloudflare origin protection (`proxied`) | optional, not verifiable here | without Authenticated Origin Pulls or a tunnel, the host firewall is what keeps a direct client out |
@@ -68,11 +68,20 @@ What it does:
   forwards it, so 80 and 443 need no input rule.
 - **Forward: open.** Docker's own traffic runs on the forward path and the
   policy stays `accept` ([`docs/standards/networking.md`](../../../docs/standards/networking.md),
-  "A host firewall and Docker share the forward path"). Two rules only: the
-  VPN's IPv6 range is dropped on every interface but `VPN_INTERFACE` (Tailscale
-  installs that rule for IPv4 alone), and in the `proxied` profile a new
+  "A host firewall and Docker share the forward path"). Two kinds of rule only:
+  the VPN's ranges — IPv4 and IPv6 — are dropped on every interface but
+  `VPN_INTERFACE`, on input and on forward, and in the `proxied` profile a new
   connection to Traefik's translated 80 or 443 is dropped unless it comes from
   Cloudflare, the VPN or a trusted range.
+
+  Tailscale installs an IPv4 drop of its own, but only on the input path
+  (`ts-input`) and only while `tailscaled` runs; on the forward path — the
+  published ports — a packet from a forged `100.64.0.0/10` source reached Traefik
+  with `tailscaled` running (measured 2026-11-04 on the step 8 lab host, final
+  audit FA-20). The rendered IPv4 rule closes both. A host whose own uplink sits
+  in the shared address space (`100.64.0.0/10`, some carrier-grade NAT providers)
+  cannot use `TAILSCALE_CIDR_V4` unchanged: narrow it to the tailnet's own range
+  first, or the uplink's traffic is dropped.
 - **No automatically filled set reaches the management plane.** The sets are
   rendered from `.env`; the CrowdSec host bouncer, when it runs, owns a table of
   its own on the forward hook
@@ -93,6 +102,49 @@ For persistence, `/etc/nftables.conf` must not begin with Debian's `flush rulese
 host's file held `destroy table inet blueprint_ingress` and `include
 "/etc/nftables.d/ingress.nft"` alone, and `nftables.service` enabled.
 
+**Never `systemctl restart` or `stop` `nftables` on a running host — `reload` it.** Debian's
+unit carries `ExecStop=/usr/sbin/nft flush ruleset`, so a stop or a restart removes every
+table — Docker's and Tailscale's included — however flush-free `/etc/nftables.conf` is.
+Measured on the step 8 lab host on 2026-11-04: after `systemctl restart nftables` only
+`inet blueprint_ingress` was left; published ports and container egress had no rules until
+`systemctl restart tailscaled` and `systemctl restart docker` wrote them again (about a
+minute). `systemctl reload nftables` runs `nft -f /etc/nftables.conf` only and left every
+table and every iptables rule identical.
+
+The same flush runs **unattended**: the package's `postinst` calls
+`deb-systemd-invoke try-restart nftables.service` on every upgrade, and unattended upgrades
+install Debian's point and security releases. Install the drop-in
+[`ops/systemd/nftables-no-flush.conf`](../ops/systemd/nftables-no-flush.conf) with the ruleset
+(`ops/host-files.manifest`) — it clears `ExecStop` and stops with
+`nft destroy table inet blueprint_ingress` instead — and apply it with
+`systemctl daemon-reload`, which never runs a stop action:
+
+```bash
+sudo install -d /etc/systemd/system/nftables.service.d
+sudo install -m 644 core/traefik/ops/systemd/nftables-no-flush.conf \
+  /etc/systemd/system/nftables.service.d/10-blueprint-no-flush.conf
+sudo systemctl daemon-reload
+systemctl show -p ExecStop nftables     # only "nft destroy table inet blueprint_ingress"
+```
+
+Measured on the step 8 lab host (2026-11-04, nftables 1.1.3, systemd 257, Docker and
+`tailscaled` in iptables-nft mode), each step compared with a snapshot of every table and
+of `iptables-save`/`ip6tables-save`, the table events recorded by `nft monitor`:
+
+| Action with the drop-in | Docker's and Tailscale's rules | The blueprint table |
+|---|---|---|
+| `daemon-reload` (install and removal) | identical | identical, no event |
+| `systemctl reload nftables` | identical | replaced in one transaction |
+| `systemctl restart nftables` | identical | absent for 122 ms |
+| `deb-systemd-invoke try-restart nftables.service` (the upgrade path) | identical | absent for 122 ms |
+| `systemctl stop nftables`, `start` 10 s later | identical; published 443, container egress and Tailscale kept working | absent while stopped, then identical |
+
+While the blueprint table is absent the host's input is unfiltered: SSH on its public
+address answers whatever the provider's filter admits, and the tailnet anti-spoofing
+drops are gone. A restart's window is a fraction of a second; a stop is the deliberate
+"firewall off". `reload` stays the form to use, without any window. Boot is unchanged:
+`ExecStart` is the vendor's.
+
 The original form:
 
 ```bash
@@ -112,8 +164,13 @@ Docker's tables as well, and published ports stop until Docker writes them again
 Verify the forward path by result:
 a throwaway container on a bridge network still reaches an external address.
 
-Not loaded on a host yet by this repository (DEC-078, verification open). What is
-checked: `nft -c` accepts every rendered profile (`scripts/ci/test_traefik_exposure.py`).
+Loaded on the step 8 lab host: the `direct` ruleset since 2026-11-03 (F1–F9, M2, a reboot
+with the drop-in), the `proxied` ruleset with `cloudflare-ranges.nft` on 2026-11-04 (X4,
+`docs/architecture.md`) — applied with `systemctl reload nftables` under a timed way back,
+and returned to `direct` twice, byte-identical. A change of `TRAEFIK_FORWARDED_PROXY` also
+changes `config/traefik.yml`: recreate Traefik with `--force-recreate`, a plain `up -d` does
+not see a changed bind-mounted file. Checked in CI: `nft -c` accepts every rendered profile
+(`scripts/ci/test_traefik_exposure.py`).
 
 ## The exposure test
 

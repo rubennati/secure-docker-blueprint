@@ -409,9 +409,10 @@ render_nft_ranges() {
 # layer the operator installs (ops/host-files.manifest), never applied here.
 # Input is closed except for what the host itself needs and the VPN brings;
 # the forward path stays open — Docker's own traffic runs there — and carries
-# only the two rules the profile needs: the VPN's IPv6 range is spoof-protected
-# like Tailscale protects IPv4, and behind Cloudflare the published ports answer
-# Cloudflare, the VPN and the trusted ranges alone.
+# only the rules the profile needs: the VPN's ranges are spoof-protected for both
+# families — for IPv4 Tailscale installs such a rule itself, but only while
+# tailscaled runs (final audit, FA-20) — and behind Cloudflare the published
+# ports answer Cloudflare, the VPN and the trusted ranges alone.
 # ---------------------------------------------------------------------------
 nft_set_elements() {  # nft_set_elements <family 4|6> <ranges...>: "{ a, b }" or ""
   local fam="$1" out="" r; shift
@@ -459,7 +460,9 @@ render_ingress_nft() {  # render_ingress_nft <profile> <bind v4> <bind v6>
     "    iif lo accept" \
     "    ct state established,related accept" \
     "    ct state invalid drop" \
-    "    # the VPN's IPv6 range arrives on the VPN interface only (Tailscale installs this for IPv4 alone)" \
+    "    # the VPN's ranges arrive on the VPN interface only — for IPv4 Tailscale installs" \
+    "    # this itself, but only while tailscaled runs; here it holds without it" \
+    "    iifname != \"${vpn_if}\" ip saddr @vpn_v4 drop" \
     "    iifname != \"${vpn_if}\" ip6 saddr @vpn_v6 drop" \
     "    meta l4proto { icmp, ipv6-icmp } accept" \
     "    udp sport 67 udp dport 68 accept    # DHCPv4 client" \
@@ -473,6 +476,7 @@ render_ingress_nft() {  # render_ingress_nft <profile> <bind v4> <bind v6>
     "  # The forward path carries Docker's traffic and stays open (docs/standards/networking.md)." \
     "  chain forward {" \
     "    type filter hook forward priority filter - 10; policy accept;" \
+    "    iifname != \"${vpn_if}\" ip saddr @vpn_v4 drop" \
     "    iifname != \"${vpn_if}\" ip6 saddr @vpn_v6 drop"
   if [ "${profile}" = proxied ]; then
     printf '%s\n' \
