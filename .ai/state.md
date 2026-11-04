@@ -2,10 +2,10 @@
 
 > If this file conflicts with git (branch, commits, tags), trust git.
 
-**Last updated:** 2026-10-31
+**Last updated:** 2026-11-05
 
-- **Phase:** pre-1.0. Latest tag `v0.9.6` (2026-10-31), which is where `main`
-  stands; what `dev` carries beyond it is `git rev-list --count v0.9.6..dev`, and
+- **Phase:** pre-1.0. Latest tag `v0.9.7` (2026-11-05), which is where `main`
+  stands; what `dev` carries beyond it is `git rev-list --count v0.9.7..dev`, and
   it is not repeated here. Work happens on a
   short-lived branch and reaches `dev` through a pull request; `dev` reaches
   `main` the same way. Both branches reject a direct push.
@@ -85,6 +85,12 @@
   [`tasks.md`](tasks.md) §11). `monitoring/changedetection` and
   `business/invoiceninja` fell to `scaffolded` (`pin-drifted`) and need a host run
   at the new tag.
+- **Released: v0.9.7** — the ingress programme, steps 1–8, verified on a
+  dual-stack lab host (2026-11-01 to 2026-11-04) with the hardening round after
+  its security audit; fourteen stacks `ops-proven`. Not verified on a host: the
+  LAN columns of block A, IPv6-only (block O), CrowdSec's host-firewall blocking.
+  Open: FA-03 (the PostgreSQL client for backups), trusted proxies narrowed to
+  the Traefik hop (`ROADMAP.md`).
 - **Current milestone:** v0.10.0 — Measured resource limits. Whether
   it stays a release is open (D4 in the audit): the measurement needs the same
   host session as the verification backlog.

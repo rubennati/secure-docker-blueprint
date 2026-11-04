@@ -2,9 +2,9 @@
 
 **Status: a decision document, not a configuration.** Nothing here changes a
 workflow. The workflows run as [`standards/ci.md`](standards/ci.md) and
-[`security-verification.md`](security-verification.md) describe them; the
-open draft pull request #302, which adds triggers to `trivy.yml`, stays a
-draft until the decisions below are taken, and is then reworked or closed.
+[`security-verification.md`](security-verification.md) describe them; pull
+request #302, which adds triggers to `trivy.yml`, is closed without a merge and
+holds the change until the decisions below are taken.
 The decisions go into [`../.ai/decisions.md`](../.ai/decisions.md) first; a
 workflow changes only after that.
 
