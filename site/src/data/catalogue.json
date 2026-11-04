@@ -1938,9 +1938,9 @@
       "infrastructure": [
         "PostgreSQL"
       ],
-      "init_services": 0,
+      "init_services": 2,
       "services": 2,
-      "summary": "2 services · PostgreSQL"
+      "summary": "2 services · 2 one-shot · PostgreSQL"
     },
     "name": "Listmonk",
     "path": "business/listmonk",
