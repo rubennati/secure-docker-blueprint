@@ -821,9 +821,11 @@ if [ "${EXPOSURE_PROFILE}" = proxied ] && [ "$(address_class "${bind_v4_effectiv
 fi
 echo "  Layers for this profile (mandatory invariants are the checks above):"
 ingress_nft="${ROOT_DIR}/config/host/ingress.nft"
+# Where the host keeps its installed ruleset; a test points it elsewhere.
+installed_nft="${HOST_NFTABLES_DIR:-/etc/nftables.d}/ingress.nft"
 if [ -f "${ingress_nft}" ]; then
-  if [ -r /etc/nftables.d/ingress.nft ]; then
-    if cmp -s "${ingress_nft}" /etc/nftables.d/ingress.nft; then
+  if [ -r "${installed_nft}" ]; then
+    if cmp -s "${ingress_nft}" "${installed_nft}"; then
       echo "    host firewall      installed — /etc/nftables.d/ingress.nft matches the rendered ruleset (loaded? nft list table inet blueprint_ingress)"
     else
       echo "    host firewall      differs — /etc/nftables.d/ingress.nft is not the rendered ruleset: scripts/host-files.sh (docs/host-firewall.md)"
