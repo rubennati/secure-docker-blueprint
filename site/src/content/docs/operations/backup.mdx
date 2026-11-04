@@ -42,8 +42,10 @@ PostgreSQL is the exception: install the client of **each server major version**
 you back up, not the distribution's newest, and name its programs in every
 entry. On Debian 13 the distribution's client 17 backed up a `postgres:16`
 database without error, but its dump did not restore into that server; client 16
-restored it completely. Same major for client and server is the blueprint's
-conservative, tested operating rule — not a claim that every other pair fails.
+restored it completely; listmonk (16) and Immich (14) failed with client 17 as
+well. Same major for client and server is the blueprint's interim rule —
+conservative and tested — while the choice of client is an open decision (FA-03,
+[the decision paper](https://github.com/rubennati/secure-docker-blueprint/blob/main/docs/research/postgres-dump-client-decision.md)).
 Packages, paths and the measurement are in
 [borgmatic's README](https://github.com/rubennati/secure-docker-blueprint/blob/main/backup/borgmatic/README.md#postgresql-the-clients-major-version-is-the-servers).
 
