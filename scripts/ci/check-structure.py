@@ -21,10 +21,11 @@ FAIL (blocks CI — dangerous or leak-prone):
                     (limit-extra-large) while its access policy admits more
                     than a closed set of clients
   router-positions  a router that does not carry the four positions of the
-                    middleware model — access, limit, headers, auth — once
+                    middleware model — headers, access, limit, auth — once
                     each and in that order, or carries a name the model
                     replaced (D2/D6, 2026-10-18; headers is the mandatory
-                    position, HSTS lives there)
+                    position, HSTS lives there; first since 2026-11-04, so
+                    that a refusal carries it — FA-13)
   tls-conflict      two routers of one stack serve the same host name with
                     different tls.options — Traefik logs the conflict and
                     serves `default` to both
@@ -131,11 +132,13 @@ CLOSED_ACCESS = {"access-trusted", "access-vpn", "access-trusted-vpn", "access-b
                  "access-lan", "access-lan-vpn", "acc-private", "acc-tailscale", "acc-deny"}
 
 # The middleware model (core/traefik/config/dynamic/model.yml, decided
-# 2026-10-18): four positions on every router, in this order. A router names
+# 2026-10-18; headers first since 2026-11-04, so a refusal by the access or
+# limit position carries the HSTS base): four positions on every router, in
+# this order. A router names
 # each through its stack's variable — ${X_TRAEFIK_ACCESS}@file and so on — and
 # the auth position carries its provider in the value (auth-none@file,
 # <stack>-auth@docker), so it is recognised by the variable as well as by name.
-POSITIONS = ("access", "limit", "headers", "auth")
+POSITIONS = ("headers", "access", "limit", "auth")
 POSITION_VAR = re.compile(r"TRAEFIK_[A-Z0-9_]*?(ACCESS|LIMIT|HEADERS|AUTH)$")
 
 # DEC-077: the line above every auth variable states the stack's posture, so

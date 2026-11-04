@@ -81,7 +81,7 @@ phone and email to the mail sink, down and up, within a second each.
   ```yaml
   - "traefik.http.routers.hc-ping.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/ping/`)"
   - "traefik.http.routers.hc-ping.priority=100"
-  - "traefik.http.routers.hc-ping.middlewares=access-public@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+  - "traefik.http.routers.hc-ping.middlewares=${APP_TRAEFIK_HEADERS}@file,access-public@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
   - "traefik.http.routers.hc-ping.service=${COMPOSE_PROJECT_NAME}"
   ```
 

@@ -207,8 +207,12 @@ nothing (a breaking change; [`CHANGELOG.md`](../../CHANGELOG.md) 0.9.5).
 after.
 
 ```yaml
-middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}
+middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}
 ```
+
+The headers position stands first, so that a refusal by the access or limit
+position carries the HSTS base as well; the numbers below name the positions
+and are not their order ([`docs/standards/traefik-security.md`](../../docs/standards/traefik-security.md)).
 
 | Position | Variable | Values | Decided by |
 |---|---|---|---|
@@ -790,7 +794,9 @@ VPN and LAN clients arrive on other interfaces and are not touched. A LAN that
 shares the public interface needs its ranges admitted in the same chain,
 before the drop. For boot, an `include` of this file from `/etc/nftables.conf`
 is enough — the flush there runs before Docker starts; on a running host never
-`systemctl restart nftables`, reload this file. After a change to
+`systemctl restart` or `stop` `nftables` without the drop-in
+`ops/systemd/nftables-no-flush.conf` (Debian's stop action flushes every table, also on
+a package upgrade — measured 2026-11-04, `docs/host-firewall.md`); reload this file. After a change to
 `ops/cloudflare-ips.txt`: render, reinstall the define file, `nft -f` this one.
 `destroy` needs nftables 1.0.8 or later, as the CrowdSec chains do. The table
 parses and loads (checked with `nft -c` and `nft -f` in a container during the

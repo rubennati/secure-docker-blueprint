@@ -115,7 +115,7 @@ services:
       # NOTE: /subscription/*, /link/*, /campaign/* must be reachable by
       # external subscribers. If you want the admin at /admin VPN-only
       # but public subscription paths, split into two routers — see README.
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,frame-self@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=frame-self@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=9000"
 
 networks:

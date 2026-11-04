@@ -145,7 +145,7 @@ services:
       # (core/traefik): X-Forwarded-Proto: https so ActivityPub reconstructs HTTPS
       # URLs. Traefik sets the header on its own, but does not guarantee it reaches
       # the backend unchanged; the explicit block does (bugfix 2026-05-02).
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-ap.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH},forwarded-proto-https@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-ap.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH},forwarded-proto-https@file"
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}-ap.loadbalancer.server.port=8080"
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}-ap.loadbalancer.passhostheader=true"

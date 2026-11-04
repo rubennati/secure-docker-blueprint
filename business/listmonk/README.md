@@ -64,7 +64,7 @@ For "admin VPN-only + subscriber endpoints public", add a second Traefik router:
 - "traefik.http.routers.listmonk-admin.priority=100"
 - "traefik.http.routers.listmonk-admin.entrypoints=websecure"
 - "traefik.http.routers.listmonk-admin.tls=true"
-- "traefik.http.routers.listmonk-admin.middlewares=access-vpn@file,${APP_TRAEFIK_LIMIT}@file,frame-self@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+- "traefik.http.routers.listmonk-admin.middlewares=frame-self@file,${APP_TRAEFIK_HEADERS}@file,access-vpn@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
 - "traefik.http.routers.listmonk-admin.service=${COMPOSE_PROJECT_NAME}"
 # The existing router (priority 1 implicit) catches subscriber paths publicly.
 ```

@@ -71,7 +71,7 @@ services:
       # Middlewares — the four positions; nosniff and the stack's frame-ancestors
       # CSP before the headers profile (response headers that must win over it),
       # the proto header after the four.
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,header-nosniff@file,${COMPOSE_PROJECT_NAME}-csp@docker,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH},forwarded-proto-https@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=header-nosniff@file,${COMPOSE_PROJECT_NAME}-csp@docker,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH},forwarded-proto-https@file"
       # Proxy headers: Collabora runs with ssl.termination=true and needs X-Forwarded-Proto.
       # The frame-ancestors CSP the stack owns — the file host that embeds the
       # editor is named by the operator. nosniff is header-nosniff@file, HSTS is

@@ -8,7 +8,8 @@ core/traefik is rendered with the same .env, for the two shapes a deployment has
 Position 1 of model.yml is one decided difference (DEC-076, step 3:
 access-trusted and access-trusted-vpn in place of access-lan and access-lan-vpn)
 and the rendered edge-networks.yml and host/ingress.nft the others (DEC-075, step 5;
-DEC-078, step 6); that region is cut out of both renders before the comparison and checked on its
+DEC-078, step 6), and the dashboard router's middleware order (headers first, FA-13,
+2026-11-04); that region is cut out of both renders before the comparison and checked on its
 own, and comment-only lines of model.yml are not compared; a step that changes
 anything else, anywhere, fails here. A shallow
 checkout without the tag skips, as the other tag-dependent tests do.
@@ -25,6 +26,8 @@ import subprocess
 import tarfile
 import tempfile
 import unittest
+
+import yaml
 from io import BytesIO
 from pathlib import Path
 
@@ -105,6 +108,16 @@ class RenderIdentity(unittest.TestCase):
                 self.assertIn("    access-lan:", access_a)
                 self.assertIn("    access-trusted:", access_b)
                 self.assertNotIn("access-lan", access_b, "the LAN class is gone (DEC-076)")
+                continue
+            if rel == "dynamic/routers-system.yml":
+                # The headers position moved in front of access (FA-13, 2026-11-04):
+                # the dashboard's list is the same four names, headers first.
+                ya, yb = (yaml.safe_load((x / rel).read_text(encoding="utf-8")) for x in (a, b))
+                ma = ya["http"]["routers"]["traefik-dashboard"].pop("middlewares")
+                mb = yb["http"]["routers"]["traefik-dashboard"].pop("middlewares")
+                self.assertEqual(ya, yb, f"{rel} differs from {REFERENCE_TAG} outside the dashboard's middlewares")
+                self.assertEqual(sorted(ma), sorted(mb), "the same four positions")
+                self.assertEqual(mb[0], "headers-standard@file", "the headers position first")
                 continue
             self.assertTrue(filecmp.cmp(a / rel, b / rel, shallow=False),
                             f"{rel} renders differently from {REFERENCE_TAG} for an unchanged .env")

@@ -185,13 +185,13 @@ Middlewares defined in **file config** (e.g. `security.yml`, `access.yml`) need
 
 ```yaml
 # File-provider middlewares — need @file
-- "traefik.http.routers.app.middlewares=access-vpn@file,limit-standard@file,headers-standard@file,auth-none@file"
+- "traefik.http.routers.app.middlewares=headers-standard@file,access-vpn@file,limit-standard@file,auth-none@file"
 
 # Docker-provider middleware (defined in the same compose labels) — needs @docker
-- "traefik.http.routers.app.middlewares=access-vpn@file,limit-standard@file,app-csp@docker,headers-standard@file,auth-none@file"
+- "traefik.http.routers.app.middlewares=app-csp@docker,headers-standard@file,access-vpn@file,limit-standard@file,auth-none@file"
 
 # WRONG — missing suffix, Traefik can't find it → the router is disabled
-- "traefik.http.routers.app.middlewares=access-vpn@file,limit-standard@file,app-csp,headers-standard@file,auth-none@file"
+- "traefik.http.routers.app.middlewares=app-csp,headers-standard@file,access-vpn@file,limit-standard@file,auth-none@file"
 ```
 
 **Rule:** If a middleware in the chain can't be found, the **entire chain fails**

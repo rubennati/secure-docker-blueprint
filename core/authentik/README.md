@@ -195,7 +195,7 @@ APP_TRAEFIK_AUTH=auth-authentik@file
 
 ```yaml
 labels:
-  - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+  - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
 ```
 
 Redeploy the app:
@@ -252,7 +252,7 @@ labels:
   - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
   - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
   - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
-  - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+  - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
   - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=9000"
 
   # --- Second router: /admin only, with Forward-Auth in its auth position ---
@@ -260,7 +260,7 @@ labels:
   - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.entrypoints=websecure"
   - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.tls=true"
   - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.priority=100"
-  - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${ADMIN_TRAEFIK_AUTH}"
+  - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${ADMIN_TRAEFIK_AUTH}"
   - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-admin.service=${COMPOSE_PROJECT_NAME}"
 ```
 

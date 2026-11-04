@@ -158,7 +158,7 @@ class Model(unittest.TestCase):
     def test_the_dashboard_router_carries_the_four_positions(self):
         self.render(VALID_ENV)
         router = self.dyn("routers-system.yml")["http"]["routers"]["traefik-dashboard"]
-        self.assertEqual(router["middlewares"], ["access-vpn@file", "limit-strict@file", "headers-standard@file", "auth-none@file"])
+        self.assertEqual(router["middlewares"], ["headers-standard@file", "access-vpn@file", "limit-strict@file", "auth-none@file"])
         self.assertEqual(router["tls"]["options"], BASE_ENV["TRAEFIK_DASHBOARD_TLS_OPTION"])
 
     def test_a_file_from_before_the_model_is_removed_by_render_and_refused_by_validate(self):

@@ -58,7 +58,7 @@ join the public network and never publish a host port.
 ## Security layers
 
 Four independent, additive layers: Traefik (TLS, and the four router positions —
-access, limit, headers, auth) → CrowdSec (reputation, enforced at the entrypoint;
+headers, access, limit, auth; headers first since 2026-11-04) → CrowdSec (reputation, enforced at the entrypoint;
 AppSec, the web application firewall, opt-in) → Authentik (Forward-Auth, optional
 per router) → container hardening. Each works without the others; why the layers
 are not redundant is
