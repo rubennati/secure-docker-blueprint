@@ -8,7 +8,7 @@ Single-container deployment with n8n's built-in SQLite database:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `n8nio/n8n:2.41.7`, pinned by digest | Web UI + workflow executor + webhook endpoint |
+| `n8n-app` | `n8nio/n8n:2.41.7`, pinned by digest | Web UI + workflow executor + webhook endpoint |
 
 Data lives in `./volumes/data/` (SQLite DB, credentials, workflow exports).
 
@@ -30,30 +30,25 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 ```bash
 # 1. Create .env
 cp .env.example .env
-# Edit: APP_TRAEFIK_HOST, TZ, BASIC_AUTH_USER
+# Edit: APP_TRAEFIK_HOST, TZ
 
-# 2. Generate basic-auth password
-BAUTH_PWD=$(openssl rand -base64 24 | tr -d '\n')
-sed -i "s|^BASIC_AUTH_PASSWORD=.*|BASIC_AUTH_PASSWORD=${BAUTH_PWD}|" .env
-echo "Basic auth password: ${BAUTH_PWD}"
-
-# 3. Generate encryption key (CRITICAL — back this up!)
+# 2. Generate encryption key (CRITICAL — back this up!)
 mkdir -p .secrets
 openssl rand -hex 32 > .secrets/n8n_encryption_key.txt
 # This key encrypts all stored credentials. Losing it = losing every
 # OAuth token and API key saved in n8n.
 
-# 4. Create data volumes
+# 3. Create data volumes
 mkdir -p volumes/data volumes/files
 # n8n runs as UID 1000 — ensure writable
 sudo chown -R 1000:1000 volumes/data volumes/files
 
-# 5. Start
+# 4. Start
 docker compose up -d
 
-# 6. Open UI and set the owner account on first visit
+# 5. Open UI and set the owner account on first visit — whoever reaches it
+# first owns the instance, which the closed access policy keeps to you
 # https://<APP_TRAEFIK_HOST>
-# Basic auth (from .env) → owner account setup wizard
 ```
 
 ## Verify
@@ -65,7 +60,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/healthz  # 200 OK
 
 ## Security Model
 
-- **Basic auth in front of the UI** — the Community Edition has no built-in multi-user auth unless you enable it. Basic auth gates access to everything.
+- **n8n's own login** — the auth posture is `app-login`: the owner account created on the first visit governs every request; there is no proxy gate in front. The setup page answers until the owner exists.
 - **`N8N_ENCRYPTION_KEY`** encrypts every credential stored in n8n (OAuth tokens, API keys, SMTP passwords). Stored in `.secrets/n8n_encryption_key.txt`. **Back this file up off-host** — losing it means re-entering every credential.
 - **Default access `access-vpn`, with `limit-standard` and `headers-standard`** — n8n stores API tokens for many third parties; VPN-only is a safer default than public. Switch to `access-public` only if you really need external webhook endpoints and are willing to accept the exposure.
 - **`N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: true`** — n8n refuses to start if its config file is world-readable.

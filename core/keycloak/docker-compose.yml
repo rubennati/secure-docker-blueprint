@@ -169,7 +169,7 @@ services:
       # and the console stops with "Timeout when waiting for 3rd party check
       # iframe message". header-permissions stands before the profile and adds
       # the one header Keycloak does not send (measured 2026-10-18).
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,header-permissions@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=header-permissions@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8080"
 

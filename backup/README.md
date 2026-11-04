@@ -93,7 +93,7 @@ postgresql_databases:
     container: caldiy-db
 ```
 
-Borgmatic asks Docker for the container's address and connects. No published ports, no database client tools installed on the host, no `docker exec` wrapper. Dumps stream straight into the archive through named pipes — no intermediate files with awkward permissions.
+Borgmatic asks Docker for the container's address and connects. No published ports and no `docker exec` wrapper — but the dump runs on the host, so the host needs a client for each engine, and for PostgreSQL the client of each server's major version ([borgmatic/README.md](borgmatic/README.md#postgresql-the-clients-major-version-is-the-servers)). Dumps stream straight into the archive through named pipes — no intermediate files with awkward permissions.
 
 Restore is `borgmatic restore --archive latest --database <name>`. Two things to know before you need it: **restore is destructive** — it replaces the live database — and **the database must already exist**; Borgmatic does not create it.
 

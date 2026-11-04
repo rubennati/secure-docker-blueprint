@@ -14,7 +14,7 @@
 - **Domain:** Automation and data
 - **Role:** Visual workflow automation
 - **Based on version:** `2.41.7`
-- **Last verified:** 2026-05-02 (v2.19.2)
+- **Last verified:** 2026-11-03 (2.41.7) — step 8 lab host behind Traefik 3.7.17 on its edge network: the owner, login, a webhook workflow with a Code node in the task runner, a stored credential, and the README's quiesced backup restored into a throwaway instance that decrypts it (docs/labs/ingress/2026-11-01-results.md). Earlier: 2026-05-02 (v2.19.2)
 
 ## What we use
 

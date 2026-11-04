@@ -53,9 +53,9 @@ class OnlyOfficeOverlay(unittest.TestCase):
                     self.assertGreater(int(r["priority"]), 0, "above the catch-all Host() router of the stack")
                     positions = r["middlewares"].split(",")
                     self.assertEqual(len(positions), 4, "the four positions")
-                    self.assertEqual(positions[0], "access-public@file")
-                    self.assertEqual(positions[1], "${SIDE_TRAEFIK_LIMIT}@file")
-                    self.assertEqual(positions[2], "${APP_TRAEFIK_HEADERS}@file")
+                    self.assertEqual(positions[0], "${APP_TRAEFIK_HEADERS}@file")
+                    self.assertEqual(positions[1], "access-public@file")
+                    self.assertEqual(positions[2], "${SIDE_TRAEFIK_LIMIT}@file")
                     self.assertEqual(positions[3], "auth-none@file", "the token and the document key are the application's gate")
 
     def test_the_stacks_variables_exist_for_what_the_overlay_names(self):

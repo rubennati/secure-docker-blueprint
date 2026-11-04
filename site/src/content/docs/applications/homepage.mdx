@@ -40,6 +40,14 @@ From `apps/homepage/`:
    cp .env.example .env
    ```
 
+   Then set `APP_BASIC_AUTH_USERS`. The route ships with a basic-auth gate,
+   because Homepage has no login of its own and its configuration holds the API keys of every widget; the placeholder is not a valid hash. Every `$` in the hash is
+   doubled for Compose — the command does it, paste the whole line:
+
+   ```bash
+   htpasswd -nbB ops 'the-password' | sed -e 's/\$/\$\$/g'
+   ```
+
 2. Create the configuration from the examples:
 
    ```bash
@@ -120,7 +128,7 @@ lose.
 Compare your file against the current example in `config/`.
 
 **Changes have no effect.** The file is not where the container reads it, or the
-YAML does not parse. Check `docker compose logs app`.
+YAML does not parse. Check `docker compose logs homepage-app`.
 
 **Container state does not appear.** Homepage has no route to the Docker daemon.
 See above.

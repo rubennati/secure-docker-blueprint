@@ -17,14 +17,24 @@ entrypoint websecure
   threat-crowdsec        when CROWDSEC_BOUNCER_ENABLED — a banned address is refused before any work
   compress               always — the response is compressed, exact exclusions for binary types
 router
-  1  access-*            who may reach it, by connecting address        (operator)
-  2  limit-*             how fast one address may ask                   (repository, from a measurement)
      [block before the profile: frame-self · csp-self-only · hsts-include-subdomains · header-*]
   3  headers-*           which browser-security headers the proxy sets  (repository, from a measurement)
+  1  access-*            who may reach it, by connecting address        (operator)
+  2  limit-*             how fast one address may ask                   (repository, from a measurement)
   4  auth-*              who must be identified                         (operator)
      [block after the four: forwarded-proto-https · a path strip · a redirect]
 service
 ```
+
+The numbers name the positions (D2, 2026-10-18) and stay; the **order on the router** puts
+the headers position first since 2026-11-04. A middleware sets its response headers only on
+what passes through it: behind the access position, a refusal (403), a rate-limit answer
+(429) and a gate's redirect left without HSTS (final audit of the step 8 host, FA-13). The
+first middleware is the outermost; on a header two of them set, the outer one wins — so a
+block that must win over the profile still stands before it, and the profile cannot move to
+the entrypoint, where it would override `hsts-include-subdomains` (both measured
+2026-11-04). A refusal by the threat position on the entrypoint (a CrowdSec ban) is
+answered before any router and carries none of these headers.
 
 The definitions live in `core/traefik/ops/templates/dynamic/`:
 
@@ -140,7 +150,7 @@ header carries it on this path: Traefik sees it only if `proxy-public`
 carries IPv6. On an IPv4-only `proxy-public` Traefik is published on IPv4
 only, so an IPv6 connection — a tailnet client's, Cloudflare's to an
 `AAAA`-only origin, a direct client's — is refused rather than handed to
-Traefik from the Docker gateway, which `access-lan` of an undeclared installation would admit. The
+Traefik from the Docker gateway, which the retired `access-lan` admitted and an overly broad `TRUSTED_RANGES` would admit. The
 dual-stack overlay publishes IPv6 together with the IPv6 subnet, and
 `validate.sh` checks that the Docker daemon forwards it by NAT (README,
 "Published addresses"). See

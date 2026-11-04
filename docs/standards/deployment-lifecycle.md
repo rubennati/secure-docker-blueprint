@@ -61,6 +61,10 @@ containers keep running while the daemon itself restarts or is upgraded. The ope
 site's server setup recommends it; it is recorded in `.ai/decisions.md` and belongs in
 the same file, as its own line.
 
+**The host itself** — updates, accounts, SSH, the provider filter, the second way in, the
+VPN — is outside the blueprint; [`docs/host-baseline.md`](../host-baseline.md) is the
+baseline it assumes, with what was tested on a host and what is open.
+
 **The host firewall and management access.** `core/traefik` renders a recommended
 `nftables` ruleset for the exposure profile it derives — `config/host/ingress.nft`,
 installed by the operator, never applied by the repository — and the two requirements
@@ -114,7 +118,7 @@ stack's own compose file rather than remembered here:
 |---|---|---|
 | `core/traefik` | every stack publishing a domain | creates `proxy-public` and the listed edge networks |
 | `core/authentik` | stacks whose Traefik labels use forward-auth | the middleware answers at its address |
-| `core/crowdsec` | stacks joining `crowdsec-security` | the network is created there |
+| `core/crowdsec` | stacks joining `crowdsec-security` | `core/traefik` creates the network; `core/crowdsec` joins it as `external: true` |
 
 Which stacks those are is a property of the tree, so read it off rather than trusting a
 number written here:
@@ -164,7 +168,9 @@ Then recreate the stacks the release touched. `docker compose up -d` applies a c
 compose file; a stack whose service names changed also needs `--remove-orphans`.
 `core/traefik` renders its configuration from templates, so a release that changes
 a template takes effect only after `bash ops/scripts/render.sh` in that directory
-and a `--force-recreate` of the proxy where the static configuration changed.
+and a `--force-recreate` of the proxy where the static configuration changed — which
+interrupts every stack it routes for about seven seconds
+([`edge-networks.md`](../../core/traefik/docs/edge-networks.md)).
 
 A checkout carries the stack files; it does not carry what a stack installed
 outside it — a logrotate stanza, systemd units, a backup agent's configuration.

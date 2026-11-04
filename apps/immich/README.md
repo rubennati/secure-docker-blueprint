@@ -6,7 +6,7 @@ Self-hosted photo and video backup with machine-learning–based search, facial 
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `ghcr.io/immich-app/immich-server:v3.2.0` | Web UI + REST API + upload handler |
+| `immich-app` | `ghcr.io/immich-app/immich-server:v3.2.0` | Web UI + REST API + upload handler |
 | `machine-learning` | `ghcr.io/immich-app/immich-machine-learning:v3.2.0` | CLIP embeddings, face detection, object recognition |
 | `db` | `ghcr.io/immich-app/postgres:14-vectorchord…` | Postgres with vector extensions for similarity search |
 | `redis` | `valkey/valkey:8.1.6` | Background job queue (Bull/BullMQ) |
@@ -47,7 +47,7 @@ mkdir -p volumes/postgres volumes/redis volumes/model-cache volumes/library
 docker compose up -d
 
 # 6. Wait for first-run migrations (~2 minutes)
-docker compose logs app --follow
+docker compose logs immich-app --follow
 # Watch for: "Immich Server is listening on..."
 
 # 7. Open UI and create the admin account
@@ -80,7 +80,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/api/server/ping   # 200 OK, {"res":"pong"}
 | **Password** | `.secrets/db_pwd.txt` |
 | **State** | `./volumes/postgres` (database) · **`${UPLOAD_LOCATION}`** — the photo and video library itself |
 | **Reproducible** | `./volumes/redis` (cache) · `./volumes/model-cache` (re-downloaded models) |
-| **Quiescing** | Not needed for the dump. Pause uploads for a large library copy if you want the two halves to match exactly. |
+| **Quiescing** | Stop `immich-app` for the dump (see Restore); pause uploads for a large library copy if you want the two halves to match exactly. |
 
 ```yaml
 postgresql_databases:
@@ -90,8 +90,8 @@ postgresql_databases:
       password: "{credential file /srv/docker/apps/immich/.secrets/db_pwd.txt}"
 ```
 
-**`UPLOAD_LOCATION` points outside the stack directory**, which is exactly why it
-gets forgotten. It is also, by volume, the largest thing this repository backs up
+**`UPLOAD_LOCATION` can point outside the stack directory** (the example keeps it
+in `./volumes/library`), which is exactly why it gets forgotten. It is also, by volume, the largest thing this repository backs up
 and the only part that is irreplaceable — the database holds albums, faces and
 metadata, all of which can be rebuilt from the originals. The reverse is not true.
 
@@ -103,7 +103,16 @@ that produced the dump, not into a stock `postgres` image.
 **A plain `psql < dump.sql` does not restore this database**, and it does not
 report that it failed. Three parts of the [upstream
 procedure](https://docs.immich.app/administration/backup-and-restore) are load
-bearing:
+bearing. The dump it expects is one database in plain SQL, taken with the app
+stopped:
+
+```bash
+docker compose stop immich-app
+docker compose exec -T db sh -c 'pg_dump --username="$POSTGRES_USER" "$POSTGRES_DB"' | gzip > dump.sql.gz
+docker compose start immich-app
+```
+
+Restore it into the fresh database:
 
 ```bash
 gunzip --stdout dump.sql.gz \
@@ -118,6 +127,12 @@ gunzip --stdout dump.sql.gz \
 | the `sed` | rewrites `search_path` so the vector extension's types and functions resolve. Without it the objects that depend on them are not created |
 | `--single-transaction` | a failure rolls the whole restore back instead of leaving a half-populated database that starts and looks plausible |
 | `ON_ERROR_STOP=on` | without it `psql` continues past errors and exits 0. This is the part that turns a failed restore into one you find out about later |
+
+Measured on the step 8 lab host (v3.2.0): this pipeline restored the `pg_dump` above
+with every row count and the originals intact. The upstream page's `pg_dumpall
+--clean` dump stops it at once — `DROP DATABASE cannot run inside a transaction
+block` — and the `postgresql_databases` entry under Backup fails on a host whose
+`pg_restore` is newer than the server's PostgreSQL 14 (`transaction_timeout`).
 
 Two preconditions upstream states, both of which invalidate a restore if missed:
 

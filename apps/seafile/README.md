@@ -72,14 +72,23 @@ openssl rand -base64 48 | tr -d '\n' > .secrets/jwt_key.txt
 # value without escaping it, and a "/" would terminate the URL early.
 openssl rand -hex 32 | tr -d '\n' > .secrets/redis_pwd.txt
 
+# 2b. thumbnail-server reads two of them from .env, not as Docker secrets
+#     (thumbnail-server.yml). Left empty, every thumbnail in the browser fails
+#     while the container reports healthy.
+sed -i "s|^JWT_PRIVATE_KEY=.*|JWT_PRIVATE_KEY=$(cat .secrets/jwt_key.txt)|" .env
+sed -i "s|^SEAFILE_MYSQL_DB_PASSWORD=.*|SEAFILE_MYSQL_DB_PASSWORD=$(cat .secrets/seafile_db_pwd.txt)|" .env
+
 # 3. SMTP secret file — always required (mounted unconditionally by compose)
 # SMTP disabled:
 touch .secrets/smtp_pwd.txt
 # SMTP enabled (run instead of touch):
 # printf '%s' '<smtp-password-or-api-key>' > .secrets/smtp_pwd.txt
 
-# 4. (Optional) If you use OnlyOffice, reuse its JWT secret
+# 4. OnlyOffice JWT secret file — always required (mounted unconditionally by compose).
+#    With OnlyOffice, reuse its secret; the integration is on when the file is not empty:
 cp ../onlyoffice/.secrets/jwt_secret.txt .secrets/onlyoffice_jwt_secret.txt
+#    Without OnlyOffice (run instead): an empty file keeps the integration off
+# touch .secrets/onlyoffice_jwt_secret.txt
 
 # 5. Start
 docker compose up -d
@@ -396,6 +405,22 @@ databases and the block store from the same archive — a newer block store with
 older database means files exist that no library references.
 
 **Restore order:** databases first, then the block store, then the app.
+
+A dump holds the databases, not the account Seafile connects with. Restored into a
+fresh `db` container, the app starts and every request fails with `Access denied
+for user 'seafile'`. Create the account before starting the app:
+
+```bash
+docker compose up -d db
+# restore the three dumps, then:
+docker compose exec -T db sh -c 'mariadb -uroot -p"$(cat /run/secrets/DB_ROOT_PWD)"' <<SQL
+CREATE USER IF NOT EXISTS 'seafile'@'%' IDENTIFIED BY '$(cat .secrets/seafile_db_pwd.txt)';
+GRANT ALL PRIVILEGES ON ccnet_db.* TO 'seafile'@'%';
+GRANT ALL PRIVILEGES ON seafile_db.* TO 'seafile'@'%';
+GRANT ALL PRIVILEGES ON seahub_db.* TO 'seafile'@'%';
+SQL
+docker compose up -d
+```
 
 ## Access policy — how OnlyOffice and SeaDoc call back into a closed instance
 

@@ -17,8 +17,8 @@ services:
       WOPI_ENABLED: "true"
       TZ: ${TZ}
     volumes:
-      - ./volumes/local/data:/var/www/onlyoffice/Data
-      - ./volumes/local/logs:/var/log/onlyoffice
+      - ./volumes/local/data:/var/www/euro-office/Data
+      - ./volumes/local/logs:/var/log/euro-office
     ports:
       - "127.0.0.1:8080:80"
     healthcheck:

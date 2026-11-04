@@ -22,6 +22,7 @@ Run:
     python3 -m unittest discover -s scripts/ci -p 'test_*.py'
 """
 
+import os
 import re
 import shutil
 import subprocess
@@ -32,6 +33,7 @@ from pathlib import Path
 import yaml
 
 from test_traefik_dashboard_cert import BASE_ENV, TRAEFIK
+import no_daemon
 
 REPO = Path(__file__).resolve().parents[2]
 VALID_ENV = dict(BASE_ENV, ACME_WILDCARD_DOMAIN="example.com")
@@ -62,7 +64,7 @@ class Model(unittest.TestCase):
         return subprocess.run(["bash", str(self.root / "ops/scripts/render.sh")], capture_output=True, text=True)
 
     def validate(self):
-        return subprocess.run(["bash", str(self.root / "ops/scripts/validate.sh")], capture_output=True, text=True)
+        return subprocess.run(["bash", str(self.root / "ops/scripts/validate.sh")], capture_output=True, text=True, env=no_daemon.env())
 
     def dyn(self, name):
         return yaml.safe_load((self.root / "config" / "dynamic" / name).read_text(encoding="utf-8"))
@@ -156,7 +158,7 @@ class Model(unittest.TestCase):
     def test_the_dashboard_router_carries_the_four_positions(self):
         self.render(VALID_ENV)
         router = self.dyn("routers-system.yml")["http"]["routers"]["traefik-dashboard"]
-        self.assertEqual(router["middlewares"], ["access-vpn@file", "limit-strict@file", "headers-standard@file", "auth-none@file"])
+        self.assertEqual(router["middlewares"], ["headers-standard@file", "access-vpn@file", "limit-strict@file", "auth-none@file"])
         self.assertEqual(router["tls"]["options"], BASE_ENV["TRAEFIK_DASHBOARD_TLS_OPTION"])
 
     def test_a_file_from_before_the_model_is_removed_by_render_and_refused_by_validate(self):
@@ -241,6 +243,33 @@ class TrustedRanges(Model):
         v = self.validate()
         self.assertNotEqual(v.returncode, 0)
         self.assertIn("overlaps the Docker network", v.stdout)
+
+    def validate_with_daemon_networks(self, networks):
+        """validate.sh against a stub docker whose daemon reports `networks` ({name: subnet})."""
+        stub_bin = self.root.parent / "bin"
+        stub_bin.mkdir(exist_ok=True)
+        ids = "\n".join(networks)
+        rows = "\n".join(f'[{{"Subnet":"{subnet}"}}] {name}' for name, subnet in networks.items())
+        (stub_bin / "docker").write_text(f"""#!/usr/bin/env bash
+case "$1 $2" in
+  "info "*) exit 0 ;;
+  "network ls") printf '%s\\n' "{ids}" ;;
+  "network inspect") printf '%s\\n' '{rows}' ;;
+esac
+exit 0
+""", encoding="utf-8")
+        (stub_bin / "docker").chmod(0o755)
+        return subprocess.run(["bash", str(self.root / "ops/scripts/validate.sh")], capture_output=True, text=True,
+                              env=no_daemon.env(PATH=f"{stub_bin}:{os.environ['PATH']}"))
+
+    def test_a_range_overlapping_a_daemon_network_is_refused(self):
+        # Step 8 lab host: a stack's edge network was given 192.168.0.0/20 by the daemon's pool.
+        self.render(dict(VALID_ENV, TRUSTED_RANGES="192.168.10.0/24"))
+        v = self.validate_with_daemon_networks({"fixture-edge": "192.168.0.0/20"})
+        self.assertNotEqual(v.returncode, 0)
+        self.assertIn("overlaps the Docker network 192.168.0.0/20 (fixture-edge)", v.stdout)
+        v = self.validate_with_daemon_networks({"fixture-edge": "172.28.0.0/16"})
+        self.assertNotIn("overlaps the Docker network", v.stdout)
 
     def test_a_value_that_is_not_a_network_is_refused(self):
         self.render(dict(VALID_ENV, TRUSTED_RANGES="192.168.10.5/24"))

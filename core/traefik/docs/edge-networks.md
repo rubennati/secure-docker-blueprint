@@ -47,29 +47,47 @@ proxy.
    creates the networks and joins Traefik to them; then start the stacks.
 
 Adding a stack later is the same three lines: list its network, render,
-`docker compose up -d` in `core/traefik` — which recreates the Traefik container
-(about two seconds of downtime, measured) — then `up -d` the stack.
+`docker compose up -d` in `core/traefik` — which recreates the Traefik container —
+then `up -d` the stack. **A Traefik recreate interrupts every stack it routes, for
+about seven seconds**: from the stop signal Traefik accepts no new connection, the
+old container takes three to five seconds to exit and the new one about two to
+start (measured on a host, 2026-11-01). The new stack is routed once its
+healthcheck passes; Traefik skips a container that is still starting.
 
 **A stack whose network is not listed is unreachable, and Traefik's log says
 nothing.** `validate.sh` compares the `traefik.docker.network` label of every
-running routed container with the networks Traefik has joined: a labelled network
-that `EDGE_NETWORKS` does not list is an error, a listed one Traefik has not
-joined yet is pending until the next `up -d` (and an error under `--strict`).
+running routed container with `EDGE_NETWORKS` and with the networks Traefik has
+joined: a labelled network that `EDGE_NETWORKS` does not list is an error, also
+while Traefik still joins it (the next `up -d` would remove it); a listed one
+Traefik has not joined yet is pending until the next `up -d` (and an error under
+`--strict`).
 
 ## Moving a shared installation to edge networks
 
-Stack by stack, each a short interruption of that stack:
+Stack by stack. Step 1 recreates Traefik and interrupts every stack for about
+seven seconds; step 3 interrupts the moved stack until its healthcheck passes:
 
 1. `core/traefik/.env`: add the stack's network to `EDGE_NETWORKS`, then
    `bash ops/scripts/render.sh` and `docker compose up -d` in `core/traefik`.
-   Traefik is recreated with the new network; the other stacks stay served.
+   Traefik is recreated with the new network.
 2. The stack's `.env`: `TRAEFIK_NETWORK=<project>-edge`.
 3. `docker compose up -d` in the stack: the web container is recreated on the
    edge network. It leaves `proxy-public`; nothing else changes.
 4. `bash ops/scripts/validate.sh --strict` in `core/traefik`.
 
 `proxy-public` keeps existing — it carries the published ports — and keeps
-every stack that still names it. Moving back is the same steps with the old value.
+every stack that still names it.
+
+**Moving back runs in the other order**, so the stack is never on a network
+Traefik has left: its `.env` to `TRAEFIK_NETWORK=proxy-public` and
+`docker compose up -d` in the stack, then its network out of `EDGE_NETWORKS`,
+`render.sh` and `docker compose up -d` in `core/traefik`, then
+`validate.sh --strict`. With the list shortened first, the stack is unreachable
+from Traefik's recreate until its own has passed its healthcheck — measured at
+about fourteen seconds for a stack with one — and `validate.sh` refuses the state
+in between. Traefik's project no longer names the removed network but does not
+remove it either; `docker network rm <project>-edge` once no container uses it
+returns its address pool.
 
 An installation from before `EDGE_NETWORKS` existed runs
 `scripts/migrate-traefik-env.sh --all` once: it adds `EDGE_NETWORKS=""` and
@@ -85,18 +103,43 @@ stacks set `TRAEFIK_NETWORK=proxy-public`, and the stack's README names the
 consequence. `apps/mailpit` and `apps/greenmail` ship that way, because being
 reached by every other stack is what they are for — and a stack that points its
 SMTP settings at `mailpit:1025` or `greenmail:3025` sets `proxy-public` too:
-on its own edge network the name does not resolve and the port is not reachable. An office server calling a
-file host back does not need it: it calls the file host's public name through
-Traefik (`apps/seafile/README.md`, "Access policy"; `apps/nextcloud/README.md`,
-"Office servers behind a closed route").
+on its own edge network the name does not resolve and the port is not reachable.
+
+An office server calling a file host back is a pair, not every stack, and needs
+neither stack on the shared network. Seafile hands the office server only its
+public name and opens the two paths it calls (`apps/seafile/README.md`, "Access
+policy"). Nextcloud has internal address settings for the callback: its opt-in
+`office.yml` joins Nextcloud's nginx alone to the office stack's edge network, so
+the office server reaches nginx by name and nothing else gains a path
+(`apps/nextcloud/README.md`, "Office servers behind a closed route"). The PHP
+container stays off that network — its FastCGI port answers whoever reaches it.
 
 ## The address pool
 
-A default daemon hands out 32 user networks (measured). Two per stack — edge and
-`app-internal` — plus the three of `core/traefik` is fourteen stacks before the
-pool is spent and `docker network create` fails with "all predefined address
-pools have been fully subnetted". A host with more stacks sets a larger pool once
-in `/etc/docker/daemon.json`:
+Docker gives each new network the next free subnet of its address pools. Without
+`default-address-pools` in `daemon.json`, those are Docker's built-in pools: the `/16`s
+from `172.17` to `172.31`, then `/20`s of `192.168.0.0/16`. A subnet already in use —
+by another network, or by a route the host has — is skipped. How many networks fit,
+and when the daemon reaches `192.168.0.0/16`, therefore depends on the host: its
+routes and the networks it already has. Each stack adds two (edge and
+`app-internal`), `core/traefik` three.
+
+Measured, not a general limit:
+
+- A throwaway daemon in the ingress audit (2026-10-31) created 32 networks before
+  `docker network create` failed with "all predefined address pools have been fully
+  subnetted".
+- On the step 8 lab host (2026-11-02) the provider's gateway route lies in
+  `172.31.0.0/16`. The default bridge and thirteen networks took `172.17` to
+  `172.30`, and the next one — a stack's edge network — was given `192.168.0.0/20`.
+
+A subnet there matters when the networks around the host use the same addresses: a
+LAN, or a range in `TRUSTED_RANGES`, then shares them with a container network, and
+`validate.sh` refuses such a range (DEC-076.3) — on the lab host it refused a test's
+`192.168.10.0/24`. A host that expects many stacks, or sits in a LAN within one of the
+built-in pools, sets a pool once, before the stacks are created, on a base that
+overlaps neither the LAN, the VPN range, `TRUSTED_RANGES` nor the host's routes;
+networks that exist keep their subnets until they are recreated. For example:
 
 ```json
 {

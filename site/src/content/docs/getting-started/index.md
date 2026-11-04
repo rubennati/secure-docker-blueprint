@@ -10,7 +10,9 @@ A service set up from this blueprint sits behind a reverse proxy on its own
 network, with its credentials mounted as files rather than set in the
 environment, and a backup you have restored from at least once.
 
-Nothing here publishes a port to the internet except the proxy. That single
+No web application here publishes a port; the proxy does. (A few stacks whose
+protocol is not HTTP — UniFi, OpenCanary, the access gateways — publish their
+own, on a host address you set.) That single
 decision is what makes the rest of it manageable — one place for certificates,
 one place for access rules, one place to look when something is unreachable.
 
@@ -25,13 +27,17 @@ done — or cannot be undone cheaply — without it.
    restarts the daemon and stops everything on the host.
 
 2. **[Set up Traefik](/infrastructure/traefik/).** It terminates TLS and routes
-   every service that follows. Applications here publish no ports of their own,
-   so until the proxy and its `proxy-public` network exist, there is nothing for
-   them to attach to.
+   every service that follows. Web applications here publish no ports of their
+   own; each attaches to its own edge network, which the proxy creates and joins
+   from `EDGE_NETWORKS` in `core/traefik/.env`.
 
 3. **Add one application.** Every guide has the same shape: copy `.env.example`
-   to `.env`, set the domain and credentials, `docker compose up -d`, then run the
-   guide's *Verify* section. One at a time — two unfamiliar stacks failing
+   to `.env`, set the domain and credentials, add the stack's network
+   (`<project>-edge`) to `EDGE_NETWORKS` in `core/traefik/.env`, render and
+   `docker compose up -d` Traefik — this interrupts every routed service for about
+   seven seconds — then `docker compose up -d` the stack and run the guide's
+   *Verify* section. A stack whose network is not listed is unreachable, and
+   Traefik's log says nothing; `core/traefik/ops/scripts/validate.sh` reports it. One at a time — two unfamiliar stacks failing
    together is much harder to read than one.
 
 4. **[Arrange a backup before real data goes in](/operations/backup/).** Not
@@ -46,11 +52,11 @@ done — or cannot be undone cheaply — without it.
 ## If you are not starting from scratch
 
 **A server that already runs this blueprint.** The foundation is done — confirm
-the proxy is up and its network exists, then go to the guide for the service you
-are adding:
+the proxy is up and the new stack's edge network is listed in `EDGE_NETWORKS`,
+then go to the guide for the service you are adding:
 
 ```bash
-docker network inspect proxy-public --format '{{.Name}}'
+docker network inspect <project>-edge --format '{{.Name}}'
 ```
 
 **Updating a service you already run.** Read the upstream release notes for

@@ -8,7 +8,7 @@ Two services:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `lscr.io/linuxserver/bookstack:version-v25.02` | BookStack web app (LSIO build with Apache + PHP 8) |
+| `bookstack-app` | `lscr.io/linuxserver/bookstack:version-v25.02` | BookStack web app (LSIO build with Apache + PHP 8) |
 | `db` | `mariadb:11.4` | Primary data store (pages, users, revisions, attachments metadata) |
 
 Attachments and images live in `./volumes/config/www/uploads/` (inside the LSIO `/config` mount).
@@ -53,7 +53,7 @@ sudo chown -R 1000:1000 volumes/config
 docker compose up -d
 
 # 7. Wait for first-run migrations
-docker compose logs app --follow
+docker compose logs bookstack-app --follow
 # Watch for: "Starting Apache web server"
 
 # 8. Open UI and log in with default credentials

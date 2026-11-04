@@ -4,7 +4,7 @@
 
 **Security-hardened Docker Compose patterns for self-hosted software — deploy, secure, operate, recover — for existing open-source projects and applications you build yourself.**
 
-Hardened configurations for 80+ services — standardized security baseline, Docker Secrets, Traefik routing, CrowdSec integration, and network isolation out of the box. For software you build yourself, [`development/`](development/) holds two deployment patterns — a static site and a web API.
+Hardened configurations for 80+ services — standardized security baseline, Docker Secrets, Traefik routing and network isolation out of the box; CrowdSec as an optional layer (its AppSec component opt-in, shipped without the OWASP Core Rule Set — see [`core/crowdsec/docs/appsec.md`](core/crowdsec/docs/appsec.md)). For software you build yourself, [`development/`](development/) holds two deployment patterns — a static site and a web API.
 
 [![CI](https://github.com/rubennati/secure-docker-blueprint/actions/workflows/ci.yml/badge.svg)](https://github.com/rubennati/secure-docker-blueprint/actions/workflows/ci.yml)
 [![Trivy](https://github.com/rubennati/secure-docker-blueprint/actions/workflows/trivy.yml/badge.svg)](https://github.com/rubennati/secure-docker-blueprint/actions/workflows/trivy.yml)

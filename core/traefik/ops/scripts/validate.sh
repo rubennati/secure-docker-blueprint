@@ -354,16 +354,26 @@ edge_pending=0
       while IFS=' ' read -r cname labelled; do
         [ -n "${cname}" ] || continue
         [ "${cname}" = "${TRAEFIK_CONTAINER_NAME}" ] && continue
-        case "${traefik_nets}" in *" ${labelled} "*) continue ;; esac
+        # Listed first: a network Traefik still joins but the list no longer
+        # names leaves it at the next 'docker compose up -d' here.
         case " ${PUBLIC_NETWORK} ${EDGE_NETWORKS} " in
           *" ${labelled} "*)
+            case "${traefik_nets}" in *" ${labelled} "*) continue ;; esac
             echo "PENDING: ${cname} labels traefik.docker.network=${labelled}, which Traefik has not joined yet —"
             echo "         'docker compose up -d' here recreates Traefik with it."
             edge_pending=1 ;;
           *)
-            echo "ERROR: ${cname} labels traefik.docker.network=${labelled}, a network Traefik does not join and"
-            echo "       EDGE_NETWORKS does not list — the stack is unreachable and the log says nothing. Add it to"
-            echo "       EDGE_NETWORKS, render.sh, 'docker compose up -d' here (docs/edge-networks.md)."
+            case "${traefik_nets}" in
+              *" ${labelled} "*)
+                echo "ERROR: ${cname} labels traefik.docker.network=${labelled}, which EDGE_NETWORKS does not list —"
+                echo "       Traefik still joins it, and the next 'docker compose up -d' here removes it: the stack"
+                echo "       becomes unreachable and the log says nothing. List it, or move the stack first" ;;
+              *)
+                echo "ERROR: ${cname} labels traefik.docker.network=${labelled}, a network Traefik does not join and"
+                echo "       EDGE_NETWORKS does not list — the stack is unreachable and the log says nothing. Add it to"
+                echo "       EDGE_NETWORKS, render.sh, 'docker compose up -d' here" ;;
+            esac
+            echo "       (docs/edge-networks.md)."
             exit 1 ;;
         esac
       done < <(docker ps -q --filter label=traefik.enable=true | xargs -r docker inspect -f '{{.Name}} {{index .Config.Labels "traefik.docker.network"}}' 2>/dev/null | sed 's|^/||')
@@ -609,6 +619,16 @@ if [ -f "${ROOT_DIR}/config/traefik.yml" ]; then
   for f in integrations.yml tls-profiles.yml routers-system.yml redirects.yml servers-transports.yml model.yml; do
     test -f "${ROOT_DIR}/config/dynamic/${f}" || { echo "Missing config/dynamic/${f} (run render.sh)"; exit 1; }
   done
+  # Every rendered file has to parse, without a key twice in one mapping:
+  # Traefik's file provider rejects the directory for one bad file and starts
+  # without every @file middleware (ops/scripts/check-yaml.py).
+  if command -v python3 >/dev/null 2>&1; then
+    yaml_rc=0
+    python3 "${ROOT_DIR}/ops/scripts/check-yaml.py" "${ROOT_DIR}/config/traefik.yml" "${ROOT_DIR}"/config/dynamic/*.yml || yaml_rc=$?
+    case ${yaml_rc} in 0) ;; 2) echo "NOT VERIFIED: the rendered YAML was not parsed (python3-yaml missing)" ;; *) exit 1 ;; esac
+  else
+    echo "NOT VERIFIED: the rendered YAML was not parsed (python3 missing)"
+  fi
   # The names the middleware model retired must be gone from config/dynamic:
   # a file from a render before the model, or a hand-kept copy, defines
   # middlewares no router may name and, for compress, a second definition.
@@ -801,9 +821,11 @@ if [ "${EXPOSURE_PROFILE}" = proxied ] && [ "$(address_class "${bind_v4_effectiv
 fi
 echo "  Layers for this profile (mandatory invariants are the checks above):"
 ingress_nft="${ROOT_DIR}/config/host/ingress.nft"
+# Where the host keeps its installed ruleset; a test points it elsewhere.
+installed_nft="${HOST_NFTABLES_DIR:-/etc/nftables.d}/ingress.nft"
 if [ -f "${ingress_nft}" ]; then
-  if [ -r /etc/nftables.d/ingress.nft ]; then
-    if cmp -s "${ingress_nft}" /etc/nftables.d/ingress.nft; then
+  if [ -r "${installed_nft}" ]; then
+    if cmp -s "${ingress_nft}" "${installed_nft}"; then
       echo "    host firewall      installed — /etc/nftables.d/ingress.nft matches the rendered ruleset (loaded? nft list table inet blueprint_ingress)"
     else
       echo "    host firewall      differs — /etc/nftables.d/ingress.nft is not the rendered ruleset: scripts/host-files.sh (docs/host-firewall.md)"
@@ -879,13 +901,85 @@ if command -v docker >/dev/null 2>&1; then
     exit 1
   fi
 fi
+# Before the first render, the files COMPOSE_FILE names under config/ do not
+# exist yet, and the published-address checks have no model to read. They are
+# reported as not run — never as passed — and run after render.sh. Only in that
+# state: once config/traefik.yml exists, with -f, or when a file outside config/
+# is missing, a missing compose file stays the checker's ERROR.
+not_rendered=""
+if [ "${#COMPOSE_ARGS[@]}" -eq 0 ] && [ ! -f "${ROOT_DIR}/config/traefik.yml" ]; then
+  other_missing=""
+  IFS="${COMPOSE_PATH_SEPARATOR:-:}" read -r -a listed_files <<< "${COMPOSE_FILE:-}"
+  for f in ${listed_files[@]+"${listed_files[@]}"}; do
+    [ -f "${ROOT_DIR}/${f}" ] && continue
+    case "${f}" in
+      config/*) not_rendered="${not_rendered} ${f}" ;;
+      *) other_missing=1 ;;
+    esac
+  done
+  [ -n "${other_missing}" ] && not_rendered=""
+fi
 family_rc=0
-python3 "${ROOT_DIR}/ops/scripts/check-published-family.py" \
-  --project-dir "${ROOT_DIR}" \
-  ${COMPOSE_ARGS[@]+"${COMPOSE_ARGS[@]}"} \
-  --public-network "${PUBLIC_NETWORK}" \
-  --container "${TRAEFIK_CONTAINER_NAME}" \
-  --daemon-check "${DOCKER_DAEMON_CHECK:-}" || family_rc=$?
+if [ -n "${not_rendered}" ]; then
+  echo "NOT VERIFIED: not rendered yet (${not_rendered# }) — the published-address checks run after render.sh."
+  family_rc=3
+else
+  python3 "${ROOT_DIR}/ops/scripts/check-published-family.py" \
+    --project-dir "${ROOT_DIR}" \
+    ${COMPOSE_ARGS[@]+"${COMPOSE_ARGS[@]}"} \
+    --public-network "${PUBLIC_NETWORK}" \
+    --container "${TRAEFIK_CONTAINER_NAME}" \
+    --daemon-check "${DOCKER_DAEMON_CHECK:-}" || family_rc=$?
+fi
+
+# The static configuration Traefik runs: config/traefik.yml is read once, at
+# the start of the container. render.sh replaces the file (a new inode) and the
+# running container keeps the one it started with; a plain 'docker compose up -d'
+# does not recreate it for that. Compared inside the container — its content
+# with the rendered file, and its time with the container's start, which catches
+# an edit in place. What cannot be read here is NOT VERIFIED, never passed.
+static_rc=0
+if [ -f "${ROOT_DIR}/config/traefik.yml" ]; then
+  static_file=/etc/traefik/traefik.yml
+  recreate="'docker compose up -d --force-recreate traefik' here loads it; a plain 'up -d' does not."
+  if ! command -v docker >/dev/null 2>&1 || ! docker info >/dev/null 2>&1; then
+    echo "NOT VERIFIED: the static configuration Traefik runs was not compared with config/traefik.yml (Docker did not answer here)."
+    static_rc=3
+  elif ! started="$(docker inspect -f '{{.State.Running}} {{.State.StartedAt}}' "${TRAEFIK_CONTAINER_NAME}" 2>/dev/null)" \
+       || [ "${started%% *}" != true ]; then
+    echo "NOT VERIFIED: ${TRAEFIK_CONTAINER_NAME} is not running — the static configuration it runs was not compared with config/traefik.yml."
+    static_rc=3
+  elif ! running_static="$(docker exec "${TRAEFIK_CONTAINER_NAME}" cat "${static_file}" 2>/dev/null)" \
+       || ! static_mtime="$(docker exec "${TRAEFIK_CONTAINER_NAME}" stat -c %Y "${static_file}" 2>/dev/null)"; then
+    echo "NOT VERIFIED: ${static_file} could not be read in ${TRAEFIK_CONTAINER_NAME} — the static configuration it runs was not compared with config/traefik.yml."
+    static_rc=3
+  elif [ "${running_static}" != "$(cat "${ROOT_DIR}/config/traefik.yml")" ]; then
+    echo "PENDING: config/traefik.yml differs from the static configuration ${TRAEFIK_CONTAINER_NAME} started with —"
+    echo "         ${recreate}"
+    static_rc=3
+  else
+    # newer | older | unknown: the file's time inside the container against the start
+    static_age="$(python3 - "${started#* }" "${static_mtime}" <<'PYEOF_STATIC' 2>/dev/null || echo unknown
+import re, sys
+from datetime import datetime
+started = re.sub(r"\.\d+", "", sys.argv[1]).replace("Z", "+00:00")
+print("newer" if int(sys.argv[2]) > int(datetime.fromisoformat(started).timestamp()) else "older")
+PYEOF_STATIC
+)"
+    case "${static_age}" in
+      older) ;;
+      newer)
+        echo "PENDING: config/traefik.yml was changed after ${TRAEFIK_CONTAINER_NAME} started; Traefik runs the version it read then —"
+        echo "         ${recreate}"
+        static_rc=3 ;;
+      *)
+        echo "NOT VERIFIED: the start of ${TRAEFIK_CONTAINER_NAME} or the time of ${static_file} could not be read — an edit since the start was not ruled out."
+        static_rc=3 ;;
+    esac
+  fi
+fi
+[ "${static_rc}" -eq 3 ] && [ "${family_rc}" -eq 0 ] && family_rc=3
+
 case "${family_rc}" in
   0)
     if [ "${open_items}" -ne 0 ]; then

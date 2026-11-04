@@ -10,7 +10,7 @@ Three services:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `fnsys/dockhand` | Dockhand web UI + Git poller + Compose orchestrator |
+| `dockhand` | `fnsys/dockhand` | Dockhand web UI + Git poller + Compose orchestrator |
 | `db` | `postgres:16-alpine` | Persistent state (stacks, users, Git repos config) |
 | `socket-proxy` | `tecnativa/docker-socket-proxy` | Filtered Docker API access — Dockhand never talks to the Docker socket directly |
 
@@ -71,7 +71,7 @@ Click "Test connection" → should turn green → "Add". The environment appears
 
 ```bash
 docker compose ps                    # All three services should be healthy
-docker compose logs app --tail 50    # Check for startup errors
+docker compose logs dockhand --tail 50    # Check for startup errors
 docker compose logs socket-proxy     # Socket proxy access log
 ```
 

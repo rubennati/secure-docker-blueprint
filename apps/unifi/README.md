@@ -6,7 +6,7 @@ Controller for Ubiquiti UniFi access points, switches, and gateways. Runs as an 
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `lscr.io/linuxserver/unifi-network-application:latest` | Web UI (port 8443) + device inform (8080) + STUN (3478/udp) + discovery (10001/udp) |
+| `unifi-app` | `lscr.io/linuxserver/unifi-network-application:latest` | Web UI (port 8443) + device inform (8080) + STUN (3478/udp) + discovery (10001/udp) |
 | `db` | `mongo:8.0` | Primary store. The image supports 3.6–7.0 from UniFi 8.1, and 8.0 from UniFi 9.0 |
 
 The web UI goes through Traefik (HTTPS). The L2/L3 device ports are exposed directly on the host because Traefik cannot proxy UDP discovery or device-inform broadcasts.
@@ -46,7 +46,7 @@ mkdir -p volumes/mongodb volumes/config
 docker compose up -d
 
 # 6. First-run is slow — MongoDB init script runs, Java heap warms up (~2-3 min)
-docker compose logs app --follow
+docker compose logs unifi-app --follow
 # Watch for: "UniFi Network Application is now available"
 
 # 7. Open UI and run the setup wizard

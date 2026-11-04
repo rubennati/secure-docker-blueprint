@@ -59,14 +59,16 @@ From `apps/easyappointments/`:
 
    ```bash
    docker compose up -d
-   docker compose logs app --follow
+   docker compose logs easyappointments-app --follow
    ```
 
    Wait for `apache2 -D FOREGROUND`.
 
-5. Open `https://<APP_TRAEFIK_HOST>/index.php/installation` — the install wizard
-   creates the administrator account. Afterwards log in at
-   `/index.php/user/login`.
+5. Open `https://<APP_TRAEFIK_HOST>/index.php/installation` from the VPN — the
+   route ships `access-vpn` until the wizard has run, because the wizard creates the
+   administrator account for whoever reaches it first. Afterwards log in at
+   `/index.php/user/login`, then set `APP_TRAEFIK_ACCESS=access-public` in `.env`
+   and `docker compose up -d` if the booking page is to be public.
 
 </Steps>
 

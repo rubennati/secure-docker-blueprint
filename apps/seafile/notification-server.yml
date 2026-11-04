@@ -73,7 +73,7 @@ services:
       # stack leaves this path answering wherever the host answers.
       # WebSocket endpoint. The four positions, with SIDE_TRAEFIK_LIMIT (.env): no
       # counter — a long-lived connection's reconnects have not been measured against one.
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-notification.middlewares=${APP_TRAEFIK_ACCESS}@file,${SIDE_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-notification.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${SIDE_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-notification.tls=true"
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-notification.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}-notification.loadbalancer.server.port=8083"

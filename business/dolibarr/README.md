@@ -6,7 +6,7 @@ Open-source ERP / CRM — invoicing, bookkeeping, project management, HR, invent
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `dolibarr/dolibarr:23.0.4` | PHP/Apache app with Dolibarr pre-installed |
+| `dolibarr-app` | `dolibarr/dolibarr:23.0.4` | PHP/Apache app with Dolibarr pre-installed |
 | `db` | `mariadb:11.4` | Primary store (customers, invoices, products, accounting entries) |
 
 ## Try it locally
@@ -44,7 +44,7 @@ mkdir -p volumes/mysql volumes/documents volumes/custom
 docker compose up -d
 
 # 5. Wait for first-run install (~90 seconds)
-docker compose logs app --follow
+docker compose logs dolibarr-app --follow
 # Watch for: "apache2 -D FOREGROUND"
 
 # 6. Open UI and log in

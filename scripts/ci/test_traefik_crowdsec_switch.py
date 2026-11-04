@@ -31,6 +31,7 @@ import unittest
 from pathlib import Path
 
 from test_traefik_dashboard_cert import BASE_ENV, TRAEFIK
+import no_daemon
 
 # BASE_ENV picks no certificate strategy on purpose (that is its own test); the
 # switch cases want validate.sh to reach the CrowdSec checks, so they cover the
@@ -52,7 +53,7 @@ def write_env(root: Path, env: dict) -> None:
 def run(root: Path, script: str) -> subprocess.CompletedProcess:
     return subprocess.run(
         ["bash", str(root / "ops" / "scripts" / script)],
-        capture_output=True, text=True,
+        capture_output=True, text=True, env=no_daemon.env(),
     )
 
 

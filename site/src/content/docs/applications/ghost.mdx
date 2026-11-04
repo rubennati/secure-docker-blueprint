@@ -77,7 +77,7 @@ From `apps/ghost/`:
 
 ```bash
 docker compose ps                  # two services, healthy
-docker compose logs app --tail 50  # migrations completed
+docker compose logs ghost-app --tail 50  # migrations completed
 docker compose logs db --tail 20   # ready for connections
 ```
 
@@ -159,7 +159,7 @@ Restore order: database, then the application.
 
    ```bash
    docker compose pull && docker compose up -d
-   docker compose logs app --follow
+   docker compose logs ghost-app --follow
    ```
 
 4. Load the public site and the administration interface. A theme incompatible
@@ -181,7 +181,7 @@ and the confirmation mail never leaves.
 domain are missing at the DNS provider.
 
 **The container is `unhealthy` for the first minute.** First-start migrations.
-It recovers on its own; if it does not, read `docker compose logs app`.
+It recovers on its own; if it does not, read `docker compose logs ghost-app`.
 
 **Federation shows redirect errors after a configuration change.** Browsers cache
 redirect chains. Confirm in a private window before changing anything else.

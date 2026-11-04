@@ -22,6 +22,11 @@ updates:
       time: "06:00"
       timezone: UTC
     open-pull-requests-limit: 5
+    # A release younger than a week is not proposed: most malicious or broken
+    # versions are yanked within days (supply-chain lesson of the step 8 audit).
+    # Security updates are not delayed by it.
+    cooldown:
+      default-days: 7
     labels:
       - dependencies
     groups:
@@ -38,6 +43,11 @@ updates:
       time: "06:00"
       timezone: UTC
     open-pull-requests-limit: 5
+    # A release younger than a week is not proposed: most malicious or broken
+    # versions are yanked within days (supply-chain lesson of the step 8 audit).
+    # Security updates are not delayed by it.
+    cooldown:
+      default-days: 7
     labels:
       - dependencies
       - javascript
@@ -61,6 +71,11 @@ updates:
       time: "06:00"
       timezone: UTC
     open-pull-requests-limit: 5
+    # A release younger than a week is not proposed: most malicious or broken
+    # versions are yanked within days (supply-chain lesson of the step 8 audit).
+    # Security updates are not delayed by it.
+    cooldown:
+      default-days: 7
     labels:
       - dependencies
       - javascript

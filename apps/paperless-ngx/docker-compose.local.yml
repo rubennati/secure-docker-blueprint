@@ -110,7 +110,7 @@ services:
       - "127.0.0.1:8000:8000"
     networks: [paperless-local]
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/ >/dev/null || exit 1"]
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/accounts/login/ >/dev/null || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5

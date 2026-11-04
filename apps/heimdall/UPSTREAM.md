@@ -11,7 +11,7 @@
 - **Domain:** Dashboards
 - **Role:** Application launcher with widgets
 - **Based on version:** `2.8.3`
-- **Last verified:** 2026-05-02 (v2.6.3)
+- **Last verified:** 2026-11-02 (2.8.3) — step 8 lab host behind Traefik 3.7.17: healthy; the `basic` posture's gate answered 401 without and with wrong credentials, and with right ones the dashboard and its settings page loaded (docs/labs/ingress/2026-11-01-results.md)
 
 ## What we use
 

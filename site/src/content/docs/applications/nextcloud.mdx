@@ -50,18 +50,20 @@ From `apps/nextcloud/`:
    think every visitor is Traefik. Print it:
 
    ```bash
-   docker network inspect proxy-public \
+   docker network inspect nextcloud-edge \
      --format '{{range .IPAM.Config}}{{.Subnet}} {{end}}'
    ```
 
-   Copy whatever that prints into `NC_TRUSTED_PROXIES` — **all of it**. If you
+   `nextcloud-edge` is the stack's own edge network (`TRAEFIK_NETWORK`), which
+   Traefik joins once `EDGE_NETWORKS` in `core/traefik/.env` lists it. Copy
+   whatever that prints into `NC_TRUSTED_PROXIES` — **all of it**. If you
    enabled IPv6 there will be two entries, and leaving one out means everyone
    shares a single address as far as the login protection is concerned: one
    person mistyping a password locks out everybody.
 
    ```ini
    APP_TRAEFIK_HOST=cloud.example.com
-   NC_TRUSTED_PROXIES=172.30.0.0/16
+   NC_TRUSTED_PROXIES=172.19.0.0/16
    TZ=Europe/Vienna
    ```
 
@@ -216,10 +218,14 @@ opened; nothing of its function depends on them. Switch to `access-public` once 
 is configured, verified, and you have logged in successfully. That is a deliberate
 change to your attack surface.
 
-An office server — OnlyOffice, Euro-Office, Collabora — calls Nextcloud back over
-the Docker network the two stacks share, not through the route: the connector's
-internal address settings (`StorageUrl`, `wopi_callback_url`) in the stack README,
-"Office servers behind a closed route".
+An office server — OnlyOffice, Euro-Office, Collabora — calls Nextcloud back past
+the closed route: the opt-in `office.yml` joins Nextcloud's nginx, and only nginx,
+to the office stack's edge network (`OFFICE_NETWORK`), and the connector hands out
+nginx as its internal address. The settings — `StorageUrl` and `jwt_secret` for
+OnlyOffice and Euro-Office, `richdocuments:activate-config` for Collabora — are in
+the stack README, "Office servers behind a closed route". Measured on a host:
+OnlyOffice and Euro-Office work that way; Collabora behind the closed route does
+not open a document, which is open.
 
 ### Rotating a key
 

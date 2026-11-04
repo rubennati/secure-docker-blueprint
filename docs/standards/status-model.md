@@ -33,8 +33,9 @@ exactly, once normalized: a leading `v`, an `_IMAGE` pin's image-name prefix,
 a digest suffix, and the one documented packaging variant a stack's own
 `UPSTREAM.md` establishes (`1.15.1-slim` pinned against `1.15.1` verified,
 per `apps/tymeslot/UPSTREAM.md`) are formatting, not a different release. A
-pin that deliberately floats a version component — `traefik:v3.7`, verified
-against the exact `v3.7.13` that was tested at the time — is **not**
+pin that deliberately floats a version component — `traefik:v3.7`, core/traefik's
+pin until 2026-11-02, verified against the exact `v3.7.13` that was tested at the
+time — is **not**
 tolerated: that pin can resolve to a newer patch upstream with no repository
 change to re-verify against, which is exactly the silent-drift risk this
 check exists to catch. Anything that does not match exactly after

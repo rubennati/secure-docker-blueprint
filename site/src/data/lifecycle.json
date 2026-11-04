@@ -74,10 +74,10 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=26.04.5.2.1",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "—",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "baseline-aligned",
+    "verified": "2026-11-02",
+    "verified_anchored": true,
+    "verified_version": "26.04.5.2.1"
   },
   "apps/dashy": {
     "backup_docs": "documented",
@@ -154,50 +154,50 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=1.6.1",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "2026-05-03",
+    "state": "ops-proven",
+    "verified": "2026-11-03",
     "verified_anchored": true,
-    "verified_version": "1.5.x"
+    "verified_version": "1.6.1"
   },
   "apps/euro-office": {
     "backup_docs": "documented",
     "local_stack": "✅",
     "pinned": "APP_TAG=v9.3.4-hotfix.1",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "—",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "baseline-aligned",
+    "verified": "2026-11-02",
+    "verified_anchored": true,
+    "verified_version": "v9.3.4-hotfix.1"
   },
   "apps/ghost": {
     "backup_docs": "documented",
     "local_stack": "✅",
     "pinned": "APP_TAG=6.63.0-alpine",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "2026-07-26",
+    "state": "ops-proven",
+    "verified": "2026-11-03",
     "verified_anchored": true,
-    "verified_version": "v6.54.0-alpine"
+    "verified_version": "6.63.0-alpine"
   },
   "apps/greenmail": {
     "backup_docs": "documented",
     "local_stack": "✅",
     "pinned": "APP_TAG=2.1.15",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "2026-09-22",
+    "state": "baseline-aligned",
+    "verified": "2026-11-03",
     "verified_anchored": true,
-    "verified_version": "2.1.13"
+    "verified_version": "2.1.15"
   },
   "apps/heimdall": {
     "backup_docs": "documented",
     "local_stack": "✅",
     "pinned": "APP_TAG=2.8.3",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "2026-05-02",
+    "state": "ops-proven",
+    "verified": "2026-11-02",
     "verified_anchored": true,
-    "verified_version": "v2.6.3"
+    "verified_version": "2.8.3"
   },
   "apps/hemmelig": {
     "backup_docs": "documented",
@@ -245,7 +245,7 @@
     "pinned": "APP_TAG=0.10.4",
     "restore_docs": "missing",
     "state": "baseline-aligned",
-    "verified": "2026-09-22",
+    "verified": "2026-11-02",
     "verified_anchored": true,
     "verified_version": "0.10.4"
   },
@@ -254,10 +254,10 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=v3.2.0",
     "restore_docs": "documented",
-    "state": "scaffolded",
-    "verified": "2026-04-17",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "baseline-aligned",
+    "verified": "2026-11-03",
+    "verified_anchored": true,
+    "verified_version": "v3.2.0"
   },
   "apps/it-tools": {
     "backup_docs": "documented",
@@ -265,7 +265,7 @@
     "pinned": "APP_TAG=2024.10.22-7ca5933",
     "restore_docs": "missing",
     "state": "baseline-aligned",
-    "verified": "2026-05-02",
+    "verified": "2026-11-02",
     "verified_anchored": true,
     "verified_version": "v2024.10.22-7ca5933"
   },
@@ -305,7 +305,7 @@
     "pinned": "APP_TAG=v1.31.1",
     "restore_docs": "missing",
     "state": "baseline-aligned",
-    "verified": "2026-09-07",
+    "verified": "2026-11-02",
     "verified_anchored": true,
     "verified_version": "v1.31.1"
   },
@@ -324,20 +324,20 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=4.1.2-apache",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "2026-04-17",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "ops-proven",
+    "verified": "2026-11-03",
+    "verified_anchored": true,
+    "verified_version": "4.1.2-apache"
   },
   "apps/n8n": {
     "backup_docs": "documented",
     "local_stack": "✅",
     "pinned": "APP_TAG=2.41.7@sha256:bcef56dd4401…",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "2026-05-02",
+    "state": "ops-proven",
+    "verified": "2026-11-03",
     "verified_anchored": true,
-    "verified_version": "v2.19.2"
+    "verified_version": "2.41.7"
   },
   "apps/nextcloud": {
     "backup_docs": "documented",
@@ -345,7 +345,7 @@
     "pinned": "APP_TAG=34.0.4-fpm-alpine",
     "restore_docs": "documented",
     "state": "ops-proven",
-    "verified": "2026-09-13",
+    "verified": "2026-11-02",
     "verified_anchored": true,
     "verified_version": "34.0.4-fpm-alpine"
   },
@@ -384,10 +384,10 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=9.4.0",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "2026-06-14",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "baseline-aligned",
+    "verified": "2026-11-02",
+    "verified_anchored": true,
+    "verified_version": "9.4.0"
   },
   "apps/open-webui": {
     "backup_docs": "documented",
@@ -434,10 +434,10 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=3.1.3",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "2026-05-03",
+    "state": "ops-proven",
+    "verified": "2026-11-02",
     "verified_anchored": true,
-    "verified_version": "v2.20.13"
+    "verified_version": "3.1.3"
   },
   "apps/photoprism": {
     "backup_docs": "documented",
@@ -484,20 +484,20 @@
     "local_stack": "✅",
     "pinned": "APP_IMAGE=seafileltd/seafile-mc:13.0.20",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "2026-04-16",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "ops-proven",
+    "verified": "2026-11-02",
+    "verified_anchored": true,
+    "verified_version": "13.0.20"
   },
   "apps/seafile-pro": {
     "backup_docs": "documented",
     "local_stack": "✅",
     "pinned": "APP_TAG=13.0.21",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "2026-04-13",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "ops-proven",
+    "verified": "2026-11-02",
+    "verified_anchored": true,
+    "verified_version": "13.0.21"
   },
   "apps/shlink": {
     "backup_docs": "documented",
@@ -534,7 +534,7 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=1.15.1-slim@sha256:4bde62fd9bb1…",
     "restore_docs": "missing",
-    "state": "baseline-aligned",
+    "state": "ops-proven",
     "verified": "2026-09-07",
     "verified_anchored": true,
     "verified_version": "v1.15.1"
@@ -554,10 +554,10 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=1.37.4",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "2026-06-14",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "ops-proven",
+    "verified": "2026-11-02",
+    "verified_anchored": true,
+    "verified_version": "1.37.4"
   },
   "apps/velociraptor": {
     "backup_docs": "documented",
@@ -585,7 +585,7 @@
     "pinned": "APP_TAG=v1.12.0",
     "restore_docs": "missing",
     "state": "baseline-aligned",
-    "verified": "2026-09-13",
+    "verified": "2026-11-01",
     "verified_anchored": true,
     "verified_version": "v1.12.0"
   },
@@ -734,20 +734,20 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=5.13.52",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "2026-09-13",
+    "state": "ops-proven",
+    "verified": "2026-11-03",
     "verified_anchored": true,
-    "verified_version": "5.13.40"
+    "verified_version": "5.13.52"
   },
   "business/kimai": {
     "backup_docs": "documented",
     "local_stack": "✅",
     "pinned": "APP_TAG=2.66.0",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "2026-05-03",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "ops-proven",
+    "verified": "2026-11-03",
+    "verified_anchored": true,
+    "verified_version": "2.66.0"
   },
   "business/leantime": {
     "backup_docs": "documented",
@@ -764,10 +764,10 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=v6.2.0",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "2026-05-03",
-    "verified_anchored": false,
-    "verified_version": ""
+    "state": "baseline-aligned",
+    "verified": "2026-11-03",
+    "verified_anchored": true,
+    "verified_version": "v6.2.0"
   },
   "business/matomo": {
     "backup_docs": "documented",
@@ -884,18 +884,18 @@
     "local_stack": "✅",
     "pinned": "APP_TAG=2026.5.7",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "2026-07-26",
+    "state": "baseline-aligned",
+    "verified": "2026-11-02",
     "verified_anchored": true,
-    "verified_version": "v2026.5.6"
+    "verified_version": "v2026.5.7"
   },
   "core/crowdsec": {
     "backup_docs": "documented",
     "local_stack": "—",
     "pinned": "APP_TAG=v1.7.8",
     "restore_docs": "missing",
-    "state": "baseline-aligned",
-    "verified": "2026-07-29",
+    "state": "ops-proven",
+    "verified": "2026-11-01",
     "verified_anchored": true,
     "verified_version": "v1.7.8"
   },
@@ -1042,12 +1042,12 @@
   "core/traefik": {
     "backup_docs": "documented",
     "local_stack": "—",
-    "pinned": "TRAEFIK_IMAGE=traefik:v3.7",
+    "pinned": "TRAEFIK_IMAGE=traefik:v3.7.17",
     "restore_docs": "missing",
-    "state": "scaffolded",
-    "verified": "2026-09-13",
+    "state": "baseline-aligned",
+    "verified": "2026-11-01",
     "verified_anchored": true,
-    "verified_version": "v3.7.13, socket-proxy v0.5.0"
+    "verified_version": "v3.7.17, socket-proxy v0.5.0"
   },
   "core/warpgate": {
     "backup_docs": "documented",

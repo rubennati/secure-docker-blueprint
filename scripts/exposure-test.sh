@@ -27,8 +27,9 @@
 # SSH (22) is reported, never judged: the management plane is the VPN, and a
 # port that answers the internet is a fact for the operator to weigh.
 #
-# On success the last line is the marker. Store it on the host:
-#   printf '%s\n' '<the marker line>' > core/traefik/config/exposure-verified
+# On success the last line is the marker. Append it on the host — one line per run
+# (one run per address keeps both families on record); validate.sh reads the last:
+#   printf '%s\n' '<the marker line>' >> core/traefik/config/exposure-verified
 #
 # Needs curl. Exit 0 when the profile holds, 1 when a probe contradicts it,
 # 2 on usage errors.
@@ -42,15 +43,34 @@ command -v curl >/dev/null 2>&1 || { echo "ERROR: curl is needed."; exit 2; }
 
 TIMEOUT="${EXPOSURE_TIMEOUT:-5}"
 
+# An address given literally has one family; the other has no address to probe
+# (curl reports a mismatch as a failed connect, which would read as "closed").
+# An IPv6 literal goes into the URL in brackets.
+only_family=""; url_host="${host}"
+case "${host}" in
+  \[*\]) only_family=6 ;;
+  *:*) only_family=6; url_host="[${host}]" ;;
+  *[!0-9.]*) ;;
+  *) only_family=4 ;;
+esac
+
 # probe <family 4|6> <port>: answers | closed | no-address
+# A port answers when the TCP connection was made. The exit code alone does not
+# say so: a server that waits for the client — HTTP, or SSH after its banner —
+# holds the connection until --max-time, and curl exits 28 exactly as it does
+# for a filtered port that never connected (measured 2026-11-01 on a host
+# running Traefik). curl's own connection count tells the two apart.
 probe() {
-  local fam="$1" port="$2" rc
-  curl -s -"${fam}" --connect-timeout "${TIMEOUT}" --max-time "${TIMEOUT}" -o /dev/null "telnet://${host}:${port}" </dev/null >/dev/null 2>&1
+  local fam="$1" port="$2" rc connects
+  if [ -n "${only_family}" ] && [ "${fam}" != "${only_family}" ]; then echo no-address; return; fi
+  connects="$(curl -s -"${fam}" --connect-timeout "${TIMEOUT}" --max-time "${TIMEOUT}" -o /dev/null \
+    -w '%{num_connects}' "telnet://${url_host}:${port}" </dev/null 2>/dev/null)"
   rc=$?
+  case "${connects}" in ''|*[!0-9]*) connects=0 ;; esac
   case "${rc}" in
-    0|48|56) echo answers ;;       # connected (telnet: closed by peer, recv failure after connect)
     6) echo no-address ;;          # the name has no address of this family
-    *) echo closed ;;              # refused or timed out
+    0|48|56) echo answers ;;       # connected (telnet: closed by peer, recv failure after connect)
+    *) if [ "${connects}" -gt 0 ]; then echo answers; else echo closed; fi ;;   # refused, or timed out before or after a connect
   esac
 }
 
@@ -98,5 +118,5 @@ if [ "${failed}" -ne 0 ]; then
 fi
 marker="EXPOSURE_MARKER date=$(date -u +%Y-%m-%dT%H:%M:%SZ) target=${host} profile=${profile} result=ok"
 echo "OK: the host exposes what the profile says. Store the marker on the host, in core/traefik:"
-echo "    printf '%s\\n' '${marker}' > config/exposure-verified"
+echo "    printf '%s\\n' '${marker}' >> config/exposure-verified"
 echo "${marker}"

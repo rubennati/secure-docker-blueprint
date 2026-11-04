@@ -6,7 +6,7 @@ AI-powered self-hosted photo manager with TensorFlow-based classification, face 
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `photoprism/photoprism:260728` | Web UI + API + TensorFlow + WebDAV |
+| `photoprism-app` | `photoprism/photoprism:260728` | Web UI + API + TensorFlow + WebDAV |
 | `db` | `mariadb:11.4` | Primary store (index, albums, users, sidecar metadata) |
 
 ## Try it locally
@@ -49,7 +49,7 @@ mkdir -p volumes/database volumes/storage volumes/originals
 docker compose up -d
 
 # 7. First run downloads TensorFlow models (~1 GB) — takes a few minutes
-docker compose logs app --follow
+docker compose logs photoprism-app --follow
 # Watch for: "server: listening on 0.0.0.0:2342"
 
 # 8. Open UI and log in

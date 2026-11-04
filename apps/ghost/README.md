@@ -8,7 +8,7 @@ Base stack (two services):
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `ghost:6.63.0-alpine` | Ghost CMS (Node.js), serves the blog + admin UI on port `2368` |
+| `ghost-app` | `ghost:6.63.0-alpine` | Ghost CMS (Node.js), serves the blog + admin UI on port `2368` |
 | `db` | `mysql:8.4` | Ghost's content database (posts, members, settings) |
 
 Optional ActivityPub stack (`activitypub.yml`):
@@ -62,11 +62,22 @@ printf '%s' 'YOUR-SMTP-PASSWORD' > .secrets/mail_pwd.txt
 # 3. Start
 docker compose up -d
 
-# 4. Open the admin UI and finish setup
+# 4. Over the VPN: open the admin UI and finish setup
 # https://<APP_TRAEFIK_HOST>/ghost/
+
+# 5. A public blog: open the route once the owner exists
+sed -i 's/^APP_TRAEFIK_ACCESS=.*/APP_TRAEFIK_ACCESS=access-public/' .env
+docker compose up -d
 ```
 
-Default access is `access-public`, with `limit-standard` and `headers-standard` — a public blog with the standard headers and rate limit.
+The setup page answers until the owner exists — there is no setup secret, whoever
+reaches it first becomes the owner. The stack therefore ships with `access-vpn`
+(final audit FA-01): the setup happens over the VPN, and the blog becomes public by
+the operator's decision in step 5.
+With mail configured, a staff login from a new browser waits for a six-digit code
+Ghost mails to the staff address (step 8 lab host, 6.63.0).
+
+Shipped access is `access-vpn` until setup; a public blog then runs `access-public`, with `limit-standard` and `headers-standard` — the standard headers and rate limit.
 
 ### Enabling ActivityPub on an existing deployment
 
@@ -82,7 +93,7 @@ Then set `COMPOSE_FILE=docker-compose.yml:activitypub.yml` in `.env` and run `do
 
 ```bash
 docker compose ps                       # All services healthy
-docker compose logs app --tail 50       # Ghost startup, DB migration messages
+docker compose logs ghost-app --tail 50       # Ghost startup, DB migration messages
 docker compose logs db --tail 20        # MySQL ready-for-connections
 
 # With ActivityPub:
@@ -117,6 +128,9 @@ mysql_databases:
       container: ghost-db
       username: ghost_user
       password: "{credential file /srv/docker/apps/ghost/.secrets/db_pwd.txt}"
+      # MySQL's self-signed certificate: the host's client refuses it and the
+      # dump fails (step 8 lab host). The connection stays on the host.
+      tls: false
 ```
 
 `volumes/content` is not just uploads: the active theme lives there too. A

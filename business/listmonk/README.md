@@ -6,7 +6,9 @@ Self-hosted newsletter, mailing list manager, and transactional mail. Go single-
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `listmonk/listmonk:v6.2.0` | Admin UI + sender + subscriber endpoints |
+| `listmonk-install` | `listmonk/listmonk:v6.2.0` | One-shot: schema on first start, migrations after an upgrade |
+| `smtp-guard` | `postgres:16-alpine` | One-shot: replaces upstream's SMTP placeholder before the app starts (below) |
+| `listmonk-app` | `listmonk/listmonk:v6.2.0` | Admin UI + sender + subscriber endpoints — UID 1000, no capabilities |
 | `db` | `postgres:16-alpine` | Subscribers, campaigns, templates, analytics |
 
 ## Try it locally
@@ -29,22 +31,46 @@ cp .env.example .env
 # Edit: APP_TRAEFIK_HOST, TZ
 
 mkdir -p .secrets volumes/postgres volumes/uploads
+# listmonk runs as APP_UID:APP_GID (default 1000:1000), not as root
+sudo chown 1000:1000 volumes/uploads
 openssl rand -base64 32 | tr -d '\n' > .secrets/db_pwd.txt
 sed -i "s|^DB_PWD_INLINE=.*|DB_PWD_INLINE=$(cat .secrets/db_pwd.txt)|" .env
 
 docker compose up -d
-# First boot: --install --idempotent → creates Postgres schema.
-# Admin user is NOT created from env — create it on first login via the web UI.
-docker compose logs app --follow
-# Watch for: "http server started on [::]:9000"
+# listmonk-install creates the schema (first boot) or migrates it; smtp-guard
+# replaces the SMTP placeholder; then listmonk-app starts. Both one-shots exit 0.
+docker compose ps -a
+docker compose logs smtp-guard   # "smtp placeholder replaced by smtp.invalid" once, then nothing
 
-# https://<APP_TRAEFIK_HOST>
-# → First visit prompts you to create the super admin account.
+# Over the VPN: https://<APP_TRAEFIK_HOST>/admin
+# → the first visit creates the super admin account.
 ```
+
+**The stack ships closed** (`APP_TRAEFIK_ACCESS=access-vpn`), because of what the step 8
+lab host measured (v6.2.0; final audit FA-01, FA-02):
+
+- **The first visit to `/admin` creates the super admin** — there is no setup secret. With a
+  public route that is whoever arrives first. Create the account over the VPN.
+- **The SMTP settings ship with upstream's placeholder `smtp.yoursite.com`**, a real domain
+  that resolves to a third party. Before the guard, an opt-in mail for a public subscription
+  — with the subscriber's address — was sent there on port 25 (it timed out on the lab host
+  only because the provider blocks outbound 25). `smtp-guard` now replaces exactly that
+  value with `smtp.invalid` (RFC 2606, never resolves) before the application loads its
+  settings; a server you configured is never changed. Until you set one under
+  **Settings → SMTP**, mail fails with `lookup smtp.invalid: no such host` and the
+  subscription form answers `500` — nothing leaves the host (measured: 0 packets to
+  25/465/587 from the stack's edge network during two subscriptions).
+- Then open the subscriber paths: `access-public` for the whole host, or — better — the
+  access split below, so `/admin` stays VPN-only.
+- The session cookie is set `HttpOnly` without `Secure`, although `root_url` is `https://`.
+
+**Outbound mail is not filtered by the stack.** The edge network has egress, which a real
+relay on 587 or 465 needs; port 25 is blocked by many providers, not by the blueprint. A
+per-network egress filter in the host ruleset is an open point, not implemented.
 
 ## Access split (recommended for production)
 
-Default is `access-public` so subscriber endpoints (`/subscription/*`, `/link/*`, `/campaign/*`) work for external users. The admin UI at `/admin` is then *also* public.
+The shipped default is `access-vpn`: nothing is public until you open it. Subscriber endpoints (`/subscription/*`, `/link/*`, `/campaign/*`) need a public route for external readers; with `access-public` on the one router, the admin UI at `/admin` is *also* public.
 
 For "admin VPN-only + subscriber endpoints public", add a second Traefik router:
 
@@ -54,7 +80,7 @@ For "admin VPN-only + subscriber endpoints public", add a second Traefik router:
 - "traefik.http.routers.listmonk-admin.priority=100"
 - "traefik.http.routers.listmonk-admin.entrypoints=websecure"
 - "traefik.http.routers.listmonk-admin.tls=true"
-- "traefik.http.routers.listmonk-admin.middlewares=access-vpn@file,${APP_TRAEFIK_LIMIT}@file,frame-self@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+- "traefik.http.routers.listmonk-admin.middlewares=frame-self@file,${APP_TRAEFIK_HEADERS}@file,access-vpn@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
 - "traefik.http.routers.listmonk-admin.service=${COMPOSE_PROJECT_NAME}"
 # The existing router (priority 1 implicit) catches subscriber paths publicly.
 ```
@@ -63,7 +89,8 @@ For "admin VPN-only + subscriber endpoints public", add a second Traefik router:
 
 - **Admin user created via web UI on first visit** — Listmonk v6+ removed `admin_username`/`admin_password` from env/config. The first visit to `/` shows a setup wizard to create the super admin. Do not use the old `ADMIN_USER`/`ADMIN_PASSWORD` env vars — they are ignored and trigger a deprecation warning.
 - **`DB_PWD_INLINE` duplicates the DB password** — Listmonk has no `_FILE` support on `LISTMONK_db__password`.
-- **`no-new-privileges:true`** on both services.
+- **No root:** `listmonk-app` and `listmonk-install` run as `APP_UID:APP_GID` (1000:1000) with `cap_drop: ALL`; `smtp-guard` as the image's `postgres` user (70) with `cap_drop: ALL`. Measured on the lab host: setup, login, API, subscription with the opt-in mail, campaign test send, a media upload (final audit FA-06). An existing installation needs `sudo chown -R 1000:1000 volumes/uploads` once before the upgrade.
+- **`no-new-privileges:true`** on every service.
 - **Postgres on `app-internal` (`internal: true`)** — not reachable from outside.
 - **SMTP credentials** live in the admin UI (Settings → SMTP) after setup — not in `.env`. They're stored encrypted in the DB.
 

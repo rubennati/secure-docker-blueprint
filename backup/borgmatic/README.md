@@ -23,7 +23,7 @@ Host-installed backup for the stacks in this blueprint. Borg does the deduplicat
 ## Requirements
 
 - **Borgmatic ≥ 2.0.8** — earlier versions have no `container:` option for databases, and the v2 configuration format differs from v1. Check with `borgmatic --version`.
-- **A client for every database engine you back up, on the host.** `mariadb-client`, `postgresql-client`, `mongodb-database-tools` as applicable. See [Databases](#databases). The dump command runs on the host, so a missing client fails the backup of that engine.
+- **A client for every database engine you back up, on the host.** `mariadb-client`, `postgresql-client`, `mongodb-database-tools`, `sqlite3` as applicable. See [Databases](#databases). The dump command runs on the host, so a missing client fails the backup of that engine. For PostgreSQL that is, for now, the client of each server major version you back up, not the distribution's newest — see [PostgreSQL: the client's major version is the server's](#postgresql-the-clients-major-version-is-the-servers); which client the blueprint settles on is an open decision (FA-03).
 - **`python3-llfuse`**, if you want to browse an archive rather than extract from it. `borg mount` fails without it; `list` and `extract` do not need it.
 - An SSH-reachable target. Any provider offering SSH/SFTP storage works; so does another machine you control.
 - Root on the Docker host.
@@ -256,6 +256,97 @@ TLS/SSL error: SSL is required, but the server does not support it
 ```
 
 For a connection from the host to a container on a local bridge, `tls: false` on the database entry is the proportionate answer — the traffic never reaches a network. Where the database is genuinely remote, configure TLS on the server instead.
+
+### PostgreSQL: the client's major version is the server's
+
+> **Interim, decision open.** Which PostgreSQL client dumps and restores a stack's
+> database is the open finding FA-03 of the final audit. The decision paper,
+> [`docs/research/postgres-dump-client-decision.md`](../../docs/research/postgres-dump-client-decision.md),
+> compares this host client (option A) with a separate dump container (B) and
+> `docker exec` into the database container (C), and recommends C; nothing of it is
+> implemented. Until it is decided, the matching host client below is the documented
+> and measured way, and the 26 stack READMEs are unchanged.
+
+borgmatic runs three PostgreSQL programs on the host: `pg_dump` for the backup,
+`pg_restore` and `psql` for the restore (`psql` also runs the `ANALYZE` after it).
+Each entry in `postgresql_databases` can name them with the options
+`pg_dump_command`, `pg_restore_command` and `psql_command`, which upstream
+provides to run a specific version. Until the client decision is taken, this
+blueprint names all three in every entry, from the client of the **same major
+version as that database's server**:
+
+```yaml
+postgresql_databases:
+    - name: myapp
+      container: myapp-db
+      # server: postgres 16 (the stack's DB_TAG)
+      pg_dump_command: /usr/lib/postgresql/16/bin/pg_dump
+      pg_restore_command: /usr/lib/postgresql/16/bin/pg_restore
+      psql_command: /usr/lib/postgresql/16/bin/psql
+```
+
+**What was measured.** On Debian 13, whose `postgresql-client` is version 17,
+`apps/paperless-ngx` with `postgres:16.14` (step 8 lab host, 2026-11-02, the
+[rehearsal log](RESTORE.md#rehearsal-log)):
+
+| Client | Backup | Restore into `postgres:16.14` |
+|---|---|---|
+| 17, Debian's, on the `PATH` | ran without error | stopped on `SET transaction_timeout = 0`, a setting server 16 does not know |
+| 16.15, named in the entry | ran without error | `pg_restore --exit-on-error` exited 0; all 74 tables with the live row counts |
+
+**Measured later, with the stack READMEs' entries** (client 17 on the `PATH`, step 8
+lab host): listmonk (server 16) and Immich (server 14) failed the same way, and
+Tymeslot (server 17) passed; with client 16 named in its entry, listmonk's backup
+restored completely ([`docs/labs/ingress/2026-11-01-results.md`](../../docs/labs/ingress/2026-11-01-results.md),
+the decision paper above). **Not measured:** server 15, and client 17 against a
+server 18, which `pg_dump` refuses by its version rule. The same major for client
+and server is the interim rule while FA-03 is open: conservative, and the
+combination that was tested, not a claim that every other pair breaks.
+
+**Choosing the client.** The server's major version is the tag of the stack's
+database image — `DB_TAG` in its `.env`, or the image in its compose file — and
+the running server confirms it:
+
+```bash
+docker exec myapp-db postgres --version
+```
+
+On Debian 13 the PostgreSQL project's repository provides the other majors,
+installed beside Debian's 17; the setup script comes with Debian's
+`postgresql-common`. Each major's programs live in `/usr/lib/postgresql/<major>/bin`,
+while `pg_dump` on the `PATH` stays the newest installed version — which is why
+the entry names the paths instead of relying on it. This is the procedure the
+Paperless rehearsal used:
+
+```bash
+sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh
+sudo apt install postgresql-client-16
+/usr/lib/postgresql/16/bin/pg_dump --version
+```
+
+The blueprint installs nothing on the host (DEC-058); the operator does, once per
+major. On another distribution the package names and paths differ and have not
+been verified here.
+
+**Several majors in one configuration.** Each entry names its own server's
+programs. A host whose stacks run 16 and 17 has both clients installed and two
+sets of paths; a stack with two servers of different majors — `apps/dify` runs
+a 15 and a 16 — needs both clients.
+
+**Backup and restore are one pair.** `borgmatic restore` uses the
+`pg_restore_command` and `psql_command` of the entry the dump came from, also
+when `--container` points it at another container (measured in the Paperless
+rehearsal). A dump is therefore
+restored with the major that wrote it, into a server of that major — the
+throwaway target of a rehearsal runs the same server image
+([RESTORE.md](RESTORE.md#3--a-database-comes-back)). Until that rehearsal has run with
+the same entry, the backup is the hypothesis [RESTORE.md](RESTORE.md) calls it.
+
+**When a server changes major.** Upgrading a stack's PostgreSQL server changes
+the client its entry needs: install the new major's client, change the three
+paths, run a backup and rehearse its restore before relying on it. Archives
+written before the change hold a dump of the old major; restoring one of those
+is a rehearsal of its own and has not been measured here.
 
 ### Before you need them
 

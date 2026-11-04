@@ -177,10 +177,10 @@
     "name": "Collabora Online",
     "path": "apps/collabora",
     "role": "Office document editing server based on LibreOffice",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://github.com/CollaboraOnline/online",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-11-02",
+    "verified_version": "26.04.5.2.1",
     "version": "26.04.5.2.1"
   },
   "apps/dashy": {
@@ -378,10 +378,10 @@
     "name": "Easy!Appointments",
     "path": "apps/easyappointments",
     "role": "Appointment booking in PHP, established since 2013",
-    "state": "scaffolded",
+    "state": "ops-proven",
     "upstream": "https://easyappointments.org/",
-    "verified": "2026-05-03",
-    "verified_version": "1.5.x",
+    "verified": "2026-11-03",
+    "verified_version": "1.6.1",
     "version": "1.6.1"
   },
   "apps/euro-office": {
@@ -398,10 +398,10 @@
     "name": "Euro-Office",
     "path": "apps/euro-office",
     "role": "EU-governed fork of OnlyOffice, a drop-in document editing server",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://github.com/euro-office/DocumentServer",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-11-02",
+    "verified_version": "v9.3.4-hotfix.1",
     "version": "9.3.4-hotfix.1"
   },
   "apps/ghost": {
@@ -420,10 +420,10 @@
     "name": "Ghost",
     "path": "apps/ghost",
     "role": "Publishing platform for blogs and newsletters, with optional Fediverse publishing",
-    "state": "scaffolded",
+    "state": "ops-proven",
     "upstream": "https://hub.docker.com/_/ghost",
-    "verified": "2026-07-26",
-    "verified_version": "v6.54.0-alpine",
+    "verified": "2026-11-03",
+    "verified_version": "6.63.0-alpine",
     "version": "6.63.0-alpine"
   },
   "apps/greenmail": {
@@ -440,10 +440,10 @@
     "name": "GreenMail",
     "path": "apps/greenmail",
     "role": "SMTP, IMAP and POP3 test server with a mailbox per recipient, for automated tests",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://hub.docker.com/r/greenmail/standalone",
-    "verified": "2026-09-22",
-    "verified_version": "2.1.13",
+    "verified": "2026-11-03",
+    "verified_version": "2.1.15",
     "version": "2.1.15"
   },
   "apps/heimdall": {
@@ -460,10 +460,10 @@
     "name": "Heimdall",
     "path": "apps/heimdall",
     "role": "Application launcher with widgets",
-    "state": "scaffolded",
+    "state": "ops-proven",
     "upstream": "https://docs.linuxserver.io/images/docker-heimdall/",
-    "verified": "2026-05-02",
-    "verified_version": "v2.6.3",
+    "verified": "2026-11-02",
+    "verified_version": "2.8.3",
     "version": "2.8.3"
   },
   "apps/hemmelig": {
@@ -582,7 +582,7 @@
     "role": "HTTP request and response service for testing clients: echoes requests, returns chosen status codes, redirects, delays and payloads",
     "state": "baseline-aligned",
     "upstream": "https://github.com/psf/httpbin/pkgs/container/httpbin",
-    "verified": "2026-09-22",
+    "verified": "2026-11-02",
     "verified_version": "0.10.4",
     "version": "0.10.4"
   },
@@ -616,10 +616,10 @@
     "name": "Immich",
     "path": "apps/immich",
     "role": "Photo and video backup with mobile apps and machine-learning search",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://immich.app/",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-11-03",
+    "verified_version": "v3.2.0",
     "version": "3.2.0"
   },
   "apps/it-tools": {
@@ -638,7 +638,7 @@
     "role": "Collection of small utilities: converters, generators and formatters",
     "state": "baseline-aligned",
     "upstream": "https://github.com/CorentinTh/it-tools/pkgs/container/it-tools",
-    "verified": "2026-05-02",
+    "verified": "2026-11-02",
     "verified_version": "v2024.10.22-7ca5933",
     "version": "2024.10.22-7ca5933"
   },
@@ -731,7 +731,7 @@
     "role": "SMTP sink that catches every outgoing message and shows it, delivering nothing",
     "state": "baseline-aligned",
     "upstream": "https://hub.docker.com/r/axllent/mailpit",
-    "verified": "2026-09-07",
+    "verified": "2026-11-02",
     "verified_version": "v1.31.1",
     "version": "1.31.1"
   },
@@ -791,10 +791,10 @@
     "name": "Monica",
     "path": "apps/monicahq",
     "role": "Personal CRM for the people in your life",
-    "state": "scaffolded",
+    "state": "ops-proven",
     "upstream": "https://www.monicahq.com/",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-11-03",
+    "verified_version": "4.1.2-apache",
     "version": "4.1.2-apache"
   },
   "apps/n8n": {
@@ -828,10 +828,10 @@
     "name": "n8n",
     "path": "apps/n8n",
     "role": "Visual workflow automation",
-    "state": "scaffolded",
+    "state": "ops-proven",
     "upstream": "https://n8n.io/",
-    "verified": "2026-05-02",
-    "verified_version": "v2.19.2",
+    "verified": "2026-11-03",
+    "verified_version": "2.41.7",
     "version": "bcef56dd4401…"
   },
   "apps/nextcloud": {
@@ -853,7 +853,7 @@
     "role": "File sync and share with calendars, contacts and collaborative editing",
     "state": "ops-proven",
     "upstream": "https://github.com/nextcloud/docker",
-    "verified": "2026-09-13",
+    "verified": "2026-11-02",
     "verified_version": "34.0.4-fpm-alpine",
     "version": "34.0.4-fpm-alpine"
   },
@@ -956,10 +956,10 @@
     "name": "OnlyOffice Document Server",
     "path": "apps/onlyoffice",
     "role": "Document editing server for Nextcloud, Seafile and similar",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://hub.docker.com/r/onlyoffice/documentserver",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-11-02",
+    "verified_version": "9.4.0",
     "version": "9.4.0"
   },
   "apps/open-webui": {
@@ -1080,10 +1080,10 @@
     "name": "Paperless-ngx",
     "path": "apps/paperless-ngx",
     "role": "Document management with OCR, tagging and full-text search",
-    "state": "scaffolded",
+    "state": "ops-proven",
     "upstream": "https://github.com/paperless-ngx/paperless-ngx/pkgs/container/paperless-ngx",
-    "verified": "2026-05-03",
-    "verified_version": "v2.20.13",
+    "verified": "2026-11-02",
+    "verified_version": "3.1.3",
     "version": "3.1.3"
   },
   "apps/photoprism": {
@@ -1201,10 +1201,10 @@
     "name": "Seafile",
     "path": "apps/seafile",
     "role": "File sync and share, community edition",
-    "state": "scaffolded",
+    "state": "ops-proven",
     "upstream": "https://manual.seafile.com/13.0/docker/",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-11-02",
+    "verified_version": "13.0.20",
     "version": "13.0.20"
   },
   "apps/seafile-pro": {
@@ -1237,10 +1237,10 @@
     "name": "Seafile Pro",
     "path": "apps/seafile-pro",
     "role": "File sync and share, professional edition",
-    "state": "scaffolded",
+    "state": "ops-proven",
     "upstream": "https://manual.seafile.com/13.0/docker/pro/deploy_seafile_pro_with_docker/",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-11-02",
+    "verified_version": "13.0.21",
     "version": "13.0.21"
   },
   "apps/shlink": {
@@ -1344,7 +1344,7 @@
     "name": "Tymeslot",
     "path": "apps/tymeslot",
     "role": "Meeting scheduling with booking pages, calendar sync and video links",
-    "state": "baseline-aligned",
+    "state": "ops-proven",
     "upstream": "https://hub.docker.com/r/luka1thb/tymeslot",
     "verified": "2026-09-07",
     "verified_version": "v1.15.1",
@@ -1388,10 +1388,10 @@
     "name": "Vaultwarden",
     "path": "apps/vaultwarden",
     "role": "Password manager: logins, TOTP and shared collections",
-    "state": "scaffolded",
+    "state": "ops-proven",
     "upstream": "https://github.com/dani-garcia/vaultwarden",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-11-02",
+    "verified_version": "1.37.4",
     "version": "1.37.4"
   },
   "apps/velociraptor": {
@@ -1450,7 +1450,7 @@
     "role": "Tiny service that shows what the proxy forwards, to check routing and TLS",
     "state": "baseline-aligned",
     "upstream": "https://hub.docker.com/r/traefik/whoami",
-    "verified": "2026-09-13",
+    "verified": "2026-11-01",
     "verified_version": "v1.12.0",
     "version": "1.12.0"
   },
@@ -1850,10 +1850,10 @@
     "name": "Invoice Ninja",
     "path": "business/invoiceninja",
     "role": "Invoicing, quotes and payments",
-    "state": "scaffolded",
+    "state": "ops-proven",
     "upstream": "https://github.com/invoiceninja/dockerfiles",
-    "verified": "2026-09-13",
-    "verified_version": "5.13.40",
+    "verified": "2026-11-03",
+    "verified_version": "5.13.52",
     "version": "5.13.52"
   },
   "business/kimai": {
@@ -1884,10 +1884,10 @@
     "name": "Kimai",
     "path": "business/kimai",
     "role": "Time tracking with reports and invoicing hooks",
-    "state": "scaffolded",
+    "state": "ops-proven",
     "upstream": "https://www.kimai.org",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-11-03",
+    "verified_version": "2.66.0",
     "version": "2.66.0"
   },
   "business/leantime": {
@@ -1938,17 +1938,17 @@
       "infrastructure": [
         "PostgreSQL"
       ],
-      "init_services": 0,
+      "init_services": 2,
       "services": 2,
-      "summary": "2 services · PostgreSQL"
+      "summary": "2 services · 2 one-shot · PostgreSQL"
     },
     "name": "Listmonk",
     "path": "business/listmonk",
     "role": "Newsletter and mailing-list manager",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://listmonk.app",
-    "verified": null,
-    "verified_version": null,
+    "verified": "2026-11-03",
+    "verified_version": "v6.2.0",
     "version": "6.2.0"
   },
   "business/matomo": {
@@ -2310,10 +2310,10 @@
     "name": "Authentik",
     "path": "core/authentik",
     "role": "Identity provider with forward-auth, OAuth2, OpenID Connect and SAML",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://github.com/goauthentik/authentik/pkgs/container/server",
-    "verified": "2026-07-26",
-    "verified_version": "v2026.5.6",
+    "verified": "2026-11-02",
+    "verified_version": "v2026.5.7",
     "version": "2026.5.7"
   },
   "core/crowdsec": {
@@ -2330,9 +2330,9 @@
     "name": "CrowdSec",
     "path": "core/crowdsec",
     "role": "Threat detection from logs, with a choice of where decisions are enforced",
-    "state": "baseline-aligned",
+    "state": "ops-proven",
     "upstream": "https://github.com/crowdsecurity/crowdsec",
-    "verified": "2026-07-29",
+    "verified": "2026-11-01",
     "verified_version": "v1.7.8",
     "version": "1.7.8"
   },
@@ -2736,11 +2736,11 @@
     "name": "Traefik Reverse Proxy",
     "path": "core/traefik",
     "role": "Reverse proxy: TLS, access policies and security headers in front of every other service",
-    "state": "scaffolded",
+    "state": "baseline-aligned",
     "upstream": "https://hub.docker.com/_/traefik",
-    "verified": "2026-09-13",
-    "verified_version": "v3.7.13, socket-proxy v0.5.0",
-    "version": "3.7"
+    "verified": "2026-11-01",
+    "verified_version": "v3.7.17, socket-proxy v0.5.0",
+    "version": "3.7.17"
   },
   "core/warpgate": {
     "decision_facts": {},

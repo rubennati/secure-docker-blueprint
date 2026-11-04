@@ -59,15 +59,16 @@ restarting.
   (`mode: strict`); port 4001 requires the basic-auth login. A request without
   credentials gets `401`.
 - **Metrics stay on loopback.** Upstream's default binds the stats listener to all
-  interfaces, which exposes `/metrics` to every container on `proxy-public`. The
+  interfaces, which exposes `/metrics` to every container on its proxy network. The
   template sets `config.statsAddr: 127.0.0.1:15020`. The readiness port (15021,
   `/healthz/ready`) remains reachable from peers and returns only `ready`.
 - **Hardening.** `read_only`, `cap_drop: ALL`, `no-new-privileges`, uid 65532, no
   published ports. The only writable path is `volumes/data`.
 - **No healthcheck.** The image is distroless: no shell, no `wget`. The compose file
   carries the marker comment; probe `:15021/healthz/ready` from outside.
-- **Egress.** The container sits on `proxy-public`, so it can reach its providers
-  and every other container on that network. Restrict the backend list in the
+- **Egress.** The container sits on its proxy network (`TRAEFIK_NETWORK`), so it can
+  reach its providers and every other container on that network; on its own edge
+  network a backend such as Ollama has to join that network or share another. Restrict the backend list in the
   config to what you intend to route to.
 
 ## Hosted providers

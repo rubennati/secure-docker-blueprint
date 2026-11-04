@@ -8,7 +8,7 @@ Single service:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `lscr.io/linuxserver/heimdall:2.8.3` | LinuxServer.io build of Heimdall on Apache + PHP |
+| `heimdall-app` | `lscr.io/linuxserver/heimdall:2.8.3` | LinuxServer.io build of Heimdall on Apache + PHP |
 
 Data (SQLite DB, uploaded icons, config) lives in `./config/`, managed by Heimdall's web UI.
 
@@ -38,7 +38,7 @@ sudo chown -R 1000:1000 config
 docker compose up -d
 
 # 4. First boot takes ~30s while the image builds the SQLite DB
-docker compose logs app --follow
+docker compose logs heimdall-app --follow
 
 # 5. Open UI — the basicAuth gate asks first; Heimdall itself has no login initially
 # https://<APP_TRAEFIK_HOST>

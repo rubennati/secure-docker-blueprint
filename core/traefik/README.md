@@ -48,6 +48,11 @@ bash ops/scripts/validate.sh --strict   # published addresses, against the runni
 # (only from Tailscale/VPN by default)
 ```
 
+With Tailscale on this host, run `sudo tailscale set --snat-subnet-routes=false`
+unless the host routes subnets for the tailnet: by default `tailscaled` masquerades
+the requests it forwards to Docker, every VPN client reaches Traefik as the Docker
+gateway, and `access-vpn` answers 403 — [host-firewall.md](docs/host-firewall.md#reaching-the-routers-over-tailscale-on-the-host).
+
 ## Structure
 
 ```text
@@ -161,13 +166,14 @@ its marker in `config/exposure-verified` for a public binding
 
 IPv6 only concerns ingress. The public network still carries IPv4 behind Traefik, and what a host without IPv4 egress needs for its outbound connections is the prerequisite list in the ingress audit (§3.4); that shape is not verified on a host yet.
 
-`validate.sh` refuses `address:port` in a port variable and prints the lines that keep the binding — `TRAEFIK_HTTPS_PORT=0.0.0.0:443` becomes `TRAEFIK_HTTPS_PORT=443` and `TRAEFIK_BIND_V4=0.0.0.0`. It then compares the published address families with the network, the Docker daemon and the running container:
+`validate.sh` refuses `address:port` in a port variable and prints the lines that keep the binding — `TRAEFIK_HTTPS_PORT=0.0.0.0:443` becomes `TRAEFIK_HTTPS_PORT=443` and `TRAEFIK_BIND_V4=0.0.0.0`. It then compares the published address families with the network, the Docker daemon and the running container, and the static configuration the container started with — `config/traefik.yml` is read once, at the start — with the rendered file:
 
 | Result | Meaning | What to do |
 |---|---|---|
 | `ERROR` | IPv6 published while `proxy-public` has none; the overlay while the daemon keeps `docker-proxy` (`userland-proxy` not `false`), has `ip6tables` off or cannot be read; the overlay while the existing network is IPv4-only | correct `.env`, the daemon or the network — [`docs/ipv6-dual-stack.md`](docs/ipv6-dual-stack.md) |
 | `PENDING` | the running container is published differently from the configuration, or `docker-proxy` relays one of its IPv6 ports | `docker compose up -d` recreates Traefik |
-| `NOT VERIFIED` | a check could not run — no Docker CLI, Docker refused an inspect — or the running container was created from other compose files than the ones checked | run where Docker answers, with the deployment's compose files |
+| `PENDING` | `config/traefik.yml` differs from the file the running container started with, or was changed after its start — the entrypoint bouncer, a timeout, the trusted ranges | `docker compose up -d --force-recreate traefik`; a plain `up -d` does not recreate it for a changed file |
+| `NOT VERIFIED` | a check could not run — no Docker CLI, Docker refused an inspect or an exec, Traefik is not running — or the running container was created from other compose files than the ones checked | run where Docker answers, with the deployment's compose files |
 
 With no `ERROR` but something pending or not verified, `validate.sh` prints `VALID, SECURITY NOT CONFIRMED` and exits 0, so it does not block the update that resolves it. After `docker compose up -d`, confirm the deployment:
 
@@ -202,8 +208,12 @@ nothing (a breaking change; [`CHANGELOG.md`](../../CHANGELOG.md) 0.9.5).
 after.
 
 ```yaml
-middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}
+middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}
 ```
+
+The headers position stands first, so that a refusal by the access or limit
+position carries the HSTS base as well; the numbers below name the positions
+and are not their order ([`docs/standards/traefik-security.md`](../../docs/standards/traefik-security.md)).
 
 | Position | Variable | Values | Decided by |
 |---|---|---|---|
@@ -468,7 +478,7 @@ CrowdSec detects threats (brute force, CVE probes, crawling), the bouncer enforc
 |---------|-------------|
 | **IP blocking** | Bans IPs flagged by CrowdSec scenarios (probing, brute force, sensitive files) |
 | **Community blocklist** | Shared threat intelligence from the CrowdSec network |
-| **AppSec / WAF** | Inspects request bodies for SQL injection, XSS, path traversal |
+| **AppSec / WAF** | Opt-in (`CROWDSEC_APPSEC_ENABLED`): virtual patches for known exploits and a small generic set; no Core Rule Set, so injection probes pass ([`appsec.md`](../crowdsec/docs/appsec.md)) |
 | **Stream mode** | Polls CrowdSec every 60s, caches decisions locally (no per-request latency) |
 
 ### How to enable
@@ -644,7 +654,7 @@ docker exec crowdsec cscli decisions delete --ip <your-address>
 |---------|-------|
 | Plugin not loading | `docker exec traefik-core cat /var/log/traefik/traefik.log` — look for plugin errors (Traefik logs to a file, not stdout). Is `CROWDSEC_BOUNCER_ENABLED=true` in `.env`, was `render.sh` run since, and was Traefik recreated afterwards? `grep -n experimental config/traefik.yml` shows whether the block was rendered |
 | 403 for legitimate IPs | `docker exec crowdsec cscli decisions list` — check if the IP is banned. Remove with `cscli decisions delete --ip X.X.X.X` |
-| WAF blocking valid requests | Set `crowdsecAppsecEnabled: false` temporarily. Check CrowdSec logs for false positives |
+| WAF blocking valid requests | Set `CROWDSEC_APPSEC_ENABLED=false` in `.env`, run `render.sh` and recreate Traefik (`--force-recreate`). Check CrowdSec logs for false positives |
 | Bouncer not connecting | `docker exec crowdsec cscli bouncers list` — check last heartbeat. Verify both containers are on the `crowdsec-security` network |
 | High latency | Verify `crowdsecMode: stream` (not `live`). Stream mode has no per-request overhead |
 
@@ -713,7 +723,21 @@ a measurement, not settled here (D2 in the core audit).
   level").
 - Origin records: `A` only, or `proxy-public` dual-stack — next paragraph.
 - Certificates: DNS-01 or HTTP-01. TLS-ALPN-01 cannot work behind the proxy
-  (above, Path C).
+  (above, Path C). DNS-01 sets a TXT record and never contacts the host, so a
+  proxied record does not hinder it: on the step 8 lab host a router with
+  `tls.certresolver=cloudflare-dns` for a proxied name had its certificate 20 s
+  after it appeared. Every name Cloudflare forwards needs a
+  certificate here — the TLS options set `sniStrict`, so a name the stored
+  certificates do not cover fails the handshake and Cloudflare answers **525**
+  (measured: a proxied name beside a wildcard for another name). A valid
+  certificate for the exact name is what *Full (strict)* checks.
+- Edge certificate: Cloudflare's free Universal certificate covers the zone and
+  one level below it (`example.com`, `*.example.com`), so a proxied name can sit
+  one level deep. A proxied wildcard one level further (`*.lab.example.com`)
+  fails at the edge before the origin is asked — measured, a TLS handshake
+  failure for such a name — unless the zone has a certificate for that level
+  (Cloudflare's Advanced Certificate Manager). The origin side is no obstacle:
+  DNS-01 issues such a wildcard.
 
 **IPv6 between Cloudflare and the origin.** Cloudflare connects to the origin
 over IPv6 when only an `AAAA` record exists, and possibly when both exist —
@@ -721,8 +745,11 @@ Cloudflare documents a preference for IPv4 there, not a guarantee. On an
 IPv4-only `proxy-public` Traefik is published on IPv4 only ("IPv4-only vs.
 Dual-Stack Networking" above), and such a connection is refused. So in
 `cloudflare` mode one of two must hold: `proxy-public` is dual-stack (the
-overlay above), or the origin has `A` records only. Neither shape is verified
-with Cloudflare yet.
+overlay above), or the origin has `A` records only. Measured on the step 8 lab
+host in `none` mode, origin with `A` and `AAAA`, `proxy-public` dual-stack: for
+clients over IPv4 and over IPv6 Cloudflare connected to the origin over IPv4
+(`X-Real-Ip` an edge IPv4 address, the client in `CF-Connecting-IP`). An origin
+with `AAAA` only is not verified.
 
 **Protect the origin.** Without this a client that connects to the host
 directly bypasses everything Cloudflare does — the edge rule, Cloudflare's own
@@ -768,7 +795,9 @@ VPN and LAN clients arrive on other interfaces and are not touched. A LAN that
 shares the public interface needs its ranges admitted in the same chain,
 before the drop. For boot, an `include` of this file from `/etc/nftables.conf`
 is enough — the flush there runs before Docker starts; on a running host never
-`systemctl restart nftables`, reload this file. After a change to
+`systemctl restart` or `stop` `nftables` without the drop-in
+`ops/systemd/nftables-no-flush.conf` (Debian's stop action flushes every table, also on
+a package upgrade — measured 2026-11-04, `docs/host-firewall.md`); reload this file. After a change to
 `ops/cloudflare-ips.txt`: render, reinstall the define file, `nft -f` this one.
 `destroy` needs nftables 1.0.8 or later, as the CrowdSec chains do. The table
 parses and loads (checked with `nft -c` and `nft -f` in a container during the
@@ -837,7 +866,10 @@ render again.
 1. The address at every hop through Cloudflare, IPv4 and IPv6: `whoami` behind
    `access-public`, the access log's `ClientHost` (last element), the bouncer's
    compared address (a manual decision answered `403`), Vaultwarden's lockout
-   address.
+   address. In `none` mode measured on the step 8 lab host: `whoami` behind
+   `access-public` through Cloudflare over IPv4 and IPv6 answered 200 with
+   `X-Real-Ip` the edge and `CF-Connecting-IP` the client; the `cloudflare` mode
+   is not.
 2. A closed route refusing a proxied request over IPv4 and over IPv6, with
    `proxy-public` dual-stack and with it IPv4-only.
 3. Forged `CF-Connecting-IP` and `X-Forwarded-For` from a direct client in both
@@ -983,6 +1015,13 @@ the lines `scripts/host-files.sh install-commands core/traefik` prints, then
 edit `/etc/traefik-watchdog.env` and `sudo systemctl enable --now
 traefik-watchdog.timer`. They are optional in the manifest, so a host without
 the watchdog reports them as `not installed` and nothing else.
+
+Without it a hung Traefik stays hung. Measured on the step 8 lab host: with the
+process frozen for 75 s, Docker reported the container `unhealthy` after 42 s and
+did nothing further; every router was unanswered until the process resumed. A crash
+is different — the restart policy brought a killed process back within 8 s — and so
+is a `docker kill` or `docker stop`, which Docker counts as a manual stop and does
+not restart.
 
 ## Backup
 

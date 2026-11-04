@@ -9,9 +9,12 @@ Every stack the repository ships is listed here, grouped by what you want done r
 than by the directory it sits in. Several groups hold more than one tool for the same
 job on purpose, and the order inside a group is alphabetical, not a ranking.
 
-Each entry states what has been checked on a host, or that nothing has: a stack
-listed here has been written and validated, and the second line says how far past
-that it has gone. A guide, where one exists, is in the sidebar under
+Each entry carries its lifecycle status and the last host run. *Scaffolded* means
+written and validated in CI; *verified* means run and checked on a host;
+*baseline-aligned* means it also meets the security baseline; *ops-proven* means a
+backup of it has been restored. A host run is evidence about the version it ran: when
+the pin has moved since, the entry names the version that ran and says the current
+pin is not checked. A guide, where one exists, is in the sidebar under
 [Infrastructure](/infrastructure/) or [Applications](/applications/).
 
 <Catalogue />

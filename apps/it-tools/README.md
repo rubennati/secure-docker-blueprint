@@ -8,7 +8,7 @@ Single service:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `ghcr.io/corentinth/it-tools` | Static SPA served by Nginx on port 80 |
+| `it-tools-app` | `ghcr.io/corentinth/it-tools` | Static SPA served by Nginx on port 80 |
 
 Completely stateless. Can be torn down and recreated without data loss.
 

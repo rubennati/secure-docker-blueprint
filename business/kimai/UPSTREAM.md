@@ -13,7 +13,7 @@
 - **Domain:** Business operations
 - **Role:** Time tracking with reports and invoicing hooks
 - **Based on version:** `2.66.0` (see Version / tag notes — the `apache-` prefix is gone)
-- **Last checked:** 2026-05-03
+- **Last verified:** 2026-11-03 (2.66.0) — step 8 lab host behind Traefik 3.7.17 on its edge network: login, customer, project, activity and a timesheet through the API, a `ROLE_USER` refused the admin's data, and the README's borgmatic entry restored into a throwaway instance (docs/labs/ingress/2026-11-01-results.md). Earlier: 2026-05-03 (Last checked)
 
 ## What we use
 

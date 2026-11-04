@@ -12,7 +12,7 @@ network (CLI / machine identity). An optional, central alternative to per-server
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `infisical/infisical:v0.165.10` | Backend + web UI + API (port 8080) |
+| `infisical-app` | `infisical/infisical:v0.165.10` | Backend + web UI + API (port 8080) |
 | `db` | `postgres:16-alpine` | Encrypted secret store, users, projects |
 | `redis` | `redis:7.4-alpine` | Cache + job queue |
 
@@ -32,7 +32,7 @@ openssl rand -base64 32 | tr -d '\n' > .secrets/auth_secret.txt
 touch .secrets/smtp_password.txt                     # optional
 
 docker compose up -d
-docker compose logs app --follow    # watch for migrations + server start
+docker compose logs infisical-app --follow    # watch for migrations + server start
 
 # https://<APP_TRAEFIK_HOST>  (over VPN) — create the first (admin) account
 ```

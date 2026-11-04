@@ -53,6 +53,7 @@ import unittest
 from pathlib import Path
 
 from test_traefik_dashboard_cert import BASE_ENV, TRAEFIK
+import no_daemon
 
 CHECKER = TRAEFIK / "ops" / "scripts" / "check-published-family.py"
 
@@ -597,7 +598,7 @@ class ValidateOutcome(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
 
     def validate(self, *args):
-        return subprocess.run(["bash", str(self.root / "ops/scripts/validate.sh"), *args], capture_output=True, text=True)
+        return subprocess.run(["bash", str(self.root / "ops/scripts/validate.sh"), *args], capture_output=True, text=True, env=no_daemon.env())
 
     def test_open_items_exit_0_without_a_plain_ok(self):
         # The copy has no docker-compose.yml, so the checks are NOT VERIFIED.
@@ -637,6 +638,58 @@ class ValidateOutcome(unittest.TestCase):
         r = self.validate("--fast")
         self.assertEqual(r.returncode, 1, r.stdout)
         self.assertIn("unknown argument", r.stdout)
+
+
+class ValidateBeforeRender(unittest.TestCase):
+    """The documented order is validate, render, validate (README, step 8 plan P2).
+    On a fresh checkout COMPOSE_FILE names files render.sh has not written yet:
+    the published-address checks are open, not failed and not passed."""
+
+    def setUp(self):
+        tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        self.root = tmp / "core" / "traefik"
+        shutil.copytree(TRAEFIK / "ops", self.root / "ops")
+        for name in ("docker-compose.yml", "network-dual-stack.yml"):
+            shutil.copy(TRAEFIK / name, self.root / name)
+        (tmp / "scripts" / "ci").mkdir(parents=True)
+        shutil.copy(TRAEFIK.parents[1] / "scripts" / "ci" / "check-crowdsec-config.py",
+                    tmp / "scripts" / "ci" / "check-crowdsec-config.py")
+        env = dict(BASE_ENV, ACME_WILDCARD_DOMAIN="example.com", TRAEFIK_BIND_V6="[::]",
+                   PUBLIC_NETWORK_SUBNET_V4="172.30.0.0/16", PUBLIC_NETWORK_SUBNET_V6="fd3e:8647:15b3::/64",
+                   COMPOSE_FILE="docker-compose.yml:network-dual-stack.yml:config/published-ports.yml:config/edge-networks.yml")
+        (self.root / ".env").write_text("".join(f'{k}="{v}"\n' for k, v in env.items()), encoding="utf-8")
+
+    def run_script(self, name, *args):
+        return subprocess.run(["bash", str(self.root / "ops/scripts" / name), *args], capture_output=True, text=True)
+
+    def test_fresh_checkout_is_open_not_failed(self):
+        r = self.run_script("validate.sh")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("NOT VERIFIED: not rendered yet (config/published-ports.yml config/edge-networks.yml)", r.stdout)
+        self.assertIn("SECURITY NOT CONFIRMED", r.stdout)
+        self.assertNotIn("compose file not found", r.stdout + r.stderr)
+
+    def test_strict_fails_before_render(self):
+        r = self.run_script("validate.sh", "--strict")
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn("not rendered yet", r.stdout)
+
+    def test_missing_file_outside_config_stays_an_error(self):
+        (self.root / "network-dual-stack.yml").unlink()
+        r = self.run_script("validate.sh")
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn("compose file not found", r.stderr)
+        self.assertNotIn("not rendered yet", r.stdout)
+
+    def test_missing_rendered_file_after_a_render_stays_an_error(self):
+        r = self.run_script("render.sh")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        (self.root / "config" / "published-ports.yml").unlink()
+        r = self.run_script("validate.sh")
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertNotIn("not rendered yet", r.stdout)
+        self.assertIn("compose file not found", r.stderr)
 
 
 @unittest.skipUnless(shutil.which("docker"), "needs the docker CLI for docker compose config")

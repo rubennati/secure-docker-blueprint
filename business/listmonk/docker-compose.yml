@@ -44,6 +44,95 @@ services:
       start_period: 15s
 
   # --------------------------------------------------------
+  # INSTALL (one-shot): schema on first start, migrations after an upgrade
+  # --------------------------------------------------------
+  listmonk-install:
+    image: listmonk/listmonk:${APP_TAG}
+    container_name: ${COMPOSE_PROJECT_NAME}-install
+    restart: "no"
+    # healthcheck: none — a one-shot; the next service waits for its exit code
+    depends_on:
+      db:
+        condition: service_healthy
+    # On a set-up database both steps are no-ops.
+    command: ["sh", "-c", "./listmonk --install --idempotent --yes --config '' && ./listmonk --upgrade --yes --config ''"]
+    # The image's entrypoint only drops privileges through PUID, and then keeps
+    # a root shell as PID 1; starting as an unprivileged user skips both.
+    user: "${APP_UID:-1000}:${APP_GID:-1000}"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    environment:
+      TZ: ${TZ}
+      # --install prints the address and fails without it
+      LISTMONK_app__address: "0.0.0.0:9000"
+      LISTMONK_app__root_url: "https://${APP_TRAEFIK_HOST}"
+      LISTMONK_db__host: db
+      LISTMONK_db__port: "5432"
+      LISTMONK_db__user: ${DB_USER}
+      LISTMONK_db__password: ${DB_PWD_INLINE}
+      LISTMONK_db__database: ${DB_NAME}
+      LISTMONK_db__ssl_mode: disable
+    networks:
+      - app-internal
+    memswap_limit: 256M          # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          pids: 50
+
+  # --------------------------------------------------------
+  # SMTP PLACEHOLDER GUARD (one-shot)
+  # --------------------------------------------------------
+  # The install seeds the SMTP server `smtp.yoursite.com` — a registered domain
+  # that resolves to a third party. Until an operator sets a real server, an
+  # opt-in mail (the subscriber's address) or a notification went there on
+  # port 25 (measured on the step 8 lab host; final audit FA-02). This step
+  # replaces exactly that placeholder with `smtp.invalid` (RFC 2606: never
+  # resolves) before the application loads its settings; a server the operator
+  # configured is never touched, so it is a no-op on every later start.
+  smtp-guard:
+    image: postgres:${DB_TAG}
+    container_name: ${COMPOSE_PROJECT_NAME}-smtp-guard
+    restart: "no"
+    # healthcheck: none — a one-shot; the application waits for its exit code
+    depends_on:
+      listmonk-install:
+        condition: service_completed_successfully
+    user: "70:70"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    environment:
+      PGHOST: db
+      PGUSER: ${DB_USER}
+      PGDATABASE: ${DB_NAME}
+      PGPASSWORD: ${DB_PWD_INLINE}
+    command:
+      - psql
+      - -v
+      - ON_ERROR_STOP=1
+      - -Atc
+      - >-
+        UPDATE settings
+        SET value = replace(value::text, '"smtp.yoursite.com"', '"smtp.invalid"')::jsonb, updated_at = now()
+        WHERE key = 'smtp' AND value::text LIKE '%"smtp.yoursite.com"%'
+        RETURNING 'smtp placeholder replaced by smtp.invalid'
+    networks:
+      - app-internal
+    memswap_limit: 64M           # == memory: no swap
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+          pids: 20
+
+  # --------------------------------------------------------
   # LISTMONK (newsletter + mailing list manager)
   # --------------------------------------------------------
   listmonk-app:
@@ -65,9 +154,18 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    # First start: run migrations. On normal start, this becomes a no-op.
-    command: ["sh", "-c", "./listmonk --install --idempotent --yes --config '' && ./listmonk --upgrade --yes --config '' && ./listmonk --config ''"]
+      # schema and migrations, then the SMTP placeholder — both before the
+      # application reads its settings
+      smtp-guard:
+        condition: service_completed_successfully
+    command: ["./listmonk", "--config", ""]
 
+    # A single Go binary: no root, no capability. The upload directory must
+    # belong to APP_UID (README, Setup). Measured on the step 8 lab host
+    # (final audit FA-06): setup, login, API, subscription and an upload.
+    user: "${APP_UID:-1000}:${APP_GID:-1000}"
+    cap_drop:
+      - ALL
     security_opt:
       - no-new-privileges:true
 
@@ -115,7 +213,7 @@ services:
       # NOTE: /subscription/*, /link/*, /campaign/* must be reachable by
       # external subscribers. If you want the admin at /admin VPN-only
       # but public subscription paths, split into two routers — see README.
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,frame-self@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=frame-self@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=9000"
 
 networks:

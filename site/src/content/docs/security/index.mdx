@@ -62,13 +62,14 @@ on, or it is outside the Compose files entirely.
 | Layer | This blueprint | You |
 |---|---|---|
 | Container hardening — no new privileges, dropped capabilities, read-only root where the image allows | applied, and checked before merge | — |
-| Container network isolation — one internal network per application, databases never published | applied | — |
+| Container network isolation — one internal network per application, one edge network per stack, databases never published | applied | list each stack's edge network in the proxy's configuration |
 | Reverse proxy and TLS | configured, certificates renew themselves | a domain and its DNS |
 | Security headers, rate limiting, access policies | available, set per service | choose the policy per service |
 | Credentials as mounted files rather than environment values | applied where the image supports it | keep the files off the machine's backups' blast radius |
 | Intrusion detection — log analysis, community blocklist | shipped, optional | switch on and operate |
 | HTTP blocking at the proxy | shipped, optional | switch on |
-| Host firewall blocking — packets dropped before any port | configuration and procedure documented; the agent is a host package | install and operate it |
+| Host firewall — input path closed except the VPN | ruleset rendered by the proxy stack for its exposure profile; not loaded by the blueprint, not verified on a host yet | install it, with a way back |
+| Host firewall blocking — banned addresses dropped before any port | configuration and procedure documented; the agent is a host package; its blocking rules not yet run on a host | install and operate it |
 | Network firewall, VLAN, upstream segmentation | not covered | provide, if your environment has one |
 | Host patching, SSH hardening, endpoint protection | **not covered at all** | required, and entirely yours |
 | Malware scanning of uploaded files | available in some applications | choose and operate it |
@@ -105,9 +106,11 @@ curl -sI http://<server>:8080
 
 Three ways out, in the order they cost you least:
 
-- **Publish to `127.0.0.1` only** — `"127.0.0.1:8080:8080"`. The port never
-  reaches a network interface. This is what the stacks here do, and it is why
-  the reverse proxy is the only thing that binds publicly.
+- **Publish on a named address only** — `"127.0.0.1:8080:8080"` never reaches a
+  network interface. Web applications here publish nothing and are reached
+  through the reverse proxy; the few stacks whose protocol is not HTTP (UniFi,
+  OpenCanary, the access gateways) publish on an address you set, shipped as
+  `0.0.0.0` — see [firewalls](/security/firewalls/).
 - **Put rules in the `DOCKER-USER` chain** — the documented place for filtering
   that has to run before Docker's own rules.
 - **Have something upstream that does not pass the port at all.** A router or

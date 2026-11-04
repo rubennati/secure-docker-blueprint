@@ -48,9 +48,13 @@ unauthenticated setup form is reachable.
 cp .env.example .env
 # Edit: APP_TRAEFIK_HOST, NC_TRUSTED_PROXIES, TZ, and the SMTP block
 
-# 2. Find the correct NC_TRUSTED_PROXIES value — both families if IPv6 is enabled
-docker network inspect proxy-public \
+# 2. Find the correct NC_TRUSTED_PROXIES value: the network Traefik reaches nginx on —
+#    the stack's TRAEFIK_NETWORK, nextcloud-edge as shipped (it exists once Traefik has
+#    rendered and joined it), proxy-public on the shared network; both families if IPv6
+docker network inspect nextcloud-edge \
   --format '{{range .IPAM.Config}}{{.Subnet}} {{end}}'
+#    Another network's range makes Nextcloud record Traefik as every client: one
+#    brute-force counter for all, and no client address in the log.
 
 # 3. Generate the six secrets
 mkdir -p .secrets
@@ -91,27 +95,57 @@ Switch to `access-public` once the instance is configured and verified.
 
 > **Office servers behind a closed route.** OnlyOffice, Euro-Office and Collabora
 > call Nextcloud back; a closed access policy refuses a call from a container
-> (DEC-076). Point the callback at Nextcloud's address on the Docker network the
-> two stacks share — `proxy-public` today — with the connector's own settings, run
-> as `www-data` after the app is installed (`<nginx>` is `CONTAINER_NAME_NGINX`,
-> `nextcloud-nginx` as shipped; `<office>` the office container's name):
+> (DEC-076). The call goes over a Docker network the two stacks share. On edge
+> networks (DEC-075) they share none, so `office.yml` joins Nextcloud's nginx —
+> and only nginx — to the office stack's edge network: the office server reaches
+> it by container name, and no other stack gains a path to Nextcloud. Nextcloud
+> calls the office server at its public name, as the browser does; the office
+> route is `access-public`. Start the office stack first — Traefik creates its
+> network once `EDGE_NETWORKS` lists it — then in this stack's `.env`:
+>
+> ```env
+> OFFICE_NETWORK=onlyoffice-edge          # the office stack's TRAEFIK_NETWORK
+> COMPOSE_FILE=docker-compose.yml:office.yml
+> ```
+>
+> `docker compose up -d`, then the connector's own settings, run as `www-data`
+> after the app is installed (`<nginx>` is `CONTAINER_NAME_NGINX`,
+> `nextcloud-nginx` as shipped):
 >
 > ```bash
 > # Nextcloud has to accept the internal name as a host it serves
 > docker compose exec -u www-data app php occ config:system:set trusted_domains 2 --value="<nginx>"
-> # OnlyOffice and Euro-Office (the onlyoffice connector): Nextcloud as the document server reaches it,
-> # and the document server as Nextcloud reaches it
+> # OnlyOffice and Euro-Office (the onlyoffice connector): the document server's public
+> # address stays the one Nextcloud and the browser use; the address the document server
+> # fetches from and saves to is nginx's
+> docker compose exec -u www-data app php occ config:app:set onlyoffice DocumentServerUrl --value="https://office.example.com/"
 > docker compose exec -u www-data app php occ config:app:set onlyoffice StorageUrl --value="http://<nginx>/"
-> docker compose exec -u www-data app php occ config:app:set onlyoffice DocumentServerInternalUrl --value="http://<office>/"
-> # Collabora (the richdocuments app): the server Nextcloud calls, the one the browser calls, the callback it hands out
-> docker compose exec -u www-data app php occ config:app:set richdocuments wopi_url --value="http://<office>:9980"
-> docker compose exec -u www-data app php occ config:app:set richdocuments public_wopi_url --value="https://office.example.com"
-> docker compose exec -u www-data app php occ config:app:set richdocuments wopi_callback_url --value="http://<nginx>"
+> # and the document server's JWT secret — without it the connector's check answers
+> # "Invalid token"; the connector reads no secret file (the path is the office stack's)
+> docker compose exec -u www-data app php occ config:app:set onlyoffice jwt_secret --value="$(cat ../onlyoffice/.secrets/jwt_secret.txt)"
+> # (Euro-Office: ../euro-office/.secrets/jwt_secret.txt)
+> # Collabora (the richdocuments app, 11.1.2): the server Nextcloud and the browser call,
+> # and the callback it hands out, both through activate-config — a callback set with
+> # config:app:set is reset to "autodetected" when activate-config runs afterwards
+> docker compose exec -u www-data app php occ richdocuments:activate-config --wopi-url="https://office.example.com" --callback-url="http://<nginx>"
+> # COLLABORA_ALIASGROUP in the Collabora stack admits the callback host as an alias of
+> # Nextcloud's group: https://cloud\.example\.com:443,http://nextcloud-nginx:80
 > ```
 >
-> The route stays closed; the office traffic never passes it. Not verified on a
-> host with this stack yet — the settings are the connectors' own
-> (ONLYOFFICE/onlyoffice-nextcloud README, nextcloud/richdocuments `AppConfig`).
+> The route stays closed; the office traffic never passes it. OnlyOffice refuses
+> requests to private addresses by default (`request-filtering-agent`,
+> `allowPrivateIPAddress: false`) but exempts a URL that arrives inside the signed
+> JWT — which is how the connector hands over the storage and callback URLs — so
+> `ALLOW_PRIVATE_IP_ADDRESS` stays off. A stack still on `proxy-public` needs no
+> file: both stacks set `TRAEFIK_NETWORK=proxy-public` and reach each other there,
+> with the consequence `core/traefik/docs/edge-networks.md` names. An office server
+> on another host reaches a closed instance only by its address in
+> `TRUSTED_RANGES`. **Measured on the step 8 lab host** (`docs/labs/ingress/2026-11-01-results.md`,
+> "Office servers"): with OnlyOffice and Euro-Office, `office.yml` and these settings, DOCX,
+> XLSX and PPTX opened, saved and reopened behind the closed route, without
+> `ALLOW_PRIVATE_IP_ADDRESS`. **Collabora does not work behind the closed route:** the
+> WOPI calls take nginx, but Collabora then fetches a template preset at Nextcloud's
+> public name, the closed route refuses it, and the document does not open — open.
 
 ### Post-install
 
@@ -176,8 +210,13 @@ docker compose ps
 # Nextcloud installed and reachable
 docker compose exec -u www-data app php occ status
 
-# Confirm trusted proxies are set correctly
+# Confirm trusted proxies are set correctly — exactly the subnets of step 2
 docker compose exec -u www-data app php occ config:system:get trusted_proxies
+#    More entries than NC_TRUSTED_PROXIES has: the install wrote the value it started
+#    with into config.php, and the environment replaces that list by position, so an
+#    entry beyond the new list's length stays trusted. Drop the stored list; the
+#    environment value is the one that remains:
+#      docker compose exec -u www-data app php occ config:system:delete trusted_proxies
 
 # Confirm Redis is reachable and the correct policy is active
 docker compose exec redis sh -c \
@@ -291,7 +330,7 @@ The shipped default `access-trusted-vpn` behaves the same way: no closed policy
 admits a Docker network (DEC-076), so these checks pass only once the route is
 `access-public`. Until then they are the policy working, not a defect — nothing
 of the instance's function depends on them; an office server reaches Nextcloud
-by its internal address (above, "Office servers behind a closed route").
+by its internal address (above, "Office servers behind a closed route", `office.yml`).
 
 ## Backup
 

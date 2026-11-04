@@ -88,7 +88,7 @@ migration. Let the application generate it: Laravel expects the `base64:` prefix
 its own generator produces, which `openssl rand` alone does not give you.
 
 ```bash
-docker run --rm invoiceninja/invoiceninja-debian:5.13.26 \
+docker run --rm invoiceninja/invoiceninja-debian:"$(grep -m1 '^APP_TAG=' .env | cut -d= -f2)" \
   php artisan key:generate --show | tr -d '\n' > .secrets/app_key.txt
 chmod 600 .secrets/app_key.txt
 ```
@@ -149,7 +149,7 @@ curl -sI https://your-domain/            # 200 or 302
 - [ ] SMTP configured and tested (send a test invoice)
 - [ ] Backup strategy in place (see UPSTREAM.md)
 - [ ] Upgrade check: verify `APP_TAG` against latest stable release (see UPSTREAM.md)
-- [ ] Consider tightening `TRUSTED_PROXIES` from `*` to the Traefik network CIDR
+- [ ] `TRUSTED_PROXIES` covers the network Traefik reaches nginx on — Docker's default address pools as shipped, the edge network's subnet once you pin it (`.env.example`, "TRUSTED_PROXIES"). The shipped ranges are the value measured on the step 8 lab host, an interim value and not a recommended standard: they trust more containers than Traefik ([`ROADMAP.md`](../../ROADMAP.md), "Trusted proxies narrowed to the Traefik hop")
 
 ## Services
 
@@ -193,7 +193,7 @@ This stack uses **named volumes**, not bind mounts. Their host paths are
 
 ```yaml
 source_directories:
-    - /srv/blueprint
+    - /srv/docker/business/invoiceninja
     - /var/lib/docker/volumes/invoiceninja_app_storage/_data
 ```
 
@@ -206,7 +206,7 @@ mysql_databases:
     - name: ninja
       container: invoiceninja-mysql
       username: ninja
-      password: "{credential file /srv/blueprint/business/invoiceninja/.secrets/db_pwd.txt}"
+      password: "{credential file /srv/docker/business/invoiceninja/.secrets/db_pwd.txt}"
       tls: false
 ```
 
@@ -248,6 +248,21 @@ failed migration against a database with no dump behind it is not recoverable.
 **Restore order:** `.secrets/` and the database first, then storage, then the app.
 
 ## Troubleshooting
+
+### The browser loops on `/`, the API answers
+
+`/` redirects to the same URL again and again: the application does not
+believe Traefik's `X-Forwarded-Proto`, so `REQUIRE_HTTPS` sends every request
+back to `https://`. `TRUSTED_PROXIES` does not cover the subnet Traefik
+reaches nginx from — see the comment in `.env.example`. Measured on the step 8
+lab host with the value naming `proxy-public` while the stack sat on its edge
+network.
+
+### 502 after the app container was recreated
+
+nginx resolves `app` once, when it starts. After `docker compose up -d`
+recreated only the app container, nginx kept the old address and answered
+`502` until `docker compose restart invoiceninja-nginx` (step 8 lab host).
 
 ### PDF and preview rendering times out
 

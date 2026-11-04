@@ -150,7 +150,7 @@ step 1/verification command:
 
 | Engine | Safety-copy / verify command |
 |---|---|
-| PostgreSQL | `pg_dump -U <user> <db>` |
+| PostgreSQL | `pg_dump -U <user> <db>` (inside the container, so the server's own client; borgmatic's restore uses the host client of the same major — `backup/borgmatic/README.md`, "PostgreSQL: the client's major version is the server's"; interim while FA-03 is open) |
 | MariaDB / MySQL | `mariadb-dump -u<user> -p<pass> <db>` (one client covers both engines, per `config.yaml.example`) |
 | SQLite | `sqlite3 <path> .dump` |
 | MongoDB | `mongodump --uri <uri>` |

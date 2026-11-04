@@ -15,7 +15,10 @@ on:
     - cron: '0 5 * * 1'  # Weekly Monday 05:00 UTC
   workflow_dispatch:
 
-permissions: read-all
+# Least privilege: the token reads the repository and nothing else; a job
+# that needs more names it in its own block.
+permissions:
+  contents: read
 
 # A superseded run on the same open PR is cancelled. A push to main/dev or a
 # scheduled/manual run never shares this group with a PR (different ref), so
@@ -44,6 +47,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - id: diff
         run: |
@@ -106,6 +110,8 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Initialise CodeQL
         uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
@@ -128,6 +134,8 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Initialise CodeQL
         uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1

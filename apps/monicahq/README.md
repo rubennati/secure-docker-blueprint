@@ -6,7 +6,7 @@ Monica is a personal CRM — remember everything about your friends, family, and
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `monica:4.1.2-apache` | Laravel app + Apache + PHP |
+| `monica-app` | `monica:4.1.2-apache` | Laravel app + Apache + PHP |
 | `db` | `mariadb:11.4` | Primary store (contacts, relationships, activities, journal) |
 
 ## Try it locally
@@ -47,7 +47,7 @@ mkdir -p volumes/mysql volumes/data
 docker compose up -d
 
 # 7. Wait for first-run migrations (~60 seconds)
-docker compose logs app --follow
+docker compose logs monica-app --follow
 # Watch for: "apache2 -D FOREGROUND"
 
 # 8. Open UI and register the first account (it becomes admin)

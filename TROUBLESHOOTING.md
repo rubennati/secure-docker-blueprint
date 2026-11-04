@@ -181,11 +181,11 @@ sudo chown -R 999:999 volumes/data
    # Check: does the Host() value exactly match the DNS name you're hitting?
    ```
 
-2. **Container not on the correct Docker network** — Traefik can only route to containers on a shared network.
+2. **Container not on the correct Docker network** — Traefik routes only to containers on a network it has joined: the stack's `TRAEFIK_NETWORK` (by default `<project>-edge`), which must be listed in `EDGE_NETWORKS` of `core/traefik` with Traefik recreated since. A stack whose network is not listed is unreachable and Traefik's log says nothing; `bash ops/scripts/validate.sh` in `core/traefik` reports it.
 
    ```bash
    docker inspect <container> --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}} {{end}}'
-   # Must include proxy-public (or whatever TRAEFIK_NETWORK is set to)
+   # Must include the stack's TRAEFIK_NETWORK (<project>-edge, or proxy-public)
    ```
 
 3. **Labels not applied** — happens when `docker compose up -d` used an old compose file or the container wasn't recreated after a label change.
@@ -273,7 +273,9 @@ reported the client's real tailnet address in `X-Real-Ip` for a browser request
 over the tailnet, and the same setup preserved the real client IP over public
 IPv4 and public IPv6. The three daemon flags and the overlay were applied
 together and **not** isolated individually, so which of them is strictly required
-is still open — but the combination is proven.
+is still open. That run predates the per-family bindings and the edge networks;
+the tailnet path has not been run with the current configuration
+([`docs/host-verification-ingress.md`](docs/host-verification-ingress.md), Results).
 
 **Confirm it yourself before blaming the policy:**
 

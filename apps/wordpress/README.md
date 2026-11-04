@@ -35,7 +35,7 @@ docker compose up -d
 # 4. Open https://your-domain.com and run the WordPress installer
 
 # 5. Apply .htaccess hardening (after WordPress installer finishes)
-docker compose exec app bash -c 'cat /config/.htaccess-security >> /var/www/html/.htaccess'
+docker compose exec wordpress-app bash -c 'cat /config/.htaccess-security >> /var/www/html/.htaccess'
 ```
 
 ## Plugin Recommendations
@@ -90,8 +90,8 @@ Every public website should have a `/.well-known/security.txt` file ([RFC 9116](
 Create `volumes/wordpress/.well-known/security.txt` after first start:
 
 ```bash
-docker compose exec app mkdir -p /var/www/html/.well-known
-docker compose exec app tee /var/www/html/.well-known/security.txt > /dev/null << 'EOF'
+docker compose exec wordpress-app mkdir -p /var/www/html/.well-known
+docker compose exec wordpress-app tee /var/www/html/.well-known/security.txt > /dev/null << 'EOF'
 Contact: mailto:security@example.com
 Expires: 2027-04-15T00:00:00.000Z
 Preferred-Languages: en, de
@@ -109,8 +109,8 @@ After the WordPress installer finishes, add these constants. Either via wp-cli o
 
 ```bash
 # Via wp-cli (recommended)
-docker compose exec app wp config set DISALLOW_FILE_EDIT true --raw --allow-root
-docker compose exec app wp config set WP_AUTO_UPDATE_CORE minor --allow-root
+docker compose exec wordpress-app wp config set DISALLOW_FILE_EDIT true --raw --allow-root
+docker compose exec wordpress-app wp config set WP_AUTO_UPDATE_CORE minor --allow-root
 ```
 
 | Constant | Value | What it does |
@@ -153,7 +153,7 @@ A security template is provided in `config/apache/.htaccess-security`. It blocks
 Apply after WordPress installer finishes:
 
 ```bash
-docker compose exec app bash -c 'cat /config/.htaccess-security >> /var/www/html/.htaccess'
+docker compose exec wordpress-app bash -c 'cat /config/.htaccess-security >> /var/www/html/.htaccess'
 ```
 
 **Important:** Append to the END of `.htaccess` — never edit the `# BEGIN WordPress` / `# END WordPress` block.
@@ -178,10 +178,10 @@ WordPress files live in `./volumes/wordpress/`. They are owned by `www-data` (UI
 
 ```bash
 # Shell into the container
-docker compose exec app bash
+docker compose exec wordpress-app bash
 
 # wp-cli
-docker compose exec app wp plugin list --allow-root
+docker compose exec wordpress-app wp plugin list --allow-root
 
 # From host (needs sudo)
 sudo nano ./volumes/wordpress/wp-config.php
@@ -191,7 +191,7 @@ sudo nano ./volumes/wordpress/wp-config.php
 
 ```bash
 docker compose ps              # Both services healthy
-docker compose logs app        # No PHP errors
+docker compose logs wordpress-app        # No PHP errors
 
 # Run the full security test suite
 bash ops/scripts/test-security.sh <domain>
@@ -222,7 +222,7 @@ For scheduled tasks (WP-Cron), set up a real cron job on the host instead:
 Then disable WP-Cron's built-in loopback in `wp-config.php`:
 
 ```bash
-docker compose exec app bash -c "echo \"define('DISABLE_WP_CRON', true);\" >> /var/www/html/wp-config.php"
+docker compose exec wordpress-app bash -c "echo \"define('DISABLE_WP_CRON', true);\" >> /var/www/html/wp-config.php"
 ```
 
 These warnings do **not** appear with `access-public` (Scenario A).

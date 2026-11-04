@@ -53,7 +53,7 @@ From `business/listmonk/`:
 
    ```bash
    docker compose up -d
-   docker compose logs app --follow
+   docker compose logs listmonk-app --follow
    ```
 
    Wait for `http server started on [::]:9000`.
@@ -149,7 +149,7 @@ Restore order: database, then the application.
 
    ```bash
    docker compose pull && docker compose up -d
-   docker compose logs app --follow
+   docker compose logs listmonk-app --follow
    ```
 
 4. Open a campaign and a template. Schema changes surface in the editor rather

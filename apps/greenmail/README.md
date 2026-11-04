@@ -47,9 +47,10 @@ Two things follow from the test-double design:
 
 ## Status
 
-Run behind Traefik with TLS on 2026-09-22 (2.1.13): the REST API and
-Swagger UI through the route, SMTPS and POP3S with a TLS client, and a restart.
-Full log in [`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-22).
+Run behind Traefik on the step 8 lab host on 2026-11-03 (2.1.15): all six
+mail protocols from a container on `proxy-public`, the REST API through the
+route, no published port, nothing reachable from an edge network, and a
+restart. Full log in [`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-11-03).
 
 ## Try it locally
 
