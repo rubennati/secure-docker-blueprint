@@ -23,7 +23,7 @@ recorded), **not tested**, **open** (a known gap).
 
 | Area | What the lab host had | State |
 |---|---|---|
-| System | Debian 13, cloud kernel, updated to the current point release; one reboot for a kernel update | tested (two reboots) |
+| System | Debian 13, cloud kernel, updated to the current point release; one reboot for a kernel update | tested (two reboots, a third with the `nftables.service` drop-in: T8) |
 | Updates | `unattended-upgrades` for security updates, automatic reboot off — a kernel update waits for a planned reboot | configured |
 | Time, journal, swap | `systemd-timesyncd` synchronised; journald persistent, capped at 200 MB; swap with a low `swappiness` | configured |
 | Docker | Docker Engine 29 with Compose 5, `daemon.json`: `local` log driver with size limits, `ipv6` and `ip6tables` on, `userland-proxy: false` (`core/traefik/docs/ipv6-dual-stack.md`) | tested |
@@ -31,12 +31,12 @@ recorded), **not tested**, **open** (a known gap).
 | SSH | keys only (`AuthenticationMethods publickey`), root login off, `MaxAuthTries 3`, `LoginGraceTime 30`, no X11 or agent forwarding; TCP forwarding left on | tested |
 | Network | static public IPv4 and IPv6 from the provider, `accept_ra 0` on `<public-if>`; IPv4/IPv6 forwarding on (Docker); reverse-path filter loose on `<public-if>` | configured |
 | Provider filter | 80 and 443/tcp on both families, 22/tcp from the operator's IPv4 only, ICMP; UDP 443 and 41641 not admitted | tested (X1, F4–F6) |
-| Host ruleset | `inet blueprint_ingress` for the `direct` profile: input closed except loopback, established, ICMP, DHCP, UDP 41641 and the tailnet ranges; forward open with the tailnet anti-spoofing drop for IPv6 (IPv4 added 2026-11-04); persistent through a flush-free `/etc/nftables.conf` | tested (F1–F9) |
-| VPN | Tailscale on the host, `--snat-subnet-routes=false`, no Tailscale SSH, exit node, routes or DNS; untagged node; relayed (DERP) because the provider filter admits no UDP 41641 | tested, both start orders and two reboots |
+| Host ruleset | `inet blueprint_ingress` for the `direct` profile: input closed except loopback, established, ICMP, DHCP, UDP 41641 and the tailnet ranges; forward open with the tailnet anti-spoofing drop for IPv6 (IPv4 added 2026-11-04); persistent through a flush-free `/etc/nftables.conf` | tested (F1–F9, T8) |
+| VPN | Tailscale on the host, `--snat-subnet-routes=false`, no Tailscale SSH, exit node, routes or DNS; untagged node; relayed (DERP) because the provider filter admits no UDP 41641 | tested, both start orders and three reboots (the last T8) |
 | Names | the test zone public and DNS-only; split DNS on the tailnet answering it with `<tailnet-v4>` and `<tailnet-v6>` | tested |
 | Published ports | Traefik alone: 80 and 443 on `0.0.0.0` and `[::]`, 443/udp as well; nothing else published except a resolver on loopback and `tailscale0` | tested (X1, E2) |
 | Docker networks | one edge network per stack, internal networks for databases; Docker's default address pools — exhausted once with about thirty networks | tested |
-| Start order | `nftables.service` before the network; `docker.service` and `tailscaled.service` unordered and in parallel; the order no longer matters with the SNAT fix | tested (F6–F8, F9 of the failure tests, two reboots) |
+| Start order | `nftables.service` before the network; `docker.service` and `tailscaled.service` unordered and in parallel; the order no longer matters with the SNAT fix | tested (F6–F8, F9 of the failure tests, three reboots, the last T8) |
 | Restart behaviour | `unless-stopped` on every container; a crashed Traefik back in 8 s; a hung Traefik not detected without the optional watchdog | tested |
 | Logging | container logs size-capped by the log driver; Traefik's access log on a bind mount without rotation on this host (72 MB after three days); `sysstat` and a five-minute container snapshot in the journal | configured — rotation **open** |
 | Monitoring | none beyond the journal and `sysstat` | open |
@@ -182,7 +182,7 @@ Each point names what it is for, what it depends on, and how to check it.
 
 ## Open
 
-- SHOULD 11–14 were added after the final audit of the lab host and were **not applied
+- SHOULD 11–15 were added after the final audit of the lab host and were **not applied
   there** (decision of 2026-11-04: documentation only); their measurements are the audit's
   readings, not a hardened host.
 
