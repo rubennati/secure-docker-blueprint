@@ -389,6 +389,34 @@ see different things. Running both is a choice, not a requirement.
 
 ---
 
+## The installation at a glance
+
+```mermaid
+flowchart TB
+  subgraph edge["Ingress"]
+    PF2["Provider filter"] --> NFT2["Host ruleset<br/>inet blueprint_ingress"]
+    NFT2 --> TR["Traefik<br/>headers · access · limit · auth"]
+    TR <--> CS2["CrowdSec engine + AppSec<br/>(optional)"]
+    TR <-.-> AK["Authentik forward-auth<br/>(optional)"]
+  end
+  subgraph stacks["Stacks — one edge network each"]
+    A1["Application"] --- D1[("Database / cache<br/>internal network")]
+  end
+  subgraph ops["Operation on the host"]
+    TSN["Tailscale<br/>VPN, split DNS"]
+    BK["borgmatic<br/>backups (host agent)"]
+    HF["host files<br/>ruleset, drop-in, logrotate, watchdog"]
+  end
+  TR --> A1
+  TSN --> NFT2
+  BK -. dumps and files .-> D1
+  HF -. installed by the operator .-> NFT2
+```
+
+Implemented and tested on a host: everything drawn with a solid line. Optional: CrowdSec,
+AppSec, Authentik. The backup agent's PostgreSQL client is an open decision
+([`research/postgres-dump-client-decision.md`](research/postgres-dump-client-decision.md)).
+
 ## Ingress paths, profiles and trust boundaries
 
 Every request to an application crosses the same layers; which of them decide depends on
@@ -437,6 +465,35 @@ policy, the rate limit and the auth posture are positions of each router; the
 application decides on its own login. Management never crosses Traefik: SSH answers the
 VPN alone once the ruleset is loaded, and the console reaches the host without either.
 
+### Firewall, Docker and Tailscale on one host
+
+Three parties write the kernel's packet filter, and none of them restores what another
+removes. The order at boot and the stop action of `nftables.service` decide whether all
+three are present:
+
+```mermaid
+sequenceDiagram
+  participant S as systemd
+  participant N as nftables.service
+  participant T as tailscaled
+  participant D as dockerd
+  participant K as kernel (nftables / iptables-nft)
+  S->>N: sysinit, before network-pre
+  N->>K: nft -f /etc/nftables.conf (destroy + include: inet blueprint_ingress)
+  S->>T: after network-pre
+  T->>K: ts-input, ts-forward (no MASQUERADE: --snat-subnet-routes=false)
+  S->>D: after network-online
+  D->>K: DOCKER, DOCKER-FORWARD, DNAT for 80/443
+  Note over N,K: reload = one atomic transaction, nothing else touched
+  Note over N,K: stop / restart / package upgrade: Debian's unit runs "nft flush ruleset"<br/>— the drop-in replaces it with "destroy table inet blueprint_ingress"
+```
+
+Measured on the step 8 lab host after a reboot (T8): the blueprint table at 7.3 s,
+Tailscale's rules at 18.1 s, Docker's at 18.7 s. Without the drop-in a restart of the
+service left only the blueprint table (Docker and Tailscale had to be restarted); with it,
+restart, the package's `try-restart` and stop/start left every other table identical
+([`core/traefik/docs/host-firewall.md`](../core/traefik/docs/host-firewall.md)).
+
 ### The profiles are global
 
 The exposure profile is derived, not set: `validate.sh` and `render.sh` read
@@ -452,6 +509,20 @@ follows from them:
 | CrowdSec bouncer (entrypoint middleware) | every router | compares the connecting address | compares the last forwarded address outside the trusted ranges |
 | AppSec | every router, on or off (`CROWDSEC_APPSEC_ENABLED`) | — | — |
 | Access policy, rate limit, auth posture | per router | the connecting address | the connecting address — a request through the proxy arrives from an edge address, so VPN-only routers refuse it |
+
+```mermaid
+flowchart LR
+  subgraph direct["direct"]
+    c1["Internet client"] -->|80/443| o1["origin: every router,<br/>client = connecting address"]
+    p1["Cloudflare edge"] -->|80/443| o1
+    v1["Tailnet client"] --> o1
+  end
+  subgraph proxied["proxied"]
+    c2["Internet client"] -.->|80/443 dropped| o2["origin"]
+    p2["Cloudflare edge<br/>(trusted ranges)"] -->|80/443, client in X-Forwarded-For| o2
+    v2["Tailnet client"] --> o2
+  end
+```
 
 **A mixed operation per application is not provided.** One installation is `direct` or
 `proxied` for every router at once. With `proxied`, the forward rule refuses direct
@@ -472,35 +543,52 @@ ranges, its own header model and its own tests before it can be named here.
 |---|---|
 | Edge network per stack, access policies, auth postures | implemented; tested on a host (step 8) |
 | `direct` profile, dual-stack publishing, client address over IPv4 and IPv6 | implemented; tested on a host |
-| Host ruleset for `direct`: input VPN-only, IPv6 anti-spoofing, persistence | implemented (rendered, installed by the operator); tested on a host — F1–F9, M1, M2 |
+| Host ruleset for `direct`: input VPN-only, anti-spoofing for both families (IPv4 since 2026-11-04), persistence | implemented (rendered, installed by the operator); tested on a host — F1–F9, M1, M2, a reboot with the drop-in (T8) |
 | Tailscale on the host with `--snat-subnet-routes=false`, split DNS | documented operator steps; tested on a host, both start orders and a reboot |
 | CrowdSec engine, Traefik bouncer, AppSec with the shipped rule sets | implemented, optional; tested on a host, including an engine outage |
 | CrowdSec's Core Rule Set | optional; measured, not recommended globally (`core/crowdsec/docs/appsec.md`) |
 | A Cloudflare-proxied name beside the DNS-only zone, `direct` profile | possible; tested — edge address as client, origin not protected |
-| `proxied` profile with origin protection (X4) | implemented (rendered); **not tested** |
+| `proxied` profile with origin protection (X4) | implemented; **tested on a host** (2026-11-04) — below |
+| The headers position first on every router (refusals carry HSTS) | implemented; tested on a host |
+| `nftables.service` drop-in: a restart or a package upgrade no longer flushes Docker's and Tailscale's tables | implemented (host file of `core/traefik`); tested on a host, including a reboot (T8) |
 | Firewall bouncer on the host | implemented, optional; not installed on the step 8 host |
 | Direct and proxied applications on one host, each with its own trust | **planned, not implemented** — below |
 | Per-application or per-path AppSec | **planned** (decision of 2026-11-03), not implemented |
 | Incident containment of one stack, evidence collection, controlled reconnection | **planned** — concept in [`docs/research/incident-response-concept.md`](research/incident-response-concept.md) |
 
-### X4 — the `proxied` profile, still open
+### X4 — the `proxied` profile, tested
 
-What it needs: the proxied records in place; `TRAEFIK_FORWARDED_PROXY=cloudflare`; a
-render (writes `config/host/cloudflare-ranges.nft` and the `proxied` ruleset); a recreate
-of Traefik (about seven seconds of interruption for every router); the new ruleset loaded
-with a timed way back; Pseudo IPv4 off at Cloudflare.
+Run on the step 8 lab host on 2026-11-04, with two clients of the operator — one in the
+tailnet with IPv4 and IPv6, one outside it with IPv4 only — and the host itself as a
+client through Cloudflare.
 
-What it checks: a request through Cloudflare over IPv4 and IPv6 answers, with the client's
-address in the access log and at the bouncer; a direct connection to the origin's 80/443
-over both families is refused; the tailnet path and SSH over the VPN still work; a
-CrowdSec decision for the client's address answers 403 through Cloudflare; a forged
-`X-Forwarded-For` or `CF-Connecting-IP` from a direct client changes nothing.
+What was changed, and back: `TRAEFIK_FORWARDED_PROXY=cloudflare`; a render (four files
+differ: `traefik.yml`, `dynamic/crowdsec.yml`, `host/ingress.nft`,
+`host/cloudflare-ranges.nft`); `docker compose up -d --force-recreate traefik`; the
+ranges file and the `proxied` ruleset installed and applied with `systemctl reload
+nftables`, under a timed way back. The return ran twice — once by the timer by itself,
+once by hand — and both times every changed file and the blueprint table were
+byte-identical to the state before.
 
-Risks: every DNS-only router becomes unreachable from outside the VPN for as long as the
-profile is set; an error in the forward rule takes the published ports with it; the
-trusted ranges are Cloudflare's whole network (`core/traefik/README.md`, "What the mode
-cannot promise"). Way back: `nft delete table inet blueprint_ingress` through the timer or
-the console, `TRAEFIK_FORWARDED_PROXY=none`, render, recreate.
+| Check | Result |
+|---|---|
+| Through Cloudflare | 200 over IPv4 and IPv6, from both clients and from the host |
+| Direct to the origin's 80/443, outside the allowed networks | dropped (no answer) on IPv4 (outside client) and IPv6 (the tailnet client's public path); `exposure-test.sh … proxied` exit 0 on both families; `validate.sh --strict` OK with both markers |
+| Tailnet | every router answered as in `direct`, with the client's tailnet address; SSH over the tailnet only |
+| The client's address | `X-Forwarded-For` at the application reads `<client>, <edge>`: Cloudflare's entry, then Traefik appends the connecting edge. The access log's `ClientHost` and CrowdSec see the client on both families. `X-Real-Ip` stays the edge address — Cloudflare sends none |
+| Forged headers | from a tailnet client: ignored, the tailnet is not a trusted proxy; through Cloudflare: the forged `X-Forwarded-For` travels in the chain and in `ClientHost`, but CrowdSec's parser and the bouncer take the rightmost untrusted address — the real client (`cscli explain`) |
+| A CrowdSec ban through Cloudflare | 403 after about six seconds on IPv4 and IPv6; no decision ever named a Cloudflare address; deleted, 200 again after the stream interval |
+| A container calling the origin's public address | dropped in `proxied` (its source is a Docker address, not Cloudflare); answered again after the return |
+
+Two lessons for operating it: a changed `traefik.yml` is invisible to `docker compose up
+-d` — only `--force-recreate` loads it (the first attempt left Traefik trusting nobody,
+and the measurement showed the edge address); and a container that reaches applications
+through their public names loses that path in `proxied`.
+
+Risks that stay: every DNS-only router is unreachable from outside the VPN for as long
+as the profile is set; the trusted ranges are Cloudflare's whole network
+(`core/traefik/README.md`, "What the mode cannot promise"); the access policies still
+see the connecting address, so a VPN-only router is not reachable through the proxy.
 
 ### Direct and proxied side by side — a later extension
 

@@ -26,6 +26,20 @@ and **reconnect** it in a controlled way afterwards.
 
 ## Three containment levels
 
+```mermaid
+flowchart LR
+  D["Detection<br/>CrowdSec alert, log, report"] --> C{"Contain"}
+  C -->|ingress| I["Traefik: router to a deny policy<br/>or Traefik off the stack's edge network"]
+  C -->|egress| E["nftables quarantine set<br/>both families"]
+  C -->|full| F["disconnect + quarantine network<br/>forensic path only"]
+  I --> V["Collect, most volatile first:<br/>memory → runtime → logs → files → volumes → config<br/>hashed, manifest, stored off the host"]
+  E --> V
+  F --> V
+  V --> R["Reconnect: rotate secrets, rebuild from the pinned image,<br/>restore if in doubt, egress last, watch"]
+```
+
+Status: **planned** — nothing of this is implemented.
+
 | Level | Cuts | Keeps |
 |---|---|---|
 | **Ingress** | requests from clients to the application (Traefik route) | the application's outbound connections, its database, its processes |

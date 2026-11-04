@@ -31,7 +31,7 @@ recorded), **not tested**, **open** (a known gap).
 | SSH | keys only (`AuthenticationMethods publickey`), root login off, `MaxAuthTries 3`, `LoginGraceTime 30`, no X11 or agent forwarding; TCP forwarding left on | tested |
 | Network | static public IPv4 and IPv6 from the provider, `accept_ra 0` on `<public-if>`; IPv4/IPv6 forwarding on (Docker); reverse-path filter loose on `<public-if>` | configured |
 | Provider filter | 80 and 443/tcp on both families, 22/tcp from the operator's IPv4 only, ICMP; UDP 443 and 41641 not admitted | tested (X1, F4–F6) |
-| Host ruleset | `inet blueprint_ingress` for the `direct` profile: input closed except loopback, established, ICMP, DHCP, UDP 41641 and the tailnet ranges; forward open with the IPv6 tailnet anti-spoofing drop; persistent through a flush-free `/etc/nftables.conf` | tested (F1–F9) |
+| Host ruleset | `inet blueprint_ingress` for the `direct` profile: input closed except loopback, established, ICMP, DHCP, UDP 41641 and the tailnet ranges; forward open with the tailnet anti-spoofing drop for IPv6 (IPv4 added 2026-11-04); persistent through a flush-free `/etc/nftables.conf` | tested (F1–F9) |
 | VPN | Tailscale on the host, `--snat-subnet-routes=false`, no Tailscale SSH, exit node, routes or DNS; untagged node; relayed (DERP) because the provider filter admits no UDP 41641 | tested, both start orders and two reboots |
 | Names | the test zone public and DNS-only; split DNS on the tailnet answering it with `<tailnet-v4>` and `<tailnet-v6>` | tested |
 | Published ports | Traefik alone: 80 and 443 on `0.0.0.0` and `[::]`, 443/udp as well; nothing else published except a resolver on loopback and `tailscale0` | tested (X1, E2) |
@@ -62,7 +62,9 @@ Each point names what it is for, what it depends on, and how to check it.
    Purpose: services that terminate on the host — SSH, a resolver, an agent — answer the
    VPN only. Dependencies: Docker and the VPN own tables of their own; the ruleset is one
    table of its own, loaded with `nft -f`, never through `flush ruleset` (Debian's default
-   `nftables.conf` begins with one). Check: `nft list tables` before and after, the other
+   `nftables.conf` begins with one, and its unit's stop action runs one — on a restart and
+   on every package upgrade, unattended included: install `core/traefik`'s drop-in
+   `nftables-no-flush.conf`, and use `systemctl reload nftables` on a running host). Check: `nft list tables` before and after, the other
    tables unchanged; a new SSH connection over the VPN works, over the public address it
    does not.
 4. **Published ports are judged on the forward path, not on input.** Docker translates a
@@ -112,20 +114,59 @@ Each point names what it is for, what it depends on, and how to check it.
    administrative accounts.
 10. **A recorded state of the host before every change** — `nft list ruleset`,
     `iptables-save`, `ss -ltunp`, `sshd -T` — so a change can be compared and undone.
+11. **Privilege needs a second factor.** An administrative account with
+    `NOPASSWD: ALL` and membership in the `docker` group is root for anyone who holds its
+    SSH key — the key is the only factor. Give interactive `sudo` a password (or a
+    hardware key through `pam_u2f`), and keep the account out of the `docker` group
+    unless it runs Compose itself; automation gets its own account with exactly the
+    commands it needs. Dependency: the console account of MUST 6 is the way back when the
+    password is lost. Check: `sudo -l` shows no `NOPASSWD: ALL`; `id <admin>` lists no
+    `docker`. (Final audit, finding FA-08.)
+12. **Kernel parameters a forwarding host does not need at their defaults:**
+    `net.ipv4.conf.all.send_redirects=0` and `net.ipv4.conf.default.send_redirects=0` (a
+    Docker host forwards, but has no reason to tell a client about a better route),
+    `net.ipv6.conf.all.accept_redirects=0` and `net.ipv6.conf.default.accept_redirects=0`,
+    `kernel.kptr_restrict=1`; optionally `kernel.yama.ptrace_scope=1`. Forwarding
+    (`net.ipv4.ip_forward=1`, IPv6 forwarding) stays as Docker sets it. In one file under
+    `/etc/sysctl.d/`, loaded with `sysctl --system`. Check: `sysctl` of each name; a
+    container still reaches the outside and a published port still answers.
+    (FA-18; measured at the Debian 13 defaults on the lab host: `1`, `1`, `0`, `0`.)
+13. **SSH with the current algorithm set only.** OpenSSH 10's defaults still offer
+    SHA-1 and 64-bit-tag MACs, encrypt-and-MAC modes and NIST curves:
+
+    ```text
+    KexAlgorithms mlkem768x25519-sha256,sntrup761x25519-sha512,sntrup761x25519-sha512@openssh.com,curve25519-sha256,curve25519-sha256@libssh.org
+    MACs hmac-sha2-256-etm@openssh.com,hmac-sha2-512-etm@openssh.com,umac-128-etm@openssh.com
+    HostKeyAlgorithms ssh-ed25519,ssh-ed25519-cert-v01@openssh.com,sk-ssh-ed25519@openssh.com,sk-ssh-ed25519-cert-v01@openssh.com,rsa-sha2-512,rsa-sha2-256
+    ```
+
+    The `curve25519` entries stay as the fallback for clients without a post-quantum
+    exchange. Before the reload, check every client with `ssh -Q kex` and `ssh -Q mac`,
+    and keep a session open: `sshd -t`, `systemctl reload ssh`, then a **new** connection.
+    Check: `ssh-audit` shows no `fail`; `sshd -T | grep -E '^(kexalgorithms|macs) '`.
+    (FA-17; the set above parsed by `sshd -T` on OpenSSH 10.0p2, not applied on the lab
+    host.)
+14. **No key for `root` that nobody uses.** A provider's provisioning key stays in
+    `/root/.ssh/authorized_keys` after the image boots. With `PermitRootLogin no` it is
+    inert, but one configuration mistake away from a way in. Remove it once the
+    administrative account works. Check: `/root/.ssh/authorized_keys` is empty or absent.
+    (FA-19.)
+15. **Watch the SSH daemon's own advisories.** A Critical in `openssh-server` without a
+    distribution fix (FA-10 on the lab host) is mitigated by MUST 1–3: SSH answers the
+    VPN only. Check: `apt list --upgradable`; the ruleset still refuses 22/tcp from outside.
 
 ### OPTIONAL — by threat model and deployment
 
 - **CrowdSec's firewall bouncer** on the host, for ports the reverse proxy never handles
   (`core/crowdsec/docs/firewall-bouncer.md`); its set must never reach the management path.
 - **A proxy in front of the origin** (Cloudflare, `proxied` profile) with the origin
-  restricted to the proxy's ranges — X4 is still open.
-- **IPv4 anti-spoofing for the tailnet range in the host ruleset**: today `tailscaled`'s
-  own rule drops it, and only while `tailscaled` runs.
+  restricted to the proxy's ranges — tested on the lab host (X4, 2026-11-04,
+  `docs/architecture.md`); the profile applies to the whole installation.
 - **UDP 41641 admitted in the provider filter**, for direct tailnet connections instead
   of a relay.
 - **Monitoring and alerting** for the host and the containers; the lab host had none.
-- **Kernel and sysctl hardening** beyond the distribution's defaults, measured against
-  Docker's need for forwarding.
+- **Kernel and sysctl hardening** beyond SHOULD 12 (Lynis' list: auditd rules, file
+  integrity, a GRUB password), measured against Docker's need for forwarding.
 
 ## Lessons from the lab host
 
@@ -141,8 +182,13 @@ Each point names what it is for, what it depends on, and how to check it.
 
 ## Open
 
+- SHOULD 11–14 were added after the final audit of the lab host and were **not applied
+  there** (decision of 2026-11-04: documentation only); their measurements are the audit's
+  readings, not a hardened host.
+
 - Log rotation for the reverse proxy and monitoring were not set up on the lab host.
 - Backups ran into a throwaway repository on the same host; an off-host target was not
   tested.
-- The `proxied` profile with origin protection (X4) is not tested.
-- The IPv4 tailnet range is not dropped by the host ruleset itself.
+- The IPv4 tailnet anti-spoofing drop (added 2026-11-04) was measured on the lab host
+  with a forged source from a container; the operator's own clients confirm that the
+  tailnet path still works (regression of 2026-11-04).
