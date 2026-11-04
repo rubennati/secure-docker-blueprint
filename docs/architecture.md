@@ -481,6 +481,7 @@ ranges, its own header model and its own tests before it can be named here.
 | Firewall bouncer on the host | implemented, optional; not installed on the step 8 host |
 | Direct and proxied applications on one host, each with its own trust | **planned, not implemented** — below |
 | Per-application or per-path AppSec | **planned** (decision of 2026-11-03), not implemented |
+| Incident containment of one stack, evidence collection, controlled reconnection | **planned** — concept in [`docs/research/incident-response-concept.md`](research/incident-response-concept.md) |
 
 ### X4 — the `proxied` profile, still open
 
