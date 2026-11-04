@@ -62,16 +62,22 @@ printf '%s' 'YOUR-SMTP-PASSWORD' > .secrets/mail_pwd.txt
 # 3. Start
 docker compose up -d
 
-# 4. Open the admin UI and finish setup
+# 4. Over the VPN: open the admin UI and finish setup
 # https://<APP_TRAEFIK_HOST>/ghost/
+
+# 5. A public blog: open the route once the owner exists
+sed -i 's/^APP_TRAEFIK_ACCESS=.*/APP_TRAEFIK_ACCESS=access-public/' .env
+docker compose up -d
 ```
 
-The setup page answers until the owner exists, and with the shipped `access-public`
-whoever reaches it first becomes the owner — finish it before the host is known.
+The setup page answers until the owner exists — there is no setup secret, whoever
+reaches it first becomes the owner. The stack therefore ships with `access-vpn`
+(final audit FA-01): the setup happens over the VPN, and the blog becomes public by
+the operator's decision in step 5.
 With mail configured, a staff login from a new browser waits for a six-digit code
 Ghost mails to the staff address (step 8 lab host, 6.63.0).
 
-Default access is `access-public`, with `limit-standard` and `headers-standard` — a public blog with the standard headers and rate limit.
+Shipped access is `access-vpn` until setup; a public blog then runs `access-public`, with `limit-standard` and `headers-standard` — the standard headers and rate limit.
 
 ### Enabling ActivityPub on an existing deployment
 
