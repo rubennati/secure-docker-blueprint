@@ -74,7 +74,7 @@ that is a second router, not a different value here:
 - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-tracker.rule=Host(`${APP_TRAEFIK_HOST}`) && (PathPrefix(`/js/`) || Path(`/api/event`))"
 - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-tracker.entrypoints=websecure"
 - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-tracker.tls=true"
-- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-tracker.middlewares=access-public@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-tracker.middlewares=${APP_TRAEFIK_HEADERS}@file,access-public@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
 ```
 
 Traefik matches the longest rule first, so the tracker router wins for those two

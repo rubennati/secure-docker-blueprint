@@ -15,6 +15,7 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+import no_daemon
 
 REPO = Path(__file__).resolve().parents[2]
 TRAEFIK = REPO / "core" / "traefik"
@@ -217,7 +218,7 @@ class ShippedExampleRequiresAChoice(unittest.TestCase):
         for key, value in changes.items():
             text = "".join(f"{key}={value}\n" if line.startswith(f"{key}=") else line for line in text.splitlines(keepends=True))
         (tmp / ".env").write_text(text, encoding="utf-8")
-        r = subprocess.run(["bash", str(tmp / "ops" / "scripts" / "validate.sh")], capture_output=True, text=True)
+        r = subprocess.run(["bash", str(tmp / "ops" / "scripts" / "validate.sh")], capture_output=True, text=True, env=no_daemon.env())
         return r.returncode, r.stdout + r.stderr
 
     def test_example_stops_at_the_documentation_prefix(self):

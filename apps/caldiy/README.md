@@ -109,7 +109,7 @@ Secrets are plain env in `.env.local` (gitignored) — **local only**, never pro
 
 ### Traefik middlewares
 
-Cal.diy's router carries the four positions of the middleware model ([`docs/standards/traefik-labels.md`](../../docs/standards/traefik-labels.md)): `access-public` once the owner exists (`access-vpn` until then), `limit-standard`, `headers-standard`, `auth-none@file`. No request is blocked at the proxy beyond the counter (125 req/s average, burst 500, per client address); the headers profile sets what a **public-facing scheduling app that stores PII** (names, emails, meeting topics) should send:
+Cal.diy's router carries the four positions of the middleware model ([`docs/standards/traefik-labels.md`](../../docs/standards/traefik-labels.md)): `headers-standard`, `access-public` once the owner exists (`access-vpn` until then), `limit-standard`, `auth-none@file`. No request is blocked at the proxy beyond the counter (125 req/s average, burst 500, per client address); the headers profile sets what a **public-facing scheduling app that stores PII** (names, emails, meeting topics) should send:
 
 | Header | `headers-standard` |
 |--------|--------------------|

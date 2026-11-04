@@ -80,7 +80,9 @@ application looks healthy and nobody is told anything.
 `.secrets/smtp_password.txt`, or the application refuses to boot. The port
 decides the encryption: 587 forces STARTTLS, 465 implicit TLS, any other port
 opportunistic TLS. For trying the stack out, `apps/mailpit` accepts all of that
-on port 1025 and shows every message in a browser.
+on port 1025 and shows every message in a browser — reachable only when both
+stacks share a network (`TRAEFIK_NETWORK=proxy-public`); on its own edge network
+`mailpit` does not resolve.
 
 ## Integrations
 

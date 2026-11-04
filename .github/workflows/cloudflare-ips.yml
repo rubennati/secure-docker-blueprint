@@ -16,7 +16,10 @@ on:
       - scripts/ci/check-cloudflare-ips.py
       - .github/workflows/cloudflare-ips.yml
 
-permissions: read-all
+# Least privilege: the token reads the repository and nothing else; a job
+# that needs more names it in its own block.
+permissions:
+  contents: read
 
 jobs:
   compare:
@@ -24,6 +27,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Compare the trusted ranges with the published lists
         run: python3 scripts/ci/check-cloudflare-ips.py --online "$GITHUB_STEP_SUMMARY"

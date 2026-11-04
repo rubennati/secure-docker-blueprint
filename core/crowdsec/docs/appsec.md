@@ -21,11 +21,16 @@ passing it to the application. The engine applies WAF rules against the request 
 path, headers, body). If a rule matches, the bouncer returns HTTP 403 immediately and the
 request never reaches the application. If no rule matches, the request proceeds normally.
 
-Key distinction: **AppSec blocks individual requests; it does not ban IPs.** A blocked
-request does not create a LAPI decision. The same IP can immediately make the next request
-and have it succeed, provided the offending payload is not repeated. This makes AppSec
-false positives self-contained — the user retries and succeeds — but it also means AppSec
-does not accumulate evidence against persistent attackers the way scenario detection does.
+Key distinction: **a single AppSec block is not a ban.** The request is refused, no LAPI
+decision follows from it alone, and the next request with a different payload passes.
+**Repeated blocks are**: every in-band block is also an event for the scenario
+`crowdsecurity/appsec-native` (installed with the rule collections), which bans the source
+address after its fourth block within the bucket's leak (capacity 3, leak 30 s).
+Measured on the step 8 lab host (v1.7.8): four false-positive blocks from one address
+produced the ban decision (in simulation mode for the test). A user who trips a false
+positive and retries a few times is then locked out of every router, not just the one
+request. Addresses in `crowdsecurity/whitelists` (loopback and the RFC 1918 ranges) never
+reach the scenario.
 
 ```text
 Scenario detection path (asynchronous):
@@ -62,8 +67,13 @@ Two collections install AppSec rule sets via `CROWDSEC_COLLECTIONS` in `.env`:
 
 ### `crowdsecurity/appsec-generic-rules`
 
-General-purpose WAF signatures covering classes of attack that apply to any HTTP
-application:
+General-purpose WAF signatures. The table is the collection's stated scope; measured on
+the step 8 lab host (v1.7.8, collection 1.1), **none of these test requests was blocked**:
+`' OR '1'='1` and `UNION SELECT` in the query, SQL in form and JSON bodies, `<script>`,
+`onerror=` and `javascript:` in query, form and JSON, `../../etc/passwd` plain and encoded,
+and `;cat /etc/passwd`. Only the virtual-patching rule for `/.env` answered 403. The
+generic rules target narrower signatures than the categories suggest; for the classes
+below, CRS is what matches (see "The Core Rule Set collections").
 
 | Category | What it detects |
 |---|---|
@@ -104,17 +114,52 @@ Set does not need a second piece of software.** It is the engine already in this
 
 ### The Core Rule Set collections
 
-Two hub entries carry CRS, and **neither is installed by this stack**:
+Two hub collections carry CRS, and **neither is installed by this stack**. Each needs two
+edits: the collection in `CROWDSEC_COLLECTIONS` in `.env`, and its AppSec configuration in
+`config/appsec.yaml` under `appsec_configs` — installed without the second, the rules are
+present and nothing evaluates them.
 
-| Collection | Behaviour |
-|---|---|
-| `crowdsecurity/crs` | evaluates out of band — matches are logged, requests pass |
-| `crowdsecurity/crs-inband` | blocks the request on a match |
+| Collection | AppSec configuration | Behaviour |
+|---|---|---|
+| `crowdsecurity/appsec-crs` | `crowdsecurity/crs` | out of band — the request passes, each match is an alert, and the scenario `crowdsecurity/crowdsec-appsec-outofband` bans the address after more than five matching requests (leak 30 s) |
+| `crowdsecurity/appsec-crs-inband` | `crowdsecurity/crs-inband` | in band — the request is refused; repeated blocks ban through `crowdsecurity/appsec-native` |
 
-Add either to `CROWDSEC_COLLECTIONS` in `.env` to install it. Start with
-`crowdsecurity/crs`, because CRS at its default paranoia level produces false positives
-against ordinary application traffic — the same caution as in "Enabling AppSec safely"
-below, and more so.
+So "out of band" is not "log only": a client whose ordinary requests match CRS is banned
+from every router after six of them. To watch without that consequence, put the scenario
+in simulation first: `docker exec crowdsec cscli simulation enable
+crowdsecurity/crowdsec-appsec-outofband` (and `crowdsecurity/appsec-native` for in band).
+
+Measured on the step 8 lab host (2026-11-03, CrowdSec v1.7.8; the engine is
+`github.com/crowdsecurity/coraza/v3 v3.3.3-crowdsec.20251113`, CrowdSec's fork in place of
+`corazawaf/coraza v3.7.0`; the rules `OWASP_CRS/4.0.0-rc1`, paranoia level 1, inbound
+threshold 5), through Traefik from a loopback probe:
+
+| Request | Shipped rules | CRS in band |
+|---|---|---|
+| SQL injection in query, form and JSON (4 patterns) | pass | 403 |
+| XSS in query, form and JSON (3 patterns) | pass | 403 |
+| Path traversal, plain and encoded; `;cat /etc/passwd` | pass | 403 |
+| `/.env` | 403 | 403 |
+| GET, form with apostrophes and SQL words in prose, JSON with HTML, multipart upload | pass | pass |
+| JSON with a fenced shell snippet (`ls -la /var/log && …`) | pass | **403** (RCE rules, score 25) |
+| PUT, PATCH, DELETE with ordinary JSON | pass | **403** (911100, method not allowed) |
+| Nextcloud WebDAV: MKCOL, PUT, PROPFIND, PROPPATCH, COPY, MOVE, DELETE | pass | **403** (OCS passes) |
+| the same with `crowdsecurity/appsec-crs-exclusion-plugin-nextcloud` | — | pass |
+| Ghost: the staff device code (`PUT /ghost/api/admin/session/verify/`) | pass | **403** — staff cannot sign in |
+| Paperless-ngx UI login and upload, listmonk, Easy!Appointments, Immich upload | pass | pass |
+
+The exclusion plugins act on request paths, for every host behind the entrypoint. Ghost and
+any API that uses PUT, PATCH or DELETE need `tx.allowed_methods` widened — a change for every
+router, since AppSec has no per-router choice here.
+
+Cost, median of 100 requests each: GET 1.7 ms without AppSec, 2.4 ms with the shipped rules,
+3.8 ms with CRS; a 2 kB JSON POST 1.9 / 4.1 / 22.9 ms; a 200 kB multipart upload 12.0 /
+21.6 / 17.4 ms. CrowdSec's memory went from 59 MiB to 108 MiB (peak 194 MiB) with CRS
+loaded.
+
+The result for this blueprint: CRS blocks the attack classes the shipped rules let through,
+and in band it breaks WebDAV without the plugin, Ghost's staff login and every PUT/PATCH/DELETE
+API. It stays off by default.
 
 They are left out here for a reason worth checking before you add them: the rule files
 CrowdSec serves identify themselves as `OWASP_CRS/4.0.0-rc1`, a release candidate, while
@@ -218,6 +263,14 @@ plain `docker compose up -d` does not recreate Traefik for it, `--force-recreate
 Measured on a host (2026-11-01): the shipped rule sets answered a virtual-patching match
 (`/.env`) with 403 on both address families; with the engine stopped the same request
 passed — the fail-open flags at work.
+
+The AppSec flags cover AppSec only. The decision stream has its own: the plugin's
+`updateMaxFailure`, whose default 0 blocks **every** request from the first failed decision
+pull until the next good one. Measured on the step 8 lab host (2026-11-03): with the engine
+stopped for 70 s every router answered 403 from 12 s after the stop to 46 s after the
+engine was healthy again — two minutes; a restart shorter than one pull interval (60 s)
+passed unnoticed, which is what the 2026-11-01 test saw. The template now sets
+`updateMaxFailure: -1`; with it the same 70 s stop left every request at 200.
 
 #### Step 3 — Observe behavior
 

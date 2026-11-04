@@ -60,7 +60,7 @@ second router rather than a change of `APP_TRAEFIK_ACCESS`:
 - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-status.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/status/public`)"
 - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-status.entrypoints=websecure"
 - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-status.tls=true"
-- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-status.middlewares=access-public@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-status.middlewares=${APP_TRAEFIK_HEADERS}@file,access-public@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
 ```
 
 Traefik matches the longest rule first, so the status router wins for that path

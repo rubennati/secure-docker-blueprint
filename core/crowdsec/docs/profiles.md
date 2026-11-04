@@ -19,7 +19,7 @@ default** — the Traefik plugin and the two middlewares exist only with
 ## Where CrowdSec sits — the entrypoint, not a router position
 
 Every app router in this blueprint carries four middlewares from its own `.env`
-(access, limit, headers, auth — [`docs/standards/traefik-security.md`](../../../docs/standards/traefik-security.md)).
+(headers, access, limit, auth — [`docs/standards/traefik-security.md`](../../../docs/standards/traefik-security.md)).
 Threat enforcement is none of them. `render.sh` places it on the `websecure`
 entrypoint, where it runs before any router's list:
 

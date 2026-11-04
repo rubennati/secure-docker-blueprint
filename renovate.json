@@ -5,6 +5,8 @@
   "timezone": "Europe/Vienna",
   "schedule": ["* 0-6 * * 1"],
 
+  "minimumReleaseAge": "7 days",
+
   "prConcurrentLimit": 5,
   "prHourlyLimit": 2,
 
@@ -46,6 +48,11 @@
         "postgres", "mariadb", "mysql", "mongo", "redis", "valkey", "memcached", "nginx"
       ],
       "groupName": "infrastructure images"
+    },
+    {
+      "description": "A release younger than seven days is not proposed (minimumReleaseAge above): most malicious or broken versions are withdrawn within days. A registry that publishes no release timestamp holds the update back until one is known; the dependency dashboard lists it as pending.",
+      "matchDatasources": ["docker"],
+      "minimumReleaseAge": "7 days"
     },
     {
       "description": "A major bump needs a host and a working core function. Never automatic.",

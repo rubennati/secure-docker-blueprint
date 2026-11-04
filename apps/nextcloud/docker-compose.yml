@@ -85,8 +85,13 @@ services:
           memory: 64M
 
     # --- Configuration ---
+    # The image's entrypoint (docker-entrypoint.sh) is what drops to its redis
+    # user and fixes the ownership of /data: a command that starts redis-server
+    # directly bypasses it and runs Redis as root (final audit FA-05). Here sh
+    # reads the secret as root and hands over to the entrypoint, so
+    # redis-server runs as UID 999.
     command: >
-      sh -c 'exec redis-server
+      sh -c 'exec docker-entrypoint.sh redis-server
       --requirepass "$$(cat /run/secrets/REDIS_PWD)"
       --maxmemory 512mb
       --maxmemory-policy noeviction'
@@ -266,7 +271,7 @@ services:
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
       # Middlewares (CalDAV/CardDAV redirect + access + security)
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,frame-self@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=frame-self@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
 

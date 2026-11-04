@@ -317,9 +317,9 @@ install_commands() {
       presence)
         echo "# ${tgt}: a secret the operator creates (see ${name}/README.md); expected mode ${mode}, owner ${owner}" ;;
       derived)
-        echo "[ -e ${tgt} ] || sudo install -m ${mode} -o ${user} -g ${group} ${rendered} ${tgt}   # then edit the values" ;;
+        echo "[ -e ${tgt} ] || sudo install -D -m ${mode} -o ${user} -g ${group} ${rendered} ${tgt}   # then edit the values" ;;
       exact)
-        echo "sudo install -m ${mode} -o ${user} -g ${group} ${rendered} ${tgt}" ;;
+        echo "sudo install -D -m ${mode} -o ${user} -g ${group} ${rendered} ${tgt}" ;;
     esac
     case "${tgt}" in
       /etc/systemd/system/*) reload=yes ;;

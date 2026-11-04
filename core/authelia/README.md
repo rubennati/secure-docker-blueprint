@@ -107,7 +107,7 @@ protect: `APP_TRAEFIK_AUTH=authelia@file` in that stack's `.env`, so the
 standard label resolves to:
 
 ```yaml
-- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,authelia@file"
+- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,authelia@file"
 ```
 
 The protected stack must share a network with `authelia-app` — `proxy-public`

@@ -12,7 +12,7 @@
 - **Domain:** Files, wiki and collaboration
 - **Role:** File sync and share with calendars, contacts and collaborative editing
 - **Based on version:** `34.0.4-fpm-alpine`
-- **Last verified:** 2026-09-13 (34.0.4-fpm-alpine) — in-place upgrade from 34.0.2 on a live host: the entrypoint ran the upgrade, `occ status` reports 34.0.4 with `needsDbUpgrade: false`, the login redirect answers as before. The first `up -d` failed on a container-name conflict left by the earlier service rename — see `TROUBLESHOOTING.md` §5.3. Earlier: 2026-07-29 (34.0.2-fpm-alpine)
+- **Last verified:** 2026-11-02 (34.0.4-fpm-alpine) — step 8 lab host behind Traefik 3.7.17 on its edge network: unattended install, an app password from OCS, WebDAV PUT/GET/PROPFIND, a 100 MB upload and a 200 MB file through chunked upload v2 (checksum identical), CalDAV and CardDAV objects created and found, login flow v2 started, the brute-force counter on the client's address once the trusted proxy is the edge network (a host-local client; external IPv4 and IPv6 clients not measured) — all through curl, no official client run (docs/labs/ingress/2026-11-01-results.md)
 - **Supported until:** 2027-06-08
 
 Nextcloud publishes a major version every four months and maintains each for one

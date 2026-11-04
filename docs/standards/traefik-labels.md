@@ -50,7 +50,7 @@ labels:
   - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
   #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
   # Middlewares — the four positions, in this order
-  - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+  - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
   # Service
   - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
 ```
@@ -192,11 +192,11 @@ this application. Where it stands decides what it does:
 
 ```yaml
 # listmonk: frames its campaign preview
-- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,frame-self@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=frame-self@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
 # Keycloak: sends its own headers, lacks the Permissions-Policy
-- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,header-permissions@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=header-permissions@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
 # Paperless-ngx: derives absolute URLs from the forwarded protocol
-- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH},forwarded-proto-https@file"
+- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH},forwarded-proto-https@file"
 ```
 
 CI reports a block on the wrong side (`block-order`). A header the stack
@@ -205,7 +205,7 @@ the operator embeds the editor in — stays a Docker middleware of the stack,
 placed before the profile like a block:
 
 ```yaml
-- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,header-nosniff@file,${COMPOSE_PROJECT_NAME}-csp@docker,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH},forwarded-proto-https@file"
+- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=header-nosniff@file,${COMPOSE_PROJECT_NAME}-csp@docker,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH},forwarded-proto-https@file"
 - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-csp.headers.contentSecurityPolicy=frame-ancestors 'self' ${COLLABORA_ALLOWED_ORIGINS}"
 ```
 
@@ -229,11 +229,11 @@ APP_TRAEFIK_AUTH=${COMPOSE_PROJECT_NAME}-auth@docker
 # Main router — catch-all
 - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
 - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.priority=1"
-- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
 # Path-scoped router — the four positions again, with its own counter
 - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/thumbnail`)"
 - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.priority=100"
-- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.middlewares=${APP_TRAEFIK_ACCESS}@file,${SIDE_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${SIDE_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
 ```
 
 A middleware attaches to a router, not to a host. A second router is a second
@@ -254,7 +254,7 @@ Where a router needs a rewrite of its own, it stands after the four, because
 access and the gate are decided before the path changes:
 
 ```yaml
-- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.middlewares=${APP_TRAEFIK_ACCESS}@file,${SIDE_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH},seadoc-strip@docker"
+- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${SIDE_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH},seadoc-strip@docker"
 ```
 
 ### No Traefik

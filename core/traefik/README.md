@@ -48,6 +48,11 @@ bash ops/scripts/validate.sh --strict   # published addresses, against the runni
 # (only from Tailscale/VPN by default)
 ```
 
+With Tailscale on this host, run `sudo tailscale set --snat-subnet-routes=false`
+unless the host routes subnets for the tailnet: by default `tailscaled` masquerades
+the requests it forwards to Docker, every VPN client reaches Traefik as the Docker
+gateway, and `access-vpn` answers 403 — [host-firewall.md](docs/host-firewall.md#reaching-the-routers-over-tailscale-on-the-host).
+
 ## Structure
 
 ```text
@@ -203,8 +208,12 @@ nothing (a breaking change; [`CHANGELOG.md`](../../CHANGELOG.md) 0.9.5).
 after.
 
 ```yaml
-middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}
+middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}
 ```
+
+The headers position stands first, so that a refusal by the access or limit
+position carries the HSTS base as well; the numbers below name the positions
+and are not their order ([`docs/standards/traefik-security.md`](../../docs/standards/traefik-security.md)).
 
 | Position | Variable | Values | Decided by |
 |---|---|---|---|
@@ -714,7 +723,21 @@ a measurement, not settled here (D2 in the core audit).
   level").
 - Origin records: `A` only, or `proxy-public` dual-stack — next paragraph.
 - Certificates: DNS-01 or HTTP-01. TLS-ALPN-01 cannot work behind the proxy
-  (above, Path C).
+  (above, Path C). DNS-01 sets a TXT record and never contacts the host, so a
+  proxied record does not hinder it: on the step 8 lab host a router with
+  `tls.certresolver=cloudflare-dns` for a proxied name had its certificate 20 s
+  after it appeared. Every name Cloudflare forwards needs a
+  certificate here — the TLS options set `sniStrict`, so a name the stored
+  certificates do not cover fails the handshake and Cloudflare answers **525**
+  (measured: a proxied name beside a wildcard for another name). A valid
+  certificate for the exact name is what *Full (strict)* checks.
+- Edge certificate: Cloudflare's free Universal certificate covers the zone and
+  one level below it (`example.com`, `*.example.com`), so a proxied name can sit
+  one level deep. A proxied wildcard one level further (`*.lab.example.com`)
+  fails at the edge before the origin is asked — measured, a TLS handshake
+  failure for such a name — unless the zone has a certificate for that level
+  (Cloudflare's Advanced Certificate Manager). The origin side is no obstacle:
+  DNS-01 issues such a wildcard.
 
 **IPv6 between Cloudflare and the origin.** Cloudflare connects to the origin
 over IPv6 when only an `AAAA` record exists, and possibly when both exist —
@@ -722,8 +745,11 @@ Cloudflare documents a preference for IPv4 there, not a guarantee. On an
 IPv4-only `proxy-public` Traefik is published on IPv4 only ("IPv4-only vs.
 Dual-Stack Networking" above), and such a connection is refused. So in
 `cloudflare` mode one of two must hold: `proxy-public` is dual-stack (the
-overlay above), or the origin has `A` records only. Neither shape is verified
-with Cloudflare yet.
+overlay above), or the origin has `A` records only. Measured on the step 8 lab
+host in `none` mode, origin with `A` and `AAAA`, `proxy-public` dual-stack: for
+clients over IPv4 and over IPv6 Cloudflare connected to the origin over IPv4
+(`X-Real-Ip` an edge IPv4 address, the client in `CF-Connecting-IP`). An origin
+with `AAAA` only is not verified.
 
 **Protect the origin.** Without this a client that connects to the host
 directly bypasses everything Cloudflare does — the edge rule, Cloudflare's own
@@ -769,7 +795,9 @@ VPN and LAN clients arrive on other interfaces and are not touched. A LAN that
 shares the public interface needs its ranges admitted in the same chain,
 before the drop. For boot, an `include` of this file from `/etc/nftables.conf`
 is enough — the flush there runs before Docker starts; on a running host never
-`systemctl restart nftables`, reload this file. After a change to
+`systemctl restart` or `stop` `nftables` without the drop-in
+`ops/systemd/nftables-no-flush.conf` (Debian's stop action flushes every table, also on
+a package upgrade — measured 2026-11-04, `docs/host-firewall.md`); reload this file. After a change to
 `ops/cloudflare-ips.txt`: render, reinstall the define file, `nft -f` this one.
 `destroy` needs nftables 1.0.8 or later, as the CrowdSec chains do. The table
 parses and loads (checked with `nft -c` and `nft -f` in a container during the
@@ -838,7 +866,10 @@ render again.
 1. The address at every hop through Cloudflare, IPv4 and IPv6: `whoami` behind
    `access-public`, the access log's `ClientHost` (last element), the bouncer's
    compared address (a manual decision answered `403`), Vaultwarden's lockout
-   address.
+   address. In `none` mode measured on the step 8 lab host: `whoami` behind
+   `access-public` through Cloudflare over IPv4 and IPv6 answered 200 with
+   `X-Real-Ip` the edge and `CF-Connecting-IP` the client; the `cloudflare` mode
+   is not.
 2. A closed route refusing a proxied request over IPv4 and over IPv6, with
    `proxy-public` dual-stack and with it IPv4-only.
 3. Forged `CF-Connecting-IP` and `X-Forwarded-For` from a direct client in both
@@ -984,6 +1015,13 @@ the lines `scripts/host-files.sh install-commands core/traefik` prints, then
 edit `/etc/traefik-watchdog.env` and `sudo systemctl enable --now
 traefik-watchdog.timer`. They are optional in the manifest, so a host without
 the watchdog reports them as `not installed` and nothing else.
+
+Without it a hung Traefik stays hung. Measured on the step 8 lab host: with the
+process frozen for 75 s, Docker reported the container `unhealthy` after 42 s and
+did nothing further; every router was unanswered until the process resumed. A crash
+is different — the restart policy brought a killed process back within 8 s — and so
+is a `docker kill` or `docker stop`, which Docker counts as a manual stop and does
+not restart.
 
 ## Backup
 

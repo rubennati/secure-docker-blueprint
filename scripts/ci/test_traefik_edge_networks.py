@@ -25,6 +25,7 @@ import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from test_traefik_dashboard_cert import BASE_ENV, TRAEFIK  # noqa: E402
+import no_daemon
 
 VALID_ENV = dict(BASE_ENV, ACME_WILDCARD_DOMAIN="example.com")
 
@@ -46,7 +47,7 @@ class EdgeNetworks(unittest.TestCase):
         return subprocess.run(["bash", str(self.root / "ops/scripts/render.sh")], capture_output=True, text=True)
 
     def validate(self):
-        return subprocess.run(["bash", str(self.root / "ops/scripts/validate.sh")], capture_output=True, text=True)
+        return subprocess.run(["bash", str(self.root / "ops/scripts/validate.sh")], capture_output=True, text=True, env=no_daemon.env())
 
     def rendered(self, env):
         r = self.render(env)

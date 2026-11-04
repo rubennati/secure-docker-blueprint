@@ -14,7 +14,7 @@
 - **Role:** Invoicing, quotes and payments
 - **Note:** Elastic License 2.0 is not OSI-approved — source-available, not open source. Self-hosting permitted; providing it as a managed service to others is restricted.
 - **Based on version:** `5.13.52`
-- **Last verified:** 2026-09-13 (5.13.40) — in-place upgrade from 5.13.26 on a live host: migrations ran, php-fpm ready, route unchanged. The first `up -d` failed on a container-name conflict left by the earlier service rename and left the application container created but not started — see `TROUBLESHOOTING.md` §5.3. 2026-07-29 (5.13.26) — on a live host: install, secrets through the wrapper entrypoint, routing under `acc-tailscale`, and an invoice created, sent by mail and opened in the client portal
+- **Last verified:** 2026-11-03 (5.13.52) — step 8 lab host behind Traefik 3.7.17 on its edge network: the README's setup, login and API, a client, an invoice with its PDF, the invoice mail and a payment, and the README's borgmatic entries restored into a throwaway instance (docs/labs/ingress/2026-11-01-results.md). Earlier: 2026-09-13 (5.13.40)
 
 ## Pinned Versions
 

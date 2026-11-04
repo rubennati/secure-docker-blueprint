@@ -45,17 +45,18 @@ docker compose -f docker-compose.local.yml --env-file .env.local up -d
 
 ## Verify on first deploy (Preview → Ready gate)
 
-Modeled on the proven OnlyOffice config, but the fork image has not been run here. Confirm:
+Run on the step 8 lab host on 2026-11-02 (`docs/labs/ingress/2026-11-01-results.md`, "Office servers"):
 
-- [ ] `docker compose up -d` — container healthy; `GET /healthcheck` returns `true`
-- [ ] Entrypoint path parity — the image still starts via `/app/ds/run-document-server.sh` (fork of OnlyOffice; verify if boot fails)
-- [ ] `JWT_SECRET` injected — no JWT value in `docker inspect euro-office-app`; JWT enforced (requests without a valid token are rejected)
-- [ ] End-to-end — a document opens and saves from Seafile/Nextcloud using the shared secret
-- [ ] Behind a closed access policy the save callback reaches the app: Nextcloud by its
-      internal `StorageUrl` over its `office.yml` (its README, "Office servers behind a
-      closed route"), Seafile
+- [x] `docker compose up -d` — container healthy; `GET /healthcheck` returns `true` after about 45 s, the first document opens about 20 s later
+- [x] Entrypoint and paths — the image starts with `/entrypoint.sh` and keeps its data and logs under `euro-office` paths, not OnlyOffice's (corrected after the step 8 lab run: with OnlyOffice's path the container exited 127)
+- [x] Recreate keeps the state — `down` and `up -d` with the existing volumes: healthy again, the WOPI keys and secure-link secret unchanged, documents open and save
+- [x] `JWT_SECRET` injected from the Docker secret; requests without a valid token are rejected (command service error 6, conversion error -8)
+- [x] End-to-end — DOCX, XLSX and PPTX open, save and reopen from Nextcloud and Seafile CE and Pro, with the OnlyOffice connector and settings
+- [x] Behind a closed access policy the save callback reaches the app: Nextcloud by its
+      internal `StorageUrl` over its `office.yml` (its README, "Office servers behind a closed route"), Seafile
       through `onlyoffice-callback.yml` or the server's address in `TRUSTED_RANGES`
-- [ ] `EXAMPLE_ENABLED` is off — `https://<host>/example/` is not reachable
+- [x] `EXAMPLE_ENABLED` is off — `/example/` answers 502; the admin panel is off too (`ADMINPANEL_ENABLED`
+      defaults to false) but routed at `/admin`, so enabling it would publish it on this route
 
 ## Backup
 

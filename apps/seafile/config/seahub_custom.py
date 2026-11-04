@@ -30,8 +30,13 @@ if _smtp_host:
     SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
 # --- OnlyOffice Integration ---
-ENABLE_ONLYOFFICE = True
+# On only when the stack holds OnlyOffice's JWT secret (README, setup step 4) and
+# ONLYOFFICE_HOST names a host; an empty file or the placeholder keeps it off. Always on, Seahub opened
+# every office file in an editor page that loads api.js from ONLYOFFICE_HOST even
+# where no Document Server answers there.
+ONLYOFFICE_JWT_SECRET = os.environ.get('ONLYOFFICE_JWT_SECRET', '').strip()
+ENABLE_ONLYOFFICE = (ONLYOFFICE_JWT_SECRET not in ('', '__REPLACE_ME__')
+                     and os.environ.get('ONLYOFFICE_URL', '').rstrip('/') not in ('', 'https:', 'https:/'))
 ONLYOFFICE_APIJS_URL = os.environ.get('ONLYOFFICE_URL', '') + '/web-apps/apps/api/documents/api.js'
-ONLYOFFICE_JWT_SECRET = os.environ.get('ONLYOFFICE_JWT_SECRET', '')
 ONLYOFFICE_FILE_EXTENSION = ('doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'odt', 'fodt', 'odp', 'fodp', 'ods', 'fods', 'ppsx', 'pps', 'csv')
 ONLYOFFICE_EDIT_FILE_EXTENSION = ('docx', 'pptx', 'xlsx', 'csv')

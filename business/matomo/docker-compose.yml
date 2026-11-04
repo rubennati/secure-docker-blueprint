@@ -153,7 +153,7 @@ services:
       # the profile and add the two headers Matomo does not send (measured
       # 2026-10-18; not verified on a host yet). forwarded-proto-https@file
       # after the four: Matomo builds its URLs from X-Forwarded-Proto.
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,header-nosniff@file,header-permissions@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH},forwarded-proto-https@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=header-nosniff@file,header-permissions@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH},forwarded-proto-https@file"
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
 

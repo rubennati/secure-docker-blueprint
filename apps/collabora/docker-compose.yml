@@ -16,6 +16,8 @@ services:
     # cap_add MKNOD: Collabora builds a per-document LibreOffice jail (chroot)
     # and needs mknod for it. no-new-privileges is kept per baseline — if the
     # sandbox fails to start on your host, that is the first thing to relax.
+    # Measured (step 8 lab host): with this set coolwsd builds no chroot jail — it
+    # runs each document in a Landlock jail instead (README, "Sandbox").
     security_opt:
       - no-new-privileges:true
     cap_drop:
@@ -69,7 +71,7 @@ services:
       # Middlewares — the four positions; nosniff and the stack's frame-ancestors
       # CSP before the headers profile (response headers that must win over it),
       # the proto header after the four.
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,header-nosniff@file,${COMPOSE_PROJECT_NAME}-csp@docker,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH},forwarded-proto-https@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=header-nosniff@file,${COMPOSE_PROJECT_NAME}-csp@docker,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH},forwarded-proto-https@file"
       # Proxy headers: Collabora runs with ssl.termination=true and needs X-Forwarded-Proto.
       # The frame-ancestors CSP the stack owns — the file host that embeds the
       # editor is named by the operator. nosniff is header-nosniff@file, HSTS is
@@ -79,9 +81,11 @@ services:
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=9980"
 
     # --- Health & Observability ---
-    # Collabora image has bash — TCP liveness on 9980 (no curl guaranteed).
+    # The image has no shell and no curl; a CMD-SHELL test never ran, the container
+    # stayed unhealthy and Traefik left it out of its routing (step 8 lab host).
+    # coolwsd's own probe is the image's HEALTHCHECK.
     healthcheck:
-      test: ["CMD-SHELL", "bash -c 'cat < /dev/null > /dev/tcp/127.0.0.1/9980' || exit 1"]
+      test: ["CMD", "/usr/bin/coolwsd", "--probe", "--use-env-vars"]
       interval: 30s
       timeout: 10s
       retries: 5

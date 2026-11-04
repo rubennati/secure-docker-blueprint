@@ -35,11 +35,27 @@ docker compose logs -f
 
 ## Adding Wildcard Zones
 
-In `.env`:
+In `.env`, one slot per zone (`_1` … `_9`), with an address per family:
 
 ```env
 DNS_WILDCARD_1_DOMAIN=test.lab.example.com
 DNS_WILDCARD_1_IP=100.100.100.10
+DNS_WILDCARD_1_IP6=fd7a:115c:a1e0::10
+```
+
+**Split DNS for a VPN needs both `A` and `AAAA`.** With only the `A` answer, a client that
+prefers IPv6 asks the upstream resolver for `AAAA`, receives the host's public address and
+leaves the tunnel — the VPN-only router then refuses it with 403. Measured on the step 8
+lab host; [`core/traefik/docs/host-firewall.md`](../traefik/docs/host-firewall.md)
+describes the path. Set `_IP6` to the host's tailnet IPv6 address whenever the host has
+one. An empty slot renders no line (`address=/zone/` without an address would answer
+NXDOMAIN for the whole zone), and `render.sh` prints a note for a zone without IPv6.
+
+Check both answers after a render:
+
+```bash
+dig +short A    anything.test.lab.example.com @127.0.0.1
+dig +short AAAA anything.test.lab.example.com @127.0.0.1
 ```
 
 After changing `.env`, re-render and restart:
@@ -97,7 +113,8 @@ nslookup google.com 127.0.0.1
 
 ## IPv6
 
-dnsmasq supports IPv6 natively. Upstream DNS and wildcard zones work for both A and AAAA records.
+dnsmasq supports IPv6 natively. Upstream DNS works for both families; a wildcard zone
+answers `AAAA` only when its `_IP6` slot is set (above).
 
 In `config/records.hosts`:
 

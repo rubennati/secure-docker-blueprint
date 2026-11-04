@@ -21,6 +21,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from test_traefik_dashboard_cert import BASE_ENV, TRAEFIK  # noqa: E402
+import no_daemon
 
 VALID_ENV = dict(BASE_ENV, ACME_WILDCARD_DOMAIN="example.com", TRAEFIK_FORWARDED_PROXY="none")
 EXPOSURE_TEST = TRAEFIK.parents[1] / "scripts" / "exposure-test.sh"
@@ -45,7 +46,7 @@ class Rendered(unittest.TestCase):
         return r.stdout
 
     def validate(self, *args):
-        return subprocess.run(["bash", str(self.root / "ops/scripts/validate.sh"), *args], capture_output=True, text=True)
+        return subprocess.run(["bash", str(self.root / "ops/scripts/validate.sh"), *args], capture_output=True, text=True, env=no_daemon.env())
 
     def nft(self):
         return (self.root / "config" / "host" / "ingress.nft").read_text(encoding="utf-8")
@@ -99,6 +100,7 @@ class HostFirewall(Rendered):
         self.assertIn("type filter hook input priority filter - 10; policy drop;", text)
         self.assertIn("type filter hook forward priority filter - 10; policy accept;", text)
         self.assertIn(f'iifname != "tailscale0" ip6 saddr @vpn_v6 drop', text)
+        self.assertIn(f'iifname != "tailscale0" ip saddr @vpn_v4 drop', text)
         self.assertIn(f"elements = {{ {BASE_ENV['TAILSCALE_CIDR_V4']} }}", text)
         self.assertIn("ip saddr @vpn_v4 accept", text)
         self.assertNotIn("ct status dnat", text, "a direct profile filters nothing on the published ports")
@@ -116,6 +118,20 @@ class HostFirewall(Rendered):
     def test_the_vpn_interface_comes_from_the_env(self):
         self.render(dict(VALID_ENV, VPN_INTERFACE="wg0"))
         self.assertIn('iifname != "wg0" ip6 saddr @vpn_v6 drop', self.nft())
+        self.assertIn('iifname != "wg0" ip saddr @vpn_v4 drop', self.nft())
+
+    def test_both_vpn_ranges_are_spoof_protected_on_input_and_forward_before_any_accept(self):
+        # FA-20: Tailscale's own IPv4 rule exists only while tailscaled runs.
+        for env in (VALID_ENV, dict(VALID_ENV, TRAEFIK_FORWARDED_PROXY="cloudflare")):
+            self.render(env)
+            text = self.nft()
+            for chain in ("input", "forward"):
+                body = text.split(f"chain {chain} {{", 1)[1].split("\n  }", 1)[0]
+                lines = [l.strip() for l in body.splitlines() if l.strip() and not l.strip().startswith("#")]
+                d4 = lines.index('iifname != "tailscale0" ip saddr @vpn_v4 drop')
+                d6 = lines.index('iifname != "tailscale0" ip6 saddr @vpn_v6 drop')
+                accepts = [i for i, l in enumerate(lines) if l.endswith("accept") and not l.startswith(("type ", "iif lo", "ct state"))]
+                self.assertTrue(all(max(d4, d6) < i for i in accepts), (chain, lines))
 
     @unittest.skipUnless(shutil.which("nft"), "nft is needed to check the ruleset")
     def test_every_profile_renders_a_ruleset_nft_accepts(self):

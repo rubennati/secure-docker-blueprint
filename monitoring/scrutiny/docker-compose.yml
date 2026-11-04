@@ -163,7 +163,7 @@ services:
       - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-auth.basicauth.realm=Scrutiny"
       # Middlewares — the four positions; APP_TRAEFIK_AUTH (.env) names the
       # basic-auth gate above, provider-qualified.
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8080"
 

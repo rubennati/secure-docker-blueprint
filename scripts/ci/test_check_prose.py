@@ -250,6 +250,8 @@ class RetiredNames(unittest.TestCase):
     def test_the_threat_names_match_whole_and_not_inside_the_models_name(self):
         self.assertEqual(retired("Attach `crowdsec-basic@file` to the router.\n", "docs/standards/x.md"), {"crowdsec-basic"})
         self.assertEqual(retired("The entrypoint carries `threat-crowdsec-appsec@file`.\n", "docs/standards/x.md"), set())
+        # CrowdSec's own hub names are not the retired middleware
+        self.assertEqual(retired("The scenario `crowdsecurity/crowdsec-appsec-outofband` bans.\n", "docs/standards/x.md"), set())
 
     def test_retired_names_warn_until_the_gate_is_on(self):
         rows = [("apps/x/README.md", 1, "sec-2", "retired name", "", "", frozenset({1}))]

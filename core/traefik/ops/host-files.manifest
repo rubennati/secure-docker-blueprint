@@ -10,3 +10,7 @@ config/host/cloudflare-ranges.nft              /etc/nftables.d/cloudflare-ranges
 # Rendered by ops/scripts/render.sh for the derived exposure profile (DEC-078); the recommended
 # host firewall — read docs/host-firewall.md before loading it, it closes the input path.
 config/host/ingress.nft                        /etc/nftables.d/ingress.nft                       0644  root:root  exact    optional
+# Debian's nftables.service flushes the whole ruleset on stop, restart and package upgrade;
+# this drop-in limits the stop to the blueprint's table (docs/host-firewall.md). Install it
+# together with ingress.nft, then `systemctl daemon-reload` — never a restart to apply it.
+ops/systemd/nftables-no-flush.conf             /etc/systemd/system/nftables.service.d/10-blueprint-no-flush.conf  0644  root:root  exact  optional

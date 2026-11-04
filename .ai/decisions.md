@@ -578,6 +578,20 @@ the header set their own middleware set, minus the obsolete XSS filter, until me
 A secondary router keeps the effective value it had wherever the review's value was an
 assumption.
 
+**Addendum 2026-11-04 — the headers position first on the router.** D2 names four
+positions "equal in rank"; their order on the router was access, limit, headers, auth.
+The final audit of the step 8 host found that order leaves every refusal by the access
+position (403) — and a 429 of the limit, a gate's redirect — without the HSTS base, because
+a headers middleware sets its response headers only on what passes through it (FA-13).
+The order is now headers, access, limit, auth; the numbers keep naming the positions.
+D1's reason against the entrypoint holds and was measured again on 2026-11-04: the
+outermost headers middleware wins on a header both set, so an entrypoint profile would
+override `hsts-include-subdomains`; the per-app blocks that must win over the profile
+still stand before it. Not covered: a refusal by the entrypoint's threat position (a ban)
+carries no profile. Verification: mechanical — scripts/ci/check-structure.py
+(`router-positions`), scripts/ci/test_traefik_router_model.py; host — the step 8 lab host,
+2026-11-04 (a 403 of `access-vpn` with HSTS, the answered routers unchanged).
+
 ---
 
 ## 2026-10-16 · Dual-stack is the default for new installations; IPv4-only and IPv6-only are supported variants

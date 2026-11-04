@@ -11,14 +11,14 @@
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Newsletter and mailing-list manager
 - **Based on version:** `v6.2.0`
-- **Last checked:** 2026-05-03
+- **Last verified:** 2026-11-03 (v6.2.0) — step 8 lab host behind Traefik 3.7.17 on its edge network: the super admin on the first visit, login, a double opt-in list, the public subscription form, the opt-in and a campaign mail; the README's borgmatic entry did not restore (the host's PostgreSQL client), the PostgreSQL 16 client did (docs/labs/ingress/2026-11-01-results.md). Earlier: 2026-05-03 (Last checked)
 
 ## What we use
 
 - Official `listmonk/listmonk` image
 - PostgreSQL as backing database
 - Docker Secrets for database password
-- One Traefik router on `access-public` as shipped, with `frame-self@file` before `headers-standard`; the split — admin UI VPN-only, subscriber paths (`/subscription`, `/link`, `/campaign`) public — is a second router the README describes
+- One Traefik router on `access-vpn` as shipped (closed until the owner exists and SMTP is set — final audit FA-01), with `frame-self@file` before `headers-standard`; the split — admin UI VPN-only, subscriber paths (`/subscription`, `/link`, `/campaign`) public — is a second router the README describes
 
 ## What we changed vs. upstream examples
 
@@ -34,7 +34,7 @@
 ```yaml
 # The one router as shipped — public, with frame-self before the headers profile
 - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
-- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,frame-self@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=frame-self@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
 ```
 
 The admin-VPN-only split is a second, path-scoped router on `access-vpn`; the

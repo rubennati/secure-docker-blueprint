@@ -44,7 +44,7 @@ services:
     restart: unless-stopped
     security_opt: [no-new-privileges:true]
     command: >
-      sh -c 'exec redis-server
+      sh -c 'exec docker-entrypoint.sh redis-server
       --requirepass "$$REDIS_PASSWORD"
       --maxmemory 512mb
       --maxmemory-policy noeviction'
