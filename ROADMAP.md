@@ -18,14 +18,15 @@ Pre-1.0 tags are set when a natural milestone is reached, not on a fixed cadence
 The single criterion for v1.0 is: **could someone fork this and run it without
 needing my mental model?**
 
-**Latest tag: v0.9.6 — Current pins, a recorded baseline, the update programme
-(2026-10-31).** The lock files carry no open npm advisory, the image CVE baseline
-records every known CRITICAL pair with its assessment and is checked on every
-push to `main`, and seven image pins stand at the newest patch release of their
-line. The programme that brings every stack to its current upstream release is
+**Latest tag: v0.9.7 — The ingress programme, verified on a host
+(2026-11-05).** How traffic reaches a stack — bindings per address family, an
+edge network per stack, access policies, the auth posture, the rendered host
+ruleset — was rebuilt in eight steps and measured on a dual-stack host; the
+faults that run found are fixed, and fourteen stacks are `ops-proven`. The
+programme that brings every stack to its current upstream release is
 [`docs/audits/upstream-version-inventory-2026-10-31.md`](docs/audits/upstream-version-inventory-2026-10-31.md);
-batch 1 of seven is done, none of it run on a host. What has and has not been
-established per stack is in [`LIFECYCLE.md`](LIFECYCLE.md).
+batches 1 and 2 of seven are done, none of them run on a host. What has and has
+not been established per stack is in [`LIFECYCLE.md`](LIFECYCLE.md).
 
 ### v0.10.0 — Measured resource limits
 

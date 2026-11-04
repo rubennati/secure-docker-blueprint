@@ -319,9 +319,11 @@ declares nothing — the render-identity test holds that.
       `feature/ingress-step-7-ipv6`. Open for step 8: the IPv6 gateway endpoint on a
       host, an IPv6-only host (ingress and the egress prerequisites), the bound
       stacks reached over their binding.
-- [ ] 8. Host evidence and release; `ipv6-only` stays "not verified" until its own run.
-      The plan: [`docs/host-verification-ingress.md`](../docs/host-verification-ingress.md)
-      (blocks P–O and the release gate); every row not run.
+- [x] 8. Host evidence and release. Run on the step 8 lab host 2026-11-01 to 2026-11-04
+      against [`docs/host-verification-ingress.md`](../docs/host-verification-ingress.md),
+      results in its table and in `docs/labs/ingress/2026-11-01-results.md`; released in
+      v0.9.7. Not verified: the LAN columns of block A (no LAN on the host), IPv6-only
+      (block O, its own run), CrowdSec's blocking in the host firewall.
 
 ## Blocked on a host
 

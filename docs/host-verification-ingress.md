@@ -305,8 +305,9 @@ The run report is [`labs/ingress/2026-11-01-results.md`](labs/ingress/2026-11-01
 A cell marked "not testable on H1" was not measured and is not a pass. The LAN
 columns of A stay open for the release gate like any row not passed; with them,
 the admitting half of `access-trusted` and `access-trusted-vpn` from a declared
-range is unmeasured on any host. The tailnet columns of A, A8, F and M2 stay open
-until the VPN block runs.
+range is unmeasured on any host. v0.9.7 was released with them open and names them
+in its release notes as not verified (decision of 2026-11-05). The tailnet columns
+of A, A8, F and M2 ran in the VPN block on 2026-11-03.
 
 A row corrected after the run — A9 and N2 their expectation, N5 its method — keeps its
 first result and names the correction; the release gate judges it against the row as it
