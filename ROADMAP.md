@@ -65,6 +65,21 @@ Open in this repository:
   TLS exceptions without a recorded reason. The list is section 5 of
   [`core/traefik/docs/middleware-model-migration.md`](core/traefik/docs/middleware-model-migration.md#5-not-verified-on-a-host);
   it is measured in host sessions, not in editing.
+- **Trusted proxies narrowed to the Traefik hop.** An application behind its own
+  nginx has to trust the proxy that sets `X-Forwarded-For` and `X-Forwarded-Proto`,
+  and only that proxy. `business/invoiceninja` ships `TRUSTED_PROXIES` with the
+  ranges measured on the step 8 lab host — Docker's default pools — as an interim
+  value, not a standard: it trusts every container Docker can address.
+  `apps/nextcloud`'s `NC_TRUSTED_PROXIES` asks for the edge network's subnet, which
+  Docker assigns per host and anew when the network is recreated. The target
+  (decision of 2026-11-04): `core/traefik` creates each edge network on a subnet
+  the operator chooses, so the value is known and stays. A subnet is the same
+  boundary as Traefik's own address only while the edge network holds Traefik and
+  the stack's front container alone; an overlay that adds a member
+  (`apps/nextcloud/office.yml` puts Nextcloud's nginx on the office server's edge
+  network) or the shared `proxy-public` widens it, so the work decides whether the
+  trust names the subnet or a fixed Traefik address in it. Not implemented; it is
+  measured on a host before it replaces the interim value.
 
 Decision pending, with a possible impact on v1.0 — the site's personal data:
 see [A public repository should not carry personal data](#a-public-repository-should-not-carry-personal-data).

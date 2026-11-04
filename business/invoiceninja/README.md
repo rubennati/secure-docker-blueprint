@@ -149,7 +149,7 @@ curl -sI https://your-domain/            # 200 or 302
 - [ ] SMTP configured and tested (send a test invoice)
 - [ ] Backup strategy in place (see UPSTREAM.md)
 - [ ] Upgrade check: verify `APP_TAG` against latest stable release (see UPSTREAM.md)
-- [ ] `TRUSTED_PROXIES` covers the network Traefik reaches nginx on — Docker's default address pools as shipped, the edge network's subnet once you pin it (`.env.example`, "TRUSTED_PROXIES")
+- [ ] `TRUSTED_PROXIES` covers the network Traefik reaches nginx on — Docker's default address pools as shipped, the edge network's subnet once you pin it (`.env.example`, "TRUSTED_PROXIES"). The shipped ranges are the value measured on the step 8 lab host, an interim value and not a recommended standard: they trust more containers than Traefik ([`ROADMAP.md`](../../ROADMAP.md), "Trusted proxies narrowed to the Traefik hop")
 
 ## Services
 
