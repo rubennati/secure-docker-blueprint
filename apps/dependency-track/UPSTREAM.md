@@ -97,7 +97,7 @@ this trap.
   `/v1/finding/project/{uuid}/analyze` and removes the distrusted eMudhra root
   from the image's CA store; no GHSA published. The frontend has no breaking
   change.
-- Moved `postgres` from `16-alpine` to `18-alpine` on 2026-11-05, not run on a
+- Moved `postgres` from `16-alpine` to `18.6-alpine` on 2026-11-05, not run on a
   host at this tag. PostgreSQL 18 support: "The lowest supported version is 11.
   You are encouraged to use the newest available version."
   (https://dependencytrack.github.io/hyades/latest/operations/database). The 18

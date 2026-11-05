@@ -44,7 +44,7 @@
   `23.0.4` is the newest 23.x image (2026-08-29). CVE-2026-23500 (critical, OS command
   injection via `MAIN_ODT_AS_PDF`) is fixed on this line. Moved on 2026-09-13; schedule 24.x as
   its own piece of work.
-- Moved `mariadb` from `11.4` to `12.3`, the current LTS line, on 2026-11-05,
+- Moved `mariadb` from `11.4` to `12.3.3`, the current LTS line, on 2026-11-05,
   not run on a host at this tag. Support: Dolibarr requires MariaDB 10.3 or
   newer with no upper bound
   (https://wiki.dolibarr.org/index.php?title=Prerequisites).

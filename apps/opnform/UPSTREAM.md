@@ -89,7 +89,7 @@ Key design choices:
   CVE-2026-40460 (1.31.0), CVE-2026-9256 (1.31.1), CVE-2026-42530 (1.31.2),
   CVE-2026-56434 (1.31.3), CVE-2026-90439 (1.31.6), CVE-2026-15176,
   CVE-2026-93479, CVE-2026-95101, CVE-2026-97629 and CVE-2026-97205 (1.31.7).
-- Moved `redis` from `7.4-alpine` to `8.10-alpine` on 2026-11-05, a new major, not
+- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major, not
   run on a host at this tag; the tag follows the 8.10 patch releases (8.10.3,
   2026-10-26). Redis 8 is offered under RSALv2, SSPLv1 or AGPLv3 at the user's
   choice (7.4: RSALv2 or SSPLv1). The image bundles the Query Engine, JSON, time

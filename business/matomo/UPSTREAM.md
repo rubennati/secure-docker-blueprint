@@ -51,7 +51,7 @@
   carries the fix for — updating Matomo alone does not. On an existing install the
   tag bump moves PHP and the OS but not Matomo's own code until checklist step 4 is
   run; this applied to every earlier bump of this stack as well.
-- Moved `mariadb` from `11.4` to `12.3`, the current LTS line, on 2026-11-05,
+- Moved `mariadb` from `11.4` to `12.3.3`, the current LTS line, on 2026-11-05,
   not run on a host at this tag. Support: Matomo 5 requires MySQL 5.5 or newer
   or MariaDB, and Matomo 6 MariaDB 10.6 or newer, neither with an upper bound
   (https://matomo.org/faq/on-premise/matomo-requirements/).

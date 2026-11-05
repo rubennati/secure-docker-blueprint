@@ -93,7 +93,7 @@
   "$POSTGRES_USER" -d postgres' < dump.sql` (errors that the bootstrap role and
   database already exist are expected); then `docker compose up -d`. A return to
   the old major is only a restore of that dump.
-- Moved `redis` from `7.4-alpine` to `8.10-alpine` on 2026-11-05, a new major, not
+- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major, not
   run on a host at this tag; the tag follows the 8.10 patch releases (8.10.3,
   2026-10-26). Redis 8 is offered under RSALv2, SSPLv1 or AGPLv3 at the user's
   choice (7.4: RSALv2 or SSPLv1). The image bundles the Query Engine, JSON, time

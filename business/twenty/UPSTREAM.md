@@ -157,7 +157,7 @@ backup and restore; an upgrade across versions.
   (v2.48.0), GHSA-j86q-q8c2-f8x7 (v2.52.0), CVE-2026-93990 in libexpat
   (v2.43.0), and a TOTP code replay (v2.55.0). GHSA-m4vm-35cw-44rq (high) and
   GHSA-pg47-7c3r-fwfx name no patched release.
-- Moved `redis` from `7.4-alpine` to `8.10-alpine` on 2026-11-05, a new major, not
+- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major, not
   run on a host at this tag; the tag follows the 8.10 patch releases (8.10.3,
   2026-10-26). Redis 8 is offered under RSALv2, SSPLv1 or AGPLv3 at the user's
   choice (7.4: RSALv2 or SSPLv1). The image bundles the Query Engine, JSON, time

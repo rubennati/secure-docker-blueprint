@@ -177,7 +177,7 @@ docker compose up -d
   CVE-2026-42530, CVE-2026-42055, CVE-2026-48142, CVE-2026-42533, CVE-2026-60005,
   CVE-2026-56434, CVE-2026-90439, CVE-2026-15176, CVE-2026-93479, CVE-2026-95101,
   CVE-2026-97629, CVE-2026-97205.
-- Moved `redis` from `8.6-alpine` to `8.10-alpine` on 2026-11-05, not run on a host
+- Moved `redis` from `8.6-alpine` to `8.10.3-alpine` on 2026-11-05, not run on a host
   at this tag; across 8.8 and 8.10, minor releases of the same major with no
   breaking change listed (they add commands, compact hashes and performance work).
   Redis does not load data files written by a newer version, so a rollback needs the

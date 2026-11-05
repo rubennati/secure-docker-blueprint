@@ -54,7 +54,7 @@
   database backup before, not during, the upgrade; rollback is restoring that
   snapshot. No variable this stack sets changed. No advisory is listed in the
   repository's advisory feed for the range.
-- Moved `postgres` from `16-alpine` to `18-alpine` on 2026-11-05, not run on a
+- Moved `postgres` from `16-alpine` to `18.6-alpine` on 2026-11-05, not run on a
   host at this tag. PostgreSQL 18 support: the requirements recommend version 14
   and up, with no upper bound
   (https://infisical.com/docs/self-hosting/configuration/requirements); upstream

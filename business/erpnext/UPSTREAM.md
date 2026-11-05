@@ -177,7 +177,7 @@ documents, stock and reports; email; PDF printing; an image upgrade with
   it by default and Frappe background jobs then fail with error 1020.
   No ERPNext advisory names a fix after v16.35.0; the move clears CRITICAL
   findings in the image scan.
-- Moved `redis` from `8.6-alpine` to `8.10-alpine` on 2026-11-05, not run on a host
+- Moved `redis` from `8.6-alpine` to `8.10.3-alpine` on 2026-11-05, not run on a host
   at this tag; across 8.8 and 8.10, minor releases of the same major with no
   breaking change listed (they add commands, compact hashes and performance work).
   Redis does not load data files written by a newer version, so a rollback needs the

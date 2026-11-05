@@ -168,7 +168,7 @@ is the real fix, and it changes the configuration rather than a tag.
   < dump.sql` (errors that the bootstrap role and database already exist are
   expected); then `docker compose up -d`. A return to the old major is only a
   restore of that dump.
-- Moved `clickhouse/clickhouse-server` from `25.12` to `26.10` on 2026-11-05,
+- Moved `clickhouse/clickhouse-server` from `25.12` to `26.10.3.7` on 2026-11-05,
   not run on a host at this tag. The tag keeps the minor precision the stack
   used; `26.10` points at 26.10.3.7 (2026-10-26), the newest stable release.
   Langfuse v4 needs ClickHouse 25.12 or newer and names no upper bound
@@ -191,7 +191,7 @@ is the real fix, and it changes the configuration rather than a tag.
   `arrayCount` now returns `UInt64` and `accurateCast` to `Nullable` throws
   instead of returning NULL; neither appears in Langfuse's release notes as a
   problem.
-- Moved `redis` from `7.4-alpine` to `8.10-alpine` on 2026-11-05, a new major, not
+- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major, not
   run on a host at this tag; the tag follows the 8.10 patch releases (8.10.3,
   2026-10-26). Redis 8 is offered under RSALv2, SSPLv1 or AGPLv3 at the user's
   choice (7.4: RSALv2 or SSPLv1). The image bundles the Query Engine, JSON, time

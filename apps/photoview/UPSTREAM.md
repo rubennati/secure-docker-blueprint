@@ -41,7 +41,7 @@
 
 ## Version notes
 
-- Moved `mariadb` from `11.4` to `12.3`, the current LTS line, on 2026-11-05,
+- Moved `mariadb` from `11.4` to `12.3.3`, the current LTS line, on 2026-11-05,
   not run on a host at this tag. Support: Photoview's example compose and its CI
   use the floating `mariadb:lts` tag, which is 12.3
   (https://github.com/photoview/photoview, `docker-compose example/` and

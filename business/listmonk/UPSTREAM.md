@@ -42,7 +42,7 @@ README carries it under "Access split".
 
 ## Version notes
 
-- Moved `postgres` from `16-alpine` to `18-alpine` on 2026-11-05, not run on a
+- Moved `postgres` from `16-alpine` to `18.6-alpine` on 2026-11-05, not run on a
   host at this tag. PostgreSQL 18 support: the installation docs require
   Postgres 12 or newer, with no upper bound
   (https://listmonk.app/docs/installation/); `smtp-guard` uses the same image as

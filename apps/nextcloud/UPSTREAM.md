@@ -114,7 +114,7 @@ If fpm-alpine + nginx causes issues:
   image the scan had pulled under that tag carried `brotli-libs` 1.2.0
   (CVE-2026-111497); the 1.31.8 build on Alpine 3.24.3 ships no brotli library
   at all. CRITICAL findings 1 -> 0. No configuration change.
-- Moved `redis` from `7.4-alpine` to `8.10-alpine` on 2026-11-05, a new major, not
+- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major, not
   run on a host at this tag; the tag follows the 8.10 patch releases (8.10.3,
   2026-10-26). Redis 8 is offered under RSALv2, SSPLv1 or AGPLv3 at the user's
   choice (7.4: RSALv2 or SSPLv1). The image bundles the Query Engine, JSON, time
@@ -155,7 +155,7 @@ If fpm-alpine + nginx causes issues:
   during `occ upgrade`. Supported until 2027-09-15
   ([v35.0.2](https://github.com/nextcloud-releases/server/releases/tag/v35.0.2),
   [schedule](https://github.com/nextcloud/server/wiki/Maintenance-and-Release-Schedule)).
-- Moved `mariadb` from `11.8` to `12.3`, the current LTS line, on 2026-11-05,
+- Moved `mariadb` from `11.8` to `12.3.3`, the current LTS line, on 2026-11-05,
   not run on a host at this tag. Nextcloud 35 lists 12.3 as recommended;
   Nextcloud 34 supports it too, so take the two steps apart as README.md
   "Updates" says: first `DB_TAG` with `APP_TAG` still on 34, then `APP_TAG`.

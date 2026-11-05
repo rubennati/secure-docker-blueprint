@@ -61,7 +61,7 @@
   GHSA-cqj8-fxxf-9pg7) plus a libxml2 DOCTYPE patch; 2026.8.5 bumps
   certificate-related dependencies after the eMudhra CA incident.
   https://docs.goauthentik.io/docs/releases/2026.8
-- Moved `postgres` from `16-alpine` to `18-alpine` on 2026-11-05, not run on a
+- Moved `postgres` from `16-alpine` to `18.6-alpine` on 2026-11-05, not run on a
   host at this tag. PostgreSQL 18 support: "authentik supports PostgreSQL 14 -
   18" (https://docs.goauthentik.io/install-config/configuration/); upstream's CI
   runs 14 and 18. The 18 image keeps its cluster under
@@ -80,7 +80,7 @@
   the minor precision the stack used, so patch releases of 3.24 arrive on pull.
   `ops/scripts/init-volumes.sh` uses only BusyBox `mkdir`, `chown` and `chmod`,
   which no release from 3.20 to 3.24 changes. https://alpinelinux.org/releases/
-- Moved `redis` from `7.4-alpine` to `8.10-alpine` on 2026-11-05, a new major, not
+- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major, not
   run on a host at this tag; the tag follows the 8.10 patch releases (8.10.3,
   2026-10-26). Redis 8 is offered under RSALv2, SSPLv1 or AGPLv3 at the user's
   choice (7.4: RSALv2 or SSPLv1). The image bundles the Query Engine, JSON, time

@@ -57,7 +57,7 @@
   vulnerability (v7.11.0), complete stripping against XSS and blocking of
   IPv6-transition spellings of internal IPv4 addresses (v7.10.0), dependency CVEs
   (v7.8.4).
-- Moved `mariadb` from `11.4` to `12.3`, the current LTS line, on 2026-11-05,
+- Moved `mariadb` from `11.4` to `12.3.3`, the current LTS line, on 2026-11-05,
   not run on a host at this tag. Support: Lychee requires "MariaDB (version >
   10.2)" with no upper bound
   (https://lycheeorg.dev/docs/getting-started/manual-installation/); upstream's
@@ -70,7 +70,7 @@
   row another transaction changed after its snapshot fails with error 1020
   instead of overwriting it; the new default collation `utf8mb4_uca1400_ai_ci`
   does not apply, as the stack sets `utf8mb4_unicode_ci` explicitly.
-- Moved `redis` from `7.4-alpine` to `8.10-alpine` on 2026-11-05, a new major, not
+- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major, not
   run on a host at this tag; the tag follows the 8.10 patch releases (8.10.3,
   2026-10-26). Redis 8 is offered under RSALv2, SSPLv1 or AGPLv3 at the user's
   choice (7.4: RSALv2 or SSPLv1). The image bundles the Query Engine, JSON, time

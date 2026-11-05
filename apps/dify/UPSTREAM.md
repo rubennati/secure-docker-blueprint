@@ -193,7 +193,7 @@ the model backend:
   0.6.11 also stops plugin subprocesses inheriting the daemon's environment and keeps
   the uv cache inside the container: whether plugins still install with `HOME=/tmp`
   and the read-only root is the first thing to check on a host.
-- Moved `redis` from `7.4-alpine` to `8.10-alpine` on 2026-11-05, a new major, not
+- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major, not
   run on a host at this tag; the tag follows the 8.10 patch releases (8.10.3,
   2026-10-26). Redis 8 is offered under RSALv2, SSPLv1 or AGPLv3 at the user's
   choice (7.4: RSALv2 or SSPLv1). The image bundles the Query Engine, JSON, time

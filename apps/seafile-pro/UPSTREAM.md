@@ -232,7 +232,7 @@ If you need Elasticsearch instead of SeaSearch:
   CVE-2026-20337 and CVE-2026-20338, which affect only 1.5.0 to 1.5.3, plus
   CVE-2026-20339, CVE-2026-20345 to CVE-2026-20348 and CVE-2025-8088, which
   1.4.6 fixes too. https://github.com/Cisco-Talos/clamav/releases
-- Moved `redis` from `7.4-alpine` to `8.10-alpine` on 2026-11-05, a new major, not
+- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major, not
   run on a host at this tag; the tag follows the 8.10 patch releases (8.10.3,
   2026-10-26). Redis 8 is offered under RSALv2, SSPLv1 or AGPLv3 at the user's
   choice (7.4: RSALv2 or SSPLv1). The image bundles the Query Engine, JSON, time

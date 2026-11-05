@@ -41,7 +41,7 @@ https://github.com/opf/openproject/releases
   used here). Advisories fixed: GHSA-4p83-c4wg-59q4, GHSA-c5j2-2mfg-49h7,
   GHSA-r374-cr8p-hmp9 (17.8.1), GHSA-998q-c58p-qf78 (17.9.3),
   GHSA-2qr3-mhmh-xfwj (17.9.5). GHSA-rg3v-wmh9-hhq6 is fixed only in 18.0.0.
-- Moved `postgres` from `17-alpine` to `18-alpine` on 2026-11-05, not run on a
+- Moved `postgres` from `17-alpine` to `18.6-alpine` on 2026-11-05, not run on a
   host at this tag. PostgreSQL 18 support: "officially supports PostgreSQL
   version 16 or above" since 16.0.0
   (https://www.openproject.org/docs/installation-and-operations/system-requirements/);

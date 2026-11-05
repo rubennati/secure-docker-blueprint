@@ -51,7 +51,7 @@
   backup from the checklist first. Sources:
   https://github.com/BookStackApp/BookStack/releases and
   https://www.bookstackapp.com/blog/bookstack-release-v26-09/
-- Moved `mariadb` from `11.4` to `12.3`, the current LTS line, on 2026-11-05,
+- Moved `mariadb` from `11.4` to `12.3.3`, the current LTS line, on 2026-11-05,
   not run on a host at this tag. Support: BookStack requires "MySQL >= 8.0 or
   MariaDB >= 10.6" with no upper bound
   (https://www.bookstackapp.com/docs/admin/installation/).

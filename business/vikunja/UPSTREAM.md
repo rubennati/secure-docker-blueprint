@@ -45,7 +45,7 @@ https://github.com/go-vikunja/vikunja/releases
 
 ## Version notes
 
-- Moved `postgres` from `17-alpine` to `18-alpine` on 2026-11-05, not run on a
+- Moved `postgres` from `17-alpine` to `18.6-alpine` on 2026-11-05, not run on a
   host at this tag. PostgreSQL 18 support: upstream's CI tests PostgreSQL 18 and
   its full Docker example uses `postgres:18`
   (https://vikunja.io/docs/installing/). The 18 image keeps its cluster under

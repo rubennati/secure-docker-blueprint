@@ -45,7 +45,7 @@
   GHSA-9vrg-x932-q57q, GHSA-j255-3x8q-7q7g, GHSA-wjwj-p342-9fq7,
   GHSA-7q86-3j97-744j, GHSA-2p22-wv7j-cvfv, GHSA-mqjw-vvgg-xfvf,
   GHSA-vchg-92fx-636p, GHSA-j3rg-rwgx-7wx7 (7.1.4).
-- Moved `mariadb` from `11.4` to `12.3`, the current LTS line, on 2026-11-05,
+- Moved `mariadb` from `11.4` to `12.3.3`, the current LTS line, on 2026-11-05,
   not run on a host at this tag. Support: WordPress recommends "MariaDB version
   10.11 or greater" (https://wordpress.org/about/requirements/).
   `MARIADB_AUTO_UPGRADE: "1"`, already set in both compose files, runs
