@@ -24,7 +24,7 @@ The origin comes from intuitem's legal notice (RCS Versailles, France).
   and `…/frontend:v4.2.1`. Upstream's compose pins `:latest` with `pull_policy:
   always`; not used here. Per upstream's licence file, the community binaries are
   AGPLv3; the commercially licensed code ships only in separate enterprise images.
-- `postgres:16.14` — upstream's template runs `postgres:16`.
+- `postgres:16.15` — upstream's template runs `postgres:16`.
 - The shape of upstream's `config/templates/docker-compose-postgresql-traefik.yml.j2`:
   backend, Huey, frontend and PostgreSQL, with `/api` routed to the backend.
 

@@ -4,6 +4,16 @@
 
 Self-hosted document archive: scan → OCR → searchable PDF archive. Optimised for paperless offices with a "consume folder" + mobile scan workflow.
 
+## Open findings
+
+The pinned Tika image, `apache/tika:3.3.3.0`, ships with 1 CRITICAL vulnerability that has a published fix, in Apache CXF (CVE-2026-49875, external entity resolution). The fix is only in Tika 4, which Paperless-ngx does not yet support, so Tika stays on the newest 3.x release.
+
+**Risk:** Tika sits on the internal network with no outbound route, which blocks the out-of-band data leak this flaw relies on. Move to Tika 4 once Paperless-ngx supports it.
+
+The PostgreSQL image, `postgres`, carries CVE-2025-68121 in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go. The `18.6-alpine` build also carries brotli-libs 1.2.0-r1 (CVE-2026-111497); Alpine has the fix, the official image is not rebuilt on it yet.
+
+**Risk:** the gosu flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. brotli is linked through libcurl for PostgreSQL 18's OAuth support, which this stack does not configure. Both clear with upstream's next rebuild.
+
 ## Architecture
 
 Five services:
@@ -12,7 +22,7 @@ Five services:
 |---------|-------|---------|
 | `paperless-app` | `ghcr.io/paperless-ngx/paperless-ngx` | Django web app + Celery workers + consumer |
 | `db` | `postgres:18.6` | Primary data store (documents, tags, correspondents, users) |
-| `redis` | `redis:8.10-alpine` | Celery broker + worker heartbeat |
+| `redis` | `redis:8.10.3-alpine` | Celery broker + worker heartbeat |
 | `gotenberg` | `gotenberg/gotenberg` | Converts HTML/Office documents to PDF |
 | `tika` | `apache/tika` | Text extraction from scanned PDFs, Office files, emails |
 

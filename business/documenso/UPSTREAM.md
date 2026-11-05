@@ -19,7 +19,7 @@
 ## What we use
 
 - `documenso/documenso:v2.21.1` (Remix app; CMD `sh start.sh` runs Prisma migrations on boot)
-- `postgres:16-alpine`
+- `postgres:16.15-alpine`
 - Custom `config/entrypoint.sh` to inject secrets from Docker Secret files (no `_FILE` support)
 
 ## What we changed vs. upstream compose

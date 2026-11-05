@@ -45,7 +45,7 @@ Consume **only** a reviewed tag or digest from `release` — never `latest`.
 
 - `ghcr.io/rubennati/cal.diy:v6.2.0-6` — built from the `rubennati/cal.diy` (cal.forte) fork's `release` branch
 - `postgres:18.6` as primary backend
-- `redis:8.10-alpine` for session cache and job queue (required by upstream)
+- `redis:8.10.3-alpine` for session cache and job queue (required by upstream)
 - Custom entrypoint (`config/entrypoint.sh`) injects all secrets from Docker Secret files
   at runtime — Cal.diy has no native `_FILE` support for any of its secrets
 

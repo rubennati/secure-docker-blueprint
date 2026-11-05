@@ -17,7 +17,7 @@
 ## What we use
 
 - LSIO `lscr.io/linuxserver/unifi-network-application`
-- Official `mongo:8.0` — supported from UniFi 9.0 onward per the image documentation
+- Official `mongo:8.0.34` — supported from UniFi 9.0 onward per the image documentation
 - Docker Secrets for Mongo root + application user passwords
 - Bind-mount `./volumes/mongodb` and `./volumes/config`
 - Custom init script (`./init-mongo.sh`) to create the app user from secrets

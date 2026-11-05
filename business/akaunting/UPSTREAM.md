@@ -30,7 +30,7 @@ The origin comes from the governing-law clause of Akaunting's terms of service
   downloaded as `version=latest` when the image is built, so the tag alone says
   little; the digest fixes it, and its `config/version.php` reads 3.3.0 of
   27 October 2026 — checked.
-- `mariadb:11.4` — the repository's MariaDB LTS. Upstream's compose uses an untagged
+- `mariadb:11.4.13` — the repository's MariaDB LTS. Upstream's compose uses an untagged
   `mariadb`.
 
 ## What we changed and why

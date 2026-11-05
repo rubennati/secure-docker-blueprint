@@ -2,12 +2,18 @@
 
 Self-hosted photo gallery focused on RAW processing, EXIF-driven organization, and face recognition. Go-based server with MariaDB backend.
 
+## Open findings
+
+The pinned image, `photoview/photoview:2.4.0`, ships with 5 CRITICAL vulnerabilities that have published fixes: the pgx PostgreSQL driver and an old Go 1.19 runtime compiled into the server. 2.4.0 is the newest release, from 2024.
+
+**Risk:** this stack uses MariaDB, so pgx is not used, but the Go runtime serves every request and its affected functions were not checked. Consider `access-vpn` instead of the shipped `access-public` until a newer release exists.
+
 ## Architecture
 
 | Service | Image | Purpose |
 |---------|-------|---------|
 | `photoview-app` | `photoview/photoview:2.4.0` | Web UI + GraphQL API + media indexer |
-| `db` | `mariadb:12.3` | Index, albums, users, face data |
+| `db` | `mariadb:12.3.3` | Index, albums, users, face data |
 
 ## Try it locally
 

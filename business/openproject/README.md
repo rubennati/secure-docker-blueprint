@@ -6,6 +6,16 @@ Full project management platform — Gantt charts, kanban boards, work packages,
 
 Uses the **slim image** (recommended for production) with separate PostgreSQL and memcached containers. The upstream proxy service is omitted — Traefik terminates TLS and routes directly to the web container.
 
+## Open findings
+
+The pinned image, `openproject/openproject:17.9.6-slim`, ships with 2 CRITICAL vulnerabilities that have published fixes, in Rails Active Storage and the Ruby json gem. 17.9.6 is the newest release; 18.0 is still a release candidate.
+
+**Risk:** whether OpenProject reaches either code path has not been checked. Keep the stack on `access-vpn` and move to the next release.
+
+The PostgreSQL image, `postgres`, carries CVE-2025-68121 in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go. The `18.6-alpine` build also carries brotli-libs 1.2.0-r1 (CVE-2026-111497); Alpine has the fix, the official image is not rebuilt on it yet.
+
+**Risk:** the gosu flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. brotli is linked through libcurl for PostgreSQL 18's OAuth support, which this stack does not configure. Both clear with upstream's next rebuild.
+
 ## Services
 
 | Service | Image | Purpose |
@@ -15,7 +25,7 @@ Uses the **slim image** (recommended for production) with separate PostgreSQL an
 | `cron` | same image | Scheduled tasks (email digests, cleanup) |
 | `seeder` | same image | One-shot: DB migrations + seed data |
 | `cache` | `memcached` | Rails cache |
-| `db` | `postgres:18-alpine` | Persistent storage |
+| `db` | `postgres:18.6-alpine` | Persistent storage |
 
 ## Try it locally
 

@@ -19,7 +19,7 @@
 ## What we use
 
 - Official `fnsys/dockhand` image, pinned tag
-- `postgres:16-alpine` as backend database
+- `postgres:16.15-alpine` as backend database
 - `tecnativa/docker-socket-proxy` with a restricted permission set for Docker API access
 
 ## What we changed and why
@@ -67,7 +67,7 @@
 
 ## Related images to keep in sync
 
-- `postgres:16-alpine` — upgrade within minor versions is safe; major upgrades (15 → 16) require a manual `pg_upgrade` procedure, not covered here
+- `postgres:16.15-alpine` — upgrade within minor versions is safe; major upgrades (15 → 16) require a manual `pg_upgrade` procedure, not covered here
 - `tecnativa/docker-socket-proxy` — safe to update within the same major version
 
 ## Useful commands

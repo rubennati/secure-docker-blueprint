@@ -2,12 +2,22 @@
 
 Self-hosted appointment booking. Established open-source scheduler since 2013. PHP/MySQL — much lighter than Cal.com's Next.js stack. Good choice if you want a simple, stable booking system and don't need Cal.com's breadth.
 
+## Open findings
+
+The pinned image, `alextselegidis/easyappointments:1.6.1`, ships with 2 CRITICAL vulnerabilities that have published fixes, in Debian 13's brotli and kernel headers. 1.6.1 is the newest release and was last rebuilt on 2026-10-22, before Debian fixed these.
+
+**Risk:** nothing in the container runs the kernel headers; brotli matters only if the app decompresses brotli data from a hostile server. Watch for a rebuild.
+
+The MariaDB image, `mariadb`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+
 ## Architecture
 
 | Service | Image | Purpose |
 |---------|-------|---------|
 | `easyappointments-app` | `alextselegidis/easyappointments:latest` | PHP + Apache + scheduling UI |
-| `db` | `mariadb:11.4` | Customers, providers, services, appointments |
+| `db` | `mariadb:11.4.13` | Customers, providers, services, appointments |
 
 ## When to pick Easy!Appointments
 

@@ -4,6 +4,16 @@
 
 Self-hosted file sync, calendar, contacts, and collaboration suite. This setup runs Nextcloud as **PHP-FPM behind nginx**, with MariaDB as database and Redis for file locking and session storage.
 
+## Open findings
+
+The MariaDB image, `mariadb`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+
+The app image, `nextcloud:35.0.2-fpm-alpine`, ships Alpine `libraw` 0.22.1 with 2 CRITICAL findings (CVE-2026-20884, CVE-2026-24450, fixed in 0.22.2). It is the newest release, and upstream has not rebuilt it.
+
+**Risk:** LibRaw only runs when a camera RAW file is previewed; if untrusted users can upload files, leave RAW previews disabled. It clears with the next image rebuild.
+
 ## Architecture
 
 Five services:
@@ -12,8 +22,8 @@ Five services:
 |---------|-------|---------|
 | `app` | `nextcloud:35.0.2-fpm-alpine` | PHP-FPM — the Nextcloud application |
 | `nextcloud-nginx` | `nginx:1.31.8-alpine-slim` | Web server, speaks HTTP to Traefik and FastCGI to `app` |
-| `db` | `mariadb:12.3` | Primary data store |
-| `redis` | `redis:8.10-alpine` | File locking + session cache |
+| `db` | `mariadb:12.3.3` | Primary data store |
+| `redis` | `redis:8.10.3-alpine` | File locking + session cache |
 | `cron` | `nextcloud:35.0.2-fpm-alpine` | Runs Nextcloud's scheduled jobs (`cron.php` every 5 minutes) |
 
 Traefik routes to `nextcloud-nginx`, which proxies PHP requests to `app` via FastCGI on port 9000. `cron` uses the same image as `app` but with `entrypoint: /cron.sh` and no HTTP listener.

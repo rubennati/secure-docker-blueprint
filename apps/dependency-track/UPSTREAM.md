@@ -20,7 +20,7 @@
 - `dependencytrack/apiserver:5.2.1` + `dependencytrack/frontend:5.2.1` —
   the v5 "Hyades" architecture, where API server and frontend are separate
   images (v4's bundled image no longer exists)
-- `postgres:18-alpine` — the only supported database in v5; H2, MySQL and
+- `postgres:18.6-alpine` — the only supported database in v5; H2, MySQL and
   SQL Server were dropped upstream, confirmed against the docs
 
 ## The `latest` tag is a trap on this image specifically

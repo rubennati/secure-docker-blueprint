@@ -24,7 +24,7 @@ and apply Spanish law.
   `latest` is the same image. Newer tags such as `2026.72` are published as
   `beta`, although the GitHub release list does not mark them as pre-releases. PHP 8.4 and Apache on
   Debian 13.
-- `mariadb:11.4` — the repository's MariaDB LTS. Upstream's compose uses
+- `mariadb:11.4.13` — the repository's MariaDB LTS. Upstream's compose uses
   `mysql:8.2`.
 - **The image seeds the webroot; the in-app updater owns it afterwards.**
   Upstream's Docker page: updates run through Admin → Updater, and a new image

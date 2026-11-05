@@ -16,7 +16,7 @@
 ## What we use
 
 - Community `tuxgasy/dolibarr`
-- Official `mariadb:12.3`
+- Official `mariadb:12.3.3`
 - Docker Secrets for every credential (DB user, DB root, admin login, admin password)
 - Bind-mount `./volumes/mysql`, `./volumes/documents`, `./volumes/custom`
 

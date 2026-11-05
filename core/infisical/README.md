@@ -8,13 +8,19 @@ network (CLI / machine identity). An optional, central alternative to per-server
 > a central secret store must not sit on the public internet. Other servers reach it over
 > Tailscale. Exposing it publicly (`access-public`) is a deliberate, high-risk decision.
 
+## Open findings
+
+The PostgreSQL image, `postgres`, carries CVE-2025-68121 in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go. The `18.6-alpine` build also carries brotli-libs 1.2.0-r1 (CVE-2026-111497); Alpine has the fix, the official image is not rebuilt on it yet.
+
+**Risk:** the gosu flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. brotli is linked through libcurl for PostgreSQL 18's OAuth support, which this stack does not configure. Both clear with upstream's next rebuild.
+
 ## Architecture
 
 | Service | Image | Purpose |
 |---------|-------|---------|
 | `infisical-app` | `infisical/infisical:v0.167.6` | Backend + web UI + API (port 8080) |
-| `db` | `postgres:18-alpine` | Encrypted secret store, users, projects |
-| `redis` | `redis:7.4-alpine` | Cache + job queue |
+| `db` | `postgres:18.6-alpine` | Encrypted secret store, users, projects |
+| `redis` | `redis:7.4.12-alpine` | Cache + job queue |
 
 Infisical has no `_FILE` support, so `config/entrypoint.sh` injects secrets from Docker Secret
 files and then execs the image's `./standalone-entrypoint.sh` (which runs DB migrations on boot).

@@ -57,7 +57,7 @@ open source.
 ## What we use
 
 - `ghcr.io/orion-belt-dev/orion-belt-server:1.4.0`
-- `postgres:16-alpine`, following upstream's own `docker-compose.prod.yml`
+- `postgres:16.15-alpine`, following upstream's own `docker-compose.prod.yml`
   exactly for this pairing
 - The agent (`docker-compose.agent.yml`), documented but not started here
   — it runs on the hosts you want to protect, not alongside the server

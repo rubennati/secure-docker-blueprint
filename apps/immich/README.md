@@ -2,6 +2,16 @@
 
 Self-hosted photo and video backup with machine-learning–based search, facial recognition, and mobile apps for iOS/Android. Four-service stack: web server, ML worker, Postgres (with the VectorChord extension for embeddings), and Valkey (Redis-compatible).
 
+## Open findings
+
+The Immich server image, `immich-server:v3.3.6`, carries 5 CRITICAL findings that have published fixes: brotli from its Debian base and the Node packages handlebars, `proxy-addr` and `tar`. The machine-learning image, `immich-machine-learning:v3.3.6`, carries 7, five of them in Pillow 12.3.0, plus anyio and certifi. v3.3.6 is the newest stable release.
+
+**Risk:** the machine-learning service decodes uploaded photos with Pillow, so allow uploads only from trusted users. The server's findings need admin-set templates, unusual proxy settings or crafted archives. Watch for v3.4.0.
+
+The Immich database image, `ghcr.io/immich-app/postgres:14-vectorchord1.1.1`, carries 4 CRITICAL findings: Perl 5.36 from its Debian 12 base (CVE-2026-13221, CVE-2026-42496, CVE-2026-8376) and the `gosu` Go runtime (CVE-2025-68121). Every current Immich PostgreSQL build, on any supported major, ships the same packages.
+
+**Risk:** PostgreSQL does not run Perl on user data, and gosu makes no network connection. Keep the database on the internal network and watch for a rebuilt image.
+
 ## Architecture
 
 | Service | Image | Purpose |

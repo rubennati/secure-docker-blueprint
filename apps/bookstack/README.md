@@ -2,6 +2,12 @@
 
 Self-hosted wiki / knowledge base. Three-level structure: Shelves → Books → Chapters → Pages. Built on Laravel (PHP) with a MariaDB backend.
 
+## Open findings
+
+The MariaDB image, `mariadb`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+
 ## Architecture
 
 Two services:
@@ -9,7 +15,7 @@ Two services:
 | Service | Image | Purpose |
 |---------|-------|---------|
 | `bookstack-app` | `lscr.io/linuxserver/bookstack:version-v26.09.2` (digest-pinned) | BookStack web app (LSIO build with Apache + PHP 8) |
-| `db` | `mariadb:12.3` | Primary data store (pages, users, revisions, attachments metadata) |
+| `db` | `mariadb:12.3.3` | Primary data store (pages, users, revisions, attachments metadata) |
 
 Attachments and images live in `./volumes/config/www/uploads/` (inside the LSIO `/config` mount).
 

@@ -2,17 +2,27 @@
 
 Self-hosted identity provider. Acts as a central SSO endpoint for other apps in the stack via **Forward-Auth** (Traefik middleware) or **OAuth2 / OIDC / SAML** (app-native clients).
 
+## Open findings
+
+The server image, `ghcr.io/goauthentik/server:2026.8.5`, ships Debian `libbrotli1` 1.1.0-2+b7 with one CRITICAL finding (CVE-2026-111497, fixed in 1.1.0-2+deb13u1). It is the newest release.
+
+**Risk:** nothing in the image links the library, and upstream has confirmed it is not reachable. The fix is announced for 2026.8.6; move to it when it is released.
+
+The PostgreSQL image, `postgres`, carries CVE-2025-68121 in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go. The `18.6-alpine` build also carries brotli-libs 1.2.0-r1 (CVE-2026-111497); Alpine has the fix, the official image is not rebuilt on it yet.
+
+**Risk:** the gosu flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. brotli is linked through libcurl for PostgreSQL 18's OAuth support, which this stack does not configure. Both clear with upstream's next rebuild.
+
 ## Architecture
 
 Five services (four long-running plus a one-shot init):
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `init-perms` | `alpine:3.24` | One-shot: chowns bind-mount directories to UID 1000 so the non-root Authentik image can write there. Exits in <1s, runs on every `up -d`. |
+| `init-perms` | `alpine:3.24.3` | One-shot: chowns bind-mount directories to UID 1000 so the non-root Authentik image can write there. Exits in <1s, runs on every `up -d`. |
 | `server` | `ghcr.io/goauthentik/server` (cmd `server`) | Web UI + REST API, the only container exposed through Traefik |
 | `worker` | Same image (cmd `worker`) | Background jobs: email, LDAP/directory sync, policy evaluation |
-| `db` | `postgres:18-alpine` | Primary data store (users, groups, tokens, events) |
-| `redis` | `redis:8.10-alpine` | Session cache + Celery broker for the worker |
+| `db` | `postgres:18.6-alpine` | Primary data store (users, groups, tokens, events) |
+| `redis` | `redis:8.10.3-alpine` | Session cache + Celery broker for the worker |
 
 `server` and `worker` share the same image — only the command differs. Both need access to `db` and `redis`; only `server` needs access to the outside world (for initial setup flows and user logins).
 

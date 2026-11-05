@@ -16,7 +16,7 @@
 ## What we use
 
 - Official `alextselegidis/easyappointments`
-- Official `mariadb:11.4`
+- Official `mariadb:11.4.13`
 - Docker Secrets for MariaDB user + root password
 - Bind-mount `./volumes/storage` for the app's uploads directory
 

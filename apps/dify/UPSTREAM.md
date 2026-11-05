@@ -26,7 +26,7 @@ PostgreSQL profile, pgvector as the vector store, minus what is listed below:
 - `ubuntu/squid:6.6-24.04_edge` — upstream uses `:latest`; a versioned tag of the
   same image
 - `postgres:15.19-alpine` (upstream: `15-alpine`), `pgvector/pgvector:0.8.7-pg16`
-  (upstream: `pg16`), `redis:8.10-alpine` (upstream: `6-alpine`)
+  (upstream: `pg16`), `redis:8.10.3-alpine` (upstream: `6-alpine`)
 - pgvector, not Weaviate: upstream supports both, and pgvector is one more
   PostgreSQL rather than a different product. No other stack (Qdrant included) is
   embedded; Dify can use any vector store it supports.

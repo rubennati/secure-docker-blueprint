@@ -5,6 +5,12 @@ can extend and a GraphQL and REST API for all of it. Server and worker from one
 image, with PostgreSQL and Redis — the four services upstream's own compose runs.
 Upstream: [Twenty](https://github.com/twentyhq/twenty).
 
+## Open findings
+
+The PostgreSQL image, `postgres`, carries CVE-2025-68121 in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go. The `18.6-alpine` build also carries brotli-libs 1.2.0-r1 (CVE-2026-111497); Alpine has the fix, the official image is not rebuilt on it yet.
+
+**Risk:** the gosu flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. brotli is linked through libcurl for PostgreSQL 18's OAuth support, which this stack does not configure. Both clear with upstream's next rebuild.
+
 ## Architecture
 
 ```text

@@ -16,7 +16,7 @@
 ## What we use
 
 - Upstream `reallibrephotos/librephotos-proxy`, `librephotos-frontend`, `librephotos` (backend)
-- `pgautoupgrade/pgautoupgrade:18-trixie` for Postgres (upstream runs `latest`, 18 on Alpine)
+- `pgautoupgrade/pgautoupgrade:18.6-trixie` for Postgres (upstream runs `latest`, 18 on Alpine)
 - Docker Secrets for Postgres password + inline duplicate for backend
 - Bind-mount `./volumes/db`, `./volumes/protected_media`, `./volumes/logs`, `./volumes/cache`
 - Configurable `SCAN_DIRECTORY` for photo source

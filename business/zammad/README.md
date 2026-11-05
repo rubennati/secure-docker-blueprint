@@ -2,6 +2,12 @@
 
 Self-hosted helpdesk / ticketing / customer support. Multi-channel (email, web form, Twitter, Telegram, SMS), SLA tracking, time accounting, knowledge base.
 
+## Open findings
+
+The PostgreSQL image, `postgres`, carries CVE-2025-68121 in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go. The `18.6-alpine` build also carries brotli-libs 1.2.0-r1 (CVE-2026-111497); Alpine has the fix, the official image is not rebuilt on it yet.
+
+**Risk:** the gosu flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. brotli is linked through libcurl for PostgreSQL 18's OAuth support, which this stack does not configure. Both clear with upstream's next rebuild.
+
 ## Architecture
 
 Heavy stack — 9 services. Upstream default deployment.
@@ -13,8 +19,8 @@ Heavy stack — 9 services. Upstream default deployment.
 | `websocket` | same + `zammad-websocket` | Agent live updates |
 | `scheduler` | same + `zammad-scheduler` | Background jobs (email import, SLA checks) |
 | `init` | same + `zammad-init` | One-shot DB migrations on every start |
-| `db` | `postgres:18-alpine` | Primary data store |
-| `redis` | `redis:8.10-alpine` | Background job queue |
+| `db` | `postgres:18.6-alpine` | Primary data store |
+| `redis` | `redis:8.10.3-alpine` | Background job queue |
 | `memcached` | `memcached:1.6.41` | Rails cache |
 | `elasticsearch` | `docker.elastic.co/elasticsearch/elasticsearch:9.5.6` | Full-text ticket search |
 

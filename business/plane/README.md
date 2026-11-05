@@ -29,6 +29,20 @@ about 1.4 GiB at rest.
 > Until then: supply the image from a registry you control, or treat this stack
 > as unavailable.
 
+## Open findings
+
+The Plane images carry CRITICAL findings that have published fixes: `plane-live` and `plane-space` 4 each in Node packages (storybook and tinypool, development tools the server does not run, and `proxy-addr`), `plane-backend` 1 in PyJWT (CVE-2026-102268), and `plane-proxy` 1 in Alpine's brotli (CVE-2026-111497). v1.4.3 is the newest stable Plane release.
+
+**Risk:** `proxy-addr` affects only trusted-proxy entries written in IPv4-mapped IPv6 form; whether Plane's token handling is affected by the PyJWT flaw has not been checked. Keep the stack behind the proxy and watch for the next release.
+
+The PostgreSQL image, `postgres`, carries CVE-2025-68121 in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go. The `18.6-alpine` build also carries brotli-libs 1.2.0-r1 (CVE-2026-111497); Alpine has the fix, the official image is not rebuilt on it yet.
+
+**Risk:** the gosu flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. brotli is linked through libcurl for PostgreSQL 18's OAuth support, which this stack does not configure. Both clear with upstream's next rebuild.
+
+The RabbitMQ image carries one CRITICAL OpenSSL finding, CVE-2026-31789. The application has not documented support for RabbitMQ 4, the only line that is still rebuilt, so the broker stays on the last 3.x release.
+
+**Risk:** the flaw affects only 32-bit platforms. Keep the broker on the internal network.
+
 ## Architecture
 
 ```text

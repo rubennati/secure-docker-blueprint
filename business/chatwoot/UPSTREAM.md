@@ -25,7 +25,7 @@ The origin comes from the governing-law clause of Chatwoot's terms of service
   compose names.
 - `pgvector/pgvector:0.8.1-pg16` — upstream's production compose uses
   `pgvector/pgvector:pg16`.
-- `redis:8.10-alpine` — upstream's uses `redis:alpine`.
+- `redis:8.10.3-alpine` — upstream's uses `redis:alpine`.
 - Local file storage, upstream's default.
 
 ## What we changed and why

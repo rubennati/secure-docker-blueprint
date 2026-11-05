@@ -2,14 +2,24 @@
 
 Self-hosted newsletter, mailing list manager, and transactional mail. Go single-binary app + Postgres backend. Handles subscriber management, double-opt-in, campaign sending, tracking (open/click), bounce processing, list segmentation.
 
+## Open findings
+
+The pinned image, `listmonk/listmonk:v6.2.0`, ships with 1 CRITICAL vulnerability that has a published fix, in the Echo web framework's proxy middleware. v6.2.0 is the newest stable release.
+
+**Risk:** listmonk does not appear to use that middleware (checked by code search only). Watch for the v7 stable release.
+
+The PostgreSQL image, `postgres`, carries CVE-2025-68121 in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go. The `18.6-alpine` build also carries brotli-libs 1.2.0-r1 (CVE-2026-111497); Alpine has the fix, the official image is not rebuilt on it yet.
+
+**Risk:** the gosu flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. brotli is linked through libcurl for PostgreSQL 18's OAuth support, which this stack does not configure. Both clear with upstream's next rebuild.
+
 ## Architecture
 
 | Service | Image | Purpose |
 |---------|-------|---------|
 | `listmonk-install` | `listmonk/listmonk:v6.2.0` | One-shot: schema on first start, migrations after an upgrade |
-| `smtp-guard` | `postgres:18-alpine` | One-shot: replaces upstream's SMTP placeholder before the app starts (below) |
+| `smtp-guard` | `postgres:18.6-alpine` | One-shot: replaces upstream's SMTP placeholder before the app starts (below) |
 | `listmonk-app` | `listmonk/listmonk:v6.2.0` | Admin UI + sender + subscriber endpoints — UID 1000, no capabilities |
-| `db` | `postgres:18-alpine` | Subscribers, campaigns, templates, analytics |
+| `db` | `postgres:18.6-alpine` | Subscribers, campaigns, templates, analytics |
 
 ## Try it locally
 

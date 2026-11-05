@@ -17,7 +17,7 @@
 ## What we use
 
 - LSIO image for BookStack (Apache + PHP 8 pre-configured)
-- Official `mariadb:12.3` as backend (consistent with rest of blueprint)
+- Official `mariadb:12.3.3` as backend (consistent with rest of blueprint)
 - Docker Secrets for DB password + DB root password
 - Bind-mount `./volumes/config/` for LSIO `/config` (attachments, logs, PHP config, etc.)
 

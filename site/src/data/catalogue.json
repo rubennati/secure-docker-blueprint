@@ -11,7 +11,7 @@
       "summary": "1 service"
     },
     "name": "Adminer",
-    "open_findings": 0,
+    "open_findings": 1,
     "path": "apps/adminer",
     "role": "Web interface onto a database another stack already runs",
     "state": "scaffolded",
@@ -55,7 +55,7 @@
       "summary": "2 services · MariaDB"
     },
     "name": "BookStack",
-    "open_findings": 0,
+    "open_findings": 1,
     "path": "apps/bookstack",
     "role": "Wiki with structure: shelves, books, chapters and pages",
     "state": "scaffolded",
@@ -79,7 +79,7 @@
       "summary": "3 services · PostgreSQL + Redis"
     },
     "name": "Cal.diy",
-    "open_findings": 0,
+    "open_findings": 26,
     "path": "apps/caldiy",
     "role": "Appointment booking pages, the community edition of Cal.com",
     "state": "scaffolded",
@@ -100,7 +100,7 @@
       "summary": "1 service"
     },
     "name": "Calnode",
-    "open_findings": 0,
+    "open_findings": 3,
     "path": "apps/calnode",
     "role": "Scheduling with booking pages, an admin interface and a REST API, as one binary with SQLite",
     "state": "scaffolded",
@@ -161,7 +161,7 @@
       "summary": "4 services · PostgreSQL"
     },
     "name": "CISO Assistant",
-    "open_findings": 0,
+    "open_findings": 3,
     "path": "apps/ciso-assistant",
     "role": "Governance, risk and compliance: frameworks such as ISO 27001 and NIS2 mapped to controls, risks and evidence",
     "state": "scaffolded",
@@ -182,7 +182,7 @@
       "summary": "1 service"
     },
     "name": "Collabora Online",
-    "open_findings": 0,
+    "open_findings": 1,
     "path": "apps/collabora",
     "role": "Office document editing server based on LibreOffice",
     "state": "baseline-aligned",
@@ -227,7 +227,7 @@
       "summary": "6 services · 1 one-shot · PostgreSQL + Valkey"
     },
     "name": "DefectDojo",
-    "open_findings": 0,
+    "open_findings": 4,
     "path": "apps/defectdojo",
     "role": "Vulnerability management: import scanner and pentest findings, deduplicate them and track them to closure",
     "state": "scaffolded",
@@ -250,7 +250,7 @@
       "summary": "3 services · PostgreSQL"
     },
     "name": "Dependency-Track",
-    "open_findings": 0,
+    "open_findings": 4,
     "path": "apps/dependency-track",
     "role": "Software composition analysis: SBOMs, components and known vulnerabilities across a portfolio",
     "state": "scaffolded",
@@ -273,7 +273,7 @@
       "summary": "4 services · RabbitMQ"
     },
     "name": "DFIR-IRIS",
-    "open_findings": 0,
+    "open_findings": 29,
     "path": "apps/dfir-iris",
     "role": "Collaborative incident-response case management: cases, indicators, evidence and timelines",
     "state": "scaffolded",
@@ -309,7 +309,7 @@
       "summary": "10 services · PostgreSQL + Redis"
     },
     "name": "Dify",
-    "open_findings": 0,
+    "open_findings": 8,
     "path": "apps/dify",
     "role": "LLM application platform: chat and workflow apps, knowledge bases, plugin-based model providers",
     "state": "scaffolded",
@@ -347,7 +347,7 @@
       "summary": "1 service"
     },
     "name": "docker-mailserver",
-    "open_findings": 0,
+    "open_findings": 8,
     "path": "apps/docker-mailserver",
     "role": "Mail server — Postfix, Dovecot and Rspamd in one container, configured by files, without a database or a web interface",
     "state": "scaffolded",
@@ -391,7 +391,7 @@
       "summary": "2 services · MariaDB"
     },
     "name": "Easy!Appointments",
-    "open_findings": 0,
+    "open_findings": 3,
     "path": "apps/easyappointments",
     "role": "Appointment booking in PHP, established since 2013",
     "state": "ops-proven",
@@ -435,7 +435,7 @@
       "summary": "2 services · MySQL"
     },
     "name": "Ghost",
-    "open_findings": 0,
+    "open_findings": 3,
     "path": "apps/ghost",
     "role": "Publishing platform for blogs and newsletters, with optional Fediverse publishing",
     "state": "scaffolded",
@@ -456,7 +456,7 @@
       "summary": "1 service"
     },
     "name": "GreenMail",
-    "open_findings": 0,
+    "open_findings": 1,
     "path": "apps/greenmail",
     "role": "SMTP, IMAP and POP3 test server with a mailbox per recipient, for automated tests",
     "state": "baseline-aligned",
@@ -498,7 +498,7 @@
       "summary": "1 service"
     },
     "name": "Hemmelig",
-    "open_findings": 0,
+    "open_findings": 7,
     "path": "apps/hemmelig",
     "role": "Ephemeral secret sharing with a built-in request flow",
     "state": "scaffolded",
@@ -539,7 +539,7 @@
       "summary": "3 services · MongoDB + Valkey"
     },
     "name": "HeyForm",
-    "open_findings": 0,
+    "open_findings": 14,
     "path": "apps/heyform",
     "role": "Form builder and response collector, with conversational forms, logic, file uploads and submission export",
     "state": "scaffolded",
@@ -602,7 +602,7 @@
       "summary": "1 service"
     },
     "name": "httpbin",
-    "open_findings": 0,
+    "open_findings": 4,
     "path": "apps/httpbin",
     "role": "HTTP request and response service for testing clients: echoes requests, returns chosen status codes, redirects, delays and payloads",
     "state": "baseline-aligned",
@@ -639,7 +639,7 @@
       "summary": "4 services · PostgreSQL + Redis + Valkey"
     },
     "name": "Immich",
-    "open_findings": 0,
+    "open_findings": 16,
     "path": "apps/immich",
     "role": "Photo and video backup with mobile apps and machine-learning search",
     "state": "scaffolded",
@@ -660,7 +660,7 @@
       "summary": "1 service"
     },
     "name": "IT-Tools",
-    "open_findings": 0,
+    "open_findings": 2,
     "path": "apps/it-tools",
     "role": "Collection of small utilities: converters, generators and formatters",
     "state": "baseline-aligned",
@@ -683,7 +683,7 @@
       "summary": "4 services · PostgreSQL"
     },
     "name": "LibrePhotos",
-    "open_findings": 0,
+    "open_findings": 1,
     "path": "apps/librephotos",
     "role": "Photo library with face recognition and search",
     "state": "scaffolded",
@@ -712,7 +712,7 @@
       "summary": "2 services · PostgreSQL"
     },
     "name": "LiteLLM",
-    "open_findings": 0,
+    "open_findings": 2,
     "path": "apps/litellm",
     "role": "OpenAI-compatible gateway in front of any model backend, with virtual keys, budgets and a spend log",
     "state": "scaffolded",
@@ -736,7 +736,7 @@
       "summary": "3 services · MariaDB + Redis"
     },
     "name": "Lychee",
-    "open_findings": 0,
+    "open_findings": 1,
     "path": "apps/lycheeorg",
     "role": "Photo gallery",
     "state": "scaffolded",
@@ -798,7 +798,7 @@
       "summary": "7 services · MySQL + Redis"
     },
     "name": "mailserver",
-    "open_findings": 0,
+    "open_findings": 2,
     "path": "apps/mailserver-jeboehm",
     "role": "Mail server — Postfix, Dovecot and Rspamd as separate containers, with an administration interface and webmail",
     "state": "scaffolded",
@@ -821,7 +821,7 @@
       "summary": "2 services · MariaDB"
     },
     "name": "Monica",
-    "open_findings": 0,
+    "open_findings": 4,
     "path": "apps/monicahq",
     "role": "Personal CRM for the people in your life",
     "state": "ops-proven",
@@ -859,7 +859,7 @@
       "summary": "1 service"
     },
     "name": "n8n",
-    "open_findings": 0,
+    "open_findings": 1,
     "path": "apps/n8n",
     "role": "Visual workflow automation",
     "state": "scaffolded",
@@ -883,7 +883,7 @@
       "summary": "5 services · MariaDB + Redis"
     },
     "name": "Nextcloud",
-    "open_findings": 0,
+    "open_findings": 3,
     "path": "apps/nextcloud",
     "role": "File sync and share with calendars, contacts and collaborative editing",
     "state": "scaffolded",
@@ -950,7 +950,7 @@
       "summary": "3 services · PostgreSQL"
     },
     "name": "obot",
-    "open_findings": 0,
+    "open_findings": 4,
     "path": "apps/obot",
     "role": "MCP gateway and agent platform — catalogues MCP servers, runs the hosted ones as containers, with an LLM gateway in front",
     "state": "scaffolded",
@@ -1025,7 +1025,7 @@
       "summary": "1 service"
     },
     "name": "Open WebUI",
-    "open_findings": 0,
+    "open_findings": 4,
     "path": "apps/open-webui",
     "role": "Chat interface for any OpenAI-compatible endpoint, with accounts, history and document upload",
     "state": "scaffolded",
@@ -1046,7 +1046,7 @@
       "summary": "1 service"
     },
     "name": "OpenCanary",
-    "open_findings": 0,
+    "open_findings": 8,
     "path": "apps/opencanary",
     "role": "Honeypot: fake network services that log every connection attempt",
     "state": "scaffolded",
@@ -1070,7 +1070,7 @@
       "summary": "7 services · PostgreSQL + Redis"
     },
     "name": "OpnForm",
-    "open_findings": 0,
+    "open_findings": 3,
     "path": "apps/opnform",
     "role": "Form builder with shareable forms and submissions",
     "state": "scaffolded",
@@ -1121,7 +1121,7 @@
       "summary": "5 services · PostgreSQL + Redis"
     },
     "name": "Paperless-ngx",
-    "open_findings": 0,
+    "open_findings": 3,
     "path": "apps/paperless-ngx",
     "role": "Document management with OCR, tagging and full-text search",
     "state": "scaffolded",
@@ -1156,7 +1156,7 @@
       "summary": "2 services · MariaDB"
     },
     "name": "PhotoPrism",
-    "open_findings": 0,
+    "open_findings": 1,
     "path": "apps/photoprism",
     "role": "Photo library with machine-learning classification and WebDAV",
     "state": "scaffolded",
@@ -1179,7 +1179,7 @@
       "summary": "2 services · MariaDB"
     },
     "name": "Photoview",
-    "open_findings": 0,
+    "open_findings": 6,
     "path": "apps/photoview",
     "role": "Photo gallery that reads your existing folders, with RAW support and face recognition",
     "state": "scaffolded",
@@ -1247,7 +1247,7 @@
       "summary": "8 services · Memcached + Redis"
     },
     "name": "Seafile",
-    "open_findings": 0,
+    "open_findings": 4,
     "path": "apps/seafile",
     "role": "File sync and share, community edition",
     "state": "scaffolded",
@@ -1284,7 +1284,7 @@
       "summary": "11 services · Elasticsearch + MariaDB + Redis"
     },
     "name": "Seafile Pro",
-    "open_findings": 0,
+    "open_findings": 25,
     "path": "apps/seafile-pro",
     "role": "File sync and share, professional edition",
     "state": "scaffolded",
@@ -1313,7 +1313,7 @@
       "summary": "3 services · PostgreSQL"
     },
     "name": "Shlink",
-    "open_findings": 0,
+    "open_findings": 4,
     "path": "apps/shlink",
     "role": "URL shortener on your own domain with visit statistics and a REST API; no user accounts, API keys instead",
     "state": "scaffolded",
@@ -1372,7 +1372,7 @@
       "summary": "1 service"
     },
     "name": "OWASP Threat Dragon",
-    "open_findings": 0,
+    "open_findings": 2,
     "path": "apps/threat-dragon",
     "role": "Threat modelling: data-flow diagrams, trust boundaries, threats and mitigations",
     "state": "scaffolded",
@@ -1395,7 +1395,7 @@
       "summary": "2 services · PostgreSQL"
     },
     "name": "Tymeslot",
-    "open_findings": 0,
+    "open_findings": 2,
     "path": "apps/tymeslot",
     "role": "Meeting scheduling with booking pages, calendar sync and video links",
     "state": "scaffolded",
@@ -1418,7 +1418,7 @@
       "summary": "2 services · MongoDB"
     },
     "name": "UniFi Network Application",
-    "open_findings": 0,
+    "open_findings": 12,
     "path": "apps/unifi",
     "role": "Controller for Ubiquiti UniFi network devices",
     "state": "scaffolded",
@@ -1441,7 +1441,7 @@
       "summary": "2 services · MariaDB"
     },
     "name": "Vaultwarden",
-    "open_findings": 0,
+    "open_findings": 1,
     "path": "apps/vaultwarden",
     "role": "Password manager: logins, TOTP and shared collections",
     "state": "scaffolded",
@@ -1533,7 +1533,7 @@
       "summary": "2 services · PostgreSQL"
     },
     "name": "Wiki.js",
-    "open_findings": 0,
+    "open_findings": 3,
     "path": "apps/wikijs",
     "role": "Wiki with Markdown and visual editors, per-page permissions and about twenty authentication modules",
     "state": "scaffolded",
@@ -1562,7 +1562,7 @@
       "summary": "4 services · PostgreSQL"
     },
     "name": "Windmill",
-    "open_findings": 0,
+    "open_findings": 3,
     "path": "apps/windmill",
     "role": "Code-first scripts, flows, APIs and scheduled jobs on a queue",
     "state": "scaffolded",
@@ -1585,7 +1585,7 @@
       "summary": "2 services · MariaDB"
     },
     "name": "WordPress",
-    "open_findings": 0,
+    "open_findings": 1,
     "path": "apps/wordpress",
     "role": "Content management system for sites and blogs",
     "state": "scaffolded",
@@ -1650,7 +1650,7 @@
       "summary": "1 service"
     },
     "name": "Kopia",
-    "open_findings": 0,
+    "open_findings": 2,
     "path": "backup/kopia",
     "role": "Repository server for Kopia clients — deduplicated, encrypted snapshots from other machines, without handing them the repository password",
     "state": "scaffolded",
@@ -1692,7 +1692,7 @@
       "summary": "1 service"
     },
     "name": "UrBackup Server",
-    "open_findings": 0,
+    "open_findings": 4,
     "path": "backup/urbackup",
     "role": "Client backup for Windows, macOS and Linux, with whole-disk image restore on Windows",
     "state": "scaffolded",
@@ -1732,7 +1732,7 @@
       "summary": "2 services · MariaDB"
     },
     "name": "Akaunting",
-    "open_findings": 0,
+    "open_findings": 2,
     "path": "business/akaunting",
     "role": "Accounting for small businesses: invoices, bills, customers, vendors, bank accounts and reports",
     "state": "scaffolded",
@@ -1767,7 +1767,7 @@
       "summary": "4 services · PostgreSQL + Redis"
     },
     "name": "Chatwoot",
-    "open_findings": 0,
+    "open_findings": 4,
     "path": "business/chatwoot",
     "role": "Customer support across website chat, email and messaging channels in one shared inbox",
     "state": "scaffolded",
@@ -1802,7 +1802,7 @@
       "summary": "2 services · PostgreSQL"
     },
     "name": "Documenso",
-    "open_findings": 0,
+    "open_findings": 2,
     "path": "business/documenso",
     "role": "Document signing with your own certificate",
     "state": "scaffolded",
@@ -1825,7 +1825,7 @@
       "summary": "2 services · MariaDB"
     },
     "name": "Dolibarr",
-    "open_findings": 0,
+    "open_findings": 1,
     "path": "business/dolibarr",
     "role": "ERP and CRM: contacts, quotes, invoices, stock and accounting",
     "state": "scaffolded",
@@ -1861,7 +1861,7 @@
       "summary": "10 services · MariaDB + Redis"
     },
     "name": "ERPNext",
-    "open_findings": 0,
+    "open_findings": 7,
     "path": "business/erpnext",
     "role": "ERP on the Frappe framework: accounting, invoicing, stock, buying, selling, manufacturing, projects and HR",
     "state": "scaffolded",
@@ -1891,7 +1891,7 @@
       "summary": "3 services · MariaDB"
     },
     "name": "FacturaScripts",
-    "open_findings": 0,
+    "open_findings": 3,
     "path": "business/facturascripts",
     "role": "Invoicing, accounting and inventory for small businesses, extended through plugins",
     "state": "scaffolded",
@@ -1921,7 +1921,7 @@
       "summary": "4 services · MySQL + Redis"
     },
     "name": "Invoice Ninja",
-    "open_findings": 0,
+    "open_findings": 3,
     "path": "business/invoiceninja",
     "role": "Invoicing, quotes and payments",
     "state": "scaffolded",
@@ -1956,7 +1956,7 @@
       "summary": "2 services · MariaDB"
     },
     "name": "Kimai",
-    "open_findings": 0,
+    "open_findings": 2,
     "path": "business/kimai",
     "role": "Time tracking with reports and invoicing hooks",
     "state": "scaffolded",
@@ -1996,7 +1996,7 @@
       "summary": "2 services · MySQL"
     },
     "name": "Leantime",
-    "open_findings": 0,
+    "open_findings": 4,
     "path": "business/leantime",
     "role": "Project management for teams that do not have a project manager —",
     "state": "scaffolded",
@@ -2019,7 +2019,7 @@
       "summary": "2 services · 2 one-shot · PostgreSQL"
     },
     "name": "Listmonk",
-    "open_findings": 0,
+    "open_findings": 3,
     "path": "business/listmonk",
     "role": "Newsletter and mailing-list manager",
     "state": "baseline-aligned",
@@ -2054,7 +2054,7 @@
       "summary": "2 services · MariaDB"
     },
     "name": "Matomo",
-    "open_findings": 0,
+    "open_findings": 1,
     "path": "business/matomo",
     "role": "Web analytics under your control",
     "state": "scaffolded",
@@ -2090,7 +2090,7 @@
       "summary": "6 services · Memcached + PostgreSQL"
     },
     "name": "OpenProject CE",
-    "open_findings": 0,
+    "open_findings": 4,
     "path": "business/openproject",
     "role": "Project management with work packages, boards and Gantt planning",
     "state": "scaffolded",
@@ -2113,7 +2113,7 @@
       "summary": "3 services · MongoDB"
     },
     "name": "OpenSign",
-    "open_findings": 0,
+    "open_findings": 56,
     "path": "business/opensign",
     "role": "Document signing with qualified-certificate support",
     "state": "scaffolded",
@@ -2157,7 +2157,7 @@
       "summary": "13 services · PostgreSQL + RabbitMQ + Redis + Valkey + object storage"
     },
     "name": "Plane",
-    "open_findings": 0,
+    "open_findings": 13,
     "path": "business/plane",
     "role": "Project management — issues, cycles, modules and pages, with a collaborative editor and public project pages",
     "state": "scaffolded",
@@ -2198,7 +2198,7 @@
       "summary": "3 services · ClickHouse + PostgreSQL"
     },
     "name": "Plausible Community Edition",
-    "open_findings": 0,
+    "open_findings": 2,
     "path": "business/plausible",
     "role": "Cookie-free, GDPR-oriented web analytics — the measurement side of a company website, without a consent banner",
     "state": "scaffolded",
@@ -2254,7 +2254,7 @@
       "summary": "4 services · PostgreSQL + Redis"
     },
     "name": "Twenty",
-    "open_findings": 0,
+    "open_findings": 2,
     "path": "business/twenty",
     "role": "CRM: companies, people, opportunities and tasks, with an extensible data model and an API",
     "state": "scaffolded",
@@ -2289,7 +2289,7 @@
       "summary": "2 services · PostgreSQL"
     },
     "name": "Vikunja",
-    "open_findings": 0,
+    "open_findings": 2,
     "path": "business/vikunja",
     "role": "Task and project management with lists, boards and calendars",
     "state": "scaffolded",
@@ -2315,7 +2315,7 @@
       "summary": "9 services · Elasticsearch + Memcached + PostgreSQL + Redis"
     },
     "name": "Zammad",
-    "open_findings": 0,
+    "open_findings": 2,
     "path": "business/zammad",
     "role": "Helpdesk and ticket system across mail, chat and phone",
     "state": "scaffolded",
@@ -2336,7 +2336,7 @@
       "summary": "1 service"
     },
     "name": "acme-certs",
-    "open_findings": 0,
+    "open_findings": 3,
     "path": "core/acme-certs",
     "role": "Certificates for devices that never pass through the reverse proxy: NAS, routers, mail servers",
     "state": "scaffolded",
@@ -2360,7 +2360,7 @@
       "summary": "3 services · PostgreSQL + Redis"
     },
     "name": "Authelia",
-    "open_findings": 0,
+    "open_findings": 2,
     "path": "core/authelia",
     "role": "Login portal with two-factor authentication that Traefik asks through forward-auth",
     "state": "scaffolded",
@@ -2396,7 +2396,7 @@
       "summary": "4 services · 1 one-shot · PostgreSQL + Redis"
     },
     "name": "Authentik",
-    "open_findings": 0,
+    "open_findings": 3,
     "path": "core/authentik",
     "role": "Identity provider with forward-auth, OAuth2, OpenID Connect and SAML",
     "state": "scaffolded",
@@ -2478,7 +2478,7 @@
       "summary": "3 services · PostgreSQL"
     },
     "name": "Dockhand",
-    "open_findings": 0,
+    "open_findings": 2,
     "path": "core/dockhand",
     "role": "Docker management with Git-based stacks: deploy and update by pushing to Git",
     "state": "scaffolded",
@@ -2582,7 +2582,7 @@
       "summary": "3 services · PostgreSQL + Redis"
     },
     "name": "Infisical",
-    "open_findings": 0,
+    "open_findings": 2,
     "path": "core/infisical",
     "role": "Central secret manager, an alternative to per-stack Docker Secrets",
     "state": "scaffolded",
@@ -2615,7 +2615,7 @@
       "summary": "1 service"
     },
     "name": "JumpServer",
-    "open_findings": 0,
+    "open_findings": 19,
     "path": "core/jumpserver",
     "role": "Privileged access management: stored target credentials, session recording, approval workflows",
     "state": "scaffolded",
@@ -2638,7 +2638,7 @@
       "summary": "2 services · PostgreSQL"
     },
     "name": "Keycloak",
-    "open_findings": 0,
+    "open_findings": 2,
     "path": "core/keycloak",
     "role": "Identity provider for applications that speak OpenID Connect or SAML, with LDAP and AD federation",
     "state": "scaffolded",
@@ -2667,7 +2667,7 @@
       "summary": "2 services · PostgreSQL"
     },
     "name": "Orion Belt",
-    "open_findings": 0,
+    "open_findings": 2,
     "path": "core/orion-belt",
     "role": "Privileged access gateway for SSH sessions, from a young single-maintainer project",
     "state": "scaffolded",
@@ -2745,7 +2745,7 @@
       "summary": "5 services · PostgreSQL + Valkey"
     },
     "name": "ShellHub",
-    "open_findings": 0,
+    "open_findings": 2,
     "path": "core/shellhub",
     "role": "SSH access through agents on each target that connect out, so targets open no inbound port",
     "state": "scaffolded",
@@ -2778,7 +2778,7 @@
       "summary": "1 service"
     },
     "name": "step-ca",
-    "open_findings": 0,
+    "open_findings": 4,
     "path": "core/step-ca",
     "role": "Internal certificate authority for machines and services: X.509, ACME and optional SSH certificates",
     "state": "scaffolded",
@@ -2943,7 +2943,7 @@
       "summary": "1 service"
     },
     "name": "changedetection.io",
-    "open_findings": 0,
+    "open_findings": 1,
     "path": "monitoring/changedetection",
     "role": "Watches web pages for changes: restocks, prices, terms",
     "state": "scaffolded",
@@ -2983,7 +2983,7 @@
       "summary": "2 services · MongoDB"
     },
     "name": "Checkmate",
-    "open_findings": 0,
+    "open_findings": 6,
     "path": "monitoring/checkmate",
     "role": "Uptime, certificate, hardware and container monitoring with incidents, maintenance windows and status pages",
     "state": "scaffolded",
@@ -3010,7 +3010,7 @@
       "summary": "1 service"
     },
     "name": "ciao",
-    "open_findings": 0,
+    "open_findings": 5,
     "path": "monitoring/ciao",
     "role": "HTTP checks on a cron schedule with a dashboard, webhook notifications and TLS expiry warnings",
     "state": "scaffolded",
@@ -3058,7 +3058,7 @@
       "summary": "1 service"
     },
     "name": "Gotify",
-    "open_findings": 0,
+    "open_findings": 2,
     "path": "monitoring/gotify",
     "role": "Self-hosted push notifications — applications post with a token, clients hold a stream open",
     "state": "scaffolded",
@@ -3160,7 +3160,7 @@
       "summary": "6 services · ClickHouse + PostgreSQL + Redis + object storage"
     },
     "name": "Langfuse",
-    "open_findings": 0,
+    "open_findings": 2,
     "path": "monitoring/langfuse",
     "role": "LLM observability: traces, scores and prompts from any instrumented application",
     "state": "scaffolded",
@@ -3246,7 +3246,7 @@
       "summary": "1 service"
     },
     "name": "Uptime Kuma",
-    "open_findings": 0,
+    "open_findings": 7,
     "path": "monitoring/uptime-kuma",
     "role": "Uptime monitoring with a status page and many notification channels",
     "state": "scaffolded",
@@ -3286,7 +3286,7 @@
       "summary": "3 services · PostgreSQL"
     },
     "name": "Zabbix",
-    "open_findings": 0,
+    "open_findings": 2,
     "path": "monitoring/zabbix",
     "role": "Enterprise monitoring — agents, SNMP, IPMI and HTTP checks with triggers, escalation and history",
     "state": "scaffolded",

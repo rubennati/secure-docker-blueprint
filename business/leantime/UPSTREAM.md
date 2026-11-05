@@ -28,7 +28,7 @@ regular patch cadence.
   `bin/leantime schedule:work` — the scheduler that sends notifications and the
   daily digest. It is not optional.
 - `mysql:9.7.4`, the current LTS line. Leantime requires MySQL 8.0 or newer;
-  upstream's own compose example ships `mysql:8.4`; the MariaDB the other stacks here run
+  upstream's own compose example ships `mysql:8.4.13`; the MariaDB the other stacks here run
   is not a tested substitute.
 
 **Single sign-on is in the AGPL core**, not behind the marketplace: OIDC

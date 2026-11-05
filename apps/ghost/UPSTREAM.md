@@ -28,7 +28,7 @@
 ## What we use
 
 - Official `ghost` image (Alpine variant), pinned tag
-- Official `mysql:8.4` LTS as backend
+- Official `mysql:8.4.13` LTS as backend
 - Custom entrypoints for Docker Secret injection — Ghost, ActivityPub, and the migrations runner do not support `_FILE` env vars
 - Optional: `ghcr.io/tryghost/activitypub` + `ghcr.io/tryghost/activitypub-migrations` via overlay compose
 
@@ -108,7 +108,7 @@ Ghost's DB migrations are one-way. Rollback = restore the SQL dump AND revert `A
 
 ## Related images to keep in sync
 
-- `mysql:8.4` — safe to update within the 8.4 LTS line. Do NOT jump to MySQL 9 without reading the MySQL 8.4 → 9.x migration notes; Ghost officially supports MySQL 8 only.
+- `mysql:8.4.13` — safe to update within the 8.4 LTS line. Do NOT jump to MySQL 9 without reading the MySQL 8.4 → 9.x migration notes; Ghost officially supports MySQL 8 only.
 - `ghcr.io/tryghost/activitypub` — keep in sync with `ghcr.io/tryghost/activitypub-migrations` (both track the same release)
 
 ## Useful commands

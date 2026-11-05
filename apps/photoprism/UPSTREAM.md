@@ -108,7 +108,7 @@ Restore DB dump and `volumes/storage/`, revert `APP_TAG`.
   https://github.com/photoprism/photoprism/commit/41ef81c48
 - Moved `mariadb` from `11.4` to `12.3`, the current LTS line, on 2026-11-05,
   not run on a host at this tag. Support: PhotoPrism's own compose files pin
-  `mariadb:12.3` (https://dl.photoprism.app/docker/compose.yaml) and its FAQ
+  `mariadb:12.3.3` (https://dl.photoprism.app/docker/compose.yaml) and its FAQ
   requires MariaDB 10.5.12 or newer
   (https://docs.photoprism.app/getting-started/faq/). `MARIADB_AUTO_UPGRADE: "1"`, already set in
   both compose files, runs `mariadb-upgrade` at the first start on 12.3 after a

@@ -3,12 +3,18 @@
 Open-source document-signing platform — a self-hosted **DocuSign alternative**. Sibling e-sign
 option: [`business/opensign/`](../opensign/).
 
+## Open findings
+
+The PostgreSQL image, `postgres`, carries CVE-2025-68121 in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go. The `18.6-alpine` build also carries brotli-libs 1.2.0-r1 (CVE-2026-111497); Alpine has the fix, the official image is not rebuilt on it yet.
+
+**Risk:** the gosu flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. brotli is linked through libcurl for PostgreSQL 18's OAuth support, which this stack does not configure. Both clear with upstream's next rebuild.
+
 ## Architecture
 
 | Service | Image | Purpose |
 |---------|-------|---------|
 | `documenso-app` | `documenso/documenso:v2.21.1` | Remix web app + signing API (port 3000) |
-| `db` | `postgres:16-alpine` | Documents, signatures, users |
+| `db` | `postgres:16.15-alpine` | Documents, signatures, users |
 
 No `_FILE` support → `config/entrypoint.sh` injects secrets from Docker Secret files and execs the
 image CMD (`sh start.sh`, which runs Prisma migrations on boot). A signing certificate (`.p12`) is

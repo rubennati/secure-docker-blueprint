@@ -2,6 +2,19 @@
 
 Self-hosted file sync + team collaboration server. This setup runs Seafile Community Edition 13 as a **multi-container stack**, split across five compose files so optional components can be toggled on or off without touching the core.
 
+## Open findings
+
+SeaDoc 2.0.11 and the thumbnail server 13.0.29, the newest images for Seafile 13,
+bundle PyJWT 2.10.1 (CVE-2026-102268); SeaDoc also bundles `proxy-addr` 2.0.7
+(CVE-2026-90711). MariaDB 10.11 carries one finding in its `gosu` start-up helper
+(CVE-2025-68121, Go TLS), as does every newer MariaDB line.
+
+**Risk:** the PyJWT flaw concerns tokens signed with a public key, while Seafile
+signs with a shared secret, so it is most likely not reached (not verified in
+code). `proxy-addr` can let a client spoof the IP address that is logged. `gosu`
+only drops privileges at start and opens no TLS connection. The fixes arrive
+with newer Seafile component images.
+
 ## Architecture
 
 Seafile 13 is a collection of cooperating services, not a single container. The main server (`seafile`) is mandatory; everything else is optional and picked via the `COMPOSE_FILE` variable in `.env`.

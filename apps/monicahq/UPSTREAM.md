@@ -16,7 +16,7 @@
 ## What we use
 
 - Official `monica:4.1.2-apache` (Laravel + Apache + PHP). Monica 5 is published as `5.0.0-beta.*` only; the stack stays on the 4.x release line until 5 ships
-- Official `mariadb:11.4`
+- Official `mariadb:11.4.13`
 - Docker Secret for MariaDB user password + inline duplicate for Monica
 - Bind-mount `./volumes/mysql`, `./volumes/data`
 

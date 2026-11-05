@@ -4,6 +4,12 @@ Client-side encrypted secret sharing with a built-in secret-request
 workflow: someone can generate a link that asks a third party for a
 credential, without that person needing an account.
 
+## Open findings
+
+The image, `hemmeligapp/hemmelig:v7.6.1`, carries 7 CRITICAL findings that have published fixes: better-auth, GnuTLS (2), Perl (3) and the npm CLI's `tar`. **The upstream project is archived, so this stack is unmaintained** and no fixed release will follow.
+
+**Risk:** the better-auth flaw needs the Magic Link sign-in, which Hemmelig does not use, and npm does not run in the container; Perl and GnuTLS were not checked. Plan a replacement.
+
 ## License — read this first
 
 Hemmelig is under the **O'Saasy License Agreement**, a 2025 MIT-derived

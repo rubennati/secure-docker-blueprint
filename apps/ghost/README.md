@@ -2,6 +2,17 @@
 
 Headless Node.js CMS focused on publishing, newsletters, and paid memberships. This setup runs Ghost with a dedicated MySQL 8 database and an external SMTP relay for member emails. ActivityPub (Fediverse/Mastodon integration) is optional via a separate overlay file.
 
+## Open findings
+
+The Ghost image and its MySQL 8.4 database both carry CVE-2025-68121 in the
+`gosu` start-up helper, built with Go 1.24.6. MySQL 8.4 also bundles certifi
+2026.2.25 in MySQL Shell (GHSA-6q48-6c7w-9gw2, distrusted emSign roots). Both
+are the newest builds of their lines, and MySQL 9.7 carries the same two.
+
+**Risk:** `gosu` only drops privileges when the container starts and opens no
+TLS connection, so the Go TLS flaw is not reached. The database server does not
+use MySQL Shell's Python. Both clear when upstream rebuilds with gosu 1.20.
+
 ## Architecture
 
 Base stack (two services):
@@ -9,7 +20,7 @@ Base stack (two services):
 | Service | Image | Purpose |
 |---------|-------|---------|
 | `ghost-app` | `ghost:6.75.0-alpine` | Ghost CMS (Node.js), serves the blog + admin UI on port `2368` |
-| `db` | `mysql:8.4` | Ghost's content database (posts, members, settings) |
+| `db` | `mysql:8.4.13` | Ghost's content database (posts, members, settings) |
 
 Optional ActivityPub stack (`activitypub.yml`):
 

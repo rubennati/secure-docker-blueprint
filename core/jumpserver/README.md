@@ -5,6 +5,12 @@ session recording, approval workflows and audit, all through one web
 console. See the [PAM/bastion comparison](../README.md#privileged-access--bastion-alternatives)
 for how it differs from Warpgate, ShellHub, Teleport and Orion Belt.
 
+## Open findings
+
+The pinned image, `jumpserver/jms_all:v5.1.1`, ships with 19 CRITICAL vulnerabilities that have published fixes, among them Apache Tomcat and Spring Framework in the bundled Java web client, Pillow, Netty, certifi, OpenJDK's trust store and Debian packages. v5.1.1 is the newest JumpServer release, and upstream has not yet rebuilt it with the fixed libraries.
+
+**Risk:** the Tomcat, Spring and Pillow issues are in the request path, so treat them as reachable for anyone who reaches the web interface. Keep JumpServer on the shipped `access-vpn` default and move to the next release as soon as it is published.
+
 ## Architecture
 
 | Service | Image | Purpose |

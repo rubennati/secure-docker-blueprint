@@ -18,8 +18,8 @@
 ## What we use
 
 - `seafileltd/seafile-mc` — main server (Seahub + file server + ccnet)
-- `mariadb:10.11` LTS as backend
-- `memcached:1.6-alpine` and `redis:8.10-alpine` for caching
+- `mariadb:10.11.19` LTS as backend
+- `memcached:1.6.45-alpine` and `redis:8.10.3-alpine` for caching
 - Optional: `sdoc-server`, `notification-server`, `seafile-md-server`, `thumbnail-server` (all official Seafile images)
 - Upstream's reference compose as a starting point, then adapted to Blueprint conventions
 
@@ -128,8 +128,8 @@ Downgrades are **not** supported once Seahub has written a newer schema. Rollbac
 
 ## Related images to keep in sync
 
-- `mariadb:10.11` — LTS, safe to update minor versions
-- `redis:8.10-alpine`, `memcached:1.6-alpine` — safe to update minor versions
+- `mariadb:10.11.19` — LTS, safe to update minor versions
+- `redis:8.10.3-alpine`, `memcached:1.6.45-alpine` — safe to update minor versions
 - `sdoc-server`, `notification-server`, `md-server`, `thumbnail-server` — should track the same Seafile major line as the main `seafile-mc` image
 
 ## Useful commands

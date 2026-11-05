@@ -9,6 +9,12 @@ It sits beside [Uptime Kuma](../uptime-kuma/) and [Gatus](../gatus/) as the
 smallest of the three: checks are created in the interface like Kuma's, while
 the whole stack stays one container.
 
+## Open findings
+
+The pinned image, `brotandgames/ciao:1.12.0`, ships with 5 CRITICAL vulnerabilities that have published fixes: Rails Active Storage, the Ruby json gem, and Debian's perl. 1.12.0 is the newest release.
+
+**Risk:** Ciao does not handle file attachments, which the Active Storage issue needs; the json issue needs a parse option whose use here was not checked. Keep the stack on `access-vpn` and watch for the next release.
+
 ## Architecture
 
 ```text

@@ -18,8 +18,8 @@
 ## What we use
 
 - `infisical/infisical:v0.167.6` standalone image (backend + UI + API)
-- `postgres:18-alpine` as the secret store
-- `redis:7.4-alpine` for cache + job queue
+- `postgres:18.6-alpine` as the secret store
+- `redis:7.4.12-alpine` for cache + job queue
 - Custom `config/entrypoint.sh` to inject secrets from Docker Secret files (no `_FILE` support)
 
 ## What we changed vs. upstream compose

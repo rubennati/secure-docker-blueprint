@@ -2,6 +2,12 @@
 
 Self-hosted website content change detection. Different axis from uptime monitoring — answers "what changed on this page" instead of "is it up". Good for: restock alerts, price drops, ToS/policy diff tracking, external-dependency defacement detection.
 
+## Open findings
+
+The image, `ghcr.io/dgtlmoon/changedetection.io:0.70.1`, carries one CRITICAL finding in the Rust `zip` library bundled with Selenium's driver manager (CVE-2026-115905). It is the newest release.
+
+**Risk:** that tool only unpacks downloaded browser drivers, which this stack does not use. Move to the next release.
+
 ## Architecture
 
 Single-container deployment (HTTP fetcher only):

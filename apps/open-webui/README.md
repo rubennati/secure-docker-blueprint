@@ -6,6 +6,12 @@ it talks to (`BACKEND_URL`) can be LiteLLM, vLLM, Ollama's `/v1`, agentgateway o
 hosted provider; none is required. Upstream:
 [Open WebUI](https://github.com/open-webui/open-webui).
 
+## Open findings
+
+The image, `ghcr.io/open-webui/open-webui:v0.13.0`, carries 4 CRITICAL findings in Python libraries: Authlib (JWS signature bypass), PyJWT (token forgery when HMAC and public-key algorithms are mixed), sentence-transformers (code execution from a writable model directory) and unstructured (server-side request forgery on URL ingestion). It is the newest release, and upstream still pins these versions.
+
+**Risk:** reachability has not been checked. Keep the data and model volumes writable only by the container, restrict who can add models and web sources, and move to the next release.
+
 ## Architecture
 
 ```text

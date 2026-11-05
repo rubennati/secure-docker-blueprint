@@ -9,6 +9,12 @@ by Nextcloud's `richdocuments`; Seafile supports it too, with settings this blue
 Pick per need: **OnlyOffice / [Euro-Office](../euro-office/)** for MS-Office-native fidelity, or
 **Collabora** when you want a much smaller footprint (LibreOffice engine).
 
+## Open findings
+
+The image, `collabora/code:26.04.5.2.1`, carries one CRITICAL finding in the DOMPurify copy bundled with the browser editor (GHSA-cg2g-xh64-v4q7). It is the newest release.
+
+**Risk:** the flaw only applies to a specific sanitizer mode; whether the editor uses it has not been checked. Move to the next release.
+
 ## Architecture
 
 | Service | Image | Purpose |

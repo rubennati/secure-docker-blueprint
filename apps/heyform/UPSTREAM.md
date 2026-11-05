@@ -35,7 +35,7 @@ GraphQL endpoint and the built web application, all on port 9157.
 | --- | --- | --- |
 | `percona/percona-server-mongodb:4.4` | `mongo:8.0.32` | upstream's newest image of that line is from 2024-04 |
 | MongoDB with no credentials | authentication on | it is a database |
-| `eqalpha/keydb:latest`, `--protected-mode no`, no password | `valkey/valkey:8.1.4-alpine` with a password | KeyDB's last release is from 2023-10 |
+| `eqalpha/keydb:latest`, `--protected-mode no`, no password | `valkey/valkey:9.1.3-alpine` with a password | KeyDB's last release is from 2023-10 |
 | `:latest` | `v3.0.3` | `latest` also moves on release candidates |
 | runs as root | `user: "1000:1000"` | nothing in the image needs root |
 | writable filesystem | `read_only: true` | the only path written is the upload volume |
@@ -59,7 +59,7 @@ built server; in v3.0.3 it is at `dist/src/main.js`.
 The upstream compose pins a MongoDB from 2024 and a KeyDB from 2023. Whether
 v3.0.3 runs on current versions of both was the open question before this
 stack existed. It does — measured, not assumed, against `mongo:8.0.32` and
-`valkey/valkey:8.1.4-alpine` with the full security baseline in place
+`valkey/valkey:9.1.3-alpine` with the full security baseline in place
 (`read_only`, `cap_drop: ALL`, `no-new-privileges`, uid 1000, MongoDB
 authentication, Valkey password):
 

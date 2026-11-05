@@ -5,6 +5,16 @@ statistics, tags, QR codes, and a REST API that everything else drives. There
 are no user accounts — the API takes keys.
 Upstream: [shlinkio/shlink](https://github.com/shlinkio/shlink).
 
+## Open findings
+
+The Shlink image, `ghcr.io/shlinkio/shlink:5.1.8`, and the web client, `shlink-web-client:4.9.0`, each ship Alpine `brotli-libs` 1.2.0 with one CRITICAL finding (CVE-2026-111497, fixed in 1.2.1). Both are the newest release, and upstream has not rebuilt them.
+
+**Risk:** the library backs PHP's curl, which Shlink uses when it fetches remote pages such as a long URL's title, so a hostile site could in principle reach it; the static web client does not use it. Move to the next release.
+
+The PostgreSQL image, `postgres`, carries CVE-2025-68121 in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go. The `18.6-alpine` build also carries brotli-libs 1.2.0-r1 (CVE-2026-111497); Alpine has the fix, the official image is not rebuilt on it yet.
+
+**Risk:** the gosu flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. brotli is linked through libcurl for PostgreSQL 18's OAuth support, which this stack does not configure. Both clear with upstream's next rebuild.
+
 ## Architecture
 
 ```text

@@ -18,7 +18,7 @@
 
 - Official `authelia/authelia` image, pinned tag, run as `1000:1000`
 - `postgres:18.6-alpine` for storage — the tag `core/keycloak` pins
-- `redis:8.10-alpine` for sessions — the tag `core/authentik` pins
+- `redis:8.10.3-alpine` for sessions — the tag `core/authentik` pins
 - The file authentication backend (`users_database.yml`), Argon2 hashes
 - Secrets through Authelia's own `_FILE` variables, no entrypoint wrapper
 - The configuration template filter, so the committed `configuration.yml` holds no

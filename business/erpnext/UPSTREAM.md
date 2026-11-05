@@ -25,7 +25,7 @@ AGPL-3.0. The Frappe framework underneath is MIT.
 
 - `frappe/erpnext:v16.53.0` — one image for every role, published for amd64 and
   arm64. Upstream's compose pins `platform: linux/amd64`; this stack does not.
-- `mariadb:11.8` (upstream's compose pin) and `redis:8.10-alpine` (upstream pins `8.6-alpine`).
+- `mariadb:11.8.9` (upstream's compose pin) and `redis:8.10.3-alpine` (upstream pins `8.6-alpine`).
 - frappe_docker's `compose.yaml` with `overrides/compose.mariadb.yaml` and
   `overrides/compose.redis.yaml`: the same ten services.
 

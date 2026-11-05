@@ -4,6 +4,12 @@
 
 Stateless web-based database administration tool. Supports MySQL, MariaDB, PostgreSQL, SQLite, MS SQL, Oracle, Elasticsearch, MongoDB, and more via drivers. Single PHP file, no dependencies.
 
+## Open findings
+
+The image, `adminer:6.3.0-standalone`, ships Alpine `brotli-libs` 1.2.0 with one CRITICAL finding (CVE-2026-111497, a brotli decoder overflow, fixed in 1.2.1). It stays because the newest Adminer image was built before Alpine published the fix.
+
+**Risk:** the library is there for libcurl; Adminer's database connections do not use it. Keep Adminer behind authentication on the internal network and move to the next image rebuild.
+
 ## Architecture
 
 Single service:

@@ -6,13 +6,35 @@
 
 For an alternative with an established track record and no build dependency, see [`apps/easyappointments/`](../easyappointments/) (PHP + MariaDB, GPL-3.0).
 
+## Open findings
+
+The pinned image, `ghcr.io/rubennati/cal.diy:v6.2.0-6`, ships with 24 CRITICAL
+vulnerabilities that have published fixes: Next.js 16.2.3 (five advisories,
+among them GHSA-vcvr-r3jv-pc5j in `next/og`), `@sentry/nextjs`, `handlebars`,
+`proxy-addr`, `shell-quote`, `tar`, a Go standard library, and Debian 12 packages
+(`libgnutls30`, ImageMagick, `perl`, `libbrotli1`, `mariadb-common`, kernel
+headers). The image is this project's own build of the Cal.diy fork; the fixes
+need a rebuild on Next.js 16.4.1 or later and a current Debian base, which is
+planned but not done.
+
+**Risk:** the Next.js and Node.js packages sit in the request path of the web
+application, so treat them as reachable; whether each advisory applies to how
+Cal.diy uses Next.js has not been checked. The Debian packages and kernel
+headers are not on that path. Keep the stack on the shipped `access-vpn`
+default, or behind the Cloudflare proxy described above, until the rebuilt
+image is pinned.
+
+The PostgreSQL image, `postgres`, carries CVE-2025-68121 in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go. The `18.6-alpine` build also carries brotli-libs 1.2.0-r1 (CVE-2026-111497); Alpine has the fix, the official image is not rebuilt on it yet.
+
+**Risk:** the gosu flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. brotli is linked through libcurl for PostgreSQL 18's OAuth support, which this stack does not configure. Both clear with upstream's next rebuild.
+
 ## Architecture
 
 | Service | Image | Purpose |
 |---------|-------|---------|
 | `caldiy-app` | `ghcr.io/rubennati/cal.diy:v6.2.0-6` | Next.js web app + scheduling engine |
 | `db` | `postgres:18.6` | Users, event types, bookings, team memberships |
-| `redis` | `redis:8.10-alpine` | Session cache + job queue |
+| `redis` | `redis:8.10.3-alpine` | Session cache + job queue |
 
 The image is built from [`rubennati/cal.diy`](https://github.com/rubennati/cal.diy) — the security-first, review-gated **cal.forte** fork that publishes reviewed, versioned images to GHCR (never `latest`). Upstream does not publish a reliable pre-built image. See [UPSTREAM.md](UPSTREAM.md).
 

@@ -4,6 +4,12 @@ Docker management UI with Git-based stack management. Deploy and update Compose 
 
 Works best for homelab / small-team setups where stacks are version-controlled in a Git repository instead of configured through a web UI.
 
+## Open findings
+
+The PostgreSQL image, `postgres`, carries CVE-2025-68121 in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go. The `18.6-alpine` build also carries brotli-libs 1.2.0-r1 (CVE-2026-111497); Alpine has the fix, the official image is not rebuilt on it yet.
+
+**Risk:** the gosu flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. brotli is linked through libcurl for PostgreSQL 18's OAuth support, which this stack does not configure. Both clear with upstream's next rebuild.
+
 ## Architecture
 
 Three services:
@@ -11,7 +17,7 @@ Three services:
 | Service | Image | Purpose |
 |---------|-------|---------|
 | `dockhand` | `fnsys/dockhand` | Dockhand web UI + Git poller + Compose orchestrator |
-| `db` | `postgres:16-alpine` | Persistent state (stacks, users, Git repos config) |
+| `db` | `postgres:16.15-alpine` | Persistent state (stacks, users, Git repos config) |
 | `socket-proxy` | `tecnativa/docker-socket-proxy` | Filtered Docker API access — Dockhand never talks to the Docker socket directly |
 
 Dockhand reaches the Docker daemon via `DOCKER_HOST=tcp://socket-proxy:2375`. The proxy enforces which API endpoints are allowed — see `.env.example` / `docker-compose.yml` for the permission set.

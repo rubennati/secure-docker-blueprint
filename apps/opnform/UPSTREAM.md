@@ -17,8 +17,8 @@
 
 - Upstream `jhumanj/opnform-api` (Laravel)
 - Upstream `jhumanj/opnform-client` (Nuxt)
-- Official `postgres:16-alpine`
-- Official `redis:8.10-alpine`
+- Official `postgres:16.15-alpine`
+- Official `redis:8.10.3-alpine`
 - Docker Secret for Postgres password + inline duplicate for Laravel
 - Bind-mount `./volumes/postgres`, `./volumes/redis`, `./volumes/api-storage`
 

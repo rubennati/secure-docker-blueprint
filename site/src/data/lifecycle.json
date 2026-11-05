@@ -2,7 +2,7 @@
   "apps/adminer": {
     "backup_docs": "documented",
     "local_stack": "—",
-    "open_findings": 0,
+    "open_findings": 1,
     "pinned": "APP_TAG=6.3.0-standalone",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -24,7 +24,7 @@
   "apps/bookstack": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 1,
     "pinned": "APP_TAG=version-v26.09.2@sha256:33f61a72d9aa…",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -35,7 +35,7 @@
   "apps/caldiy": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 26,
     "pinned": "APP_TAG=v6.2.0-6@sha256:538cbb4a2273…",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -46,7 +46,7 @@
   "apps/calnode": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 3,
     "pinned": "APP_TAG=0.13.0",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -68,7 +68,7 @@
   "apps/ciso-assistant": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 3,
     "pinned": "APP_TAG=v4.2.1",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -79,7 +79,7 @@
   "apps/collabora": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 1,
     "pinned": "APP_TAG=26.04.5.2.1",
     "restore_docs": "missing",
     "state": "baseline-aligned",
@@ -101,7 +101,7 @@
   "apps/defectdojo": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 4,
     "pinned": "APP_TAG=3.5.0",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -112,7 +112,7 @@
   "apps/dependency-track": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 4,
     "pinned": "APP_TAG=5.2.1",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -123,7 +123,7 @@
   "apps/dfir-iris": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 29,
     "pinned": "APP_TAG=v2.4.29",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -134,7 +134,7 @@
   "apps/dify": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 8,
     "pinned": "APP_TAG=1.19.0",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -145,7 +145,7 @@
   "apps/docker-mailserver": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 8,
     "pinned": "APP_TAG=16.0.1",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -167,7 +167,7 @@
   "apps/easyappointments": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 3,
     "pinned": "APP_TAG=1.6.1",
     "restore_docs": "missing",
     "state": "ops-proven",
@@ -189,7 +189,7 @@
   "apps/ghost": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 3,
     "pinned": "APP_TAG=6.75.0-alpine",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -200,7 +200,7 @@
   "apps/greenmail": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 1,
     "pinned": "APP_TAG=2.1.15",
     "restore_docs": "missing",
     "state": "baseline-aligned",
@@ -222,7 +222,7 @@
   "apps/hemmelig": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 7,
     "pinned": "APP_TAG=v7.6.1",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -233,7 +233,7 @@
   "apps/heyform": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 14,
     "pinned": "APP_TAG=v3.0.6",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -266,7 +266,7 @@
   "apps/httpbin": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 4,
     "pinned": "APP_TAG=0.10.4",
     "restore_docs": "missing",
     "state": "baseline-aligned",
@@ -277,7 +277,7 @@
   "apps/immich": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 16,
     "pinned": "APP_TAG=v3.3.6",
     "restore_docs": "documented",
     "state": "scaffolded",
@@ -288,7 +288,7 @@
   "apps/it-tools": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 2,
     "pinned": "APP_TAG=2024.10.22-7ca5933",
     "restore_docs": "missing",
     "state": "baseline-aligned",
@@ -299,7 +299,7 @@
   "apps/librephotos": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 1,
     "pinned": "APP_TAG=1.5.1",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -310,7 +310,7 @@
   "apps/litellm": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 2,
     "pinned": "APP_TAG=v1.108.0@sha256:08d313a00c46…",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -321,7 +321,7 @@
   "apps/lycheeorg": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 1,
     "pinned": "APP_TAG=v7.12.1",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -343,7 +343,7 @@
   "apps/mailserver-jeboehm": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 2,
     "pinned": "APP_TAG=8.1.0",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -354,7 +354,7 @@
   "apps/monicahq": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 4,
     "pinned": "APP_TAG=4.1.2-apache",
     "restore_docs": "missing",
     "state": "ops-proven",
@@ -365,7 +365,7 @@
   "apps/n8n": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 1,
     "pinned": "APP_TAG=2.46.6@sha256:8602f5dfacbe…",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -376,7 +376,7 @@
   "apps/nextcloud": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 3,
     "pinned": "APP_TAG=35.0.2-fpm-alpine",
     "restore_docs": "documented",
     "state": "scaffolded",
@@ -398,7 +398,7 @@
   "apps/obot": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 4,
     "pinned": "APP_TAG=v0.27.0",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -431,7 +431,7 @@
   "apps/open-webui": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 4,
     "pinned": "APP_TAG=v0.13.0",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -442,7 +442,7 @@
   "apps/opencanary": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 8,
     "pinned": "APP_TAG=0.9.10",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -453,7 +453,7 @@
   "apps/opnform": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 3,
     "pinned": "APP_TAG=2.8.4",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -475,7 +475,7 @@
   "apps/paperless-ngx": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 3,
     "pinned": "APP_TAG=3.4.2",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -486,7 +486,7 @@
   "apps/photoprism": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 1,
     "pinned": "APP_TAG=261029",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -497,7 +497,7 @@
   "apps/photoview": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 6,
     "pinned": "APP_TAG=2.4.0",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -530,7 +530,7 @@
   "apps/seafile": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 4,
     "pinned": "APP_IMAGE=seafileltd/seafile-mc:13.0.29",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -541,7 +541,7 @@
   "apps/seafile-pro": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 25,
     "pinned": "APP_TAG=13.0.29",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -552,7 +552,7 @@
   "apps/shlink": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 4,
     "pinned": "APP_TAG=5.1.8",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -574,7 +574,7 @@
   "apps/threat-dragon": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 2,
     "pinned": "APP_TAG=v2.6.2",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -585,7 +585,7 @@
   "apps/tymeslot": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 2,
     "pinned": "APP_TAG=1.39.0-slim@sha256:ad7cfda6fe84…",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -596,7 +596,7 @@
   "apps/unifi": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 12,
     "pinned": "APP_TAG=10.6.109",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -607,7 +607,7 @@
   "apps/vaultwarden": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 1,
     "pinned": "APP_TAG=1.37.5",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -651,7 +651,7 @@
   "apps/wikijs": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 3,
     "pinned": "APP_TAG=3.1.0",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -662,7 +662,7 @@
   "apps/windmill": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 3,
     "pinned": "APP_TAG=1.862.0",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -673,7 +673,7 @@
   "apps/wordpress": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 1,
     "pinned": "APP_TAG=7.1.4-php8.3-apache",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -706,7 +706,7 @@
   "backup/kopia": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 2,
     "pinned": "APP_TAG=0.23.1",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -728,7 +728,7 @@
   "backup/urbackup": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 4,
     "pinned": "APP_TAG=2.5.x@sha256:fd218c45192f…",
     "restore_docs": "documented",
     "state": "scaffolded",
@@ -739,7 +739,7 @@
   "business/akaunting": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 2,
     "pinned": "APP_TAG=3.3.0-v@sha256:6c5e9864dfe7…",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -750,7 +750,7 @@
   "business/chatwoot": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 4,
     "pinned": "APP_TAG=v4.19.1",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -761,7 +761,7 @@
   "business/documenso": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 2,
     "pinned": "APP_TAG=v2.21.1",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -772,7 +772,7 @@
   "business/dolibarr": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 1,
     "pinned": "APP_TAG=24.0.2",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -783,7 +783,7 @@
   "business/erpnext": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 7,
     "pinned": "APP_TAG=v16.53.0",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -794,7 +794,7 @@
   "business/facturascripts": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 3,
     "pinned": "APP_TAG=2026.7",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -805,7 +805,7 @@
   "business/invoiceninja": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 3,
     "pinned": "APP_TAG=5.13.53",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -816,7 +816,7 @@
   "business/kimai": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 2,
     "pinned": "APP_TAG=2.71.0",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -827,7 +827,7 @@
   "business/leantime": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 4,
     "pinned": "APP_TAG=3.13.2",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -838,7 +838,7 @@
   "business/listmonk": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 3,
     "pinned": "APP_TAG=v6.2.0",
     "restore_docs": "missing",
     "state": "baseline-aligned",
@@ -849,7 +849,7 @@
   "business/matomo": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 1,
     "pinned": "APP_TAG=5.14.2-apache",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -860,7 +860,7 @@
   "business/openproject": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 4,
     "pinned": "APP_TAG=17.9.6-slim",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -871,7 +871,7 @@
   "business/opensign": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 56,
     "pinned": "APP_TAG=main@sha256:093910c698c1…",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -882,7 +882,7 @@
   "business/plane": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 13,
     "pinned": "APP_TAG=v1.4.3",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -893,7 +893,7 @@
   "business/plausible": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 2,
     "pinned": "APP_TAG=v3.2.1",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -915,7 +915,7 @@
   "business/twenty": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 2,
     "pinned": "APP_TAG=v2.55.0",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -926,7 +926,7 @@
   "business/vikunja": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 2,
     "pinned": "APP_TAG=2.6.0",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -937,7 +937,7 @@
   "business/zammad": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 2,
     "pinned": "APP_TAG=7.2.2-0038",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -948,7 +948,7 @@
   "core/acme-certs": {
     "backup_docs": "documented",
     "local_stack": "—",
-    "open_findings": 0,
+    "open_findings": 3,
     "pinned": "APP_TAG=0.2.1",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -959,7 +959,7 @@
   "core/authelia": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 2,
     "pinned": "APP_TAG=4.39.28",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -970,7 +970,7 @@
   "core/authentik": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 3,
     "pinned": "APP_TAG=2026.8.5",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -1003,7 +1003,7 @@
   "core/dockhand": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 2,
     "pinned": "APP_TAG=v1.0.57",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -1047,7 +1047,7 @@
   "core/infisical": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 2,
     "pinned": "APP_TAG=v0.167.6",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -1058,7 +1058,7 @@
   "core/jumpserver": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 19,
     "pinned": "APP_TAG=v5.1.1",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -1069,7 +1069,7 @@
   "core/keycloak": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 2,
     "pinned": "APP_TAG=26.8.1",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -1080,7 +1080,7 @@
   "core/orion-belt": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 2,
     "pinned": "APP_TAG=1.4.0",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -1113,7 +1113,7 @@
   "core/shellhub": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 2,
     "pinned": "SHELLHUB_VERSION=v0.29.3",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -1124,7 +1124,7 @@
   "core/step-ca": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 4,
     "pinned": "APP_TAG=0.30.2",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -1201,7 +1201,7 @@
   "monitoring/changedetection": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 1,
     "pinned": "APP_TAG=0.70.1",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -1212,7 +1212,7 @@
   "monitoring/checkmate": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 6,
     "pinned": "APP_TAG=v3.13.1",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -1223,7 +1223,7 @@
   "monitoring/ciao": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 5,
     "pinned": "APP_TAG=1.12.0",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -1245,7 +1245,7 @@
   "monitoring/gotify": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 2,
     "pinned": "APP_TAG=3.1.1",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -1278,7 +1278,7 @@
   "monitoring/langfuse": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 2,
     "pinned": "APP_TAG=4.75.0",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -1311,7 +1311,7 @@
   "monitoring/uptime-kuma": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 7,
     "pinned": "APP_TAG=2.5.9",
     "restore_docs": "missing",
     "state": "scaffolded",
@@ -1322,7 +1322,7 @@
   "monitoring/zabbix": {
     "backup_docs": "documented",
     "local_stack": "✅",
-    "open_findings": 0,
+    "open_findings": 2,
     "pinned": "APP_TAG=alpine-7.0.32",
     "restore_docs": "missing",
     "state": "scaffolded",

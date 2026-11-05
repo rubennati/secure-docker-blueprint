@@ -5,6 +5,12 @@ interface, and a REST API with its own keys. One Go binary with SQLite in the
 data volume — upstream needs no database service, no cache and no separate API
 server. Upstream: [Calnode](https://github.com/Calnode/calnode).
 
+## Open findings
+
+The pinned image, `ghcr.io/calnode/calnode:0.13.0`, ships with 3 CRITICAL vulnerabilities that have published fixes, all in the bundled Litestream binary (gRPC and an old Go runtime). 0.13.0 is the newest release.
+
+**Risk:** Litestream starts only when `LITESTREAM_REPLICA_URL` is set, which this stack does not do. Leave it unset and watch for a release with a newer Litestream.
+
 ## Architecture
 
 ```text

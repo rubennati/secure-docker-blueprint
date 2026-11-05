@@ -2,12 +2,18 @@
 
 AI-powered self-hosted photo manager with ONNX-based classification, face recognition, and location enrichment. Go-based server with MariaDB backend.
 
+## Open findings
+
+The MariaDB image, `mariadb`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+
 ## Architecture
 
 | Service | Image | Purpose |
 |---------|-------|---------|
 | `photoprism-app` | `photoprism/photoprism:261029` | Web UI + API + ONNX models + WebDAV |
-| `db` | `mariadb:12.3` | Primary store (index, albums, users, sidecar metadata) |
+| `db` | `mariadb:12.3.3` | Primary store (index, albums, users, sidecar metadata) |
 
 ## Try it locally
 

@@ -20,7 +20,7 @@
 
 - `docker.langfuse.com/langfuse/langfuse:4.75.0` and `…/langfuse-worker:4.75.0`.
   Upstream's compose file uses the floating `:4`; not used here.
-- `postgres:18.6`, `clickhouse/clickhouse-server:26.10`, `redis:8.10-alpine` and
+- `postgres:18.6`, `clickhouse/clickhouse-server:26.10.3.7`, `redis:8.10.3-alpine` and
   `quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z` — the same five components as
   upstream's compose, pinned. Upstream's MinIO is `cgr.dev/chainguard/minio` with no
   tag; the quay image is a versioned release of the same server.

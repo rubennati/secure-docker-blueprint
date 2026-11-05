@@ -7,6 +7,16 @@ worker and scheduler, a one-shot initializer, PostgreSQL and Valkey — the seve
 services of upstream's compose. Upstream:
 [DefectDojo](https://github.com/DefectDojo/django-DefectDojo).
 
+## Open findings
+
+The pinned image, `defectdojo/defectdojo-django:3.5.0`, ships with 2 CRITICAL vulnerabilities that have published fixes: certifi still trusts revoked eMudhra intermediates, and Debian's kernel headers. 3.5.0 is the newest release.
+
+**Risk:** nothing runs the kernel headers; the certifi issue lets someone holding those keys intercept DefectDojo's outbound HTTPS from an on-path position. Watch for the next release.
+
+The PostgreSQL image, `postgres`, carries CVE-2025-68121 in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go. The `18.6-alpine` build also carries brotli-libs 1.2.0-r1 (CVE-2026-111497); Alpine has the fix, the official image is not rebuilt on it yet.
+
+**Risk:** the gosu flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. brotli is linked through libcurl for PostgreSQL 18's OAuth support, which this stack does not configure. Both clear with upstream's next rebuild.
+
 ## Architecture
 
 ```text
