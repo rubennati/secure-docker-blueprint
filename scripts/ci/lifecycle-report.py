@@ -33,12 +33,20 @@ a partial answer.
 Other owners (see status-model.md):
   pinned version  <stack>/.env.example  (APP_TAG, else APP_IMAGE, else first *_TAG/_IMAGE/_VERSION pin)
   backup/restore  <stack>/README.md     (presence of the corresponding section)
+  open findings   .trivy-baseline.json  (CRITICAL findings recorded as an image
+                                         exception, counted per stack)
 
 Consistency rules (--check):
 
 FAIL:
   stale-report         LIFECYCLE.md or lifecycle.json differs from the sources
-  unknown-stack        the rehearsal log names a stack that does not exist
+  unknown-stack        the rehearsal log or an image exception in
+                       .trivy-baseline.json names a stack that does not exist
+  open-findings-unmarked
+                       a stack uses an image with a recorded exception, and its
+                       README has no `## Open findings` section saying so
+  open-findings-stale  a README carries `## Open findings`, and no exception in
+                       .trivy-baseline.json names the stack any more
 
 WARN — evidence probably exists, the record is in the old shape:
   legacy-stamp         the pre-v0.5.1 `Last checked: DATE` field instead of
@@ -163,6 +171,22 @@ def baseline_ok() -> bool:
         if done.returncode != 0:
             return False
     return True
+
+
+TRIVY_BASELINE = Path(".trivy-baseline.json")
+OPEN_FINDINGS = re.compile(r"^##\s+Open findings\s*$", re.M)
+
+
+def open_findings() -> dict[str, int]:
+    """{stack key: CRITICAL findings it ships under a recorded image exception}."""
+    if not TRIVY_BASELINE.is_file():
+        return {}
+    data = json.loads(TRIVY_BASELINE.read_text(encoding="utf-8"))
+    per_stack: dict[str, int] = {}
+    for entry in (data.get("exceptions") or {}).values():
+        for key in entry.get("stacks") or []:
+            per_stack[key] = per_stack.get(key, 0) + len(entry.get("cves") or [])
+    return per_stack
 
 
 def restored_stacks() -> tuple[set[str], list[str]]:
@@ -381,6 +405,14 @@ def collect() -> tuple[list[dict], list[dict]]:
             "rule": "unknown-stack", "stack": key,
             "detail": f"named in {RESTORE_LOG} but no such directory exists",
         })
+    findings = open_findings()
+    for key in sorted(findings):
+        if not Path(key).is_dir():
+            problems.append({
+                "rule": "unknown-stack", "stack": key,
+                "detail": f"named in an exception in {TRIVY_BASELINE} but no such "
+                          "directory exists",
+            })
 
     if not baseline:
         problems.append({
@@ -453,8 +485,25 @@ def collect() -> tuple[list[dict], list[dict]]:
                               f"anchored verification date to reach ops-proven",
                 })
 
+            open_count = findings.get(key, 0)
+            marked = bool(OPEN_FINDINGS.search(read(stack / "README.md")))
+            if open_count and not marked:
+                problems.append({
+                    "rule": "open-findings-unmarked", "stack": key,
+                    "detail": f"ships {open_count} CRITICAL finding(s) under an image "
+                              f"exception in {TRIVY_BASELINE}, and its README has no "
+                              "`## Open findings` section saying so",
+                })
+            if marked and not open_count:
+                problems.append({
+                    "rule": "open-findings-stale", "stack": key,
+                    "detail": "README carries `## Open findings`, and no exception in "
+                              f"{TRIVY_BASELINE} names the stack — remove the section",
+                })
+
             backup_docs, restore_docs = doc_sections(stack)
             rows.append({
+                "open_findings": open_count,
                 "stack": key, "category": category, "state": state,
                 "pinned": pinned, "verified": verified,
                 "verified_version": verified_version,
@@ -489,6 +538,9 @@ def render_json(rows: list[dict]) -> str:
             "backup_docs": r["backup"],
             "restore_docs": r["restore"],
             "local_stack": r["local"],
+            # CRITICAL findings that ship with the pinned images, recorded as an
+            # exception with reason and risk; the README's section names them.
+            "open_findings": r["open_findings"],
         }
         for r in rows
     }
@@ -507,6 +559,13 @@ def strip_stamp(text: str) -> str:
     return "\n".join(
         line for line in text.splitlines() if not line.startswith("Generated ")
     )
+
+
+def marker(row: dict) -> str:
+    n = row["open_findings"]
+    if not n:
+        return "—"
+    return f"[⚠️ {n} CRITICAL]({row['stack']}/README.md#open-findings)"
 
 
 def render(rows: list[dict]) -> str:
@@ -529,7 +588,9 @@ def render(rows: list[dict]) -> str:
         + "**Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.",
         "",
         f"{len(rows)} stacks: {summary}. "
-        + f"{sum(1 for r in rows if r['local'] == '✅')} carry a local test stack.",
+        + f"{sum(1 for r in rows if r['local'] == '✅')} carry a local test stack. "
+        + f"{sum(1 for r in rows if r['open_findings'])} ship with open CRITICAL "
+        + "findings.",
         "",
         "This is the maintainer's view: what has been established about each "
         + "stack. It makes no statement about whether a stack suits a given "
@@ -552,6 +613,11 @@ def render(rows: list[dict]) -> str:
         + "`ops-proven` records. `n/a` marks a stack where the section would be "
         + "circular — the backup tool cannot describe backing itself up with "
         + "itself.",
+        "- **Open findings** — CRITICAL vulnerabilities with a published fix that "
+        + "the pinned images still carry, because no upstream release removes them "
+        + "yet. Each is recorded as an exception with its reason and risk in "
+        + "`.trivy-baseline.json`; the stack README's *Open findings* section "
+        + "says what that means for an installation. `—` means none.",
         "",
     ]
 
@@ -562,14 +628,14 @@ def render(rows: list[dict]) -> str:
         out += [
             f"## `{category}/`",
             "",
-            "| Stack | State | Pinned | Last verified | Local | Backup docs | Restore docs |",
-            "|---|---|---|---|---|---|---|",
+            "| Stack | State | Pinned | Last verified | Local | Backup docs | Restore docs | Open findings |",
+            "|---|---|---|---|---|---|---|---|",
         ]
         for r in group:
             out.append(
                 f"| [`{r['stack']}`]({r['stack']}/) | `{r['state']}` "
                 f"| {r['pinned']} | {r['verified']} | {r['local']} "
-                f"| {r['backup']} | {r['restore']} |"
+                f"| {r['backup']} | {r['restore']} | {marker(r)} |"
             )
         out.append("")
 

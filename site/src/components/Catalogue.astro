@@ -37,6 +37,7 @@ type Entry = {
 	state: string;
 	verified: string | null;
 	verified_version: string | null;
+	open_findings: number;
 	footprint: {
 		services: number;
 		init_services: number;
@@ -155,6 +156,11 @@ const checked = (e: Entry) => {
 							<p class="cat__meta">
 								<span class="cat__state">{STATE_LABEL[e.state] ?? e.state}</span>
 								<span>{checked(e)}</span>
+								{e.open_findings > 0 && (
+									<a class="cat__findings" href={`${REPO.replace('/tree/', '/blob/')}${e.path}/README.md#open-findings`}>
+										{e.open_findings} open CRITICAL finding{e.open_findings === 1 ? '' : 's'}
+									</a>
+								)}
 								<a href={`${REPO}${e.path}`}>Files</a>
 								{e.upstream && <a href={e.upstream}>Upstream</a>}
 							</p>
@@ -278,6 +284,10 @@ const checked = (e: Entry) => {
 	.cat__state {
 		font-weight: 600;
 		color: var(--sl-color-gray-2);
+	}
+	.cat__findings {
+		color: var(--sl-color-orange);
+		font-weight: 600;
 	}
 	.cat__meta {
 		display: flex;

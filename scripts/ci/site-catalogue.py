@@ -344,6 +344,7 @@ def collect() -> tuple[dict, list[str]]:
             "state": life.get("state", "scaffolded"),
             "verified": life.get("verified") if life.get("verified_anchored") and life.get("verified") not in (None, "—") else None,
             "verified_version": life.get("verified_version") or None,
+            "open_findings": life.get("open_findings", 0),
             "footprint": footprint(
                 _structure.compose_files(stack), _structure.overlay_files(stack)
             ),

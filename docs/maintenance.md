@@ -158,8 +158,9 @@ A chain is a defined sequence of files to check and update for a specific trigge
 | 4 | `<app>/.env.local.example` | Bump the same pin, where the local stack runs the same image. `check-structure.py` fails on a local pin that lags production (`local-pin-drift`) |
 | 5 | `<app>/UPSTREAM.md` | Update version reference and release notes link |
 | 6 | `<app>/docker-compose.yml` | Check if any compose changes are needed (new envs, removed features, healthcheck changes) |
-| 7 | `docs/bugfixes/` | If anything broke during upgrade, document it here |
-| 8 | `CHANGELOG.md` | Version bump documented |
+| 7 | Image scan | Run the image scan on the branch (`trivy.yml`, `workflow_dispatch`). A CRITICAL finding the new pin still carries is fixed by the newest upstream release that removes it. Only where none exists does it go into `.trivy-baseline.json` as an exception for that image — the stacks that use it, why the pin cannot move, the risk — with an `## Open findings` section in each stack README. `trivy-gate.py --prune` removes what the scan no longer finds |
+| 8 | `docs/bugfixes/` | If anything broke during upgrade, document it here |
+| 9 | `CHANGELOG.md` | Version bump documented |
 
 Step 4 exists because its absence was the whole defect: the chain named only
 `.env.example`, so no bump ever reached the local file, and 41 pins across 39
