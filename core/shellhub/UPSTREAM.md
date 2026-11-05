@@ -22,7 +22,7 @@
 
 - `shellhubio/server`, `shellhubio/ui`, `shellhubio/gateway`, all at the
   same version, matching upstream's single-`${SHELLHUB_VERSION}` model
-- `postgres:18.6` and `valkey/valkey:9.1-alpine`. Upstream's own
+- `postgres:18.6` and `valkey/valkey:9.1.3-alpine`. Upstream's own
   `docker-compose.postgres.yml` still pins `postgres:18.0`; this stack runs the
   newest 18.x patch release instead (see Version notes)
 
@@ -89,6 +89,15 @@
   CVE-2026-2007 (18.2) and 28 CVEs in 18.6, among them CVE-2026-6471,
   CVE-2026-14663 and CVE-2026-6464 — the full list is in
   https://www.postgresql.org/docs/release/18.6/.
+
+- `VALKEY_TAG` is pinned to `9.1.3-alpine` on 2026-11-05, not run on a host at
+  this tag; until then it followed the floating `9.1-alpine`, which now points
+  at the same 9.1.3 build. The image the scan had pulled under the floating tag
+  carried OpenSSL 3.5.4 (CVE-2026-31789); the 9.1.3 build, on Alpine 3.24.3,
+  ships the fixed one.
+  CRITICAL findings 1 -> 0. Valkey 9.1.3 is a patch release; no configuration
+  change. 9.2 exists only as a release candidate.
+  Source: https://github.com/valkey-io/valkey/releases/tag/9.1.3
 
 ## Upgrade checklist
 

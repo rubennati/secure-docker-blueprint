@@ -11,7 +11,7 @@ Five services:
 | Service | Image | Purpose |
 |---------|-------|---------|
 | `app` | `nextcloud:35.0.2-fpm-alpine` | PHP-FPM — the Nextcloud application |
-| `nextcloud-nginx` | `nginx:1.31-alpine-slim` | Web server, speaks HTTP to Traefik and FastCGI to `app` |
+| `nextcloud-nginx` | `nginx:1.31.8-alpine-slim` | Web server, speaks HTTP to Traefik and FastCGI to `app` |
 | `db` | `mariadb:12.3` | Primary data store |
 | `redis` | `redis:8.10-alpine` | File locking + session cache |
 | `cron` | `nextcloud:35.0.2-fpm-alpine` | Runs Nextcloud's scheduled jobs (`cron.php` every 5 minutes) |

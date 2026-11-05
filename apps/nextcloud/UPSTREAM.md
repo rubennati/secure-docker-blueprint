@@ -109,6 +109,11 @@ If fpm-alpine + nginx causes issues:
   CVE-2026-42530, CVE-2026-42055, CVE-2026-48142, CVE-2026-42533, CVE-2026-60005,
   CVE-2026-56434, CVE-2026-90439, CVE-2026-15176, CVE-2026-93479, CVE-2026-95101,
   CVE-2026-97629, CVE-2026-97205.
+- The nginx front is pinned to `1.31.8-alpine-slim` on 2026-11-05, not run on a
+  host at this tag; until then it followed the floating `1.31-alpine-slim`. The
+  image the scan had pulled under that tag carried `brotli-libs` 1.2.0
+  (CVE-2026-111497); the 1.31.8 build on Alpine 3.24.3 ships no brotli library
+  at all. CRITICAL findings 1 -> 0. No configuration change.
 - Moved `redis` from `7.4-alpine` to `8.10-alpine` on 2026-11-05, a new major, not
   run on a host at this tag; the tag follows the 8.10 patch releases (8.10.3,
   2026-10-26). Redis 8 is offered under RSALv2, SSPLv1 or AGPLv3 at the user's

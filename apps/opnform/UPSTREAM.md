@@ -10,7 +10,7 @@
 - **Origin:** France · Julien Nahum · EU
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Form builder with shareable forms and submissions
-- **Based on version:** `2.8.1`
+- **Based on version:** `2.8.4`
 - **Last checked:** 2026-04-17
 
 ## What we use
@@ -48,6 +48,20 @@ Key design choices:
 
 ## Version notes
 
+- Moved to `2.8.4` on 2026-11-05 (released 2026-11-05), not run on a host at
+  this tag. Both images now carry the tag. No database migration from 2.8.1
+  to 2.8.4; API and client move together, as `APP_TAG` names both. 2.8.2
+  saves edits to existing integrations correctly and filters shared and
+  transition address ranges in webhook URLs more strictly; 2.8.3 also rejects
+  Teredo IPv6 addresses in webhook and PDF image URLs; 2.8.4 updates six
+  Symfony components to 7.4.23 for their security fixes. 2.8.4 adds the
+  hostname to the instance telemetry; this stack keeps
+  `OPNFORM_ANONYMOUS_TELEMETRY_DISABLED=true`, so none is sent. No compose
+  change. CRITICAL findings 1 -> 1: the API image still ships Alpine
+  `brotli-libs` 1.2.0 (CVE-2026-111497, fixed in 1.2.1); the client image has
+  none. Sources: https://github.com/JhumanJ/OpnForm/releases/tag/v2.8.2,
+  https://github.com/JhumanJ/OpnForm/releases/tag/v2.8.3,
+  https://github.com/JhumanJ/OpnForm/releases/tag/v2.8.4
 - Moved to `2.8.1` on 2026-11-05, not run on a host at this tag. Not 2.8.3:
   `jhumanj/opnform-api` carries 2.8.2 and 2.8.3, but `jhumanj/opnform-client`
   stops at 2.8.1 on Docker Hub — the release pipeline runs for both tags were

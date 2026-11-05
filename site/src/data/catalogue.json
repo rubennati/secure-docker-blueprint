@@ -1077,7 +1077,7 @@
     "upstream": "https://opnform.com/",
     "verified": null,
     "verified_version": null,
-    "version": "2.8.1"
+    "version": "2.8.4"
   },
   "apps/paperless-gpt": {
     "decision_facts": {
@@ -1735,11 +1735,11 @@
     "open_findings": 0,
     "path": "business/akaunting",
     "role": "Accounting for small businesses: invoices, bills, customers, vendors, bank accounts and reports",
-    "state": "baseline-aligned",
+    "state": "scaffolded",
     "upstream": "https://hub.docker.com/r/akaunting/akaunting",
     "verified": "2026-09-22",
     "verified_version": "3.1.21",
-    "version": "3.1.21"
+    "version": "6c5e9864dfe7…"
   },
   "business/chatwoot": {
     "decision_facts": {

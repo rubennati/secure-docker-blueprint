@@ -191,6 +191,19 @@ If you need Elasticsearch instead of SeaSearch:
   fixes this move also takes in. No CVE IDs are given for 13.0.29. Seafile 14.0 is
   not taken: the changelog lists its only release as "14.0.9 beta (2026-10-14)",
   so the stack stays on the stable 13 line.
+- The Elasticsearch image in `elasticsearch.yml` (the optional search backend,
+  not in `COMPOSE_FILE`) moved from `8.15.0` to `8.19.23` on 2026-11-05, not run
+  on a host at this tag. 8.19.23 (image built 2026-10-26) is the newest release
+  of the 8 line; the Seafile 13 manual ships `elasticsearch:8.15.0` and names
+  Elasticsearch 8.x since Seafile 10, and its upgrade notes for 13.0 say the
+  Elasticsearch version did not change. Elasticsearch 9 is not taken: Seafile
+  does not name it. Within one major, 8.19 reads the indexes 8.15 wrote, and the
+  index is rebuildable in any case. The four settings the service sets
+  (`discovery.type`, `bootstrap.memory_lock`, `ES_JAVA_OPTS`,
+  `xpack.security.enabled`) are unchanged in 8.19; no compose change. CRITICAL
+  Trivy findings 5 -> 0 (netty-handler, Tika's PDF parser module, Bouncy
+  Castle). Sources: https://manual.seafile.com/13.0/upgrade/upgrade_notes_for_13.0.x/,
+  https://www.elastic.co/guide/en/elasticsearch/reference/8.19/es-release-notes.html
 - `SEASEARCH_TAG` moved from `1.0.3` to `1.0.8` on 2026-11-05, not run on a host
   at this tag (held at `1.0.3` on 2026-10-31 while the pairing was open). The
   Seafile 13 manual (https://manual.seafile.com/13.0/setup/use_seasearch/)

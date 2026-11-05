@@ -11,10 +11,10 @@ Seven services — `opnform-nginx` is the single Traefik entry point:
 | Service | Image | Purpose |
 |---------|-------|---------|
 | `opnform-nginx` | `nginx:1.31` | HTTP entry point — routes `/api/*` to php-fpm, everything else to Nuxt |
-| `api` | `jhumanj/opnform-api:2.8.1` | Laravel backend — php-fpm on port 9000 |
+| `api` | `jhumanj/opnform-api:2.8.4` | Laravel backend — php-fpm on port 9000 |
 | `api-worker` | same | `artisan queue:work` — processes async jobs (notifications, webhooks) |
 | `api-scheduler` | same | `artisan schedule:work` — runs scheduled tasks |
-| `ui` | `jhumanj/opnform-client:2.8.1` | Nuxt SSR frontend on port 3000 |
+| `ui` | `jhumanj/opnform-client:2.8.4` | Nuxt SSR frontend on port 3000 |
 | `db` | `postgres:16-alpine` | Primary store (forms, responses, users, workspaces) |
 | `redis` | `redis:8.10-alpine` | Cache, queue, sessions |
 

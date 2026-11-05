@@ -4,7 +4,7 @@
 
 Generated 2026-11-05 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-121 stacks: 2 ops-proven · 10 baseline-aligned · 109 scaffolded. 111 carry a local test stack. 0 ship with open CRITICAL findings.
+121 stacks: 2 ops-proven · 9 baseline-aligned · 110 scaffolded. 111 carry a local test stack. 0 ship with open CRITICAL findings.
 
 This is the maintainer's view: what has been established about each stack. It makes no statement about whether a stack suits a given deployment.
 
@@ -87,7 +87,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/onlyoffice`](apps/onlyoffice/) | `scaffolded` | `APP_TAG=10.0.0` | 2026-11-02 | ✅ | documented | missing | — |
 | [`apps/open-webui`](apps/open-webui/) | `scaffolded` | `APP_TAG=v0.13.0` | 2026-09-21 | ✅ | documented | missing | — |
 | [`apps/opencanary`](apps/opencanary/) | `scaffolded` | `APP_TAG=0.9.10` | — | ✅ | documented | missing | — |
-| [`apps/opnform`](apps/opnform/) | `scaffolded` | `APP_TAG=2.8.1` | 2026-04-17 ⚠️ | ✅ | documented | missing | — |
+| [`apps/opnform`](apps/opnform/) | `scaffolded` | `APP_TAG=2.8.4` | 2026-04-17 ⚠️ | ✅ | documented | missing | — |
 | [`apps/paperless-gpt`](apps/paperless-gpt/) | `scaffolded` | `APP_TAG=v0.31.0` | — | ✅ | documented | missing | — |
 | [`apps/paperless-ngx`](apps/paperless-ngx/) | `scaffolded` | `APP_TAG=3.4.2` | 2026-11-02 | ✅ | documented | missing | — |
 | [`apps/photoprism`](apps/photoprism/) | `scaffolded` | `APP_TAG=261029` | 2026-04-17 ⚠️ | ✅ | documented | missing | — |
@@ -114,7 +114,7 @@ This is the maintainer's view: what has been established about each stack. It ma
 
 | Stack | State | Pinned | Last verified | Local | Backup docs | Restore docs | Open findings |
 |---|---|---|---|---|---|---|---|
-| [`business/akaunting`](business/akaunting/) | `baseline-aligned` | `APP_TAG=3.1.21` | 2026-09-22 | ✅ | documented | missing | — |
+| [`business/akaunting`](business/akaunting/) | `scaffolded` | `APP_TAG=3.3.0-v@sha256:6c5e9864dfe7…` | 2026-09-22 | ✅ | documented | missing | — |
 | [`business/chatwoot`](business/chatwoot/) | `scaffolded` | `APP_TAG=v4.19.1` | 2026-09-22 | ✅ | documented | missing | — |
 | [`business/documenso`](business/documenso/) | `scaffolded` | `APP_TAG=v2.21.1` | — | ✅ | documented | missing | — |
 | [`business/dolibarr`](business/dolibarr/) | `scaffolded` | `APP_TAG=24.0.2` | 2026-04-17 ⚠️ | ✅ | documented | missing | — |

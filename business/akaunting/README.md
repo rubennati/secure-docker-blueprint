@@ -74,11 +74,14 @@ only what changes:
 | `volumes/storage` → `storage/` | Uploads, logs, sessions, caches |
 | `volumes/app.env` → `.env` | The application key and the installed flag |
 
-Everything else — the application code — stays in the image, so the pinned
-`APP_TAG` is what runs, and upgrading means changing the tag. The trade-off:
-modules installed from Akaunting's in-app store write into the code directory,
-which is read-only here, so **in-app module installation does not work**. The two
-modules the image ships (offline payments, PayPal Standard) are present.
+Everything else — the application code — comes from the image. The pinned image
+carries it as an archive, and `config/entrypoint.sh` unpacks it on every start
+into a webroot held in memory (a tmpfs, about 300 MiB), owned by root and
+read-only for the web server. So the pinned `APP_TAG` is what runs, and upgrading
+means changing the tag. The trade-off: modules installed from Akaunting's in-app
+store write into the code directory, which the web server cannot write and which
+is rebuilt at every start, so **in-app module installation does not work**. The
+two modules the image ships (offline payments, PayPal Standard) are present.
 
 ## Security notes
 
@@ -97,6 +100,9 @@ modules the image ships (offline payments, PayPal Standard) are present.
 - **Replaced entrypoint.** The image's own entrypoint enables `mod_rewrite` and
   runs `chown -R` over the webroot on every start; a read-only filesystem refuses
   both. `config/rewrite.load` enables the module as a mounted file instead.
+- **PHP settings.** `config/php-overrides.ini` sends temporary files to the
+  `/var/tmp` tmpfs (`/tmp` holds the image's archive and stays read-only) and
+  switches off upload progress, an attack path of CVE-2026-109619.
 - **Network.** The database has no route out.
 
 ## Status
@@ -105,6 +111,8 @@ Run behind Traefik with TLS on 2026-09-22 (3.1.21): the install, the login and
 company wizard, a customer, the reports, a restart, and the restore below. The
 pages that create records stayed closed without an akaunting.com API key — see
 above. Full log in [`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-22).
+The current pin, 3.3.0, has not been run on a host; see
+[`UPSTREAM.md`](UPSTREAM.md#version-notes).
 
 ## Try it locally
 

@@ -39,7 +39,7 @@ services:
       interval: 30s
       retries: 5
       start_period: 30s
-    image: postgres:15.14-alpine
+    image: postgres:15.19-alpine
     networks:
     - dify-local
     restart: unless-stopped

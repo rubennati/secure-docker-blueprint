@@ -25,7 +25,7 @@ PostgreSQL profile, pgvector as the vector store, minus what is listed below:
   `langgenius/dify-sandbox:0.2.15`
 - `ubuntu/squid:6.6-24.04_edge` — upstream uses `:latest`; a versioned tag of the
   same image
-- `postgres:15.14-alpine` (upstream: `15-alpine`), `pgvector/pgvector:0.8.1-pg16`
+- `postgres:15.19-alpine` (upstream: `15-alpine`), `pgvector/pgvector:0.8.7-pg16`
   (upstream: `pg16`), `redis:8.10-alpine` (upstream: `6-alpine`)
 - pgvector, not Weaviate: upstream supports both, and pgvector is one more
   PostgreSQL rather than a different product. No other stack (Qdrant included) is
@@ -216,6 +216,18 @@ the model backend:
   https://github.com/redis/redis/releases/tag/8.10.3,
   https://github.com/redis/docker-library-redis/blob/release/8.10/alpine/docker-entrypoint.sh,
   https://github.com/langgenius/dify/blob/main/docker/docker-compose.yaml
+- Moved `db` from `postgres:15.14-alpine` to `15.19-alpine` on 2026-11-05 (15.19
+  released 2026-08-13), not run on a host at this tag. Minor releases within 15: no
+  dump/restore. 15.19 restricts logical decoding output plugins to the new
+  `output_plugin_libraries` setting (CVE-2026-6471) and makes `pgcrypto` refuse PGP
+  messages encrypted with a cipher OpenSSL rejected; it asks for a reindex only of
+  `btree_gist` and `ltree` indexes. This stack configures no logical replication;
+  whether Dify uses `pgcrypto`, `btree_gist` or `ltree` was not checked. The newer
+  Alpine base removes the critical OpenSSL finding CVE-2026-31789 (`libssl3`,
+  `libcrypto3`): critical findings 3 -> 1. The one left is CVE-2025-68121 in the Go
+  runtime of the image's `gosu`, which every current PostgreSQL image ships (see the
+  README). The hardcoded tag in `docker-compose.local.yml` moves too. Source:
+  https://www.postgresql.org/docs/release/15.19/
 
 ## Upgrade checklist
 

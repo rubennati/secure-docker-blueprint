@@ -15,7 +15,7 @@ RUN npm run build
 # --- Runtime ---
 # Identical across every recipe: a hardened, non-root nginx serving static
 # files.
-FROM nginxinc/nginx-unprivileged:1.31-alpine
+FROM nginxinc/nginx-unprivileged:1.31.7-alpine-slim
 COPY --from=builder /src/dist /usr/share/nginx/html
 USER 101
 EXPOSE 8080

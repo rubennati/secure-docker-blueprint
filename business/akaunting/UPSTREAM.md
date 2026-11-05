@@ -13,7 +13,7 @@
 - **Decision facts checked:** 2026-09-21
 - **Domain:** Business operations
 - **Role:** Accounting for small businesses: invoices, bills, customers, vendors, bank accounts and reports
-- **Based on version:** `3.1.21`
+- **Based on version:** `3.3.0` (image tag `3.3.0-v`)
 - **Last verified:** 2026-09-22 (3.1.21) — behind Traefik with TLS: the install, the login and company wizard, a customer, the reports, a restart, and the README's restore; creating records needs an akaunting.com API key
 
 The origin comes from the governing-law clause of Akaunting's terms of service
@@ -21,23 +21,30 @@ The origin comes from the governing-law clause of Akaunting's terms of service
 
 ## What we use
 
-- `akaunting/akaunting:3.1.21` — the newest image tag. **The image lags the source
-  releases**: the repository's newest release is 3.2.4 (2026-09-17). Pinning the
-  image means running a release older than the source's newest.
+- `akaunting/akaunting:3.3.0-v`, pinned by its index digest — the `-v` variant,
+  because upstream publishes 3.3.0 for Apache only in this form: there is no plain
+  `3.3.0` tag, only `3.3.0-v`, `3.3-v` and the `-fpm…` variants, which need a
+  separate web server. The `-v` image (`v.Dockerfile` in akaunting/docker) has the
+  same `php:8.2.35-apache` base as the plain one but carries the application as an
+  archive, `/tmp/akaunting.zip`, instead of unpacked in the webroot. The archive is
+  downloaded as `version=latest` when the image is built, so the tag alone says
+  little; the digest fixes it, and its `config/version.php` reads 3.3.0 of
+  27 October 2026 — checked.
 - `mariadb:11.4` — the repository's MariaDB LTS. Upstream's compose uses an untagged
   `mariadb`.
-- Not the `-v` image variant: it downloads `version=latest` at build time and is
-  not pinned in any meaningful way.
 
 ## What we changed and why
 
 | Change | Reason |
 |--------|--------|
 | Only `storage/` and `.env` mounted, not the whole webroot | Upstream mounts `/var/www/html` as a named volume, so the code lives in the volume and a newer image does not update it. A bind mount there would also hide the image's code entirely. Mounting only the changing paths keeps the pinned tag meaningful |
-| `config/entrypoint.sh` replaces the image's entrypoint | The original runs `a2enmod rewrite` and `chown -R` over the webroot at every start, both writes a read-only root refuses |
+| `config/entrypoint.sh` replaces the image's entrypoint | The original runs `a2enmod rewrite` and `chown -R` over the webroot at every start, both writes a read-only root refuses. It also unpacks the application only when the webroot has no `index.php`, so a webroot that persists keeps the old code after an image change |
+| The webroot `/var/www/html` is a tmpfs with `mode: 493` (octal 755); `config/entrypoint.sh` unpacks `/tmp/akaunting.zip` into it as root on every start, leaving out `storage/` and `bootstrap/cache/` | The `-v` image has no code in the webroot. A tmpfs is empty at every start, so the code that runs is always the pinned image's; root owns it, so `www-data` reads it and cannot change it, as with code in the image. Measured: about 300 MiB in memory, counted against the container's limit, and two seconds to unpack |
+| `/var/tmp` as a tmpfs instead of `/tmp`, `TMPDIR=/var/tmp`, and `config/php-overrides.ini` setting `sys_temp_dir`, `upload_tmp_dir` and `opcache.lockfile_path` to `/var/tmp` | A tmpfs on `/tmp` would hide the image's archive. With `/tmp` read-only, Apache's PHP stopped at start, `Unable to create lock file: Read-only file system` (OPcache's lock file is in `/tmp` by default) — measured |
+| `session.upload_progress.enabled = 0` in `config/php-overrides.ini` | Upload progress is an attack path of CVE-2026-109619; from 3.3.0 Akaunting logs an error once a day while it is on, and only `php.ini` can switch it off — https://github.com/akaunting/akaunting/blob/3.3.0/app/Providers/App.php |
 | `config/rewrite.load` mounted into `mods-enabled/` | The image does not enable `mod_rewrite`; its entrypoint did at runtime |
 | `bootstrap/cache` as a tmpfs with `mode: 1023` | The image ships it owned by root, and a plain tmpfs mounts as `755 root` — verified; `www-data` could not write it. Compose takes the tmpfs mode as the decimal of the bit pattern, so 1023 is octal 1777 |
-| Apache's tmpfs: `/var/run/apache2` only | It holds the PID file. `/var/log/apache2` keeps the image's links to stdout and stderr: a tmpfs there turned them into files in memory, and no request reached `docker logs` — measured. `/var/lock/apache2` is not needed |
+| Apache's tmpfs: `/var/run/apache2` only (besides `/var/tmp` above) | It holds the PID file. `/var/log/apache2` keeps the image's links to stdout and stderr: a tmpfs there turned them into files in memory, and no request reached `docker logs` — measured. `/var/lock/apache2` is not needed |
 | `cap_add: SETUID, SETGID` | Apache's master starts as root and drops its workers to `www-data`. Measured: with both, the master is uid 0 and six workers uid 33; with `SETUID` alone **all seven stay root while the site still answers 200**. `NET_BIND_SERVICE` is not needed — Docker lets a container bind port 80 |
 | Database connection as environment variables, password from a Docker Secret | Laravel reads real environment variables before `.env`. The installer still writes the password into `.env`; `ops/install.sh` deletes that line, and the application keeps working |
 | `ops/install.sh` instead of the web wizard | Upstream's own `php artisan install`, run as `www-data`, with both passwords read from the secrets inside the container |
@@ -120,15 +127,49 @@ store (read-only by design here); an upgrade to a newer image; backup and restor
 2. Check whether a newer image tag exists — the image lags the source releases
 3. Back up the database, `volumes/storage`, `volumes/app.env` and `.secrets/`
 4. Bump `APP_TAG` in `.env.example`
-5. `docker compose pull && docker compose up -d`, then apply the database
-   migrations of the new release:
-   `docker compose exec --user www-data akaunting-app php artisan migrate --force`
-   (not exercised here). `php artisan update` is Akaunting's in-app code updater; it
-   writes into the code directory and does not apply to this stack
+5. `docker compose pull && docker compose up -d`, then run the new release's
+   update steps — migrations and data fixes — for company 1, from the old version
+   to the new one:
+   `docker compose exec --user www-data akaunting-app sh -c 'DB_PASSWORD="$(cat /run/secrets/DB_PWD)" php artisan update:finish core 1 <new> <old>'`.
+   The password has to be set in the command: it is in the environment of Apache
+   only, not of `docker compose exec`. `php artisan update` is Akaunting's in-app
+   code updater; it writes into the code directory and does not apply to this stack
 6. Log in and open the dashboard
 7. Update **Based on version** above — and add **Last verified** only if the
    upgrade was exercised on a real install
 
-Because the code is in the image, upgrading is a tag change followed by the
-database migration — not an in-app update, which would write into the read-only
-code directory.
+Because the code comes from the image, upgrading is a tag change followed by the
+update steps — not an in-app update, whose files would be gone at the next start.
+
+## Version notes
+
+- Moved from `3.1.21` to `3.3.0-v` on 2026-11-05, not run on a host at this tag.
+  Upstream has no Apache image of 3.3.0 other than the `-v` variant; see "What we
+  use". The compose files changed for it: the webroot is a tmpfs the replaced
+  entrypoint fills from the image's archive, `/tmp` gives way to a `/var/tmp`
+  tmpfs, and `config/php-overrides.ini` moves PHP's temporary files there and
+  switches off upload progress (CVE-2026-109619, which 3.3.0 reports as an
+  error). Releases on the way: 3.2.0 to 3.2.4 and 3.3.0; there is no 3.1.22.
+  3.2.0 and 3.2.4 bring database migrations and 3.2.0 fills in a missing
+  category on document items; 3.2.2 deletes `storage/oauth-keys`. All of these
+  run through `php artisan update:finish` (upgrade checklist, step 5). 3.3.0
+  needs PHP 8.2 (the image has 8.2.35) and names MariaDB among its databases
+  without a version; 3.2.0 fixed a MariaDB install failure (#3351). Laravel
+  stays on 10.x. On a local test machine, without Traefik: a fresh install with
+  `ops/install.sh`, the login, the company wizard page and a second start;
+  and an instance installed at 3.1.21, moved to this pin and updated with
+  `update:finish core 1 3.3.0 3.1.21` — the 3.2.0, 3.2.2 and 3.2.4 steps ran,
+  `migrate:status` showed nothing pending, and the login and company settings
+  answered. Memory of the application container after a login: about 400 MiB, of
+  which about 300 MiB is the unpacked code.
+  CRITICAL findings (Trivy 0.74.0, fixed versions only), counted as distinct
+  CVEs: 20 at 3.1.21 (16 in Debian packages — ImageMagick, brotli, GLib, GnuTLS,
+  Perl, LibRaw, OpenSSL, `linux-libc-dev` — and 4 in PHP packages:
+  `laravel/framework`, `mtdowling/jmespath.php`, `phpoffice/phpspreadsheet`),
+  1 at `3.3.0-v` in the image scan: CVE-2026-99083 in `linux-libc-dev`. The
+  image scan does not look inside the archive; scanned separately, its
+  `vendor/composer/installed.json` still carries CVE-2026-114509 in
+  `laravel/framework` 10.50.3, fixed only in 12.68.0 and 13.29.0. Sources:
+  https://github.com/akaunting/akaunting/releases,
+  https://github.com/akaunting/docker (`v.Dockerfile`, `files/akaunting-v.sh`),
+  https://github.com/akaunting/akaunting/tree/3.3.0/app/Listeners/Update/V32

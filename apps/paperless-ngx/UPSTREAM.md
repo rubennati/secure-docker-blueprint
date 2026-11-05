@@ -67,6 +67,17 @@
   the range include the ExifTool arbitrary file write (8.29), SSRF and DNS
   rebinding hardening (8.31–8.32), Chromium CVE-2026-87654 (8.38.1), and the
   ExifTool `j` alias, the `devtools://` scheme and the eMudhra roots (8.39).
+- Gotenberg moved to `8.40.0` on 2026-11-05 (released the same day), not run on
+  a host at this tag. Upstream calls it the final Gotenberg 8 release; the next
+  is Gotenberg 9. It updates Chromium to 156.0.8078.79, which removes the two
+  critical Chromium findings of 8.39 (CVE-2026-118333, CVE-2026-118337): 2
+  critical image findings before, 0 after. Security fixes: QPDF encryption
+  passwords can no longer inject options, the `*_DENY_PRIVATE_IPS` checks refuse
+  every special-purpose range, Chromium distrusts the eMudhra roots from the
+  first request. Behaviour changes concern `--chromium-host-resolver-rules`,
+  `--chromium-proxy-server` and the `linux/386` image, none of which this stack
+  uses; no compose change
+  (https://github.com/gotenberg/gotenberg/releases/tag/v8.40.0).
 - Moved `postgres` from `16.14` to `18.6` on 2026-11-05, not run on a host at
   this tag. PostgreSQL 18 support: upstream's own compose file ships
   `postgres:18`

@@ -1,6 +1,6 @@
 services:
   elasticsearch:
-    image: ${SEAFILE_ELASTICSEARCH_IMAGE:-elasticsearch:8.15.0}
+    image: ${SEAFILE_ELASTICSEARCH_IMAGE:-elasticsearch:8.19.23}
     container_name: ${CONTAINER_NAME_ELASTICSEARCH}
     restart: unless-stopped
 
