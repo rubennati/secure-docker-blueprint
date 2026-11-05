@@ -13,8 +13,8 @@ Run:
 
 import os
 import unittest
+import unittest.mock
 from pathlib import Path
-from unittest import mock
 
 REPO = Path(__file__).resolve().parents[2]
 STACKS = ("apps/seafile", "apps/seafile-pro")
@@ -31,7 +31,7 @@ CASES = [
 def enabled(stack, secret, url):
     env = {"ONLYOFFICE_JWT_SECRET": secret, "ONLYOFFICE_URL": url, "SEAFILE_SMTP_HOST": ""}
     scope = {}
-    with mock.patch.dict(os.environ, env):
+    with unittest.mock.patch.dict(os.environ, env):
         exec((REPO / stack / "config" / "seahub_custom.py").read_text(encoding="utf-8"), scope)
     return scope["ENABLE_ONLYOFFICE"]
 
