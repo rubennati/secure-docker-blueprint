@@ -11,8 +11,8 @@ For an alternative with an established track record and no build dependency, see
 | Service | Image | Purpose |
 |---------|-------|---------|
 | `caldiy-app` | `ghcr.io/rubennati/cal.diy:v6.2.0-6` | Next.js web app + scheduling engine |
-| `db` | `postgres:17.11` | Users, event types, bookings, team memberships |
-| `redis` | `redis:7.4-alpine` | Session cache + job queue |
+| `db` | `postgres:18.6` | Users, event types, bookings, team memberships |
+| `redis` | `redis:8.10-alpine` | Session cache + job queue |
 
 The image is built from [`rubennati/cal.diy`](https://github.com/rubennati/cal.diy) — the security-first, review-gated **cal.forte** fork that publishes reviewed, versioned images to GHCR (never `latest`). Upstream does not publish a reliable pre-built image. See [UPSTREAM.md](UPSTREAM.md).
 

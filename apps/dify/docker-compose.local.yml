@@ -288,7 +288,7 @@ services:
       interval: 30s
       retries: 5
       start_period: 10s
-    image: redis:7.4-alpine
+    image: redis:8.10-alpine
     networks:
     - dify-local
     read_only: true

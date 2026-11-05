@@ -1,13 +1,13 @@
 # PhotoPrism
 
-AI-powered self-hosted photo manager with TensorFlow-based classification, face recognition, and location enrichment. Go-based server with MariaDB backend.
+AI-powered self-hosted photo manager with ONNX-based classification, face recognition, and location enrichment. Go-based server with MariaDB backend.
 
 ## Architecture
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `photoprism-app` | `photoprism/photoprism:260728` | Web UI + API + TensorFlow + WebDAV |
-| `db` | `mariadb:11.4` | Primary store (index, albums, users, sidecar metadata) |
+| `photoprism-app` | `photoprism/photoprism:261029` | Web UI + API + ONNX models + WebDAV |
+| `db` | `mariadb:12.3` | Primary store (index, albums, users, sidecar metadata) |
 
 ## Try it locally
 
@@ -48,7 +48,7 @@ mkdir -p volumes/database volumes/storage volumes/originals
 # 6. Start
 docker compose up -d
 
-# 7. First run downloads TensorFlow models (~1 GB) — takes a few minutes
+# 7. Watch the first start — creating the database schema takes a moment
 docker compose logs photoprism-app --follow
 # Watch for: "server: listening on 0.0.0.0:2342"
 
@@ -68,7 +68,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/api/v1/status  # 200 OK
 
 - **`ADMIN_PASSWORD` only read on first startup** — remove from `.env` afterwards and rotate in the UI.
 - **`DB_PWD_INLINE` duplicates the DB password** — see Known Issues.
-- **`PHOTOPRISM_DISABLE_TLS: "true"` + `DEFAULT_TLS: "false"`** — Traefik terminates TLS. PhotoPrism's internal TLS (part of `PHOTOPRISM_INIT: https`) was removed.
+- **`PHOTOPRISM_DISABLE_TLS: "true"` + `DEFAULT_TLS: "false"`** — Traefik terminates TLS. PhotoPrism's internal TLS (part of `PHOTOPRISM_INIT: https`, the image default) is off: `PHOTOPRISM_INIT` is empty.
 - **`cap_drop: ALL`** on MariaDB with minimal `cap_add` (CHOWN, SETUID, SETGID, DAC_OVERRIDE).
 - **`no-new-privileges:true`** on both services.
 - **MariaDB on `app-internal` (`internal: true`)** — not reachable from outside the app.

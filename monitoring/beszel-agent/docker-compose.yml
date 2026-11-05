@@ -141,6 +141,10 @@ services:
       NICS: ${AGENT_NICS:--*}
       # Optional: comma-separated mount points beyond root FS.
       EXTRA_FILESYSTEMS: ${EXTRA_FILESYSTEMS}
+      # Since 0.20.0 the agent asks image registries (Docker Hub, GHCR, ...)
+      # hourly whether a container's image has a newer digest. Off: it sends
+      # every image name out, and the socket proxy grants no IMAGES call.
+      DOCKER_IMAGE_CHECK: "false"
 
     # --- Health & Observability ---
     # healthcheck: none — the image has no shell, so there is nothing for

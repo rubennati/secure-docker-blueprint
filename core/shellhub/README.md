@@ -129,10 +129,10 @@ For the general PostgreSQL restore procedure and verification checklist, see
 
 ## Known Issues
 
-- **`server` has no stable Docker Hub tag as of this writing** — this
-  deployment pins the newest release candidate; see
-  [UPSTREAM.md](UPSTREAM.md#known-limitations) and check for a stable
-  release before every deploy.
+- **Usage telemetry is switched off.** Upstream sends a daily usage report
+  to `telemetry.shellhub.io` by default since v0.28.0; this stack sets
+  `SHELLHUB_TELEMETRY=false` on the server. See
+  [UPSTREAM.md](UPSTREAM.md#version-notes).
 - **Not yet exercised beyond a clean start** — no agent registered, no SSH
   session proxied, no restart or upgrade tested.
 - **OIDC-in-Community-Edition status unconfirmed** — see Security Model.

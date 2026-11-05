@@ -10,12 +10,12 @@
 - **Origin:** Sweden · Jonas Haals (individual maintainer, corporate-adjacent — Spotify, Doddle and Gumtree Australia are named as users, not owners) · EU
 - **Domain:** Identity, access and secrets
 - **Role:** Self-destructing links for handing someone a credential once
-- **Based on version:** `14.10.0`
+- **Based on version:** `16.0.1`
 - **Verification snapshot:** 2026-09-19 — local Compose stack booted and exercised (see README.md's Preview → Ready gate); not yet run behind a real Traefik host
 
 ## What we use
 
-- `jhaals/yopass:14.10.0`, distroless build, runs as a fixed non-root UID
+- `jhaals/yopass:16.0.1`, distroless build, runs as a fixed non-root UID
 - `memcached:1.6-alpine` as the ephemeral store — the upstream-documented
   default backend, matching every value Yopass stores: TTL-based, no
   durability required or wanted
@@ -55,6 +55,38 @@ Secret Requests on; it requires a different, licensed product from upstream.
 - **Not verified:** an actual secret created and retrieved through the web
   UI, TLS/Traefik behind a real domain, the Redis backend option (Memcached
   only), Argon2 key derivation, and file/S3 storage backends.
+
+## Version notes
+
+- Moved to `16.0.1` on 2026-11-05 (released 2026-10-23), across two majors, not
+  run on a host at this tag; the checks under "What was actually verified" ran
+  on 14.10.0. Nothing this stack sets changes: `MEMCACHED`, `PORT` and the
+  `--health-check` subcommand keep their names
+  (https://yopass.se/docs/server-options), and with no `FILE_STORE` set, files
+  still go to the database, so no writable path is needed beside the `/tmp`
+  tmpfs. Breaking changes, none of them touching this configuration
+  (https://github.com/jhaals/yopass/releases):
+  - 15.0.0: request deadlines of 30 s and, for file transfers, 5 min
+    (`REQUEST_TIMEOUT`, `FILE_TRANSFER_TIMEOUT`); a proxy with a shorter limit
+    cuts requests first. Forwarded client addresses are trusted only from
+    `TRUSTED_PROXIES`, which is not set here. OIDC logins need
+    `email_verified` (licensed feature, not used).
+  - 16.0.0: clients must send the `key_version` from the lookup when fetching a
+    secret (`412` otherwise), receipt errors answer `404` and `503`, session
+    cookies no longer authenticate cross-origin requests or direct browser GETs
+    to the API, `OIDC_ALLOWED_DOMAIN` is replaced by `OIDC_ALLOWED_DOMAINS`
+    (the server refuses to start with the old one), Argon2 memory above 128 MiB
+    and OpenPGP packets expanding beyond 1 MiB are rejected, request headers
+    are capped at 16 KiB, webhook payloads carry `delivery_id`, and disk and S3
+    file stores must exist and be private to the server account. The bundled
+    web UI follows the API changes; an outside client written against 14.x
+    may not.
+  - Security: 16.0.0 addresses 27 findings from an audit (15 medium, 12 low),
+    among them disk file operations confined to the storage root and a race in
+    which a retried Redis write could recreate a consumed one-time secret;
+    15.0.0 stops trusting spoofed forwarded addresses. 16.0.1 is rebuilt with
+    Go 1.27.3 for CVE-2026-111943 (certificate chains through distrusted
+    intermediates).
 
 ## Upgrade checklist
 

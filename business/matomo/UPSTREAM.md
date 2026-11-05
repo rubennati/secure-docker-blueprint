@@ -18,7 +18,7 @@
 ## What we use
 
 - Official `matomo:5.14.2-apache` (Apache + PHP; the floating `5-apache` tag was replaced by the exact pin in 2026-07)
-- Official `mariadb:11.4`
+- Official `mariadb:12.3`
 - Docker Secrets for DB password + DB root password
 - Bind-mount `./volumes/config`, `./volumes/logs`, `./volumes/matomo`, `./volumes/mysql`
 
@@ -51,6 +51,19 @@
   carries the fix for — updating Matomo alone does not. On an existing install the
   tag bump moves PHP and the OS but not Matomo's own code until checklist step 4 is
   run; this applied to every earlier bump of this stack as well.
+- Moved `mariadb` from `11.4` to `12.3`, the current LTS line, on 2026-11-05,
+  not run on a host at this tag. Support: Matomo 5 requires MySQL 5.5 or newer
+  or MariaDB, and Matomo 6 MariaDB 10.6 or newer, neither with an upper bound
+  (https://matomo.org/faq/on-premise/matomo-requirements/).
+  `MARIADB_AUTO_UPGRADE: "1"`, already set in both compose files, runs
+  `mariadb-upgrade` at the first start on 12.3 after a backup of the system
+  tables; the data directory `./volumes/mysql` is reused. Take the
+  `mariadb-dump` before the tag changes: going back to 11.4 is only a restore of
+  that dump. Changed on the way (11.8 and 12.x): `innodb_snapshot_isolation` is
+  on by default, so a transaction that writes a row another transaction changed
+  after its snapshot fails with error 1020 instead of overwriting it; the new
+  default collation `utf8mb4_uca1400_ai_ci` does not apply, as the stack sets
+  `utf8mb4_unicode_ci` explicitly.
 
 ## Upgrade checklist
 

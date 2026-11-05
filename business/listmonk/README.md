@@ -7,9 +7,9 @@ Self-hosted newsletter, mailing list manager, and transactional mail. Go single-
 | Service | Image | Purpose |
 |---------|-------|---------|
 | `listmonk-install` | `listmonk/listmonk:v6.2.0` | One-shot: schema on first start, migrations after an upgrade |
-| `smtp-guard` | `postgres:16-alpine` | One-shot: replaces upstream's SMTP placeholder before the app starts (below) |
+| `smtp-guard` | `postgres:18-alpine` | One-shot: replaces upstream's SMTP placeholder before the app starts (below) |
 | `listmonk-app` | `listmonk/listmonk:v6.2.0` | Admin UI + sender + subscriber endpoints — UID 1000, no capabilities |
-| `db` | `postgres:16-alpine` | Subscribers, campaigns, templates, analytics |
+| `db` | `postgres:18-alpine` | Subscribers, campaigns, templates, analytics |
 
 ## Try it locally
 

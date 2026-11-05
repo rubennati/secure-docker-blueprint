@@ -13,10 +13,10 @@ Heavy stack — 9 services. Upstream default deployment.
 | `websocket` | same + `zammad-websocket` | Agent live updates |
 | `scheduler` | same + `zammad-scheduler` | Background jobs (email import, SLA checks) |
 | `init` | same + `zammad-init` | One-shot DB migrations on every start |
-| `db` | `postgres:16-alpine` | Primary data store |
-| `redis` | `redis:7.4-alpine` | Background job queue |
+| `db` | `postgres:18-alpine` | Primary data store |
+| `redis` | `redis:8.10-alpine` | Background job queue |
 | `memcached` | `memcached:1.6.41` | Rails cache |
-| `elasticsearch` | `docker.elastic.co/elasticsearch/elasticsearch:8.17.4` | Full-text ticket search |
+| `elasticsearch` | `docker.elastic.co/elasticsearch/elasticsearch:9.5.6` | Full-text ticket search |
 
 ## Resource requirements
 

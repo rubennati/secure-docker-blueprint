@@ -110,6 +110,12 @@ already collected; it sends nothing away.
   from `collector.yaml` to `scrutiny.yaml`. `collector.yml` here sets neither.
   Built with Go 1.27; the omnibus image's InfluxDB moved to 2.8, which this
   stack does not use. No advisory named.
+- `INFLUXDB_DIGEST` moved to
+  `sha256:e4572d094ac3272f06528ea904ce6b4cb3bb19be2db3b3b1acbd27ba5c3a73e2` on
+  2026-11-05, not run on a host at this digest. Same tag `2.9.1`, rebuilt by
+  Docker Official Images on 2026-11-05 with updated base packages, which clears
+  the CVE findings of the old digest. InfluxDB itself is unchanged, so there is
+  no migration.
 
 ## Upgrade checklist
 

@@ -8,11 +8,11 @@ Five services (four long-running plus a one-shot init):
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `init-perms` | `alpine:3.19` | One-shot: chowns bind-mount directories to UID 1000 so the non-root Authentik image can write there. Exits in <1s, runs on every `up -d`. |
+| `init-perms` | `alpine:3.24` | One-shot: chowns bind-mount directories to UID 1000 so the non-root Authentik image can write there. Exits in <1s, runs on every `up -d`. |
 | `server` | `ghcr.io/goauthentik/server` (cmd `server`) | Web UI + REST API, the only container exposed through Traefik |
 | `worker` | Same image (cmd `worker`) | Background jobs: email, LDAP/directory sync, policy evaluation |
-| `db` | `postgres:16-alpine` | Primary data store (users, groups, tokens, events) |
-| `redis` | `redis:7.4-alpine` | Session cache + Celery broker for the worker |
+| `db` | `postgres:18-alpine` | Primary data store (users, groups, tokens, events) |
+| `redis` | `redis:8.10-alpine` | Session cache + Celery broker for the worker |
 
 `server` and `worker` share the same image — only the command differs. Both need access to `db` and `redis`; only `server` needs access to the outside world (for initial setup flows and user logins).
 

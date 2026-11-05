@@ -6,8 +6,8 @@ Open-source ERP / CRM — invoicing, bookkeeping, project management, HR, invent
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `dolibarr-app` | `dolibarr/dolibarr:23.0.4` | PHP/Apache app with Dolibarr pre-installed |
-| `db` | `mariadb:11.4` | Primary store (customers, invoices, products, accounting entries) |
+| `dolibarr-app` | `dolibarr/dolibarr:24.0.2` | PHP/Apache app with Dolibarr pre-installed |
+| `db` | `mariadb:12.3` | Primary store (customers, invoices, products, accounting entries) |
 
 ## Try it locally
 
@@ -94,7 +94,7 @@ produces an ERP whose documents are all missing links.
 
 ## Known Issues
 
-- **`tuxgasy/dolibarr` is abandoned** — that community image stalled at 19.0.2. This blueprint uses the official `dolibarr/dolibarr` image (maintained by the Dolibarr association, current at 23.0.2).
+- **`tuxgasy/dolibarr` is abandoned** — that community image stalled at 19.0.2. This blueprint uses the official `dolibarr/dolibarr` image (maintained by the Dolibarr association, pinned here at 24.0.2).
 - **Custom modules** — stored in `volumes/custom/`. Install via the UI → the module tarball is unpacked here. Back up together with the documents volume.
 - **Document attachments** — PDFs, scanned invoices, etc. go into `volumes/documents/`. Can grow large; plan backups and storage accordingly.
 - **Upgrades run on first boot after a version bump** — Dolibarr detects the version difference and triggers a schema migration through a web wizard at `/install/`. Do not clear browser cookies during the migration.

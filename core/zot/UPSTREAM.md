@@ -10,7 +10,7 @@
 - **Origin:** Community project under the CNCF sandbox umbrella, no single company · no single jurisdiction
 - **Domain:** Developer tools
 - **Role:** OCI registry for your own build output
-- **Based on version:** `v2.1.22`
+- **Based on version:** `v2.1.23`
 - **Verification snapshot:** 2026-09-19 — local Compose stack booted,
   authentication and access-control policy exercised against a live
   container; not yet run behind a real Traefik host
@@ -64,6 +64,14 @@
   `Strict-Transport-Security` on TLS responses, stops proxying local API keys to
   an upstream token service, tightens input validation, stops storing signature
   layers in MetaDB and clears three Dependabot alerts. No CVE or GHSA named.
+- Moved to `v2.1.23` on 2026-11-05 (released 2026-11-02), not run on a host at
+  this tag. No breaking change, configuration or storage-format change; new
+  options are opt-in (disabling anonymous catalog listing, per-repository byte
+  quotas, an OpenID `discoveryurl`, per-user repository namespaces). Security
+  items, no CVE or GHSA named: bearer tokens without a grant for a repository
+  are denied access to it, a failing OIDC issuer no longer affects the others,
+  and ID-token signing algorithms are taken from OIDC discovery; several
+  Dependabot alerts cleared. https://github.com/project-zot/zot/releases
 
 ## Upgrade checklist
 

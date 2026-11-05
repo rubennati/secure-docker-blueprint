@@ -16,7 +16,7 @@
 ## What we use
 
 - Upstream `reallibrephotos/librephotos-proxy`, `librephotos-frontend`, `librephotos` (backend)
-- `pgautoupgrade/pgautoupgrade:16-bookworm` for Postgres (upstream default)
+- `pgautoupgrade/pgautoupgrade:18-trixie` for Postgres (upstream runs `latest`, 18 on Alpine)
 - Docker Secrets for Postgres password + inline duplicate for backend
 - Bind-mount `./volumes/db`, `./volumes/protected_media`, `./volumes/logs`, `./volumes/cache`
 - Configurable `SCAN_DIRECTORY` for photo source
@@ -82,6 +82,24 @@
   GHSA-xq77-cj4c-42qr (1.3.0); GHSA-f7vw-q3m9-4998 (1.4.0); public page and
   sharing fixes and Pillow 13 (1.5.0). Upstream lists GHSA-975v-mx44-9jxq,
   GHSA-6367-m327-c4pf and GHSA-hq2w-x39h-8wmp with no patched release.
+- Moved `pgautoupgrade/pgautoupgrade` from `16-bookworm` to `18-trixie` on
+  2026-11-05, not run on a host at this tag. LibrePhotos states no maximum;
+  1.5.0 requires PostgreSQL 15 or newer, and upstream's compose
+  (https://github.com/LibrePhotos/librephotos-docker) runs
+  `pgautoupgrade/pgautoupgrade:latest`, which is PostgreSQL 18. 18 is built on
+  Debian trixie only; there is no bookworm build. The mount stays
+  `./volumes/db:/var/lib/postgresql`, the layout PostgreSQL 18 expects:
+  pgautoupgrade looks for the old cluster in `/var/lib/postgresql/data`,
+  upgrades it with `pg_upgrade --link` to `/var/lib/postgresql/18/docker` and
+  removes the old cluster
+  (https://github.com/pgautoupgrade/docker-pgautoupgrade). Check first where the
+  16 cluster lives: the 16 image declares `VOLUME /var/lib/postgresql/data`, so
+  under this mount the cluster can sit in an anonymous volume rather than in
+  `./volumes/db/data` (`docker inspect` on the `db` container lists the mounts).
+  If `./volumes/db/data` is empty, the 18 image starts an empty cluster. Take
+  the `pg_dump` from the upgrade checklist before the tag changes in either
+  case, and restore it into the new cluster if the upgrade does not find the
+  data. Downgrade is only a restore of that dump.
 
 ## Upgrade checklist
 

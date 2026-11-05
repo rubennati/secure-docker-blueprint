@@ -143,6 +143,19 @@ Upstream reference:
   ranges. Not checked: whether the empty strings the compose file passes for
   unset options (`PUSH_RELAY_URI`, `PUSH_IDENTITY_URI`, `SMTP_HOST`) pass the
   new validation; watch the first start.
+- Moved `mariadb` from `11.4` to `12.3`, the current LTS line, on 2026-11-05,
+  not run on a host at this tag. Support: the MariaDB backend page names no
+  version range, and its examples use the untagged `mariadb` image
+  (https://github.com/dani-garcia/vaultwarden/wiki/Using-the-MariaDB-(MySQL)-Backend).
+  `MARIADB_AUTO_UPGRADE: "1"`, already set in both compose files, runs
+  `mariadb-upgrade` at the first start on 12.3 after a backup of the system
+  tables; the data directory `./volumes/mysql` is reused. Take the
+  `mariadb-dump` before the tag changes: going back to 11.4 is only a restore of
+  that dump. Changed on the way (11.8 and 12.x): `innodb_snapshot_isolation` is
+  on by default, so a transaction that writes a row another transaction changed
+  after its snapshot fails with error 1020 instead of overwriting it; the new
+  server default collation `utf8mb4_uca1400_ai_ci` does not touch the existing
+  database, whose tables keep the collation it was created with.
 
 ## Upgrade checklist
 

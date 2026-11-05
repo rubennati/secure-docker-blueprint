@@ -20,7 +20,7 @@
 - `dependencytrack/apiserver:5.2.1` + `dependencytrack/frontend:5.2.1` —
   the v5 "Hyades" architecture, where API server and frontend are separate
   images (v4's bundled image no longer exists)
-- `postgres:16-alpine` — the only supported database in v5; H2, MySQL and
+- `postgres:18-alpine` — the only supported database in v5; H2, MySQL and
   SQL Server were dropped upstream, confirmed against the docs
 
 ## The `latest` tag is a trap on this image specifically
@@ -97,6 +97,20 @@ this trap.
   `/v1/finding/project/{uuid}/analyze` and removes the distrusted eMudhra root
   from the image's CA store; no GHSA published. The frontend has no breaking
   change.
+- Moved `postgres` from `16-alpine` to `18-alpine` on 2026-11-05, not run on a
+  host at this tag. PostgreSQL 18 support: "The lowest supported version is 11.
+  You are encouraged to use the newest available version."
+  (https://dependencytrack.github.io/hyades/latest/operations/database). The 18
+  image keeps its cluster under `/var/lib/postgresql/18/docker`; `PGDATA:
+  /var/lib/postgresql/data` in both compose files keeps it on the existing
+  mount. A new major does not read the old cluster, so existing data moves by
+  dump and restore: before the tag changes, `docker compose exec db sh -c
+  'pg_dumpall -U "$POSTGRES_USER"' > dump.sql`; `docker compose down`; move
+  `./volumes/postgres` aside; set the new tag; `docker compose up -d db`;
+  `docker compose exec -T db sh -c 'psql -U "$POSTGRES_USER" -d postgres' <
+  dump.sql` (errors that the bootstrap role and database already exist are
+  expected); then `docker compose up -d`. A return to the old major is only a
+  restore of that dump.
 
 ## Upgrade checklist
 

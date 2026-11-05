@@ -7,7 +7,7 @@ Self-hosted web analytics platform — privacy-respecting, GDPR-compatible alter
 | Service | Image | Purpose |
 |---------|-------|---------|
 | `matomo-app` | `matomo:5.14.2-apache` | Tracking endpoint + reporting UI |
-| `db` | `mariadb:11.4` | Raw visits, aggregated reports, users, settings |
+| `db` | `mariadb:12.3` | Raw visits, aggregated reports, users, settings |
 
 ## Try it locally
 

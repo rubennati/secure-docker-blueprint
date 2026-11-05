@@ -18,7 +18,7 @@
 ## What we use
 
 - `infisical/infisical:v0.167.6` standalone image (backend + UI + API)
-- `postgres:16-alpine` as the secret store
+- `postgres:18-alpine` as the secret store
 - `redis:7.4-alpine` for cache + job queue
 - Custom `config/entrypoint.sh` to inject secrets from Docker Secret files (no `_FILE` support)
 
@@ -33,7 +33,7 @@
 | `deploy.resources` (memory/cpus/pids) on all services | Bound a compromised container |
 | Healthcheck via `node` hitting `/api/status` | Image ships node but not curl/wget |
 | Traefik `access-vpn` + `limit-standard` default | A central secret manager must not be public; UI is an SPA |
-| Postgres pinned to `16-alpine` | Upstream sample uses `postgres:14-alpine`; blueprint prefers a current supported line |
+| Postgres pinned to `18-alpine` | Upstream sample uses `postgres:14-alpine`; blueprint prefers a current supported line |
 | DB password generated as hex | URL-safe in `DB_CONNECTION_URI` (avoids `/ + =` breaking the URI) |
 
 ## Version notes
@@ -54,6 +54,20 @@
   database backup before, not during, the upgrade; rollback is restoring that
   snapshot. No variable this stack sets changed. No advisory is listed in the
   repository's advisory feed for the range.
+- Moved `postgres` from `16-alpine` to `18-alpine` on 2026-11-05, not run on a
+  host at this tag. PostgreSQL 18 support: the requirements recommend version 14
+  and up, with no upper bound
+  (https://infisical.com/docs/self-hosting/configuration/requirements); upstream
+  names 16 as its extensively tested version. The 18 image keeps its cluster
+  under `/var/lib/postgresql/18/docker`; `PGDATA: /var/lib/postgresql/data` in
+  both compose files keeps it on the existing mount. A new major does not read
+  the old cluster, so existing data moves by dump and restore: before the tag
+  changes, `docker compose exec db sh -c 'pg_dumpall -U "$POSTGRES_USER"' >
+  dump.sql`; `docker compose down`; move `./volumes/postgres` aside; set the new
+  tag; `docker compose up -d db`; `docker compose exec -T db sh -c 'psql -U
+  "$POSTGRES_USER" -d postgres' < dump.sql` (errors that the bootstrap role and
+  database already exist are expected); then `docker compose up -d`. A return to
+  the old major is only a restore of that dump.
 
 ## Upgrade checklist
 

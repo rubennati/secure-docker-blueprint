@@ -40,10 +40,25 @@
 
 OpenSign uses Parse Server (Node.js) as the backend API with MongoDB as the data store. The React SPA (frontend) communicates with Parse at `/app` (the `PARSE_MOUNT` path). Upstream uses Caddy as a reverse proxy, which strips the `/api` path prefix before forwarding to Parse — our Traefik setup routes `/app` directly without any prefix stripping.
 
+## Version notes
+
+- Re-pinned `main` on 2026-11-05 to the images built on 2026-11-02 from
+  upstream commit `9258b593c0` (after the v3.1.0 release), not run on a host at
+  these digests: UI `opensign/opensign`
+  `sha256:093910c698c135e272a794ec1df81324c584b0c1011bb95da0c04ff22adb45ac`,
+  API `opensign/opensignserver`
+  `sha256:49819bc883aa5b0053106f2d60d49334231c723cc37c01a304a9322e46bfc06f`.
+  The previous API digest was built on 2026-06-30, so the move spans the
+  GitHub releases v3.0.0, v3.0.1 and v3.1.0: a redesigned interface, qualified
+  electronic signatures (QES), undo and redo in the editor, decline reasons in
+  the document API and dependency updates. No breaking change, variable change
+  or migration step is listed. The reason for the move is the CVE findings in
+  the old images. Source: https://github.com/OpenSignLabs/OpenSign/releases
+
 ## Upgrade checklist
 
 1. Check [OpenSign releases](https://github.com/OpenSignLabs/OpenSign/releases) for changelog
-2. **Note:** Docker Hub only has `main` / `staging` / `docker_beta` — no semver tags. Upgrading means pulling the latest `main`.
+2. **Note:** Docker Hub only has `main` / `staging` / `docker_beta` — no semver tags. Upgrading means re-pinning `main` to its current digests (`APP_TAG` and `SERVER_TAG` in `.env` and `.env.local.example`; commands in `.env.example`) and adding a dated version note.
 3. Back up MongoDB:
 
    ```bash

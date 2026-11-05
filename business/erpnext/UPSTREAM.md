@@ -25,7 +25,7 @@ AGPL-3.0. The Frappe framework underneath is MIT.
 
 - `frappe/erpnext:v16.53.0` — one image for every role, published for amd64 and
   arm64. Upstream's compose pins `platform: linux/amd64`; this stack does not.
-- `mariadb:11.8` and `redis:8.6-alpine` — the versions upstream's compose pins.
+- `mariadb:11.8` (upstream's compose pin) and `redis:8.10-alpine` (upstream pins `8.6-alpine`).
 - frappe_docker's `compose.yaml` with `overrides/compose.mariadb.yaml` and
   `overrides/compose.redis.yaml`: the same ten services.
 
@@ -177,6 +177,22 @@ documents, stock and reports; email; PDF printing; an image upgrade with
   it by default and Frappe background jobs then fail with error 1020.
   No ERPNext advisory names a fix after v16.35.0; the move clears CRITICAL
   findings in the image scan.
+- Moved `redis` from `8.6-alpine` to `8.10-alpine` on 2026-11-05, not run on a host
+  at this tag; across 8.8 and 8.10, minor releases of the same major with no
+  breaking change listed (they add commands, compact hashes and performance work).
+  Redis does not load data files written by a newer version, so a rollback needs the
+  backup of the Redis data. Security fixes in the 8.10 line: CVE-2026-62356 (8.10.1,
+  heap write when loading a Count-min sketch from an RDB file), queued `MULTI`
+  commands keeping access to keys whose ACL permission was revoked (8.10.2), and a
+  cluster-bus overflow that needs cluster mode (8.10.3). frappe_docker's
+  `overrides/compose.redis.yaml` still pins `redis:8.6-alpine` (set 2026-04-21, when
+  8.6 was the newest line) and says nothing against 8.10, so this stack now runs
+  ahead of upstream's pin. This service starts as UID 999 through its own
+  `config/redis-entrypoint.sh`, which execs `redis-server` directly, so the image
+  entrypoint's privilege handling and module loading do not apply; no compose
+  change. Sources: https://github.com/redis/redis/releases/tag/8.10.0,
+  https://github.com/redis/redis/releases/tag/8.10.3,
+  https://github.com/frappe/frappe_docker/blob/main/overrides/compose.redis.yaml
 
 ## Upgrade checklist
 

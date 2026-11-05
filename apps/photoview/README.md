@@ -7,7 +7,7 @@ Self-hosted photo gallery focused on RAW processing, EXIF-driven organization, a
 | Service | Image | Purpose |
 |---------|-------|---------|
 | `photoview-app` | `photoview/photoview:2.4.0` | Web UI + GraphQL API + media indexer |
-| `db` | `mariadb:11.4` | Index, albums, users, face data |
+| `db` | `mariadb:12.3` | Index, albums, users, face data |
 
 ## Try it locally
 

@@ -1,6 +1,6 @@
 # Immich
 
-Self-hosted photo and video backup with machine-learning–based search, facial recognition, and mobile apps for iOS/Android. Four-service stack: web server, ML worker, Postgres (with pgvectors/vectorchord extensions for embeddings), and Valkey (Redis-compatible).
+Self-hosted photo and video backup with machine-learning–based search, facial recognition, and mobile apps for iOS/Android. Four-service stack: web server, ML worker, Postgres (with the VectorChord extension for embeddings), and Valkey (Redis-compatible).
 
 ## Architecture
 
@@ -8,8 +8,8 @@ Self-hosted photo and video backup with machine-learning–based search, facial 
 |---------|-------|---------|
 | `immich-app` | `ghcr.io/immich-app/immich-server:v3.3.6` | Web UI + REST API + upload handler |
 | `machine-learning` | `ghcr.io/immich-app/immich-machine-learning:v3.3.6` | CLIP embeddings, face detection, object recognition |
-| `db` | `ghcr.io/immich-app/postgres:14-vectorchord…` | Postgres with vector extensions for similarity search |
-| `redis` | `valkey/valkey:8.1.6` | Background job queue (Bull/BullMQ) |
+| `db` | `ghcr.io/immich-app/postgres:14-vectorchord1.1.1` (digest-pinned) | Postgres with vector extensions for similarity search |
+| `redis` | `valkey/valkey:9.1.3` | Background job queue (Bull/BullMQ) |
 
 ## Try it locally
 
@@ -145,7 +145,7 @@ Two preconditions upstream states, both of which invalidate a restore if missed:
 
 - **A `429` on first install leaves the app on a black screen** — Immich's service worker pre-caches about 100 JS chunks in parallel. With a burst of 50 part of them were answered `429`. `.env.example` ships `limit-standard`, whose burst of 500 holds them.
 - **`DB_PWD_INLINE` duplicates the DB password** — Immich-server's `DB_PASSWORD` env var has no `_FILE` support. The Postgres service reads `POSTGRES_PASSWORD_FILE` from a Docker Secret, but immich-server needs the same value inline in `.env`. Setup step 3 syncs them. Mismatch = connection refused.
-- **Custom Postgres image is required** — the vector extensions (pgvectors, vectorchord) used for photo similarity search are Immich-specific. Do NOT substitute a stock `postgres:14` image.
+- **Custom Postgres image is required** — the vector extension (VectorChord) used for photo similarity search are Immich-specific. Do NOT substitute a stock `postgres:14` image.
 - **Upload volume** — `UPLOAD_LOCATION` can be an NFS/SMB share. The `db` volume must be local storage (Postgres corrupts on network filesystems).
 - **Hardware acceleration** — transcoding and ML inference can use GPU/NPU. See [Immich hwaccel docs](https://docs.immich.app/features/ml-hardware-acceleration) — add the `extends:` block and change the image tag (e.g. `v2-cuda`).
 - **First ML inference is slow** — CLIP model downloads on first photo upload (~5-10 min on slow links).

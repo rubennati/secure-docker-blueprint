@@ -13,7 +13,7 @@ network (CLI / machine identity). An optional, central alternative to per-server
 | Service | Image | Purpose |
 |---------|-------|---------|
 | `infisical-app` | `infisical/infisical:v0.167.6` | Backend + web UI + API (port 8080) |
-| `db` | `postgres:16-alpine` | Encrypted secret store, users, projects |
+| `db` | `postgres:18-alpine` | Encrypted secret store, users, projects |
 | `redis` | `redis:7.4-alpine` | Cache + job queue |
 
 Infisical has no `_FILE` support, so `config/entrypoint.sh` injects secrets from Docker Secret

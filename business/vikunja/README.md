@@ -7,7 +7,7 @@ Open-source task management with kanban boards, to-do lists, Gantt views, and ta
 | Service | Image | Purpose |
 |---|---|---|
 | `vikunja` | `vikunja/vikunja` (custom build) | App + frontend (single binary, port 3456) |
-| `db` | `postgres:17-alpine` | Stores all tasks, projects, and user data |
+| `db` | `postgres:18-alpine` | Stores all tasks, projects, and user data |
 
 The upstream image ships without a shell or any utilities (`FROM scratch`). A custom build layer adds the minimum needed: a shell and `cat` for reading secrets at startup, and `wget` for the health check.
 
@@ -219,4 +219,4 @@ every active session — recoverable, but users are logged out without explanati
 - **Health check**: the built-in `vikunja healthcheck` command fails every time because it starts without the database password. We replaced it with an HTTP check against the running server. See `docs/bugfixes/vikunja-openproject-2026-05-06.md`.
 - **DNS on self-hosted servers**: the container must be able to resolve the Authentik hostname. On a server with public DNS this works automatically. On test servers, add the hostname to `/etc/hosts` on the Docker host. See `docs/bugfixes/vikunja-openproject-2026-05-06.md` Bug 5.
 - **Authentik policy binding required**: the Vikunja application in Authentik must have at least one Group/User binding — without it Authentik returns 403 on the login endpoint.
-- **Postgres version**: pinned to `17-alpine` to match the blueprint standard. Upstream docs mention `postgres:18` — no hard dependency on the version.
+- **Postgres version**: pinned to `18-alpine`, the version upstream's CI tests and its Docker example uses. The move from 17 needs a dump and restore (UPSTREAM.md, Version notes).

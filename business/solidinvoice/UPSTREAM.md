@@ -10,12 +10,12 @@
 - **Origin:** SolidInvoice · no country stated in its published terms · no country
 - **Domain:** Business operations
 - **Role:** Invoicing: clients, quotes, invoices, recurring invoices and payments
-- **Based on version:** `3.0.1`
+- **Based on version:** `3.1.2`
 - **Last verified:** 2026-09-22 (3.0.1) — behind Traefik with TLS: the web installer to the end, the onboarding with a client and an invoice, a restart, and the README's restore
 
 ## What we use
 
-- `solidinvoice/solidinvoice:3.0.1` — the static binary image. Upstream's compose
+- `solidinvoice/solidinvoice:3.1.2` — the static binary image. Upstream's compose
   pins `:latest`; not used here.
 - SQLite in the configuration volume, the installer's recommendation. Upstream's
   compose runs `mysql:8.0` beside it, a line that went out of support in April 2026.
@@ -102,6 +102,32 @@ without Traefik:
 **Not yet exercised:** completing the web installer, and therefore everything after
 it — login, clients, invoices, payments, the background worker; Traefik routing and
 TLS; email; backup and restore. This is the least-verified stack in its batch.
+
+## Version notes
+
+- Moved `solidinvoice/solidinvoice` to `3.1.2` on 2026-11-05 (released 2026-10-21),
+  across 3.1.0 and 3.1.1, not run on a host at this tag. Not stopped at 3.1.0 or
+  3.1.1: their in-app upgrade aborted on MySQL, MariaDB and PostgreSQL, and they
+  ignored `SOLIDINVOICE_APP_SECRET`, so the app secret changed whenever the cache was
+  rebuilt. 3.1.2 runs the real database migrations once at startup, under a lock,
+  instead of marking them done from a web request (#3024), so `docker compose up -d`
+  migrates the SQLite database in `volumes/config/db`; back up `volumes/config`
+  first — the upgrade rewrites every invoice-line and quote-line row more than once.
+  Behaviour changes from UPGRADE.md: Symfony 8.1 and PHP 8.4.1 (bundled in the
+  binary); the Sms77 and Gitter notification transports are removed; all remember-me
+  cookies are invalidated, so users log in again; client website URLs must have a
+  real domain; lines gain a name (taken from the first line of the description) and
+  an explicit order; invoices, recurring invoices and clients gain payment terms, with
+  a new company default of Net 30 and existing invoices set to Custom (due dates
+  unchanged); issued invoices and quotes freeze their currency, backfilled for older
+  documents in 3.1.2. The embedded Caddy now takes the client IP from
+  `Cf-Connecting-Ip` and `X-Forwarded-For` of trusted proxies (private ranges by
+  default, which includes Traefik on `proxy-public`). The command `run --disable-https
+  --skip-intro`, port 8765, `/health` and the `HOME` unpacking are not named as
+  changed, so the compose files keep their configuration and hardening. Whether the
+  command-line installer completes in 3.1.2 was not examined. Sources:
+  https://github.com/SolidInvoice/SolidInvoice/releases/tag/3.1.2,
+  https://github.com/SolidInvoice/SolidInvoice/blob/3.1.2/UPGRADE.md
 
 ## Upgrade checklist
 

@@ -18,7 +18,7 @@
 - Upstream `jhumanj/opnform-api` (Laravel)
 - Upstream `jhumanj/opnform-client` (Nuxt)
 - Official `postgres:16-alpine`
-- Official `redis:7.4-alpine`
+- Official `redis:8.10-alpine`
 - Docker Secret for Postgres password + inline duplicate for Laravel
 - Bind-mount `./volumes/postgres`, `./volumes/redis`, `./volumes/api-storage`
 
@@ -75,6 +75,30 @@ Key design choices:
   CVE-2026-40460 (1.31.0), CVE-2026-9256 (1.31.1), CVE-2026-42530 (1.31.2),
   CVE-2026-56434 (1.31.3), CVE-2026-90439 (1.31.6), CVE-2026-15176,
   CVE-2026-93479, CVE-2026-95101, CVE-2026-97629 and CVE-2026-97205 (1.31.7).
+- Moved `redis` from `7.4-alpine` to `8.10-alpine` on 2026-11-05, a new major, not
+  run on a host at this tag; the tag follows the 8.10 patch releases (8.10.3,
+  2026-10-26). Redis 8 is offered under RSALv2, SSPLv1 or AGPLv3 at the user's
+  choice (7.4: RSALv2 or SSPLv1). The image bundles the Query Engine, JSON, time
+  series and probabilistic data types as modules, which the image's entrypoint loads
+  at start on amd64 and arm64; this stack uses none of them. 8.x reads the 7.4 data
+  files in place, but Redis does not load files written by a newer version, so a
+  rollback needs the backup of the Redis data. The one potentially breaking change
+  upstream lists: `GETRANGE` with an out-of-range negative end returns an empty
+  string. Security fixes in the 8.10 line: CVE-2026-62356 (8.10.1, heap write when
+  loading a Count-min sketch from an RDB file), queued `MULTI` commands keeping
+  access to keys whose ACL permission was revoked (8.10.2), and a cluster-bus
+  overflow that needs cluster mode (8.10.3). The 7.4 line still receives fixes
+  (7.4.12, 2026-10-26); the move is to the newest stable line, not away from an
+  unmaintained one. OpnForm's deployment guide names Redis without a version. The
+  image's entrypoint now drops to the `redis` user only when SETUID and SETGID are
+  in the capability bounding set, empties that set while dropping, and fixes
+  ownership only of `*.rdb` files and `appendonlydir` in `/data`. This service
+  starts as root with Docker's default capabilities, so it drops to UID 999 as
+  before; no compose change. Sources:
+  https://github.com/redis/redis/releases/tag/8.0.0,
+  https://github.com/redis/redis/releases/tag/8.10.3,
+  https://github.com/redis/docker-library-redis/blob/release/8.10/alpine/docker-entrypoint.sh,
+  https://docs.opnform.com/deployment
 
 ## Upgrade checklist
 

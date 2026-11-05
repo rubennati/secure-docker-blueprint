@@ -94,7 +94,7 @@ exactly what was and was not verified.
 |---|---|
 | [Warpgate](warpgate/) | Lightweight, multi-protocol proxy (SSH, HTTPS, MySQL, PostgreSQL, Kubernetes, RDP, VNC). No database, no CE/EE split |
 | [JumpServer](jumpserver/) | Full-featured, traditional PAM — stored target credentials, session recording, approval workflows. The vendor's own all-in-one image; cannot run under this repository's usual container hardening (documented, not silently accepted) |
-| [ShellHub](shellhub/) | Agent-based, reverse-connection SSH access — install an agent on each target, no inbound port needed there. The server component here currently has no stable upstream release tag |
+| [ShellHub](shellhub/) | Agent-based, reverse-connection SSH access — install an agent on each target, no inbound port needed there |
 | [Teleport](teleport/) | Identity- and certificate-based access — short-lived certificates instead of standing credentials. Does not sit behind Traefik: its proxy port carries client-certificate TLS Traefik would break. Community Edition's license has real usage limits — read its README first |
 | [Orion Belt](orion-belt/) *(experimental)* | Lightweight reverse-agent PAM with JIT approval and ReBAC. Single-maintainer project, a few months old — read its README's maturity assessment before trusting it with real access |
 

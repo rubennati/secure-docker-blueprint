@@ -143,8 +143,8 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
   the one `ops/create-admin.sh` made.
 - **ClickHouse is one version upstream does not test.** Upstream's compose
   pins 24.12, which is out of support; upstream's CI runs 25.11. This pins a
-  current release and verifies the migrations and ingestion against it, which
-  is not the same as upstream supporting it.
+  current release (26.10); the migrations and ingestion were verified on 26.8,
+  not yet on 26.10, and neither is the same as upstream supporting it.
 - **The two-router split is written, not run.** See above.
 - **Nothing here has run behind this repository's Traefik yet.** The stack is
   `scaffolded`.

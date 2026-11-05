@@ -12,7 +12,7 @@
 - **Origin:** Germany · Philipp Heckel · EU
 - **Domain:** Monitoring
 - **Role:** Push notifications over HTTP, the receiving end for every other alert
-- **Based on version:** `v2.28.0` (released 2026-08-27)
+- **Based on version:** `v2.37.2` (released 2026-11-04)
 - **Upstream reviewed:** 2026-07-27 — image, tag, configuration surface, channel
   support and licence checked against upstream documentation
 - **Last verified:** 2026-09-08 (v2.28.0) — v0.8.0 host session: clean start,
@@ -53,6 +53,33 @@ Everything lives in `config/server.yml`. The settings that matter most:
 | `upstream-base-url` | Required for iOS instant notifications; sends only a message ID and a SHA256 checksum of the topic URL upstream, not message content |
 
 See the [ntfy config reference](https://docs.ntfy.sh/config/) for the full list.
+
+## Version notes
+
+- Moved to `v2.37.2` on 2026-11-05 (released 2026-11-04), not run on a host at
+  this tag; `Last verified` stays at v2.28.0. No `server.yml` key is removed or
+  renamed between v2.28.0 and v2.37.2, so `config/server.yml` needs no change.
+  What changes underneath it:
+  - v2.31.1 migrates the message cache schema from 16 to 17 at first start;
+    going back to v2.31.0 or older needs the version set back by hand, and
+    v2.32.0 makes an older ntfy refuse a database a newer one migrated in a
+    breaking way. Back up `volumes/` before the move.
+  - v2.31.0: a reconnect with `since=<message ID>` also returns messages from the
+    same second, so a polling script may see duplicates.
+  - v2.36.0 validates the whole configuration at start when `base-url` is set
+    (it is here), so an invalid `server.yml` now stops the container instead of
+    starting; daily usage counters reset once at the upgrade.
+  - v2.37.0: UnifiedPush to a topic with no subscriber for four days answers
+    `410` instead of `507`; responses carry `Retry-After` and `RateLimit`
+    headers.
+  - Security: v2.34.0 ends a user's subscriptions when access is reset or the
+    user is deleted; v2.35.0 rejects Matrix push-gateway requests with invalid
+    push keys, which on SQLite could store messages under a protected topic;
+    v2.33.1 is built with Go 1.27.3, limits a subscription to 150 topics and
+    fixes an "Illegal instruction" crash on amd64 CPUs without x86-64-v3.
+  - Experimental clustering (v2.30.0 onwards) stays off; upstream says it is
+    not ready for production.
+  https://github.com/binwiederhier/ntfy/releases
 
 ## Upgrade checklist
 

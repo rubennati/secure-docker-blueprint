@@ -26,7 +26,7 @@ PostgreSQL profile, pgvector as the vector store, minus what is listed below:
 - `ubuntu/squid:6.6-24.04_edge` — upstream uses `:latest`; a versioned tag of the
   same image
 - `postgres:15.14-alpine` (upstream: `15-alpine`), `pgvector/pgvector:0.8.1-pg16`
-  (upstream: `pg16`), `redis:7.4-alpine` (upstream: `6-alpine`)
+  (upstream: `pg16`), `redis:8.10-alpine` (upstream: `6-alpine`)
 - pgvector, not Weaviate: upstream supports both, and pgvector is one more
   PostgreSQL rather than a different product. No other stack (Qdrant included) is
   embedded; Dify can use any vector store it supports.
@@ -193,6 +193,29 @@ the model backend:
   0.6.11 also stops plugin subprocesses inheriting the daemon's environment and keeps
   the uv cache inside the container: whether plugins still install with `HOME=/tmp`
   and the read-only root is the first thing to check on a host.
+- Moved `redis` from `7.4-alpine` to `8.10-alpine` on 2026-11-05, a new major, not
+  run on a host at this tag; the tag follows the 8.10 patch releases (8.10.3,
+  2026-10-26). Redis 8 is offered under RSALv2, SSPLv1 or AGPLv3 at the user's
+  choice (7.4: RSALv2 or SSPLv1). The image bundles the Query Engine, JSON, time
+  series and probabilistic data types as modules, which the image's entrypoint loads
+  at start on amd64 and arm64; this stack uses none of them. 8.x reads the 7.4 data
+  files in place, but Redis does not load files written by a newer version, so a
+  rollback needs the backup of the Redis data. The one potentially breaking change
+  upstream lists: `GETRANGE` with an out-of-range negative end returns an empty
+  string. Security fixes in the 8.10 line: CVE-2026-62356 (8.10.1, heap write when
+  loading a Count-min sketch from an RDB file), queued `MULTI` commands keeping
+  access to keys whose ACL permission was revoked (8.10.2), and a cluster-bus
+  overflow that needs cluster mode (8.10.3). The 7.4 line still receives fixes
+  (7.4.12, 2026-10-26); the move is to the newest stable line, not away from an
+  unmaintained one. Dify's compose uses `redis:6-alpine` and states no supported
+  range; the hardcoded tag in `docker-compose.local.yml` moves too. This service
+  starts as UID 999 through its own `config/redis-entrypoint.sh`, which execs
+  `redis-server` directly, so the image entrypoint's privilege handling and module
+  loading do not apply; no compose change. Sources:
+  https://github.com/redis/redis/releases/tag/8.0.0,
+  https://github.com/redis/redis/releases/tag/8.10.3,
+  https://github.com/redis/docker-library-redis/blob/release/8.10/alpine/docker-entrypoint.sh,
+  https://github.com/langgenius/dify/blob/main/docker/docker-compose.yaml
 
 ## Upgrade checklist
 

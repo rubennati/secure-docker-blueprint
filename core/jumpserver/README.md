@@ -9,7 +9,7 @@ for how it differs from Warpgate, ShellHub, Teleport and Orion Belt.
 
 | Service | Image | Purpose |
 |---|---|---|
-| `jumpserver` | `jumpserver/jms_all` | Core (Django) + koko (SSH/RDP gateway) + web UI + bundled PostgreSQL + Redis + nginx, one container |
+| `jumpserver` | `jumpserver/jms_all` | Core (Django) + koko (SSH/RDP gateway) + chen + kael + web UI + bundled PostgreSQL + Redis + nginx, one container |
 
 This is the vendor's own all-in-one image, not a decomposition into
 per-service containers the way every other stack in this repository is
@@ -74,7 +74,7 @@ host can mean direct, standing access to every registered target, not just
 active sessions.
 
 **Where credentials and keys live.** In the bundled PostgreSQL database
-under `./volumes/data`, encrypted at rest with a key derived from
+in the `pgdata` named volume, encrypted at rest with a key derived from
 `SECRET_KEY`. Compromising `SECRET_KEY` and the database together is
 equivalent to compromising every stored credential.
 
@@ -85,8 +85,8 @@ same access discipline as a credential vault, because it is one.
 
 **What session recordings contain.** For terminal sessions, every keystroke
 and all terminal output — the same scope as any SSH session recorder.
-RDP/graphical sessions are recorded as video. Stored under `./volumes/data`
-alongside the database; back them up with equal care.
+RDP/graphical sessions are recorded as video. Stored under `./volumes/data`;
+back them up with the same care as the database.
 
 **Which ports must be reachable from where.** The SSH/RDP gateway from
 wherever your users connect (typically your VPN range); the web console
@@ -104,16 +104,16 @@ repository — configure and verify against your own instance.
 
 | | |
 |---|---|
-| **State** | `./volumes/data` — the bundled PostgreSQL data directory, stored credentials, session recordings, and application state. `./volumes/download` is regenerable export/report cache. |
-| **Critical** | `./volumes/data` entirely. It is one container's worth of what would normally be three or four separate backup targets in this repository's usual model. |
+| **State** | The `pgdata` named volume — the bundled PostgreSQL cluster, holding the stored credentials. `./volumes/data` — session recordings, Redis and application state. `./volumes/download` is regenerable export/report cache. |
+| **Critical** | The `pgdata` volume and `./volumes/data` entirely. Together they are one container's worth of what would normally be three or four separate backup targets in this repository's usual model. |
 | **Quiescing** | Not verified. The bundled Postgres is a normal PostgreSQL instance; a file-level copy of a live data directory risks the same torn-write problem `docs/standards/restore.md` describes for any database — a logical dump from inside the container (`docker compose exec jumpserver ...`) is the safer, unverified-here alternative. |
 
 For the general restore procedure and verification checklist, see
 [Restore](../../docs/standards/restore.md). This stack's single-container
 shape means there is no separate database container to target a
-`postgresql_databases:` hook at — a full `source_directories` capture of
-`./volumes/data` is the only verified-shape option until a logical-dump
-path is exercised.
+`postgresql_databases:` hook at — a logical dump from inside the container
+plus a `source_directories` capture of `./volumes/data` is the expected
+shape; neither path is exercised yet.
 
 ## Known Issues
 
@@ -124,8 +124,11 @@ path is exercised.
   `no-new-privileges`, `cap_drop`, and `read_only` all break this image;
   see `docker-compose.yml`'s Security block for the verified reason for
   each.
-- **One major version behind upstream's newest (v5) architecture** — see
+- **All-in-one image, not upstream's component split** — see
   [UPSTREAM.md](UPSTREAM.md#known-limitations).
+- **Moving from a v4 deployment** — the database was not on a volume before
+  v5.1.1 here; dump it before recreating the container, see
+  [UPSTREAM.md](UPSTREAM.md#version-notes).
 - **4 CPU / 8 GB RAM minimum** (vendor-stated) makes this the heaviest of
   the five PAM/bastion stacks evaluated together with this one.
 

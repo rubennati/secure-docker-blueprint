@@ -15,7 +15,7 @@ Uses the **slim image** (recommended for production) with separate PostgreSQL an
 | `cron` | same image | Scheduled tasks (email digests, cleanup) |
 | `seeder` | same image | One-shot: DB migrations + seed data |
 | `cache` | `memcached` | Rails cache |
-| `db` | `postgres:17-alpine` | Persistent storage |
+| `db` | `postgres:18-alpine` | Persistent storage |
 
 ## Try it locally
 

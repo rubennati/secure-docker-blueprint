@@ -119,7 +119,7 @@ these ports. What protects them is in the next section, and the host's firewall.
 
 ## Security model
 
-Measured on the image on 2026-10-03:
+Measured on the image on 2026-10-03, at v0.16.24:
 
 - **No open relay.** Port 25 answers a recipient outside the hosted domains
   with `550 Relay not allowed`, and an unknown mailbox with `550`.
@@ -134,7 +134,10 @@ Measured on the image on 2026-10-03:
 - **Bans land on the client, not on Traefik.** Behind a proxy Stalwart sees the
   proxy's address unless told to read `X-Forwarded-For`. Left at upstream's
   default, 100 failed logins through the web interface ban Traefik's address
-  and the interface is gone for everyone. `ops/setup.sh` switches it on.
+  and the interface is gone for everyone. `ops/setup.sh` switches it on and
+  takes the address one entry from the right of `X-Forwarded-For`, the one
+  Traefik appends (`APP_FORWARDED_HOPS=1`). Behind Cloudflare that entry is the
+  edge address; `APP_FORWARDED_HOPS=2` takes the client's.
 - **Non-root**, `read_only`, `cap_drop: ALL` with `NET_BIND_SERVICE`,
   `no-new-privileges`. The image runs as uid 2000.
 - **The one-time setup administrator exists for one start.** `ops/setup.sh`
@@ -179,8 +182,9 @@ in front of this server.
   the bans above depend on it.
 - **DANE is off.** Stalwart reports that Docker's resolver cannot validate
   DNSSEC and disables DANE for outgoing mail.
-- **0.x.** Upstream states that a minor release can need a migration and that
-  upgrades are manual. `UPSTREAM.md` has the checklist.
+- **Not run at v1.0.3.** The measurements above are from v0.16.24 on
+  2026-10-03. A v0.16 data store does not open in v1; `UPSTREAM.md`, "Version
+  notes", has the migration.
 - **The web interface is not pinned by the image tag.** It is downloaded at
   start — see `UPSTREAM.md`, "What reaches the network on its own".
 

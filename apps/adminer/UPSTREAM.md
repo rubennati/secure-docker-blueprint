@@ -10,12 +10,12 @@
 - **Origin:** Czech Republic · Jakub Vrána · EU
 - **Domain:** Developer tools
 - **Role:** Web interface onto a database another stack already runs
-- **Based on version:** `5.5.1` (standalone variant)
+- **Based on version:** `6.3.0` (standalone variant)
 - **Last verified:** 2026-05-02 (v4.8.1-standalone)
 
 ## What we use
 
-- Official `adminer` image, `4.8.1-standalone` tag (pure Adminer — no bundled web server stack)
+- Official `adminer` image, `6.3.0-standalone` tag (pure Adminer — no bundled web server stack)
 - No database — Adminer connects to external DBs
 - Blueprint-standard Traefik routing + Docker network model
 
@@ -28,11 +28,11 @@
 | `security_opt: no-new-privileges` | Blueprint baseline. |
 | Access defaults to `access-vpn` | Admin-access tools must never be publicly reachable by default. |
 | Rate limit defaults to `limit-strict` | 20 per second, burst 40, against credential-stuffing on the DB-login form; headers `headers-standard`. |
-| `4-standalone` tag instead of `latest` | Reproducible; other variants (`fastcgi`, `4-fastcgi`) are less useful behind Traefik. |
+| Exact `<version>-standalone` tag instead of `latest` | Reproducible; other variants (`fastcgi`, `4-fastcgi`) are less useful behind Traefik. |
 
 ## Upgrade checklist
 
-Adminer moves in minor versions (`4.8.x` → `4.9.x`). Major `5.x` not yet out as of 2026-04-17.
+Adminer moves in minor versions within a major line (`6.1.x` → `6.2.x`); Adminer releases no fixes on an older major line once the next one is out.
 
 1. Check [GitHub releases](https://github.com/vrana/adminer/releases) for notes on deprecated drivers
 2. Bump `APP_TAG` in `.env`
@@ -43,16 +43,32 @@ No DB migrations, no data to back up — Adminer is stateless.
 
 ## Version / tag notes
 
-- **Pinned to `5.5.1-standalone`, not to 6.x.** Four advisories published 2026-09-07 are
-  fixed only in Adminer 6.0.2 — conditional RCE via a CONNECTION_ID XSS combined with
-  `INTO DUMPFILE`, pre-authentication SSRF in the Elasticsearch plugin, the ClickHouse
-  driver reflecting an arbitrary HTTP response body on the login page, and a
-  privileged-port SSRF. **No 6.0.2 image exists**; Docker Hub's newest 6.x tag is
-  `6.0.1-standalone`, which predates those fixes. One of the four is described as a
-  regression introduced in 5.5.1, so 6.0.x is the affected line rather than the fixed one.
-  `5.5.1` closes the advisory that applies to the 5.5.x line (GHSA-fr74-9mf9-gf44,
-  X-Forwarded-Prefix backslash bypass). Re-check for a 6.0.2 image before moving to 6.x.
-  Decided 2026-09-13.
+- Moved to `6.3.0-standalone` on 2026-11-05 (released 2026-11-03), from
+  `5.5.1-standalone` across 6.0.0–6.2.0, not run on a host at this tag. The 5.x line
+  ends at `5.5.1`: no newer 5.x image exists, and the current pin carries a CRITICAL
+  image finding. The hold of 2026-09-13 ends: 6.0.2 shipped the four fixes of
+  2026-09-07 (GHSA-rwxg-xph9-82cj server-name check, a regression from 5.5.1;
+  GHSA-7c5h-q78c-fpxx connection-id XSS; GHSA-77qq-q8fv-x45v ClickHouse and
+  GHSA-q8h3-4cx4-prgm Elasticsearch response reflection), and every later 6.x
+  release carries them. 6.1.1 adds GHSA-r9r5-j5q8-8c59 (SQLite `ATTACH`/`VACUUM INTO`
+  behind a BOM); 6.3.0 restores the CSRF check on a login posted along with a request,
+  a regression from 6.0.1. Image packaging is unchanged between the two lines
+  (`php:8.4-alpine`, user `adminer`, `php -S [::]:8080`, same entrypoint,
+  `ADMINER_DESIGN`, `ADMINER_DEFAULT_SERVER` and `ADMINER_PLUGINS`), and the
+  `pepa-linha` design still ships, so the compose and its hardening stay as they are.
+  Behaviour changes to know: 6.0.0 refuses servers that accept any password (for
+  example PostgreSQL with `trust` authentication), removes the plugins `edit-calendar`,
+  `tinymce`, `json-column`, `pretty-json-column`, `translation`, `email-table`,
+  `dump-php` and `master-slave`, and needs an ES6 browser; 6.0.1 sends the session
+  cookie `SameSite=lax` and checks the CSRF token on login, and renames the
+  Elasticsearch database `elastic` to `data`; 6.1.0 shows Oracle schemas as databases
+  instead of tablespaces; 6.2.0 drops the InterBase extension for PDO_Firebird; 6.3.0
+  drops found-rows timeouts for MySQL < 5.7.8 and MariaDB < 10.1.2. Login throttling
+  counts the proxy's address behind Traefik, as before; 6.0.0 suggests the
+  `login-reverse-proxy` plugin for that case, not enabled here. No data or migration:
+  Adminer is stateless. Sources:
+  https://github.com/vrana/adminer/blob/master/CHANGELOG.md ,
+  https://github.com/TimWolla/docker-adminer/tree/master/6
 
 ## Related images to keep in sync
 

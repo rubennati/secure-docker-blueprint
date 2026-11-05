@@ -16,7 +16,7 @@ Seven services — `opnform-nginx` is the single Traefik entry point:
 | `api-scheduler` | same | `artisan schedule:work` — runs scheduled tasks |
 | `ui` | `jhumanj/opnform-client:2.8.1` | Nuxt SSR frontend on port 3000 |
 | `db` | `postgres:16-alpine` | Primary store (forms, responses, users, workspaces) |
-| `redis` | `redis:7.4-alpine` | Cache, queue, sessions |
+| `redis` | `redis:8.10-alpine` | Cache, queue, sessions |
 
 Traefik routes to **`opnform-nginx` only** (port 80). It handles path-based routing internally.
 

@@ -1,6 +1,6 @@
 # Adminer
 
-> **Upgrading from 4.x is a major version change.** Verify before rolling it out.
+> **Upgrading from 5.x is a major version change.** Verify before rolling it out.
 
 Stateless web-based database administration tool. Supports MySQL, MariaDB, PostgreSQL, SQLite, MS SQL, Oracle, Elasticsearch, MongoDB, and more via drivers. Single PHP file, no dependencies.
 
@@ -10,7 +10,7 @@ Single service:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `adminer-app` | `adminer:5.5.1-standalone` | Adminer web UI on port 8080 |
+| `adminer-app` | `adminer:6.3.0-standalone` | Adminer web UI on port 8080 |
 
 **No database of its own.** Adminer is a client that connects to databases running in other containers or on other hosts. It stays on `proxy-public` only; it joins individual app networks on demand (see below).
 

@@ -10,11 +10,11 @@ Five services:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `nextcloud:34.0.4-fpm-alpine` | PHP-FPM — the Nextcloud application |
+| `app` | `nextcloud:35.0.2-fpm-alpine` | PHP-FPM — the Nextcloud application |
 | `nextcloud-nginx` | `nginx:1.31-alpine-slim` | Web server, speaks HTTP to Traefik and FastCGI to `app` |
-| `db` | `mariadb:11.8` | Primary data store |
-| `redis` | `redis:7.4-alpine` | File locking + session cache |
-| `cron` | `nextcloud:34.0.4-fpm-alpine` | Runs Nextcloud's scheduled jobs (`cron.php` every 5 minutes) |
+| `db` | `mariadb:12.3` | Primary data store |
+| `redis` | `redis:8.10-alpine` | File locking + session cache |
+| `cron` | `nextcloud:35.0.2-fpm-alpine` | Runs Nextcloud's scheduled jobs (`cron.php` every 5 minutes) |
 
 Traefik routes to `nextcloud-nginx`, which proxies PHP requests to `app` via FastCGI on port 9000. `cron` uses the same image as `app` but with `entrypoint: /cron.sh` and no HTTP listener.
 
@@ -124,9 +124,10 @@ Switch to `access-public` once the instance is configured and verified.
 > # "Invalid token"; the connector reads no secret file (the path is the office stack's)
 > docker compose exec -u www-data app php occ config:app:set onlyoffice jwt_secret --value="$(cat ../onlyoffice/.secrets/jwt_secret.txt)"
 > # (Euro-Office: ../euro-office/.secrets/jwt_secret.txt)
-> # Collabora (the richdocuments app, 11.1.2): the server Nextcloud and the browser call,
-> # and the callback it hands out, both through activate-config — a callback set with
-> # config:app:set is reset to "autodetected" when activate-config runs afterwards
+> # Collabora (the richdocuments app, 12.x on Nextcloud 35): the server Nextcloud and
+> # the browser call, and the callback it hands out, both through activate-config — a
+> # callback set with config:app:set is reset to "autodetected" when activate-config
+> # runs afterwards
 > docker compose exec -u www-data app php occ richdocuments:activate-config --wopi-url="https://office.example.com" --callback-url="http://<nginx>"
 > # COLLABORA_ALIASGROUP in the Collabora stack admits the callback host as an alias of
 > # Nextcloud's group: https://cloud\.example\.com:443,http://nextcloud-nginx:80
@@ -392,7 +393,7 @@ empty target, and let borgmatic restore into it:
 ```bash
 PW=$(openssl rand -hex 16)
 docker run -d --name nextcloud-restore-test \
-  -e MARIADB_ROOT_PASSWORD="$PW" --tmpfs /var/lib/mysql:rw mariadb:11.8
+  -e MARIADB_ROOT_PASSWORD="$PW" --tmpfs /var/lib/mysql:rw mariadb:12.3
 docker exec nextcloud-restore-test mariadb -uroot -p"$PW" -e 'CREATE DATABASE nextcloud;'
 
 sudo borgmatic restore --archive latest --database nextcloud \
@@ -523,7 +524,7 @@ that is the part that scales with use:
 | RAM per PHP process | 128 MB minimum, **512 MB recommended** | [System requirements](https://docs.nextcloud.com/server/latest/admin_manual/installation/system_requirements.html) |
 | RAM for the built-in updater | 256 MB | same |
 | PHP | 8.3 · 8.4 · **8.5 recommended** — the pinned image ships 8.5 | same |
-| MariaDB | 10.11 · 11.4 · **11.8 recommended** · 12.3 | same |
+| MariaDB | 10.11 · 11.4 · 11.8 · **12.3 recommended** — the pinned tag is 12.3 | same |
 | CPU, disk | not specified upstream | — |
 
 Translating that into a machine, for the reference workload — a small team, this

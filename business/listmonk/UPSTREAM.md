@@ -40,6 +40,23 @@
 The admin-VPN-only split is a second, path-scoped router on `access-vpn`; the
 README carries it under "Access split".
 
+## Version notes
+
+- Moved `postgres` from `16-alpine` to `18-alpine` on 2026-11-05, not run on a
+  host at this tag. PostgreSQL 18 support: the installation docs require
+  Postgres 12 or newer, with no upper bound
+  (https://listmonk.app/docs/installation/); `smtp-guard` uses the same image as
+  its client. The 18 image keeps its cluster under
+  `/var/lib/postgresql/18/docker`; `PGDATA: /var/lib/postgresql/data` in both
+  compose files keeps it on the existing mount. A new major does not read the
+  old cluster, so existing data moves by dump and restore: before the tag
+  changes, `docker compose exec db sh -c 'pg_dumpall -U "$POSTGRES_USER"' >
+  dump.sql`; `docker compose down`; move `./volumes/postgres` aside; set the new
+  tag; `docker compose up -d db`; `docker compose exec -T db sh -c 'psql -U
+  "$POSTGRES_USER" -d postgres' < dump.sql` (errors that the bootstrap role and
+  database already exist are expected); then `docker compose up -d`. A return to
+  the old major is only a restore of that dump.
+
 ## Upgrade checklist
 
 1. Check [Listmonk releases](https://github.com/knadh/listmonk/releases)

@@ -11,7 +11,7 @@
 - **Origin:** Latvia · Pēteris Caune · EU
 - **Domain:** Monitoring
 - **Role:** Dead-man's switch that alerts when a cron job or backup stops reporting
-- **Based on version:** `v4.4`
+- **Based on version:** `v5.0.3`
 - **Last verified:** 2026-09-08 (v4.4) — v0.8.0 host session: clean start on SQLite, first admin from the CLI, a check with a one-minute period and grace, the ntfy and email integrations attached; the expiry produced a down notification and the next ping an up notification, both delivered to an iPhone and to the mail sink.
 
 ## What we use
@@ -61,6 +61,32 @@ Healthchecks uses semver. Django migrations run on container start.
 ### Rollback
 
 If the upgrade breaks, restore the pre-upgrade SQLite backup and revert `APP_TAG`.
+
+## Version notes
+
+- Moved to `v5.0.3` on 2026-11-05 (released 2026-10-27), across v5.0, v5.0.1 and
+  v5.0.2, not run on a host at this tag. The v4 line ends at v4.4, so the
+  CRITICAL image findings at `v4.4` have no fix on v4. Breaking in v5.0: the
+  image serves HTTP with gunicorn instead of uWSGI and starts through
+  `/opt/healthchecks/run.sh`; a compose file that overrides `command` with
+  `uwsgi` must call `run.sh` instead — this stack sets no `command`, so the
+  image default applies. Workers come from `GUNICORN_WORKERS` (falling back to
+  `UWSGI_PROCESSES`, default 4; neither is set here). A crash of any child
+  process (`sendalerts`, `sendreports`, `smtpd`) now ends the whole container,
+  which `restart: unless-stopped` brings back. Port `8000`, the uid 999 user
+  `hc`, `/data` and the image's `fetchstatus.py` healthcheck are unchanged;
+  migrations still run on start, so back up `hc.sqlite` first. v5.0.1 adds
+  `GUNICORN_PORT` and `GUNICORN_DISABLE_LOGGING`; v5.0.2 moves the server
+  settings to `gunicorn.conf.py`, which trusts `X-Forwarded-Proto` from any
+  address (`forwarded_allow_ips = "*"`) — acceptable here because the container
+  publishes no port and is reached only through Traefik on the stack's edge
+  network, and Traefik keeps forwarded headers only from the senders in its
+  `forwardedHeaders.trustedIPs` and sets its own otherwise. v5.0.3 moves the
+  base to `python:3.14.10-slim-trixie`. Of the findings at `v4.4`, PyJWT
+  (CVE-2026-102268) is pinned to 2.15.1 at this tag; the Debian packages
+  (brotli, perl-base) and certifi come with the newer base and build and are
+  confirmed only by the next image scan. No configuration change in this stack.
+  Release notes: https://github.com/healthchecks/healthchecks/blob/master/CHANGELOG.md
 
 ## Related images
 

@@ -12,7 +12,7 @@
 - **Domain:** Files, wiki and collaboration
 - **Role:** File sync and share, professional edition
 - **Note:** Commercial license — self-hosting permitted under the paid plan. Chinese company: data stored on self-hosted instances is under your jurisdiction, but the vendor itself is subject to Chinese law.
-- **Based on version:** Seafile Pro 13.0
+- **Based on version:** Seafile Pro `13.0.29`
 - **Last verified:** 2026-11-02 (13.0.21) — step 8 lab host behind Traefik 3.7.17 on its edge network, the seven compose files of the example (SeaSearch 1.0.3, ClamAV `1.4` — 1.4.6 ran, the tag floats —, sdoc-server 2.0.9, notification-server 13.0.10, md-server and thumbnail-server 13.0.20), installed by the README: API login, libraries, a 10 MB and a 300 MB upload and download with identical checksums, the desktop client's sync protocol, the notification WebSocket delivering `repo-update`, SeaDoc's document fetch over the internal network, browser-session thumbnails, a share link, full-text search finding an indexed file, and the virus scan reporting the EICAR test file — through lab scripts, no official client run, OnlyOffice and SMTP not run; the restore rehearsal in backup/borgmatic/RESTORE.md (docs/labs/ingress/2026-11-01-results.md). Earlier: `Last checked` 2026-04-13
 
 ## What we use from upstream
@@ -49,7 +49,7 @@
 | `seahub_custom.py` Pattern | For OnlyOffice + Metadata + Thumbnail Config |
 | `clamd-remote.conf` mounted as `/etc/clamav/clamd.conf` | ClamAV runs in separate container, needs TCP connection |
 | Entrypoint wrapper reduced to seahub_custom.py only | Secrets via my_init didn't work, passwords now in .env |
-| `seafile-ai` pinned to `13.0.10` instead of upstream's `13.0-latest` | A moving tag changes the image under an unchanged file. `13.0.10` is the newest 13.0 release; `13.0-latest` pointed to the same digest on 2026-09-22 |
+| `seafile-ai` pinned to `13.0.10` instead of upstream's `13.0-latest` | A moving tag changes the image under an unchanged file. `13.0.10` is the newest 13.0 release — still so on 2026-11-05, there is no newer 13 image; `13.0-latest` pointed to the same digest on 2026-09-22 |
 | `SEAFILE_SERVER_HOSTNAME: 127.0.0.1:8001` in `docker-compose.local.yml` | First-boot setup (`setup-seafile-mysql.py`, 13.0.21) accepts only a host name that contains a dot. On `localhost:8001` it exits with status 255 before it writes a file or opens the database, Seahub never starts, and the stack answers `502`. Seahub builds `SERVICE_URL` and `FILE_SERVER_ROOT` from this value, so the local stack is opened at the same address |
 
 ## Known limitations
@@ -166,6 +166,31 @@ If you need Elasticsearch instead of SeaSearch:
 
 ## Version notes
 
+- Moved to `13.0.29` on 2026-11-05, not run on a host at this tag. `APP_TAG`
+  (`seafile-pro-mc`) from 13.0.21 to 13.0.29, `NOTIFICATION_TAG` from 13.0.10 to
+  13.0.29, `MD_TAG` from 13.0.20 to 13.0.28 (the newest 13.0 tag of
+  `seafile-md-server`), `THUMBNAIL_TAG` from 13.0.20 to 13.0.29, `SEADOC_TAG` from
+  2.0.9 to 2.0.11 (newest 2.0 tag, the line the Seafile 13 manual names with
+  `2.0-latest`). The previous images carried CRITICAL Trivy findings, mostly in OS
+  packages. `seafile-ai` stays at `13.0.10`: there is no newer 13 image, so its
+  findings remain until the stack moves to a stable 14. Breaking changes: none
+  listed. The changelog (https://plus.seafile.com/wiki/publish/seafile-wiki/5L80/)
+  names no configuration change, renamed or removed variable, manual step or
+  migration between 13.0.22 and 13.0.29 apart from a new, unnamed md-server
+  option for the profile feature (13.0.24), not set here. Behaviour changes to
+  know: deactivated users can no longer authenticate with a WebDAV password
+  (13.0.25), read-only repository API tokens can no longer batch-write (13.0.28).
+  Upgrade steps: the checklist below; schema changes run on the first start.
+  Advisories, from upstream's security page
+  (https://plus.seafile.com/wiki/publish/seafile-wiki/O50D/): 13.0.29 fixes
+  cross-site scripting, privilege bypass, unauthorised access and resource
+  exhaustion, an SQL injection in the API, an SSRF in the markdown-to-SDoc
+  conversion, and a flaw that allowed filesystem objects to be overwritten and
+  the folder-share boundary to be bypassed; 13.0.28, 13.0.27 (SAML
+  authentication, CAN-2026-2034155), 13.0.25, 13.0.23 and 13.0.22 carry earlier
+  fixes this move also takes in. No CVE IDs are given for 13.0.29. Seafile 14.0 is
+  not taken: the changelog lists its only release as "14.0.9 beta (2026-10-14)",
+  so the stack stays on the stable 13 line.
 - `SEASEARCH_TAG` moved from `1.0.3` to `1.0.8` on 2026-11-05, not run on a host
   at this tag (held at `1.0.3` on 2026-10-31 while the pairing was open). The
   Seafile 13 manual (https://manual.seafile.com/13.0/setup/use_seasearch/)
@@ -181,6 +206,41 @@ If you need Elasticsearch instead of SeaSearch:
   (`SS_MAX_OBJ_CACHE_SIZE`, `SS_STORAGE_TYPE`, `SS_LOG_TO_STDOUT`, `SS_LOG_DIR`,
   `SS_LOG_LEVEL`); `SS_FIRST_ADMIN_USER` and `SS_FIRST_ADMIN_PASSWORD` are read
   outside that file and were not checked.
+- `CLAMAV_TAG` (`clamav/clamav`) moved from `1.4` to `1.5` on 2026-11-05, not
+  run on a host at this tag. `1.5` points at 1.5.4 (2026-08-07), the newest
+  stable feature release; `1.4` is upstream's long-term line, which still gets
+  security fixes (1.4.6). The tag keeps the minor precision the stack used.
+  Seafile reaches clamd over TCP (`config/clamd-remote.conf`), and the 1.5 notes
+  change nothing on that path: no option is removed or renamed and no
+  `clamd.conf` or `freshclam.conf` change is required. Behaviour changes in
+  1.5.0: freshclam also downloads `.sign` files next to each database and diff,
+  the clean-file cache hashes with SHA2-256 instead of MD5, and FIPS mode is
+  detected and enforced when the host runs in it. Advisories: 1.5.4 fixes
+  CVE-2026-20337 and CVE-2026-20338, which affect only 1.5.0 to 1.5.3, plus
+  CVE-2026-20339, CVE-2026-20345 to CVE-2026-20348 and CVE-2025-8088, which
+  1.4.6 fixes too. https://github.com/Cisco-Talos/clamav/releases
+- Moved `redis` from `7.4-alpine` to `8.10-alpine` on 2026-11-05, a new major, not
+  run on a host at this tag; the tag follows the 8.10 patch releases (8.10.3,
+  2026-10-26). Redis 8 is offered under RSALv2, SSPLv1 or AGPLv3 at the user's
+  choice (7.4: RSALv2 or SSPLv1). The image bundles the Query Engine, JSON, time
+  series and probabilistic data types as modules, which the image's entrypoint loads
+  at start on amd64 and arm64; this stack uses none of them. 8.x reads the 7.4 data
+  files in place, but Redis does not load files written by a newer version, so a
+  rollback needs the backup of the Redis data. The one potentially breaking change
+  upstream lists: `GETRANGE` with an out-of-range negative end returns an empty
+  string. Security fixes in the 8.10 line: CVE-2026-62356 (8.10.1, heap write when
+  loading a Count-min sketch from an RDB file), queued `MULTI` commands keeping
+  access to keys whose ACL permission was revoked (8.10.2), and a cluster-bus
+  overflow that needs cluster mode (8.10.3). The 7.4 line still receives fixes
+  (7.4.12, 2026-10-26); the move is to the newest stable line, not away from an
+  unmaintained one. Seafile 13's compose uses the untagged `redis` image, which
+  already resolves to 8.x. This service's command starts with `sh`, so the image's
+  entrypoint neither drops privileges nor loads the modules and Redis runs as root,
+  as it did on 7.4; no compose change. Sources:
+  https://github.com/redis/redis/releases/tag/8.0.0,
+  https://github.com/redis/redis/releases/tag/8.10.3,
+  https://github.com/redis/docker-library-redis/blob/release/8.10/alpine/docker-entrypoint.sh,
+  https://manual.seafile.com/latest/setup/setup_ce_by_docker/
 
 ## Upgrade checklist
 

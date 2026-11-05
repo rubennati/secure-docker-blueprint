@@ -20,6 +20,8 @@ services:
     volumes:
       - ./volumes/local/data:/opt/data
       - ./volumes/local/download:/opt/download
+      # The bundled PostgreSQL cluster — a named volume, see docker-compose.yml.
+      - pgdata-local:/var/lib/postgresql
 
     networks:
       - jumpserver-local
@@ -34,6 +36,9 @@ services:
       timeout: 10s
       retries: 5
       start_period: 180s
+
+volumes:
+  pgdata-local:
 
 networks:
   jumpserver-local:

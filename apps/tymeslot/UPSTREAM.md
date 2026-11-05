@@ -22,7 +22,7 @@ booking from a guest's side has not been exercised.
 
 - The official `-slim` image: application only, no bundled PostgreSQL. The
   plain tag runs a PostgreSQL server inside the app container.
-- `postgres:17.11-alpine` as the database, the shape of upstream's
+- `postgres:18.6-alpine` as the database, the shape of upstream's
   `docker-compose.with-postgres.yml`
 - The image's own `start-docker.sh` as the command: it validates
   `SECRET_KEY_BASE`, waits for the database, runs the Ecto migrations and
@@ -82,6 +82,19 @@ Tailscale client → Traefik (TLS, 443) → tymeslot-app :4000 (Bandit, LiveView
   (1.22.0), rate limits that simultaneous requests could slip past and IPv6 clients
   limited per network (1.27.0), Telegram webhooks refused with an empty secret
   (1.18.0), and data encryption key rotation without losing secrets.
+- Moved `postgres` from `17.11-alpine` to `18.6-alpine` on 2026-11-05, not run
+  on a host at this tag. PostgreSQL 18 support: the README requires PostgreSQL
+  14+, with no upper bound (https://github.com/Tymeslot/tymeslot); upstream's
+  own compose uses 17. The 18 image keeps its cluster under
+  `/var/lib/postgresql/18/docker`; `PGDATA: /var/lib/postgresql/data` in both
+  compose files keeps it on the existing mount. A new major does not read the
+  old cluster, so existing data moves by dump and restore: before the tag
+  changes, `docker compose exec db sh -c 'pg_dumpall -U "$POSTGRES_USER"' >
+  dump.sql`; `docker compose down`; move `./volumes/postgres` aside; set the new
+  tag; `docker compose up -d db`; `docker compose exec -T db sh -c 'psql -U
+  "$POSTGRES_USER" -d postgres' < dump.sql` (errors that the bootstrap role and
+  database already exist are expected); then `docker compose up -d`. A return to
+  the old major is only a restore of that dump.
 
 ## Upgrade checklist
 

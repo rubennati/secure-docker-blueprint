@@ -1,8 +1,9 @@
 # Wiki.js
 
-A wiki with a Markdown and a visual editor, per-page permissions, and about
-twenty authentication modules — all of them in the free code. Pages live in
-PostgreSQL; the data volume holds caches and uploads.
+A wiki with Markdown, AsciiDoc and visual editors, per-page permissions, live
+collaboration and its own authentication modules — all of them in the free
+code. Pages and uploaded files live in PostgreSQL; the data volume holds
+caches. Wiki.js 3.
 Upstream: [requarks/wiki](https://github.com/requarks/wiki).
 
 It sits beside [BookStack](../bookstack/) as the second wiki here. BookStack
@@ -26,29 +27,35 @@ Runs on `http://localhost:8080` without Traefik, DNS or a certificate.
 cp .env.local.example .env.local
 mkdir -p .secrets volumes/data volumes/postgres
 openssl rand -hex 32 | tr -d '\n' > .secrets/db_pwd.txt
+openssl rand -base64 24 | tr -d '\n' > .secrets/admin_pwd.txt
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
-# http://localhost:8080 — the setup wizard creates the administrator
+# http://localhost:8080 — sign in as ADMIN_EMAIL with .secrets/admin_pwd.txt
 docker compose -f docker-compose.local.yml --env-file .env.local down
 ```
 
 ## Setup
 
 ```bash
-cp .env.example .env                      # host name, database name and user
+cp .env.example .env                      # host name, admin e-mail, database name and user
 mkdir -p .secrets volumes/data volumes/postgres
 openssl rand -hex 32 | tr -d '\n' > .secrets/db_pwd.txt
+openssl rand -base64 24 | tr -d '\n' > .secrets/admin_pwd.txt
 sudo chown -R 1000:1000 volumes/data      # the image runs as uid 1000
 docker compose up -d
-docker compose logs wikijs-app --follow   # watch for: Browse to … to complete setup!
+docker compose logs wikijs-app --follow   # migrations, then the HTTP server starts
 ```
 
-**Then complete the setup immediately.** The first request opens a wizard, and
-whoever completes it becomes the administrator — there is no setup password in
-front of it. The shipped router is VPN-only for exactly this window.
+The first start creates the root administrator from `ADMIN_EMAIL` and
+`.secrets/admin_pwd.txt` — there is no setup wizard in 3.x. Sign in, then:
 
-The wizard asks for the administrator's e-mail and password, the site URL, and
-carries a **telemetry checkbox that is ticked by default**. Untick it there, or
-turn it off afterwards under *Administration → Utilities → Telemetry*.
+- *Administration → Security*: turn on **Trust X-Forwarded-\* Proxy Headers**,
+  so that audit entries and rate limits see the client rather than Traefik.
+- In the site's settings in the administration area, set the hostname to
+  `APP_TRAEFIK_HOST`; mail is not sent without a fixed hostname.
+
+Coming from 2.x: there is no in-place upgrade. Export on 2.x, import into a
+fresh 3.x database — the steps are in [UPSTREAM.md](UPSTREAM.md), "Version
+notes".
 
 After setup, decide what the wiki should answer: `APP_TRAEFIK_ACCESS` opens it
 at the router, and *Administration → Groups* decides what a guest may read.
@@ -63,27 +70,29 @@ authentication is available for local accounts.
 
 ## Known limits
 
-- **2.5 is the maintenance line.** It receives security fixes; 3.0 is in beta
-  and its release notes say it is not for production. Upstream's documentation
-  lists the 2.x upgrade path as coming soon. This stack starts on PostgreSQL —
-  the only engine 3.0 supports — so the migration is one less thing to change.
-- **Update and locale checks** go to `graph.requarks.io` every 24 hours. There
-  is no environment variable for it; the telemetry switch is in the
-  administration area.
+- **3.x is new.** `3.0.1` (2026-11-01) is the first stable release; this
+  stack moved to `3.1.0` without a host run.
+- **Outbound calls**: the version check goes to `api.github.com`, icons are
+  fetched from `api.iconify.design` on first use. Upstream lists both as
+  required outbound endpoints.
+- **Extensions cannot be installed from the administration area**: that
+  writes under `/wiki/backend`, and the root filesystem is read-only. The
+  Puppeteer extension for server-side rendering is already in the image;
+  whether its headless Chrome runs under `read_only` has not been checked.
 - **The rate limit is not measured.** `.env.example` ships `limit-standard` and
   the editor is a Vue application; no first-load count has been taken behind
   Traefik.
 - **Nothing here has run behind Traefik yet.** The stack is `scaffolded`: the
-  hardening, the setup and a login were verified on the image, the route was
-  not.
+  hardening, the setup and a login were verified on the 2.5 image, the route
+  was not, and 3.x has not run at all.
 
 ## Backup
 
 | | |
 |---|---|
-| **Database** | PostgreSQL · container `wikijs-db` · database `wikijs` · user `wikijs` — pages, page history, users, groups, settings |
-| **Password** | `.secrets/db_pwd.txt` |
-| **State** | `./volumes/data` — uploads staged for the database and, if the Git storage module is enabled, the content mirror |
+| **Database** | PostgreSQL · container `wikijs-db` · database `wikijs` (schema `wiki`) · user `wikijs` — pages, page history, uploaded files, users, groups, settings |
+| **Password** | `.secrets/db_pwd.txt`; `.secrets/admin_pwd.txt` is only read at the first start |
+| **State** | `./volumes/data` — if the Git storage module is enabled, the content mirror |
 | **Reproducible** | The caches under `./volumes/data/cache` |
 | **Quiescing** | Not needed: dump the database rather than copying its files |
 

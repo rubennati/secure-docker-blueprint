@@ -23,7 +23,7 @@ in a browser, a realm, a client, an application signing in.
 
 - The official image, pinned to the patch release, started with `kc.sh start`
   — production mode, not `start-dev`
-- `postgres:17.11-alpine` as the database, `KC_DB=postgres`
+- `postgres:18.6-alpine` as the database, `KC_DB=postgres`
 - The image's own `kc.sh` behind the secret-injection entrypoint
 
 ## Architecture
@@ -72,6 +72,19 @@ Client → Traefik (TLS, 443) → keycloak-app :8080  (admin console, realms, OI
   CVE-2026-96445, CVE-2026-97177, CVE-2026-95503, CVE-2026-97311,
   CVE-2026-97846, CVE-2026-101333, CVE-2026-103884, CVE-2026-107121 and
   dependency CVEs.
+- Moved `postgres` from `17.11-alpine` to `18.6-alpine` on 2026-11-05, not run
+  on a host at this tag. PostgreSQL 18 support: Keycloak 26 lists 18.x as
+  supported and tested (https://www.keycloak.org/server/db). The 18 image keeps
+  its cluster under `/var/lib/postgresql/18/docker`; `PGDATA:
+  /var/lib/postgresql/data` in both compose files keeps it on the existing
+  mount. A new major does not read the old cluster, so existing data moves by
+  dump and restore: before the tag changes, `docker compose exec db sh -c
+  'pg_dumpall -U "$POSTGRES_USER"' > dump.sql`; `docker compose down`; move
+  `./volumes/postgres` aside; set the new tag; `docker compose up -d db`;
+  `docker compose exec -T db sh -c 'psql -U "$POSTGRES_USER" -d postgres' <
+  dump.sql` (errors that the bootstrap role and database already exist are
+  expected); then `docker compose up -d`. A return to the old major is only a
+  restore of that dump.
 
 ## Upgrade checklist
 

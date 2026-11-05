@@ -22,7 +22,7 @@
 |---|---|---|
 | Invoice Ninja | `5.13.53` | Latest release 2026-11-02 |
 | MySQL | `8.4` | LTS — upstream target DB |
-| Redis | `8.6-alpine` | |
+| Redis | `8.10-alpine` | |
 | Nginx | `1.31-alpine` | |
 
 ## What We Use From Upstream
@@ -177,6 +177,22 @@ docker compose up -d
   CVE-2026-42530, CVE-2026-42055, CVE-2026-48142, CVE-2026-42533, CVE-2026-60005,
   CVE-2026-56434, CVE-2026-90439, CVE-2026-15176, CVE-2026-93479, CVE-2026-95101,
   CVE-2026-97629, CVE-2026-97205.
+- Moved `redis` from `8.6-alpine` to `8.10-alpine` on 2026-11-05, not run on a host
+  at this tag; across 8.8 and 8.10, minor releases of the same major with no
+  breaking change listed (they add commands, compact hashes and performance work).
+  Redis does not load data files written by a newer version, so a rollback needs the
+  backup of the Redis data. Security fixes in the 8.10 line: CVE-2026-62356 (8.10.1,
+  heap write when loading a Count-min sketch from an RDB file), queued `MULTI`
+  commands keeping access to keys whose ACL permission was revoked (8.10.2), and a
+  cluster-bus overflow that needs cluster mode (8.10.3). Invoice Ninja's compose
+  uses the untagged `redis:alpine`. The image's entrypoint now drops to the `redis`
+  user only when SETUID and SETGID are in the capability bounding set, empties that
+  set while dropping, and fixes ownership only of `*.rdb` files and `appendonlydir`
+  in `/data`. This service starts as root with Docker's default capabilities, so it
+  drops to UID 999 as before; no compose change. Sources:
+  https://github.com/redis/redis/releases/tag/8.10.0,
+  https://github.com/redis/redis/releases/tag/8.10.3,
+  https://github.com/invoiceninja/dockerfiles/blob/debian/debian/docker-compose.yml
 
 ## Upgrade Checklist
 

@@ -132,7 +132,7 @@ Status is the state after the PR named.
 | S1 | Most stacks are `scaffolded`, and a state resting on no evidence breaks the promise that a fork deploys without the author's mental model. The live figures — how many are scaffolded, how many carry a legacy stamp, how many have no verification date and how many are pin-drifted — are generated into [`LIFECYCLE.md`](../LIFECYCLE.md) and are not restated here, because they move with every stack that lands | `LIFECYCLE.md` | **NEEDS HOST EVIDENCE** — the largest remaining item | Open — needs a host session, not repository work. D1 decides how a reason is recorded, not whether one is needed |
 | S2 | Nearly every stack README has no restore section; `docs/standards/restore.md` carries the model. The count is the generated Restore column in `LIFECYCLE.md` rather than a figure kept here | generated Restore column | DECISION REQUIRED | Open — D2 |
 | S3 | `cap_drop`, `read_only` and non-root `user` are conditional controls and not CI-enforced — the current coverage of each is in [`security-coverage.md`](security-coverage.md). A later option, not a gap: per-service exception records. The non-failing coverage report R15 also called for now exists | `security-verification.md` §4–5 | POST-V1 / ON HOLD | Open — narrowed to the exception records |
-| S4 | ShellHub pins a release candidate | `core/shellhub/UPSTREAM.md` | CLEANUP — documented limitation, revisit at the first stable tag | Open |
+| S4 | ShellHub pins a release candidate | `core/shellhub/UPSTREAM.md` | CLEANUP — documented limitation, revisit at the first stable tag | Resolved — moved to the stable `v0.29.3` on 2026-11-05 |
 | S5 | Structure checks otherwise clean: no `:latest`, no plaintext secrets, no datastore on `proxy-public`, 13 published-port services all by design, 7 socket mounts all documented exceptions | `check-structure.py`, `check-baseline.py` | — | No finding |
 
 ### Operator site
@@ -387,8 +387,6 @@ deliberately deferred.
 **Deferred by design, scoped but not built**
 
 - **R13** — dated working records under `docs/`. Kept as evidence.
-- **S4** — ShellHub pins a release candidate, which upstream publishes as its only
-  tag. Revisit at the first stable release.
 - **A one-command local workflow** — a design question, not started. #126 normalised
   the local surface enough that it can now be designed against a real contract: one
   invocation shape, loopback-only ports, and a known set of exceptions.

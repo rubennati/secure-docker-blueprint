@@ -13,7 +13,7 @@
 - **Origin:** US · Grafana Labs (Raintank, Inc.) · non-EU (Prometheus: CNCF, no single jurisdiction)
 - **Domain:** Monitoring
 - **Role:** Metrics collection and dashboards — a time series database, its scraper, and the interface that queries it
-- **Based on version:** `13.3.0` (Grafana), `v3.14.0` (Prometheus)
+- **Based on version:** `13.3.0` (Grafana), `v3.15.1` (Prometheus)
 
 ## Project maturity
 
@@ -24,7 +24,7 @@ CNCF project.
 ## What we use
 
 - `grafana/grafana:13.3.0` — the only routed service.
-- `prom/prometheus:v3.14.0` — internal network only, no router, no host port.
+- `prom/prometheus:v3.15.1` — internal network only, no router, no host port.
 - Two opt-in overlays: `prom/node-exporter:v1.12.1` for host metrics and
   `ghcr.io/google/cadvisor:v0.60.6` for per-container metrics.
 
@@ -107,6 +107,20 @@ Prometheus reaches exactly the targets in `config/prometheus.yml`.
   CVE-2026-81841, CVE-2026-88858, CVE-2026-88967, CVE-2026-93294,
   CVE-2026-95502, CVE-2026-100105 (13.3.0), and CVE-2026-103506 in the 13.2.5
   patch line.
+- Moved `prom/prometheus` to `v3.15.1` on 2026-11-05 (released 2026-10-21), not
+  run on a host at this tag; the `v3.16.0-rc` tags are pre-releases. 3.15.1 is a
+  security release: the container image's CA certificates distrust "emSign ECC
+  Root CA - G3" and "Comodo AAA Services root" after the compromise of eMudhra
+  intermediate CA keys, the build moves to Go 1.27.3 (`net/http`,
+  `net/textproto`, `crypto/tls`, `html/template`), and `golang.org/x/net` to
+  v0.60.0 for HTTP/2 vulnerabilities. 3.15.0 deprecates `--log.level` in favour
+  of `runtime.log_level` in the configuration file (this stack sets neither),
+  stabilises the XOR2 chunk encoding (opt-in, off by default) and fixes subquery
+  evaluation past the last step of unaligned range queries. The flags this stack
+  passes, the distroless image and `promtool check healthy` are unchanged, so the
+  compose files keep their configuration. Sources:
+  https://github.com/prometheus/prometheus/releases/tag/v3.15.1,
+  https://github.com/prometheus/prometheus/releases/tag/v3.15.0
 
 ## Upgrade checklist
 
@@ -126,5 +140,5 @@ Prometheus reaches exactly the targets in `config/prometheus.yml`.
 docker run --rm --entrypoint sh grafana/grafana:13.3.0 -c 'cat /usr/share/grafana/conf/defaults.ini' | head -80
 
 # Prometheus' flags, including the negative forms
-docker run --rm prom/prometheus:v3.14.0 --help
+docker run --rm prom/prometheus:v3.15.1 --help
 ```
