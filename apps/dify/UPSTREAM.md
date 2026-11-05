@@ -12,16 +12,16 @@
 - **Origin:** LangGenius · no country stated in its published terms · no country
 - **Domain:** AI and local AI
 - **Role:** LLM application platform: chat and workflow apps, knowledge bases, plugin-based model providers
-- **Based on version:** `1.17.1`
+- **Based on version:** `1.19.0`
 - **Last verified:** 2026-09-22 (1.17.1) — behind Traefik with TLS: the setup through `/install`, a marketplace plugin with a model provider, a workflow with code, HTTP and LLM nodes, a restart, and a restore from its three dumps
 
 ## What we use
 
-Upstream's Docker Compose deployment (`docker/docker-compose.yaml`, tag `1.17.1`),
+Upstream's Docker Compose deployment (`docker/docker-compose.yaml`, tag `1.19.0`),
 PostgreSQL profile, pgvector as the vector store, minus what is listed below:
 
-- `langgenius/dify-api:1.17.1` (three services: `MODE=api`, `worker`, `beat`),
-  `langgenius/dify-web:1.17.1`, `langgenius/dify-plugin-daemon:0.6.10-local`,
+- `langgenius/dify-api:1.19.0` (three services: `MODE=api`, `worker`, `beat`),
+  `langgenius/dify-web:1.19.0`, `langgenius/dify-plugin-daemon:0.6.14-local`,
   `langgenius/dify-sandbox:0.2.15`
 - `ubuntu/squid:6.6-24.04_edge` — upstream uses `:latest`; a versioned tag of the
   same image
@@ -52,7 +52,7 @@ PostgreSQL profile, pgvector as the vector store, minus what is listed below:
 | `INIT_PASSWORD` as a Docker Secret | Verified: `/console/api/setup` returns `401` until `/console/api/init` has accepted the password |
 | `MIGRATION_ENABLED=false` on worker and beat | The api container migrates; upstream runs it from every container that shares the environment file |
 | `api`, `worker`, `worker-beat`, `web`: `read_only`, `cap_drop: ALL` | Verified: start, migrate, index and serve with only `/tmp` and `storage` writable |
-| `plugin-daemon`: `user: 1001:1001`, `read_only`, `cap_drop: ALL`, `HOME=/tmp` | The image runs as root; three marketplace plugins installed and loaded, model calls worked, with this in place. The Compose volume must belong to uid 1001 |
+| `plugin-daemon`: `user: 1001:1001`, `read_only`, `cap_drop: ALL`, `HOME=/tmp` | The image ran as root up to 0.6.11; since 0.6.12 it creates a `dify` user and sets `USER dify`, and the explicit uid keeps the volume owner fixed. On 0.6.10, three marketplace plugins installed and loaded, model calls worked, with this in place. The Compose volume must belong to uid 1001 |
 | `PLUGIN_REMOTE_INSTALLING_HOST=127.0.0.1` | The daemon refuses to start with an empty host; upstream's default `0.0.0.0` with a published port is a remote-install listener |
 | `sandbox`: `cap_add` CHOWN, SETUID, SETGID, SYS_CHROOT, DAC_OVERRIDE | With `cap_drop: ALL` alone a code node fails with `chown script to uid 10000: operation not permitted`. Removing each of the five in turn made the run fail; FOWNER, tried in the same probe, is not needed. Root, writable root: the sandbox chroots and drops to its own users per run |
 | `ssrf-proxy`: root, five capabilities, writable root | Squid's entrypoint writes `/etc/squid` and the cache at start and Squid drops privileges itself. Not narrowed further |
@@ -164,6 +164,35 @@ the model backend:
   extraction directory, and stops plugin subprocesses inheriting the daemon's
   environment; 0.6.12 redacts errors and aborts failed endpoint streams (marked
   breaking) and moves to Go 1.26.10 for CVE-2026-111943; 0.6.13 raises go-jose.
+- Moved to `1.19.0` (api, worker, web) and `PLUGIN_TAG` to `0.6.14-local` on
+  2026-11-05, not run on a host at these tags. Upstream's 1.19.0 compose ships the
+  daemon at `0.6.14-local` (1.18.0 still shipped `0.6.10-local`), so both move
+  together; `SANDBOX_TAG` stays at `0.2.15`, unchanged upstream. Back up the three
+  databases, `storage`, `plugin_daemon` and the secrets before the first start, and
+  stop the whole stack before starting the new images instead of replacing services
+  one by one. 1.18.0 and 1.19.0 add database migrations, about six revisions in 1.19.0
+  ending at `53c10126d551`; the api applies them at start (`MIGRATION_ENABLED=true`).
+  One keeps a single tracing configuration per app and provider and deletes the
+  superseded rows, which a downgrade does not restore; another builds indexes
+  concurrently and scans the affected tables. New tracing tasks go to the queue
+  `ops_trace_v2`; this stack sets no `CELERY_QUEUES`, and the image's default queue
+  list already carries it. Removed settings: `OPS_TRACE_UNIFIED_ENABLED`,
+  `OPS_TRACE_RETRYABLE_DISPATCH_*`, `OPS_TRACE_PARENT_CONTEXT_TTL_SECONDS`,
+  `GRAPH_ENGINE_MIN_WORKERS`, `GRAPH_ENGINE_SCALE_UP_THRESHOLD`,
+  `GRAPH_ENGINE_SCALE_DOWN_IDLE_TIME`; none is set here. `PASSWORD_PEPPER` is new and
+  stays unset: setting it on an existing install invalidates every password hash. The
+  Console feedback export endpoint is removed. The Agent Backend, Local sandbox and
+  KnowledgeFS changes concern services this stack does not run. Security fixes in
+  1.18.0 and 1.19.0: exact CSRF whitelist matching, dataset operation and token scope,
+  owner/admin role protection, provider model toggles restricted to owners and admins,
+  tracing credentials no longer returned, SSRF client cookies scoped to one request,
+  and dependency updates (Authlib 1.9.1, pypdf 6.21.4, Pillow 13.0.0, Werkzeug, Next.js);
+  no GHSA IDs are listed. The daemon from 0.6.11 to 0.6.14 brings the fixes listed in
+  the entry above, x/net and otel updates for CVEs in 0.6.12, and since 0.6.12 runs as
+  its own `dify` user, presumably uid 1001 like `user:` here (not checked on a host).
+  0.6.11 also stops plugin subprocesses inheriting the daemon's environment and keeps
+  the uv cache inside the container: whether plugins still install with `HOME=/tmp`
+  and the read-only root is the first thing to check on a host.
 
 ## Upgrade checklist
 

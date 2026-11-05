@@ -13,7 +13,7 @@
 - **Origin:** United States · HeyForm · non-EU
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Form builder and response collector, with conversational forms, logic, file uploads and submission export
-- **Based on version:** `v3.0.5`
+- **Based on version:** `v3.0.6`
 
 ## Project maturity
 
@@ -135,6 +135,16 @@ can reach the host name can become such a member.
   enforce acceptance, and lets a self-hoster stop storing submitter IP addresses.
   No breaking change, variable, MongoDB or cache requirement change is labelled,
   and no advisory.
+- Moved to `v3.0.6` on 2026-11-05, not run on a host at this tag. Fixes to
+  answer logic, file uploads and the progress bar, new notification options
+  (reply-to, respondent subject, owner skip), and Node 22.23.4 as the image
+  base. The variable `HEYFORM_ALLOW_PRIVATE_OUTBOUND` is renamed
+  `ALLOW_PRIVATE_OUTBOUND` and now applies in any `NODE_ENV`; this stack sets
+  neither. No migration is labelled. GHSA-xqwg-g3q8-3cf2 (account takeover via
+  unverified email-based social account linking) and GHSA-gc7q-cgmp-6p2x
+  (Apple sign-in ID token signature not verified), both high, were published
+  for `<= 3.0.5` with no patched version recorded; the release notes do not
+  name them, so whether v3.0.6 closes them is not confirmed.
 
 ## Upgrade checklist
 

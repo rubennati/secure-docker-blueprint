@@ -10,7 +10,7 @@
 - **Origin:** Hong Kong · Louis Lam · non-EU
 - **Domain:** Monitoring
 - **Role:** Uptime monitoring with a status page and many notification channels
-- **Based on version:** `2.5.8`
+- **Based on version:** `2.5.9`
 - **Last verified:** 2026-09-13 (2.5.4) — patch recreated on a live host, healthy, route unchanged. 2026-09-08 (2.5.3) — v0.8.0 host session: clean start on SQLite, owner account from the setup page, ntfy notification with an access token, a TCP monitor on a container on `proxy-public`; stopping that container produced the down alert on an iPhone within twenty seconds, starting it the up alert.
 
 ## What we use
@@ -42,6 +42,11 @@
   GHSA-98hr-q8q8-5j23 (rootless privilege escalation) and GHSA-wf2j-5mc7-5c4w
   (ping badge denial of service) — name no fixed version on the list page and
   were not read further.
+- Moved to `2.5.9` on 2026-11-05, not run on a host at this tag. A patch release
+  with no breaking change and no migration: bug fixes (runtime timeout fallback,
+  push monitor retries, status page refresh timer, recurring maintenance timezone)
+  and dependency updates. It fixes GHSA-86ch-2247-gr56 (RSS cache poisoning) and
+  replaces the outdated `apicache` with `http-cache-semantics` for it.
 
 ## Upgrade checklist
 

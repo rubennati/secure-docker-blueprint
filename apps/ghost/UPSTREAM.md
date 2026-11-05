@@ -11,7 +11,7 @@
 - **Origin:** Ireland · Ghost Foundation · EU
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Publishing platform for blogs and newsletters, with optional Fediverse publishing
-- **Based on version:** `6.63.0-alpine`
+- **Based on version:** `6.75.0-alpine`
 - **Last verified:** 2026-11-03 (6.63.0-alpine) — step 8 lab host behind Traefik 3.7.17 on its edge network: the owner setup, the staff login with the mailed device code, a published post, a member's magic-link mail, and the README's corrected borgmatic entry restored into a throwaway instance (docs/labs/ingress/2026-11-01-results.md). Earlier: 2026-07-26 (v6.54.0-alpine)
 
 ### ActivityPub service
@@ -62,6 +62,21 @@ The official ghost-docker setup uses Caddy as an internal webserver. This bluepr
 | `ALLOW_PRIVATE_ADDRESS=true` on ActivityPub | Required for Docker internal network communication between services. |
 | `USE_MQ=false` on ActivityPub | Disables Google PubSub dependency — not available in self-hosted deployments. |
 | `app-internal: internal: true` | Blueprint network isolation — databases and backend services never have direct internet access. The official uses a single `ghost_network` without the `internal` flag. |
+
+## Version notes
+
+- Moved to `6.75.0-alpine` on 2026-11-05, not run on a host at this tag. No
+  breaking change, variable or manual step is listed from 6.64.0 to 6.75.0;
+  migrations run on start. 6.66.0 was not published to npm (its content ships
+  in 6.67.0); 6.70.0 removes Ember, so Admin is React only; 6.71.0 fixes
+  relative SQLite paths, which this MySQL stack does not use. ActivityPub tags
+  are separate and unchanged. Advisories fixed: CVE-2026-105650,
+  CVE-2026-105651, CVE-2026-105652, CVE-2026-105675, CVE-2026-105676,
+  CVE-2026-105677 (remote code execution via theme translation files),
+  CVE-2026-105678, CVE-2026-105679 (6.64.0); CVE-2026-105647, CVE-2026-105648,
+  CVE-2026-105649 (6.65.0); CVE-2026-84383, CVE-2026-105642 (remote code
+  execution via bookmark card images), CVE-2026-105643, CVE-2026-105644,
+  CVE-2026-105645, CVE-2026-105646 (6.67.0).
 
 ## Upgrade checklist
 

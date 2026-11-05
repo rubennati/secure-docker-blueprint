@@ -13,15 +13,15 @@
 - **Use restrictions:** none — the community images this stack pins are released under AGPLv3, and the commercially licensed code in `enterprise/` ships only in separate enterprise binaries — https://github.com/intuitem/ciso-assistant-community/blob/main/LICENSE.md · checked 2026-09-21
 - **Edition gating:** SSO/SAML, the API, multiple frameworks and self-hosting are in the community edition; the Pro edition adds, among others, SCIM group provisioning, fine-grained per-object permissions, a multi-level domain hierarchy and custom fields — https://intuitem.com/compare · checked 2026-09-21
 - **Commercial model:** paid self-hosted edition — https://intuitem.com/compare · checked 2026-09-21
-- **Based on version:** `v4.0.9`
+- **Based on version:** `v4.2.1`
 - **Last verified:** 2026-09-22 (v4.0.5) — behind Traefik with TLS: the interface and the `/api` split, a framework imported into a compliance assessment, Huey's scheduled tasks, a restart, and the README's restore
 
 The origin comes from intuitem's legal notice (RCS Versailles, France).
 
 ## What we use
 
-- `ghcr.io/intuitem/ciso-assistant-community/backend:v4.0.9` for backend and Huey,
-  and `…/frontend:v4.0.9`. Upstream's compose pins `:latest` with `pull_policy:
+- `ghcr.io/intuitem/ciso-assistant-community/backend:v4.2.1` for backend and Huey,
+  and `…/frontend:v4.2.1`. Upstream's compose pins `:latest` with `pull_policy:
   always`; not used here. Per upstream's licence file, the community binaries are
   AGPLv3; the commercially licensed code ships only in separate enterprise images.
 - `postgres:16.14` — upstream's template runs `postgres:16`.
@@ -107,6 +107,18 @@ Against the production `docker-compose.yml` (Docker Secrets, wrapper,
 practice; the browser interface; Huey actually running a task (it started and
 loaded its configuration against PostgreSQL); email; SSO; importing a framework
 into an assessment; backup and restore.
+
+## Version notes
+
+- Moved to `v4.2.1` on 2026-11-05, backend and frontend together, not run on a
+  host at this tag. `v4.2.0` moves the frontend to SvelteKit 3 and adapter-node 6,
+  which drops the `ORIGIN` variable; this stack uses `PROTOCOL_HEADER` and
+  `HOST_HEADER`, which remain, so login and CSRF behind Traefik are what a host
+  run has to check. `v4.1.0` changes the current-user API (marked breaking
+  upstream). Since `v4.1.3` `startup.sh` stops the backend when a migration fails
+  instead of starting anyway. The backend image moves to a Docker Hardened Images
+  base. `v4.2.0` hardens the rendering of uploaded docx templates (#5185); no GHSA
+  is published. https://github.com/intuitem/ciso-assistant-community/releases
 
 ## Upgrade checklist
 

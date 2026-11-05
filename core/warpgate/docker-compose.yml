@@ -98,8 +98,9 @@ services:
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.scheme=https"
 
     # --- Health & Observability ---
-    # The image ships its own healthcheck (verified: `docker inspect` shows
-    # Config.Healthcheck = ["CMD-SHELL", "warpgate healthcheck"]). Restated
+    # The image ships its own healthcheck — exec form since the distroless
+    # image of 0.30.0 (`HEALTHCHECK CMD ["/usr/local/bin/warpgate",
+    # "healthcheck"]` in upstream's Dockerfile; there is no shell). Restated
     # explicitly for visibility, matching this repository's convention of
     # always showing the Health block rather than relying on an invisible
     # image default.

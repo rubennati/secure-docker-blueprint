@@ -12,12 +12,12 @@
 - **Origin:** New Zealand · InnoCraft Ltd · non-EU
 - **Domain:** Business operations
 - **Role:** Web analytics under your control
-- **Based on version:** `5.13.0-apache`
+- **Based on version:** `5.14.2-apache`
 - **Last checked:** 2026-04-17
 
 ## What we use
 
-- Official `matomo:5.13.0-apache` (Apache + PHP; the floating `5-apache` tag was replaced by the exact pin in 2026-07)
+- Official `matomo:5.14.2-apache` (Apache + PHP; the floating `5-apache` tag was replaced by the exact pin in 2026-07)
 - Official `mariadb:11.4`
 - Docker Secrets for DB password + DB root password
 - Bind-mount `./volumes/config`, `./volumes/logs`, `./volumes/matomo`, `./volumes/mysql`
@@ -39,6 +39,19 @@
 | **`TZ` env var added** on both services | Blueprint convention; inbox relied on UTC |
 | **Access `access-public`; `limit-standard`; `headers-application-owned` with `header-nosniff` and `header-permissions` before it** | Tracking pixel must be reachable by any browser that visits your sites, so public access is required; Matomo sends its own frame and referrer headers, which the proxy leaves alone, and the two blocks add what it lacks |
 
+## Version notes
+
+- Moved to `5.14.2-apache` on 2026-11-05, not run on a host at this tag. 5.14.0,
+  5.14.1 and 5.14.2 each state that they contain no major database upgrade; the
+  image repository changed only `MATOMO_VERSION`. 5.14.0 adds aggregated real-time
+  counters for when the Visits Log is disabled and a refreshed login page; 5.14.1
+  fixes a race condition in nonce validation (#25300) and redesigns the Marketplace;
+  5.14.2 updates `composer/ca-bundle` to 1.6.0 (#25563) and warns on PHP versions
+  affected by CVE-2026-109618 and CVE-2026-109619, which the rebuilt image's PHP
+  carries the fix for — updating Matomo alone does not. On an existing install the
+  tag bump moves PHP and the OS but not Matomo's own code until checklist step 4 is
+  run; this applied to every earlier bump of this stack as well.
+
 ## Upgrade checklist
 
 Matomo's major-version bumps usually include DB schema changes that the web UI performs on first visit.
@@ -54,28 +67,49 @@ Matomo's major-version bumps usually include DB schema changes that the web UI p
    ```
 
 3. Bump `APP_TAG` and/or `DB_TAG` in `.env`
-4. `docker compose pull && docker compose up -d`
-5. Visit the UI — Matomo prompts to run DB upgrades, click through
-6. Verify: open a tracked site's report, confirm data is still present
+4. Pull, then let the new image replace the application files and start it.
+   `./volumes/matomo` is `/var/www/html`, and the image's entrypoint copies its
+   Matomo into it only when `matomo.php` is missing — without removing it an
+   existing install keeps its old Matomo code and only PHP and the OS move.
+   `matomo.php` is also the tracking endpoint, so remove it right before the start:
+
+   ```bash
+   docker compose pull
+   rm volumes/matomo/matomo.php
+   docker compose up -d
+   ```
+
+5. The entrypoint unpacks the image's files over the directory. It overwrites, it
+   does not delete: `config/`, marketplace plugins and `misc/` stay, and files the
+   new release dropped stay behind — the system check lists them.
+6. Run the database upgrade, from the console or by visiting the UI, which
+   prompts for it:
+
+   ```bash
+   docker compose exec -u www-data matomo-app php /var/www/html/console core:update --yes
+   ```
+
+7. Verify: open a tracked site's report, confirm data is still present, and check
+   Administration → System → System check for the version and leftover files
 
 ### Rollback
 
-Restore DB dump and `volumes/config/`, revert `APP_TAG`.
+Restore the DB dump, `volumes/config/` and `volumes/matomo/` (both in the step 2 archive), revert `APP_TAG`.
 
 ## Useful commands
 
 ```bash
 # Shell into the app
-docker compose exec app bash
+docker compose exec matomo-app bash
 
 # Matomo console
-docker compose exec app php /var/www/html/console <command>
+docker compose exec matomo-app php /var/www/html/console <command>
 
 # Force-archive reports (useful as a cron)
-docker compose exec app php /var/www/html/console core:archive
+docker compose exec matomo-app php /var/www/html/console core:archive
 
 # List users
-docker compose exec app php /var/www/html/console user:list
+docker compose exec matomo-app php /var/www/html/console user:list
 
 # Manual DB backup
 docker compose exec db sh -c \

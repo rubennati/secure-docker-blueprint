@@ -12,7 +12,7 @@
 - **Domain:** Business operations
 - **Role:** Customer support across website chat, email and messaging channels in one shared inbox
 - **Edition gating:** everything under the repository's `enterprise/` directory is licensed under `enterprise/LICENSE` rather than MIT — https://github.com/chatwoot/chatwoot/blob/develop/LICENSE · checked 2026-09-21
-- **Based on version:** `v4.18.0`
+- **Based on version:** `v4.19.1`
 - **Last verified:** 2026-09-22 (v4.18.0) — behind Traefik with TLS: the onboarding, the dashboard and its websocket, the API, a website widget, a restart, and the README's restore
 
 The origin comes from the governing-law clause of Chatwoot's terms of service
@@ -20,7 +20,7 @@ The origin comes from the governing-law clause of Chatwoot's terms of service
 
 ## What we use
 
-- `chatwoot/chatwoot:v4.18.0` for web and worker. Upstream's production compose pins
+- `chatwoot/chatwoot:v4.19.1` for web and worker. Upstream's production compose pins
   `:latest`; not used here. A `-ce` tag also exists; this stack uses the tag upstream's
   compose names.
 - `pgvector/pgvector:0.8.1-pg16` — upstream's production compose uses
@@ -97,6 +97,18 @@ enterprise features; backup and restore; an upgrade across versions.
   0.8.4 fix index corruption and a repair error with HNSW vacuuming, 0.8.2, 0.8.6
   and 0.8.7 fix buffer overflows. After the image moves, upstream's upgrade note
   applies per database: `ALTER EXTENSION vector UPDATE;`.
+- Moved to `v4.19.1` on 2026-11-05 (released 2026-10-24), web and worker
+  together, not run on a host at this tag. v4.19.0 retires Captain V1:
+  installations with V1 assistant instructions must migrate them to V2 before
+  upgrading (upstream's `docs/captain_v1_sunset.md`); this stack has not
+  exercised Captain. New optional variables only — `SEARCH_TIME_RANGE_LIMIT_DAYS`,
+  `WEB_CONCURRENCY`, `AUTO_RESOLVE_MIN_MINUTES`, `AUTO_RESOLVE_CRON`,
+  `SIDEKIQ_ALIVE_HOST` and `SIDEKIQ_ALIVE_PORT` (still 7433 by default, so the
+  worker healthcheck is unchanged); upstream's production compose did not
+  change; the web service migrates at start. Both releases recommend upgrading
+  for security hardening (Twilio webhook verification, CSS sanitization) and
+  v4.19.1 moves the build stage to Node.js 24.22.1 (CVE-2026-111497, build only).
+  No GHSA named.
 
 ## Upgrade checklist
 

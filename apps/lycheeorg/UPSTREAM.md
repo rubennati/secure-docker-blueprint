@@ -11,7 +11,7 @@
 - **Origin:** Community · LycheeOrg · EU contributors
 - **Domain:** Photos
 - **Role:** Photo gallery
-- **Based on version:** `v7.8.3`
+- **Based on version:** `v7.12.1`
 - **Last checked:** 2026-04-17
 
 ## What we use
@@ -42,6 +42,21 @@
 | **Container names standardized** — `lychee-app/db/redis` instead of `lychee/lychee_db/lychee_redis` | Project-scoped naming |
 | **100+ lines of commented env-var examples trimmed** | Moved to upstream docs reference; `.env.example` is lean. Every dropped option remains available via standard env vars if needed |
 | **Access `access-public`, `limit-standard` and `headers-standard` defaults** | Typical for a public gallery |
+
+## Version notes
+
+- Moved to `v7.12.1` on 2026-11-05, not run on a host at this tag. No breaking change
+  and no manual step in the notes. The standard image moves to FrankenPHP 1.13.3
+  and builds its own ImageMagick 7.1.2 with JPEG XL support, and turns off PHP's `session.upload_progress`; entrypoint,
+  `PUID`/`PGID`, the volume paths and the healthcheck on `:2019/metrics` are
+  unchanged. The move from debian-slim to a PHP base image in v7.12.0 (#4915)
+  concerns only the `-legacy` image. Upstream's `.env.example` renames
+  `CACHE_DRIVER` to `CACHE_STORE`; `CACHE_DRIVER`, which this stack sets, is still
+  read while `CACHE_STORE` is unset. v7.12.0 adds email login. Security fixes:
+  CVE-2026-109618 and CVE-2026-109619 (PHP, in the Docker image, v7.12.0), a sprintf
+  vulnerability (v7.11.0), complete stripping against XSS and blocking of
+  IPv6-transition spellings of internal IPv4 addresses (v7.10.0), dependency CVEs
+  (v7.8.4).
 
 ## Upgrade checklist
 

@@ -6,7 +6,7 @@ Self-hosted photo gallery focused on fast browsing and clean presentation. Three
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `lychee-app` | `lycheeorg/lychee:v7.8.3` | PHP/Laravel app + Apache |
+| `lychee-app` | `lycheeorg/lychee:v7.12.1` | PHP/Laravel app on FrankenPHP |
 | `db` | `mariadb:11.4` | Primary store (albums, photo metadata, users) |
 | `redis` | `redis:7.4-alpine` | Cache + session driver |
 

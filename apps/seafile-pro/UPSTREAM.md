@@ -166,11 +166,21 @@ If you need Elasticsearch instead of SeaSearch:
 
 ## Version notes
 
-- `SEASEARCH_TAG` stays at `1.0.3` on 2026-10-31, although `1.0.8` is on Docker
-  Hub: upstream publishes no release notes for 1.0.5 to 1.0.8 (the GitHub
-  releases end at 1.0.4, which removed the web UI), and which SeaSearch release
-  Seafile 13 pairs with is stated in the Seafile manual, not reachable from the
-  session. The move follows the Seafile release that names it.
+- `SEASEARCH_TAG` moved from `1.0.3` to `1.0.8` on 2026-11-05, not run on a host
+  at this tag (held at `1.0.3` on 2026-10-31 while the pairing was open). The
+  Seafile 13 manual (https://manual.seafile.com/13.0/setup/use_seasearch/)
+  defaults to `seafileltd/seasearch:1.0-latest`, which points at `1.0.8`.
+  Upstream (https://github.com/seafileltd/seasearch) publishes no release notes
+  for 1.0.5 to 1.0.8; the GitHub releases end at 1.0.4, which removed the web UI.
+  The commits between the tags include "Fix security issues" (#66) and "Fix the
+  vulnerable dependency" (#81), no advisory IDs given; log rotation; an HNSW
+  vector index and lazy loading of indexes; `ZINC_PROMETHEUS_ENABLE` renamed to
+  `SS_PROMETHEUS_ENABLE`; `SS_SERVER_MODE` replaced by `SS_CLUSTER_ENABLE` —
+  neither is set here. A diff of `pkg/config/config.go` between the two tags
+  shows every `SS_*` variable `seasearch.yml` sets still exists
+  (`SS_MAX_OBJ_CACHE_SIZE`, `SS_STORAGE_TYPE`, `SS_LOG_TO_STDOUT`, `SS_LOG_DIR`,
+  `SS_LOG_LEVEL`); `SS_FIRST_ADMIN_USER` and `SS_FIRST_ADMIN_PASSWORD` are read
+  outside that file and were not checked.
 
 ## Upgrade checklist
 

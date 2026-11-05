@@ -10,12 +10,12 @@
 - **Origin:** Germany · Qdrant Solutions GmbH (Berlin) · EU
 - **Domain:** AI and local AI
 - **Role:** Vector database: collections, similarity search with filters, snapshots
-- **Based on version:** `v1.19.1`
+- **Based on version:** `v1.20.0`
 - **Last verified:** 2026-09-21 (v1.19.1-unprivileged) — behind Traefik with TLS: the REST API through the route, gRPC with 100,000 points, snapshot recovery, a restart, and the README's restore
 
 ## What we use
 
-- Official image, pinned tag: `qdrant/qdrant:v1.19.1-unprivileged` (`amd64` and
+- Official image, pinned tag: `qdrant/qdrant:v1.20.0-unprivileged` (`amd64` and
   `arm64`, 74 MB). The `-unprivileged` variant runs as `qdrant` (uid/gid 1000);
   the plain tag runs as root.
 - Command `./entrypoint.sh` in `/qdrant`, ports `6333` (REST, dashboard) and
@@ -111,6 +111,18 @@ on a throwaway `proxy-public` network without Traefik:
   startup (reproduced)
 - On the macOS test host's virtiofs bind mount Qdrant logs `FUSE filesystems
   may cause data corruption`; a Docker named volume on the VM's disk did not
+
+## Version notes
+
+- Moved to `v1.20.0-unprivileged` on 2026-11-05 (released 2026-10-22), not run
+  on a host at this tag; 1.19.2 lies between. No storage migration named.
+  `service.enforce_internal_auth` now defaults to `true` when an API key is set —
+  it concerns the internal gRPC API of distributed mode, which this stack does
+  not run. Snapshot names are unique and a stored snapshot is never
+  overwritten; the README's restore names the file, so it is unaffected. Log
+  timestamps follow `TZ`, which the compose file sets. Advisories fixed:
+  GHSA-3gph-6c29-p29v (high, 1.19.2), GHSA-frc7-44gm-99qq (critical, distributed
+  mode only, 1.20.0); RUSTSEC-2026-0382 and RUSTSEC-2026-0383.
 
 ## Upgrade checklist
 

@@ -13,12 +13,12 @@
 - **Origin:** United States · ClickHouse, Inc. (Langfuse has been part of it since 2026-01) · non-EU
 - **Domain:** AI and local AI
 - **Role:** LLM observability: traces, scores and prompts from any instrumented application
-- **Based on version:** `4.50.0`
+- **Based on version:** `4.75.0`
 - **Last verified:** 2026-09-22 (4.38.0) — behind Traefik with TLS: the UI, the Python SDK sending traces, scores and a prompt, a restart, and a restore
 
 ## What we use
 
-- `docker.langfuse.com/langfuse/langfuse:4.50.0` and `…/langfuse-worker:4.50.0`.
+- `docker.langfuse.com/langfuse/langfuse:4.75.0` and `…/langfuse-worker:4.75.0`.
   Upstream's compose file uses the floating `:4`; not used here.
 - `postgres:17.6`, `clickhouse/clickhouse-server:25.12`, `redis:7.4-alpine` and
   `quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z` — the same five components as
@@ -129,6 +129,31 @@ running; it is not something this repository can pin.
 
 A versioned, S3-compatible replacement — SeaweedFS and Garage both publish one —
 is the real fix, and it changes the configuration rather than a tag.
+
+## Version notes
+
+- Moved to `4.75.0` on 2026-11-05 (released 2026-11-04), web and worker
+  together, not run on a host at this tag. The releases from 4.51.0 to 4.75.0
+  carry no breaking-change section; migrations still run at start. The web and
+  worker images moved from `node:24-alpine` to Red Hat UBI 9 micro with the
+  `nodejs:24` RPM: no busybox and no package manager, but bash, sed, wget and
+  coreutils remain; uid 1001 and the `dumb-init` entrypoint are unchanged.
+  The image has no `hostname` binary, so the healthchecks that called
+  `$(hostname)` now read Docker's `HOSTNAME` variable. ClickHouse migration
+  0050 now materializes the `scores` columns it indexes (PR #19443); an
+  install left on a dirty migration 50 recovers with `migrate force 49` and a
+  redeploy. Upstream's compose moved ClickHouse to `26.3.62.3`; the release
+  notes do not make it a requirement, and `CH_TAG` stays at `25.12`. New
+  optional variables: `LANGFUSE_LLM_CONNECTION_ALLOWED_HOSTS`,
+  `LANGFUSE_WEBHOOK_ALLOWED_HOSTS`,
+  `LANGFUSE_BLOB_STORAGE_ENDPOINT_ALLOWED_HOSTS`,
+  `LANGFUSE_EXTERNAL_MEDIA_STORAGE_ENDPOINT_ALLOWED_HOSTS`,
+  `LANGFUSE_OUTBOUND_BLOCKED_IP_SEGMENTS`, `LANGFUSE_TRUSTED_PROXY_COUNT`,
+  `LANGFUSE_DISABLE_SIGNUP_ONBOARDING`,
+  `LANGFUSE_S3_MEDIA_UPLOAD_REQUEST_TIMEOUT_MS`. Security items in the notes:
+  Node.js 24.22.1 fixes in the images, and webhook, PostHog and storage
+  secrets are required again when their destination changes (PRs #19261,
+  #19566); no GHSA published.
 
 ## Upgrade checklist
 

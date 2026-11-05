@@ -13,7 +13,7 @@
 - **Origin:** Community · Jason Kulatunga (AnalogJ) · no single jurisdiction
 - **Domain:** Monitoring
 - **Role:** S.M.A.R.T. disk health — collects the counters, keeps their history and warns before a drive fails
-- **Based on version:** `v0.9.5`
+- **Based on version:** `v0.10.0`
 
 ## Project maturity
 
@@ -24,10 +24,10 @@ change.
 
 ## What we use
 
-- `ghcr.io/analogj/scrutiny:v0.9.4-web` — the interface and API.
-- `influxdb:2.8`, **pinned by digest as well as by tag**: the `influxdb` tags
+- `ghcr.io/analogj/scrutiny:v0.10.0-web` — the interface and API.
+- `influxdb:2.9.1`, **pinned by digest as well as by tag**: the `influxdb` tags
   are rebuilt in place, so a tag alone does not identify an image.
-- `ghcr.io/analogj/scrutiny:v0.9.4-collector` as an opt-in overlay.
+- `ghcr.io/analogj/scrutiny:v0.10.0-collector` as an opt-in overlay.
 
 Upstream's own examples use `nightly-*` tags; its README says to pin a version,
 and these do.
@@ -95,6 +95,21 @@ already collected; it sends nothing away.
   SMART failure, evaluate SCSI thresholds against SCSI metadata and fix the
   notification repeat check. No breaking change, InfluxDB requirement change or
   advisory.
+- Moved to `v0.10.0` on 2026-11-05 (released 2026-11-01), web and collector
+  together, not run on a host at this tag. The web app migrates its database
+  at start: it stores an estimated upload period and a per-device
+  `friendly_name`, now edited in the device settings rather than in the
+  configuration. New optional `scrutiny.yaml` keys: a `devices` list by
+  `scrutiny_uuid` with `notifications.disabled`, `on_missed_upload`,
+  `on_smartctl_error` and `upload_period`, and global
+  `notify.on_missed_upload` (default `true`) and `notify.upload_period`. With
+  notification URLs set, a device that misses its expected upload now raises a
+  notification. The collector stops publishing incomplete smartctl results and
+  reports smartctl failures to the web app (`notify.on_smartctl_error` in
+  `collector.yaml`, default `true`); `devices[].notify.on_smartctl_error` moved
+  from `collector.yaml` to `scrutiny.yaml`. `collector.yml` here sets neither.
+  Built with Go 1.27; the omnibus image's InfluxDB moved to 2.8, which this
+  stack does not use. No advisory named.
 
 ## Upgrade checklist
 

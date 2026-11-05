@@ -51,7 +51,7 @@ services:
     command:
       - "gotenberg"
       - "--chromium-disable-javascript=true"
-      - "--chromium-allow-list=file:///tmp/.*"
+      - "--chromium-allow-list=^file:///tmp/.*"
     networks: [paperless-local]
     healthcheck:
       test: ["CMD-SHELL", "curl -sS -o /dev/null --max-time 5 http://127.0.0.1:3000/"]

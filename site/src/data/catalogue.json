@@ -33,11 +33,11 @@
     "name": "agentgateway",
     "path": "apps/agentgateway",
     "role": "LLM and MCP gateway: one authenticated endpoint in front of model providers and MCP servers",
-    "state": "baseline-aligned",
+    "state": "scaffolded",
     "upstream": "https://github.com/agentgateway/agentgateway/pkgs/container/agentgateway",
     "verified": "2026-09-21",
     "verified_version": "v1.5.0",
-    "version": "1.5.0"
+    "version": "1.7.0"
   },
   "apps/bookstack": {
     "decision_facts": {},
@@ -98,11 +98,11 @@
     "name": "Calnode",
     "path": "apps/calnode",
     "role": "Scheduling with booking pages, an admin interface and a REST API, as one binary with SQLite",
-    "state": "baseline-aligned",
+    "state": "scaffolded",
     "upstream": "https://github.com/Calnode/calnode/pkgs/container/calnode",
     "verified": "2026-09-22",
     "verified_version": "0.9.0",
-    "version": "0.9.0"
+    "version": "0.13.0"
   },
   "apps/calrs": {
     "decision_facts": {},
@@ -118,11 +118,11 @@
     "name": "calrs",
     "path": "apps/calrs",
     "role": "Scheduling with booking pages and availability read from a CalDAV calendar you already run",
-    "state": "baseline-aligned",
+    "state": "scaffolded",
     "upstream": "https://github.com/olivierlambert/calrs/pkgs/container/calrs",
     "verified": "2026-09-22",
     "verified_version": "1.17.1",
-    "version": "1.17.1"
+    "version": "1.22.0"
   },
   "apps/ciso-assistant": {
     "decision_facts": {
@@ -161,7 +161,7 @@
     "upstream": "https://github.com/intuitem/ciso-assistant-community/pkgs/container/ciso-assistant-community%2Fbackend",
     "verified": "2026-09-22",
     "verified_version": "v4.0.5",
-    "version": "4.0.9"
+    "version": "4.2.1"
   },
   "apps/collabora": {
     "decision_facts": {},
@@ -220,11 +220,11 @@
     "name": "DefectDojo",
     "path": "apps/defectdojo",
     "role": "Vulnerability management: import scanner and pentest findings, deduplicate them and track them to closure",
-    "state": "baseline-aligned",
+    "state": "scaffolded",
     "upstream": "https://hub.docker.com/r/defectdojo/defectdojo-django",
     "verified": "2026-09-22",
     "verified_version": "3.3.100",
-    "version": "3.3.100"
+    "version": "3.5.0"
   },
   "apps/dependency-track": {
     "decision_facts": {},
@@ -246,7 +246,7 @@
     "upstream": "https://github.com/DependencyTrack/dependency-track/pkgs/container/apiserver",
     "verified": null,
     "verified_version": null,
-    "version": "5.1.0"
+    "version": "5.2.1"
   },
   "apps/dfir-iris": {
     "decision_facts": {},
@@ -299,11 +299,11 @@
     "name": "Dify",
     "path": "apps/dify",
     "role": "LLM application platform: chat and workflow apps, knowledge bases, plugin-based model providers",
-    "state": "baseline-aligned",
+    "state": "scaffolded",
     "upstream": "https://hub.docker.com/r/langgenius/dify-api",
     "verified": "2026-09-22",
     "verified_version": "1.17.1",
-    "version": "1.17.1"
+    "version": "1.19.0"
   },
   "apps/docker-mailserver": {
     "decision_facts": {
@@ -356,11 +356,11 @@
     "name": "docling-serve",
     "path": "apps/docling-serve",
     "role": "Document understanding as an API: layout, tables and Markdown or JSON export for AI pipelines",
-    "state": "baseline-aligned",
+    "state": "scaffolded",
     "upstream": "https://github.com/docling-project/docling-serve/pkgs/container/docling-serve-cpu",
     "verified": "2026-09-22",
     "verified_version": "v1.34.0",
-    "version": "1.34.0"
+    "version": "1.38.2"
   },
   "apps/easyappointments": {
     "decision_facts": {},
@@ -420,11 +420,11 @@
     "name": "Ghost",
     "path": "apps/ghost",
     "role": "Publishing platform for blogs and newsletters, with optional Fediverse publishing",
-    "state": "ops-proven",
+    "state": "scaffolded",
     "upstream": "https://hub.docker.com/_/ghost",
     "verified": "2026-11-03",
     "verified_version": "6.63.0-alpine",
-    "version": "6.63.0-alpine"
+    "version": "6.75.0-alpine"
   },
   "apps/greenmail": {
     "decision_facts": {},
@@ -484,7 +484,7 @@
     "upstream": "https://hub.docker.com/r/hemmeligapp/hemmelig",
     "verified": null,
     "verified_version": null,
-    "version": "7.4.8"
+    "version": "7.6.1"
   },
   "apps/heyform": {
     "decision_facts": {
@@ -524,7 +524,7 @@
     "upstream": "https://hub.docker.com/r/heyform/community-edition",
     "verified": null,
     "verified_version": null,
-    "version": "3.0.5"
+    "version": "3.0.6"
   },
   "apps/homarr": {
     "decision_facts": {},
@@ -564,7 +564,7 @@
     "upstream": "https://github.com/gethomepage/homepage/pkgs/container/homepage",
     "verified": "2026-05-03",
     "verified_version": "v0.10.9",
-    "version": "2.3.0"
+    "version": "2.7.0"
   },
   "apps/httpbin": {
     "decision_facts": {},
@@ -616,11 +616,11 @@
     "name": "Immich",
     "path": "apps/immich",
     "role": "Photo and video backup with mobile apps and machine-learning search",
-    "state": "baseline-aligned",
+    "state": "scaffolded",
     "upstream": "https://immich.app/",
     "verified": "2026-11-03",
     "verified_version": "v3.2.0",
-    "version": "3.2.0"
+    "version": "3.3.6"
   },
   "apps/it-tools": {
     "decision_facts": {},
@@ -662,7 +662,7 @@
     "upstream": "https://www.librephotos.com/",
     "verified": null,
     "verified_version": null,
-    "version": "1.2.1"
+    "version": "1.5.1"
   },
   "apps/litellm": {
     "decision_facts": {
@@ -690,7 +690,7 @@
     "upstream": "https://github.com/BerriAI/litellm/pkgs/container/litellm-non_root",
     "verified": "2026-09-21",
     "verified_version": "v1.101.0",
-    "version": "1.101.4"
+    "version": "08d313a00c46…"
   },
   "apps/lycheeorg": {
     "decision_facts": {},
@@ -713,7 +713,7 @@
     "upstream": "https://lycheeorg.dev/",
     "verified": null,
     "verified_version": null,
-    "version": "7.8.3"
+    "version": "7.12.1"
   },
   "apps/mailpit": {
     "decision_facts": {},
@@ -881,7 +881,7 @@
     "upstream": "https://nocodb.com/",
     "verified": "2026-05-02",
     "verified_version": "v0.301.5",
-    "version": "2026.09.0"
+    "version": "2026.10.1"
   },
   "apps/obot": {
     "decision_facts": {
@@ -920,7 +920,7 @@
     "upstream": "https://github.com/obot-platform/obot/pkgs/container/obot",
     "verified": null,
     "verified_version": null,
-    "version": "0.26.0"
+    "version": "0.27.0"
   },
   "apps/ollama": {
     "decision_facts": {},
@@ -988,11 +988,11 @@
     "name": "Open WebUI",
     "path": "apps/open-webui",
     "role": "Chat interface for any OpenAI-compatible endpoint, with accounts, history and document upload",
-    "state": "baseline-aligned",
+    "state": "scaffolded",
     "upstream": "https://github.com/open-webui/open-webui/pkgs/container/open-webui",
     "verified": "2026-09-21",
     "verified_version": "v0.11.3",
-    "version": "0.11.3"
+    "version": "0.13.0"
   },
   "apps/opencanary": {
     "decision_facts": {},
@@ -1035,7 +1035,7 @@
     "upstream": "https://opnform.com/",
     "verified": null,
     "verified_version": null,
-    "version": "2.5.0"
+    "version": "2.8.1"
   },
   "apps/paperless-gpt": {
     "decision_facts": {
@@ -1061,7 +1061,7 @@
     "upstream": "https://github.com/icereed/paperless-gpt/pkgs/container/paperless-gpt",
     "verified": null,
     "verified_version": null,
-    "version": "0.28.0"
+    "version": "0.31.0"
   },
   "apps/paperless-ngx": {
     "decision_facts": {},
@@ -1080,11 +1080,11 @@
     "name": "Paperless-ngx",
     "path": "apps/paperless-ngx",
     "role": "Document management with OCR, tagging and full-text search",
-    "state": "ops-proven",
+    "state": "scaffolded",
     "upstream": "https://github.com/paperless-ngx/paperless-ngx/pkgs/container/paperless-ngx",
     "verified": "2026-11-02",
     "verified_version": "3.1.3",
-    "version": "3.1.3"
+    "version": "3.4.2"
   },
   "apps/photoprism": {
     "decision_facts": {
@@ -1178,11 +1178,11 @@
     "name": "Qdrant",
     "path": "apps/qdrant",
     "role": "Vector database: collections, similarity search with filters, snapshots",
-    "state": "baseline-aligned",
+    "state": "scaffolded",
     "upstream": "https://hub.docker.com/r/qdrant/qdrant",
     "verified": "2026-09-21",
     "verified_version": "v1.19.1-unprivileged",
-    "version": "1.19.1-unprivileged"
+    "version": "1.20.0-unprivileged"
   },
   "apps/seafile": {
     "decision_facts": {},
@@ -1344,11 +1344,11 @@
     "name": "Tymeslot",
     "path": "apps/tymeslot",
     "role": "Meeting scheduling with booking pages, calendar sync and video links",
-    "state": "ops-proven",
+    "state": "scaffolded",
     "upstream": "https://hub.docker.com/r/luka1thb/tymeslot",
     "verified": "2026-09-07",
     "verified_version": "v1.15.1",
-    "version": "4bde62fd9bb1…"
+    "version": "ad7cfda6fe84…"
   },
   "apps/unifi": {
     "decision_facts": {},
@@ -1370,7 +1370,7 @@
     "upstream": "https://ui.com/download/unifi",
     "verified": null,
     "verified_version": null,
-    "version": "10.6.101"
+    "version": "10.6.109"
   },
   "apps/vaultwarden": {
     "decision_facts": {},
@@ -1388,11 +1388,11 @@
     "name": "Vaultwarden",
     "path": "apps/vaultwarden",
     "role": "Password manager: logins, TOTP and shared collections",
-    "state": "ops-proven",
+    "state": "scaffolded",
     "upstream": "https://github.com/dani-garcia/vaultwarden",
     "verified": "2026-11-02",
     "verified_version": "1.37.4",
-    "version": "1.37.4"
+    "version": "1.37.5"
   },
   "apps/velociraptor": {
     "decision_facts": {},
@@ -1432,7 +1432,7 @@
     "upstream": "https://hub.docker.com/r/vllm/vllm-openai",
     "verified": null,
     "verified_version": null,
-    "version": "0.30.0"
+    "version": "0.33.0"
   },
   "apps/whoami": {
     "decision_facts": {},
@@ -1504,11 +1504,11 @@
     "name": "Windmill",
     "path": "apps/windmill",
     "role": "Code-first scripts, flows, APIs and scheduled jobs on a queue",
-    "state": "baseline-aligned",
+    "state": "scaffolded",
     "upstream": "https://github.com/windmill-labs/windmill/pkgs/container/windmill",
     "verified": "2026-09-23",
     "verified_version": "1.814.0",
-    "version": "1.814.0"
+    "version": "1.862.0"
   },
   "apps/wordpress": {
     "decision_facts": {},
@@ -1530,7 +1530,7 @@
     "upstream": "https://hub.docker.com/_/wordpress",
     "verified": null,
     "verified_version": null,
-    "version": "7.0.4-php8.3-apache"
+    "version": "7.1.4-php8.3-apache"
   },
   "apps/yopass": {
     "decision_facts": {},
@@ -1701,11 +1701,11 @@
     "name": "Chatwoot",
     "path": "business/chatwoot",
     "role": "Customer support across website chat, email and messaging channels in one shared inbox",
-    "state": "baseline-aligned",
+    "state": "scaffolded",
     "upstream": "https://hub.docker.com/r/chatwoot/chatwoot",
     "verified": "2026-09-22",
     "verified_version": "v4.18.0",
-    "version": "4.18.0"
+    "version": "4.19.1"
   },
   "business/documenso": {
     "decision_facts": {
@@ -1739,7 +1739,7 @@
     "upstream": "https://github.com/documenso/documenso",
     "verified": null,
     "verified_version": null,
-    "version": "2.20.0"
+    "version": "2.21.1"
   },
   "business/dolibarr": {
     "decision_facts": {},
@@ -1792,11 +1792,11 @@
     "name": "ERPNext",
     "path": "business/erpnext",
     "role": "ERP on the Frappe framework: accounting, invoicing, stock, buying, selling, manufacturing, projects and HR",
-    "state": "baseline-aligned",
+    "state": "scaffolded",
     "upstream": "https://hub.docker.com/r/frappe/erpnext",
     "verified": "2026-09-23",
     "verified_version": "v16.35.0",
-    "version": "16.35.0"
+    "version": "16.53.0"
   },
   "business/facturascripts": {
     "decision_facts": {
@@ -1821,11 +1821,11 @@
     "name": "FacturaScripts",
     "path": "business/facturascripts",
     "role": "Invoicing, accounting and inventory for small businesses, extended through plugins",
-    "state": "baseline-aligned",
+    "state": "scaffolded",
     "upstream": "https://hub.docker.com/r/facturascripts/facturascripts",
     "verified": "2026-09-22",
     "verified_version": "2026.5",
-    "version": "2026.5"
+    "version": "2026.7"
   },
   "business/invoiceninja": {
     "decision_facts": {
@@ -1850,11 +1850,11 @@
     "name": "Invoice Ninja",
     "path": "business/invoiceninja",
     "role": "Invoicing, quotes and payments",
-    "state": "ops-proven",
+    "state": "scaffolded",
     "upstream": "https://github.com/invoiceninja/dockerfiles",
     "verified": "2026-11-03",
     "verified_version": "5.13.52",
-    "version": "5.13.52"
+    "version": "5.13.53"
   },
   "business/kimai": {
     "decision_facts": {
@@ -1884,11 +1884,11 @@
     "name": "Kimai",
     "path": "business/kimai",
     "role": "Time tracking with reports and invoicing hooks",
-    "state": "ops-proven",
+    "state": "scaffolded",
     "upstream": "https://www.kimai.org",
     "verified": "2026-11-03",
     "verified_version": "2.66.0",
-    "version": "2.66.0"
+    "version": "2.71.0"
   },
   "business/leantime": {
     "decision_facts": {
@@ -1927,7 +1927,7 @@
     "upstream": "https://hub.docker.com/r/leantime/leantime",
     "verified": null,
     "verified_version": null,
-    "version": "3.9.8"
+    "version": "3.13.2"
   },
   "business/listmonk": {
     "decision_facts": {},
@@ -1983,7 +1983,7 @@
     "upstream": "https://matomo.org/",
     "verified": null,
     "verified_version": null,
-    "version": "5.13.0-apache"
+    "version": "5.14.2-apache"
   },
   "business/openproject": {
     "decision_facts": {
@@ -2018,7 +2018,7 @@
     "upstream": "https://github.com/opf/openproject",
     "verified": "2026-05-06",
     "verified_version": "v17.3.1",
-    "version": "17.8.0-slim"
+    "version": "17.9.6-slim"
   },
   "business/opensign": {
     "decision_facts": {},
@@ -2173,11 +2173,11 @@
     "name": "Twenty",
     "path": "business/twenty",
     "role": "CRM: companies, people, opportunities and tasks, with an extensible data model and an API",
-    "state": "baseline-aligned",
+    "state": "scaffolded",
     "upstream": "https://hub.docker.com/r/twentycrm/twenty",
     "verified": "2026-09-23",
     "verified_version": "v2.41.0",
-    "version": "2.41.0"
+    "version": "2.55.0"
   },
   "business/vikunja": {
     "decision_facts": {
@@ -2236,7 +2236,7 @@
     "upstream": "https://zammad.org",
     "verified": null,
     "verified_version": null,
-    "version": "7.2.0-0004"
+    "version": "7.2.2-0038"
   },
   "core/acme-certs": {
     "decision_facts": {},
@@ -2310,11 +2310,11 @@
     "name": "Authentik",
     "path": "core/authentik",
     "role": "Identity provider with forward-auth, OAuth2, OpenID Connect and SAML",
-    "state": "baseline-aligned",
+    "state": "scaffolded",
     "upstream": "https://github.com/goauthentik/authentik/pkgs/container/server",
     "verified": "2026-11-02",
     "verified_version": "v2026.5.7",
-    "version": "2026.5.7"
+    "version": "2026.8.5"
   },
   "core/crowdsec": {
     "decision_facts": {},
@@ -2330,11 +2330,11 @@
     "name": "CrowdSec",
     "path": "core/crowdsec",
     "role": "Threat detection from logs, with a choice of where decisions are enforced",
-    "state": "ops-proven",
+    "state": "scaffolded",
     "upstream": "https://github.com/crowdsecurity/crowdsec",
     "verified": "2026-11-01",
     "verified_version": "v1.7.8",
-    "version": "1.7.8"
+    "version": "1.8.2"
   },
   "core/dnsmasq": {
     "decision_facts": {},
@@ -2493,7 +2493,7 @@
     "upstream": "https://github.com/Infisical/infisical",
     "verified": null,
     "verified_version": null,
-    "version": "0.165.10"
+    "version": "0.167.6"
   },
   "core/jumpserver": {
     "decision_facts": {
@@ -2543,11 +2543,11 @@
     "name": "Keycloak",
     "path": "core/keycloak",
     "role": "Identity provider for applications that speak OpenID Connect or SAML, with LDAP and AD federation",
-    "state": "baseline-aligned",
+    "state": "scaffolded",
     "upstream": "https://quay.io/repository/keycloak/keycloak",
     "verified": "2026-09-07",
     "verified_version": "v26.7.3",
-    "version": "26.7.3"
+    "version": "26.8.1"
   },
   "core/orion-belt": {
     "decision_facts": {
@@ -2575,7 +2575,7 @@
     "upstream": "https://github.com/orion-belt-dev/orion-belt",
     "verified": null,
     "verified_version": null,
-    "version": "1.2.0"
+    "version": "1.4.0"
   },
   "core/portainer": {
     "decision_facts": {
@@ -2760,7 +2760,7 @@
     "upstream": "https://github.com/warp-tech/warpgate",
     "verified": null,
     "verified_version": null,
-    "version": "0.29.0"
+    "version": "0.30.4"
   },
   "core/zot": {
     "decision_facts": {},
@@ -2840,7 +2840,7 @@
     "upstream": "https://changedetection.io",
     "verified": "2026-09-13",
     "verified_version": "0.60.4",
-    "version": "0.60.10"
+    "version": "0.70.1"
   },
   "monitoring/checkmate": {
     "decision_facts": {
@@ -2879,7 +2879,7 @@
     "upstream": "https://github.com/bluewave-labs/Checkmate/pkgs/container/checkmate",
     "verified": null,
     "verified_version": null,
-    "version": "3.12.0"
+    "version": "3.13.1"
   },
   "monitoring/ciao": {
     "decision_facts": {
@@ -2905,7 +2905,7 @@
     "upstream": "https://hub.docker.com/r/brotandgames/ciao",
     "verified": null,
     "verified_version": null,
-    "version": "1.10.1"
+    "version": "1.12.0"
   },
   "monitoring/gatus": {
     "decision_facts": {},
@@ -2988,7 +2988,7 @@
     "upstream": "https://hub.docker.com/r/grafana/grafana",
     "verified": null,
     "verified_version": null,
-    "version": "13.2.2"
+    "version": "13.3.0"
   },
   "monitoring/healthchecks": {
     "decision_facts": {},
@@ -3050,7 +3050,7 @@
     "upstream": "https://github.com/langfuse/langfuse/pkgs/container/langfuse",
     "verified": "2026-09-22",
     "verified_version": "4.38.0",
-    "version": "4.50.0"
+    "version": "4.75.0"
   },
   "monitoring/ntfy": {
     "decision_facts": {
@@ -3113,7 +3113,7 @@
     "upstream": "https://github.com/AnalogJ/scrutiny/pkgs/container/scrutiny",
     "verified": null,
     "verified_version": null,
-    "version": "0.9.5-web"
+    "version": "0.10.0-web"
   },
   "monitoring/uptime-kuma": {
     "decision_facts": {},
@@ -3133,7 +3133,7 @@
     "upstream": "https://uptime.kuma.pet",
     "verified": "2026-09-13",
     "verified_version": "2.5.4",
-    "version": "2.5.8"
+    "version": "2.5.9"
   },
   "monitoring/zabbix": {
     "decision_facts": {

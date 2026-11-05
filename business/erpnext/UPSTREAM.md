@@ -13,7 +13,7 @@
 - **Decision facts checked:** 2026-09-21
 - **Domain:** Business operations
 - **Role:** ERP on the Frappe framework: accounting, invoicing, stock, buying, selling, manufacturing, projects and HR
-- **Based on version:** `v16.35.0`
+- **Based on version:** `v16.53.0`
 - **Last verified:** 2026-09-23 (v16.35.0) — behind Traefik with TLS: the site created and the setup wizard, a customer, live updates over the websocket, a restart, and the README's restore
 
 The origin comes from Frappe's cloud and enterprise terms, which name Frappe
@@ -23,7 +23,7 @@ AGPL-3.0. The Frappe framework underneath is MIT.
 
 ## What we use
 
-- `frappe/erpnext:v16.35.0` — one image for every role, published for amd64 and
+- `frappe/erpnext:v16.53.0` — one image for every role, published for amd64 and
   arm64. Upstream's compose pins `platform: linux/amd64`; this stack does not.
 - `mariadb:11.8` and `redis:8.6-alpine` — the versions upstream's compose pins.
 - frappe_docker's `compose.yaml` with `overrides/compose.mariadb.yaml` and
@@ -153,6 +153,30 @@ throwaway `proxy-public` network without Traefik. `volumes/sites`, `volumes/logs
 **Not yet exercised:** Traefik routing and TLS; the desk in a browser; accounting
 documents, stock and reports; email; PDF printing; an image upgrade with
 `bench migrate`; backup and restore; more than one site.
+
+## Version notes
+
+- Moved to `v16.53.0` on 2026-11-05 (released 2026-10-28), not run on a host at
+  this tag. The step from v16.37 to v16.50 is upstream's coordinated
+  renumbering of Frappe, ERPNext and HRMS, not a skipped range. Breaking
+  changes listed: v16.36.0 adds access checks to several actions and record
+  lookups and carries the new role grants into customized permissions;
+  v16.50.0 checks user permissions on records used in accounting, stock,
+  asset, manufacturing and project actions and changes role access for
+  Payment Terms Template, POS Invoice, Serial and Batch Bundle and Address.
+  Users can lose actions they had; nothing changes in the configuration.
+  `bench --site … migrate` applies the schema changes (checklist step 5).
+  From v16.50 the images come from frappe_docker after its Debian trixie move:
+  the `frappe` user (uid 1000) now has primary group 0, the entrypoints set
+  `umask 0002` and add an `/etc/passwd` entry for an arbitrary uid.
+  frappe_docker also changed two settings this stack follows:
+  `chromium_path` points at `/usr/lib/chromium/chromium-headless-shell`,
+  because `/usr/bin/chromium-headless-shell` is a wrapper script and Frappe
+  ended only the wrapper, leaving a Chromium process tree behind after each PDF;
+  and MariaDB runs with `--innodb-snapshot-isolation=OFF`, because 11.8 enables
+  it by default and Frappe background jobs then fail with error 1020.
+  No ERPNext advisory names a fix after v16.35.0; the move clears CRITICAL
+  findings in the image scan.
 
 ## Upgrade checklist
 

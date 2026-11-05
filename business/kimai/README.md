@@ -6,7 +6,7 @@ Self-hosted time-tracking for freelancers and small teams. Project/customer hier
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `kimai-app` | `kimai/kimai2:2.66.0` | PHP/Symfony + Apache + cron |
+| `kimai-app` | `kimai/kimai2:2.71.0` | PHP/Symfony + Apache + cron |
 | `db` | `mariadb:11.4` | Timesheets, users, customers, projects |
 
 ## Try it locally

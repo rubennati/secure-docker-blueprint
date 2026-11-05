@@ -7,8 +7,9 @@ set -e
 # variant: KC_DB_PASSWORD_FILE is accepted into the configuration without a
 # warning and never reaches the JDBC driver ("no password was provided"),
 # and KC_BOOTSTRAP_ADMIN_PASSWORD_FILE leaves the bootstrap admin unset.
-# Verified against 26.7.3 on 2026-09-07. This wrapper exports both from
-# /run/secrets/ and hands over to kc.sh. It runs as the image's user (1000).
+# Verified against 26.7.3 on 2026-09-07; not yet verified on 26.8.1.
+# This wrapper exports both from /run/secrets/ and hands over to kc.sh.
+# It runs as the image's user (1000).
 #
 # Wiring in docker-compose.yml:
 #   entrypoint: ["/bin/sh", "/config/entrypoint.sh"]

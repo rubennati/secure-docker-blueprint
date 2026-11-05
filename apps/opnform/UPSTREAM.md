@@ -10,7 +10,7 @@
 - **Origin:** France · Julien Nahum · EU
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Form builder with shareable forms and submissions
-- **Based on version:** `2.5.0`
+- **Based on version:** `2.8.1`
 - **Last checked:** 2026-04-17
 
 ## What we use
@@ -45,6 +45,36 @@ Key design choices:
 | **`app-internal` network (`internal: true`)** | Isolate Postgres + Redis |
 | **`security_opt: no-new-privileges`** on all services | Baseline |
 | **Access `access-public`, `limit-standard` and `headers-standard` defaults** | Forms are meant to be filled by external users; `access-vpn` would be OK if your forms are internal-only |
+
+## Version notes
+
+- Moved to `2.8.1` on 2026-11-05, not run on a host at this tag. Not 2.8.3:
+  `jhumanj/opnform-api` carries 2.8.2 and 2.8.3, but `jhumanj/opnform-client`
+  stops at 2.8.1 on Docker Hub — the release pipeline runs for both tags were
+  cancelled — and `APP_TAG` names both images. Move to 2.8.3 once the client
+  tag exists (2.8.2 and 2.8.3 tighten webhook and PDF image URL filtering and
+  add no migration). In the range: 2.6.0 and 2.7.0 carry database migrations,
+  which the API image runs at start — back up first. 2.7.0 stops sending
+  answers to an embedding page by default, revokes sessions and tokens on a
+  password change, requires public HTTPS endpoints without redirects for OIDC,
+  a TXT proof for new custom domains, and `X-AI-Completion-Token` when polling
+  an AI completion. 2.6.1 routes `/api/_nuxt_icon/` to the client in nginx;
+  `docker/nginx.conf` already carries it. 2.8.1 adds the optional
+  `PUBLIC_UPLOADS_MAX_FILE_SIZE` (50 MB default for temporary uploads), 2.6.0
+  the optional `EMAIL_TRACKING_SNS_TOPICS`. Security: 2.6.1 rebuilds on PHP
+  8.3.36 for CVE-2026-109618 and CVE-2026-109619 and disables PHP session upload
+  progress; 2.7.0 hardens password resets, credential revocation, OAuth/OIDC,
+  domain ownership and file signing. No GHSA is published.
+- nginx moved to `1.31` on 2026-11-05, not run on a host at this tag.
+  1.29.7 enables upstream keepalive by default and makes `proxy_http_version`
+  default to 1.1 without a `Connection` header; `docker/nginx.conf` sets both
+  explicitly on its proxied locations. 1.31.0 rejects HTTP/2 and HTTP/3
+  requests carrying connection-specific headers; this nginx listens on plain
+  HTTP/1.1 behind Traefik. Security fixes in the range include CVE-2026-27654
+  (1.29.7), CVE-2026-1642 (1.29.5), CVE-2026-42945, CVE-2026-42926,
+  CVE-2026-40460 (1.31.0), CVE-2026-9256 (1.31.1), CVE-2026-42530 (1.31.2),
+  CVE-2026-56434 (1.31.3), CVE-2026-90439 (1.31.6), CVE-2026-15176,
+  CVE-2026-93479, CVE-2026-95101, CVE-2026-97629 and CVE-2026-97205 (1.31.7).
 
 ## Upgrade checklist
 

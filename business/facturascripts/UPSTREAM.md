@@ -12,7 +12,7 @@
 - **Decision facts checked:** 2026-09-21
 - **Domain:** Business operations
 - **Role:** Invoicing, accounting and inventory for small businesses, extended through plugins
-- **Based on version:** `2026.5`
+- **Based on version:** `2026.7`
 - **Last verified:** 2026-09-22 (2026.5) — behind Traefik with TLS: the unattended install, the login and wizard, a customer, the in-app updater across a restart, and the README's restore
 
 The origin comes from the terms on facturascripts.com, which name the site's owner
@@ -20,9 +20,9 @@ and apply Spanish law.
 
 ## What we use
 
-- `facturascripts/facturascripts:2026.5` — the image publisher's stable channel;
-  `latest` is the same image. `2026.65` is published as `beta`, although the
-  GitHub release list does not mark it as a pre-release. PHP 8.4 and Apache on
+- `facturascripts/facturascripts:2026.7` — the image publisher's stable channel;
+  `latest` is the same image. Newer tags such as `2026.72` are published as
+  `beta`, although the GitHub release list does not mark them as pre-releases. PHP 8.4 and Apache on
   Debian 13.
 - `mariadb:11.4` — the repository's MariaDB LTS. Upstream's compose uses
   `mysql:8.2`.
@@ -41,7 +41,7 @@ and apply Spanish law.
 | `facturascripts-cron` service | Upstream's compose has none. It runs `php index.php -cron`, upstream's command-line entry point, every five minutes as uid 33. Page requests already run the work queue; the scheduled clean-up and plugin jobs need the cron. Its healthcheck only confirms the loop is running: the command exits 0 even with the database unreachable — measured |
 | `cap_add: SETUID, SETGID` | Measured with Apache alone: with both, the master is uid 0 and its workers uid 33; with `SETUID` alone every Apache process stays root and `/` answers 403; with `SETGID` alone Apache exits. The entrypoint's `setpriv` needs both as well |
 | tmpfs on `/tmp` and `/var/run/apache2` only | Apache exits on a read-only root without `/var/run/apache2` (its PID file) — measured. `/var/lock/apache2` is not needed. `/var/log/apache2` keeps the image's links to stdout and stderr, so the logs reach `docker logs` |
-| `ops/install.sh` instead of the web wizard | Upstream's installer in its unattended mode (`unattended=1`), run as `www-data`, with both passwords read from the secrets inside the container. It sends `mysql_socket` empty, as the web form does: without the field the 2026.5 installer stops with a `TypeError` halfway through `config.php` — measured. Fixed upstream in [NeoRazorX/facturascripts#2041](https://github.com/NeoRazorX/facturascripts/pull/2041), merged 2026-09-25; no released image carries it yet — the newest is `2026.65`, published 2026-08-27 — so the empty field stays until `APP_TAG` points to a release that contains it |
+| `ops/install.sh` instead of the web wizard | Upstream's installer in its unattended mode (`unattended=1`), run as `www-data`, with both passwords read from the secrets inside the container. It sends `mysql_socket` empty, as the web form does: without the field the 2026.5 installer stops with a `TypeError` halfway through `config.php` — measured. Fixed upstream in [NeoRazorX/facturascripts#2041](https://github.com/NeoRazorX/facturascripts/pull/2041), merged 2026-09-25; the `2026.7` release contains the fix. The empty field stays, as the web form also sends it; not yet run against `2026.7` |
 | `FS_DB_PASS` reads the Docker Secret | The installer writes the password into `config.php` in plain text; `ops/install.sh` replaces the line with `file_get_contents('/run/secrets/DB_PWD')` |
 | `FS_INITIAL_USER` and `FS_INITIAL_PASS` removed after the install | The installer writes the administrator's password into `config.php`. It is read once, when the `users` table is created |
 | `APP_TRAEFIK_ACCESS=access-vpn` | The web installer is open until the install has run |
@@ -108,6 +108,24 @@ owned by uid 33 with mode 700, as `ops/init.sh` and the `chown` leave it:
 login, dashboard and the customer form; invoices, accounting and reports; email;
 the in-app updater and plugin installation; the web installer path used by the
 local file; an upgrade to a newer image; backup and restore.
+
+## Version notes
+
+- Moved to `2026.7` on 2026-11-05 (image published 2026-10-21), not run on a
+  host at this tag. `2026.7` is the image behind `latest`; the automatic pick
+  `2026.72` is the `beta` tag and was not used. The image tag changes PHP,
+  Apache and the operating system and seeds the webroot of a new install; an
+  existing install keeps the version in its webroot until the in-app updater
+  moves it. Upstream's GitHub release notes for 2026.6 to 2026.7 only link to
+  the facturascripts.com announcements, which were not reviewed here. The
+  release contains the installer fix for an absent `mysql_socket`
+  (NeoRazorX/facturascripts#2041). Advisories fixed in 2026.7, published
+  2026-10-05, include GHSA-grw9-xvv2-5623 (critical, path traversal in SendMail
+  attachments), GHSA-3cjq-m4qh-3w8p (unauthenticated code injection in the
+  installer), GHSA-r2vf-58f8-chgr, GHSA-jrgg-j699-qm3h, GHSA-7pf9-mm9p-ph24,
+  GHSA-r6rq-mv65-vrw7 (high) and, from 2026.65, GHSA-pmhg-rhr4-5624 and
+  GHSA-7598-jq2v-gmxf (high SQL injection); the remaining 2026.7 advisories are
+  medium.
 
 ## Upgrade checklist
 

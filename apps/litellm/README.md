@@ -68,7 +68,8 @@ curl -H "Authorization: Bearer $(cat .secrets/litellm_master_key.txt)" \
 - **Network.** The database has no route out. The proxy is on `proxy-public` to
   reach Traefik and its backends; every container on that network can reach port
   4000, where a key is still required.
-- **Telemetry.** `litellm_settings.telemetry: false` is set.
+- **Telemetry.** None to switch off: the `telemetry` setting has been a no-op since
+  upstream removed its telemetry code in 2024, and it is no longer set here.
 
 ## Status
 

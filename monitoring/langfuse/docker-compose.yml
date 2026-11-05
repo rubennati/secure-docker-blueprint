@@ -218,8 +218,11 @@ services:
       - app-internal
 
     # --- Health & Observability ---
+    # The worker listens on the container's hostname address. HOSTNAME is the
+    # variable Docker sets; the image (UBI 9 micro at 4.75.0) has no `hostname`
+    # binary.
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O /dev/null http://$$(hostname):3030/api/health || exit 1"]
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://$$HOSTNAME:3030/api/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5

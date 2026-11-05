@@ -54,6 +54,9 @@ services:
     environment:
       TZ: ${TZ}
       DOCLING_SERVE_ENABLE_UI: ${DOCLING_ENABLE_UI}
+      # Since v1.35.0 the API reference pages (/openapi.json, /docs, /swagger,
+      # /scalar) are served by default and need no API key. Off here.
+      DOCLING_SERVE_ENABLE_API_DOCS: "false"
     secrets:
       - DOCLING_API_KEY
 

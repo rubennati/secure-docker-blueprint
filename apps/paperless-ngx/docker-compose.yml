@@ -124,7 +124,7 @@ services:
     command:
       - "gotenberg"
       - "--chromium-disable-javascript=true"
-      - "--chromium-allow-list=file:///tmp/.*"
+      - "--chromium-allow-list=^file:///tmp/.*"
 
     # --- Health & Observability ---
     # Any HTTP answer means the server is serving, including a 5xx —

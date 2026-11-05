@@ -51,7 +51,8 @@ The first start migrates the database, which takes longer than the server itself
 
 The scheduler runs inside the web process, so there is no worker container to
 deploy, and every active check is scheduled again when the container starts. The
-interface also has a *recreate jobs* action for the case where one was lost.
+admin page (`/checks/admin`) has a *Check now* action, which replaced the former
+*recreate jobs* action in 1.11.0.
 
 Then add checks in the interface: a name, the URL, and a cron expression such as
 `*/5 * * * *`. The same thing over the API:

@@ -10,12 +10,12 @@
 - **Origin:** LF AI & Data Foundation (US non-profit) · originated at IBM Research Zurich, Switzerland · non-EU
 - **Domain:** AI and local AI
 - **Role:** Document understanding as an API: layout, tables and Markdown or JSON export for AI pipelines
-- **Based on version:** `v1.34.0`
+- **Based on version:** `v1.38.2`
 - **Last verified:** 2026-09-22 (v1.34.0) — behind Traefik with TLS: a PDF converted through the route with the key from the Docker Secret, a URL conversion, and a restart
 
 ## What we use
 
-- Official image, pinned tag: `ghcr.io/docling-project/docling-serve-cpu:v1.34.0` —
+- Official image, pinned tag: `ghcr.io/docling-project/docling-serve-cpu:v1.38.2` —
   the CPU-only variant. `-cu128`/`-cu130` exist for NVIDIA GPU hosts; not used
   here, this blueprint assumes no GPU by default.
 - Runs as uid 1001 by upstream default (verified via `docker inspect`) — no
@@ -39,6 +39,7 @@ per-conversion scratch files.
 | Change | Reason |
 |--------|--------|
 | Docker Secret for `DOCLING_SERVE_API_KEY`, injected by `config/entrypoint.sh` | Upstream defaults this to an empty string, which disables auth entirely (`docling_serve/auth.py`) — the blueprint standard is a secret, not an open endpoint |
+| `DOCLING_SERVE_ENABLE_API_DOCS=false` | Since v1.35.0 the API reference pages are served by default and need no API key |
 | `read_only: true` + `tmpfs: [/tmp]` | Verified working against a real conversion (`POST /v1/convert/source` against a live PDF) — see below |
 | `app-internal` network not added | No database or internal service to isolate — same reasoning as `development/web-api/`'s base pattern |
 
@@ -77,6 +78,18 @@ Against the local test stack, without Traefik:
 - No API key set → any request succeeds (upstream's documented default); a
   Docker Secret set via `config/entrypoint.sh` requires `X-Api-Key` on every
   request
+
+## Version notes
+
+- Moved to `v1.38.2` on 2026-11-05, not run on a host at this tag; `Last verified`
+  stays at `v1.34.0`. `v1.35.0` removes the deprecated openapi-3 endpoint, serves
+  `/metrics` only with the Prometheus exporter on, and adds
+  `DOCLING_SERVE_ENABLE_API_DOCS`, default true, whose pages (`/openapi.json`,
+  `/docs`, `/swagger`, `/scalar`) need no API key; this stack sets it to `false`.
+  `v1.36.0` rebuilds the web UI, `DOCLING_SERVE_ENABLE_UI` unchanged; `v1.37.0`
+  makes `granite_docling` the default code-formula preset; `v1.38.2` enforces
+  `max_sources_per_request` on the chunk endpoints. No migrations, no advisory
+  published. https://github.com/docling-project/docling-serve/releases
 
 ## Upgrade checklist
 

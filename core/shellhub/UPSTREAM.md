@@ -22,8 +22,9 @@
 
 - `shellhubio/server`, `shellhubio/ui`, `shellhubio/gateway`, all at the
   same version, matching upstream's single-`${SHELLHUB_VERSION}` model
-- `postgres:18.0` and `valkey/valkey:9.1-alpine` — the exact versions
-  upstream's own `docker-compose.postgres.yml` and `docker-compose.yml` pin
+- `postgres:18.6` and `valkey/valkey:9.1-alpine`. Upstream's own
+  `docker-compose.postgres.yml` still pins `postgres:18.0`; this stack runs the
+  newest 18.x patch release instead (see Version notes)
 
 ## What we changed vs. upstream compose
 
@@ -54,6 +55,19 @@
   against Authentik or Keycloak (SAML confirmed Enterprise-only; OIDC in
   Community Edition not confirmed either way), backup/restore, or behavior
   across a restart or upgrade.
+
+## Version notes
+
+- `DB_TAG` moved from `18.0` to `18.6` on 2026-11-05, not run on a host at this
+  tag. A patch release within 18: no dump and restore (18.5 was never
+  released). Manual items from the 18.2 and 18.6 release notes, none expected to
+  apply to ShellHub's schema: reindex `ltree` indexes; only `pgoutput` and
+  `test_decoding` are allowed as logical decoding plugins; pgcrypto refuses
+  ciphers OpenSSL rejects; check `reltuples` after parallel GIN index builds;
+  reindex `btree_gist` indexes on float and bit columns. Fixes CVE-2026-2003 to
+  CVE-2026-2007 (18.2) and 28 CVEs in 18.6, among them CVE-2026-6471,
+  CVE-2026-14663 and CVE-2026-6464 — the full list is in
+  https://www.postgresql.org/docs/release/18.6/.
 
 ## Upgrade checklist
 

@@ -56,7 +56,8 @@ seconds on an empty database. The healthcheck allows two minutes.
 
 **The first account to register becomes the instance admin.** Register, then
 close registration: `REGISTRATION_ENABLED=false` in `.env` and
-`docker compose up -d`, or toggle it at `/admin`, which overrides the file.
+`docker compose up -d`. The toggle at `/admin` does not override it: since
+1.26.0 a set environment variable outranks the saved setting.
 
 ## Verify
 

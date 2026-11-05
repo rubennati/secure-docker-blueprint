@@ -9,7 +9,7 @@
 - **Origin:** Community · unofficial Bitwarden reimplementation · no single jurisdiction
 - **Domain:** Identity, access and secrets
 - **Role:** Password manager: logins, TOTP and shared collections
-- **Based on version:** `1.37.4`
+- **Based on version:** `1.37.5`
 - **Last verified:** 2026-11-02 (1.37.4) — step 8 lab host behind Traefik 3.7.17 with MariaDB 11.4: registration through the e-mail token flow with `apps/mailpit` as the SMTP sink, password-grant login, sync and a created item through the client API (a lab script; no official client run), WebSocket notifications (101 with a token, 401 without), the admin panel's Argon2 token (401 wrong, session on right), signups off refusing a new registration, Vaultwarden's own `X-Frame-Options` passed through; restored from a borgmatic archive into a throwaway instance (docs/labs/ingress/2026-11-01-results.md)
 
 ## What we changed and why
@@ -133,6 +133,16 @@ Upstream reference:
   `POST /api/accounts/prelogin` are removed; the feature flags are removed and
   `EXPERIMENTAL_CLIENT_FEATURE_FLAGS` only warns (not set here); `DUO_USE_IFRAME`
   is ignored (not set here); `MARIADB_TLS_DISABLE_PEER_VERIFICATION` is new.
+- Moved to `1.37.5` on 2026-11-05 (released 2026-11-01), not run on a host at
+  this tag. A security release: GHSA-x9cq-f669-vrr4 (website icons, medium) and
+  GHSA-9pjj-f9g5-3x4c (emergency access, medium), both still private upstream.
+  The bundled web vault is v2026.10.1. Invalid configuration values now stop
+  the start with an error: numeric options have tighter ranges, and the rate
+  limit `*_SECONDS` and `*_MAX_BURST` options must be at least 1 — the values
+  this stack sets (300/3 for the admin page, 60/10 for logins) are inside the
+  ranges. Not checked: whether the empty strings the compose file passes for
+  unset options (`PUSH_RELAY_URI`, `PUSH_IDENTITY_URI`, `SMTP_HOST`) pass the
+  new validation; watch the first start.
 
 ## Upgrade checklist
 

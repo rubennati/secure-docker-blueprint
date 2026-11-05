@@ -14,7 +14,7 @@
 - **Domain:** Business operations
 - **Role:** Project management for teams that do not have a project manager —
   projects, milestones, tasks, time tracking, retrospectives and goals
-- **Based on version:** `3.9.8`
+- **Based on version:** `3.13.2`
 
 ## Project maturity
 
@@ -23,7 +23,7 @@ regular patch cadence.
 
 ## What we use
 
-- `leantime/leantime:3.9.8`, one container. Inside it supervisord runs three
+- `leantime/leantime:3.13.2`, one container. Inside it supervisord runs three
   programs: nginx on 8080, php-fpm on 127.0.0.1:9000, and
   `bin/leantime schedule:work` — the scheduler that sends notifications and the
   daily digest. It is not optional.
@@ -92,6 +92,33 @@ What a host run still has to establish: the route through `core/traefik`,
 `limit-standard` against the application's own pages, a mail path for the
 notifications the scheduler sends, and a restore from the volumes below.
 
+## Version notes
+
+- Moved to `3.13.2` on 2026-11-05, not run on a host at this tag. Database
+  migrations in 3.12 (db version 3.5.30, merges duplicate plugin rows) and 3.13 (db
+  version 3.5.33: a `metadata` column on projects for per-project modules, a separate
+  key and base role for roles, the new permissions granted to existing roles). The
+  image does not apply them by itself: run checklist step 4, or confirm the database
+  update screen as an admin. 3.13 runs on Laravel 12 and the image moves to PHP 8.4
+  with the `intl` extension; paths, ports and the `www-data` uid are unchanged.
+  Plugins live in `./volumes/plugins`, which hides the plugins bundled in the image:
+  installed ones must be updated by hand after the core — McpServer to 2.0 (core now
+  ships laravel/mcp 1.x), and CustomFields, Notes, PgmPro, StrategyPro and Whiteboards
+  to their 3.13 releases. 3.10.1 runs PHP in UTC; timestamps written before in a
+  non-UTC timezone may display shifted. 3.10.2 signs everyone out once and invalidates
+  earlier password-reset links, requires `LEAN_APP_URL` behind a proxy that rewrites
+  the Host header (set here), trusts only private-network proxies by default (Docker
+  networks qualify) and adds an origin check on state-changing requests
+  (`LEAN_CSRF_ORIGIN_CHECK`) and rate limits (`LEAN_RATELIMIT_PASSWORD_RESET`,
+  `LEAN_RATELIMIT_TWOFA`). 3.10.3 runs plugin scheduled jobs from cron, so expect a
+  catch-up on the first scheduler run, and adds `GET /health`. 3.13.2 reports
+  marketplace install results with the PHP, OpenSSL and OS versions to the
+  marketplace. Security fixes: 3.10.2 (password-reset tokens, session rotation, rate
+  limits, OIDC token validation, API role escalation, project-scoped authorization,
+  file module, outbound webhook and calendar requests, CSRF), 3.10.3 (email links from
+  a trusted app URL instead of the Host header, escaped theme CSS). No CVE or GHSA IDs
+  are listed in the notes.
+
 ## Upgrade checklist
 
 1. Read the release notes — https://github.com/leantime/leantime/releases
@@ -110,5 +137,5 @@ notifications the scheduler sends, and a restore from the volumes below.
 curl -s https://raw.githubusercontent.com/leantime/leantime/master/.docker/docker-compose.yml
 
 # Every setting the application knows, with upstream's defaults and comments
-docker run --rm --entrypoint sh leantime/leantime:3.9.8 -c 'cat config/sample.env'
+docker run --rm --entrypoint sh leantime/leantime:3.13.2 -c 'cat config/sample.env'
 ```

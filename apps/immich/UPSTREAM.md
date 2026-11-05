@@ -12,7 +12,7 @@
 - **Origin:** US · Alex Tran · non-EU
 - **Domain:** Photos
 - **Role:** Photo and video backup with mobile apps and machine-learning search
-- **Based on version:** `v3.2.0`
+- **Based on version:** `v3.3.6`
 - **Last verified:** 2026-11-03 (v3.2.0) — step 8 lab host behind Traefik 3.7.17 on its edge network, machine learning off: the admin, a second user kept from the admin's assets, uploads with byte-identical originals and thumbnails, and the README's restore pipeline with a plain `pg_dump`; the `postgresql_databases` entry did not restore (the host's PostgreSQL client) (docs/labs/ingress/2026-11-01-results.md). Earlier: 2026-04-17 (Last checked)
 
 ## What we use
@@ -38,6 +38,19 @@
 | **`DB_TAG` / `APP_TAG` / `REDIS_TAG` as variables** | Blueprint pinning convention |
 | **Digest pinning dropped for the Postgres + Valkey images** | Inbox pinned by digest; blueprint pins by tag. Upgrade discipline handled via `APP_TAG` bump + documented in Upgrade checklist |
 | **Access `access-public`, `limit-standard` and `headers-standard` defaults** | Typical for photo-sharing; consider `access-vpn` for family-only |
+
+## Version notes
+
+- Moved to `v3.3.6` on 2026-11-05, server and machine learning together, not run
+  on a host at this tag; `Last verified` stays at `v3.2.0`. No breaking change,
+  variable change or database image change in the range; migrations run on start.
+  `v3.3.0` offers optimised models behind `MACHINE_LEARNING_MODEL_REVISION=v2`
+  (opt-in, not set here). `v3.3.6` turns off onnxruntime telemetry, which had sent
+  anonymous metrics to Microsoft from the machine-learning container. Advisories
+  fixed: GHSA-q89f-h332-8q2h (high, SVG upload reaching ImageMagick, RCE;
+  `v3.2.4`) and GHSA-72rm-x7xr-v679 (unauthenticated filesystem path injection;
+  `v3.3.0`). `v3.3.5` carries the eMudhra CA removal and the Node.js October 2026
+  security releases. https://github.com/immich-app/immich/releases
 
 ## Upgrade checklist
 

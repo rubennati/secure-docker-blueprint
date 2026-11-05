@@ -13,7 +13,7 @@
 - **Origin:** Individual maintainer · Mohamed Zrouga · no single jurisdiction
 - **Domain:** Identity, access and secrets
 - **Role:** Privileged access gateway for SSH sessions, from a young single-maintainer project
-- **Based on version:** `1.2.0`
+- **Based on version:** `1.4.0`
 - **Verification snapshot:** 2026-09-19 — clean start and hardening only, see below
 
 ## EXPERIMENTAL — project maturity, verified directly
@@ -56,7 +56,7 @@ open source.
 
 ## What we use
 
-- `ghcr.io/orion-belt-dev/orion-belt-server:1.2.0`
+- `ghcr.io/orion-belt-dev/orion-belt-server:1.4.0`
 - `postgres:16-alpine`, following upstream's own `docker-compose.prod.yml`
   exactly for this pairing
 - The agent (`docker-compose.agent.yml`), documented but not started here
@@ -98,6 +98,22 @@ open source.
   session, WebAuthn enrollment, the JIT/approval workflow, ReBAC policy
   behavior, session recording end to end, backup/restore, or behavior
   across a restart or upgrade.
+
+## Version notes
+
+- Moved to `1.4.0` on 2026-11-05, not run on a host at this tag; the agent
+  example (`.env.agent.example`) moved with it. 1.4.0 adds RDP, VNC and
+  just-in-time Kubernetes access through the agents and migrates the database
+  schema on start (`permission_history`, risk signals, `risk_policy`). A
+  `both` grant now means ssh + scp only; SSH and SCP behaviour is unchanged.
+  Agents older than 1.4.0 keep working for SSH. The new
+  `ORION_TRUSTED_PROXIES` (read into `server.trusted_proxies`) defaults to
+  trusting no proxy, so behind Traefik every web client would appear as Traefik's
+  address — this stack now sets it, see `.env.example`. No GHSA in the range;
+  1.2.1 hardens authentication, authorization and proxy handling, 1.3.0 moves
+  to Go 1.27.3 for reported vulnerabilities, lets users delete only their own
+  SSH keys and validates admin-set plugin URLs and mail headers, and 1.4.0
+  audits key, token and WebAuthn logins that were not audited before.
 
 ## Upgrade checklist
 

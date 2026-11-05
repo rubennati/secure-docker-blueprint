@@ -117,11 +117,14 @@ local in the sense of "not routed", not in the sense of "harmless".
 
 ## What leaves the host
 
-The update check is off. Four catalogue feeds remain, all on GitHub, all read at
-start: the MCP catalogue, the system MCP catalogue, the skills repository and
-the hosted-agents catalogue. They are content rather than telemetry — nothing
-about this installation is sent — and each can be pointed at your own
-repository. See `UPSTREAM.md` for the settings.
+The update check is off. Three catalogue feeds remain, all on GitHub, all read at
+start: the MCP catalogue, the system MCP catalogue and the skills repository.
+The hosted-agents catalogue went with Hosted Agents in v0.27.0. They are content
+rather than telemetry — nothing about this installation is sent — and each can
+be pointed at your own repository. See `UPSTREAM.md` for the settings.
+
+Since v0.27.0 MCP clients connect through virtual MCP servers (vMCPs) only; a
+direct connection to a catalogue entry or a server instance is refused.
 
 Anything you then ask an agent to do reaches whatever model provider and MCP
 servers you configured — that is the work, not a side effect.

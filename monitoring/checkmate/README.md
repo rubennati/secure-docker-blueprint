@@ -110,8 +110,9 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 
 ## What leaves the host
 
-Upstream states plainly that Checkmate has no phone-home and no telemetry, and
-nothing in the image contradicts that. Three features do send data outward
+Since v3.13.0 Checkmate has anonymous telemetry, on by default: a daily
+heartbeat, with a count of monitors by type since v3.13.1. This stack sets
+`TELEMETRY_ENABLED: "false"`, so it is off. Three features do send data outward
 **when you choose them**:
 
 | Feature | Goes to | What |

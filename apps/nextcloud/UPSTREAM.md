@@ -80,6 +80,21 @@ If fpm-alpine + nginx causes issues:
 5. Remove `nginx/nginx.conf` mount
 6. The `cron` service stays unchanged
 
+## Version notes
+
+- The nginx front (`NGINX_TAG`) moved from `1.29-alpine-slim` to
+  `1.31-alpine-slim` on 2026-11-05, not run on a host at this tag; it stays on the mainline branch (1.29 was mainline too, 1.30 is the
+  stable branch). The "Change:" entries from 1.30.0 to 1.31.8 do not touch this
+  configuration: HTTP/2 and HTTP/3 requests carrying `Connection`, `Upgrade`, `TE`
+  and similar headers are rejected, requests to backends always carry `:authority`
+  or `Host`, HTTP/2 uses RFC 9218 priorities, xslt external entities are off,
+  `working_directory` is relative to the prefix, `$request_id` uses SipHash.
+  Security fixes in 1.31.0 to 1.31.7: CVE-2026-42926, CVE-2026-42945,
+  CVE-2026-42946, CVE-2026-42934, CVE-2026-40460, CVE-2026-40701, CVE-2026-9256,
+  CVE-2026-42530, CVE-2026-42055, CVE-2026-48142, CVE-2026-42533, CVE-2026-60005,
+  CVE-2026-56434, CVE-2026-90439, CVE-2026-15176, CVE-2026-93479, CVE-2026-95101,
+  CVE-2026-97629, CVE-2026-97205.
+
 ## Upgrade checklist
 
 When bumping the Nextcloud version:

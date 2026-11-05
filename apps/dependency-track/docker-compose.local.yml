@@ -54,7 +54,7 @@ services:
       - "127.0.0.1:8081:8080"
     networks: [dependency-track-local]
     healthcheck:
-      test: ["CMD", "/bin/sh", "-c", "curl -f -s --max-time 3 --noproxy '*' -o /dev/null http://127.0.0.1:9000/health"]
+      test: ["CMD", "/bin/sh", "-c", "wget -q -Y off -T 3 -O /dev/null http://127.0.0.1:9000/health"]
       interval: 10s
       timeout: 10s
       retries: 10

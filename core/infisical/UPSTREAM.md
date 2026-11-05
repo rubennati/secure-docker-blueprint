@@ -12,12 +12,12 @@
 - **Origin:** US · Infisical Inc · non-EU
 - **Domain:** Identity, access and secrets
 - **Role:** Central secret manager, an alternative to per-stack Docker Secrets
-- **Based on version:** `v0.165.10`
+- **Based on version:** `v0.167.6`
 - **Last verified:** — (config authored 2026-07-26; not yet run on a live server)
 
 ## What we use
 
-- `infisical/infisical:v0.165.10` standalone image (backend + UI + API)
+- `infisical/infisical:v0.167.6` standalone image (backend + UI + API)
 - `postgres:16-alpine` as the secret store
 - `redis:7.4-alpine` for cache + job queue
 - Custom `config/entrypoint.sh` to inject secrets from Docker Secret files (no `_FILE` support)
@@ -35,6 +35,25 @@
 | Traefik `access-vpn` + `limit-standard` default | A central secret manager must not be public; UI is an SPA |
 | Postgres pinned to `16-alpine` | Upstream sample uses `postgres:14-alpine`; blueprint prefers a current supported line |
 | DB password generated as hex | URL-safe in `DB_CONNECTION_URI` (avoids `/ + =` breaking the URI) |
+
+## Version notes
+
+- Moved to `v0.167.6` on 2026-11-05, not run on a host at this tag. Upstream's
+  upgrade-impact records (`upgrade-impact/data/releases/`) list startup
+  database migrations in most releases of the range, no manual step for them.
+  Breaking changes: the Agent Vault member, variable and session-log APIs
+  change shape (v0.166.4–v0.166.6, v0.167.5); since v0.166.6, revoking auth
+  and managing tokens and client secrets on org identities needs the specific
+  identity action, so roles on the legacy privilege system without it — the
+  built-in Member role included — get `403`, and LDAP auth template URLs on
+  private addresses need `ALLOW_INTERNAL_IP_CONNECTIONS=true`; v0.167.0 drops
+  the bundled `go-sidecar` binary, which this stack does not use; v0.167.5
+  disables creating proxied services and soft-deletes certificates. The
+  v0.167.5 certificate migration takes a 10-second lock: a concurrent
+  `pg_dump` or other long transaction can make startup fail, so take the
+  database backup before, not during, the upgrade; rollback is restoring that
+  snapshot. No variable this stack sets changed. No advisory is listed in the
+  repository's advisory feed for the range.
 
 ## Upgrade checklist
 

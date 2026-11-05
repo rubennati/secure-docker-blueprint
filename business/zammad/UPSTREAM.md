@@ -12,7 +12,7 @@
 - **Origin:** Germany · Zammad GmbH · EU
 - **Domain:** Business operations
 - **Role:** Helpdesk and ticket system across mail, chat and phone
-- **Based on version:** `7.2.0-0004` (Zammad publishes no clean semver — only `X.Y.Z-NNNN`; pin the
+- **Based on version:** `7.2.2-0038` (Zammad publishes no clean semver — only `X.Y.Z-NNNN`; pin the
   highest build of the target release, not the first)
 - **Last checked:** 2026-08-16
 
@@ -67,6 +67,21 @@ Minimum RAM: ~4 GB (Elasticsearch grabs 512 MB heap alone).
   overflows, ascii auth enforcement) and prefixes `lru_crawler metadump` output
   with `OK`, which touches tooling only; 1.6.44 and 1.6.45 fix crashes and
   overflows. No changed default.
+
+- Moved to `7.2.2-0038` on 2026-11-05, not run on a host at this tag — the
+  highest 7.2.2 build in the registry that day (built 2026-11-05); 7.2.2 is the
+  newest stable release, the only 7.3 tag is `7.3.0-alpha`. Breaking changes
+  added to the 7.2 section since 7.2.0 (`BREAKING_CHANGES.md`): verifying a
+  signup address no longer signs the user in; the getting-started endpoints
+  require `admin.wizard` once the system is set up; the legacy WebSocket login
+  is authenticated from the session cookie and `signshow` no longer returns
+  `session_id`. The 7.2 note that the request scheme comes only from
+  `X-Forwarded-Proto` or `NGINX_SERVER_SCHEME` is covered: this stack sets
+  `NGINX_SERVER_SCHEME`. Elasticsearch 8.15 stays the minimum (`ES_TAG` is
+  8.17.4). Migrations run at start. No advisory IDs are listed; the 7.2.1 and
+  7.2.2 commit logs carry authorization hardening (knowledge base, GraphQL
+  attribute assignment, ActionCable sessions, link and activity-stream
+  access).
 
 ## Upgrade checklist
 

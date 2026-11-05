@@ -12,7 +12,7 @@
 - **Origin:** Community · no single company · no single jurisdiction
 - **Domain:** Documents and e-signature
 - **Role:** Document management with OCR, tagging and full-text search
-- **Based on version:** `3.1.3`
+- **Based on version:** `3.4.2`
 - **Last verified:** 2026-11-02 (3.1.3) — with postgres 16.14, redis 7.4-alpine, gotenberg 8.21 and tika 3.3.3.0; step 8 lab host on its edge network behind a loopback-only test router: the README's setup run again in a fresh instance, upload through the UI and the API, the consume folder and IMAP mail import; OCR of scans and images (`deu+ron` included), Tika and Gotenberg for DOCX and e-mail, full-text search, metadata, owner and object permissions, SMTP; dependency failures and the healthchecks; borgmatic backup with the README's entry and the PostgreSQL 16 client, restored into a throwaway instance (backup/borgmatic/RESTORE.md). Lab scripts and headless Chromium, no mobile app; `sso.yml` not run (docs/labs/ingress/2026-11-01-results.md). Earlier: 2026-05-03 (v2.20.13)
 
 ## What we use
@@ -49,6 +49,24 @@
   3.x line is unchanged.
 - Run at these tags on the step 8 lab host on 2026-11-02; that run does not
   replace the change-note check above.
+- Moved to `3.4.2` on 2026-11-05, not run on a host at this tag. No breaking
+  change, renamed `PAPERLESS_*` variable or manual step is listed from 3.2.0 to
+  3.4.2; Django migrations run on start as before. 3.3.2 fixes
+  GHSA-c8f3-pqr2-rr24 (cross-user information disclosure in AI classification
+  workflows on ownerless documents); 3.3.4 updates Pillow, aiohttp and the CA
+  bundle for the eMudhra / emSign certificate incident.
+- Gotenberg moved to `8.39` on 2026-11-05, not run on a host at this tag
+  (upstream Paperless ships 8.38 at this time). Behaviour changes in the range:
+  8.30 ships a smaller font set (Noto, DejaVu, Liberation, Carlito, Caladea);
+  8.31 blocked private addresses by default and 8.32 reverted that; 8.37 warns
+  at start about unanchored allow-list patterns, so `--chromium-allow-list` is
+  now anchored (`^file:///tmp/.*`) in both compose files, as upstream Paperless
+  did; 8.38 gives every Chromium conversion its own browser context and counts
+  the raw request body against `--api-body-limit`; 8.39 rejects non-HTTP
+  schemes on the URL routes, which Paperless does not call. Security fixes in
+  the range include the ExifTool arbitrary file write (8.29), SSRF and DNS
+  rebinding hardening (8.31–8.32), Chromium CVE-2026-87654 (8.38.1), and the
+  ExifTool `j` alias, the `devtools://` scheme and the eMudhra roots (8.39).
 
 ## Upgrade checklist
 

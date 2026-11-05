@@ -38,7 +38,7 @@ network with this one. Validate a change before restarting:
 
 ```bash
 docker run --rm -v "$PWD/config/config.yaml:/config/config.yaml:ro" \
-  cr.agentgateway.dev/agentgateway:v1.5.0 -f /config/config.yaml --validate-only
+  cr.agentgateway.dev/agentgateway:v1.7.0 -f /config/config.yaml --validate-only
 ```
 
 ## Three kinds of credential

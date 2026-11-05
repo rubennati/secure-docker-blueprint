@@ -13,17 +13,17 @@
 - **Domain:** Business operations
 - **Role:** Invoicing, quotes and payments
 - **Note:** Elastic License 2.0 is not OSI-approved — source-available, not open source. Self-hosting permitted; providing it as a managed service to others is restricted.
-- **Based on version:** `5.13.52`
+- **Based on version:** `5.13.53`
 - **Last verified:** 2026-11-03 (5.13.52) — step 8 lab host behind Traefik 3.7.17 on its edge network: the README's setup, login and API, a client, an invoice with its PDF, the invoice mail and a payment, and the README's borgmatic entries restored into a throwaway instance (docs/labs/ingress/2026-11-01-results.md). Earlier: 2026-09-13 (5.13.40)
 
 ## Pinned Versions
 
 | Component | Tag | Notes |
 |---|---|---|
-| Invoice Ninja | `5.13.52` | Latest release 2026-10-30 |
+| Invoice Ninja | `5.13.53` | Latest release 2026-11-02 |
 | MySQL | `8.4` | LTS — upstream target DB |
 | Redis | `8.6-alpine` | |
-| Nginx | `1.29-alpine` | |
+| Nginx | `1.31-alpine` | |
 
 ## What We Use From Upstream
 
@@ -161,6 +161,22 @@ docker compose up -d
   `OIDC_ISSUER`; this stack sets neither, an installation that configured OIDC
   renames it. No breaking change, no migration beyond `php artisan migrate`, no
   advisory in the range.
+- Moved to `5.13.53` on 2026-11-05 (released 2026-11-02), not run on a host at
+  this tag. A fix for a partial-payment regression in InvoicePay and static
+  analysis cleanup; no migration, no variable change (only `config/ninja.php`
+  changes in the application config), no advisory.
+- nginx moved from `1.29-alpine` to `1.31-alpine` on 2026-11-05, not run on a host at
+  this tag; it stays on the mainline branch (1.29 was mainline too, 1.30 is the
+  stable branch). The "Change:" entries from 1.30.0 to 1.31.8 do not touch this
+  configuration: HTTP/2 and HTTP/3 requests carrying `Connection`, `Upgrade`, `TE`
+  and similar headers are rejected, requests to backends always carry `:authority`
+  or `Host`, HTTP/2 uses RFC 9218 priorities, xslt external entities are off,
+  `working_directory` is relative to the prefix, `$request_id` uses SipHash.
+  Security fixes in 1.31.0 to 1.31.7: CVE-2026-42926, CVE-2026-42945,
+  CVE-2026-42946, CVE-2026-42934, CVE-2026-40460, CVE-2026-40701, CVE-2026-9256,
+  CVE-2026-42530, CVE-2026-42055, CVE-2026-48142, CVE-2026-42533, CVE-2026-60005,
+  CVE-2026-56434, CVE-2026-90439, CVE-2026-15176, CVE-2026-93479, CVE-2026-95101,
+  CVE-2026-97629, CVE-2026-97205.
 
 ## Upgrade Checklist
 

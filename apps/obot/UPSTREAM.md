@@ -13,7 +13,7 @@
 - **Origin:** US · Obot AI, Inc · non-EU
 - **Domain:** AI and local AI
 - **Role:** MCP gateway and agent platform — catalogues MCP servers, runs the hosted ones as containers, with an LLM gateway in front
-- **Based on version:** `v0.26.0`
+- **Based on version:** `v0.27.0`
 
 ## Project maturity
 
@@ -24,7 +24,7 @@ a refresh.
 
 ## What we use
 
-- `ghcr.io/obot-platform/obot:v0.26.0`, one container.
+- `ghcr.io/obot-platform/obot:v0.27.0`, one container.
 - `postgres:18.6-alpine`, which **replaces the PostgreSQL the image bundles**.
 - `tecnativa/docker-socket-proxy:v0.5.0` between obot and the Docker daemon.
 
@@ -38,7 +38,7 @@ a refresh.
 | `OBOT_BOOTSTRAP_TOKEN` from a Docker Secret | Left unset, obot generates one and prints it into the container log, where it stays |
 | `user: "1000:1000"` | The image declares `USER 0`. With the DSN set it never needs root — verified below |
 | `OBOT_SERVER_DISABLE_UPDATE_CHECK=true` | Upstream checks for new releases on its own |
-| `APP_TAG=v0.26.0` | Upstream's documented command uses `:latest` |
+| `APP_TAG=v0.27.0` | Upstream's documented command uses `:latest` |
 | PostgreSQL on `internal: true` | Upstream has no second service to isolate |
 | `APP_TRAEFIK_ACCESS=access-vpn` | This stack can start containers on the host |
 
@@ -65,7 +65,8 @@ and no Traefik router. The socket proxy did reach the real Docker daemon.
   `/api/mcpcatalogs`, `/api/users` and `/api/agents` all answer `401
   unauthorized` without credentials; the bootstrap token as a bearer token
   returns the `bootstrap` user with the `owner` and `admin` groups, and a wrong
-  token is refused.
+  token is refused. Measured at v0.26.0; `/api/agents` belongs to Obot Agent,
+  which v0.27.0 removes.
 - **The image ships no HTTP client** — no curl, no wget, and busybox is built
   without the wget applet. The health check opens the socket in bash instead.
   The endpoint is `/api/healthz`; `/healthz` and `/health` are 404.
@@ -82,7 +83,7 @@ and a restore from the volumes.
 
 ## What reaches the network on its own
 
-`OBOT_SERVER_DISABLE_UPDATE_CHECK` closes the update check. Four content feeds
+`OBOT_SERVER_DISABLE_UPDATE_CHECK` closes the update check. Three content feeds
 remain, all on GitHub, all fetched at start:
 
 | Setting | Default |
@@ -90,15 +91,30 @@ remain, all on GitHub, all fetched at start:
 | `OBOT_SERVER_DEFAULT_MCPCATALOG_PATH` | `github.com/obot-platform/mcp-catalog` |
 | `OBOT_SERVER_DEFAULT_SYSTEM_MCPCATALOG_PATH` | `github.com/obot-platform/system-mcp-catalog` |
 | `--default-skill-repo-url` | `github.com/obot-platform/skills` |
-| `--default-hosted-agents-catalog-url` | `github.com/obot-platform/hosted-agents-catalog` |
 
 They are what the catalogue is made of rather than telemetry, and each can be
-pointed at your own repository. Nothing about the installation is sent.
+pointed at your own repository. Nothing about the installation is sent. A fourth
+feed, the hosted-agents catalogue (`--default-hosted-agents-catalog-url`), went
+with Hosted Agents in v0.27.0.
 
 Upstream's defaults are on the careful side where it matters most:
 `--disallow-localhost-mcp`, `--disallow-private-ipmcp` and
 `--disallow-link-local-mcp` all default to **true**, so a hosted MCP server
 cannot reach this host's own services unless that is changed.
+
+## Version notes
+
+- Moved to `v0.27.0` on 2026-11-05, not run on a host at this tag. Crossing
+  `v0.26.2` runs a data migration on start that turns MCP servers exposed by
+  access rules into virtual MCP servers (vMCPs); `v0.27.0` rejects MCP connections
+  that do not go through a vMCP, removes Obot Agent (`OBOT_ENABLE_AGENTS`, the
+  User Impersonation role) and Hosted Agents with their catalogue, and redeploys
+  containerised MCP servers once. Init files reach those containers as an archive
+  copy, which the socket proxy's `CONTAINERS` and `POST` already allow. Advisories
+  fixed: GHSA-57qx-69p6-3w3g and GHSA-x3hf-v55x-jcp6 (high), GHSA-2mfp-9vv3-q737,
+  GHSA-r3m3-5rmh-h3fm, GHSA-cv8w-jqg2-jg55 (`v0.27.0`); GHSA-929v-v9hq-5xhr,
+  GHSA-xhpw-65qw-wj6m, GHSA-q5wf-87f5-cxgq (`v0.26.1`, `v0.26.2`).
+  https://github.com/obot-platform/obot/releases/tag/v0.27.0
 
 ## Upgrade checklist
 

@@ -10,7 +10,7 @@
 - **Origin:** Estonia · Diletta Luna OÜ (Tallinn) · EU
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Meeting scheduling with booking pages, calendar sync and video links
-- **Based on version:** `1.15.1` (`-slim` tag, digest-pinned)
+- **Based on version:** `1.39.0` (`-slim` tag, digest-pinned)
 - **Last verified:** 2026-09-07 (v1.15.1)
 
 What that date covers: a clean install, migrations, the healthcheck, Traefik
@@ -50,8 +50,38 @@ Tailscale client → Traefik (TLS, 443) → tymeslot-app :4000 (Bandit, LiveView
 | `read_only: true`, tmpfs on `/tmp`, `/run`, `/app/tmp` | The release writes its boot-time `sys.config` copy to `/app/tmp`; everything else goes to `/app/data` |
 | Bind mounts instead of named volumes | Blueprint convention. Upstream's warning against a host path concerns the bundled PostgreSQL's `initdb`, which the slim image does not run |
 | `bash /dev/tcp` healthcheck | The image ships neither curl nor wget; `/healthcheck` verifies database and job queue |
-| Social login off, `WEBHOOK_BASE_URL` unset | Attack surface; the host is not reachable from the public internet, so push channels cannot be registered |
+| Social login off, `WEBHOOK_BASE_URL` unset | Attack surface; the host is not reachable from the public internet, so push channels cannot be registered. Since 1.26.0 the `ENABLE_*_AUTH` variables outrank the admin page, so single sign-on is switched on in the compose file, not at `/admin` |
 | Traefik labels, `access-vpn`, `limit-standard`, `headers-standard` | Blueprint standard. A first load is about ten requests, far below the burst of 500; the access policy is the deployment decision the README describes |
+
+## Version notes
+
+- Moved to `1.39.0` on 2026-11-05, not run on a host at this tag; 24 minor releases
+  past the verified `1.15.1`, so a host re-run is advised before the stack counts as
+  verified again. New index digest
+  `sha256:ad7cfda6fe84a5693fb2da0820fb47c54d9f9e52700223430efaa70bf6cac352`, read
+  from the registry; confirm it with checklist step 4. Breaking changes upstream:
+  1.16.0 moves Zoom meetings on reschedule and needs the `meeting:update:meeting`
+  scope, or `ZOOM_UPDATE_SCOPE_ENABLED=false` (Zoom is not configured here). 1.26.0
+  lets a set environment variable outrank the value saved on the admin page:
+  `REGISTRATION_ENABLED` and the hard-coded `ENABLE_GOOGLE_AUTH`,
+  `ENABLE_GITHUB_AUTH` and `ENABLE_OAUTH_AUTH` in the compose file now decide, and
+  the toggles at `/admin` no longer override them. 1.27.0 refuses to start when
+  `DATA_ENCRYPTION_KEY` is not Base64 or decodes to fewer than 32 bytes; the key the
+  README generates (`openssl rand -base64 48`) passes. 1.29.0 retires the Cloudron
+  URL package (not used here). `start-docker.sh`, compared per step 2: it now reads
+  `/app/data/.env` from the data volume as a layer below the container environment
+  (variables set in the compose file still win, and the database-selection keys are
+  ignored there), no longer defaults `ENABLE_GOOGLE_AUTH`, `ENABLE_GITHUB_AUTH` and
+  `ALLOW_PRIVATE_IPS_FOR_VIDEO`, accepts `DATA_ENCRYPTION_KEYS` after a key rotation,
+  and migrates through `Tymeslot.Release.migrate()`; it still forwards the
+  environment the wrapper exports. The image moves to Elixir 1.20.4 on OTP
+  28.5.0.7, drops Node.js and adds `/app/dotenv-reader.sh`; the `app` user (uid 1000)
+  and the paths are unchanged. Migrations run at boot. Security fixes, with no CVE or
+  GHSA IDs in the notes: plain-text copies of encrypted secrets and of poll, RSVP and
+  free/busy link tokens dropped (1.22.0, 1.27.0), a narrower Content-Security-Policy
+  (1.22.0), rate limits that simultaneous requests could slip past and IPv6 clients
+  limited per network (1.27.0), Telegram webhooks refused with an empty secret
+  (1.18.0), and data encryption key rotation without losing secrets.
 
 ## Upgrade checklist
 
@@ -64,7 +94,7 @@ deliberately, not on every tag.
    wrapper relies on it forwarding the environment to the release:
 
    ```bash
-   gh api -H "Accept: application/vnd.github.raw" "repos/tymeslot/tymeslot/contents/start-docker.sh?ref=v1.15.1" > /tmp/old.sh
+   gh api -H "Accept: application/vnd.github.raw" "repos/tymeslot/tymeslot/contents/start-docker.sh?ref=v1.39.0" > /tmp/old.sh
    gh api -H "Accept: application/vnd.github.raw" "repos/tymeslot/tymeslot/contents/start-docker.sh?ref=vX.Y.Z" > /tmp/new.sh
    diff /tmp/old.sh /tmp/new.sh
    ```
@@ -81,9 +111,9 @@ deliberately, not on every tag.
 
 ```bash
 # The two-container compose file this stack is shaped after
-gh api -H "Accept: application/vnd.github.raw" "repos/tymeslot/tymeslot/contents/docker-compose.with-postgres.yml?ref=v1.15.1"
+gh api -H "Accept: application/vnd.github.raw" "repos/tymeslot/tymeslot/contents/docker-compose.with-postgres.yml?ref=v1.39.0"
 # Every variable the release reads
-gh api -H "Accept: application/vnd.github.raw" "repos/tymeslot/tymeslot/contents/.env.example?ref=v1.15.1"
+gh api -H "Accept: application/vnd.github.raw" "repos/tymeslot/tymeslot/contents/.env.example?ref=v1.39.0"
 ```
 
 ## Useful commands

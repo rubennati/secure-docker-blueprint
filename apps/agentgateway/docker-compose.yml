@@ -26,9 +26,10 @@ services:
     restart: unless-stopped
 
     # --- Security ---
-    # The image is a static binary running as uid 65532 with no shell. Verified with
-    # 2026-09-18 against v1.5.0: read_only, cap_drop ALL and no-new-privileges
-    # hold; the only writable path is the /data volume.
+    # The image is a static binary running as uid 65532 with no shell. Verified on
+    # 2026-09-18 against v1.5.0, not yet repeated at the pinned tag: read_only,
+    # cap_drop ALL and no-new-privileges hold; the only writable path is the
+    # /data volume.
     security_opt:
       - no-new-privileges:true
     cap_drop:
