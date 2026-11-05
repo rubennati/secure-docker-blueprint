@@ -21,21 +21,21 @@ This is the maintainer's view: what has been established about each stack. It ma
 | Stack | State | Pinned | Last verified | Local | Backup docs | Restore docs | Open findings |
 |---|---|---|---|---|---|---|---|
 | [`core/acme-certs`](core/acme-certs/) | `scaffolded` | `APP_TAG=0.2.1` | 2026-04-14 ⚠️ | — | documented | missing | [⚠️ 3 CRITICAL](core/acme-certs/README.md#open-findings) |
-| [`core/authelia`](core/authelia/) | `scaffolded` | `APP_TAG=4.39.28` | — | ✅ | documented | missing | [⚠️ 2 CRITICAL](core/authelia/README.md#open-findings) |
-| [`core/authentik`](core/authentik/) | `scaffolded` | `APP_TAG=2026.8.5` | 2026-11-02 | ✅ | documented | missing | [⚠️ 3 CRITICAL](core/authentik/README.md#open-findings) |
+| [`core/authelia`](core/authelia/) | `scaffolded` | `APP_TAG=4.39.28` | — | ✅ | documented | missing | [⚠️ 1 CRITICAL](core/authelia/README.md#open-findings) |
+| [`core/authentik`](core/authentik/) | `scaffolded` | `APP_TAG=2026.8.5` | 2026-11-02 | ✅ | documented | missing | [⚠️ 2 CRITICAL](core/authentik/README.md#open-findings) |
 | [`core/crowdsec`](core/crowdsec/) | `scaffolded` | `APP_TAG=v1.8.2` | 2026-11-01 | — | documented | missing | — |
 | [`core/dnsmasq`](core/dnsmasq/) | `scaffolded` | `APP_TAG=2.93` | 2026-04-14 ⚠️ | — | documented | missing | — |
-| [`core/dockhand`](core/dockhand/) | `scaffolded` | `APP_TAG=v1.0.57` | 2026-04-16 ⚠️ | ✅ | documented | missing | [⚠️ 2 CRITICAL](core/dockhand/README.md#open-findings) |
+| [`core/dockhand`](core/dockhand/) | `scaffolded` | `APP_TAG=v1.0.57` | 2026-04-16 ⚠️ | ✅ | documented | missing | [⚠️ 1 CRITICAL](core/dockhand/README.md#open-findings) |
 | [`core/hawser`](core/hawser/) | `scaffolded` | `APP_TAG=0.2.53` | 2026-04-14 ⚠️ | — | documented | missing | — |
 | [`core/headscale`](core/headscale/) | `scaffolded` | `APP_TAG=v0.29.7` | — | ✅ | documented | missing | — |
 | [`core/host-watchdog`](core/host-watchdog/) | `scaffolded` | *host-installed* | — | — | missing | missing | — |
-| [`core/infisical`](core/infisical/) | `scaffolded` | `APP_TAG=v0.167.6` | — | ✅ | documented | missing | [⚠️ 2 CRITICAL](core/infisical/README.md#open-findings) |
+| [`core/infisical`](core/infisical/) | `scaffolded` | `APP_TAG=v0.167.6` | — | ✅ | documented | missing | [⚠️ 1 CRITICAL](core/infisical/README.md#open-findings) |
 | [`core/jumpserver`](core/jumpserver/) | `scaffolded` | `APP_TAG=v5.1.1` | — | ✅ | documented | missing | [⚠️ 19 CRITICAL](core/jumpserver/README.md#open-findings) |
-| [`core/keycloak`](core/keycloak/) | `scaffolded` | `APP_TAG=26.8.1` | 2026-09-07 | ✅ | documented | missing | [⚠️ 2 CRITICAL](core/keycloak/README.md#open-findings) |
-| [`core/orion-belt`](core/orion-belt/) | `scaffolded` | `APP_TAG=1.4.0` | — | ✅ | documented | missing | [⚠️ 2 CRITICAL](core/orion-belt/README.md#open-findings) |
+| [`core/keycloak`](core/keycloak/) | `scaffolded` | `APP_TAG=26.8.1` | 2026-09-07 | ✅ | documented | missing | [⚠️ 1 CRITICAL](core/keycloak/README.md#open-findings) |
+| [`core/orion-belt`](core/orion-belt/) | `scaffolded` | `APP_TAG=1.4.0` | — | ✅ | documented | missing | [⚠️ 1 CRITICAL](core/orion-belt/README.md#open-findings) |
 | [`core/portainer`](core/portainer/) | `scaffolded` | `APP_TAG=2.45.3` | 2026-04-16 ⚠️ | ✅ | documented | missing | — |
 | [`core/portainer-agent`](core/portainer-agent/) | `scaffolded` | `APP_TAG=2.45.3` | 2026-05-05 | — | documented | missing | — |
-| [`core/shellhub`](core/shellhub/) | `scaffolded` | `SHELLHUB_VERSION=v0.29.3` | — | ✅ | documented | missing | [⚠️ 2 CRITICAL](core/shellhub/README.md#open-findings) |
+| [`core/shellhub`](core/shellhub/) | `scaffolded` | `SHELLHUB_VERSION=v0.29.3` | — | ✅ | documented | missing | [⚠️ 1 CRITICAL](core/shellhub/README.md#open-findings) |
 | [`core/step-ca`](core/step-ca/) | `scaffolded` | `APP_TAG=0.30.2` | — | ✅ | documented | missing | [⚠️ 4 CRITICAL](core/step-ca/README.md#open-findings) |
 | [`core/teleport`](core/teleport/) | `scaffolded` | `APP_TAG=18.11.8` | — | ✅ | documented | missing | — |
 | [`core/traefik`](core/traefik/) | `baseline-aligned` | `TRAEFIK_IMAGE=traefik:v3.7.17` | 2026-11-01 | — | documented | missing | — |
@@ -49,16 +49,16 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/adminer`](apps/adminer/) | `scaffolded` | `APP_TAG=6.3.0-standalone` | 2026-05-02 | — | documented | missing | [⚠️ 1 CRITICAL](apps/adminer/README.md#open-findings) |
 | [`apps/agentgateway`](apps/agentgateway/) | `scaffolded` | `APP_TAG=v1.7.0` | 2026-09-21 | ✅ | documented | missing | — |
 | [`apps/bookstack`](apps/bookstack/) | `scaffolded` | `APP_TAG=version-v26.09.2@sha256:33f61a72d9aa…` | 2026-05-03 | ✅ | documented | missing | [⚠️ 1 CRITICAL](apps/bookstack/README.md#open-findings) |
-| [`apps/caldiy`](apps/caldiy/) | `scaffolded` | `APP_TAG=v6.2.0-6@sha256:538cbb4a2273…` | 2026-07-26 | ✅ | documented | missing | [⚠️ 26 CRITICAL](apps/caldiy/README.md#open-findings) |
+| [`apps/caldiy`](apps/caldiy/) | `scaffolded` | `APP_TAG=v6.2.0-6@sha256:538cbb4a2273…` | 2026-07-26 | ✅ | documented | missing | [⚠️ 25 CRITICAL](apps/caldiy/README.md#open-findings) |
 | [`apps/calnode`](apps/calnode/) | `scaffolded` | `APP_TAG=0.13.0` | 2026-09-22 | ✅ | documented | missing | [⚠️ 3 CRITICAL](apps/calnode/README.md#open-findings) |
 | [`apps/calrs`](apps/calrs/) | `scaffolded` | `APP_TAG=1.22.0` | 2026-09-22 | ✅ | documented | missing | — |
-| [`apps/ciso-assistant`](apps/ciso-assistant/) | `scaffolded` | `APP_TAG=v4.2.1` | 2026-09-22 | ✅ | documented | missing | [⚠️ 3 CRITICAL](apps/ciso-assistant/README.md#open-findings) |
+| [`apps/ciso-assistant`](apps/ciso-assistant/) | `scaffolded` | `APP_TAG=v4.2.1` | 2026-09-22 | ✅ | documented | missing | [⚠️ 2 CRITICAL](apps/ciso-assistant/README.md#open-findings) |
 | [`apps/collabora`](apps/collabora/) | `baseline-aligned` | `APP_TAG=26.04.5.2.1` | 2026-11-02 | ✅ | documented | missing | [⚠️ 1 CRITICAL](apps/collabora/README.md#open-findings) |
 | [`apps/dashy`](apps/dashy/) | `scaffolded` | `APP_TAG=4.9.15` | 2026-05-02 | ✅ | documented | missing | — |
-| [`apps/defectdojo`](apps/defectdojo/) | `scaffolded` | `APP_TAG=3.5.0` | 2026-09-22 | ✅ | documented | missing | [⚠️ 4 CRITICAL](apps/defectdojo/README.md#open-findings) |
-| [`apps/dependency-track`](apps/dependency-track/) | `scaffolded` | `APP_TAG=5.2.1` | — | ✅ | documented | missing | [⚠️ 4 CRITICAL](apps/dependency-track/README.md#open-findings) |
+| [`apps/defectdojo`](apps/defectdojo/) | `scaffolded` | `APP_TAG=3.5.0` | 2026-09-22 | ✅ | documented | missing | [⚠️ 3 CRITICAL](apps/defectdojo/README.md#open-findings) |
+| [`apps/dependency-track`](apps/dependency-track/) | `scaffolded` | `APP_TAG=5.2.1` | — | ✅ | documented | missing | [⚠️ 3 CRITICAL](apps/dependency-track/README.md#open-findings) |
 | [`apps/dfir-iris`](apps/dfir-iris/) | `scaffolded` | `APP_TAG=v2.4.29` | — | ✅ | documented | missing | [⚠️ 29 CRITICAL](apps/dfir-iris/README.md#open-findings) |
-| [`apps/dify`](apps/dify/) | `scaffolded` | `APP_TAG=1.19.0` | 2026-09-22 | ✅ | documented | missing | [⚠️ 8 CRITICAL](apps/dify/README.md#open-findings) |
+| [`apps/dify`](apps/dify/) | `scaffolded` | `APP_TAG=1.19.0` | 2026-09-22 | ✅ | documented | missing | [⚠️ 7 CRITICAL](apps/dify/README.md#open-findings) |
 | [`apps/docker-mailserver`](apps/docker-mailserver/) | `scaffolded` | `APP_TAG=16.0.1` | — | ✅ | documented | missing | [⚠️ 8 CRITICAL](apps/docker-mailserver/README.md#open-findings) |
 | [`apps/docling-serve`](apps/docling-serve/) | `scaffolded` | `APP_TAG=v1.38.2` | 2026-09-22 | ✅ | documented | missing | — |
 | [`apps/easyappointments`](apps/easyappointments/) | `ops-proven` | `APP_TAG=1.6.1` | 2026-11-03 | ✅ | documented | missing | [⚠️ 3 CRITICAL](apps/easyappointments/README.md#open-findings) |
@@ -74,39 +74,39 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`apps/immich`](apps/immich/) | `scaffolded` | `APP_TAG=v3.3.6` | 2026-11-03 | ✅ | documented | documented | [⚠️ 16 CRITICAL](apps/immich/README.md#open-findings) |
 | [`apps/it-tools`](apps/it-tools/) | `baseline-aligned` | `APP_TAG=2024.10.22-7ca5933` | 2026-11-02 | ✅ | documented | missing | [⚠️ 2 CRITICAL](apps/it-tools/README.md#open-findings) |
 | [`apps/librephotos`](apps/librephotos/) | `scaffolded` | `APP_TAG=1.5.1` | 2026-04-17 ⚠️ | ✅ | documented | missing | [⚠️ 1 CRITICAL](apps/librephotos/README.md#open-findings) |
-| [`apps/litellm`](apps/litellm/) | `scaffolded` | `APP_TAG=v1.108.0@sha256:08d313a00c46…` | 2026-09-21 | ✅ | documented | missing | [⚠️ 2 CRITICAL](apps/litellm/README.md#open-findings) |
+| [`apps/litellm`](apps/litellm/) | `scaffolded` | `APP_TAG=v1.108.0@sha256:08d313a00c46…` | 2026-09-21 | ✅ | documented | missing | [⚠️ 1 CRITICAL](apps/litellm/README.md#open-findings) |
 | [`apps/lycheeorg`](apps/lycheeorg/) | `scaffolded` | `APP_TAG=v7.12.1` | 2026-04-17 ⚠️ | ✅ | documented | missing | [⚠️ 1 CRITICAL](apps/lycheeorg/README.md#open-findings) |
 | [`apps/mailpit`](apps/mailpit/) | `scaffolded` | `APP_TAG=v1.33.0` | 2026-11-02 | ✅ | documented | missing | — |
 | [`apps/mailserver-jeboehm`](apps/mailserver-jeboehm/) | `scaffolded` | `APP_TAG=8.1.0` | — | ✅ | documented | missing | [⚠️ 2 CRITICAL](apps/mailserver-jeboehm/README.md#open-findings) |
 | [`apps/monicahq`](apps/monicahq/) | `ops-proven` | `APP_TAG=4.1.2-apache` | 2026-11-03 | ✅ | documented | missing | [⚠️ 4 CRITICAL](apps/monicahq/README.md#open-findings) |
 | [`apps/n8n`](apps/n8n/) | `scaffolded` | `APP_TAG=2.46.6@sha256:8602f5dfacbe…` | 2026-11-03 | ✅ | documented | missing | [⚠️ 1 CRITICAL](apps/n8n/README.md#open-findings) |
-| [`apps/nextcloud`](apps/nextcloud/) | `scaffolded` | `APP_TAG=35.0.2-fpm-alpine` | 2026-11-02 | ✅ | documented | documented | [⚠️ 3 CRITICAL](apps/nextcloud/README.md#open-findings) |
+| [`apps/nextcloud`](apps/nextcloud/) | `scaffolded` | `APP_TAG=35.0.2-fpm-alpine` | 2026-11-02 | ✅ | documented | documented | [⚠️ 1 CRITICAL](apps/nextcloud/README.md#open-findings) |
 | [`apps/nocodb`](apps/nocodb/) | `scaffolded` | `APP_TAG=2026.10.1` | 2026-05-02 | ✅ | documented | missing | — |
-| [`apps/obot`](apps/obot/) | `scaffolded` | `APP_TAG=v0.27.0` | — | ✅ | documented | missing | [⚠️ 4 CRITICAL](apps/obot/README.md#open-findings) |
+| [`apps/obot`](apps/obot/) | `scaffolded` | `APP_TAG=v0.27.0` | — | ✅ | documented | missing | [⚠️ 3 CRITICAL](apps/obot/README.md#open-findings) |
 | [`apps/ollama`](apps/ollama/) | `scaffolded` | `APP_TAG=0.40.14` | 2026-09-21 | ✅ | documented | missing | — |
 | [`apps/onlyoffice`](apps/onlyoffice/) | `scaffolded` | `APP_TAG=10.0.0` | 2026-11-02 | ✅ | documented | missing | — |
 | [`apps/open-webui`](apps/open-webui/) | `scaffolded` | `APP_TAG=v0.13.0` | 2026-09-21 | ✅ | documented | missing | [⚠️ 4 CRITICAL](apps/open-webui/README.md#open-findings) |
 | [`apps/opencanary`](apps/opencanary/) | `scaffolded` | `APP_TAG=0.9.10` | — | ✅ | documented | missing | [⚠️ 8 CRITICAL](apps/opencanary/README.md#open-findings) |
-| [`apps/opnform`](apps/opnform/) | `scaffolded` | `APP_TAG=2.8.4` | 2026-04-17 ⚠️ | ✅ | documented | missing | [⚠️ 3 CRITICAL](apps/opnform/README.md#open-findings) |
+| [`apps/opnform`](apps/opnform/) | `scaffolded` | `APP_TAG=2.8.4` | 2026-04-17 ⚠️ | ✅ | documented | missing | [⚠️ 2 CRITICAL](apps/opnform/README.md#open-findings) |
 | [`apps/paperless-gpt`](apps/paperless-gpt/) | `scaffolded` | `APP_TAG=v0.31.0` | — | ✅ | documented | missing | — |
-| [`apps/paperless-ngx`](apps/paperless-ngx/) | `scaffolded` | `APP_TAG=3.4.2` | 2026-11-02 | ✅ | documented | missing | [⚠️ 3 CRITICAL](apps/paperless-ngx/README.md#open-findings) |
+| [`apps/paperless-ngx`](apps/paperless-ngx/) | `scaffolded` | `APP_TAG=3.4.2` | 2026-11-02 | ✅ | documented | missing | [⚠️ 2 CRITICAL](apps/paperless-ngx/README.md#open-findings) |
 | [`apps/photoprism`](apps/photoprism/) | `scaffolded` | `APP_TAG=261029` | 2026-04-17 ⚠️ | ✅ | documented | missing | [⚠️ 1 CRITICAL](apps/photoprism/README.md#open-findings) |
 | [`apps/photoview`](apps/photoview/) | `scaffolded` | `APP_TAG=2.4.0` | 2026-04-17 ⚠️ | ✅ | documented | missing | [⚠️ 6 CRITICAL](apps/photoview/README.md#open-findings) |
 | [`apps/privatebin`](apps/privatebin/) | `scaffolded` | `APP_TAG=2.1.1` | — | ✅ | documented | missing | — |
 | [`apps/qdrant`](apps/qdrant/) | `scaffolded` | `APP_TAG=v1.20.0-unprivileged` | 2026-09-21 | ✅ | documented | missing | — |
 | [`apps/seafile`](apps/seafile/) | `scaffolded` | `APP_IMAGE=seafileltd/seafile-mc:13.0.29` | 2026-11-02 | ✅ | documented | missing | [⚠️ 4 CRITICAL](apps/seafile/README.md#open-findings) |
 | [`apps/seafile-pro`](apps/seafile-pro/) | `scaffolded` | `APP_TAG=13.0.29` | 2026-11-02 | ✅ | documented | missing | [⚠️ 25 CRITICAL](apps/seafile-pro/README.md#open-findings) |
-| [`apps/shlink`](apps/shlink/) | `scaffolded` | `APP_TAG=5.1.8` | — | ✅ | documented | missing | [⚠️ 4 CRITICAL](apps/shlink/README.md#open-findings) |
+| [`apps/shlink`](apps/shlink/) | `scaffolded` | `APP_TAG=5.1.8` | — | ✅ | documented | missing | [⚠️ 3 CRITICAL](apps/shlink/README.md#open-findings) |
 | [`apps/stalwart`](apps/stalwart/) | `scaffolded` | `APP_TAG=v1.0.3` | — | ✅ | documented | missing | — |
 | [`apps/threat-dragon`](apps/threat-dragon/) | `scaffolded` | `APP_TAG=v2.6.2` | — | ✅ | documented | missing | [⚠️ 2 CRITICAL](apps/threat-dragon/README.md#open-findings) |
-| [`apps/tymeslot`](apps/tymeslot/) | `scaffolded` | `APP_TAG=1.39.0-slim@sha256:ad7cfda6fe84…` | 2026-09-07 | ✅ | documented | missing | [⚠️ 2 CRITICAL](apps/tymeslot/README.md#open-findings) |
+| [`apps/tymeslot`](apps/tymeslot/) | `scaffolded` | `APP_TAG=1.39.0-slim@sha256:ad7cfda6fe84…` | 2026-09-07 | ✅ | documented | missing | [⚠️ 1 CRITICAL](apps/tymeslot/README.md#open-findings) |
 | [`apps/unifi`](apps/unifi/) | `scaffolded` | `APP_TAG=10.6.109` | 2026-04-17 ⚠️ | ✅ | documented | missing | [⚠️ 12 CRITICAL](apps/unifi/README.md#open-findings) |
 | [`apps/vaultwarden`](apps/vaultwarden/) | `scaffolded` | `APP_TAG=1.37.5` | 2026-11-02 | ✅ | documented | missing | [⚠️ 1 CRITICAL](apps/vaultwarden/README.md#open-findings) |
 | [`apps/velociraptor`](apps/velociraptor/) | `scaffolded` | `APP_TAG=0.77.3` | — | ✅ | documented | missing | — |
 | [`apps/vllm`](apps/vllm/) | `scaffolded` | `APP_TAG=v0.33.0` | — | ✅ | documented | missing | — |
 | [`apps/whoami`](apps/whoami/) | `baseline-aligned` | `APP_TAG=v1.12.0` | 2026-11-01 | ✅ | documented | missing | — |
-| [`apps/wikijs`](apps/wikijs/) | `scaffolded` | `APP_TAG=3.1.0` | — | ✅ | documented | missing | [⚠️ 3 CRITICAL](apps/wikijs/README.md#open-findings) |
-| [`apps/windmill`](apps/windmill/) | `scaffolded` | `APP_TAG=1.862.0` | 2026-09-23 | ✅ | documented | missing | [⚠️ 3 CRITICAL](apps/windmill/README.md#open-findings) |
+| [`apps/wikijs`](apps/wikijs/) | `scaffolded` | `APP_TAG=3.1.0` | — | ✅ | documented | missing | [⚠️ 2 CRITICAL](apps/wikijs/README.md#open-findings) |
+| [`apps/windmill`](apps/windmill/) | `scaffolded` | `APP_TAG=1.862.0` | 2026-09-23 | ✅ | documented | missing | [⚠️ 2 CRITICAL](apps/windmill/README.md#open-findings) |
 | [`apps/wordpress`](apps/wordpress/) | `scaffolded` | `APP_TAG=7.1.4-php8.3-apache` | 2026-04-15 ⚠️ | ✅ | documented | missing | [⚠️ 1 CRITICAL](apps/wordpress/README.md#open-findings) |
 | [`apps/yopass`](apps/yopass/) | `scaffolded` | `APP_TAG=16.0.1` | — | ✅ | documented | missing | — |
 
@@ -116,23 +116,23 @@ This is the maintainer's view: what has been established about each stack. It ma
 |---|---|---|---|---|---|---|---|
 | [`business/akaunting`](business/akaunting/) | `scaffolded` | `APP_TAG=3.3.0-v@sha256:6c5e9864dfe7…` | 2026-09-22 | ✅ | documented | missing | [⚠️ 2 CRITICAL](business/akaunting/README.md#open-findings) |
 | [`business/chatwoot`](business/chatwoot/) | `scaffolded` | `APP_TAG=v4.19.1` | 2026-09-22 | ✅ | documented | missing | [⚠️ 4 CRITICAL](business/chatwoot/README.md#open-findings) |
-| [`business/documenso`](business/documenso/) | `scaffolded` | `APP_TAG=v2.21.1` | — | ✅ | documented | missing | [⚠️ 2 CRITICAL](business/documenso/README.md#open-findings) |
+| [`business/documenso`](business/documenso/) | `scaffolded` | `APP_TAG=v2.21.1` | — | ✅ | documented | missing | [⚠️ 1 CRITICAL](business/documenso/README.md#open-findings) |
 | [`business/dolibarr`](business/dolibarr/) | `scaffolded` | `APP_TAG=24.0.2` | 2026-04-17 ⚠️ | ✅ | documented | missing | [⚠️ 1 CRITICAL](business/dolibarr/README.md#open-findings) |
 | [`business/erpnext`](business/erpnext/) | `scaffolded` | `APP_TAG=v16.53.0` | 2026-09-23 | ✅ | documented | missing | [⚠️ 7 CRITICAL](business/erpnext/README.md#open-findings) |
 | [`business/facturascripts`](business/facturascripts/) | `scaffolded` | `APP_TAG=2026.7` | 2026-09-22 | ✅ | documented | missing | [⚠️ 3 CRITICAL](business/facturascripts/README.md#open-findings) |
 | [`business/invoiceninja`](business/invoiceninja/) | `scaffolded` | `APP_TAG=5.13.53` | 2026-11-03 | ✅ | documented | missing | [⚠️ 3 CRITICAL](business/invoiceninja/README.md#open-findings) |
 | [`business/kimai`](business/kimai/) | `scaffolded` | `APP_TAG=2.71.0` | 2026-11-03 | ✅ | documented | missing | [⚠️ 2 CRITICAL](business/kimai/README.md#open-findings) |
 | [`business/leantime`](business/leantime/) | `scaffolded` | `APP_TAG=3.13.2` | — | ✅ | documented | missing | [⚠️ 4 CRITICAL](business/leantime/README.md#open-findings) |
-| [`business/listmonk`](business/listmonk/) | `baseline-aligned` | `APP_TAG=v6.2.0` | 2026-11-03 | ✅ | documented | missing | [⚠️ 3 CRITICAL](business/listmonk/README.md#open-findings) |
+| [`business/listmonk`](business/listmonk/) | `baseline-aligned` | `APP_TAG=v6.2.0` | 2026-11-03 | ✅ | documented | missing | [⚠️ 2 CRITICAL](business/listmonk/README.md#open-findings) |
 | [`business/matomo`](business/matomo/) | `scaffolded` | `APP_TAG=5.14.2-apache` | 2026-04-17 ⚠️ | ✅ | documented | missing | [⚠️ 1 CRITICAL](business/matomo/README.md#open-findings) |
-| [`business/openproject`](business/openproject/) | `scaffolded` | `APP_TAG=17.9.6-slim` | 2026-05-06 | ✅ | documented | missing | [⚠️ 4 CRITICAL](business/openproject/README.md#open-findings) |
+| [`business/openproject`](business/openproject/) | `scaffolded` | `APP_TAG=17.9.6-slim` | 2026-05-06 | ✅ | documented | missing | [⚠️ 3 CRITICAL](business/openproject/README.md#open-findings) |
 | [`business/opensign`](business/opensign/) | `scaffolded` | `APP_TAG=main@sha256:093910c698c1…` | 2026-05-11 ⚠️ | ✅ | documented | missing | [⚠️ 56 CRITICAL](business/opensign/README.md#open-findings) |
-| [`business/plane`](business/plane/) | `scaffolded` | `APP_TAG=v1.4.3` | — | ✅ | documented | missing | [⚠️ 13 CRITICAL](business/plane/README.md#open-findings) |
-| [`business/plausible`](business/plausible/) | `scaffolded` | `APP_TAG=v3.2.1` | — | ✅ | documented | missing | [⚠️ 2 CRITICAL](business/plausible/README.md#open-findings) |
+| [`business/plane`](business/plane/) | `scaffolded` | `APP_TAG=v1.4.3` | — | ✅ | documented | missing | [⚠️ 12 CRITICAL](business/plane/README.md#open-findings) |
+| [`business/plausible`](business/plausible/) | `scaffolded` | `APP_TAG=v3.2.1` | — | ✅ | documented | missing | [⚠️ 1 CRITICAL](business/plausible/README.md#open-findings) |
 | [`business/solidinvoice`](business/solidinvoice/) | `scaffolded` | `APP_TAG=3.1.2` | 2026-09-22 | ✅ | documented | missing | — |
-| [`business/twenty`](business/twenty/) | `scaffolded` | `APP_TAG=v2.55.0` | 2026-09-23 | ✅ | documented | missing | [⚠️ 2 CRITICAL](business/twenty/README.md#open-findings) |
-| [`business/vikunja`](business/vikunja/) | `scaffolded` | `APP_TAG=2.6.0` | 2026-05-06 | ✅ | documented | missing | [⚠️ 2 CRITICAL](business/vikunja/README.md#open-findings) |
-| [`business/zammad`](business/zammad/) | `scaffolded` | `APP_TAG=7.2.2-0038` | 2026-08-16 ⚠️ | ✅ | documented | missing | [⚠️ 2 CRITICAL](business/zammad/README.md#open-findings) |
+| [`business/twenty`](business/twenty/) | `scaffolded` | `APP_TAG=v2.55.0` | 2026-09-23 | ✅ | documented | missing | [⚠️ 1 CRITICAL](business/twenty/README.md#open-findings) |
+| [`business/vikunja`](business/vikunja/) | `scaffolded` | `APP_TAG=2.6.0` | 2026-05-06 | ✅ | documented | missing | [⚠️ 1 CRITICAL](business/vikunja/README.md#open-findings) |
+| [`business/zammad`](business/zammad/) | `scaffolded` | `APP_TAG=7.2.2-0038` | 2026-08-16 ⚠️ | ✅ | documented | missing | [⚠️ 1 CRITICAL](business/zammad/README.md#open-findings) |
 
 ## `monitoring/`
 
@@ -147,11 +147,11 @@ This is the maintainer's view: what has been established about each stack. It ma
 | [`monitoring/gotify`](monitoring/gotify/) | `scaffolded` | `APP_TAG=3.1.1` | — | ✅ | documented | missing | [⚠️ 2 CRITICAL](monitoring/gotify/README.md#open-findings) |
 | [`monitoring/grafana-prometheus`](monitoring/grafana-prometheus/) | `scaffolded` | `APP_TAG=13.3.0` | — | ✅ | documented | missing | — |
 | [`monitoring/healthchecks`](monitoring/healthchecks/) | `scaffolded` | `APP_TAG=v5.0.3` | 2026-09-08 | ✅ | documented | missing | — |
-| [`monitoring/langfuse`](monitoring/langfuse/) | `scaffolded` | `APP_TAG=4.75.0` | 2026-09-22 | ✅ | documented | missing | [⚠️ 2 CRITICAL](monitoring/langfuse/README.md#open-findings) |
+| [`monitoring/langfuse`](monitoring/langfuse/) | `scaffolded` | `APP_TAG=4.75.0` | 2026-09-22 | ✅ | documented | missing | [⚠️ 1 CRITICAL](monitoring/langfuse/README.md#open-findings) |
 | [`monitoring/ntfy`](monitoring/ntfy/) | `scaffolded` | `APP_TAG=v2.37.2` | 2026-09-08 | ✅ | documented | missing | — |
 | [`monitoring/scrutiny`](monitoring/scrutiny/) | `scaffolded` | `APP_TAG=v0.10.0-web` | — | ✅ | documented | missing | — |
 | [`monitoring/uptime-kuma`](monitoring/uptime-kuma/) | `scaffolded` | `APP_TAG=2.5.9` | 2026-09-13 | ✅ | documented | missing | [⚠️ 7 CRITICAL](monitoring/uptime-kuma/README.md#open-findings) |
-| [`monitoring/zabbix`](monitoring/zabbix/) | `scaffolded` | `APP_TAG=alpine-7.0.32` | — | ✅ | documented | missing | [⚠️ 2 CRITICAL](monitoring/zabbix/README.md#open-findings) |
+| [`monitoring/zabbix`](monitoring/zabbix/) | `scaffolded` | `APP_TAG=alpine-7.0.32` | — | ✅ | documented | missing | [⚠️ 1 CRITICAL](monitoring/zabbix/README.md#open-findings) |
 
 ## `backup/`
 

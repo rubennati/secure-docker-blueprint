@@ -760,17 +760,6 @@
         "CVE-2026-111497"
       ]
     },
-    "nextcloud": {
-      "stacks": [
-        "apps/nextcloud"
-      ],
-      "reason": "35.0.2 is the newest stable Nextcloud 35 image and has not been rebuilt with libraw 0.22.2.",
-      "risk": "LibRaw runs when ImageMagick decodes a camera RAW file, for example for a preview.",
-      "cves": [
-        "CVE-2026-20884",
-        "CVE-2026-24450"
-      ]
-    },
     "openproject/openproject": {
       "stacks": [
         "business/openproject"
@@ -935,11 +924,10 @@
         "monitoring/langfuse",
         "monitoring/zabbix"
       ],
-      "reason": "Every current official image of this line ships gosu 1.19 (or 1.20) built with Go 1.24.6, and the gosu maintainer has not rebuilt it with a fixed Go (tianon/gosu#176); no tag removes the finding. The 18.6-alpine build (Alpine 3.24.3, the newest PostgreSQL 18 Alpine image) also ships brotli-libs 1.2.0-r1 (CVE-2026-111497, fixed in Alpine's 1.2.1-r0); upstream has not rebuilt the image on it yet.",
-      "risk": "The flaw is in Go's crypto/tls session resumption. gosu only drops root privileges at container start and opens no TLS connection, so the code is not reached. The Alpine OpenSSL finding some older tags carried is gone at the current pins. brotli is a compression library linked by libcurl for PostgreSQL 18's OAuth support; the server does not decompress untrusted Brotli data in this setup (no OAuth validator configured), so the flaw is most likely not reached.",
+      "reason": "Every current official image of this line ships gosu 1.19 (or 1.20) built with Go 1.24.6, and the gosu maintainer has not rebuilt it with a fixed Go (tianon/gosu#176); no tag removes the finding.",
+      "risk": "The flaw is in Go's crypto/tls session resumption. gosu only drops root privileges at container start and opens no TLS connection, so the code is not reached. The Alpine OpenSSL finding some older tags carried is gone at the current pins.",
       "cves": [
-        "CVE-2025-68121",
-        "CVE-2026-111497"
+        "CVE-2025-68121"
       ]
     },
     "rabbitmq": {

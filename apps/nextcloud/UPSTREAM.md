@@ -95,7 +95,9 @@ If fpm-alpine + nginx causes issues:
   ([secdb](https://secdb.alpinelinux.org/v3.24/community.json)), so the move
   to Nextcloud 35 below does not remove them either. They clear with the next
   image rebuild. `libraw` is reached only when
-  ImageMagick decodes a camera RAW file, for example in a preview.
+  ImageMagick decodes a camera RAW file, for example in a preview. The
+  rebuilt `35.0.2-fpm-alpine` image scanned on 2026-11-06 no longer carries
+  them.
 
 - The nginx front (`NGINX_TAG`) moved from `1.29-alpine-slim` to
   `1.31-alpine-slim` on 2026-11-05, not run on a host at this tag; it stays on the mainline branch (1.29 was mainline too, 1.30 is the
