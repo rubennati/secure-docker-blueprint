@@ -1,8 +1,12 @@
 # Security Verification
 
-> This document is an evidence-based assessment of the security controls in this repository.
-> It does not repeat marketing claims. Every statement is backed by a specific file, line, or CI output.
-> Gaps are documented honestly.
+> **Historical assessment, not a current control reference.** This file combines
+> earlier assessments and partial updates; its scores, enforcement statements and
+> roadmap are not a current description of the repository. Retained for historical
+> context. Use the [security baseline](standards/security-baseline.md),
+> [CI reference](standards/ci.md) and generated [security coverage](security-coverage.md)
+> for current requirements, enforcement and figures. Use stack verification records
+> and host reports for runtime evidence.
 
 ---
 

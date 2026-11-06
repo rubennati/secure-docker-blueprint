@@ -261,8 +261,8 @@ be marked *for review*; none needed it.
 
 Inventory and batches:
 [`../docs/audits/upstream-version-inventory-2026-10-31.md`](../docs/audits/upstream-version-inventory-2026-10-31.md).
-One pull request and one commit per batch, each move recorded in the
-stack's `UPSTREAM.md`; a full image scan of the tree with the new pins measures
+Group commits and pull requests by purpose, verification and rollback needs,
+each move recorded in the stack's `UPSTREAM.md`; a full image scan of the tree with the new pins measures
 it (today a run started by hand on `dev`; the trigger is an open CI decision),
 the baseline record follows, and `dev` reaches `main` when the maintainer
 decides, not per batch.

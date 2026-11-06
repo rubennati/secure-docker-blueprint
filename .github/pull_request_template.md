@@ -28,17 +28,17 @@ bash ops/scripts/test-security.sh <host>   # if applicable
 
 ## Checklist
 
-- [ ] Branch target is `dev` (not `main`, unless trivial doc fix)
+- [ ] Changes target `dev`; a release pull request targets `main` from `dev`
 - [ ] Single focused topic (no unrelated drive-by changes)
 - [ ] Follows `docs/standards/` — compose-structure, env-structure, naming-conventions, commit-rules
-- [ ] `CHANGELOG.md` updated under `## [Unreleased]`
+- [ ] `CHANGELOG.md` records notable changes under `## [Unreleased]`, where applicable
 - [ ] App-level `README.md`, `UPSTREAM.md`, `CONFIG.md` updated if relevant
 - [ ] No real data in the diff — no real domains, IPs, tokens, or personal paths
 - [ ] Secrets via Docker Secrets or `.env` (gitignored), never hardcoded
 
 ## For documentation changes
 
-- [ ] Preflight done before writing — readers, document purpose, section objective, what is explicitly out of scope, and the canonical owner of each changing fact ([purpose preflight](../docs/standards/documentation-workflow.md#before-drafting-the-purpose-preflight))
+- [ ] Changed instructions agree with their sources and serve the reader; small corrections need no preflight form ([documentation workflow](../docs/standards/documentation-workflow.md))
 - [ ] `python3 scripts/ci/check-prose.py` reports no blocking finding
 
 ## For new apps specifically

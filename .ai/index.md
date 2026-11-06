@@ -5,10 +5,10 @@ governance documents — this directory coordinates work, it does not redefine r
 
 ## Start sequence
 
-1. [`../AGENTS.md`](../AGENTS.md) — rule precedence and mandatory reading
-2. [`state.md`](state.md) — where the project is right now
-3. [`routing.md`](routing.md) — which files this task actually needs
-4. [`rules.md`](rules.md) — how to work here
+Start with [`../AGENTS.md`](../AGENTS.md). Use [`routing.md`](routing.md) to
+find sources for the task and [`state.md`](state.md) for ongoing work or release
+context. [`rules.md`](rules.md) covers authorization and evidence. Read the
+relevant sections as needed rather than loading this whole workspace.
 
 ## Core files
 

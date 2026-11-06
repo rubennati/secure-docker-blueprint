@@ -335,7 +335,7 @@ incident. Keep the heading exactly `## Backup` — `lifecycle-report.py` reads i
       `python3 scripts/ci/lifecycle-report.py --write`,
       `python3 scripts/ci/sovereignty-report.py`,
       `python3 scripts/ci/site-catalogue.py`
-- [ ] Add any bugs found to `docs/bugfixes/` with root cause and fix
+- [ ] Record significant incidents or reusable recovery lessons in `docs/bugfixes/`; routine corrections need no separate incident file
 - [ ] Update this checklist if you discovered a new pitfall
 
 ---

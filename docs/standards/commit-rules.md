@@ -1,17 +1,27 @@
 # Commit Rules
 
-Rules for every commit in this repository. These rules are binding.
-
 ## Core Principles
 
-- **Commit only on user request** — never auto-commit after file changes
-- **Ask before committing** — two-part question: "Commit X? With message Y?"
-- **English in every committed file and commit message** — German only in the
-  exchange with the maintainer ([writing-style.md](writing-style.md#address-and-mood))
-- **Public content only** — the rule is [Public content](#public-content) below;
-  other documents point here instead of restating it
-- **No leaks** — API keys, tokens, credentials never committed
-- **Scope-first commits** — one logical change per commit
+- Commit when the user requests it or explicitly includes it in the task.
+  Authorization for an agreed change set does not require another approval of
+  each commit message. A request to edit or review alone does not authorize a commit.
+- Keep unrelated work out of the commit. Review the staged diff before committing.
+- Use an English, descriptive, scope-first message.
+- Protect credentials and private data as specified below.
+- Group changes by purpose, verification and rollback needs. Related pin updates
+  may share a commit; migrations and changes to authentication or other behavior
+  may need separate units. There is no fixed count per file, stack or batch.
+
+## Signing
+
+Commit signing is recommended when available, not a repository-wide requirement.
+Use the existing signing setup when it works. If it is unavailable, an authorized
+commit may be unsigned unless the user explicitly requested a signature or the
+remote policy requires one. State a signing limitation when relevant.
+
+Do not change global Git configuration, rebuild commits or cherry-pick changes
+solely to obtain a signature. Any history rewrite needs its own justification
+and authorization.
 
 ## Public content
 
@@ -53,103 +63,31 @@ statement about production systems.
 
 ## Checks
 
-### What CI enforces
+Review the staged diff for credentials, private deployment data and unintended
+changes. Do not stage `.env`, `.secrets/`, runtime data or unrelated work.
+Synthetic fixtures and public upstream references follow [Public content](#public-content).
 
-| Check | CI job | Covers |
-|---|---|---|
-| gitleaks with its default rules | Secret scan (gitleaks) | credentials, tokens and keys in the lines a pull request or a push to `main` adds; the whole history on `workflow_dispatch` — see [`ci.md`](ci.md#1--secret-scan-gitleaks) |
-| Public-content patterns | Secret scan (gitleaks) | workstation paths (`/Users/<name>/`) and password-manager references (`op://`) in tracked files |
-| `__REPLACE_ME__` in a committed `.env` | Sentinel value check | an environment file committed with its placeholder |
-| Plaintext secrets in compose | Canonical structure | a secret written into a compose file instead of a Docker secret |
-
-Private domains, hostnames and addresses and personal data have no automatic
-check: which names are private is known only to the maintainer. The checks
-below cover them by hand.
-
-### Before a commit (manual)
-
-These run locally. No hook enforces them.
-
-#### 1. Private names
-
-```bash
-# Keep your own domains, hostnames and user names outside the repository, one
-# regular expression per line, and run the list against the staged diff.
-git diff --cached -U0 | grep -nE -f ~/.config/<your-private-patterns>
-# Must return zero lines
-```
-
-#### 2. Addresses
-
-```bash
-# Lists every IPv4 address in the staged diff outside loopback, RFC 1918 and
-# RFC 5737. An address in 100.64.0.0/10 is listed as well: a placeholder is
-# fine, a real node's address is not.
-git diff --cached -U0 | grep -oE "\b([0-9]{1,3}\.){3}[0-9]{1,3}\b" \
-  | grep -vE "^(0\.0\.0\.0|127\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.|192\.0\.2\.|198\.51\.100\.|203\.0\.113\.)"
-```
-
-#### 3. Secrets
-
-```bash
-# A quick hint before CI runs gitleaks with its full rule set
-git diff --cached -U0 | grep -nE "(api[_-]?key|secret[_-]?key|access[_-]?token|password)\s*[=:]\s*['\"]?[A-Za-z0-9+/=_-]{16,}"
-# Any match → stop and review
-```
-
-#### 4. No .env / .secrets staged
-
-```bash
-# These must never be committed
-git diff --cached --name-only | grep -E "\.env$|\.secrets/" && echo "ABORT: secrets staged"
-```
-
-#### 5. English in commit message
-
-```bash
-# Commit message should be English in main branch
-# Heuristic: check for German word markers
-git log -1 --pretty=%B | grep -iE "ä|ö|ü|ß|und|für|nach|mit|auch|bei|oder" \
-  && echo "WARN: commit message may contain German — confirm"
-```
+Run checks relevant to the change; use [`ci.md`](ci.md) and
+[the local check reference](../../.ai/quality-gates.md) to select them. Required CI
+checks must pass before merge. Report a check that could not run, including why;
+do not describe it as passed. Inspect an existing unrelated failure separately
+rather than silently expanding the change.
 
 ## Commit Message Format
 
-Conventional-style, English, scope-first:
+Use an English subject that names the scope and resulting change; aim for a short
+subject. Add a body when it helps explain behavior, migration, risk or validation.
 
 ```text
-<scope>: <short description (max 72 chars)>
+<scope>: <short description>
 
-<optional body with details>
-- Bullet point 1
-- Bullet point 2
-
-<optional footer for breaking changes / refs>
-
-Co-Authored-By: <AI model and version> <noreply@anthropic.com>
+<optional explanation and issue references>
 ```
 
-### Scope examples
-
-- `apps/wordpress:` for app-specific changes
-- `core/traefik:` for core services
-- `docs:` for root documentation
-- `docs/standards:` for standard documents
-- `docs/bugfixes:` for bugfix docs
-
-### Good examples
-
-- `apps/wordpress: standardize setup + security hardening`
-- `core/traefik: add IPv6 support to access policies`
-- `docs/standards: add commit-rules.md`
-- `apps/paperless-ngx: set PAPERLESS_ALLOWED_HOSTS explicitly`
-
-### Anti-patterns
-
-- `update files` — no scope, no info
-- `fix` — too generic
-- `wip` — not acceptable in main
-- `Aktualisiere Manifest` — German in main branch
+Examples: `apps/wordpress: fix upload permissions`,
+`deps: update related patch pins`, `docs: simplify maintenance rules`.
+A co-author trailer is optional and must identify an actual contributor accurately.
+Do not fabricate model versions, identities or vendor addresses.
 
 ## Branch Model
 
@@ -233,7 +171,7 @@ available.
 **main:**
 
 - Only receives merged pull requests from `dev`; direct pushes are rejected
-- Everything tested, and the twelve required checks passed against current
+- The twelve required checks passed against current
   `main` — the ten CI jobs plus Trivy's IaC config scan and image CVE scan
 - Commit messages in English
 - Full CI runs again on the push that results from the merge — that run checks
@@ -253,201 +191,51 @@ available.
 
 ### Merge rules
 
-- `dev` → `main`: only after live testing passed and tests green
+- `dev` → `main`: after required checks pass and the release's relevant runtime
+  verification is complete; untested updates and remaining gaps are stated explicitly
 - `feature/*` → `dev`: through a pull request, once the feature works and is self-contained
 
 ## Push Strategy
 
-Push only what should be public. Always push refs explicitly.
-
-### Explicit push commands
+Push only authorized changes and name the remote ref explicitly:
 
 ```bash
-# Good — explicit ref, and on this repository the only ref you push
 git push -u origin fix/my-change
-
-# Avoid — pushes every local branch
-git push --all
 ```
 
-`main` and `dev` are not push targets: both rulesets reject a direct push, so the
-day-to-day push is always to a short-lived branch. The bootstrap commands below
-apply to a fresh remote that has no protection yet.
-
-### Push-time checklist
-
-Before `git push`:
-
-- [ ] Pre-commit checks passed on all commits being pushed
-- [ ] No real domains, IPs, secrets, personal data in files or commit messages
-- [ ] Commit messages in English
-- [ ] Remote ref explicitly named
-
-### Setting up a public remote
-
-```bash
-# Add remote
-git remote add origin git@github.com:<user>/<repo>.git
-
-# Optional: configure which refs get pushed by default
-git config --add remote.origin.push refs/heads/main
-
-# Verify config
-git config --get-all remote.origin.push
-```
-
-With this config, a plain `git push origin` pushes only the configured refs. Other branches require explicit `git push origin <branch>`.
-
-### First push to a fresh remote
-
-```bash
-# 1. Run pre-push audit (see below)
-
-# 2. Dry-run
-git push --dry-run origin
-
-# 3. Actual push
-git push origin main
-```
-
-### Pre-push audit
-
-Run before each push. Replace the pattern list with your own sensitive strings (domains, hostnames, usernames):
-
-```bash
-PATTERNS=(
-  "your-private-domain\.com"
-  "internal-hostname"
-  "real-user-name"
-  # add site-specific patterns here
-)
-
-for branch in main dev; do
-  echo "── $branch ──"
-  for pattern in "${PATTERNS[@]}"; do
-    echo -n "  $pattern: "
-    if git log $branch -p 2>/dev/null | grep -qE "$pattern"; then
-      echo "FOUND — do NOT push"
-    else
-      echo "CLEAN"
-    fi
-  done
-done
-```
-
-### Branch Protection (GitHub settings)
-
-After first push, configure on the GitHub repo:
-
-1. Settings → Branches → Branch Protection Rules
-2. Protect `main`:
-   - Require pull request before merging
-   - Require status checks
-   - Do not allow force pushes
-   - Do not allow deletions
-3. Protect `dev` the same way — this repository protects both branches with rulesets ([Branch Model](#branch-model))
-
-### Pre-push hook (optional)
-
-A `.git/hooks/pre-push` script can prevent accidental pushes of specific local branches. The hook is not tracked (per-developer setup). Example pattern:
-
-```bash
-#!/usr/bin/env bash
-# Block push of specific local-only branches
-BLOCKED_BRANCHES=("local-notes" "drafts")
-
-while read local_ref local_sha remote_ref remote_sha; do
-  for blocked in "${BLOCKED_BRANCHES[@]}"; do
-    if [[ "$remote_ref" == "refs/heads/$blocked" ]]; then
-      echo "Push to '$blocked' blocked by local hook."
-      exit 1
-    fi
-  done
-done
-exit 0
-```
-
-Make executable: `chmod +x .git/hooks/pre-push`
+Review which commits will be published and check them for private data. Do not use
+`--all` or `--mirror` for routine work. A request for a local commit does not
+itself authorize a push, release or merge. Do not alter branch protection to
+complete ordinary work.
 
 ## AI Commit Behavior
 
-The AI must follow these rules:
+Before an authorized commit, inspect `git status` and the staged diff, exclude
+unrelated edits, run relevant checks and choose a descriptive message. Then commit
+within the agreed scope; another message-approval step is unnecessary.
 
-### Before any commit
-
-1. Run `git status` and report to user
-2. Run `git diff --cached` if anything staged
-3. Run pre-commit checks (above)
-4. Propose commit message
-5. Ask user: "Commit the staged files with message `<msg>`? Or adjust?"
-6. Wait for explicit user confirmation
-7. Only then commit
-
-### When the AI should NOT commit
-
-- User hasn't asked for a commit
-- Changes involve real data not yet redacted
-- Changes involve secrets or .env
-- Changes are in-progress / broken
-- User said "don't commit" earlier in session
-- User is reviewing / discussing, not decided
-
-### When in doubt
-
-Always ask. "Wollen wir das jetzt committen?" is better than an unwanted commit.
-
-### Commit frequency
-
-- **Small, logical commits** — one change per commit
-- **Not every file-edit** — group related edits
-- **Test-driven** — commit after tests pass, not during debugging
+If authorization is unclear, ask whether a commit is wanted. If the user requested
+no commit or is only discussing a proposal, leave the work uncommitted.
 
 ## Undoing Commits
 
-### Options in order of safety
+Prefer a revert for published changes. Local resets can preserve edits but still
+change branch state; choose the operation for the task rather than applying a
+standard recovery recipe. Do not discard uncommitted work or rewrite shared
+history without explicit authorization.
 
-| Method | Safe for | Effect |
-|--------|---------|--------|
-| `git revert <hash>` | Any commit, including pushed | New commit that undoes the change. History preserved. |
-| `git reset --soft <hash>` | Local, unpushed | Moves HEAD back, keeps changes staged |
-| `git reset --mixed <hash>` | Local, unpushed | Moves HEAD back, keeps changes unstaged |
-| `git rm <file> && commit` | Any time | Removes file in new commit, history preserved |
-| `git reset --hard <hash>` | Local only, unpushed | **DESTRUCTIVE** — loses work |
-| `git filter-repo / filter-branch` | Pushed, secret leaks | **NUCLEAR** — rewrites all history, breaks all clones |
-
-### When to use which
-
-- **Accidentally committed something** → `git revert` (safest)
-- **Committed to wrong branch, want to move** → `git reset --soft` + re-commit on right branch
-- **Committed secret that's already pushed** → rotate or revoke it first; that is what removes the risk. A history rewrite (`git filter-repo` + force push) is a separate, deliberate decision: it breaks every fork, clone and tag, and GitHub keeps pull-request refs regardless. If the value stays in history, list its finding in `.gitleaksignore` with the reason
-- **Want file gone going forward but keep history** → `git rm` + commit
-
-### Workflow example: undo last commit on main
-
-```bash
-# Safe (recommended): revert creates new commit
-git revert HEAD
-
-# If only local, not pushed yet:
-git reset --soft HEAD~1  # keeps changes staged
-git reset --mixed HEAD~1 # keeps changes unstaged
-git reset --hard HEAD~1  # DESTROYS changes — use with care
-```
+For a leaked credential, revoke or rotate it first. Removing a file does not
+invalidate the credential or remove it from history. A history rewrite is a
+separate decision with effects on clones, forks and tags.
 
 ## Checklist before every commit
 
-- [ ] User explicitly asked for commit
-- [ ] Scope and message clear
-- [ ] English in message
-- [ ] [Public content](#public-content) checked (no private domains, hostnames or addresses, secrets, personal data)
-- [ ] Correct branch (not accidentally committing to main)
-- [ ] `git status` and `git diff --cached` reviewed
-- [ ] Test-Script run (if applicable)
-- [ ] Co-Authored-By footer present
-- [ ] User confirmed after seeing proposed message
-- [ ] Related docs updated in the same commit (see [`documentation-workflow.md`](documentation-workflow.md))
+- [ ] Commit is within the user's authorization.
+- [ ] Staged changes contain only the intended change set and no private data.
+- [ ] Relevant checks and limitations are understood and reported.
+- [ ] Message describes the change; affected documentation is included in the change set.
 
 ## Related Standards
 
-- [`documentation-workflow.md`](documentation-workflow.md) — which documents must be updated when code changes, and the "same-commit documentation" rule
-- [`new-app-checklist.md`](new-app-checklist.md) — step-by-step for adding a new app, including doc requirements per commit
+- [`documentation-workflow.md`](documentation-workflow.md) — affected documentation and generated views
+- [`new-app-checklist.md`](new-app-checklist.md) — adding a stack

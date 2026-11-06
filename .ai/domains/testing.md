@@ -5,7 +5,7 @@ deployment is its acceptance test. Neither substitutes for the other.
 
 **Specs:** [`quality-gates.md`](../quality-gates.md) ·
 [`docs/standards/ci.md`](../../docs/standards/ci.md) ·
-[`docs/security-verification.md`](../../docs/security-verification.md)
+[`security-baseline.md`](../../docs/standards/security-baseline.md)
 
 ## Three levels
 
@@ -13,7 +13,7 @@ deployment is its acceptance test. Neither substitutes for the other.
 |---|---|---|
 | Static | structure, tags, plaintext secrets, exposed datastores, status contradictions | `scripts/ci/*.py`, locally and in CI |
 | Compose | files that do not parse or resolve | `docker compose config` |
-| Real | everything that matters | a clean install on a host |
+| Real | behavior exercised by the test, including core functions and recovery | a clean install on a host |
 
 ## The bar for ✅
 
