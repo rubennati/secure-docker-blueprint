@@ -1,60 +1,28 @@
 # Domain — Documentation
 
-**Specs:** [`documentation-workflow.md`](../../docs/standards/documentation-workflow.md) ·
-[`writing-style.md`](../../docs/standards/writing-style.md) ·
-[`maintenance.md`](../../docs/maintenance.md) File Map ·
-[`status-model.md`](../../docs/standards/status-model.md)
+Use [`documentation-workflow.md`](../../docs/standards/documentation-workflow.md)
+for purpose and maintenance, [`writing-style.md`](../../docs/standards/writing-style.md)
+for wording, and the [File Map](../../docs/maintenance.md#file-map--single-source-of-truth)
+for canonical sources. This summary owns no rule.
 
-An operative summary for a working session. It owns nothing; on any disagreement
-the specs above win.
+Update affected documentation in the same change set. Small corrections need no
+purpose form, separate approval or session log. Record consequential decisions,
+incidents and host evidence where they help future work.
 
-## Same change set, not later
-
-Code and its documentation go into the same commit. What is not written while the
-reasons are fresh is lost — the rationale that is obvious today is gone in two weeks.
-
-## One canonical owner per fact
-
-The File Map in `docs/maintenance.md` names the canonical owner of every fact, and
-separately who keeps each file current. A mirror never overrides its owner. If an
-owning document looks wrong, propose changing it *there*.
-
-Derived files are regenerated, never retyped:
-
-```bash
-python3 scripts/ci/lifecycle-report.py --write
-```
-
-## What each document is for
-
-| Document | Contains |
+| Document | Purpose |
 |---|---|
-| Root `README.md` | What exists, one line per service, status symbol |
-| Category `README.md` | Scope of the category, choice guidance, per-tool rationale |
-| App `README.md` | Setup, verify, security model, known issues, `## Backup` |
-| App `UPSTREAM.md` | Source, license, version, `Last verified`, upgrade checklist |
-| `CHANGELOG.md` | What shipped |
-| `ROADMAP.md` | Direction — never a duplicate of the changelog |
-| `docs/architecture.md` | Why the structure is the way it is |
-| `docs/bugfixes/` | One incident: symptom, cause, fix, lesson |
+| Root `README.md` | Project entry point and links to the inventories |
+| Category `README.md` | Category scope and per-stack listing |
+| Stack `README.md` | Setup, verification, operation, known limitations and recovery |
+| Stack `UPSTREAM.md` | Source, licence, pins, upgrade notes and actual verification |
+| `CHANGELOG.md` | Shipped changes |
+| `ROADMAP.md` | Planned work |
 
-## Writing
+Correct facts at their canonical source and regenerate affected views with their
+scripts. Preserve `Last verified` through a pin update unless a new test actually
+establishes a new record; see [`status-model.md`](../../docs/standards/status-model.md).
 
-- English in the repository, German in chat.
-- Register follows the section's purpose — imperative and direct address where the
-  reader is performing steps, declarative and neutral where the reader is
-  establishing what is true. No global language rule overrides a
-  [section contract](../../docs/standards/documentation-workflow.md#section-contracts).
-- Never name another product or vendor negatively. State what this project does.
-- Public content: [`commit-rules.md` → Public content](../../docs/standards/commit-rules.md#public-content)
-  — no domains, hostnames or addresses of private systems, no local paths or
-  personal data, nothing addressed to or from an assistant session.
-- No personal attribution or self-critical wording in public files.
-- No links from public files to material a normal clone does not contain — a dead
-  end for the reader.
-
-## Status claims
-
-A status is a claim about evidence. `✅` requires all ten Ready Criteria, including a
-`Last verified: YYYY-MM-DD (vX.Y.Z)` that reflects an actual verification — not a
-version bump. When in doubt, `🚧` is the honest answer.
+Use factual language, explain consequences and correct errors directly. Repository
+content is English; discussion with the maintainer is German. Public records follow
+[`Public content`](../../docs/standards/commit-rules.md#public-content). Link to
+material available in a normal clone or to a public source.

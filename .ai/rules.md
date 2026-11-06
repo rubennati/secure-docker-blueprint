@@ -1,108 +1,56 @@
 # Working Rules
 
-These layer on top of [`../AGENTS.md`](../AGENTS.md) and the standards it routes to.
-They do not restate them.
+Operational guidance for completing work in this repository. Technical standards
+are routed through [`AGENTS.md`](../AGENTS.md) and [the task guide](routing.md).
 
-## Advise, do not decide
+## Scope and authorization
 
-The maintainer decides; the AI analyses, proposes with reasoning, shows alternatives
-and trade-offs, and asks before any change with consequences. Where a recommendation
-exists, state it as a recommendation — not as the outcome.
+Carry out the agreed task, including the edits and checks needed to complete it.
+Authorization remains valid for that scope; do not ask again at each step.
 
-If an instruction looks risky, say what the consequence would be and ask. Do not
-simply execute, and do not silently substitute a different plan.
+Ask when essential information is missing, a material decision is not covered by
+the request, or the next action would extend the scope or introduce consequences
+not already authorized. Explain the concrete decision or consequence.
 
-## Phases with verification between them
+Plan complex work in useful, testable units. A plan does not require a separate
+approval unless it introduces such a decision. Run available checks yourself;
+hand over commands only when execution needs access or action the user must supply.
 
-For anything larger than a single focused change:
+Commit, push, merge and deployment authorization follows the requested scope;
+see [`commit-rules.md`](../docs/standards/commit-rules.md). Do not overwrite other
+work, expose private data, or perform an unauthorized destructive operation.
 
-1. Present a plan with phases
-2. Get approval for the plan
-3. Implement one phase
-4. Hand over the commands to verify it
-5. Only then the next phase
+## Evidence and sources
 
-Many simultaneous changes make failures untraceable. This is why the repository is
-built in small, individually testable steps.
+Use official upstream documentation, releases and registries for the version in
+question. Compare them with the repository's actual configuration and test
+results. Historical records and community discussions are context, not automatic
+instructions for the current task.
 
-## Source hierarchy
+Check claims about available image tools, supported options and current releases.
+Distinguish a confirmed result, an inference and an unknown. If a check cannot run,
+state the limitation; do not report it as passed or change a verification stamp.
 
-When sources disagree, the higher level wins:
+An upstream issue does not automatically require waiting or a local workaround.
+Recommend a course based on impact, security, support and maintenance cost.
 
-| Level | Source |
-|---|---|
-| **L1** | Official upstream documentation and repositories — registry pages, the project's own README and docs, release notes |
-| **L2** | Configurations proven to work — stacks already verified in this repository |
-| **L3** | Historical documentation — older versions of official docs, archived pages |
-| **L4** | Exploratory material — forum threads, Q&A sites, blog posts |
+## Proportionate validation
 
-A community solution is checked against L1 before it is adopted. Where upstream has
-an open issue for a problem, waiting for the upstream fix beats carrying a local
-workaround — a workaround has to be maintained and removed later, and it usually
-outlives the memory of why it exists.
+Choose checks that can detect defects caused by the change. Repository-wide CI
+requirements still apply before merge; a small local edit need not rerun unrelated
+checks at every step. Report relevant failures and distinguish environment problems
+from defects. See [`quality-gates.md`](quality-gates.md).
 
-This is also how contradictions inside this repository are resolved: the owning
-document per the File Map is the local L1.
+## Documentation and review
 
-## Verify before asserting
+Update affected instructions and generated views in the same change set. Use the
+[File Map](../docs/maintenance.md#file-map--single-source-of-truth) to change facts
+at their source. Record significant decisions, incidents and host evidence where
+they belong; routine sessions need no additional log entry.
 
-Never state that an image contains a tool, that a flag exists, or that a version is
-current without checking. `docker inspect`, the upstream documentation, the registry
-API — then the claim. "I do not know, I will check" is a valid answer.
+Write repository content in English and discuss it with the maintainer in German.
+Give direct, factual assessments of configurations and products, acknowledge errors,
+and state recommendations as recommendations. Avoid personal attacks.
 
-## Preserved at its owner, not everywhere
-
-A decision that shapes the system, a failure with its cause and fix, and a
-limitation that still applies are kept — each at the place that owns it:
-
-| What | Where |
-|---|---|
-| Architecture decisions | `docs/architecture.md`, summarised in `decisions.md` |
-| A decision's state — decided, applied, verified | `decisions.md`, the entry's field lines; the register at its top is generated |
-| Standards | `docs/standards/` |
-| App-specific choices | the app's `README.md` and `UPSTREAM.md` |
-| Failures | `docs/bugfixes/<app>-<date>.md`, patterns in `errors.md` |
-| Session state | `state.md`, `progress.md` |
-
-Preservation is never a reason to leave content in the wrong document or in the
-reader's path. A fact that belongs elsewhere is moved to its canonical owner, not
-kept in both places.
-
-A rejected alternative is recorded when knowing it changes something later —
-architecture, maintenance, a migration, a repeat of the same mistake, or a
-limitation that still applies. An alternative that fails that test is dropped
-when the decision is made. This is not an instruction to conserve session
-context.
-
-Test environments, local configuration, session state and this repository's own
-history are evidence, not specification. They are promoted here only where they
-establish a reusable property, requirement, limitation or procedure.
-
-## Ownership
-
-One fact, one **canonical owner** — the map is the File Map in
-`docs/maintenance.md`, which also names who keeps each file current. Never change
-a fact from a document that only mirrors it. If an owning document looks wrong,
-propose changing it *at the owner*.
-
-## Scope discipline
-
-No unrelated refactors. No "improving" working configuration without a reason and
-approval. Keep changes reviewable by a human.
-
-## Language and tone
-
-Owner: [`writing-style.md`](../docs/standards/writing-style.md#address-and-mood).
-
-- Repository content: English. Chat: German.
-- Register follows the section's purpose: imperative, and direct address where the
-  reader is performing steps; declarative and neutral where the reader is
-  establishing what is true. No global language rule overrides a section's
-  purpose.
-- Never name other products or vendors negatively. State what this project does, not
-  what others do badly.
-- Public content follows [`commit-rules.md` → Public content](../docs/standards/commit-rules.md#public-content):
-  no domains, hostnames or addresses of private systems, no local paths,
-  credentials or personal data, and nothing addressed to or from an assistant
-  session. Test runs are recorded by what they showed, not by where they ran.
-- No personal attributions and no self-critical wording.
+Public content follows
+[`commit-rules.md`](../docs/standards/commit-rules.md#public-content).

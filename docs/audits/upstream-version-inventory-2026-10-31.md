@@ -3,7 +3,7 @@
 What every image pin in the tree stands against upstream on 2026-10-31, and the
 order in which the pins move. The inventory is a snapshot and the programme is a
 plan; neither moves a pin. A pin moves through the Version Chain in
-[`../maintenance.md`](../maintenance.md#version-chain), one batch per commit, and
+[`../maintenance.md`](../maintenance.md#version-chain), commits grouped by purpose, verification and rollback needs, and
 the record of each move is the stack's `UPSTREAM.md` and `CHANGELOG.md`.
 
 ## How the inventory was taken
@@ -36,8 +36,10 @@ The state in the last column is the stack's state in `LIFECYCLE.md` on
 
 ### Rules that hold for every batch
 
-1. **One pull request and one commit per batch**: a batch of pin moves is one
-   change, as a dependency bot groups it. Every stack in it moves
+1. **Group changes by purpose, verification and rollback needs.** Related pin
+   moves may share a commit and pull request. Separate migrations or behavioral
+   changes when they need independent review or testing; neither a stack nor a
+   batch fixes the commit count. Every stack in the change set moves
    `.env.example` and `.env.local.example` together and records the move under
    *Version notes* in the stack's `UPSTREAM.md`: date, from and to, what
    upstream's release notes say about breaking changes, migrations, variables
@@ -62,7 +64,7 @@ The state in the last column is the stack's state in `LIFECYCLE.md` on
    the migration path in `UPSTREAM.md` before the pin moves, and a database
    family moves once, with one procedure, not twelve times.
 5. **`LIFECYCLE.md`, `site/src/data/lifecycle.json` and
-   `site/src/data/catalogue.json` are regenerated in the batch's commit**
+   `site/src/data/catalogue.json` are regenerated in the change set**
    (`lifecycle-report.py --write`, `site-catalogue.py`), and the checkers run
    before the push.
 
